@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T22:04:39.373321+00:00",
+    "updatedAt": "2026-10-26T22:13:52.843363+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18037,18 +18037,18 @@
       "repo": "google/gvisor",
       "number": 16057,
       "ref": "review/proc-creation-locking",
-      "head": "a400475087d78a7359464817c6e45fc4c22bba73",
+      "head": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
       "title": "Preserve procfs lookup errors during creation",
       "url": "https://github.com/google/gvisor/pull/16057",
       "group": "runtime",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at a400475087d7 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at eca97a613b. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at eca97a613b16d5c61fec9064e2cad005578c2407 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118634037736 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16057 at a75577a78618fe57dc07c30d98cf2c9776573fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe refined procfs creation proposal a28c preserves Linux lookup errors for mkdir, symlink, mknod and O_CREAT, including missing overlong names, while retaining internal synthetic mountpoints. Compared with c29 it restores the original caller-held directory lock for ordinary creation and releases it only for procfs revalidation. Exact integration e5d6 passed12 configured owners/154 positive records: nine proc/kernfs/analyzer/lint owners plus actual native, directfs and shared ProcTest.Create cases. Both components passed independent evidence review. Root requested contributor review once for a28c, explicitly superseding the pending c29 question; no upstream PR has been opened. No measured performance, standalone-binary equivalence or full Node runtime result is claimed.",
+      "summary": "The reviewed fork amendment b039155d0 is ready for contributor review against public 859fb9e04. It extends procfs lookup/error coverage to hard-link destinations, missing and overlong rename names, NOREPLACE and same-inode behavior, ordinary proc-root to PID-directory destinations, and read-only creation. Four real proc syscall cases pass in each of native Linux, DirectFS and shared modes: twelve passes, no failures or skips.\n\nA reverse PID-source rename remains a separate open follow-up: /proc/self/status to /proc/version returns EPERM natively and EACCES in both systrap modes. This amendment does not claim to fix or qualify that direction.\n\nEarlier source-specific record:\n\nThe requested post-#16046 rebase is published at a400475087d7 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at eca97a613b. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at eca97a613b16d5c61fec9064e2cad005578c2407 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118634037736 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16057 at a75577a78618fe57dc07c30d98cf2c9776573fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe refined procfs creation proposal a28c preserves Linux lookup errors for mkdir, symlink, mknod and O_CREAT, including missing overlong names, while retaining internal synthetic mountpoints. Compared with c29 it restores the original caller-held directory lock for ordinary creation and releases it only for procfs revalidation. Exact integration e5d6 passed12 configured owners/154 positive records: nine proc/kernfs/analyzer/lint owners plus actual native, directfs and shared ProcTest.Create cases. Both components passed independent evidence review. Root requested contributor review once for a28c, explicitly superseding the pending c29 question; no upstream PR has been opened. No measured performance, standalone-binary equivalence or full Node runtime result is claimed.",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "a400475087d78a7359464817c6e45fc4c22bba73",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Gazelle rebase complete; exact current-head Gazelle check succeeded",
-        "nextAction": "Follow new substantive review, import and merge events in the existing sweep; preserve current maintainer holds and do not repeat the completed rebase.",
+        "owner": "pinring_source_scope",
+        "sourceHead": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
+        "observedAt": "2026-10-26T22:13:52.843363+00:00",
+        "disposition": "Reviewed amendment ready for contributor review",
+        "nextAction": "Review b039155d0 against the current public head. Keep the independently observed reverse PID-source error difference as separate agent work.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39424653924/job/118634037736",
           "https://github.com/google/gvisor/pull/16031",
@@ -18056,7 +18056,7 @@
           "https://github.com/tamird/gvisor/commit/a400475087d78a7359464817c6e45fc4c22bba73"
         ]
       },
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -18077,6 +18077,18 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/a400475087d78a7359464817c6e45fc4c22bba73"
+        },
+        {
+          "label": "Reviewed procfs amendment",
+          "url": "https://github.com/tamird/gvisor/commit/b039155d0869ebda7eb3973a6f8b79fab4f6d001"
+        },
+        {
+          "label": "Final three-mode proc syscall qualification",
+          "url": "https://app.buildbuddy.io/invocation/89735c8a-eeac-4f10-9786-d372305e8a19"
+        },
+        {
+          "label": "Retained child qualification",
+          "url": "https://app.buildbuddy.io/invocation/4e216e66-ac92-4b08-9cf1-8e88d351d138"
         }
       ],
       "ciRecovery": {
@@ -18098,6 +18110,16 @@
             "jobURL": "https://github.com/google/gvisor/actions/runs/39424653924/job/118634037736"
           }
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "b039155d0869ebda7eb3973a6f8b79fab4f6d001",
+        "baseHead": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
+        "url": "https://github.com/tamird/gvisor/commit/b039155d0869ebda7eb3973a6f8b79fab4f6d001",
+        "title": "Extend procfs creation and rename error coverage",
+        "summary": "Address the reviewed procfs lookup and error cases while retaining the separate reverse PID-source follow-up.",
+        "body": "Four real syscall cases passed in native Linux, DirectFS and shared modes, twelve positives with no failures or skips. The reverse /proc/self/status to /proc/version EPERM/EACCES difference remains open and is not a verified claim of this amendment."
       }
     },
     {
@@ -20300,14 +20322,14 @@
       "id": "branch:state-wire-storage",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/state-wire-storage-current",
-      "head": "f7204694d85924f979109ff60ea28f34abf14714",
-      "title": "Retain typed homogeneous state arrays",
-      "url": "https://github.com/google/gvisor/pull/16380",
+      "ref": "review/state-reference-arrays-split",
+      "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+      "title": "Split state array storage into reviewable changes",
+      "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
       "group": "runtime",
-      "status": "Published as #16380",
-      "updatedAt": "2026-10-25T13:15:07.380213+00:00",
-      "summary": "The approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "summary": "The four-part split has passed independent source review and is ready for one contributor decision on the linked fork proposal. Wire loading, benchmark fixtures, primitive arrays and reference arrays remain separately inspectable. The benchmark fixture is independently published at d8c5f75da on the common baseline: its exact patch and complete pkg/state tree match the already-qualified baseline. It does not require the wire-loader change. The implementation dependency is wire loader, then primitive arrays, then reference arrays; incidental fixture ancestry does not make it a production prerequisite. Public #16380 remains unchanged.\n\nThe existing container checkpoint/resume target passes six records; the DirectFS pipe-save target passes 151 records with four existing named-pipe skips; the actual Docker checkpoint and resume methods both pass. Two completed invocations required later authenticated collection after a local DNS interruption; their original INCOMPLETE receipts remain preserved and no tests reran. This is selected AMD64 checkpoint coverage, not a full Docker/save suite or ARM runtime result.\n\nA fresh twenty-leaf encoding/decoding comparison measured 1,024 fewer allocations for slice and adopted-array cases. The unchanged gob controls varied substantially across the separate workers, so this comparison supplies allocation evidence without a clean timing claim.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
       "links": [
         {
           "label": "Original approved change",
@@ -20320,22 +20342,25 @@
       ],
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
-        "disposition": "Approved source delivered as #16380; current normal and race qualification pass",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing watcher. The approved destination-kind child retains its separate source grant and waits for actual #16380 landing. No repeated contributor question.",
+        "sourceHead": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+        "disposition": "Independently reviewed split ready for contributor decision",
+        "nextAction": "Review the single linked split proposal. The benchmark fixture can be submitted independently; preserve the actual loader/primitive/reference dependencies when delivering the implementation stages.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16380",
           "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c",
-          "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615"
+          "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615",
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5643702405",
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5657639744"
         ],
-        "observedAt": "2026-10-25T13:15:07.380213+00:00"
+        "observedAt": "2026-10-26T22:13:52.843363+00:00"
       },
       "refinement": {
         "before": {
-          "head": "9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d"
+          "head": "f7204694d85924f979109ff60ea28f34abf14714"
         },
         "after": {
-          "head": "4b896b20690e5dbcb8128b2a90d84e21c9b1db78"
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
+          "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776"
         }
       },
       "evidence": [
@@ -20350,9 +20375,69 @@
         {
           "label": "Current race suites PASS with two declared skips",
           "url": "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615"
+        },
+        {
+          "label": "Wire payload loading",
+          "url": "https://github.com/tamird/gvisor/commit/3c6804639b39ceeb6dd55b49d25a905794cbece1"
+        },
+        {
+          "label": "Encoding and decoding benchmark fixtures",
+          "url": "https://github.com/tamird/gvisor/commit/c701d31f048bfb16155839170f7ce30f9138c0bc"
+        },
+        {
+          "label": "Typed primitive arrays",
+          "url": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b"
+        },
+        {
+          "label": "Homogeneous reference arrays",
+          "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776"
+        },
+        {
+          "label": "Final split normal suites and analyzers",
+          "url": "https://app.buildbuddy.io/invocation/b1695ab9-c0b9-45ef-b6fe-39a1dd339fc1"
+        },
+        {
+          "label": "Final split race suites; two existing lazy-registration skips",
+          "url": "https://app.buildbuddy.io/invocation/2fa688f0-6d51-4b7d-8a67-329288e1c063"
+        },
+        {
+          "label": "Container checkpoint and resume",
+          "url": "https://app.buildbuddy.io/invocation/5c0f61f2-216e-44f7-9daf-e4da2735f020"
+        },
+        {
+          "label": "Existing DirectFS pipe-save case target",
+          "url": "https://app.buildbuddy.io/invocation/dd37e5c8-dd7c-4e5b-a793-4a7b7fb2c718"
+        },
+        {
+          "label": "Actual Docker checkpoint and resume methods",
+          "url": "https://app.buildbuddy.io/invocation/843f25c3-74b0-4f80-a846-282752cdf7b3"
+        },
+        {
+          "label": "Fresh allocation comparison: baseline",
+          "url": "https://app.buildbuddy.io/invocation/536239b6-b9e8-4d32-96f3-8920a774508d"
+        },
+        {
+          "label": "Fresh allocation comparison: final split",
+          "url": "https://app.buildbuddy.io/invocation/803d908e-a1fc-47eb-a687-8c0ba93a5dbb"
+        },
+        {
+          "label": "Independent benchmark fixture on the common baseline",
+          "url": "https://github.com/tamird/gvisor/commit/d8c5f75da340974a15607c762f9dd2053e3a0f2b"
+        },
+        {
+          "label": "Complete reviewed four-commit series",
+          "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...7b4e8579e089e89a237fdd22cd0f5e83658d3776"
         }
       ],
-      "inactive": true
+      "inactive": false,
+      "contributorReview": {
+        "status": "pending",
+        "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+        "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+        "title": "Review the state-array split",
+        "summary": "Review wire loading, independent benchmark fixtures, primitive arrays and reference arrays separately, with one decision for the proposed split.",
+        "body": "The standalone benchmark fixture d8c5f75da needs no loader change. The implementation stages depend on wire loading, then primitive arrays, then reference arrays. Each selected stage and the final normal/race checks pass; actual container checkpoint/resume, DirectFS pipe-save and Docker checkpoint methods also pass with the recorded existing skips. Fresh benchmarks establish allocation savings, not a clean latency improvement."
+      }
     },
     {
       "id": "branch:state-destination-kind",
@@ -22711,25 +22796,39 @@
       "repo": "google/gvisor",
       "number": 16336,
       "ref": "tcp-cookie-sack-negotiation",
-      "head": "8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
+      "head": "0b06fce451fe2bff770f870740690f3e1772b859",
       "title": "Preserve SACK on connections accepted with SYN cookies",
       "url": "https://github.com/google/gvisor/pull/16336",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T10:42:01.085386+00:00",
-      "summary": "The approved SACK timestamp-negotiation change is published at exact 8757001b. Initial readback is open/non-draft and mergeable, with public checks starting. The retained Linux/netstack controls and full e2e timestamp-owner validation remain tied to their source identities; no current-head maintainer approval or import is inferred. The window-scaling child still awaits its distinct contributor decision.",
+      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "summary": "The reviewed amendment is published as #16336 at 0b06fce45. It documents the Linux timestamp-cookie analogue and the peer-controlled SACK bit, makes the protocol-lock contract explicit, and extends negotiation checks for missing peer SACK and timestamps. The verified remote result includes both TestSynCookieSACK executions. All six review threads are answered and resolved; no contributor decision remains. Current checks and maintainer review come from the provider snapshot.\n\nEarlier source-specific record:\n\nThe approved SACK timestamp-negotiation change is published at exact 8757001b. Initial readback is open/non-draft and mergeable, with public checks starting. The retained Linux/netstack controls and full e2e timestamp-owner validation remain tied to their source identities; no current-head maintainer approval or import is inferred. The window-scaling child still awaits its distinct contributor decision.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
-        "observedAt": "2026-10-24T10:42:01.085386+00:00",
-        "disposition": "Approved source delivered; current public checks and review remain",
-        "nextAction": "Follow #16336 exact-head checks, human review and import through the existing watcher. Window scaling keeps its separate contributor decision and prerequisite edge.",
+        "sourceHead": "0b06fce451fe2bff770f870740690f3e1772b859",
+        "observedAt": "2026-10-26T22:13:52.843363+00:00",
+        "disposition": "Published amendment; current review and CI remain",
+        "nextAction": "Follow the exact published source, current review responses and checks; do not repeat the consumed contributor decision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
           "https://app.buildbuddy.io/invocation/098f63cd-c41f-498e-9d44-abf1fd9967de",
           "https://app.buildbuddy.io/invocation/c0561e06-802a-4321-8f69-4c96c3adb96c"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Verified cookie-SACK amendment qualification",
+          "url": "https://app.buildbuddy.io/invocation/3b4196fa-7d21-4522-b081-f37d967e43e6"
+        },
+        {
+          "label": "Published response to the addressed review",
+          "url": "https://github.com/google/gvisor/pull/16336#pullrequestreview-5659783155"
+        },
+        {
+          "label": "Current published reviewed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/0b06fce451fe2bff770f870740690f3e1772b859"
+        }
+      ]
     },
     {
       "id": "branch:review/kernel-14345-contracts",
@@ -23422,19 +23521,19 @@
       "repo": "google/gvisor",
       "number": 16344,
       "ref": "fix/tpu-timeout-parseuint",
-      "head": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
+      "head": "72b4500d37af524b19dfd6acd11655ffb83da529",
       "title": "Reject unrepresentable TPU operation timeouts",
       "url": "https://github.com/google/gvisor/pull/16344",
       "group": "analysis",
       "status": "open",
-      "summary": "The independently reviewed refinement at 72b4500d3 preserves the actual ParseUint error and names the accepted range for malformed and overflowing input. Zero retains a separate range diagnostic. Its real CLI qualification passes eight fresh owners and 54 positive XML records, with no failed, skipped or missing cases. It is ready for contributor review against public 86ab5ae25; the consumed 62c proposal and incomplete intermediate 9669 revision are not pending decisions. No TPU hardware or ARM runtime execution is claimed.\n\nEarlier source-specific history:\n\nCurrent public #16344 remains at 86ab5ae25. The reviewed fork amendment at 62c7fdd34 is qualified and ready for contributor review. No upstream source update has been made.\n\nUse one diagnostic for malformed, zero and overflowing timeouts, naming the accepted integer range [1, 2147483647]. ParseUint and the signed wire conversion are unchanged.\n\nThe real CLI passed eleven cases, including the minimum valid timeout and malformed, zero and overflow inputs. The existing TPU request/pipe tests, four analyzer owners, formatting and imports also passed: eight fresh owners and 54 positive XML records, with no skipped, failed or missing cases. This does not claim TPU hardware or ARM runtime execution.\n\nEarlier source-specific record:\n\nThe revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. The contributor approved this exact revised head, now published as #16344. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
-      "updatedAt": "2026-10-26T22:04:39.373321+00:00",
+      "summary": "The contributor-approved diagnostic refinement is published as #16344 at 72b4500d3. Invalid inputs name the accepted range and retain the actual ParseUint error; zero has its own range diagnostic. The real CLI and existing request/pipe/analyzer checks pass eight fresh owners and 54 positive XML records without failures, skips or missing cases. Lucas\u2019s thread is answered and resolved; no contributor decision remains. The existing maintainer request is preserved.\n\nEarlier source-specific history:\n\nCurrent public #16344 remains at 86ab5ae25. The reviewed fork amendment at 62c7fdd34 is qualified and ready for contributor review. No upstream source update has been made.\n\nUse one diagnostic for malformed, zero and overflowing timeouts, naming the accepted integer range [1, 2147483647]. ParseUint and the signed wire conversion are unchanged.\n\nThe real CLI passed eleven cases, including the minimum valid timeout and malformed, zero and overflow inputs. The existing TPU request/pipe tests, four analyzer owners, formatting and imports also passed: eight fresh owners and 54 positive XML records, with no skipped, failed or missing cases. This does not claim TPU hardware or ARM runtime execution.\n\nEarlier source-specific record:\n\nThe revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. The contributor approved this exact revised head, now published as #16344. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
+      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
-        "observedAt": "2026-10-26T22:04:39.373321+00:00",
-        "disposition": "Reviewed diagnostic refinement ready for contributor review",
-        "nextAction": "Review 72b4500d3 against the unchanged public head; the earlier 62c decision was consumed by the requested parser-error correction.",
+        "sourceHead": "72b4500d37af524b19dfd6acd11655ffb83da529",
+        "observedAt": "2026-10-26T22:13:52.843363+00:00",
+        "disposition": "Published amendment; current review and CI remain",
+        "nextAction": "Follow the exact published source, current review responses and checks; do not repeat the consumed contributor decision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/72b4500d37af524b19dfd6acd11655ffb83da529",
           "https://app.buildbuddy.io/invocation/823b0b54-ec12-4bd9-8ab5-fc2941bd8218"
@@ -23468,18 +23567,12 @@
         {
           "label": "Qualified final parser-error and range CLI behavior",
           "url": "https://app.buildbuddy.io/invocation/823b0b54-ec12-4bd9-8ab5-fc2941bd8218"
+        },
+        {
+          "label": "Published response to the addressed review",
+          "url": "https://github.com/google/gvisor/pull/16344#discussion_r4383068254"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "72b4500d37af524b19dfd6acd11655ffb83da529",
-        "baseHead": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
-        "url": "https://github.com/tamird/gvisor/commit/72b4500d37af524b19dfd6acd11655ffb83da529",
-        "title": "Preserve the parser error in TPU timeout diagnostics",
-        "summary": "Name the accepted range and include the returned ParseUint error when parsing fails. Keep a separate diagnostic for zero.",
-        "body": "The eleven real CLI cases include valid bounds, malformed input, zero and overflow. Existing TPU request/pipe tests, four analyzer owners, formatting and imports also pass: eight fresh owners and 54 positive XML records, without skipped, failed or missing cases. Parsing and the signed wire conversion are unchanged; no TPU hardware or ARM runtime claim."
-      }
+      ]
     },
     {
       "id": "pr:16345",
@@ -23836,8 +23929,8 @@
       "url": "https://github.com/google/gvisor/pull/16380",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T22:04:39.373321+00:00",
-      "summary": "Four separate fork revisions now isolate wire loading, benchmark fixtures, primitive arrays and reference arrays. Each stage passes its selected remote checks, and the final stage passes the existing normal and race suites. Independent review of the split is pending; public #16380 remains unchanged.\n\nThe existing container checkpoint/resume target passes six records; the DirectFS pipe-save target passes 151 records with four existing named-pipe skips; the actual Docker checkpoint and resume methods both pass. Two completed invocations required later authenticated collection after a local DNS interruption; their original INCOMPLETE receipts remain preserved and no tests reran. This is selected AMD64 checkpoint coverage, not a full Docker/save suite or ARM runtime result.\n\nA fresh twenty-leaf encoding/decoding comparison measured 1,024 fewer allocations for slice and adopted-array cases. The unchanged gob controls varied substantially across the separate workers, so this comparison supplies allocation evidence without a clean timing claim.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
+      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "summary": "The four-part split has passed independent source review and is ready for one contributor decision on the linked fork proposal. Wire loading, benchmark fixtures, primitive arrays and reference arrays remain separately inspectable. The benchmark fixture is independently published at d8c5f75da on the common baseline: its exact patch and complete pkg/state tree match the already-qualified baseline. It does not require the wire-loader change. The implementation dependency is wire loader, then primitive arrays, then reference arrays; incidental fixture ancestry does not make it a production prerequisite. Public #16380 remains unchanged.\n\nThe existing container checkpoint/resume target passes six records; the DirectFS pipe-save target passes 151 records with four existing named-pipe skips; the actual Docker checkpoint and resume methods both pass. Two completed invocations required later authenticated collection after a local DNS interruption; their original INCOMPLETE receipts remain preserved and no tests reran. This is selected AMD64 checkpoint coverage, not a full Docker/save suite or ARM runtime result.\n\nA fresh twenty-leaf encoding/decoding comparison measured 1,024 fewer allocations for slice and adopted-array cases. The unchanged gob controls varied substantially across the separate workers, so this comparison supplies allocation evidence without a clean timing claim.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
       "links": [
         {
           "label": "Original approved change",
@@ -23851,8 +23944,8 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
-        "disposition": "Four-stage split qualified; independent source review pending",
-        "nextAction": "Review the four linear revisions and the complete original-to-final source difference before presenting the split for contributor approval. Public #16380 and its unresolved feedback remain unchanged.",
+        "disposition": "Independently reviewed split ready for contributor decision",
+        "nextAction": "Review the single linked split proposal. The benchmark fixture can be submitted independently; preserve the actual loader/primitive/reference dependencies when delivering the implementation stages.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16380",
           "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c",
@@ -23860,7 +23953,7 @@
           "https://github.com/google/gvisor/pull/16380#pullrequestreview-5643702405",
           "https://github.com/google/gvisor/pull/16380#pullrequestreview-5657639744"
         ],
-        "observedAt": "2026-10-26T22:04:39.373321+00:00"
+        "observedAt": "2026-10-26T22:13:52.843363+00:00"
       },
       "evidence": [
         {
@@ -23918,6 +24011,14 @@
         {
           "label": "Fresh allocation comparison: final split",
           "url": "https://app.buildbuddy.io/invocation/803d908e-a1fc-47eb-a687-8c0ba93a5dbb"
+        },
+        {
+          "label": "Independent benchmark fixture on the common baseline",
+          "url": "https://github.com/tamird/gvisor/commit/d8c5f75da340974a15607c762f9dd2053e3a0f2b"
+        },
+        {
+          "label": "Complete reviewed four-commit series",
+          "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...7b4e8579e089e89a237fdd22cd0f5e83658d3776"
         }
       ],
       "number": 16380
@@ -24024,14 +24125,14 @@
       "url": "https://github.com/google/gvisor/pull/16382",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T22:04:39.373321+00:00",
-      "summary": "The contributor-approved amendment is published on #16382 at f5e35772f. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot. Fresh approval was requested from Etienne in the public review; GitHub rejected the formal reviewer-assignment API, so no new native assignment is claimed.\n\nRound a retained receive window up when truncation would move its right edge left, and use the same decoded window for segment acceptance.\n\nThe negative control withdrew sixteen bytes from the advertised right edge. The corrected wire regression is present in the passing fixed qualification (407 records), covering partial-segment acceptance and the scaled-zero reopen boundary. Preserve the failed control separately; this does not qualify memory-pressure policy or performance.\n\nEarlier source-specific record:\n\nMatching Copybara import #16385 at 7089c937472a is open with both public Buildkite 52336 and internal 34045 reporting SUCCESS in the 19:52 UTC snapshot. This records the two service outcomes, without inferring internal test details. Neither source PR nor import has landed. The separate source generate TLS failure remains preserved.\n\nEtienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
+      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "summary": "Etienne approved the published f5e35772f amendment after the review fixes. All three Lucas threads are resolved and no contributor decision remains. Current source checks and import progress come from the provider snapshot.\n\nRound a retained receive window up when truncation would move its right edge left, and use the same decoded window for segment acceptance.\n\nThe negative control withdrew sixteen bytes from the advertised right edge. The corrected wire regression is present in the passing fixed qualification (407 records), covering partial-segment acceptance and the scaled-zero reopen boundary. Preserve the failed control separately; this does not qualify memory-pressure policy or performance.\n\nEarlier source-specific record:\n\nMatching Copybara import #16385 at 7089c937472a is open with both public Buildkite 52336 and internal 34045 reporting SUCCESS in the 19:52 UTC snapshot. This records the two service outcomes, without inferring internal test details. Neither source PR nor import has landed. The separate source generate TLS failure remains preserved.\n\nEtienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
       "followup": {
         "owner": "root",
         "sourceHead": "f5e35772f5ff7143e634613dc55a0e2356556cec",
-        "observedAt": "2026-10-26T22:04:39.373321+00:00",
-        "disposition": "Published amendment; awaiting maintainer follow-up",
-        "nextAction": "Follow the current source checks and maintainer review. The contributor decision is complete; do not repeat the review request.",
+        "observedAt": "2026-10-26T22:13:52.843363+00:00",
+        "disposition": "Current-head maintainer approval received",
+        "nextAction": "Follow current source checks and matching import progress; the fresh approval is recorded and no new review request is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16382#discussion_r4381418318",
           "https://github.com/tamird/gvisor/commit/f5e35772f5ff7143e634613dc55a0e2356556cec",
@@ -24099,6 +24200,10 @@
         {
           "label": "Public request for fresh maintainer approval",
           "url": "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659669671"
+        },
+        {
+          "label": "Etienne\u2019s approval of the amended head",
+          "url": "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659724612"
         }
       ],
       "number": 16382
@@ -24702,19 +24807,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-repeated-rto-ssthresh",
-      "head": "d13561b12b7015924636f58b701705a98bee68e5",
-      "title": "Keep ssthresh on a repeat timer retransmission",
+      "head": "c25ba441f930815f91bd9018cb42d6ed24625aa0",
+      "title": "Keep ssthresh on repeated TCP retransmission timeouts",
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T15:10:17.359539+00:00",
-      "summary": "The approved e396b8c8a proposal is delivered as #16419 at d13561b12 with an identical diff. No contributor decision remains pending. Current public checks and maintainer review are tracked on the PR.\n\nA ten-segment flight set the slow-start threshold to five segments with Reno and seven with CUBIC on the first timeout. When the same retransmission timed out again, the sender reduced the threshold to two. The published change preserves five or seven until a timeout reaches new data, as RFC 5681 requires. In separate tests with no ACK and a half-segment ACK, the old code failed four cases per run; both corrected runs passed all 13 cases. These tests cover repeated timeouts on the same bytes; #16393 reported advancing oldest data.\n\nBroader validation passed 536 records across TCP, race, packet and analyzer checks, with one existing RACK skip. All seven packet cases passed. Each analyzer passed for AMD64 and ARM64; the runtime checks were on AMD64.\n\nThe current integration at 185276b5b, which includes this fix, also passed its selected public socket slice: 11 targets and 38 sharded attempts, with 1,686 positive records, 32 known skips and no failures or missing results. Coverage includes ordinary AMD64, emulated ARM64 variants including 64 KiB pages, and separate AMD64 UNIX-stream save/restore cases. The TCP suite itself excludes save/restore. This is integration evidence, separate from the standalone repeated-timeout regression.",
+      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "summary": "The reviewed repeated-timeout amendment is now published as #16419 at c25ba441f. It starts a new loss episode on any advancing cumulative ACK, including a partial-segment ACK, while a SACK alone does not reset the episode. A zero-window probe with no data in flight retains the congestion window and threshold. The focused remote qualification passes 425 records. No contributor decision remains; the delivery owner is completing the associated review responses. If #15604 lands first, synchronize its two new HandleRTOExpired test calls with this signature; neither PR independently requires the other.\n\nEarlier source-specific record:\n\nThe approved e396b8c8a proposal is delivered as #16419 at d13561b12 with an identical diff. No contributor decision remains pending. Current public checks and maintainer review are tracked on the PR.\n\nA ten-segment flight set the slow-start threshold to five segments with Reno and seven with CUBIC on the first timeout. When the same retransmission timed out again, the sender reduced the threshold to two. The published change preserves five or seven until a timeout reaches new data, as RFC 5681 requires. In separate tests with no ACK and a half-segment ACK, the old code failed four cases per run; both corrected runs passed all 13 cases. These tests cover repeated timeouts on the same bytes; #16393 reported advancing oldest data.\n\nBroader validation passed 536 records across TCP, race, packet and analyzer checks, with one existing RACK skip. All seven packet cases passed. Each analyzer passed for AMD64 and ARM64; the runtime checks were on AMD64.\n\nThe current integration at 185276b5b, which includes this fix, also passed its selected public socket slice: 11 targets and 38 sharded attempts, with 1,686 positive records, 32 known skips and no failures or missing results. Coverage includes ordinary AMD64, emulated ARM64 variants including 64 KiB pages, and separate AMD64 UNIX-stream save/restore cases. The TCP suite itself excludes save/restore. This is integration evidence, separate from the standalone repeated-timeout regression.",
       "followup": {
-        "sourceHead": "d13561b12b7015924636f58b701705a98bee68e5",
+        "sourceHead": "c25ba441f930815f91bd9018cb42d6ed24625aa0",
         "owner": "root",
-        "observedAt": "2026-10-26T15:10:17.359539+00:00",
-        "disposition": "Approved proposal published as #16419",
-        "nextAction": "Follow #16419 at published d13561b12. The original e396b8c8a proposal and its source-specific qualification remain recorded; publication preserves the diff and clears the contributor decision.",
+        "observedAt": "2026-10-26T22:13:52.843363+00:00",
+        "disposition": "Published amendment; current review and CI remain",
+        "nextAction": "Follow the exact published source, current review responses and checks; do not repeat the consumed contributor decision.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/b84d8479-53da-4b50-9823-b7de420223d4",
           "https://github.com/google/gvisor/pull/16419",
@@ -24757,6 +24862,14 @@
         {
           "label": "RFC 5681 \u00a73.1: threshold on timer retransmissions",
           "url": "https://www.rfc-editor.org/rfc/rfc5681#section-3.1"
+        },
+        {
+          "label": "Qualified repeated-timeout review amendment",
+          "url": "https://app.buildbuddy.io/invocation/53bc2ee5-b563-4a6c-8a59-78128c7f6267"
+        },
+        {
+          "label": "Current published reviewed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/c25ba441f930815f91bd9018cb42d6ed24625aa0"
         }
       ],
       "number": 16419
@@ -27986,8 +28099,9 @@
       "from": "branch:state-wire-storage",
       "to": "pr:16380",
       "type": "includes",
-      "reason": "The approved array-storage proposal is delivered in this public PR.",
-      "evidence": "https://github.com/google/gvisor/pull/16380"
+      "reason": "The independently reviewed four-part replacement awaits one contributor decision; the public source PR remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+      "role": "proposed_update"
     },
     {
       "from": "pr:16380",
