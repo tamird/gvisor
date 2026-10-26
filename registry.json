@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T16:12:55.045991+00:00",
+    "updatedAt": "2026-10-26T16:55:32.685515+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1671,8 +1671,8 @@
       "url": "https://github.com/tamird/gvisor/tree/hermetic-toolchains",
       "group": "bazel",
       "status": "historical combined predecessor; successor validated",
-      "summary": "Historical combined predecessor. The current compiler replacement remains fork-only at 8306976db; the independent public LLVM source migration is now 6aa2df662. Neither record is an upstream compiler PR. Preserve these earlier combined experiments as history.\n\nPreserved earlier source-specific record:\n\nThe separate compiler successor is now public at hermetic-compiler-refresh@87cfd11a4, with source-specific compiler/static/loader validation closed and real prerequisite delivery holds recorded on its node. The five superseded compiler proposal refs were archived and retired in receipt 854cf64e88ef. This distinct combined predecessor is outside that retirement scope and remains preserved with its descendants.\n\nHistorical record: #15036 and #15042 landed on October 5. Existing combined compiler/plugin source 63e2554be remains retained. The early compiler-only current/corrected attempts failed; their exact source heads and complete failed-result records are preserved in the recovery bundle and validation packets. Those failures are not relabeled by the later successor results.",
-      "updatedAt": "2026-10-26T16:12:55.045991+00:00",
+      "summary": "Historical combined predecessor. The current compiler replacement remains fork-only at 8306976db; the independent public LLVM source migration is now 17d37fc9a. Neither record is an upstream compiler PR. Preserve these earlier combined experiments as history.\n\nPreserved earlier source-specific record:\n\nThe separate compiler successor is now public at hermetic-compiler-refresh@87cfd11a4, with source-specific compiler/static/loader validation closed and real prerequisite delivery holds recorded on its node. The five superseded compiler proposal refs were archived and retired in receipt 854cf64e88ef. This distinct combined predecessor is outside that retirement scope and remains preserved with its descendants.\n\nHistorical record: #15036 and #15042 landed on October 5. Existing combined compiler/plugin source 63e2554be remains retained. The early compiler-only current/corrected attempts failed; their exact source heads and complete failed-result records are preserved in the recovery bundle and validation packets. Those failures are not relabeled by the later successor results.",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
       "inactive": true
     },
     {
@@ -1696,15 +1696,15 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "PR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
+      "summary": "The public PR remains open at a3818d179. The separately linked GNU-only fork 414e26abe reduces its DPDK patch burden and is agent-owned until the original GNU build validation passes. The LLVM unwind experiment has focused cgo/static positives but is a distinct follow-up. No fork refinement has amended this upstream PR.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-23T23:24:38.958974+00:00",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
       "followup": {
-        "disposition": "PR/fork reconciliation complete; current-head CI pending",
+        "disposition": "Open upstream PR; GNU-only refinement under agent validation",
         "owner": "root",
-        "nextAction": "Observe current-head checks through the existing watcher and address any actual failure. No repeated push or reviewer reminder for this reconciliation.",
-        "sourceHead": "154d10c44a781c9bc7cdce0f6729a490386caf06",
+        "nextAction": "Validate and review the separately linked GNU-only refinement before any upstream amendment; keep provider checks and human review on the current public head distinct.",
+        "sourceHead": "a3818d1793b919df1feeeb1c028cc40158754a7e",
         "reviewedAt": "2026-10-16T08:57:33Z",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
@@ -1721,10 +1721,10 @@
           "https://github.com/tamird/gvisor/commit/596535e6b16e321e4864432daa25f43f518b94ac",
           "https://github.com/tamird/gvisor/commit/154d10c44a781c9bc7cdce0f6729a490386caf06"
         ],
-        "observedAt": "2026-10-23T23:24:38.958974+00:00",
-        "providerHead": "154d10c44a781c9bc7cdce0f6729a490386caf06"
+        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "providerHead": "a3818d1793b919df1feeeb1c028cc40158754a7e"
       },
-      "head": "154d10c44a781c9bc7cdce0f6729a490386caf06",
+      "head": "a3818d1793b919df1feeeb1c028cc40158754a7e",
       "refinement": {
         "before": {
           "head": "c80d6b6aba23932cfb6fb201fc5ff0ece40bd6c2"
@@ -1734,6 +1734,10 @@
         }
       },
       "evidence": [
+        {
+          "label": "Separate GNU-only refinement",
+          "url": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
+        },
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/6779464a0fa68c547ad8cc1f6c741c107e0f7eed"
@@ -2285,8 +2289,8 @@
       "url": "https://github.com/tamird/gvisor/tree/llvm-0-8-24",
       "group": "bazel",
       "status": "Superseded by upstream supplier version",
-      "summary": "This branch-only version update is superseded: public gVisor already declares llvm 0.8.24. There is no remaining extraction or contributor decision for this branch. The active standalone LLVM source migration is llvm-project-source-catalog@6aa2df662; the separate #16236 header cleanup waits for a released BCR version containing merged supplier #883.\n\nPreserved earlier source-specific record:\n\nThe Linux-header selection uses this supplier version atop the combined LLVM migration. Extract and review this stack before independent header publication; integrated validation does not establish contributor approval.",
-      "updatedAt": "2026-10-26T16:12:55.045991+00:00",
+      "summary": "This branch-only version update is superseded: public gVisor already declares llvm 0.8.24. There is no remaining extraction or contributor decision for this branch. The active standalone LLVM source migration is llvm-project-qualified@17d37fc9a; the separate #16236 header cleanup waits for a released BCR version containing merged supplier #883.\n\nPreserved earlier source-specific record:\n\nThe Linux-header selection uses this supplier version atop the combined LLVM migration. Extract and review this stack before independent header publication; integrated validation does not establish contributor approval.",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
       "inactive": true,
       "evidence": [
         {
@@ -2295,7 +2299,7 @@
         },
         {
           "label": "Standalone LLVM source migration",
-          "url": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8"
+          "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
         }
       ]
     },
@@ -4183,8 +4187,8 @@
       "url": "https://github.com/tamird/gvisor/commit/8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
       "group": "bazel",
       "status": "Contributor approval retained; waiting for prerequisites",
-      "summary": "The crosstool replacement is fork branch hermetic-compiler-reconciled-review at 8306976db, not an upstream PR. Prior conditional contributor approval remains, with the open source prerequisites and their own review states shown separately. The standalone LLVM source migration is now split out as llvm-project-source-catalog@6aa2df662 and is being qualified with GNU/Coral unchanged. Completed historical compiler qualifications below remain tied to their original sources. Benchmark-version prerequisite #15376 has landed; it is no longer a delivery gate.\n\nPreserved earlier source-specific record:\n\nThe reconciled compiler is published at 8306976 with the public @llvm-project source supplier. Its prior conditional contributor approval is retained. Current validation is complete: the scoped 42-output/eight-owner checks, mixed 40-output comparison, full lint, fixed startup comparison and parser completion retain their exact source boundaries. The canonical source audit passes 206 records and 33 owning cases. Earlier failed and interrupted invocations remain failed; no broad replay or performance equivalence is claimed. The six static call-site corrections are now a separate delivery prerequisite, not a hidden qualification-only change. Existing #15153, #15376, #15368, #15146 and #16051 dependencies remain.\n\nPreserved earlier source-specific record:\n\nThe current compiler migration is published at 0a766 on the four remaining prerequisites. The historical 87cfd branch is preserved separately. The latest broad run retained 40 outputs but expired before the plugin outputs and final inspection/tests; it remains FAIL/INCOMPLETE. A single completion run reuses those exact retained outputs and checks the two plugin binaries, all 42 outputs and eight test owners. Procumounter builds and its two named static/page-size tests are separately accepted. The canonical 207-entry-seed audit is prepared but held; the startup comparison has not run. Six restored static attributes are qualification-only.\n\nEarlier source-specific record:\n\nCurrent compiler source 1a8e5ab72a composes the four remaining prerequisites above master b4bb99d. Independent source review verifies the 29 preserved compiler payloads and removes the obsolete Coral link-flags patch with its supplier. Current Go 1.27.3 and dependency inputs require fresh focused validation; prior compiler outcomes remain historical. The original BPF implementation and Python, Abseil and cgo support have landed. The Go static-attribute change was rolled back upstream, so it is explicitly restored only in the qualification child until its delivery disposition is resolved. Remaining source prerequisites are #15153, #15376, #15368 and #15146; BCR cleanup #16194 is independent. RBE configuration and nvproxy delivery still require the compiler proposal.\n\nEarlier implementation and validation records:\n\nThe refreshed compiler candidate is public at 87cfd11a4 on prerequisite composition 97487b52b and master e1bc74024. It amends the preceding dc22 proposal with the validated GNU preload boundary. Independent source reconciliation (peer 748c346ae987) confirms all 28 retained compiler changes match the earlier reviewed implementation. The approved Abseil release graph from #15414 replaces the obsolete backport; stale Benchmark patch-header edits are removed. Current upstream exports are preserved. The validation-only child a41144e7b adds the exact existing six-file RBE adapter. The bounded parent 9f365c22 ended at its shared deadline with exit 124. Four release build commands succeeded and three test owners passed. The bounded continuation 90ab completes the remaining five test owners; saved Action/Command/log/XML records bind those results. Its license phase did not reach enumeration because the method omitted DOCKER_BUILD=false and attempted unavailable Docker. That is a validation-method failure, not evidence of a source licensing defect. Saved ELF inspection found a PT_INTERP segment in the race shim despite its legacy fully_static_link feature. The independent go-static-attributes@60a4c080d prerequisite replaces that C/C++ feature request with the owning Go static attribute at six callers. Compiler composition 6614 adds a GNU ABI boundary for the embedded ioctl preload library. Its focused validation exposed a real Go embed error: wrapping cc_binary relocated libioctl_hook.so into a subdirectory, so the package-relative embed pattern did not match. The correction is public and tracked at compiler validation head 4cd7db30d; it applies the transition to a filegroup and preserves the C++ output path. Source peer f8ca3c005005 closes that correction and explicitly supersedes the earlier source approval that missed the relative-path contract. Corrected builds at 4cd now pass for both target CPUs in normal and race modes. Independent saved peer 55aa5b34b797 verifies eight static executables, four GNU hooks and each complete hook embedded in the matching sniffer binary. Original parent 671eb968 remains Failed because its post-build oracle mishandled an omitted zero-valued protobuf field. The separate loader parent b89f8b4c passes: the exact GNU hook loads into a hash-bound dynamic /bin/true with eager symbol resolution and exits zero (peer 3fe4607f41f7). This is AMD64 GNU loading only, with no sniffer CLI, ioctl, GPU or ARM64 loader claim. The preceding fc881 partial result remains failed; peer 078b18867e0f verifies its forty successful static executables, four GNU libraries and canonical Fetch/Verify for 203 byte-identical catalog entries. Together these source-specific packets close the intended static-output and loader checks without relabeling either failed parent. Final proposal amendment 87cfd11a48dbc80beffc410423856d1092442916 is public and tracked. Independent composition peer 5f6267508559 and immutable binding 65922e5e0dce verify the GNU filegroup correction while keeping the six-callsite static prerequisite separate. The complete proposal plus that prerequisite and the unchanged RBE adapter equals the tested 4cd tree. The five superseded compiler refs (current, corrected, go126, review and rbe-fresh-master-compiler) are retired after independent source/dependency review. Their exact heads are recoverable from the verified 73,653-byte native Git bundle in the disclosed scratch record (bundle 8a77f359478a; retirement receipt 854cf64e88ef). All three historical validation descendants, the approved RBE adapter and raw evidence remain preserved. No new compiler contributor question is pending.\n\nThe eight source prerequisites are #15414 (released Abseil and compatible gRPC/Protobuf graph), #15337 (declared BPF/LLVM inputs), #15153 (plugin build foundation), #15376 (Benchmark annotations), #15368 (allocator behavior and tests), #15120 (declared Python bootstrap), #15146 (license classifier), and seccomp-cgo-thread-clone@51a4d7127. The last prerequisite is demonstrated by the musl plugin failure and corrected passing Actions execution. Its own contributor question is pending. The explicit one-week #15146 maintainer hold remains on upstream delivery; no live prerequisite PR was changed by this source composition. Previously recorded #15034, #15332, #15036, #15042 and #14984 prerequisites are merged and retained only as history. Go 1.27 is not required by this compiler candidate.\n\nHistorical source and validation record:\n\nThe C++ dependency prerequisite #14984 landed through import #15210 at 07:24:33 UTC on October 3. That edge is cleared. Other recorded source prerequisites remain open, including the explicit one-week #15146 review hold; approved RBE configuration delivery is not yet unblocked.\n\nPublic, clean and tracked at 7a0dc16e5c2822e3aa4a93f981b2131a399dc043. The isolated 30-path compiler commit sits above 12 separately reviewed prerequisites. Its tree 0325a2b723c4ee53b88a7321aefe45ff54f6da53 equals catalog descendant f4e41e90c6984807b033cddf0ea73128190e6c67. At the original source head, source and record peers passed and a contributor request was recorded. That historical request is not a current unanswered question; source reconciliation must establish the refreshed candidate and its remaining prerequisites before a new review request. It registers declared LLVM compilers, preserves current Go 1.26.3/x/net 0.54, configures static Go consumers for musl, forwards analyzer/dependency providers, migrates freestanding inputs, and specializes the retained #15153 plugin foundation to declared LLVM tools and its supported Linux AMD64 musl boundary. The LLVM 23.1.2 parser-source/zlib change and their owning catalog entries are folded into this compiler commit; dcd8ef29951708fc054db8b5630222f979fd861a is preserved predecessor evidence, not an independently ready PR candidate. Its source-only master base lacked @llvm referenced by the release overlay; the BPF precursor supplies that module in the final composition. Existing #15146 classifier and #15120 Python bootstrap remain separate prerequisites. Independent Go 1.27/x/net upgrades are not compiler prerequisites.\n\nValidation is closed with exact source boundaries. Original Go 1.26 parent 48bcb09d-92cd-4b21-9b7f-c3bbf809614f at 51901f9a1084f731d54ac4409f199ed5be656fc6 remains FAILED. Independently reviewed outcome 6004b9b94284 verifies eight normal/race outputs across both target CPUs, four static race ELF/link joins, two uncached deps/Nogo test passes and the canonical 189-entry catalog audit with five retained warnings. Its parser bootstrap and supported musl plugin tool-path failures are preserved. Corrected focused parent 9683afe5-ec68-4d76-b29f-ba485ca34efb at 7f82a4f5ba3e845089c87300ae06a71ff48b9fb0 closed OK in 364.747 seconds (outcome d85568400905, independent root peer): actual TestParser and TestDumpStack each pass with no skips, and both public plugin binaries build. The foreign Make action ran uncached; saved action/input paths bind the declared ld.lld and llvm-objdump. Both tests and that action used pinned AMD64 Ubuntu OCI. The two plugin binaries were not executed; no full CI, plugin-network/vhost runtime, native ARM runtime or Coral-parser pass is claimed. The catalog-only f4 descendant imports exact canonical 222bec9a4891 (47,463 bytes/189 entries); final 7a0 changes commit organization without changing that tree. Catalog enumeration excludes toolchain runtime payloads, so this is not a complete runtime-license audit.\n\nEarlier failed compiler predecessors remain recoverable and are omitted from active work. Source 1087b901f92a02c0f50ee834d841a8ae69dfae1d / parent 8f466163-1541-4a59-9725-a8e4de057c3a remains FAILED after 417.191 seconds (580480fa44e7): SDK and 186-entry catalog passed, six of eight normal AMD roots built, and gRPC/x/net, BPF headers, Benchmark macro and ncalls failures stopped later gates. Source b9effe541574ce1ac8f0d15624733e046efc9116, public tree-identical 1cb132b03918e0963308fb7f24fde59a76ca8574 / parent 3d44639e-10ca-4350-a97a-5bc3ce1f5fc0 remains FAILED after 2389.437 seconds (b141c241ec0a): both normal target-CPU builds, four static race joins and nine uncached AMD test owners passed, while the old LLVM Hexagon parser and plugin GLIBC boundaries failed. Those are actual Go 1.27 results, not transferred Go 1.26 runtime credit. The extra direct GNU-libc archive experiment in 48b remains FAILED and unsupported by the public plugin contract. All original source heads are archived and complete historical validation records remain preserved. This compiler delivery preparation made no source change to the qualification branch; its subsequent primary advances are recorded on the qualification node.",
-      "updatedAt": "2026-10-26T16:12:55.045991+00:00",
+      "summary": "The crosstool replacement is fork branch hermetic-compiler-reconciled-review at 8306976db, not an upstream PR. Prior conditional contributor approval remains, with the open source prerequisites and their own review states shown separately. The standalone LLVM source migration is now split out as llvm-project-qualified@17d37fc9a and is being qualified with GNU/Coral unchanged. Completed historical compiler qualifications below remain tied to their original sources. Benchmark-version prerequisite #15376 has landed; it is no longer a delivery gate.\n\nPreserved earlier source-specific record:\n\nThe reconciled compiler is published at 8306976 with the public @llvm-project source supplier. Its prior conditional contributor approval is retained. Current validation is complete: the scoped 42-output/eight-owner checks, mixed 40-output comparison, full lint, fixed startup comparison and parser completion retain their exact source boundaries. The canonical source audit passes 206 records and 33 owning cases. Earlier failed and interrupted invocations remain failed; no broad replay or performance equivalence is claimed. The six static call-site corrections are now a separate delivery prerequisite, not a hidden qualification-only change. Existing #15153, #15376, #15368, #15146 and #16051 dependencies remain.\n\nPreserved earlier source-specific record:\n\nThe current compiler migration is published at 0a766 on the four remaining prerequisites. The historical 87cfd branch is preserved separately. The latest broad run retained 40 outputs but expired before the plugin outputs and final inspection/tests; it remains FAIL/INCOMPLETE. A single completion run reuses those exact retained outputs and checks the two plugin binaries, all 42 outputs and eight test owners. Procumounter builds and its two named static/page-size tests are separately accepted. The canonical 207-entry-seed audit is prepared but held; the startup comparison has not run. Six restored static attributes are qualification-only.\n\nEarlier source-specific record:\n\nCurrent compiler source 1a8e5ab72a composes the four remaining prerequisites above master b4bb99d. Independent source review verifies the 29 preserved compiler payloads and removes the obsolete Coral link-flags patch with its supplier. Current Go 1.27.3 and dependency inputs require fresh focused validation; prior compiler outcomes remain historical. The original BPF implementation and Python, Abseil and cgo support have landed. The Go static-attribute change was rolled back upstream, so it is explicitly restored only in the qualification child until its delivery disposition is resolved. Remaining source prerequisites are #15153, #15376, #15368 and #15146; BCR cleanup #16194 is independent. RBE configuration and nvproxy delivery still require the compiler proposal.\n\nEarlier implementation and validation records:\n\nThe refreshed compiler candidate is public at 87cfd11a4 on prerequisite composition 97487b52b and master e1bc74024. It amends the preceding dc22 proposal with the validated GNU preload boundary. Independent source reconciliation (peer 748c346ae987) confirms all 28 retained compiler changes match the earlier reviewed implementation. The approved Abseil release graph from #15414 replaces the obsolete backport; stale Benchmark patch-header edits are removed. Current upstream exports are preserved. The validation-only child a41144e7b adds the exact existing six-file RBE adapter. The bounded parent 9f365c22 ended at its shared deadline with exit 124. Four release build commands succeeded and three test owners passed. The bounded continuation 90ab completes the remaining five test owners; saved Action/Command/log/XML records bind those results. Its license phase did not reach enumeration because the method omitted DOCKER_BUILD=false and attempted unavailable Docker. That is a validation-method failure, not evidence of a source licensing defect. Saved ELF inspection found a PT_INTERP segment in the race shim despite its legacy fully_static_link feature. The independent go-static-attributes@60a4c080d prerequisite replaces that C/C++ feature request with the owning Go static attribute at six callers. Compiler composition 6614 adds a GNU ABI boundary for the embedded ioctl preload library. Its focused validation exposed a real Go embed error: wrapping cc_binary relocated libioctl_hook.so into a subdirectory, so the package-relative embed pattern did not match. The correction is public and tracked at compiler validation head 4cd7db30d; it applies the transition to a filegroup and preserves the C++ output path. Source peer f8ca3c005005 closes that correction and explicitly supersedes the earlier source approval that missed the relative-path contract. Corrected builds at 4cd now pass for both target CPUs in normal and race modes. Independent saved peer 55aa5b34b797 verifies eight static executables, four GNU hooks and each complete hook embedded in the matching sniffer binary. Original parent 671eb968 remains Failed because its post-build oracle mishandled an omitted zero-valued protobuf field. The separate loader parent b89f8b4c passes: the exact GNU hook loads into a hash-bound dynamic /bin/true with eager symbol resolution and exits zero (peer 3fe4607f41f7). This is AMD64 GNU loading only, with no sniffer CLI, ioctl, GPU or ARM64 loader claim. The preceding fc881 partial result remains failed; peer 078b18867e0f verifies its forty successful static executables, four GNU libraries and canonical Fetch/Verify for 203 byte-identical catalog entries. Together these source-specific packets close the intended static-output and loader checks without relabeling either failed parent. Final proposal amendment 87cfd11a48dbc80beffc410423856d1092442916 is public and tracked. Independent composition peer 5f6267508559 and immutable binding 65922e5e0dce verify the GNU filegroup correction while keeping the six-callsite static prerequisite separate. The complete proposal plus that prerequisite and the unchanged RBE adapter equals the tested 4cd tree. The five superseded compiler refs (current, corrected, go126, review and rbe-fresh-master-compiler) are retired after independent source/dependency review. Their exact heads are recoverable from the verified 73,653-byte native Git bundle in the disclosed scratch record (bundle 8a77f359478a; retirement receipt 854cf64e88ef). All three historical validation descendants, the approved RBE adapter and raw evidence remain preserved. No new compiler contributor question is pending.\n\nThe eight source prerequisites are #15414 (released Abseil and compatible gRPC/Protobuf graph), #15337 (declared BPF/LLVM inputs), #15153 (plugin build foundation), #15376 (Benchmark annotations), #15368 (allocator behavior and tests), #15120 (declared Python bootstrap), #15146 (license classifier), and seccomp-cgo-thread-clone@51a4d7127. The last prerequisite is demonstrated by the musl plugin failure and corrected passing Actions execution. Its own contributor question is pending. The explicit one-week #15146 maintainer hold remains on upstream delivery; no live prerequisite PR was changed by this source composition. Previously recorded #15034, #15332, #15036, #15042 and #14984 prerequisites are merged and retained only as history. Go 1.27 is not required by this compiler candidate.\n\nHistorical source and validation record:\n\nThe C++ dependency prerequisite #14984 landed through import #15210 at 07:24:33 UTC on October 3. That edge is cleared. Other recorded source prerequisites remain open, including the explicit one-week #15146 review hold; approved RBE configuration delivery is not yet unblocked.\n\nPublic, clean and tracked at 7a0dc16e5c2822e3aa4a93f981b2131a399dc043. The isolated 30-path compiler commit sits above 12 separately reviewed prerequisites. Its tree 0325a2b723c4ee53b88a7321aefe45ff54f6da53 equals catalog descendant f4e41e90c6984807b033cddf0ea73128190e6c67. At the original source head, source and record peers passed and a contributor request was recorded. That historical request is not a current unanswered question; source reconciliation must establish the refreshed candidate and its remaining prerequisites before a new review request. It registers declared LLVM compilers, preserves current Go 1.26.3/x/net 0.54, configures static Go consumers for musl, forwards analyzer/dependency providers, migrates freestanding inputs, and specializes the retained #15153 plugin foundation to declared LLVM tools and its supported Linux AMD64 musl boundary. The LLVM 23.1.2 parser-source/zlib change and their owning catalog entries are folded into this compiler commit; dcd8ef29951708fc054db8b5630222f979fd861a is preserved predecessor evidence, not an independently ready PR candidate. Its source-only master base lacked @llvm referenced by the release overlay; the BPF precursor supplies that module in the final composition. Existing #15146 classifier and #15120 Python bootstrap remain separate prerequisites. Independent Go 1.27/x/net upgrades are not compiler prerequisites.\n\nValidation is closed with exact source boundaries. Original Go 1.26 parent 48bcb09d-92cd-4b21-9b7f-c3bbf809614f at 51901f9a1084f731d54ac4409f199ed5be656fc6 remains FAILED. Independently reviewed outcome 6004b9b94284 verifies eight normal/race outputs across both target CPUs, four static race ELF/link joins, two uncached deps/Nogo test passes and the canonical 189-entry catalog audit with five retained warnings. Its parser bootstrap and supported musl plugin tool-path failures are preserved. Corrected focused parent 9683afe5-ec68-4d76-b29f-ba485ca34efb at 7f82a4f5ba3e845089c87300ae06a71ff48b9fb0 closed OK in 364.747 seconds (outcome d85568400905, independent root peer): actual TestParser and TestDumpStack each pass with no skips, and both public plugin binaries build. The foreign Make action ran uncached; saved action/input paths bind the declared ld.lld and llvm-objdump. Both tests and that action used pinned AMD64 Ubuntu OCI. The two plugin binaries were not executed; no full CI, plugin-network/vhost runtime, native ARM runtime or Coral-parser pass is claimed. The catalog-only f4 descendant imports exact canonical 222bec9a4891 (47,463 bytes/189 entries); final 7a0 changes commit organization without changing that tree. Catalog enumeration excludes toolchain runtime payloads, so this is not a complete runtime-license audit.\n\nEarlier failed compiler predecessors remain recoverable and are omitted from active work. Source 1087b901f92a02c0f50ee834d841a8ae69dfae1d / parent 8f466163-1541-4a59-9725-a8e4de057c3a remains FAILED after 417.191 seconds (580480fa44e7): SDK and 186-entry catalog passed, six of eight normal AMD roots built, and gRPC/x/net, BPF headers, Benchmark macro and ncalls failures stopped later gates. Source b9effe541574ce1ac8f0d15624733e046efc9116, public tree-identical 1cb132b03918e0963308fb7f24fde59a76ca8574 / parent 3d44639e-10ca-4350-a97a-5bc3ce1f5fc0 remains FAILED after 2389.437 seconds (b141c241ec0a): both normal target-CPU builds, four static race joins and nine uncached AMD test owners passed, while the old LLVM Hexagon parser and plugin GLIBC boundaries failed. Those are actual Go 1.27 results, not transferred Go 1.26 runtime credit. The extra direct GNU-libc archive experiment in 48b remains FAILED and unsupported by the public plugin contract. All original source heads are archived and complete historical validation records remain preserved. This compiler delivery preparation made no source change to the qualification branch; its subsequent primary advances are recorded on the qualification node.",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
       "head": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
       "followup": {
         "owner": "hostinet_delivery",
@@ -4199,7 +4203,7 @@
       "evidence": [
         {
           "label": "Standalone source migration, independent of compiler selection",
-          "url": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8"
+          "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
         }
       ]
     },
@@ -14653,8 +14657,8 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15940",
       "status": "open",
-      "updatedAt": "2026-10-26T16:09:24.625274+00:00",
-      "summary": "The related parser-target reduction remains an open gVisor PR at 786caf36a with open Copybara import #16324. Preserve Etienne\u2019s approval on prior head 1e4bf6e0d and the current provider review signals; the standalone source migration does not retire or supersede this live PR. Continue its existing import/review path.\n\nPreserved earlier source-specific record:\n\nEtienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nThe requested post-#16046 rebase is published at 1e4bf6e0d617 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe independent MODULE.bazel change selects AArch64 and X86 in the existing LLVM supplier without changing dependency versions or license records. All four focused parser/ABI owners pass at integration c5ec864087: 52 cases pass, with 18 existing unavailable-source skips and no failures or missing results. Validation used the integrated LLVM 23.1.2 supplier; upstream retains the older pin with the same source-verified target-selection API. Published as ready PR #15940 after contributor approval. The public buildifier requested multiline list formatting; that formatting-only amendment is published at 297d9b6582 with unchanged executable behavior and description. Exact head, master base and single-commit scope are verified. No contributor decision remains. This does not replace the separate compiler migration.",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "summary": "The open backend-reduction PR and its import #16324 remain active. The separately linked supplier proposal fc158be46 now demonstrates a same-release reduction of 479 configured LLVM C++ compile actions per CPU. It is not yet delivered and does not supersede this PR; preserve the existing approval history and current provider review signals.\n\nPreserved earlier source-specific record:\n\nThe related parser-target reduction remains an open gVisor PR at 786caf36a with open Copybara import #16324. Preserve Etienne\u2019s approval on prior head 1e4bf6e0d and the current provider review signals; the standalone source migration does not retire or supersede this live PR. Continue its existing import/review path.\n\nPreserved earlier source-specific record:\n\nEtienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nThe requested post-#16046 rebase is published at 1e4bf6e0d617 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe independent MODULE.bazel change selects AArch64 and X86 in the existing LLVM supplier without changing dependency versions or license records. All four focused parser/ABI owners pass at integration c5ec864087: 52 cases pass, with 18 existing unavailable-source skips and no failures or missing results. Validation used the integrated LLVM 23.1.2 supplier; upstream retains the older pin with the same source-verified target-selection API. Published as ready PR #15940 after contributor approval. The public buildifier requested multiline list formatting; that formatting-only amendment is published at 297d9b6582 with unchanged executable behavior and description. Exact head, master base and single-commit scope are verified. No contributor decision remains. This does not replace the separate compiler migration.",
       "followup": {
         "owner": "root",
         "disposition": "Open source/import; prior approval retained as history",
@@ -14715,6 +14719,10 @@
       },
       "number": 15940,
       "evidence": [
+        {
+          "label": "Separate supplier backend proposal",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...fc158be46c4408324e1924ae2489f9c01565e775"
+        },
         {
           "label": "Public buildifier formatting failure",
           "url": "https://github.com/google/gvisor/actions/runs/39085320256/job/117550517608"
@@ -21270,8 +21278,8 @@
       "title": "Package the NVIDIA parser builtin headers",
       "url": "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
       "status": "Contributor approved; waiting for public LLVM supplier",
-      "summary": "The approved parser-resource proposal 52feb7b78 waits specifically for the public LLVM source supplier, now isolated in llvm-project-source-catalog@6aa2df662. Its package consumes @llvm-project//clang:builtin_headers_gen, so it does not require switching the selected C/C++ compiler. Prior parser/resource validation remains source-specific; the new supplier remains in qualification.\n\nPreserved earlier source-specific record:\n\nThe contributor explicitly approved 52feb7b78. Delivery waits on the reconciled compiler public @llvm-project repository/header target; prior completed parser/resource evidence remains accepted.\n\nEarlier source-specific record:\n\nThe detached parser receives its declared builtin headers and complete Clang notice through an explicit resource directory, with ambient standard-header lookup disabled. Original partial265 and the one-owner completion5c644 jointly pass five outputs, ten reached headers, 300 ZIP members, real 570.195.03 parser/parity cases and all three analyzer owners. The full final source tree equals the qualified product. Its actual API prerequisite is the public @llvm-project repository/header target supplied by compiler830; static and UAPI parents are review-stack ordering, not resource APIs. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-26T16:12:55.045991+00:00",
+      "summary": "The approved parser-resource proposal 52feb7b78 waits specifically for the public LLVM source supplier, now isolated in llvm-project-qualified@17d37fc9a. Its package consumes @llvm-project//clang:builtin_headers_gen, so it does not require switching the selected C/C++ compiler. Prior parser/resource validation remains source-specific; the source migration\u2019s GNU parser and catalog checks have passed, while supplier backend delivery remains separate.\n\nPreserved earlier source-specific record:\n\nThe contributor explicitly approved 52feb7b78. Delivery waits on the reconciled compiler public @llvm-project repository/header target; prior completed parser/resource evidence remains accepted.\n\nEarlier source-specific record:\n\nThe detached parser receives its declared builtin headers and complete Clang notice through an explicit resource directory, with ambient standard-header lookup disabled. Original partial265 and the one-owner completion5c644 jointly pass five outputs, ten reached headers, 300 ZIP members, real 570.195.03 parser/parity cases and all three analyzer owners. The full final source tree equals the qualified product. Its actual API prerequisite is the public @llvm-project repository/header target supplied by compiler830; static and UAPI parents are review-stack ordering, not resource APIs. Root has requested contributor review of this new scope.",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
@@ -21285,7 +21293,7 @@
       "evidence": [
         {
           "label": "Standalone public LLVM source supplier",
-          "url": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8"
+          "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
         }
       ]
     },
@@ -24466,27 +24474,48 @@
       "id": "branch:hermetic-llvm-project",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "llvm-project-source-catalog",
-      "head": "6aa2df662c64e3199b918197cf5d1684570cc6f8",
+      "ref": "llvm-project-qualified",
+      "head": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "title": "Build the NVIDIA parser against hermetic-llvm\u2019s LLVM source",
-      "url": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8",
+      "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T16:12:55.045991+00:00",
-      "summary": "Standalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nThe separate supplier proposal fc158be46 restores root backend selection. On the same hermetic-llvm v0.8.24 / LLVM 23.1.2 release, it removes 479 configured LLVM C++ compile actions per CPU. Those are graph counts, not measured build-time savings. Preserve open #15940 and its import until the replacement is delivered; the supplier proposal and the compiler switch remain separately reviewable.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
       "followup": {
         "owner": "root",
-        "sourceHead": "6aa2df662c64e3199b918197cf5d1684570cc6f8",
-        "observedAt": "2026-10-26T16:12:55.045991+00:00",
-        "disposition": "In qualification; corrected archive catalog and backend-scope comparison pending",
-        "nextAction": "Authenticate the source-specific GNU and license results and compare backend scope on the same LLVM release before presenting a contributor proposal. #15940 and its open import remain active; do not retire them or request contributor approval for this candidate yet.",
+        "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
+        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "disposition": "Source and GNU parser qualification passed; supplier delivery remains separate",
+        "nextAction": "Complete the independently reviewed supplier backend proposal and prerequisite delivery before presenting the final source migration. Keep #15940 active and the compiler switch separate.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8",
-          "https://github.com/hermeticbuild/llvm-redist/releases/tag/llvmorg-23.1.2-r1",
-          "https://github.com/google/gvisor/pull/15940"
+          "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
+          "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
+          "https://app.buildbuddy.io/invocation/2476c02c-1d7a-4ecd-9ce5-9ed8c5635e55",
+          "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9"
         ]
       },
       "evidence": [
+        {
+          "label": "Current source migration",
+          "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+        },
+        {
+          "label": "Canonical Fetch and Verify: 201 records",
+          "url": "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f"
+        },
+        {
+          "label": "GNU parser parity: AMD64",
+          "url": "https://app.buildbuddy.io/invocation/2476c02c-1d7a-4ecd-9ce5-9ed8c5635e55"
+        },
+        {
+          "label": "GNU parser parity: ARM64",
+          "url": "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9"
+        },
+        {
+          "label": "Same source patch on corrected prerequisite stack",
+          "url": "https://github.com/tamird/gvisor/compare/6aa2df662c64e3199b918197cf5d1684570cc6f8..17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+        },
         {
           "label": "Current fork proposal with corrected archive metadata",
           "url": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8"
@@ -24510,6 +24539,196 @@
         {
           "label": "Original catalog qualification with archive-pin mismatch",
           "url": "https://app.buildbuddy.io/invocation/e4a15677-7002-4234-b992-d8e740917831"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "6aa2df662c64e3199b918197cf5d1684570cc6f8"
+        },
+        "after": {
+          "head": "17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+        }
+      }
+    },
+    {
+      "id": "branch:licensecheck-go-digest-notices",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "licensecheck-go-digest-notices",
+      "head": "ea27b4806607c7640e2c1f43a5996f80374a78af",
+      "title": "Record the go-digest documentation license",
+      "url": "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "summary": "The standalone fork records Apache-2.0 source and CC-BY-SA-4.0 documentation for go-digest v1.0.0, including the narrowly scoped documentation exception. It follows #15146 and precedes the LLVM source audit. The combined canonical Fetch/Verify passed 201 records. This policy/catalog change remains separately visible; that passing audit is not contributor approval or upstream delivery.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ea27b4806607c7640e2c1f43a5996f80374a78af",
+        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "disposition": "Agent work; no contributor decision pending",
+        "nextAction": "Review and deliver this independent notice/catalog change through the existing license workstream; retain its exact scope and do not infer approval from validation.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Standalone notice and catalog change",
+          "url": "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af"
+        },
+        {
+          "label": "Complete standalone change",
+          "url": "https://github.com/tamird/gvisor/compare/6f7d2db61bddacbed530e63aee95b82e45a1da30...ea27b4806607c7640e2c1f43a5996f80374a78af"
+        },
+        {
+          "label": "Combined canonical Fetch/Verify",
+          "url": "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f"
+        }
+      ]
+    },
+    {
+      "id": "branch:hermetic-llvm-root-backends",
+      "type": "branch",
+      "repo": "tamird/hermetic-llvm",
+      "ref": "qualify/root-llvm-default-targets-main",
+      "head": "fc158be46c4408324e1924ae2489f9c01565e775",
+      "title": "Honor root module LLVM backend selection",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/fc158be46c4408324e1924ae2489f9c01565e775",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-26T16:55:32.685515+00:00",
+      "summary": "The supplier proposal restores root-module backend selection and clarifies which modules supply default backends. It is a fork proposal on upstream main, with no upstream PR or contact. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until this supplier replacement is delivered. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "fc158be46c4408324e1924ae2489f9c01565e775",
+        "observedAt": "2026-10-26T16:55:32.685515+00:00",
+        "disposition": "Graph and product qualification passed; supplier proposal remains agent-owned",
+        "nextAction": "Prepare the final supplier proposal for the normal contributor decision before upstream submission; preserve #15940 until delivery.",
+        "evidence": [
+          "https://github.com/tamird/hermetic-llvm/commit/fc158be46c4408324e1924ae2489f9c01565e775"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Complete proposal on supplier main",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...fc158be46c4408324e1924ae2489f9c01565e775"
+        },
+        {
+          "label": "Same-release tested backport",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/39e71f9391895169b05ccd62cbb1956ae5322ff3...b6ed0f573b10959a979f55a887865710adafa162"
+        },
+        {
+          "label": "AMD64 configured action comparison",
+          "url": "https://app.buildbuddy.io/invocation/07f59b32-faa7-4a48-835c-8f4d6ef17355"
+        },
+        {
+          "label": "ARM64 configured action comparison",
+          "url": "https://app.buildbuddy.io/invocation/ca507d66-8bd1-422b-a5f7-7360800d9f31"
+        },
+        {
+          "label": "AMD64 candidate parser parity and output identity",
+          "url": "https://app.buildbuddy.io/invocation/6522cb0c-3946-4e94-a493-07ec257678ea"
+        },
+        {
+          "label": "Native ARM64 candidate parser parity and output identity",
+          "url": "https://app.buildbuddy.io/invocation/f1578511-0c75-4276-bde7-a9fa27257c85"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "base": "39e71f9391895169b05ccd62cbb1956ae5322ff3",
+          "head": "b6ed0f573b10959a979f55a887865710adafa162"
+        },
+        "after": {
+          "base": "3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
+          "head": "fc158be46c4408324e1924ae2489f9c01565e775"
+        }
+      }
+    },
+    {
+      "id": "branch:plugin-gnu-source",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "qualification/plugin-gnu-source",
+      "head": "414e26abefc363780f489ead2625df02fa5541d2",
+      "title": "Simplify the GNU plugin build inputs",
+      "url": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "summary": "Preliminary GNU-only refinement of open #15153. DPDK patches shrink from 380 to 31 lines and total patches from 616 to 132 lines. The published source PR remains a3818d179; this fork has not amended it. Original GNU builds must pass before the refinement is ready for contributor review. Keep the later LLVM unwind experiment separate.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "414e26abefc363780f489ead2625df02fa5541d2",
+        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "disposition": "Agent work; no contributor decision pending",
+        "nextAction": "Finish the original GNU build validation and any narrowly scoped cleanup, then compare the final candidate with published #15153 before presenting a decision.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Preliminary GNU-only candidate",
+          "url": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
+        },
+        {
+          "label": "Direct amendment against the published source",
+          "url": "https://github.com/tamird/gvisor/compare/a3818d1793b919df1feeeb1c028cc40158754a7e..414e26abefc363780f489ead2625df02fa5541d2"
+        },
+        {
+          "label": "Existing upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15153"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "a3818d1793b919df1feeeb1c028cc40158754a7e"
+        },
+        "after": {
+          "head": "414e26abefc363780f489ead2625df02fa5541d2"
+        }
+      }
+    },
+    {
+      "id": "branch:plugin-toolchain-unwind",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "qualification/plugin-toolchain-unwind",
+      "head": "59ed8f8787f37114a56292faf8a742aca8484d5d",
+      "title": "Use the compiler unwinder for TLDK on musl",
+      "url": "https://github.com/tamird/gvisor/commit/59ed8f8787f37114a56292faf8a742aca8484d5d",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "summary": "Experimental LLVM follow-up 59ed8f878 uses the compiler unwinder for TLDK stack dumps on musl without libbacktrace. The focused cgo trace and static-program runs passed. This is a direct follow-up to 77d1072c5, separate from the preliminary GNU-only #15153 refinement. Cleanup and final source review remain; there is no upstream publication or contributor decision.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "59ed8f8787f37114a56292faf8a742aca8484d5d",
+        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "disposition": "Agent work; no contributor decision pending",
+        "nextAction": "Clean up and review the experimental change before proposing it; retain the focused cgo/static evidence without treating it as original-GNU validation.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/59ed8f8787f37114a56292faf8a742aca8484d5d"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Experimental follow-up",
+          "url": "https://github.com/tamird/gvisor/commit/59ed8f8787f37114a56292faf8a742aca8484d5d"
+        },
+        {
+          "label": "Exact follow-up delta",
+          "url": "https://github.com/tamird/gvisor/compare/77d1072c593f283ed590d17a51e17cab320abdbf...59ed8f8787f37114a56292faf8a742aca8484d5d"
+        },
+        {
+          "label": "Cgo trace without libbacktrace",
+          "url": "https://app.buildbuddy.io/invocation/e4b5f62c-239e-4d70-a405-a43e9ca4ef93"
+        },
+        {
+          "label": "Static programs without libbacktrace",
+          "url": "https://app.buildbuddy.io/invocation/ad40358e-a519-421f-a123-23a608202e06"
         }
       ]
     }
@@ -26729,7 +26948,7 @@
       "type": "depends_on",
       "reason": "The builtin-header package consumes @llvm-project//clang:builtin_headers_gen from the standalone public source supplier. It does not require switching the selected C/C++ compiler.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8",
+        "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
         "https://github.com/tamird/gvisor/blob/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c/tools/nvidia_driver_differ/parser/BUILD"
       ]
     },
@@ -27315,14 +27534,42 @@
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
       "reason": "The standalone LLVM source catalog requires the existing complete-license classifier.",
-      "evidence": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8"
+      "evidence": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
     },
     {
       "from": "pr:16249",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
       "reason": "The standalone migration requires canonical enumeration of the public @llvm-project source repository.",
-      "evidence": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8"
+      "evidence": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+    },
+    {
+      "from": "pr:15146",
+      "to": "branch:licensecheck-go-digest-notices",
+      "type": "depends_on",
+      "reason": "The independent documentation notice/catalog change follows the complete-license classifier.",
+      "evidence": "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af"
+    },
+    {
+      "from": "branch:licensecheck-go-digest-notices",
+      "to": "branch:hermetic-llvm-project",
+      "type": "depends_on",
+      "reason": "The source migration audit includes the separately visible go-digest documentation-license record.",
+      "evidence": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+    },
+    {
+      "from": "branch:hermetic-llvm-root-backends",
+      "to": "branch:hermetic-llvm-project",
+      "type": "depends_on",
+      "reason": "Preserve root backend selection when delivering the standalone source migration; the supplier proposal remains separate from the compiler switch.",
+      "evidence": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...fc158be46c4408324e1924ae2489f9c01565e775"
+    },
+    {
+      "from": "pr:15153",
+      "to": "branch:plugin-gnu-source",
+      "type": "includes",
+      "reason": "This candidate refines the existing open plugin-build proposal; it has not replaced the public head.",
+      "evidence": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
     }
   ],
   "investigations": [
