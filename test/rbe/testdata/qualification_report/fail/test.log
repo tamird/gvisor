@@ -1,0 +1,150 @@
+t.txt"
+D1016 17:42:44.907075     336 donation.go:31] Donating FD 5: "sandbox IO FD"
+D1016 17:42:44.907077     336 donation.go:31] Donating FD 6: "sandbox IO FD"
+D1016 17:42:44.907078     336 donation.go:31] Donating FD 7: "|0"
+D1016 17:42:44.907080     336 donation.go:31] Donating FD 8: "|1"
+D1016 17:42:44.907082     336 donation.go:31] Donating FD 9: "pin ring"
+D1016 17:42:44.907083     336 donation.go:31] Donating FD 10: "control_server_socket"
+D1016 17:42:44.907086     336 donation.go:31] Donating FD 11: "/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/bundle3974273358/config.json"
+D1016 17:42:44.907089     336 donation.go:31] Donating FD 12: "/dev/stdin"
+D1016 17:42:44.907091     336 donation.go:31] Donating FD 13: "/dev/stdout"
+D1016 17:42:44.907093     336 donation.go:31] Donating FD 14: "/dev/stdout"
+D1016 17:42:44.907095     336 sandbox.go:1515] Starting sandbox: /workspace/bazel-out/k8-fastbuild-ST-cb3b6d32351b/bin/runsc/container/container_test_systrap_cgroup_v2_amd64.exe.runfiles/_main/release/gvisor-bin/gvisor-sentry-prewarmer [runsc-sandbox --root=/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/containers3458899789 --debug-log=/workspace/bazel-out/k8-fastbuild-ST-cb3b6d32351b/testlogs/runsc/container/container_test_systrap_cgroup_v2_amd64/shard_8_of_8/test.outputs/runsc.log.TestTraceLifecycle.%TIMESTAMP%.%COMMAND%.txt --log-packets=true --debug=true --clock-source=calibrated --network=none --strace=true --watchdog-action=panic --TESTONLY-unsafe-nonroot=true --debug-log-fd=4 boot --bundle=/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/bundle3974273358 --gofer-mount-confs=lisafs:none,lisafs:none --apply-caps=true --total-host-memory 4326027264 --total-memory 4326027264 --io-fds=5 --io-fds=6 --dev-io-fd=-1 --mounts-fd=7 --start-sync-fd=8 --pin-ring-fd=9 --controller-fd=10 --spec-fd=11 --stdio-fds=12 --stdio-fds=13 --stdio-fds=14 test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4]
+D1016 17:42:44.907108     336 sandbox.go:1516] SysProcAttr: &{Chroot: Credential:<nil> Ptrace:false Setsid:true Setpgid:false Setctty:false Noctty:false Ctty:0 Foreground:false Pgid:0 Pdeathsig:signal 0 Cloneflags:0 Unshareflags:0 UidMappings:[] GidMappings:[] GidMappingsEnableSetgroups:false AmbientCaps:[] UseCgroupFD:false CgroupFD:0 PidFD:<nil>}
+I1016 17:42:44.907857     336 sandbox.go:1544] Sandbox started, PID: 2402
+I1016 17:42:44.907908     336 gvisorbinaries.go:347] sidecar "runsc-fd-parking": executing /workspace/bazel-out/k8-fastbuild-ST-cb3b6d32351b/bin/runsc/container/container_test_systrap_cgroup_v2_amd64.exe.runfiles/_main/release/gvisor-bin/runsc-fd-parking ([])
+I1016 17:42:44.908014     336 sandbox.go:1598] FD parking sidecar started, PID: 2405
+D1016 17:42:44.912147     336 urpc.go:458] urpc: unregistering client with FD 14
+D1016 17:42:44.937277     336 container.go:1390] Save container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:44.937429     336 container.go:503] Start container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:44.937439     336 hostsettings.go:189] Checking host settings
+D1016 17:42:44.937445     336 hostsettings.go:317] Checking host setting: /sys/kernel/mm/transparent_hugepage/shmem_enabled
+D1016 17:42:44.937488     336 hostsettings.go:155] Host settings: Current value of "/sys/kernel/mm/transparent_hugepage/shmem_enabled": "always within_size advise [never] deny force"
+D1016 17:42:44.937510     336 hostsettings.go:317] Checking host setting: /sys/kernel/mm/transparent_hugepage/defrag
+D1016 17:42:44.937520     336 hostsettings.go:155] Host settings: Current value of "/sys/kernel/mm/transparent_hugepage/defrag": "always defer defer+madvise [madvise] never"
+D1016 17:42:44.937526     336 hostsettings.go:317] Checking host setting: /proc/sys/vm/max_map_count
+D1016 17:42:44.937539     336 hostsettings.go:155] Host settings: Current value of "/proc/sys/vm/max_map_count": "65530"
+D1016 17:42:44.937542     336 hostsettings.go:317] Checking host setting: /proc/sys/user/max_user_namespaces
+D1016 17:42:44.937552     336 hostsettings.go:155] Host settings: Current value of "/proc/sys/user/max_user_namespaces": "16330"
+I1016 17:42:44.937554     336 hostsettings.go:326] Host setting "/proc/sys/user/max_user_namespaces" is optimal
+D1016 17:42:44.937557     336 hostsettings.go:317] Checking host setting: /proc/sys/kernel/unprivileged_userns_clone
+I1016 17:42:44.937567     336 hostsettings.go:326] Host setting "/proc/sys/kernel/unprivileged_userns_clone" is optimal
+D1016 17:42:44.937570     336 hostsettings.go:317] Checking host setting: /proc/sys/kernel/unprivileged_userns_apparmor_policy
+I1016 17:42:44.937574     336 hostsettings.go:326] Host setting "/proc/sys/kernel/unprivileged_userns_apparmor_policy" is optimal
+W1016 17:42:44.937578     336 hostsettings.go:46] Host setting "/sys/kernel/mm/transparent_hugepage/shmem_enabled" (currently: "always within_size advise [never] deny force") is not optimal (turning on transparent hugepages support in shmem increases memory allocation performance); it is recommended to change it to "advise"
+W1016 17:42:44.937584     336 hostsettings.go:46] Host setting "/sys/kernel/mm/transparent_hugepage/defrag" (currently: "always defer defer+madvise [madvise] never") is not optimal (disabling direct compaction improves page fault latency when hugepages are not immediately available); it is recommended to change it to "never"
+W1016 17:42:44.937587     336 hostsettings.go:46] Host setting "/proc/sys/vm/max_map_count" (currently: "65530") is not optimal (increasing max_map_count decreases the likelihood of host VMA exhaustion); it is recommended to change it to "4194304"
+D1016 17:42:44.937590     336 sandbox.go:481] Start root sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4", PID: 2402
+D1016 17:42:44.937595     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+I1016 17:42:44.937649     336 network.go:56] Setting up network
+I1016 17:42:44.937691     336 network.go:60] Network is disabled, create loopback interface only
+D1016 17:42:44.937727     336 urpc.go:627] urpc: successfully marshalled 569 bytes.
+D1016 17:42:44.938415     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.938570     336 urpc.go:627] urpc: successfully marshalled 95 bytes.
+D1016 17:42:44.961204     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.961300     336 container.go:1390] Save container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:44.962177     336 state_file.go:76] Load container, rootDir: "/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/containers3458899789", id: {SandboxID:test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4 ContainerID:test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4}, opts: {Exact:true SkipCheck:true TryLock:false RootContainer:false}
+D1016 17:42:44.962415     336 sandbox.go:821] Listing trace sessions in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.962450     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.962581     336 urpc.go:627] urpc: successfully marshalled 58 bytes.
+D1016 17:42:44.964532     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.965218     336 sandbox.go:785] Creating trace session in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.965253     336 remote.go:81] Remote sink connecting to "/tmp/remote2004063005/remote.sock"
+D1016 17:42:44.966628     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.967006     336 urpc.go:627] urpc: successfully marshalled 285 bytes.
+D1016 17:42:44.968059     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.968118     336 container.go:683] Execute in container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4, args: /bin/true
+D1016 17:42:44.968136     336 sandbox.go:847] Executing new process in container "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4" in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.968146     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.968261     336 urpc.go:627] urpc: successfully marshalled 452 bytes.
+D1016 17:42:44.971972     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.972025     336 container.go:776] Wait on process 2 in container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:44.972046     336 sandbox.go:1733] Waiting for PID 2 in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.972054     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.972124     336 urpc.go:627] urpc: successfully marshalled 109 bytes.
+D1016 17:42:44.975821     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.976893     336 sandbox.go:821] Listing trace sessions in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.976916     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.976965     336 urpc.go:627] urpc: successfully marshalled 58 bytes.
+D1016 17:42:44.977915     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.977958     336 sandbox.go:812] Deleting trace session "Default" in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.977970     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.978011     336 urpc.go:627] urpc: successfully marshalled 64 bytes.
+D1016 17:42:44.978481     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.978544     336 sandbox.go:821] Listing trace sessions in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.978554     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.978588     336 urpc.go:627] urpc: successfully marshalled 58 bytes.
+D1016 17:42:44.979912     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.979957     336 container.go:683] Execute in container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4, args: /bin/true
+D1016 17:42:44.979974     336 sandbox.go:847] Executing new process in container "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4" in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.979982     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.980025     336 urpc.go:627] urpc: successfully marshalled 452 bytes.
+D1016 17:42:44.981988     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:44.982029     336 container.go:776] Wait on process 3 in container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:44.982044     336 sandbox.go:1733] Waiting for PID 3 in sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.982050     336 sandbox.go:929] Connecting to sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:44.982095     336 urpc.go:627] urpc: successfully marshalled 109 bytes.
+D1016 17:42:44.991740     336 urpc.go:670] urpc: unmarshal success.
+D1016 17:42:45.992485     336 container.go:1030] Destroy container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:45.992598     336 container.go:1404] Destroying container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:45.992610     336 sandbox.go:2692] Destroying root container by destroying sandbox, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4
+D1016 17:42:45.992618     336 sandbox.go:1783] Destroying sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:45.992690     336 sandbox.go:1793] Killing sandbox "test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4"
+D1016 17:42:45.994582     336 container.go:1418] Killing gofer for container, cid: test-container-KPNPBXICFRDOJBT6CUEEGOBHR4SY6IP4, PID: 2395
+--- PASS: TestTraceLifecycle (1.09s)
+=== NAME  
+FAIL
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found
+external/bazel_tools/tools/test/test-setup.sh: line 411: file: command not found

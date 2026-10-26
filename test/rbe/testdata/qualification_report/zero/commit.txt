@@ -1,0 +1,20 @@
+tree f35e58ed6b9d1ddad8d03733fabf12eff18265ec
+parent 4756ad18a60bd92c3314c04e4631a82ac8be3178
+author Tamir Duberstein <tamird@gmail.com> 1792176955 +0200
+committer Tamir Duberstein <tamird@gmail.com> 1792176955 +0200
+gpgsig -----BEGIN SSH SIGNATURE-----
+ U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgtYz36g7iDMSkY5K7Ab51ksGX7h
+ JgsMRt+XVZTrIzMVIAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5
+ AAAAQMumEMtM6EevmQJjZAXbrehZ0KL9A7J2qb3DUy6yUkuqHH6FT3pVDv2ShtaZDrw8EX
+ DL1swgMx/bq8z9i68AfgQ=
+ -----END SSH SIGNATURE-----
+
+Fix declared EROFS tool extraction
+
+The Noble tool archive contained both a populated /bin directory and a
+later base-files symlink at the same path. Extract only /usr, which owns
+the tools, loader, libraries, and licenses, and use those paths directly.
+
+Allow filtered cases through the existing container-v1 lane so focused
+checks retain its root coordinator and KVM guest setup. The explicit test
+lane did not provide the custom guest launcher access to /dev/kvm.

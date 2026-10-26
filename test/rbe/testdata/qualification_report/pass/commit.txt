@@ -1,0 +1,15 @@
+tree dfbb9f9bba08ce341a6ac6fc612dbca01fef48f3
+parent ccec1ae570cf3b1eb8d4178ab89676f1c455b5ab
+author Tamir Duberstein <tamird@gmail.com> 1792169096 +0200
+committer Tamir Duberstein <tamird@gmail.com> 1792169096 +0200
+
+Bound explicit qualification concurrency keys
+
+Nine explicit syscall targets exceeded GitHub's 400-character
+concurrency-group limit, so the workflow failed before creating a job.
+
+Use the run ID for explicit build, test and benchmark selections. This
+keeps their keys bounded and prevents distinct selections from cancelling
+each other. Named qualification lanes retain their existing grouping.
+
+Assisted-by: Codex

@@ -1,0 +1,9 @@
+2026/10/21 02:13:48 Loaded declared image archive test/docker/images_benchmarks_iperf_amd64_source_load/tarball.tar:
+Loaded image: gvisor.dev/images/benchmarks/iperf:77769a624d9e1cf3
+Loaded image: gvisor.dev/images/benchmarks/iperf:latest
+BenchmarkIperfOneConnection
+BenchmarkIperfOneConnection/operation.Upload
+BenchmarkIperfOneConnection/operation.Upload-4         	59433939	       606.9 ns/op	215955.01 MB/s	1859644416 bandwidth.bytes_per_second
+BenchmarkIperfOneConnection/operation.Download
+BenchmarkIperfOneConnection/operation.Download-4       	67249435	       556.1 ns/op	235699.03 MB/s	2143787008 bandwidth.bytes_per_second
+PASS

@@ -1,0 +1,14 @@
+test
+--test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated
+--define=gvisor_test_clock_source=calibrated
+--config=rbe-matrix
+--config=x86_64
+--keep_going
+--sandbox_add_mount_pair=/tmp
+--test_output=errors
+--test_filter=^(TestMountEROFSConfig|TestMountEROFS|TestCheckpointRestoreEROFS)$
+--config=rbe-hybrid-tests
+--local_test_jobs=1
+--test_env=GO_TEST_WRAP_TESTV=1
+--strip=never
+--target_pattern_file=/tmp/tmp.StMMxyInLn/targets

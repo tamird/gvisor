@@ -1,0 +1,9 @@
+{
+  "run": 39111747901,
+  "source": "54b0c243c68cbcf8f2349e200011d7ead3a2830a",
+  "invocation": "b7f8548f-a8f0-4e27-a9a9-fd8ae5f81194",
+  "archive_sha256": "4ee9b1b2dafc28b6fe860bf02d269d289f3d0fa67212145e068c87e1de39b954",
+  "original_member": "invocation-RShTOj/expected.jsonl",
+  "original_member_sha256": "5cef9a5f60750fe24cce5a9c5e29e9c48d6612324ee1331b1da7c0b4147e146b",
+  "projection": "Unchanged targetConfigured, targetCompleted and buildFinished events from successful build --nobuild analysis with clang_tidy aspect. Test variants replace NO_BUILD with completion events; those are regression inputs, not executed results."
+}

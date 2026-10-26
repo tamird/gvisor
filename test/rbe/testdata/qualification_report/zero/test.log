@@ -1,0 +1,31 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //runsc/container:serialization_test_cgroup_v1
+-----------------------------------------------------------------------------
+0-6
+0
+testing: warning: no tests to run
+PASS
+Controller bindings before VM disposal:
+#subsys_name	hierarchy	num_cgroups	enabled
+cpuset	1	1	1
+cpu	2	1	1
+cpuacct	3	1	1
+blkio	4	1	1
+memory	5	1	1
+devices	6	1	1
+freezer	7	1	1
+net_cls	8	1	1
+perf_event	9	1	1
+net_prio	0	1	1
+hugetlb	0	1	1
+pids	0	1	1
+9:perf_event:/
+8:net_cls:/
+7:freezer:/
+6:devices:/
+5:memory:/
+4:blkio:/
+3:cpuacct:/
+2:cpu:/
+1:cpuset:/
+0::/
