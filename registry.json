@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T17:51:26.091300+00:00",
+    "updatedAt": "2026-10-26T17:52:47.718726+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24732,8 +24732,8 @@
       "url": "https://github.com/tamird/gvisor/commit/d86b92bcd85ce9f2faaf71f0f4336ee60f806540",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T17:51:26.091300+00:00",
-      "summary": "The separate musl product is now d86b92bcd, directly atop GNU candidate 7d549676b. It adapts the TLDK/DPDK build for musl and uses the compiler unwinder where execinfo.h is unavailable. Exact product tests are in progress; no final result, contributor readiness or runtime traffic claim is made. The earlier 59ed8f878 cgo/static passes below remain evidence for that earlier experiment, not a pass for this expanded product.\n\nPreserved earlier experiment:\n\nExperimental LLVM follow-up 59ed8f878 uses the compiler unwinder for TLDK stack dumps on musl without libbacktrace. The focused cgo trace and static-program runs passed. This is a direct follow-up to 77d1072c5, separate from the preliminary GNU-only #15153 refinement. Cleanup and final source review remain; there is no upstream publication or contributor decision.",
+      "updatedAt": "2026-10-26T17:52:47.718726+00:00",
+      "summary": "The separate musl product is now d86b92bcd, directly atop GNU candidate 7d549676b. It adapts the TLDK/DPDK build for musl and uses the compiler unwinder where execinfo.h is unavailable. Exact product tests are in progress; no final result, contributor readiness or runtime traffic claim is made. The earlier 59ed8f878 cgo/static passes below remain evidence for that earlier experiment, not a pass for this expanded product.\n\nTarget-specific GNU/musl checks are separate from complete consumer binaries. Selecting hermetic-llvm for the whole tree also needs the existing freestanding-tool proposal 0c0b49881. That is not a new dependency of the GNU-only #15153 replacement.\n\nPreserved earlier experiment:\n\nExperimental LLVM follow-up 59ed8f878 uses the compiler unwinder for TLDK stack dumps on musl without libbacktrace. The focused cgo trace and static-program runs passed. This is a direct follow-up to 77d1072c5, separate from the preliminary GNU-only #15153 refinement. Cleanup and final source review remain; there is no upstream publication or contributor decision.",
       "followup": {
         "owner": "root",
         "sourceHead": "d86b92bcd85ce9f2faaf71f0f4336ee60f806540",
@@ -24752,6 +24752,10 @@
         {
           "label": "Separate musl change atop the GNU candidate",
           "url": "https://github.com/tamird/gvisor/compare/7d549676be357bd0829fa863a174091953e34be0...d86b92bcd85ce9f2faaf71f0f4336ee60f806540"
+        },
+        {
+          "label": "Existing whole-tree freestanding-tool proposal; not a GNU prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/0c0b49881e60c528bca7ac95532cb8a1da475763"
         },
         {
           "label": "Experimental follow-up",
