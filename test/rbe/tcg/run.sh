@@ -38,7 +38,7 @@ machine="$7"
 test_setup="$(realpath "$8")"
 shift 8
 # The owning rule writes this declared configuration beside the launcher.
-declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2 guest_smp
+declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2 guest_smp guest_user
 declare -a guest_env guest_inherited_env
 # shellcheck disable=SC1090
 source "${GVISOR_TEST_GUEST_CONFIG:?}"
@@ -207,7 +207,15 @@ host_phase scratch_ready
       'done'
   fi
   printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
-  printf 'exec /bin/bash /input/test-setup.sh'
+  if [[ $guest_user == nobody ]]; then
+    # Let the unprivileged harness create XML and output directories at the
+    # scratch root. Its sticky bit protects the root-owned payload directory.
+    printf '%s\n' 'chmod 1777 /work || exit 1'
+    printf 'exec setpriv --reuid=nobody --regid=nogroup --clear-groups '
+  else
+    printf 'exec '
+  fi
+  printf '/bin/bash /input/test-setup.sh'
   if [[ -n $guest_run_under ]]; then
     # Both executables and their runfiles are in the declared payload image.
     # Absolute paths remain valid after the harness enters payload runfiles.

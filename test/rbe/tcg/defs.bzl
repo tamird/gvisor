@@ -272,6 +272,7 @@ def _tcg_test_impl(ctx):
             "true" if ctx.attr.arm64_el2 else "false",
             shell.quote("2,sockets=1,cores=1,threads=2" if ctx.attr.smt else "2"),
         ) +
+        "guest_user=%s\n" % shell.quote(ctx.attr.guest_user) +
         "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
             " ".join([shell.quote(key + "=" + value) for key, value in environment.items()]),
             " ".join([shell.quote(key) for key in inherited_environment]),
@@ -331,6 +332,7 @@ _tcg_test = rule(
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
         "guest_env": attr.string_dict(),
+        "guest_user": attr.string(default = "root", values = ["root", "nobody"]),
         "memory_mib": attr.int(default = 3072),
         "scratch_gib": attr.int(default = 4),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),

@@ -15,6 +15,7 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
+load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
 load("//tools:defs.bzl", "go_test", "py_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
@@ -635,5 +636,29 @@ _SOURCE_ARCHIVES = {
     for architecture in [
         "amd64",
         "arm64",
+    ]
+]
+
+# The guest runs the architecture-specific native_test executable and its
+# runfiles. Bazel applies args at TestRunner time, so retain the owner's filter.
+[
+    arm64_tcg_test(
+        name = owner.split(":")[1] + "_tcg_test",
+        size = size,
+        args = ["-test.run=" + case],
+        guest_env = {
+            "GO_TEST_RUN_FROM_BAZEL": "1",
+            "GO_TEST_WRAP_TESTV": "1",
+        },
+        guest_user = user,
+        image = "//test/rbe/tcg:rc_guest",
+        payload = owner,
+        run_under = ":worker_identity",
+        tags = [],
+    )
+    for owner, size, case, user in [
+        ("//pkg/pinring:pinring_afpacket_privileged_test_arm64", "medium", "^TestAFPacketDeferredRelease$$", "root"),
+        ("//runsc/fsgofer:lisafs_hardlink_privileged_test_arm64", "small", "^TestFSGofer$$/^HardLink$$", "root"),
+        ("//runsc/fsgofer:lisafs_permissions_nonroot_test_arm64", "small", "^TestXattrWithoutReadPermission$$", "nobody"),
     ]
 ]
