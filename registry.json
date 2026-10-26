@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+    "updatedAt": "2026-10-26T23:15:55.755534+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22063,20 +22063,20 @@
       "id": "branch:rules-img-bun-spawn",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/rules-img-bun-spawn-mirrors",
-      "head": "f97de383f63c560aee4e38c68ba0e1005567ab73",
+      "ref": "rules-img-bun-spawn-current",
+      "head": "6b36e53079c13e3d3cbe3e01a71a08366fb8c224",
       "title": "Use a pinned upstream Bun benchmark image",
-      "url": "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73",
+      "url": "https://github.com/tamird/gvisor/commit/6b36e53079c13e3d3cbe3e01a71a08366fb8c224",
       "group": "bazel",
-      "status": "Contributor approved; delivery in progress",
+      "status": "Contributor approved; validating source-bundle preservation",
       "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThe pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. The final commit has the same whole tree as qualified 785f27447a. No shared BusyBox or compiler source dependency is required.",
+      "summary": "The approved Bun migration is rebased on current master at 6b36e5307. Its new Bazel package now forwards its source files into //images:source_contexts, preserving spawn.js that the parent glob would otherwise omit. Image digest, layer, configuration and consumer code are unchanged. The combined remote source-bundle check is pending before upstream opening; no new contributor decision is required.\n\nThe pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. The final commit has the same whole tree as qualified 785f27447a. No shared BusyBox or compiler source dependency is required.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "f97de383f63c560aee4e38c68ba0e1005567ab73",
+        "sourceHead": "6b36e53079c13e3d3cbe3e01a71a08366fb8c224",
         "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; all recorded prerequisites landed",
-        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
+        "disposition": "Approved delivery; source-bundle preservation awaiting remote check",
+        "nextAction": "Verify the actual source_contexts archive includes the exact Bun spawn.js blob, then open the separately scoped approved Bun PR. Keep the earlier runtime qualification tied to its original source.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066",
           "https://github.com/google/gvisor/pull/16097",
@@ -22089,6 +22089,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Current Bun source and source-bundle preservation",
+          "url": "https://github.com/tamird/gvisor/commit/6b36e53079c13e3d3cbe3e01a71a08366fb8c224"
+        },
         {
           "label": "Last prerequisite landed: shared Docker Hub mirror policy",
           "url": "https://github.com/google/gvisor/pull/16430"
@@ -22462,17 +22466,17 @@
       "ref": "review/rules-img-mysql-upstream-mirrors",
       "head": "85033b2dc96550a21eff4b3587e5536b5efa8f76",
       "title": "Use pinned upstream MySQL images",
-      "url": "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
+      "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
-      "status": "Contributor approved; delivery in progress",
-      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. The MySQL approval is separate from the Redis proposal.",
+      "status": "Published as #16458",
+      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "summary": "This approved proposal is published as #16458 at 48f06c611. Follow the linked PR for current checks and review. Earlier proposal heads and validation remain below.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. The MySQL approval is separate from the Redis proposal.",
       "followup": {
-        "owner": "root",
+        "owner": "native_runtime",
         "sourceHead": "85033b2dc96550a21eff4b3587e5536b5efa8f76",
-        "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; all recorded prerequisites landed",
-        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
+        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "disposition": "Published as #16458; historical proposal record",
+        "nextAction": "No action is needed on this historical branch record. Follow #16458.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
           "https://github.com/google/gvisor/pull/16097",
@@ -22481,7 +22485,8 @@
           "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76",
           "https://github.com/google/gvisor/pull/16379",
           "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16458"
         ]
       },
       "evidence": [
@@ -22501,7 +22506,8 @@
           "label": "Both image configurations and one actual AMD64 SQL consumer",
           "url": "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "pr:16333",
@@ -22609,17 +22615,17 @@
       "ref": "review/rules-img-python-upstream-context-mirrors",
       "head": "05a50fb8f99369a1bbe3755bc881f3cf2607b903",
       "title": "Use pinned upstream Python images",
-      "url": "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
+      "url": "https://github.com/google/gvisor/pull/16459",
       "group": "bazel",
-      "status": "Contributor approved; delivery in progress",
-      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The contributor subsequently approved this exact proposal.",
+      "status": "Published as #16459",
+      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "summary": "This approved proposal is published as #16459 at 2e4cf26a2. Follow the linked PR for current checks and review. Earlier proposal heads and validation remain below.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The contributor subsequently approved this exact proposal.",
       "followup": {
         "owner": "root",
         "sourceHead": "05a50fb8f99369a1bbe3755bc881f3cf2607b903",
-        "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; all recorded prerequisites landed",
-        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
+        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "disposition": "Published as #16459; historical proposal record",
+        "nextAction": "No action is needed on this historical branch record. Follow #16459.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
           "https://github.com/google/gvisor/pull/16097",
@@ -22628,7 +22634,8 @@
           "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903",
           "https://github.com/google/gvisor/pull/16379",
           "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16459"
         ]
       },
       "evidence": [
@@ -22648,7 +22655,8 @@
           "label": "Both image configurations and two actual AMD64 lifecycle cases",
           "url": "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:rules-img-postgresql-upstream",
@@ -22657,17 +22665,17 @@
       "ref": "review/rules-img-postgresql-upstream-mirrors",
       "head": "ce20befb2e4e54a21d600f35b72c39f3822f6157",
       "title": "Use pinned upstream PostgreSQL images",
-      "url": "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157",
+      "url": "https://github.com/google/gvisor/pull/16460",
       "group": "bazel",
-      "status": "Contributor approved; delivery in progress",
-      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The contributor subsequently approved this exact proposal.",
+      "status": "Published as #16460",
+      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "summary": "This approved proposal is published as #16460 at 50a6f3c30. Follow the linked PR for current checks and review. Earlier proposal heads and validation remain below.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The contributor subsequently approved this exact proposal.",
       "followup": {
-        "owner": "root",
+        "owner": "native_runtime",
         "sourceHead": "ce20befb2e4e54a21d600f35b72c39f3822f6157",
-        "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; all recorded prerequisites landed",
-        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
+        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "disposition": "Published as #16460; historical proposal record",
+        "nextAction": "No action is needed on this historical branch record. Follow #16460.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
           "https://github.com/google/gvisor/pull/16097",
@@ -22676,7 +22684,8 @@
           "https://github.com/tamird/gvisor/compare/e485bb2b079ca2d94c55955e66c5c86a388eb9be...ce20befb2e4e54a21d600f35b72c39f3822f6157",
           "https://github.com/google/gvisor/pull/16379",
           "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16460"
         ]
       },
       "evidence": [
@@ -22696,7 +22705,8 @@
           "label": "Both image configurations and native/runsc AMD64 SQL consumers",
           "url": "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "pr:16335",
@@ -23478,17 +23488,17 @@
       "ref": "review/rules-img-tomcat-upstream-mirrors",
       "head": "c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
       "title": "Pin the existing Tomcat fixture images",
-      "url": "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
+      "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
-      "status": "Contributor approved; delivery in progress",
-      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head; no contributor decision remains pending.",
+      "status": "Published as #16462",
+      "updatedAt": "2026-10-26T23:13:19.855537+00:00",
+      "summary": "This approved proposal is published as #16462 at 235ec4262. Follow the linked PR for current checks and review. Earlier proposal heads and validation remain below.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head; no contributor decision remains pending.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
-        "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; all recorded prerequisites landed",
-        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
+        "observedAt": "2026-10-26T23:13:19.855537+00:00",
+        "disposition": "Published as #16462; historical proposal record",
+        "nextAction": "No action is needed on this historical branch record. Follow #16462.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
           "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d",
@@ -23497,7 +23507,8 @@
           "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
           "https://github.com/google/gvisor/pull/16379",
           "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16462"
         ]
       },
       "evidence": [
@@ -23521,7 +23532,8 @@
           "label": "Exact five-file range on the foundation candidate",
           "url": "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...728c76fdcd6a7947176e015c8259f386270b7177"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "pr:16343",
@@ -23705,20 +23717,20 @@
       "id": "branch:rules-img-mariadb-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/rules-img-mariadb-upstream-mirrors",
-      "head": "aafc177480a2742cb5a3a7f38077805c2c397919",
+      "ref": "rules-img-mariadb-upstream",
+      "head": "35eb15359d6d6ca384c3a68ac07be1adc8daad6d",
       "title": "Pin the existing MariaDB fixture image",
-      "url": "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
+      "url": "https://github.com/tamird/gvisor/commit/35eb15359d6d6ca384c3a68ac07be1adc8daad6d",
       "group": "bazel",
-      "status": "Contributor approved; delivery in progress",
+      "status": "Contributor approved; sequence after #16460",
       "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nPins the official MariaDB 12.3.2 AMD64 and ARM64 images and exports their archives and Docker contexts through rules_img, replacing the FROM-only Dockerfile. Both archives preserve the complete upstream configs and all eight compressed layers without added layers. The unchanged TestMariaDB SQL roundtrip passed on AMD64 runc and runsc. ARM64 coverage is archive/config/layer inspection only. The first four-owner qualification retains native FAIL: both SQL consumers passed, while the private inspector import and BUILD formatting failed and the required-case manifest used incorrect class names. A two-owner recovery passes the inspector and buildifier; exact image, runtime and source joins carry the original SQL evidence without replay. That original product composition qualified before the mirror amendment and the current contributor approval.",
+      "summary": "The approved MariaDB source is staged at 35eb15359 on PostgreSQL #16460. After #16460 merges, rebase only the MariaDB commit onto master and open its PR. Both image pulls, the selected manifest/outputs and the SQL test match approved aafc17748; the parent supplies the compatibility package and its source forwarding. No upstream MariaDB PR or new contributor decision exists.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nPins the official MariaDB 12.3.2 AMD64 and ARM64 images and exports their archives and Docker contexts through rules_img, replacing the FROM-only Dockerfile. Both archives preserve the complete upstream configs and all eight compressed layers without added layers. The unchanged TestMariaDB SQL roundtrip passed on AMD64 runc and runsc. ARM64 coverage is archive/config/layer inspection only. The first four-owner qualification retains native FAIL: both SQL consumers passed, while the private inspector import and BUILD formatting failed and the required-case manifest used incorrect class names. A two-owner recovery passes the inspector and buildifier; exact image, runtime and source joins carry the original SQL evidence without replay. That original product composition qualified before the mirror amendment and the current contributor approval.\n\nCompare the approved mirror amendment with the staged image delta:\ngit -C ~/code/gvisor range-diff --creation-factor=999 aafc177480^! 35eb15359d^!",
       "followup": {
-        "owner": "root",
-        "sourceHead": "aafc177480a2742cb5a3a7f38077805c2c397919",
+        "owner": "native_runtime",
+        "sourceHead": "35eb15359d6d6ca384c3a68ac07be1adc8daad6d",
         "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; all recorded prerequisites landed",
-        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
+        "disposition": "Contributor approved; shared compatibility-package edits sequence after #16460",
+        "nextAction": "After #16460 lands, rebase the approved MariaDB image delta and open its PR. No new contributor decision is required for an equivalent adaptation.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
           "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00",
@@ -23729,10 +23741,15 @@
           "https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919",
           "https://github.com/google/gvisor/pull/16379",
           "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/tamird/gvisor/compare/50a6f3c30a99c0320937dc4d09525f830c927602...35eb15359d6d6ca384c3a68ac07be1adc8daad6d"
         ]
       },
       "evidence": [
+        {
+          "label": "Current standalone MariaDB delta after PostgreSQL",
+          "url": "https://github.com/tamird/gvisor/compare/50a6f3c30a99c0320937dc4d09525f830c927602...35eb15359d6d6ca384c3a68ac07be1adc8daad6d"
+        },
         {
           "label": "Last prerequisite landed: shared Docker Hub mirror policy",
           "url": "https://github.com/google/gvisor/pull/16430"
@@ -25491,6 +25508,226 @@
           "https://github.com/google/gvisor/pull/16453"
         ]
       }
+    },
+    {
+      "id": "pr:16459",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "rules-img-python-upstream-context",
+      "head": "2e4cf26a2919edfb1c38d2b1b026f9b16e1e8008",
+      "title": "Build the Python HTTP image with rules_img",
+      "url": "https://github.com/google/gvisor/pull/16459",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "summary": "The contributor-approved image change is published as #16459 at 2e4cf26a2 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The contributor subsequently approved this exact proposal.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "2e4cf26a2919edfb1c38d2b1b026f9b16e1e8008",
+        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "disposition": "Approved image migration published as #16459",
+        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d",
+          "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
+          "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903",
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16459"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published approved image migration",
+          "url": "https://github.com/google/gvisor/pull/16459"
+        },
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903"
+        },
+        {
+          "label": "Exact Python proposal awaiting contributor decision",
+          "url": "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00"
+        },
+        {
+          "label": "Both image configurations and two actual AMD64 lifecycle cases",
+          "url": "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d"
+        }
+      ],
+      "number": 16459
+    },
+    {
+      "id": "pr:16458",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "rules-img-mysql-upstream",
+      "head": "48f06c61104b8f3f5550d2c7fd5d984dce0b77cc",
+      "title": "Pin the basic MySQL image",
+      "url": "https://github.com/google/gvisor/pull/16458",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "summary": "The contributor-approved image change is published as #16458 at 48f06c611 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. The MySQL approval is separate from the Redis proposal.",
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "48f06c61104b8f3f5550d2c7fd5d984dce0b77cc",
+        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "disposition": "Approved image migration published as #16458",
+        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f",
+          "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
+          "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76",
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16458"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published approved image migration",
+          "url": "https://github.com/google/gvisor/pull/16458"
+        },
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76"
+        },
+        {
+          "label": "Qualified product awaiting contributor decision",
+          "url": "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a"
+        },
+        {
+          "label": "Both image configurations and one actual AMD64 SQL consumer",
+          "url": "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f"
+        }
+      ],
+      "number": 16458
+    },
+    {
+      "id": "pr:16460",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "rules-img-postgresql-upstream",
+      "head": "50a6f3c30a99c0320937dc4d09525f830c927602",
+      "title": "Pin the PostgreSQL compatibility image",
+      "url": "https://github.com/google/gvisor/pull/16460",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "summary": "The contributor-approved image change is published as #16460 at 50a6f3c30 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The contributor subsequently approved this exact proposal.",
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "50a6f3c30a99c0320937dc4d09525f830c927602",
+        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "disposition": "Approved image migration published as #16460",
+        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad",
+          "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157",
+          "https://github.com/tamird/gvisor/compare/e485bb2b079ca2d94c55955e66c5c86a388eb9be...ce20befb2e4e54a21d600f35b72c39f3822f6157",
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16460"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published approved image migration",
+          "url": "https://github.com/google/gvisor/pull/16460"
+        },
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/e485bb2b079ca2d94c55955e66c5c86a388eb9be...ce20befb2e4e54a21d600f35b72c39f3822f6157"
+        },
+        {
+          "label": "Exact PostgreSQL proposal awaiting contributor decision",
+          "url": "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be"
+        },
+        {
+          "label": "Both image configurations and native/runsc AMD64 SQL consumers",
+          "url": "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad"
+        }
+      ],
+      "number": 16460
+    },
+    {
+      "id": "pr:16462",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "rules-img-tomcat-upstream-current",
+      "head": "235ec4262784bf0a359886eda0f9783540f57bdd",
+      "title": "Pin the existing Tomcat fixture images",
+      "url": "https://github.com/google/gvisor/pull/16462",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-26T23:13:19.855537+00:00",
+      "summary": "The contributor-approved image change is published as #16462 at 235ec4262 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head; no contributor decision remains pending.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "235ec4262784bf0a359886eda0f9783540f57bdd",
+        "observedAt": "2026-10-26T23:13:19.855537+00:00",
+        "disposition": "Approved image migration published as #16462",
+        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
+          "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
+          "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/google/gvisor/pull/16462"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published approved image migration",
+          "url": "https://github.com/google/gvisor/pull/16462"
+        },
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf"
+        },
+        {
+          "label": "Exact original-image pinning proposal",
+          "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177"
+        },
+        {
+          "label": "Both image architectures and native/runsc HTTP consumer",
+          "url": "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d"
+        },
+        {
+          "label": "Exact five-file range on the foundation candidate",
+          "url": "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...728c76fdcd6a7947176e015c8259f386270b7177"
+        }
+      ],
+      "number": 16462
     }
   ],
   "edges": [
@@ -27875,7 +28112,7 @@
     },
     {
       "from": "pr:16097",
-      "to": "branch:rules-img-mysql-upstream",
+      "to": "pr:16458",
       "type": "depends_on",
       "reason": "Satisfied foundation: #16097 closed in favor of merged Copybara import #16307 (c3e0783a). This historical source edge is not a remaining delivery gate. Any separate context exports, license, compiler or registry prerequisites remain independent.",
       "evidence": [
@@ -27908,7 +28145,7 @@
     },
     {
       "from": "pr:16097",
-      "to": "branch:rules-img-python-upstream-context",
+      "to": "pr:16459",
       "type": "depends_on",
       "reason": "Satisfied foundation: #16097 closed in favor of merged Copybara import #16307 (c3e0783a). This historical source edge is not a remaining delivery gate. Any separate context exports, license, compiler or registry prerequisites remain independent.",
       "evidence": [
@@ -27919,7 +28156,7 @@
     },
     {
       "from": "pr:16097",
-      "to": "branch:rules-img-postgresql-upstream",
+      "to": "pr:16460",
       "type": "depends_on",
       "reason": "Satisfied foundation: #16097 closed in favor of merged Copybara import #16307 (c3e0783a). This historical source edge is not a remaining delivery gate. Any separate context exports, license, compiler or registry prerequisites remain independent.",
       "evidence": [
@@ -28043,7 +28280,7 @@
     },
     {
       "from": "pr:16097",
-      "to": "branch:rules-img-tomcat-upstream",
+      "to": "pr:16462",
       "type": "depends_on",
       "reason": "Satisfied foundation: #16097 closed in favor of merged Copybara import #16307 (c3e0783a). This historical source edge is not a remaining delivery gate. Any separate context exports, license, compiler or registry prerequisites remain independent.",
       "evidence": [
@@ -28138,7 +28375,7 @@
     },
     {
       "from": "pr:16379",
-      "to": "branch:rules-img-mysql-upstream",
+      "to": "pr:16458",
       "type": "depends_on",
       "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
@@ -28150,7 +28387,7 @@
     },
     {
       "from": "pr:16379",
-      "to": "branch:rules-img-python-upstream-context",
+      "to": "pr:16459",
       "type": "depends_on",
       "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
@@ -28162,7 +28399,7 @@
     },
     {
       "from": "pr:16379",
-      "to": "branch:rules-img-postgresql-upstream",
+      "to": "pr:16460",
       "type": "depends_on",
       "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
@@ -28174,7 +28411,7 @@
     },
     {
       "from": "pr:16379",
-      "to": "branch:rules-img-tomcat-upstream",
+      "to": "pr:16462",
       "type": "depends_on",
       "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
@@ -28371,6 +28608,16 @@
       "type": "depends_on",
       "reason": "The approved reference-array implementation follows typed primitive arrays.",
       "evidence": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b"
+    },
+    {
+      "from": "pr:16460",
+      "to": "branch:rules-img-mariadb-upstream",
+      "type": "depends_on",
+      "reason": "Both migrations introduce images/compatibility. Sequence MariaDB after PostgreSQL lands to keep one shared-package editing surface; this is delivery coordination, not a database or base-image dependency.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16460",
+        "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919"
+      ]
     }
   ],
   "investigations": [
@@ -38085,7 +38332,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the existing approved combined stock Nginx/Redis proposal after #16250 and #16379 land. Approved HTTPD 8b2c4cbe0 waits on #16379; its basic image foundation is already merged through #16307, not awaiting closed #16097. Keep source-specific functional and performance evidence separate. Continue agent-owned runtime-base work only where its existing record has an unfinished supplier or validation task; the withdrawn local BusyBox build is not a prerequisite.",
+      "nextStep": "The shared mirror and basic image prerequisites have landed. Python #16459, MySQL #16458, PostgreSQL #16460 and Tomcat #16462 are published. Finish Apache delivery and Bun source-bundle validation; sequence approved MariaDB after #16460. Benchmark Nginx still needs Apache payloads, and combined stock Nginx/Redis still needs #16250. Preserve source-specific functional and performance evidence. The withdrawn local BusyBox build is not a prerequisite.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
