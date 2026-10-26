@@ -17,7 +17,8 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_pkg//pkg:path.bzl", "safe_short_path")
-load("@tar.bzl//tar:tar.bzl", "tar_lib")
+load("@tar.bzl//tar:mtree.bzl", "mutate")
+load("@tar.bzl//tar:tar.bzl", "tar", "tar_lib")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
@@ -340,16 +341,29 @@ _tcg_test = rule(
     }),
 )
 
-def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
-    pkg_tar(
-        name = name + "_payload",
-        testonly = True,
-        srcs = [payload] + ([run_under] if run_under else []),
-        include_runfiles = True,
-        strip_prefix = "/",
-        allow_duplicates_with_different_content = False,
-        tags = ["manual"],
-    )
+def _guest_test(name, payload, tags, image, run_under = None, preserve_runfiles_symlinks = False, **kwargs):
+    srcs = [payload] + ([run_under] if run_under else [])
+    if preserve_runfiles_symlinks:
+        # A rules_python venv links to its interpreter relative to its final
+        # runfiles layout. Dereferencing it in the execroot loses that target.
+        tar(
+            name = name + "_payload",
+            testonly = True,
+            srcs = srcs,
+            include_runfiles = True,
+            mutate = mutate(preserve_symlinks = True, srcs = srcs),
+            tags = ["manual"],
+        )
+    else:
+        pkg_tar(
+            name = name + "_payload",
+            testonly = True,
+            srcs = srcs,
+            include_runfiles = True,
+            strip_prefix = "/",
+            allow_duplicates_with_different_content = False,
+            tags = ["manual"],
+        )
 
     # Image construction remains remote even when the guest test needs KVM on
     # the local worker. Test execution tags must not constrain build actions.

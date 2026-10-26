@@ -677,6 +677,7 @@ _SOURCE_ARCHIVES = {
         guest_user = user,
         image = "//test/rbe/tcg:rc_guest",
         payload = owner,
+        preserve_runfiles_symlinks = name == "sandboxexec_python_unit",
         run_under = ":worker_identity",
         tags = [],
     )
