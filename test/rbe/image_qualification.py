@@ -218,9 +218,11 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
                     raise RuntimeError(f"Unexpected image assembly worker: {properties}")
                 if action["exitCode"] != 0 or action["status"] or not action["remotable"]:
                     raise RuntimeError('Failed or non-remotable remote image action')
-                if not action['digest']['hash'] or not action['actualOutputs'] or any(
+                # A TestRunner can emit only stdout and leave test.xml to a
+                # separate action. Required program outputs are checked at use.
+                if not action['digest']['hash'] or any(
                         not output.get('digest', {}).get('hash') for output in action['actualOutputs']):
-                    raise RuntimeError('Remote image action omitted action/output identity')
+                    raise RuntimeError('Remote action omitted its digest or an output identity')
             record['uncached_remote_image_actions'] = len(executed)
             record['cache_only_is_execution_proof'] = False
             record['status'] = 'PASS'
