@@ -94,13 +94,14 @@ PosixError ConfigureNetwork(const FileDescriptor& fd, uint16_t type,
 }  // namespace
 
 // SetupExternalNetwork supplies a non-loopback interface for local UDP
-// broadcast and multicast tests. A dummy link cannot reach another namespace;
-// the caller's private network namespace owns the link and its lifetime.
+// broadcast and multicast tests. Both veth ends stay in the caller's private
+// network namespace. The peer stays down and unaddressed, leaving eth0 as the
+// only non-loopback interface with an address. No traffic leaves the namespace.
 PosixError SetupExternalNetwork() {
   FileDescriptor fd;
   ASSIGN_OR_RETURN_ERRNO(fd, NetlinkBoundSocket(NETLINK_ROUTE));
   constexpr char kName[] = "eth0";
-  constexpr char kKind[] = "dummy";
+  constexpr char kKind[] = "veth";
   std::vector<char> link_info;
   AppendNetworkAttributes(link_info, {{IFLA_INFO_KIND, kKind, sizeof(kKind)}});
   ifinfomsg link = {};
@@ -137,7 +138,7 @@ PosixError SetupExternalNetwork() {
   RETURN_IF_ERRNO(ConfigureNetwork(fd, RTM_NEWADDR, &addr, sizeof(addr),
                                    {{IFA_ADDRESS, &ipv6, sizeof(ipv6)}}));
 
-  // No default route or peer is needed. These routes select the private
+  // No default route is needed. These routes select the private
   // interface for local broadcast and IPv4 multicast delivery.
   for (const auto& [destination, prefix] :
        {std::pair<uint32_t, uint8_t>{0xe0000000, 4},
