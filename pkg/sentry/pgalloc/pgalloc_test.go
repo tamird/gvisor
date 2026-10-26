@@ -44,6 +44,12 @@ const (
 	hugepage = hostarch.HugePageSize
 )
 
+func (f *MemoryFile) committedBytesForTest() uint64 {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.knownCommittedBytes
+}
+
 func newSaveRestoreMemoryFile(t *testing.T) *MemoryFile {
 	t.Helper()
 	fd, err := unix.MemfdCreate("pgalloc_save_test", unix.MFD_CLOEXEC)
@@ -89,7 +95,7 @@ func TestRetainCommitmentSaveRestore(t *testing.T) {
 				if err := f.SaveTo(context.Background(), &saved, &SaveOpts{ExcludeCommittedZeroPages: excludeZero}); err != nil {
 					t.Fatal(err)
 				}
-				if got := f.knownCommittedBytes; got != page {
+				if got := f.committedBytesForTest(); got != page {
 					t.Fatalf("round %d: saved committed bytes = %d, want %d", round, got, page)
 				}
 				var st unix.Stat_t
@@ -170,11 +176,13 @@ func TestRetainCommitmentReferences(t *testing.T) {
 	// Exercise the range metadata without a releaser racing to consume waste,
 	// as in TestFindAllocatable. No backing pages are accessed here.
 	f := &MemoryFile{opts: MemoryFileOpts{DisableMemoryAccounting: true}}
+	f.mu.Lock()
 	f.initFields()
 	chunks := []chunkInfo{{}}
 	f.chunks.Store(&chunks)
 	fr := memmap.FileRange{0, 2 * page}
 	f.unfreeSmall.RemoveRange(fr)
+	f.mu.Unlock()
 	alloc := allocState{
 		length:     fr.Length(),
 		opts:       AllocOpts{Mode: AllocateAndCommit, RetainCommitment: true},
@@ -290,6 +298,7 @@ func TestAllocateAndCommit(t *testing.T) {
 					AdviseNoHugepage:        !test.huge,
 				},
 			}
+			f.mu.Lock()
 			f.initFields()
 			chunks := []chunkInfo{{mapping: uintptr(unsafe.Pointer(&mapping[0])), huge: test.huge}}
 			f.chunks.Store(&chunks)
@@ -304,6 +313,7 @@ func TestAllocateAndCommit(t *testing.T) {
 			} else {
 				unfree.RemoveRange(available)
 			}
+			f.mu.Unlock()
 
 			readerCalled := false
 			opts := AllocOpts{
