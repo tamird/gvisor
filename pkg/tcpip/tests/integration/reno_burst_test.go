@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -150,7 +151,7 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 			row.EligibleACK = row.EligibleACK || (r.Kind == "ack_scan" && r.Lost > 0 && !r.Active)
 			row.EligibleTimer = row.EligibleTimer || r.Kind == "timer_expired"
 		}
-		if watching || r.State != tcpip.Open || len(r.SACK) != 0 || r.Lost != 0 ||
+		if watching || r.State != tcpip.Open || len(r.SACK) != 0 || r.Lost != 0 || strings.HasSuffix(r.Kind, "_cc") ||
 			r.Kind == "rto_interrupt" || r.Kind == "enter_recovery" || r.Kind == "timer_expired" || r.Kind == "timer_scan" {
 			row.Events = append(row.Events, event{Sender: &r})
 		}
@@ -246,6 +247,9 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 			w.Retry = offset < high
 			high = max(high, offset+uint32(w.Bytes))
 			w.Dropped = loss.First > 0 && w.Offer >= loss.First && w.Offer <= loss.Last
+			if loss.Name == "lost_repair" && w.Offer == 13 {
+				w.Dropped = true
+			}
 			if w.Dropped {
 				row.Drops++
 			}
@@ -437,4 +441,17 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 		t.Logf("VIRTUAL_TCP_PART %s %d/%d %s", row.Case, i, chunks, encoded[i*size:min((i+1)*size, len(encoded))])
 	}
 	return row
+}
+
+// TestVirtualTCPRTOFlight holds all network and application inputs fixed while
+// the remote driver changes the source commit. No reporter guard is activated.
+func TestVirtualTCPRTOFlight(t *testing.T) {
+	if runtime.GOMAXPROCS(0) != 1 {
+		t.Fatal("one TCP processor per stack is required")
+	}
+	for _, schedule := range []lossSchedule{{"blackout", 1, 11}, {"partial", 2, 8}, {"lost_repair", 1, 11}} {
+		t.Run(schedule.Name, func(t *testing.T) {
+			runTrial(t, "reno", schedule, false, false)
+		})
+	}
 }

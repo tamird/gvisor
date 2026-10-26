@@ -2,13 +2,14 @@
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
-ROOT = "TestVirtualTCPNoTimestampBurst"
-SCHEDULES = {"none": (0, 0), "blackout": (1, 11), "partial": (2, 8)}
+ROOT = "TestVirtualTCPRTOFlight"
+SCHEDULES = {"blackout": (1, 11), "partial": (2, 8), "lost_repair": (1, 11)}
 BODY = bytes((i * 17 + i // 251) % 256 for i in range(512 << 10))
 RTO_RECOVERY = 1
 SACK_RECOVERY = 3
@@ -53,9 +54,10 @@ def summarize(sample: dict, algorithm: str, schedule: str, guards: tuple[bool, b
         raise ValueError(f"{s['Case']}: not actual SACK/no-timestamp negotiation")
     offers = [w for w in wire if w["From"] == 0 and w["Bytes"]]
     drops = [w for w in wire if w["Dropped"]]
+    expected_drops = list(range(first, last + 1)) + ([13] if schedule == "lost_repair" else [])
     if ([w["Offer"] for w in offers] != list(range(1, len(offers) + 1)) or s["Offers"] != len(offers)
             or offers[0]["At"] != s["FirstData"] or len(drops) != s["Drops"]
-            or [w["Offer"] for w in drops] != (list(range(first, last + 1)) if first else [])):
+            or [w["Offer"] for w in drops] != expected_drops):
         raise ValueError(f"{s['Case']}: actual physical drop schedule changed")
     elapsed = s["End"] - s["FirstData"]
     completed = s["EOF"] and s["FinACK"] and not s["Pending"]
@@ -109,35 +111,73 @@ def summarize(sample: dict, algorithm: str, schedule: str, guards: tuple[bool, b
 
 def measure(samples: dict) -> dict:
     cases = {name.removeprefix(ROOT + "/"): s for name, s in samples.items()}
-    expected = {}
-    for schedule in SCHEDULES:
-        for algorithm in ("reno", "cubic"):
-            label = f"{algorithm}_{schedule}"
-            expected[label] = (algorithm, schedule, (False, False))
-        base = cases["reno_" + schedule]["Events"]
-        ack, timer = (any(trigger(entry, guard) for entry in base) for guard in ("ack", "timer"))
-        for suffix, enabled in (("ack", (True, False)), ("timer", (False, True)), ("both", (True, True))):
-            if (not enabled[0] or ack) and (not enabled[1] or timer):
-                expected[f"reno_{schedule}_{suffix}"] = ("reno", schedule, enabled)
-    if set(expected) != set(cases):
-        raise ValueError(f"Baseline-based treatment census differs: {set(expected) ^ set(cases)}")
-    summary = {label: summarize(cases[label], *args) for label, args in expected.items()}
-    for label, (_, schedule, guards) in expected.items():
-        if not any(guards):
-            continue
-        ref = cases["reno_" + schedule]["Events"]
-        arm = cases[label]["Events"]
-        gate = next(i for i, e in enumerate(ref) if any(en and trigger(e, g) for en, g in zip(guards, ("ack", "timer"))))
-        if arm[:gate + 1] != ref[:gate + 1]:
-            raise ValueError(f"{label}: wire or sender history diverged before the first selected guard")
-        ref_wire = [entry["Wire"] for entry in ref if "Wire" in entry]
-        arm_wire = [entry["Wire"] for entry in arm if "Wire" in entry]
-        i = next((i for i, pair in enumerate(zip(ref_wire, arm_wire)) if pair[0] != pair[1]), min(len(ref_wire), len(arm_wire)))
-        summary[label]["matched_events_through_trigger"] = gate + 1
-        summary[label]["matched_wire_offers"] = i
-        summary[label]["first_different_wire_offer"] = {"stock": ref_wire[i] if i < len(ref_wire) else None,
-                                                        "guard": arm_wire[i] if i < len(arm_wire) else None}
-    return summary
+    if set(cases) != set(SCHEDULES):
+        raise ValueError("Expected three unchanged Reno schedules, no diagnostic guard arms")
+    result = {}
+    for schedule, s in cases.items():
+        summary = summarize(s, "reno", schedule, (False, False))
+        events = s["Events"]
+        wire = [e["Wire"] for e in events if "Wire" in e]
+        first_seq = next(w["Seq"] for w in wire if w["From"] == 0 and w["Bytes"])
+        rows = [e["Sender"] for e in events if "Sender" in e]
+        old_events = [e for e in events if "Wire" in e or
+                      (e["Sender"]["Kind"] != "rack_loss_copy" and not e["Sender"]["Kind"].endswith("_cc"))]
+        pending = []
+        scans = []
+        for r in rows:
+            if r["Kind"] == "rack_loss_copy":
+                cp = r["Copy"]
+                match = [w for w in wire if w["From"] == 0 and w["Bytes"] and w["Seq"] == cp["Start"]
+                         and (w["Seq"] + w["Bytes"]) % 2**32 == cp["End"]]
+                n = cp["Count"]
+                copy = match[n - 1] if 1 <= n <= len(match) else None
+                # Timer-generated sends are emitted after the parked processors'
+                # bounded tick. Do not use an apparent wire match without checking time.
+                if copy is not None and not 0 <= copy["At"] - cp["Sent"] <= 1_000_000:
+                    copy = None
+                pending.append({"actual_mark": cp, "matched_wire": copy})
+            if r["Kind"] in ("ack_scan", "timer_scan"):
+                if r["Lost"] != len(pending) or len({m["actual_mark"]["Start"] for m in pending}) != len(pending):
+                    raise ValueError(f"{s['Case']}: per-transmission counts do not reproduce the actual RACK scan")
+                if pending:
+                    scans.append({"decision": r, "copies": pending})
+                pending = []
+        if pending:
+            raise ValueError(f"{s['Case']}: unbound RACK copy observations")
+        if any(m["matched_wire"] is None for scan in scans if scan["decision"]["State"] == RTO_RECOVERY for m in scan["copies"]):
+            raise ValueError(f"{s['Case']}: cannot authenticate each transmission counted in RTO recovery")
+        summary.update(first_seq=first_seq, first_data=s["FirstData"], prior_format_events_sha256=digest(old_events),
+                       scans=scans, responses=[r for r in rows if r["Kind"].endswith("_cc")],
+                       timeout_epochs=[r for r in rows if r["Kind"] in ("rto_interrupt", "rto_enter")])
+        if schedule == "lost_repair":
+            offers = [w for w in wire if w["From"] == 0 and w["Bytes"]]
+            extra = offers[12]
+            original = offers[1]
+            resets = [r for r in rows if r["Kind"] == "rto_enter" and r["At"] <= extra["At"]]
+            if (extra["Offer"] != 13 or not extra["Retry"] or not extra["Dropped"] or len(resets) != 1
+                    or original["Retry"] or not original["Dropped"] or extra["Seq"] != original["Seq"]
+                    or extra["Bytes"] != original["Bytes"] or (extra["Seq"] - first_seq) % 2**32 != 1424
+                    or extra["Bytes"] != 1424 or resets[0]["NXT"] != (first_seq + 14240) % 2**32):
+                raise ValueError("Offer 13 did not drop the specified second MSS retry after the actual RTO")
+            later = [w for w in offers if w["Offer"] > 13 and w["Seq"] == extra["Seq"] and w["Bytes"] == extra["Bytes"]]
+            cover = [w for w in wire if w["From"] == 1 and w["Flags"] & 16 and w["At"] >= extra["At"]
+                     and ahead(w["ACK"], (extra["Seq"] + extra["Bytes"] - 1) % 2**32)]
+            marks = [m for scan in scans for m in scan["copies"] if m["matched_wire"] == extra]
+            responses = [r for r in summary["responses"] if r["At"] > extra["At"] and
+                         (not cover or r["At"] <= cover[0]["Due"])]
+            if cover and (not later or later[0]["Dropped"] or later[0]["Due"] > cover[0]["At"]):
+                raise ValueError("Genuine missing copy was acknowledged without admission of a later repair")
+            summary["genuine_copy"] = {"original": original, "post_rto_drop": extra, "rack_marks": marks,
+                                       "repair": later[0] if later else None, "covering_ack": cover[0] if cover else None,
+                                       "cc_callbacks_to_covering_ack": responses}
+        result[schedule] = summary
+    # The isolated positive control changes exactly one physical offer until its loss.
+    original, lost = cases["blackout"]["Events"], cases["lost_repair"]["Events"]
+    cut = next(i for i, e in enumerate(original) if e.get("Wire", {}).get("Offer") == 13)
+    if (original[:cut] != lost[:cut] or dict(original[cut]["Wire"], Dropped=True) != lost[cut].get("Wire")):
+        raise ValueError("The genuine-loss control diverged before its one additional drop")
+    result["lost_repair"]["identical_events_before_extra_drop"] = cut
+    return result
 
 
 def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[dict, dict]:
@@ -245,8 +285,9 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    source = config["source"]
-    if config["targets"] != [OWNER] or config["expected_sources"] != [source]:
+    child, parent, stock = (config[k] for k in ("source", "prerequisite", "stock"))
+    if (config["targets"] != [OWNER] or config["expected_sources"] != [child, parent, stock]
+            or subprocess.check_output(["git", "rev-parse", child + "^", child + "^^"], text=True).splitlines() != [parent, stock]):
         raise ValueError("Unexpected source or native owner")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"], "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc"]
@@ -261,8 +302,29 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     selected = ["--strategy=TestRunner=remote", "--nocache_test_results", "--flaky_test_attempts=1",
                 "--test_output=errors", "--test_timeout=300", "--test_env=GO_TEST_WRAP=1",
                 "--test_env=GO_TEST_WRAP_TESTV=1", "--runs_per_test=2", f"--test_arg=-test.run=^{ROOT}$"]
-    checked = invoke("no-timestamps", ["test", *options, *selected, OWNER], "test", targets=[OWNER])
-    if checked["source"] != source or checked["status"] != "PASS":
-        raise RuntimeError("Native no-timestamp fixture failed")
-    result = observations(evidence, "no-timestamps", 2)
-    (evidence / "reno-no-timestamps.json").write_text(json.dumps(result, indent=2) + "\n")
+    result = {"status": "INCOMPLETE", "sources": config["expected_sources"], "phases": {}}
+    try:
+        for label, rev in (("stock", stock), ("sack-credit", parent), ("rack-flight", child)):
+            subprocess.run(["git", "switch", "--detach", rev], check=True)
+            phase = invoke(label, ["test", *options, *selected, OWNER], "test", targets=[OWNER], source=rev)
+            if phase["source"] != rev:
+                raise RuntimeError(f"{label}: native source differs")
+            if phase["status"] != "PASS":
+                result["phases"][label] = {"source": rev, "error": "native target failed"}
+                continue
+            try:
+                obs = observations(evidence, label, 2)
+                if label == "stock":
+                    for schedule, pins in config["historical_stock"].items():
+                        actual = obs["measurements"][schedule]
+                        if [actual["wire_sha256"], actual["prior_format_events_sha256"]] != pins:
+                            raise ValueError(f"{schedule}: stock diverged from both identical historical attempts")
+                result["phases"][label] = {"source": rev, **obs}
+            except (ValueError, KeyError, OSError) as error:
+                result["phases"][label] = {"source": rev, "error": str(error)}
+        if any("error" in r for r in result["phases"].values()):
+            raise RuntimeError("One or more exact-source comparisons failed")
+        result["status"] = "PASS"
+    finally:
+        subprocess.run(["git", "switch", "--detach", child], check=True)
+        (evidence / "reno-rto-loss-provenance.json").write_text(json.dumps(result, indent=2) + "\n")

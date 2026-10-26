@@ -605,6 +605,14 @@ type RTOEvent struct {
 	SACK                            []header.SACKBlock
 	Cwnd, Threshold, Flight, Sacked int
 	Lost                            int
+	Copy                            *RTOLossCopy `json:",omitempty"`
+}
+
+// RTOLossCopy identifies the actual transmission counted by a RACK scan.
+type RTOLossCopy struct {
+	Start, End, Count uint32
+	Sent, AsOf        int64
+	AlreadyLost       bool
 }
 
 // NewProtocolRTODiagnostic creates the qualification's active opener.
@@ -618,6 +626,23 @@ func NewProtocolRTODiagnostic(algorithm string, diagnostic *RTODiagnostic) stack
 
 // +checklocks:s.ep.mu
 func (s *sender) observeRTO(kind string, seg *segment, lost int) {
+	s.observeRTOCopy(kind, seg, lost, nil)
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) observeRACKLoss(seg *segment, asOf tcpip.MonotonicTime) {
+	if s.ep.protocol.rtoDiagnostic == nil {
+		return
+	}
+	s.observeRTOCopy("rack_loss_copy", nil, 1, &RTOLossCopy{
+		Start: uint32(seg.sequenceNumber), End: uint32(seg.sequenceNumber) + uint32(seg.payloadSize()),
+		Count: seg.xmitCount, Sent: int64(seg.xmitTime.Sub(tcpip.MonotonicTime{})),
+		AsOf: int64(asOf.Sub(tcpip.MonotonicTime{})), AlreadyLost: seg.lost,
+	})
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) observeRTOCopy(kind string, seg *segment, lost int, copy *RTOLossCopy) {
 	d := s.ep.protocol.rtoDiagnostic
 	if d == nil {
 		return
@@ -628,6 +653,7 @@ func (s *sender) observeRTO(kind string, seg *segment, lost int) {
 		Last: uint32(s.FastRecovery.Last), State: s.state, Active: s.FastRecovery.Active,
 		SACKEnabled: s.ep.SACKPermitted, Timestamps: s.ep.SendTSOk,
 		Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Flight: s.Outstanding, Sacked: s.SackedOut, Lost: lost,
+		Copy: copy,
 	}
 	if seg != nil {
 		row.ACK = uint32(seg.ackNumber)

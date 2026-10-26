@@ -640,6 +640,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	s.recordRetransmitTS()
 
 	s.state = tcpip.RTORecovery
+	s.observeRTO("rto_cc", nil, 0)
 	s.cc.HandleRTOExpired()
 
 	// Mark the next segment to be sent as the first unacknowledged one and
@@ -1326,6 +1327,7 @@ func (s *sender) detectLoss(seg *segment) (fastRetransmit bool) {
 		s.DupAckCount = 0
 		return false
 	}
+	s.observeRTO("dupack_cc", seg, 0)
 	s.cc.HandleLossDetected()
 	s.enterRecovery()
 	return true
@@ -1803,6 +1805,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// If any segment is marked as lost by
 			// RACK, enter recovery and retransmit
 			// the lost segments.
+			s.observeRTO("ack_cc", rcvdSeg, numLost)
 			s.cc.HandleLossDetected()
 			s.enterRecovery()
 			fastRetransmit = true
