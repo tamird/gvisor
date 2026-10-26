@@ -37,14 +37,9 @@ func arrayFromSlice(obj reflect.Value) reflect.Value {
 	return arr
 }
 
-// captureArray selects one save-owned array representation without
-// reflecting or boxing each primitive or pointer element. Kind selects its
-// native width and layout, including defined scalar types. Typed copies retain
-// GC ownership for strings. Other kinds use encodeArray's composite path.
-// Each invocation captures anew; late parent replacement must
-// remain able to observe changes made before re-encoding a containing array.
-// Unaddressable inputs come from interfaceable SaveValue or map values; no
-// caller supplies a reflect.Value obtained from an unexported struct field.
+// captureArray returns a typed copy of a primitive or pointer array, or false
+// for other element kinds. Unaddressable arrays (from interfaces or map values)
+// are copied once to obtain an address.
 func (es *encodeState) captureArray(obj reflect.Value) (wire.Object, bool) {
 	if !obj.CanAddr() {
 		switch obj.Type().Elem().Kind() {
@@ -116,7 +111,7 @@ type referenceArray struct {
 }
 
 // encodeReferenceArray captures an addressable array of pointers. The element
-// kind is checked by encodeArray before borrowing its pointer-sized cells.
+// kind is checked by captureArray before borrowing its pointer-sized cells.
 func (es *encodeState) encodeReferenceArray(obj reflect.Value, dest *wire.Object) {
 	a := &referenceArray{RefArray: wire.RefArray{Contents: make([]wire.Ref, obj.Len())}}
 	*dest = &a.RefArray

@@ -305,9 +305,8 @@ func (s *Slice) save(w *Writer) {
 	s.Ref.save(w)
 }
 
-// ObjectArray owns homogeneous composite or no-op values. Load uses typed
-// arrays for scalar and reference tags, without an Object cell per element.
-// Writers may also construct this form directly; the wire grammar is identical.
+// ObjectArray is an array of composite elements (structs, interfaces, slices,
+// maps, nested arrays, Nil).
 type ObjectArray struct {
 	arrayKind
 	Contents []Object

@@ -16,13 +16,9 @@ package wire
 
 import "slices"
 
-// Array is an owned homogeneous array. Implementations are pointers; passing
-// an Array does not copy its payload. Capture and Load use the same typed
-// payloads. Element is for inspection; primitive restoration reads the typed
-// contents directly, without boxing each element. Pointer-valued elements are
-// copied so retaining one element does not retain the array's backing storage.
-// Load uses IntArray[Int], UintArray[Uint] and Float32Array[Float32]; capture
-// may retain a different native width until writing the same wire payload.
+// Array is a homogeneous array value. Element boxes a single element for
+// inspection. Load produces IntArray[Int], UintArray[Uint] and
+// Float32Array[Float32]; capture may use the native element width.
 type Array interface {
 	Object
 	Len() int
@@ -51,7 +47,7 @@ func saveArrayHeader(w *Writer, length int, kind Uint) bool {
 	return true
 }
 
-// CaptureBoolArray copies values now and emits the existing Array wire form.
+// CaptureBoolArray returns a BoolArray holding a copy of values.
 func CaptureBoolArray(values []bool) Object {
 	return &BoolArray{Contents: snapshotValues(values)}
 }
@@ -71,7 +67,7 @@ func (a *BoolArray) save(w *Writer) {
 	}
 }
 
-// CaptureIntArray copies values now and emits the existing Array wire form.
+// CaptureIntArray returns a IntArray holding a copy of values.
 func CaptureIntArray[T ~int | ~int8 | ~int16 | ~int32 | ~int64](values []T) Object {
 	return &IntArray[T]{Contents: snapshotValues(values)}
 }
@@ -91,7 +87,7 @@ func (a *IntArray[T]) save(w *Writer) {
 	}
 }
 
-// CaptureUintArray copies values now and emits the existing Array wire form.
+// CaptureUintArray returns a UintArray holding a copy of values.
 func CaptureUintArray[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](values []T) Object {
 	return &UintArray[T]{Contents: snapshotValues(values)}
 }
@@ -111,7 +107,7 @@ func (a *UintArray[T]) save(w *Writer) {
 	}
 }
 
-// CaptureFloat32Array copies values now and emits the existing Array wire form.
+// CaptureFloat32Array returns a Float32Array holding a copy of values.
 func CaptureFloat32Array(values []float32) Object {
 	// Scalar encoding promotes float32 through reflect.Value.Float before
 	// narrowing to wire.Float32. Preserve that conversion at capture time:
@@ -138,7 +134,7 @@ func (a *Float32Array[T]) save(w *Writer) {
 	}
 }
 
-// CaptureFloat64Array copies values now and emits the existing Array wire form.
+// CaptureFloat64Array returns a Float64Array holding a copy of values.
 func CaptureFloat64Array(values []float64) Object {
 	return &Float64Array{Contents: snapshotValues(values)}
 }
@@ -158,7 +154,7 @@ func (a *Float64Array) save(w *Writer) {
 	}
 }
 
-// CaptureComplex64Array copies values now and emits the existing Array wire form.
+// CaptureComplex64Array returns a Complex64Array holding a copy of values.
 func CaptureComplex64Array(values []complex64) Object {
 	captured := make([]Complex64, len(values))
 	for i, value := range values {
@@ -183,7 +179,7 @@ func (a *Complex64Array) save(w *Writer) {
 	}
 }
 
-// CaptureComplex128Array copies values now and emits the existing Array wire form.
+// CaptureComplex128Array returns a Complex128Array holding a copy of values.
 func CaptureComplex128Array(values []complex128) Object {
 	captured := make([]Complex128, len(values))
 	for i, value := range values {
@@ -208,7 +204,7 @@ func (a *Complex128Array) save(w *Writer) {
 	}
 }
 
-// CaptureStringArray copies values now and emits the existing Array wire form.
+// CaptureStringArray returns a StringArray holding a copy of values.
 func CaptureStringArray(values []string) Object {
 	return &StringArray{Contents: snapshotValues(values)}
 }
