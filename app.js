@@ -189,7 +189,7 @@ const ATTENTION_REASONS = [
 ];
 const OTHER_ATTENTION_GROUPS = [
   { id: "draft", owner: "other", title: "Draft PRs" },
-  { id: "resolved", owner: "other", title: "Resolved PRs" },
+  { id: "resolved", owner: "other", title: "History · no current action" },
   { id: "other", owner: "other", title: "Other work" },
 ];
 const ATTENTION_OWNERS = { agent: "Agent work", user: "Needs your attention", maintainer: "Needs maintainer attention", other: "Other visible work" };
@@ -446,7 +446,7 @@ function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) 
   const groups = [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => ({ ...group, entries: [] }));
   for (const entry of entries) {
     const primary = entry.reasons.find(item => filters.has(item.id)) || entry.reasons.find(item => item.id !== "author-proposal") || entry.reasons[0];
-    const id = primary?.id || (resolved(entry.node) ? "resolved" : entry.node.github?.status === "draft" ? "draft" : "other");
+    const id = primary?.id || (historical(entry.node) ? "resolved" : entry.node.github?.status === "draft" ? "draft" : "other");
     if (id === "author-proposal" && contributorDecision(entry.node)) entry.copyURL = contributorDecisionURL(entry.node);
     if (id === "human-submission" && humanAction(entry.node)) entry.copyURL = contributorDecisionURL(entry.node, "human-submission");
     groups.find(group => group.id === id).entries.push(entry);
@@ -662,11 +662,22 @@ function appendAttributes(container, node) {
   container.append(section);
 }
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status) || node.type === "investigation" && node.status === "concluded"; }
+function historical(node) {
+  // A past delivery never hides a new decision or a live public PR. Curated
+  // branch history is explicit: freeform status text can also describe work
+  // that is still blocked, waiting for review or being validated.
+  if (contributorDecision(node) || contributorChanges(node) || humanAction(node) || node.status === "Agent work") return false;
+  if (node.type === "pr") return ["merged", "closed"].includes(node.github?.status || node.status);
+  return node.inactive === true || ["resolved", "merged", "closed", "concluded", "withdrawn", "retired", "superseded"].includes(node.status?.toLowerCase());
+}
+function visibleHistory(node) {
+  return !historical(node) || $("show-resolved").checked || node.id === selected || node.id === focus;
+}
 function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
 function investigationMap() { return new Map((registry.investigations || []).map(item => [item.id, item])); }
 function selectionMap() { return view === "investigations" ? investigationMap() : new Map([...nodeMap(), ...(view === "table" && tableGrouping ? [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => [`attention-${group.id}`, group]) : [])]); }
 function activeDependencyEdges() {
-  const active = new Set(model.nodes.filter((node) => !resolved(node) && node.status !== "resolved").map((node) => node.id));
+  const active = new Set(model.nodes.filter((node) => !historical(node)).map((node) => node.id));
   return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
 }
 function impact(id) {
@@ -679,8 +690,13 @@ function impact(id) {
   return { direct: direct.size, prs: [...seen].filter((other) => nodes.get(other)?.type === "pr").length,
     branches: [...seen].filter((other) => nodes.get(other)?.type === "branch").length };
 }
-function components() {
-  const edges = activeDependencyEdges(), remaining = new Set(edges.flatMap((edge) => [edge.from, edge.to])), result = [];
+function displayDependencyEdges() {
+  const selectedHistory = [selected, focus].some(id => { const node = nodeMap().get(id); return node && historical(node); });
+  return $("show-resolved").checked || selectedHistory
+    ? model.edges.filter(edge => ["depends_on", "blocked_by"].includes(edge.type)) : activeDependencyEdges();
+}
+function components(edges = displayDependencyEdges()) {
+  const remaining = new Set(edges.flatMap((edge) => [edge.from, edge.to])), result = [];
   const nodes = nodeMap();
   while (remaining.size) {
     const first = remaining.values().next().value, members = [first]; remaining.delete(first);
@@ -779,7 +795,7 @@ function drawStateFilters() {
   // Initial snapshot loading precedes creation of the attention controls.
   if (initializing) return;
   const counts = new Map(ATTENTION_REASONS.map(reason => [reason.id, 0]));
-  const candidates = model.nodes.filter(node => matchesBase(node) && (!resolved(node) || $("show-resolved").checked));
+  const candidates = model.nodes.filter(node => matchesBase(node) && visibleHistory(node));
   for (const node of candidates) for (const reason of attentionReasons(node, registry.meta.owner)) counts.set(reason.id, counts.get(reason.id) + 1);
   for (const control of $("state-filters").querySelectorAll("input[data-reason]")) {
     control.checked = reasonFilters.has(control.dataset.reason);
@@ -799,13 +815,14 @@ function stateAge(node) {
   const records = Object.entries(states(node)).filter(([state, record]) => record.basis !== "unknown" && (!stateFilters.size || stateFilters.has(state)));
   return records.length ? Math.max(...records.map(([, record]) => Date.parse(record.observedAt || model.checkedAt) - Date.parse(record.since))) : -1;
 }
-const URL_FIELDS = ["view", "state", "reason", "group-by", "sort", "order", "q", "group", "resolved", "focus", "investigation-status"];
+const URL_FIELDS = ["view", "state", "reason", "group-by", "sort", "order", "q", "group", "history", "resolved", "focus", "investigation-status"];
 function selectedFromURL() {
   try { return decodeURIComponent(location.hash.slice(1)) || null; } catch { return null; }
 }
 function currentViewURL(selection = selected) {
   const url = new URL(location.href); url.search = "";
   url.searchParams.set("view", view);
+  if ($("show-resolved").checked) url.searchParams.set("history", "1");
   if (view === "investigations") {
     if ($("investigation-search").value) url.searchParams.set("q", $("investigation-search").value);
     if ($("investigation-filter").value) url.searchParams.set("investigation-status", $("investigation-filter").value);
@@ -819,7 +836,6 @@ function currentViewURL(selection = selected) {
     }
     if ($("search").value) url.searchParams.set("q", $("search").value);
     if ($("group-filter").value) url.searchParams.set("group", $("group-filter").value);
-    if ($("show-resolved").checked) url.searchParams.set("resolved", "1");
     if (focus) url.searchParams.set("focus", focus);
   }
   url.hash = selection ? encodeURIComponent(selection) : "";
@@ -833,7 +849,8 @@ function readViewURL() {
     reasonFilters: params.getAll("reason"), sortKey: params.get("sort") || "impact", sortDirection: params.get("order") === "asc" ? 1 : -1,
     stateFilters: params.getAll("state"), search: params.get("q") || "", group: params.get("group") || "",
     investigationStatus: params.get("investigation-status") || "",
-    resolved: params.get("resolved") === "1", selected: selectedFromURL(), focus: params.get("focus") || null };
+    history: params.get("history") === "1" || params.get("resolved") === "1" ||
+      !params.has("history") && params.get("view") === "investigations" && params.get("investigation-status") === "concluded", selected: selectedFromURL(), focus: params.get("focus") || null };
 }
 function applyView(saved) {
   view = saved.view === "handoff" ? "table" : VIEWS.includes(saved.view) ? saved.view : "dag";
@@ -843,6 +860,8 @@ function applyView(saved) {
   if (saved.selected?.startsWith("handoff-")) saved = { ...saved, selected: `attention-${LEGACY_HANDOFF_GROUPS[saved.selected.slice(8)] || saved.selected.slice(8)}` };
   const validID = id => typeof id === "string" && /^[^\s]{1,240}$/.test(id) ? id : null;
   const ids = nodeMap();
+  $("show-resolved").checked = saved.history === true || saved.history === undefined &&
+    (saved.resolved === true || view === "investigations" && saved.investigationStatus === "concluded");
   // URLs affect their displayed area. Saved preferences can retain both areas
   // without letting hidden PR filters change an investigation's results.
   if (view !== "investigations" || typeof saved.workSearch === "string") {
@@ -850,8 +869,7 @@ function applyView(saved) {
       state === "review" ? ["contributor-review", "maintainer-review"] : [state]).filter(state => FILTER_STATES.includes(state)));
     $("search").value = typeof saved.workSearch === "string" ? saved.workSearch : typeof saved.search === "string" ? saved.search : "";
     $("group-filter").value = [...$("group-filter").options].some(option => option.value === saved.group) ? saved.group : "";
-    $("show-resolved").checked = saved.resolved === true;
-    focus = ids.has(validID(saved.focus)) && !resolved(ids.get(saved.focus)) ? saved.focus : null;
+    focus = ids.has(validID(saved.focus)) ? saved.focus : null;
   }
   if (view === "investigations" || typeof saved.investigationSearch === "string") {
     $("investigation-search").value = typeof saved.investigationSearch === "string" ? saved.investigationSearch : typeof saved.search === "string" ? saved.search : "";
@@ -871,7 +889,7 @@ function saveView() {
   try { localStorage.setItem(UI_KEY, JSON.stringify({ url: currentViewURL(), view, tableGrouping, reasonFilters: [...reasonFilters], stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
     search: view === "investigations" ? $("investigation-search").value : $("search").value,
     workSearch: $("search").value, investigationSearch: $("investigation-search").value, investigationStatus: $("investigation-filter").value,
-    group: $("group-filter").value, resolved: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
+    group: $("group-filter").value, history: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
 }
 function restoreView() {
   let saved;
@@ -903,12 +921,12 @@ function navigateFromURL() {
   if (view === "investigations" && selected)
     document.getElementById(selected)?.focus({ preventScroll: true });
 }
-function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
+function tableNodes() { return model.nodes.filter((node) => matches(node) && visibleHistory(node)); }
 function investigationMatches(item) {
   const query = $("investigation-search").value.trim().toLowerCase(), state = $("investigation-filter").value;
   const text = [item.title, item.owner, item.summary, item.nextStep || "", ...item.findings.map(finding => finding.text),
     ...(item.comparisons || []).flatMap(comparison => [comparison.title, comparison.description, comparison.note, ...comparison.columns, ...comparison.rows.flat()])].join(" ").toLowerCase();
-  return (!state || item.status === state) && (!query || text.includes(query));
+  return visibleHistory(item) && (!state || item.status === state) && (!query || text.includes(query));
 }
 function investigationEvidence(sources) {
   const evidence = element("div", "investigation-evidence");
@@ -958,9 +976,10 @@ function drawInvestigations() {
   return items;
 }
 function graphNodes() {
-  const chains = components(), filtering = filtered();
-  if (!filtering && !focus) return tableNodes();
-  const ids = new Set((filtering ? tableNodes() : model.nodes.filter((node) => node.id === focus)).map((node) => node.id));
+  const selectedNode = nodeMap().get(selected), historySelection = !$("show-resolved").checked && selectedNode && historical(selectedNode) ? selected : null;
+  const target = focus || historySelection, chains = components(), filtering = filtered();
+  if (!filtering && !target) return tableNodes();
+  const ids = new Set((filtering ? tableNodes() : model.nodes.filter((node) => node.id === target)).map((node) => node.id));
   for (const chain of chains) if ([...chain.ids].some((id) => ids.has(id))) for (const id of chain.ids) ids.add(id);
   return model.nodes.filter((node) => ids.has(node.id));
 }
@@ -1000,7 +1019,7 @@ function wrap(text, length = 29, maxLines = 2) {
 }
 function dagLayout(nodes, content) {
   const ids = new Set(nodes.map((node) => node.id)), byId = nodeMap();
-  const edges = activeDependencyEdges().filter((edge) => ids.has(edge.from) && ids.has(edge.to));
+  const edges = displayDependencyEdges().filter((edge) => ids.has(edge.from) && ids.has(edge.to));
   const indegree = new Map(nodes.map((node) => [node.id, 0])), depth = new Map(nodes.map((node) => [node.id, 0]));
   for (const edge of edges) indegree.set(edge.to, indegree.get(edge.to) + 1);
   const queue = nodes.filter((node) => !indegree.get(node.id)).map((node) => node.id);
@@ -1010,7 +1029,7 @@ function dagLayout(nodes, content) {
     if (!indegree.get(edge.to)) queue.push(edge.to);
   }
   if (queue.length !== nodes.length) throw new Error("A recorded dependency cycle cannot be drawn as a DAG. Inspect its relationships in Table.");
-  const chains = components().filter((chain) => ids.has(chain.id)), positions = new Map();
+  const chains = components(edges), positions = new Map();
   const connected = new Set(chains.flatMap((chain) => [...chain.ids]));
   const isolates = nodes.filter((node) => !connected.has(node.id));
   const grouped = chains.length > 1 || isolates.length > 0;
@@ -1065,7 +1084,7 @@ function drawGraph(nodes) {
   bounds = layout;
   const { positions } = layout;
   const edges = svg("g", { "aria-hidden": "true" });
-  for (const edge of activeDependencyEdges()) {
+  for (const edge of displayDependencyEdges()) {
     const from = positions.get(edge.from), to = positions.get(edge.to); if (!from || !to) continue;
     const x1 = from.x + CARD.width, x2 = to.x, y1 = from.y + CARD.height / 2, y2 = to.y + CARD.height / 2;
     const bend = Math.max((x2 - x1) / 2, 20);
@@ -1213,6 +1232,7 @@ function drawDetails() {
   if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
   const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
   if (!node) return;
+  if (historical(node)) details.append(element("p", "notice", "History: no current action on this record. Linked active work remains separate."));
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
@@ -1280,7 +1300,7 @@ function drawDetails() {
       const sourceLabel = edge.role === "proposed_update" ? (other === "from" ? "Open proposed update ↗" : "Open live PR ↗") : "↗";
       relation.append(button(`${label(target)} · ${target.title}`, () => select(target.id)), link(sourceLabel, target.url, "relation-source"), element("p", "", edge.reason));
       if (!refinement || node.id !== edge.from) appendRangeDiff(relation, edge, nodes);
-      if (resolved(target)) relation.append(element("p", "", `Resolved: ${target.status}`));
+      if (historical(target)) relation.append(element("p", "", `History: ${target.status}`));
       for (const [index, url] of (Array.isArray(edge.evidence) ? edge.evidence : [edge.evidence]).filter(Boolean).entries()) relation.append(link(`Evidence${index ? " " + (index + 1) : ""} ↗`, url, "evidence-link"));
       section.append(relation);
     }
@@ -1319,12 +1339,13 @@ function render(reposition = false, navigation = "replace") {
   $("dag-pane").hidden = !dag; $("table-pane").hidden = view !== "table"; $("investigations-pane").hidden = !investigations;
   for (const choice of VIEWS) $(`${choice}-view`).setAttribute("aria-pressed", view === choice);
   document.body.classList.toggle("investigation-mode", investigations);
-  $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations; $("resolved-control").hidden = investigations;
+  $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations;
   $("work-state-controls").hidden = investigations; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
   $("chain-control").hidden = !dag; $("group-by-attention").checked = tableGrouping;
   const nodes = investigations ? drawInvestigations() : dag ? graphNodes() : tableNodes();
   $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : `${nodes.length} items${dag ? " · prerequisite → dependent" : " · click a title for relationships"}`;
-  $("filter-note").textContent = investigations ? "Research records · separate from GitHub status" : reasonFilters.size ? "Matching any selected attention reason" : dag && filtered() ? "Matches with dependency context" : "";
+  const historyNote = $("show-resolved").checked ? "Including history" : "Inactive history hidden; direct links remain available";
+  $("filter-note").textContent = `${historyNote} · ${investigations ? "Research records" : reasonFilters.size ? "Matching any selected attention reason" : dag && filtered() ? "Matches with dependency context" : "Active work"}`;
   $("empty").hidden = nodes.length !== 0; $("empty-title").textContent = investigations ? "No matching investigations" : "No matching work";
   drawDetails(); drawStateFilters();
   if (dag) { drawGraph(nodes); drawChainSelector(); } else if (view === "table") drawTable(nodes);
@@ -1437,7 +1458,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   if (aliases.has(focus)) focus = aliases.get(focus);
   if (selected && !selectionMap().has(selected)) selected = null;
   if (view === "investigations" && selected && !investigationMatches(investigationMap().get(selected))) selected = null;
-  if (focus && !model.nodes.some((node) => node.id === focus && !resolved(node))) focus = null;
+  if (focus && !model.nodes.some((node) => node.id === focus)) focus = null;
   // Status updates redraw the data, not the user's viewport. Initial render,
   // filters and explicit graph controls own fitting/recentering.
   render();
@@ -1462,6 +1483,7 @@ function validateRegistry(candidate) {
         Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
+    if (node.inactive !== undefined && typeof node.inactive !== "boolean") throw new Error("Invalid inactive classification");
     if (node.group !== undefined && !candidate.groups.some(group => group.id === node.group))
       throw new Error("Invalid node group");
     const dispositions = node.followup?.attentionDispositions;
@@ -1716,6 +1738,10 @@ function setView(next) {
   view = next; searchEditing = false; render(!separateView, "push");
 }
 function resetFilters(redraw = true) {
+  $("show-resolved").checked = false;
+  const selectedNode = nodeMap().get(selected);
+  if (selectedNode && historical(selectedNode)) selected = null;
+  focus = null;
   if (view === "investigations") {
     $("investigation-search").value = ""; $("investigation-filter").value = ""; selected = null;
     if (redraw) render(false, "push"); return;
@@ -1740,8 +1766,15 @@ function initialize() {
   $("search").addEventListener("blur", () => { searchEditing = false; });
   $("investigation-search").addEventListener("input", () => { selected = null; render(false, searchEditing ? "replace" : "push"); searchEditing = true; });
   $("investigation-search").addEventListener("blur", () => { searchEditing = false; });
-  $("investigation-filter").addEventListener("change", () => { selected = null; render(false, "push"); });
-  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => { if (selected?.startsWith("attention-")) selected = null; render(true, "push"); });
+  $("investigation-filter").addEventListener("change", () => { if ($("investigation-filter").value === "concluded") $("show-resolved").checked = true; selected = null; render(false, "push"); });
+  $("group-filter").addEventListener("change", () => { if (selected?.startsWith("attention-")) selected = null; render(true, "push"); });
+  $("show-resolved").addEventListener("change", () => {
+    if (!$("show-resolved").checked) {
+      selected = null; focus = null;
+      if ($("investigation-filter").value === "concluded") $("investigation-filter").value = "";
+    }
+    render(true, "push");
+  });
   $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; render(true, "push"); });
   for (const next of VIEWS) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());

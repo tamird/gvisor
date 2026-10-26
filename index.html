@@ -9,7 +9,7 @@
   <title>gVisor + BuildBuddy · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css?v=attention-table-2">
-  <script src="app.js?v=20261021-triaged-attention-2" defer></script>
+  <script src="app.js?v=20261026-history" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -24,14 +24,14 @@
       <label class="search"><span class="sr-only">Search work</span><input id="search" type="search" placeholder="Search title, PR #, or branch" autocomplete="off"><kbd>/</kbd></label>
       <label id="investigation-search-control" class="search" hidden><span class="sr-only">Search investigations</span><input id="investigation-search" type="search" placeholder="Search investigations and findings" autocomplete="off"><kbd>/</kbd></label>
       <label id="group-control"><span class="sr-only">Workstream</span><select id="group-filter"><option value="">All workstreams</option></select></label>
-      <label id="resolved-control" class="resolved-control"><input id="show-resolved" type="checkbox"> Show resolved</label>
+      <label id="resolved-control" class="resolved-control"><input id="show-resolved" type="checkbox"> Show history</label>
       <label id="investigation-filter-control" hidden><span class="sr-only">Investigation status</span><select id="investigation-filter"><option value="">All investigations</option><option value="active">Active</option><option value="concluded">Concluded</option></select></label>
       <button id="toolbar-reset" class="subtle">Reset</button>
     </div>
     <section id="work-state-controls" class="state-toolbar" aria-label="Work state filters">
       <div id="state-filters" class="state-filters" role="group" aria-label="Filter by state; select multiple reasons to match any"></div>
       <span id="legacy-state-filter" hidden></span>
-      <details class="state-help"><summary>Attention &amp; evidence</summary><p>Choose reasons under Agent work, Needs your decision, or Needs maintainer attention. Conflicts, public source failures and feedback triage are agent work; only actual proposal decisions require you. Reasons can overlap; selecting several matches any. Public source checks, internal Copybara feedback and import checks stay distinct. An author reply can require reviewer follow-up without establishing that the fix is accepted. A newer head or outdated location alone does not answer unresolved feedback. Unclear review holds are marked for clarification.</p><p>Unpublished proposal decisions do not change a published PR's review status. Drafts, resolved items and other work remain explicit table groups. Grouped rows appear once under the first matching reason; all their reasons remain visible. Internal CL progress and merge gates may be unknown. Recorded state ages retain their original revision-scoped observation clocks; attention labels do not invent new timestamps.</p></details>
+      <details class="state-help"><summary>Attention &amp; evidence</summary><p>Choose reasons under Agent work, Needs your decision, or Needs maintainer attention. Conflicts, public source failures and feedback triage are agent work; only actual proposal decisions require you. Reasons can overlap; selecting several matches any. Public source checks, internal Copybara feedback and import checks stay distinct. An author reply can require reviewer follow-up without establishing that the fix is accepted. A newer head or outdated location alone does not answer unresolved feedback. Unclear review holds are marked for clarification.</p><p>Unpublished proposal decisions do not change a published PR's review status. Inactive delivery, withdrawn, retired, merged and concluded records are hidden by default. Show history includes them for reference; they do not request action. Active PRs, decisions and ongoing work remain visible. Grouped rows appear once under the first matching reason; all their reasons remain visible. Internal CL progress and merge gates may be unknown. Recorded state ages retain their original revision-scoped observation clocks; attention labels do not invent new timestamps.</p></details>
     </section>
     <div class="workspace-body">
       <section class="work-pane" aria-label="Work inventory">
@@ -64,7 +64,7 @@
           </tr></thead><tbody></tbody></table>
         </section>
         <section id="investigations-pane" class="investigations-pane" aria-label="Investigations and findings" hidden>
-          <p class="investigation-intro">Research and tasks can start before a Git branch exists. Findings and evidence remain available after an investigation concludes.</p>
+          <p class="investigation-intro">Research and tasks can start before a Git branch exists. Use Show history for concluded investigations; direct links always remain available.</p>
           <div id="investigation-list"></div>
         </section>
         <div id="empty" class="empty" hidden><h2 id="empty-title">No matching work</h2><p id="empty-text">Try another search or reset the filters.</p><div><button id="reset-filters">Reset filters</button></div></div>

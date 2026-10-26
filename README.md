@@ -32,6 +32,21 @@ facts and unresolved causes in every relationship.
 - Remove obsolete branches manually. Do not infer retirement from a missing
   branch lookup or silently replace a dependency with a similarly named item.
 
+The everyday views hide inactive history. **Show history** includes delivered
+branch records, withdrawn or superseded proposals, merged/closed PRs and
+concluded investigations. Its shareable URL is `?view=table&history=1` (also
+supported in the DAG and Investigations views); old `resolved=1` links still
+work. A direct link always exposes its selected historical record. Dependency
+details retain historical relationships without counting them as live blockers.
+
+Use `inactive: true` for a curated branch, external or other record that has no
+remaining action of its own. Do not infer inactivity from words such as
+"delivered" inside freeform status or follow-up prose: a release or validation
+may still be pending. Public open PRs, explicit contributor decisions, changes
+requests, human submissions and `Agent work` remain visible even when an old
+record carries this flag. Keep ongoing work in its current owning record, and
+clear the flag when reactivating a historical record.
+
 Repository policies in `meta.repositories` select the existing Copybara workflow
 for gVisor and ordinary direct PR review for BuildBuddy. Every live PR carries
 its source repository; non-primary PR IDs include that repository, preserving
@@ -408,8 +423,9 @@ promoted branches retain it under the PR identity. Initial display, filter/focus
 changes and explicit Fit/Reset controls still position the graph.
 
 New PRs replace matching curated branches and inherit their relationships.
-Merged/closed PRs hide by default; **Show resolved** reveals them. Other external
-evidence and deployed-worker qualification remain curated. No source or import
+Inactive records hide by default across all views; **Show history** reveals them.
+Direct links still open historical records and their dependency context. Other
+external evidence and deployed-worker qualification remain curated. No source or import
 check status changes a dependency edge or establishes deployed capacity.
 
 ### Interface

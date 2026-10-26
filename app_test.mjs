@@ -1146,6 +1146,123 @@ test('shared table URLs preserve multiple attention reasons and legacy handoff n
   const shared = JSON.parse(vm.runInContext('JSON.stringify(readViewURL())', context)); assert.deepEqual(shared.reasonFilters, ['author-conflicts', 'maintainer-import-failed']); assert.equal(shared.sortKey, 'number'); assert.equal(shared.sortDirection, 1);
 });
 
+function historyView(nodes, investigations = []) {
+  const context = client();
+  const controls = new Map();
+  context.location = new URL('https://example.test/?view=table');
+  context.document = { getElementById: id => {
+    if (!controls.has(id)) controls.set(id, { value: '', checked: false, options: [{ value: '' }],
+      querySelectorAll: () => [], setAttribute() {}, getBoundingClientRect: () => ({ width: 1000, height: 800 }) });
+    return controls.get(id);
+  } };
+  context.registryInput = { ...context.registryInput, nodes, investigations, edges: [], groups: [] };
+  context.nodesInput = nodes;
+  vm.runInContext('registry = registryInput; model = { nodes: nodesInput, edges: [], statesAvailable: true }; view = "table";', context);
+  return { context, controls };
+}
+
+test('default visibility hides inactive history but retains live, blocked and newly actionable work', () => {
+  const old = { id: 'branch:delivered', type: 'branch', title: 'Delivered proposal', status: 'Published as #1', inactive: true };
+  const open = { ...attentionNode(1), inactive: true };
+  const decision = { ...old, id: 'branch:new-decision', contributorReview: { status: 'pending', head: 'a'.repeat(40) } };
+  const changes = { ...old, id: 'branch:changes', head: 'b'.repeat(40), contributorChangesRequested: { head: 'b'.repeat(40) } };
+  const work = { ...old, id: 'branch:ongoing', status: 'Agent work' };
+  const blocked = { id: 'branch:blocked', type: 'branch', title: 'Approved child', status: 'Awaiting prerequisites' };
+  const external = { id: 'external:release', type: 'issue', title: 'Release pending', githubState: 'closed', status: 'Source workaround delivered; release pending' };
+  const terminal = ['resolved', 'withdrawn', 'retired', 'superseded', 'closed', 'merged'].map(status =>
+    ({ id: `branch:${status}`, type: 'branch', title: status, status }));
+  const merged = { ...attentionNode(2), status: 'merged', github: { ...attentionNode(2).github, status: 'merged' } };
+  const nodes = [old, ...terminal, merged, open, decision, changes, work, blocked, external];
+  const { context, controls } = historyView(nodes);
+  const ids = expression => JSON.parse(vm.runInContext(`JSON.stringify(${expression}.map(n => n.id))`, context));
+  const active = [open, decision, changes, work, blocked, external].map(n => n.id);
+  assert.deepEqual(ids('tableNodes()'), active);
+  assert.deepEqual(ids('graphNodes()'), active);
+  vm.runInContext('initializing = false; drawStateFilters()', context);
+  assert.equal(controls.get('all-reasons').textContent, `All ${active.length}`);
+  controls.get('show-resolved').checked = true;
+  assert.deepEqual(ids('tableNodes()'), nodes.map(n => n.id));
+  const groups = JSON.parse(vm.runInContext('JSON.stringify(attentionGroups(tableNodes(), "tamird"))', context));
+  assert.equal(groups.find(group => group.id === 'resolved').entries.length, terminal.length + 2);
+});
+
+test('history deep links expose the selected record and its live dependency without adding a blocker', () => {
+  const old = { id: 'branch:withdrawn', type: 'branch', title: 'Old proposal', status: 'Withdrawn', inactive: true };
+  const live = { id: 'branch:replacement', type: 'branch', title: 'Replacement', status: 'Agent work' };
+  const { context, controls } = historyView([old, live]);
+  context.edgesInput = [{ from: old.id, to: live.id, type: 'depends_on' }];
+  vm.runInContext('model.edges = edgesInput', context);
+  assert.equal(vm.runInContext('activeDependencyEdges().length', context), 0);
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(tableNodes().map(n => n.id))', context)), [live.id]);
+  context.location = new URL(`https://example.test/?view=dag&focus=${encodeURIComponent(old.id)}#${encodeURIComponent(old.id)}`);
+  vm.runInContext('applyView(readViewURL())', context);
+  assert.equal(controls.get('show-resolved').checked, false);
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(graphNodes().map(n => n.id))', context)), [old.id, live.id]);
+  assert.equal(vm.runInContext('selected', context), old.id);
+  assert.equal(vm.runInContext('focus', context), old.id);
+  context.location = new URL(`https://example.test/?view=dag#${encodeURIComponent(old.id)}`);
+  vm.runInContext('applyView(readViewURL())', context);
+  assert.equal(vm.runInContext('focus', context), null);
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(graphNodes().map(n => n.id))', context)), [old.id, live.id]);
+  assert.equal(vm.runInContext('displayDependencyEdges().length', context), 1);
+  assert.equal(vm.runInContext('components()[0].ids.size', context), 2);
+  assert.equal(vm.runInContext('dagLayout(graphNodes(), {}).positions.get("branch:replacement").x > dagLayout(graphNodes(), {}).positions.get("branch:withdrawn").x', context), true);
+  vm.runInContext('resetFilters(false)', context);
+  assert.equal(vm.runInContext('selected', context), null);
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(graphNodes().map(n => n.id))', context)), [live.id]);
+  assert.equal(vm.runInContext('displayDependencyEdges().length', context), 0);
+  context.unrelatedInput = { id: 'branch:unrelated', type: 'branch', title: 'Unrelated', status: 'Agent work' };
+  vm.runInContext('model.nodes.push(unrelatedInput); selected = "branch:withdrawn"', context);
+  controls.get('show-resolved').checked = true;
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(graphNodes().map(n => n.id))', context)), [old.id, live.id, 'branch:unrelated']);
+});
+
+test('investigations share history visibility and keep concluded direct links readable', () => {
+  const items = ['active', 'concluded'].map(status => ({ id: `investigation:${status}`, title: status,
+    status, summary: status, owner: 'agent', findings: [], evidence: [] }));
+  const { context, controls } = historyView([], items);
+  context.itemsInput = items;
+  const visible = () => JSON.parse(vm.runInContext('JSON.stringify(itemsInput.filter(investigationMatches).map(n => n.id))', context));
+  assert.deepEqual(visible(), ['investigation:active']);
+  controls.get('show-resolved').checked = true;
+  assert.deepEqual(visible(), items.map(n => n.id));
+  context.location = new URL('https://example.test/?view=investigations#investigation%3Aconcluded');
+  vm.runInContext('applyView(readViewURL())', context);
+  assert.equal(controls.get('show-resolved').checked, false);
+  assert.equal(vm.runInContext('selected', context), 'investigation:concluded');
+  assert.deepEqual(visible(), items.map(n => n.id));
+  context.location = new URL('https://example.test/?view=investigations&investigation-status=concluded');
+  vm.runInContext('applyView(readViewURL())', context);
+  assert.equal(controls.get('show-resolved').checked, true);
+  assert.deepEqual(visible(), ['investigation:concluded']);
+});
+
+test('history URLs round-trip in every view and old resolved links retain their intent', () => {
+  const { context, controls } = historyView([]);
+  for (const view of ['dag', 'table', 'investigations']) {
+    context.location = new URL(`https://example.test/?view=${view}&history=1`);
+    vm.runInContext('applyView(readViewURL())', context);
+    assert.equal(controls.get('show-resolved').checked, true);
+    assert.equal(vm.runInContext('currentViewURL()', context), `/?view=${view}&history=1`);
+    context.location = new URL(`https://example.test/?view=${view}`);
+    vm.runInContext('applyView(readViewURL())', context);
+    assert.equal(controls.get('show-resolved').checked, false);
+  }
+  context.location = new URL('https://example.test/?view=table&resolved=1');
+  vm.runInContext('applyView(readViewURL())', context);
+  assert.equal(vm.runInContext('currentViewURL()', context), '/?view=table&history=1');
+  vm.runInContext('resetFilters(false)', context);
+  assert.equal(controls.get('show-resolved').checked, false);
+  for (const view of ['dag', 'table']) {
+    context.savedInput = { view, history: false, investigationStatus: 'concluded' };
+    vm.runInContext('applyView(savedInput)', context);
+    assert.equal(controls.get('show-resolved').checked, false);
+  }
+  context.savedInput = { view: 'investigations', history: false, investigationStatus: 'concluded' };
+  vm.runInContext('applyView(savedInput)', context);
+  assert.equal(controls.get('show-resolved').checked, false);
+});
+
 test('clipboard fallback and pending writes cannot restore a stale handoff after invalidation', async () => {
   const context = client();
   const elements = Object.fromEntries(['handoff-manual', 'handoff-copy-text', 'handoff-copy-status', 'handoff-copy-all']
