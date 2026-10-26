@@ -225,6 +225,24 @@ func (a *StringArray) save(w *Writer) {
 	}
 }
 
+// RefArray stores a homogeneous reference array without one Object interface
+// and allocation per element. Contents must not move while a graph resolver
+// retains element pointers. Each save reads the current reference values.
+// Load uses this same storage for the ordinary Array wire grammar.
+type RefArray struct {
+	arrayKind
+	Contents []Ref
+}
+
+func (a *RefArray) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeRef) {
+		return
+	}
+	for i := range a.Contents {
+		a.Contents[i].save(w)
+	}
+}
+
 func (a *BoolArray) Len() int                   { return len(a.Contents) }
 func (a *BoolArray) Element(i int) Object       { return Bool(a.Contents[i]) }
 func (a *IntArray[T]) Len() int                 { return len(a.Contents) }
@@ -248,5 +266,10 @@ func (a *Complex128Array) Element(i int) Object {
 func (a *StringArray) Len() int { return len(a.Contents) }
 func (a *StringArray) Element(i int) Object {
 	value := String(a.Contents[i])
+	return &value
+}
+func (a *RefArray) Len() int { return len(a.Contents) }
+func (a *RefArray) Element(i int) Object {
+	value := a.Contents[i]
 	return &value
 }
