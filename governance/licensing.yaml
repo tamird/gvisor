@@ -44,15 +44,15 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
-  - dependency: llvm-raw
+  - dependency: llvm-project
     license:
       - Apache-2.0 WITH LLVM-exception
-      - MIT
+      - NCSA
     exception_rationale: >-
       LLVM is part of the NVIDIA GPU test toolchain only and is not
-      distributed with gVisor. The LLVM exception only relaxes
-      Apache-2.0's requirements, and the MIT match comes from third-party
-      notices embedded in LICENSE.TXT.
+      distributed with gVisor. LICENSE.TXT includes both the Apache-2.0
+      license with the LLVM exception and the legacy University of
+      Illinois/NCSA license.
   - dependency: qemu_user_amd64
     license: GPL-2.0-only
     exception_rationale: >-

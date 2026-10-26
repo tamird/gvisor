@@ -492,8 +492,8 @@ func (graph *modGraph) repoRefs() []repoRef {
 		case strings.HasSuffix(u.Key, "%go_deps"):
 			// Go repos imported from the gazelle go_deps extension.
 		default:
-			// Toolchain extensions (crosstool, llvm_zlib, python, go_sdk,
-			// ...) are not audited.
+			// Toolchain extensions (crosstool, python, go_sdk, ...)
+			// are not audited.
 			continue
 		}
 		for _, r := range u.UsedRepos {
