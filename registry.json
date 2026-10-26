@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T19:45:36.534102+00:00",
+    "updatedAt": "2026-10-26T20:02:54.305667+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17790,26 +17790,28 @@
       "repo": "google/gvisor",
       "number": 16055,
       "ref": "fix/rack-reorder-test",
-      "head": "bd37d23bc935b2585ade8c056c26c8ca8fb17dc2",
+      "head": "51e6940d1d4a66e8e9f87b1b278c99370c08a019",
       "title": "Restore the RACK reordering test",
       "url": "https://github.com/google/gvisor/pull/16055",
       "group": "tests",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at bd37d23bc935 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at a7ad53e89f. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at a7ad53e89f4045cc8bbfbdb7ad490b13fc3cdf7d on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633275867 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16055 at 3782966d5f1f5a14baa6d14ba296998088be0fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe proposed fixture replaces an unconditional skip with a manual-clock SACK/cumulative-ACK sequence and unchanged production RACK code. Qualified integration6c8c passed all18 RACK methods per architecture plus owning Nogo/buildifier; the negative mutation failed the exact final reordering assertion on both architectures. Root requested contributor review once; no upstream PR. The prior529906 revision differs only in its message.",
+      "summary": "Current public #16055 remains at 51e6940d1. A comment-only amendment at 792659c37 is ready for contributor review in response to Lucas\u2019s missing-packet wording suggestion. No upstream update has been made.\n\nEarlier source-specific history:\n\nThe requested post-#16046 rebase is published at bd37d23bc935 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at a7ad53e89f. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at a7ad53e89f4045cc8bbfbdb7ad490b13fc3cdf7d on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633275867 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16055 at 3782966d5f1f5a14baa6d14ba296998088be0fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe proposed fixture replaces an unconditional skip with a manual-clock SACK/cumulative-ACK sequence and unchanged production RACK code. Qualified integration6c8c passed all18 RACK methods per architecture plus owning Nogo/buildifier; the negative mutation failed the exact final reordering assertion on both architectures. Root requested contributor review once; no upstream PR. The prior529906 revision differs only in its message.",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "bd37d23bc935b2585ade8c056c26c8ca8fb17dc2",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Gazelle rebase complete; exact current-head Gazelle check succeeded",
-        "nextAction": "Follow new substantive review, import and merge events in the existing sweep; preserve current maintainer holds and do not repeat the completed rebase.",
+        "owner": "root",
+        "sourceHead": "51e6940d1d4a66e8e9f87b1b278c99370c08a019",
+        "observedAt": "2026-10-26T20:02:54.305667+00:00",
+        "disposition": "Comment-only amendment ready for contributor review",
+        "nextAction": "Review the one-line comment amendment at 792659c37 against the current public head. Keep the source PR and current maintainer state separate until authorization.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39424435862/job/118633275867",
           "https://github.com/google/gvisor/pull/16031",
           "https://github.com/google/gvisor/pull/16048",
-          "https://github.com/tamird/gvisor/commit/bd37d23bc935b2585ade8c056c26c8ca8fb17dc2"
+          "https://github.com/tamird/gvisor/commit/bd37d23bc935b2585ade8c056c26c8ca8fb17dc2",
+          "https://github.com/tamird/gvisor/commit/792659c3733210dd8943e52dcd64a47b467791cd",
+          "https://github.com/google/gvisor/pull/16055#discussion_r4381423969"
         ]
       },
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-26T20:02:54.305667+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -17830,6 +17832,14 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/bd37d23bc935b2585ade8c056c26c8ca8fb17dc2"
+        },
+        {
+          "label": "Proposed comment-only amendment",
+          "url": "https://github.com/tamird/gvisor/commit/792659c3733210dd8943e52dcd64a47b467791cd"
+        },
+        {
+          "label": "Exact public-to-proposed difference",
+          "url": "https://github.com/tamird/gvisor/compare/51e6940d1d4a66e8e9f87b1b278c99370c08a019..792659c3733210dd8943e52dcd64a47b467791cd"
         }
       ],
       "ciRecovery": {
@@ -17851,6 +17861,16 @@
             "jobURL": "https://github.com/google/gvisor/actions/runs/39424435862/job/118633275867"
           }
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "792659c3733210dd8943e52dcd64a47b467791cd",
+        "baseHead": "51e6940d1d4a66e8e9f87b1b278c99370c08a019",
+        "url": "https://github.com/tamird/gvisor/commit/792659c3733210dd8943e52dcd64a47b467791cd",
+        "title": "Clarify the RACK reordering test comment",
+        "summary": "Change \u201cthe first packet\u201d to \u201cthe missing packet\u201d in response to the current review. This is a comment-only amendment; the executed test and production code are unchanged.",
+        "body": "The proposed revision makes the ACK comment identify the missing packet, avoiding confusion with the earlier RTT-establishing packet. The single changed line preserves all test inputs and assertions. Existing source-specific qualification remains applicable to the unchanged executable code; no new run is claimed."
       }
     },
     {
@@ -23306,13 +23326,23 @@
       "repo": "google/gvisor",
       "number": 16344,
       "ref": "fix/tpu-timeout-parseuint",
-      "head": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
+      "head": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
       "title": "Reject unrepresentable TPU operation timeouts",
       "url": "https://github.com/google/gvisor/pull/16344",
       "group": "analysis",
       "status": "open",
       "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. The contributor approved this exact revised head, now published as #16344. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
-      "updatedAt": "2026-10-24T15:10:12.677101+00:00"
+      "updatedAt": "2026-10-26T20:01:37.709096+00:00",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
+        "observedAt": "2026-10-26T20:01:37.709096+00:00",
+        "disposition": "Prepare the optional timeout-diagnostic refinement",
+        "nextAction": "Use one bounded, user-facing invalid-timeout message for parse failures and zero, preserving the existing signed-wire range and library semantics. Prepare a fork-only revision and focused remote validation before any upstream update or reply.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16344#discussion_r4381420029"
+        ]
+      }
     },
     {
       "id": "pr:16345",
@@ -23640,7 +23670,7 @@
       "url": "https://github.com/google/gvisor/pull/16380",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-25T15:17:53+00:00",
+      "updatedAt": "2026-10-26T20:01:37.709096+00:00",
       "summary": "The approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
       "links": [
         {
@@ -23655,15 +23685,16 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
-        "disposition": "Approved source delivered as #16380; current normal and race qualification pass; the October25 automated no-findings comment is not a maintainer approval",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing watcher. The approved destination-kind child retains its separate source grant and waits for actual #16380 landing. No repeated contributor question.",
+        "disposition": "Address the current-head automated review before further delivery",
+        "nextAction": "Prepare a smaller wire-loading/benchmark/primitive-array/reference-array series for review; refresh current-source encoding/decoding measurements and identify the existing save/restore owners. Trim historical comments and keep the exported Load panic contract. No upstream source update or reply is authorized by this assignment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16380",
           "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c",
           "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615",
-          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5643702405"
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5643702405",
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5657639744"
         ],
-        "observedAt": "2026-10-25T15:17:53+00:00"
+        "observedAt": "2026-10-26T20:01:37.709096+00:00"
       },
       "evidence": [
         {
