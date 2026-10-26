@@ -47,6 +47,7 @@ jobs:
 
           export USE_BAZEL_VERSION
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          printf '%s\n' //pkg/pinring:pinring_test > "$RUNNER_TEMP/pinring.targets"
           bazelisk test --lockfile_mode=error --config=x86_64 --config=unit \
             --define=rbe=true --define=gvisor_test_clock_source=calibrated \
             --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64 \
@@ -55,7 +56,8 @@ jobs:
             --test_env=GO_TEST_RUN_FROM_BAZEL=1 --test_env=GO_TEST_WRAP_TESTV=1 \
             --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_output=errors \
             "--run_under=$RUNNER_TEMP/verified-pinring" \
-            '--test_arg=-test.run=^TestKVMVMDeferredRelease$' //pkg/pinring:pinring_test
+            '--test_arg=-test.run=^TestKVMVMDeferredRelease$' \
+            "--target_pattern_file=$RUNNER_TEMP/pinring.targets"
 
           python3 - <<'PY'
           import json
