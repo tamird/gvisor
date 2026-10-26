@@ -28,6 +28,13 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: github.com/opencontainers/go-digest
+    license:
+      - Apache-2.0
+      - CC-BY-SA-4.0
+    exception_rationale: >-
+      The Go source is Apache-2.0. LICENSE.docs covers README.md and
+      CONTRIBUTING.md, which are not compiled into gVisor.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-

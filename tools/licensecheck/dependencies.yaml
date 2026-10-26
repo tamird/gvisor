@@ -692,10 +692,12 @@
   license: BSD-3-Clause
 - dependency: github.com/opencontainers/go-digest
   version: v1.0.0
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-26"
   commit: ea51bea511f75cfa3ef6098cc253c5c3609b037a
   sha256: 615efb31ff6cd71035b8aa38c3659d8b4da46f3cd92ac807cb50449adfe37c86
-  license: Apache-2.0
+  license:
+    - Apache-2.0
+    - CC-BY-SA-4.0
 - dependency: github.com/opencontainers/image-spec
   version: v1.1.1
   retrieved: "2026-08-27"
