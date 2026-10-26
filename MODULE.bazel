@@ -284,6 +284,139 @@ img_pull(
     tag = "1.31.1",
 )
 
+img_pull(
+    name = "test_python",
+    digest = "sha256:c5075348770d14159b316d99a4f65f3771d227710877021833119b014cd1a803",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/python",
+    tag = "3.15.1-trixie",
+)
+
+# Select the platform manifest directly to preserve Docker's health check.
+# Both manifests belong to mysql/mysql-server:8.0.19's pinned index:
+# sha256:7cd104d6ff11f7e6a16087f88b1ce538bcb0126c048a60cd28632e7cf3dbe1b7
+img_pull(
+    name = "test_mysql_amd64",
+    digest = "sha256:dc8cea19bc103ff2faf1ef01ac2bd337f5dd0c68a4981a962db8800d13d3b7c7",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "mysql/mysql-server",
+    tag = "8.0.19",
+)
+
+img_pull(
+    name = "test_mysql_arm64",
+    digest = "sha256:5495664652ac1a8c78c8079bc838483732c12ef59a7f7dbed21adbade33fa1ea",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "mysql/mysql-server",
+    tag = "8.0.19",
+)
+
+# Both platform manifests belong to the official mariadb:12.3.2 index:
+# sha256:a02fe89cb597d4375812b2eac90cf9d0775d4686daa7f7cc750ebbcad7525bbc
+img_pull(
+    name = "test_mariadb_amd64",
+    digest = "sha256:63b29a06fbde176102a20d90fee92b2bac3a112a4f47816cac18da9b70767393",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/mariadb",
+    tag = "12.3.2",
+)
+
+img_pull(
+    name = "test_mariadb_arm64",
+    digest = "sha256:f3761402303ebafc3bb4cb174afae399d71acd72b260f19139b5337dc39065f1",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/mariadb",
+    tag = "12.3.2",
+)
+
+# Both platform manifests belong to the official postgres:18.4 index:
+# sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636
+img_pull(
+    name = "test_postgresql_amd64",
+    digest = "sha256:4cc13dede823cab4e05290c7fb3350fb4e599ecabd9b07e6706b5d5e8f5bc929",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/postgres",
+    tag = "18.4",
+)
+
+img_pull(
+    name = "test_postgresql_arm64",
+    digest = "sha256:0826e5f2996099babb925e09fb72bf2c6eb5d187cfcae20aa9291af1612307e4",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/postgres",
+    tag = "18.4",
+)
+
+# Pin the existing architecture-specific Tomcat 8.0 images. The ARM64 image
+# remains at 8.0.52; the AMD64 image is 8.0.53.
+img_pull(
+    name = "test_tomcat_amd64",
+    digest = "sha256:47274bc304687e21217ca6a33e3244c43c6d5cfaceade76c4b478023f2aca3b2",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/tomcat",
+    tag = "8.0",
+)
+
+img_pull(
+    name = "test_tomcat_arm64",
+    digest = "sha256:4f6ab20a775c1582d1a25f1487a0d50f45eca32a8c0ec7eb135de2507026e0b1",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "arm64v8/tomcat",
+    tag = "8.0",
+)
+
+img_pull(
+    name = "test_bun",
+    digest = "sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "oven/bun",
+    tag = "1.4.3",
+)
+
+img_pull(
+    name = "test_httpd",
+    digest = "sha256:cd88fee4eab37f0d8cd04b06ef97285ca981c27b4d685f0321e65c5d4fd49357",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/httpd",
+    tag = "2.4.43",
+)
+
+img_pull(
+    name = "benchmark_httpd",
+    digest = "sha256:a30cd4cd57f3f3c3be9b2d16384d2488839996bb14c67df2b51f1ecbb3e584a1",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/httpd",
+    tag = "2.4.69-trixie",
+)
+
 ### Toolchains
 register_toolchains("//:cc_toolchain_k8")
 

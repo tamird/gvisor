@@ -51,7 +51,15 @@ LOCAL_IMAGE_PREFIX  ?= gvisor.dev/images
 BAZEL_IMAGE_CONTEXTS := \
   basic_alpine=//images/basic:alpine_context \
   basic_busybox=//images/basic:busybox_context \
-  basic_tmpfile=//images/basic:tmpfile_context
+  basic_httpd=//images/basic:httpd_context \
+  basic_mysql=//images/basic:mysql_context \
+  basic_python=//images/basic:python_context \
+  basic_tmpfile=//images/basic:tmpfile_context \
+  basic_tomcat=//images/basic:tomcat_context \
+  benchmarks_bun-spawn=//images/benchmarks/bun-spawn:bun_spawn_context \
+  benchmarks_httpd=//images/benchmarks:httpd_context \
+  compatibility_mariadb_mariadb=//images/compatibility:mariadb_context \
+  compatibility_postgresql_postgresql=//images/compatibility:postgresql_context
 BAZEL_IMAGES        := $(foreach entry,$(BAZEL_IMAGE_CONTEXTS),$(word 1,$(subst =, ,$(entry))))
 ALL_IMAGES          := $(BAZEL_IMAGES) $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | sed 's,/[^/]*$$,,' | sort -u)))
 NON_TEST_IMAGES     := gpu/ollama/bench\|gpu/vllm\|gpu/triton\|tpu/vllm
