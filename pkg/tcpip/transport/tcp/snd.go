@@ -73,6 +73,11 @@ type congestionControl interface {
 	// must be held constant (RFC 5681 section 3.1).
 	HandleRTOExpired(reduceThreshold bool)
 
+	// HandleWindowRestart is invoked when the sender reduces its window
+	// after an idle period (RFC 5681 section 4.1). Linux tcp_cwnd_restart()
+	// notifies congestion control with CA_EVENT_CWND_RESTART.
+	HandleWindowRestart()
+
 	// Update is invoked when processing inbound acks. It's passed the
 	// number of packet's that were acked by the most recent cumulative
 	// acknowledgement.  rtt is the round-trip time, or is set to unknownRTT
@@ -1137,6 +1142,7 @@ func (s *sender) sendData() {
 	if !s.FastRecovery.Active && s.state != tcpip.RTORecovery && s.ep.stack.Clock().NowMonotonic().Sub(s.LastSendTime) > s.RTO {
 		if s.SndCwnd > InitialCwnd {
 			s.SndCwnd = InitialCwnd
+			s.cc.HandleWindowRestart()
 		}
 	}
 
