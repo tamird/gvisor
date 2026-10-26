@@ -460,9 +460,8 @@ func (w *countingWriter) Write(p []byte) (int, error) {
 var _ = boot.VersionKey
 
 func TestMain(m *testing.M) {
-	harness.Init()
 	// Loading tasks' floating point state uses the host's CPUID,
 	// expected by the kernel load machinery.
 	cpuid.Initialize()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(m.Run))
 }
