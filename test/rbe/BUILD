@@ -27,6 +27,7 @@ py_test(
     name = "qualification_report_test",
     srcs = [
         "collect_actions.py",
+        "credential_artifacts.py",
         "qualification_report.py",
         "qualification_report_test.py",
         "unit_matrix.py",
@@ -42,6 +43,17 @@ py_test(
     imports = ["."],
     main = "qualification_report_test.py",
     tags = ["manual"],
+)
+
+py_test(
+    name = "credential_artifacts_test",
+    srcs = [
+        "credential_artifacts.py",
+        "credential_artifacts_test.py",
+    ],
+    main = "credential_artifacts_test.py",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 py_test(

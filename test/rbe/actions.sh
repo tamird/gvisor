@@ -84,10 +84,11 @@ fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=
 qualification_private=
+qualification_credentials=
 qualification_workspace=$PWD
 qualification_artifacts=
 cleanup() {
-  local status=$? capture_status=0 bundle_status=0
+  local status=$? capture_status=0 bundle_status=0 publication_status=0
   trap - EXIT
   # Preserve dependency resolution output even on failure or interruption.
   # A dirty lock remains a source-integrity failure; it is never restored here.
@@ -135,8 +136,19 @@ cleanup() {
       gzip -c -- "$qualification_artifacts/verdict.json" > "$BUILDBUDDY_ARTIFACTS_DIRECTORY/verdict.json.gz" || bundle_status=$?
     fi
   fi
+  if [[ -n $qualification_credentials ]]; then
+    # The final verdict is part of the scan. Only this successful check enables
+    # the existing Actions uploader, including when the native command failed.
+    # Compact/profile archives rely on the helper keeping credentials out of
+    # Bazel inputs; this scan checks the retained files without decompressing.
+    python3 "$qualification_workspace/test/rbe/credential_artifacts.py" verify \
+      "$qualification_credentials" "$qualification_artifacts" || publication_status=$?
+    rm -rf -- "$qualification_credentials" || publication_status=1
+  fi
   if (( status == 0 )); then
-    if (( capture_status != 0 )); then status=$capture_status; else status=$bundle_status; fi
+    if (( capture_status != 0 )); then status=$capture_status;
+    elif (( bundle_status != 0 )); then status=$bundle_status;
+    else status=$publication_status; fi
   fi
   exit "$status"
 }
@@ -239,6 +251,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     USE_BAZEL_VERSION=$(<images/default/bazelversion)
     command -v bazelisk
     : "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"
+    qualification_credentials=$(mktemp -d "$RUNNER_TEMP/qualification-credentials.XXXXXX")
+    credential_status=0
+    python3 test/rbe/credential_artifacts.py prepare "$qualification_credentials" || credential_status=$?
+    # client_env can appear in structured command-line events, even when an
+    # option is hidden. Remove the key before starting any Bazel process.
+    unset BUILDBUDDY_API_KEY
+    (( credential_status == 0 )) || exit "$credential_status"
     qualification_bazel_binary=$(command -v bazelisk)
     # Bazel's Docker strategy runs each test as the coordinator's UID. These
     # lanes need root for their namespace fixture or KVM device; others retain
@@ -296,8 +315,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=COMMIT_SHA=%s\n' "$QUALIFICATION_COMMIT"
       printf 'build:buildbuddy_remote_executor --build_metadata=REPO_URL=%s/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY"
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
-      printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-      printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+      printf 'common --credential_helper=remote.buildbuddy.io=%s/helper\n' "$qualification_credentials"
       if [[ $qualification_full_unit == true || $QUALIFICATION_EXECUTION == remote-actions ]]; then
         # Broad graphs need space beyond their roughly 4-GiB retained heap.
         # On this 16-GiB runner, give Bazel 8 GiB and local actions 4 GiB,
@@ -334,8 +352,6 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import sys,time; print(time.monotonic()+int(sys.argv[1]))' "$qualification_seconds")
       export QUALIFICATION_WORK_DEADLINE
     fi
-    unset BUILDBUDDY_API_KEY
-
     # These are observations of this VM, not claims about other hosted images.
     {
       uname -a

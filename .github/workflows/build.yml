@@ -177,6 +177,7 @@ jobs:
         printf 'QUALIFICATION_DECODER=%s\n' "$decoder" >> "$GITHUB_ENV"
 
     - name: Coordinate qualification on Actions
+      id: qualification
       timeout-minutes: ${{ matrix.step_minutes }}
       shell: bash
       env:
@@ -197,7 +198,7 @@ jobs:
         bash test/rbe/actions.sh "${options[@]}"
 
     - name: Retain this row's unchanged verdict and evidence
-      if: always()
+      if: always() && steps.qualification.outputs.artifacts_safe == 'true'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: qualification-row-${{ matrix.id }}-attempt-${{ github.run_attempt }}
