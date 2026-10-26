@@ -62,6 +62,87 @@ def linked(pr: dict, source: int) -> dict:
     return item
 
 
+class IssueInventoryTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.nodes = [{"id": f"issue:{index}", "type": "issue", "repo": repo, "number": index}
+                      for index, repo in enumerate(["buildbuddy-io/buildbuddy", "docker/compose"] * 5, 1)]
+        self.rows = {f"i{index}": {"issue": {
+            "url": f'https://github.com/{node["repo"]}/issues/{node["number"]}',
+            "state": "CLOSED", "stateReason": "NOT_PLANNED", "closedAt": OLD, "updatedAt": LATER,
+        }} for index, node in enumerate(self.nodes)}
+        self.batches = []
+
+    def graphql(self, query: str, *, missing_issue_aliases: set[str]) -> dict:
+        aliases = re.findall(r"(i\d+):repository", query)
+        self.batches.append(aliases)
+        self.assertLessEqual(len(aliases), updater.PR_BATCH_SIZE)
+        self.assertEqual(missing_issue_aliases, set(aliases))
+        return {alias: copy.deepcopy(self.rows[alias]) for alias in aliases}
+
+    def test_all_repositories_refresh_closure_reason_and_reopening_in_batches(self) -> None:
+        with mock.patch.object(updater, "REGISTRY", {"nodes": self.nodes}), \
+                mock.patch.object(updater, "graphql", side_effect=self.graphql):
+            closed = updater.collect_issues({})
+            self.rows["i0"]["issue"].update(state="OPEN", stateReason="REOPENED", closedAt=None)
+            reopened = updater.collect_issues({"issues": closed})
+        self.assertEqual(self.batches, [[f"i{i}" for i in range(8)], ["i8", "i9"]] * 2)
+        self.assertEqual(set(closed), {node["id"] for node in self.nodes})
+        self.assertEqual((closed["issue:1"]["githubState"], closed["issue:1"]["githubStateReason"]),
+                         ("closed", "NOT_PLANNED"))
+        self.assertEqual((reopened["issue:1"]["githubState"], reopened["issue:1"]["closedAt"]), ("open", None))
+        self.assertEqual(reopened["issue:2"]["githubState"], closed["issue:2"]["githubState"])
+
+    def test_missing_and_relocated_issue_retains_history_while_other_records_refresh(self) -> None:
+        prior = {"githubState": "closed", "githubStateReason": "COMPLETED", "updatedAt": OLD, "checkedAt": OLD}
+        for row in (None, {"issue": None}, {"issue": {**self.rows["i0"]["issue"],
+                                                      "url": "https://github.com/other/repo/issues/99"}}):
+            with self.subTest(row=row), mock.patch.object(updater, "REGISTRY", {"nodes": self.nodes[:2]}), \
+                    mock.patch.object(updater, "graphql", return_value={"i0": row, "i1": self.rows["i1"]}):
+                result = updater.collect_issues({"issues": {"issue:1": prior}})
+                self.assertEqual({key: result["issue:1"][key] for key in prior}, prior)
+                self.assertIn("Last observation retained", result["issue:1"]["unavailable"])
+                self.assertEqual(result["issue:2"]["githubStateReason"], "NOT_PLANNED")
+                unknown = updater.collect_issues({})["issue:1"]
+                self.assertEqual(unknown["githubState"], "unknown")
+                self.assertIn("No provider observation", unknown["unavailable"])
+        with mock.patch.object(updater, "REGISTRY", {"nodes": self.nodes[:1]}), \
+                mock.patch.object(updater, "graphql", return_value={}):
+            with self.assertRaisesRegex(RuntimeError, "inventory is incomplete"):
+                updater.collect_issues({})
+
+    def test_partial_gh_exit_retains_missing_issue_and_refreshes_sibling(self) -> None:
+        prior = {"githubState": "closed", "updatedAt": OLD, "checkedAt": OLD}
+        response = {"data": {"i0": {"issue": None}, "i1": self.rows["i1"],
+                             "rateLimit": {"cost": 1, "remaining": 4000}},
+                    "errors": [{"type": "NOT_FOUND", "path": ["i0", "issue"],
+                                "message": "Could not resolve to an Issue"}]}
+        completed = subprocess.CompletedProcess([], 1, json.dumps(response), "gh: Could not resolve to an Issue")
+        with mock.patch.object(updater, "REGISTRY", {"nodes": self.nodes[:2]}), \
+                mock.patch.object(updater, "requests", 0), \
+                mock.patch.object(updater, "query_cost", 0), \
+                mock.patch.object(updater, "rate_remaining", None), \
+                mock.patch.object(updater.subprocess, "run", return_value=completed) as run:
+            result = updater.collect_issues({"issues": {"issue:1": prior}})
+            self.assertEqual({key: result["issue:1"][key] for key in prior}, prior)
+            self.assertIn("Last observation retained", result["issue:1"]["unavailable"])
+            self.assertEqual(result["issue:2"]["updatedAt"], LATER)
+            self.assertEqual(result["issue:2"]["githubState"], "closed")
+            self.assertEqual((updater.requests, updater.query_cost, updater.rate_remaining), (1, 1, 4000))
+            run.assert_called_once()
+
+        for error in ({"type": "FORBIDDEN", "path": ["i0", "issue"]},
+                      {"type": "NOT_FOUND", "path": ["unknown", "issue"]},
+                      {"type": "NOT_FOUND", "path": ["i0", "pullRequest"]},
+                      {"type": "NOT_FOUND", "path": ["i0"]}):
+            with self.subTest(error=error), mock.patch.object(updater, "REGISTRY", {"nodes": self.nodes[:2]}), \
+                    mock.patch.object(updater, "requests", 0), \
+                    mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess(
+                        [], 1, json.dumps({**response, "errors": [error]}), "gh: query failed")) as run:
+                with self.assertRaisesRegex(RuntimeError, "GitHub query failed"):
+                    updater.collect_issues({})
+                run.assert_called_once()
+
+
 class MergeabilityBatchTest(unittest.TestCase):
     def setUp(self) -> None:
         self.rows = [raw_pr(number) for number in range(1, 18)]

@@ -77,8 +77,8 @@ function label(node) {
 function status(node) {
   if (node.type === "issue" && node.githubState) {
     if (humanAction(node)) return `Issue ${node.githubState} · human submission pending`;
-    if (node.status === "deployment-pending") return `Issue ${node.githubState} · deployment pending`;
-    return `Issue ${node.githubState} · capacity unverified`;
+    const reason = node.githubStateReason?.toLowerCase().replaceAll("_", " ");
+    return `Issue ${node.githubState}${reason ? ` · ${reason}` : ""}${node.unavailable ? " · refresh unavailable" : ""}`;
   }
   return ({ branch: "Working branch", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
 }
@@ -662,12 +662,16 @@ function appendAttributes(container, node) {
   container.append(section);
 }
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status) || node.type === "investigation" && node.status === "concluded"; }
+function providerClosed(node) {
+  return node.type === "pr" && ["merged", "closed"].includes(node.github?.status || node.status)
+    || node.type === "issue" && node.githubState === "closed";
+}
 function historical(node) {
   // A past delivery never hides a new decision or a live public PR. Curated
   // branch history is explicit: freeform status text can also describe work
   // that is still blocked, waiting for review or being validated.
   if (contributorDecision(node) || contributorChanges(node) || humanAction(node) || node.status === "Agent work") return false;
-  if (node.type === "pr") return ["merged", "closed"].includes(node.github?.status || node.status);
+  if (node.type === "pr" || node.type === "issue" && ["open", "closed"].includes(node.githubState)) return providerClosed(node);
   return node.inactive === true || ["resolved", "merged", "closed", "concluded", "withdrawn", "retired", "superseded"].includes(node.status?.toLowerCase());
 }
 function visibleHistory(node) {
@@ -677,7 +681,7 @@ function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node]));
 function investigationMap() { return new Map((registry.investigations || []).map(item => [item.id, item])); }
 function selectionMap() { return view === "investigations" ? investigationMap() : new Map([...nodeMap(), ...(view === "table" && tableGrouping ? [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => [`attention-${group.id}`, group]) : [])]); }
 function activeDependencyEdges() {
-  const active = new Set(model.nodes.filter((node) => !historical(node)).map((node) => node.id));
+  const active = new Set(model.nodes.filter((node) => !historical(node) && !providerClosed(node)).map((node) => node.id));
   return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
 }
 function impact(id) {
@@ -1281,7 +1285,10 @@ function drawDetails() {
     } else details.append(element("p", "detail-description", node.summary));
   }
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
-  if (node.type === "issue" && !decision && !action) details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
+  if (node.type === "issue" && node.unavailable)
+    details.append(element("p", "detail-meta", `${node.unavailable} Last provider observation: ${node.checkedAt ? date(node.checkedAt) : "not recorded"}.`));
+  if (node.type === "issue" && node.githubState === "closed" && !decision && !action)
+    details.append(element("p", "detail-meta", "Closed upstream. No action is needed on this issue."));
   const statePanel = element("div", "detail-states"); appendStates(statePanel, node, true); details.append(statePanel);
   const relations = [
     ["Proposed updates", model.edges.filter((edge) => edge.to === node.id && edge.role === "proposed_update"), "from"],
@@ -1300,7 +1307,7 @@ function drawDetails() {
       const sourceLabel = edge.role === "proposed_update" ? (other === "from" ? "Open proposed update ↗" : "Open live PR ↗") : "↗";
       relation.append(button(`${label(target)} · ${target.title}`, () => select(target.id)), link(sourceLabel, target.url, "relation-source"), element("p", "", edge.reason));
       if (!refinement || node.id !== edge.from) appendRangeDiff(relation, edge, nodes);
-      if (historical(target)) relation.append(element("p", "", `History: ${target.status}`));
+      if (historical(target)) relation.append(element("p", "", `History: ${status(target)}`));
       for (const [index, url] of (Array.isArray(edge.evidence) ? edge.evidence : [edge.evidence]).filter(Boolean).entries()) relation.append(link(`Evidence${index ? " " + (index + 1) : ""} ↗`, url, "evidence-link"));
       section.append(relation);
     }
@@ -1635,6 +1642,21 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
   if (snapshot?.schema !== 1 || snapshot.repo !== nextRegistry.meta.repo || snapshot.owner !== nextRegistry.meta.owner ||
       !Number.isFinite(Date.parse(snapshot.checkedAt)) || !Array.isArray(snapshot.prs) || !snapshot.issues) throw new Error("Invalid GitHub snapshot");
   if (snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
+  const issueNodes = (nextRegistry.nodes || []).filter(node => node.type === "issue" && node.repo && node.number);
+  if (issueNodes.length !== Object.keys(snapshot.issues).length || issueNodes.some(node => !Object.hasOwn(snapshot.issues, node.id)))
+    throw new Error("Incomplete issue inventory");
+  for (const [id, issue] of Object.entries(snapshot.issues)) {
+    const node = nextRegistry.nodes.find(node => node.id === id && node.type === "issue");
+    if (!node || !["open", "closed", "unknown"].includes(issue.githubState)
+        || (issue.githubState === "unknown" ? !issue.unavailable : !Number.isFinite(Date.parse(issue.updatedAt)))
+        || (issue.githubStateReason != null && typeof issue.githubStateReason !== "string")
+        || (issue.githubURL != null && issue.githubURL !== `https://github.com/${node.repo}/issues/${node.number}`)
+        || (issue.closedAt != null && !Number.isFinite(Date.parse(issue.closedAt)))
+        || (issue.checkedAt != null && !Number.isFinite(Date.parse(issue.checkedAt)))
+        || (issue.unavailable != null && (typeof issue.unavailable !== "string" || !issue.unavailable.trim()
+          || !Number.isFinite(Date.parse(issue.unavailableAt)))))
+      throw new Error("Invalid issue provider identity or state");
+  }
   if (snapshot.workStates !== undefined) {
     if (!snapshot.workStates || Array.isArray(snapshot.workStates) || typeof snapshot.workStates !== "object") throw new Error("Invalid state history");
     for (const [identity, records] of Object.entries(snapshot.workStates)) {

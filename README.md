@@ -47,6 +47,19 @@ requests, human submissions and `Agent work` remain visible even when an old
 record carries this flag. Keep ongoing work in its current owning record, and
 clear the flag when reactivating a historical record.
 
+Issue visibility follows the provider's open/closed state, including reopening,
+just as PR visibility follows its current source state. A closed request is
+history even if old notes say "deployment unverified"; its closure reason is
+shown without implying that a capability was deployed. Record unfinished
+validation in its existing agent-owned investigation or consumer, rather than
+keeping the closed provider request as a live blocker. Historical dependencies
+remain reachable from details and deep links. A new reply decision can expose
+a closed record without reactivating its dependency edges. The collector
+refreshes all registered issues in bounded batches. A missing or relocated
+issue retains its last observation with an explicit unavailable note while
+other records refresh; a partial inventory is rejected. Reconcile the affected
+identity before assigning it a new provider state.
+
 Repository policies in `meta.repositories` select the existing Copybara workflow
 for gVisor and ordinary direct PR review for BuildBuddy. Every live PR carries
 its source repository; non-primary PR IDs include that repository, preserving

@@ -77,7 +77,8 @@ class GitHubTransportError(RuntimeError):
     """A bounded request failed before a usable GitHub response arrived."""
 
 
-def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
+def graphql(query: str, variables: dict[str, object] | None = None, *,
+            missing_issue_aliases: set[str] | None = None) -> dict:
     global requests, query_cost, rate_remaining
     query = query.rstrip().removesuffix("}") + " rateLimit { cost remaining } }"
     for attempt in range(2):
@@ -106,10 +107,21 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
                 continue
             if interrupted:
                 raise GitHubTransportError(f"GitHub transport failed: {result.stderr.strip()}")
-            raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
+            if result.returncode != 1 or not missing_issue_aliases:
+                raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
         response = json.loads(result.stdout)
-        if response.get("errors"):
-            raise RuntimeError(f"GitHub query failed: {response['errors']}")
+        errors = response.get("errors")
+        # gh exits 1 for a partial GraphQL response. Only an unavailable
+        # requested issue may fall back to its prior observation.
+        missing_issues = errors and missing_issue_aliases and all(
+            isinstance(error, dict) and error.get("type") == "NOT_FOUND"
+            and isinstance(error.get("path"), list) and len(error["path"]) == 2
+            and error["path"][0] in missing_issue_aliases and error["path"][1] == "issue"
+            and response.get("data", {}).get(error["path"][0]) == {"issue": None}
+            for error in errors
+        )
+        if (errors or result.returncode) and not missing_issues:
+            raise RuntimeError(f"GitHub query failed: {errors or result.stderr.strip()}")
         data = response["data"]
         rate = data.pop("rateLimit")
         query_cost += rate["cost"]
@@ -716,6 +728,38 @@ def reapproval_reminders(post: bool = False) -> None:
             raise RuntimeError(f"PR #{pr['number']} changed while reminder {comment['html_url']} was posted")
 
 
+def collect_issues(previous: dict) -> dict[str, dict]:
+    """Refresh every registered issue, including terminal records and reopening."""
+    nodes = [node for node in REGISTRY["nodes"] if node["type"] == "issue"
+             and node.get("repo") and node.get("number")]
+    issues = {}
+    for start in range(0, len(nodes), PR_BATCH_SIZE):
+        batch = {f"i{index}": node for index, node in enumerate(nodes[start:start + PR_BATCH_SIZE], start)}
+        fields = []
+        for alias, node in batch.items():
+            owner, name = node["repo"].split("/")
+            fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{issue(number:{node["number"]})'
+                          '{url state stateReason closedAt updatedAt}}')
+        response = graphql("query{" + " ".join(fields) + "}", missing_issue_aliases=set(batch))
+        if set(response) != set(batch):
+            raise RuntimeError("Issue inventory is incomplete; previous snapshot is unchanged")
+        for alias, node in batch.items():
+            issue = (response[alias] or {}).get("issue")
+            if not issue or issue.get("url") != f'https://github.com/{node["repo"]}/issues/{node["number"]}':
+                prior = previous.get("issues", {}).get(node["id"])
+                issues[node["id"]] = {**(prior or {"githubState": "unknown"}),
+                    "unavailable": "Issue missing or relocated; reconcile its provider identity."
+                                   + (" Last observation retained." if prior else " No provider observation available."),
+                    "unavailableAt": datetime.now(timezone.utc).isoformat()}
+                continue
+            if issue.get("state") not in {"OPEN", "CLOSED"}:
+                raise RuntimeError(f'Invalid provider state for issue {node["id"]}')
+            issues[node["id"]] = {"githubState": issue["state"].lower(), "githubStateReason": issue["stateReason"],
+                                  "githubURL": issue["url"], "closedAt": issue["closedAt"], "updatedAt": issue["updatedAt"],
+                                  "checkedAt": datetime.now(timezone.utc).isoformat()}
+    return issues
+
+
 def main() -> None:
     policies = repository_policies(REGISTRY)
     output = ROOT / "github-status.json"
@@ -737,22 +781,7 @@ def main() -> None:
         refreshed.update({(repo, number): value for number, value in fresh.items()})
         prior_prs.update({(repo, number): value for number, value in prior.items()})
         inventories[repo] = inventory
-    issue_fields = []
-    issue_ids = {}
-    for index, node in enumerate(REGISTRY["nodes"]):
-        if node["type"] != "issue" or not node.get("repo") or not node.get("number"):
-            continue
-        owner, name = node["repo"].split("/")
-        alias = f"i{index}"
-        issue_fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{issue(number:{node["number"]}){{state updatedAt}}}}')
-        issue_ids[alias] = node["id"]
-    issues = {}
-    if issue_fields:
-        response = graphql("query{" + " ".join(issue_fields) + "}")
-        for alias, value in response.items():
-            if value and value["issue"]:
-                issue = value["issue"]
-                issues[issue_ids[alias]] = {"githubState": issue["state"].lower(), "updatedAt": issue["updatedAt"]}
+    issues = collect_issues(previous)
     checked_at = datetime.now(timezone.utc).isoformat()
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,

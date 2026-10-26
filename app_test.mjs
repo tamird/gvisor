@@ -1175,7 +1175,7 @@ test('default visibility hides inactive history but retains live, blocked and ne
   const nodes = [old, ...terminal, merged, open, decision, changes, work, blocked, external];
   const { context, controls } = historyView(nodes);
   const ids = expression => JSON.parse(vm.runInContext(`JSON.stringify(${expression}.map(n => n.id))`, context));
-  const active = [open, decision, changes, work, blocked, external].map(n => n.id);
+  const active = [open, decision, changes, work, blocked].map(n => n.id);
   assert.deepEqual(ids('tableNodes()'), active);
   assert.deepEqual(ids('graphNodes()'), active);
   vm.runInContext('initializing = false; drawStateFilters()', context);
@@ -1183,7 +1183,62 @@ test('default visibility hides inactive history but retains live, blocked and ne
   controls.get('show-resolved').checked = true;
   assert.deepEqual(ids('tableNodes()'), nodes.map(n => n.id));
   const groups = JSON.parse(vm.runInContext('JSON.stringify(attentionGroups(tableNodes(), "tamird"))', context));
-  assert.equal(groups.find(group => group.id === 'resolved').entries.length, terminal.length + 2);
+  assert.equal(groups.find(group => group.id === 'resolved').entries.length, terminal.length + 3);
+});
+
+test('provider issue closure removes active blockers without claiming deployment, and reopening restores them', () => {
+  const closed = { id: 'external:capacity', type: 'issue', title: 'Capacity', status: 'deployment unverified',
+    githubState: 'closed', githubStateReason: 'NOT_PLANNED' };
+  const dependent = { id: 'branch:consumer', type: 'branch', title: 'Consumer', status: 'Agent work' };
+  const unrelated = { id: 'branch:other', type: 'branch', title: 'Other work', status: 'Awaiting prerequisites' };
+  const { context, controls } = historyView([closed, dependent, unrelated]);
+  context.edgesInput = [{ from: closed.id, to: dependent.id, type: 'blocked_by' }];
+  vm.runInContext('model.edges = edgesInput', context);
+  const ids = expression => JSON.parse(vm.runInContext(`JSON.stringify(${expression}.map(n => n.id))`, context));
+  for (const expression of ['tableNodes()', 'graphNodes()']) assert.deepEqual(ids(expression), [dependent.id, unrelated.id]);
+  assert.equal(vm.runInContext('activeDependencyEdges().length', context), 0);
+  assert.equal(vm.runInContext('status(model.nodes[0])', context), 'Issue closed · not planned');
+  vm.runInContext('initializing = false; drawStateFilters()', context);
+  assert.equal(controls.get('all-reasons').textContent, 'All 2');
+  closed.contributorReview = { kind: 'reply', status: 'pending', url: 'https://github.com/buildbuddy-io/buildbuddy/issues/1' };
+  assert.deepEqual(ids('tableNodes()'), [closed.id, dependent.id, unrelated.id]);
+  assert.equal(vm.runInContext('activeDependencyEdges().length', context), 0);
+  delete closed.contributorReview;
+  context.location = new URL('https://example.test/?view=dag#external%3Acapacity');
+  vm.runInContext('applyView(readViewURL())', context);
+  assert.deepEqual(ids('graphNodes()'), [closed.id, dependent.id]);
+  assert.equal(vm.runInContext('activeDependencyEdges().length', context), 0);
+  controls.get('show-resolved').checked = true;
+  assert.deepEqual(ids('graphNodes()'), [closed.id, dependent.id, unrelated.id]);
+  vm.runInContext('resetFilters(false); model.nodes[0].githubState = "open"; model.nodes[0].githubStateReason = "REOPENED"; model.nodes[0].status = "closed"', context);
+  assert.deepEqual(ids('tableNodes()'), [closed.id, dependent.id, unrelated.id]);
+  assert.equal(vm.runInContext('activeDependencyEdges().length', context), 1);
+  assert.equal(vm.runInContext('status(model.nodes[0])', context), 'Issue open · reopened');
+});
+
+test('issue snapshot validates the provider identity and keeps a new explicit reply decision visible after closure', () => {
+  const context = client();
+  const node = { id: 'external:logs', type: 'issue', repo: 'buildbuddy-io/buildbuddy', number: 13542,
+    title: 'Worker output', status: 'deployment unverified', githubState: 'closed' };
+  context.registryInput.nodes = [node];
+  context.snapshotInput.issues[node.id] = { githubState: 'closed', githubStateReason: 'COMPLETED',
+    githubURL: 'https://github.com/buildbuddy-io/buildbuddy/issues/13542', closedAt: '2026-09-29T15:20:00Z',
+    updatedAt: '2026-09-29T15:50:00Z' };
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
+  context.nodeInput = node;
+  assert.equal(vm.runInContext('historical(nodeInput)', context), true);
+  node.contributorReview = { kind: 'reply', status: 'pending', url: context.snapshotInput.issues[node.id].githubURL };
+  assert.equal(vm.runInContext('historical(nodeInput)', context), false);
+  const issue = context.snapshotInput.issues[node.id];
+  delete context.snapshotInput.issues[node.id];
+  assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Incomplete issue inventory/);
+  context.snapshotInput.issues[node.id] = issue;
+  issue.unavailable = 'Issue relocated; last observation retained.';
+  issue.unavailableAt = '2026-10-12T11:48:00Z';
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
+  assert.equal(vm.runInContext('historical({...nodeInput, contributorReview: undefined, ...snapshotInput.issues[nodeInput.id]})', context), true);
+  context.snapshotInput.issues[node.id].githubURL = 'https://github.com/other/repo/issues/13542';
+  assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid issue provider/);
 });
 
 test('history deep links expose the selected record and its live dependency without adding a blocker', () => {
