@@ -126,7 +126,10 @@ func main() {
 				fatal("--timeout requires a value")
 			}
 			secs, err := strconv.ParseUint(args[i], 10, 31)
-			if err != nil || secs == 0 {
+			if err != nil {
+				fatal("invalid timeout: %v", err)
+			}
+			if secs == 0 {
 				fatal("invalid timeout %q: must be an integer in [1, %d]", args[i], math.MaxInt32)
 			}
 			timeoutSec = int32(secs)
