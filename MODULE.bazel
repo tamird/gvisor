@@ -46,7 +46,17 @@ single_version_override(
 )
 
 ### LLVM
+single_version_override(
+    module_name = "llvm",
+    patch_strip = 1,
+    patches = ["//tools:hermetic-llvm-default-targets.patch"],
+)
+
 llvm_source = use_extension("@llvm//extensions:llvm.bzl", "llvm")
+llvm_source.default_targets(targets = [
+    "AArch64",
+    "X86",
+])
 use_repo(llvm_source, "llvm-project")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

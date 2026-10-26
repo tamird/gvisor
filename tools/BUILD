@@ -74,6 +74,7 @@ bzl_library(
 exports_files([
     "build_cover.sh",
     "go-allow-internal.patch",
+    "hermetic-llvm-default-targets.patch",
 ])
 
 py_test(
