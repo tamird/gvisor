@@ -3201,6 +3201,23 @@ TEST(ProcTask, ProcRootNeverListsZeroTID) {
   EXPECT_FALSE(listed_zero.load(std::memory_order_relaxed));
 }
 
+TEST(ProcTask, ImmutableTaskDirectories) {
+  struct statvfs st;
+  ASSERT_THAT(statvfs("/proc", &st), SyscallSucceeds());
+  SKIP_IF(st.f_flag & ST_RDONLY);  // rename requires a writable mount.
+
+  for (const char* dir : {"/proc/self", "/proc/thread-self"}) {
+    SCOPED_TRACE(dir);
+    EXPECT_THAT(access(dir, R_OK | X_OK), SyscallSucceeds());
+    EXPECT_THAT(access(dir, W_OK), SyscallFailsWithErrno(EPERM));
+  }
+
+  // Immutability takes precedence over the directory's mode bits.
+  AutoCapability cap(CAP_DAC_OVERRIDE, false);
+  EXPECT_THAT(rename("/proc/self/status", "/proc/version"),
+              SyscallFailsWithErrno(EPERM));
+}
+
 TEST(ProcTask, TaskDirCannotBeDeleted) {
   // Drop capabilities that allow us to override file and directory permissions.
   AutoCapability cap(CAP_DAC_OVERRIDE, false);
