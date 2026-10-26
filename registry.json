@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T18:30:12.787714+00:00",
+    "updatedAt": "2026-10-26T19:13:24.310925+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24485,12 +24485,12 @@
       "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T17:44:12.952781+00:00",
-      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nThe separate supplier proposal 72f8e4c22 restores root backend selection. On the same hermetic-llvm v0.8.24 / LLVM 23.1.2 release, it removes 479 configured LLVM C++ compile actions per CPU. Those are graph counts, not measured build-time savings. Preserve open #15940 and its import until the replacement is delivered; the supplier proposal and the compiler switch remain separately reviewable.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
+      "updatedAt": "2026-10-26T19:13:24.310925+00:00",
+      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nThe separate supplier change is open as hermetic-llvm #892 at f468e1713. Its composable backend API preserves every module\u2019s requirements. The fresh same-supplier nine-versus-two-backend graph removes 479 configured LLVM C++ compile actions per CPU, matching the earlier v0.8.24 comparison. Those are graph counts, not measured build-time savings. Preserve #15940 until the replacement is delivered; the supplier and compiler switch remain separate.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
       "followup": {
         "owner": "root",
         "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
-        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "observedAt": "2026-10-26T19:13:24.310925+00:00",
         "disposition": "Source and GNU parser qualification passed; supplier delivery remains separate",
         "nextAction": "Complete the independently reviewed supplier backend proposal and prerequisite delivery before presenting the final source migration. Keep #15940 active and the compiler switch separate.",
         "evidence": [
@@ -24597,25 +24597,57 @@
       "type": "branch",
       "repo": "tamird/hermetic-llvm",
       "ref": "qualify/root-llvm-default-targets-main",
-      "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
-      "title": "Honor root module LLVM backend selection",
+      "head": "f468e17137c558d0720a86b11a199339e4d13284",
+      "title": "LLVM backend requirements supplier (published)",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
       "status": "Published as hermetic-llvm #892",
-      "updatedAt": "2026-10-26T18:30:12.787714+00:00",
-      "summary": "The contributor-approved supplier change is published as hermetic-llvm #892 at 72f8e4c22, targeting main. The contributor decision is complete. The root module can replace LLVM defaults while every module\u2019s explicit llvm.configure requests remain additive. Current maintainer review and CI are reported by the provider snapshot. The LLVM source migration still depends on this supplier change; #15940 remains active until the replacement is ready for downstream use.\n\nThe supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe published supplier change restores root-module backend selection and clarifies which modules supply default backends. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until the replacement is ready for downstream use. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
+      "updatedAt": "2026-10-26T19:13:24.310925+00:00",
+      "summary": "Published #892 is now at f468e1713, which differs from measured 852d1c3da only in buildifier\u2019s layout of the unchanged two-item e2e list. Every module contributes its llvm.backends and llvm.configure requirements. A non-isolated root that declares backends, including an explicit empty list, replaces only LLVM\u2019s nine defaults; dependency requirements remain in the union. This removes the previous API\u2019s silently ignored non-root declarations. The contributor decision is complete; current upstream review and CI come from the provider snapshot.\n\nAll eight real Bazel module-graph phases passed, including the previous lost NVPTX requirement, an empty root declaration that retains dependency requirements, and a real isolated use. A fresh comparison on measured supplier main revision 852d1c3da selects AArch64/X86 instead of nine defaults: AMD64 configured LLVM C++ compiles fall from 3,184 to 2,705 and ARM64 from 3,181 to 2,702, with 1,105 fewer total configured actions per architecture. These are graph counts, not elapsed build-time or new binary measurements. The LLVM source migration still depends on the supplier; keep #15940 until its replacement is delivered.\n\nEarlier source-specific qualification:\n\nThe supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe published supplier change restores root-module backend selection and clarifies which modules supply default backends. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until the replacement is ready for downstream use. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
-        "observedAt": "2026-10-26T18:30:12.787714+00:00",
-        "disposition": "Approved supplier change published; contributor decision complete",
-        "nextAction": "Follow upstream #892 through maintainer review and CI using the existing intake; no repeated contributor request.",
+        "sourceHead": "f468e17137c558d0720a86b11a199339e4d13284",
+        "observedAt": "2026-10-26T19:13:24.310925+00:00",
+        "disposition": "Composable backend API published; contributor decision complete",
+        "nextAction": "Follow upstream #892 review and CI through the existing intake. Keep earlier product binaries scoped to the tested backport; no repeated contributor request.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
-          "https://github.com/tamird/hermetic-llvm/commit/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/f468e17137c558d0720a86b11a199339e4d13284",
+          "https://github.com/tamird/hermetic-llvm/compare/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250..f468e17137c558d0720a86b11a199339e4d13284",
+          "https://app.buildbuddy.io/invocation/aafca59c-bd81-44c7-b949-092c9ccfa762",
+          "https://app.buildbuddy.io/invocation/60dd4011-ef8d-424a-acce-607a67b3da85",
+          "https://app.buildbuddy.io/invocation/b8af337e-8fae-4539-a1f8-405182b1d53b"
         ]
       },
       "evidence": [
+        {
+          "label": "Published composable backend API",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/f468e17137c558d0720a86b11a199339e4d13284"
+        },
+        {
+          "label": "Exact amendment from the previous public head",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250..f468e17137c558d0720a86b11a199339e4d13284"
+        },
+        {
+          "label": "Formatter-only amendment after the measured source",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/852d1c3da581dd8568455c1556a19a33ebcd46a4..f468e17137c558d0720a86b11a199339e4d13284"
+        },
+        {
+          "label": "Eight actual Bazel graph phases, including lost NVPTX and isolation",
+          "url": "https://app.buildbuddy.io/invocation/aafca59c-bd81-44c7-b949-092c9ccfa762"
+        },
+        {
+          "label": "Exact main supplier: selected two-backend graph",
+          "url": "https://app.buildbuddy.io/invocation/60dd4011-ef8d-424a-acce-607a67b3da85"
+        },
+        {
+          "label": "Exact same main supplier: nine-default control",
+          "url": "https://app.buildbuddy.io/invocation/b8af337e-8fae-4539-a1f8-405182b1d53b"
+        },
+        {
+          "label": "Previous 72f8e4c22 CI: all 43 jobs passed",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/40378052459"
+        },
         {
           "label": "Published upstream supplier PR",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892"
@@ -24655,12 +24687,12 @@
       ],
       "refinement": {
         "before": {
-          "base": "39e71f9391895169b05ccd62cbb1956ae5322ff3",
-          "head": "b6ed0f573b10959a979f55a887865710adafa162"
+          "base": "3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
+          "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         },
         "after": {
           "base": "3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
-          "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
+          "head": "f468e17137c558d0720a86b11a199339e4d13284"
         }
       },
       "inactive": true
@@ -24670,25 +24702,57 @@
       "type": "pr",
       "repo": "hermeticbuild/hermetic-llvm",
       "ref": "qualify/root-llvm-default-targets-main",
-      "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
-      "title": "Let the root module choose default LLVM backends",
+      "head": "f468e17137c558d0720a86b11a199339e4d13284",
+      "title": "Let modules declare the LLVM backends they need",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T18:30:12.787714+00:00",
-      "summary": "The contributor-approved supplier change is published as hermetic-llvm #892 at 72f8e4c22, targeting main. The contributor decision is complete. The root module can replace LLVM defaults while every module\u2019s explicit llvm.configure requests remain additive. Current maintainer review and CI are reported by the provider snapshot. The LLVM source migration still depends on this supplier change; #15940 remains active until the replacement is ready for downstream use.\n\nThe supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe published supplier change restores root-module backend selection and clarifies which modules supply default backends. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until the replacement is ready for downstream use. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
+      "updatedAt": "2026-10-26T19:13:24.310925+00:00",
+      "summary": "Published #892 is now at f468e1713, which differs from measured 852d1c3da only in buildifier\u2019s layout of the unchanged two-item e2e list. Every module contributes its llvm.backends and llvm.configure requirements. A non-isolated root that declares backends, including an explicit empty list, replaces only LLVM\u2019s nine defaults; dependency requirements remain in the union. This removes the previous API\u2019s silently ignored non-root declarations. The contributor decision is complete; current upstream review and CI come from the provider snapshot.\n\nAll eight real Bazel module-graph phases passed, including the previous lost NVPTX requirement, an empty root declaration that retains dependency requirements, and a real isolated use. A fresh comparison on measured supplier main revision 852d1c3da selects AArch64/X86 instead of nine defaults: AMD64 configured LLVM C++ compiles fall from 3,184 to 2,705 and ARM64 from 3,181 to 2,702, with 1,105 fewer total configured actions per architecture. These are graph counts, not elapsed build-time or new binary measurements. The LLVM source migration still depends on the supplier; keep #15940 until its replacement is delivered.\n\nEarlier source-specific qualification:\n\nThe supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe published supplier change restores root-module backend selection and clarifies which modules supply default backends. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until the replacement is ready for downstream use. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
-        "observedAt": "2026-10-26T18:30:12.787714+00:00",
-        "disposition": "Approved supplier change published; contributor decision complete",
-        "nextAction": "Follow upstream #892 through maintainer review and CI using the existing intake; no repeated contributor request.",
+        "sourceHead": "f468e17137c558d0720a86b11a199339e4d13284",
+        "observedAt": "2026-10-26T19:13:24.310925+00:00",
+        "disposition": "Composable backend API published; contributor decision complete",
+        "nextAction": "Follow upstream #892 review and CI through the existing intake. Keep earlier product binaries scoped to the tested backport; no repeated contributor request.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
-          "https://github.com/tamird/hermetic-llvm/commit/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/f468e17137c558d0720a86b11a199339e4d13284",
+          "https://github.com/tamird/hermetic-llvm/compare/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250..f468e17137c558d0720a86b11a199339e4d13284",
+          "https://app.buildbuddy.io/invocation/aafca59c-bd81-44c7-b949-092c9ccfa762",
+          "https://app.buildbuddy.io/invocation/60dd4011-ef8d-424a-acce-607a67b3da85",
+          "https://app.buildbuddy.io/invocation/b8af337e-8fae-4539-a1f8-405182b1d53b"
         ]
       },
       "evidence": [
+        {
+          "label": "Published composable backend API",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/f468e17137c558d0720a86b11a199339e4d13284"
+        },
+        {
+          "label": "Exact amendment from the previous public head",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250..f468e17137c558d0720a86b11a199339e4d13284"
+        },
+        {
+          "label": "Formatter-only amendment after the measured source",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/852d1c3da581dd8568455c1556a19a33ebcd46a4..f468e17137c558d0720a86b11a199339e4d13284"
+        },
+        {
+          "label": "Eight actual Bazel graph phases, including lost NVPTX and isolation",
+          "url": "https://app.buildbuddy.io/invocation/aafca59c-bd81-44c7-b949-092c9ccfa762"
+        },
+        {
+          "label": "Exact main supplier: selected two-backend graph",
+          "url": "https://app.buildbuddy.io/invocation/60dd4011-ef8d-424a-acce-607a67b3da85"
+        },
+        {
+          "label": "Exact same main supplier: nine-default control",
+          "url": "https://app.buildbuddy.io/invocation/b8af337e-8fae-4539-a1f8-405182b1d53b"
+        },
+        {
+          "label": "Previous 72f8e4c22 CI: all 43 jobs passed",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/40378052459"
+        },
         {
           "label": "Published upstream supplier PR",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892"
@@ -24728,12 +24792,12 @@
       ],
       "refinement": {
         "before": {
-          "base": "39e71f9391895169b05ccd62cbb1956ae5322ff3",
-          "head": "b6ed0f573b10959a979f55a887865710adafa162"
+          "base": "3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
+          "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         },
         "after": {
           "base": "3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
-          "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
+          "head": "f468e17137c558d0720a86b11a199339e4d13284"
         }
       },
       "number": 892
@@ -24811,18 +24875,20 @@
       "url": "https://github.com/tamird/gvisor/commit/ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T18:19:01.646721+00:00",
-      "summary": "The separate musl fork is now ccae8886e, directly atop the published GNU head 85c742f25. Its tree is identical to the tested candidate: the GNU cgo/archive check and musl check passed in the linked runs. It remains agent work pending full compiler-consumer proof, with no contributor decision or runtime traffic claim. The change adapts TLDK/DPDK for musl and uses the compiler unwinder where execinfo.h is unavailable.\n\nTarget-specific GNU/musl checks are separate from complete consumer binaries. Selecting hermetic-llvm for the whole tree also needs the existing freestanding-tool proposal 0c0b49881. That is not a new dependency of the GNU-only #15153 replacement.\n\nPreserved earlier experiment:\n\nExperimental LLVM follow-up 59ed8f878 uses the compiler unwinder for TLDK stack dumps on musl without libbacktrace. The focused cgo trace and static-program runs passed. This is a direct follow-up to 77d1072c5, separate from the preliminary GNU-only #15153 refinement. Cleanup and final source review remain; there is no upstream publication or contributor decision.",
+      "updatedAt": "2026-10-26T19:13:24.310925+00:00",
+      "summary": "The separate musl fork remains ccae8886e on published GNU head 85c742f25, with the exact tested product tree. GNU and musl TestDumpStack each passed with zero skips; the candidate license check also passed. The combined compiler-consumer proof passed on private source 0b3cb773b: both AMD64 production binaries built, and runsc --version executed. Both binaries used the exact 6,881,160-byte plugin archive from the musl regression. This remains agent work with no contributor decision.\n\nThe complete build includes the existing freestanding-tool prerequisite 0c0b49881 and selects both LLVM toolchains for the ARM64 vDSO transition. It does not establish an ARM64 production-binary run. The preceding standalone attempt failed during analysis because $(OBJCOPY) was undefined; that result is preserved. This prerequisite is separate from the published GNU-only #15153 change. The coordinator lacked /dev/vhost-net, so no virtio-user packet flow or privileged networking is claimed.\n\nPreserved earlier experiment:\n\nExperimental LLVM follow-up 59ed8f878 uses the compiler unwinder for TLDK stack dumps on musl without libbacktrace. The focused cgo trace and static-program runs passed. This is a direct follow-up to 77d1072c5, separate from the preliminary GNU-only #15153 refinement. Cleanup and final source review remain; there is no upstream publication or contributor decision.",
       "followup": {
         "owner": "root",
         "sourceHead": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
-        "observedAt": "2026-10-26T18:19:01.646721+00:00",
-        "disposition": "Target-specific GNU and musl checks passed; full compiler-consumer proof remains pending",
-        "nextAction": "Complete and authenticate the full compiler-consumer proof before presenting a separate contributor proposal. No contributor action is pending.",
+        "observedAt": "2026-10-26T19:13:24.310925+00:00",
+        "disposition": "GNU/musl regressions and composed AMD64 production build passed; packet traffic remains unqualified",
+        "nextAction": "Keep the composed-build prerequisite and source scope explicit during the remaining source/delivery review. Packet traffic needs suitable vhost-net capacity; no contributor action is pending.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
           "https://app.buildbuddy.io/invocation/05079e26-0161-42bc-a149-24c66ff93a22",
-          "https://app.buildbuddy.io/invocation/d20507c4-0ce0-44ac-ba95-53845c4d9c16"
+          "https://app.buildbuddy.io/invocation/d20507c4-0ce0-44ac-ba95-53845c4d9c16",
+          "https://app.buildbuddy.io/invocation/ea12e802-0ac6-491d-a57b-6d490960e626",
+          "https://app.buildbuddy.io/invocation/2f77ca44-a6b2-40ed-909e-b53ef5662a02"
         ]
       },
       "evidence": [
@@ -24869,6 +24935,18 @@
         {
           "label": "Static programs without libbacktrace",
           "url": "https://app.buildbuddy.io/invocation/ad40358e-a519-421f-a123-23a608202e06"
+        },
+        {
+          "label": "Combined compiler-consumer proof on private 0b3cb773b",
+          "url": "https://app.buildbuddy.io/invocation/ea12e802-0ac6-491d-a57b-6d490960e626"
+        },
+        {
+          "label": "Candidate license check",
+          "url": "https://app.buildbuddy.io/invocation/2f77ca44-a6b2-40ed-909e-b53ef5662a02"
+        },
+        {
+          "label": "Preserved standalone analysis failure: OBJCOPY unavailable",
+          "url": "https://app.buildbuddy.io/invocation/c1830b69-d718-44f3-b202-305771b893ae"
         }
       ],
       "refinement": {
@@ -27709,8 +27787,8 @@
       "from": "branch:hermetic-llvm-root-backends",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
-      "reason": "Preserve root backend selection when delivering the standalone source migration; the supplier proposal remains separate from the compiler switch.",
-      "evidence": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
+      "reason": "Preserve selectable LLVM backends and transitive requirements when delivering the standalone source migration; upstream supplier #892 remains separate from the compiler switch.",
+      "evidence": "https://github.com/hermeticbuild/hermetic-llvm/pull/892"
     },
     {
       "from": "branch:plugin-gnu-source",
