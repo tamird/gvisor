@@ -3,6 +3,11 @@ name: Native ARM64 image consumers
 "on":
   workflow_dispatch:
     inputs:
+      profile:
+        description: Native image consumer to run
+        type: choice
+        options: [fsstress, podman]
+        default: fsstress
       archive_run:
         description: Reuse the verified image artifact from a prior run in this fork
         type: string
@@ -187,3 +192,77 @@ jobs:
           PY
           sha256sum -c "$RUNNER_TEMP/qualification-lock.sha256"
           test -z "$(git status --porcelain --untracked-files=no)"
+
+  podman:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers-podman' && inputs.profile == 'podman'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    env:
+      PRODUCT: 386044d6ad6446430b65e92269f5dc40f9b67737
+      LOCK: ca984532b395b146a8d66b6d8f79d243665ac7ed126f93f7fca14b08c0007ea8
+      TEST_TARGET: //test/podman:podman_test_arm64
+      PODMAN_FIXTURE: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/podmantest_aarch64@sha256:423781ce282367175283f69e85dbce58c03c075451eb5b2821b52cd795546edf
+      PODMAN_ALPINE_SHA256: f23115a502a379a64be824ff665a8ceb9fd17df522efc72a79ee21625afdbf8b
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.PRODUCT }}
+          path: source
+          persist-credentials: false
+      - name: Prepare the declared native rootless fixture
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          uname -srmo
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          printf '%s  MODULE.bazel.lock\n' "$LOCK" | sha256sum -c -
+          grep -F "docker://$PODMAN_FIXTURE" test/podman/defs.bzl
+          if [[ ! -c /dev/net/tun ]]; then sudo modprobe tun; fi
+          if [[ ! -c /dev/fuse ]]; then sudo modprobe fuse; fi
+          [[ -c /dev/net/tun && -c /dev/fuse ]]
+          test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
+          docker pull --platform=linux/arm64 "$PODMAN_FIXTURE"
+          test "$(docker image inspect --format '{{.Architecture}}' "$PODMAN_FIXTURE")" = arm64
+          sudo apt-get -q update
+          sudo apt-get -qy install --no-install-recommends crossbuild-essential-amd64 libnuma-dev
+      - name: Build and execute the actual ARM64 Podman Bazel owner
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat .bazelversion)
+          wrapper="$GITHUB_WORKSPACE/harness/.github/native-podman-fixture.sh"
+          status=0
+          bazelisk test --config=aarch64 --lockfile_mode=error --strip=never \
+            --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed --strategy=TestRunner=local \
+            --define=gvisor_test_clock_source=calibrated --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated \
+            --test_env=PODMAN_FIXTURE --test_env=PODMAN_ALPINE_SHA256 \
+            --run_under="$wrapper" --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
+            --test_timeout=600 --test_output=all "$TEST_TARGET" || status=$?
+          printf '%s  MODULE.bazel.lock\n' "$LOCK" | sha256sum -c -
+          test -z "$(git status --porcelain --untracked-files=no)"
+          log=bazel-testlogs/test/podman/podman_test_arm64/test.log
+          native=false
+          gofer=false
+          direct=false
+          if [[ -f $log ]]; then
+            if grep -Fxq 'FIXTURE_IDENTITY arch=aarch64 uid=1338 gid=1337 cgroup=cgroup2fs' "$log"; then native=true; fi
+            if [[ $(grep -Fxc 'PASS: rootless Podman directfs=false' "$log") == 1 ]]; then gofer=true; fi
+            if [[ $(grep -Fxc 'PASS: rootless Podman directfs=true' "$log") == 1 ]]; then direct=true; fi
+          fi
+          jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg fixture "$PODMAN_FIXTURE" \
+            --arg alpinesha "$PODMAN_ALPINE_SHA256" --argjson bazel "$status" --argjson native "$native" \
+            --argjson gofer "$gofer" --argjson direct "$direct" \
+            '{source:$source,owner:$owner,fixture:$fixture,alpine_sha256:$alpinesha,bazel_exit:$bazel,nonroot_fixture:$native,directfs_false:$gofer,directfs_true:$direct}'
+          [[ $status == 0 && $native == true && $gofer == true && $direct == true ]]
