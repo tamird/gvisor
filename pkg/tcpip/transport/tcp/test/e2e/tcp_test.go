@@ -48,6 +48,96 @@ import (
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+func TestRepeatedRetransmissionTimeoutThreshold(t *testing.T) {
+	const mss = 32
+	for _, cc := range []string{"reno", "cubic"} {
+		for _, tc := range []struct {
+			name  string
+			acked int
+		}{
+			{"same_segment", 0},
+			{"partial_ack", mss / 2},
+			{"next_segment", mss},
+		} {
+			t.Run(cc+"/"+tc.name, func(t *testing.T) {
+				clock := faketime.NewManualClock()
+				c := context.NewWithOpts(t, context.Options{
+					EnableV4: true,
+					MTU:      header.IPv4MinimumSize + header.TCPMinimumSize + mss,
+					Clock:    clock,
+				})
+				defer c.Cleanup()
+				algorithm := tcpip.CongestionControlOption(cc)
+				if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &algorithm); err != nil {
+					t.Fatalf("SetTransportProtocolOption(%s): %s", cc, err)
+				}
+				c.CreateConnected(789, 30000, -1)
+
+				data := make([]byte, tcp.InitialCwnd*mss)
+				for i := range data {
+					data[i] = byte(i)
+				}
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); n != int64(len(data)) || err != nil {
+					t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+				}
+				for off := 0; off < len(data); off += mss {
+					c.ReceiveAndCheckPacket(data, off, mss)
+				}
+				info := func() tcpip.TCPInfoOption {
+					t.Helper()
+					var i tcpip.TCPInfoOption
+					if err := c.EP.GetSockOpt(&i); err != nil {
+						t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+					}
+					return i
+				}
+				expire := func(off, length int) uint32 {
+					t.Helper()
+					before := c.Stack().Stats().TCP.Timeouts.Value()
+					old := info()
+					clock.Advance(old.RTO)
+					c.ReceiveAndCheckPacket(data, off, length)
+					if got := c.Stack().Stats().TCP.Timeouts.Value(); got != before+1 {
+						t.Fatalf("timeouts = %d, want %d", got, before+1)
+					}
+					i := info()
+					if i.SndCwnd != 1 {
+						t.Fatalf("cwnd after timeout = %d, want 1", i.SndCwnd)
+					}
+					if i.RTO != 2*old.RTO {
+						t.Fatalf("backoff on timeout = %v, want %v", i.RTO, 2*old.RTO)
+					}
+					t.Logf("timeout %d retransmitted [%d,%d): cwnd %d->%d, threshold %d->%d, RTO %v->%v", before+1, off, off+length, old.SndCwnd, i.SndCwnd, old.SndSsthresh, i.SndSsthresh, old.RTO, i.RTO)
+					return i.SndSsthresh
+				}
+				first := expire(0, mss)
+				if first <= 2 {
+					t.Fatalf("first timeout threshold = %d, want above the two-segment minimum", first)
+				}
+				if tc.acked != 0 {
+					c.SendAck(790, tc.acked)
+					c.Stack().Pause()
+					c.Stack().Resume()
+					// Discard transmissions driven by the advancing ACK. The
+					// next observation must come from the timer itself.
+					for pkt := c.GetPacketNonBlocking(); pkt != nil; pkt = c.GetPacketNonBlocking() {
+						pkt.Release()
+					}
+				}
+				if tc.acked == mss {
+					// A different segment is being retransmitted by the timer for
+					// the first time, after the previous loss collapsed the window.
+					if got := expire(mss, mss); got != 2 {
+						t.Errorf("threshold after first timeout of next segment = %d, want 2", got)
+					}
+				} else if got := expire(tc.acked, mss-tc.acked); got != first {
+					t.Errorf("threshold after repeated timeout of bytes [%d,%d) = %d, want %d", tc.acked, mss, got, first)
+				}
+			})
+		}
+	}
+}
+
 func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
 	for _, recovery := range []string{"fast_retransmit", "retransmission_timeout"} {
 		// Individual ACKs expose lost fractional credit; delayed and batched
