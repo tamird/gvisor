@@ -742,3 +742,39 @@ test_suite(
         for case in _ARM64_GUEST_CASES
     ] + [":" + unit[0] + "_arm64_tcg_test" for unit in _ARM64_GUEST_UNITS],
 )
+
+docker_daemon_config(
+    name = "checkpointfile_nginx_config",
+    testonly = True,
+    images = ["//test/docker:images_benchmarks_nginx_amd64_tar"],
+    runtime_args = [
+        "--platform=systrap",
+        "--debug=false",
+    ],
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "checkpointfile_nginx_test",
+    size = "large",
+    command = "checkpointfile_nginx.sh",
+    command_args = ["$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test_amd64)"],
+    data = ["//test/benchmarks/checkpointfile:checkpointfile_test_amd64"],
+    docker_config = ":checkpointfile_nginx_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    tags = [
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
