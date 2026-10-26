@@ -85,6 +85,8 @@ temporary_files=()
 GVISOR_DOCKER_NETWORK=
 qualification_private=
 qualification_credentials=
+qualification_step_output=${GITHUB_OUTPUT-}
+unset GITHUB_OUTPUT
 qualification_workspace=$PWD
 qualification_artifacts=
 cleanup() {
@@ -137,13 +139,15 @@ cleanup() {
     fi
   fi
   if [[ -n $qualification_credentials ]]; then
-    # The final verdict is part of the scan. Only this successful check enables
-    # the existing Actions uploader, including when the native command failed.
-    # Compact/profile archives rely on the helper keeping credentials out of
-    # Bazel inputs; this scan checks the retained files without decompressing.
-    python3 "$qualification_workspace/test/rbe/credential_artifacts.py" verify \
-      "$qualification_credentials" "$qualification_artifacts" || publication_status=$?
+    # A failing test's evidence may be published if both actual uploads pass.
+    timeout --signal=TERM --kill-after=5s 600s \
+      python3 "$qualification_workspace/test/rbe/credential_artifacts.py" verify \
+      "$qualification_credentials" "$RUNNER_TEMP/qualification.tar.gz" \
+      "$qualification_artifacts/verdict.json" || publication_status=$?
     rm -rf -- "$qualification_credentials" || publication_status=1
+    if (( publication_status == 0 )); then
+      printf 'artifacts_safe=true\n' >> "$qualification_step_output" || publication_status=1
+    fi
   fi
   if (( status == 0 )); then
     if (( capture_status != 0 )); then status=$capture_status;

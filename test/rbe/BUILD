@@ -16,7 +16,7 @@ load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
 load("//tools:defs.bzl", "go_test", "py_test")
-load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties", "nonroot_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -40,6 +40,7 @@ py_test(
         "//:github_workflows",
         "//test/benchmarks:lifecycle.json",
     ] + glob(["testdata/qualification_report/**"]),
+    exec_properties = nonroot_test_exec_properties(),
     imports = ["."],
     main = "qualification_report_test.py",
     tags = ["manual"],
@@ -51,6 +52,10 @@ py_test(
         "credential_artifacts.py",
         "credential_artifacts_test.py",
     ],
+    data = ["@llvm_zstd//:zstd_cli"],
+    env = {"QUALIFICATION_ZSTD": "$(rootpath @llvm_zstd//:zstd_cli)"},
+    exec_properties = nonroot_test_exec_properties(),
+    imports = ["."],
     main = "credential_artifacts_test.py",
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],

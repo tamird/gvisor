@@ -404,6 +404,13 @@ The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job.
 
+Each Actions row verifies the finished tarball and its separate verdict before
+upload. It checks text and filenames for the literal or JSON-escaped key,
+decompresses Bazel's gzip profile and Zstandard compact execution log, and
+requires the two copies of the verdict to match. If a report is unreadable or
+contains another archive or binary format, the public row is withheld. The
+native test result and private BuildBuddy evidence keep their original status.
+
 Pass space-separated `lanes` and an `architecture` selection; the qualification
 script owns their meaning and test selection. For example:
 

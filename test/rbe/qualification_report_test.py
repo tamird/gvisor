@@ -2714,6 +2714,7 @@ elif args[:1] not in (['status'], ['diff']):
                 git.chmod(0o755)
                 bazel = binary / "bazel"
                 bazel.write_text("""#!/usr/bin/env python3
+import gzip
 import json
 import os
 from pathlib import Path
@@ -2732,9 +2733,11 @@ if os.environ['QUALIFICATION_EXECUTION'] == 'local':
     assert response.returncode == 0 and response.stderr == b''
     assert json.loads(response.stdout) == {'headers': {'x-buildbuddy-api-key': ['SYNTHETIC-ACTIONS-CREDENTIAL']}}
     assert 'SYNTHETIC-ACTIONS-CREDENTIAL' not in configuration
-    if os.environ['TEST_LEAK'] == 'true':
-        # Do not print even the synthetic value. Exercise final artifact gating.
-        (Path(os.environ['RUNNER_TEMP']) / 'qualification/leaked.txt').write_bytes(response.stdout)
+    for arg in sys.argv:
+        if arg.startswith('--profile='):
+            # Raw byte scanning of this member would miss the synthetic key.
+            with gzip.open(arg.removeprefix('--profile='), 'wb') as profile:
+                profile.write(response.stdout if os.environ['TEST_LEAK'] == 'true' else b'[]')
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
     stream.write(json.dumps({
         'arguments': sys.argv[1:],

@@ -11,18 +11,28 @@ RBE_DOCKER_TOOLS_IMAGE = "docker://gcr.io/flame-public/rbe-ubuntu22-04@sha256:0d
 # https://github.com/istio/istio/blob/1d6649895/docker/Dockerfile.base
 RBE_NETWORK_TOOLS_IMAGE = "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
 
+_NONROOT_OCI = {
+    "test.dockerUser": "nobody",
+    "test.nonroot-workspace": "true",
+    "test.workload-isolation-type": "oci",
+}
+
+def nonroot_test_exec_properties():
+    """Run the test under an ordinary UID with a writable OCI workspace."""
+    return select({
+        Label("//tools/bazeldefs:rbe"): _NONROOT_OCI,
+        "//conditions:default": {},
+    })
+
 def network_test_exec_properties():
     """Returns remote test properties for external HTTPS access."""
     return select({
         # The cgroup-v1 wrapper needs root and mount tools before the test starts.
         # The Docker image also supplies CA trust for the HTTPS requests.
         Label("//tools/bazeldefs:rbe_cgroup_v1"): docker_exec_properties(free_disk = "20GB"),
-        Label("//tools/bazeldefs:rbe"): {
+        Label("//tools/bazeldefs:rbe"): _NONROOT_OCI | {
             "test.container-image": RBE_NETWORK_TOOLS_IMAGE,
-            "test.dockerUser": "nobody",
             "test.network": "external",
-            "test.nonroot-workspace": "true",
-            "test.workload-isolation-type": "oci",
         },
         "//conditions:default": {},
     })
