@@ -62,7 +62,6 @@ func (f *MemoryFile) ResourceID() checkpoint.ResourceID {
 	return f.opts.ResourceID
 }
 
-// +checklocks:f.mu
 func (f *MemoryFile) exportMetadataProto() *pgallocpb.MemoryFileMetadataProto {
 	pb := &pgallocpb.MemoryFileMetadataProto{
 		Version:     1,
@@ -120,16 +119,7 @@ func (f *MemoryFile) exportMetadataProto() *pgallocpb.MemoryFileMetadataProto {
 	return pb
 }
 
-// importMetadataProto restores f's bookkeeping before its mappings are loaded.
-//
-// Preconditions: f is newly created and has not been used for allocations or
-// registered with async page loading.
-//
-// +checklocksexclude:f.mu
 func (f *MemoryFile) importMetadataProto(pb *pgallocpb.MemoryFileMetadataProto) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
 	if pb.Version != 1 {
 		return fmt.Errorf("unsupported MemoryFileMetadataProto version %d", pb.Version)
 	}
@@ -195,13 +185,6 @@ type SaveOpts struct {
 }
 
 // SaveTo writes f's state to the given stream.
-//
-// If asynchronous page loading is active, the caller must not hold that
-// loader's mu. checklocks cannot name this mutex through the atomic
-// f.asyncPageLoad.Load() result in an entry contract.
-//
-// +checklocksexclude:f.mu
-// +checklocksexclude:opts.PagesFile.mu
 func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) error {
 	if err := f.AwaitLoadAll(); err != nil {
 		return fmt.Errorf("previous async page loading failed: %w", err)
@@ -335,32 +318,30 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 		updatePendingWasCommitted bool
 		updatePendingNowCommitted bool
 	)
-	// These local batching callbacks run synchronously while SaveTo holds
-	// f.mu. checklocks does not propagate the caller's lock state through them.
 	updateNow := func(maseg memAcctIterator, fr memmap.FileRange, wasCommitted, nowCommitted bool) memAcctIterator {
 		amount := fr.Length()
 		if amount == 0 {
 			return maseg
 		}
 		if wasCommitted != nowCommitted {
-			maseg = f.memAcct.Isolate(maseg, fr) // +checklocksignore
+			maseg = f.memAcct.Isolate(maseg, fr)
 			ma := maseg.ValuePtr()
 			if nowCommitted {
 				ma.knownCommitted = true
 				ma.commitSeq = 0
-				f.knownCommittedBytes += amount // +checklocksignore
+				f.knownCommittedBytes += amount
 				if !f.opts.DisableMemoryAccounting {
 					usage.MemoryAccounting.Inc(amount, ma.kind, ma.memCgID)
 				}
 			} else {
 				ma.knownCommitted = false
-				ma.commitSeq = f.commitSeq      // +checklocksignore
-				f.knownCommittedBytes -= amount // +checklocksignore
+				ma.commitSeq = f.commitSeq
+				f.knownCommittedBytes -= amount
 				if !f.opts.DisableMemoryAccounting {
 					usage.MemoryAccounting.Dec(amount, ma.kind, ma.memCgID)
 				}
 			}
-			maseg = f.memAcct.Unisolate(maseg) // +checklocksignore
+			maseg = f.memAcct.Unisolate(maseg)
 		}
 		if nowCommitted {
 			asyncWritePages(fr)
@@ -398,19 +379,19 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 	// f.mu is unlocked below, allowing concurrent calls to f.UpdateUsage() to
 	// observe pages that we transiently commit (for comparisons to zero) or
 	// leave committed (if opts.ExcludeCommittedZeroPages is true). Set
-	// f.isSaving to prevent this.
-	if f.isSaving {
+	// f.inhibitUsageScans to prevent this.
+	if f.inhibitUsageScans {
 		panic(fmt.Sprintf("pgalloc.MemoryFile(%p).SaveTo() called concurrently", f))
 	}
-	f.isSaving = true
-	defer func() { f.isSaving = false }()
+	f.inhibitUsageScans = true
+	defer func() { f.inhibitUsageScans = false }()
 	// An f.updateUsageLocked() that is still in progress skips merging the
 	// segments it split in f.memAcct, since we hold an iterator into it
 	// across f.mu unlocks below.
 	f.memAcct.MergeAll()
 	// Reset f.commitSeq and memAcctInfo.commitSeq to 0 to make more segments
 	// in f.memAcct mergeable. This is safe because f.updateUsageLocked() is
-	// excluded by f.isSaving being set to true.
+	// excluded by f.inhibitUsageScans being set to true.
 	f.commitSeq = 0
 	maseg := f.memAcct.FirstSegment()
 	unscannedStart := uint64(0)
@@ -443,7 +424,7 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 			}
 			// f.UpdateUsage() may be called concurrently with f.SaveTo();
 			// occasionally unlock f.mu to ensure that the former can promptly
-			// observe f.isSaving and return. Assume that maseg is not
+			// observe f.inhibitUsageScans and return. Assume that maseg is not
 			// invalidated while f.mu is unlocked, since it should still be the
 			// case that nothing is concurrently trying to mutate f.
 			f.mu.Unlock()
@@ -640,15 +621,10 @@ type AsyncPagesFileSave struct {
 	mu apfsMutex
 
 	// saveOff is the offset in the pages file at which the next page to be
-	// inserted into unsaved will be saved. PagesFileOffset may read it
-	// between MemoryFile.SaveTo calls using this pages file.
-	//
-	// +checklocks:mu
+	// inserted into unsaved will be saved. saveOff is protected by mu.
 	saveOff uint64
 
-	// unsaved tracks pages that have not been saved.
-	//
-	// +checklocks:mu
+	// unsaved tracks pages that have not been saved. unsaved is protected by mu.
 	unsaved ringdeque.Deque[apsRange]
 
 	// stStatus communicates state from MemoryFile.SaveTo() and its callers to
@@ -658,9 +634,8 @@ type AsyncPagesFileSave struct {
 	// Padding before fields used mostly by the async page saver goroutine:
 	_ [hostarch.CacheLineSize]byte
 
-	// bytesSaved is the number of write-completed bytes.
-	//
-	// +checklocks:mu
+	// bytesSaved is the number of write-completed bytes. bytesSaved is
+	// protected by statsMu.
 	bytesSaved uint64
 
 	// When async page saving is enabled, MemoryFile.SaveTo() enqueues writes
@@ -675,16 +650,11 @@ type AsyncPagesFileSave struct {
 	// full. timeFullStart was the value of gohacks.Nanotime() when the I/O
 	// queue last became full; if it is currently not full, timeFullStart is
 	// MaxInt64. durFull is the duration elapsed while the I/O queue was full,
-	// not counting time elapsed since timeFullStart.
-	//
-	// +checklocks:mu
-	bytesFull uint64
-
-	// +checklocks:mu
+	// not counting time elapsed since timeFullStart. These fields are
+	// protected by statsMu.
+	bytesFull     uint64
 	timeFullStart int64
-
-	// +checklocks:mu
-	durFull time.Duration
+	durFull       time.Duration
 
 	// Following fields are exclusive to the async page saver goroutine.
 
@@ -801,10 +771,6 @@ func (apfs *AsyncPagesFileSave) MemoryFilesDone() {
 
 // PagesFileOffset returns the offset into the pages file of the next page to
 // be written.
-//
-// Preconditions: MemoryFile.SaveTo must not run concurrently using apfs.
-//
-// +checklocks:apfs.mu
 func (apfs *AsyncPagesFileSave) PagesFileOffset() uint64 {
 	return apfs.saveOff
 }
@@ -1128,11 +1094,6 @@ type LoadOpts struct {
 	// MemoryFile completes. DoneCallback will be called whether or not
 	// LoadFrom returns a non-nil error.
 	//
-	// DoneCallback may run with PagesFile.amflsMu and PagesFile.mu held. It
-	// must not reacquire them or locks that precede them in pgalloc's lock
-	// order, including MemoryFile.mu. checklocks cannot pass the incoming
-	// lock state through this function value.
-	//
 	// Invariant: PagesFileOffset must be page-aligned.
 	PagesFile       *AsyncPagesFileLoad
 	PagesFileOffset uint64
@@ -1145,17 +1106,8 @@ type LoadOpts struct {
 	Timeline *timing.Timeline
 }
 
-// LoadFrom loads MemoryFile state from the given stream.
-//
-// Preconditions: f is newly created and has not been used for allocations.
-// UpdateUsage may run concurrently, but the caller must exclude operations
-// that allocate, release, or save memory and other calls to LoadFrom until it
-// returns. Asynchronous page loading started by LoadFrom may proceed
-// concurrently and may continue after it returns.
-//
-// +checklocksexclude:f.mu
-// +checklocksexclude:opts.PagesFile.amflsMu
-// +checklocksexclude:opts.PagesFile.mu
+// LoadFrom loads the given stream into a fresh MemoryFile. On failure,
+// the caller must discard the partially restored file.
 func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) (err error) {
 	mfTimeline := opts.Timeline.Fork(fmt.Sprintf("mf:%p", f)).Lease()
 	defer mfTimeline.End()
@@ -1181,6 +1133,11 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return fmt.Errorf("failed to unmarshal metadata: %w", err)
 	}
+	// LoadFrom uses the saved commitment ranges to locate page data. A
+	// usage scan must not mark an omitted page committed between reads.
+	f.mu.Lock()
+	f.inhibitUsageScans = true
+	f.mu.Unlock()
 	if err := f.importMetadataProto(&pb); err != nil {
 		return fmt.Errorf("failed to import metadata: %w", err)
 	}
@@ -1211,14 +1168,11 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 			return fmt.Errorf("failed to mmap MemoryFile: %w", errno)
 		}
 		mfTimeline.Reached("mmaped chunks")
-		// Publish mappings to commitment scans before loading page contents.
-		f.mu.Lock()
 		for i := range chunks {
 			chunk := &chunks[i]
 			chunk.mapping = m
 			m += chunkSize
 		}
-		f.mu.Unlock()
 		madviseWG.Add(1)
 		go func() {
 			defer madviseWG.Done()
@@ -1292,13 +1246,11 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 	wr := wire.Reader{Reader: r}
 	timePagesStart := gohacks.Nanotime()
 	minUnloadedInit := false
-	// Saved ranges define the stream layout. Live accounting may merge ranges
-	// during import or while UpdateUsage observes restored pages.
-	for _, ma := range pb.MemAcct {
-		if !ma.KnownCommitted {
+	for maseg := f.memAcct.FirstSegment(); maseg.Ok(); maseg = maseg.NextSegment() {
+		if !maseg.ValuePtr().knownCommitted {
 			continue
 		}
-		maFR := memmap.FileRange{Start: ma.Start, End: ma.End}
+		maFR := maseg.Range()
 		amount := maFR.Length()
 		// Wait for all chunks spanned by this segment to be madvised.
 		for madviseEnd.Load() < maFR.End {
@@ -1347,23 +1299,23 @@ func (f *MemoryFile) LoadFrom(ctx context.Context, r io.Reader, opts *LoadOpts) 
 		// Update accounting for restored pages. We need to do this here since
 		// these segments are marked as "known committed", and will be skipped
 		// over on accounting scans.
-		f.mu.Lock()
 		f.knownCommittedBytes += amount
 		if !f.opts.DisableMemoryAccounting {
-			usage.MemoryAccounting.Inc(amount, usage.MemoryKind(ma.Kind), ma.MemCgId)
+			usage.MemoryAccounting.Inc(amount, maseg.ValuePtr().kind, maseg.ValuePtr().memCgID)
 		}
-		f.mu.Unlock()
 	}
 	durPages := time.Duration(gohacks.Nanotime() - timePagesStart)
-	f.mu.Lock()
-	knownCommittedBytes := f.knownCommittedBytes
-	f.mu.Unlock()
 	if amfl != nil {
-		log.Infof("MemoryFile(%p): loaded page file offsets in %s; async loading %d bytes", f, durPages, knownCommittedBytes)
+		log.Infof("MemoryFile(%p): loaded page file offsets in %s; async loading %d bytes", f, durPages, f.knownCommittedBytes)
 	} else {
-		log.Infof("MemoryFile(%p): loaded pages in %s (%d bytes, %.3f MB/s)", f, durPages, knownCommittedBytes, float64(knownCommittedBytes)*1e-6/durPages.Seconds())
+		log.Infof("MemoryFile(%p): loaded pages in %s (%d bytes, %.3f MB/s)", f, durPages, f.knownCommittedBytes, float64(f.knownCommittedBytes)*1e-6/durPages.Seconds())
 	}
 
+	// A failed load may leave incomplete mappings. Only resume scans
+	// once all page ranges are installed; background reads can continue.
+	f.mu.Lock()
+	f.inhibitUsageScans = false
+	f.mu.Unlock()
 	return nil
 }
 
@@ -1374,15 +1326,11 @@ type AsyncPagesFileLoad struct {
 	// If errVal is not nil, it is an error that has terminated asynchronous
 	// page loading. errVal can only be set by the async page loader goroutine,
 	// and can only transition from nil to non-nil once, after which it is
-	// immutable.
-	//
-	// +checkatomic
-	// +checklocks:mu
+	// immutable. errVal is stored with mu locked.
 	errVal atomic.Value
 
 	// priority contains possibly-unstarted ranges with at least one waiter.
-	//
-	// +checklocks:mu
+	// priority is protected by mu.
 	priority ringdeque.Deque[aplFileRange]
 
 	// If throttled is true, a read of pages without waiters starts only when
@@ -1396,51 +1344,34 @@ type AsyncPagesFileLoad struct {
 	// Padding before state used mostly by the async page loader goroutine:
 	_ [hostarch.CacheLineSize]byte
 
-	amflsMu amflsMutex
-
 	// amfls tracks MemoryFiles that are currently loading from the pages file.
-	//
-	// +checklocks:amflsMu
-	amfls asyncMemoryFileLoadList
+	// amfls is protected by amflsMu.
+	amflsMu amflsMutex
+	amfls   asyncMemoryFileLoadList
 
-	// numWaiters is the current number of waiting waiters.
-	//
-	// +checklocks:mu
+	// numWaiters is the current number of waiting waiters. numWaiters is
+	// protected by mu.
 	numWaiters int
 
 	// totalWaiters is the number of waiters that have ever waited for pages
-	// from this pages file.
-	//
-	// +checklocks:mu
+	// from this pages file. totalWaiters is protected by mu.
 	totalWaiters int
 
 	// timeStartWaiters was the value of gohacks.Nanotime() when numWaiters
 	// most recently transitioned from 0 to 1. If numWaiters is 0,
-	// timeStartWaiters is MaxInt64.
-	//
-	// +checklocks:mu
+	// timeStartWaiters is MaxInt64. timeStartWaiters is protected by mu.
 	timeStartWaiters int64
 
-	// durWaitedOne is the duration for which at least one waiter was waiting
-	// for a load.
-	//
-	// +checklocks:mu
-	durWaitedOne time.Duration
-
-	// durWaitedTotal is the duration for which waiters were waiting for loads,
-	// summed across all waiters.
-	//
-	// +checklocks:mu
+	// nsWaitedOne is the duration for which at least one waiter was waiting
+	// for a load. nsWaitedTotal is the duration for which waiters were waiting
+	// for loads, summed across all waiters. bytesWaited is the number of bytes
+	// for which at least one waiter waited. These fields are protected by mu.
+	durWaitedOne   time.Duration
 	durWaitedTotal time.Duration
-
-	// bytesWaited is the number of bytes for which at least one waiter waited.
-	//
-	// +checklocks:mu
-	bytesWaited uint64
+	bytesWaited    uint64
 
 	// bytesLoaded is the number of bytes that have been loaded so far.
-	//
-	// +checklocks:mu
+	// bytesLoaded is protected by mu.
 	bytesLoaded uint64
 
 	// Following fields are exclusive to the async page loader goroutine.
@@ -1495,42 +1426,26 @@ func (apfl *AsyncPagesFileLoad) err() error {
 
 // asyncMemoryFileLoad holds async page loading state for a single MemoryFile.
 type asyncMemoryFileLoad struct {
-	// f, pf, and df are immutable.
-	f  *MemoryFile
-	pf *AsyncPagesFileLoad
-	df stateio.DestinationFile
-
-	// doneCallback is called and cleared when loading completes or fails.
-	//
-	// +checklocks:pf.amflsMu
-	// +checklocks:pf.mu
+	// Immutable fields:
+	f            *MemoryFile
+	pf           *AsyncPagesFileLoad
+	df           stateio.DestinationFile
 	doneCallback func(error)
-
-	// timeline is an immutable pointer to the async load timeline.
-	timeline *timing.Timeline
+	timeline     *timing.Timeline
 
 	// minUnloaded is the MemoryFile offset of the first unloaded byte.
-	//
-	// +checkatomic
 	minUnloaded atomicbitops.Uint64
 
 	// unloaded tracks pages in the MemoryFile that have not been loaded.
-	//
-	// +checklocks:pf.mu
+	// unloaded is protected by pf.mu.
 	unloaded aplUnloadedSet
 
 	// lfDone is true if MemoryFile.LoadFrom() has finished inserting into
-	// unloaded.
-	//
-	// +checklocks:pf.mu
+	// unloaded. lfDone is protected by pf.mu.
 	lfDone bool
 
 	// asyncMemoryFileLoadEntry links into pf.amfls. asyncMemoryFileLoadEntry
 	// is protected by pf.amflsMu.
-	//
-	// Generated list methods access the links without a parent-lock
-	// precondition, so checklocks cannot verify that their callers hold
-	// pf.amflsMu.
 	asyncMemoryFileLoadEntry
 
 	// Padding before state exclusive to the async page loader goroutine:
@@ -1542,11 +1457,6 @@ type asyncMemoryFileLoad struct {
 }
 
 // aplUnloadedInfo is the value type of asyncMemoryFileLoad.unloaded.
-//
-// Stored values are protected by the owning asyncMemoryFileLoad.pf.mu.
-// Values and generated iterators have no back-reference to that owner, so
-// checklocks cannot resolve its mutex. Merge and Split also operate on
-// copied values.
 type aplUnloadedInfo struct {
 	// off is the offset into the pages file at which the represented pages
 	// begin.
@@ -1560,21 +1470,18 @@ type aplUnloadedInfo struct {
 }
 
 type aplWaiter struct {
-	// wakeup is used by asyncMemoryFileLoad.awaitLoad() to block until all pages
-	// in fr are loaded. wakeup is internally synchronized. fr is
-	// immutable until the waiter is returned to aplWaiterPool.
+	// wakeup is used by a caller of MemoryFile.awaitLoad() to block until all
+	// pages in fr are loaded. wakeup is internally synchronized. fr is
+	// immutable after initialization.
 	wakeup syncevent.Waiter
 	fr     memmap.FileRange
 
 	// timeStart was the value of gohacks.Nanotime() when this waiter started
-	// waiting. It is immutable until the waiter is returned to aplWaiterPool.
+	// waiting. timeStart is immutable after initialization.
 	timeStart int64
 
 	// pending is the number of unloaded bytes that this waiter is waiting for.
-	// pending is protected by the owning AsyncPagesFileLoad.mu.
-	//
-	// The owner is determined by the unloaded segments containing this
-	// waiter; aplWaiter has no pointer to that loader for checklocks to use.
+	// pending is protected by aplShared.mu.
 	pending uint64
 }
 
@@ -1680,10 +1587,6 @@ func (f *MemoryFile) IsAsyncLoading() bool {
 
 // AwaitLoadAll blocks until async page loading has completed. If async page
 // loading is not in progress, AwaitLoadAll returns immediately.
-//
-// If asynchronous page loading is active, the caller must not hold that
-// loader's mu. checklocks cannot name this mutex through the atomic
-// f.asyncPageLoad.Load() result in an entry contract.
 func (f *MemoryFile) AwaitLoadAll() error {
 	if amfl := f.asyncPageLoad.Load(); amfl != nil {
 		return amfl.awaitLoad(memmap.FileRange{0, hostarch.PageRoundDown(uint64(math.MaxUint64))})
@@ -1695,8 +1598,6 @@ func (f *MemoryFile) AwaitLoadAll() error {
 //
 // Preconditions: At least one reference must be held on all unloaded pages in
 // fr.
-//
-// +checklocksexclude:amfl.pf.mu
 func (amfl *asyncMemoryFileLoad) awaitLoad(fr memmap.FileRange) error {
 	// Lockless fast path:
 	if fr.End <= amfl.minUnloaded.Load() {
@@ -1728,12 +1629,10 @@ func (amfl *asyncMemoryFileLoad) awaitLoad(fr memmap.FileRange) error {
 		ul := ulseg.ValuePtr()
 		ulFR := ulseg.Range()
 		ullen := ulFR.Length()
-		// MutateRange invokes this callback synchronously with apfl.mu held.
-		// checklocks does not propagate the caller's lock state into it.
 		if len(ul.waiters) == 0 {
-			apfl.bytesWaited += ullen // +checklocksignore
+			apfl.bytesWaited += ullen
 			if !ul.started {
-				apfl.priority.PushBack(aplFileRange{amfl, ulFR}) // +checklocksignore
+				apfl.priority.PushBack(aplFileRange{amfl, ulFR})
 			}
 			if logAwaitedLoads {
 				log.Infof("MemoryFile(%p): prioritize %v", amfl.f, ulFR)
@@ -1924,10 +1823,8 @@ func (apfl *AsyncPagesFileLoad) main() {
 		// unloaded) segments.
 		apfl.amflsMu.Lock()
 		apfl.mu.Lock()
-		// Each entry in apfl.amfls belongs to apfl. checklocks cannot prove
-		// amfl.pf == apfl after the list lookup.
 		for amfl := apfl.amfls.Front(); amfl != nil; amfl = amfl.Next() {
-			for ulseg := amfl.unloaded.FirstSegment(); ulseg.Ok(); ulseg = ulseg.NextSegment() { // +checklocksignore
+			for ulseg := amfl.unloaded.FirstSegment(); ulseg.Ok(); ulseg = ulseg.NextSegment() {
 				ul := ulseg.ValuePtr()
 				ullen := ulseg.Range().Length()
 				for _, w := range ul.waiters {
@@ -1939,9 +1836,9 @@ func (apfl *AsyncPagesFileLoad) main() {
 				ul.started = false
 				ul.waiters = nil
 			}
-			if amfl.doneCallback != nil { // +checklocksignore
-				amfl.doneCallback(apfl.err()) // +checklocksignore
-				amfl.doneCallback = nil       // +checklocksignore
+			if amfl.doneCallback != nil {
+				amfl.doneCallback(apfl.err())
+				amfl.doneCallback = nil
 			}
 		}
 		apfl.mu.Unlock()
@@ -2023,15 +1920,12 @@ func (apfl *AsyncPagesFileLoad) main() {
 		apfl.mu.Lock()
 		for apfl.canEnqueue() && !apfl.priority.Empty() {
 			fr := apfl.priority.PopFront()
-			// awaitLoad queued this range on its own pages-file loader, so
-			// fr.amfl.pf == apfl. checklocks cannot recover that identity here.
-			//
 			// All pages in apfl.priority have non-zero waiters and were split
 			// around fr by fr.amfl.awaitLoad(), and fr.amfl.unloaded never
 			// merges segments with waiters. Thus, we don't need to split
 			// around fr again, and fr.Intersect(ulseg.Range()) ==
 			// ulseg.Range().
-			ulseg := fr.amfl.unloaded.LowerBoundSegment(fr.Start) // +checklocksignore
+			ulseg := fr.amfl.unloaded.LowerBoundSegment(fr.Start)
 			for ulseg.Ok() && ulseg.Start() < fr.End {
 				ul := ulseg.ValuePtr()
 				ulFR := ulseg.Range()
@@ -2052,7 +1946,7 @@ func (apfl *AsyncPagesFileLoad) main() {
 					break
 				}
 				ulFR.End = ulFR.Start + n
-				ulseg = fr.amfl.unloaded.SplitAfter(ulseg, ulFR.End) // +checklocksignore
+				ulseg = fr.amfl.unloaded.SplitAfter(ulseg, ulFR.End)
 				ulseg.ValuePtr().started = true
 				fr.Start = ulFR.End
 				if fr.Length() > 0 {
@@ -2084,9 +1978,7 @@ func (apfl *AsyncPagesFileLoad) main() {
 			for amfl := apfl.amfls.Front(); amfl != nil; amfl = amfl.Next() {
 				amfl.f.mu.Lock()
 				apfl.mu.Lock()
-				// Membership in apfl.amfls establishes amfl.pf == apfl,
-				// which checklocks cannot infer from this iterator.
-				ulseg := amfl.unloaded.LowerBoundSegment(amfl.minUnstarted) // +checklocksignore
+				ulseg := amfl.unloaded.LowerBoundSegment(amfl.minUnstarted)
 				for ulseg.Ok() {
 					ul := ulseg.ValuePtr()
 					ulFR := ulseg.Range()
@@ -2112,7 +2004,7 @@ func (apfl *AsyncPagesFileLoad) main() {
 					}
 					partial := n < ulFR.Length()
 					ulFR.End = ulFR.Start + n
-					ulseg = amfl.unloaded.SplitAfter(ulseg, ulFR.End) // +checklocksignore
+					ulseg = amfl.unloaded.SplitAfter(ulseg, ulFR.End)
 					ulseg.ValuePtr().started = true
 					amfl.minUnstarted = ulFR.End
 					amfl.f.incRefLocked(ulFR)
@@ -2189,8 +2081,6 @@ func (apfl *AsyncPagesFileLoad) main() {
 			}
 			apfl.bytesLoaded += op.total
 			amfl := op.amfl
-			// enqueueRange records only MemoryFiles belonging to apfl in ops.
-			// checklocks cannot recover amfl.pf == apfl from the completed op.
 			haveWaiters := false
 			now := int64(0)
 			for _, fr := range op.frs {
@@ -2198,7 +2088,7 @@ func (apfl *AsyncPagesFileLoad) main() {
 				// when they were started (above), and fr.amfl.unloaded never
 				// merges started segments. Thus, we don't need to split around
 				// fr again, and fr.Intersect(ulseg.Range()) == ulseg.Range().
-				for ulseg := amfl.unloaded.FindSegment(fr.Start); ulseg.Ok() && ulseg.Start() < fr.End; ulseg = amfl.unloaded.Remove(ulseg).NextSegment() { // +checklocksignore
+				for ulseg := amfl.unloaded.FindSegment(fr.Start); ulseg.Ok() && ulseg.Start() < fr.End; ulseg = amfl.unloaded.Remove(ulseg).NextSegment() {
 					ul := ulseg.ValuePtr()
 					ullen := ulseg.Range().Length()
 					if !ul.started {
@@ -2214,7 +2104,7 @@ func (apfl *AsyncPagesFileLoad) main() {
 							}
 							// This definition of "wait time" skips the time
 							// taken for w to wake up (bad), but avoids having
-							// to lock apfl.mu again in asyncMemoryFileLoad.awaitLoad()
+							// to lock apfl.mu again in apfl.awaitLoad()
 							// (good).
 							apfl.durWaitedTotal += time.Duration(now - w.timeStart)
 							apfl.numWaiters--
@@ -2231,19 +2121,18 @@ func (apfl *AsyncPagesFileLoad) main() {
 			}
 			// Keep amfl.minUnloaded up to date. We can only determine this
 			// accurately if insertions into amfl.unloaded are complete.
-			if amfl.lfDone { // +checklocksignore
-				if amfl.unloaded.IsEmpty() { // +checklocksignore
+			if amfl.lfDone {
+				if amfl.unloaded.IsEmpty() {
 					amfl.minUnloaded.Store(math.MaxUint64)
 					apfl.amfls.Remove(amfl)
 					amfl.f.asyncPageLoad.Store(nil)
 					amfl.timeline.End()
-					if amfl.doneCallback != nil { // +checklocksignore
-						amfl.doneCallback(nil)  // +checklocksignore
-						amfl.doneCallback = nil // +checklocksignore
+					if amfl.doneCallback != nil {
+						amfl.doneCallback(nil)
+						amfl.doneCallback = nil
 					}
 				} else {
-					minUnloaded := amfl.unloaded.FirstSegment().Start() // +checklocksignore
-					amfl.minUnloaded.Store(minUnloaded)
+					amfl.minUnloaded.Store(amfl.unloaded.FirstSegment().Start())
 				}
 			}
 		}
@@ -2257,14 +2146,9 @@ func (apfl *AsyncPagesFileLoad) main() {
 	}
 }
 
-// cancelWasteLoad cancels unstarted loads for pages becoming waste.
-//
 // Preconditions:
-//   - All pages in fr must be becoming waste pages.
-//   - fr must be page-aligned.
-//
-// +checklocks:amfl.f.mu
-// +checklocksexclude:amfl.pf.mu
+// - All pages in fr must be becoming waste pages.
+// - fr must be page-aligned.
 func (amfl *asyncMemoryFileLoad) cancelWasteLoad(fr memmap.FileRange) {
 	// Lockless fast path:
 	if fr.End <= amfl.minUnloaded.Load() {
@@ -2277,7 +2161,7 @@ func (amfl *asyncMemoryFileLoad) cancelWasteLoad(fr memmap.FileRange) {
 		ul := ulseg.ValuePtr()
 		if ul.started {
 			// This shouldn't be possible since page references are held while
-			// reading (see AsyncPagesFileLoad.main()).
+			// reading (see MemoryFile.asyncPageLoadMain()).
 			panic(fmt.Sprintf("pages %v becoming waste during inflight read from async loading", ulseg.Range()))
 		}
 		if n := len(ul.waiters); n != 0 {

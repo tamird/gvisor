@@ -286,10 +286,7 @@ func (k *Kernel) fsSaveLocked(ctx context.Context, bundle *FSSaveBundle, runscVe
 			PagesStart:         prevPagesOffset,
 		})
 		prevPagesMetadataOffset = pagesMetadataWriter.count
-		// This function serializes all SaveTo calls using apfs. Only those
-		// calls write saveOff; the background saver only reads it.
-		// checklocks cannot express the absence of a concurrent writer here.
-		prevPagesOffset = apfs.PagesFileOffset() // +checklocksignore
+		prevPagesOffset = apfs.PagesFileOffset()
 
 		if err := tmpfs.FSCheckpointWrite(ctx, fs, multiTarWriter); err != nil {
 			return fmt.Errorf("failed to write tmpfs with resourceID %s to multi-tar file: %w", resourceID, err)

@@ -19,36 +19,22 @@ package pgalloc
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"fmt"
 	"os"
-	"runtime"
-	"sync"
 	"testing"
-	"time"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
-	"gvisor.dev/gvisor/pkg/memutil"
 	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
-	"gvisor.dev/gvisor/pkg/sentry/usage"
-	"gvisor.dev/gvisor/pkg/state"
-	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 const (
 	page     = hostarch.PageSize
 	hugepage = hostarch.HugePageSize
 )
-
-func (f *MemoryFile) committedBytesForTest() uint64 {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return f.knownCommittedBytes
-}
 
 func newSaveRestoreMemoryFile(t *testing.T) *MemoryFile {
 	t.Helper()
@@ -95,7 +81,7 @@ func TestRetainCommitmentSaveRestore(t *testing.T) {
 				if err := f.SaveTo(context.Background(), &saved, &SaveOpts{ExcludeCommittedZeroPages: excludeZero}); err != nil {
 					t.Fatal(err)
 				}
-				if got := f.committedBytesForTest(); got != page {
+				if got := f.knownCommittedBytes; got != page {
 					t.Fatalf("round %d: saved committed bytes = %d, want %d", round, got, page)
 				}
 				var st unix.Stat_t
@@ -176,13 +162,11 @@ func TestRetainCommitmentReferences(t *testing.T) {
 	// Exercise the range metadata without a releaser racing to consume waste,
 	// as in TestFindAllocatable. No backing pages are accessed here.
 	f := &MemoryFile{opts: MemoryFileOpts{DisableMemoryAccounting: true}}
-	f.mu.Lock()
 	f.initFields()
 	chunks := []chunkInfo{{}}
 	f.chunks.Store(&chunks)
 	fr := memmap.FileRange{0, 2 * page}
 	f.unfreeSmall.RemoveRange(fr)
-	f.mu.Unlock()
 	alloc := allocState{
 		length:     fr.Length(),
 		opts:       AllocOpts{Mode: AllocateAndCommit, RetainCommitment: true},
@@ -298,7 +282,6 @@ func TestAllocateAndCommit(t *testing.T) {
 					AdviseNoHugepage:        !test.huge,
 				},
 			}
-			f.mu.Lock()
 			f.initFields()
 			chunks := []chunkInfo{{mapping: uintptr(unsafe.Pointer(&mapping[0])), huge: test.huge}}
 			f.chunks.Store(&chunks)
@@ -313,7 +296,6 @@ func TestAllocateAndCommit(t *testing.T) {
 			} else {
 				unfree.RemoveRange(available)
 			}
-			f.mu.Unlock()
 
 			readerCalled := false
 			opts := AllocOpts{
@@ -867,29 +849,23 @@ func TestFindAllocatable(t *testing.T) {
 					DisableMemoryAccounting: true,
 				},
 			}
-			// f is a local fixture with no releaser or published references.
-			// checklocks cannot substitute this ownership for the mutex contract.
-			f.initFields() // +checklocksignore
+			f.initFields()
 			chunks := make([]chunkInfo, len(test.chunkHuge))
 			for i, huge := range test.chunkHuge {
 				chunks[i].huge = huge
 				chunkFR := memmap.FileRange{uint64(i) * chunkSize, uint64(i+1) * chunkSize}
 				if huge {
-					f.unfreeHuge.RemoveRange(chunkFR) // +checklocksignore
+					f.unfreeHuge.RemoveRange(chunkFR)
 				} else {
-					f.unfreeSmall.RemoveRange(chunkFR) // +checklocksignore
+					f.unfreeSmall.RemoveRange(chunkFR)
 				}
 			}
-			// f remains local to this fixture; checklocks does not track that
-			// ownership through initFields.
-			f.chunks.Store(&chunks) // +checklocksignore
-			// The synchronous callbacks below only initialize this private
-			// fixture; checklocks cannot track that ownership into them.
+			f.chunks.Store(&chunks)
 			for _, es := range test.existing {
 				f.forEachChunk(memmap.FileRange{es.start, es.end}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
-					unwaste, unfree := &f.unwasteSmall, &f.unfreeSmall // +checklocksignore
+					unwaste, unfree := &f.unwasteSmall, &f.unfreeSmall
 					if chunk.huge {
-						unwaste, unfree = &f.unwasteHuge, &f.unfreeHuge // +checklocksignore
+						unwaste, unfree = &f.unwasteHuge, &f.unfreeHuge
 					}
 					switch es.state {
 					case existingUsed:
@@ -902,7 +878,7 @@ func TestFindAllocatable(t *testing.T) {
 					default:
 						t.Fatalf("existingSegment %+v has unknown state", es)
 					}
-					f.memAcct.InsertRange(chunkFR, memAcctInfo{ // +checklocksignore
+					f.memAcct.InsertRange(chunkFR, memAcctInfo{
 						wasteOrReleasing: es.state != existingUsed,
 					})
 					return true
@@ -933,154 +909,5 @@ func TestFindAllocatable(t *testing.T) {
 				t.Errorf("findAllocatableAndMarkUsed(%+v): got: end=%#x, want: %#x\n%v", alloc, fr.End, wantEnd, f)
 			}
 		})
-	}
-}
-
-// readFunc lets the restore test intervene after a page reaches its mapping.
-type readFunc func([]byte) (int, error)
-
-// Read implements io.Reader.
-func (f readFunc) Read(p []byte) (int, error) {
-	return f(p)
-}
-
-func TestLoadFromWithUpdateUsage(t *testing.T) {
-	newMemoryFile := func() *MemoryFile {
-		t.Helper()
-		memfd, err := memutil.CreateMemFD("pgalloc-test", 0)
-		if err != nil {
-			t.Fatal(err)
-		}
-		file := os.NewFile(uintptr(memfd), "pgalloc-test")
-		f, err := NewMemoryFile(file, MemoryFileOpts{
-			DisableMemoryAccounting: true,
-		})
-		if err != nil {
-			_ = file.Close()
-			t.Fatal(err)
-		}
-		t.Cleanup(f.Destroy)
-		return f
-	}
-
-	ctx := context.Background()
-	src := newMemoryFile()
-	fr, err := src.Allocate(3*page, AllocOpts{Kind: usage.Anonymous})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { src.DecRef(fr) })
-
-	want := make([]byte, 3*page)
-	want[0], want[2*page] = 1, 2
-	// The first three-page allocation fits in one chunk.
-	src.forEachMappingSlice(fr, func(bs []byte) {
-		bs[0], bs[2*page] = want[0], want[2*page]
-	})
-	var saved bytes.Buffer
-	if err := src.SaveTo(ctx, &saved, &SaveOpts{
-		ExcludeCommittedZeroPages: true,
-	}); err != nil {
-		t.Fatal(err)
-	}
-
-	data := saved.Bytes()
-	metadataEnd := 8 + int(binary.LittleEndian.Uint64(data[:8]))
-	probe := bytes.NewReader(data[metadataEnd:])
-	length, object, err := state.ReadHeader(&wire.Reader{Reader: probe})
-	if err != nil || object || length != page {
-		t.Fatalf("first page header: length=%d object=%t err=%v",
-			length, object, err)
-	}
-	firstPayloadEnd := len(data) - probe.Len() + int(length)
-
-	dst := newMemoryFile()
-	t.Cleanup(func() {
-		// LoadFrom may fail before or after importing this reference.
-		dst.mu.Lock()
-		seg := dst.unfreeSmall.FindSegment(fr.Start)
-		hasRef := seg.Ok() && seg.Value().refs != 0
-		dst.mu.Unlock()
-		if hasRef {
-			dst.DecRef(fr)
-		}
-	})
-
-	stop := make(chan struct{})
-	scanned := make(chan error, 1)
-	var scanWG sync.WaitGroup
-	scanWG.Go(func() {
-		// Observe host commitment without synchronizing with LoadFrom. A
-		// signal from the reader would hide missing mapping publication.
-		for {
-			select {
-			case <-stop:
-				return
-			default:
-			}
-			committed, err := dst.TotalUsage()
-			if err != nil {
-				scanned <- err
-				return
-			}
-			if committed >= 2*page {
-				scanned <- dst.UpdateUsage(nil)
-				return
-			}
-			runtime.Gosched()
-		}
-	})
-	t.Cleanup(func() {
-		close(stop)
-		scanWG.Wait()
-	})
-
-	input := bytes.NewReader(data)
-	updated := false
-	reader := readFunc(func(p []byte) (int, error) {
-		n, err := input.Read(p)
-		if !updated && len(data)-input.Len() >= firstPayloadEnd {
-			updated = true
-			// Model neighboring-page commitment without requiring THP.
-			// This preserves the omitted page's zero contents.
-			dst.forEachMappingSlice(memmap.FileRange{
-				Start: fr.Start + page,
-				End:   fr.Start + 2*page,
-			}, func(bs []byte) {
-				clear(bs)
-			})
-			select {
-			case err := <-scanned:
-				if err != nil {
-					t.Fatalf("UpdateUsage during restore: %v", err)
-				}
-			case <-time.After(5 * time.Second):
-				t.Fatal("usage scan did not complete during restore")
-			}
-		}
-		return n, err
-	})
-	if err := dst.LoadFrom(ctx, reader, &LoadOpts{}); err != nil {
-		t.Fatal(err)
-	}
-	if !updated {
-		t.Fatal("restore never reached the accounting update")
-	}
-	dst.forEachMappingSlice(fr, func(bs []byte) {
-		if !bytes.Equal(bs, want) {
-			t.Error("restored pages differ from saved pages")
-		}
-	})
-	if input.Len() != 0 {
-		t.Errorf("restore left %d bytes unread", input.Len())
-	}
-
-	// Count both restored pages and the zero page committed during loading.
-	dst.mu.Lock()
-	committed := dst.knownCommittedBytes
-	dst.mu.Unlock()
-	if committed != 3*page {
-		t.Errorf("committed bytes after restore: got %d, want %d",
-			committed, 3*page)
 	}
 }

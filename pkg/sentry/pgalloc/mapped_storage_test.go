@@ -159,7 +159,7 @@ func TestMappedStorageSaveRestore(t *testing.T) {
 				} else if err := f.SaveTo(ctx, &metadata, &saveOpts); err != nil {
 					t.Fatal(err)
 				}
-				if got := f.committedBytesForTest(); got != 3*page {
+				if got := f.knownCommittedBytes; got != 3*page {
 					t.Fatalf("round %d: saved %d committed bytes, want %d", round, got, 3*page)
 				}
 				// Saving must leave the original live mapping usable.

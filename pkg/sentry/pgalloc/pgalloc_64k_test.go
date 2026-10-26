@@ -404,29 +404,23 @@ func TestFindAllocatable64K(t *testing.T) {
 					DisableMemoryAccounting: true,
 				},
 			}
-			// f is a local fixture with no releaser or published references.
-			// checklocks cannot substitute this ownership for the mutex contract.
-			f.initFields() // +checklocksignore
+			f.initFields()
 			chunks := make([]chunkInfo, len(test.chunkHuge))
 			for i, huge := range test.chunkHuge {
 				chunks[i].huge = huge
 				chunkFR := memmap.FileRange{uint64(i) * chunkSize, uint64(i+1) * chunkSize}
 				if huge {
-					f.unfreeHuge.RemoveRange(chunkFR) // +checklocksignore
+					f.unfreeHuge.RemoveRange(chunkFR)
 				} else {
-					f.unfreeSmall.RemoveRange(chunkFR) // +checklocksignore
+					f.unfreeSmall.RemoveRange(chunkFR)
 				}
 			}
-			// f remains local to this fixture; checklocks does not track that
-			// ownership through initFields.
-			f.chunks.Store(&chunks) // +checklocksignore
-			// The synchronous callbacks below only initialize this private
-			// fixture; checklocks cannot track that ownership into them.
+			f.chunks.Store(&chunks)
 			for _, es := range test.existing {
 				f.forEachChunk(memmap.FileRange{es.start, es.end}, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
-					unwaste, unfree := &f.unwasteSmall, &f.unfreeSmall // +checklocksignore
+					unwaste, unfree := &f.unwasteSmall, &f.unfreeSmall
 					if chunk.huge {
-						unwaste, unfree = &f.unwasteHuge, &f.unfreeHuge // +checklocksignore
+						unwaste, unfree = &f.unwasteHuge, &f.unfreeHuge
 					}
 					switch es.state {
 					case existingUsed:
@@ -439,7 +433,7 @@ func TestFindAllocatable64K(t *testing.T) {
 					default:
 						t.Fatalf("existingSegment %+v has unknown state", es)
 					}
-					f.memAcct.InsertRange(chunkFR, memAcctInfo{ // +checklocksignore
+					f.memAcct.InsertRange(chunkFR, memAcctInfo{
 						wasteOrReleasing: es.state != existingUsed,
 					})
 					return true
