@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T23:20:59.556134+00:00",
+    "updatedAt": "2026-10-26T23:45:49.112551+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25742,23 +25742,15 @@
       "title": "Honor immutable proc task directories",
       "url": "https://github.com/tamird/gvisor/commit/0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
       "group": "runtime",
-      "status": "Contributor review",
-      "summary": "Ordinary writes to immutable PID and TID proc directories now return Linux\u2019s EPERM before mode-based access checks. Internal synthetic mountpoint creation retains the existing owner, mode and capability checks; it is denied without CAP_DAC_OVERRIDE and succeeds with it. This is a separate follow-up to #16057, not a change to that published PR\u2019s scope.\n\nThe exact product 0809155479 is independently reviewed and qualified through overlay 0331d2fb9e. Three proc syscall cases passed in each of native Linux, DirectFS and shared modes: nine passed, zero failed or skipped. Two actual proc Go tests cover synthetic creation and live PID/TID credential controls; three analyzer owners passed on AMD64 and ARM64. These checks do not claim ARM64 runtime execution or a complete OCI boot. The initial candidate\u2019s synthetic-creation failure remains retained.\n\nContributor approval is requested for this exact fork commit. Open the follow-up after #16057 lands; no upstream follow-up PR exists.",
-      "updatedAt": "2026-10-26T23:20:59.556134+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
-        "url": "https://github.com/tamird/gvisor/commit/0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
-        "title": "Honor immutable proc task directories",
-        "summary": "Approve the independently reviewed permission follow-up for opening after #16057 lands. Preserve privileged internal synthetic mountpoint creation.",
-        "body": "Linux marks `/proc/PID` and `/proc/PID/task/TID` immutable. On a writable proc mount, renaming `/proc/self/status` over `/proc/version` without `CAP_DAC_OVERRIDE` therefore fails with `EPERM`. gVisor checked the directory's mode first and returned `EACCES`.\n\nCheck immutability before mode bits on those two directory types. For an internal request to create a synthetic mountpoint, retain the existing check against the directory's owner and mode. The tests cover ordinary write, read and search access; the rename that exposed the difference; and synthetic creation under both kinds of live directory, with and without `CAP_DAC_OVERRIDE`.\n\nThis change builds on the proc lookup ordering in #16057."
-      },
+      "status": "Contributor approved; waiting for #16057",
+      "summary": "Ordinary writes to immutable PID and TID proc directories now return Linux\u2019s EPERM before mode-based access checks. Internal synthetic mountpoint creation retains the existing owner, mode and capability checks; it is denied without CAP_DAC_OVERRIDE and succeeds with it. This is a separate follow-up to #16057, not a change to that published PR\u2019s scope.\n\nThe exact product 0809155479 is independently reviewed and qualified through overlay 0331d2fb9e. Three proc syscall cases passed in each of native Linux, DirectFS and shared modes: nine passed, zero failed or skipped. Two actual proc Go tests cover synthetic creation and live PID/TID credential controls; three analyzer owners passed on AMD64 and ARM64. These checks do not claim ARM64 runtime execution or a complete OCI boot. The initial candidate\u2019s synthetic-creation failure remains retained.\n\nThe contributor approved this exact fork commit for opening after #16057 lands. No contributor decision remains pending, and no upstream follow-up PR exists.",
+      "updatedAt": "2026-10-26T23:45:49.112551+00:00",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
-        "observedAt": "2026-10-26T23:20:59.556134+00:00",
-        "disposition": "Qualified independent follow-up awaiting contributor decision",
-        "nextAction": "After contributor approval and #16057 landing, rebase the approved follow-up onto the landed prerequisite and open its own PR.",
+        "observedAt": "2026-10-26T23:45:49.112551+00:00",
+        "disposition": "Exact follow-up approved; waiting for #16057 landing",
+        "nextAction": "After #16057 lands, rebase the approved follow-up onto the landed prerequisite and open its own PR. No new contributor decision is required for an equivalent adaptation.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
           "https://app.buildbuddy.io/invocation/b008f0ee-6b24-475f-acd4-c450723d0e26",
