@@ -98,6 +98,17 @@ diff --git a/dpdk/Makefile b/dpdk/Makefile
  	$(call set,RTE_MACHINE,$(DPDK_MACHINE))
  	@# modify options
  	$(call set,RTE_MAX_LCORE,256)
+@@ -206,8 +196,8 @@
+ 	$(call set,RTE_LIBRTE_PMD_BOND,n)
+ 	$(call set,RTE_LIBRTE_ATLANTIC_PMD,n)
+ 	$(call set,RTE_LIBRTE_GSO,n)
+-	$(call set,RTE_MAX_VFIO_GROUPS,4)
+-	$(call set,RTE_MAX_VFIO_CONTAINERS,4)
++	@# The gVisor plugin always uses virtio-user with --no-pci.
++	$(call set,RTE_EAL_VFIO,n)
+ 	$(call set,RTE_LIBRTE_COMMON_DPAAX,n)
+ 	$(call set,RTE_LIBRTE_PMD_OCTEONTX_CRYPTO,n)
+ 	$(call set,RTE_EAL_NUMA_AWARE_HUGEPAGES,n)
 @@ -219,39 +209,22 @@
  	$(call set,RTE_LIBRTE_PDUMP,n)
  	@rm -f .config.ok
