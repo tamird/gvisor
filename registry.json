@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T10:36:53.751019+00:00",
+    "updatedAt": "2026-10-26T12:51:26.020659+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5488,7 +5488,8 @@
         "reviewedAt": "2026-10-18T00:02:10.306236+00:00",
         "sourceHead": "97b26c63bd39fbf386180b2b4b396d00fe0a97ce",
         "observedAt": "2026-10-18T00:34:01.901163+00:00"
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:netstack-test-addresses",
@@ -5558,7 +5559,8 @@
         "reviewedAt": "2026-10-18T00:02:10.306236+00:00",
         "sourceHead": "945eb349a1524e36cf027881e720a13e386b7551",
         "observedAt": "2026-10-18T00:34:01.901163+00:00"
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:15375",
@@ -9835,7 +9837,8 @@
           "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
         ],
         "observedAt": "2026-10-21T18:16:40.279706+00:00"
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:15643",
@@ -10172,7 +10175,8 @@
         "after": {
           "head": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0"
         }
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:review/state-reference-arrays",
@@ -10203,7 +10207,8 @@
           "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
         ],
         "observedAt": "2026-10-21T18:16:40.279706+00:00"
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:15650",
@@ -12088,7 +12093,8 @@
           "https://github.com/tamird/gvisor/commit/d5f5350e1de2657ce3b61ff140a9d8ba31cff1e9",
           "https://github.com/tamird/gvisor/commit/d702e924375d756788a304c01b887fb833c30243"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:fixes/iperf-client-metrics",
@@ -12555,7 +12561,8 @@
           "label": "Correctness and production-link qualification",
           "url": "https://app.buildbuddy.io/invocation/fa912991-f7cd-409b-a7e2-50ab190945a0"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:diagnostics/state-current-upstream-v2",
@@ -12612,7 +12619,8 @@
           "label": "Passed current-consumer compilation and checkpoint/deadlock smoke",
           "url": "https://app.buildbuddy.io/invocation/a7637d92-5dde-455f-a184-b4c88a04b4e0"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:diagnostics/state-integrated-array-proposal",
@@ -12749,7 +12757,8 @@
           "label": "Original-base lifecycle comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/39708975978"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:fix/nodejs-tls-server-name",
@@ -15439,7 +15448,8 @@
           "label": "Re-audited Linux record: canonical generation active",
           "url": "https://app.buildbuddy.io/invocation/eff9ded3-67da-43c4-b84a-d97db063c5b9"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:fix/licensecheck-codeload",
