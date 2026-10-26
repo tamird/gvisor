@@ -29,6 +29,7 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import tarfile
@@ -4138,12 +4139,15 @@ signal.pause()
                     value = self.native_collect(metadata, [self.metadata_response(pending),
                                                            TimeoutError("timed out"),
                                                            OSError(errno.EADDRNOTAVAIL, "no local address"),
+                                                           socket.gaierror(socket.EAI_NONAME, "name unavailable"),
+                                                           socket.gaierror(socket.EAI_AGAIN, "temporary resolution failure"),
                                                            ConnectionResetError("connection reset"),
                                                            RemoteDisconnected("connection closed"),
                                                            self.metadata_response(metadata),
                                                            self.native_response(artifact.read_bytes())])
                 self.assertEqual([retry["error"] for retry in value["observation_retries"]],
-                                 ["TimeoutError", "EADDRNOTAVAIL", "ConnectionResetError", "RemoteDisconnected"])
+                                 ["TimeoutError", "EADDRNOTAVAIL", "EAI_NONAME", "EAI_AGAIN",
+                                  "ConnectionResetError", "RemoteDisconnected"])
                 self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
                                  (status, status, "COMPLETE"))
                 for field in ("case_counts", "failures", "missing", "skips", "zero_case_owners",
@@ -4259,22 +4263,37 @@ signal.pause()
         artifact, producer = self.artifact(self.fixture(), native=True)
         metadata = self.native_metadata(artifact, producer)
         pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
-        for timeout in (False, True):
-            with self.subTest(timeout=timeout):
+        for error in (None, TimeoutError("timed out"),
+                      socket.gaierror(socket.EAI_NONAME, "name unavailable"),
+                      socket.gaierror(socket.EAI_AGAIN, "temporary resolution failure")):
+            with self.subTest(error=error):
                 clock = [0]
 
                 def expire(_: float) -> None:
                     clock[0] = 31
 
-                responses = [TimeoutError("timed out")] if timeout else [self.metadata_response(pending)]
+                responses = [error] if error is not None else [self.metadata_response(pending)]
                 with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]), \
                      mock.patch.object(report.time, "sleep", side_effect=expire):
                     value = self.native_collect(metadata, responses)
                 self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
                 self.assertIn("deadline", value["collection_error"])
-                if not timeout:
+                if error is None:
                     self.assertEqual(value["native_invocation"]["invocationStatus"], "PARTIAL_INVOCATION_STATUS")
                 self.assertNotIn("consumer_verified_at", value)
+
+    def test_native_collection_does_not_retry_other_socket_errors(self) -> None:
+        artifact, producer = self.artifact(self.fixture(), native=True)
+        metadata = self.native_metadata(artifact, producer)
+        for error in (socket.gaierror(socket.EAI_FAIL, "permanent resolver failure"),
+                      PermissionError(errno.EACCES, "connection denied")):
+            with self.subTest(error=error), mock.patch.object(report.time, "sleep") as sleep:
+                value = self.native_collect(metadata, [error])
+                self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
+                self.assertEqual(value["observation_retries"], [])
+                self.assertEqual(value["collection_error"], str(error))
+                self.assertNotIn("consumer_verified_at", value)
+                sleep.assert_not_called()
 
     def test_native_collection_deadline_covers_verification(self) -> None:
         original_open = Path.open

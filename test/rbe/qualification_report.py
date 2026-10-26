@@ -43,6 +43,7 @@ from pathlib import Path
 import posixpath
 import re
 import shutil
+import socket
 import subprocess
 import tarfile
 import tempfile
@@ -3075,6 +3076,10 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
             except OSError as error:
                 if isinstance(error, (TimeoutError, ConnectionResetError)):
                     reason = type(error).__name__
+                elif isinstance(error, socket.gaierror) and error.errno in (socket.EAI_NONAME, socket.EAI_AGAIN):
+                    # This fixed service name can temporarily fail to resolve
+                    # locally; it is not a user-supplied unknown hostname.
+                    reason = "EAI_NONAME" if error.errno == socket.EAI_NONAME else "EAI_AGAIN"
                 elif error.errno == errno.EADDRNOTAVAIL:
                     reason = "EADDRNOTAVAIL"
                 else:
