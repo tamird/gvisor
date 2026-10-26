@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="49" failures="0" disabled="0" errors="0" time="0.152" timestamp="2026-10-16T17:01:08.667" name="AllTests">
+  <testsuite name="ElfTest" tests="29" failures="0" disabled="0" skipped="1" errors="0" time="0.126" timestamp="2026-10-16T17:01:08.667">
+    <testcase name="Execute" file="test/syscalls/linux/exec_binary.cc" line="408" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.667" classname="ElfTest" />
+    <testcase name="MissingText" file="test/syscalls/linux/exec_binary.cc" line="441" status="run" result="completed" time="0.108" timestamp="2026-10-16T17:01:08.668" classname="ElfTest" />
+    <testcase name="DataSegment" file="test/syscalls/linux/exec_binary.cc" line="467" status="run" result="completed" time="0.001" timestamp="2026-10-16T17:01:08.777" classname="ElfTest" />
+    <testcase name="ExtraMemPages" file="test/syscalls/linux/exec_binary.cc" line="515" status="run" result="completed" time="0.001" timestamp="2026-10-16T17:01:08.778" classname="ElfTest" />
+    <testcase name="AnonOnlySegment" file="test/syscalls/linux/exec_binary.cc" line="575" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.779" classname="ElfTest" />
+    <testcase name="UnalignedOffset" file="test/syscalls/linux/exec_binary.cc" line="617" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.779" classname="ElfTest" />
+    <testcase name="DirectlyOverlappingSegments" file="test/syscalls/linux/exec_binary.cc" line="653" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.780" classname="ElfTest" />
+    <testcase name="OutOfOrderSegments" file="test/syscalls/linux/exec_binary.cc" line="689" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.781" classname="ElfTest" />
+    <testcase name="OutOfBoundsPhdrs" file="test/syscalls/linux/exec_binary.cc" line="725" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.782" classname="ElfTest" />
+    <testcase name="MissingPhdr" file="test/syscalls/linux/exec_binary.cc" line="741" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.782" classname="ElfTest" />
+    <testcase name="MissingHeader" file="test/syscalls/linux/exec_binary.cc" line="765" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.783" classname="ElfTest" />
+    <testcase name="PIE" file="test/syscalls/linux/exec_binary.cc" line="783" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.783" classname="ElfTest" />
+    <testcase name="PIENonZeroStart" file="test/syscalls/linux/exec_binary.cc" line="865" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.784" classname="ElfTest" />
+    <testcase name="PIEOutOfOrderSegments" file="test/syscalls/linux/exec_binary.cc" line="937" status="run" result="skipped" time="0." timestamp="2026-10-16T17:01:08.785" classname="ElfTest">
+      <skipped message="test/syscalls/linux/exec_binary.cc:944&#x0A;!IsRunningOnGvisor()&#x0A;"><![CDATA[test/syscalls/linux/exec_binary.cc:944
+!IsRunningOnGvisor()
+]]></skipped>
+    </testcase>
+    <testcase name="PIEOverflow" file="test/syscalls/linux/exec_binary.cc" line="977" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.785" classname="ElfTest" />
+    <testcase name="ELFInterpreter" file="test/syscalls/linux/exec_binary.cc" line="1006" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.785" classname="ElfTest" />
+    <testcase name="ExecuteOnlyELFInterpreter" file="test/syscalls/linux/exec_binary.cc" line="1117" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.786" classname="ElfTest" />
+    <testcase name="PtraceExecuteOnlyBinary" file="test/syscalls/linux/exec_binary.cc" line="1201" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.786" classname="ElfTest" />
+    <testcase name="UsernsAttachExecuteOnlyBinary" file="test/syscalls/linux/exec_binary.cc" line="1277" status="run" result="completed" time="0.001" timestamp="2026-10-16T17:01:08.787" classname="ElfTest" />
+    <testcase name="ExecuteOnlyScriptReadableInterpreter" file="test/syscalls/linux/exec_binary.cc" line="1410" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.789" classname="ElfTest" />
+    <testcase name="ExecuteOnlyScriptReadableInterpreterEmptyPathFd" file="test/syscalls/linux/exec_binary.cc" line="1415" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.789" classname="ElfTest" />
+    <testcase name="ExecuteOnlyScriptReadableInterpreterRelativeDirfd" file="test/syscalls/linux/exec_binary.cc" line="1420" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.790" classname="ElfTest" />
+    <testcase name="ProcessVMReadExecuteOnlyBinary" file="test/syscalls/linux/exec_binary.cc" line="1430" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.790" classname="ElfTest" />
+    <testcase name="ProcMemFdAcrossExecuteOnlyExec" file="test/syscalls/linux/exec_binary.cc" line="1492" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.791" classname="ElfTest" />
+    <testcase name="ELFInterpreterRelative" file="test/syscalls/linux/exec_binary.cc" line="1672" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.792" classname="ElfTest" />
+    <testcase name="ELFInterpreterWrongArch" file="test/syscalls/linux/exec_binary.cc" line="1739" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.792" classname="ElfTest" />
+    <testcase name="NoExecute" file="test/syscalls/linux/exec_binary.cc" line="1779" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.793" classname="ElfTest" />
+    <testcase name="NoRead" file="test/syscalls/linux/exec_binary.cc" line="1799" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.793" classname="ElfTest" />
+    <testcase name="ElfInterpreterNoExecute" file="test/syscalls/linux/exec_binary.cc" line="1819" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.793" classname="ElfTest" />
+  </testsuite>
+  <testsuite name="InterpreterScriptTest" tests="9" failures="0" disabled="0" skipped="0" errors="0" time="0.022" timestamp="2026-10-16T17:01:08.794">
+    <testcase name="Execute" file="test/syscalls/linux/exec_binary.cc" line="1861" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.794" classname="InterpreterScriptTest" />
+    <testcase name="Whitespace" file="test/syscalls/linux/exec_binary.cc" line="1880" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.794" classname="InterpreterScriptTest" />
+    <testcase name="InterpreterScriptNoExecute" file="test/syscalls/linux/exec_binary.cc" line="1899" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.795" classname="InterpreterScriptTest" />
+    <testcase name="BinaryNoExecute" file="test/syscalls/linux/exec_binary.cc" line="1916" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.795" classname="InterpreterScriptTest" />
+    <testcase name="MaxRecursion" file="test/syscalls/linux/exec_binary.cc" line="1935" status="run" result="completed" time="0.018" timestamp="2026-10-16T17:01:08.796" classname="InterpreterScriptTest" />
+    <testcase name="RelativePath" file="test/syscalls/linux/exec_binary.cc" line="1970" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.814" classname="InterpreterScriptTest" />
+    <testcase name="UncleanPath" file="test/syscalls/linux/exec_binary.cc" line="1992" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.815" classname="InterpreterScriptTest" />
+    <testcase name="Symlink" file="test/syscalls/linux/exec_binary.cc" line="2012" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.815" classname="InterpreterScriptTest" />
+    <testcase name="SymlinkLoop" file="test/syscalls/linux/exec_binary.cc" line="2034" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.816" classname="InterpreterScriptTest" />
+  </testsuite>
+  <testsuite name="ExecveTest" tests="4" failures="0" disabled="0" skipped="0" errors="0" time="0.001" timestamp="2026-10-16T17:01:08.817">
+    <testcase name="SymlinkLoop" file="test/syscalls/linux/exec_binary.cc" line="2057" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.817" classname="ExecveTest" />
+    <testcase name="Directory" file="test/syscalls/linux/exec_binary.cc" line="2077" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.817" classname="ExecveTest" />
+    <testcase name="BinaryAsDirectory" file="test/syscalls/linux/exec_binary.cc" line="2086" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.817" classname="ExecveTest" />
+    <testcase name="BrkAfterBinary" file="test/syscalls/linux/exec_binary.cc" line="2101" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.818" classname="ExecveTest" />
+  </testsuite>
+  <testsuite name="Cases/ElfInterpreterStaticTest" tests="3" failures="0" disabled="0" skipped="3" errors="0" time="0." timestamp="2026-10-16T17:01:08.818">
+    <testcase name="Test/0" value_param="({ &apos;\0&apos; }, 0)" file="test/syscalls/linux/exec_binary.cc" line="1560" status="run" result="skipped" time="0." timestamp="2026-10-16T17:01:08.818" classname="Cases/ElfInterpreterStaticTest">
+      <skipped message="test/syscalls/linux/exec_binary.cc:1565&#x0A;version.major &gt; 4&#x0A;"><![CDATA[test/syscalls/linux/exec_binary.cc:1565
+version.major > 4
+]]></skipped>
+    </testcase>
+    <testcase name="Test/1" value_param="({ &apos;\0&apos;, &apos;b&apos; (98, 0x62), &apos;\0&apos; }, 0)" file="test/syscalls/linux/exec_binary.cc" line="1560" status="run" result="skipped" time="0." timestamp="2026-10-16T17:01:08.818" classname="Cases/ElfInterpreterStaticTest">
+      <skipped message="test/syscalls/linux/exec_binary.cc:1565&#x0A;version.major &gt; 4&#x0A;"><![CDATA[test/syscalls/linux/exec_binary.cc:1565
+version.major > 4
+]]></skipped>
+    </testcase>
+    <testcase name="Test/2" value_param="({ &apos;\0&apos;, &apos;b&apos; (98, 0x62) }, 8)" file="test/syscalls/linux/exec_binary.cc" line="1560" status="run" result="skipped" time="0." timestamp="2026-10-16T17:01:08.818" classname="Cases/ElfInterpreterStaticTest">
+      <skipped message="test/syscalls/linux/exec_binary.cc:1565&#x0A;version.major &gt; 4&#x0A;"><![CDATA[test/syscalls/linux/exec_binary.cc:1565
+version.major > 4
+]]></skipped>
+    </testcase>
+  </testsuite>
+  <testsuite name="Cases/ElfInterpreterBadPathTest" tests="4" failures="0" disabled="0" skipped="0" errors="0" time="0.001" timestamp="2026-10-16T17:01:08.818">
+    <testcase name="Test/0" value_param="({ &apos;/&apos; (47, 0x2F), &apos;f&apos; (102, 0x66), &apos;/&apos; (47, 0x2F), &apos;b&apos; (98, 0x62), &apos;\0&apos; }, 2)" file="test/syscalls/linux/exec_binary.cc" line="1631" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.818" classname="Cases/ElfInterpreterBadPathTest" />
+    <testcase name="Test/1" value_param="({ &apos;/&apos; (47, 0x2F), &apos;f&apos; (102, 0x66), &apos;/&apos; (47, 0x2F), &apos;b&apos; (98, 0x62) }, 8)" file="test/syscalls/linux/exec_binary.cc" line="1631" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.819" classname="Cases/ElfInterpreterBadPathTest" />
+    <testcase name="Test/2" value_param="({ &apos;\0&apos; }, 8)" file="test/syscalls/linux/exec_binary.cc" line="1631" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.819" classname="Cases/ElfInterpreterBadPathTest" />
+    <testcase name="Test/3" value_param="({ &apos;\0&apos;, &apos;\0&apos; }, 13)" file="test/syscalls/linux/exec_binary.cc" line="1631" status="run" result="completed" time="0." timestamp="2026-10-16T17:01:08.820" classname="Cases/ElfInterpreterBadPathTest" />
+  </testsuite>
+</testsuites>

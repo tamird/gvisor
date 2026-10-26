@@ -1,0 +1,22 @@
+{
+  "workflow": {
+    "id": 39148304978,
+    "head_sha": "2ab755534b17d2142cd836d8a9b1d3e5c1946ede",
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/tamird/gvisor/actions/runs/39148304978",
+    "run_attempt": 1,
+    "created_at": "2026-10-18T17:09:57Z",
+    "updated_at": "2026-10-18T18:13:02Z"
+  },
+  "artifacts": {
+    "total_count": 0,
+    "artifacts": []
+  },
+  "provenance": {
+    "workflow_metadata_sha256": "e5cd5be43bfcce78fb16eec63779811635d4686243f1bec15a39d1f56834e5e4",
+    "artifact_metadata_sha256": "f7417e1fb877d3f5934f143cc38ad9e2905476e8f5ac6776507d09441efcd6f6",
+    "projection": "Only workflow identity, result and timing fields retained from the authenticated API response. Artifact listing retained verbatim as JSON. No test result was available.",
+    "failure": "Hosted runner lost communication; upload did not complete."
+  }
+}

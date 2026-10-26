@@ -1,0 +1,1321 @@
+{
+  "targets": [
+    {
+      "id": 1,
+      "label": "//test/rtnetlink:bridge_test_runsc_ptrace_overlay_arm64"
+    },
+    {
+      "id": 2,
+      "label": "//test/rtnetlink:bridge_test_runsc_systrap_overlay_directfs_arm64"
+    },
+    {
+      "id": 3,
+      "label": "//test/rtnetlink:route_test_runsc_ptrace_overlay_arm64"
+    },
+    {
+      "id": 4,
+      "label": "//test/rtnetlink:route_test_runsc_systrap_overlay_directfs_arm64"
+    },
+    {
+      "id": 7,
+      "label": "//test/rtnetlink:veth_test_runsc_ptrace_overlay_arm64"
+    },
+    {
+      "id": 9,
+      "label": "//test/syscalls:32bit_test_runsc_ptrace_arm64"
+    },
+    {
+      "id": 10,
+      "label": "//test/syscalls:32bit_test_runsc_systrap_directfs_arm64"
+    },
+    {
+      "id": 12,
+      "label": "//test/syscalls:accept_bind_stream_test_runsc_ptrace_arm64"
+    },
+    {
+      "id": 13,
+      "label": "//test/syscalls:accept_bind_stream_test_runsc_systrap_directfs_arm64"
+    },
+    {
+      "id": 14,
+      "label": "//test/syscalls:accept_bind_stream_test_runsc_systrap_hostnet_arm64"
+    },
+    {
+      "id": 17,
+      "label": "//test/syscalls:accept_bind_test_runsc_systrap_directfs_arm64"
+    },
+    {
+      "id": 18,
+      "label": "//test/syscalls:accept_bind_test_runsc_systrap_hostnet_arm64"
+    },
+    {
+      "id": 20,
+      "label": "//test/syscalls:access_test_runsc_ptrace_arm64"
+    },
+    {
+      "id": 30,
+      "label": "//test/syscalls:aio_test_runsc_systrap_overlay_arm64"
+    },
+    {
+      "id": 35,
+      "label": "//test/syscalls:arch_prctl_test_runsc_ptrace_arm64"
+    }
+  ],
+  "actions": [
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 1,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 2,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 3,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 4,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 7,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 9,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 10,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 12,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 13,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 14,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 17,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 18,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 20,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 30,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    },
+    {
+      "mnemonic": "TestRunner",
+      "targetId": 35,
+      "configurationId": 1,
+      "executionInfo": [
+        {
+          "key": "OSFamily",
+          "value": "linux"
+        },
+        {
+          "key": "container-image",
+          "value": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+        },
+        {
+          "key": "workload-isolation-type",
+          "value": "firecracker"
+        },
+        {
+          "key": "Arch",
+          "value": "arm64"
+        },
+        {
+          "key": "dockerUser",
+          "value": "root"
+        },
+        {
+          "key": "network-enable-ipv6",
+          "value": "true"
+        },
+        {
+          "key": "block-network"
+        },
+        {
+          "key": "requires-net:loopback"
+        },
+        {
+          "key": "requires-net:ipv4"
+        },
+        {
+          "key": "no-remote-exec"
+        }
+      ]
+    }
+  ],
+  "configuration": [
+    {
+      "id": 1,
+      "mnemonic": "k8-fastbuild",
+      "platformName": "k8",
+      "checksum": "318955b6fc4be58898caf98f6705e2b7989f0d5c082060abca4789983f45bbdf"
+    }
+  ]
+}
