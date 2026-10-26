@@ -210,7 +210,10 @@ func TestMappedStorageSaveRestore(t *testing.T) {
 					}
 					reader = &blockedPageReader{Reader: bytes.NewReader(pageData), ready: make(chan struct{}), read: make(chan struct{}, 1)}
 					loadDone = make(chan error, 1)
-					apfl, err := StartAsyncPagesFileLoad(stateio.NewIOReader(reader, 4*page, 4, 1), func(err error) { loadDone <- err }, nil)
+					ar := stateio.NewIOReader(reader, 4*page, 4, 1)
+					apfl, err := StartAsyncPagesFileLoad(ar, func(err error) {
+						loadDone <- err
+					}, nil, AsyncPagesFileLoadOpts{})
 					if err != nil {
 						t.Fatal(err)
 					}
