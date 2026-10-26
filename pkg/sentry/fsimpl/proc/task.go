@@ -294,6 +294,11 @@ func (i *taskOwnedInode) Stat(ctx context.Context, fs *vfs.Filesystem, opts vfs.
 //
 // +checklocksexclude:i.owner.mu
 func (i *taskOwnedInode) CheckPermissions(ctx context.Context, creds *auth.Credentials, ats vfs.AccessTypes) error {
+	if ats.MayWrite() && i.TaskFromProcPIDInode() != nil {
+		// Linux marks both PID and TID directories S_IMMUTABLE, which
+		// inode_permission checks before the ordinary mode bits.
+		return linuxerr.EPERM
+	}
 	mode := i.Mode()
 	uid, gid := i.getOwner(mode)
 	return vfs.GenericCheckPermissions(creds, ats, mode, nil, uid, gid)
