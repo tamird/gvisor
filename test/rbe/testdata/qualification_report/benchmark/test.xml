@@ -1,0 +1,10 @@
+<testsuites>
+	<testsuite errors="2" failures="0" skipped="0" tests="2" time="0.000" name="gvisor.dev/gvisor/pkg/state/tests/benchmark.BenchmarkFirstRestore" timestamp="2026-10-16T21:42:29.285Z">
+		<testcase classname="benchmark" name="BenchmarkFirstRestore" time="">
+			<error message="No pass/skip/fail event found for test" type="">=== RUN   BenchmarkFirstRestore&#xA;BenchmarkFirstRestore&#xA;</error>
+		</testcase>
+		<testcase classname="benchmark" name="BenchmarkFirstRestore/empty" time="">
+			<error message="No pass/skip/fail event found for test" type="">=== RUN   BenchmarkFirstRestore/empty&#xA;BenchmarkFirstRestore/empty&#xA;BenchmarkFirstRestore/empty         &#x9;       1&#x9;      7090 ns/op&#x9;        15.00 wire-B/op&#x9;     512 B/op&#x9;       8 allocs/op&#xA;</error>
+		</testcase>
+	</testsuite>
+</testsuites>

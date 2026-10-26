@@ -1,0 +1,35 @@
+{
+  "errors": [],
+  "reports": [
+    {
+      "identity": {
+        "label": "//test/benchmarks/network:iperf_test_continuous_kvm_owned",
+        "configuration": {
+          "id": "30e6a884746014bfdcc7d465895a8cefc0a070b57e16f278b320811872ec515d"
+        },
+        "run": 1,
+        "shard": 1,
+        "attempt": 1
+      },
+      "name": "test.log",
+      "path": "reports/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.log",
+      "sha256": "48336bd80ff6c4d3c8940f37de0e18d77c3d2fc78fcc146bbfd3493314ee3344",
+      "bytes": 639
+    },
+    {
+      "identity": {
+        "label": "//test/benchmarks/network:iperf_test_continuous_kvm_owned",
+        "configuration": {
+          "id": "30e6a884746014bfdcc7d465895a8cefc0a070b57e16f278b320811872ec515d"
+        },
+        "run": 1,
+        "shard": 1,
+        "attempt": 1
+      },
+      "name": "test.xml",
+      "path": "reports/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.xml",
+      "sha256": "e1ff8fddbf862e8b28596e5c64620d2d5427fd1801e2dd053c2a78650eb3b665",
+      "bytes": 523
+    }
+  ]
+}
