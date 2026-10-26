@@ -32,7 +32,19 @@ cc_library(
 # during its build, so its execution platform must match that architecture.
 make(
     name = "libpluginstack",
+    # DPDK takes tools and flags as command-line variables. Capture the
+    # foreign_cc environment before its recursive makefiles redefine them.
     args = [
+        "'CC:=$(CC)'",
+        "'CPP:=$(CC) -E'",
+        "'AR:=$(AR)'",
+        "'LD:=$(LD)'",
+        "'OBJDUMP:=$(OBJDUMP)'",
+        "'TOOLCHAIN_CFLAGS:=$(CFLAGS)'",
+        "'TOOLCHAIN_LDFLAGS:=$(LDFLAGS)'",
+        "'HOST_EXTRA_CFLAGS:=$(CFLAGS)'",
+        "'HOST_EXTRA_CPPFLAGS:=$(CPPFLAGS)'",
+        "'EXTRA_HOST_LDFLAGS:=$(LDFLAGS)'",
         "RTE_TARGET=x86_64-native-linuxapp-clang",
         "DPDK_MACHINE=ivb",
         "EXTRA_CFLAGS='-g -O3 -fPIC -fno-omit-frame-pointer -DLOOK_ASIDE_BACKEND -Wno-error'",

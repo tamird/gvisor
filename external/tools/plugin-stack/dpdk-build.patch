@@ -1,48 +1,6 @@
-diff --git a/mk/toolchain/clang/rte.vars.mk b/mk/toolchain/clang/rte.vars.mk
---- a/mk/toolchain/clang/rte.vars.mk
-+++ b/mk/toolchain/clang/rte.vars.mk
-@@ -10,30 +10,30 @@
- #   - define TOOLCHAIN_ASFLAGS variable (overridden by cmdline value)
- #
- 
--CC        = $(CROSS)clang
-+CC        ?= $(CROSS)clang
- KERNELCC  = $(CROSS)gcc
--CPP       = $(CROSS)cpp
-+CPP       = $(CC) -E
- # for now, we don't use as but nasm.
- # AS      = $(CROSS)as
- AS        = nasm
--AR        = $(CROSS)ar
--LD        = $(CROSS)ld
-+AR        ?= $(CROSS)ar
-+LD        ?= $(CROSS)ld
- OBJCOPY   = $(CROSS)objcopy
--OBJDUMP   = $(CROSS)objdump
-+OBJDUMP   ?= $(CROSS)objdump
- STRIP     = $(CROSS)strip
- READELF   = $(CROSS)readelf
- GCOV      = $(CROSS)gcov
- 
--ifeq ("$(origin CC)", "command line")
-+# The plugin's execution and target platforms are both Linux AMD64.
- HOSTCC    = $(CC)
--else
--HOSTCC    = clang
--endif
-+HOST_CFLAGS += $(BAZEL_CFLAGS)
-+HOST_CPPFLAGS += $(CPPFLAGS)
-+HOST_LDFLAGS += $(BAZEL_LDFLAGS)
- HOSTAS    = as
- 
- TOOLCHAIN_ASFLAGS =
--TOOLCHAIN_CFLAGS =
--TOOLCHAIN_LDFLAGS =
-+TOOLCHAIN_CFLAGS = $(BAZEL_CFLAGS)
-+TOOLCHAIN_LDFLAGS = $(BAZEL_LDFLAGS)
- 
- WERROR_FLAGS := -W -Wall -Wstrict-prototypes -Wmissing-prototypes
- WERROR_FLAGS += -Wmissing-declarations -Wold-style-definition -Wpointer-arith
+# Use the selected raw linker and objdump for relocatable links and symbol
+# checks that invoke these programs by name.
+
 diff --git a/mk/internal/rte.compile-pre.mk b/mk/internal/rte.compile-pre.mk
 --- a/mk/internal/rte.compile-pre.mk
 +++ b/mk/internal/rte.compile-pre.mk
