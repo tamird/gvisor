@@ -14,6 +14,7 @@ package_group(
 go_test(
     name = "benchmark_test",
     srcs = ["benchmark_test.go"],
+    benchmark_smoke = True,
     deps = [
         ":test",
         "//pkg/binary",

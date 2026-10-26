@@ -327,14 +327,18 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
                 **test_kwargs
             )
 
-def go_test(name, nogo = True, **kwargs):
+def go_test(name, nogo = True, benchmark_smoke = False, **kwargs):
     """Wraps the standard go_test.
 
     Args:
       name: the rule name.
       nogo: enable nogo analysis.
+      benchmark_smoke: run each Go benchmark once alongside named tests.
       **kwargs: standard go_test arguments.
     """
+    if benchmark_smoke:
+        kwargs["args"] = kwargs.get("args", []) + ["-test.bench=.", "-test.benchtime=1x"]
+        kwargs["tags"] = kwargs.get("tags", []) + ["go-benchmark-contract"]
     _go_test(
         name = name,
         **kwargs

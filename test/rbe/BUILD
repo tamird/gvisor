@@ -39,6 +39,7 @@ py_test(
         "qualify.sh",
         "//:github_workflows",
         "//test/benchmarks:lifecycle.json",
+        "//test/benchmarks:unit.json",
     ] + glob(["testdata/qualification_report/**"]),
     exec_properties = nonroot_test_exec_properties(),
     imports = ["."],

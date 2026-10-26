@@ -6,7 +6,10 @@ package(
 )
 
 exports_files(
-    ["lifecycle.json"],
+    [
+        "lifecycle.json",
+        "unit.json",
+    ],
     visibility = ["//test/rbe:__pkg__"],
 )
 

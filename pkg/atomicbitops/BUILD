@@ -32,6 +32,7 @@ go_test(
     name = "atomicbitops_benchmark_test",
     size = "small",
     srcs = ["atomicbitops_benchmark_test.go"],
+    benchmark_smoke = True,
     embed = [":atomicbitops"],
 )
 

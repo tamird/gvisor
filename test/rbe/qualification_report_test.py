@@ -67,7 +67,7 @@ class QualificationReportTest(unittest.TestCase):
                               invocation, invocation / "reports", retain_outputs)
 
     def verdict(self, invocation: Path, *, analysis: Path | None = None, benchmarks: Path | None = None,
-                declared_benchmarks: Path | None = None, case_manifest: Path | None = None) -> dict[str, object]:
+                declared_benchmarks: tuple[Path, ...] = (), case_manifest: Path | None = None) -> dict[str, object]:
         events = invocation / "captured.jsonl"
         value = report.verdict(events, report.manifest_path(events), invocation / "context.json",
                                invocation / "expected.txt", (analysis,) if analysis else (), benchmarks,
@@ -1687,7 +1687,8 @@ class QualificationReportTest(unittest.TestCase):
 
     def lifecycle_verdict(self, invocation: Path) -> dict[str, object]:
         self.assertEqual(self.capture(invocation)["errors"], [])
-        return self.verdict(invocation, analysis=self.analysis(invocation), declared_benchmarks=LIFECYCLE_MANIFEST)
+        return self.verdict(invocation, analysis=self.analysis(invocation),
+                            declared_benchmarks=(LIFECYCLE_MANIFEST, LIFECYCLE_MANIFEST.with_name("unit.json")))
 
     def test_declared_benchmarks_in_mixed_invocation(self) -> None:
         for package, rows in (("runsc", 16), ("shim", 22)):
@@ -1701,6 +1702,17 @@ class QualificationReportTest(unittest.TestCase):
                 self.assertEqual(len(measured), 1)
                 self.assertEqual(len(measured[0]["benchmarks"]), rows)
                 self.assertTrue(all(row["iterations"] == 30 for row in measured[0]["benchmarks"]))
+                shutil.rmtree(invocation)
+
+    def test_benchmark_observations_preserve_named_tests(self) -> None:
+        for child, status in (("", "PASS"), ("<skipped/>", "INCOMPLETE"), ("<failure/>", "FAIL")):
+            with self.subTest(status=status):
+                invocation = self.lifecycle_fixture()
+                (invocation / "another/test.xml").write_text(
+                    f'<testsuite><testcase name="BenchmarkOCICreate/systrap"/>'
+                    f'<testcase name="TestAlsoPresent">{child}</testcase></testsuite>')
+                value = self.lifecycle_verdict(invocation)
+                self.assertEqual(value["status"], status, value)
                 shutil.rmtree(invocation)
 
     def test_declared_benchmarks_reject_incomplete_or_failed_execution(self) -> None:
@@ -2677,7 +2689,8 @@ class QualificationReportTest(unittest.TestCase):
                 ):
                     shutil.copy2(Path(__file__).with_name(name), scripts / name)
                 (workspace / "test/benchmarks").mkdir()
-                shutil.copyfile(LIFECYCLE_MANIFEST, workspace / "test/benchmarks/lifecycle.json")
+                for name in ("lifecycle.json", "unit.json"):
+                    shutil.copyfile(LIFECYCLE_MANIFEST.with_name(name), workspace / "test/benchmarks" / name)
                 (workspace / "MODULE.bazel.lock").write_text("fixture lock\n")
                 binary = workspace / "bin"
                 binary.mkdir()
