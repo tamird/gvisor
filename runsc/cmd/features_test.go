@@ -15,34 +15,41 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"os"
 	"testing"
 
+	"github.com/google/subcommands"
 	"github.com/opencontainers/runtime-spec/specs-go/features"
 )
 
 func TestFeatures(t *testing.T) {
-	originalStdout := os.Stdout
-	r, w, err := os.Pipe()
+	// A pipe can fill before Execute returns because the output is read below.
+	output, err := os.CreateTemp(t.TempDir(), "features")
 	if err != nil {
-		t.Fatalf("os.Pipe failed: %v", err)
+		t.Fatalf("Creating output file: %v", err)
 	}
-	os.Stdout = w
+	originalStdout := os.Stdout
+	os.Stdout = output
+	t.Cleanup(func() {
+		os.Stdout = originalStdout
+		if err := output.Close(); err != nil {
+			t.Errorf("Closing output file: %v", err)
+		}
+	})
 
 	cmd := &Features{}
-	cmd.Execute(context.Background(), nil)
-
-	w.Close()
-	os.Stdout = originalStdout
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	if status := cmd.Execute(context.Background(), nil); status != subcommands.ExitSuccess {
+		t.Fatalf("Execute returned %v, want %v", status, subcommands.ExitSuccess)
+	}
+	data, err := os.ReadFile(output.Name())
+	if err != nil {
+		t.Fatalf("Reading output file: %v", err)
+	}
 
 	var feat features.Features
-	if err := json.Unmarshal(buf.Bytes(), &feat); err != nil {
-		t.Fatalf("Failed to parse JSON output: %v. Output was:\n%s", err, buf.String())
+	if err := json.Unmarshal(data, &feat); err != nil {
+		t.Fatalf("Failed to parse JSON output: %v. Output was:\n%s", err, data)
 	}
 }

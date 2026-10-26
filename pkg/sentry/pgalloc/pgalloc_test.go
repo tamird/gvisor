@@ -17,9 +17,17 @@
 package pgalloc
 
 import (
+	"bytes"
+	"context"
+	"fmt"
+	"os"
 	"testing"
+	"unsafe"
 
+	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 )
 
@@ -27,6 +35,324 @@ const (
 	page     = hostarch.PageSize
 	hugepage = hostarch.HugePageSize
 )
+
+func newSaveRestoreMemoryFile(t *testing.T) *MemoryFile {
+	t.Helper()
+	fd, err := unix.MemfdCreate("pgalloc_save_test", unix.MFD_CLOEXEC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := os.NewFile(uintptr(fd), "pgalloc_save_test")
+	f, err := NewMemoryFile(file, MemoryFileOpts{
+		DisableIMAWorkAround:    true,
+		DisableMemoryAccounting: true,
+		AdviseNoHugepage:        true,
+	})
+	if err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
+	t.Cleanup(f.Destroy)
+	return f
+}
+
+func TestRetainCommitmentSaveRestore(t *testing.T) {
+	zeroPage := make([]byte, page)
+	for _, excludeZero := range []bool{false, true} {
+		t.Run(fmt.Sprintf("exclude_zero=%t", excludeZero), func(t *testing.T) {
+			f := newSaveRestoreMemoryFile(t)
+			// Put ordinary zero pages on both sides of retained zero pages. Save
+			// must elide only the former, even while updating adjacent metadata.
+			var ranges []memmap.FileRange
+			for _, retain := range []bool{false, true, false} {
+				fr, err := f.Allocate(page, AllocOpts{Mode: AllocateAndCommit, RetainCommitment: retain})
+				if err != nil {
+					t.Fatal(err)
+				}
+				allocated := f
+				t.Cleanup(func() { allocated.DecRef(fr) })
+				ranges = append(ranges, fr)
+			}
+			// The second round starts with restored, known-committed pages; it
+			// checks that the policy survives metadata serialization and also
+			// overrides ExcludeCommittedZeroPages on a later checkpoint.
+			for round := 0; round < 2; round++ {
+				var saved bytes.Buffer
+				if err := f.SaveTo(context.Background(), &saved, &SaveOpts{ExcludeCommittedZeroPages: excludeZero}); err != nil {
+					t.Fatal(err)
+				}
+				if got := f.knownCommittedBytes; got != page {
+					t.Fatalf("round %d: saved committed bytes = %d, want %d", round, got, page)
+				}
+				var st unix.Stat_t
+				if err := unix.Fstat(f.FD(), &st); err != nil {
+					t.Fatal(err)
+				}
+				if got := uint64(st.Blocks) * 512; got < page {
+					t.Fatalf("round %d: live backing after save = %d, want at least %d", round, got, page)
+				}
+				restored := newSaveRestoreMemoryFile(t)
+				if err := restored.LoadFrom(context.Background(), &saved, &LoadOpts{}); err != nil {
+					t.Fatal(err)
+				}
+				for _, fr := range ranges {
+					t.Cleanup(func() { restored.DecRef(fr) })
+				}
+				// Check backing before reading the mapping, which could itself
+				// instantiate missing zero pages and conceal a bad restore.
+				if err := unix.Fstat(restored.FD(), &st); err != nil {
+					t.Fatal(err)
+				}
+				if got := uint64(st.Blocks) * 512; got != page {
+					t.Fatalf("round %d: restored backing = %d, want %d", round, got, page)
+				}
+				blocks, err := restored.MapInternal(ranges[1], hostarch.ReadWrite)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for bs := blocks; !bs.IsEmpty(); bs = bs.Tail() {
+					if !bytes.Equal(bs.Head().ToSlice(), zeroPage[:bs.Head().Len()]) {
+						t.Fatalf("round %d: retained page did not restore zero bytes", round)
+					}
+				}
+				f = restored
+			}
+		})
+	}
+}
+
+func TestRetainCommitmentDecommit(t *testing.T) {
+	f := newSaveRestoreMemoryFile(t)
+	ordinary, err := f.Allocate(page, AllocOpts{Mode: AllocateAndCommit})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.DecRef(ordinary)
+	retained, err := f.Allocate(page, AllocOpts{Mode: AllocateAndCommit, RetainCommitment: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.DecRef(retained)
+	if ordinary.End != retained.Start {
+		t.Fatal("expected adjacent allocations")
+	}
+	blocks, err := f.MapInternal(ordinary, hostarch.ReadWrite)
+	if err != nil {
+		t.Fatal(err)
+	}
+	blocks.Head().ToSlice()[0] = 1
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("Decommit accepted a range containing retained commitment")
+			}
+		}()
+		f.Decommit(memmap.FileRange{ordinary.Start, retained.End})
+	}()
+	if got := blocks.Head().ToSlice()[0]; got != 1 {
+		t.Fatalf("rejected Decommit changed the ordinary prefix to %d", got)
+	}
+	f.Decommit(ordinary)
+	if got := blocks.Head().ToSlice()[0]; got != 0 {
+		t.Fatalf("ordinary Decommit left byte %d, want zero", got)
+	}
+}
+
+func TestRetainCommitmentReferences(t *testing.T) {
+	// Exercise the range metadata without a releaser racing to consume waste,
+	// as in TestFindAllocatable. No backing pages are accessed here.
+	f := &MemoryFile{opts: MemoryFileOpts{DisableMemoryAccounting: true}}
+	f.initFields()
+	chunks := []chunkInfo{{}}
+	f.chunks.Store(&chunks)
+	fr := memmap.FileRange{0, 2 * page}
+	f.unfreeSmall.RemoveRange(fr)
+	alloc := allocState{
+		length:     fr.Length(),
+		opts:       AllocOpts{Mode: AllocateAndCommit, RetainCommitment: true},
+		willCommit: true,
+	}
+	if got, err := f.findAllocatableAndMarkUsed(&alloc); err != nil || got != fr {
+		t.Fatalf("allocation = (%v, %v), want (%v, nil)", got, err, fr)
+	}
+	first := memmap.FileRange{0, page}
+	f.IncRef(first, 0)
+	f.DecRef(fr)
+	f.mu.Lock()
+	for _, want := range []struct {
+		offset uint64
+		retain bool
+	}{{0, true}, {page, false}} {
+		if got := f.memAcct.FindSegment(want.offset).Value().retainCommitment; got != want.retain {
+			t.Errorf("retainCommitment at %d = %t, want %t after partial release", want.offset, got, want.retain)
+		}
+	}
+	f.mu.Unlock()
+	f.DecRef(first)
+	// Recycle the same range into an ordinary allocation. A stale retained
+	// policy would defeat zero-page elision for the new owner.
+	alloc.opts.RetainCommitment = false
+	alloc.recycled = false
+	if got, err := f.findAllocatableAndMarkUsed(&alloc); err != nil || got != fr || !alloc.recycled {
+		t.Fatalf("recycled allocation = (%v, %v), recycled=%t; want (%v, nil), true", got, err, alloc.recycled, fr)
+	}
+	f.mu.Lock()
+	f.memAcct.VisitFullRange(fr, func(seg memAcctIterator) bool {
+		if seg.Value().retainCommitment {
+			t.Errorf("recycled ordinary range %v retained the prior allocation's policy", seg.Range())
+		}
+		return true
+	})
+	f.mu.Unlock()
+	f.DecRef(fr)
+	alloc.opts.RetainCommitment = true
+	if got, err := f.findAllocatableAndMarkUsed(&alloc); err != nil || got != fr {
+		t.Fatalf("retained reuse = (%v, %v), want (%v, nil)", got, err, fr)
+	}
+	f.mu.Lock()
+	f.memAcct.VisitFullRange(fr, func(seg memAcctIterator) bool {
+		if !seg.Value().retainCommitment {
+			t.Errorf("recycled retained range %v lost its new allocation policy", seg.Range())
+		}
+		return true
+	})
+	f.mu.Unlock()
+	f.DecRef(fr)
+}
+
+func TestAllocateAndCommit(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		fr          memmap.FileRange
+		fileSize    int64
+		recycled    bool
+		huge        bool
+		wantFault   bool
+		retryLength uint64
+	}{
+		{
+			name: "small advised allocation", fr: memmap.FileRange{0, page}, fileSize: page,
+		},
+		{
+			name: "recycled allocation", fr: memmap.FileRange{0, page}, fileSize: page, recycled: true,
+		},
+		{
+			name: "recycled fault", fr: memmap.FileRange{0, page}, recycled: true, wantFault: true,
+		},
+		{
+			name: "fault across hugepage boundary", fr: memmap.FileRange{hugepage - page, hugepage + page}, fileSize: hugepage, wantFault: true,
+		},
+		{
+			name: "huge advised fault", fr: memmap.FileRange{0, hugepage}, huge: true, wantFault: true,
+		},
+		{
+			name: "commit after backing fault", fr: memmap.FileRange{0, 2 * page}, wantFault: true, retryLength: 3 * page,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fd, err := unix.MemfdCreate("pgalloc_test", unix.MFD_CLOEXEC)
+			if err != nil {
+				t.Fatal(err)
+			}
+			file := os.NewFile(uintptr(fd), "pgalloc_test")
+			defer file.Close()
+			if err := file.Truncate(test.fileSize); err != nil {
+				t.Fatal(err)
+			}
+			available := memmap.FileRange{test.fr.Start, test.fr.End + test.retryLength}
+			mapping, err := unix.Mmap(int(file.Fd()), 0, int(available.End), unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Munmap(mapping)
+			if test.recycled && !test.wantFault {
+				for i := range mapping {
+					mapping[i] = 0xff
+				}
+			}
+
+			// Expose only this allocation, without a releaser racing to reclaim
+			// waste pages. Mapping past EOF supplies a real, bounded SIGBUS.
+			f := &MemoryFile{
+				file: file,
+				opts: MemoryFileOpts{
+					DisableMemoryAccounting: true,
+					ExpectHugepages:         test.huge,
+					AdviseHugepage:          test.huge,
+					AdviseNoHugepage:        !test.huge,
+				},
+			}
+			f.initFields()
+			chunks := []chunkInfo{{mapping: uintptr(unsafe.Pointer(&mapping[0])), huge: test.huge}}
+			f.chunks.Store(&chunks)
+			f.madviseChunkMapping(chunks[0].mapping, uintptr(len(mapping)), test.huge)
+			unfree, unwaste := &f.unfreeSmall, &f.unwasteSmall
+			if test.huge {
+				unfree, unwaste = &f.unfreeHuge, &f.unwasteHuge
+			}
+			if test.recycled {
+				unwaste.RemoveRange(test.fr)
+				f.memAcct.InsertRange(test.fr, memAcctInfo{wasteOrReleasing: true})
+			} else {
+				unfree.RemoveRange(available)
+			}
+
+			readerCalled := false
+			opts := AllocOpts{
+				Mode: AllocateAndCommit,
+				Huge: test.huge,
+				ReaderFunc: func(dsts safemem.BlockSeq) (uint64, error) {
+					readerCalled = true
+					var st unix.Stat_t
+					if err := unix.Fstat(int(file.Fd()), &st); err != nil {
+						t.Fatal(err)
+					}
+					if got := uint64(st.Blocks) * 512; got < test.fr.Length() {
+						t.Errorf("committed bytes before ReaderFunc = %d, want at least %d", got, test.fr.Length())
+					}
+					for blocks := dsts; !blocks.IsEmpty(); blocks = blocks.Tail() {
+						for i, b := range blocks.Head().ToSlice() {
+							if b != 0 {
+								t.Fatalf("allocated byte %d = %#x, want zero", i, b)
+							}
+						}
+					}
+					return safemem.ZeroSeq(dsts)
+				},
+			}
+			fr, err := f.Allocate(test.fr.Length(), opts)
+			if test.wantFault {
+				if !linuxerr.Equals(linuxerr.ENOMEM, err) {
+					t.Fatalf("Allocate() = (%v, %v), want ENOMEM", fr, err)
+				}
+				if fr != (memmap.FileRange{}) || readerCalled {
+					t.Errorf("failed Allocate() returned %v, called reader=%t", fr, readerCalled)
+				}
+				unfree.VisitFullRange(test.fr, func(seg unfreeIterator) bool {
+					if got := seg.Value().refs; got != 0 {
+						t.Errorf("failed allocation retained %d references on %v", got, seg.Range())
+					}
+					return true
+				})
+				if test.retryLength == 0 {
+					return
+				}
+				// The failed population above makes the allocator use its
+				// fallback. A larger retry cannot recycle the failed range, so
+				// its sparse policy touches still require full commitment.
+				if err := file.Truncate(int64(available.End)); err != nil {
+					t.Fatal(err)
+				}
+				test.fr = memmap.FileRange{test.fr.End, available.End}
+				fr, err = f.Allocate(test.retryLength, opts)
+			}
+			if err != nil || fr != test.fr || !readerCalled {
+				t.Fatalf("Allocate() = (%v, %v), called reader=%t; want (%v, nil), true", fr, err, readerCalled, test.fr)
+			}
+			f.DecRef(fr)
+		})
+	}
+}
 
 // existingSegment represents a range of pages in a test MemoryFile that is not
 // void or free.

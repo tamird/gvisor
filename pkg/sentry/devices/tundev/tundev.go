@@ -26,11 +26,14 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/inet"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
+	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/socket/netstack"
+	"gvisor.dev/gvisor/pkg/sentry/usage"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/tcpip/link/tun"
 	"gvisor.dev/gvisor/pkg/usermem"
@@ -140,15 +143,15 @@ func (fd *tunFD) Read(ctx context.Context, dst usermem.IOSequence, opts vfs.Read
 	if err != nil {
 		return 0, err
 	}
-	defer data.Release()
-
 	size := data.Size()
-	n, err := io.CopyN(dst.Writer(ctx), data, dst.NumBytes())
-	if n > 0 && n < int64(size) {
+	reader := data.AsBufferReader()
+	defer reader.Close()
+	n, err := io.CopyN(dst.Writer(ctx), &reader, dst.NumBytes())
+	if n > 0 && n < size {
 		// Not an error for partial copying. Packet truncated.
 		err = nil
 	}
-	return int64(n), err
+	return n, err
 }
 
 // PWrite implements vfs.FileDescriptionImpl.PWrite.
@@ -161,19 +164,34 @@ func (fd *tunFD) Write(ctx context.Context, src usermem.IOSequence, opts vfs.Wri
 	if src.NumBytes() == 0 {
 		return 0, unix.EINVAL
 	}
-	mtu, err := fd.device.MTU()
+	// Preserve the device-state check before allocating packet storage. The
+	// configured MTU does not limit the size of a write to the device.
+	if _, err := fd.device.MTU(); err != nil {
+		return 0, err
+	}
+	mf := pgalloc.MemoryFileFromContext(ctx)
+	storage, err := mf.AllocateMapped(uint64(src.NumBytes()), buffer.MaxChunkSize, usage.System, pgalloc.MemoryCgroupIDFromContext(ctx))
 	if err != nil {
-		return 0, err
+		// Match tun_alloc_skb's allocation failure, rather than exposing the
+		// MemoryFile backing store's errors to the writer.
+		return 0, linuxerr.ENOBUFS
 	}
-	if int64(mtu) < src.NumBytes() {
-		return 0, unix.EMSGSIZE
-	}
-	data := buffer.NewView(int(src.NumBytes()))
+	var data buffer.Buffer
 	defer data.Release()
-	if _, err := io.CopyN(data, src.Reader(ctx), src.NumBytes()); err != nil {
+	blocks := make([]safemem.Block, 0, len(storage))
+	for _, s := range storage {
+		// Every view is full, so Append only links it into data. The buffer
+		// now owns the page references, including on a later copy failure.
+		data.Append(buffer.NewViewWithExternalStorage(s))
+		blocks = append(blocks, safemem.BlockFromSafeSlice(s.Bytes()))
+	}
+	writer := safemem.BlockSeqWriter{Blocks: safemem.BlockSeqFromSlice(blocks)}
+	if _, err := src.CopyInTo(ctx, &writer); err != nil {
 		return 0, err
 	}
-	return fd.device.Write(data)
+	// Copy the entire user range before injecting any packet. Device.Write
+	// retains shared chunk references when delivery outlives this call.
+	return fd.device.Write(&data)
 }
 
 // Readiness implements watier.Waitable.Readiness.

@@ -78,7 +78,13 @@ syscall_test(
 syscall_test(
     size = "large",
     in_sandbox_cgroup = "v2",
+    # PidsEnforcement reads pids.events.local, added by Linux 3f26a885a.
+    # https://github.com/torvalds/linux/commit/3f26a885a
+    native_kernel_requirements = ["pids-events-local"],
     shard_count = more_shards,
+    # Native execution must reach the v1 hierarchy-creation check after the
+    # initial-cgroup-namespace permission check.
+    tags = ["requires-initial-cgroup-namespace"],
     test = "//test/syscalls/linux:cgroup2_test",
 )
 
@@ -86,6 +92,7 @@ syscall_test(
 # memory charges survive task migration and cgroup removal and can pin controllers.
 syscall_test(
     in_sandbox_cgroup = "v2",
+    tags = ["requires-initial-cgroup-namespace"],
     test = "//test/syscalls/linux:cgroup2_transfer_test",
 )
 
@@ -146,8 +153,6 @@ syscall_test(
 syscall_test(
     add_host_connector = True,
     add_hostinet = True,
-    # TODO(b/318948806): lisafs.BoundSocketFD is leaked.
-    leak_check = False,
     one_sandbox = False,
     # Takes too long to run with S/R.
     save = False,
@@ -160,8 +165,6 @@ syscall_test(
 syscall_test(
     add_host_uds = True,
     add_hostinet = True,
-    # TODO(b/318948806): lisafs.BoundSocketFD is leaked.
-    leak_check = False,
     one_sandbox = False,
     # Takes too long to run with S/R.
     save = False,
@@ -206,14 +209,20 @@ syscall_test(
 
 syscall_test(
     in_sandbox_cgroup = "v2",
+    # QueryRevisionStartsAtOne needs the Linux 6.17 BPF query revision.
+    native_kernel_requirements = ["cgroup-bpf-query-revision"],
     test = "//test/syscalls/linux:cgroup2_ebpf_test",
 )
 
 syscall_test(
+    # Leave room for the rest of the suite after the 16K-round-trip race.
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:epoll_test",
 )
 
 syscall_test(
+    # BigWriteFails requires oversized-write rejection from Linux 6.9.
+    native_kernel_requirements = ["eventfd-oversized-write-rejection"],
     test = "//test/syscalls/linux:eventfd_test",
 )
 
@@ -352,6 +361,8 @@ syscall_test(
 )
 
 syscall_test(
+    # Native revision queries require the mark rev1 and CT rev0 extensions.
+    native_kernel_requirements = ["xtables-mark-ct"],
     test = "//test/syscalls/linux:iptables_test",
 )
 
@@ -366,6 +377,13 @@ syscall_test(
 )
 
 syscall_test(
+    # gVisor exposes KCOV only when its kernel is built with Go coverage.
+    kcov = True,
+    # Packaged Ubuntu RC kernels do not enable native KCOV instrumentation.
+    native_rc_images = {
+        "amd64": "//test/rbe/tcg:amd64_kcov_guest",
+        "arm64": "//test/rbe/tcg:kcov_guest",
+    },
     test = "//test/syscalls/linux:kcov_test",
 )
 
@@ -378,38 +396,47 @@ syscall_test(
 )
 
 syscall_test(
-    add_overlay = True,
+    # These cases require Landlock ABI 1; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-1"],
     test = "//test/syscalls/linux:landlock_v1_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    # These cases require Landlock ABI 2; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-2"],
     test = "//test/syscalls/linux:landlock_v2_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    # These cases require Landlock ABI 3; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-3"],
     test = "//test/syscalls/linux:landlock_v3_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    # These cases require Landlock ABI 4; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-4"],
     test = "//test/syscalls/linux:landlock_v4_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    # These cases require Landlock ABI 5; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-5"],
     test = "//test/syscalls/linux:landlock_v5_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    # These cases require Landlock ABI 6; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-6"],
     test = "//test/syscalls/linux:landlock_v6_test",
 )
 
 syscall_test(
     add_fusefs = True,
     add_overlay = True,
+    # AT_EMPTY_PATH with matching credentials requires Linux 42bd2af59.
+    # https://github.com/torvalds/linux/commit/42bd2af59
+    native_kernel_requirements = ["linkat-empty-path-same-credentials"],
     test = "//test/syscalls/linux:link_test",
 )
 
@@ -428,6 +455,8 @@ syscall_test(
 )
 
 syscall_test(
+    # The test populates 512 MiB; save/restore and the executor need memory too.
+    memory = "2GB",
     test = "//test/syscalls/linux:memory_accounting_test",
 )
 
@@ -484,6 +513,13 @@ syscall_test(
 
 syscall_test(
     add_overlay = True,
+    # The suite attaches detached mounts to detached mounts and clones fsmount FDs.
+    # https://github.com/torvalds/linux/commit/211077238
+    # https://github.com/torvalds/linux/commit/f8b6cd66e
+    native_kernel_requirements = [
+        "detached-mount-attachment",
+        "fsmount-cloning",
+    ],
     save = False,
     test = "//test/syscalls/linux:mount_fd_test",
 )
@@ -498,6 +534,8 @@ syscall_test(
 )
 
 syscall_test(
+    # MSG_COPY requires CONFIG_CHECKPOINT_RESTORE.
+    native_kernel_requirements = ["sysv-msg-copy"],
     test = "//test/syscalls/linux:msgqueue_test",
 )
 
@@ -530,6 +568,9 @@ syscall_test(
 
 syscall_test(
     add_overlay = True,
+    # O_DIRECTORY | O_CREAT must be rejected with EINVAL.
+    # https://github.com/torvalds/linux/commit/43b450632
+    native_kernel_requirements = ["directory-create-einval"],
     test = "//test/syscalls/linux:openat2_test",
 )
 
@@ -562,6 +603,8 @@ syscall_test(
 )
 
 syscall_test(
+    # PIDFD_THREAD notification cases require Linux 6.15 semantics.
+    native_kernel_requirements = ["pidfd-thread-notifications"],
     test = "//test/syscalls/linux:pidfd_test",
 )
 
@@ -570,8 +613,11 @@ syscall_test(
     add_hostinet = True,
     # Host-network sockets also need descriptors in the sentry.
     args = ["--host-nofile=131072"],
+    # ICMP identifier exhaustion retains up to 65,535 connected sockets.
+    memory = "1GB",
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:ping_socket_test",
 )
 
@@ -627,7 +673,13 @@ syscall_test(
 
 syscall_test(
     size = "medium",
+    # The anonymous mapping name cases require CONFIG_ANON_VMA_NAME.
+    native_kernel_requirements = ["anonymous-vma-names"],
     shard_count = most_shards,
+    # Separate the fixed fork/reap workloads across emulator actions.
+    tcg_shard_count = 9,
+    # The fixed fork/children workload can take over five minutes under TCG.
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:proc_test",
 )
 
@@ -671,6 +723,8 @@ syscall_test(
 )
 
 syscall_test(
+    # The relational ptrace cases require Yama ptrace_scope=1.
+    native_kernel_requirements = ["yama-relational-ptrace"],
     test = "//test/syscalls/linux:ptrace_test",
 )
 
@@ -779,6 +833,7 @@ syscall_test(
 
 syscall_test(
     shard_count = more_shards,
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:semaphore_test",
 )
 
@@ -885,6 +940,10 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    # Both variants rely on the host's dual-stack wildcard conflict rules.
+    # https://github.com/torvalds/linux/commit/d9ba99342
+    hostnet_kernel_requirements = ["dual-stack-wildcard-bind"],
+    native_kernel_requirements = ["dual-stack-wildcard-bind"],
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
@@ -895,6 +954,10 @@ syscall_test(
     size = "large",
     add_hostinet = True,
     container = True,
+    # TIME_WAIT sockets must participate in the correct bind-address index.
+    # https://github.com/torvalds/linux/commit/936a192f9
+    hostnet_kernel_requirements = ["time-wait-bind-indexing"],
+    native_kernel_requirements = ["time-wait-bind-indexing"],
     one_sandbox = False,
     shard_count = most_shards,
     test = "//test/syscalls/linux:socket_inet_loopback_isolated_test",
@@ -912,11 +975,13 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
+    external_network = True,
     test = "//test/syscalls/linux:socket_ipv4_udp_unbound_external_networking_test",
 )
 
 syscall_test(
     # TODO(b/446206378): TestJoinLeaveMulticast fails with add_hostinet.
+    external_network = True,
     test = "//test/syscalls/linux:socket_ipv6_udp_unbound_external_networking_test",
 )
 
@@ -988,9 +1053,13 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
+    args = ["--host-nofile=131072"],
+    # The host file table must hold the full ephemeral-port range.
+    memory = "1GB",
     shard_count = more_shards,
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:socket_ipv4_udp_unbound_loopback_nogotsan_test",
 )
 
@@ -1042,12 +1111,25 @@ syscall_test(
 )
 
 syscall_test(
+    # The RBE worker supplies the namespaces needed by these tests.
+    execution_requirements = select({
+        "//tools/bazeldefs:rbe": {},
+        "//conditions:default": {"local": ""},
+    }),
+    # The native cases require inet-family FIB and the newer attribute checks.
+    # https://github.com/torvalds/linux/commit/8509f62b0
+    # https://github.com/torvalds/linux/commit/b9703ed44
+    # https://github.com/torvalds/linux/commit/a412dbf40
+    # https://github.com/torvalds/linux/commit/068d82e75
+    # https://github.com/torvalds/linux/commit/ec2c5917e
+    # https://github.com/torvalds/linux/commit/62e1e94b2
+    native_kernel_requirements = [
+        "nftables-inet-fib",
+        "nftables-validation",
+    ],
     nftables = True,
     save = False,
-    tags = [
-        "local",
-        "notap",
-    ],
+    tags = ["notap"],
     test = "//test/syscalls/linux:socket_netlink_netfilter_test",
 )
 
@@ -1103,9 +1185,16 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    # Exhaust ports before the sentry's host descriptors or file table.
+    args = ["--host-nofile=131072"],
+    memory = "1GB",
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
+    # Keep each stress case in its own emulator action so it gets the full
+    # deadline instead of sharing it with other long-running cases.
+    tcg_shard_count = 33,
+    tcg_timeout = "eternal",
     test = "//test/syscalls/linux:socket_stress_test",
 )
 
@@ -1119,6 +1208,8 @@ syscall_test(
     # Takes too long to run with S/R.
     save = False,
     shard_count = more_shards,
+    # Spread the datagram workload across additional emulator actions.
+    tcg_shard_count = 8,
     test = "//test/syscalls/linux:socket_unix_dgram_local_test",
 )
 
@@ -1131,6 +1222,8 @@ syscall_test(
     size = "large",
     add_overlay = True,
     shard_count = most_shards,
+    # The 5,000-child race can exceed 15 minutes under software translation.
+    tcg_timeout = "eternal",
     test = "//test/syscalls/linux:socket_unix_pair_test",
 )
 
@@ -1278,11 +1371,21 @@ syscall_test(
 )
 
 syscall_test(
+    one_sandbox = False,
+    test = "//test/syscalls/linux:tuntap_packet_lifetime_test",
+)
+
+syscall_test(
+    # Connect-error poll must observe the completed state before error wakeup.
+    # https://github.com/torvalds/linux/commit/fde6f897f
+    native_kernel_requirements = ["tcp-error-poll-ordering"],
     test = "//test/syscalls/linux:tuntap_test",
 )
 
 syscall_test(
     add_hostinet = True,
+    allow_native = False,
+    supported_networks = ["host"],
     test = "//test/syscalls/linux:tuntap_hostinet_test",
 )
 
@@ -1372,6 +1475,12 @@ syscall_test(
     # Per-syscall tracing dominates the million deliberately invalid close calls.
     # Keep debug logs without formatting a trace for every call.
     args = ["--strace=false"],
+    # Linux sizes its host thread limit from guest RAM. The thousand-thread
+    # case also needs ptrace tracer and tracee threads.
+    memory = "1GB",
+    # The million-syscall case exceeded 14 minutes under TCG.
+    # https://app.buildbuddy.io/invocation/9bfda50e-d746-44a1-bb16-d73f686fca72
+    tcg_timeout = "eternal",
     test = "//test/syscalls/linux:processes_test",
 )
 
@@ -1410,6 +1519,8 @@ syscall_test(
 
 syscall_test(
     size = "large",
+    # SetACLEmpty requires empty ACL clearing from Linux 6.2.
+    native_kernel_requirements = ["empty-posix-acl-clearing"],
     # TODO(b/546149934): These tests timeout with s/r, fix them and then enable.
     save = False,
     test = "//test/syscalls/linux:posix_acl_test",

@@ -27,7 +27,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -1660,7 +1659,11 @@ func (c *Container) createGoferProcess(conf *config.Config, specFile *os.File, m
 	// Don't forward GOMAXPROCS defaults that apply to this process (in
 	// particular, containerd-shim-runsc-v1 passes GOMAXPROCS=2 in
 	// v1.service.newCommand()).
-	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool { return strings.HasPrefix(env, "GOMAXPROCS=") })
+	// Also exclude filesystem coverage collectors that cannot run under the
+	// gofer's seccomp policy.
+	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool {
+		return strings.HasPrefix(env, "GOMAXPROCS=") || specutils.IsGoCoverageEnv(env)
+	})
 	cmd.SysProcAttr = &unix.SysProcAttr{
 		// Detach from session. Otherwise, signals sent to the foreground process
 		// will also be forwarded by this process, resulting in duplicate signals.
@@ -1814,9 +1817,9 @@ func (c *Container) createGoferProcess(conf *config.Config, specFile *os.File, m
 	if !rootlessEUID {
 		if userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec); ok {
 			nss = append(nss, userNS)
-			specutils.SetUIDGIDMappings(cmd, c.Spec)
-			// We need to set UID and GID to have capabilities in a new user namespace.
-			cmd.SysProcAttr.Credential = &syscall.Credential{Uid: 0, Gid: 0}
+			if err := sandbox.ConfigureCmdForUserNamespace(cmd, c.Spec, userNS); err != nil {
+				return nil, nil, nil, nil, err
+			}
 			if conf.GetHostUDS().AllowOpen() && len(cmd.SysProcAttr.GidMappings) > 0 && specutils.SetgroupsAllowed() {
 				// Connecting to a host socket applies the application's supplementary
 				// groups, which setgroups(2) refuses in a user namespace that denies

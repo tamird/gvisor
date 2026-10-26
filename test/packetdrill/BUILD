@@ -1,9 +1,21 @@
+load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//test/packetdrill:defs.bzl", "packetdrill_test")
+load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "bzl_library")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+docker_daemon_config(
+    name = "docker_config",
+    testonly = True,
+    images = select_arch(
+        amd64 = ["//test/docker:images_packetdrill_amd64_tar"],
+        arm64 = ["//test/docker:images_packetdrill_arm64_tar"],
+    ),
+    tags = ["manual"],
 )
 
 packetdrill_test(
@@ -48,11 +60,24 @@ test_suite(
         "manual",
         "packetdrill",
     ],
-    tests = existing_rules(),
+    tests = [name for name in existing_rules() if name.endswith("_test")],
+)
+
+test_suite(
+    name = "owned_tests",
+    tags = [
+        "manual",
+        "packetdrill",
+    ],
+    tests = [name for name in existing_rules() if name.endswith("_owned")],
 )
 
 bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
+    deps = [
+        "//tools/bazeldefs:platforms_bzl",
+        "@bazel_skylib//lib:shell",
+    ],
 )

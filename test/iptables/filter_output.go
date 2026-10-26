@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 
 	"gvisor.dev/gvisor/test/netutils"
@@ -69,7 +70,7 @@ func (*FilterOutputDropTCPDestPort) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputDropTCPDestPort) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropTCPDestPort) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "-m", "tcp", "--dport", "1024:65535", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func (*FilterOutputDropTCPDestPort) ContainerAction(ctx context.Context, ip net.
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputDropTCPDestPort) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropTCPDestPort) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, acceptPort, ipv6); err == nil {
@@ -109,7 +110,7 @@ func (*FilterOutputDropTCPSrcPort) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputDropTCPSrcPort) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropTCPSrcPort) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "-m", "tcp", "--sport", fmt.Sprintf("%d", dropPort), "-j", "DROP"); err != nil {
 		return err
 	}
@@ -127,7 +128,7 @@ func (*FilterOutputDropTCPSrcPort) ContainerAction(ctx context.Context, ip net.I
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputDropTCPSrcPort) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropTCPSrcPort) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, dropPort, ipv6); err == nil {
@@ -148,7 +149,7 @@ func (*FilterOutputAcceptTCPOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputAcceptTCPOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptTCPOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "-m", "owner", "--uid-owner", "root", "-j", "ACCEPT"); err != nil {
 		return err
 	}
@@ -158,7 +159,7 @@ func (*FilterOutputAcceptTCPOwner) ContainerAction(ctx context.Context, ip net.I
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputAcceptTCPOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptTCPOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ConnectTCP(ctx, ip, acceptPort, ipv6)
 }
 
@@ -173,7 +174,7 @@ func (*FilterOutputDropTCPOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputDropTCPOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropTCPOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "-m", "owner", "--uid-owner", "root", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -191,7 +192,7 @@ func (*FilterOutputDropTCPOwner) ContainerAction(ctx context.Context, ip net.IP,
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputDropTCPOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropTCPOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, acceptPort, ipv6); err == nil {
@@ -212,7 +213,7 @@ func (*FilterOutputAcceptUDPOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputAcceptUDPOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptUDPOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "udp", "-m", "owner", "--uid-owner", "root", "-j", "ACCEPT"); err != nil {
 		return err
 	}
@@ -222,7 +223,7 @@ func (*FilterOutputAcceptUDPOwner) ContainerAction(ctx context.Context, ip net.I
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputAcceptUDPOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptUDPOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Listen for UDP packets on acceptPort.
 	return netutils.ListenUDP(ctx, acceptPort, ipv6)
 }
@@ -238,7 +239,7 @@ func (*FilterOutputDropUDPOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputDropUDPOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropUDPOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "udp", "-m", "owner", "--uid-owner", "root", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -248,7 +249,7 @@ func (*FilterOutputDropUDPOwner) ContainerAction(ctx context.Context, ip net.IP,
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputDropUDPOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropUDPOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Listen for UDP packets on dropPort.
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
@@ -273,7 +274,7 @@ func (*FilterOutputOwnerFail) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputOwnerFail) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputOwnerFail) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "udp", "-m", "owner", "-j", "ACCEPT"); err == nil {
 		return fmt.Errorf("invalid argument")
 	}
@@ -282,7 +283,7 @@ func (*FilterOutputOwnerFail) ContainerAction(ctx context.Context, ip net.IP, ip
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputOwnerFail) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputOwnerFail) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// no-op.
 	return nil
 }
@@ -298,7 +299,7 @@ func (*FilterOutputAcceptGIDOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputAcceptGIDOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptGIDOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "-m", "owner", "--gid-owner", "root", "-j", "ACCEPT"); err != nil {
 		return err
 	}
@@ -308,7 +309,7 @@ func (*FilterOutputAcceptGIDOwner) ContainerAction(ctx context.Context, ip net.I
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputAcceptGIDOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptGIDOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ConnectTCP(ctx, ip, acceptPort, ipv6)
 }
 
@@ -323,7 +324,7 @@ func (*FilterOutputDropGIDOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputDropGIDOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropGIDOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "-m", "owner", "--gid-owner", "root", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -341,7 +342,7 @@ func (*FilterOutputDropGIDOwner) ContainerAction(ctx context.Context, ip net.IP,
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputDropGIDOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropGIDOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, acceptPort, ipv6); err == nil {
@@ -362,7 +363,7 @@ func (*FilterOutputInvertGIDOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInvertGIDOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertGIDOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	rules := [][]string{
 		{"-A", "OUTPUT", "-p", "tcp", "-m", "owner", "!", "--gid-owner", "root", "-j", "ACCEPT"},
 		{"-A", "OUTPUT", "-p", "tcp", "-j", "DROP"},
@@ -384,7 +385,7 @@ func (*FilterOutputInvertGIDOwner) ContainerAction(ctx context.Context, ip net.I
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInvertGIDOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertGIDOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, acceptPort, ipv6); err == nil {
@@ -405,7 +406,7 @@ func (*FilterOutputInvertUIDOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInvertUIDOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertUIDOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	rules := [][]string{
 		{"-A", "OUTPUT", "-p", "tcp", "-m", "owner", "!", "--uid-owner", "root", "-j", "DROP"},
 		{"-A", "OUTPUT", "-p", "tcp", "-j", "ACCEPT"},
@@ -419,7 +420,7 @@ func (*FilterOutputInvertUIDOwner) ContainerAction(ctx context.Context, ip net.I
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInvertUIDOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertUIDOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ConnectTCP(ctx, ip, acceptPort, ipv6)
 }
 
@@ -435,7 +436,7 @@ func (*FilterOutputInvertUIDAndGIDOwner) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInvertUIDAndGIDOwner) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertUIDAndGIDOwner) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	rules := [][]string{
 		{"-A", "OUTPUT", "-p", "tcp", "-m", "owner", "!", "--uid-owner", "root", "!", "--gid-owner", "root", "-j", "ACCEPT"},
 		{"-A", "OUTPUT", "-p", "tcp", "-j", "DROP"},
@@ -457,7 +458,7 @@ func (*FilterOutputInvertUIDAndGIDOwner) ContainerAction(ctx context.Context, ip
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInvertUIDAndGIDOwner) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertUIDAndGIDOwner) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, acceptPort, ipv6); err == nil {
@@ -479,7 +480,7 @@ func (*FilterOutputDestination) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputDestination) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDestination) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	var rules [][]string
 	if ipv6 {
 		rules = [][]string{
@@ -503,7 +504,7 @@ func (*FilterOutputDestination) ContainerAction(ctx context.Context, ip net.IP, 
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputDestination) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDestination) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ListenUDP(ctx, acceptPort, ipv6)
 }
 
@@ -519,7 +520,7 @@ func (*FilterOutputInvertDestination) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInvertDestination) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertDestination) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	rules := [][]string{
 		{"-A", "OUTPUT", "!", "-d", netutils.LocalIP(ipv6), "-j", "ACCEPT"},
 		{"-P", "OUTPUT", "DROP"},
@@ -532,7 +533,7 @@ func (*FilterOutputInvertDestination) ContainerAction(ctx context.Context, ip ne
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInvertDestination) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertDestination) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ListenUDP(ctx, acceptPort, ipv6)
 }
 
@@ -548,7 +549,7 @@ func (*FilterOutputInterfaceAccept) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInterfaceAccept) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceAccept) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	ifname, ok := netutils.GetInterfaceName()
 	if !ok {
 		return fmt.Errorf("no interface is present, except loopback")
@@ -561,7 +562,7 @@ func (*FilterOutputInterfaceAccept) ContainerAction(ctx context.Context, ip net.
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInterfaceAccept) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceAccept) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ListenUDP(ctx, acceptPort, ipv6)
 }
 
@@ -577,7 +578,7 @@ func (*FilterOutputInterfaceDrop) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInterfaceDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	ifname, ok := netutils.GetInterfaceName()
 	if !ok {
 		return fmt.Errorf("no interface is present, except loopback")
@@ -590,7 +591,7 @@ func (*FilterOutputInterfaceDrop) ContainerAction(ctx context.Context, ip net.IP
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInterfaceDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ListenUDP(timedCtx, acceptPort, ipv6); err == nil {
@@ -614,7 +615,7 @@ func (*FilterOutputInterface) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInterface) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterface) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "udp", "-o", "lo", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -623,7 +624,7 @@ func (*FilterOutputInterface) ContainerAction(ctx context.Context, ip net.IP, ip
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInterface) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterface) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ListenUDP(ctx, acceptPort, ipv6)
 }
 
@@ -639,7 +640,7 @@ func (*FilterOutputInterfaceBeginsWith) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInterfaceBeginsWith) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceBeginsWith) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "udp", "-o", "e+", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -648,7 +649,7 @@ func (*FilterOutputInterfaceBeginsWith) ContainerAction(ctx context.Context, ip 
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInterfaceBeginsWith) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceBeginsWith) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ListenUDP(timedCtx, acceptPort, ipv6); err == nil {
@@ -672,7 +673,7 @@ func (*FilterOutputInterfaceInvertDrop) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInterfaceInvertDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceInvertDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "!", "-o", "lo", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -690,7 +691,7 @@ func (*FilterOutputInterfaceInvertDrop) ContainerAction(ctx context.Context, ip 
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInterfaceInvertDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceInvertDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, acceptPort, ipv6); err == nil {
@@ -712,7 +713,7 @@ func (*FilterOutputInterfaceInvertAccept) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInterfaceInvertAccept) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceInvertAccept) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "!", "-o", "lo", "-j", "ACCEPT"); err != nil {
 		return err
 	}
@@ -722,7 +723,7 @@ func (*FilterOutputInterfaceInvertAccept) ContainerAction(ctx context.Context, i
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInterfaceInvertAccept) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInterfaceInvertAccept) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ConnectTCP(ctx, ip, acceptPort, ipv6)
 }
 
@@ -738,7 +739,7 @@ func (*FilterOutputInvertSportAccept) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInvertSportAccept) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertSportAccept) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "!", "--sport", fmt.Sprintf("%d", dropPort), "-j", "ACCEPT"); err != nil {
 		return err
 	}
@@ -748,7 +749,7 @@ func (*FilterOutputInvertSportAccept) ContainerAction(ctx context.Context, ip ne
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInvertSportAccept) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertSportAccept) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ConnectTCP(ctx, ip, acceptPort, ipv6)
 }
 
@@ -764,7 +765,7 @@ func (*FilterOutputInvertSportDrop) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputInvertSportDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertSportDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "tcp", "!", "--sport", fmt.Sprintf("%d", acceptPort), "-j", "DROP"); err != nil {
 		return err
 	}
@@ -782,7 +783,7 @@ func (*FilterOutputInvertSportDrop) ContainerAction(ctx context.Context, ip net.
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputInvertSportDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputInvertSportDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, dropPort, ipv6); err == nil {
@@ -815,7 +816,7 @@ func (*FilterOutputAcceptInvertSrcPorts) Name() string {
 // It installs the single ACCEPT rule with negation and then
 // attempts to connect to a local UDP server listening on a
 // blocked port.
-func (*FilterOutputAcceptInvertSrcPorts) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptInvertSrcPorts) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Add the multiport rule that accepts all but the blocked ports.
 	err := filterTable(
 		ipv6,
@@ -844,8 +845,8 @@ func (*FilterOutputAcceptInvertSrcPorts) ContainerAction(ctx context.Context, ip
 // It attempts to connect to the container on the specified port.
 // Since the container cannot send back responses, the connection
 // attempt will fail or time out.
-func (*FilterOutputAcceptInvertSrcPorts) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
-	testPort := 53
+func (*FilterOutputAcceptInvertSrcPorts) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
+	const testPort = 53
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 
@@ -880,7 +881,7 @@ func (*FilterOutputDropSrcPorts) Name() string {
 // source ports. The container then listens on those ports, expecting
 // connection attempts from the local side. Because responses from
 // these ports are dropped, no handshake completes.
-func (*FilterOutputDropSrcPorts) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputDropSrcPorts) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Add the DROP rule for outbound packets from the specified source ports.
 	err := filterTable(
 		ipv6,
@@ -930,12 +931,12 @@ func (*FilterOutputDropSrcPorts) ContainerAction(ctx context.Context, ip net.IP,
 // It attempts to connect to the container on each of the blocked
 // source ports. Since the container cannot send back responses,
 // the connection attempts will fail or time out.
-func (*FilterOutputDropSrcPorts) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
-	ports := []int{22, 53, 80, 443}
+func (*FilterOutputDropSrcPorts) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
+	ports := []uint16{22, 53, 80, 443}
 	errCh := make(chan error, len(ports))
 
 	for _, p := range ports {
-		go func(port int) {
+		go func(port uint16) {
 			// Attempt to connect, but it will time out.
 			timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 			defer cancel()
@@ -983,7 +984,7 @@ func (*FilterOutputAcceptInvertPorts) Name() string {
 // It installs the single ACCEPT rule with negation. The container then
 // listens on those ports, expecting connection attempts from the local
 // side, which will all succeed.
-func (*FilterOutputAcceptInvertPorts) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputAcceptInvertPorts) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	err := filterTable(
 		ipv6,
 		"-A", "OUTPUT", "-p", "tcp", "-m", "multiport",
@@ -1031,13 +1032,13 @@ func (*FilterOutputAcceptInvertPorts) ContainerAction(ctx context.Context, ip ne
 // It attempts to connect to the container on each ports
 // being listened on. Since this is an either port match,
 // both connections should succeed.
-func (*FilterOutputAcceptInvertPorts) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
-	testPorts := []int{22, 27017}
+func (*FilterOutputAcceptInvertPorts) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
+	testPorts := []uint16{22, 27017}
 	errCh := make(chan error, len(testPorts))
 
 	// All connections should succeed.
 	for _, p := range testPorts {
-		go func(port int) {
+		go func(port uint16) {
 			timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 			defer cancel()
 			if err := netutils.ConnectTCP(timedCtx, ip, port, ipv6); err != nil {
@@ -1074,7 +1075,7 @@ func (*FilterOutputOwnerNilAccept) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterOutputOwnerNilAccept) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputOwnerNilAccept) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Drop packets from UID 9999. Packets without owner (nil) should NOT match
 	// this rule and should be accepted by default.
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-m", "owner", "--uid-owner", "9999", "-j", "DROP"); err != nil {
@@ -1110,6 +1111,6 @@ func (*FilterOutputOwnerNilAccept) ContainerAction(ctx context.Context, ip net.I
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterOutputOwnerNilAccept) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputOwnerNilAccept) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }

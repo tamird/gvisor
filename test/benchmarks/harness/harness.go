@@ -29,8 +29,9 @@ var (
 	debug = flag.Bool("debug", false, "turns on debug messages for individual benchmarks")
 )
 
-// Init performs any harness initialization before runs.
-func Init() error {
+// Run initializes the benchmark harness and runs benchmarks against the selected
+// Docker daemon. Owned daemon cleanup finishes before Run returns to TestMain.
+func Run(run func() int) int {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s -- --test.bench=<regex>\n", os.Args[0])
 		flag.PrintDefaults()
@@ -38,10 +39,26 @@ func Init() error {
 	flag.Parse()
 	if *help {
 		flag.Usage()
-		os.Exit(0)
+		return 0
 	}
-	dockerutil.EnsureSupportedDockerVersion()
-	return nil
+	if *pgoProfiletool == "" {
+		return dockerutil.RunTests(run)
+	}
+	args, finish, err := preparePGO()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "prepare PGO: %v\n", err)
+		return 1
+	}
+	if status := dockerutil.RunTests(run, args...); status != 0 {
+		return status
+	}
+	// All benchmark containers and their daemon have stopped, so every profile
+	// is closed before profiletool reads it.
+	if err := finish(); err != nil {
+		fmt.Fprintf(os.Stderr, "finish PGO: %v\n", err)
+		return 1
+	}
+	return 0
 }
 
 // SetFixedBenchmarks causes all benchmarks to run once.

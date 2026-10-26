@@ -17,7 +17,9 @@ package nftables
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
+	"os"
 	"sync"
 	"testing"
 
@@ -25,6 +27,11 @@ import (
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/test/netutils/container"
 )
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	os.Exit(dockerutil.RunTests(m.Run))
+}
 
 // singleTest runs a TestCase. Each test follows a pattern:
 //   - Create a container.

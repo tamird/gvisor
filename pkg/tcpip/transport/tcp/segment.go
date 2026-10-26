@@ -17,6 +17,7 @@ package tcp
 import (
 	"fmt"
 	"io"
+	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/sync"
@@ -79,6 +80,10 @@ type segment struct {
 	xmitTime  tcpip.MonotonicTime
 	xmitCount uint32
 
+	// rtoRetransmitted is true if these bytes have been retransmitted by
+	// the retransmission timer, including when only a suffix remains unacked.
+	rtoRetransmitted bool
+
 	// acked indicates if the segment has already been SACKed.
 	acked bool
 
@@ -94,8 +99,8 @@ type segment struct {
 
 func newIncomingSegment(id stack.TransportEndpointID, clock tcpip.Clock, pkt *stack.PacketBuffer) (*segment, error) {
 	hdr := header.TCP(pkt.TransportHeader().Slice())
-	var srcAddr tcpip.Address
-	var dstAddr tcpip.Address
+	var srcAddr netip.Addr
+	var dstAddr netip.Addr
 	switch netProto := pkt.NetworkProtocolNumber; netProto {
 	case header.IPv4ProtocolNumber:
 		hdr := header.IPv4(pkt.NetworkHeader().Slice())
@@ -161,6 +166,7 @@ func (s *segment) clone() *segment {
 	t.rcvdTime = s.rcvdTime
 	t.xmitTime = s.xmitTime
 	t.xmitCount = s.xmitCount
+	t.rtoRetransmitted = s.rtoRetransmitted
 	t.ep = s.ep
 	t.qFlags = s.qFlags
 	t.dataMemSize = s.dataMemSize

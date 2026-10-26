@@ -6,11 +6,11 @@ change for Google-internal and bazel-compatible rules.
 """
 
 load("//tools:arch.bzl", "arch_genrule", "arch_transition_impl")
-load("//tools/bazeldefs:cc.bzl", _cc_binary = "cc_binary", _cc_flags_supplier = "cc_flags_supplier", _cc_grpc_library = "cc_grpc_library", _cc_library = "cc_library", _cc_proto_library = "cc_proto_library", _cc_test = "cc_test", _cc_toolchain = "cc_toolchain", _gbenchmark = "gbenchmark", _gbenchmark_internal = "gbenchmark_internal", _grpcpp = "grpcpp", _gtest = "gtest", _select_gtest = "select_gtest")
-load("//tools/bazeldefs:defs.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _bpf_program = "bpf_program", _build_test = "build_test", _bzl_library = "bzl_library", _coreutil = "coreutil", _default_net_util = "default_net_util", _expand_template = "expand_template", _more_shards = "more_shards", _most_shards = "most_shards", _proto_library = "proto_library", _select_arch = "select_arch", _select_system = "select_system", _short_path = "short_path", _string_flag = "string_flag", _target_emulator = "target_emulator", _target_emulators = "target_emulators", _version = "version")
+load("//tools/bazeldefs:cc.bzl", _cc_binary = "cc_binary", _cc_flags_supplier = "cc_flags_supplier", _cc_grpc_library = "cc_grpc_library", _cc_library = "cc_library", _cc_linker = "cc_linker", _cc_nm = "cc_nm", _cc_objcopy = "cc_objcopy", _cc_objdump = "cc_objdump", _cc_proto_library = "cc_proto_library", _cc_test = "cc_test", _gbenchmark = "gbenchmark", _gbenchmark_internal = "gbenchmark_internal", _grpcpp = "grpcpp", _gtest = "gtest", _select_gtest = "select_gtest")
+load("//tools/bazeldefs:defs.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _bpf_program = "bpf_program", _build_test = "build_test", _bzl_library = "bzl_library", _coreutil = "coreutil", _default_net_util = "default_net_util", _expand_template = "expand_template", _more_shards = "more_shards", _most_shards = "most_shards", _native_test = "native_test", _proto_library = "proto_library", _py_test = "py_test", _runtime_native_test = "runtime_native_test", _runtime_test_timeout = "runtime_test_timeout", _select_arch = "select_arch", _select_system = "select_system", _sh_test = "sh_test", _short_path = "short_path", _string_flag = "string_flag", _string_list_flag = "string_list_flag", _version = "version", _write_source_files = "write_source_files")
 load("//tools/bazeldefs:go.bzl", _cov_available = "cov_available", _gazelle = "gazelle", _go_binary = "go_binary", _go_binary_nogo_dep = "go_binary_nogo_dep", _go_cov = "go_cov", _go_grpc_and_proto_libraries = "go_grpc_and_proto_libraries", _go_imports = "go_imports", _go_library = "go_library", _go_path = "go_path", _go_proto_library = "go_proto_library", _go_reset_target = "go_reset_target", _go_test = "go_test", _gotsan_flag_values = "gotsan_flag_values", _gotsan_values = "gotsan_values", _select_goarch = "select_goarch", _select_goos = "select_goos")
 load("//tools/bazeldefs:pkg.bzl", _pkg_deb = "pkg_deb", _pkg_tar = "pkg_tar")
-load("//tools/bazeldefs:platforms.bzl", _default_platform = "default_platform", _platform_capabilities = "platform_capabilities", _platforms = "platforms", _save_restore_platforms = "save_restore_platforms")
+load("//tools/bazeldefs:platforms.bzl", _default_platform = "default_platform", _namespace_test_exec_properties = "namespace_test_exec_properties", _platform_capabilities = "platform_capabilities", _platforms = "platforms", _save_restore_platforms = "save_restore_platforms", _syscall_test_exec_properties = "syscall_test_exec_properties")
 load("//tools/bazeldefs:tags.bzl", _go_suffixes = "go_suffixes", _local_test_tags = "local_test_tags")
 load("//tools/go_hostlayout:defs.bzl", "go_host_layout_struct_test")
 load("//tools/go_marshal:defs.bzl", "go_marshal", "marshal_deps", "marshal_test_deps")
@@ -22,17 +22,22 @@ build_test = _build_test
 bzl_library = _bzl_library
 bool_flag = _bool_flag
 string_flag = _string_flag
+string_list_flag = _string_list_flag
 BuildSettingInfo = _BuildSettingInfo
 default_net_util = _default_net_util
 expand_template = _expand_template
 select_arch = _select_arch
 select_system = _select_system
 short_path = _short_path
-target_emulator = _target_emulator
-target_emulators = _target_emulators
 coreutil = _coreutil
 more_shards = _more_shards
 most_shards = _most_shards
+native_test = _native_test
+py_test = _py_test
+sh_test = _sh_test
+write_source_files = _write_source_files
+runtime_native_test = _runtime_native_test
+runtime_test_timeout = _runtime_test_timeout
 version = _version
 
 # C++ rules.
@@ -40,8 +45,11 @@ cc_binary = _cc_binary
 cc_flags_supplier = _cc_flags_supplier
 cc_grpc_library = _cc_grpc_library
 cc_library = _cc_library
+cc_linker = _cc_linker
+cc_nm = _cc_nm
+cc_objcopy = _cc_objcopy
+cc_objdump = _cc_objdump
 cc_test = _cc_test
-cc_toolchain = _cc_toolchain
 gbenchmark = _gbenchmark
 gbenchmark_internal = _gbenchmark_internal
 gtest = _gtest
@@ -70,9 +78,11 @@ pkg_tar = _pkg_tar
 
 # Platform options.
 default_platform = _default_platform
+namespace_test_exec_properties = _namespace_test_exec_properties
 platforms = _platforms
 platform_capabilities = _platform_capabilities
 save_restore_platforms = _save_restore_platforms
+syscall_test_exec_properties = _syscall_test_exec_properties
 
 # Tags.
 local_test_tags = _local_test_tags
@@ -304,6 +314,7 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
 
         # See above.
         marshal_sets = calculate_sets(srcs)
+        test_kwargs = dict(kwargs, tags = kwargs.get("tags", []) + ["go-marshal-test-contract"])
         for (suffix, _) in marshal_sets.items():
             _go_test(
                 name = name + suffix + "_abi_autogen_test",
@@ -313,17 +324,21 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
                 ],
                 library = ":" + name,
                 deps = marshal_test_deps,
-                **kwargs
+                **test_kwargs
             )
 
-def go_test(name, nogo = True, **kwargs):
+def go_test(name, nogo = True, benchmark_smoke = False, **kwargs):
     """Wraps the standard go_test.
 
     Args:
       name: the rule name.
       nogo: enable nogo analysis.
+      benchmark_smoke: run each Go benchmark once alongside named tests.
       **kwargs: standard go_test arguments.
     """
+    if benchmark_smoke:
+        kwargs["args"] = kwargs.get("args", []) + ["-test.bench=.", "-test.benchtime=1x"]
+        kwargs["tags"] = kwargs.get("tags", []) + ["go-benchmark-contract"]
     _go_test(
         name = name,
         **kwargs

@@ -11,6 +11,8 @@ go_binary(
         "main.go",
     ],
     features = ["fully_static_link"],
+    importpath = "gvisor.dev/gvisor/tools/gvisor2pcap/gvisor2pcap",
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/buffer",
         "//pkg/log",

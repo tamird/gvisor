@@ -50,3 +50,10 @@ with Sandbox(
 ## License
 
 Apache License 2.0
+
+## Clock source
+
+`Sandbox(clock_source=ClockSource.REFERENCE)` uses host reference clocks when
+raw hardware counters are not synchronized across host CPUs. This adds
+clock-read overhead. Omitting `clock_source` preserves the runtime's calibrated
+default; `ClockSource.CALIBRATED` selects it explicitly.

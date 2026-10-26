@@ -18,7 +18,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"net"
+	"net/netip"
 	"reflect"
 	"strings"
 
@@ -34,8 +34,10 @@ import (
 // Layer is the interface that all encapsulations must implement.
 //
 // A Layer is an encapsulation in a packet, such as TCP, IPv4, IPv6, etc. A
-// Layer contains all the fields of the encapsulation. Each field is a pointer
-// and may be nil.
+// Layer contains all the fields of the encapsulation. Apart from LayerBase,
+// fields are pointers to scalar or immutable values, byte slices, or pointers
+// to byte slices. Nil fields match any value. An invalid address also matches any
+// address, allowing a merge to replace a specified address with a wildcard.
 type Layer interface {
 	fmt.Stringer
 
@@ -112,7 +114,41 @@ func equalLayer(x, y Layer) bool {
 		}
 		return false
 	}, cmp.Ignore())
-	return cmp.Equal(x, y, opt, cmpopts.IgnoreTypes(LayerBase{}))
+	return cmp.Equal(x, y, opt, cmpopts.IgnoreTypes(LayerBase{}), cmp.Comparer(func(x, y netip.Addr) bool {
+		return !x.IsValid() || !y.IsValid() || x.Unmap() == y.Unmap()
+	}))
+}
+
+// cloneLayer copies a layer's fields without retaining links to adjacent layers.
+// Pointer values are copied as values; only byte slices need their backing
+// storage copied too. This preserves immutable values with unexported fields.
+func cloneLayer(l Layer) Layer {
+	v := reflect.ValueOf(l)
+	if v.IsNil() {
+		return l
+	}
+	v = v.Elem()
+	clone := reflect.New(v.Type())
+	for i := 0; i < v.NumField(); i++ {
+		if v.Type().Field(i).Anonymous {
+			continue
+		}
+		src, dst := v.Field(i), clone.Elem().Field(i)
+		if src.Kind() == reflect.Ptr {
+			if src.IsNil() {
+				continue
+			}
+			dst.Set(reflect.New(src.Type().Elem()))
+			src, dst = src.Elem(), dst.Elem()
+		}
+		if src.Kind() == reflect.Slice && !src.IsNil() {
+			dst.Set(reflect.MakeSlice(src.Type(), src.Len(), src.Len()))
+			reflect.Copy(dst, src)
+		} else {
+			dst.Set(src)
+		}
+	}
+	return clone.Interface().(Layer)
 }
 
 // mergeLayer merges y into x. Any fields for which y has a non-nil value, that
@@ -303,8 +339,8 @@ type IPv4 struct {
 	TTL            *uint8
 	Protocol       *uint8
 	Checksum       *uint16
-	SrcAddr        *net.IP
-	DstAddr        *net.IP
+	SrcAddr        *netip.Addr
+	DstAddr        *netip.Addr
 	Options        *header.IPv4Options
 }
 
@@ -336,8 +372,8 @@ func (l *IPv4) ToBytes() ([]byte, error) {
 		TTL:            64,
 		Protocol:       0,
 		Checksum:       0,
-		SrcAddr:        tcpip.Address{},
-		DstAddr:        tcpip.Address{},
+		SrcAddr:        netip.Addr{},
+		DstAddr:        netip.Addr{},
 		Options:        nil,
 	}
 	if l.TOS != nil {
@@ -380,11 +416,12 @@ func (l *IPv4) ToBytes() ([]byte, error) {
 			return nil, fmt.Errorf("ipv4 header's next layer is unrecognized: %#v", n)
 		}
 	}
-	if l.SrcAddr != nil && len(*l.SrcAddr) > 0 {
-		fields.SrcAddr = tcpip.AddrFrom4Slice(*l.SrcAddr)
+	var err error
+	if fields.SrcAddr, err = ipv4Address(l.SrcAddr); err != nil {
+		return nil, err
 	}
-	if l.DstAddr != nil && len(*l.DstAddr) > 0 {
-		fields.DstAddr = tcpip.AddrFrom4Slice(*l.DstAddr)
+	if fields.DstAddr, err = ipv4Address(l.DstAddr); err != nil {
+		return nil, err
 	}
 
 	h.Encode(fields)
@@ -432,13 +469,31 @@ func TCPFlags(v header.TCPFlags) *header.TCPFlags {
 	return &v
 }
 
-// Address is a helper routine that allocates a new net.IP value to
-// store v and returns a pointer to it.
-func Address(v tcpip.Address) *net.IP {
-	bs := make([]byte, v.Len())
-	copy(bs, v.AsSlice())
-	ret := net.IP(bs)
-	return &ret
+// Address returns a pointer to v.
+func Address(v netip.Addr) *netip.Addr {
+	return &v
+}
+
+// ipv4Address converts an optional layer address to its exact wire family.
+func ipv4Address(addr *netip.Addr) (netip.Addr, error) {
+	if addr == nil || !addr.IsValid() {
+		return netip.Addr{}, nil
+	}
+	if !addr.Is4() {
+		return netip.Addr{}, fmt.Errorf("IPv4 layer requires an IPv4 address, got %s", addr)
+	}
+	return *addr, nil
+}
+
+// ipv6Address converts an optional layer address to its exact wire family.
+func ipv6Address(addr *netip.Addr) (netip.Addr, error) {
+	if addr == nil || !addr.IsValid() {
+		return netip.Addr{}, nil
+	}
+	if !addr.Is6() || addr.Zone() != "" {
+		return netip.Addr{}, fmt.Errorf("IPv6 layer requires an unzoned IPv6 address, got %s", addr)
+	}
+	return *addr, nil
 }
 
 // parseIPv4 parses the bytes assuming that they start with an ipv4 header and
@@ -504,8 +559,8 @@ type IPv6 struct {
 	PayloadLength *uint16
 	NextHeader    *uint8
 	HopLimit      *uint8
-	SrcAddr       *net.IP
-	DstAddr       *net.IP
+	SrcAddr       *netip.Addr
+	DstAddr       *netip.Addr
 }
 
 func (l *IPv6) String() string {
@@ -544,11 +599,12 @@ func (l *IPv6) ToBytes() ([]byte, error) {
 	if l.HopLimit != nil {
 		fields.HopLimit = *l.HopLimit
 	}
-	if l.SrcAddr != nil && len(*l.SrcAddr) > 0 {
-		fields.SrcAddr = tcpip.AddrFrom16Slice(*l.SrcAddr)
+	var err error
+	if fields.SrcAddr, err = ipv6Address(l.SrcAddr); err != nil {
+		return nil, err
 	}
-	if l.DstAddr != nil && len(*l.DstAddr) > 0 {
-		fields.DstAddr = tcpip.AddrFrom16Slice(*l.DstAddr)
+	if fields.DstAddr, err = ipv6Address(l.DstAddr); err != nil {
+		return nil, err
 	}
 	h.Encode(fields)
 	return h, nil
@@ -889,10 +945,21 @@ func (l *ICMPv6) ToBytes() ([]byte, error) {
 		// We need to search backwards to find the IPv6 header.
 		for layer := l.Prev(); layer != nil; layer = layer.Prev() {
 			if ipv6, ok := layer.(*IPv6); ok {
+				src, err := ipv6Address(ipv6.SrcAddr)
+				if err != nil {
+					return nil, err
+				}
+				dst, err := ipv6Address(ipv6.DstAddr)
+				if err != nil {
+					return nil, err
+				}
+				if !src.IsValid() || !dst.IsValid() {
+					return nil, fmt.Errorf("ICMPv6 checksum requires IPv6 source and destination addresses")
+				}
 				h.SetChecksum(header.ICMPv6Checksum(header.ICMPv6ChecksumParams{
 					Header:      h[:header.ICMPv6PayloadOffset],
-					Src:         tcpip.AddrFrom16Slice(*ipv6.SrcAddr),
-					Dst:         tcpip.AddrFrom16Slice(*ipv6.DstAddr),
+					Src:         src,
+					Dst:         dst,
 					PayloadCsum: checksum.Checksum(l.Payload, 0 /* initial */),
 					PayloadLen:  len(l.Payload),
 				}))
@@ -1144,9 +1211,31 @@ func layerChecksum(l Layer, protoNumber tcpip.TransportProtocolNumber) (uint16, 
 	var xsum uint16
 	switch p := l.Prev().(type) {
 	case *IPv4:
-		xsum = header.PseudoHeaderChecksum(protoNumber, tcpip.AddrFrom4Slice(*p.SrcAddr), tcpip.AddrFrom4Slice(*p.DstAddr), totalLength)
+		src, err := ipv4Address(p.SrcAddr)
+		if err != nil {
+			return 0, err
+		}
+		dst, err := ipv4Address(p.DstAddr)
+		if err != nil {
+			return 0, err
+		}
+		if !src.IsValid() || !dst.IsValid() {
+			return 0, fmt.Errorf("IPv4 checksum requires IPv4 source and destination addresses")
+		}
+		xsum = header.PseudoHeaderChecksum(protoNumber, src, dst, totalLength)
 	case *IPv6:
-		xsum = header.PseudoHeaderChecksum(protoNumber, tcpip.AddrFrom16Slice(*p.SrcAddr), tcpip.AddrFrom16Slice(*p.DstAddr), totalLength)
+		src, err := ipv6Address(p.SrcAddr)
+		if err != nil {
+			return 0, err
+		}
+		dst, err := ipv6Address(p.DstAddr)
+		if err != nil {
+			return 0, err
+		}
+		if !src.IsValid() || !dst.IsValid() {
+			return 0, fmt.Errorf("IPv6 checksum requires IPv6 source and destination addresses")
+		}
+		xsum = header.PseudoHeaderChecksum(protoNumber, src, dst, totalLength)
 	default:
 		// TODO(b/161246171): Support more protocols.
 		return 0, fmt.Errorf("checksum for protocol %d is not supported when previous layer is %T", protoNumber, p)

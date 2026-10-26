@@ -79,6 +79,35 @@ TEST(IPTablesBasic, CreateSocket) {
   ASSERT_THAT(close(sock), SyscallSucceeds());
 }
 
+TEST(IPTablesBasic, MissingTable) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
+
+  FileDescriptor sock =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_DGRAM, 0));
+
+  struct ipt_getinfo info = {.name = "gvisor-missing"};
+  socklen_t info_size = sizeof(info);
+  EXPECT_THAT(
+      getsockopt(sock.get(), SOL_IP, IPT_SO_GET_INFO, &info, &info_size),
+      SyscallFailsWithErrno(ENOENT));
+
+  info_size = sizeof(info) + 1;
+  EXPECT_THAT(
+      getsockopt(sock.get(), SOL_IP, IPT_SO_GET_INFO, &info, &info_size),
+      SyscallFailsWithErrno(EINVAL));
+
+  struct ipt_get_entries entries = {.name = "gvisor-missing"};
+  socklen_t entries_size = sizeof(entries);
+  EXPECT_THAT(getsockopt(sock.get(), SOL_IP, IPT_SO_GET_ENTRIES, &entries,
+                         &entries_size),
+              SyscallFailsWithErrno(ENOENT));
+
+  entries.size = 1;
+  EXPECT_THAT(getsockopt(sock.get(), SOL_IP, IPT_SO_GET_ENTRIES, &entries,
+                         &entries_size),
+              SyscallFailsWithErrno(EINVAL));
+}
+
 TEST(IPTablesBasic, GetInfoShortBuffer) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
 

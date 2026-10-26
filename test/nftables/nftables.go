@@ -18,7 +18,7 @@ package nftables
 import (
 	"context"
 	"fmt"
-	"net"
+	"net/netip"
 	"time"
 )
 
@@ -42,10 +42,10 @@ type TestCase interface {
 
 	// ContainerAction runs inside the container. It receives the IP of the
 	// local process.
-	ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error
+	ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error
 
 	// LocalAction runs locally. It receives the IP of the container.
-	LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error
+	LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error
 
 	// ContainerSufficient indicates whether ContainerAction's return value
 	// alone indicates whether the test succeeded.

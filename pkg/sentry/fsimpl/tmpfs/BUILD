@@ -145,6 +145,7 @@ go_test(
     name = "benchmark_test",
     size = "small",
     srcs = ["benchmark_test.go"],
+    benchmark_smoke = True,
     deps = [
         ":tmpfs",
         "//pkg/abi/linux",

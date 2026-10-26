@@ -551,6 +551,16 @@ func (g *Generator) writeTests(ts []*testGenerator) error {
 	// before go-marshal is called.
 	b.emit("// Automatically generated marshal tests. See tools/go_marshal.\n\n")
 	b.emit("package %s\n\n", g.pkg)
+	b.emit("import (\n\t\"fmt\"\n\t\"os\"\n\t\"testing\"\n)\n\n")
+	b.emit("var goMarshalTestConstraintsMatch bool\n\n")
+	b.emit("func TestMain(m *testing.M) {\n")
+	b.inIndent(func() {
+		// This is a generator-owned declaration, not a synthetic test case.
+		// The conditional test file records whether its real checks are built.
+		b.emit("fmt.Printf(\"gvisor-go-marshal-test: {\\\"schema_version\\\":1,\\\"runtime_types\\\":%d,\\\"constraints_match\\\":%%t}\\n\", goMarshalTestConstraintsMatch)\n", len(ts))
+		b.emit("os.Exit(m.Run())\n")
+	})
+	b.emit("}\n\n")
 	b.emit("func Example() {\n")
 	b.inIndent(func() {
 		b.emit("// This example is intentionally empty, and ensures this package contains at\n")
@@ -590,6 +600,11 @@ func (g *Generator) writeTests(ts []*testGenerator) error {
 	}
 
 	if err := imports.write(g.outputTest); err != nil {
+		return err
+	}
+	b.reset()
+	b.emit("func init() {\n\tgoMarshalTestConstraintsMatch = true\n}\n\n")
+	if err := b.write(g.outputTest); err != nil {
 		return err
 	}
 

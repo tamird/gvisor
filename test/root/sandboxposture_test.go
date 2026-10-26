@@ -38,7 +38,19 @@ import (
 // expected to have been started with.
 func postureConfig(t *testing.T) *config.Config {
 	t.Helper()
-	conf, err := config.NewFromFlags(flag.CommandLine)
+	args, err := dockerutil.RuntimeArgs()
+	if err != nil {
+		t.Fatalf("Reading the configured runtime arguments: %v", err)
+	}
+	flags := flag.NewFlagSet("runtime", flag.ContinueOnError)
+	config.RegisterFlags(flags)
+	if err := flags.Parse(args); err != nil {
+		t.Fatalf("Parsing the configured runtime arguments: %v", err)
+	}
+	if flags.NArg() != 0 {
+		t.Fatalf("Expected only runtime flags, got positional arguments: %q", flags.Args())
+	}
+	conf, err := config.NewFromFlags(flags)
 	if err != nil {
 		t.Fatalf("Building a configuration from flags: %v", err)
 	}
@@ -189,6 +201,7 @@ func TestSandboxPostureDo(t *testing.T) {
 	const readyMarker = "sandbox-posture-ready"
 	cmd := exec.CommandContext(ctx, runsc,
 		"--network=none",
+		"--clock-source="+conf.ClockSource.String(),
 		"--platform="+conf.Platform,
 		"--directfs="+strconv.FormatBool(conf.DirectFS),
 		"--root", rootDir,

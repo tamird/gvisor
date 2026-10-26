@@ -1,4 +1,7 @@
-load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "platforms")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
+load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "native_test", "platforms")
+load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "namespace_test_exec_properties")
+load(":test_tools.bzl", "erofs_tools")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -43,6 +46,34 @@ go_library(
     ],
 )
 
+# configs() in container_test.go already excludes ptrace. Keep the remaining
+# public platforms selectable without rebuilding or narrowing the test binary.
+_CONTAINER_PLATFORMS = [p for (p, tags) in platforms.items() if "manual" not in tags and p != "ptrace"]
+
+_CONTAINER_PLATFORM_ARGS = {platform: ["--test_platforms=" + platform] for platform in _CONTAINER_PLATFORMS}
+
+# TSan runs only the default platform; other builds exercise all public
+# platforms selected by configs() in container_test.go.
+_CONTAINER_TEST_ARGS = select({
+    "//conditions:default": [
+        "--test_platforms=%s" % ",".join([p for (p, tags) in platforms.items() if "manual" not in tags]) or default_platform,
+    ],
+    "//tools:gotsan": ["--test_platforms=%s" % default_platform],
+})
+
+# The tests execute ip from the container root and create memory-backed files
+# in up to 25 concurrent containers, each writing 100 MiB.
+_CONTAINER_EXEC_PROPERTIES = namespace_test_exec_properties(
+    image = RBE_NETWORK_TOOLS_IMAGE,
+    memory = "4GB",
+)
+
+erofs_tools(
+    name = "erofs_tools",
+    testonly = True,
+    src = "@container_test_tools//:flat",
+)
+
 go_test(
     name = "container_test",
     size = "large",
@@ -56,23 +87,17 @@ go_test(
         "shared_volume_test.go",
         "trace_test.go",
     ],
-    # Only run the default platform for the tsan test, which should
-    # be compatible. For non-tsan builds, run all platforms.
-    args = select({
-        "//conditions:default": [
-            "--test_platforms=%s" % ",".join([p for (p, tags) in platforms.items() if "manual" not in tags]) or default_platform,
-        ],
-        "//tools:gotsan": [
-            "--test_platforms=%s" % default_platform,
-        ],
-    }),
+    args = _CONTAINER_TEST_ARGS,
+    cgroup_v2 = True,
     data = [
+        ":erofs_tools",
         "//:release",
         "//test/cmd/test_app",
     ],
     embed = [":container"],
+    exec_properties = _CONTAINER_EXEC_PROPERTIES,
     shard_count = most_shards,
-    tags = ["requires-kvm"],
+    tags = ["requires-kvm"] + ["rbe-has-container-%s-variant" % p for p in _CONTAINER_PLATFORMS],
     deps = [
         "//pkg/abi/linux",
         "//pkg/cleanup",
@@ -115,6 +140,62 @@ go_test(
     ],
 )
 
+[
+    native_test(
+        name = "container_test_" + platform,
+        size = "large",
+        src = ":container_test",
+        args = _CONTAINER_PLATFORM_ARGS[platform],
+        cgroup_v2 = True,
+        # Preserve rules_go's runfiles initialization in the shared executable.
+        env = {"GO_TEST_RUN_FROM_BAZEL": "1"},
+        exec_properties = _CONTAINER_EXEC_PROPERTIES,
+        shard_count = most_shards,
+        tags = ["manual"] + ([
+            "requires-kvm",
+            "rbe-has-cgroup-v1-guest-variant",
+        ] if platform == "kvm" else []),
+    )
+    for platform in _CONTAINER_PLATFORMS
+]
+
+# ARM64 KVM needs EL2 in the guest. Keep both platforms in the same payload
+# and preserve the native owner's sharding, so its other cases run too.
+arm64_tcg_test(
+    name = "container_test_arm64_el2_guest",
+    size = "large",
+    args = _CONTAINER_TEST_ARGS,
+    arm64_el2 = True,
+    guest_env = {
+        "GO_TEST_RUN_FROM_BAZEL": "1",
+        "GO_TEST_WRAP_TESTV": "1",
+    },
+    image = "//test/rbe/tcg:rc_guest",
+    memory_mib = 6144,
+    payload = ":container_test_arm64",
+    run_under = "//test/rbe:worker_identity",
+    scratch_gib = 8,
+    shard_count = most_shards,
+    tags = [],
+)
+
+# The cgroup-v1 fixture owns VM-wide controller bindings. Run it inside the
+# disposable guest, never around QEMU on the Actions host. Six GiB includes
+# the existing four-GB test budget plus guest kernel/initramfs overhead.
+amd64_kvm_test(
+    name = "container_test_kvm_cgroup_v1_guest",
+    size = "large",
+    args = _CONTAINER_PLATFORM_ARGS["kvm"],
+    guest_env = {"CGROUPV2": "false"},
+    image = "//test/rbe/tcg:amd64_cgroup_v1_guest",
+    memory_mib = 6144,
+    payload = ":container_test_kvm",
+    run_under = "//test/rbe:cgroup_v1",
+    scratch_gib = 8,
+    shard_count = most_shards,
+    tags = [],
+)
+
 go_test(
     name = "serialization_test",
     srcs = ["serialization_test.go"],
@@ -125,33 +206,65 @@ go_test(
     ],
 )
 
+_LIFECYCLE_BENCHMARK_DATA = [
+    "//:release",
+    "//test/cmd/test_app",
+]
+
+_LIFECYCLE_BENCHMARK_DEPS = [
+    "//pkg/log",
+    "//pkg/test/testutil",
+    "//runsc/config",
+    "//runsc/flag",
+    "//runsc/specutils",
+    "@org_golang_x_sys//unix:go_default_library",
+]
+
+_LIFECYCLE_BENCHMARK_ARGS = [
+    "-test.bench=.",
+    "-test.run=^$$",
+    "-test.benchtime=30x",  # A fixed iteration count.
+    "-test.v",
+]
+
 go_test(
     name = "lifecycle_benchmark_test",
     size = "large",
     srcs = ["lifecycle_bench_test.go"],
-    args = [
-        "-test.bench=.",
-        "-test.run=^$$",
-        "-test.benchtime=30x",  # A fixed iteration count.
-        "-test.v",
-        "--test_platforms=kvm,systrap",
-    ],
-    data = [
-        "//:release",
-        "//test/cmd/test_app",
-    ],
+    args = _LIFECYCLE_BENCHMARK_ARGS + ["--test_platforms=kvm,systrap"],
+    data = _LIFECYCLE_BENCHMARK_DATA,
     embed = [":container"],
     tags = [
         "manual",
         "notap",
         "requires-kvm",
     ],
-    deps = [
-        "//pkg/log",
-        "//pkg/test/testutil",
-        "//runsc/config",
-        "//runsc/flag",
-        "//runsc/specutils",
-        "@org_golang_x_sys//unix:go_default_library",
-    ],
+    deps = _LIFECYCLE_BENCHMARK_DEPS,
 )
+
+# Use the same direct runtime owner, separately selectable for hosted systrap
+# and KVM-capable workers. No Docker daemon or runc variant is involved.
+[
+    go_test(
+        name = "lifecycle_benchmark_" + platform + "_test",
+        size = "large",
+        timeout = "eternal",
+        srcs = ["lifecycle_bench_test.go"],
+        args = _LIFECYCLE_BENCHMARK_ARGS + ["--test_platforms=" + platform],
+        data = _LIFECYCLE_BENCHMARK_DATA,
+        exec_properties = namespace_test_exec_properties(memory = "8GB"),
+        library = ":container",
+        nogo = False,
+        tags = [
+            "continuous-benchmark",
+            "go-benchmark-contract",
+            "manual",
+        ] + (["requires-kvm"] if platform == "kvm" else []),
+        visibility = ["//test/benchmarks:__pkg__"],
+        deps = _LIFECYCLE_BENCHMARK_DEPS,
+    )
+    for platform in [
+        "kvm",
+        "systrap",
+    ]
+]

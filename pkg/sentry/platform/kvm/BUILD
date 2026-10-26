@@ -1,5 +1,8 @@
 load("//pkg/seccomp/precompiledseccomp:defs.bzl", "precompiled_seccomp_rules")
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
+load("//tools:defs.bzl", "cc_objcopy", "cc_objdump", "go_library", "go_test")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -135,6 +138,7 @@ go_test(
         "virtual_map_test.go",
     ],
     embed = [":kvm"],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
     # FIXME(gvisor.dev/issue/3374): Not working with all build systems.
     nogo = False,
     pure = True,
@@ -142,7 +146,7 @@ go_test(
         "manual",
         "nogotsan",
         "requires-kvm",
-    ],
+    ] + host_test_requirement_tags(["docker"]),
     deps = [
         "//pkg/abi/linux",
         "//pkg/cpuid",
@@ -175,9 +179,18 @@ go_test(
         "vdso_stub_test.go",
         "vdso_test.go",
     ],
+    args = [
+        "--objcopy=$(location {})".format(cc_objcopy),
+        "--objdump=$(location {})".format(cc_objdump),
+    ],
+    data = [
+        cc_objcopy,
+        cc_objdump,
+    ],
     embed = [":kvm"],
     nogo = False,
     pure = True,
+    rundir = ".",
     tags = ["nogotsan"],
 )
 
@@ -217,3 +230,61 @@ go_test(
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
+
+# Qualify the same guest/fixture's nested KVM capability with the complete
+# existing KVM package owner before selecting all container shards.
+amd64_kvm_test(
+    name = "cgroup_v1_guest_probe",
+    size = "medium",
+    guest_env = {"CGROUPV2": "false"},
+    image = "//test/rbe/tcg:amd64_cgroup_v1_guest",
+    memory_mib = 6144,
+    payload = ":kvm_test",
+    run_under = "//test/rbe:cgroup_v1",
+    scratch_gib = 8,
+    tags = [],
+)
+
+# Isolate KVM entry and exit with the existing ARM64 unit test body.
+arm64_tcg_test(
+    name = "kernel_syscall_arm64_tcg_test",
+    size = "large",
+    args = ["-test.run=^TestKernelSyscall$$"],
+    arm64_el2 = True,
+    guest_env = {
+        "GO_TEST_RUN_FROM_BAZEL": "1",
+        "GO_TEST_WRAP_TESTV": "1",
+    },
+    image = "//test/rbe/tcg:rc_guest",
+    payload = ":kvm_test_arm64",
+    tags = [
+        "manual",
+        "nogotsan",
+    ],
+    visibility = ["//test/rbe:__pkg__"],
+)
+
+# Exercise offset and zero-offset controls in both existing KVM test binaries.
+[
+    arm64_tcg_test(
+        name = test + "_tsc_arm64_tcg",
+        size = "large",
+        args = ["-test.run=^Test(Rdtsc(WithOffset)?|TSCDomainWithOffset|KernelVDSO(WithTSCOffset)?|KernelSyscall)$$"],
+        arm64_el2 = True,
+        guest_env = {
+            "GO_TEST_RUN_FROM_BAZEL": "1",
+            "GO_TEST_WRAP_TESTV": "1",
+        },
+        image = "//test/rbe/tcg:rc_guest",
+        payload = ":" + test + "_arm64",
+        tags = [
+            "manual",
+            "nogotsan",
+        ],
+        visibility = ["//test/rbe:__pkg__"],
+    )
+    for test in [
+        "kvm_test",
+        "kvm_cgo_test",
+    ]
+]

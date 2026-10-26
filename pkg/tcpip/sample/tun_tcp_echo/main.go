@@ -25,10 +25,11 @@ import (
 	"flag"
 	"io"
 	"log"
+	"math"
 	"net"
+	"net/netip"
 	"os"
 	"strconv"
-	"strings"
 
 	"gvisor.dev/gvisor/pkg/rawfile"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -118,26 +119,24 @@ func main() {
 	}
 
 	// Parse the IP address. Support both ipv4 and ipv6.
-	parsedAddr := net.ParseIP(addrName)
-	if parsedAddr == nil {
+	parsedAddr, err := netip.ParseAddr(addrName)
+	if err != nil || parsedAddr.Zone() != "" {
 		log.Fatalf("Bad IP address: %v", addrName)
 	}
+	parsedAddr = parsedAddr.Unmap()
 
-	var addrWithPrefix tcpip.AddressWithPrefix
-	var proto tcpip.NetworkProtocolNumber
-	if parsedAddr.To4() != nil {
-		addrWithPrefix = tcpip.AddrFromSlice(parsedAddr.To4()).WithPrefix()
+	addrWithPrefix := tcpip.FullPrefix(parsedAddr)
+	proto := ipv6.ProtocolNumber
+	if parsedAddr.Is4() {
 		proto = ipv4.ProtocolNumber
-	} else if parsedAddr.To16() != nil {
-		addrWithPrefix = tcpip.AddrFromSlice(parsedAddr.To16()).WithPrefix()
-		proto = ipv6.ProtocolNumber
-	} else {
-		log.Fatalf("Unknown IP type: %v", addrName)
 	}
 
-	localPort, err := strconv.Atoi(portName)
+	localPort, err := strconv.ParseInt(portName, 10, 64)
 	if err != nil {
 		log.Fatalf("Unable to convert port %v: %v", portName, err)
+	}
+	if localPort < 0 || localPort > math.MaxUint16 {
+		log.Fatalf("Unable to convert port %v: %v", portName, strconv.ErrRange)
 	}
 
 	// Create the stack with ip and tcp protocols, then add a tun-based
@@ -183,10 +182,7 @@ func main() {
 		log.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 
-	subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte(strings.Repeat("\x00", addrWithPrefix.Address.Len()))), tcpip.MaskFrom(strings.Repeat("\x00", addrWithPrefix.Address.Len())))
-	if err != nil {
-		log.Fatal(err)
-	}
+	subnet := netip.PrefixFrom(addrWithPrefix.Addr(), 0).Masked()
 
 	// Add default route.
 	s.SetRouteTable([]tcpip.Route{

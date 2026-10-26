@@ -1066,10 +1066,13 @@ func TestCheckpointRestoreEROFS(t *testing.T) {
 	// Skip this test if mkfs.erofs or busybox are not available.
 	skipIfNotAvailable(t, "mkfs.erofs", "busybox")
 
-	for _, tc := range []struct{ name, options string }{
+	for _, tc := range []struct {
+		name    string
+		options []string
+	}{
 		{name: "flat"},
-		{name: "chunk-blockmap", options: "--chunksize=8192 -E force-inode-blockmap"},
-		{name: "chunk-indexes", options: "--chunksize=8192 -E force-chunk-indexes"},
+		{name: "chunk-blockmap", options: []string{"--chunksize=8192", "-E", "force-inode-blockmap"}},
+		{name: "chunk-indexes", options: []string{"--chunksize=8192", "-E", "force-chunk-indexes"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			testDir, err := os.MkdirTemp(testutil.TmpDir(), "erofs_checkpoint_restore_test_")
@@ -1078,7 +1081,7 @@ func TestCheckpointRestoreEROFS(t *testing.T) {
 			}
 			defer os.RemoveAll(testDir)
 
-			rootfsDir, rootfsImage, err := createRootfsEROFS(testDir, tc.options)
+			rootfsDir, rootfsImage, err := createRootfsEROFS(testDir, tc.options...)
 			if err != nil {
 				t.Fatalf("failed to create EROFS rootfs image: %v", err)
 			}

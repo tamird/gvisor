@@ -1,8 +1,7 @@
 {::nomarkdown}
-{% assign fn = include.id | remove: " " | remove: "-" | downcase %}
 <figure><a href="{{ include.url }}"><svg id="{{ include.id }}" width=500 height=200><title>{{ include.title }}</title></svg></a></figure>
 <script>
-function render_{{ fn }}() {
+$(function() {
 d3.csv("{{ include.url }}", function(d, i, columns) {
     return d; // Transformed below.
 }, function(error, data) {
@@ -99,13 +98,13 @@ d3.csv("{{ include.url }}", function(d, i, columns) {
 
     // Use log scale if required.
     var y_min = 0;
-    if ({{ include.log | default: "false" }}) {
+    if ("{{ include.log | default: 'false' }}" == "true") {
         // Need to cap lower end of the domain at 1.
         y_min = 1;
     }
 
-    if ({{ include.y_min | default: "false" }}) {
-        y_min = "{{ include.y_min }}";
+    if (Number("{{ include.y_min | default: '0' }}")) {
+        y_min = Number("{{ include.y_min | default: '0' }}");
     }
 
     var svg = d3.select("#{{ include.id }}"),
@@ -123,7 +122,7 @@ d3.csv("{{ include.url }}", function(d, i, columns) {
 
     var y = d3.scaleLinear()
         .rangeRound([height, 0]);
-    if ({{ include.log | default: "false" }}) {
+    if ("{{ include.log | default: 'false' }}" == "true") {
         y = d3.scaleLog()
            .rangeRound([height, 0]);
     }
@@ -200,7 +199,6 @@ d3.csv("{{ include.url }}", function(d, i, columns) {
         .attr("dy", "0.32em")
         .text(function(d) { return d; });
 });
-}
-$(render_{{ fn }});
+});
 </script>
 {:/}

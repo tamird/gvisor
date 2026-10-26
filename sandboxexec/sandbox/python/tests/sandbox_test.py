@@ -14,6 +14,7 @@
 
 """Tests for the gVisor sandbox Python binding."""
 
+import functools
 import glob
 import json
 import os
@@ -75,27 +76,33 @@ def setUpModule():
 
 class SandboxTest(unittest.TestCase):
 
+  def setUp(self) -> None:
+    self.new_sandbox = functools.partial(
+        sandbox.Sandbox,
+        clock_source=os.environ.get("GVISOR_TEST_CLOCK_SOURCE"),
+    )
+
   def test_exec_dmesg(self):
     # Create the background sandbox (default network="none" works for
     # non-root and root).
-    with sandbox.Sandbox() as sb:
+    with self.new_sandbox() as sb:
       # Execute dmesg in the gVisor sandbox.
       stdout, _ = sb.exec("dmesg")
       self.assertIn("Starting gVisor", stdout)
 
   def test_exec_timeout(self):
-    with sandbox.Sandbox() as sb:
+    with self.new_sandbox() as sb:
       with self.assertRaises(sandbox.Error) as ctx:
         sb.exec("sleep", "10", timeout=1)
       self.assertIn("exec timed out", str(ctx.exception))
 
   def test_exec_with_args(self):
-    with sandbox.Sandbox() as sb:
+    with self.new_sandbox() as sb:
       stdout, _ = sb.exec("echo", "hello", "sandbox")
       self.assertEqual(stdout.strip(), "hello sandbox")
 
   def test_exec_invalid_command_or_args(self):
-    with sandbox.Sandbox() as sb:
+    with self.new_sandbox() as sb:
       with self.assertRaises(sandbox.Error) as ctx:
         sb.exec("nonexistent_command_xyz123")
       self.assertIn("exec failed", str(ctx.exception))
@@ -104,13 +111,20 @@ class SandboxTest(unittest.TestCase):
         sb.exec("ls", "--invalid-flag-xyz123")
       self.assertIn("exec failed", str(ctx.exception))
 
+  def test_invalid_clock_source(self) -> None:
+    with self.assertRaises(ValueError):
+      self.new_sandbox(clock_source="invalid")
+    with self.assertRaises(TypeError):
+      self.new_sandbox(clock_source=1)
+
   def test_sandbox_options(self):
     with tempfile.TemporaryDirectory() as runtime_dir:
       sandbox_id = "iwillbeasandbox"
-      with sandbox.Sandbox(
+      with self.new_sandbox(
           runtime_dir=runtime_dir,
           sandbox_id=sandbox_id,
           network=sandbox.NetworkMode.HOST,
+          clock_source=sandbox.ClockSource.REFERENCE,
       ) as sb:
         self.assertTrue(sb.bundle_dir.startswith(runtime_dir))
         self.assertEqual(sb.id, sandbox_id)
@@ -121,7 +135,7 @@ class SandboxTest(unittest.TestCase):
 
     before_tmp = set(os.listdir(tempfile.gettempdir()))
     with self.assertRaises(sandbox.Error) as ctx:
-      sandbox.Sandbox(network=sandbox.NetworkMode.SANDBOX)
+      self.new_sandbox(network=sandbox.NetworkMode.SANDBOX)
     after_tmp = set(os.listdir(tempfile.gettempdir()))
 
     self.assertIn(
@@ -147,7 +161,7 @@ class SandboxTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir:
           try:
-            sb = sandbox.Sandbox(
+            sb = self.new_sandbox(
                 runtime_dir=temp_dir,
                 sandbox_id=sandbox_id,
                 network=net_mode,
@@ -157,7 +171,7 @@ class SandboxTest(unittest.TestCase):
 
           try:
             bundle_dir = sb.bundle_dir
-            expected_bundle_dir = os.path.join(temp_dir, sandbox_id)
+            expected_bundle_dir = os.path.join(sb._state_dir, sandbox_id)
             self.assertEqual(bundle_dir, expected_bundle_dir)
 
             config_path = os.path.join(bundle_dir, "config.json")
@@ -187,7 +201,7 @@ class SandboxTest(unittest.TestCase):
 
   def test_init_env_list_and_dict(self):
     with tempfile.TemporaryDirectory() as temp_dir:
-      sb = sandbox.Sandbox(
+      sb = self.new_sandbox(
           runtime_dir=temp_dir,
           env=["FOO=bar", "BAZ=123"],
       )
@@ -200,7 +214,7 @@ class SandboxTest(unittest.TestCase):
       )
       sb.close()
 
-      sb_dict = sandbox.Sandbox(
+      sb_dict = self.new_sandbox(
           runtime_dir=temp_dir,
           env={"FOO": "bar", "BAZ": "123"},
       )
@@ -215,7 +229,7 @@ class SandboxTest(unittest.TestCase):
 
   def test_init_env_overrides_path(self):
     with tempfile.TemporaryDirectory() as temp_dir:
-      sb = sandbox.Sandbox(
+      sb = self.new_sandbox(
           runtime_dir=temp_dir,
           env={"PATH": "/bin:/usr/bin:/custom/path"},
       )
@@ -229,26 +243,42 @@ class SandboxTest(unittest.TestCase):
 
   def test_init_env_malformed_raises_error(self):
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(env=["NO_EQUALS"])
+      self.new_sandbox(env=["NO_EQUALS"])
     self.assertIn("Invalid environment variable format", str(ctx.exception))
 
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(env={"KEY=FOO": "val"})
+      self.new_sandbox(env={"KEY=FOO": "val"})
     self.assertIn(
         "Environment variable key cannot contain '='", str(ctx.exception)
     )
 
     with self.assertRaises(TypeError) as ctx:
-      sandbox.Sandbox(env=123)
+      self.new_sandbox(env=123)
     self.assertIn(
         "env must be a list of 'KEY=VALUE' strings or a dict",
         str(ctx.exception),
     )
 
   @mock.patch("subprocess.run")
+  def test_clock_source_flags(self, mock_run):
+    mock_run.return_value = mock.Mock(returncode=0)
+    for source in [None, "calibrated", "reference", sandbox.ClockSource.REFERENCE]:
+      with self.subTest(source=source):
+        mock_run.reset_mock()
+        with self.new_sandbox(clock_source=source):
+          args = mock_run.call_args_list[0][0][0]
+          clock_flags = [arg for arg in args if arg.startswith("--clock-source=")]
+          if source is None:
+            self.assertEqual(clock_flags, [])
+          else:
+            self.assertEqual(
+                clock_flags, [f"--clock-source={sandbox.ClockSource(source).value}"]
+            )
+
+  @mock.patch("subprocess.run")
   def test_exec_env_flags(self, mock_run):
     mock_run.return_value = mock.Mock(returncode=0)
-    sb = sandbox.Sandbox()
+    sb = self.new_sandbox()
     mock_run.reset_mock()
     sb.exec("/bin/sh", "-c", "echo hi", env={"LOCAL_VAR": "test"})
     args = mock_run.call_args_list[0][0][0]
@@ -268,7 +298,7 @@ class SandboxTest(unittest.TestCase):
 
   def test_runtime_dir_ownership_and_cleanup(self):
     # Auto-created runtime directory should be deleted on close.
-    sb = sandbox.Sandbox()
+    sb = self.new_sandbox()
     auto_runtime_dir = sb._runtime_dir
     self.assertTrue(os.path.exists(auto_runtime_dir))
     sb.close()
@@ -276,33 +306,65 @@ class SandboxTest(unittest.TestCase):
 
     # Custom runtime directory should not be deleted on close.
     with tempfile.TemporaryDirectory() as custom_dir:
-      sb = sandbox.Sandbox(runtime_dir=custom_dir)
-      sb.close()
+      with self.new_sandbox(runtime_dir=custom_dir, sandbox_id="shared") as first:
+        with self.new_sandbox(
+            runtime_dir=custom_dir, sandbox_id="shared"
+        ) as second:
+          self.assertNotEqual(first._state_dir, second._state_dir)
+          self.assertNotEqual(first.bundle_dir, second.bundle_dir)
+          first.close()
+          self.assertFalse(os.path.exists(first._state_dir), first._state_dir)
+          stdout, _ = second.exec("echo", "still running")
+          self.assertEqual(stdout.strip(), "still running")
+          self.assertTrue(os.path.exists(second._state_dir), second._state_dir)
+        self.assertFalse(os.path.exists(second._state_dir), second._state_dir)
       self.assertTrue(os.path.exists(custom_dir))
 
   def test_close_idempotent(self):
-    sb = sandbox.Sandbox()
+    sb = self.new_sandbox()
     sb.close()
     # Repeating close() should be a safe no-op.
     sb.close()
+
+  def test_close_retries_cleanup_failure(self):
+    sb = self.new_sandbox()
+    self.addCleanup(sb.close)
+    with mock.patch.object(
+        sandbox, "_unmount_null_netns", side_effect=OSError("unmount failed")
+    ):
+      with self.assertRaisesRegex(sandbox.Error, "unmount failed"):
+        sb.close()
+    sb.close()
+    self.assertFalse(os.path.exists(sb._runtime_dir), sb._runtime_dir)
+
+  def test_close_preserves_state_after_delete_failure(self):
+    sb = self.new_sandbox()
+    self.addCleanup(sb.close)
+    with mock.patch(
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            1, "runsc delete", stderr="delete failed"
+        ),
+    ):
+      with self.assertRaisesRegex(sandbox.Error, "delete failed"):
+        sb.close()
+    self.assertTrue(os.path.isdir(sb._state_dir), sb._state_dir)
+    self.assertTrue(os.path.isdir(sb.bundle_dir), sb.bundle_dir)
+    sb.close()
+    self.assertFalse(os.path.exists(sb._runtime_dir), sb._runtime_dir)
 
   @mock.patch("tempfile.mkdtemp")
   def test_runtime_dir_creation_error(self, mock_mkdtemp):
     mock_mkdtemp.side_effect = OSError("mock disk error")
     with self.assertRaises(sandbox.Error) as ctx:
-      sandbox.Sandbox()
+      self.new_sandbox()
     self.assertIn("failed to create runtime directory", str(ctx.exception))
 
-  @mock.patch("os.makedirs")
-  def test_state_dir_creation_error(self, mock_makedirs):
-    def side_effect(path, **_kwargs):
-      if path.endswith("state"):
-        raise OSError("mock permission denied")
-
-    mock_makedirs.side_effect = side_effect
+  def test_state_dir_creation_error(self):
     with tempfile.TemporaryDirectory() as runtime_dir:
-      with self.assertRaises(sandbox.Error) as ctx:
-        sandbox.Sandbox(runtime_dir=runtime_dir)
+      with mock.patch("tempfile.mkdtemp", side_effect=OSError("permission denied")):
+        with self.assertRaises(sandbox.Error) as ctx:
+          self.new_sandbox(runtime_dir=runtime_dir)
       self.assertIn(
           "failed to create sandbox state directory", str(ctx.exception)
       )
@@ -312,7 +374,7 @@ class SandboxTest(unittest.TestCase):
       # Bypass __init__ to test _create_bundle logic
       sb = sandbox.Sandbox.__new__(sandbox.Sandbox)
       sb._id = "test-bundle"
-      sb._runtime_dir = temp_dir
+      sb._state_dir = temp_dir
       sb._network = "none"
       with mock.patch("os.makedirs") as mock_makedirs:
         mock_makedirs.side_effect = OSError("mock disk error")
@@ -329,7 +391,7 @@ class SandboxTest(unittest.TestCase):
 
     mock_run.side_effect = side_effect
     with self.assertRaises(sandbox.Error) as ctx:
-      sandbox.Sandbox()
+      self.new_sandbox()
     self.assertIn("sandbox creation timed out", str(ctx.exception))
 
   @mock.patch("subprocess.run")
@@ -341,12 +403,12 @@ class SandboxTest(unittest.TestCase):
 
     mock_run.side_effect = side_effect
     with self.assertRaises(sandbox.Error) as ctx:
-      sandbox.Sandbox()
+      self.new_sandbox()
     self.assertIn("failed to create sandbox via subprocess", str(ctx.exception))
 
   def test_invalid_networking_mode(self):  # pylint: disable=unused-argument
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(network="invalid-net")
+      self.new_sandbox(network="invalid-net")
     self.assertIn(
         "Invalid network mode 'invalid-net'. Valid options are 'none', 'host',"
         " 'sandbox'.",
@@ -355,7 +417,7 @@ class SandboxTest(unittest.TestCase):
 
   def test_invalid_networking_type(self):
     with self.assertRaises(TypeError) as ctx:
-      sandbox.Sandbox(network=123)
+      self.new_sandbox(network=123)
     self.assertIn("network must be a NetworkMode or str", str(ctx.exception))
 
   @mock.patch("os.geteuid", return_value=0)
@@ -364,7 +426,7 @@ class SandboxTest(unittest.TestCase):
     mock_run.return_value = mock.Mock(returncode=0)
     for net in ["none", "sandbox", "host", sandbox.NetworkMode.HOST]:
       mock_run.reset_mock()
-      sb = sandbox.Sandbox(network=net)
+      sb = self.new_sandbox(network=net)
       args = mock_run.call_args_list[0][0][0]
       net_val = net.value if isinstance(net, sandbox.NetworkMode) else net
       self.assertIn(f"--network={net_val}", args)
@@ -376,7 +438,7 @@ class SandboxTest(unittest.TestCase):
       self, mock_run, mock_geteuid
   ):  # pylint: disable=unused-argument
     mock_run.return_value = mock.Mock(returncode=0)
-    sb = sandbox.Sandbox(network=sandbox.NetworkMode.NONE)
+    sb = self.new_sandbox(network=sandbox.NetworkMode.NONE)
     args = mock_run.call_args_list[0][0][0]
     self.assertIn("--network=none", args)
     config_path = os.path.join(sb.bundle_dir, "config.json")
@@ -392,14 +454,14 @@ class SandboxTest(unittest.TestCase):
       self, mock_geteuid
   ):  # pylint: disable=unused-argument
     with self.assertRaises(sandbox.Error) as ctx:
-      sandbox.Sandbox(network="sandbox")
+      self.new_sandbox(network="sandbox")
     self.assertIn(
         "sandbox networking requires running as root", str(ctx.exception)
     )
 
   def test_network_mode_none_real_sandbox(self):
     """Verifies starting a real sandbox with network='none' without mocks."""
-    with sandbox.Sandbox(network="none") as sb:
+    with self.new_sandbox(network="none") as sb:
       stdout, _ = sb.exec("echo", "hello network none")
       self.assertEqual(stdout.strip(), "hello network none")
       config_path = os.path.join(sb.bundle_dir, "config.json")
@@ -411,7 +473,7 @@ class SandboxTest(unittest.TestCase):
 
   def test_network_mode_host_real_sandbox(self):
     """Verifies starting a real sandbox with network='host' without mocks."""
-    with sandbox.Sandbox(network="host") as sb:
+    with self.new_sandbox(network="host") as sb:
       stdout, _ = sb.exec("echo", "hello network host")
       self.assertEqual(stdout.strip(), "hello network host")
       config_path = os.path.join(sb.bundle_dir, "config.json")
@@ -429,7 +491,7 @@ class SandboxTest(unittest.TestCase):
 
       with mock.patch("shutil.which", return_value=None):
         with self.assertRaises(sandbox.Error) as ctx:
-          sandbox.Sandbox()
+          self.new_sandbox()
         self.assertIn("runsc binary is not found", str(ctx.exception))
     finally:
       if old_runsc_path is not None:
@@ -441,7 +503,7 @@ class SandboxTest(unittest.TestCase):
       with open(witness_file, "w") as f:
         f.write("hello-mount")
 
-      with sandbox.Sandbox(
+      with self.new_sandbox(
           mounts=[
               sandbox.Mount.bind(
                   source=temp_host_dir,
@@ -459,7 +521,7 @@ class SandboxTest(unittest.TestCase):
 
   def test_custom_bind_mount_readwrite(self):
     with tempfile.TemporaryDirectory() as temp_host_dir:
-      with sandbox.Sandbox(
+      with self.new_sandbox(
           mounts=[
               sandbox.Mount.bind(
                   source=temp_host_dir,
@@ -480,7 +542,7 @@ class SandboxTest(unittest.TestCase):
         self.assertEqual(f.read().strip(), "hello-write")
 
   def test_custom_tmpfs_mount(self):
-    with sandbox.Sandbox(
+    with self.new_sandbox(
         mounts=[sandbox.Mount.tmpfs("/mnt/scratch")],
     ) as sb:
       sb.exec("sh", "-c", "echo hello-tmpfs > /mnt/scratch/tmp.txt")
@@ -488,7 +550,7 @@ class SandboxTest(unittest.TestCase):
       self.assertEqual(stdout.strip(), "hello-tmpfs")
 
   def test_custom_proc_mount(self):
-    with sandbox.Sandbox(
+    with self.new_sandbox(
         mounts=[sandbox.Mount.proc("/custom_proc")],
     ) as sb:
       stdout, _ = sb.exec("cat", "/custom_proc/self/status")
@@ -500,7 +562,7 @@ class SandboxTest(unittest.TestCase):
       with open(witness_file, "w") as f:
         f.write("hello-dict-mount")
 
-      with sandbox.Sandbox(
+      with self.new_sandbox(
           mounts=[
               {
                   "source": temp_host_dir,
@@ -515,44 +577,44 @@ class SandboxTest(unittest.TestCase):
 
   def test_mount_validation_errors(self):
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           mounts=[sandbox.Mount(destination="")],
       )
     self.assertIn("Mount destination cannot be empty", str(ctx.exception))
 
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           mounts=[sandbox.Mount.bind(source="", destination="/mnt")],
       )
     self.assertIn("Bind mount source cannot be empty", str(ctx.exception))
 
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           mounts=[{"destination": "/mnt", "type": "invalid_type"}],
       )
     self.assertIn("Invalid mount type", str(ctx.exception))
 
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           mounts=[{"destination": "/mnt", "extra_key": "val"}],
       )
     self.assertIn("Unrecognized keys in mount dict", str(ctx.exception))
     self.assertIn("extra_key", str(ctx.exception))
 
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           mounts=[{"source": "/host/path"}],
       )
     self.assertIn("Mount dictionary missing 'destination'", str(ctx.exception))
 
     with self.assertRaises(TypeError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           mounts="invalid_string_not_list",
       )
     self.assertIn("mounts must be a list or tuple", str(ctx.exception))
 
     with self.assertRaises(TypeError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           mounts=[123],
       )
     self.assertIn(
@@ -560,7 +622,7 @@ class SandboxTest(unittest.TestCase):
     )
 
   def test_container_default_working_dir(self):
-    with sandbox.Sandbox() as sb:
+    with self.new_sandbox() as sb:
       stdout, _ = sb.exec("pwd")
       self.assertEqual(stdout.strip(), "/")
 
@@ -569,7 +631,7 @@ class SandboxTest(unittest.TestCase):
         spec = json.load(f)
       self.assertEqual(spec["process"]["cwd"], "/")
 
-    with sandbox.Sandbox(working_dir=None) as sb:
+    with self.new_sandbox(working_dir=None) as sb:
       stdout, _ = sb.exec("pwd")
       self.assertEqual(stdout.strip(), "/")
 
@@ -579,7 +641,7 @@ class SandboxTest(unittest.TestCase):
       self.assertEqual(spec["process"]["cwd"], "/")
 
   def test_container_working_dir(self):
-    with sandbox.Sandbox(
+    with self.new_sandbox(
         working_dir="/tmp",
     ) as sb:
       stdout, _ = sb.exec("pwd")
@@ -591,7 +653,7 @@ class SandboxTest(unittest.TestCase):
       self.assertEqual(spec["process"]["cwd"], "/tmp")
 
   def test_container_working_dir_relative(self):
-    with sandbox.Sandbox(
+    with self.new_sandbox(
         working_dir="tmp/custom",
     ) as sb:
       stdout, _ = sb.exec("pwd")
@@ -604,19 +666,19 @@ class SandboxTest(unittest.TestCase):
 
   def test_bad_working_dir(self):
     with self.assertRaises(ValueError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           working_dir="",
       )
     self.assertIn("working directory cannot be empty", str(ctx.exception))
 
     with self.assertRaises(TypeError) as ctx:
-      sandbox.Sandbox(
+      self.new_sandbox(
           working_dir=123,
       )
     self.assertIn("working_dir must be a str", str(ctx.exception))
 
   def test_exec_cwd_override(self):
-    with sandbox.Sandbox(
+    with self.new_sandbox(
         working_dir="/",
     ) as sb:
       stdout, _ = sb.exec("pwd")
@@ -629,7 +691,7 @@ class SandboxTest(unittest.TestCase):
       self.assertEqual(stdout_rel.strip(), "/bin")
 
   def test_exec_bad_cwd(self):
-    with sandbox.Sandbox() as sb:
+    with self.new_sandbox() as sb:
       with self.assertRaises(ValueError) as ctx:
         sb.exec("pwd", cwd="")
       self.assertIn("cwd cannot be empty", str(ctx.exception))

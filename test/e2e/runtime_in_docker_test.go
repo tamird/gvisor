@@ -37,6 +37,7 @@ type testVariant struct {
 	CapAdd        []string
 	Args          []string
 	MountCgroupfs bool
+	CgroupnsMode  string
 }
 
 // run runs the test variant.
@@ -87,7 +88,8 @@ func (test testVariant) run(ctx context.Context, logger testutil.Logger) (string
 			// Set correct SELinux label; this allows ptrace.
 			"label=type:container_engine_t",
 		},
-		CapAdd: test.CapAdd,
+		CapAdd:       test.CapAdd,
+		CgroupnsMode: test.CgroupnsMode,
 		Mounts: append([]mount.Mount{
 			// Mount the runtime binary.
 			{
@@ -115,6 +117,7 @@ func (test testVariant) run(ctx context.Context, logger testutil.Logger) (string
 		"--debug=true",
 		"--debug-log=/dev/stderr",
 	}
+	args = append(args, testutil.RuntimeTestFlags()...)
 	args = append(args, test.Args...)
 	args = append(args, "do")
 	// Split the message into separate substrings to avoid matching on the message
@@ -149,6 +152,7 @@ func (test testVariant) failureCases() []testVariant {
 	}
 	var failureCases []testVariant
 	if test.MountCgroupfs {
+		// Retain the host cgroup namespace so only the required mount changes.
 		copy := failureCase("without cgroupfs mounted")
 		copy.MountCgroupfs = false
 		failureCases = append(failureCases, copy)
@@ -188,8 +192,10 @@ func TestGVisorInDocker(t *testing.T) {
 				"SYS_ADMIN",
 			},
 			// Mount cgroupfs as writable, otherwise the runtime won't be able to
-			// set up cgroups.
+			// set up cgroups. Match the host cgroup namespace to the bound tree;
+			// nsdelegate prevents clone3 from targeting its ancestors otherwise.
 			MountCgroupfs: true,
+			CgroupnsMode:  "host",
 		},
 		{
 			Name: "Rootful without networking",
@@ -202,6 +208,7 @@ func TestGVisorInDocker(t *testing.T) {
 				"--network=none",
 			},
 			MountCgroupfs: true,
+			CgroupnsMode:  "host",
 		},
 		{
 			Name: "Rootful with host networking",
@@ -217,6 +224,7 @@ func TestGVisorInDocker(t *testing.T) {
 				"--network=host",
 			},
 			MountCgroupfs: true,
+			CgroupnsMode:  "host",
 		},
 		{
 			Name: "Rootful without networking and cgroupfs",

@@ -1,0 +1,449 @@
+{
+  "arguments": [
+    "-test.v=true",
+    "-test.bench=.",
+    "-test.benchtime=20s"
+  ],
+  "owners": {
+    "//test/benchmarks/base:sysbench_test_pgo_systrap_owned": [
+      {
+        "name": "BenchmarkSysbench/testname.CPU",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.CPU/threads.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.Memory",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.Memory/threads.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.Mutex",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/base:sysbench_test_pgo_kvm_owned": [
+      {
+        "name": "BenchmarkSysbench/testname.CPU",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.CPU/threads.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.Memory",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.Memory/threads.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkSysbench/testname.Mutex",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/database:redis_test_pgo_systrap_owned": [
+      {
+        "name": "BenchmarkRedis/operation.SET",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRedis/operation.LPUSH",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRedis/operation.LRANGE_100",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/database:redis_test_pgo_kvm_owned": [
+      {
+        "name": "BenchmarkRedis/operation.SET",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRedis/operation.LPUSH",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRedis/operation.LRANGE_100",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/fs:rubydev_test_pgo_systrap_owned": [
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.bindfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.rootfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.fusefs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/fs:rubydev_test_pgo_kvm_owned": [
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.bindfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.rootfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkRubySpecTest/page_cache.clean/filesystem.fusefs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/media:ffmpeg_test_pgo_systrap_owned": [
+      {
+        "name": "BenchmarkFfmpeg",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/media:ffmpeg_test_pgo_kvm_owned": [
+      {
+        "name": "BenchmarkFfmpeg",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/network:iperf_test_pgo_systrap_owned": [
+      {
+        "name": "BenchmarkIperfManyConnections/operation.Upload/parallel.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkIperfManyConnections/operation.Download/parallel.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/network:iperf_test_pgo_kvm_owned": [
+      {
+        "name": "BenchmarkIperfManyConnections/operation.Upload/parallel.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkIperfManyConnections/operation.Download/parallel.16",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/network:nginx_test_pgo_systrap_owned": [
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.1/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.100/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.1/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.100/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.1/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.100/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.1/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.100/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ],
+    "//test/benchmarks/network:nginx_test_pgo_kvm_owned": [
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.1/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.100/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.1/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.100/filesystem.tmpfs",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.1/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.1Kb/concurrency.100/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.1/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      },
+      {
+        "name": "BenchmarkNginxDocSize/filesize.10Mb/concurrency.100/filesystem.bind",
+        "count": 1,
+        "units": [
+          "ns/op"
+        ]
+      }
+    ]
+  },
+  "pgo": {
+    "//test/benchmarks/base:sysbench_test_pgo_systrap_owned": {
+      "excluded": [],
+      "platform": "systrap",
+      "benchmark": "sysbench"
+    },
+    "//test/benchmarks/base:sysbench_test_pgo_kvm_owned": {
+      "excluded": [],
+      "platform": "kvm",
+      "benchmark": "sysbench"
+    },
+    "//test/benchmarks/database:redis_test_pgo_systrap_owned": {
+      "excluded": [
+        "BenchmarkAllRedisOperations"
+      ],
+      "platform": "systrap",
+      "benchmark": "redis"
+    },
+    "//test/benchmarks/database:redis_test_pgo_kvm_owned": {
+      "excluded": [
+        "BenchmarkAllRedisOperations"
+      ],
+      "platform": "kvm",
+      "benchmark": "redis"
+    },
+    "//test/benchmarks/fs:rubydev_test_pgo_systrap_owned": {
+      "excluded": [
+        "BenchmarkRubyNoOpTest",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.bindfs",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.tmpfs",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.rootfs",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.fusefs"
+      ],
+      "platform": "systrap",
+      "benchmark": "rubydev"
+    },
+    "//test/benchmarks/fs:rubydev_test_pgo_kvm_owned": {
+      "excluded": [
+        "BenchmarkRubyNoOpTest",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.bindfs",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.tmpfs",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.rootfs",
+        "BenchmarkRubySpecTest/page_cache.dirty/filesystem.fusefs"
+      ],
+      "platform": "kvm",
+      "benchmark": "rubydev"
+    },
+    "//test/benchmarks/media:ffmpeg_test_pgo_systrap_owned": {
+      "excluded": [],
+      "platform": "systrap",
+      "benchmark": "ffmpeg"
+    },
+    "//test/benchmarks/media:ffmpeg_test_pgo_kvm_owned": {
+      "excluded": [],
+      "platform": "kvm",
+      "benchmark": "ffmpeg"
+    },
+    "//test/benchmarks/network:iperf_test_pgo_systrap_owned": {
+      "excluded": [
+        "BenchmarkIperfOneConnection",
+        "BenchmarkIperfManyConnections/operation.Upload/parallel.4",
+        "BenchmarkIperfManyConnections/operation.Download/parallel.4",
+        "BenchmarkIperfManyConnections/operation.Upload/parallel.64",
+        "BenchmarkIperfManyConnections/operation.Download/parallel.64"
+      ],
+      "platform": "systrap",
+      "benchmark": "iperf"
+    },
+    "//test/benchmarks/network:iperf_test_pgo_kvm_owned": {
+      "excluded": [
+        "BenchmarkIperfOneConnection",
+        "BenchmarkIperfManyConnections/operation.Upload/parallel.4",
+        "BenchmarkIperfManyConnections/operation.Download/parallel.4",
+        "BenchmarkIperfManyConnections/operation.Upload/parallel.64",
+        "BenchmarkIperfManyConnections/operation.Download/parallel.64"
+      ],
+      "platform": "kvm",
+      "benchmark": "iperf"
+    },
+    "//test/benchmarks/network:nginx_test_pgo_systrap_owned": {
+      "excluded": [
+        "BenchmarkContinuousNginx"
+      ],
+      "platform": "systrap",
+      "benchmark": "nginx"
+    },
+    "//test/benchmarks/network:nginx_test_pgo_kvm_owned": {
+      "excluded": [
+        "BenchmarkContinuousNginx"
+      ],
+      "platform": "kvm",
+      "benchmark": "nginx"
+    }
+  }
+}

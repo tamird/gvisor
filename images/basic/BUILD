@@ -7,6 +7,17 @@ package(
     licenses = ["notice"],
 )
 
+# The source-context archive also serves images in this package that still use
+# Dockerfiles. The tmpfile image supplies its own complete Make context.
+filegroup(
+    name = "sources",
+    srcs = glob(
+        ["**"],
+        exclude = ["tmpfile/**"],
+    ),
+    visibility = ["//images:__pkg__"],
+)
+
 image_manifest(
     name = "alpine",
     base = "@test_alpine",

@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -16,7 +16,10 @@ go_test(
     name = "docprocessor_test",
     srcs = ["docprocessor_test.go"],
     data = ["//:release"],
-    embed = [":docprocessor"],
+    # The runtime creates namespaces and configures cgroups.
+    exec_properties = namespace_test_exec_properties(),
+    library = ":docprocessor",
     tags = ["nogotsan"],
+    visibility = ["//test/rbe:__pkg__"],
     deps = ["//pkg/test/testutil"],
 )

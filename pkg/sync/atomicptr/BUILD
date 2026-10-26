@@ -29,6 +29,7 @@ go_template_instance(
 go_library(
     name = "atomicptr",
     srcs = ["atomicptr_int_unsafe.go"],
+    visibility = ["//tools/codeql:__pkg__"],
 )
 
 go_test(

@@ -1,9 +1,32 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
-load("//tools:defs.bzl", "go_binary", "pkg_tar")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+bzl_library(
+    name = "layers_bzl",
+    srcs = ["layers.bzl"],
+    visibility = ["//images:__subpackages__"],
+    deps = [
+        "//tools:defs_bzl",
+        "//tools/bazeldefs:platforms_bzl",
+    ],
+)
+
+bzl_library(
+    name = "oci_bzl",
+    srcs = ["oci.bzl"],
+    visibility = ["//images:__subpackages__"],
+    deps = [
+        "//test/docker:source_image_contracts_bzl",
+        "//tools:arch_bzl",
+        "//tools:defs_bzl",
+        "@rules_oci//oci:defs",
+        "@rules_pkg//pkg:bzl_srcs",
+    ],
 )
 
 # Include the complete contexts, including files owned by nested packages.
@@ -11,24 +34,41 @@ package(
 filegroup(
     name = "sources",
     srcs = glob(["**"]) + [
+        "//images/basic:sources",
         "//images/gpu/ollama/client:sources",
+        "//images/gpu/triton:sources",
+        "//images/jekyll:sources",
     ],
 )
 
-# Build the CUDA sample runners with the repository Go toolchain.
+# The CUDA image contexts and Go analysis use these same declared programs.
 # Their former Docker build used CGO_ENABLED=0; preserve that link contract.
 go_binary(
     name = "cuda_run_sample",
     srcs = ["gpu/cuda-tests/run_sample.go"],  # keep
+    importpath = "gvisor.dev/gvisor/images/gpu/cuda-tests/run_sample",
     pure = True,
     static = True,
+    visibility = ["//tools/codeql:__pkg__"],
 )
 
 go_binary(
     name = "cuda_12_8_run_sample",
     srcs = ["gpu/cuda-tests-12-8/run_sample.go"],  # keep
+    importpath = "gvisor.dev/gvisor/images/gpu/cuda-tests-12-8/run_sample",
     pure = True,
     static = True,
+    visibility = ["//tools/codeql:__pkg__"],
+)
+
+go_test(
+    name = "cuda_run_sample_test",
+    size = "small",
+    srcs = [
+        "gpu/cuda-tests/run_sample.go",
+        "gpu/cuda-tests/run_sample_test.go",
+    ],
+    pure = True,
 )
 
 pkg_files(
@@ -68,9 +108,32 @@ pkg_tar(
         "fuse/gcs/run_test.sh": "0755",
         "gpu/cuda-tests-12-8/run_smoke.sh": "0755",
         "gpu/cuda-tests/run_smoke.sh": "0755",
-        "gpu/ollama/bench/pull.sh": "0755",
         "jekyll/build.sh": "0755",
     },
     package_dir = "images",
     strip_prefix = ".",
+    visibility = ["//test/docker:__pkg__"],
+)
+
+# Native archives belong to their image cohort; individual Dockerfile builds
+# continue to use source_contexts without depending on either OCI image.
+pkg_tar(
+    name = "cpu_source_contexts",
+    visibility = ["//test/docker:__pkg__"],
+    deps = [
+        ":source_contexts",
+        "//images/basic:alpine_context",
+        "//images/basic:busybox_context",
+        "//images/basic:tmpfile_context",
+        "//images/benchmarks/profile-helper:make_context",
+    ],
+)
+
+pkg_tar(
+    name = "gpu_source_contexts",
+    visibility = ["//test/docker:__pkg__"],
+    deps = [
+        ":source_contexts",
+        "//images/gpu/ollama/client:make_context",
+    ],
 )

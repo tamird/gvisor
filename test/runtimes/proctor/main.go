@@ -124,7 +124,10 @@ func Run(customRunners map[string]lib.TestRunner) error {
 	}
 
 	// Run tests.
-	cmds := tr.TestCmds(tests)
+	cmds, err := tr.TestCmds(tests)
+	if err != nil {
+		return fmt.Errorf("failed to prepare test commands: %w", err)
+	}
 	done := make(chan struct{})
 	defer close(done)
 	go func() {

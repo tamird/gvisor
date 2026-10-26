@@ -39,6 +39,7 @@ go_test(
         "//pkg/test/testutil",
         "//pkg/waiter",
         "@com_github_google_go_cmp//cmp:go_default_library",
+        "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
     ],
 )
 
@@ -65,6 +66,7 @@ go_library(
     name = "e2e",
     testonly = 1,
     srcs = ["e2e.go"],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/tcpip",
         "//pkg/tcpip/checker",
@@ -130,6 +132,7 @@ go_test(
         "//pkg/tcpip/transport/tcp/testing/context",
         "//pkg/waiter",
         "@com_github_google_go_cmp//cmp:go_default_library",
+        "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
     ],
 )
 
@@ -142,6 +145,7 @@ go_test(
         "//pkg/buffer",
         "//pkg/refs",
         "//pkg/tcpip",
+        "//pkg/tcpip/faketime",
         "//pkg/tcpip/header",
         "//pkg/tcpip/seqnum",
         "//pkg/tcpip/transport/tcp",

@@ -33,6 +33,11 @@ const (
 	// CtxMemoryFileMap is a Context.Value key for mapping
 	// MemoryFileOpts.RestoreID to *MemoryFile. This is used for save/restore.
 	CtxMemoryFileMap
+
+	// CtxMappedStorageRestore is a Context.Value key for the concrete storage
+	// owners awaiting MemoryFile loading. Omit it only when restored buffers
+	// will be released without accessing their bytes.
+	CtxMappedStorageRestore
 )
 
 // MemoryFileFromContext returns the MemoryFile used by ctx, or nil if no such

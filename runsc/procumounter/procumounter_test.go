@@ -133,8 +133,24 @@ func TestUmounterIsStatic(t *testing.T) {
 }
 
 func TestUmounter(t *testing.T) {
-	path, err := filepath.Abs(umounterPath(t))
+	// A child in a new user namespace cannot use the parent's initial-namespace
+	// capabilities to traverse Bazel's cache. Execute a test-owned copy outside
+	// that cache, without changing the declared input or its ancestors.
+	dir, err := os.MkdirTemp("/tmp", "procumounter-test-")
 	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Errorf("removing test executable: %v", err)
+		}
+	})
+	data, err := os.ReadFile(umounterPath(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "gvisor-proc-umounter")
+	if err := os.WriteFile(path, data, 0700); err != nil {
 		t.Fatal(err)
 	}
 	for _, sync := range []bool{true, false} {

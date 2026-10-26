@@ -11,6 +11,7 @@ go_binary(
     srcs = ["main.go"],
     visibility = ["//test/runtimes:__pkg__"],
     deps = [
+        "//pkg/test/dockerutil",
         "//pkg/test/testutil",
         "//test/runtimes/runner/lib",
     ],

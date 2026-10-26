@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -115,7 +116,7 @@ func TestEnvVars(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 			cmd.Env = append(baseEnv, hostEnvVar+"="+hostEnvVal)
 
 			var stdout, stderr bytes.Buffer
@@ -153,10 +154,11 @@ func TestBind(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(workDir, "input"), []byte(contents), 0600); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(specutils.ExePath,
+	args := append(testutil.RuntimeTestFlags(),
 		"--root", newRunRootDir(t), "bwrap",
 		"--ro-bind", "/", "/", "--bind", workDir, "/mnt",
 		"--", "/bin/sh", "-ec", "cat /mnt/input; cp /mnt/input /mnt/output")
+	cmd := exec.Command(specutils.ExePath, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
@@ -178,6 +180,10 @@ func TestUserAndGroup(t *testing.T) {
 	if err := testutil.ConfigureExePath(); err != nil {
 		t.Fatalf("failed to configure exe path: %v", err)
 	}
+	// Use an existing destination outside bwrap's default mounts.
+	if info, err := os.Stat("/mnt"); err != nil || !info.IsDir() {
+		t.Fatalf("private bind destination /mnt is not a directory: %v", err)
+	}
 
 	stop := testutil.StartReaper()
 	defer stop()
@@ -185,66 +191,68 @@ func TestUserAndGroup(t *testing.T) {
 	tests := []struct {
 		name      string
 		bwrapArgs []string
-		wantUID   string
-		wantGID   string
+		wantUID   int
+		wantGID   int
 	}{
 		{
-			name: "DefaultUser",
-			bwrapArgs: []string{
-				"--unshare-user",
-				"--ro-bind", "/", "/",
-				"--",
-				"/usr/bin/id", "-u",
-			},
-			wantUID: fmt.Sprintf("%d", os.Getuid()),
+			name:    "DefaultUser",
+			wantUID: os.Getuid(),
+			wantGID: os.Getgid(),
 		},
 		{
-			name: "CustomUID",
-			bwrapArgs: []string{
-				"--unshare-user",
-				"--uid", "12345",
-				"--ro-bind", "/", "/",
-				"--",
-				"/usr/bin/id", "-u",
-			},
-			wantUID: "12345",
+			name:      "CustomUID",
+			bwrapArgs: []string{"--uid", "12345"},
+			wantUID:   12345,
+			wantGID:   os.Getgid(),
 		},
 		{
-			name: "CustomGID",
-			bwrapArgs: []string{
-				"--unshare-user",
-				"--gid", "54321",
-				"--ro-bind", "/", "/",
-				"--",
-				"/usr/bin/id", "-g",
-			},
-			wantGID: "54321",
+			name:      "CustomGID",
+			bwrapArgs: []string{"--gid", "54321"},
+			wantUID:   os.Getuid(),
+			wantGID:   54321,
 		},
 		{
-			name: "CustomUIDAndGID",
-			bwrapArgs: []string{
-				"--unshare-user",
-				"--uid", "12345",
-				"--gid", "54321",
-				"--ro-bind", "/", "/",
-				"--",
-				"/usr/bin/id",
-			},
-			wantUID: "uid=12345",
-			wantGID: "gid=54321",
+			name:      "CustomUIDAndGID",
+			bwrapArgs: []string{"--uid", "12345", "--gid", "54321"},
+			wantUID:   12345,
+			wantGID:   54321,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			runRootDir := newRunRootDir(t)
+			workDir := t.TempDir()
+			hostUID, err := getEnvID("SUDO_UID", uint32(os.Getuid()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			hostGID, err := getEnvID("SUDO_GID", uint32(os.Getgid()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			input := filepath.Join(workDir, "input")
+			const contents = "private caller data\n"
+			if err := os.WriteFile(input, []byte(contents), 0600); err != nil {
+				t.Fatal(err)
+			}
+			for _, path := range []string{workDir, input} {
+				if err := os.Chown(path, int(hostUID), int(hostGID)); err != nil {
+					t.Fatalf("chown %q: %v", path, err)
+				}
+			}
 
 			args := append([]string{
 				"--root", runRootDir,
 				"bwrap",
+				"--unshare-user",
+				"--ro-bind", "/", "/",
+				"--bind", workDir, "/mnt",
 			}, tc.bwrapArgs...)
+			args = append(args, "--", "/bin/sh", "-ec",
+				"id -u; id -g; cp /mnt/input /mnt/output; stat -c '%u:%g' /mnt/output")
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -254,12 +262,21 @@ func TestUserAndGroup(t *testing.T) {
 				t.Fatalf("runsc bwrap failed: %v\nStderr: %s", err, stderr.String())
 			}
 
-			output := strings.TrimSpace(stdout.String())
-			if tc.wantUID != "" && !strings.Contains(output, tc.wantUID) {
-				t.Errorf("output = %q, want UID %q", output, tc.wantUID)
+			want := fmt.Sprintf("%d\n%d\n%d:%d\n", tc.wantUID, tc.wantGID, tc.wantUID, tc.wantGID)
+			if got := stdout.String(); got != want {
+				t.Errorf("sandbox identity and file owner = %q, want %q", got, want)
 			}
-			if tc.wantGID != "" && !strings.Contains(output, tc.wantGID) {
-				t.Errorf("output = %q, want GID %q", output, tc.wantGID)
+			output := filepath.Join(workDir, "output")
+			if got, err := os.ReadFile(output); err != nil || string(got) != contents {
+				t.Errorf("reading sandbox output = %q, %v; want %q", got, err, contents)
+			}
+			info, err := os.Stat(output)
+			if err != nil {
+				t.Fatal(err)
+			}
+			stat := info.Sys().(*syscall.Stat_t)
+			if stat.Uid != uint32(hostUID) || stat.Gid != uint32(hostGID) {
+				t.Errorf("host file owner = %d:%d, want %d:%d", stat.Uid, stat.Gid, hostUID, hostGID)
 			}
 		})
 	}
@@ -304,7 +321,7 @@ func TestHostname(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -356,7 +373,7 @@ func TestProc(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -422,7 +439,7 @@ func TestCapabilities(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -474,7 +491,7 @@ func TestArgv0(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -579,7 +596,7 @@ func TestPerms(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout

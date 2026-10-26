@@ -26,7 +26,7 @@ import (
 var javaExclDirs = regexp.MustCompile(`(^(sun\/security)|(java\/util\/stream)|(java\/time)| )`)
 
 // Location of java tests.
-const javaTestDir = "/root/jdk/test/jdk"
+const javaTestDir = "/opt/jdk/test/jdk"
 
 // Discovery and execution must apply the same declared-timeout limit. Otherwise
 // jtreg lists tests that it will silently exclude from an execution batch.
@@ -41,6 +41,7 @@ var _ TestRunner = javaRunner{}
 func (javaRunner) ListTests() ([]string, error) {
 	args := []string{
 		"-dir:" + javaTestDir,
+		"-nativepath:/opt/jdk-native",
 		"-ignore:quiet",
 		"-a",
 		"-listtests",
@@ -66,17 +67,20 @@ func (javaRunner) ListTests() ([]string, error) {
 }
 
 // TestCmds implements TestRunner.TestCmds.
-func (javaRunner) TestCmds(tests []string) []*exec.Cmd {
+func (javaRunner) TestCmds(tests []string) ([]*exec.Cmd, error) {
 	args := append(
 		[]string{
-			"-agentvm",            // Execute each action using a pool of reusable JVMs.
-			"-dir:" + javaTestDir, // Base directory for test files and directories.
-			"-noreport",           // Do not generate /root/JTreport/html/report.html.
-			"-timeoutFactor:5",    // Extend the default timeout (2 min) of all tests by this factor.
-			"-verbose:all",        // Verbose output.
-			javaTimeLimit,         // Exclude tests with a declared timeout of zero or over 200s.
+			"-agentvm",                    // Execute each action using a pool of reusable JVMs.
+			"-dir:" + javaTestDir,         // Base directory for test files and directories.
+			"-nativepath:/opt/jdk-native", // Matching installed JDK native test libraries.
+			"-noreport",                   // Do not generate the HTML report.
+			"-timeoutFactor:5",            // Extend the default timeout (2 min) of all tests by this factor.
+			"-verbose:all",                // Verbose output.
+			javaTimeLimit,                 // Exclude tests with a declared timeout of zero or over 200s.
+			// Use the image's NSS package for the JDK's PKCS11 test fixture.
+			"-Djdk.test.lib.artifacts.nsslib-linux_x64=/usr/lib/x86_64-linux-gnu",
 		},
 		tests...,
 	)
-	return []*exec.Cmd{exec.Command("jtreg", args...)}
+	return []*exec.Cmd{exec.Command("jtreg", args...)}, nil
 }

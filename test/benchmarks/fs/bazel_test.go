@@ -55,7 +55,8 @@ func runBuildBenchmark(b *testing.B, image, workDir, target string) {
 
 // TestMain is the main method for package fs.
 func TestMain(m *testing.M) {
-	harness.Init()
-	harness.SetFixedBenchmarks()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(func() int {
+		harness.SetFixedBenchmarks()
+		return m.Run()
+	}))
 }

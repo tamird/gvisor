@@ -14,6 +14,7 @@ package_group(
 go_test(
     name = "benchmark_test",
     srcs = ["benchmark_test.go"],
+    benchmark_smoke = True,
     deps = [
         ":test",
         "//pkg/binary",
@@ -31,7 +32,10 @@ go_library(
     ],
     importpath = "gvisor.dev/gvisor/tools/go_marshal/test",
     marshal = True,
-    visibility = ["//tools/go_marshal/test:__subpackages__"],
+    visibility = [
+        "//tools/codeql:__pkg__",
+        "//tools/go_marshal/test:__subpackages__",
+    ],
     deps = [
         "//pkg/marshal/primitive",
         "//tools/go_marshal/test/external",

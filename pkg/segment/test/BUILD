@@ -56,6 +56,7 @@ go_library(
         "int_set.go",
         "set_functions.go",
     ],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/state",
     ],

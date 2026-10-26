@@ -90,10 +90,10 @@ bool PlatformSupported() {
          platform == Platform::kKVM;
 }
 
-// HostKernelSupported returns false for old host kernels that should not be
-// tested with PAC.
+// Systrap needs Linux 5.13's per-process PAC controls for save/restore.
+// Native tests need only the PAC support checked by HasFeatPAuth.
 bool HostKernelSupported(const KernelVersion& version) {
-  return IsRunningOnGvisor() &&
+  return !IsRunningOnGvisor() ||
          (version.major > 5 || (version.major == 5 && version.minor >= 13));
 }
 

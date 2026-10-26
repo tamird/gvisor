@@ -104,25 +104,23 @@ func (*Runner) ListTests() ([]string, error) {
 }
 
 // TestCmds implements TestRunner.TestCmds.
-func (r *Runner) TestCmds(tests []string) []*exec.Cmd {
+func (r *Runner) TestCmds(tests []string) ([]*exec.Cmd, error) {
 	if len(tests) == 0 {
-		return nil
+		return nil, nil
 	}
 	if err := r.setup(); err != nil {
-		slog.Error("failed to setup runner", "err", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("failed to set up runner: %w", err)
 	}
 
 	cmds := make([]*exec.Cmd, 0, len(tests))
 	for _, test := range tests {
 		cmd, err := r.testCmd(test)
 		if err != nil {
-			slog.Error("failed to prepare test", "test", test, "err", err)
-			os.Exit(1)
+			return nil, fmt.Errorf("failed to prepare test %q: %w", test, err)
 		}
 		cmds = append(cmds, cmd)
 	}
-	return cmds
+	return cmds, nil
 }
 
 // checkEnvironment verifies that required features for

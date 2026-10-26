@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/netip"
 	"os"
 	"runtime"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/rand"
 	"gvisor.dev/gvisor/pkg/refs"
@@ -47,6 +49,108 @@ import (
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+func getTCPInfo(t *testing.T, c *context.Context) tcpip.TCPInfoOption {
+	t.Helper()
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+	}
+	return info
+}
+
+// Pause drains queued TCP work while virtual time is held still.
+func sendAckAndWait(c *context.Context, seq seqnum.Value, receivedBytes int) {
+	c.SendAck(seq, receivedBytes)
+	c.Stack().Pause()
+	c.Stack().Resume()
+}
+
+func TestRepeatedRetransmissionTimeoutThreshold(t *testing.T) {
+	const mss = 32
+	for _, cc := range []struct {
+		name           string
+		firstThreshold uint32
+	}{{"reno", 5}, {"cubic", 7}} {
+		for _, tc := range []struct {
+			name  string
+			acked int
+		}{
+			{"same_segment", 0},
+			{"partial_ack", mss / 2},
+			{"next_segment", mss},
+		} {
+			t.Run(cc.name+"/"+tc.name, func(t *testing.T) {
+				clock := faketime.NewManualClock()
+				c := context.NewWithOpts(t, context.Options{
+					EnableV4: true,
+					MTU:      header.IPv4MinimumSize + header.TCPMinimumSize + mss,
+					Clock:    clock,
+				})
+				defer c.Cleanup()
+				algorithm := tcpip.CongestionControlOption(cc.name)
+				if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &algorithm); err != nil {
+					t.Fatalf("SetTransportProtocolOption(%s): %s", cc.name, err)
+				}
+				c.CreateConnected(789, 30000, -1)
+
+				data := make([]byte, tcp.InitialCwnd*mss)
+				for i := range data {
+					data[i] = byte(i)
+				}
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); n != int64(len(data)) || err != nil {
+					t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+				}
+				for off := 0; off < len(data); off += mss {
+					c.ReceiveAndCheckPacket(data, off, mss)
+				}
+				if got, want := getTCPInfo(t, c).SndCwnd, uint32(tcp.InitialCwnd); got != want {
+					t.Fatalf("initial cwnd = %d, want %d", got, want)
+				}
+				expire := func(off, length int) uint32 {
+					t.Helper()
+					before := c.Stack().Stats().TCP.Timeouts.Value()
+					old := getTCPInfo(t, c)
+					clock.Advance(old.RTO)
+					c.ReceiveAndCheckPacket(data, off, length)
+					if got, want := c.Stack().Stats().TCP.Timeouts.Value(), before+1; got != want {
+						t.Fatalf("timeouts = %d, want %d", got, want)
+					}
+					i := getTCPInfo(t, c)
+					if got, want := i.SndCwnd, uint32(1); got != want {
+						t.Fatalf("cwnd after timeout = %d, want %d", got, want)
+					}
+					if got, want := i.RTO, 2*old.RTO; got != want {
+						t.Fatalf("backoff on timeout = %v, want %v", got, want)
+					}
+					return i.SndSsthresh
+				}
+				if got, want := expire(0, mss), cc.firstThreshold; got != want {
+					t.Fatalf("threshold after first timeout = %d, want %d", got, want)
+				}
+				if tc.acked != 0 {
+					sendAckAndWait(c, 790, tc.acked)
+					// Discard transmissions driven by the advancing ACK. The
+					// next observation must come from the timer itself.
+					for pkt := c.GetPacketNonBlocking(); pkt != nil; pkt = c.GetPacketNonBlocking() {
+						pkt.Release()
+					}
+				}
+				// An ACK within the timer's first retransmission leaves a suffix
+				// of the same segment. Covering it completely exposes a new loss.
+				want := cc.firstThreshold
+				length := mss - tc.acked
+				if tc.acked == mss {
+					want = 2
+					length = mss
+				}
+				if got := expire(tc.acked, length); got != want {
+					t.Errorf("threshold on timeout of bytes [%d,%d) = %d, want %d", tc.acked, tc.acked+length, got, want)
+				}
+			})
+		}
+	}
+}
 
 func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
 	for _, recovery := range []string{"fast_retransmit", "retransmission_timeout"} {
@@ -74,20 +178,6 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	defer c.Cleanup()
 	e2e.EnableCUBIC(t, c)
 	c.CreateConnected(789, 30000, -1)
-	// Pause drains queued TCP work before returning. With virtual time held
-	// still, the next step observes all effects of the ACK without sleeping.
-	ackAndWait := func(receivedBytes int) {
-		c.SendAck(790, receivedBytes)
-		c.Stack().Pause()
-		c.Stack().Resume()
-	}
-	tcpInfo := func() tcpip.TCPInfoOption {
-		var info tcpip.TCPInfoOption
-		if err := c.EP.GetSockOpt(&info); err != nil {
-			t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
-		}
-		return info
-	}
 	// Keep data queued throughout warmup and every post-loss window, so an
 	// application-limited sender cannot explain a window that stops growing.
 	queuedData := make([]byte, 256<<10)
@@ -108,9 +198,9 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 			receivedBytes += segmentBytes
 		}
 		clock.Advance(rtt)
-		ackAndWait(receivedBytes)
+		sendAckAndWait(c, 790, receivedBytes)
 	}
-	beforeLoss := int(tcpInfo().SndCwnd)
+	beforeLoss := int(getTCPInfo(t, c).SndCwnd)
 	firstLostByte := receivedBytes
 	for range beforeLoss {
 		c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
@@ -120,8 +210,8 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	if recovery == "retransmission_timeout" {
 		// These packets were sent at the current virtual time. Withhold
 		// their ACKs until the actual retransmission timer expires.
-		clock.Advance(tcpInfo().RTO)
-		if got, want := tcpInfo().SndCwnd, uint32(1); got != want {
+		clock.Advance(getTCPInfo(t, c).RTO)
+		if got, want := getTCPInfo(t, c).SndCwnd, uint32(1); got != want {
 			t.Fatalf("cwnd after retransmission timeout = %d, want %d", got, want)
 		}
 		// After RTO the cubic epoch starts with K=0, so its initial
@@ -132,19 +222,19 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 		// Retain later packets at the peer, but report the gap left by
 		// the first packet to trigger fast retransmission.
 		for range 3 {
-			ackAndWait(firstLostByte)
+			sendAckAndWait(c, 790, firstLostByte)
 		}
 	}
 	c.ReceiveAndCheckPacket(queuedData, firstLostByte, segmentBytes)
-	ackAndWait(receivedBytes)
-	afterLoss := int(tcpInfo().SndCwnd)
+	sendAckAndWait(c, 790, receivedBytes)
+	afterLoss := int(getTCPInfo(t, c).SndCwnd)
 	if got, want := afterLoss, beforeLoss; got >= want {
 		t.Fatalf("loss did not reduce cwnd: before=%d after=%d", want, got)
 	}
 	// ACK a full window over one RTT, changing only ACK grouping. We check
 	// eventual growth, not an implementation-specific CUBIC window formula.
 	for range recoveryWindows {
-		window := int(tcpInfo().SndCwnd)
+		window := int(getTCPInfo(t, c).SndCwnd)
 		ackedBytes := receivedBytes
 		for range window {
 			c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
@@ -154,11 +244,11 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 			n := min(segmentsPerACK, remaining)
 			clock.Advance(rtt * time.Duration(n) / time.Duration(window))
 			ackedBytes += n * segmentBytes
-			ackAndWait(ackedBytes)
+			sendAckAndWait(c, 790, ackedBytes)
 			remaining -= n
 		}
 	}
-	if got, want := int(tcpInfo().SndCwnd), afterLoss; got <= want {
+	if got, want := int(getTCPInfo(t, c).SndCwnd), afterLoss; got <= want {
 		t.Fatalf("cwnd did not recover after %d windows of ACKs: before=%d after=%d", recoveryWindows, want, got)
 	}
 }
@@ -175,7 +265,7 @@ func (e *endpointTester) CheckReadError(t *testing.T, want tcpip.Error) {
 	if got != want {
 		t.Fatalf("ep.Read = %s, want %s", got, want)
 	}
-	if diff := cmp.Diff(tcpip.ReadResult{}, res); diff != "" {
+	if diff := cmp.Diff(tcpip.ReadResult{}, res, cmpopts.EquateComparable(netip.Addr{})); diff != "" {
 		t.Errorf("ep.Read: unexpected non-zero result (-want +got):\n%s", diff)
 	}
 }
@@ -192,7 +282,7 @@ func (e *endpointTester) CheckRead(t *testing.T) []byte {
 	if diff := cmp.Diff(tcpip.ReadResult{
 		Count: buf.Len(),
 		Total: buf.Len(),
-	}, res, checker.IgnoreCmpPath("ControlMessages")); diff != "" {
+	}, res, checker.IgnoreCmpPath("ControlMessages"), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
 		t.Errorf("ep.Read: unexpected result (-want +got):\n%s", diff)
 	}
 	return buf.Bytes()
@@ -353,12 +443,7 @@ func TestConnectICMPError(t *testing.T) {
 			runtime.Gosched()
 		}
 	}
-	id := stack.TransportEndpointID{
-		LocalAddress:  context.StackAddr,
-		LocalPort:     context.StackPort,
-		RemoteAddress: context.TestAddr,
-		RemotePort:    context.TestPort,
-	}
+	id := stack.TransportEndpointID{Local: netip.AddrPortFrom(context.StackAddr, context.StackPort), Remote: netip.AddrPortFrom(context.TestAddr, context.TestPort)}
 	waitFor("endpoint registration", func() bool {
 		return c.Stack().FindTransportEndpoint(ipv4.ProtocolNumber, tcp.ProtocolNumber, id, 1) != nil
 	})
@@ -1180,7 +1265,7 @@ func TestUserSuppliedMSSOnConnect(t *testing.T) {
 	ips := []struct {
 		name        string
 		createEP    func(*context.Context)
-		connectAddr tcpip.Address
+		connectAddr netip.Addr
 		checker     func(*testing.T, *context.Context, uint16, int)
 		maxMSS      uint16
 	}{
@@ -1901,7 +1986,7 @@ func TestListenerReadinessOnEvent(t *testing.T) {
 		}
 		protocolAddr := tcpip.ProtocolAddress{
 			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: tcpip.Address(context.StackAddr).WithPrefix(),
+			AddressWithPrefix: tcpip.FullPrefix(netip.Addr(context.StackAddr)),
 		}
 		if err := s.AddProtocolAddress(id, protocolAddr, stack.AddressProperties{}); err != nil {
 			t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", id, protocolAddr, err)
@@ -2760,21 +2845,15 @@ func TestSmallReceiveBufferReadiness(t *testing.T) {
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x7f\x00\x00\x01")),
-			PrefixLen: 32,
-		},
+		Protocol:          ipv4.ProtocolNumber,
+		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), 32),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}) failed: %s", nicID, protocolAddr, err)
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x7f\x00\x00\x00")), tcpip.MaskFrom("\xff\x00\x00\x00"))
-		if err != nil {
-			t.Fatalf("tcpip.NewSubnet failed: %s", err)
-		}
+		subnet := header.IPv4LoopbackSubnet
 		s.SetRouteTable([]tcpip.Route{
 			{
 				Destination: subnet,
@@ -4217,7 +4296,7 @@ func TestDefaultTTL(t *testing.T) {
 	for _, test := range []struct {
 		name     string
 		protoNum tcpip.NetworkProtocolNumber
-		addr     tcpip.Address
+		addr     netip.Addr
 	}{
 		{"ipv4", ipv4.ProtocolNumber, context.TestAddr},
 		{"ipv6", ipv6.ProtocolNumber, context.TestV6Addr},
@@ -4279,7 +4358,7 @@ func TestSetTTL(t *testing.T) {
 	for _, test := range []struct {
 		name          string
 		protoNum      tcpip.NetworkProtocolNumber
-		addr          tcpip.Address
+		addr          netip.Addr
 		relevantOpt   tcpip.SockOptInt
 		irrelevantOpt tcpip.SockOptInt
 	}{
@@ -6078,7 +6157,7 @@ func makeStack() (*stack.Stack, tcpip.Error) {
 
 	for _, ct := range []struct {
 		number         tcpip.NetworkProtocolNumber
-		addrWithPrefix tcpip.AddressWithPrefix
+		addrWithPrefix netip.Prefix
 	}{
 		{ipv4.ProtocolNumber, context.StackAddrWithPrefix},
 		{ipv6.ProtocolNumber, context.StackV6AddrWithPrefix},
@@ -6181,16 +6260,16 @@ func TestConnectAvoidsBoundPorts(t *testing.T) {
 		panic("unreachable")
 	}
 
-	address := func(t *testing.T, addressType string, isAny bool) tcpip.Address {
+	address := func(t *testing.T, addressType string, isAny bool) netip.Addr {
 		switch addressType {
 		case "v4":
 			if isAny {
-				return tcpip.Address{}
+				return netip.Addr{}
 			}
 			return context.StackAddr
 		case "v6":
 			if isAny {
-				return tcpip.Address{}
+				return netip.Addr{}
 			}
 			return context.StackV6Addr
 		case "mapped":
@@ -6390,16 +6469,16 @@ func TestTCPEndpointProbe(t *testing.T) {
 		//
 		// We don't do an extensive validation of every field but a
 		// basic sanity test.
-		if got, want := state.ID.LocalAddress, tcpip.Address(context.StackAddr); got != want {
+		if got, want := state.ID.Local.Addr(), netip.Addr(context.StackAddr); got != want {
 			t.Fatalf("got LocalAddress: %q, want: %q", got, want)
 		}
-		if got, want := state.ID.LocalPort, port; got != want {
+		if got, want := state.ID.Local.Port(), port; got != want {
 			t.Fatalf("got LocalPort: %d, want: %d", got, want)
 		}
-		if got, want := state.ID.RemoteAddress, tcpip.Address(context.TestAddr); got != want {
+		if got, want := state.ID.Remote.Addr(), netip.Addr(context.TestAddr); got != want {
 			t.Fatalf("got RemoteAddress: %q, want: %q", got, want)
 		}
-		if got, want := state.ID.RemotePort, uint16(context.TestPort); got != want {
+		if got, want := state.ID.Remote.Port(), uint16(context.TestPort); got != want {
 			t.Fatalf("got RemotePort: %d, want: %d", got, want)
 		}
 
@@ -6945,13 +7024,13 @@ func TestListenBacklogFull(t *testing.T) {
 func TestListenNoAcceptNonUnicastV4(t *testing.T) {
 	multicastAddr := tcpiptestutil.MustParse4("224.0.1.2")
 	otherMulticastAddr := tcpiptestutil.MustParse4("224.0.1.3")
-	subnet := context.StackAddrWithPrefix.Subnet()
-	subnetBroadcastAddr := subnet.Broadcast()
+	subnet := context.StackAddrWithPrefix.Masked()
+	subnetBroadcastAddr := header.IPv4SubnetBroadcast(subnet)
 
 	tests := []struct {
 		name    string
-		srcAddr tcpip.Address
-		dstAddr tcpip.Address
+		srcAddr netip.Addr
+		dstAddr netip.Addr
 	}{
 		{
 			name:    "SourceUnspecified",
@@ -7062,8 +7141,8 @@ func TestListenNoAcceptNonUnicastV6(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		srcAddr tcpip.Address
-		dstAddr tcpip.Address
+		srcAddr netip.Addr
+		dstAddr netip.Addr
 	}{
 		{
 			"SourceUnspecified",

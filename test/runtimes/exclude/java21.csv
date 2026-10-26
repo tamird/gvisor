@@ -73,6 +73,7 @@ jdk/internal/vm/Continuation/Basic.java#id0,,Broken test
 jdk/jfr/api/consumer/streaming/TestJVMExit.java,,Only fails on Buildkite
 jdk/jfr/event/gc/detailed/TestZUncommitEvent.java#ZGenerational,,
 jdk/jfr/event/gc/detailed/TestZUncommitEvent.java#ZSinglegen,,
+jdk/jfr/event/oldobject/TestShenandoah.java,https://bugs.openjdk.org/browse/JDK-8342951,JFR leak profiling is unsupported with Shenandoah; excluded by upstream ProblemList
 jdk/jfr/event/runtime/TestNetworkUtilizationEvent.java,,
 jdk/jfr/event/runtime/TestResidentSetSizeEvent.java,,
 jdk/jfr/jvm/TestWaste.java,,Broken test

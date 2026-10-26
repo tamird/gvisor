@@ -274,10 +274,11 @@ TEST(TimerTest, RlimitCpuInheritedAcrossFork) {
       for (;;) {
         x++;
         benchmark::DoNotOptimize(x);  // Don't optimize this loop away.
-        // Periodically block to ensure that child_pid gets a chance to run and
-        // block in waitid().
+        // gVisor needs periodic blocking so child_pid can run and reach
+        // waitid(). Native Linux does not need this workaround; sleeping
+        // instead of burning CPU can greatly delay reaching the CPU limit.
         // TODO: b/315388929 - remove this
-        if (x % 16384 == 0) {
+        if (x % 16384 == 0 && IsRunningOnGvisor()) {
           TEST_PCHECK(RetryEINTR(ppoll)(&pfd, 1, &timeout, nullptr) == 0);
         }
       }
@@ -584,18 +585,18 @@ TEST(IntervalTimerTest, AlreadyPendingSignal) {
 }
 
 TEST(IntervalTimerTest, NegativeInterval) {
-  timer_t timerid;
-  EXPECT_THAT(timer_create(CLOCK_PROCESS_CPUTIME_ID, nullptr, &timerid),
-              SyscallSucceeds());
+  struct sigevent sev = {};
+  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_signo = SIGALRM;
+  auto timer =
+      ASSERT_NO_ERRNO_AND_VALUE(TimerCreate(CLOCK_PROCESS_CPUTIME_ID, sev));
   struct itimerspec new_value = {};
   new_value.it_interval.tv_sec = 0;
   new_value.it_interval.tv_nsec = -2;  // Negative.
   new_value.it_value.tv_sec = 0;
   new_value.it_value.tv_nsec = 1000000;
   // Make sure this fails with EINVAL.
-  EXPECT_THAT(timer_settime(timerid, 0, &new_value, nullptr),
-              SyscallFailsWithErrno(EINVAL));
-  timer_delete(timerid);
+  EXPECT_THAT(timer.Set(0, new_value), PosixErrorIs(EINVAL, _));
 }
 
 }  // namespace

@@ -1,0 +1,114 @@
+<testsuites>
+	<testsuite errors="0" failures="0" skipped="0" tests="3" time="1.021" name="gvisor.dev/gvisor/runsc/container.TestCheckpointRestoreHostname" timestamp="2026-10-16T17:42:21.317Z">
+		<testcase classname="container" name="TestCheckpointRestoreHostname" time="1.020"></testcase>
+		<testcase classname="container" name="TestCheckpointRestoreHostname/changed_false" time="0.710"></testcase>
+		<testcase classname="container" name="TestCheckpointRestoreHostname/changed_true" time="0.310"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="8.620" name="gvisor.dev/gvisor/runsc/container.TestContainerMetricsAfterRestore" timestamp="2026-10-16T17:42:33.213Z">
+		<testcase classname="container" name="TestContainerMetricsAfterRestore" time="8.620"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="0.680" name="gvisor.dev/gvisor/runsc/container.TestContainerMetricsIterationID" timestamp="2026-10-16T17:42:32.536Z">
+		<testcase classname="container" name="TestContainerMetricsIterationID" time="0.680"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="0.060" name="gvisor.dev/gvisor/runsc/container.TestDestroyNotStarted" timestamp="2026-10-16T17:42:28.281Z">
+		<testcase classname="container" name="TestDestroyNotStarted" time="0.060"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="2" tests="3" time="0.002" name="gvisor.dev/gvisor/runsc/container.TestIDMappedMountFile" timestamp="2026-10-16T17:42:28.279Z">
+		<testcase classname="container" name="TestIDMappedMountFile" time="0.000"></testcase>
+		<testcase classname="container" name="TestIDMappedMountFile/systrap" time="0.000">
+			<skipped message="Skipped" type="">=== RUN   TestIDMappedMountFile/systrap&#xA;    container_test.go:3042: Skipping as kernel &gt;=6.3 is required for id mapped mount tests&#xA;D1016 17:42:28.280228     336 container.go:214] Create container, cid: test-container-HK2L4LZEWVNXMXXRZKAOE2QHGAY6WVA3, rootDir: &#34;/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/containers2417846044&#34;&#xA;D1016 17:42:28.280276     336 container.go:386] Creating new sandbox for container, cid: test-container-HK2L4LZEWVNXMXXRZKAOE2QHGAY6WVA3&#xA;W1016 17:42:28.280410     336 container.go:1870] gVisor startup is slower if `--root` (or `--shared-root`) is not reused across multiple sandboxes. You can speed up sandbox startup by setting `--shared-root` to a shared system-wide directory so that the null gofer network namespace is reused across sandboxes.&#xA;I1016 17:42:28.280423     336 container.go:1800] Starting gofer with command: [runsc-gofer --debug=true --debug-log=/workspace/bazel-out/k8-fastbuild-ST-cb3b6d32351b/testlogs/runsc/container/container_test_systrap_cgroup_v2_amd64/shard_8_of_8/test.outputs/runsc.log.TestDestroyNotStarted.%TIMESTAMP%.%COMMAND%.txt --clock-source=calibrated --network=none --strace=true --TESTONLY-unsafe-nonroot=true --root=/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/containers2417846044 --log-packets=true --watchdog-action=panic --debug-log-fd=3 gofer --bundle /workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/bundle3403215123 --gofer-mount-confs=lisafs:none,lisafs:none --spec-fd=4 --mounts-fd=5 --rpc-fd=6 --io-fds=7 --io-fds=8 --sync-chroot-fd=9 test-container-HK2L4LZEWVNXMXXRZKAOE2QHGAY6WVA3]&#xA;D1016 17:42:28.280437     336 donation.go:31] Donating FD 3: &#34;/workspace/bazel-out/k8-fastbuild-ST-cb3b6d32351b/testlogs/runsc/container/container_test_systrap_cgroup_v2_amd64/shard_8_of_8/test.outputs/runsc.log.TestDestroyNotStarted.20261016-174221.310719.gofer.txt&#34;&#xA;D1016 17:42:28.280443     336 donation.go:31] Donating FD 4: &#34;/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/bundle3403215123/config.json&#34;&#xA;D1016 17:42:28.280445     336 donation.go:31] Donating FD 5: &#34;|1&#34;&#xA;D1016 17:42:28.280447     336 donation.go:31] Donating FD 6: &#34;gofer-rpc&#34;&#xA;D1016 17:42:28.280449     336 donation.go:31] Donating FD 7: &#34;gofer IO FD&#34;&#xA;D1016 17:42:28.280450     336 donation.go:31] Donating FD 8: &#34;gofer IO FD&#34;&#xA;D1016 17:42:28.280452     336 donation.go:31] Donating FD 9: &#34;chroot sync gofer FD&#34;&#xA;D1016 17:42:28.280454     336 container.go:1805] Starting gofer: /workspace/bazel-out/k8-fastbuild-ST-cb3b6d32351b/bin/runsc/container/container_test_systrap_cgroup_v2_amd64.exe.runfiles/_main/release/runsc [runsc-gofer --debug=true --debug-log=/workspace/bazel-out/k8-fastbuild-ST-cb3b6d32351b/testlogs/runsc/container/container_test_systrap_cgroup_v2_amd64/shard_8_of_8/test.outputs/runsc.log.TestDestroyNotStarted.%TIMESTAMP%.%COMMAND%.txt --clock-source=calibrated --network=none --strace=true --TESTONLY-unsafe-nonroot=true --root=/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/containers2417846044 --log-packets=true --watchdog-action=panic --debug-log-fd=3 gofer --bundle /workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/bundle3403215123 --gofer-mount-confs=lisafs:none,lisafs:none --spec-fd=4 --mounts-fd=5 --rpc-fd=6 --io-fds=7 --io-fds=8 --sync-chroot-fd=9 test-container-HK2L4LZEWVNXMXXRZKAOE2QHGAY6WVA3]&#xA;--- SKIP: TestIDMappedMountFile/systrap (0.00s)&#xA;</skipped>
+		</testcase>
+		<testcase classname="container" name="TestIDMappedMountFile/systrap-overlay" time="0.000">
+			<skipped message="Skipped" type="">=== RUN   TestIDMappedMountFile/systrap-overlay&#xA;    container_test.go:3042: Skipping as kernel &gt;=6.3 is required for id mapped mount tests&#xA;--- SKIP: TestIDMappedMountFile/systrap-overlay (0.00s)&#xA;</skipped>
+		</testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="3" time="2.270" name="gvisor.dev/gvisor/runsc/container.TestLifecycle" timestamp="2026-10-16T17:42:23.707Z">
+		<testcase classname="container" name="TestLifecycle" time="2.270"></testcase>
+		<testcase classname="container" name="TestLifecycle/systrap" time="1.100"></testcase>
+		<testcase classname="container" name="TestLifecycle/systrap-overlay" time="1.170"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="1" skipped="0" tests="1" time="1.790" name="gvisor.dev/gvisor/runsc/container.TestMountEROFS" timestamp="2026-10-16T17:42:30.749Z">
+		<testcase classname="container" name="TestMountEROFS" time="1.790">
+			<failure message="Failed" type="">=== RUN   TestMountEROFS&#xA;�    container_test.go:5060: setupEROFS failed: error creating EROFS image: exec: [/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/erofs-tools-3456425639/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 --inhibit-cache --library-path /workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/erofs-tools-3456425639/lib/x86_64-linux-gnu:/workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/erofs-tools-3456425639/usr/lib/x86_64-linux-gnu /workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/erofs-tools-3456425639/usr/bin/mkfs.erofs --chunksize=8192 -E force-inode-blockmap,force-inode-compact /workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/erofs_mount_test_3370724420/chunk-blockmap /workspace/_tmp/04f54ed120f6d8f707a27cc81383b53b/erofs_mount_test_3370724420/source], err: exit status 1, out: mkfs.erofs 1.4&#xA;        &#x9;c_version:           [     1.4]&#xA;        &#x9;c_dbg_lvl:           [       2]&#xA;        &#x9;c_dry_run:           [       0]&#xA;        &lt;W&gt; erofs: EXPERIMENTAL chunked file feature in use. Use at your own risk!&#xA;        &lt;E&gt; erofs: &#x9;Could not format the device : [Error 5] Input/output error&#xA;        �&#xA;--- FAIL: TestMountEROFS (1.79s)&#xA;</failure>
+		</testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="3" time="0.472" name="gvisor.dev/gvisor/runsc/container.TestMountNewDir" timestamp="2026-10-16T17:42:27.807Z">
+		<testcase classname="container" name="TestMountNewDir" time="0.470"></testcase>
+		<testcase classname="container" name="TestMountNewDir/systrap" time="0.210"></testcase>
+		<testcase classname="container" name="TestMountNewDir/systrap-overlay" time="0.260"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="3" time="0.250" name="gvisor.dev/gvisor/runsc/container.TestMultiContainerCgroups" timestamp="2026-10-16T17:42:44.657Z">
+		<testcase classname="container" name="TestMultiContainerCgroups" time="0.250"></testcase>
+		<testcase classname="container" name="TestMultiContainerCgroups/systrap" time="0.120"></testcase>
+		<testcase classname="container" name="TestMultiContainerCgroups/systrap-overlay" time="0.130"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="0.522" name="gvisor.dev/gvisor/runsc/container.TestMultiContainerCheckpointRestoreJoinPIDNamespace" timestamp="2026-10-16T17:42:41.829Z">
+		<testcase classname="container" name="TestMultiContainerCheckpointRestoreJoinPIDNamespace" time="0.520"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="0.070" name="gvisor.dev/gvisor/runsc/container.TestMultiContainerDestroyNotStarted" timestamp="2026-10-16T17:42:42.830Z">
+		<testcase classname="container" name="TestMultiContainerDestroyNotStarted" time="0.070"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="4" time="0.973" name="gvisor.dev/gvisor/runsc/container.TestMultiContainerEvent" timestamp="2026-10-16T17:42:43.684Z">
+		<testcase classname="container" name="TestMultiContainerEvent" time="0.970"></testcase>
+		<testcase classname="container" name="TestMultiContainerEvent/disableCgroups" time="0.320"></testcase>
+		<testcase classname="container" name="TestMultiContainerEvent/enableCgroups" time="0.230"></testcase>
+		<testcase classname="container" name="TestMultiContainerEvent/enableCgroupsV2" time="0.420"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="21" time="0.784" name="gvisor.dev/gvisor/runsc/container.TestMultiContainerSharedMountUnsupportedOptions" timestamp="2026-10-16T17:42:42.900Z">
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions" time="0.780"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind" time="0.380"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/all:memory" time="0.130"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/all:memory/directory_is_mounted_in_container0" time="0.010"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/all:memory/directory_is_mounted_in_container1" time="0.010"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/none" time="0.120"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/none/directory_is_mounted_in_container0" time="0.020"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/none/directory_is_mounted_in_container1" time="0.010"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/root:self" time="0.130"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/root:self/directory_is_mounted_in_container0" time="0.020"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/bind/root:self/directory_is_mounted_in_container1" time="0.010"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs" time="0.400"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/all:memory" time="0.130"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/all:memory/directory_is_mounted_in_container0" time="0.020"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/all:memory/directory_is_mounted_in_container1" time="0.010"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/none" time="0.130"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/none/directory_is_mounted_in_container0" time="0.020"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/none/directory_is_mounted_in_container1" time="0.010"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/root:self" time="0.140"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/root:self/directory_is_mounted_in_container0" time="0.020"></testcase>
+		<testcase classname="container" name="TestMultiContainerSharedMountUnsupportedOptions/tmpfs/root:self/directory_is_mounted_in_container1" time="0.010"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="2" time="0.193" name="gvisor.dev/gvisor/runsc/container.TestMultiPIDNSRoot" timestamp="2026-10-16T17:42:42.637Z">
+		<testcase classname="container" name="TestMultiPIDNSRoot" time="0.190"></testcase>
+		<testcase classname="container" name="TestMultiPIDNSRoot/systrap" time="0.190"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="0.290" name="gvisor.dev/gvisor/runsc/container.TestNoRootContainerPIDNS" timestamp="2026-10-16T17:42:42.351Z">
+		<testcase classname="container" name="TestNoRootContainerPIDNS" time="0.290"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="1.393" name="gvisor.dev/gvisor/runsc/container.TestProfile" timestamp="2026-10-16T17:42:29.356Z">
+		<testcase classname="container" name="TestProfile" time="1.390"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="5" time="1.835" name="gvisor.dev/gvisor/runsc/container.TestSignalUnkillablePolicyForcedSignals" timestamp="2026-10-16T17:42:25.972Z">
+		<testcase classname="container" name="TestSignalUnkillablePolicyForcedSignals" time="1.830"></testcase>
+		<testcase classname="container" name="TestSignalUnkillablePolicyForcedSignals/systrap" time="1.830"></testcase>
+		<testcase classname="container" name="TestSignalUnkillablePolicyForcedSignals/systrap/HostForcedHandledSignalDelivered" time="0.260"></testcase>
+		<testcase classname="container" name="TestSignalUnkillablePolicyForcedSignals/systrap/HostForcedSIGKILLTerminatesInit" time="1.370"></testcase>
+		<testcase classname="container" name="TestSignalUnkillablePolicyForcedSignals/systrap/HostForcedUnhandledSIGTERMDiscarded" time="0.200"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="0.001" name="gvisor.dev/gvisor/runsc/container.TestSpecValidationIgnore" timestamp="2026-10-16T17:42:32.535Z">
+		<testcase classname="container" name="TestSpecValidationIgnore" time="0.000"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="4" time="1.370" name="gvisor.dev/gvisor/runsc/container.TestSplitFSCheckpointRestore" timestamp="2026-10-16T17:42:22.338Z">
+		<testcase classname="container" name="TestSplitFSCheckpointRestore" time="1.370"></testcase>
+		<testcase classname="container" name="TestSplitFSCheckpointRestore/DefaultFilePrefix" time="0.360"></testcase>
+		<testcase classname="container" name="TestSplitFSCheckpointRestore/DirectoryPrefix" time="0.510"></testcase>
+		<testcase classname="container" name="TestSplitFSCheckpointRestore/ExplicitFilePrefix" time="0.500"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="3" time="1.020" name="gvisor.dev/gvisor/runsc/container.TestTTYField" timestamp="2026-10-16T17:42:28.339Z">
+		<testcase classname="container" name="TestTTYField" time="1.020"></testcase>
+		<testcase classname="container" name="TestTTYField/no_tty" time="0.650"></testcase>
+		<testcase classname="container" name="TestTTYField/tty_used" time="0.370"></testcase>
+	</testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="1" time="1.092" name="gvisor.dev/gvisor/runsc/container.TestTraceLifecycle" timestamp="2026-10-16T17:42:44.904Z">
+		<testcase classname="container" name="TestTraceLifecycle" time="1.090"></testcase>
+	</testsuite>
+</testsuites>

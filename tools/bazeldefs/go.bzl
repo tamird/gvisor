@@ -3,21 +3,58 @@
 load("@bazel_gazelle//:def.bzl", _gazelle = "gazelle")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "cgroup_v2_variant")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
+load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test", "go_cgroup_v1_test", "static_go_amd64_test", "static_go_arm64_test", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants")
 
 gazelle = _gazelle
 
 go_path = _go_path
 go_reset_target = _go_reset_target
-go_cov = native.genrule
 cov_available = True
+
+# Runtime data binaries inherit their parent's musl platform, but rules_go
+# resets the parent's static mode across data edges. Give these binaries their
+# own static attribute so that build tools can still reset to their usual mode.
+_DEFAULT_STATIC = select({
+    Label("@llvm//constraints/libc:musl"): "on",
+    "//conditions:default": "auto",
+})
+
+def _codeql_source(name, testonly, srcs = None, excluded_modes = None):
+    tags = ["manual", "codeql-go-owner:" + str(Label("//%s:%s" % (native.package_name(), name)))]
+    if excluded_modes:
+        # Instrumented/race compilations are not the default source analysis.
+        # Retain their original inputs for parity without analyzing that graph.
+        if not srcs:
+            fail("Configured Go analysis disposition requires original sources: " + name)
+        native.filegroup(
+            name = name + "_codeql",
+            srcs = srcs,
+            testonly = testonly,
+            tags = tags + ["codeql-go-excluded:" + mode for mode in excluded_modes],
+            visibility = ["//tools/codeql:__pkg__"],
+        )
+        return
+
+    # An alias in the same package preserves the owner's visibility (including
+    # package defaults) and configuration. It adds no compilation or runfiles.
+    native.alias(
+        name = name + "_codeql",
+        actual = ":" + name,
+        testonly = testonly,
+        tags = tags,
+        visibility = ["//tools/codeql:__pkg__"],
+    )
 
 def _go_proto_or_grpc_library(go_library_func, name, **kwargs):
     if "importpath" in kwargs:
         # If importpath is explicit, pass straight through.
         go_library_func(name = name, **kwargs)
+        _codeql_source(name, kwargs.get("testonly"))
         return
     deps = []
     com_google_protobuf = "@com_google_protobuf//"
@@ -44,6 +81,7 @@ def _go_proto_or_grpc_library(go_library_func, name, **kwargs):
         deps = deps,
         **kwargs
     )
+    _codeql_source(name + "_go_proto", kwargs.get("testonly"))
 
 def go_proto_library(name, **kwargs):
     _go_proto_or_grpc_library(_go_proto_library, name, **kwargs)
@@ -61,12 +99,31 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         x_defs: additional definitions.
         **kwargs: rest of the arguments are passed to _go_binary.
     """
+    _go_binary_with_rule(
+        _static_go_binary if static else _go_binary,
+        name = name,
+        static = static,
+        pure = pure,
+        x_defs = x_defs,
+        **kwargs
+    )
+
+def go_cov(name, static = False, **kwargs):
+    """Build a coverage binary with the same options as go_binary."""
+    _go_binary_with_rule(
+        _static_go_cov if static else _go_cov,
+        name = name,
+        static = static,
+        coverage = True,
+        **kwargs
+    )
+
+def _go_binary_with_rule(binary_rule, name, static = False, pure = False, x_defs = None, coverage = False, **kwargs):
     if "noasan" in kwargs:
         # no-op option, will need to do transitions when sanitizer configs are defined.
         kwargs.pop("noasan")
 
-    if static:
-        kwargs["static"] = "on"
+    kwargs["static"] = "on" if static else _DEFAULT_STATIC
     if pure:
         kwargs["pure"] = "on"
     gc_goopts = select({
@@ -82,16 +139,36 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    _go_binary(
+    binary_rule(
         name = name,
         x_defs = x_defs,
         gc_goopts = gc_goopts,
         **kwargs
     )
+    excluded_modes = ["coverage"] if coverage else []
+    race = kwargs.get("race", "auto")
+    if race not in ["auto", "on", "off"]:
+        fail("Go analysis requires an explicit race-mode disposition: " + name)
+    if race == "on":
+        excluded_modes.append("race")
+    _codeql_source(name, kwargs.get("testonly"), kwargs.get("srcs"), excluded_modes)
 
-def go_importpath(target):
-    """Returns the importpath for the target."""
-    return target[GoLibrary].importpath
+def go_package(target):
+    """Returns configured Go sources and canonical import identities."""
+
+    # Binary rules expose the same source metadata through their archive.
+    info = target[GoInfo] if go_has_source(target) else target[GoArchive].data
+    return struct(
+        srcs = list(info.srcs),
+        archive = target[GoArchive].data.file,
+        importpath = info.importmap,
+        source_importpath = info.importpath,
+        importpath_aliases = list(info.importpath_aliases),
+    )
+
+def go_has_archive(target):
+    """Returns whether the target exposes a compiled Go archive."""
+    return GoArchive in target
 
 def go_source_files(target):
     """Returns the canonical source membership, including source-only embeds."""
@@ -100,10 +177,6 @@ def go_source_files(target):
 def go_has_source(target):
     """Returns whether the target exposes its canonical Go source view."""
     return GoInfo in target
-
-def go_binary_archive(target):
-    """Returns compiled Go archive metadata for a binary target."""
-    return target[GoArchive].data
 
 def go_binary_nogo_dep(name, noasan = False):  # buildifier: disable=unused-variable
     """Returns the target that nogo should analyze for the given go_binary.
@@ -129,11 +202,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         bazel_copts: cgo opts to pass to `go_library`.
         **kwargs: rest of the arguments are passed to `go_library`.
     """
-    importpath = "gvisor.dev/gvisor/" + native.package_name()
-
-    # Gazelle writes importpath explicitly; it must match the package.
-    if kwargs.pop("importpath", importpath) != importpath:
-        fail("%s: importpath must be %s" % (name, importpath))
+    importpath = kwargs.pop("importpath", "gvisor.dev/gvisor/" + native.package_name())
     _go_library(
         name = name,
         cgo = bazel_cgo,
@@ -143,8 +212,9 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         importpath = importpath,
         **kwargs
     )
+    _codeql_source(name, kwargs.get("testonly"))
 
-def go_test(name, static = False, pure = False, library = None, **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, **kwargs):
     """Build a go test.
 
     Args:
@@ -152,12 +222,16 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
         static: build a static binary.
         pure: should it be built without cgo.
         library: the library to embed.
+        architectures: Additional explicitly selected native architecture variants.
+        test_rule: Optional configured raw Go test rule, including any required
+            static platform transition. Used by the base and architecture variants.
+        cgroup_v2: Declare an explicit cgroup-v2 environment variant for combined
+            container qualification, preserving the ordinary target's environment.
         **kwargs: rest of the arguments to pass to _go_test.
     """
     if pure:
         kwargs["pure"] = "on"
-    if static:
-        kwargs["static"] = "on"
+    kwargs["static"] = "on" if static else _DEFAULT_STATIC
     if library:
         kwargs["embed"] = [library]
     base_gotags = kwargs.pop("gotags", [])
@@ -169,9 +243,34 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    _go_test(
+    base_rule = test_rule if test_rule != None else (_static_go_test if static else _go_test)
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    if cgroup_v2:
+        kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
+    base_rule(
         name = name,
         **kwargs
+    )
+    if cgroup_v2:
+        cgroup_attributes = cgroup_v2_variant(name, base_rule, kwargs)
+        if test_rule != None:
+            cgroup_attributes["test_rule"] = test_rule
+        test_architecture_variants(
+            name + "_cgroup_v2",
+            architectures,
+            {"amd64": static_go_amd64_test, "arm64": static_go_arm64_test} if static else {"amd64": go_amd64_test, "arm64": go_arm64_test},
+            dict(cgroup_attributes, compile_exec_compatible_with = kwargs.get("exec_compatible_with", [])),
+        )
+    cgroup_v1_variant(name, go_cgroup_v1_test, dict(kwargs, test_rule = base_rule))
+    if test_rule != None:
+        # The architecture frontend must configure the same raw rule as the
+        # original declaration, without copying this macro's Go/Nogo setup.
+        kwargs["test_rule"] = test_rule
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": static_go_amd64_test, "arm64": static_go_arm64_test} if static else {"amd64": go_amd64_test, "arm64": go_arm64_test},
+        dict(kwargs, compile_exec_compatible_with = kwargs.get("exec_compatible_with", [])),
     )
 
 def go_rule(rule, implementation, **kwargs):
@@ -340,6 +439,3 @@ def go_imports(name, src, out):
         src = src,
         out = out,
     )
-
-def nogo_extra_proto_deps(target):  # buildifier: disable=unused-variable
-    return []

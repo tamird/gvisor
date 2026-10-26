@@ -37,6 +37,7 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/log"
+	"gvisor.dev/gvisor/pkg/safecopy"
 	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/sentry/checkpoint"
 	"gvisor.dev/gvisor/pkg/sentry/hostmm"
@@ -167,8 +168,8 @@ type MemoryFile struct {
 	// ongoingCommitScan is true while UpdateUsage(nil) is in progress. Writing
 	// to it requires f.mu to be locked, but reading it does not.
 	//
-	// isSaving is true during f.SaveTo() to prevent concurrent calls to
-	// f.UpdateUsage() from marking pages as committed.
+	// inhibitUsageScans prevents scans from changing the commitment ranges
+	// SaveTo and LoadFrom use to locate page data in a checkpoint.
 	//
 	// All of these fields are protected by mu.
 	memAcct             memAcctSet
@@ -176,7 +177,7 @@ type MemoryFile struct {
 	commitSeq           uint64
 	nextCommitScan      time.Time
 	ongoingCommitScan   atomicbitops.Bool
-	isSaving            bool
+	inhibitUsageScans   bool
 
 	// evictable maps EvictableMemoryUsers to eviction state.
 	//
@@ -296,6 +297,10 @@ type memAcctInfo struct {
 	// committed; pages that are definitely not committed are represented by
 	// gaps in MemoryFile.memAcct.)
 	knownCommitted bool
+
+	// retainCommitment prevents checkpointing from discarding backing storage
+	// for live allocations, even when their contents are zero.
+	retainCommitment bool
 
 	// If true, represented pages are waste or releasing pages.
 	wasteOrReleasing bool
@@ -539,6 +544,12 @@ type AllocOpts struct {
 	// Mode controls the commitment status of returned pages.
 	Mode AllocationMode
 
+	// RetainCommitment keeps the allocation committed until its last reference
+	// is released, including across save and restore. This is for callers that
+	// cannot handle backing-storage faults after allocation. Mode must be
+	// AllocateAndCommit, and Decommit must not be called on these pages.
+	RetainCommitment bool
+
 	// If Huge is true, the allocation should be hugepage-backed if possible.
 	Huge bool
 
@@ -622,6 +633,9 @@ func (f *MemoryFile) Allocate(length uint64, opts AllocOpts) (memmap.FileRange, 
 	if length == 0 || !hostarch.IsPageAligned(length) || (opts.Huge && !hostarch.IsHugePageAligned(length)) {
 		panic(fmt.Sprintf("invalid allocation length: %#x", length))
 	}
+	if opts.RetainCommitment && opts.Mode != AllocateAndCommit {
+		panic("RetainCommitment requires AllocateAndCommit")
+	}
 
 	alloc := allocState{
 		length:     length,
@@ -701,17 +715,39 @@ func (f *MemoryFile) Allocate(length uint64, opts AllocOpts) (memmap.FileRange, 
 					}
 				}
 			}
-			if alloc.recycled {
-				// The contents of recycled waste pages are initially unknown, so we
-				// need to zero them.
-				f.manuallyZero(fr)
-			} else if needHugeTouch {
-				// We only need to touch a single byte in each huge page.
-				f.forEachMappingSlice(fr, func(bs []byte) {
-					for i := 0; i < len(bs); i += int(hostarch.HugePageSize) {
-						bs[i] = 0
+			if alloc.recycled || needHugeTouch || opts.Mode == AllocateAndCommit {
+				f.forEachChunk(fr, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
+					bs := chunk.sliceAt(chunkFR)
+					if alloc.recycled {
+						// Waste pages may be uncommitted and their contents are unknown.
+						_, err = safemem.Zero(safemem.BlockFromUnsafeSlice(bs))
+						return err == nil
 					}
+					// Establish the VMA's backing policy before fallocate. Population
+					// is only a hint: it may skip short or unaligned mappings.
+					for off := chunkFR.Start; off < chunkFR.End; off = hostarch.HugePageRoundDown(off) + uint64(hostarch.HugePageSize) {
+						i := off - chunkFR.Start
+						if _, err = safemem.Zero(safemem.BlockFromUnsafeSlice(bs[i : i+1])); err != nil {
+							return false
+						}
+					}
+					return true
 				})
+			}
+			// Full zeroing commits recycled shmem pages. Sparse policy touches
+			// still need full commitment, and disk-backed files need fallocate's
+			// storage reservation even after zeroing.
+			if err == nil && opts.Mode == AllocateAndCommit && (!alloc.recycled || f.opts.DiskBackedFile) {
+				err = f.commitFile(fr)
+			}
+			if err != nil {
+				f.DecRef(fr)
+				if _, ok := err.(safecopy.BusError); ok {
+					// This is failure to back our allocation, not a ReaderFunc
+					// fault while copying from application memory.
+					err = linuxerr.ENOMEM
+				}
+				return memmap.FileRange{}, err
 			}
 		default:
 			panic(fmt.Sprintf("unknown AllocOpts.Mode %d", alloc.opts.Mode))
@@ -803,6 +839,7 @@ func (f *MemoryFile) findAllocatableAndMarkUsed(alloc *allocState) (fr memmap.Fi
 				}
 				ma.kind = alloc.opts.Kind
 				ma.memCgID = alloc.opts.MemCgID
+				ma.retainCommitment = alloc.opts.RetainCommitment
 				ma.wasteOrReleasing = false
 				return true
 			})
@@ -849,10 +886,11 @@ retryFree:
 	// them committed prematurely makes them more likely to be saved even if
 	// zeroed, unless SaveOpts.ExcludeCommittedZeroPages is enabled.
 	f.memAcct.InsertRange(fr, memAcctInfo{
-		kind:           alloc.opts.Kind,
-		memCgID:        alloc.opts.MemCgID,
-		knownCommitted: false,
-		commitSeq:      f.commitSeq,
+		kind:             alloc.opts.Kind,
+		memCgID:          alloc.opts.MemCgID,
+		knownCommitted:   false,
+		retainCommitment: alloc.opts.RetainCommitment,
+		commitSeq:        f.commitSeq,
 	})
 	return
 }
@@ -1050,10 +1088,23 @@ func tryPopulate(b safemem.Block) bool {
 //   - fr.Start and fr.End must be page-aligned.
 //   - fr.Length() > 0.
 //   - At least one reference must be held on all pages in fr.
+//   - No pages in fr were allocated with AllocOpts.RetainCommitment.
 func (f *MemoryFile) Decommit(fr memmap.FileRange) {
 	if !fr.WellFormed() || fr.Length() == 0 || !hostarch.IsPageAligned(fr.Start) || !hostarch.IsPageAligned(fr.End) {
 		panic(fmt.Sprintf("invalid range: %v", fr))
 	}
+	// Check the entire range before changing any backing storage. The caller's
+	// reference keeps this allocation policy stable after we release f.mu.
+	func() {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		f.memAcct.VisitFullRange(fr, func(maseg memAcctIterator) bool {
+			if maseg.ValuePtr().retainCommitment {
+				panic(fmt.Sprintf("Decommit(%v) overlaps retained commitment at %v", fr, maseg.Range()))
+			}
+			return true
+		})
+	}()
 
 	f.decommitOrManuallyZero(fr)
 
@@ -1244,6 +1295,7 @@ func (f *MemoryFile) DecRef(fr memmap.FileRange) {
 						usage.MemoryAccounting.Move(maseg.Range().Length(), usage.System, ma.kind, ma.memCgID)
 					}
 					ma.kind = usage.System
+					ma.retainCommitment = false
 					ma.wasteOrReleasing = true
 					return true
 				})
@@ -1594,12 +1646,7 @@ func (f *MemoryFile) UpdateUsage(memCgIDs map[uint32]struct{}) error {
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if currentUsage == f.knownCommittedBytes {
-		return nil
-	}
-
-	if f.isSaving {
-		log.Debugf("pgalloc.MemoryFile.UpdateUsage() inhibited during MemoryFile save")
+	if f.inhibitUsageScans || currentUsage == f.knownCommittedBytes {
 		return nil
 	}
 
@@ -1625,11 +1672,7 @@ func (f *MemoryFile) UpdateUsage(memCgIDs map[uint32]struct{}) error {
 		f.nextCommitScan = startTime.Add(max(linux.ClockTick, scanTime*commitScanIntervalRatio))
 	}
 
-	if _, ok := err.(updateUsageDuringSaveErr); ok {
-		log.Debugf("pgalloc.MemoryFile.UpdateUsage() inhibited during MemoryFile save")
-		return nil
-	}
-	if log.IsLogging(log.Debug) {
+	if !f.inhibitUsageScans && log.IsLogging(log.Debug) {
 		log.Debugf("UpdateUsage: took %v, currentUsage=%d knownCommittedBytes=%d",
 			scanTime, currentUsage, f.knownCommittedBytes)
 	}
@@ -1642,11 +1685,11 @@ func (f *MemoryFile) UpdateUsage(memCgIDs map[uint32]struct{}) error {
 // Precondition: f.mu must be held; it may be unlocked and reacquired.
 // +checklocks:f.mu
 func (f *MemoryFile) updateUsageLocked(memCgIDs map[uint32]struct{}) error {
-	// Track if anything changed to elide the merge. f.SaveTo() holds an
-	// iterator into f.memAcct across f.mu unlocks, so don't merge while saving.
+	// SaveTo and LoadFrom keep a memAcct iterator between segments. A scan
+	// that started before either operation must not invalidate its iterator.
 	changedAny := false
 	defer func() {
-		if changedAny && !f.isSaving {
+		if changedAny && !f.inhibitUsageScans {
 			f.memAcct.MergeAll()
 		}
 	}()
@@ -1713,13 +1756,9 @@ func (f *MemoryFile) updateUsageLocked(memCgIDs map[uint32]struct{}) error {
 				return false
 			}
 
-			// Reconcile internal state with buf. Since we temporarily dropped
-			// f.mu, f.isSaving and f.memAcct may have changed, and maseg/ma
-			// are no longer valid. If wasCommitted is false, then we are
-			// marking ranges that are now committed; otherwise, we are marking
-			// ranges that are now uncommitted.
-			if f.isSaving {
-				checkErr = updateUsageDuringSaveErr{}
+			// A checkpoint may have started while mincore ran. Otherwise
+			// resume with a fresh iterator: f.memAcct may have changed.
+			if f.inhibitUsageScans {
 				return false
 			}
 			maseg = f.memAcct.LowerBoundSegment(chunkFR.Start)
@@ -1772,19 +1811,12 @@ func (f *MemoryFile) updateUsageLocked(memCgIDs map[uint32]struct{}) error {
 			unscannedStart = chunkFR.End
 			return false
 		})
-		if checkErr != nil {
+		if checkErr != nil || f.inhibitUsageScans {
 			return checkErr
 		}
 	}
 
 	return nil
-}
-
-type updateUsageDuringSaveErr struct{}
-
-// Error implements error.Error.
-func (updateUsageDuringSaveErr) Error() string {
-	return "pgalloc.MemoryFile.UpdateUsage() called during MemoryFile save"
 }
 
 // TotalUsage returns an aggregate usage for all memory statistics except

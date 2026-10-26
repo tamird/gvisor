@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
+	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/test/testutil"
@@ -36,25 +36,25 @@ func ListenUDP(ctx context.Context, port int, ipv6 bool) error {
 
 // ListenUDPFrom listens on a UDP port and returns the sender's UDP address if
 // the first read from that port is successful.
-func ListenUDPFrom(ctx context.Context, port int, ipv6 bool) (*net.UDPAddr, error) {
+func ListenUDPFrom(ctx context.Context, port int, ipv6 bool) (netip.AddrPort, error) {
 	localAddr := net.UDPAddr{
 		Port: port,
 	}
 	conn, err := net.ListenUDP(UDPNetwork(ipv6), &localAddr)
 	if err != nil {
-		return nil, err
+		return netip.AddrPort{}, err
 	}
 	defer conn.Close()
 
 	type result struct {
-		remoteAddr *net.UDPAddr
+		remoteAddr netip.AddrPort
 		err        error
 	}
 
 	// The read must be able to finish after cancellation stops the receiver.
 	ch := make(chan result, 1)
 	go func() {
-		_, remoteAddr, err := conn.ReadFromUDP([]byte{0})
+		_, remoteAddr, err := conn.ReadFromUDPAddrPort([]byte{0})
 		ch <- result{remoteAddr, err}
 	}()
 
@@ -62,18 +62,15 @@ func ListenUDPFrom(ctx context.Context, port int, ipv6 bool) (*net.UDPAddr, erro
 	case res := <-ch:
 		return res.remoteAddr, res.err
 	case <-ctx.Done():
-		return nil, fmt.Errorf("timed out reading from %s: %w", &localAddr, ctx.Err())
+		return netip.AddrPort{}, fmt.Errorf("timed out reading from %s: %w", &localAddr, ctx.Err())
 	}
 }
 
 // SendUDPLoop sends 1 byte UDP packets repeatedly to the IP and port specified
 // over a duration.
-func SendUDPLoop(ctx context.Context, ip net.IP, port int, ipv6 bool) error {
-	remote := net.UDPAddr{
-		IP:   ip,
-		Port: port,
-	}
-	conn, err := net.DialUDP(UDPNetwork(ipv6), nil, &remote)
+func SendUDPLoop(ctx context.Context, ip netip.Addr, port uint16, ipv6 bool) error {
+	remote := netip.AddrPortFrom(ip, port)
+	conn, err := net.DialUDP(UDPNetwork(ipv6), nil, net.UDPAddrFromAddrPort(remote))
 	if err != nil {
 		return err
 	}
@@ -105,7 +102,7 @@ func ListenTCP(ctx context.Context, port int, ipv6 bool) error {
 
 // ListenTCPFrom listens for connections on a TCP port, and returns the remote
 // TCP address if a connection is established.
-func ListenTCPFrom(ctx context.Context, port int, ipv6 bool) (net.Addr, error) {
+func ListenTCPFrom(ctx context.Context, port int, ipv6 bool) (netip.AddrPort, error) {
 	localAddr := net.TCPAddr{
 		Port: port,
 	}
@@ -113,12 +110,12 @@ func ListenTCPFrom(ctx context.Context, port int, ipv6 bool) (net.Addr, error) {
 	// Starts listening on port.
 	lConn, err := net.ListenTCP(TCPNetwork(ipv6), &localAddr)
 	if err != nil {
-		return nil, err
+		return netip.AddrPort{}, err
 	}
 	defer lConn.Close()
 
 	type result struct {
-		remoteAddr net.Addr
+		remoteAddr netip.AddrPort
 		err        error
 	}
 
@@ -127,9 +124,9 @@ func ListenTCPFrom(ctx context.Context, port int, ipv6 bool) (net.Addr, error) {
 	ch := make(chan result, 1)
 	go func() {
 		conn, err := lConn.AcceptTCP()
-		var remoteAddr net.Addr
+		var remoteAddr netip.AddrPort
 		if err == nil {
-			remoteAddr = conn.RemoteAddr()
+			remoteAddr = conn.RemoteAddr().(*net.TCPAddr).AddrPort()
 			conn.Close()
 		}
 		ch <- result{remoteAddr, err}
@@ -139,21 +136,18 @@ func ListenTCPFrom(ctx context.Context, port int, ipv6 bool) (net.Addr, error) {
 	case res := <-ch:
 		return res.remoteAddr, res.err
 	case <-ctx.Done():
-		return nil, fmt.Errorf("timed out waiting for a connection at %s: %w", &localAddr, ctx.Err())
+		return netip.AddrPort{}, fmt.Errorf("timed out waiting for a connection at %s: %w", &localAddr, ctx.Err())
 	}
 }
 
 // ConnectTCP connects to the given IP and port from an ephemeral local address.
-func ConnectTCP(ctx context.Context, ip net.IP, port int, ipv6 bool) error {
-	contAddr := net.TCPAddr{
-		IP:   ip,
-		Port: port,
-	}
+func ConnectTCP(ctx context.Context, ip netip.Addr, port uint16, ipv6 bool) error {
+	contAddr := netip.AddrPortFrom(ip, port)
 	// The container may not be listening when we first connect, so retry
 	// upon error.
 	callback := func() error {
 		var d net.Dialer
-		conn, err := d.DialContext(ctx, TCPNetwork(ipv6), contAddr.String())
+		conn, err := d.DialTCP(ctx, TCPNetwork(ipv6), netip.AddrPort{}, contAddr)
 		if conn != nil {
 			conn.Close()
 		}
@@ -166,9 +160,9 @@ func ConnectTCP(ctx context.Context, ip net.IP, port int, ipv6 bool) error {
 	return nil
 }
 
-// LocalAddrs returns a list of local network interface addresses. When ipv6 is
-// true, only IPv6 addresses are returned. Otherwise only IPv4 addresses are
-// returned.
+// LocalAddrs returns local network interface IP addresses without prefixes.
+// When ipv6 is true, only IPv6 addresses are returned. Otherwise only IPv4
+// addresses are returned.
 func LocalAddrs(ipv6 bool) ([]string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -176,30 +170,20 @@ func LocalAddrs(ipv6 bool) ([]string, error) {
 	}
 	addrStrs := make([]string, 0, len(addrs))
 	for _, addr := range addrs {
-		// Add only IPv4 or only IPv6 addresses.
-		parts := strings.Split(addr.String(), "/")
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("bad interface address: %q", addr.String())
+		ipnet, ok := addr.(*net.IPNet)
+		if !ok {
+			return nil, fmt.Errorf("unexpected interface address type %T", addr)
 		}
-		if isIPv6 := net.ParseIP(parts[0]).To4() == nil; isIPv6 == ipv6 {
-			addrStrs = append(addrStrs, addr.String())
+		ip, ok := netip.AddrFromSlice(ipnet.IP)
+		if !ok {
+			return nil, fmt.Errorf("invalid interface IP address: %v", ipnet.IP)
 		}
-	}
-	return FilterAddrs(addrStrs, ipv6), nil
-}
-
-// FilterAddrs filters a list of IP addresses and returns only IPv4 or
-// IPv6 addresses.
-func FilterAddrs(addrs []string, ipv6 bool) []string {
-	addrStrs := make([]string, 0, len(addrs))
-	for _, addr := range addrs {
-		// Add only IPv4 or only IPv6 addresses.
-		parts := strings.Split(addr, "/")
-		if isIPv6 := net.ParseIP(parts[0]).To4() == nil; isIPv6 == ipv6 {
-			addrStrs = append(addrStrs, parts[0])
+		ip = ip.Unmap()
+		if ip.Is6() == ipv6 {
+			addrStrs = append(addrStrs, ip.String())
 		}
 	}
-	return addrStrs
+	return addrStrs, nil
 }
 
 // GetInterfaceName returns the name of the interface other than loopback.
@@ -213,7 +197,7 @@ func GetInterfaceName() (string, bool) {
 
 // GetInterfaceAddrs returns a list of IP addresses for the non-loopback
 // interface. When ipv6 is true, only IPv6 addresses are returned.
-func GetInterfaceAddrs(ipv6 bool) ([]net.IP, error) {
+func GetInterfaceAddrs(ipv6 bool) ([]netip.Addr, error) {
 	iface, ok := GetNonLoopbackInterface()
 	if !ok {
 		return nil, errors.New("no non-loopback interface found")
@@ -224,19 +208,14 @@ func GetInterfaceAddrs(ipv6 bool) ([]net.IP, error) {
 	}
 
 	// Get only IPv4 or IPv6 addresses.
-	ips := make([]net.IP, 0, len(addrs))
+	ips := make([]netip.Addr, 0, len(addrs))
 	for _, addr := range addrs {
-		parts := strings.Split(addr.String(), "/")
-		var ip net.IP
-		// To16() returns IPv4 addresses as IPv4-mapped IPv6 addresses.
-		// So we check whether To4() returns nil to test whether the
-		// address is v4 or v6.
-		if v4 := net.ParseIP(parts[0]).To4(); ipv6 && v4 == nil {
-			ip = net.ParseIP(parts[0]).To16()
-		} else {
-			ip = v4
+		prefix, err := netip.ParsePrefix(addr.String())
+		if err != nil {
+			return nil, fmt.Errorf("bad interface address %q: %w", addr, err)
 		}
-		if ip != nil {
+		ip := prefix.Addr().Unmap()
+		if ip.Is6() == ipv6 {
 			ips = append(ips, ip)
 		}
 	}

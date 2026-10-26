@@ -19,6 +19,8 @@ go_test(
 go_binary(
     name = "safemount_runner",
     srcs = ["safemount_runner.go"],
+    importpath = "gvisor.dev/gvisor/runsc/specutils/safemount_test/safemount_runner",
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//runsc/specutils",
         "@org_golang_x_sys//unix:go_default_library",

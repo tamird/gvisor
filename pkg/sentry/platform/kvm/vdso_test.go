@@ -156,6 +156,9 @@ func hostVDSO(t *testing.T) []byte {
 		if vr.filename != "[vdso]" {
 			return false
 		}
+		if !vr.accessType.Read || !vr.accessType.Execute {
+			t.Fatalf("[vdso] mapping is not readable and executable: %v", vr.accessType)
+		}
 		vdso = append([]byte(nil), sliceFromAddr(vr.virtual, vr.length)...)
 		return true
 	}); err != nil {

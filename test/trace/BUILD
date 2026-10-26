@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -17,6 +17,9 @@ go_test(
         "//test/trace/workload",
     ],
     embed = [":trace"],
+    # runsc do must acquire capabilities in a new user namespace.
+    exec_properties = namespace_test_exec_properties(user = "nobody"),
+    visibility = ["//test/rbe:__pkg__"],
     deps = [
         "//pkg/sentry/seccheck",
         "//pkg/sentry/seccheck/points:points_go_proto",

@@ -1,15 +1,34 @@
-"""Defines a rule for benchmark test targets."""
+"""Defines installed and declared benchmark test targets."""
 
-load("//tools:defs.bzl", "go_test")
+load("//test/docker:defs.bzl", "docker_test", "owned_docker_test")
 
-def benchmark_test(name, tags = [], use_for_pgo = True, **kwargs):
-    """Defines a benchmark test and its CI selection tags.
+# Match the continuous Buildkite benchmark-platforms invocation. KVM stays
+# declared even though the current Firecracker workers cannot qualify it.
+_CONTINUOUS_RUNTIMES = [
+    struct(
+        name = platform,
+        # Make enables profiling support without enabling debug logging. These
+        # arguments follow the private daemon's ordinary --debug default.
+        args = ["--platform=" + platform, "--profile", "--debug=false"],
+        test_args = [],
+        tags = ["requires-kvm"] if platform == "kvm" else [],
+    )
+    for platform in ["kvm", "systrap"]
+] + [struct(name = "runc", args = [], test_args = ["--runtime=runc"], tags = [])]
+
+def benchmark_test(name, tags = [], use_for_pgo = True, continuous = [], cohort = None, owned_args = [], runtime_variants = None, nogo = True, **kwargs):
+    """Declares existing benchmark entrypoints and optional continuous cases.
 
     Args:
-      name: Name of the generated go_test target.
-      tags: Additional target tags.
-      use_for_pgo: Include the test in PGO benchmark selection.
-      **kwargs: Additional arguments forwarded to go_test.
+      name: Existing installed benchmark target.
+      tags: Existing benchmark tags.
+      use_for_pgo: Whether the benchmark participates in PGO collection.
+      continuous: Case dictionaries with name, cohort, filter and benchtime.
+      cohort: Optional image cohort for the existing smoke entrypoint.
+      owned_args: Existing smoke entrypoint's arguments.
+      runtime_variants: Existing smoke entrypoint's runtime modes.
+      nogo: Whether the installed target owns static analysis.
+      **kwargs: Existing go_test source, dependency and other attributes.
     """
     tags = tags + [
         "manual",
@@ -18,10 +37,12 @@ def benchmark_test(name, tags = [], use_for_pgo = True, **kwargs):
     if use_for_pgo:
         tags = tags + ["gvisor_pgo_benchmark"]
 
-    # Requires docker and runsc at execution time, not during compilation.
-    kwargs["local"] = True
-    go_test(
-        name,
+    docker_test(
+        name = name,
+        cohort = cohort,
+        owned_args = owned_args,
+        runtime_variants = runtime_variants,
+        nogo = nogo,
         tags = tags,
         # Benchmark test binaries are built inside a bazel docker container in
         # OSS but are executed directly on the host. Use static binaries to
@@ -29,3 +50,75 @@ def benchmark_test(name, tags = [], use_for_pgo = True, **kwargs):
         features = ["fully_static_link"],
         **kwargs
     )
+
+    if continuous:
+        continuous_kwargs = dict(kwargs)
+
+        # These are separate complete continuous workloads, not the existing
+        # one-iteration startup smoke. CI permits 120 minutes across runtimes.
+        continuous_kwargs.update(size = "large", timeout = "eternal")
+        owned_docker_test(
+            name = name + "_continuous",
+            memory = "8GB",
+            free_disk = "40GB",
+            runtime_variants = [
+                struct(
+                    name = (case["name"] + "_" if case["name"] else "") + runtime.name,
+                    cohort = case["cohort"],
+                    args = runtime.args,
+                    test_args = [
+                        # Preserve the wrapper's benchmark event framing.
+                        "-test.v=test2json",
+                        "-test.bench=" + case["filter"],
+                        "-test.benchtime=" + case["benchtime"],
+                    ] + runtime.test_args,
+                    tags = runtime.tags,
+                )
+                for case in continuous
+                for runtime in _CONTINUOUS_RUNTIMES
+            ],
+            tags = tags + ["continuous-benchmark"],
+            features = ["fully_static_link"],
+            **continuous_kwargs
+        )
+
+    if use_for_pgo:
+        # The public PGO selector runs the whole tagged benchmark, not the
+        # continuous filter. Each current PGO benchmark has one image cohort.
+        if len(continuous) != 1:
+            fail("PGO benchmark %s requires one declared image cohort" % name)
+        pgo_kwargs = dict(kwargs)
+        pgo_kwargs.update(size = "large", timeout = "eternal")
+        owned_docker_test(
+            name = name + "_pgo",
+            architectures = ["amd64"],
+            cohort = continuous[0]["cohort"],
+            data = [
+                "//runsc:pgo_profiles",
+                "//tools/profiletool",
+            ],
+            memory = "8GB",
+            free_disk = "40GB",
+            runtime_variants = [
+                struct(
+                    name = runtime.name,
+                    args = runtime.args,
+                    test_args = [
+                        "-pgo-benchmarks=true",
+                        "-pgo-profiletool=$(rootpath //tools/profiletool)",
+                        "-pgo-platform=" + runtime.name,
+                        "-pgo-benchmark=" + name.removesuffix("_test"),
+                        "-test.v=test2json",
+                        "-test.bench=.",
+                        "-test.benchtime=20s",
+                    ],
+                    tags = runtime.tags,
+                )
+                for runtime in _CONTINUOUS_RUNTIMES
+                if runtime.name != "runc"
+            ],
+            tags = ["manual", "pgo-benchmark"],
+            features = ["fully_static_link"],
+            target_compatible_with = ["@platforms//cpu:x86_64"],
+            **pgo_kwargs
+        )

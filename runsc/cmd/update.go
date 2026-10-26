@@ -116,8 +116,8 @@ other options are ignored.
 
 	f.StringVar(&u.cpuBurst, "cpu-burst", "", "CPU CFS hardcap burst limit (in usecs). Allowed accumulated cpu time additionally for burst a given period")
 	f.StringVar(&u.cpuIdle, "cpu-idle", "", "set cgroup SCHED_IDLE or not, 0: default behavior, 1: SCHED_IDLE")
-	f.StringVar(&u.cpuPeriod, "cpu-period", "", "CPU CFS period to be used for hardcapping (in usecs). 0 to use system default")
-	f.StringVar(&u.cpuQuota, "cpu-quota", "", "CPU CFS hardcap limit (in usecs). Allowed cpu time in a given period")
+	f.StringVar(&u.cpuPeriod, "cpu-period", "", "CPU CFS period to be used for hardcapping (in usecs). 0 to leave unchanged")
+	f.StringVar(&u.cpuQuota, "cpu-quota", "", "CPU CFS hardcap limit (in usecs). -1 for unlimited, 0 to leave unchanged")
 	f.StringVar(&u.cpuRtPeriod, "cpu-rt-period", "", "CPU realtime period to be used for hardcapping (in usecs). 0 to use system default")
 	f.StringVar(&u.cpuRtRuntime, "cpu-rt-runtime", "", "CPU realtime hardcap limit (in usecs). Allowed cpu time in a given period")
 	f.StringVar(&u.cpuShares, "cpu-share", "", "CPU shares (relative weight vs. other containers)")
@@ -240,7 +240,9 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 	}
 
 	prev := c.Spec.Linux.Resources
-	// Retain existing values if not set
+	// Retain existing values when an update leaves them unspecified. Docker
+	// sends zero-valued pointers for some unchanged limits; preserve those
+	// limits without discarding meaningful zeros such as CPU.Idle.
 	if prev.CPU != nil {
 		if r.CPU.Burst == nil {
 			r.CPU.Burst = prev.CPU.Burst
@@ -248,10 +250,10 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		if r.CPU.Idle == nil {
 			r.CPU.Idle = prev.CPU.Idle
 		}
-		if r.CPU.Period == nil {
+		if r.CPU.Period == nil || *r.CPU.Period == 0 {
 			r.CPU.Period = prev.CPU.Period
 		}
-		if r.CPU.Quota == nil {
+		if r.CPU.Quota == nil || *r.CPU.Quota == 0 {
 			r.CPU.Quota = prev.CPU.Quota
 		}
 		if r.CPU.RealtimePeriod == nil {
@@ -260,25 +262,26 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		if r.CPU.RealtimeRuntime == nil {
 			r.CPU.RealtimeRuntime = prev.CPU.RealtimeRuntime
 		}
-		if r.CPU.Shares == nil {
+		if r.CPU.Shares == nil || *r.CPU.Shares == 0 {
 			r.CPU.Shares = prev.CPU.Shares
 		}
 	}
 
 	if prev.Memory != nil {
-		if r.Memory.Limit == nil {
+		if r.Memory.Limit == nil || *r.Memory.Limit == 0 {
 			r.Memory.Limit = prev.Memory.Limit
 		}
-		if r.Memory.Reservation == nil {
+		if r.Memory.Reservation == nil || *r.Memory.Reservation == 0 {
 			r.Memory.Reservation = prev.Memory.Reservation
 		}
+		// Zero swap with unlimited memory requests unlimited swap.
 		if r.Memory.Swap == nil {
 			r.Memory.Swap = prev.Memory.Swap
 		}
 	}
 
 	if prev.BlockIO != nil {
-		if r.BlockIO.Weight == nil {
+		if r.BlockIO.Weight == nil || *r.BlockIO.Weight == 0 {
 			r.BlockIO.Weight = prev.BlockIO.Weight
 		}
 	}

@@ -1,8 +1,13 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_binary", "go_test")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+exports_files(
+    ["prewarmer.c"],
+    visibility = ["//:__pkg__"],
 )
 
 # Tell build_cleaner not to create an unnecessary cc_library for prewarmer.c.
@@ -21,6 +26,7 @@ genrule(
     srcs = ["prewarmer.c"],
     outs = ["gvisor-sentry-prewarmer"],
     cmd = "$(CC) $(CC_FLAGS) " +
+          "--ld-path=$(execpath {}) ".format(cc_linker) +
           "-Os " +
           "-ffreestanding " +
           "-fno-sanitize=all " +
@@ -38,10 +44,8 @@ genrule(
           "$(execpath prewarmer.c)",
     executable = True,
     features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
-        ":no_pie_cc_flags",
-    ],
+    toolchains = [":no_pie_cc_flags"],
+    tools = [cc_linker],
     visibility = ["//visibility:public"],
 )
 
@@ -61,7 +65,9 @@ go_test(
 go_binary(
     name = "fdtable_expander",
     srcs = ["fdtable_expander.go"],
+    importpath = "gvisor.dev/gvisor/runsc/prewarmer/fdtable_expander",
     pure = True,
+    visibility = ["//tools/codeql:__pkg__"],
     deps = ["@org_golang_x_sys//unix:go_default_library"],
 )
 

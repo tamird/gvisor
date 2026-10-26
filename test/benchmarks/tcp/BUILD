@@ -1,5 +1,5 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
-load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//tools:defs.bzl", "cc_binary", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -12,6 +12,7 @@ go_binary(
         "tcp_proxy.go",
         "xdp.go",
     ],
+    importpath = "gvisor.dev/gvisor/test/benchmarks/tcp/tcp_proxy",
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/rand",
@@ -33,6 +34,13 @@ go_binary(
         "@com_github_cilium_ebpf//link:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+go_test(
+    name = "tcp_proxy_test",
+    srcs = ["tcp_proxy_test.go"],
+    data = [":tcp_proxy"],
+    deps = ["//pkg/test/testutil"],
 )
 
 # nsjoin is a trivial replacement for nsenter. This is used because nsenter is

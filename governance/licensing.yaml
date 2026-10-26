@@ -28,6 +28,4591 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: apt/container_test_tools/amd64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+    exception_rationale: &apt_container_test_tools_rationale >-
+      Currently used in the EROFS and BusyBox payload for
+      runsc/container tests, not as a declared input to gVisor release
+      artifacts.
+  - dependency: apt/container_test_tools/amd64/busybox-static
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/erofs-utils
+    license: &apt_erofs_utils_licenses
+      - Apache-2.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - Unlicense
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/gcc-14-base
+    license: &apt_container_gcc_14_licenses
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/libc6
+    license: &apt_libc6_licenses
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The pinned per-file license inventory cannot be classified
+      automatically. Its verbatim notice is recorded under an explicit
+      metadata identifier. Currently used in the EROFS and BusyBox
+      payload for runsc/container tests, not as a declared input to
+      gVisor release artifacts.
+  - dependency: apt/container_test_tools/amd64/libgcc-s1
+    license: *apt_container_gcc_14_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/liblz4-1
+    license: &apt_liblz4_1_licenses
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/liblzma5
+    license: &apt_container_liblzma5_licenses
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/libselinux1
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - libselinux-1.0
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/libuuid1
+    license: &apt_libuuid1_licenses
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/mawk
+    license:
+      - CC-BY-3.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - MIT
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/busybox-static
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/erofs-utils
+    license: *apt_erofs_utils_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/gcc-14-base
+    license: *apt_container_gcc_14_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The pinned per-file license inventory cannot be classified
+      automatically. Its verbatim notice is recorded under an explicit
+      metadata identifier. Currently used in the EROFS and BusyBox
+      payload for runsc/container tests, not as a declared input to
+      gVisor release artifacts.
+  - dependency: apt/container_test_tools/arm64/libgcc-s1
+    license: *apt_container_gcc_14_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/liblz4-1
+    license: *apt_liblz4_1_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/liblzma5
+    license: *apt_container_liblzma5_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/libselinux1
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - libselinux-1.0
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/libuuid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/mawk
+    license:
+      - CC-BY-3.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - MIT
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/kernel_build_deps/amd64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: &apt_kernel_build_deps_rationale >-
+      Used only to compile instrumented Linux kernels for the native
+      syscall test guests, not as an input to gVisor release artifacts.
+  - dependency: apt/kernel_build_deps/amd64/bc
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - Latex2e
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/binutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/binutils-common
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/binutils-x86-64-linux-gnu
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/bison
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/bzip2
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/dpkg
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/dpkg-dev
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/flex
+    license:
+      - BSD-3-Clause
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/gcc-11-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/gcc-12-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/guile-3.0-libs
+    license:
+      - FSFULLR
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libacl1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libasan6
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libatomic1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libbinutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libbz2-1.0
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libc-dev-bin
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libc6
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libc6-dev
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libcom-err2
+    license: HPND
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libcrypt-dev
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The archive is identical to
+      apt/syzkaller_sysroot/amd64/libcrypt-dev; retain its existing
+      notice audit. Used only to compile instrumented Linux kernels for
+      the native syscall test guests, not as an input to gVisor release
+      artifacts.
+  - dependency: apt/kernel_build_deps/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The archive is identical to apt/tcg_host_tools/amd64/libcrypt1;
+      retain its existing notice audit. Used only to compile
+      instrumented Linux kernels for the native syscall test guests, not
+      as an input to gVisor release artifacts.
+  - dependency: apt/kernel_build_deps/amd64/libctf-nobfd0
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libctf0
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libdpkg-perl
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libelf-dev
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libelf1
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libffi8
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgc1
+    license: LicenseRef-libgc-8.0.6
+    exception_rationale: >-
+      The archive is identical to apt/qemu_build_deps/amd64/libgc1;
+      retain its existing notice audit. Used only to compile
+      instrumented Linux kernels for the native syscall test guests, not
+      as an input to gVisor release artifacts.
+  - dependency: apt/kernel_build_deps/amd64/libgcc-11-dev
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgcc-s1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgdbm-compat4
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgdbm6
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgomp1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgssapi-krb5-2
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libitm1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libk5crypto3
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libkeyutils1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libkrb5-3
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libkrb5support0
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/liblsan0
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/liblzma5
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libnsl-dev
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libnsl2
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libperl5.34
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libpkgconf3
+    license:
+      - BSD-2-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - ISC
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libquadmath0
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libreadline8
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libselinux1
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libsigsegv2
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libssl-dev
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libssl3
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libstdc++6
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtirpc-common
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtirpc-dev
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtirpc3
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtsan0
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libubsan1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libunistring2
+    license:
+      - FSFULLR
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libzstd1
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - MIT
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/linux-libc-dev
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/lto-disabled-list
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/m4
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/make-guile
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/patch
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/perl
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/perl-base
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/perl-modules-5.34
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/pkgconf
+    license:
+      - BSD-2-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - ISC
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/readline-common
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/rpcsvc-proto
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/tar
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/xz-utils
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/base-files. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/base-passwd
+    license: GPL-2.0
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/base-passwd. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/bash
+    license:
+      - BSD-4-Clause-UC
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/bash. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/busybox-static
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/busybox-static. Used only by the
+      disposable AMD64 cgroup-v1 test guest, with its package notices
+      retained, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/coreutils
+    license:
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/coreutils. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/debianutils
+    license: GPL-2.0
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/debianutils. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/diffutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/release_tools/amd64/diffutils. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/dpkg
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/dpkg. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/findutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/findutils. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/gcc-12-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/gcc-12-base. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/grep
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/grep. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/hostname
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The pinned package notice specifies GPL version 2. It supplies
+      only the disposable AMD64 cgroup-v1 test kernel, modules or guest
+      utility, with its notice and common license text retained, not a
+      gVisor release artifact.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/init-system-helpers
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/init-system-helpers. Used only by the
+      disposable AMD64 cgroup-v1 test guest, with its package notices
+      retained, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/iproute2
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/iproute2. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/kmod
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/kmod. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libacl1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libacl1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libattr1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libattr1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libaudit-common
+    license:
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0-only
+      - LGPL-2.1
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_host_tools/amd64/libaudit-common. Used only by the
+      disposable AMD64 cgroup-v1 test guest, with its package notices
+      retained, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libaudit1
+    license:
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0-only
+      - LGPL-2.1
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_host_tools/amd64/libaudit1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libblkid1
+    license:
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libblkid1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libbpf0
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-only
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libbpf0. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libbsd0
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - Beerware
+      - ISC
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libbsd0. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libbz2-1.0
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libbz2-1.0. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libc-bin
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libc-bin. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libc6
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libc6. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libcap-ng0
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_host_tools/amd64/libcap-ng0. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libcap2
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libcap2. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libcap2-bin
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libcap2-bin. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The same pinned artifact and verbatim per-file notice audit are
+      retained from apt/kvm_amd64_guest/amd64/libcrypt1. Automatic
+      classification does not cover the package's complete notice. Used
+      only by the disposable AMD64 cgroup-v1 test guest, not as a gVisor
+      release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libelf1
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libelf1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libgcc-s1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libgcc-s1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libgcrypt20
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libgcrypt20. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libgmp10. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libgpg-error0
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libgpg-error0. Used only by the
+      disposable AMD64 cgroup-v1 test guest, with its package notices
+      retained, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libkmod2
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libkmod2. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/liblz4-1
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/liblz4-1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/liblzma5
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/liblzma5. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libmd0
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - Beerware
+      - ISC
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libmd0. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libmnl0
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libmnl0. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libmount1
+    license:
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libmount1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libpam0g
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_host_tools/amd64/libpam0g. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libprocps8
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libprocps8. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libselinux1
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libselinux1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libsmartcols1
+    license:
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libsmartcols1. Used only by the
+      disposable AMD64 cgroup-v1 test guest, with its package notices
+      retained, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libssl3
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libssl3. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libsystemd0
+    license:
+      - CC0-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libsystemd0. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libudev1
+    license:
+      - CC0-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_host_tools/amd64/libudev1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libuuid1
+    license:
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/container_test_tools/amd64/libuuid1. Used only by the
+      disposable AMD64 cgroup-v1 test guest, with its package notices
+      retained, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libxtables12
+    license:
+      - Artistic-1.0-Perl
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libxtables12. Used only by the
+      disposable AMD64 cgroup-v1 test guest, with its package notices
+      retained, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/libzstd1
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - MIT
+      - Zlib
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/libzstd1. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/linux-base
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/tcg_arm64_guest/arm64/linux-base. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/linux-image-6.8.0-138-generic
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The pinned package notice specifies GPL version 2. It supplies
+      only the disposable AMD64 cgroup-v1 test kernel, modules or guest
+      utility, with its notice and common license text retained, not a
+      gVisor release artifact.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/linux-modules-6.8.0-138-generic
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The pinned package notice specifies GPL version 2. It supplies
+      only the disposable AMD64 cgroup-v1 test kernel, modules or guest
+      utility, with its notice and common license text retained, not a
+      gVisor release artifact.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/linux-modules-extra-6.8.0-138-generic
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The pinned package notice specifies GPL version 2. It supplies
+      only the disposable AMD64 cgroup-v1 test kernel, modules or guest
+      utility, with its notice and common license text retained, not a
+      gVisor release artifact.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/lsb-base
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/lsb-base. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/mawk. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/mount
+    license:
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/mount. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/perl-base
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/perl-base. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/procps
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/procps. Used only by the disposable
+      AMD64 cgroup-v1 test guest, with its package notices retained, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/sed
+    license: LicenseRef-Sed-Copyright-60886b626
+    exception_rationale: >-
+      The same pinned artifact and complete notice audit are retained
+      from apt/kvm_amd64_guest/amd64/sed. GNU sed is GPL-3.0-or-later
+      and its retained manual is GFDL-1.3-or-later, without invariant
+      sections or cover texts; automatic classification omits the
+      manual's terms. Used only by the disposable AMD64 cgroup-v1 test
+      guest, which retains the notices and complete license texts, not
+      as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/tar
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: >-
+      The same pinned artifact and license set are already audited under
+      apt/kvm_amd64_guest/amd64/tar. Used only by the disposable AMD64
+      cgroup-v1 test guest, with its package notices retained, not as a
+      gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/util-linux
+    license:
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: >-
+      The pinned package has the same complete supplier copyright notice
+      and canonical license set as apt/kvm_amd64_guest/amd64/libmount1.
+      Used only for the disposable AMD64 cgroup-v1 test fixture and
+      guest, with package notices retained, not as a gVisor
+      release-artifact input.
+  - dependency: apt/kvm_amd64_guest/amd64/base-files
+    license: &apt_base_files_licenses
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: &kvm_tools_rationale >-
+      The pinned packages provide the QEMU host tools and Linux guest used
+      only by manual AMD64 RC-kernel tests. Their package copyright notices
+      are retained. They are not linked into or packaged with gVisor
+      release artifacts.
+  - dependency: apt/kvm_amd64_guest/amd64/base-passwd
+    license: GPL-2.0
+    exception_rationale: &guest_harness_tools_rationale >-
+      These pinned packages supply account defaults and standard tools
+      for the declared manual full-system test guest. Their copyright
+      notices and referenced common-license texts are retained in that
+      guest. They are not declared inputs to gVisor release artifacts.
+  - dependency: apt/kvm_amd64_guest/amd64/bash
+    license: &kvm_bash_licenses
+      - BSD-4-Clause-UC
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/busybox-static
+    license: &kvm_busybox_static_licenses
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/coreutils
+    license: &kvm_coreutils_licenses
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/debianutils
+    license: GPL-2.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/dpkg
+    license: &kvm_dpkg_licenses
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/findutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/gcc-12-base
+    license: &apt_gcc_12_base_licenses
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/grep
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/init-system-helpers
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/iproute2
+    license: *kvm_busybox_static_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/kmod
+    license: &kvm_kmod_licenses
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libacl1
+    license: &kvm_libacl1_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libattr1
+    license: *kvm_libacl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libaudit-common
+    license: &kvm_libaudit_common_licenses
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0-only
+      - LGPL-2.1
+    exception_rationale: &guest_syscall_groups_rationale >-
+      These packages provide setpriv and its dependencies in disposable
+      syscall test guests. Their package notices are retained; they are
+      not linked into or packaged with gVisor release artifacts.
+  - dependency: apt/kvm_amd64_guest/amd64/libaudit1
+    license: *kvm_libaudit_common_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libblkid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libbpf0
+    license: &kvm_libbpf0_licenses
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-only
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libbsd0
+    license: &kvm_libbsd0_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - Beerware
+      - ISC
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libbz2-1.0
+    license: &kvm_libbz2_1_0_licenses
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libc-bin
+    license: *apt_libc6_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libcap-ng0
+    license: &kvm_libcap_ng0_licenses
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libcap2
+    license: &kvm_libcap2_licenses
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libcap2-bin
+    license: *kvm_libcap2_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      This is the same pinned artifact and verbatim notice already
+      audited under apt/release_tools/amd64/libcrypt1.
+      It supplies only the manual AMD64 RC test tools or guest,
+      not gVisor release artifacts.
+  - dependency: apt/kvm_amd64_guest/amd64/libelf1
+    license: &kvm_libelf1_licenses
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libgcc-s1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libgcrypt20
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libgmp10
+    license: *kvm_libelf1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libgpg-error0
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libkmod2
+    license: *kvm_kmod_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/liblz4-1
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/liblzma5
+    license: &kvm_liblzma5_licenses
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libmd0
+    license: &kvm_libmd0_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - Beerware
+      - ISC
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libmnl0
+    license: *kvm_libacl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libmount1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libpam0g
+    license: &kvm_cpio_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libprocps8
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libselinux1
+    license: &apt_libselinux1_licenses
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libsmartcols1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libssl3
+    license: &kvm_libssl3_licenses
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libsystemd0
+    license:
+      - CC0-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libudev1
+    license: &kvm_libsystemd0_licenses
+      - CC0-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libuuid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libxtables12
+    license: &kvm_libxtables12_licenses
+      - Artistic-1.0-Perl
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/libzstd1
+    license: &kvm_libzstd1_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - MIT
+      - Zlib
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/lsb-base
+    license: &kvm_lsb_base_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/mawk
+    license: *kvm_busybox_static_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/mount
+    license: *apt_libuuid1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/perl-base
+    license: &kvm_perl_base_licenses
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/procps
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/sed
+    license: LicenseRef-Sed-Copyright-60886b626
+    exception_rationale: >-
+      The pinned package's copyright and embedded manual were audited
+      directly: GNU sed is GPL-3.0-or-later and its retained manual is
+      GFDL-1.3-or-later, with no invariant sections or cover texts.
+      Automatic classification omits the manual's terms. Used only by
+      the declared manual test guest, which retains both notices and
+      complete license texts, not as a gVisor release-artifact input.
+  - dependency: apt/kvm_amd64_guest/amd64/tar
+    license: &kvm_tar_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_amd64_guest/amd64/util-linux
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/kvm_host_tools/amd64/acl
+    license: *kvm_libacl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/adduser
+    license: &kvm_adduser_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/base-files
+    license: *apt_base_files_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/coreutils
+    license: *kvm_coreutils_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/dpkg
+    license: *kvm_dpkg_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/e2fsprogs
+    license: &kvm_e2fsprogs_licenses
+      - GPL-2.0
+      - LGPL-2.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/fakeroot
+    license: &guest_image_fakeroot_licenses
+      - Artistic-1.0-Perl
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: &guest_image_fakeroot_rationale >-
+      The pinned supplier notice provides GPL-3.0-or-later terms and
+      the Perl module under the same terms as Perl. The unmodified
+      wrapper and preload library preserve ownership while constructing
+      disposable test guest images. Their package notices are retained;
+      they are not linked into or packaged with gVisor release artifacts.
+  - dependency: apt/kvm_host_tools/amd64/gcc-12-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/ipxe-qemu
+    license: &kvm_ipxe_qemu_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - ISC
+      - MIT
+    exception_rationale: >-
+      These unmodified ROMs are dependencies of the declared QEMU x86
+      package used only by manual AMD64 RC tests. The retained notice
+      offers GPL terms as an alternative to UBDL; this grant uses the
+      GPL alternative, not UBDL additional permissions. They are not
+      linked into or packaged with gVisor release artifacts.
+  - dependency: apt/kvm_host_tools/amd64/ipxe-qemu-256k-compat-efi-roms
+    license: &kvm_ipxe_qemu_256k_compat_efi_roms_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      These unmodified ROMs are dependencies of the declared QEMU x86
+      package used only by manual AMD64 RC tests. The retained notice
+      offers GPL terms as an alternative to UBDL; this grant uses the
+      GPL alternative, not UBDL additional permissions. They are not
+      linked into or packaged with gVisor release artifacts.
+  - dependency: apt/kvm_host_tools/amd64/iso-codes
+    license: &kvm_iso_codes_licenses
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/kmod
+    license: *kvm_kmod_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libacl1
+    license: *kvm_libacl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libaio1
+    license: *kvm_iso_codes_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libasound2
+    license: *kvm_iso_codes_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libasound2-data
+    license: *kvm_iso_codes_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libattr1
+    license: *kvm_libacl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libaudit-common
+    license: *kvm_libaudit_common_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libaudit1
+    license: *kvm_libaudit_common_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libblkid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libbrlapi0.8
+    license: LGPL-2.1
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libbsd0
+    license: *kvm_libbsd0_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libbz2-1.0
+    license: *kvm_libbz2_1_0_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libcacard0
+    license: *kvm_kmod_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libcap-ng0
+    license: *kvm_libcap_ng0_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libcap2
+    license: *kvm_libcap2_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libcap2-bin
+    license: *kvm_libcap2_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libcom-err2
+    license: HPND
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      This is the same pinned artifact and verbatim notice already
+      audited under apt/release_tools/amd64/libcrypt1.
+      It supplies only the manual AMD64 RC test tools or guest,
+      not gVisor release artifacts.
+  - dependency: apt/kvm_host_tools/amd64/libdaxctl1
+    license: &kvm_libdaxctl1_licenses
+      - CC0-1.0
+      - GPL-2.0
+      - LGPL-2.1
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libdw1
+    license: *kvm_libelf1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libelf1
+    license: *kvm_libelf1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libext2fs2
+    license: *kvm_e2fsprogs_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libfakeroot
+    license: *guest_image_fakeroot_licenses
+    exception_rationale: *guest_image_fakeroot_rationale
+  - dependency: apt/kvm_host_tools/amd64/libfdt1
+    license: &kvm_libfdt1_licenses
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libffi8
+    license: &kvm_libffi8_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libfuse3-3
+    license: *kvm_libacl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgbm1
+    license: &kvm_libgbm1_licenses
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSL-1.0
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+      - SGI-B-2.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgcc-s1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgcrypt20
+    license: &kvm_libgcrypt20_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libglib2.0-0
+    license: &kvm_libglib2_0_0_licenses
+      - GPL-2.0-or-later
+      - LGPL-2.0-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgmp10
+    license: *kvm_libelf1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgnutls30
+    license: &kvm_libgnutls30_licenses
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - CC0-1.0
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgpg-error0
+    license: &kvm_libgpg_error0_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgssapi-krb5-2
+    license: &kvm_libgssapi_krb5_2_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgstreamer-plugins-base1.0-0
+    license: &kvm_libgstreamer_plugins_base1_0_0_licenses
+      - LGPL-2.0-or-later
+      - LGPL-3.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libgstreamer1.0-0
+    license: *kvm_libgstreamer_plugins_base1_0_0_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libhogweed6
+    license: &kvm_libhogweed6_licenses
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libibverbs1
+    license: &kvm_libibverbs1_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - CC0-1.0
+      - CPL-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - Linux-OpenIB
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libidn2-0
+    license: &kvm_libidn2_0_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libjpeg-turbo8
+    license: &kvm_libjpeg_turbo8_licenses
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - RSA-MD
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libjpeg8
+    license: &kvm_libjpeg8_licenses
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libk5crypto3
+    license: *kvm_libgssapi_krb5_2_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libkeyutils1
+    license: &kvm_libkeyutils1_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libkmod2
+    license: *kvm_kmod_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libkrb5-3
+    license: *kvm_libgssapi_krb5_2_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libkrb5support0
+    license: *kvm_libgssapi_krb5_2_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/liblz4-1
+    license: *apt_liblz4_1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/liblzma5
+    license: *kvm_liblzma5_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libmd0
+    license: *kvm_libmd0_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libmount1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libndctl6
+    license: *kvm_libdaxctl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libnettle8
+    license: *kvm_libhogweed6_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libnl-3-200
+    license: &kvm_libnl_3_200_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+      - LGPL-2.1
+      - LGPL-2.1-only
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libnl-route-3-200
+    license: *kvm_libnl_3_200_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libnsl2
+    license: &kvm_libnsl2_licenses
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libnspr4
+    license: MPL-2.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libnss3
+    license: &kvm_libnss3_licenses
+      - HPND
+      - HPND-sell-variant
+      - MIT
+      - MPL-2.0
+      - Zlib
+      - blessing
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libnuma1
+    license: &kvm_libnuma1_licenses
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libp11-kit0
+    license: &kvm_libp11_kit0_licenses
+      - Apache-2.0
+      - BSD-3-Clause
+      - ISC
+      - LGPL-2.1
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libpam-modules
+    license: *kvm_cpio_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libpam-modules-bin
+    license: *kvm_cpio_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libpam0g
+    license: *kvm_cpio_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libpcsclite1
+    license: &kvm_libpcsclite1_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libpng16-16
+    license: &kvm_libpng16_16_licenses
+      - Apache-2.0
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/librdmacm1
+    license: *kvm_libibverbs1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsasl2-2
+    license: &kvm_libsasl2_2_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - HPND-sell-variant
+      - OLDAP-2.8
+      - OpenSSL
+      - RSA-MD
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsasl2-modules-db
+    license: *kvm_libsasl2_2_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libseccomp2
+    license: LGPL-2.1
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libselinux1
+    license: *apt_libselinux1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsemanage-common
+    license: &kvm_libsemanage_common_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsemanage2
+    license: *kvm_libsemanage_common_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsepol2
+    license: *kvm_libsemanage_common_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsmartcols1
+    license: *apt_libuuid1_licenses
+    exception_rationale: &guest_image_util_linux_rationale >-
+      These are the same pinned artifacts and supplier copyright notice
+      already audited for the AMD64 cgroup-v1 guest. They provide getopt
+      and its package dependencies for the guest image builder, with
+      notices retained, not as gVisor release-artifact inputs.
+  - dependency: apt/kvm_host_tools/amd64/libspice-server1
+    license: &kvm_libspice_server1_licenses
+      - BSD-3-Clause
+      - HPND
+      - HPND-sell-variant
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsqlite3-0
+    license: *kvm_busybox_static_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libss2
+    license: HPND
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libssl3
+    license: *kvm_libssl3_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libstdc++6
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsystemd0
+    license: *kvm_libsystemd0_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libtasn1-6
+    license: &kvm_libtasn1_6_licenses
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libtirpc-common
+    license: &kvm_libtirpc_common_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libtirpc3
+    license: *kvm_libtirpc_common_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libudev1
+    license: *kvm_libsystemd0_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libunistring2
+    license: &kvm_libunistring2_licenses
+      - FSFULLR
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libunwind8
+    license: &kvm_libunwind8_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/liburing2
+    license: &kvm_liburing2_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libusb-1.0-0
+    license: &kvm_libusb_1_0_0_licenses
+      - GPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libusbredirparser1
+    license: *kvm_libacl1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libuuid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libxau6
+    license: HPND-sell-variant
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libxdmcp6
+    license: HPND-sell-variant
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libzstd1
+    license: *kvm_libzstd1_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/logsave
+    license: *kvm_e2fsprogs_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/lsb-base
+    license: *kvm_lsb_base_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/mawk
+    license: *kvm_busybox_static_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/passwd
+    license: &kvm_passwd_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/perl-base
+    license: *kvm_perl_base_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/qemu-system-common
+    license: &kvm_qemu_system_common_licenses
+      - BSD-1-Clause
+      - BSD-3-Clause
+      - CC-BY-3.0
+      - GPL-2.0
+      - LGPL-2.0
+      - MIT
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/qemu-system-data
+    license: *kvm_qemu_system_common_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/qemu-system-x86
+    license: *kvm_qemu_system_common_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/seabios
+    license: LicenseRef-SeaBIOS-Copyright-58b417317
+    exception_rationale: >-
+      The pinned BIOS notice includes LGPL terms, an LGPL/CPL grant with
+      a linking exception for LZMA code, and public-domain files. The
+      automatic LGPL summary omits that distinction; this identifier
+      records the complete verbatim notice. Used only as firmware for
+      the manual AMD64 RC test guest, not in gVisor release artifacts.
+  - dependency: apt/kvm_host_tools/amd64/tar
+    license: *kvm_tar_licenses
+    exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/util-linux
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_image_util_linux_rationale
+  - dependency: apt/qemu_build_deps/amd64/base-files
+    license: *apt_base_files_licenses
+    exception_rationale: &apt_qemu_build_deps_rationale >-
+      Used only in the declared QEMU test-emulator build sysroot and tool
+      closure, separate from gVisor release-artifact inputs.
+  - dependency: apt/qemu_build_deps/amd64/binutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/binutils-common
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/binutils-x86-64-linux-gnu
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/bzip2
+    license: *kvm_libbz2_1_0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/dpkg
+    license: *kvm_dpkg_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/dpkg-dev
+    license: *kvm_dpkg_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/gcc-11-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/gcc-12-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/guile-3.0-libs
+    license:
+      - FSFULLR
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libacl1
+    license: *kvm_libacl1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libasan6
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libatomic1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libattr1
+    license: *kvm_libacl1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libattr1-dev
+    license: *kvm_libacl1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libbinutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libblkid-dev
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libblkid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libbz2-1.0
+    license: *kvm_libbz2_1_0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libc-dev-bin
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libc6-dev
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libcap-ng-dev
+    license: *kvm_libcap_ng0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libcap-ng0
+    license: *kvm_libcap_ng0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libcom-err2
+    license: HPND
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libcrypt-dev
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The same pinned artifact and verbatim per-file notice audit are
+      retained from apt/syzkaller_sysroot/amd64/libcrypt-dev. Automatic
+      classification does not cover the package's complete notice. Used
+      only in the declared QEMU test-emulator build dependency closure,
+      separate from gVisor release-artifact inputs.
+  - dependency: apt/qemu_build_deps/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The same pinned artifact and verbatim per-file notice audit are
+      retained from apt/syzkaller_sysroot/amd64/libcrypt1. Automatic
+      classification does not cover the package's complete notice. Used
+      only in the declared QEMU test-emulator build dependency closure,
+      separate from gVisor release-artifact inputs.
+  - dependency: apt/qemu_build_deps/amd64/libctf-nobfd0
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libctf0
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libdpkg-perl
+    license: *kvm_dpkg_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libelf1
+    license: *kvm_libelf1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libfdt-dev
+    license: *kvm_libfdt1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libfdt1
+    license: *kvm_libfdt1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libffi-dev
+    license: *kvm_libffi8_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libffi8
+    license: *kvm_libffi8_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libgc1
+    license: LicenseRef-libgc-8.0.6
+    exception_rationale: >-
+      The pinned package notice permits use or copying for any purpose
+      with notice retention, and modification and distribution of modified
+      code with the retained notices plus a modification notice. Automatic
+      classification does not cover this complete supplier text, retained
+      under this explicit metadata identifier. Used only in the declared
+      QEMU test-emulator build dependency closure, separate from gVisor
+      release-artifact inputs.
+  - dependency: apt/qemu_build_deps/amd64/libgcc-11-dev
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libgcc-s1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libgdbm-compat4
+    license: *kvm_tar_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libgdbm6
+    license: *kvm_tar_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libglib2.0-0
+    license: *kvm_libglib2_0_0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libglib2.0-bin
+    license: *kvm_libglib2_0_0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libglib2.0-data
+    license: *kvm_libglib2_0_0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libglib2.0-dev
+    license: *kvm_libglib2_0_0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libglib2.0-dev-bin
+    license: *kvm_libglib2_0_0_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libgmp10
+    license: *kvm_libelf1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libgomp1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libgssapi-krb5-2
+    license: *kvm_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libitm1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libk5crypto3
+    license: *kvm_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libkeyutils1
+    license: *kvm_libkeyutils1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libkrb5-3
+    license: *kvm_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libkrb5support0
+    license: *kvm_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/liblsan0
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/liblzma5
+    license: *kvm_liblzma5_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libmount-dev
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libmount1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libmpdec3
+    license: *kvm_dpkg_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libnsl-dev
+    license: *kvm_libnsl2_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libnsl2
+    license: *kvm_libnsl2_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libperl5.34
+    license: *kvm_perl_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libpkgconf3
+    license:
+      - BSD-2-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - ISC
+      - MIT
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libpython3.10-minimal
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-Source-Code
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - HPND
+      - MIT
+      - Python-2.0.1
+      - Zlib
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libpython3.10-stdlib
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-Source-Code
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - HPND
+      - MIT
+      - Python-2.0.1
+      - Zlib
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libquadmath0
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libreadline8
+    license: &kvm_findutils_licenses
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libselinux1
+    license: *apt_libselinux1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libselinux1-dev
+    license: *apt_libselinux1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libsepol-dev
+    license: *kvm_libsemanage_common_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libsepol2
+    license: *kvm_libsemanage_common_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libsqlite3-0
+    license: *kvm_busybox_static_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libssl3
+    license: *kvm_libssl3_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libstdc++-11-dev
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libstdc++6
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libtirpc-common
+    license: *kvm_libtirpc_common_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libtirpc-dev
+    license: *kvm_libtirpc_common_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libtirpc3
+    license: *kvm_libtirpc_common_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libtsan0
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libubsan1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libunistring2
+    license: *kvm_libunistring2_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libuuid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/libzstd1
+    license: *kvm_libzstd1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/linux-libc-dev
+    license: *kvm_busybox_static_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/lto-disabled-list
+    license: *kvm_adduser_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/make-guile
+    license: *kvm_cpio_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/mawk
+    license: *kvm_busybox_static_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/media-types
+    license: LicenseRef-media-types-7.0.0
+    exception_rationale: >-
+      The pinned package notice marks all files public-domain and
+      describes them as public information compiled from multiple sources,
+      using an ad-hoc license label. The exact supplier notice is retained
+      under this metadata identifier rather than replaced by an invented
+      standardized license. Used only in the declared QEMU test-emulator
+      build dependency closure, separate from gVisor release-artifact
+      inputs.
+  - dependency: apt/qemu_build_deps/amd64/patch
+    license: *kvm_cpio_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/perl
+    license: *kvm_perl_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/perl-base
+    license: *kvm_perl_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/perl-modules-5.34
+    license: *kvm_perl_base_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/pkgconf
+    license:
+      - BSD-2-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - ISC
+      - MIT
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/python3.10
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-Source-Code
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - HPND
+      - MIT
+      - Python-2.0.1
+      - Zlib
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/python3.10-minimal
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-Source-Code
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - HPND
+      - MIT
+      - Python-2.0.1
+      - Zlib
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/readline-common
+    license: *kvm_findutils_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/rpcsvc-proto
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/tar
+    license: *kvm_tar_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/uuid-dev
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/qemu_build_deps/amd64/xz-utils
+    license: *kvm_liblzma5_licenses
+    exception_rationale: *apt_qemu_build_deps_rationale
+  - dependency: apt/release_tools/amd64/adduser
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: &apt_release_tools_rationale >-
+      Currently used in test/release's tool image to construct and
+      verify test repositories. That image is separate from the declared
+      gVisor release-artifact inputs.
+  - dependency: apt/release_tools/amd64/apt
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/apt-utils
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/base-files
+    license: *apt_base_files_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/bash
+    license:
+      - BSD-4-Clause-UC
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/bzip2
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/coreutils
+    license:
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/debianutils
+    license: GPL-2.0
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/diffutils
+    license: &apt_diffutils_licenses
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/dirmngr
+    license: &apt_dirmngr_licenses
+      - BSD-3-Clause
+      - CC0-1.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/dpkg
+    license: &apt_dpkg_licenses
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/dpkg-sig
+    license: *apt_base_files_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gcc-12-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gnupg
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gnupg-l10n
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gnupg-utils
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gpg
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gpg-agent
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gpg-wks-client
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gpg-wks-server
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gpgconf
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gpgsm
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gpgv
+    license: *apt_dirmngr_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/grep
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/gzip
+    license: LicenseRef-Gzip-Copyright-7fc508e25
+    exception_rationale: >-
+      The pinned notice references a nonexistent GFDL-3 common-license
+      file. Its verbatim notice is recorded under an explicit metadata
+      identifier. Currently used in test/release's tool image to
+      construct and verify test repositories. That image is separate
+      from the declared gVisor release-artifact inputs.
+  - dependency: apt/release_tools/amd64/init-system-helpers
+    license: &apt_init_system_helpers_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libacl1
+    license: &apt_libacl1_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libapt-pkg6.0
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libassuan0
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libattr1
+    license: *apt_libacl1_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libaudit-common
+    license: &apt_libaudit_common_licenses
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0-only
+      - LGPL-2.1
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libaudit1
+    license: *apt_libaudit_common_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libbz2-1.0
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libcap-ng0
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libcap2
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libcom-err2
+    license: HPND
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libconfig-file-perl
+    license:
+      - GPL-2.0
+      - LGPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The pinned per-file license inventory cannot be classified
+      automatically. Its verbatim notice is recorded under an explicit
+      metadata identifier. Currently used in test/release's tool image
+      to construct and verify test repositories. That image is separate
+      from the declared gVisor release-artifact inputs.
+  - dependency: apt/release_tools/amd64/libffi8
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgcc-s1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgcrypt20
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgdbm-compat4
+    license: &apt_libgdbm_compat4_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgdbm6
+    license: *apt_libgdbm_compat4_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgnutls30
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - CC0-1.0
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgpg-error0
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libgssapi-krb5-2
+    license: &apt_libgssapi_krb5_2_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libhogweed6
+    license: &apt_libhogweed6_licenses
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libidn2-0
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libk5crypto3
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libkeyutils1
+    license: &apt_libkeyutils1_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libkrb5-3
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libkrb5support0
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libksba8
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libldap-2.5-0
+    license:
+      - BSD-4-Clause-UC
+      - HPND-sell-variant
+      - ISC
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/liblz4-1
+    license: *apt_liblz4_1_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/liblzma5
+    license: &apt_liblzma5_licenses
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libnettle8
+    license: *apt_libhogweed6_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libnpth0
+    license:
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libnsl2
+    license: &apt_libnsl2_licenses
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libp11-kit0
+    license:
+      - Apache-2.0
+      - BSD-3-Clause
+      - ISC
+      - LGPL-2.1
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libpam-modules
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libpam-modules-bin
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libpam0g
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libperl5.34
+    license: &apt_libperl5_34_licenses
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libreadline8
+    license: *apt_diffutils_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libsasl2-2
+    license: &apt_libsasl2_2_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - HPND-sell-variant
+      - OLDAP-2.8
+      - OpenSSL
+      - RSA-MD
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libsasl2-modules-db
+    license: *apt_libsasl2_2_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libseccomp2
+    license: LGPL-2.1
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libselinux1
+    license: *apt_libselinux1_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libsemanage-common
+    license: &apt_libsemanage_common_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libsemanage2
+    license: *apt_libsemanage_common_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libsepol2
+    license: *apt_libsemanage_common_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libsqlite3-0
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libssl3
+    license: &apt_libssl3_licenses
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libstdc++6
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libsystemd0
+    license: &apt_libsystemd0_licenses
+      - CC0-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libtasn1-6
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libtirpc-common
+    license: &apt_libtirpc_common_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libtirpc3
+    license: *apt_libtirpc_common_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libudev1
+    license: *apt_libsystemd0_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libunistring2
+    license:
+      - FSFULLR
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libxxhash0
+    license: *apt_dpkg_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/libzstd1
+    license: &apt_libzstd1_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - MIT
+      - Zlib
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/lsb-base
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/passwd
+    license: *apt_init_system_helpers_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/perl
+    license: *apt_libperl5_34_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/perl-base
+    license: *apt_libperl5_34_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/perl-modules-5.34
+    license: *apt_libperl5_34_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/pinentry-curses
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/readline-common
+    license: *apt_diffutils_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/tar
+    license: *apt_libgdbm_compat4_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/ubuntu-keyring
+    license: *apt_base_files_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/xz-utils
+    license: *apt_liblzma5_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/release_tools/amd64/zstd
+    license: *apt_libzstd1_licenses
+    exception_rationale: *apt_release_tools_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/base-files
+    license: *apt_base_files_licenses
+    exception_rationale: &apt_syzkaller_sysroot_rationale >-
+      Currently used as the C/C++ sysroot for the Syzkaller test manager
+      and executors. This test-tool closure is separate from the
+      declared gVisor release-artifact inputs.
+  - dependency: apt/syzkaller_sysroot/amd64/dpkg
+    license: *apt_dpkg_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/gcc-11-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/gcc-12-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libacl1
+    license: *apt_libacl1_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libasan6
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libatomic1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libbz2-1.0
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libc-dev-bin
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libc6-dev
+    license: *apt_libc6_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libcom-err2
+    license: HPND
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libcrypt-dev
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The pinned per-file license inventory cannot be classified
+      automatically. Its verbatim notice is recorded under an explicit
+      metadata identifier. Currently used as the C/C++ sysroot for the
+      Syzkaller test manager and executors. This test-tool closure is
+      separate from the declared gVisor release-artifact inputs.
+  - dependency: apt/syzkaller_sysroot/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The pinned per-file license inventory cannot be classified
+      automatically. Its verbatim notice is recorded under an explicit
+      metadata identifier. Currently used as the C/C++ sysroot for the
+      Syzkaller test manager and executors. This test-tool closure is
+      separate from the declared gVisor release-artifact inputs.
+  - dependency: apt/syzkaller_sysroot/amd64/libgcc-11-dev
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libgcc-s1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libgomp1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libgssapi-krb5-2
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libitm1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libk5crypto3
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libkeyutils1
+    license: *apt_libkeyutils1_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libkrb5-3
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libkrb5support0
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/liblsan0
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/liblzma5
+    license: *apt_liblzma5_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libnsl-dev
+    license: *apt_libnsl2_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libnsl2
+    license: *apt_libnsl2_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libquadmath0
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libselinux1
+    license: *apt_libselinux1_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libssl3
+    license: *apt_libssl3_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libstdc++-11-dev
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libstdc++6
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libtirpc-common
+    license: *apt_libtirpc_common_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libtirpc-dev
+    license: *apt_libtirpc_common_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libtirpc3
+    license: *apt_libtirpc_common_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libtsan0
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libubsan1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/libzstd1
+    license: *apt_libzstd1_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/linux-libc-dev
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/perl-base
+    license: *apt_libperl5_34_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/rpcsvc-proto
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/syzkaller_sysroot/amd64/tar
+    license: *apt_libgdbm_compat4_licenses
+    exception_rationale: *apt_syzkaller_sysroot_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/base-files
+    license: *apt_base_files_licenses
+    exception_rationale: &tcg_tools_rationale >-
+      The pinned packages provide the QEMU host tools and Linux guest used
+      only by manual full-system 64K-page tests. Their package copyright
+      notices are retained. They are not linked into or packaged with
+      gVisor release artifacts.
+  - dependency: apt/tcg_arm64_guest/arm64/base-passwd
+    license: GPL-2.0
+    exception_rationale: *guest_harness_tools_rationale
+
+  - dependency: apt/tcg_arm64_guest/arm64/bash
+    license: &tcg_bash_licenses
+      - BSD-4-Clause-UC
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/busybox-static
+    license: &tcg_busybox_static_licenses
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/coreutils
+    license: &tcg_coreutils_licenses
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/debianutils
+    license: GPL-2.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/dpkg
+    license: *apt_dpkg_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/findutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/gcc-12-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/grep
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/init-system-helpers
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/iproute2
+    license: *tcg_busybox_static_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/kmod
+    license: &tcg_kmod_licenses
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libacl1
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libattr1
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libaudit-common
+    license: *kvm_libaudit_common_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libaudit1
+    license: *kvm_libaudit_common_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libblkid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libbpf0
+    license: &tcg_libbpf0_licenses
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-only
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libbsd0
+    license: &tcg_libbsd0_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - Beerware
+      - ISC
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libbz2-1.0
+    license: &tcg_libbz2_1_0_licenses
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libc-bin
+    license: *apt_libc6_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libcap-ng0
+    license: *kvm_libcap_ng0_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libcap2
+    license: &tcg_libcap2_licenses
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libcap2-bin
+    license: *tcg_libcap2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      This is the same pinned artifact and verbatim notice already
+      audited under apt/container_test_tools/arm64/libcrypt1.
+      It supplies only the manual full-system test tools or guest,
+      not gVisor release artifacts.
+  - dependency: apt/tcg_arm64_guest/arm64/libelf1
+    license: &tcg_libelf1_licenses
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libgcc-s1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libgcrypt20
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libgmp10
+    license: *tcg_libelf1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libgpg-error0
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libkmod2
+    license: *tcg_kmod_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/liblz4-1
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/liblzma5
+    license: *apt_liblzma5_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libmd0
+    license: &tcg_libmd0_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - Beerware
+      - ISC
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libmnl0
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libmount1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libpam0g
+    license: *kvm_cpio_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libprocps8
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libselinux1
+    license: *apt_libselinux1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libsmartcols1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libssl3
+    license: *apt_libssl3_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libsystemd0
+    license:
+      - CC0-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libudev1
+    license: *kvm_libsystemd0_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libuuid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libxtables12
+    license: &tcg_libxtables12_licenses
+      - Artistic-1.0-Perl
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libzstd1
+    license: *apt_libzstd1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/linux-base
+    license: *tcg_busybox_static_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/linux-image-6.8.0-138-generic-64k
+    license: *tcg_busybox_static_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/linux-modules-6.8.0-138-generic-64k
+    license: *tcg_busybox_static_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/lsb-base
+    license: &tcg_lsb_base_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/mawk
+    license: *tcg_busybox_static_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/mount
+    license: *apt_libuuid1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/perl-base
+    license: *apt_libperl5_34_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/procps
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/sed
+    license: LicenseRef-Sed-Copyright-60886b626
+    exception_rationale: >-
+      The pinned package's copyright and embedded manual were audited
+      directly: GNU sed is GPL-3.0-or-later and its retained manual is
+      GFDL-1.3-or-later, with no invariant sections or cover texts.
+      Automatic classification omits the manual's terms. Used only by
+      the declared manual test guest, which retains both notices and
+      complete license texts, not as a gVisor release-artifact input.
+  - dependency: apt/tcg_arm64_guest/arm64/tar
+    license: *apt_libgdbm_compat4_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/util-linux
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_syscall_groups_rationale
+  - dependency: apt/tcg_host_tools/amd64/acl
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/adduser
+    license: &tcg_adduser_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/base-files
+    license: *apt_base_files_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/coreutils
+    license: *tcg_coreutils_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/dpkg
+    license: *apt_dpkg_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/e2fsprogs
+    license: &tcg_e2fsprogs_licenses
+      - GPL-2.0
+      - LGPL-2.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/fakeroot
+    license: *guest_image_fakeroot_licenses
+    exception_rationale: *guest_image_fakeroot_rationale
+  - dependency: apt/tcg_host_tools/amd64/gcc-12-base
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/iso-codes
+    license: &tcg_iso_codes_licenses
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/kmod
+    license: *tcg_kmod_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libacl1
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libaio1
+    license: *tcg_iso_codes_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libasound2
+    license: *tcg_iso_codes_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libasound2-data
+    license: *tcg_iso_codes_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libattr1
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libaudit-common
+    license: *apt_libaudit_common_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libaudit1
+    license: *apt_libaudit_common_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libblkid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libbrlapi0.8
+    license: LGPL-2.1
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libbsd0
+    license: *tcg_libbsd0_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libbz2-1.0
+    license: *tcg_libbz2_1_0_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libc6
+    license: *apt_libc6_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libcacard0
+    license: *tcg_kmod_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libcap-ng0
+    license: &tcg_libcap_ng0_licenses
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libcap2
+    license: *tcg_libcap2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libcap2-bin
+    license: *tcg_libcap2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libcom-err2
+    license: HPND
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      This is the same pinned artifact and verbatim notice already
+      audited under apt/release_tools/amd64/libcrypt1.
+      It supplies only the manual full-system test tools or guest,
+      not gVisor release artifacts.
+  - dependency: apt/tcg_host_tools/amd64/libdaxctl1
+    license: &tcg_libdaxctl1_licenses
+      - CC0-1.0
+      - GPL-2.0
+      - LGPL-2.1
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libdw1
+    license: *tcg_libelf1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libelf1
+    license: *tcg_libelf1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libext2fs2
+    license: *tcg_e2fsprogs_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libfakeroot
+    license: *guest_image_fakeroot_licenses
+    exception_rationale: *guest_image_fakeroot_rationale
+  - dependency: apt/tcg_host_tools/amd64/libfdt1
+    license: &tcg_libfdt1_licenses
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libffi8
+    license: &tcg_libffi8_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libfuse3-3
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgbm1
+    license: &tcg_libgbm1_licenses
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSL-1.0
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+      - SGI-B-2.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgcc-s1
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgcrypt20
+    license: &tcg_libgcrypt20_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libglib2.0-0
+    license: &tcg_libglib2_0_0_licenses
+      - GPL-2.0-or-later
+      - LGPL-2.0-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgmp10
+    license: *tcg_libelf1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgnutls30
+    license: &tcg_libgnutls30_licenses
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - CC0-1.0
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgpg-error0
+    license: &tcg_libgpg_error0_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgssapi-krb5-2
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgstreamer-plugins-base1.0-0
+    license: &tcg_libgstreamer_plugins_base1_0_0_licenses
+      - LGPL-2.0-or-later
+      - LGPL-3.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libgstreamer1.0-0
+    license: *tcg_libgstreamer_plugins_base1_0_0_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libhogweed6
+    license: *apt_libhogweed6_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libibverbs1
+    license: &tcg_libibverbs1_licenses
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - CC0-1.0
+      - CPL-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - Linux-OpenIB
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libidn2-0
+    license: &tcg_libidn2_0_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libjpeg-turbo8
+    license: &tcg_libjpeg_turbo8_licenses
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - RSA-MD
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libjpeg8
+    license: &tcg_libjpeg8_licenses
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libk5crypto3
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libkeyutils1
+    license: *apt_libkeyutils1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libkmod2
+    license: *tcg_kmod_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libkrb5-3
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libkrb5support0
+    license: *apt_libgssapi_krb5_2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/liblz4-1
+    license: *apt_liblz4_1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/liblzma5
+    license: *apt_liblzma5_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libmd0
+    license: *tcg_libmd0_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libmount1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libndctl6
+    license: *tcg_libdaxctl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libnettle8
+    license: *apt_libhogweed6_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libnl-3-200
+    license: &tcg_libnl_3_200_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+      - LGPL-2.1
+      - LGPL-2.1-only
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libnl-route-3-200
+    license: *tcg_libnl_3_200_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libnsl2
+    license: *apt_libnsl2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libnspr4
+    license: MPL-2.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libnss3
+    license: &tcg_libnss3_licenses
+      - HPND
+      - HPND-sell-variant
+      - MIT
+      - MPL-2.0
+      - Zlib
+      - blessing
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libnuma1
+    license: &tcg_libnuma1_licenses
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libp11-kit0
+    license: &tcg_libp11_kit0_licenses
+      - Apache-2.0
+      - BSD-3-Clause
+      - ISC
+      - LGPL-2.1
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libpam-modules
+    license: &tcg_cpio_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libpam-modules-bin
+    license: *tcg_cpio_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libpam0g
+    license: *tcg_cpio_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libpcsclite1
+    license: &tcg_libpcsclite1_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libpng16-16
+    license: &tcg_libpng16_16_licenses
+      - Apache-2.0
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/librdmacm1
+    license: *tcg_libibverbs1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsasl2-2
+    license: *apt_libsasl2_2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsasl2-modules-db
+    license: *apt_libsasl2_2_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libseccomp2
+    license: LGPL-2.1
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libselinux1
+    license: *apt_libselinux1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsemanage-common
+    license: *apt_libsemanage_common_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsemanage2
+    license: *apt_libsemanage_common_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsepol2
+    license: *apt_libsemanage_common_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsmartcols1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_image_util_linux_rationale
+  - dependency: apt/tcg_host_tools/amd64/libspice-server1
+    license: &tcg_libspice_server1_licenses
+      - BSD-3-Clause
+      - HPND
+      - HPND-sell-variant
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsqlite3-0
+    license: *tcg_busybox_static_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libss2
+    license: HPND
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libssl3
+    license: *apt_libssl3_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libstdc++6
+    license: *apt_gcc_12_base_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsystemd0
+    license: *apt_libsystemd0_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libtasn1-6
+    license: &tcg_libtasn1_6_licenses
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libtirpc-common
+    license: *apt_libtirpc_common_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libtirpc3
+    license: *apt_libtirpc_common_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libudev1
+    license: *apt_libsystemd0_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libunistring2
+    license: &tcg_libunistring2_licenses
+      - FSFULLR
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libunwind8
+    license: &tcg_libunwind8_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/liburing2
+    license: &tcg_liburing2_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libusb-1.0-0
+    license: &tcg_libusb_1_0_0_licenses
+      - GPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libusbredirparser1
+    license: *apt_libacl1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libuuid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libxau6
+    license: HPND-sell-variant
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libxdmcp6
+    license: HPND-sell-variant
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libzstd1
+    license: *apt_libzstd1_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/logsave
+    license: *tcg_e2fsprogs_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/lsb-base
+    license: *tcg_lsb_base_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/mawk
+    license: *tcg_busybox_static_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/passwd
+    license: *apt_init_system_helpers_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/perl-base
+    license: *apt_libperl5_34_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/qemu-system-arm
+    license: &tcg_qemu_system_arm_licenses
+      - BSD-1-Clause
+      - BSD-3-Clause
+      - CC-BY-3.0
+      - GPL-2.0
+      - LGPL-2.0
+      - MIT
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/qemu-system-common
+    license: *tcg_qemu_system_arm_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/qemu-system-data
+    license: *tcg_qemu_system_arm_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/tar
+    license: *apt_libgdbm_compat4_licenses
+    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/util-linux
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_image_util_linux_rationale
+  - dependency: codeql_bundle
+    license: LicenseRef-CodeQL-Bundle-2.27.1
+    exception_rationale: >-
+      The pinned CodeQL bundle is used only to analyze the public,
+      Apache-2.0 gVisor codebase hosted and maintained on GitHub. Its
+      shipped terms allow that analysis and automated database generation;
+      GitHub documents external CI use. The bundle and its notices remain
+      intact as analysis tool inputs and are not declared gVisor
+      release-artifact inputs. LicenseRef-CodeQL-Bundle-2.27.1 identifies
+      the shipped top-level terms and separate component licenses and
+      notices; it does not replace those grants. This exception does not
+      authorize analyzing private code, publishing the tool, or offering
+      it as a service to others.
+  - dependency: gawk
+    license: GPL-3.0-or-later
+    exception_rationale: >-
+      The source-built executable is used by rules_distroless to process
+      tar metadata when constructing the release test's tool image. It is
+      neither linked into nor included in the gVisor release artifacts.
+  - dependency: github.com/opencontainers/go-digest
+    license: &module_documentation_licenses
+      - Apache-2.0
+      - CC-BY-SA-4.0
+    exception_rationale: &go_digest_documentation_rationale >-
+      The module's code is Apache-2.0. Its LICENSE.docs contains CC-BY-SA-4.0
+      for the README and CONTRIBUTING documentation already in the archive.
+      Allow this complete bundled-notice set for the existing module inputs;
+      the documentation license does not reclassify the Go code. The README's
+      Attribution wording differs from the full ShareAlike text in LICENSE.docs,
+      so retain the latter identifier without resolving that wording conflict.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
@@ -44,24 +4629,500 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: kcov_linux_source
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The pinned kernel COPYING file specifies GPL version 2 only, with
+      Linux-syscall-note covering ordinary system calls. The referenced
+      GPL text and syscall exception were audited at fd73f4a66.
+      File-specific compatible terms remain in the source tree. Used
+      only for native syscall test guests, not linked into or packaged
+      with gVisor releases.
+      https://github.com/torvalds/linux/blob/fd73f4a66/COPYING
+
+  - dependency: kvm_amd64_rc_image
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The pinned Ubuntu mainline package's embedded copyright notice was
+      audited directly. Used only by the manual AMD64 RC test guest, not
+      as a declared input to gVisor release artifacts; retain its notice
+      and the guest's complete GPL-2 text. Automatic archive classification
+      does not support this upstream URL.
+  - dependency: kvm_amd64_rc_modules
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The pinned Ubuntu mainline package's embedded copyright notice was
+      audited directly. Used only by the manual AMD64 RC test guest, not
+      as a declared input to gVisor release artifacts; retain its notice
+      and the guest's complete GPL-2 text. Automatic archive classification
+      does not support this upstream URL.
+  - dependency: kythe_release
+    license:
+      - Apache-2.0
+      - NCSA
+    exception_rationale: >-
+      Kythe is Apache-2.0; its LICENSE also includes the legacy LLVM
+      University of Illinois/NCSA grant for incorporated LLVM code. That
+      grant permits redistribution with copyright notices, conditions and
+      disclaimers retained, and prohibits using contributors' names for
+      endorsement without permission.
+  - dependency: libpluginstack
+    license:
+      - Apache-2.0
+      - BSD-3-Clause
+      - CC0-1.0
+    exception_rationale: >-
+      The existing TLDK plugin uses Apache-2.0 libraries, the CC0-1.0
+      implementation in lib/libtle_l4p/halfsiphash.h, and BSD-3-Clause code
+      in its DPDK patch series. This records those existing dependencies
+      when replacing the plugin's implicit source downloads with pinned
+      Bazel inputs. The optional GPL packetdrill integration is not built.
   - dependency: llvm-raw
     license:
       - Apache-2.0 WITH LLVM-exception
-      - MIT
+      - NCSA
     exception_rationale: >-
       LLVM is part of the NVIDIA GPU test toolchain only and is not
       distributed with gVisor. The LLVM exception only relaxes
-      Apache-2.0's requirements, and the MIT match comes from third-party
-      notices embedded in LICENSE.TXT.
-  - dependency: qemu_user_amd64
+      Apache-2.0's requirements. LICENSE.TXT also includes LLVM's legacy
+      University of Illinois/NCSA grant, which permits redistribution with
+      copyright notices, conditions and disclaimers retained and prohibits
+      using contributors' names for endorsement without permission.
+  - dependency: module_proxy/exported_go_modules/github.com/docker/go-metrics
+    license: *module_documentation_licenses
+    exception_rationale: >-
+      The module's code is Apache-2.0. Its LICENSE.docs contains CC-BY-SA-4.0
+      for the README and docs directory already in the archive. Allow this
+      complete bundled-notice set for the existing module inputs; the
+      documentation license does not reclassify the Go code. The README's
+      Attribution wording differs from the full ShareAlike text in LICENSE.docs,
+      so retain the latter identifier without resolving that wording conflict.
+  - dependency: module_proxy/exported_go_modules/github.com/opencontainers/go-digest
+    license: *module_documentation_licenses
+    exception_rationale: *go_digest_documentation_rationale
+  - dependency: module_proxy/exported_go_modules/github.com/rcrowley/go-metrics
+    license: BSD-2-Clause-Views
+    exception_rationale: >-
+      The module's LICENSE permits source and binary redistribution with
+      copyright notices, conditions and disclaimers retained. Its final
+      paragraph says the authors' views and conclusions do not represent
+      Richard Crowley's official policies.
+      This exception allows this module under BSD-2-Clause-Views, preserving
+      that paragraph alongside the two redistribution conditions rather than
+      reducing the notice to BSD-2-Clause.
+  - dependency: module_proxy/exported_go_modules/github.com/veraison/go-cose
+    license: MPL-2.0
+    exception_rationale: >-
+      Go-cose is in the offline Go build's dependency graph through
+      containerd, hcsshim and cosesign1go. The checked Linux AMD64 cgo
+      package list for gVisor's exported Go source contains no go-cose
+      packages. Allow MPL-2.0 for this module. Recheck its use when
+      changing dependencies or build configurations: this exception also
+      permits later versions of go-cose under MPL-2.0 and does not prevent
+      builds from importing the code.
+  - dependency: module_proxy/syzkaller_modules/github.com/apache/arrow/go/v15
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSL-1.0
+      - HPND
+      - MIT
+      - NCSA
+      - OpenSSL
+      - Zlib
+    exception_rationale: >-
+      The module's root LICENSE.txt aggregates Apache and third-party notices.
+      The Boost, historical c-ares and LLVM NCSA grants permit use and
+      redistribution subject to their respective notice, disclaimer and
+      name-use conditions. This exception allows the module supplied to the
+      Syzkaller build with this complete observed license set. Some notices
+      explicitly concern C++ sources or binary Python distributions; the set
+      does not establish which grants apply to the compiled Go packages.
+  - dependency: npm/nodejs26.12.0/doc/node_modules/@orama/core
+    license: AGPL-3.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 documentation
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/doc/node_modules/@orama/oramacore-events-parser
+    license: AGPL-3.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 documentation
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/doc/node_modules/lightningcss-wasm
+    license: MPL-2.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 documentation
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/caniuse-lite
+    license: CC-BY-4.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/minimatch
+    license: BlueOak-1.0.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/spdx-exceptions
+    license: CC-BY-3.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/spdx-license-ids
+    license: CC0-1.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/uri-js
+    license: BSD-2-Clause-Views
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+      The full notice includes the BSD views and conclusions clause;
+      the package manifest uses the shorter BSD-2-Clause identifier.
+  - dependency: nvidia_driver_535_129_03
+    license: &nvidia_driver_licenses
+      - GPL-2.0
+      - MIT
+    exception_rationale: &nvidia_driver_rationale >-
+      These snapshots supply headers for the existing NVIDIA ABI parity test.
+      COPYING licenses individual files under MIT unless otherwise noted and
+      describes linked Linux kernel modules as MIT/GPLv2. The build only parses
+      headers into ABI JSON; it does not build or distribute an NVIDIA kernel
+      module or link driver code into gVisor. The scanner's GPL-2.0 identifier
+      describes the included license text; it does not assert a later-version
+      grant.
+  - dependency: nvidia_driver_535_183_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_247_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_261_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_274_02
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_288_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_309_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_550_90_12
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_124_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_133_20
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_172_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_195_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_105_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_126_09
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_126_20
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_159_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_159_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_167_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_173_02
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_178_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_65_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_590_48_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_610_57_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_615_71_09
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: plugin_dpdk
+    license:
+      - BSD-3-Clause
+      - GPL-2.0-only
+    exception_rationale: >-
+      The existing plugin links DPDK's BSD-3-Clause user-space libraries
+      and drivers. GPL-2.0-only applies to buildtools/pmdinfogen, which
+      generates device metadata during the build and is not linked into
+      the plugin archive or gVisor executables. Kernel modules are disabled.
+  - dependency: pypi/codespell-2.3.0-py3-none-any.whl
+    license: GPL-2.0
+    exception_rationale: >-
+      Codespell is the existing standalone spelling checker for source and
+      documentation. Its pinned wheel is used only by development checks;
+      it is neither linked into nor included in gVisor release artifacts.
+  - dependency: pypi/setuptools-84.0.0-py3-none-any.whl
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - LGPL-3.0
+      - MIT
+    exception_rationale: >-
+      Setuptools is the declared build backend for the Python distribution,
+      used only by the Bazel execution tool. Its wheel bundles autocommand
+      under LGPLv3 or later, as stated in all six vendored source files,
+      alongside permissively licensed dependencies. The scanner's LGPL-3.0
+      identifier describes the included license text without narrowing that
+      grant. These tools are not distribution runtime requirements or payload
+      files.
+      The distribution action stages only the declared project sources.
+  - dependency: qemu_source
+    license: LicenseRef-QEMU-11.1.2-Source
+    exception_rationale: >-
+      The pinned QEMU distribution and bundled build tools are used only
+      to build the ARM full-system test emulator. The source license
+      declares the emulator as a whole GPLv2 with compatible
+      file-specific terms; the retained audit separately records bundled
+      Meson, pycotap and qemu.qmp notices. The build disables
+      installation of firmware blobs and copies only the emulator
+      executable and build evidence to declared test outputs. Separately
+      licensed firmware is not represented as GPLv2 by this audit. This
+      scoped exception does not authorize linking or packaging QEMU in
+      gVisor release artifacts.
+  # QEMU COPYING contains the GPLv2 text and its example GPLv2-or-later
+  # notice. These are the scanner identifiers for that text, not an
+  # assertion that every bundled component offers a later-license option.
+  - dependency: qemu_user_prebuilt_linux_amd64_aarch64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for aarch64 target binaries on amd64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_arm
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for arm target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_i386
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for i386 target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_mips64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for mips64 target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_ppc
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for ppc target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_ppc64le
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for ppc64le target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_riscv32
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for riscv32 target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_riscv64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for riscv64 target binaries on amd64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_s390x
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for s390x target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_amd64_x86_64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for x86_64 target binaries on amd64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_aarch64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for aarch64 target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_arm
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for arm target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_i386
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for i386 target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_mips64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for mips64 target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_ppc
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for ppc target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_ppc64le
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for ppc64le target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_riscv32
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for riscv32 target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_riscv64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for riscv64 target binaries on arm64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_s390x
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for s390x target binaries on arm64 build
+      machines, declared by the user toolchain alongside the selected
+      cross-compilers. The executable uses QEMU's GPL terms, not the MIT
+      license of its build scripts. QEMU is neither linked into nor
+      distributed with gVisor.
+  - dependency: qemu_user_prebuilt_linux_arm64_x86_64
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: >-
+      QEMU user-mode emulator for x86_64 target binaries on arm64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
+  - dependency: tcg_arm64_rc_image
     license: GPL-2.0-only
     exception_rationale: >-
-      QEMU user-mode emulators for x86_64 build machines, run as a build tool
-      to execute binaries built for the target architecture when
-      cross-compiling. QEMU is neither linked into nor distributed with gVisor.
-  - dependency: qemu_user_arm64
+      The pinned Ubuntu mainline package's embedded copyright notice was
+      audited directly. Used only by the manual RC test guest, not as a
+      declared input to gVisor release artifacts; retain its notice and
+      the guest's complete GPL-2 text. Automatic archive classification
+      does not support this upstream URL.
+  - dependency: tcg_arm64_rc_modules
     license: GPL-2.0-only
     exception_rationale: >-
-      QEMU user-mode emulators for arm64 build machines, run as a build tool
-      to execute binaries built for the target architecture when
-      cross-compiling. QEMU is neither linked into nor distributed with gVisor.
+      The matching modules package carries the same audited GPL-2 notice
+      as tcg_arm64_rc_image. Used only by that manual RC test guest, with
+      the notice and complete GPL-2 text retained.

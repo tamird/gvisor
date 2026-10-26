@@ -30,6 +30,7 @@
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <list>
 #include <memory>
 #include <optional>
@@ -350,8 +351,18 @@ TEST(Cgroup, MigrateToSubcontainerThread) {
 }
 
 TEST(Cgroup, MigrateInvalidPID) {
-  SKIP_IF(!CgroupsAvailable());
-  Cgroup c = Cgroup::RootCgroup("/sys/fs/cgroup/cpuacct");
+  const char* cgroup_v2 = std::getenv("CGROUPV2");
+  // Native execution requires the existing disposable cgroup-v1 fixture.
+  SKIP_IF(!IsRunningOnGvisor() &&
+          (cgroup_v2 == nullptr || absl::string_view(cgroup_v2) != "false"));
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SYS_ADMIN)));
+  SKIP_IF(!IsRunningOnGvisor() &&
+          !ASSERT_NO_ERRNO_AND_VALUE(InInitialUserNamespace()));
+  // A controller-free hierarchy also exercises the native kernel without
+  // changing the test process's resource-controller memberships.
+  Mounter m(ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir()));
+  Cgroup c = ASSERT_NO_ERRNO_AND_VALUE(
+      m.MountCgroupfs(absl::StrCat("none,name=pid_range_", getpid())));
 
   EXPECT_THAT(c.WriteControlFile("cgroup.procs", "-1"), PosixErrorIs(EINVAL));
   EXPECT_THAT(c.WriteControlFile("cgroup.procs", "not-a-number"),

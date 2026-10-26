@@ -132,6 +132,162 @@ func TestDeclaredFactsErrors(t *testing.T) {
 	}
 }
 
+func TestExportDataInputs(t *testing.T) {
+	savedImports, savedPaths, savedStdlib := flags.ImportMap, flags.ImportPaths, flags.Stdlib
+	t.Cleanup(func() {
+		flags.ImportMap, flags.ImportPaths, flags.Stdlib = savedImports, savedPaths, savedStdlib
+	})
+	const canonical = "example.org/private/dep"
+	for _, tc := range []struct {
+		name    string
+		data    string
+		stdlib  bool
+		missing bool
+		wantErr bool
+	}{
+		{name: "direct"},
+		{name: "stdlib", stdlib: true},
+		{name: "missing", missing: true, wantErr: true},
+		{name: "malformed", data: "invalid", wantErr: true},
+		{name: "compiler_archive", data: "!<arch>\n", wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			flags.ImportMap = make(map[string]string)
+			flags.ImportPaths = map[string]string{"alias": canonical}
+			flags.Stdlib = t.TempDir()
+			filename := filepath.Join(flags.Stdlib, canonical+".export")
+			if !tc.missing {
+				pkg := types.NewPackage(canonical, "dep")
+				pkg.MarkComplete()
+				if err := writeExport(filename, token.NewFileSet(), pkg); err != nil {
+					t.Fatal(err)
+				}
+				if tc.data != "" {
+					if err := os.WriteFile(filename, []byte(tc.data), 0600); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			if !tc.stdlib {
+				flags.ImportMap[canonical] = filename
+			}
+			i := &importer{fset: token.NewFileSet(), cache: make(map[string]*importerEntry), imports: make(map[string]*types.Package)}
+			pkg, err := i.Import("alias")
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("Import() = %v, %v; want error: %t", pkg, err, tc.wantErr)
+			}
+			if !tc.wantErr {
+				if got, want := pkg.Path(), canonical; got != want {
+					t.Errorf("package path = %q, want %q", got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestExportTargetSizes(t *testing.T) {
+	savedArch := flags.GOARCH
+	t.Cleanup(func() { flags.GOARCH = savedArch })
+	src := filepath.Join(t.TempDir(), "source.go")
+	if err := os.WriteFile(src, []byte(`package sizes
+import "unsafe"
+const Word = unsafe.Sizeof(uintptr(0))
+type Value [Word]byte
+`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		arch string
+		size int64
+	}{{"amd64", 8}, {"arm64", 8}, {"386", 4}} {
+		t.Run(tc.arch, func(t *testing.T) {
+			flags.GOARCH = tc.arch
+			i := &importer{fset: token.NewFileSet(), cache: make(map[string]*importerEntry), imports: make(map[string]*types.Package)}
+			pkg, _, _, err := i.checkPackage("sizes", []string{src})
+			if err != nil {
+				t.Fatal(err)
+			}
+			filename := filepath.Join(t.TempDir(), "sizes.export")
+			if err := writeExport(filename, i.fset, pkg); err != nil {
+				t.Fatal(err)
+			}
+			savedImports := flags.ImportMap
+			flags.ImportMap = map[string]string{"sizes": filename}
+			defer func() { flags.ImportMap = savedImports }()
+			consumer := &importer{fset: token.NewFileSet(), cache: make(map[string]*importerEntry), imports: make(map[string]*types.Package)}
+			loaded, err := consumer.Import("sizes")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := loaded.Scope().Lookup("Value").Type().Underlying().(*types.Array).Len(), tc.size; got != want {
+				t.Errorf("exported array length = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
+func TestBundleAndPackageExports(t *testing.T) {
+	savedAnalyzers, savedStdlib := allAnalyzers, flags.Stdlib
+	t.Cleanup(func() {
+		allAnalyzers, flags.Stdlib = savedAnalyzers, savedStdlib
+	})
+	// This fixture checks the export protocol independently of individual
+	// analyzers, which have their own binary and fact inputs.
+	allAnalyzers = nil
+	dir := t.TempDir()
+	sources := make(map[string][]string)
+	for path, source := range map[string]string{
+		"internal/abi": "package abi; type MapType struct { Size uintptr }",
+		"outer": `package outer
+import "internal/abi"
+type Value[T any] struct { Map abi.MapType; Data T }
+`,
+	} {
+		filename := filepath.Join(dir, path, "source.go")
+		if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filename, []byte(source), 0600); err != nil {
+			t.Fatal(err)
+		}
+		sources[path] = []string{filename}
+	}
+	flags.Stdlib = filepath.Join(dir, "exports")
+	if _, _, err := Bundle(sources, nil, flags.Stdlib); err != nil {
+		t.Fatal(err)
+	}
+	consumer := filepath.Join(dir, "consumer.go")
+	if err := os.WriteFile(consumer, []byte(`package consumer
+import "outer"
+type Value = outer.Value[string]
+`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var exported bytes.Buffer
+	if _, _, err := Package("consumer", []string{consumer}, &exported); err != nil {
+		t.Fatal(err)
+	}
+	// Package's consumer preloads internal/abi before importing outer. Its
+	// exported generic alias must still refer to that one canonical package.
+	filename := filepath.Join(flags.Stdlib, "consumer.export")
+	if err := os.WriteFile(filename, exported.Bytes(), 0600); err != nil {
+		t.Fatal(err)
+	}
+	i := &importer{fset: token.NewFileSet(), cache: make(map[string]*importerEntry), imports: make(map[string]*types.Package)}
+	pkg, err := i.Import("consumer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	internal, err := i.Import("internal/abi")
+	if err != nil {
+		t.Fatal(err)
+	}
+	value := pkg.Scope().Lookup("Value").Type().Underlying().(*types.Struct)
+	if got, want := value.Field(0).Type().(*types.Named).Obj().Pkg(), internal; got != want {
+		t.Errorf("exported field package = %p, want canonical internal package %p", got, want)
+	}
+}
+
 func TestDeprecatedImportedMethods(t *testing.T) {
 	for _, exported := range []bool{false, true} {
 		for _, indirect := range []bool{false, true} {

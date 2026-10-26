@@ -17,7 +17,7 @@ package boot
 import (
 	"fmt"
 	"math/rand"
-	"net"
+	"net/netip"
 	"os"
 	"runtime"
 	"strings"
@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/moby/sys/capability"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
@@ -39,6 +40,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/seccheck"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/pkg/unet"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
@@ -62,6 +64,9 @@ func init() {
 func testConfig() *config.Config {
 	testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
+	if err := testFlags.Parse(testutil.RuntimeTestFlags()); err != nil {
+		panic(err)
+	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		panic(err)
@@ -686,15 +691,12 @@ func TestNetworkConfig(t *testing.T) {
 		LoopbackLinks: []sentryapi.LoopbackLink{
 			{
 				Name: "lo",
-				Addresses: []sentryapi.IPWithPrefix{
-					{Address: net.IP("\x7f\x00\x00\x01"), PrefixLen: 8},
+				Addresses: []netip.Prefix{
+					netip.MustParsePrefix("127.0.0.1/8"),
 				},
 				Routes: []sentryapi.Route{
 					{
-						Destination: net.IPNet{
-							IP:   net.IP{127, 0, 0, 0},
-							Mask: net.IPMask{255, 0, 0, 0},
-						},
+						Destination: netip.MustParsePrefix("127.0.0.0/8"),
 					},
 				},
 			},
@@ -707,7 +709,7 @@ func TestNetworkConfig(t *testing.T) {
 	if err := l.ctrl.manager.GetNetworkConfig(nil, &networkArgs); err != nil {
 		t.Errorf("error calling NetworkConfig: %v", err)
 	}
-	if diff := cmp.Diff(networkArgs.LoopbackLinks, args.LoopbackLinks); diff != "" {
+	if diff := cmp.Diff(args.LoopbackLinks, networkArgs.LoopbackLinks, cmpopts.EquateComparable(netip.Prefix{}, netip.Addr{})); diff != "" {
 		t.Errorf("Network config content mismatch (-want +got):\n%s", diff)
 	}
 }

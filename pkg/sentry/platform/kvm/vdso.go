@@ -28,8 +28,8 @@ import (
 type vdsoImage struct {
 	f *elf.File
 
-	// data is the raw image. Its length is that of the [vdso] mapping, which
-	// is the image size rounded up to a page.
+	// data is a copy of the complete readable, executable [vdso] mapping.
+	// The mapping can extend beyond the pages covered by its PT_LOAD segments.
 	data []byte
 
 	// textStart and textEnd delimit the .text section in data.
@@ -63,6 +63,8 @@ var vdsoDeadSections = map[string]bool{
 // virtual offsets, so that offsets into vdsoBytes can be used directly to
 // compute PC-relative displacements, and .text lies within an executable
 // PT_LOAD segment.
+//
+// vdsoBytes must contain the complete readable, executable [vdso] mapping.
 func parseVDSO(vdsoBytes []byte) (*vdsoImage, error) {
 	f, err := elf.NewFile(bytes.NewReader(vdsoBytes))
 	if err != nil {

@@ -4744,6 +4744,9 @@ struct RuleWithExprTestParams {
   std::string expr_name;
   NlNestedAttr expr_attrs;
   int expected_error_no;
+  // Older native kernels may lack the validation being tested. gVisor always
+  // checks the current contract, independently of its reported kernel version.
+  std::optional<KernelVersion> min_native_kernel_version;
   // If non-null, the expected errno is determined by this function
   // rather than the above expected_error_no
   int (*expected_error_fn)(const KernelVersion&) = nullptr;
@@ -4762,6 +4765,15 @@ class AddRuleWithExprTest
 
 TEST_P(AddRuleWithExprTest, AddRuleWithExpr) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCaps()));
+  if (!IsRunningOnGvisor() && GetParam().min_native_kernel_version) {
+    const KernelVersion version = ASSERT_NO_ERRNO_AND_VALUE(GetKernelVersion());
+    const KernelVersion minimum = *GetParam().min_native_kernel_version;
+    if (std::tie(version.major, version.minor, version.micro) <
+        std::tie(minimum.major, minimum.minor, minimum.micro)) {
+      GTEST_SKIP() << "Requires native kernel " << minimum.major << "."
+                   << minimum.minor << "." << minimum.micro << " or newer";
+    }
+  }
   FileDescriptor fd =
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_NETFILTER));
   std::vector<char> expr_data = NlNestedAttr(GetParam().expr_attrs).Build();
@@ -5362,7 +5374,11 @@ std::vector<RuleWithExprTestParams> GetFibRuleTestParams() {
                             .U32Attr(NFTA_FIB_RESULT, NFT_FIB_RESULT_OIFNAME)
                             .U32Attr(NFTA_FIB_FLAGS,
                                      NFTA_FIB_F_SADDR | NFTA_FIB_F_PRESENT),
-          .expected_error_no = EINVAL},
+          .expected_error_no = EINVAL,
+          // Linux 7.1 restricts PRESENT to OIF:
+          // https://github.com/torvalds/linux/commit/ab185e0c4
+          // Stable and vendor backports make older release numbers ambiguous.
+          .min_native_kernel_version = KernelVersion{7, 1, 0}},
       RuleWithExprTestParams{
           .test_name = "ADDRTYPEWithPresent",
           .expr_name = "fib",
@@ -5371,7 +5387,8 @@ std::vector<RuleWithExprTestParams> GetFibRuleTestParams() {
                             .U32Attr(NFTA_FIB_RESULT, NFT_FIB_RESULT_ADDRTYPE)
                             .U32Attr(NFTA_FIB_FLAGS,
                                      NFTA_FIB_F_SADDR | NFTA_FIB_F_PRESENT),
-          .expected_error_no = EINVAL},
+          .expected_error_no = EINVAL,
+          .min_native_kernel_version = KernelVersion{7, 1, 0}},
   };
 }
 
