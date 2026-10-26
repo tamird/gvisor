@@ -54,7 +54,7 @@ exceptions:
       grant permits redistribution with copyright notices, conditions and
       disclaimers retained, and prohibits using contributors' names for
       endorsement without permission.
-  - dependency: llvm-raw
+  - dependency: llvm-project
     license:
       - Apache-2.0 WITH LLVM-exception
       - NCSA
