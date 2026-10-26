@@ -1,3 +1,4 @@
+load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker", "go_test", "namespace_test_exec_properties")
 
 package(
@@ -63,4 +64,20 @@ go_test(
         "//pkg/test/testutil",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+# Run the complete owner with its ARM64 umounter in a guest that permits user
+# and mount namespaces. Preserve the owner's size, timeout and shard count.
+arm64_tcg_test(
+    name = "procumounter_arm64_tcg_test",
+    size = "small",
+    guest_env = {
+        "GO_TEST_RUN_FROM_BAZEL": "1",
+        "GO_TEST_WRAP_TESTV": "1",
+    },
+    image = "//test/rbe/tcg:rc_guest",
+    payload = ":procumounter_test_arm64",
+    run_under = "//test/rbe:worker_identity",
+    tags = [],
+    visibility = ["//test/rbe:__pkg__"],
 )

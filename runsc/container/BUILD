@@ -1,4 +1,4 @@
-load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "native_test", "platforms")
 load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "namespace_test_exec_properties")
 load(":test_tools.bzl", "erofs_tools")
@@ -52,6 +52,15 @@ _CONTAINER_PLATFORMS = [p for (p, tags) in platforms.items() if "manual" not in 
 
 _CONTAINER_PLATFORM_ARGS = {platform: ["--test_platforms=" + platform] for platform in _CONTAINER_PLATFORMS}
 
+# TSan runs only the default platform; other builds exercise all public
+# platforms selected by configs() in container_test.go.
+_CONTAINER_TEST_ARGS = select({
+    "//conditions:default": [
+        "--test_platforms=%s" % ",".join([p for (p, tags) in platforms.items() if "manual" not in tags]) or default_platform,
+    ],
+    "//tools:gotsan": ["--test_platforms=%s" % default_platform],
+})
+
 # The tests execute ip from the container root and create memory-backed files
 # in up to 25 concurrent containers, each writing 100 MiB.
 _CONTAINER_EXEC_PROPERTIES = namespace_test_exec_properties(
@@ -78,16 +87,7 @@ go_test(
         "shared_volume_test.go",
         "trace_test.go",
     ],
-    # Only run the default platform for the tsan test, which should
-    # be compatible. For non-tsan builds, run all platforms.
-    args = select({
-        "//conditions:default": [
-            "--test_platforms=%s" % ",".join([p for (p, tags) in platforms.items() if "manual" not in tags]) or default_platform,
-        ],
-        "//tools:gotsan": [
-            "--test_platforms=%s" % default_platform,
-        ],
-    }),
+    args = _CONTAINER_TEST_ARGS,
     cgroup_v2 = True,
     data = [
         ":erofs_tools",
@@ -156,6 +156,26 @@ go_test(
     )
     for platform in _CONTAINER_PLATFORMS
 ]
+
+# ARM64 KVM needs EL2 in the guest. Keep both platforms in the same payload
+# and preserve the native owner's sharding, so its other cases run too.
+arm64_tcg_test(
+    name = "container_test_arm64_el2_guest",
+    size = "large",
+    args = _CONTAINER_TEST_ARGS,
+    arm64_el2 = True,
+    guest_env = {
+        "GO_TEST_RUN_FROM_BAZEL": "1",
+        "GO_TEST_WRAP_TESTV": "1",
+    },
+    image = "//test/rbe/tcg:rc_guest",
+    memory_mib = 6144,
+    payload = ":container_test_arm64",
+    run_under = "//test/rbe:worker_identity",
+    scratch_gib = 8,
+    shard_count = most_shards,
+    tags = [],
+)
 
 # The cgroup-v1 fixture owns VM-wide controller bindings. Run it inside the
 # disposable guest, never around QEMU on the Actions host. Six GiB includes

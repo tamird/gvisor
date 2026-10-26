@@ -19,6 +19,7 @@ go_test(
     embed = [":trace"],
     # runsc do must acquire capabilities in a new user namespace.
     exec_properties = namespace_test_exec_properties(user = "nobody"),
+    visibility = ["//test/rbe:__pkg__"],
     deps = [
         "//pkg/sentry/seccheck",
         "//pkg/sentry/seccheck/points:points_go_proto",

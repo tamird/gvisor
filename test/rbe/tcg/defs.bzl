@@ -17,7 +17,8 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_pkg//pkg:path.bzl", "safe_short_path")
-load("@tar.bzl//tar:tar.bzl", "tar_lib")
+load("@tar.bzl//tar:mtree.bzl", "mutate")
+load("@tar.bzl//tar:tar.bzl", "tar", "tar_lib")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
@@ -246,7 +247,7 @@ _runtime_payload_image = rule(
 def _tcg_test_impl(ctx):
     _guest_executables(ctx)
     image = ctx.attr.image[TcgImageInfo]
-    architecture = {"arm64_tcg": "arm64", "amd64_kvm": "amd64"}[ctx.attr.machine]
+    architecture = {"arm64_tcg": "arm64", "amd64_tcg": "amd64", "amd64_kvm": "amd64"}[ctx.attr.machine]
     if image.architecture != architecture:
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     if ctx.attr.arm64_el2 and architecture != "arm64":
@@ -272,12 +273,13 @@ def _tcg_test_impl(ctx):
             "true" if ctx.attr.arm64_el2 else "false",
             shell.quote("2,sockets=1,cores=1,threads=2" if ctx.attr.smt else "2"),
         ) +
+        "guest_user=%s\n" % shell.quote(ctx.attr.guest_user) +
         "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
             " ".join([shell.quote(key + "=" + value) for key, value in environment.items()]),
             " ".join([shell.quote(key) for key in inherited_environment]),
         ),
     )
-    payload_input = ctx.file.payload_image if ctx.attr.machine == "arm64_tcg" else ctx.executable.payload_builder
+    payload_input = ctx.file.payload_image or ctx.executable.payload_builder
     inputs = [payload_input, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
     if ctx.file.emulator != None:
         inputs.append(ctx.file.emulator)
@@ -325,12 +327,13 @@ _tcg_test = rule(
         "payload_builder": attr.label(executable = True, cfg = "target"),
         "host_tools": attr.label(default = Label(":host_tools"), allow_single_file = True, cfg = "exec"),
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
-        "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
+        "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_tcg", "amd64_kvm"]),
         "arm64_el2": attr.bool(default = False),
         "smt": attr.bool(default = False),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
         "guest_env": attr.string_dict(),
+        "guest_user": attr.string(default = "root", values = ["root", "nobody"]),
         "memory_mib": attr.int(default = 3072),
         "scratch_gib": attr.int(default = 4),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
@@ -338,16 +341,29 @@ _tcg_test = rule(
     }),
 )
 
-def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
-    pkg_tar(
-        name = name + "_payload",
-        testonly = True,
-        srcs = [payload] + ([run_under] if run_under else []),
-        include_runfiles = True,
-        strip_prefix = "/",
-        allow_duplicates_with_different_content = False,
-        tags = ["manual"],
-    )
+def _guest_test(name, payload, tags, image, run_under = None, preserve_runfiles_symlinks = False, **kwargs):
+    srcs = [payload] + ([run_under] if run_under else [])
+    if preserve_runfiles_symlinks:
+        # A rules_python venv links to its interpreter relative to its final
+        # runfiles layout. Dereferencing it in the execroot loses that target.
+        tar(
+            name = name + "_payload",
+            testonly = True,
+            srcs = srcs,
+            include_runfiles = True,
+            mutate = mutate(preserve_symlinks = True, srcs = srcs, testonly = True),
+            tags = ["manual"],
+        )
+    else:
+        pkg_tar(
+            name = name + "_payload",
+            testonly = True,
+            srcs = srcs,
+            include_runfiles = True,
+            strip_prefix = "/",
+            allow_duplicates_with_different_content = False,
+            tags = ["manual"],
+        )
 
     # Image construction remains remote even when the guest test needs KVM on
     # the local worker. Test execution tags must not constrain build actions.
@@ -366,26 +382,15 @@ def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
         run_under = run_under,
         payload_image = ":" + name + "_payload_image",
         exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
-        tags = tags + ["manual"],
-        **kwargs
-    )
-
-def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
-    """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
-
-    _guest_test(
-        name = name,
-        payload = payload,
-        image = image,
-        emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
-        tags = tags + ["no-local"],
+        tags = tags + ["manual", "no-local"],
         exec_properties = {
             # Compute units prevent predicted task sizes from overriding CPUs.
             # EstimatedMemory below still controls the memory allocation.
             # https://github.com/buildbuddy-io/buildbuddy/blob/171043b63/enterprise/server/tasksize_model/tasksize_model.go#L190-L198
             "test.EstimatedComputeUnits": "2",
-            "test.EstimatedMemory": "6GB",
-            "test.EstimatedFreeDiskBytes": "8GB",
+            # Allow for QEMU and the guest's root and scratch disk images.
+            "test.EstimatedMemory": "%dGB" % (3 + (kwargs.get("memory_mib", 3072) + 1023) // 1024),
+            "test.EstimatedFreeDiskBytes": "%dGB" % (4 + kwargs.get("scratch_gib", 4)),
             # Bazel's undeclared-output collection requires file and zip.
             "test.container-image": RBE_DOCKER_TOOLS_IMAGE,
             "test.dockerUser": "nobody",
@@ -395,6 +400,29 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
             "test.termination-grace-period": "30s",
             "test.workload-isolation-type": "oci",
         },
+        **kwargs
+    )
+
+def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
+    """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
+    _guest_test(
+        name = name,
+        payload = payload,
+        image = image,
+        emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
+        tags = tags,
+        **kwargs
+    )
+
+def amd64_tcg_test(name, payload, tags, image, **kwargs):
+    """Wraps an AMD64 payload for unprivileged software emulation."""
+    _guest_test(
+        name = name,
+        payload = payload,
+        image = image,
+        machine = "amd64_tcg",
+        host_tools = Label(":kvm_host_tools"),
+        tags = tags,
         **kwargs
     )
 

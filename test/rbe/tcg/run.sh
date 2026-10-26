@@ -38,7 +38,7 @@ machine="$7"
 test_setup="$(realpath "$8")"
 shift 8
 # The owning rule writes this declared configuration beside the launcher.
-declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2 guest_smp
+declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2 guest_smp guest_user
 declare -a guest_env guest_inherited_env
 # shellcheck disable=SC1090
 source "${GVISOR_TEST_GUEST_CONFIG:?}"
@@ -65,6 +65,11 @@ case "$machine" in
     # platform. Never fall back to emulation if this host cannot provide it.
     # https://docs.kernel.org/virt/kvm/x86/running-nested-guests.html
     machine_options=(-machine pc-i440fx-6.2 -cpu host -accel kvm)
+    console=ttyS0
+    ;;
+  amd64_tcg)
+    emulator=qemu-system-x86_64
+    machine_options=(-machine pc-i440fx-6.2 -cpu max -accel "tcg,thread=multi")
     console=ttyS0
     ;;
   *) printf 'Unsupported guest machine: %s\n' "$machine" >&2; exit 1 ;;
@@ -131,7 +136,7 @@ trap 'host_phase signal_TERM 143; exit 143' TERM
 trap 'host_phase signal_INT 130; exit 130' INT
 mkdir -p "$scratch/input" "$result"
 host_phase host_tools_ready
-if [[ "$machine" == amd64_kvm ]]; then
+if [[ "$machine" == amd64_* ]]; then
   # Ubuntu's use-fixed-data-path.patch makes firmware defaults absolute.
   # Select the declared BIOS instead of the host's /usr/share/seabios.
   # https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/q/qemu/qemu_6.2+dfsg-2ubuntu6.31.debian.tar.xz
@@ -155,7 +160,7 @@ if (( image_bytes > guest_scratch_gib * 1024 * 1024 * 1024 )); then
 fi
 printf 'Payload filesystem template: %s bytes; scratch capacity: %s GiB\n' "$image_bytes" "$guest_scratch_gib"
 # Copy the remote template sparsely; guest writes cannot modify declared inputs.
-if [[ "$machine" == arm64_tcg ]]; then
+if [[ "$machine" != amd64_kvm ]]; then
   host_tool bin/cp --reflink=auto --sparse=always "$payload_image" "$scratch/scratch.ext4"
 fi
 # Materialized Bazel outputs may have write permission removed.
@@ -206,12 +211,21 @@ host_phase scratch_ready
       '  [[ "$siblings" == 0-1 ]] || { echo "Guest CPUs are not SMT siblings" >&2; exit 1; }' \
       'done'
   fi
-  printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
-  printf 'exec /bin/bash /input/test-setup.sh'
+  payload_executable="/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
+  printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "$payload_executable"
+  if [[ $guest_user == nobody ]]; then
+    # Let the unprivileged harness create XML and output directories at the
+    # scratch root. Its sticky bit protects the root-owned payload directory.
+    printf '%s\n' 'chmod 1777 /work || exit 1'
+    printf 'exec setpriv --reuid=nobody --regid=nogroup --clear-groups '
+  else
+    printf 'exec '
+  fi
+  printf '/bin/bash /input/test-setup.sh'
   if [[ -n $guest_run_under ]]; then
-    # Both executables and their runfiles are in the declared payload image.
-    # Absolute paths remain valid after the harness enters payload runfiles.
-    printf ' %q' "/work/payload/$guest_run_under" "/work/payload/$payload"
+    # The payload builder verifies the executable inside its runfiles tree.
+    # Use that same file when the harness enters runfiles through run_under.
+    printf ' %q' "/work/payload/$guest_run_under" "$payload_executable"
   else
     printf ' %q' "$payload"
   fi

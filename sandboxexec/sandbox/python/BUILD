@@ -44,6 +44,7 @@ py_test(
     exec_properties = namespace_test_exec_properties(),
     main = "tests/sandbox_test.py",
     tags = ["nogotsan"],
+    visibility = ["//test/rbe:__pkg__"],
     deps = [
         ":sandbox_py",
     ],

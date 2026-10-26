@@ -1,4 +1,4 @@
-load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "amd64_tcg_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "go_library", "go_test", "native_test")
 
 package(
@@ -50,6 +50,17 @@ arm64_tcg_test(
     payload = ":coretag_test_arm64",
     smt = True,
     tags = ["nogotsan"],
+    visibility = ["//test/rbe:__pkg__"],
+)
+
+amd64_tcg_test(
+    name = "coretag_smt_amd64_tcg_test",
+    size = "small",
+    image = "//test/rbe/tcg:amd64_rc_guest",
+    payload = ":coretag_test_amd64",
+    smt = True,
+    tags = ["nogotsan"],
+    visibility = ["//test/rbe:__pkg__"],
 )
 
 # Reuse the local root fixture for the outer VM's /dev/kvm access.

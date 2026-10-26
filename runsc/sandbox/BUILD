@@ -75,6 +75,7 @@ go_test(
     embed = [":sandbox"],
     # The network fixtures create namespaces, interfaces, and IPv6 routes.
     exec_properties = namespace_test_exec_properties(),
+    visibility = ["//test/rbe:__pkg__"],
     deps = [
         "//pkg/control/server",
         "//pkg/prometheus",

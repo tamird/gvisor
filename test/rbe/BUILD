@@ -15,6 +15,7 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
+load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
 load("//tools:defs.bzl", "go_test", "py_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties", "nonroot_test_exec_properties")
 
@@ -655,3 +656,88 @@ _SOURCE_ARCHIVES = {
         "arm64",
     ]
 ]
+
+_ARM64_GUEST_CASES = [
+    ("//pkg/pinring:pinring_afpacket_privileged_test_arm64", "medium", "^TestAFPacketDeferredRelease$$", "root"),
+    ("//runsc/fsgofer:lisafs_hardlink_privileged_test_arm64", "small", "^TestFSGofer$$/^HardLink$$", "root"),
+    ("//runsc/fsgofer:lisafs_permissions_nonroot_test_arm64", "small", "^TestXattrWithoutReadPermission$$", "nobody"),
+    ("//sandboxexec/sandbox:sandbox_network_nonroot_test_arm64", "medium", "^TestNonRootNetworkingError$$", "nobody"),
+]
+
+# The guest runs the architecture-specific native_test executable and its
+# runfiles. Bazel applies args at TestRunner time, so retain the owner's filter.
+[
+    arm64_tcg_test(
+        name = owner.split(":")[1] + "_tcg_test",
+        size = size,
+        args = ["-test.run=" + case],
+        guest_env = {
+            "GO_TEST_RUN_FROM_BAZEL": "1",
+            "GO_TEST_WRAP_TESTV": "1",
+        },
+        guest_user = user,
+        image = "//test/rbe/tcg:rc_guest",
+        payload = owner,
+        run_under = ":worker_identity",
+        tags = [],
+    )
+    for owner, size, case, user in _ARM64_GUEST_CASES
+]
+
+_ARM64_GUEST_UNITS = [
+    ("docprocessor_unit", "//examples/sandboxexec/go/docprocessor:docprocessor_test_arm64", "medium", "root"),
+    ("runsc_cmd_unit", "//runsc/cmd:cmd_test_arm64", "medium", "root"),
+    ("runsc_sandbox_unit", "//runsc/sandbox:sandbox_test_arm64", "small", "root"),
+    ("sandboxexec_python_unit", "//sandboxexec/sandbox/python:sandbox_py_test_arm64", "medium", "root"),
+    ("sandboxexec_unit", "//sandboxexec/sandbox:sandbox_test_arm64", "medium", "root"),
+    ("trace_unit", "//test/trace:trace_test_arm64", "medium", "nobody"),
+]
+
+# These complete native owners need Linux namespaces. Keep their binaries,
+# runfiles and original test deadlines; only the execution environment changes.
+[
+    arm64_tcg_test(
+        name = name + "_arm64_tcg_test",
+        size = size,
+        arm64_el2 = owner == "//runsc/cmd:cmd_test_arm64",
+        guest_env = {} if name == "sandboxexec_python_unit" else {
+            "GO_TEST_RUN_FROM_BAZEL": "1",
+            "GO_TEST_WRAP_TESTV": "1",
+        },
+        guest_user = user,
+        image = "//test/rbe/tcg:rc_guest",
+        payload = owner,
+        preserve_runfiles_symlinks = name == "sandboxexec_python_unit",
+        run_under = ":worker_identity",
+        tags = [],
+    )
+    for name, owner, size, user in _ARM64_GUEST_UNITS
+]
+
+# The full Python owner runs as root; this method requires an unprivileged user.
+arm64_tcg_test(
+    name = "sandboxexec_python_nonroot_arm64_tcg_test",
+    size = "medium",
+    args = ["-v", "SandboxTest.test_non_root_networking_error"],
+    guest_user = "nobody",
+    image = "//test/rbe/tcg:rc_guest",
+    payload = "//sandboxexec/sandbox/python:sandbox_py_test_arm64",
+    preserve_runfiles_symlinks = True,
+    run_under = ":worker_identity",
+    tags = [],
+)
+
+test_suite(
+    name = "unit_guest_tests",
+    tags = ["manual"],
+    tests = [
+        ":sandboxexec_python_nonroot_arm64_tcg_test",
+        "//pkg/coretag:coretag_smt_amd64_tcg_test",
+        "//pkg/coretag:coretag_smt_arm64_tcg_test",
+        "//pkg/pinring:pinring_kvm_arm64_tcg_test",
+        "//runsc/procumounter:procumounter_arm64_tcg_test",
+    ] + [
+        ":" + case[0].split(":")[1] + "_tcg_test"
+        for case in _ARM64_GUEST_CASES
+    ] + [":" + unit[0] + "_arm64_tcg_test" for unit in _ARM64_GUEST_UNITS],
+)

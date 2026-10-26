@@ -36,6 +36,8 @@ qemu_system(
         "//pkg/pinring:__pkg__",
         "//pkg/sentry/platform/kvm:__pkg__",
         "//runsc/cmd:__pkg__",
+        "//runsc/container:__pkg__",
+        "//runsc/procumounter:__pkg__",
         "//test:__subpackages__",
     ],
 )

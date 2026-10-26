@@ -70,9 +70,11 @@ Each test uses QEMU's private snapshot overlay under its scratch directory;
 the declared root image remains read-only. The root image has twice the input
 file size plus 256 MiB for metadata and root writes, separate from the existing
 private payload and scratch disk. Payload packaging uses
-`pkg_tar(include_runfiles = True)` and preserves the complete Bazel runfiles
-layout, including the runtime release and sidecars. A cacheable Bazel action
-extracts that archive and prepares a compact ext4 template with the same
+`pkg_tar(include_runfiles = True)` and preserves the Bazel runfiles layout,
+including the runtime release and sidecars. The Python owner uses the pinned
+`tar.bzl` archiver's symlink preservation so its virtualenv can reach the
+declared interpreter at the same relative path in the guest. A cacheable Bazel
+action extracts that archive and prepares a compact ext4 template with the same
 root-owned files. Each test sparsely copies or reflinks the template and grows
 its private copy to the existing scratch capacity before booting. The guest
 mounts the prepared payload directly; it performs no archive extraction.

@@ -53,6 +53,18 @@ The retained guest kernel configuration, console, test XML and original
 statuses distinguish missing prerequisites from completed KVM operations.
 This ARM64 cohort does not select the AMD64 Docker KVM integration suite.
 
+To exercise unit cases that need namespaces, a particular user, SMT siblings
+or ARM64 KVM, run:
+
+```sh
+test/rbe/qualify.sh --arch=all --test-target=//test/rbe:unit_guest_tests test
+```
+
+The suite boots Linux guests on ordinary remote AMD64 workers and runs the
+existing test executables in them. It supplements the public unit selection;
+it does not exercise AMD64 KVM. The full ARM64 container suite is available as
+`//runsc/container:container_test_arm64_el2_guest`.
+
 SlimVM remains an optional, unqualified platform: the public syscall profiles
 exclude it in [.bazelrc](../../.bazelrc), and the [benchmark adapters](../../Makefile)
 explicitly skip it. Its manual test targets are outside this public CI selection;

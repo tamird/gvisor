@@ -20,6 +20,9 @@ mkdir -p "$out" || exit 1
   uname -a
   cat /proc/version
   id
+  if [[ -r /proc/sys/net/ipv6/conf/all/disable_ipv6 ]]; then
+    printf 'disable_ipv6=%s\n' "$(</proc/sys/net/ipv6/conf/all/disable_ipv6)"
+  fi
   if [[ -r /sys/kernel/notes ]]; then
     sha256sum /sys/kernel/notes
   fi
