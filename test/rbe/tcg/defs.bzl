@@ -386,8 +386,9 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
             # EstimatedMemory below still controls the memory allocation.
             # https://github.com/buildbuddy-io/buildbuddy/blob/171043b63/enterprise/server/tasksize_model/tasksize_model.go#L190-L198
             "test.EstimatedComputeUnits": "2",
-            "test.EstimatedMemory": "6GB",
-            "test.EstimatedFreeDiskBytes": "8GB",
+            # Allow for QEMU and the guest's root and scratch disk images.
+            "test.EstimatedMemory": "%dGB" % (3 + (kwargs.get("memory_mib", 3072) + 1023) // 1024),
+            "test.EstimatedFreeDiskBytes": "%dGB" % (4 + kwargs.get("scratch_gib", 4)),
             # Bazel's undeclared-output collection requires file and zip.
             "test.container-image": RBE_DOCKER_TOOLS_IMAGE,
             "test.dockerUser": "nobody",
