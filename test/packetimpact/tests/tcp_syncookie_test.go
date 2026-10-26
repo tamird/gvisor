@@ -31,6 +31,73 @@ func init() {
 	testbench.Initialize(flag.CommandLine)
 }
 
+func TestSynCookieSACK(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	listenFD, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	t.Cleanup(func() { dut.Close(t, listenFD) })
+
+	sendSYN := func(timestamps bool) (*testbench.TCPIPv4, header.TCPSynOptions) {
+		t.Helper()
+		conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+		t.Cleanup(func() { conn.Close(t) })
+		var options [header.TCPOptionsMaximumSize]byte
+		n := header.EncodeSACKPermittedOption(options[:])
+		if timestamps {
+			n += header.EncodeTSOption(1, 0, options[n:])
+		}
+		n += header.AddTCPOptionPadding(options[:], n)
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: options[:n]})
+		reply, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second)
+		if err != nil {
+			t.Fatalf("waiting for SYN-ACK: %v", err)
+		}
+		return &conn, header.ParseSynOptions(reply.Options, true /* isAck */)
+	}
+
+	// Leave enough handshakes unfinished to fill the SYN queue. A cookie
+	// cannot preserve the SACK option when the peer omits timestamps.
+	if _, opts := sendSYN(false); !opts.SACKPermitted {
+		t.Fatal("ordinary SYN-ACK did not permit SACK")
+	}
+	const maxHalfOpen = 16
+	for i := range maxHalfOpen {
+		if _, opts := sendSYN(false); !opts.SACKPermitted {
+			break
+		}
+		if i == maxHalfOpen-1 {
+			t.Fatal("listener still negotiated SACK without timestamps on a full SYN queue")
+		}
+	}
+	conn, opts := sendSYN(true)
+	if !opts.TS || opts.TSEcr != 1 || !opts.SACKPermitted {
+		t.Fatalf("cookie SYN-ACK options = %+v, want echoed TSVal 1 and SACK", opts)
+	}
+
+	var ts [12]byte
+	n := header.EncodeTSOption(2, opts.TSVal, ts[:])
+	header.AddTCPOptionPadding(ts[:], n)
+	ack := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), Options: ts[:]}
+	conn.Send(t, ack)
+	dut.PollOne(t, listenFD, unix.POLLIN, time.Second)
+	fd, _ := dut.Accept(t, listenFD)
+	t.Cleanup(func() { dut.Close(t, fd) })
+
+	// A SACK block for the byte beyond the hole proves that the accepted
+	// socket recovered the option from the handshake.
+	hole := *conn.LocalSeqNum(t)
+	ack.SeqNum = testbench.Uint32(uint32(hole + 1))
+	conn.Send(t, ack, &testbench.Payload{Bytes: []byte{1}})
+	reply, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(hole))}, time.Second)
+	if err != nil {
+		t.Fatalf("waiting for ACK of out-of-order data: %v", err)
+	}
+	got := header.ParseTCPOptions(reply.Options).SACKBlocks
+	want := []header.SACKBlock{{Start: hole + 1, End: hole + 2}}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("SACK blocks (-want +got):\n%s", diff)
+	}
+}
+
 // TestTCPSynCookie tests for ACK handling for connections in SYNRCVD state
 // connections with and without syncookies. It verifies if the passive open
 // connection is indeed using syncookies before proceeding.
