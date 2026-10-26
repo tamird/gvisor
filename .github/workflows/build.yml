@@ -1,35 +1,149 @@
-name: CI
+name: Native ARM64 image consumers
 
 "on":
-  push:
-    branches:
-      - "*"
+  workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
+
+env:
+  PRODUCT: 97c071a74524f2d2fc10f6f4768f1214381b7133
+  ARCHIVE: f61319d2805ddcdfe8be464022a826609efebb73a2aadc6374724c12dab7bb4a
+  IMAGE: sha256:72d5111b49aa7ec798180547d2a5e3a2855cf017acfcb98dc61bd360fef8368f
+  ARCHIVE_TARGET: //images/basic:fsstress_archive
+  ARCHIVE_PATH: bazel-bin/images/basic/fsstress_load_docker.tar
+  IMAGE_TAG: gvisor.dev/images/basic/fsstress:latest
+  TEST_TARGET: //test/fsstress:fsstress_test
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  image:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.PRODUCT }}
+          persist-credentials: false
+      - name: Reproduce the RBE image with its GNU cross toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          mkdir "$RUNNER_TEMP/transfer"
+          docker run --rm --volume "$PWD:/workspace" --workdir /workspace \
+            --volume "$RUNNER_TEMP/transfer:/transfer" --env ARCHIVE --env ARCHIVE_TARGET --env ARCHIVE_PATH \
+            --env GIT_CONFIG_COUNT=1 --env GIT_CONFIG_KEY_0=safe.directory --env GIT_CONFIG_VALUE_0=/workspace \
+            --entrypoint /bin/bash \
+            gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a \
+            -euo pipefail -c '
+              version=$(cat .bazelversion)
+              if [[ "$(bazel --version)" != "bazel $version" ]]; then
+                url="https://releases.bazel.build/$version/release/bazel-$version-linux-x86_64"
+                curl -fsSLo /tmp/bazel "$url"
+                expected=$(curl -fsSL "$url.sha256" | cut -d" " -f1)
+                printf "%s  %s\n" "$expected" /tmp/bazel | sha256sum -c -
+                chmod +x /tmp/bazel
+                PATH=/tmp:$PATH
+              fi
+              bazel build --config=aarch64 -c opt --lockfile_mode=error "$ARCHIVE_TARGET"
+              printf "%s  %s\n" "$ARCHIVE" "$ARCHIVE_PATH" | sha256sum -c -
+              cp -L "$ARCHIVE_PATH" /transfer/image.tar
+            '
+          test -z "$(git status --porcelain --untracked-files=no)"
+      - name: Transfer only the verified public-source image to the ARM runner
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualified-arm64-image
+          path: ${{ runner.temp }}/transfer/image.tar
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+  runtime:
+    needs: image
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.PRODUCT }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: qualified-arm64-image
+          path: ${{ runner.temp }}/transfer
+      - name: Load the verified ARM image and build the selected gVisor runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          test "$(uname -m)" = aarch64
+          uname -srmo
+          printf '%s  %s\n' "$ARCHIVE" "$RUNNER_TEMP/transfer/image.tar" | sha256sum -c -
+          docker load --input "$RUNNER_TEMP/transfer/image.tar"
+          docker tag "$IMAGE" "$IMAGE_TAG"
+          test "$(docker image inspect --format '{{.Architecture}} {{.Id}}' "$IMAGE_TAG")" = "arm64 $IMAGE"
+          # Use the release rule's installed runsc and every sidecar. The daemon
+          # must not fetch a sidecar from a different release.
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat .bazelversion)
+          bazelisk build --config=aarch64 -c opt --lockfile_mode=error \
+            --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed //:release
+          runtime_dir="$RUNNER_TEMP/gvisor-runtime"
+          mkdir -m 755 "$runtime_dir"
+          cp -RL bazel-bin/release/. "$runtime_dir"
+          sudo "$runtime_dir/runsc" install --runtime=qualification-images \
+            --download-sidecars=NEVER --require-sidecars=ALWAYS -- --platform=systrap
+          sudo systemctl reload docker
+          for ((n=0; n<30; n++)); do
+            if docker info --format '{{json .Runtimes}}' | jq -e 'has("qualification-images")' >/dev/null; then break; fi
+            sleep 1
+          done
+          docker info --format '{{json .Runtimes}}' | jq -e --arg binary "$runtime_dir/runsc" '.["qualification-images"].path == $binary'
+      - name: Execute the consumer and reconcile its named results
+        shell: bash
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat .bazelversion)
+          status=0
+          bazelisk test --config=aarch64 -c opt --lockfile_mode=error \
+            --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed \
+            --strategy=TestRunner=local --nocache_test_results --runs_per_test=1 \
+            --flaky_test_attempts=1 --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=900 \
+            --test_output=all --test_arg=-runtime=qualification-images "$TEST_TARGET" || status=$?
+          export BAZEL_EXIT="$status" FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from xml.etree import ElementTree
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          expected = {"TestFsstressGofer", "TestFsstressGoferShared", "TestFsstressTmpfs"}
+          reports = Path("bazel-testlogs/test/fsstress/fsstress_test")
+          results = {}
+          if (reports / "test.xml").is_file():
+              for case in ElementTree.parse(reports / "test.xml").iter("testcase"):
+                  name = case.attrib["name"]
+                  if name in results:
+                      raise SystemExit(f"Duplicate test record: {name}")
+                  results[name] = next((child.tag for child in case if child.tag in {"skipped", "failure", "error"}), "pass")
+          log = (reports / "test.log").read_text() if (reports / "test.log").is_file() else ""
+          executions = log.count("Repro: docker run --rm --runtime=qualification-images")
+          passed = (os.environ["BAZEL_EXIT"] == "0" and set(results) == expected
+                    and all(result == "pass" for result in results.values()) and executions == len(expected))
+          print("IMAGE_VERDICT " + json.dumps({
+              "status": "PASS" if passed else "FAIL", "source": os.environ["PRODUCT"],
+              "target": os.environ["TEST_TARGET"], "image": os.environ["IMAGE"], "archive": os.environ["ARCHIVE"],
+              "architecture": os.uname().machine, "kernel": os.uname().release, "runtime": "systrap",
+              "cases": results, "missing": sorted(expected - results.keys()), "runtimeInvocations": executions,
+              "bazelExit": int(os.environ["BAZEL_EXIT"]), "executionFinished": os.environ["FINISHED_AT"],
+              "verdictAt": datetime.now(timezone.utc).isoformat(),
+          }, sort_keys=True))
+          raise SystemExit(0 if passed else 1)
+          PY
+          test -z "$(git status --porcelain --untracked-files=no)"
