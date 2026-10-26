@@ -12,7 +12,7 @@ import qualification_report as report
 UNIT = "//test/benchmarks/tcp:tcp_proxy_cli_qualification"
 BINARIES = ["//test/benchmarks/tcp:tcp_proxy"]
 ANALYZERS = [BINARIES[0] + "_nogo"]
-UNIT_CASES = {"test_listen_overflow_before_setup", "test_forward_overflow_before_setup", "test_valid_forward_reaches_setup", "test_native_forwarding_hex_listen"}
+UNIT_CASES = {"test_listen_overflow_before_setup", "test_forward_overflow_before_setup", "test_valid_forward_reaches_setup", "test_native_forwarding_hex_listen", "test_native_forward_overflow_before_setup"}
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -105,12 +105,14 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         if not os.access(binary, os.X_OK) or observed["binary"] != report.file_record(binary):
                             raise ValueError("Executed proxy does not match the declared build output")
                         rows = observed["observations"]
-                        if not observed["success"] or len(rows) != 4 or {r["case"] for r in rows} != UNIT_CASES:
+                        if not observed["success"] or len(rows) != len(UNIT_CASES) or {r["case"] for r in rows} != UNIT_CASES:
                             raise ValueError("Proxy observation case set/status differs")
                         for row in rows:
                             case = row["case"]
                             if case.endswith("overflow_before_setup"):
                                 prefix = "invalid listen port:" if case.startswith("test_listen") else "invalid forwarding target:"
+                                if case.startswith("test_native_forward"):
+                                    prefix = "invalid forwarding port:"
                                 if row["exit"] != 1 or prefix not in row["stderr"] or row["profile_created"] or any(v in row["stderr"] for v in ("netstack error:", "connect failed retrying")):
                                     raise ValueError(f"Early rejection boundary failed: {row}")
                             elif case == "test_valid_forward_reaches_setup":

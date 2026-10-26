@@ -392,6 +392,14 @@ func main() {
 		if target.Addr().Zone() != "" {
 			log.Fatalf("netstack forwarding uses -iface; omit the zone in %q", *forward)
 		}
+	} else {
+		_, service, err := net.SplitHostPort(*forward)
+		if err != nil {
+			log.Fatalf("invalid forwarding target: %v", err)
+		}
+		if _, err := net.LookupPort("tcp", service); err != nil {
+			log.Fatalf("invalid forwarding port: %v", err)
+		}
 	}
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)

@@ -53,6 +53,10 @@ class ProxyCLI(unittest.TestCase):
                        "-addr=10.0.0.1", "-iface=qualification-missing"],
                       "invalid forwarding target:")
 
+    def test_native_forward_overflow_before_setup(self) -> None:
+        self.rejected(["-port=12345", "-forward=127.0.0.1:65537"],
+                      "invalid forwarding port:")
+
     def test_valid_forward_reaches_setup(self) -> None:
         command = [str(BINARY), "-port=12345", "-forward=127.0.0.1:80", "-client",
                    "-addr=10.0.0.1", "-iface=qualification-missing"]
