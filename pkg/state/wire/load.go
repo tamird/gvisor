@@ -156,6 +156,8 @@ func loadArray(r *Reader, count Uint, tag Uint) Array {
 		return &Complex128Array{Contents: loadArrayValues(r, count, loadComplex128)} // Escapes: owned homogeneous array header.
 	case typeString:
 		return &StringArray{Contents: loadArrayValues(r, count, loadStringValue)} // Escapes: owned homogeneous array header.
+	case typeRef:
+		return &RefArray{Contents: loadArrayValues(r, count, loadReference)} // Escapes: owned homogeneous array header.
 	default:
 		values := loadArrayValues(r, count, func(r *Reader) Object { return loadPayload(r, tag) }) // Escapes: owned composite elements.
 		return &ObjectArray{Contents: values}                                                      // Escapes: owned homogeneous array header.

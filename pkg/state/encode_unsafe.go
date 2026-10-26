@@ -37,13 +37,13 @@ func arrayFromSlice(obj reflect.Value) reflect.Value {
 	return arr
 }
 
-// captureArray returns a typed copy of a primitive array, or false
+// captureArray returns a typed copy of a primitive or pointer array, or false
 // for other element kinds. Unaddressable arrays (from interfaces or map values)
 // are copied once to obtain an address.
 func (es *encodeState) captureArray(obj reflect.Value) (wire.Object, bool) {
 	if !obj.CanAddr() {
 		switch obj.Type().Elem().Kind() {
-		case reflect.Bool,
+		case reflect.Ptr, reflect.Bool,
 			reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
 			reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.String:
@@ -59,6 +59,9 @@ func (es *encodeState) captureArray(obj reflect.Value) (wire.Object, bool) {
 	var captured wire.Object
 	length := obj.Len()
 	switch obj.Type().Elem().Kind() {
+	case reflect.Ptr:
+		es.encodeReferenceArray(obj, &captured)
+		return captured, true
 	case reflect.Bool:
 		captured = wire.CaptureBoolArray(unsafe.Slice((*bool)(obj.Addr().UnsafePointer()), length))
 	case reflect.Int:
@@ -97,4 +100,33 @@ func (es *encodeState) captureArray(obj reflect.Value) (wire.Object, bool) {
 		return nil, false
 	}
 	return captured, true
+}
+
+// referenceArray owns a reusable pointer slot alongside the wire container.
+// Keeping the slot here avoids allocating one scratch cell per element. The
+// retained pointer to RefArray keeps this entire allocation reachable.
+type referenceArray struct {
+	wire.RefArray
+	current unsafe.Pointer
+}
+
+// encodeReferenceArray captures an addressable array of pointers. The element
+// kind is checked by captureArray before borrowing its pointer-sized cells.
+func (es *encodeState) encodeReferenceArray(obj reflect.Value, dest *wire.Object) {
+	a := &referenceArray{RefArray: wire.RefArray{Contents: make([]wire.Ref, obj.Len())}}
+	*dest = &a.RefArray
+	// A pointer of the array's exact element type reads the reusable GC-visible
+	// slot. resolve retains its pointee value, never this changing slot.
+	value := reflect.NewAt(obj.Type().Elem(), unsafe.Pointer(&a.current)).Elem()
+	pointers := unsafe.Slice((*unsafe.Pointer)(obj.Addr().UnsafePointer()), obj.Len())
+	for i, pointer := range pointers {
+		if pointer == nil {
+			// The full pointer value is a zero Ref, including in a homogeneous
+			// array whose first element is nil.
+			continue
+		}
+		a.current = pointer
+		es.resolve(value, &a.Contents[i])
+	}
+	a.current = nil
 }

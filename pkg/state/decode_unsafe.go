@@ -65,6 +65,13 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value,
 			ds.waitObject(ods, value, nil)
 		}
 		return
+	case *wire.RefArray:
+		for i := range values.Contents {
+			value := &values.Contents[i]
+			ds.decodeObject(ods, target.Index(i), value)
+			ds.waitObject(ods, value, nil)
+		}
+		return
 	}
 
 	// The actual reflected flags must allow writes, even for an unexported
