@@ -1,0 +1,79 @@
+# musl has no execinfo.h. Walk the compiler runtime's unwind tables instead
+# of opening executables to read their symbols after sandbox startup. Keep
+# glibc's stack dump unchanged when execinfo.h is available.
+
+diff --git a/lib/librte_eal/linuxapp/eal/eal_debug.c b/lib/librte_eal/linuxapp/eal/eal_debug.c
+--- a/lib/librte_eal/linuxapp/eal/eal_debug.c
++++ b/lib/librte_eal/linuxapp/eal/eal_debug.c
+@@ -3,7 +3,13 @@
+  */
+ 
+ #ifdef RTE_BACKTRACE
++#if __has_include(<execinfo.h>)
++#define HAVE_EXECINFO
+ #include <execinfo.h>
++#else
++#include <dlfcn.h>
++#include <unwind.h>
++#endif
+ #endif
+ #include <stdarg.h>
+ #include <signal.h>
+@@ -18,10 +24,32 @@
+ 
+ #define BACKTRACE_SIZE 256
+ 
++#if defined(RTE_BACKTRACE) && !defined(HAVE_EXECINFO)
++struct stack_trace {
++	uintptr_t pc[BACKTRACE_SIZE];
++	unsigned int size;
++};
++
++static _Unwind_Reason_Code
++collect_frame(struct _Unwind_Context *ctx, void *data)
++{
++	struct stack_trace *trace = data;
++	int before_instruction;
++	uintptr_t ip = _Unwind_GetIPInfo(ctx, &before_instruction);
++
++	if (ip == 0)
++		return _URC_END_OF_STACK;
++	/* A return address points just past its call instruction. */
++	trace->pc[trace->size++] = before_instruction ? ip : ip - 1;
++	return trace->size == BACKTRACE_SIZE ? _URC_END_OF_STACK : _URC_NO_REASON;
++}
++#endif
++
+ /* dump the stack of the calling core */
+ void rte_dump_stack(void)
+ {
+ #ifdef RTE_BACKTRACE
++#ifdef HAVE_EXECINFO
+ 	void *func[BACKTRACE_SIZE];
+ 	char **symb = NULL;
+ 	int size;
+@@ -39,6 +67,24 @@
+ 	}
+ 
+ 	free(symb);
++#else
++	struct stack_trace trace = {0};
++
++	_Unwind_Backtrace(collect_frame, &trace);
++	while (trace.size != 0) {
++		uintptr_t pc = trace.pc[trace.size - 1];
++		Dl_info info;
++
++		if (dladdr((void *)pc, &info) && info.dli_sname && info.dli_saddr)
++			rte_log(RTE_LOG_ERR, RTE_LOGTYPE_EAL,
++				"%u: [%p <%s+%#lx>]\n", trace.size, (void *)pc,
++				info.dli_sname, (unsigned long)(pc - (uintptr_t)info.dli_saddr));
++		else
++			rte_log(RTE_LOG_ERR, RTE_LOGTYPE_EAL,
++				"%u: [%p]\n", trace.size, (void *)pc);
++		--trace.size;
++	}
++#endif
+ #endif /* RTE_BACKTRACE */
+ }
+ 

@@ -65,7 +65,17 @@ diff --git a/dpdk/Makefile b/dpdk/Makefile
  	$(call set,RTE_MACHINE,$(DPDK_MACHINE))
  	@# modify options
  	$(call set,RTE_MAX_LCORE,256)
-@@ -219,6 +217,13 @@
+@@ -206,6 +204,9 @@
+ 	$(call set,RTE_LIBRTE_PMD_BOND,n)
+ 	$(call set,RTE_LIBRTE_ATLANTIC_PMD,n)
+ 	$(call set,RTE_LIBRTE_GSO,n)
++ifneq ($(RTE_EAL_VFIO),)
++	$(call set,RTE_EAL_VFIO,$(RTE_EAL_VFIO))
++endif
+ 	$(call set,RTE_MAX_VFIO_GROUPS,4)
+ 	$(call set,RTE_MAX_VFIO_CONTAINERS,4)
+ 	$(call set,RTE_LIBRTE_COMMON_DPAAX,n)
+@@ -219,6 +220,13 @@
  	$(call set,RTE_LIBRTE_PDUMP,n)
  	@rm -f .config.ok
  
@@ -79,7 +89,7 @@ diff --git a/dpdk/Makefile b/dpdk/Makefile
  $(B)/.download.ok:
  	@mkdir -p $(B)
  	@if [ -e $(DPDK_SOURCE) ] ; \
-@@ -242,16 +247,17 @@
+@@ -242,16 +250,17 @@
  
  .PHONY: patch
  patch: $(B)/.patch.ok
