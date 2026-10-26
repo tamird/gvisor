@@ -1,0 +1,7 @@
+<testsuites>
+	<testsuite errors="0" failures="0" skipped="0" tests="3" time="0.000" name="gvisor.dev/gvisor/test/benchmarks/network.BenchmarkIperfOneConnection" timestamp="2026-10-21T02:13:48.607Z">
+		<testcase classname="network" name="BenchmarkIperfOneConnection" time=""></testcase>
+		<testcase classname="network" name="BenchmarkIperfOneConnection/operation.Download" time=""></testcase>
+		<testcase classname="network" name="BenchmarkIperfOneConnection/operation.Upload" time=""></testcase>
+	</testsuite>
+</testsuites>

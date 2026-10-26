@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="4" failures="0" disabled="0" errors="0" time="0.006" timestamp="2026-10-16T21:17:51.941" name="AllTests">
+  <testsuite name="Syscall32Bit" tests="3" failures="0" disabled="0" skipped="0" errors="0" time="0.001" timestamp="2026-10-16T21:17:51.944">
+    <testcase name="Int80" file="test/syscalls/linux/32bit.cc" line="80" status="run" result="completed" time="0." timestamp="2026-10-16T21:17:51.944" classname="Syscall32Bit" />
+    <testcase name="Sysenter" file="test/syscalls/linux/32bit.cc" line="102" status="run" result="completed" time="0." timestamp="2026-10-16T21:17:51.945" classname="Syscall32Bit" />
+    <testcase name="Syscall" file="test/syscalls/linux/32bit.cc" line="148" status="run" result="completed" time="0." timestamp="2026-10-16T21:17:51.945" classname="Syscall32Bit" />
+  </testsuite>
+  <testsuite name="Call32Bit" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0.001" timestamp="2026-10-16T21:17:51.946">
+    <testcase name="Disallowed" file="test/syscalls/linux/32bit.cc" line="242" status="run" result="completed" time="0." timestamp="2026-10-16T21:17:51.947" classname="Call32Bit" />
+  </testsuite>
+</testsuites>

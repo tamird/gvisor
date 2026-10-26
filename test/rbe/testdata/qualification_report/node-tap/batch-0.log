@@ -1,0 +1,257 @@
+Batch:
+abort/test-worker-abort-uncaught-exception.js
+addons/non-node-context/test-make-buffer.js
+addons/stringbytes-external-exceed-max/test-stringbytes-external-exceed-max-by-1-binary.js
+async-hooks/test-async-exec-resource-match.js
+async-hooks/test-async-local-storage-http.js
+async-hooks/test-crypto-pbkdf2.js
+async-hooks/test-emit-init.js
+async-hooks/test-graph.http.js
+async-hooks/test-graph.tls-write.js
+async-hooks/test-net-get-connections.js
+async-hooks/test-shutdownwrap.js
+async-hooks/test-unhandled-exception-valid-ids.js
+benchmark/test-benchmark-cluster.js
+benchmark/test-benchmark-http2.js
+benchmark/test-benchmark-streams.js
+benchmark/test-benchmark-webstreams.js
+es-module/test-dynamic-import-script-lifetime.js
+es-module/test-esm-encoded-path-native.js
+es-module/test-esm-preserve-symlinks-main.js
+es-module/test-esm-url-extname.js
+es-module/test-require-module-default-extension.js
+es-module/test-require-module-preload.js
+es-module/test-vm-source-text-module-leak.js
+fixtures/test-runner/default-behavior/node_modules/test-nm.js
+internet/test-dgram-multicast-multi-process.js
+internet/test-dns-lookup.js
+internet/test-https-issue-43963.js
+internet/test-tls-autoselectfamily-backing-socket.js
+known_issues/test-http-clientrequest-end-empty-response-body.js
+known_issues/test-vm-ownkeys.js
+node-api/test_buffer/test-external-buffer.js
+parallel/test-assert-async.js
+parallel/test-assert-fail.js
+parallel/test-async-hooks-correctly-switch-promise-hook.js
+parallel/test-async-hooks-execution-async-resource.js
+parallel/test-async-hooks-run-in-async-scope-caught-exception.js
+parallel/test-async-local-storage-deep-stack.js
+parallel/test-async-wrap-uncaughtexception.js
+parallel/test-blob.js
+parallel/test-buffer-badhex.js
+parallel/test-buffer-copy.js
+parallel/test-buffer-isascii.js
+parallel/test-buffer-pending-deprecation.js
+parallel/test-buffer-sharedarraybuffer.js
+parallel/test-buffer-writefloat.js
+parallel/test-child-process-can-write-to-stdout.js
+parallel/test-child-process-exec-any-shells-windows.js
+parallel/test-child-process-exec-timeout-kill.js
+parallel/test-child-process-fork-and-spawn.js
+parallel/test-child-process-fork-net-socket.js
+Output:
+2026/10/20 01:27:13 INFO Proctor checking in 2026-10-20 01:27:13.279674451 +0000 UTC m=+15.002675632
+2026/10/20 01:27:28 INFO Proctor checking in 2026-10-20 01:27:28.283421165 +0000 UTC m=+30.006422349
+TAP version 13
+1..49
+ok 1 async-hooks/test-async-exec-resource-match
+  ---
+  duration_ms: 350.73200
+  ...
+ok 2 async-hooks/test-graph.tls-write # skip IPv6 support required
+  ---
+  duration_ms: 360.50400
+  ...
+ok 3 async-hooks/test-emit-init
+  ---
+  duration_ms: 432.72600
+  ...
+ok 4 async-hooks/test-graph.http # skip IPv6 support required
+  ---
+  duration_ms: 438.12300
+  ...
+ok 5 async-hooks/test-crypto-pbkdf2
+  ---
+  duration_ms: 503.38100
+  ...
+ok 6 async-hooks/test-net-get-connections
+  ---
+  duration_ms: 469.64800
+  ...
+ok 7 async-hooks/test-async-local-storage-http
+  ---
+  duration_ms: 509.65500
+  ...
+ok 8 async-hooks/test-unhandled-exception-valid-ids
+  ---
+  duration_ms: 295.07000
+  ...
+ok 9 async-hooks/test-shutdownwrap
+  ---
+  duration_ms: 446.45700
+  ...
+ok 10 es-module/test-esm-url-extname
+  ---
+  duration_ms: 304.97200
+  ...
+ok 11 es-module/test-dynamic-import-script-lifetime
+  ---
+  duration_ms: 449.52600
+  ...
+ok 12 es-module/test-require-module-default-extension
+  ---
+  duration_ms: 369.63100
+  ...
+ok 13 es-module/test-esm-encoded-path-native # skip 0
+  ---
+  duration_ms: 640.34400
+  ...
+ok 14 parallel/test-assert-async
+  ---
+  duration_ms: 304.95300
+  ...
+ok 15 parallel/test-async-hooks-correctly-switch-promise-hook
+  ---
+  duration_ms: 313.11000
+  ...
+ok 16 parallel/test-assert-fail
+  ---
+  duration_ms: 381.68200
+  ...
+ok 17 parallel/test-async-hooks-run-in-async-scope-caught-exception
+  ---
+  duration_ms: 282.77000
+  ...
+ok 18 es-module/test-vm-source-text-module-leak
+  ---
+  duration_ms: 639.40100
+  ...
+ok 19 parallel/test-async-local-storage-deep-stack
+  ---
+  duration_ms: 290.59200
+  ...
+ok 20 parallel/test-async-wrap-uncaughtexception
+  ---
+  duration_ms: 280.30800
+  ...
+ok 21 es-module/test-esm-preserve-symlinks-main # skip 0
+  ---
+  duration_ms: 1064.27600
+  ...
+ok 22 parallel/test-buffer-badhex
+  ---
+  duration_ms: 281.08000
+  ...
+ok 23 parallel/test-blob
+  ---
+  duration_ms: 358.73500
+  ...
+ok 24 parallel/test-buffer-copy
+  ---
+  duration_ms: 284.01800
+  ...
+ok 25 parallel/test-buffer-isascii
+  ---
+  duration_ms: 246.37600
+  ...
+ok 26 parallel/test-buffer-pending-deprecation
+  ---
+  duration_ms: 286.19100
+  ...
+ok 27 parallel/test-buffer-sharedarraybuffer
+  ---
+  duration_ms: 228.33300
+  ...
+ok 28 parallel/test-child-process-exec-any-shells-windows # skip Windows specific test.
+  ---
+  duration_ms: 191.69000
+  ...
+ok 29 parallel/test-buffer-writefloat
+  ---
+  duration_ms: 288.61200
+  ...
+ok 30 es-module/test-require-module-preload
+  ---
+  duration_ms: 1458.53200
+  ...
+ok 31 parallel/test-child-process-exec-timeout-kill
+  ---
+  duration_ms: 360.05200
+  ...
+ok 32 parallel/test-child-process-can-write-to-stdout
+  ---
+  duration_ms: 463.13900
+  ...
+ok 33 parallel/test-child-process-fork-net-socket
+  ---
+  duration_ms: 659.45900
+  ...
+ok 34 parallel/test-child-process-fork-and-spawn
+  ---
+  duration_ms: 754.65200
+  ...
+ok 35 abort/test-worker-abort-uncaught-exception
+  ---
+  duration_ms: 785.83400
+  ...
+ok 36 addons/non-node-context/test-make-buffer
+  ---
+  duration_ms: 240.36500
+  ...
+ok 37 parallel/test-async-hooks-execution-async-resource
+  ---
+  duration_ms: 5594.40200
+  ...
+2026/10/20 01:27:43 INFO Proctor checking in 2026-10-20 01:27:43.28430727 +0000 UTC m=+45.007308446
+ok 38 addons/stringbytes-external-exceed-max/test-stringbytes-external-exceed-max-by-1-binary
+  ---
+  duration_ms: 10503.14700
+  ...
+ok 39 benchmark/test-benchmark-cluster
+  ---
+  duration_ms: 1039.57100
+  ...
+ok 40 benchmark/test-benchmark-http2
+  ---
+  duration_ms: 3664.02800
+  ...
+2026/10/20 01:27:58 INFO Proctor checking in 2026-10-20 01:27:58.289165483 +0000 UTC m=+60.012166676
+ok 41 benchmark/test-benchmark-streams
+  ---
+  duration_ms: 7488.06900
+  ...
+ok 42 benchmark/test-benchmark-webstreams
+  ---
+  duration_ms: 3157.31400
+  ...
+ok 43 internet/test-dgram-multicast-multi-process
+  ---
+  duration_ms: 645.71200
+  ...
+ok 44 internet/test-dns-lookup
+  ---
+  duration_ms: 287.36700
+  ...
+ok 45 internet/test-https-issue-43963
+  ---
+  duration_ms: 234.60400
+  ...
+ok 46 internet/test-tls-autoselectfamily-backing-socket
+  ---
+  duration_ms: 346.39500
+  ...
+ok 47 known_issues/test-http-clientrequest-end-empty-response-body
+  ---
+  duration_ms: 232.76300
+  ...
+ok 48 known_issues/test-vm-ownkeys
+  ---
+  duration_ms: 196.66300
+  ...
+ok 49 node-api/test_buffer/test-external-buffer
+  ---
+  duration_ms: 190.67700
+  ...
+
+All tests passed.
+
