@@ -1,0 +1,26 @@
+{
+  "arguments": [
+    "-test.run=^$",
+    "-test.bench=^BenchmarkFirstRestore$/^empty$",
+    "-test.v=false",
+    "-test.benchtime=1x",
+    "-test.benchmem",
+    "-test.count=1",
+    "-test.cpu=1"
+  ],
+  "owners": {
+    "//pkg/state/tests/benchmark:slice_diagnostic_empty": [
+      {
+        "name": "BenchmarkFirstRestore/empty",
+        "count": 1,
+        "iterations": 1,
+        "units": [
+          "ns/op",
+          "wire-B/op",
+          "B/op",
+          "allocs/op"
+        ]
+      }
+    ]
+  }
+}

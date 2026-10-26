@@ -1,0 +1,17 @@
+{
+  "source": "e8df4b7145e6dc5f01f3e105b111d8f4de8d3e20",
+  "artifact_sha256": "3ddac64e78e3330a3ead60b7d1c707171ba22f0f9a5bdcf9ff3434f30277133b",
+  "projection": "Only original goos/goarch, Benchmark-prefixed lines and standalone package PASS retained; original authenticated complete logs remain in the qualification bundle. No measurements generated.",
+  "logs": {
+    "runsc": {
+      "original_sha256": "eb74852f38ff9b7f5ec2acf6745f781d50023e514eb3bc9875faf835f7376fe2",
+      "original_bytes": 218695,
+      "owner": "//runsc/container:lifecycle_benchmark_systrap_test"
+    },
+    "shim": {
+      "original_sha256": "4752f32b2a009fecbecef0d2f379df051ec4e4f69903aef007dd5a13df993eee",
+      "original_bytes": 5365,
+      "owner": "//shim/tests:lifecycle_benchmark_systrap_test"
+    }
+  }
+}

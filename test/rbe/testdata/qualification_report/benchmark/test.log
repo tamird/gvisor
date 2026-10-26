@@ -1,0 +1,10 @@
+goos: linux
+goarch: amd64
+cpu: AMD EPYC 9755 128-Core Processor               
+=== RUN   BenchmarkFirstRestore
+BenchmarkFirstRestore
+=== RUN   BenchmarkFirstRestore/empty
+BenchmarkFirstRestore/empty
+BenchmarkFirstRestore/empty         	       1	      7090 ns/op	        15.00 wire-B/op	     512 B/op	       8 allocs/op
+=== NAME  
+PASS
