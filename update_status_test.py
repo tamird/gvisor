@@ -62,6 +62,54 @@ def linked(pr: dict, source: int) -> dict:
     return item
 
 
+class MergeabilityBatchTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.rows = [raw_pr(number) for number in range(1, 18)]
+        for row in self.rows:
+            row["mergeable"] = "UNKNOWN"
+        self.batches = []
+
+    def graphql(self, query: str) -> dict:
+        numbers = [int(n) for n in re.findall(r"p(\d+):pullRequest", query)]
+        self.batches.append(numbers)
+        updater.requests += 1
+        if len(numbers) > updater.PR_BATCH_SIZE:
+            raise updater.GitHubTransportError("HTTP 502 for oversized mergeability query")
+        return {"repository": {f"p{n}": {**raw_pr(n),
+                "mergeable": "CONFLICTING" if n == 13 else "MERGEABLE"} for n in numbers}}
+
+    def test_large_unknown_inventory_uses_bounded_head_checked_batches(self) -> None:
+        with mock.patch.object(updater, "requests", 0), \
+                mock.patch.object(updater, "graphql", side_effect=self.graphql):
+            result = updater.recheck_unknown_mergeability(self.rows)
+        self.assertEqual(result, {"status": "completed", "numbers": list(range(1, 18))})
+        self.assertEqual(self.batches, [list(range(1, 9)), list(range(9, 17)), [17]])
+        self.assertEqual([row["number"] for row in self.rows if row["mergeable"] == "CONFLICTING"], [13])
+        self.assertTrue(all("_mergeabilityRetrievedAt" in row for row in self.rows))
+
+    def test_late_transport_failure_preserves_completed_batch_only(self) -> None:
+        def fail_second(query: str) -> dict:
+            if self.batches:
+                raise updater.GitHubTransportError("HTTP 502")
+            return self.graphql(query)
+
+        with mock.patch.object(updater, "requests", 0), \
+                mock.patch.object(updater, "graphql", side_effect=fail_second):
+            result = updater.recheck_unknown_mergeability(self.rows)
+        self.assertEqual(result["status"], "unavailable")
+        self.assertEqual([row["mergeable"] for row in self.rows], ["MERGEABLE"] * 8 + ["UNKNOWN"] * 9)
+        self.assertEqual([row["number"] for row in self.rows if "_mergeabilityRetrievedAt" in row], list(range(1, 9)))
+
+    def test_request_budget_stops_before_next_batch(self) -> None:
+        with mock.patch.object(updater, "requests", updater.REQUEST_LIMIT - 1), \
+                mock.patch.object(updater, "graphql", side_effect=self.graphql):
+            result = updater.recheck_unknown_mergeability(self.rows)
+            self.assertEqual(updater.requests, updater.REQUEST_LIMIT)
+        self.assertEqual(result["status"], "budget-exhausted")
+        self.assertEqual(self.batches, [list(range(1, 9))])
+        self.assertEqual([row["mergeable"] for row in self.rows], ["MERGEABLE"] * 8 + ["UNKNOWN"] * 9)
+
+
 class CollectorHistoryTest(unittest.TestCase):
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()

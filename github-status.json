@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-26T00:39:45.485667+00:00",
-  "registryDate": "2026-10-26T00:34:54.404682+00:00",
+  "registryDate": "2026-10-26T00:43:09.596621+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -430,9 +430,9 @@
       },
       "reviewRequests": [],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000766+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -817,12 +817,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3e6c298682bcd2e8c480af2170b7915fb7d594f4",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:55.623572+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -1348,9 +1348,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000821+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1968,12 +1968,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e84407a2b6d59c3b522e15a5677e4845b1654981",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:55.623801+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -2009,9 +2009,9 @@
       },
       "reviewRequests": [],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000825+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -2806,12 +2806,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:55.623805+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -5256,9 +5256,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000828+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -5524,12 +5524,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "751b9b2062b40122d7c4096baa2436096d199030",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:55.623806+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -16959,9 +16959,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000830+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -17182,12 +17182,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "efa6209c33882e002d3aa0d27f9985342618d4a9",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:55.623806+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -18551,9 +18551,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000831+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -18952,12 +18952,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b61651f9371f514411dbb4fc2bd367f860204546",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:55.623807+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -20829,9 +20829,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000833+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -21081,12 +21081,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "4291208d12dc721acd67b80d28f32d9c8a5037ca",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:55.623808+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -27923,9 +27923,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000835+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -28184,12 +28184,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
         "base": "7d17d85641106925b52618eb8651a3e1d673fab1",
-        "checkedAt": "2026-10-25T22:21:55.623809+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -28234,9 +28234,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610299+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -28486,12 +28486,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "bec06589fb87222be549eb253a81e7eb87e379e9",
         "base": "30ace3e2a91e0832ab53234c8cf17cc38ee90f72",
-        "checkedAt": "2026-10-25T22:21:59.186863+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -30026,9 +30026,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610313+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -30397,12 +30397,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a3818d1793b919df1feeeb1c028cc40158754a7e",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:59.186894+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -40193,9 +40193,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610316+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -40564,12 +40564,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "36900f03504f22a8a89271d95f9beaa172f9d233",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:59.186895+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -43341,9 +43341,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610318+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -43564,12 +43564,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1c156e11a9760fb68214c2483493f1d50d8836a9",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:59.186898+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -51489,9 +51489,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610320+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -51747,12 +51747,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "75bfe160127ff01c8c7394bb4984527077ed8bf2",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:59.186898+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -52004,9 +52004,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610322+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -52235,12 +52235,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
-        "state": "MERGEABLE",
+        "state": "CONFLICTING",
         "head": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:59.186899+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -56731,9 +56731,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610323+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -56926,12 +56926,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "403195966ebb7900501ebb8ef40fa859c12fe71c",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:59.186900+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -56976,9 +56976,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610325+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -57171,12 +57171,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3332b33c838aa9f877395cd773c749cf087f9c5a",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:21:59.186900+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -64802,9 +64802,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627055+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -65077,12 +65077,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c1ae7f4705ba582853fb8c8179c7a2019ebd268a",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:02.707962+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -69053,9 +69053,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627070+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -69263,12 +69263,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "5af539b23594b3711fd49c514e236442baad9df3",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:02.708022+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -70553,9 +70553,9 @@
       },
       "reviewRequests": [],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627073+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -70748,12 +70748,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:02.708024+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -86504,9 +86504,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627075+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -86777,12 +86777,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b91b6f06ca53984c36fb915461aa293786b793a9",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:02.708025+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -86817,9 +86817,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:13.053678+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "DIRTY",
           "labels": [
             "exported"
           ],
@@ -87055,12 +87055,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "bc25b28dd702fa5fbb76b6d15549a1e198aeb74e",
             "base": "ab53add94c68e9564e22a4147807c83d141a618b",
-            "checkedAt": "2026-10-25T22:22:26.541239+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
           "matchesSourceHead": false,
@@ -98885,9 +98885,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627080+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -99095,12 +99095,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fe6307b885b148afced775852fccaf69dfba1e73",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:02.708037+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -100900,9 +100900,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627081+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -101095,12 +101095,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "d4c6ee0eae1cb9a4ec0c9fb201766a7c4428a38e",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:02.708038+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -103298,9 +103298,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700426+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -103493,12 +103493,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:06.679694+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -118399,9 +118399,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700448+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -118594,12 +118594,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "29edee9cbe9321287548342acca1004c1d9e9c00",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:06.679734+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -122142,9 +122142,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700450+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -122337,12 +122337,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "adc403f9444424da967f5262e4d8b649503c3615",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:06.679735+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -123946,9 +123946,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:13.053702+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -124214,12 +124214,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "7c78511153ae56c4a370cd7e5b731360ca9e29e7",
             "base": "727a46ebf7f3e1b1c1d7108b015bc8a1db2e8da5",
-            "checkedAt": "2026-10-25T22:22:26.541273+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "29eff9a55b6ae52f47aa0b977276ac67d298264f",
           "matchesSourceHead": true,
@@ -126363,9 +126363,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700455+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -126571,12 +126571,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "06a73ca10996bd195ddedfe9dcca489c03460923",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:06.679737+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -127303,9 +127303,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700457+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -127564,12 +127564,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:06.679737+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -127604,9 +127604,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:13.053697+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -127842,12 +127842,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "716235c7bb29daa8da4e087f627547154785691a",
             "base": "727a46ebf7f3e1b1c1d7108b015bc8a1db2e8da5",
-            "checkedAt": "2026-10-25T22:22:26.541270+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
           "matchesSourceHead": false,
@@ -133322,9 +133322,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700458+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -133663,12 +133663,12 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
       "approvedAt": "2026-10-21T15:39:57Z",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "77360cb73e3f5c8a882de1538cedc569a5abc450",
         "base": "9e9495997e29dfd6fd75a1bb4a941a91725d341a",
-        "checkedAt": "2026-10-25T22:22:06.679738+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -134012,9 +134012,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:13.053701+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -134250,12 +134250,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "134a61b1b17f0d5a94509512c92d914c44e0a8f1",
             "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-            "checkedAt": "2026-10-25T22:22:26.541272+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
           "matchesSourceHead": true,
@@ -134291,9 +134291,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:13.053704+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -134559,12 +134559,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "0c596564c0f54cf6c8ef7298b4f148d92b1cabdd",
             "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-            "checkedAt": "2026-10-25T22:22:26.541274+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
           "matchesSourceHead": true,
@@ -139990,9 +139990,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560962+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -140255,12 +140255,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6c3989016d3ce611337fe7954087a63ff4958b02",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093071+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -140581,9 +140581,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560977+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -140776,12 +140776,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093105+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -142565,9 +142565,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560979+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -142778,12 +142778,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093106+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -142824,9 +142824,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560981+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -143128,12 +143128,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3a7fe444c2169cf136de4305d4670ea45f4e869b",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093107+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -143168,9 +143168,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:13.053696+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -143406,12 +143406,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "ba5fbbf8740e1830ce67742ae968038e26095f24",
             "base": "40e83675f6429af6bc1fafe9707878bbb873cfcf",
-            "checkedAt": "2026-10-25T22:22:26.541269+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "fd6376945efa93664fec28669cc18e29c89b8648",
           "matchesSourceHead": false,
@@ -143458,9 +143458,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560983+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -143719,12 +143719,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093107+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -143759,9 +143759,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:13.053699+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -143997,12 +143997,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "e1b7a796148ec9dd8de7e934831a94e3b239a7b0",
             "base": "af2cc2c8dfd17247cb9565b16d206f0682c56aa1",
-            "checkedAt": "2026-10-25T22:22:26.541272+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "46aadd608aa19c1bbc33a425475d8900d6c9b5a7",
           "matchesSourceHead": false,
@@ -144285,9 +144285,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560984+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -144480,12 +144480,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "51e6940d1d4a66e8e9f87b1b278c99370c08a019",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093109+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -145236,9 +145236,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560986+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -145431,12 +145431,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093110+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -146159,9 +146159,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560990+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -146369,12 +146369,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "857926029bac476680f79bb66f5ac69b4dc91365",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:10.093110+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -147653,9 +147653,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155506+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -147878,12 +147878,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ec776316b254a79cb8eab6f76c5164459e8481b9",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660798+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -151209,9 +151209,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155522+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -151451,12 +151451,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660923+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -152173,9 +152173,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155525+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -152389,12 +152389,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "53b1c2e9c206a9e70bfbb1f13209b010f89538ff",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660926+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -157249,9 +157249,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155528+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -157495,12 +157495,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "76919b76075ddd8031cd0f35b42f5dc94f51feb7",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660930+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -157855,9 +157855,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155529+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -158096,12 +158096,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "181bf07a8fb918c58b206014451c400b76864290",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660931+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -158159,9 +158159,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155531+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -158408,12 +158408,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0d14cdf1f03ae940215738839add77dcb4677d79",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660932+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -158738,9 +158738,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155533+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -158999,12 +158999,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "be98bb4a72dbdbbda89ae07c87d05d1167a484af",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660933+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -159355,9 +159355,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155534+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -159616,12 +159616,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:13.660933+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -159976,9 +159976,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112956+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -160208,12 +160208,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6c330bf066b45334570a16b293a135fc167951b2",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:17.205540+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -162620,9 +162620,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112974+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -162881,12 +162881,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "7cf0ed8044e738fa01709f9ec5fd213a4a26b165",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:17.205577+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -163943,9 +163943,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112976+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -164153,12 +164153,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:17.205578+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -164207,9 +164207,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112978+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -164480,12 +164480,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1f8ed82325a943d475c4ecfcab7989e3860873c3",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:17.205579+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -165439,9 +165439,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112981+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -165649,12 +165649,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "97cd922bdf94cc284ada76c9d26d397a819f9350",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:17.205580+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -165699,9 +165699,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112985+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -165909,12 +165909,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ef26d82645e82c03a9360f9f239489629787633c",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:17.205581+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -165959,9 +165959,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958840+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -166154,12 +166154,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "21eea4551c30c3f084c9faa11d53e3ba162d26c3",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:20.636928+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -166200,9 +166200,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958857+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -166440,12 +166440,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b7a43f35edcf10a2fa8446b7009fa4ae291ce225",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:20.636983+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -166486,9 +166486,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958860+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -166726,12 +166726,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:20.636985+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -166776,9 +166776,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958862+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -166971,12 +166971,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:20.636986+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -167021,9 +167021,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958864+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -167216,12 +167216,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:20.636986+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -167266,9 +167266,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958865+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -167461,12 +167461,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:20.636987+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -167507,9 +167507,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958867+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -167765,12 +167765,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:20.636988+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -168532,9 +168532,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693350+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -168772,12 +168772,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:24.010195+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -168822,9 +168822,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693353+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -169123,12 +169123,12 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
       "approvedAt": "2026-10-25T18:28:14Z",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:24.010197+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -169163,9 +169163,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:14.011703+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -169431,12 +169431,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "bff00b5e086de3a6877fc7708fdda797b384b3be",
             "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-            "checkedAt": "2026-10-25T22:22:27.798926+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
           "matchesSourceHead": true,
@@ -169479,9 +169479,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693354+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -169737,12 +169737,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f7204694d85924f979109ff60ea28f34abf14714",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:24.010200+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -170414,9 +170414,9 @@
           },
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-26T00:39:14.011720+00:00",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -170682,12 +170682,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+          "checkedAt": "2026-10-26T00:43:09.596621+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "7089c937472a674a44197ae19b0872be5480cfa4",
             "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-            "checkedAt": "2026-10-25T22:22:27.798936+00:00"
+            "checkedAt": "2026-10-26T00:43:09.596621+00:00"
           },
           "sourceHead": "68bb9a238540e16c5784dc0153e9d15a7d94a3a7",
           "matchesSourceHead": true,
@@ -170734,9 +170734,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693359+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -170974,12 +170974,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "056d21cee8bc662737520aca579c2bc5d5936e85",
         "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-        "checkedAt": "2026-10-25T22:22:24.010202+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -171024,9 +171024,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693361+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -171264,12 +171264,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
+      "checkedAt": "2026-10-26T00:43:09.596621+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f1305131246efe3874ba4a7231a20d3076ff5e44",
         "base": "b36c8aa5ecca7e018c3155edd496d369b67385e7",
-        "checkedAt": "2026-10-25T22:22:24.010203+00:00"
+        "checkedAt": "2026-10-26T00:43:09.596621+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -179339,318 +179339,6 @@
   "mergeabilityHandoff": [
     {
       "repo": "google/gvisor",
-      "source": 12483,
-      "sourceHead": "3e6c298682bcd2e8c480af2170b7915fb7d594f4",
-      "number": 12483,
-      "url": "https://github.com/google/gvisor/pull/12483",
-      "scope": "source",
-      "head": "3e6c298682bcd2e8c480af2170b7915fb7d594f4",
-      "branchHead": "3e6c298682bcd2e8c480af2170b7915fb7d594f4",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000766+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
-        "disposition": "Measured reply posted; awaiting reviewer response",
-        "nextAction": "Follow the original reviewer thread. No contributor response authorization remains."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 14338,
-      "sourceHead": "e84407a2b6d59c3b522e15a5677e4845b1654981",
-      "number": 14338,
-      "url": "https://github.com/google/gvisor/pull/14338",
-      "scope": "source",
-      "head": "e84407a2b6d59c3b522e15a5677e4845b1654981",
-      "branchHead": "e84407a2b6d59c3b522e15a5677e4845b1654981",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000821+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "048d2635a582ab85720274b3cd8e515a781a3409",
-        "disposition": "Maintainer review and CI",
-        "nextAction": "Observe current-head checks, maintainer review and imports through the sole collector; the user has already requested review."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 14343,
-      "sourceHead": "e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
-      "number": 14343,
-      "url": "https://github.com/google/gvisor/pull/14343",
-      "scope": "source",
-      "head": "e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
-      "branchHead": "e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000825+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
-        "disposition": "Source reconciliation delivered; current head is mergeable",
-        "nextAction": "Follow exact-head checks, matching imports and maintainer review through the existing watcher. Earlier runtime results and approvals retain their source identities; no duplicate rebase or courtesy comment."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 14361,
-      "sourceHead": "751b9b2062b40122d7c4096baa2436096d199030",
-      "number": 14361,
-      "url": "https://github.com/google/gvisor/pull/14361",
-      "scope": "source",
-      "head": "751b9b2062b40122d7c4096baa2436096d199030",
-      "branchHead": "751b9b2062b40122d7c4096baa2436096d199030",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000828+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "752de31a1b3cbc9c800f64fc88c8148ff294888a",
-        "disposition": "Corrected rebase validated and published",
-        "nextAction": "Observe exact-head CI, review and import. The focused node and analyzer checks passed; preserve earlier source-specific evidence separately."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15064,
-      "sourceHead": "efa6209c33882e002d3aa0d27f9985342618d4a9",
-      "number": 15064,
-      "url": "https://github.com/google/gvisor/pull/15064",
-      "scope": "source",
-      "head": "efa6209c33882e002d3aa0d27f9985342618d4a9",
-      "branchHead": "efa6209c33882e002d3aa0d27f9985342618d4a9",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000830+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "9708dbc9f027a6eece93b1bb9b4f1638038ff31c",
-        "disposition": "conflict resolved; upstream review pending",
-        "nextAction": "Track exact-head review, CI and import after the source-preserving rebase. No remaining rebase task or new code dependency."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15106,
-      "sourceHead": "b61651f9371f514411dbb4fc2bd367f860204546",
-      "number": 15106,
-      "url": "https://github.com/google/gvisor/pull/15106",
-      "scope": "source",
-      "head": "b61651f9371f514411dbb4fc2bd367f860204546",
-      "branchHead": "b61651f9371f514411dbb4fc2bd367f860204546",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000831+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "e758ff20aee552bab5474f8f36bc50efd5a74c8d",
-        "disposition": "Substantive amendment after prior maintainer approval; reminder proof reconciled",
-        "nextAction": "Use the existing three-hour Pacific-business-hours reminder after fresh head, approval and mergeability checks. Existing source corrections and contributor approvals are complete; do not repeat them."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15114,
-      "sourceHead": "4291208d12dc721acd67b80d28f32d9c8a5037ca",
-      "number": 15114,
-      "url": "https://github.com/google/gvisor/pull/15114",
-      "scope": "source",
-      "head": "4291208d12dc721acd67b80d28f32d9c8a5037ca",
-      "branchHead": "4291208d12dc721acd67b80d28f32d9c8a5037ca",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000833+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "636cec92b308662bb2da1b2c325f999c82e9e65a",
-        "disposition": "ZIP integration validated and published; existing maintainer hold remains",
-        "nextAction": "Await maintainer confirmation that the existing internal license-exception hold is cleared. The mechanical rebase does not clear that hold."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15145,
-      "sourceHead": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
-      "number": 15145,
-      "url": "https://github.com/google/gvisor/pull/15145",
-      "scope": "source",
-      "head": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
-      "branchHead": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
-      "base": "7d17d85641106925b52618eb8651a3e1d673fab1",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:46.000835+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
-        "disposition": "Recovery source checks pass; existing review requirements remain",
-        "nextAction": "Follow existing maintainer review and any matching import. The current recovery head passes all source checks, including Gazelle and Go export; no repeated rebase or cleanup repair is indicated. Preserve the explicit license-exception confirmation and CHANGES_REQUESTED hold."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15146,
-      "sourceHead": "bec06589fb87222be549eb253a81e7eb87e379e9",
-      "number": 15146,
-      "url": "https://github.com/google/gvisor/pull/15146",
-      "scope": "source",
-      "head": "bec06589fb87222be549eb253a81e7eb87e379e9",
-      "branchHead": "bec06589fb87222be549eb253a81e7eb87e379e9",
-      "base": "30ace3e2a91e0832ab53234c8cf17cc38ee90f72",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610299+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "bec06589fb87222be549eb253a81e7eb87e379e9",
-        "disposition": "Equivalent rebase delivered; existing maintainer hold remains",
-        "nextAction": "Follow substantive human review and import outcomes; do not repeat the completed rebase or send an unauthorized reminder."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15153,
-      "sourceHead": "a3818d1793b919df1feeeb1c028cc40158754a7e",
-      "number": 15153,
-      "url": "https://github.com/google/gvisor/pull/15153",
-      "scope": "source",
-      "head": "a3818d1793b919df1feeeb1c028cc40158754a7e",
-      "branchHead": "a3818d1793b919df1feeeb1c028cc40158754a7e",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610313+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "154d10c44a781c9bc7cdce0f6729a490386caf06",
-        "disposition": "PR/fork reconciliation complete; current-head CI pending",
-        "nextAction": "Observe current-head checks through the existing watcher and address any actual failure. No repeated push or reviewer reminder for this reconciliation."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15181,
-      "sourceHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
-      "number": 15181,
-      "url": "https://github.com/google/gvisor/pull/15181",
-      "scope": "source",
-      "head": "36900f03504f22a8a89271d95f9beaa172f9d233",
-      "branchHead": "36900f03504f22a8a89271d95f9beaa172f9d233",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610316+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "9b469b1928628f1124992e8af1746435f6b04a8e",
-        "disposition": "Approved amendment delivered; Xeon comparison remains open",
-        "nextAction": "Root owns the requested Xeon comparison and any further substantive reviewer feedback. No duplicate acknowledgement or automatic review alert."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15189,
-      "sourceHead": "1c156e11a9760fb68214c2483493f1d50d8836a9",
-      "number": 15189,
-      "url": "https://github.com/google/gvisor/pull/15189",
-      "scope": "source",
-      "head": "1c156e11a9760fb68214c2483493f1d50d8836a9",
-      "branchHead": "1c156e11a9760fb68214c2483493f1d50d8836a9",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610318+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "d45c60c8a5856894425a04026639eb103aa014df",
-        "disposition": "Source-preserving refresh delivered; maintainer review required",
-        "nextAction": "Observe current-head maintainer review and import checks; source conflict resolution is delivered and adds no new runtime claim."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15321,
-      "sourceHead": "75bfe160127ff01c8c7394bb4984527077ed8bf2",
-      "number": 15321,
-      "url": "https://github.com/google/gvisor/pull/15321",
-      "scope": "source",
-      "head": "75bfe160127ff01c8c7394bb4984527077ed8bf2",
-      "branchHead": "75bfe160127ff01c8c7394bb4984527077ed8bf2",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610320+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "nybidari",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "nybidari",
-        "sourceHead": "f2a8ca99073d65942e559209b87c9be8606e5849",
-        "disposition": "Source checks pass; explicit current-revision re-review remains",
-        "nextAction": "Follow the existing maintainer review/import request. Exact changed bytes are preserved, so the standing pure-rebase rule suppresses automated reapproval reminders; generic robot dismissal alone is not a content amendment."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
       "source": 15322,
       "sourceHead": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
       "number": 15322,
@@ -179659,1268 +179347,17 @@
       "head": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
       "branchHead": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
       "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
+      "mergeable": "CONFLICTING",
       "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610322+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "1f9c427d908d8c78a0b69530e8ce315cab885948",
-        "disposition": "Conflict resolved and validated; awaiting maintainer review/import",
-        "nextAction": "Follow current-head CI and the existing maintainer review/import process. Preserve prior review requests and dependent holds; no duplicate rebase or reviewer reminder."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15368,
-      "sourceHead": "403195966ebb7900501ebb8ef40fa859c12fe71c",
-      "number": 15368,
-      "url": "https://github.com/google/gvisor/pull/15368",
-      "scope": "source",
-      "head": "403195966ebb7900501ebb8ef40fa859c12fe71c",
-      "branchHead": "403195966ebb7900501ebb8ef40fa859c12fe71c",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610323+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "886a52af8c85864aa628d04550ce5508dd91e8bc",
-        "disposition": "awaiting upstream review or import",
-        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15370,
-      "sourceHead": "3332b33c838aa9f877395cd773c749cf087f9c5a",
-      "number": 15370,
-      "url": "https://github.com/google/gvisor/pull/15370",
-      "scope": "source",
-      "head": "3332b33c838aa9f877395cd773c749cf087f9c5a",
-      "branchHead": "3332b33c838aa9f877395cd773c749cf087f9c5a",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:48.610325+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "24a215d72d01102b08ceb27bccd656bd3b258a4a",
-        "disposition": "Equivalent rebase published; native product validation accepted",
-        "nextAction": "Observe current-head public CI, review and import through the existing refresh. Preserve the original outer reporting failure and prior native evidence; no duplicate review notice."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15435,
-      "sourceHead": "c1ae7f4705ba582853fb8c8179c7a2019ebd268a",
-      "number": 15435,
-      "url": "https://github.com/google/gvisor/pull/15435",
-      "scope": "source",
-      "head": "c1ae7f4705ba582853fb8c8179c7a2019ebd268a",
-      "branchHead": "c1ae7f4705ba582853fb8c8179c7a2019ebd268a",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627055+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "c1ae7f4705ba582853fb8c8179c7a2019ebd268a",
-        "disposition": "Source reconciliation delivered; current head is mergeable",
-        "nextAction": "Follow exact-head checks, matching imports and maintainer review through the existing watcher. Earlier runtime results and approvals retain their source identities; no duplicate rebase or courtesy comment."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15443,
-      "sourceHead": "5af539b23594b3711fd49c514e236442baad9df3",
-      "number": 15443,
-      "url": "https://github.com/google/gvisor/pull/15443",
-      "scope": "source",
-      "head": "5af539b23594b3711fd49c514e236442baad9df3",
-      "branchHead": "5af539b23594b3711fd49c514e236442baad9df3",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627070+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "7771b786fbba82026dea68352e7bbc954e6326f2",
-        "disposition": "open",
-        "nextAction": "Follow the delivered exact head, CI, import and human review in the standing periodic sweep."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15449,
-      "sourceHead": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
-      "number": 15449,
-      "url": "https://github.com/google/gvisor/pull/15449",
-      "scope": "source",
-      "head": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
-      "branchHead": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627073+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "57834789e0f3343fc67a6bf2eb12544ea867a632",
-        "disposition": "Mechanical rebase delivered; current-head review and checks",
-        "nextAction": "Follow current-head public checks, genuine maintainer replies and any new import through the existing sweep. Historical approvals and imports do not cover the rebased head; do not duplicate the delivered notice."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15562,
-      "sourceHead": "b91b6f06ca53984c36fb915461aa293786b793a9",
-      "number": 15562,
-      "url": "https://github.com/google/gvisor/pull/15562",
-      "scope": "source",
-      "head": "b91b6f06ca53984c36fb915461aa293786b793a9",
-      "branchHead": "b91b6f06ca53984c36fb915461aa293786b793a9",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627075+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "b91b6f06ca53984c36fb915461aa293786b793a9",
-        "disposition": "Source reconciliation delivered; current head is mergeable",
-        "nextAction": "Follow exact-head checks, matching imports and maintainer review through the existing watcher. Earlier runtime results and approvals retain their source identities; no duplicate rebase or courtesy comment."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15647,
-      "sourceHead": "fe6307b885b148afced775852fccaf69dfba1e73",
-      "number": 15647,
-      "url": "https://github.com/google/gvisor/pull/15647",
-      "scope": "source",
-      "head": "fe6307b885b148afced775852fccaf69dfba1e73",
-      "branchHead": "fe6307b885b148afced775852fccaf69dfba1e73",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627080+00:00",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
       "sourceBranchMismatch": false,
       "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
+      "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
         "owner": "root",
-        "sourceHead": "bb11fc326ce7c506c13cea0212ea190a442dbbf7",
-        "disposition": "Approved correction delivered; follow current public CI and review",
-        "nextAction": "Observe checks and maintainer review for exact bb11fc source through the existing sweep. The contributor decision and publication are complete; do not request approval again."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15651,
-      "sourceHead": "d4c6ee0eae1cb9a4ec0c9fb201766a7c4428a38e",
-      "number": 15651,
-      "url": "https://github.com/google/gvisor/pull/15651",
-      "scope": "source",
-      "head": "d4c6ee0eae1cb9a4ec0c9fb201766a7c4428a38e",
-      "branchHead": "d4c6ee0eae1cb9a4ec0c9fb201766a7c4428a38e",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:51.627081+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "89bbc33772fdf5eecec78d3b920b75fdb5e3918c",
-        "disposition": "Contributor-approved; upstream review and CI",
-        "nextAction": "Follow current-head CI, maintainer comments and review threads. No merge or auto-merge is authorized."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15668,
-      "sourceHead": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
-      "number": 15668,
-      "url": "https://github.com/google/gvisor/pull/15668",
-      "scope": "source",
-      "head": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
-      "branchHead": "1c532008791abca23a5a434c4c71b1bd6ceea0ab",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700426+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "4215bbbbfc1ac58009b4afe6704d6b06cf64f599",
-        "disposition": "Approved direct-header amendment published",
-        "nextAction": "Follow #15668 current-head checks, maintainer feedback and import status."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15918,
-      "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "number": 15918,
-      "url": "https://github.com/google/gvisor/pull/15918",
-      "scope": "source",
-      "head": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "branchHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700448+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "external_sweeps",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "external_sweeps",
-        "sourceHead": "fd2999b440601691d26f86ad5b8c2af2e5fe1fe9",
-        "disposition": "Contributor approval delivered; maintainer review pending",
-        "nextAction": "Follow exact-head public CI and incoming maintainer feedback. The approved delivery is complete."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15929,
-      "sourceHead": "adc403f9444424da967f5262e4d8b649503c3615",
-      "number": 15929,
-      "url": "https://github.com/google/gvisor/pull/15929",
-      "scope": "source",
-      "head": "adc403f9444424da967f5262e4d8b649503c3615",
-      "branchHead": "adc403f9444424da967f5262e4d8b649503c3615",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700450+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "hostinet_delivery",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "aa691effa6f5ab741f9fefc8eab6bf6085b70cf3",
-        "disposition": "Equivalent rebase published; provider PR synchronization pending",
-        "nextAction": "Use the existing ordinary watcher to observe the replacement PR head and fresh mergeability/checks. Keep the old provider conflict observable until it catches up; no repush, new watcher or reapproval reminder for the equivalent rebase."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15931,
-      "sourceHead": "29eff9a55b6ae52f47aa0b977276ac67d298264f",
-      "number": 16371,
-      "url": "https://github.com/google/gvisor/pull/16371",
-      "scope": "current-source-import",
-      "head": "7c78511153ae56c4a370cd7e5b731360ca9e29e7",
-      "branchHead": "7c78511153ae56c4a370cd7e5b731360ca9e29e7",
-      "base": "727a46ebf7f3e1b1c1d7108b015bc8a1db2e8da5",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:13.053702+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "hostinet_delivery",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "29eff9a55b6ae52f47aa0b977276ac67d298264f",
-        "disposition": "Approved correction delivered; CI and maintainer review pending",
-        "nextAction": "Follow current-head CI and new substantive feedback in the existing collector. Preserve the native requested-reviewer404 as a failed request, not a successful re-request."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15936,
-      "sourceHead": "06a73ca10996bd195ddedfe9dcca489c03460923",
-      "number": 15936,
-      "url": "https://github.com/google/gvisor/pull/15936",
-      "scope": "source",
-      "head": "06a73ca10996bd195ddedfe9dcca489c03460923",
-      "branchHead": "06a73ca10996bd195ddedfe9dcca489c03460923",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700455+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "Codex",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "Codex",
-        "sourceHead": "06a73ca10996bd195ddedfe9dcca489c03460923",
-        "disposition": "Independent trace assertion strengthening; current public head remains under review"
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15940,
-      "sourceHead": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
-      "number": 15940,
-      "url": "https://github.com/google/gvisor/pull/15940",
-      "scope": "source",
-      "head": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
-      "branchHead": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700457+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
-        "disposition": "Exact head approved; public validation passed; import pending",
-        "nextAction": "Follow the approved exact head and matching import through the existing watcher. No source amendment, acknowledgement or repeat reviewer request is needed."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15958,
-      "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-      "number": 15958,
-      "url": "https://github.com/google/gvisor/pull/15958",
-      "scope": "source",
-      "head": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-      "branchHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-      "base": "9e9495997e29dfd6fd75a1bb4a941a91725d341a",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:54.700458+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current — import/check intake; tcp_fin_review — completed Buildkite diagnosis; root — INET contributor decision",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current — import/check intake; tcp_fin_review — completed Buildkite diagnosis; root — INET contributor decision",
-        "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-        "disposition": "Matching import has separate TLS setup and diagnosed native INET failures",
-        "nextAction": "Follow both exact-source imports and their current checks. Public 52329 and 52333 each have three native INET failures on the unchanged master fixture; generate TLS and its propagated go tests status remain separate. Keep private 34040 and historical 34024 distinct; their causes are not established by public logs. The one INET contributor decision is already registered."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15958,
-      "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-      "number": 16369,
-      "url": "https://github.com/google/gvisor/pull/16369",
-      "scope": "current-source-import",
-      "head": "134a61b1b17f0d5a94509512c92d914c44e0a8f1",
-      "branchHead": "134a61b1b17f0d5a94509512c92d914c44e0a8f1",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:13.053701+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current — import/check intake; tcp_fin_review — completed Buildkite diagnosis; root — INET contributor decision",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current — import/check intake; tcp_fin_review — completed Buildkite diagnosis; root — INET contributor decision",
-        "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-        "disposition": "Matching import has separate TLS setup and diagnosed native INET failures",
-        "nextAction": "Follow both exact-source imports and their current checks. Public 52329 and 52333 each have three native INET failures on the unchanged master fixture; generate TLS and its propagated go tests status remain separate. Keep private 34040 and historical 34024 distinct; their causes are not established by public logs. The one INET contributor decision is already registered."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15958,
-      "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-      "number": 16383,
-      "url": "https://github.com/google/gvisor/pull/16383",
-      "scope": "current-source-import",
-      "head": "0c596564c0f54cf6c8ef7298b4f148d92b1cabdd",
-      "branchHead": "0c596564c0f54cf6c8ef7298b4f148d92b1cabdd",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:13.053704+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current — import/check intake; tcp_fin_review — completed Buildkite diagnosis; root — INET contributor decision",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current — import/check intake; tcp_fin_review — completed Buildkite diagnosis; root — INET contributor decision",
-        "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-        "disposition": "Matching import has separate TLS setup and diagnosed native INET failures",
-        "nextAction": "Follow both exact-source imports and their current checks. Public 52329 and 52333 each have three native INET failures on the unchanged master fixture; generate TLS and its propagated go tests status remain separate. Keep private 34040 and historical 34024 distinct; their causes are not established by public logs. The one INET contributor decision is already registered."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15981,
-      "sourceHead": "6c3989016d3ce611337fe7954087a63ff4958b02",
-      "number": 15981,
-      "url": "https://github.com/google/gvisor/pull/15981",
-      "scope": "source",
-      "head": "6c3989016d3ce611337fe7954087a63ff4958b02",
-      "branchHead": "6c3989016d3ce611337fe7954087a63ff4958b02",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560962+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "4cbfbc9d210184f78809d741642ece5f4e95b31a",
-        "disposition": "Maintainer internal feedback remains distinct from passing public import checks",
-        "nextAction": "Keep this item in maintainer internal-feedback routing. The matching import is closed; its Buildkite success does not resolve the separate feedback/copybara failure. No source rebase or reminder is warranted for this status alone."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15983,
-      "sourceHead": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
-      "number": 15983,
-      "url": "https://github.com/google/gvisor/pull/15983",
-      "scope": "source",
-      "head": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
-      "branchHead": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560977+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "9182165b35529ed529e72aeddf4c32bcc76ad67f",
-        "disposition": "Approved bwrap correction delivered; follow public review and CI",
-        "nextAction": "Use the existing PR/provider sweep for feedback, checks and matching imports. Contributor approval and publication are complete."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16051,
-      "sourceHead": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a",
-      "number": 16051,
-      "url": "https://github.com/google/gvisor/pull/16051",
-      "scope": "source",
-      "head": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a",
-      "branchHead": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560979+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "36d42cd42ed7535e9106267046beb65b38880612",
-        "disposition": "Additive codeload conflict resolution published; follow the new revision",
-        "nextAction": "Follow the newly published head through current checks, matching Copybara import and actual revision-bound reviews using the existing watcher. Preserve previous-head validation and import history; no automatic reviewer request or merge."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16052,
-      "sourceHead": "3a7fe444c2169cf136de4305d4670ea45f4e869b",
-      "number": 16052,
-      "url": "https://github.com/google/gvisor/pull/16052",
-      "scope": "source",
-      "head": "3a7fe444c2169cf136de4305d4670ea45f4e869b",
-      "branchHead": "3a7fe444c2169cf136de4305d4670ea45f4e869b",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560981+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "3a7fe444c2169cf136de4305d4670ea45f4e869b",
-        "disposition": "Approved amendment published; both prior approvers asked to reapprove by comment",
-        "nextAction": "Follow exact-head checks, matching imports and substantive reapproval through the existing watcher. The reapproval comment is already posted; do not repeat the contributor decision or reviewer notification. Preserve the prior 8c172 lint failure and earlier import/compile evidence as historical."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16053,
-      "sourceHead": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
-      "number": 16053,
-      "url": "https://github.com/google/gvisor/pull/16053",
-      "scope": "source",
-      "head": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
-      "branchHead": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560983+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
-        "disposition": "Requested source rebase delivered",
-        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16055,
-      "sourceHead": "51e6940d1d4a66e8e9f87b1b278c99370c08a019",
-      "number": 16055,
-      "url": "https://github.com/google/gvisor/pull/16055",
-      "scope": "source",
-      "head": "51e6940d1d4a66e8e9f87b1b278c99370c08a019",
-      "branchHead": "51e6940d1d4a66e8e9f87b1b278c99370c08a019",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560984+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "bd37d23bc935b2585ade8c056c26c8ca8fb17dc2",
-        "disposition": "Gazelle rebase complete; exact current-head Gazelle check succeeded",
-        "nextAction": "Follow new substantive review, import and merge events in the existing sweep; preserve current maintainer holds and do not repeat the completed rebase."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16057,
-      "sourceHead": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
-      "number": 16057,
-      "url": "https://github.com/google/gvisor/pull/16057",
-      "scope": "source",
-      "head": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
-      "branchHead": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560986+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "a400475087d78a7359464817c6e45fc4c22bba73",
-        "disposition": "Gazelle rebase complete; exact current-head Gazelle check succeeded",
-        "nextAction": "Follow new substantive review, import and merge events in the existing sweep; preserve current maintainer holds and do not repeat the completed rebase."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16059,
-      "sourceHead": "857926029bac476680f79bb66f5ac69b4dc91365",
-      "number": 16059,
-      "url": "https://github.com/google/gvisor/pull/16059",
-      "scope": "source",
-      "head": "857926029bac476680f79bb66f5ac69b4dc91365",
-      "branchHead": "857926029bac476680f79bb66f5ac69b4dc91365",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:38:57.560990+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "857926029bac476680f79bb66f5ac69b4dc91365",
-        "disposition": "Source reconciliation delivered; current head is mergeable",
-        "nextAction": "Follow exact-head checks, matching imports and maintainer review through the existing watcher. Earlier runtime results and approvals retain their source identities; no duplicate rebase or courtesy comment."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16076,
-      "sourceHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-      "number": 16076,
-      "url": "https://github.com/google/gvisor/pull/16076",
-      "scope": "source",
-      "head": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-      "branchHead": "ec776316b254a79cb8eab6f76c5164459e8481b9",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155506+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root / hostinet_delivery",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root / hostinet_delivery",
-        "sourceHead": "bc40a65c7d06164a2a6f941fbe86dd409699258d",
-        "disposition": "Authorized wait-for-release reply posted",
-        "nextAction": "Wait for an official dind image containing the Compose fix, then replace the workaround and check the existing two host-network cases. No duplicate reply."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16096,
-      "sourceHead": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
-      "number": 16096,
-      "url": "https://github.com/google/gvisor/pull/16096",
-      "scope": "source",
-      "head": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
-      "branchHead": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155522+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
-        "disposition": "Requested rebase delivered; follow exact-head checks and review",
-        "nextAction": "Follow checks, matching imports and any required maintainer reapproval on the delivered head through the existing watcher. The human rebase request is handled; no acknowledgement, repeated contributor decision or runtime replay is needed."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16098,
-      "sourceHead": "53b1c2e9c206a9e70bfbb1f13209b010f89538ff",
-      "number": 16098,
-      "url": "https://github.com/google/gvisor/pull/16098",
-      "scope": "source",
-      "head": "53b1c2e9c206a9e70bfbb1f13209b010f89538ff",
-      "branchHead": "53b1c2e9c206a9e70bfbb1f13209b010f89538ff",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155525+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "3b7396026aa9671591f7dba451809c443c0c4844",
-        "disposition": "Landed-base source delivered; earlier import failures remain historical",
-        "nextAction": "Follow the actual current head, maintainer feedback and fresh matching import through the existing watcher. Keep old import failures and source-bound qualification separate; no duplicate reply, review request or contributor question."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16234,
-      "sourceHead": "76919b76075ddd8031cd0f35b42f5dc94f51feb7",
-      "number": 16234,
-      "url": "https://github.com/google/gvisor/pull/16234",
-      "scope": "source",
-      "head": "76919b76075ddd8031cd0f35b42f5dc94f51feb7",
-      "branchHead": "76919b76075ddd8031cd0f35b42f5dc94f51feb7",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155528+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "hostinet_delivery",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "fcad05c687d355637e4f91ea73831cd4a406da13",
-        "disposition": "Approved static correction delivered; current CI and maintainer review pending",
-        "nextAction": "Follow PR #16234 CI, review and import through the existing watcher. Retain prior contributor approval; no new contributor question."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16236,
-      "sourceHead": "181bf07a8fb918c58b206014451c400b76864290",
-      "number": 16236,
-      "url": "https://github.com/google/gvisor/pull/16236",
-      "scope": "source",
-      "head": "181bf07a8fb918c58b206014451c400b76864290",
-      "branchHead": "181bf07a8fb918c58b206014451c400b76864290",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155529+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "hostinet_delivery",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "c9b190fa8e9cda378c9c36a42cc6d6edb290caab",
-        "disposition": "Reply posted; supplier release and BCR prerequisites pending",
-        "nextAction": "Follow hermetic-llvm #883 through upstream release and BCR registration, then update the gVisor pin and remove its temporary patch."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16249,
-      "sourceHead": "0d14cdf1f03ae940215738839add77dcb4677d79",
-      "number": 16249,
-      "url": "https://github.com/google/gvisor/pull/16249",
-      "scope": "source",
-      "head": "0d14cdf1f03ae940215738839add77dcb4677d79",
-      "branchHead": "0d14cdf1f03ae940215738839add77dcb4677d79",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155531+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8",
-        "disposition": "Additive codeload conflict resolution published; follow the new revision",
-        "nextAction": "Follow the newly published head through current checks, matching Copybara import and actual revision-bound reviews using the existing watcher. Preserve previous-head validation and import history; no automatic reviewer request or merge."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16250,
-      "sourceHead": "be98bb4a72dbdbbda89ae07c87d05d1167a484af",
-      "number": 16250,
-      "url": "https://github.com/google/gvisor/pull/16250",
-      "scope": "source",
-      "head": "be98bb4a72dbdbbda89ae07c87d05d1167a484af",
-      "branchHead": "be98bb4a72dbdbbda89ae07c87d05d1167a484af",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155533+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "node_tls_sni",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72",
-        "disposition": "Exact head approved; netstat source condition checked",
-        "nextAction": "Continue ordinary current-head checks and matching import tracking. The reviewer condition is satisfied by exact source; no amendment, acknowledgement or second review request is needed."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16253,
-      "sourceHead": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
-      "number": 16253,
-      "url": "https://github.com/google/gvisor/pull/16253",
-      "scope": "source",
-      "head": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
-      "branchHead": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:00.155534+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
-        "disposition": "Requested source rebase delivered",
-        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16254,
-      "sourceHead": "6c330bf066b45334570a16b293a135fc167951b2",
-      "number": 16254,
-      "url": "https://github.com/google/gvisor/pull/16254",
-      "scope": "source",
-      "head": "6c330bf066b45334570a16b293a135fc167951b2",
-      "branchHead": "6c330bf066b45334570a16b293a135fc167951b2",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112956+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
-        "disposition": "Contributor reply and description update completed",
-        "nextAction": "Follow new substantive reviewer feedback through the existing watcher. Do not repeat the fulfilled reply or decision."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16283,
-      "sourceHead": "7cf0ed8044e738fa01709f9ec5fd213a4a26b165",
-      "number": 16283,
-      "url": "https://github.com/google/gvisor/pull/16283",
-      "scope": "source",
-      "head": "7cf0ed8044e738fa01709f9ec5fd213a4a26b165",
-      "branchHead": "7cf0ed8044e738fa01709f9ec5fd213a4a26b165",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112974+00:00",
-      "sourceBranchMismatch": false,
-      "owner": null,
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {},
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16313,
-      "sourceHead": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
-      "number": 16313,
-      "url": "https://github.com/google/gvisor/pull/16313",
-      "scope": "source",
-      "head": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
-      "branchHead": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112976+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
-        "disposition": "Benchmark upstream fix merged; downstream citation-only amendment published at the verified head",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review for the still-open gVisor #16313 through the existing watcher. Benchmark #2351 is merged, and the downstream backport cites its squash commit. Contributor approval remains settled; no new decision, submission or public comment is needed."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16333,
-      "sourceHead": "1f8ed82325a943d475c4ecfcab7989e3860873c3",
-      "number": 16333,
-      "url": "https://github.com/google/gvisor/pull/16333",
-      "scope": "source",
-      "head": "1f8ed82325a943d475c4ecfcab7989e3860873c3",
-      "branchHead": "1f8ed82325a943d475c4ecfcab7989e3860873c3",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112978+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "1f8ed82325a943d475c4ecfcab7989e3860873c3",
-        "disposition": "Requested rebase delivered; follow exact-head checks and review",
-        "nextAction": "Follow checks, matching imports and any required maintainer reapproval on the delivered head through the existing watcher. The human rebase request is handled; no acknowledgement, repeated contributor decision or runtime replay is needed."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16337,
-      "sourceHead": "97cd922bdf94cc284ada76c9d26d397a819f9350",
-      "number": 16337,
-      "url": "https://github.com/google/gvisor/pull/16337",
-      "scope": "source",
-      "head": "97cd922bdf94cc284ada76c9d26d397a819f9350",
-      "branchHead": "97cd922bdf94cc284ada76c9d26d397a819f9350",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112981+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "a8f37898d52094b71fd786aa31af4476c1133d1d",
-        "disposition": "Published; current public checks and maintainer review",
-        "nextAction": "Follow current-head public checks, review and import in the existing watcher. No new contributor question."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16338,
-      "sourceHead": "ef26d82645e82c03a9360f9f239489629787633c",
-      "number": 16338,
-      "url": "https://github.com/google/gvisor/pull/16338",
-      "scope": "source",
-      "head": "ef26d82645e82c03a9360f9f239489629787633c",
-      "branchHead": "ef26d82645e82c03a9360f9f239489629787633c",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:03.112985+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "ef26d82645e82c03a9360f9f239489629787633c",
-        "disposition": "Current-source resolution published; provider confirms MERGEABLE",
-        "nextAction": "Follow current-head CI and maintainer review on the delivered source. Remote qualification is complete; preserve the earlier local executable-mismatch failure separately. No new contributor decision."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16339,
-      "sourceHead": "21eea4551c30c3f084c9faa11d53e3ba162d26c3",
-      "number": 16339,
-      "url": "https://github.com/google/gvisor/pull/16339",
-      "scope": "source",
-      "head": "21eea4551c30c3f084c9faa11d53e3ba162d26c3",
-      "branchHead": "21eea4551c30c3f084c9faa11d53e3ba162d26c3",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958840+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
-        "disposition": "Published as #16339",
-        "nextAction": "Follow current-head checks and maintainer review on #16339; no new contributor decision."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16340,
-      "sourceHead": "b7a43f35edcf10a2fa8446b7009fa4ae291ce225",
-      "number": 16340,
-      "url": "https://github.com/google/gvisor/pull/16340",
-      "scope": "source",
-      "head": "b7a43f35edcf10a2fa8446b7009fa4ae291ce225",
-      "branchHead": "b7a43f35edcf10a2fa8446b7009fa4ae291ce225",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958857+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "b7a43f35edcf10a2fa8446b7009fa4ae291ce225",
-        "disposition": "Requested source rebase delivered",
-        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16341,
-      "sourceHead": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
-      "number": 16341,
-      "url": "https://github.com/google/gvisor/pull/16341",
-      "scope": "source",
-      "head": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
-      "branchHead": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958860+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
-        "disposition": "Requested source rebase delivered",
-        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16343,
-      "sourceHead": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
-      "number": 16343,
-      "url": "https://github.com/google/gvisor/pull/16343",
-      "scope": "source",
-      "head": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
-      "branchHead": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958862+00:00",
-      "sourceBranchMismatch": false,
-      "owner": null,
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {},
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16344,
-      "sourceHead": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
-      "number": 16344,
-      "url": "https://github.com/google/gvisor/pull/16344",
-      "scope": "source",
-      "head": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
-      "branchHead": "86ab5ae254e59c70f73520ca81368dc9ac68f7c5",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958864+00:00",
-      "sourceBranchMismatch": false,
-      "owner": null,
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {},
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16345,
-      "sourceHead": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
-      "number": 16345,
-      "url": "https://github.com/google/gvisor/pull/16345",
-      "scope": "source",
-      "head": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
-      "branchHead": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958865+00:00",
-      "sourceBranchMismatch": false,
-      "owner": null,
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {},
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16374,
-      "sourceHead": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
-      "number": 16374,
-      "url": "https://github.com/google/gvisor/pull/16374",
-      "scope": "source",
-      "head": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
-      "branchHead": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:05.958867+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
-        "disposition": "Exact approved source restoration delivered",
-        "nextAction": "Follow current-head checks, matching import and maintainer review through the existing watcher. Keep the Docker Hub mirror convention and per-child source dependencies separate."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16378,
-      "sourceHead": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
-      "number": 16378,
-      "url": "https://github.com/google/gvisor/pull/16378",
-      "scope": "source",
-      "head": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
-      "branchHead": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693350+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
-        "disposition": "Approved proposal delivered as an open source PR",
-        "nextAction": "Follow exact-head CI, imports and maintainer review through the existing watcher. No contributor decision remains pending."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16379,
-      "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-      "number": 16379,
-      "url": "https://github.com/google/gvisor/pull/16379",
-      "scope": "source",
-      "head": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-      "branchHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693353+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "disposition": "Exact-head maintainer approval received; actual landing remains the image release gate",
-        "nextAction": "Root and the assigned FIFO investigator own a controlled proof of the separate Overlay EINTR, informed by existing #14849; no competing fix or exact signal attribution is established. Follow matching import16384 and actual landing through the existing watcher. The INET setup proposal remains its independent contributor decision; SSL generate failures and private check statuses stay separate."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16379,
-      "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-      "number": 16384,
-      "url": "https://github.com/google/gvisor/pull/16384",
-      "scope": "current-source-import",
-      "head": "bff00b5e086de3a6877fc7708fdda797b384b3be",
-      "branchHead": "bff00b5e086de3a6877fc7708fdda797b384b3be",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:14.011703+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "root",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "root",
-        "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "disposition": "Exact-head maintainer approval received; actual landing remains the image release gate",
-        "nextAction": "Root and the assigned FIFO investigator own a controlled proof of the separate Overlay EINTR, informed by existing #14849; no competing fix or exact signal attribution is established. Follow matching import16384 and actual landing through the existing watcher. The INET setup proposal remains its independent contributor decision; SSL generate failures and private check statuses stay separate."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16380,
-      "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
-      "number": 16380,
-      "url": "https://github.com/google/gvisor/pull/16380",
-      "scope": "source",
-      "head": "f7204694d85924f979109ff60ea28f34abf14714",
-      "branchHead": "f7204694d85924f979109ff60ea28f34abf14714",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693354+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
-        "disposition": "Approved source delivered as #16380; current normal and race qualification pass; the October25 automated no-findings comment is not a maintainer approval",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing watcher. The approved destination-kind child retains its separate source grant and waits for actual #16380 landing. No repeated contributor question."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16382,
-      "sourceHead": "68bb9a238540e16c5784dc0153e9d15a7d94a3a7",
-      "number": 16385,
-      "url": "https://github.com/google/gvisor/pull/16385",
-      "scope": "current-source-import",
-      "head": "7089c937472a674a44197ae19b0872be5480cfa4",
-      "branchHead": "7089c937472a674a44197ae19b0872be5480cfa4",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:14.011720+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "68bb9a238540e16c5784dc0153e9d15a7d94a3a7",
-        "disposition": "Matching import public and internal checks passed; awaiting maintainer landing",
-        "nextAction": "Follow maintainer landing of the approved source and current green import. Preserve the source generate TLS timeout and HTTP 403 author-rerun limitation separately; no new contributor decision or unsolicited rerun request."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16391,
-      "sourceHead": "056d21cee8bc662737520aca579c2bc5d5936e85",
-      "number": 16391,
-      "url": "https://github.com/google/gvisor/pull/16391",
-      "scope": "source",
-      "head": "056d21cee8bc662737520aca579c2bc5d5936e85",
-      "branchHead": "056d21cee8bc662737520aca579c2bc5d5936e85",
-      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693359+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "056d21cee8bc662737520aca579c2bc5d5936e85",
-        "disposition": "Contributor-approved exact source delivered as #16391",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing intake. Preserve the controlled original failure and corrected success; no repeated contributor decision or broader systemd coverage claim."
-      },
-      "conflictObservedSince": null
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 16392,
-      "sourceHead": "f1305131246efe3874ba4a7231a20d3076ff5e44",
-      "number": 16392,
-      "url": "https://github.com/google/gvisor/pull/16392",
-      "scope": "source",
-      "head": "f1305131246efe3874ba4a7231a20d3076ff5e44",
-      "branchHead": "f1305131246efe3874ba4a7231a20d3076ff5e44",
-      "base": "b36c8aa5ecca7e018c3155edd496d369b67385e7",
-      "mergeable": "UNKNOWN",
-      "checkedAt": "2026-10-26T00:39:35.462931+00:00",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:09.693361+00:00",
-      "sourceBranchMismatch": false,
-      "owner": "work_map_current",
-      "action": "Mergeability remains unknown after the bounded provider check. Establish the actual current head/base result before treating this source as ready.",
-      "recordedFollowup": {
-        "owner": "work_map_current",
-        "sourceHead": "f1305131246efe3874ba4a7231a20d3076ff5e44",
-        "disposition": "Contributor-approved exact INET setup correction delivered as #16392",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing intake. Preserve the failed control and unknown original public-worker module state. No repeated contributor question or public notification."
+        "sourceHead": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
+        "disposition": "Current source conflicts; resolution needs an assigned source owner",
+        "nextAction": "Root owns assigning reconciliation of current ca01d635 against master. GitHub reports CONFLICTING on this exact source; this is agent source work, not a new maintainer changes-requested event. Preserve previous validation as historical and do not mutate the old Copybara import."
       },
       "conflictObservedSince": null
     }
@@ -180939,9 +179376,9 @@
       "branchHead": "bc25b28dd702fa5fbb76b6d15549a1e198aeb74e",
       "sourceBranchMismatch": false,
       "base": "ab53add94c68e9564e22a4147807c83d141a618b",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:13.053678+00:00",
+      "mergeable": "CONFLICTING",
+      "mergeState": "DIRTY",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
       "scope": "older-source-import",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -180978,9 +179415,9 @@
       "branchHead": "134a61b1b17f0d5a94509512c92d914c44e0a8f1",
       "sourceBranchMismatch": false,
       "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:13.053701+00:00",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
       "scope": "current-source-import",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -181027,9 +179464,9 @@
       "branchHead": "0c596564c0f54cf6c8ef7298b4f148d92b1cabdd",
       "sourceBranchMismatch": false,
       "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:13.053704+00:00",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
       "scope": "current-source-import",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -181091,9 +179528,9 @@
       "branchHead": "ba5fbbf8740e1830ce67742ae968038e26095f24",
       "sourceBranchMismatch": false,
       "base": "40e83675f6429af6bc1fafe9707878bbb873cfcf",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:13.053696+00:00",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
       "scope": "older-source-import",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -181140,9 +179577,9 @@
       "branchHead": "bff00b5e086de3a6877fc7708fdda797b384b3be",
       "sourceBranchMismatch": false,
       "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-26T00:39:14.011703+00:00",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-10-26T00:43:09.596621+00:00",
       "scope": "current-source-import",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -182272,6 +180709,13 @@
       }
     },
     "pr:15322": {
+      "conflicts": {
+        "scope": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
+        "since": "2026-10-26T00:39:35.462931+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-26T00:39:35.462931+00:00"
+      },
       "maintainer-review": {
         "scope": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
         "since": "2026-10-25T12:53:20.570315+00:00",
@@ -183383,7 +181827,14 @@
         "scope": "16371:7c78511153ae56c4a370cd7e5b731360ca9e29e7",
         "since": "2026-10-25T12:30:00.278779+00:00",
         "basis": "observed",
-        "qualifier": "#16371: open, validation checks passed, mergeability unknown",
+        "qualifier": "#16371: open, validation checks passed, no reported conflict",
+        "observedAt": "2026-10-26T00:39:35.462931+00:00"
+      },
+      "waiting-merge": {
+        "scope": "29eff9a55b6ae52f47aa0b977276ac67d298264f,16371:7c78511153ae56c4a370cd7e5b731360ca9e29e7",
+        "since": "2026-10-26T00:39:35.462931+00:00",
+        "basis": "observed",
+        "qualifier": "Import #16371",
         "observedAt": "2026-10-26T00:39:35.462931+00:00"
       }
     },
@@ -183534,7 +181985,7 @@
         "scope": "16369:134a61b1b17f0d5a94509512c92d914c44e0a8f1,16383:0c596564c0f54cf6c8ef7298b4f148d92b1cabdd",
         "since": "2026-10-25T18:35:56.862442+00:00",
         "basis": "observed",
-        "qualifier": "#16369: open, checks failing, mergeability unknown; #16383: open, checks failing, mergeability unknown",
+        "qualifier": "#16369: open, checks failing, no reported conflict; #16383: open, checks failing, no reported conflict",
         "observedAt": "2026-10-26T00:39:35.462931+00:00"
       }
     },
@@ -184171,7 +182622,7 @@
         "scope": "16384:bff00b5e086de3a6877fc7708fdda797b384b3be",
         "since": "2026-10-25T18:55:59.028532+00:00",
         "basis": "observed",
-        "qualifier": "#16384: open, checks failing, mergeability unknown",
+        "qualifier": "#16384: open, checks failing, no reported conflict",
         "observedAt": "2026-10-26T00:39:35.462931+00:00"
       }
     },
@@ -184205,7 +182656,7 @@
         "scope": "16385:7089c937472a674a44197ae19b0872be5480cfa4",
         "since": "2026-10-25T19:05:11.009989+00:00",
         "basis": "observed",
-        "qualifier": "#16385: open, validation checks passed, mergeability unknown",
+        "qualifier": "#16385: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-26T00:39:35.462931+00:00"
       }
     },
@@ -184416,7 +182867,7 @@
         "since": "2026-10-25T17:18:41.123958+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-26T00:34:54.404682+00:00"
+        "observedAt": "2026-10-26T00:43:09.596621+00:00"
       }
     }
   },
@@ -184434,7 +182885,7 @@
         "retainedSources": 242,
         "retainedImports": 277,
         "mergeabilityRecheck": {
-          "status": "unavailable",
+          "status": "completed",
           "numbers": [
             12483,
             14338,

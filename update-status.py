@@ -446,32 +446,38 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
                if pr["state"] == "OPEN" and pr["mergeable"] == "UNKNOWN"}
     if not unknown:
         return {"status": "not-needed", "numbers": []}
-    if requests >= REQUEST_LIMIT:
-        return {"status": "budget-exhausted", "numbers": sorted(unknown)}
     owner, name = repo.split("/")
-    fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid headRef{{name target{{oid}}}} baseRefOid state mergeable mergeStateStatus}}"
-                      for number in unknown)
-    try:
-        response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
-    except GitHubTransportError as error:
-        # The primary observations remain valid UNKNOWN results. This optional
-        # read must not discard them or advance their mergeability timestamps.
-        print(f"Mergeability recheck unavailable; retaining primary observations: {error}", file=sys.stderr)
-        return {"status": "unavailable", "numbers": sorted(unknown)}
-    retrieved_at = datetime.now(timezone.utc).isoformat()
-    if set(response) != {f"p{number}" for number in unknown}:
-        raise RuntimeError("Mergeability recheck inventory is incomplete; previous snapshot is unchanged")
-    for number, pr in unknown.items():
-        result = response[f"p{number}"]
-        if (not result or result["number"] != number or result["headRefOid"] != pr["headRefOid"]
-                or result["state"] != pr["state"]):
-            raise RuntimeError(f"PR #{number} changed during mergeability recheck; previous snapshot is unchanged")
-        if result["mergeable"] not in {"MERGEABLE", "CONFLICTING", "UNKNOWN"}:
-            raise RuntimeError(f"Unexpected mergeability for PR #{number}; previous snapshot is unchanged")
-        pr.update(baseRefOid=result["baseRefOid"], mergeable=result["mergeable"],
-                  headRef=result.get("headRef"),
-                  mergeStateStatus=result["mergeStateStatus"], _mergeabilityRetrievedAt=retrieved_at)
-    return {"status": "completed", "numbers": sorted(unknown)}
+    # Report the original candidate inventory; per-PR observations record which
+    # batches actually completed if transport or the request budget stops us.
+    numbers = sorted(unknown)
+    for start in range(0, len(numbers), PR_BATCH_SIZE):
+        if requests >= REQUEST_LIMIT:
+            return {"status": "budget-exhausted", "numbers": numbers}
+        batch = numbers[start:start + PR_BATCH_SIZE]
+        fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid headRef{{name target{{oid}}}} baseRefOid state mergeable mergeStateStatus}}"
+                          for number in batch)
+        try:
+            response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
+        except GitHubTransportError as error:
+            # Preserve successful batches; the unavailable batch keeps its
+            # primary UNKNOWN observations and their original timestamps.
+            print(f"Mergeability recheck unavailable; retaining valid observations: {error}", file=sys.stderr)
+            return {"status": "unavailable", "numbers": numbers}
+        retrieved_at = datetime.now(timezone.utc).isoformat()
+        if set(response) != {f"p{number}" for number in batch}:
+            raise RuntimeError("Mergeability recheck inventory is incomplete; previous snapshot is unchanged")
+        for number in batch:
+            pr = unknown[number]
+            result = response[f"p{number}"]
+            if (not result or result["number"] != number or result["headRefOid"] != pr["headRefOid"]
+                    or result["state"] != pr["state"]):
+                raise RuntimeError(f"PR #{number} changed during mergeability recheck; previous snapshot is unchanged")
+            if result["mergeable"] not in {"MERGEABLE", "CONFLICTING", "UNKNOWN"}:
+                raise RuntimeError(f"Unexpected mergeability for PR #{number}; previous snapshot is unchanged")
+            pr.update(baseRefOid=result["baseRefOid"], mergeable=result["mergeable"],
+                      headRef=result.get("headRef"),
+                      mergeStateStatus=result["mergeStateStatus"], _mergeabilityRetrievedAt=retrieved_at)
+    return {"status": "completed", "numbers": numbers}
 
 
 def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dict], dict, dict, dict]:
