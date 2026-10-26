@@ -162,7 +162,8 @@ def go_package(target):
         srcs = list(info.srcs),
         archive = target[GoArchive].data.file,
         importpath = info.importmap,
-        importpaths = [info.importpath] + list(info.importpath_aliases),
+        source_importpath = info.importpath,
+        importpath_aliases = list(info.importpath_aliases),
     )
 
 def go_has_archive(target):

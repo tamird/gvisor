@@ -143,7 +143,8 @@ NogoInfo = provider(
         "transitive_facts": "depset of (import path, facts file) pairs",
         "raw_findings": "raw package findings (if relevant)",
         "importpath": "canonical package path",
-        "importpaths": "source import paths for the package",
+        "source_importpath": "primary source import path for the package",
+        "importpath_aliases": "alternate source import paths for the package",
         "archive": "compiled package archive for binary analyzers",
         "srcs": "srcs (for go_test support)",
         "deps": "deps (for go_test support)",
@@ -167,6 +168,8 @@ def _nogo_config(ctx, deps, attr = None):
     inputs = []
     raw_findings = []
     fact_sets = []
+    primary_imports = {}
+    alias_imports = {}
     for dep in deps:
         # Non-Go dependencies do not produce export data or facts.
         info = dep[NogoInfo]
@@ -175,12 +178,19 @@ def _nogo_config(ctx, deps, attr = None):
 
         args.append("-archive=%s=%s" % (info.importpath, info.archive.path))
         args.append("-import=%s=%s" % (info.importpath, info.export.path))
-        for importpath in info.importpaths:
-            if importpath != info.importpath:
-                args.append("-import-map=%s=%s" % (importpath, info.importpath))
+        primary_imports[info.source_importpath] = info.importpath
+        for importpath in info.importpath_aliases:
+            alias_imports[importpath] = info.importpath
         fact_sets.append(info.transitive_facts)
         raw_findings.extend(info.raw_findings)
         inputs.extend([info.archive, info.export])
+
+    # Match rules_go's checkImports: a primary import takes precedence over
+    # another dependency's alias, regardless of dependency order.
+    alias_imports.update(primary_imports)
+    for importpath, package_path in alias_imports.items():
+        if importpath != package_path:
+            args.append("-import-map=%s=%s" % (importpath, package_path))
 
     # Export data can expose types and methods from indirect imports. Their
     # facts must be available even without a direct source import.
@@ -269,7 +279,8 @@ def _nogo_aspect_impl(target, ctx):
             elif hasattr(embed[NogoInfo], "srcs"):
                 srcs = embed[NogoInfo].srcs + srcs
         importpath = "test"
-        importpaths = []
+        source_importpath = "test"
+        importpath_aliases = []
 
         # The GoArchive provider describes generated testmain, while this
         # output group contains the source package's internal/external code.
@@ -278,7 +289,8 @@ def _nogo_aspect_impl(target, ctx):
         package = go_package(target)
         srcs = package.srcs
         importpath = package.importpath
-        importpaths = package.importpaths
+        source_importpath = package.source_importpath
+        importpath_aliases = package.importpath_aliases
         archive = package.archive
 
     # Use the analyzed rule's transitioned Go configuration, including its build
@@ -324,7 +336,8 @@ def _nogo_aspect_impl(target, ctx):
             ),
             raw_findings = raw_findings + [findings_file],
             importpath = importpath,
-            importpaths = importpaths,
+            source_importpath = source_importpath,
+            importpath_aliases = importpath_aliases,
             archive = archive,
             srcs = srcs,
             deps = deps,
