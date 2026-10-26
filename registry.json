@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T22:43:37.425124+00:00",
+    "updatedAt": "2026-10-26T22:59:16.323648+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21492,20 +21492,21 @@
       "title": "Use official Nginx and Redis images in port-forward tests",
       "url": "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16250 and #16379",
-      "updatedAt": "2026-10-25T20:42:47.994980+00:00",
-      "summary": "The contributor approved exact combined port-forward stock-image proposal 97c92ed7353dc4c304c7682c8b2a33453e8ea82a for automatic upstream opening after #16250 and #16379 land. No contributor decision remains pending. The tests use the official Nginx and Redis images unchanged: their existing clients wait for HTTP 200 and PONG, eliminating net-tools installation. This replaces the two separate basic-image proposals while preserving their links, range-diffs and source-specific evidence below. Both prerequisites remain open; #16250's old import #16321 closed unmerged, and #16379's import #16384 remains open. No upstream PR has been opened for the combined source.\n\nAll eight AMD64/ARM64 archive and Make-context artifacts were built from combined source 97c92ed7353d in invocation caea451c and were byte-identical to the independent builds. Four selected runtime cases also passed in the original 94558fe7 run, but that run remains FAIL/producer INCOMPLETE because the required-case manifest used unqualified names. A separate retained-only recovery uses the exact configured Go helper and canonical reporter; it reproduces all four original misses and then verifies four classname/name positives from the same authenticated CAS outputs. The recovery did not rerun the runtime cases. Canonical license Verify on the exact combined source passed for all 200 source entries without changing the catalog or policy. That catalog does not enumerate OCI image pulls, so it is not a new catalog audit of the upstream image contents. Delivery requires actual landing of #16250 and #16379.\n\nCompare the earlier proposals with the combined source:\nNginx: git -C ~/code/gvisor range-diff --creation-factor=999 0d29bd346^! 97c92ed735^!\nRedis: git -C ~/code/gvisor range-diff --creation-factor=999 e3f204357^! 97c92ed735^!\n\nEarlier Nginx proposal and validation:\n\nThe fork-only mirror amendment is 0d29bd34650d, replacing proposal source e2b318ab2eec. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.\n\nEarlier Redis proposal and validation:\n\nThe fork-only mirror amendment is e3f204357353, replacing proposal source d16b540dc2e9. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
+      "status": "Contributor approved; waiting for #16250",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "The contributor approved exact combined port-forward stock-image proposal 97c92ed7353dc4c304c7682c8b2a33453e8ea82a for automatic upstream opening after #16250 and #16379 land. No contributor decision remains pending. The tests use the official Nginx and Redis images unchanged: their existing clients wait for HTTP 200 and PONG, eliminating net-tools installation. This replaces the two separate basic-image proposals while preserving their links, range-diffs and source-specific evidence below. The shared mirror prerequisite #16379 has landed through #16430. Only #16250 remains open; its old import #16321 closed unmerged. No upstream PR has been opened for the combined source.\n\nAll eight AMD64/ARM64 archive and Make-context artifacts were built from combined source 97c92ed7353d in invocation caea451c and were byte-identical to the independent builds. Four selected runtime cases also passed in the original 94558fe7 run, but that run remains FAIL/producer INCOMPLETE because the required-case manifest used unqualified names. A separate retained-only recovery uses the exact configured Go helper and canonical reporter; it reproduces all four original misses and then verifies four classname/name positives from the same authenticated CAS outputs. The recovery did not rerun the runtime cases. Canonical license Verify on the exact combined source passed for all 200 source entries without changing the catalog or policy. That catalog does not enumerate OCI image pulls, so it is not a new catalog audit of the upstream image contents. Delivery now requires only the actual landing of #16250.\n\nCompare the earlier proposals with the combined source:\nNginx: git -C ~/code/gvisor range-diff --creation-factor=999 0d29bd346^! 97c92ed735^!\nRedis: git -C ~/code/gvisor range-diff --creation-factor=999 e3f204357^! 97c92ed735^!\n\nEarlier Nginx proposal and validation:\n\nThe fork-only mirror amendment is 0d29bd34650d, replacing proposal source e2b318ab2eec. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. That prerequisite is now satisfied by #16430.\n\nHistorical proposal and validation:\n\nThe contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.\n\nEarlier Redis proposal and validation:\n\nThe fork-only mirror amendment is e3f204357353, replacing proposal source d16b540dc2e9. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. That prerequisite is now satisfied by #16430.\n\nHistorical proposal and validation:\n\nThe contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
       "followup": {
         "owner": "root",
         "sourceHead": "97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
-        "observedAt": "2026-10-25T20:42:47.994980+00:00",
-        "disposition": "Exact combined proposal approved; two actual prerequisite landings remain",
-        "nextAction": "Root owns automatic upstream opening of approved 97c92ed7353d after both #16250 and #16379 actually land. Their open/approved state and #16321 closed-unmerged state do not clear these gates. Do not repeat the contributor question. Preserve original runtime FAIL/INCOMPLETE alongside the separate retained canonical PASS.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; #16250 is the remaining prerequisite",
+        "nextAction": "Open the approved combined proposal after #16250 lands. The shared mirror gate is satisfied through #16430. Preserve original runtime FAIL/INCOMPLETE alongside the separate retained canonical PASS; do not repeat the contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
           "https://app.buildbuddy.io/invocation/94558fe7-29bb-4541-802f-26229e15ef94",
           "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850",
-          "https://app.buildbuddy.io/invocation/50d20319-56f5-4dcf-8808-762d6c4dc61c"
+          "https://app.buildbuddy.io/invocation/50d20319-56f5-4dcf-8808-762d6c4dc61c",
+          "https://github.com/google/gvisor/pull/16430"
         ]
       },
       "links": [
@@ -22027,25 +22028,31 @@
       "title": "Use pinned official Apache images with fixture layers",
       "url": "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nThe fork-only mirror amendment is 8b2c4cbe03cc, replacing proposal source eab6a14ae890. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved this exact revision for delivery after #16097 lands. Basic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The source requires the image_outputs and Make image-context interfaces from #16097; it does not consume shared BusyBox/compiler outputs.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nBasic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The required image_outputs and Make interfaces are now on master; no shared BusyBox/compiler output is consumed.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "root",
         "sourceHead": "8b2c4cbe03cc70e2f14e849b952b2216e130197a",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; all recorded prerequisites landed",
+        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
           "https://github.com/google/gvisor/pull/16097",
           "https://app.buildbuddy.io/invocation/7b51f160-f39a-4e55-8189-d38a04010805",
           "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a",
           "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ]
       },
       "evidence": [
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a"
@@ -22061,25 +22068,31 @@
       "title": "Use a pinned upstream Bun benchmark image",
       "url": "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nThe fork-only mirror amendment is f97de383f63c, replacing proposal source f3617c9bd90d. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact f3617c9bd9 for delivery after PR #16097 lands. The pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. The final commit has the same whole tree as qualified 785f27447a. Only the image_outputs/Make context prerequisite remains; no shared BusyBox or compiler source dependency.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThe pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. The final commit has the same whole tree as qualified 785f27447a. No shared BusyBox or compiler source dependency is required.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "work_map_current",
         "sourceHead": "f97de383f63c560aee4e38c68ba0e1005567ab73",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; all recorded prerequisites landed",
+        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066",
           "https://github.com/google/gvisor/pull/16097",
           "https://app.buildbuddy.io/invocation/355a5a1d-5863-4cba-9ab8-db85452faac5",
           "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73",
           "https://github.com/tamird/gvisor/compare/f3617c9bd90d886d5f1376845a102ea9a42b5066...f97de383f63c560aee4e38c68ba0e1005567ab73",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ]
       },
       "evidence": [
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/f3617c9bd90d886d5f1376845a102ea9a42b5066...f97de383f63c560aee4e38c68ba0e1005567ab73"
@@ -22258,22 +22271,23 @@
       "title": "Use the pinned official Nginx image for benchmarks",
       "url": "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-25T14:15:31.420374+00:00",
-      "summary": "The fork-only mirror amendment is 33a66c674d55, replacing proposal source 34ae8afe757c. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact 34ae8afe75 for delivery after Apache eab6a14ae8 after #16097. Deliver after the approved Apache shared-payload prerequisite lands; Apache itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image migration preserves Nginx 1.25.1 and depends on the approved Apache shared payload layer. Both CPU image assembly and the four existing AMD64 benchmark groups passed. The independently reviewed fixed comparison completed 136 fresh children and 352 measured rows, with sixteen pairs per case and the same retained runtime/helper images on both arms. The final proposal changes only the commit message from the qualified product tree. Native benchstat comparisons remain workload-specific; no general migration speedup, ARM runtime result or image-size claim is inferred. This benchmark child needs its own contributor decision; Apache approval is unchanged.",
+      "status": "Contributor approved; waiting for Apache payload layer",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "The basic image foundation and shared mirror policy have landed through #16307 and #16430. The existing contributor approval stands. Delivery still requires the approved Apache shared payload layer; Apache delivery is in progress.\n\nSource-specific qualification:\n\nThe benchmark image migration preserves Nginx 1.25.1 and depends on the approved Apache shared payload layer. Both CPU image assembly and the four existing AMD64 benchmark groups passed. The independently reviewed fixed comparison completed 136 fresh children and 352 measured rows, with sixteen pairs per case and the same retained runtime/helper images on both arms. The final proposal changes only the commit message from the qualified product tree. Native benchstat comparisons remain workload-specific; no general migration speedup, ARM runtime result or image-size claim is inferred. The contributor approved this benchmark child separately from Apache.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "root",
         "sourceHead": "33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
-        "observedAt": "2026-10-25T12:46:43.341670+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; Apache payload prerequisite remains",
+        "nextAction": "Deliver after the Apache shared-payload change lands. The shared mirror gate is satisfied; no repeated contributor decision or runtime result is claimed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830",
           "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
           "https://app.buildbuddy.io/invocation/35d94ab7-743f-427a-a755-5997c9f26c4b",
           "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
           "https://github.com/tamird/gvisor/compare/34ae8afe757c6dd9e4ebefb9352bf407040c3830...33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430"
         ]
       },
       "evidence": [
@@ -22450,25 +22464,31 @@
       "title": "Use pinned upstream MySQL images",
       "url": "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nThe fork-only mirror amendment is 85033b2dc965, replacing proposal source 7cf4bb53140e. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact 7cf4bb5314 for delivery after #16097. After #16097 lands, deliver the exact approved MySQL patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact 7cf4bb5314. This proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. Only #16097 is a prerequisite; the Redis approval does not apply to this separate proposal.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. The MySQL approval is separate from the Redis proposal.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "root",
         "sourceHead": "85033b2dc96550a21eff4b3587e5536b5efa8f76",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; all recorded prerequisites landed",
+        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
           "https://github.com/google/gvisor/pull/16097",
           "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f",
           "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
           "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ]
       },
       "evidence": [
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76"
@@ -22591,25 +22611,31 @@
       "title": "Use pinned upstream Python images",
       "url": "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nThe fork-only mirror amendment is 05a50fb8f993, replacing proposal source fd67c097cb74. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact fd67c097cb for delivery after #16097. After #16097 lands, deliver the exact approved Python patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact fd67c097cb on the corrected #16097 foundation. This proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The separate contributor decision and #16097 landing are still required.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The contributor subsequently approved this exact proposal.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "root",
         "sourceHead": "05a50fb8f99369a1bbe3755bc881f3cf2607b903",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; all recorded prerequisites landed",
+        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
           "https://github.com/google/gvisor/pull/16097",
           "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d",
           "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
           "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ]
       },
       "evidence": [
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903"
@@ -22633,25 +22659,31 @@
       "title": "Use pinned upstream PostgreSQL images",
       "url": "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nThe fork-only mirror amendment is ce20befb2e4e, replacing proposal source e485bb2b079c. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact e485bb2b07 for delivery after #16097. After #16097 lands, deliver the exact approved PostgreSQL patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact e485bb2b07, based on the corrected #16097 foundation. This proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The separate contributor decision and #16097 landing are required.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nThis proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The contributor subsequently approved this exact proposal.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "root",
         "sourceHead": "ce20befb2e4e54a21d600f35b72c39f3822f6157",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; all recorded prerequisites landed",
+        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
           "https://github.com/google/gvisor/pull/16097",
           "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad",
           "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157",
           "https://github.com/tamird/gvisor/compare/e485bb2b079ca2d94c55955e66c5c86a388eb9be...ce20befb2e4e54a21d600f35b72c39f3822f6157",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ]
       },
       "evidence": [
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/e485bb2b079ca2d94c55955e66c5c86a388eb9be...ce20befb2e4e54a21d600f35b72c39f3822f6157"
@@ -23448,25 +23480,31 @@
       "title": "Pin the existing Tomcat fixture images",
       "url": "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nThe fork-only mirror amendment is c96b1ceb4b6f, replacing proposal source 728c76fdcd6a. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests behind #16097. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head for delivery after #16097 lands. No contributor decision remains pending. No upstream PR is published; delivery requires #16097 to land.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head; no contributor decision remains pending.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "work_map_current",
         "sourceHead": "c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; all recorded prerequisites landed",
+        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
           "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d",
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
           "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ]
       },
       "evidence": [
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf"
@@ -23672,15 +23710,15 @@
       "title": "Pin the existing MariaDB fixture image",
       "url": "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16379",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nThe contributor approved exact mirror amendment aafc177480a2742cb5a3a7f38077805c2c397919 on October 25. The existing MariaDB item is retained. No renewed contributor question is needed; the proposal has not been published as an upstream PR. Hostinet owns delivery after the shared Docker Hub mirror policy #16379 actually lands. At the October 25 14:14 UTC provider check, #16379 remains open and unmerged. The imported #16097 foundation contains the exact required image helper interfaces; #16374 is not a prerequisite for this change.\n\nIndependent source review of the mirror amendment passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. Earlier runtime qualification retains its original source identity; no new runtime result is claimed.\n\nHistorical proposal and validation:\n\nPins the official MariaDB 12.3.2 AMD64 and ARM64 images and exports their archives and Docker contexts through rules_img, replacing the FROM-only Dockerfile. Both archives preserve the complete upstream configs and all eight compressed layers without added layers. The unchanged TestMariaDB SQL roundtrip passed on AMD64 runc and runsc. ARM64 coverage is archive/config/layer inspection only. The first four-owner qualification retains native FAIL: both SQL consumers passed, while the private inspector import and BUILD formatting failed and the required-case manifest used incorrect class names. A two-owner recovery passes the inspector and buildifier; exact image, runtime and source joins carry the original SQL evidence without replay. That original product composition qualified before the mirror amendment and the current contributor approval.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "All recorded prerequisites have landed: #16097 through #16307, and #16379 through #16430 at 248c3a910. The approved fork change is being prepared for separate upstream delivery on current master; no new contributor decision is required. No upstream PR is published yet.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nPins the official MariaDB 12.3.2 AMD64 and ARM64 images and exports their archives and Docker contexts through rules_img, replacing the FROM-only Dockerfile. Both archives preserve the complete upstream configs and all eight compressed layers without added layers. The unchanged TestMariaDB SQL roundtrip passed on AMD64 runc and runsc. ARM64 coverage is archive/config/layer inspection only. The first four-owner qualification retains native FAIL: both SQL consumers passed, while the private inspector import and BUILD formatting failed and the required-case manifest used incorrect class names. A two-owner recovery passes the inspector and buildifier; exact image, runtime and source joins carry the original SQL evidence without replay. That original product composition qualified before the mirror amendment and the current contributor approval.",
       "followup": {
-        "owner": "hostinet_delivery",
+        "owner": "root",
         "sourceHead": "aafc177480a2742cb5a3a7f38077805c2c397919",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Contributor approved exact mirror amendment; waiting only for #16379 landing",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Contributor approved; all recorded prerequisites landed",
+        "nextAction": "Prepare the approved image change independently on current master, verify the complete delta and publish its own PR. Root coordinates delivery ownership. Preserve the earlier exact-source qualification; no duplicate contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
           "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00",
@@ -23689,10 +23727,16 @@
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
           "https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ]
       },
       "evidence": [
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
         {
           "label": "Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919"
@@ -23849,31 +23893,41 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "shared-docker-hub-registries",
-      "head": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+      "head": "d81056abf82c94def1a0e810f1ed7c1813c6dad8",
       "url": "https://github.com/google/gvisor/pull/16379",
       "title": "Share the Docker Hub mirror policy",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-25T19:19:27.227362+00:00",
-      "summary": "Exact approved source c3174eb917aa has matching Copybara import #16384 at bff00b5e086d, still open. Public Buildkite 52334 failed AddCompatRule/Inet with ENOENT in all three completed AMD64 shard-11 attempts on the unchanged master fixture. Its separate Overlay TestDockerWithVFS/docker_run_host_network_non_privileged attempt failed when docker run exited 125 with \u201creopen exec fifo: reopen fd 7: interrupted system call\u201d; the daemon also reported that it could not start a stopped process. Existing external #14849 discusses FIFO interruption/restart behavior, and the assigned owner is preparing a controlled proof. The public log identifies neither the causal signal nor its flags. Java passed on retry. No registry-source cause is established for either public failure. Neither source nor import has landed, so approved image children remain gated.\n\nEtienne approved exact c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4 at 18:28:14 UTC on October 25, with no additional source request. The source PR remains open; approved image successors still wait for its actual landing.\n\nExact shared policy c3174eb917aa passed remote qualification: both repositories record mirror.gcr.io before index.docker.io with the pinned image identities, and all four architecture archives pass inspection. The contributor approved this exact source and it is delivered as open, non-draft #16379. No contributor decision remains pending. Defines a single registry list and reuses it for Alpine and BusyBox, with brief README guidance. Pinned rules_img 0.3.23 prepends singular registry before plural registries, so child amendments remove the singular attribute. Existing image-proposal grants and historical runtime scope remain separate.",
+      "status": "closed",
+      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
+      "summary": "The shared Docker Hub mirror policy landed through Copybara #16430 at 248c3a910 on October 26. The source PR is closed, and the basic image foundation had already landed through #16307. These two prerequisites no longer block approved image successors. The merged import records the original approved c3174eb91 patch; d81056abf is the later equivalent source rebase. Older imports #16384 and #16420 closed without merging.\n\nThe qualified policy lists mirror.gcr.io before index.docker.io for Alpine and BusyBox. Both repository orders and all four architecture archives passed. Child amendments use the shared plural registries attribute without the singular registry attribute, whose precedence would bypass the mirror. Their existing contributor approvals and source-specific runtime evidence remain separate.\n\nHistorical import #16384 / Buildkite 52334 failed the unchanged INET fixture with ENOENT and separately encountered an interrupted Overlay exec FIFO. Neither established a registry-source defect. The landing supersedes that delivery wait; the original failures remain linked below.",
       "followup": {
         "owner": "root",
-        "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "observedAt": "2026-10-25T19:19:27.227362+00:00",
-        "disposition": "Exact-head maintainer approval received; actual landing remains the image release gate",
-        "nextAction": "Root and the assigned FIFO investigator own a controlled proof of the separate Overlay EINTR, informed by existing #14849; no competing fix or exact signal attribution is established. Follow matching import16384 and actual landing through the existing watcher. The INET setup proposal remains its independent contributor decision; SSL generate failures and private check statuses stay separate.",
+        "sourceHead": "d81056abf82c94def1a0e810f1ed7c1813c6dad8",
+        "observedAt": "2026-10-26T22:59:16.323648+00:00",
+        "disposition": "Landed through Copybara #16430; approved image release gate cleared",
+        "nextAction": "No action is needed on this closed source PR. Assigned delivery owners rebase each approved image change independently onto current master and preserve its qualification scope.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
           "https://github.com/bazel-contrib/rules_img/blob/v0.3.23/img/private/repository_rules/registry.bzl#L3-L25",
           "https://app.buildbuddy.io/invocation/5837b7ca-add5-46ce-815a-370912dd7090",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
         ],
         "reviewedAt": "2026-10-25T18:28:14Z"
       },
       "number": 16379,
       "evidence": [
         {
-          "label": "Matching import for the approved registry policy",
+          "label": "Shared mirror policy landed through Copybara",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
+        {
+          "label": "Exact landed registry policy",
+          "url": "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
+        },
+        {
+          "label": "Historical closed import before the successful landing",
           "url": "https://github.com/google/gvisor/pull/16384"
         },
         {
@@ -27789,7 +27843,7 @@
       "from": "branch:rules-img-httpd-upstream",
       "to": "branch:rules-img-nginx-benchmark-upstream",
       "type": "depends_on",
-      "reason": "Reuses Apache eab6 shared payload generation; Apache separately waits for #16097.",
+      "reason": "Reuses the approved Apache shared payload generation. Apache delivery is in progress; its foundation and mirror prerequisites have landed.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
         "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830"
@@ -28050,80 +28104,96 @@
       "from": "pr:16379",
       "to": "branch:rules-img-httpd-upstream",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a"
+        "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
       "from": "pr:16379",
       "to": "branch:rules-img-bun-spawn",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73"
+        "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
       "from": "pr:16379",
       "to": "branch:rules-img-nginx-benchmark-upstream",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4"
+        "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
       "from": "pr:16379",
       "to": "branch:rules-img-mysql-upstream",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76"
+        "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
       "from": "pr:16379",
       "to": "branch:rules-img-python-upstream-context",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903"
+        "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
       "from": "pr:16379",
       "to": "branch:rules-img-postgresql-upstream",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157"
+        "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
       "from": "pr:16379",
       "to": "branch:rules-img-tomcat-upstream",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf"
+        "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
       "from": "pr:16379",
       "to": "branch:rules-img-mariadb-upstream",
       "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919"
+        "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
       ]
     },
     {
@@ -28175,8 +28245,12 @@
       "from": "pr:16379",
       "to": "branch:portforward-stock-images",
       "type": "depends_on",
-      "reason": "The combined proposal requires this actual prerequisite landing before upstream opening.",
-      "evidence": "https://github.com/google/gvisor/pull/16379"
+      "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16379",
+        "https://github.com/google/gvisor/pull/16430",
+        "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9"
+      ]
     },
     {
       "from": "branch:systemd-daemon-journal-readiness",
