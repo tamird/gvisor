@@ -71,6 +71,7 @@ go_test(
 arm64_tcg_test(
     name = "procumounter_arm64_tcg_test",
     size = "small",
+    args = ["-test.v=test2json"],
     guest_env = {
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",

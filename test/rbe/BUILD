@@ -670,7 +670,7 @@ _ARM64_GUEST_CASES = [
     arm64_tcg_test(
         name = owner.split(":")[1] + "_tcg_test",
         size = size,
-        args = ["-test.run=" + case],
+        args = ["-test.v=test2json", "-test.run=" + case],
         guest_env = {
             "GO_TEST_RUN_FROM_BAZEL": "1",
             "GO_TEST_WRAP_TESTV": "1",
@@ -699,6 +699,7 @@ _ARM64_GUEST_UNITS = [
     arm64_tcg_test(
         name = name + "_arm64_tcg_test",
         size = size,
+        args = [] if name == "sandboxexec_python_unit" else ["-test.v=test2json"],
         arm64_el2 = owner == "//runsc/cmd:cmd_test_arm64",
         guest_env = {} if name == "sandboxexec_python_unit" else {
             "GO_TEST_RUN_FROM_BAZEL": "1",
