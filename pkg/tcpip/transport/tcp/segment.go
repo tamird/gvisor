@@ -80,6 +80,10 @@ type segment struct {
 	xmitTime  tcpip.MonotonicTime
 	xmitCount uint32
 
+	// rtoRetransmitted is true if these bytes have been retransmitted by
+	// the retransmission timer, including when only a suffix remains unacked.
+	rtoRetransmitted bool
+
 	// acked indicates if the segment has already been SACKed.
 	acked bool
 
@@ -162,6 +166,7 @@ func (s *segment) clone() *segment {
 	t.rcvdTime = s.rcvdTime
 	t.xmitTime = s.xmitTime
 	t.xmitCount = s.xmitCount
+	t.rtoRetransmitted = s.rtoRetransmitted
 	t.ep = s.ep
 	t.qFlags = s.qFlags
 	t.dataMemSize = s.dataMemSize

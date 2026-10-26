@@ -68,8 +68,10 @@ type congestionControl interface {
 	// retransmit.
 	HandleLossDetected()
 
-	// HandleRTOExpired is invoked when the retransmit timer expires.
-	HandleRTOExpired()
+	// HandleRTOExpired restarts slow start on a retransmission timeout.
+	// When the timer has already retransmitted the same data, the slow
+	// start threshold must be held constant.
+	HandleRTOExpired(reduceThreshold bool)
 
 	// Update is invoked when processing inbound acks. It's passed the
 	// number of packet's that were acked by the most recent cumulative
@@ -653,7 +655,11 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	s.recordRetransmitTS()
 
 	s.state = tcpip.RTORecovery
-	s.cc.HandleRTOExpired()
+	// RFC 5681 section 3.1: do not reduce ssthresh again for a segment
+	// already retransmitted by the timer. A zero-window probe follows a
+	// separate path below and never marks data as retransmitted.
+	s.cc.HandleRTOExpired(s.zeroWindowProbing || !s.writeList.Front().rtoRetransmitted)
+	s.SndCwnd = 1
 
 	// Mark the next segment to be sent as the first unacknowledged one and
 	// start sending again. Set the number of outstanding packets to 0 so
@@ -699,7 +705,11 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return &tcpip.ErrTimeout{}
 	}
 
-	s.sendData()
+	if sent := s.sendData(); sent != nil && sent.xmitCount > 1 {
+		// With cwnd reset to one, at most one segment is sent. Record its
+		// actual range after any split, not the original GSO segment.
+		sent.rtoRetransmitted = true
+	}
 
 	return nil
 }
@@ -857,9 +867,9 @@ func (s *sender) NextSeg(nextSegHint *segment) (nextSeg, hint *segment, rescueRt
 // maybeSendSegment tries to send the specified segment and either coalesces
 // other segments into this one or splits the specified segment based on the
 // lower of the specified limit value or the receivers window size specified by
-// end.
+// end. It reports whether transmission was attempted and any network error.
 // +checklocks:s.ep.mu
-func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (sent bool) {
+func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (bool, tcpip.Error) {
 	// We abuse the flags field to determine if we have already
 	// assigned a sequence number to this segment.
 	newData := !s.isAssignedSequenceNumber(seg)
@@ -912,7 +922,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 						// Preserve the exception for a short segment that fills
 						// the available window, and Nagle's precedence over CORK.
 						if nagle {
-							return false
+							return false, nil
 						}
 						if !s.startCork {
 							s.startCork = true
@@ -921,7 +931,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 							// the segments are drained.
 							s.corkTimer.enable(MinRTO)
 						}
-						return false
+						return false, nil
 					}
 				}
 			}
@@ -949,12 +959,12 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		}
 
 		if !seg.sequenceNumber.LessThan(end) {
-			return false
+			return false, nil
 		}
 
 		available := int(seg.sequenceNumber.Size(end))
 		if available == 0 {
-			return false
+			return false, nil
 		}
 
 		// If the whole segment or at least 1MSS sized segment cannot
@@ -982,7 +992,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 				// OK to send, at least 1 MSS sized segment fits
 				// in the receiver's advertised window.
 			default:
-				return false
+				return false, nil
 			}
 		}
 
@@ -1023,7 +1033,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		panic("attempted to send segment not in write list")
 	}
 
-	s.sendSegment(seg)
+	err := s.sendSegment(seg)
 
 	// Update sndNxt if we actually sent new data (as opposed to
 	// retransmitting some previously sent data).
@@ -1034,7 +1044,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		}
 	}
 
-	return true
+	return true, err
 }
 
 // zeroProbeJunk is data sent during zero window probes. Its value is
@@ -1116,10 +1126,10 @@ func (s *sender) postXmit(dataSent bool, shouldScheduleProbe bool) {
 }
 
 // sendData sends new data segments. It is called when data becomes available or
-// when the send window opens up.
+// when the send window opens up. It returns the last successfully sent segment.
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
-func (s *sender) sendData() {
+func (s *sender) sendData() *segment {
 	limit := s.MaxPayloadSize
 	if s.gso {
 		limit = int(s.ep.gso.MaxSize - header.TCPTotalHeaderMaximumSize - 1)
@@ -1137,6 +1147,7 @@ func (s *sender) sendData() {
 	}
 
 	var dataSent bool
+	var lastSent *segment
 	for seg := s.writeNext; seg != nil && s.Outstanding < s.SndCwnd; seg = seg.Next() {
 		// NOTE(gvisor.dev/issue/11632): Use uint64 to avoid overflow.
 		cwndLimit := uint64(s.SndCwnd-s.Outstanding) * uint64(s.MaxPayloadSize)
@@ -1149,8 +1160,12 @@ func (s *sender) sendData() {
 			s.updateWriteNext(seg.Next())
 			continue
 		}
-		if sent := s.maybeSendSegment(seg, limit, end); !sent {
+		attempted, err := s.maybeSendSegment(seg, limit, end)
+		if !attempted {
 			break
+		}
+		if err == nil {
+			lastSent = seg
 		}
 		dataSent = true
 		s.Outstanding += s.pCount(seg, s.MaxPayloadSize)
@@ -1158,6 +1173,7 @@ func (s *sender) sendData() {
 	}
 
 	s.postXmit(dataSent, true /* shouldScheduleProbe */)
+	return lastSent
 }
 
 // +checklocks:s.ep.mu
