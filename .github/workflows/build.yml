@@ -52,8 +52,8 @@ jobs:
             --define=rbe=true --define=gvisor_test_clock_source=calibrated \
             --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64 \
             --strip=never --spawn_strategy=local --strategy=TestRunner=local \
-            --strategy=GoStdlib=linux-sandbox \
-            --strategy=GoStdlibList=linux-sandbox \
+            --strategy=GoStdlib=sandboxed \
+            --strategy=GoStdlibList=sandboxed \
             --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
             --test_env=GO_TEST_RUN_FROM_BAZEL=1 --test_env=GO_TEST_WRAP_TESTV=1 \
             --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_output=errors \
