@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T17:59:15.185212+00:00",
+    "updatedAt": "2026-10-26T18:01:39.862779+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24597,15 +24597,15 @@
       "title": "Honor root module LLVM backend selection",
       "url": "https://github.com/tamird/hermetic-llvm/commit/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-26T17:44:12.952781+00:00",
-      "summary": "The supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe supplier proposal restores root-module backend selection and clarifies which modules supply default backends. It is a fork proposal on upstream main, with no upstream PR or contact. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until this supplier replacement is delivered. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-26T18:01:39.862779+00:00",
+      "summary": "Contributor review is requested to submit this standalone supplier fix upstream. The root module can replace LLVM\u2019s default backends while every module\u2019s explicit llvm.configure requests remain additive. The target-selection suite passed; the same-release two-architecture graph and product checks below remain the qualification evidence. No upstream PR has been opened.\n\nThe supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe supplier proposal restores root-module backend selection and clarifies which modules supply default backends. It is a fork proposal on upstream main, with no upstream PR or contact. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until this supplier replacement is delivered. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
-        "observedAt": "2026-10-26T17:44:12.952781+00:00",
-        "disposition": "Graph and product qualification passed; supplier proposal remains agent-owned",
-        "nextAction": "Prepare the final supplier proposal for the normal contributor decision before upstream submission; preserve #15940 until delivery.",
+        "observedAt": "2026-10-26T18:01:39.862779+00:00",
+        "disposition": "Qualified supplier proposal awaiting contributor approval for upstream submission",
+        "nextAction": "Obtain the contributor decision for this exact supplier commit, then submit it upstream if approved; preserve #15940 until delivery.",
         "evidence": [
           "https://github.com/tamird/hermetic-llvm/commit/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         ]
@@ -24638,6 +24638,10 @@
         {
           "label": "Reviewed pre-squash source (identical tree)",
           "url": "https://github.com/tamird/hermetic-llvm/commit/fc158be46c4408324e1924ae2489f9c01565e775"
+        },
+        {
+          "label": "Target-selection suite",
+          "url": "https://app.buildbuddy.io/invocation/3b67af27-49f4-4aaa-acb8-951364f00c4d"
         }
       ],
       "refinement": {
@@ -24649,6 +24653,14 @@
           "base": "3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
           "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
+        "title": "Let the root module choose default LLVM backends",
+        "summary": "Review this standalone supplier fix for upstream submission. It lets the root replace LLVM\u2019s defaults while preserving explicit backend requests from all consumers. The target-selection suite passed; the same-release comparison removed 479 configured LLVM compile actions per architecture and preserved the parser binaries and parity results on AMD64 and ARM64.",
+        "body": "LLVM requested its default backends through the same additive interface\nas its consumers. A root that requested only AArch64 and X86 still built\nseven unused backends for its Clang-based tools.\n\nLet the root replace LLVM's defaults. Keep every module's explicit\nllvm.configure requests additive so one consumer cannot drop backends\nthat another consumer needs."
       }
     },
     {

@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-26T15:32:21.778415+00:00",
-  "registryDate": "2026-10-26T17:59:15.185212+00:00",
+  "registryDate": "2026-10-26T18:01:39.862779+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -185866,6 +185866,15 @@
         "basis": "transition",
         "qualifier": null,
         "observedAt": "2026-10-26T16:07:23.944324+00:00"
+      }
+    },
+    "branch:hermetic-llvm-root-backends": {
+      "contributor-review": {
+        "scope": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
+        "since": "2026-10-26T18:01:39.862779+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-26T18:01:39.862779+00:00"
       }
     }
   },
