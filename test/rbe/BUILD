@@ -662,3 +662,30 @@ _SOURCE_ARCHIVES = {
         ("//runsc/fsgofer:lisafs_permissions_nonroot_test_arm64", "small", "^TestXattrWithoutReadPermission$$", "nobody"),
     ]
 ]
+
+# These complete native owners need Linux namespaces. Keep their binaries,
+# runfiles and original test deadlines; only the execution environment changes.
+[
+    arm64_tcg_test(
+        name = name + "_arm64_tcg_test",
+        size = size,
+        arm64_el2 = owner == "//runsc/cmd:cmd_test_arm64",
+        guest_env = {} if name == "sandboxexec_python_unit" else {
+            "GO_TEST_RUN_FROM_BAZEL": "1",
+            "GO_TEST_WRAP_TESTV": "1",
+        },
+        guest_user = user,
+        image = "//test/rbe/tcg:rc_guest",
+        payload = owner,
+        run_under = ":worker_identity",
+        tags = [],
+    )
+    for name, owner, size, user in [
+        ("docprocessor_unit", "//examples/sandboxexec/go/docprocessor:docprocessor_test_arm64", "medium", "root"),
+        ("runsc_cmd_unit", "//runsc/cmd:cmd_test_arm64", "medium", "root"),
+        ("runsc_sandbox_unit", "//runsc/sandbox:sandbox_test_arm64", "small", "root"),
+        ("sandboxexec_python_unit", "//sandboxexec/sandbox/python:sandbox_py_test_arm64", "medium", "root"),
+        ("sandboxexec_unit", "//sandboxexec/sandbox:sandbox_test_arm64", "medium", "root"),
+        ("trace_unit", "//test/trace:trace_test_arm64", "medium", "nobody"),
+    ]
+]

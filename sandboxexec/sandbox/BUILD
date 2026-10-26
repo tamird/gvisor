@@ -36,6 +36,7 @@ go_test(
     # The runtime creates namespaces and configures cgroups.
     exec_properties = namespace_test_exec_properties(),
     tags = ["nogotsan"],
+    visibility = ["//test/rbe:__pkg__"],
     deps = [
         ":sandbox",
         "//pkg/test/testutil",

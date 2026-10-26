@@ -125,6 +125,7 @@ go_test(
     ],
     embed = [":cmd"],
     exec_properties = namespace_test_exec_properties(memory = "1GB"),
+    visibility = ["//test/rbe:__pkg__"],
     deps = [
         "//pkg/abi/linux",
         "//pkg/log",

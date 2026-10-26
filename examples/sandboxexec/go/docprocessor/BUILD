@@ -20,5 +20,6 @@ go_test(
     exec_properties = namespace_test_exec_properties(),
     library = ":docprocessor",
     tags = ["nogotsan"],
+    visibility = ["//test/rbe:__pkg__"],
     deps = ["//pkg/test/testutil"],
 )
