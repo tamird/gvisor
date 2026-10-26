@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-26T22:55:06.918340+00:00",
-  "registryDate": "2026-10-26T23:15:55.755534+00:00",
+  "registryDate": "2026-10-26T23:20:59.556134+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -196099,6 +196099,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-26T23:15:30.591404+00:00"
+      }
+    },
+    "branch:proc-immutable-pid-dirs-synthetic": {
+      "contributor-review": {
+        "scope": "0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
+        "since": "2026-10-26T23:20:59.556134+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-26T23:20:59.556134+00:00"
       }
     }
   },
