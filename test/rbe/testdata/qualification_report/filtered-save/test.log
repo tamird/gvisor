@@ -1,0 +1,275 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //test/syscalls:32bit_test_runsc_systrap_directfs_save
+-----------------------------------------------------------------------------
++ [[ -n /workspace/bazel-out/k8-fastbuild/testlogs/test/syscalls/32bit_test_runsc_systrap_directfs_save/test.outputs ]]
++ mkdir -p /workspace/bazel-out/k8-fastbuild/testlogs/test/syscalls/32bit_test_runsc_systrap_directfs_save/test.outputs
++ chmod a+rwx /workspace/bazel-out/k8-fastbuild/testlogs/test/syscalls/32bit_test_runsc_systrap_directfs_save/test.outputs
++ exec test/runner/runner_/runner --platform=systrap --platform-support=32BIT:FALSE,ALIGNMENT_CHECK:TRUE,INT3:TRUE,MULTIPROCESS:TRUE,VSYSCALL:TRUE --network=none --use-tmpfs=False --fusefs=False --file-access=exclusive --overlay=False --add-host-uds=False --add-host-connector=False --add-host-fifo=False --add-host-tty=False --strace=True --debug=True --container=False --one-sandbox=True --iouring=False --directfs=True --leak-check=True --save=True --save-resume=False --nftables=False --kvm-use-cpu-nums=False --in-sandbox-cgroup=v1 test/syscalls/linux/32bit_test
+I1016 21:17:50.854618     322 main.go:442] Running test "main.test" in container "test-container-JCLMZUOX4QARJEO6SMGQ7JRRWZPIZTWU"
+D1016 21:17:50.855760     322 specutils.go:136] Spec:
+{
+  "ociVersion": "",
+  "process": {
+    "user": {
+      "uid": 0,
+      "gid": 0
+    },
+    "args": [
+      "/workspace/bazel-out/k8-fastbuild/bin/test/syscalls/32bit_test_runsc_systrap_directfs_save.runfiles/_main/test/syscalls/linux/32bit_test",
+      "--gtest_filter=Syscall32Bit.Int80:Syscall32Bit.Sysenter:Syscall32Bit.Syscall:Call32Bit.Disallowed"
+    ],
+    "cwd": "/",
+    "capabilities": {
+      "bounding": [
+        "CAP_NET_RAW",
+        "CAP_SYS_PTRACE",
+        "CAP_SYS_RESOURCE",
+        "CAP_AUDIT_WRITE",
+        "CAP_CHOWN",
+        "CAP_DAC_READ_SEARCH",
+        "CAP_KILL",
+        "CAP_SYS_PACCT",
+        "CAP_MKNOD",
+        "CAP_FSETID",
+        "CAP_SETGID",
+        "CAP_LINUX_IMMUTABLE",
+        "CAP_BPF",
+        "CAP_SETPCAP",
+        "CAP_NET_ADMIN",
+        "CAP_SYS_BOOT",
+        "CAP_LEASE",
+        "CAP_AUDIT_READ",
+        "CAP_IPC_OWNER",
+        "CAP_SYS_RAWIO",
+        "CAP_SYS_NICE",
+        "CAP_AUDIT_CONTROL",
+        "CAP_SETFCAP",
+        "CAP_MAC_ADMIN",
+        "CAP_IPC_LOCK",
+        "CAP_MAC_OVERRIDE",
+        "CAP_PERFMON",
+        "CAP_FOWNER",
+        "CAP_NET_BIND_SERVICE",
+        "CAP_SYS_MODULE",
+        "CAP_SYS_CHROOT",
+        "CAP_SYS_TTY_CONFIG",
+        "CAP_SYSLOG",
+        "CAP_WAKE_ALARM",
+        "CAP_CHECKPOINT_RESTORE",
+        "CAP_SETUID",
+        "CAP_NET_BROADCAST",
+        "CAP_SYS_ADMIN",
+        "CAP_SYS_TIME",
+        "CAP_BLOCK_SUSPEND",
+        "CAP_DAC_OVERRIDE"
+      ],
+      "effective": [
+        "CAP_NET_RAW",
+        "CAP_SYS_PTRACE",
+        "CAP_SYS_RESOURCE",
+        "CAP_AUDIT_WRITE",
+        "CAP_CHOWN",
+        "CAP_DAC_READ_SEARCH",
+        "CAP_KILL",
+        "CAP_SYS_PACCT",
+        "CAP_MKNOD",
+        "CAP_FSETID",
+        "CAP_SETGID",
+        "CAP_LINUX_IMMUTABLE",
+        "CAP_BPF",
+        "CAP_SETPCAP",
+        "CAP_NET_ADMIN",
+        "CAP_SYS_BOOT",
+        "CAP_LEASE",
+        "CAP_AUDIT_READ",
+        "CAP_IPC_OWNER",
+        "CAP_SYS_RAWIO",
+        "CAP_SYS_NICE",
+        "CAP_AUDIT_CONTROL",
+        "CAP_SETFCAP",
+        "CAP_MAC_ADMIN",
+        "CAP_IPC_LOCK",
+        "CAP_MAC_OVERRIDE",
+        "CAP_PERFMON",
+        "CAP_FOWNER",
+        "CAP_NET_BIND_SERVICE",
+        "CAP_SYS_MODULE",
+        "CAP_SYS_CHROOT",
+        "CAP_SYS_TTY_CONFIG",
+        "CAP_SYSLOG",
+        "CAP_WAKE_ALARM",
+        "CAP_CHECKPOINT_RESTORE",
+        "CAP_SETUID",
+        "CAP_NET_BROADCAST",
+        "CAP_SYS_ADMIN",
+        "CAP_SYS_TIME",
+        "CAP_BLOCK_SUSPEND",
+        "CAP_DAC_OVERRIDE"
+      ],
+      "inheritable": [
+        "CAP_NET_RAW",
+        "CAP_SYS_PTRACE",
+        "CAP_SYS_RESOURCE",
+        "CAP_AUDIT_WRITE",
+        "CAP_CHOWN",
+        "CAP_DAC_READ_SEARCH",
+        "CAP_KILL",
+        "CAP_SYS_PACCT",
+        "CAP_MKNOD",
+        "CAP_FSETID",
+        "CAP_SETGID",
+        "CAP_LINUX_IMMUTABLE",
+        "CAP_BPF",
+        "CAP_SETPCAP",
+        "CAP_NET_ADMIN",
+        "CAP_SYS_BOOT",
+        "CAP_LEASE",
+        "CAP_AUDIT_READ",
+        "CAP_IPC_OWNER",
+        "CAP_SYS_RAWIO",
+        "CAP_SYS_NICE",
+        "CAP_AUDIT_CONTROL",
+        "CAP_SETFCAP",
+        "CAP_MAC_ADMIN",
+        "CAP_IPC_LOCK",
+        "CAP_MAC_OVERRIDE",
+        "CAP_PERFMON",
+        "CAP_FOWNER",
+        "CAP_NET_BIND_SERVICE",
+        "CAP_SYS_MODULE",
+        "CAP_SYS_CHROOT",
+        "CAP_SYS_TTY_CONFIG",
+        "CAP_SYSLOG",
+        "CAP_WAKE_ALARM",
+        "CAP_CHECKPOINT_RESTORE",
+        "CAP_SETUID",
+        "CAP_NET_BROADCAST",
+        "CAP_SYS_ADMIN",
+        "CAP_SYS_TIME",
+        "CAP_BLOCK_SUSPEND",
+        "CAP_DAC_OVERRIDE"
+      ],
+      "permitted": [
+        "CAP_NET_RAW",
+        "CAP_SYS_PTRACE",
+        "CAP_SYS_RESOURCE",
+        "CAP_AUDIT_WRITE",
+        "CAP_CHOWN",
+        "CAP_DAC_READ_SEARCH",
+        "CAP_KILL",
+        "CAP_SYS_PACCT",
+        "CAP_MKNOD",
+        "CAP_FSETID",
+        "CAP_SETGID",
+        "CAP_LINUX_IMMUTABLE",
+        "CAP_BPF",
+        "CAP_SETPCAP",
+        "CAP_NET_ADMIN",
+        "CAP_SYS_BOOT",
+        "CAP_LEASE",
+        "CAP_AUDIT_READ",
+        "CAP_IPC_OWNER",
+        "CAP_SYS_RAWIO",
+        "CAP_SYS_NICE",
+        "CAP_AUDIT_CONTROL",
+        "CAP_SETFCAP",
+        "CAP_MAC_ADMIN",
+        "CAP_IPC_LOCK",
+        "CAP_MAC_OVERRIDE",
+        "CAP_PERFMON",
+        "CAP_FOWNER",
+        "CAP_NET_BIND_SERVICE",
+        "CAP_SYS_MODULE",
+        "CAP_SYS_CHROOT",
+        "CAP_SYS_TTY_CONFIG",
+        "CAP_SYSLOG",
+        "CAP_WAKE_ALARM",
+        "CAP_CHECKPOINT_RESTORE",
+        "CAP_SETUID",
+        "CAP_NET_BROADCAST",
+        "CAP_SYS_ADMIN",
+        "CAP_SYS_TIME",
+        "CAP_BLOCK_SUSPEND",
+        "CAP_DAC_OVERRIDE"
+      ],
+      "ambient": [
+        "CAP_NET_RAW",
+        "CAP_SYS_PTRACE",
+        "CAP_SYS_RESOURCE",
+        "CAP_AUDIT_WRITE",
+        "CAP_CHOWN",
+        "CAP_DAC_READ_SEARCH",
+        "CAP_KILL",
+        "CAP_SYS_PACCT",
+        "CAP_MKNOD",
+        "CAP_FSETID",
+        "CAP_SETGID",
+        "CAP_LINUX_IMMUTABLE",
+        "CAP_BPF",
+        "CAP_SETPCAP",
+        "CAP_NET_ADMIN",
+        "CAP_SYS_BOOT",
+        "CAP_LEASE",
+        "CAP_AUDIT_READ",
+        "CAP_IPC_OWNER",
+        "CAP_SYS_RAWIO",
+        "CAP_SYS_NICE",
+        "CAP_AUDIT_CONTROL",
+        "CAP_SETFCAP",
+        "CAP_MAC_ADMIN",
+        "CAP_IPC_LOCK",
+        "CAP_MAC_OVERRIDE",
+        "CAP_PERFMON",
+        "CAP_FOWNER",
+        "CAP_NET_BIND_SERVICE",
+        "CAP_SYS_MODULE",
+        "CAP_SYS_CHROOT",
+        "CAP_SYS_TTY_CONFIG",
+        "CAP_SYSLOG",
+        "CAP_WAKE_ALARM",
+        "CAP_CHECKPOINT_RESTORE",
+        "CAP_SETUID",
+        "CAP_NET_BROADCAST",
+        "CAP_SYS_ADMIN",
+        "CAP_SYS_TIME",
+        "CAP_BLOCK_SUSPEND",
+        "CAP_DAC_OVERRIDE"
+      ]
+    }
+  },
+  "root": {
+    "path": "/"
+  },
+  "hostname": "runsc-test-hostname",
+  "domainname": "runsc-test-domain",
+  "mounts": [
+    {
+      "destination": "/sys/fs/cgroup",
+      "type": "cgroup"
+    }
+  ]
+}
+I1016 21:17:50.859657     322 main.go:537] runsc logs: /workspace/bazel-out/k8-fastbuild/testlogs/test/syscalls/32bit_test_runsc_systrap_directfs_save/test.outputs/main.test/runsc2182494513/logs
+I1016 21:17:50.859831     322 main.go:634] Executing: [/workspace/bazel-out/k8-fastbuild/bin/test/syscalls/32bit_test_runsc_systrap_directfs_save.runfiles/_main/release/runsc -root /workspace/_tmp/a3deebc34a8122d6abc3f6a9f34a1dd3/containers3637161953 -network none -log-format=text -TESTONLY-unsafe-nonroot=true -allow-packet-socket-write=true -panic-signal=15 -iouring=false -watchdog-action=panic -platform systrap -file-access exclusive -gvisor-gro -host-settings=check_mandatory -allow-suid --clock-source=calibrated -net-raw -overlay2=none -debug -log-packets=true -strace -ref-leak-mode=log-names -directfs -kvm-use-cpu-nums=false -in-sandbox-cgroup=v1 -debug-log /workspace/bazel-out/k8-fastbuild/testlogs/test/syscalls/32bit_test_runsc_systrap_directfs_save/test.outputs/main.test/runsc2182494513/logs/ -coverage-report /workspace/bazel-out/k8-fastbuild/testlogs/test/syscalls/32bit_test_runsc_systrap_directfs_save/test.outputs/main.test/runsc2182494513/coverage/ -log=/dev/null -TESTONLY-autosave-image-path /workspace/bazel-out/k8-fastbuild/testlogs/test/syscalls/32bit_test_runsc_systrap_directfs_save/test.outputs/state.0.3613259032 run --bundle /workspace/_tmp/a3deebc34a8122d6abc3f6a9f34a1dd3/bundle171125519 test-container-JCLMZUOX4QARJEO6SMGQ7JRRWZPIZTWU]
+Note: Google Test filter = Syscall32Bit.Int80:Syscall32Bit.Sysenter:Syscall32Bit.Syscall:Call32Bit.Disallowed
+[==========] Running 4 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 3 tests from Syscall32Bit
+[ RUN      ] Syscall32Bit.Int80
+[       OK ] Syscall32Bit.Int80 (0 ms)
+[ RUN      ] Syscall32Bit.Sysenter
+[       OK ] Syscall32Bit.Sysenter (0 ms)
+[ RUN      ] Syscall32Bit.Syscall
+[       OK ] Syscall32Bit.Syscall (0 ms)
+[----------] 3 tests from Syscall32Bit (1 ms total)
+
+[----------] 1 test from Call32Bit
+[ RUN      ] Call32Bit.Disallowed
+[       OK ] Call32Bit.Disallowed (0 ms)
+[----------] 1 test from Call32Bit (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 2 test suites ran. (6 ms total)
+[  PASSED  ] 4 tests.
+Failed to match any benchmarks against regex: .
+PASS

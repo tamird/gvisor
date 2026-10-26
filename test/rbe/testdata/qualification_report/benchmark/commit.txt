@@ -1,0 +1,10 @@
+tree 6f1df4ba0291eb4dedef1df4bd036d0c75e0d344
+parent ce5ee1123b16886099ebb7ffc9807bcbc69a5072
+author Tamir Duberstein <tamird@gmail.com> 1792186789 +0200
+committer Tamir Duberstein <tamird@gmail.com> 1792186789 +0200
+
+Escape diagnostic benchmark expressions
+
+Bazel expanded dollar signs in test arguments before launching the Go
+benchmark. Escape the regex anchors so the declared targets receive the
+intended literal expressions.

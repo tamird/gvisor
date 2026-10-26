@@ -1,0 +1,17 @@
+tree bafe98d970e95a91458780ba9330b0b6223de5e0
+parent d3b7c05b2cecbef7b6f0405cb8dc602ae771b4d0
+author Tamir Duberstein <tamird@gmail.com> 1792171800 +0200
+committer Tamir Duberstein <tamird@gmail.com> 1792171800 +0200
+
+Retain syscall reports in Actions artifacts
+
+The local syscall lanes omitted original reports from their Actions
+artifacts, requiring separate downloads for every log and XML file.
+Enable the existing bounded report capture for ordinary, KVM and resume
+profiles, with command and source records named for the selected lane.
+
+Record cleanup and source-integrity errors as capture failures. Preserve
+a known native failure when report capture also fails, and fail otherwise
+successful work when its evidence is incomplete.
+
+Assisted-by: Codex

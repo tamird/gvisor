@@ -1,0 +1,58 @@
+goos: linux
+goarch: amd64
+BenchmarkShimStart
+BenchmarkShimStart/systrap
+BenchmarkShimStart/systrap-4          	      30	  13826780 ns/op	  11589908 p50.ns	  27471856 p90.ns
+BenchmarkShimStart/systrap_overlay
+BenchmarkShimStart/systrap_overlay-4  	      30	   7956029 ns/op	   6036912 p50.ns	   9567776 p90.ns
+BenchmarkShimCreate
+BenchmarkShimCreate/systrap
+BenchmarkShimCreate/systrap-4         	      30	  42294812 ns/op	  41852816 p50.ns	  49532300 p90.ns
+BenchmarkShimCreate/systrap_overlay
+BenchmarkShimCreate/systrap_overlay-4 	      30	  41283187 ns/op	  40875615 p50.ns	  46128159 p90.ns
+BenchmarkShimContainerStart
+BenchmarkShimContainerStart/systrap
+BenchmarkShimContainerStart/systrap-4 	      30	  26109309 ns/op	  25326856 p50.ns	  30035688 p90.ns
+BenchmarkShimContainerStart/systrap_overlay
+BenchmarkShimContainerStart/systrap_overlay-4         	      30	  24981479 ns/op	  24821815 p50.ns	  27055747 p90.ns
+BenchmarkShimPause
+BenchmarkShimPause/systrap
+BenchmarkShimPause/systrap-4                          	      30	   9170213 ns/op	   8644925 p50.ns	  12106248 p90.ns
+BenchmarkShimPause/systrap_overlay
+BenchmarkShimPause/systrap_overlay-4                  	      30	   8539276 ns/op	   8244015 p50.ns	  10589606 p90.ns
+BenchmarkShimResume
+BenchmarkShimResume/systrap
+BenchmarkShimResume/systrap-4                         	      30	   6943591 ns/op	   6953064 p50.ns	   7943825 p90.ns
+BenchmarkShimResume/systrap_overlay
+BenchmarkShimResume/systrap_overlay-4                 	      30	   6643413 ns/op	   6313095 p50.ns	   7455714 p90.ns
+BenchmarkShimKill
+BenchmarkShimKill/systrap
+BenchmarkShimKill/systrap-4                           	      30	  13717086 ns/op	  13664250 p50.ns	  16071790 p90.ns
+BenchmarkShimKill/systrap_overlay
+BenchmarkShimKill/systrap_overlay-4                   	      30	  13753976 ns/op	  13249708 p50.ns	  16643370 p90.ns
+BenchmarkShimDelete
+BenchmarkShimDelete/systrap
+BenchmarkShimDelete/systrap-4                         	      30	  11947163 ns/op	  11595289 p50.ns	  13776958 p90.ns
+BenchmarkShimDelete/systrap_overlay
+BenchmarkShimDelete/systrap_overlay-4                 	      30	  11990796 ns/op	  11994468 p50.ns	  13520968 p90.ns
+BenchmarkShimTimeToReady
+BenchmarkShimTimeToReady/systrap
+BenchmarkShimTimeToReady/systrap-4                    	      30	  72595963 ns/op	  68694361 p50.ns	  84508361 p90.ns
+BenchmarkShimTimeToReady/systrap_overlay
+BenchmarkShimTimeToReady/systrap_overlay-4            	      30	  72424968 ns/op	  69894364 p50.ns	  86283341 p90.ns
+BenchmarkShimEndToEnd
+BenchmarkShimEndToEnd/systrap
+BenchmarkShimEndToEnd/systrap-4                       	      30	  96077217 ns/op	  95862328 p50.ns	 113679147 p90.ns
+BenchmarkShimEndToEnd/systrap_overlay
+BenchmarkShimEndToEnd/systrap_overlay-4               	      30	  98181549 ns/op	  94628426 p50.ns	 106322305 p90.ns
+BenchmarkShimSubcontainerEndToEnd
+BenchmarkShimSubcontainerEndToEnd/systrap
+BenchmarkShimSubcontainerEndToEnd/systrap-4           	      30	  58663016 ns/op	  57222735 p50.ns	  65867890 p90.ns
+BenchmarkShimSubcontainerEndToEnd/systrap_overlay
+BenchmarkShimSubcontainerEndToEnd/systrap_overlay-4   	      30	  57968747 ns/op	  56020093 p50.ns	  64880369 p90.ns
+BenchmarkShimEndToEndCold
+BenchmarkShimEndToEndCold/systrap
+BenchmarkShimEndToEndCold/systrap-4                   	      30	 103540688 ns/op	 101993952 p50.ns	 115061990 p90.ns
+BenchmarkShimEndToEndCold/systrap_overlay
+BenchmarkShimEndToEndCold/systrap_overlay-4           	      30	 102649062 ns/op	 102167031 p50.ns	 107716506 p90.ns
+PASS
