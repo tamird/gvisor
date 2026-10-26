@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T23:56:16.889436+00:00",
+    "updatedAt": "2026-10-26T00:14:30.877536+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19432,15 +19432,27 @@
       "id": "branch:rules-img-fsstress",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/fsstress-standalone-utilities",
-      "head": "6012e1652777e4bd4c3997f55466a324c6491a08",
+      "ref": "review/fsstress-official-image-current",
+      "head": "97c071a74524f2d2fc10f6f4768f1214381b7133",
       "title": "Build the filesystem stress-test image with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/6012e1652777e4bd4c3997f55466a324c6491a08",
+      "url": "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-25T23:55:28.213552+00:00",
-      "summary": "The fsstress contributor approval is retained, but the local BusyBox proposal d450a87dd3 has been withdrawn. Earlier approved source 8e45c79086 already used the currently pinned official @test_busybox image. Agent work will return to that official-image approach and validate a revised source on the current base. The retained 6012e16527 fork head is the previous local-utility composition, not an upstream-ready replacement. No new fsstress approval is required to abandon the local utility.\n\nThe official @test_busybox pull on current upstream/master is already mirror-first and pinned for both target architectures. Reusing it adds no new pull and does not require #16379, which centralizes the registry definition. The missing basic-context exports in #16374 remain a landing gate. The foundation itself landed through #16307 after #16097 closed. Neither withdrawn d450 nor parked PIDFD is an active gate. Final source and any additional implementation prerequisites must be checked during the revision before delivery.\n\nHistorical local-utility composition and measured qualification:\n\nExact 6012e16527 is the approved fsstress proposal reparented directly onto standalone BusyBox d450a87dd3. It preserves the source-built LTP workload, shell parent, per-worker cleanup, image name and Make entry points. The existing fsstress contributor approval is retained; there is no new fsstress decision.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nThe basic-image foundation landed through import #16307 after source PR #16097 closed. Its missing basic-context exports remain a separate #16374 landing gate. Delivery also waits for the new standalone utility decision and its GNU/native-image/compiler ancestry; the mirror PR #16379 and parked PIDFD are not gates for this scratch pair.\n\nPreserved earlier source-specific record:\n\nThe source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
+      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
+      "summary": "The actual fsstress revision is 97c071a745 on current base fb7341a1ad, published at review/fsstress-official-image-current. It builds pinned LTP fsstress and adds the executable, notice and launch script to the existing official @test_busybox image. The shell parent remains because fsstress workers exit early when their parent has PID 1. This returns to the approved official-image approach; the fsstress approval is retained, and no new contributor decision is pending. Root owns current-base delivery and will advise upstream publication.\n\nThe existing BusyBox pull is pinned for both target architectures and already mirror-first. No local BusyBox producer, parked PIDFD or new #16379 dependency is needed. The basic foundation landed through #16307 after #16097 closed; the independent generic source archive in #16374 is not required by fsstress's native Make and archive outputs. No #16374 landing gate remains.\n\nEarlier official-image evidence is retained at d5246ab2 (images and filesystem consumers) and fe7b2570 (two-worker entrypoint execution). Those runs qualify their recorded source identities; they are not a new execution of 97c071a745. The local-utility f4134e3b evidence below remains historical and does not justify shipping that withdrawn implementation.\n\nCompare the current official-image source with the former local composition:\ngit range-diff --creation-factor=999 6012e1652777e4bd4c3997f55466a324c6491a08^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nCompare with the prior approved resource-layout source:\ngit range-diff --creation-factor=999 6bc049050ab0fcce55ffc823e36bfdf55deb2e1d^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nHistorical dispositions and source-specific evidence:\n\nThe fsstress contributor approval is retained, but the local BusyBox proposal d450a87dd3 has been withdrawn. Earlier approved source 8e45c79086 already used the currently pinned official @test_busybox image. Agent work will return to that official-image approach and validate a revised source on the current base. The retained 6012e16527 fork head is the previous local-utility composition, not an upstream-ready replacement. No new fsstress approval is required to abandon the local utility.\n\nThe official @test_busybox pull on current upstream/master is already mirror-first and pinned for both target architectures. Reusing it adds no new pull and does not require #16379, which centralizes the registry definition. The missing basic-context exports in #16374 remain a landing gate. The foundation itself landed through #16307 after #16097 closed. Neither withdrawn d450 nor parked PIDFD is an active gate. Final source and any additional implementation prerequisites must be checked during the revision before delivery.\n\nHistorical local-utility composition and measured qualification:\n\nExact 6012e16527 is the approved fsstress proposal reparented directly onto standalone BusyBox d450a87dd3. It preserves the source-built LTP workload, shell parent, per-worker cleanup, image name and Make entry points. The existing fsstress contributor approval is retained; there is no new fsstress decision.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nThe basic-image foundation landed through import #16307 after source PR #16097 closed. Its missing basic-context exports remain a separate #16374 landing gate. Delivery also waits for the new standalone utility decision and its GNU/native-image/compiler ancestry; the mirror PR #16379 and parked PIDFD are not gates for this scratch pair.\n\nPreserved earlier source-specific record:\n\nThe source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
       "links": [
+        {
+          "label": "Current fsstress product on the official BusyBox image",
+          "url": "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133"
+        },
+        {
+          "label": "Complete current change against fb7341a1ad",
+          "url": "https://github.com/tamird/gvisor/compare/fb7341a1ad7d3b1195f482e30f580390a43d09c0...97c071a74524f2d2fc10f6f4768f1214381b7133"
+        },
+        {
+          "label": "Direct source amendment from the former local-utility composition",
+          "url": "https://github.com/tamird/gvisor/compare/6012e1652777e4bd4c3997f55466a324c6491a08..97c071a74524f2d2fc10f6f4768f1214381b7133"
+        },
         {
           "label": "Previously approved fsstress source using official @test_busybox",
           "url": "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9"
@@ -19488,12 +19500,16 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "6012e1652777e4bd4c3997f55466a324c6491a08",
-        "observedAt": "2026-10-25T23:55:28.213552+00:00",
+        "sourceHead": "97c071a74524f2d2fc10f6f4768f1214381b7133",
+        "observedAt": "2026-10-26T00:14:10.948933+00:00",
         "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
-        "disposition": "Existing fsstress approval retained; official-image revision and validation are agent-owned",
-        "nextAction": "Return to the previously approved official @test_busybox approach from 8e45c79086 and validate revised source on the current base. Preserve the fsstress approval and #16374 context-export gate. Reuse the existing mirror-first, both-CPU-pinned pull; add no #16379 dependency without an actual source need. Do not ship withdrawn d450 or unpark PIDFD.",
+        "disposition": "Approved official-image direction restored at actual 97c071a745; delivery remains agent-owned",
+        "nextAction": "Complete current-base delivery review of 97c071a745 on fb7341a1ad and advise upstream publication. Preserve the existing fsstress approval and earlier exact-source official-image evidence. No local BusyBox/PIDFD, #16374 generic-archive or #16379 mirror landing gate applies to this existing-pull implementation.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133",
+          "https://github.com/tamird/gvisor/commit/fb7341a1ad7d3b1195f482e30f580390a43d09c0",
+          "https://app.buildbuddy.io/invocation/d5246ab2-9bc0-43d6-95eb-b832bc3cecca",
+          "https://app.buildbuddy.io/invocation/fe7b2570-6a93-4ebe-a1b8-0a348df57c34",
           "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
@@ -19509,10 +19525,10 @@
       },
       "refinement": {
         "before": {
-          "head": "5ccbde621b4be2951005dd83e9f54d17d73e9949"
+          "head": "6012e1652777e4bd4c3997f55466a324c6491a08"
         },
         "after": {
-          "head": "6012e1652777e4bd4c3997f55466a324c6491a08"
+          "head": "97c071a74524f2d2fc10f6f4768f1214381b7133"
         }
       }
     },
@@ -19566,15 +19582,19 @@
       "id": "branch:rules-img-symlink-resolv",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/scratch-resolver-image",
-      "head": "e6ee9af099852412bc0fb557552820fbb8e5045a",
-      "title": "Build the resolver fixture from source",
-      "url": "https://github.com/tamird/gvisor/commit/e6ee9af099852412bc0fb557552820fbb8e5045a",
+      "ref": "rules-img-symlink-resolv",
+      "head": "06a1ac32a39a557612731961754132d5b07d2d76",
+      "title": "Build the resolver fixture on the official BusyBox image",
+      "url": "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76",
       "group": "bazel",
-      "status": "Child approval retained; waiting for shared utilities",
-      "updatedAt": "2026-10-23T04:36:33.769185+00:00",
-      "summary": "The final resolver commit e6ee preserves the relative /etc/resolv.conf symlink and per-image cat/readlink/sleep links using the shared source-built BusyBox. Its complete child patch is unchanged from the reviewed split. Both-CPU archives and existing AMD64 containerd grouping cases are qualified in the separate root result; exact common config and BusyBox identities bind that result to the final union tree. The prior conditional child grant remains; there is no duplicate contributor question or ARM runtime claim.\n\nPreserved earlier source-specific record:\n\nThe requested scratch refinement builds BusyBox cat, readlink and sleep, preserves the relative resolver symlink and Make image name, and adds explicit BusyBox/musl notices. Complete source and existing containerd consumer review found that ordinary image targets also need native musl platform selection; the shared two-BUILD correction is independently accepted and being integrated. Resolver both-CPU archives and TestMountOverSymlinks grouping cases remain unexecuted for this refinement. Root owns shared source integration and resolver qualification remains queued while WorkMap handles the Rust refinement; Node shares the exact BusyBox input checks with other scratch leaf images. The prior 06a source approval and results remain preserved below.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
+      "summary": "The retained approved resolver source is 06a1ac32a3 at rules-img-symlink-resolv. It uses the pinned official @test_busybox base and adds only the declared relative /etc/resolv.conf symlink to ../tmp/resolv.conf. The later local-BusyBox descendant e6ee9af099 is superseded and will not be shipped. The existing resolver approval remains; root owns current-base integration and upstream delivery review, with no new contributor decision.\n\nThe basic-image foundation landed through #16307, satisfying the old #16097 condition. There is no need for the scratch-leaf or local-BusyBox source stack. Earlier e4b77e91 validation covers the two architecture archives/contexts, AMD64 Make identity and existing containerd mount-over-symlink cases on the recorded official-image source. No new runtime result or ARM runtime is claimed.\n\nHistorical local-utility refinement and original official-image evidence:\n\nThe final resolver commit e6ee preserves the relative /etc/resolv.conf symlink and per-image cat/readlink/sleep links using the shared source-built BusyBox. Its complete child patch is unchanged from the reviewed split. Both-CPU archives and existing AMD64 containerd grouping cases are qualified in the separate root result; exact common config and BusyBox identities bind that result to the final union tree. The prior conditional child grant remains; there is no duplicate contributor question or ARM runtime claim.\n\nPreserved earlier source-specific record:\n\nThe requested scratch refinement builds BusyBox cat, readlink and sleep, preserves the relative resolver symlink and Make image name, and adds explicit BusyBox/musl notices. Complete source and existing containerd consumer review found that ordinary image targets also need native musl platform selection; the shared two-BUILD correction is independently accepted and being integrated. Resolver both-CPU archives and TestMountOverSymlinks grouping cases remain unexecuted for this refinement. Root owns shared source integration and resolver qualification remains queued while WorkMap handles the Rust refinement; Node shares the exact BusyBox input checks with other scratch leaf images. The prior 06a source approval and results remain preserved below.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
       "links": [
+        {
+          "label": "Approved official BusyBox resolver source; one relative symlink",
+          "url": "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76"
+        },
         {
           "label": "Complete change",
           "url": "https://github.com/tamird/gvisor/compare/1d562c448fe89ced8d0b98f9eed5fedb3b614c3b...06a1ac32a39a557612731961754132d5b07d2d76"
@@ -19589,21 +19609,24 @@
         }
       ],
       "followup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "e6ee9af099852412bc0fb557552820fbb8e5045a",
-        "observedAt": "2026-10-23T04:36:33.769185+00:00",
-        "disposition": "Child approval retained; waiting for shared utilities",
-        "nextAction": "Deliver after shared utilities, the leaf image foundation and the retained #16097/compiler/license ancestry; qualification is complete and the existing child grant is preserved.",
+        "owner": "root",
+        "sourceHead": "06a1ac32a39a557612731961754132d5b07d2d76",
+        "observedAt": "2026-10-26T00:14:10.948933+00:00",
+        "disposition": "Approved official-image resolver restored; current-base integration is agent work",
+        "nextAction": "Use approved 06a1ac32a3 as the resolver product and assess its current-base delivery. Preserve the original official-image qualification and approval; do not ship superseded e6ee local-BusyBox source or wait on the withdrawn utility stack.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76",
+          "https://app.buildbuddy.io/invocation/e4b77e91-e309-48bf-87df-af9845b2a24a",
+          "https://github.com/google/gvisor/pull/16307",
           "https://github.com/tamird/gvisor/commit/e6ee9af099852412bc0fb557552820fbb8e5045a"
         ]
       },
       "refinement": {
         "before": {
-          "head": "06a1ac32a39a557612731961754132d5b07d2d76"
+          "head": "e6ee9af099852412bc0fb557552820fbb8e5045a"
         },
         "after": {
-          "head": "6f22e19051fba6c5126d47661b2d862bb2b55464"
+          "head": "06a1ac32a39a557612731961754132d5b07d2d76"
         }
       }
     },
@@ -20360,19 +20383,25 @@
       "title": "Build tmpfile and syscallbench from scratch",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/ffed1e6bedc48eaba7880b992f0c2d72e2a377dc",
-      "status": "Child approvals retained; waiting for shared utilities",
-      "updatedAt": "2026-10-23T04:36:33.769185+00:00",
-      "summary": "The final published leaf commit ffed uses the accepted common BusyBox configuration and ordinary native-CPU musl image selection. Its complete child patch is unchanged from the independently reviewed split. The final tree through resolver e6ee equals qualified union d7e; both-CPU tmpfile/PIDFD and AMD64-only syscallbench evidence is complete. Existing child contributor grants are retained, without a new child question. No ARM syscallbench or ARM runtime claim is added.\n\nPreserved earlier source-specific record:\n\nThe scratch extension reuses the qualified PIDFD source-built utilities for tmpfile cat and syscallbench sleep. Root owns source; Node independently accepted its source and owns remote image/consumer validation. BusyBox, tmpfile and PIDFD cover both target CPUs; syscallbench retains its existing AMD64-only syscall assembly and ABI constraint. No architecture port, contributor approval or new successful runtime is claimed.",
+      "status": "Superseded",
+      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
+      "summary": "The local-BusyBox leaf proposal ffed1e6bed is superseded. Current upstream tmpfile uses the existing @test_alpine image, while published #16376 at 8a346ca879 uses official @test_busybox for sleep 24h. These consumers do not require a gVisor-specific BusyBox build. No delivery or contributor decision remains for this old scratch-leaf attempt.\n\nHistorical source-specific proposal and qualification:\n\nThe final published leaf commit ffed uses the accepted common BusyBox configuration and ordinary native-CPU musl image selection. Its complete child patch is unchanged from the independently reviewed split. The final tree through resolver e6ee equals qualified union d7e; both-CPU tmpfile/PIDFD and AMD64-only syscallbench evidence is complete. Existing child contributor grants are retained, without a new child question. No ARM syscallbench or ARM runtime claim is added.\n\nPreserved earlier source-specific record:\n\nThe scratch extension reuses the qualified PIDFD source-built utilities for tmpfile cat and syscallbench sleep. Root owns source; Node independently accepted its source and owns remote image/consumer validation. BusyBox, tmpfile and PIDFD cover both target CPUs; syscallbench retains its existing AMD64-only syscall assembly and ABI constraint. No architecture port, contributor approval or new successful runtime is claimed.",
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "root",
         "sourceHead": "ffed1e6bedc48eaba7880b992f0c2d72e2a377dc",
-        "observedAt": "2026-10-23T04:36:33.769185+00:00",
-        "disposition": "Child approvals retained; waiting for shared utilities",
-        "nextAction": "Deliver the retained-approved child after shared utilities and all inherited foundation/compiler/license prerequisites; do not replay completed qualification or ask again.",
+        "observedAt": "2026-10-26T00:14:10.948933+00:00",
+        "disposition": "Superseded by upstream tmpfile and published #16376",
+        "nextAction": "Retain the old source and evidence only as history. Use current upstream tmpfile and the existing #16376 delivery; do not publish ffed or revive its local BusyBox/PIDFD ancestry.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ffed1e6bedc48eaba7880b992f0c2d72e2a377dc"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Current syscallbench source PR using official BusyBox",
+          "url": "https://github.com/google/gvisor/pull/16376"
+        }
+      ]
     },
     {
       "id": "branch:rules-img-rust",
@@ -20701,15 +20730,15 @@
       "ref": "review/source-image-utilities",
       "title": "Prepare shared utilities for scratch images",
       "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
-      "status": "Contributor approved; waiting for prerequisites",
-      "summary": "The broader approved e12 utility composition remains the recorded source for its unreparented consumers. The narrower standalone BusyBox proposal d450a87dd3 was withdrawn; fsstress is returning to its previously approved official-image approach under agent ownership. Other child sources and the parked PIDFD record are unchanged.\n\nPreserved broader-utility record:\n\nThe contributor explicitly approved e12e8a357. Existing child approvals remain valid. Delivery still waits on PIDFD source utilities and their recorded compiler/image/license ancestry.\n\nEarlier source-specific record:\n\nThe shared source-built BusyBox configuration supplies the commands used by the tmpfile, syscallbench, resolver, containerd and fsstress fixtures. It declares the Coreutils gperf generator and binds the image target CPU to musl. Final union qualification passes 25 native phases, 11 reporting controls, 10 image/context outputs, 22 program joins, two uncached tests and four syscallbench modes. Seven PIDFD programs retain the nested unsupported-kcmp skip. Both BusyBox binaries and their producer digests exactly match the separately qualified root-image configuration; union BusyBox actions are cache hits, while those root producers were uncached remote actions. No ARM runtime or ARM64 syscallbench port is claimed. Root has requested this one new shared-utilities review; child grants remain separate.",
-      "updatedAt": "2026-10-25T23:55:28.213552+00:00",
+      "status": "Withdrawn local BusyBox composition",
+      "summary": "The broad e12 composition is not approved for shipment as a gVisor-specific BusyBox build under the contributor's current direction. Its old approval and qualification are preserved only as history. The narrower d450 local producer is also withdrawn. Existing official images supply the BusyBox applets needed by fsstress, resolver, basic/busybox and syscallbench; tmpfile uses its existing Alpine image.\n\nUseful GNU Coreutils work is separate: profile helper 1ef50322e5 needs GNU mkdir, chmod and rm --one-file-system, not BusyBox. Preserve that source and its review while reconciling only its actual GNU/compiler prerequisites. No approval here authorizes shipping a local BusyBox replacement, and PIDFD stays parked.\n\nSuperseded broad-utility disposition and qualification:\n\nThe broader approved e12 utility composition remains the recorded source for its unreparented consumers. The narrower standalone BusyBox proposal d450a87dd3 was withdrawn; fsstress is returning to its previously approved official-image approach under agent ownership. Other child sources and the parked PIDFD record are unchanged.\n\nPreserved broader-utility record:\n\nThe contributor explicitly approved e12e8a357. Existing child approvals remain valid. Delivery still waits on PIDFD source utilities and their recorded compiler/image/license ancestry.\n\nEarlier source-specific record:\n\nThe shared source-built BusyBox configuration supplies the commands used by the tmpfile, syscallbench, resolver, containerd and fsstress fixtures. It declares the Coreutils gperf generator and binds the image target CPU to musl. Final union qualification passes 25 native phases, 11 reporting controls, 10 image/context outputs, 22 program joins, two uncached tests and four syscallbench modes. Seven PIDFD programs retain the nested unsupported-kcmp skip. Both BusyBox binaries and their producer digests exactly match the separately qualified root-image configuration; union BusyBox actions are cache hits, while those root producers were uncached remote actions. No ARM runtime or ARM64 syscallbench port is claimed. Root has requested this one new shared-utilities review; child grants remain separate.",
+      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Deliver after the recorded prerequisites land, preserving existing child grants and source-specific qualification.",
+        "observedAt": "2026-10-26T00:14:10.948933+00:00",
+        "disposition": "Local BusyBox delivery withdrawn; distinct GNU Coreutils work retained",
+        "nextAction": "Do not ship the e12 BusyBox composition. Retain useful GNU Coreutils source independently, and use official BusyBox/Alpine images for the audited consumers. Preserve old grants as history rather than current authorization for local BusyBox; leave PIDFD parked.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
         ]
@@ -20730,15 +20759,15 @@
       "title": "Build the containerd BusyBox image from source",
       "url": "https://github.com/tamird/gvisor/commit/b2a09233588ff4d63b408879e8445bb587aa4597",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
-      "summary": "Build the containerd BusyBox fixture from shared declared source utilities. This is an independent child of utilities e12, separate from the tmpfile/syscallbench and resolver refinements. Existing root/containerd qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives and AMD64 runtime are qualified; no ARM runtime is claimed. The previous basic-image contributor approval is retained; shared utilities e12 now have explicit contributor approval and retain their landing prerequisites.",
+      "status": "Retired broken local BusyBox attempt",
+      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
+      "summary": "Retire local-BusyBox attempt b2a0923358 and keep upstream basic/busybox on the official image. Independent consumer review found that this branch removes the @test_busybox pin while its own syscallbench still references it. Its shell, dd, df, grep, setsid, sleep, stat and true needs do not require a local BusyBox producer. The old approval does not authorize shipping this broken attempt; no new contributor decision or replacement runtime result is claimed.\n\nHistorical attempt and qualification:\n\nBuild the containerd BusyBox fixture from shared declared source utilities. This is an independent child of utilities e12, separate from the tmpfile/syscallbench and resolver refinements. Existing root/containerd qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives and AMD64 runtime are qualified; no ARM runtime is claimed. The previous basic-image contributor approval is retained; shared utilities e12 now have explicit contributor approval and retain their landing prerequisites.",
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "root",
         "sourceHead": "b2a09233588ff4d63b408879e8445bb587aa4597",
-        "observedAt": "2026-10-23T05:13:28.927269+00:00",
-        "disposition": "Contributor approval retained; waiting for prerequisites",
-        "nextAction": "Deliver after the shared utilities and actual compiler/basic/license prerequisite landings; no duplicate child review question.",
+        "observedAt": "2026-10-26T00:14:10.948933+00:00",
+        "disposition": "Broken local BusyBox attempt retired; retain upstream official basic/busybox",
+        "nextAction": "Do not ship b2a0923358. Keep the upstream basic/busybox official-image implementation and its shared pin; retain the old branch evidence only as history.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b2a09233588ff4d63b408879e8445bb587aa4597",
           "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
@@ -20942,15 +20971,15 @@
       "title": "Build profiling utilities from source",
       "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
-      "summary": "The contributor explicitly approved 1ef50322e. Both-CPU static outputs and native AMD64 host helper checks remain accepted; delivery retains shared utilities/compiler/image/license prerequisites.\n\nEarlier source-specific record:\n\nBuild GNU mkdir, chmod, rm and timeout with the existing declared Coreutils producer and package the profiling helper in scratch. The image transition selects the target CPU for Go and Coreutils. Both CPU image/static-output gates and native AMD64 host filesystem, helper configuration and stream checks passed. Exact timeout and complete PIDFD archive equality permits retained PIDFD runtime reuse. GNU rm --one-file-system preserves nested-mount protection. No Kubernetes or native ARM execution is claimed. Root has requested contributor review of final1ef503; earlier failed preparations and the one reporting-count correction remain retained.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
+      "summary": "Profile helper 1ef50322e5 is distinct GNU Coreutils work. It uses GNU mkdir, chmod and rm --one-file-system to protect nested mounts, and shares the existing Coreutils build with timeout. It has no BusyBox applet requirement. Its prior approval and exact-source qualification remain recorded; the withdrawal of local BusyBox is not a rejection of these GNU semantics.\n\nThe current commit still has the broad e12 parent, so root must reconcile its actual GNU/compiler and image inputs independently before delivery. The e12 BusyBox composition is not an active shipment prerequisite or authorization. Existing pinned GNU packages supply a separate route; no new extracted source, runtime result or upstream-ready claim is made here.\n\nHistorical source-specific GNU helper record:\n\nThe contributor explicitly approved 1ef50322e. Both-CPU static outputs and native AMD64 host helper checks remain accepted; delivery retains shared utilities/compiler/image/license prerequisites.\n\nEarlier source-specific record:\n\nBuild GNU mkdir, chmod, rm and timeout with the existing declared Coreutils producer and package the profiling helper in scratch. The image transition selects the target CPU for Go and Coreutils. Both CPU image/static-output gates and native AMD64 host filesystem, helper configuration and stream checks passed. Exact timeout and complete PIDFD archive equality permits retained PIDFD runtime reuse. GNU rm --one-file-system preserves nested-mount protection. No Kubernetes or native ARM execution is claimed. Root has requested contributor review of final1ef503; earlier failed preparations and the one reporting-count correction remain retained.",
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "root",
         "sourceHead": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Deliver after the recorded prerequisites land; retain the no-Kubernetes/no-native-ARM limitations and prior failures.",
+        "observedAt": "2026-10-26T00:14:10.948933+00:00",
+        "disposition": "GNU-only helper approval retained; actual dependency extraction is agent work",
+        "nextAction": "Preserve approved GNU Coreutils behavior, especially rm --one-file-system. Reconcile its current GNU/compiler/image inputs separately from withdrawn e12 BusyBox before delivery, retaining existing exact-source evidence and no-Kubernetes/no-native-ARM limits.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
         ]
@@ -25660,15 +25689,15 @@
       "from": "pr:16097",
       "to": "branch:rules-img-fsstress",
       "type": "includes",
-      "reason": "Basic image foundation satisfied by merged Copybara import #16307 (c3e0783a); #16097 closed in its favor. Missing context exports are tracked separately under #16374.",
+      "reason": "Basic image foundation satisfied by merged #16307 after #16097 closed. The separate generic context archive #16374 is not required by current fsstress native Make/archive outputs.",
       "evidence": "https://github.com/google/gvisor/pull/16307"
     },
     {
       "from": "pr:16097",
       "to": "branch:rules-img-symlink-resolv",
-      "type": "depends_on",
-      "reason": "Uses the declared basic-image and image-output foundation.",
-      "evidence": "https://github.com/google/gvisor/pull/16097"
+      "type": "includes",
+      "reason": "Official-image resolver foundation satisfied by merged Copybara import #16307 after #16097 closed.",
+      "evidence": "https://github.com/google/gvisor/pull/16307"
     },
     {
       "from": "pr:16097",
@@ -25802,8 +25831,8 @@
     {
       "from": "branch:rules-img-scratch-leaf-images",
       "to": "branch:rules-img-symlink-resolv",
-      "type": "depends_on",
-      "reason": "Reuses the basic-image musl selection and shared utility inputs; exact child source patch is unchanged.",
+      "type": "includes",
+      "reason": "Historical source ancestry only; no active local BusyBox delivery prerequisite. Reuses the basic-image musl selection and shared utility inputs; exact child source patch is unchanged.",
       "evidence": "https://github.com/tamird/gvisor/commit/ffed1e6bedc48eaba7880b992f0c2d72e2a377dc"
     },
     {
@@ -25858,8 +25887,8 @@
     {
       "from": "branch:source-image-utilities",
       "to": "branch:rules-img-scratch-leaf-images",
-      "type": "depends_on",
-      "reason": "Uses the shared configured utility executable and target ABI selection.",
+      "type": "includes",
+      "reason": "Historical source ancestry only; no active local BusyBox delivery prerequisite. Uses the shared configured utility executable and target ABI selection.",
       "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
     },
     {
@@ -25872,8 +25901,8 @@
     {
       "from": "branch:source-image-utilities",
       "to": "branch:source-built-containerd-image",
-      "type": "depends_on",
-      "reason": "Uses the selected shared BusyBox applets, notices and native target-CPU musl binding; compiler/basic/license ancestry remains inherited.",
+      "type": "includes",
+      "reason": "Historical source ancestry only; no active local BusyBox delivery prerequisite. Uses the selected shared BusyBox applets, notices and native target-CPU musl binding; compiler/basic/license ancestry remains inherited.",
       "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
     },
     {
@@ -25886,8 +25915,8 @@
     {
       "from": "branch:source-image-utilities",
       "to": "branch:source-built-profile-helper",
-      "type": "depends_on",
-      "reason": "Reuses the declared shared Coreutils source/generator and musl image-platform foundation; inherited compiler, image and license prerequisites remain.",
+      "type": "includes",
+      "reason": "Historical source ancestry only; no active local BusyBox delivery prerequisite. Reuses the declared shared Coreutils source/generator and musl image-platform foundation; inherited compiler, image and license prerequisites remain.",
       "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
     },
     {
@@ -26385,13 +26414,6 @@
       "type": "includes",
       "reason": "Historical ancestry of the withdrawn local BusyBox proposal. The declared target-CPU musl/compiler closure requires the reviewed supplier 8306976dbf exposing @llvm; ordinary upstream defaults do not provide this contract.",
       "evidence": "https://github.com/tamird/gvisor/commit/8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
-    },
-    {
-      "from": "pr:16374",
-      "to": "branch:rules-img-fsstress",
-      "type": "depends_on",
-      "reason": "Restore the basic package source export required by the complete Make context after the foundation landed through #16307.",
-      "evidence": "https://github.com/google/gvisor/pull/16374"
     }
   ],
   "investigations": [
