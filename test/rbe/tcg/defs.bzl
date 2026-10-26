@@ -351,7 +351,7 @@ def _guest_test(name, payload, tags, image, run_under = None, preserve_runfiles_
             testonly = True,
             srcs = srcs,
             include_runfiles = True,
-            mutate = mutate(preserve_symlinks = True, srcs = srcs),
+            mutate = mutate(preserve_symlinks = True, srcs = srcs, testonly = True),
             tags = ["manual"],
         )
     else:
