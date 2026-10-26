@@ -109,12 +109,17 @@ tcg_image(
     tags = ["manual"],
 )
 
-# The sandbox hostname test invokes the command by name inside its UTS
-# namespace. The guest already ships the native BusyBox hostname applet.
+# The container tests mount EROFS images at /mnt and invoke /usr/bin/touch;
+# the Jammy package archives omit /mnt and install touch only in /bin.
 pkg_tar(
-    name = "rc_hostname",
+    name = "rc_userspace_layout",
     testonly = True,
-    symlinks = {"bin/hostname": "busybox"},
+    empty_dirs = ["mnt"],
+    symlinks = {
+        # The UTS namespace test needs the hostname applet provided by BusyBox.
+        "bin/hostname": "busybox",
+        "usr/bin/touch": "../../bin/touch",
+    },
     tags = ["manual"],
 )
 
@@ -130,7 +135,7 @@ flatten(
         "@tcg_arm64_guest//base-passwd/arm64",
         "@tcg_arm64_guest//bash/arm64",
         "@tcg_arm64_guest//busybox-static/arm64",
-        ":rc_hostname",
+        ":rc_userspace_layout",
         "@tcg_arm64_guest//coreutils/arm64",
         "@tcg_arm64_guest//debianutils/arm64",
         "@tcg_arm64_guest//file/arm64",
