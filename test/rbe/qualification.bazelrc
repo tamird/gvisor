@@ -1,0 +1,27 @@
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+common --lockfile_mode=error
+# Include underlying remote upload errors, not just the outer artifact digest.
+build:buildbuddy_remote_executor --verbose_failures
+# Large OCI inputs exceed the default 60-second cache-write deadline.
+# https://www.buildbuddy.io/docs/troubleshooting-rbe/
+build:buildbuddy_remote_executor --remote_timeout=10m
+# Reuse checksum-addressed repository assets instead of repeating upstream
+# downloads. Keep local fallback for authenticated URLs the service cannot fetch.
+# https://www.buildbuddy.io/docs/remote-runner-introduction/#reducing-disk-snapshot-size
+build:buildbuddy_remote_executor --experimental_remote_downloader=grpcs://remote.buildbuddy.io
+build:buildbuddy_remote_executor --experimental_remote_downloader_local_fallback
+build:buildbuddy_remote_executor --remote_download_outputs=minimal
+build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$

@@ -1,0 +1,82 @@
+{
+  "actions_run": 38941203981,
+  "archive_sha256": "e81ffbb7ca8e2279f4ef0890562ecd4cbf184495422baeee3350e1e9d51ddc1d",
+  "events_sha256": "1d48414dc98610ce98ca433ae94879b631b8b0968e3c98248c983c4be7c76ba9",
+  "originals": [
+    {
+      "bytes": 858048,
+      "fixture": "test.log",
+      "offset": 841664,
+      "path": "reports/k8-fastbuild-ST-cb3b6d32351b/testlogs/runsc/container/container_test_systrap_cgroup_v2_amd64/shard_8_of_8/test.log",
+      "retained_sha256": "5b39e4560a02e7c08f2e3b97e78c3c14cea722045e8f3d5d50fbc76e2aa0dd60",
+      "sha256": "775ece1b58cabdc44404622b8f25faa3a28405c81976a635a93f05a6cc81cbb6"
+    },
+    {
+      "bytes": 16421,
+      "fixture": "test.xml",
+      "offset": 0,
+      "path": "reports/k8-fastbuild-ST-cb3b6d32351b/testlogs/runsc/container/container_test_systrap_cgroup_v2_amd64/shard_8_of_8/test.xml",
+      "retained_sha256": "147aec49b259b7d22dafa7e47b476344de657ae52d3e3052cf72aae253824079",
+      "sha256": "147aec49b259b7d22dafa7e47b476344de657ae52d3e3052cf72aae253824079"
+    },
+    {
+      "bytes": 759,
+      "fixture": "commit.txt",
+      "offset": 0,
+      "path": "container-full-profile/commit.txt",
+      "retained_sha256": "586090ba50abb4f7f60aa9b85fa12bb39925a4ce4da01d83f97ff4681a6976f6",
+      "sha256": "586090ba50abb4f7f60aa9b85fa12bb39925a4ce4da01d83f97ff4681a6976f6"
+    },
+    {
+      "bytes": 0,
+      "fixture": "source-before.txt",
+      "offset": 0,
+      "path": "container-full-profile/source-before.txt",
+      "retained_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "fixture": "source-after.txt",
+      "offset": 0,
+      "path": "container-full-profile/source-after.txt",
+      "retained_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 41,
+      "fixture": "final-head.txt",
+      "offset": 0,
+      "path": "container-full-profile/final-head.txt",
+      "retained_sha256": "2203a1b8548ee0f2ae8d58d2eea1bddd66ca8ae0c37766496b01c2407ff5ddab",
+      "sha256": "2203a1b8548ee0f2ae8d58d2eea1bddd66ca8ae0c37766496b01c2407ff5ddab"
+    },
+    {
+      "bytes": 818,
+      "fixture": "executed-arguments.txt",
+      "offset": 0,
+      "path": "container-full-profile/executed-arguments.txt",
+      "retained_sha256": "a3738907258618f3382e12fe5fcac2d5097c38e216a260fc42dff29221798010",
+      "sha256": "a3738907258618f3382e12fe5fcac2d5097c38e216a260fc42dff29221798010"
+    },
+    {
+      "bytes": 2,
+      "fixture": "native-exit",
+      "offset": 0,
+      "path": "guest-events-nzQ8rD.jsonl.bazel-exit",
+      "retained_sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2",
+      "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+    },
+    {
+      "bytes": 2,
+      "fixture": "capture-exit",
+      "offset": 0,
+      "path": "guest-events-nzQ8rD.jsonl.capture-exit",
+      "retained_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    }
+  ],
+  "projection": "One configured owner; preserve its completed children and summary. Keep original invocation finish. URI paths become fixture-local. Reports preserve XML; large logs use an identified suffix. This is a regression fixture, not a new qualification claim.",
+  "receipt_sha256": "d61da13aeb94eefcfcf4bcee24b32f5574d85e75f44728e609fc256e1a8553ac",
+  "source": "eaf99ce23210a12f04fedae5bb68909d9bd71eaa"
+}

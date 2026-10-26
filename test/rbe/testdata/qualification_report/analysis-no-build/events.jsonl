@@ -1,0 +1,43 @@
+{"id": {"started": {}}, "children": [{"progress": {}}, {"unstructuredCommandLine": {}}, {"structuredCommandLine": {"commandLineLabel": "original"}}, {"structuredCommandLine": {"commandLineLabel": "canonical"}}, {"structuredCommandLine": {"commandLineLabel": "tool"}}, {"buildMetadata": {}}, {"optionsParsed": {}}, {"workspaceStatus": {}}, {"pattern": {"pattern": ["//test/rbe:qualification_report_test", "//:github_actions_test"]}}, {"buildFinished": {}}], "started": {"uuid": "886ee1c3-63e6-4311-85b8-fb3edd66a38c", "startTime": "2026-10-16T20:33:36.339Z", "startTimeMillis": "1792182816339", "command": "test"}}
+{"id": {"buildMetadata": {}}}
+{"id": {"unstructuredCommandLine": {}}}
+{"id": {"optionsParsed": {}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "original"}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "canonical"}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "tool"}}}
+{"id": {"progress": {}}, "children": [{"progress": {"opaqueCount": 1}}, {"fetch": {"url": "https://github.com/bazel-contrib/jq.bzl/releases/download/v0.1.0/jq.bzl-v0.1.0.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/bazel-contrib/jq.bzl/releases/download/v0.1.0/jq.bzl-v0.1.0.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 1}}, "children": [{"progress": {"opaqueCount": 2}}, {"fetch": {"url": "https://bcr.bazel.build/modules/jq.bzl/0.1.0/patches/module_dot_bazel_version.patch", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://bcr.bazel.build/modules/jq.bzl/0.1.0/patches/module_dot_bazel_version.patch", "downloader": "HTTP"}}}
+{"id": {"pattern": {"pattern": ["//test/rbe:qualification_report_test", "//:github_actions_test"]}}, "children": [{"targetConfigured": {"label": "//test/rbe:qualification_report_test"}}, {"targetConfigured": {"label": "//:github_actions_test"}}]}
+{"id": {"progress": {"opaqueCount": 2}}, "children": [{"progress": {"opaqueCount": 3}}, {"workspace": {}}]}
+{"id": {"workspace": {}}}
+{"id": {"progress": {"opaqueCount": 3}}, "children": [{"progress": {"opaqueCount": 4}}, {"configuration": {"id": "0a7ec418872349bb35880c4ef5c8c056d686f6f087c32b4d5a1388c931da0911"}}]}
+{"id": {"configuration": {"id": "0a7ec418872349bb35880c4ef5c8c056d686f6f087c32b4d5a1388c931da0911"}}}
+{"id": {"progress": {"opaqueCount": 4}}, "children": [{"progress": {"opaqueCount": 5}}, {"fetch": {"url": "https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 5}}, "children": [{"progress": {"opaqueCount": 6}}, {"fetch": {"url": "https://github.com/uutils/coreutils/releases/download/0.5.0/coreutils-0.5.0-x86_64-unknown-linux-musl.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/uutils/coreutils/releases/download/0.5.0/coreutils-0.5.0-x86_64-unknown-linux-musl.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 6}}, "children": [{"progress": {"opaqueCount": 7}}, {"fetch": {"url": "https://github.com/bazel-contrib/bazel-lib/releases/download/v3.2.2/copy_to_directory-linux_amd64", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/bazel-contrib/bazel-lib/releases/download/v3.2.2/copy_to_directory-linux_amd64", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 7}}, "children": [{"progress": {"opaqueCount": 8}}, {"fetch": {"url": "https://github.com/cerisier/glibc-headers/releases/download/2.28-20250512/x86_64-linux-gnu.2.28.tar.zst", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/cerisier/glibc-headers/releases/download/2.28-20250512/x86_64-linux-gnu.2.28.tar.zst", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 8}}, "children": [{"progress": {"opaqueCount": 9}}, {"fetch": {"url": "https://github.com/cerisier/kernel-headers/releases/download/6.18.33-20260526/6.18.33-x86.tar.zst", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/cerisier/kernel-headers/releases/download/6.18.33-20260526/6.18.33-x86.tar.zst", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 9}}, "children": [{"progress": {"opaqueCount": 10}}, {"fetch": {"url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260414/cpython-3.11.15+20260414-x86_64-unknown-linux-gnu-install_only.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260414/cpython-3.11.15+20260414-x86_64-unknown-linux-gnu-install_only.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 10}}, "children": [{"progress": {"opaqueCount": 11}}, {"fetch": {"url": "https://github.com/bminor/glibc/archive/92d25389c255b0da9b56bc05694f0702cd22921a.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/bminor/glibc/archive/92d25389c255b0da9b56bc05694f0702cd22921a.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 11}}, "children": [{"progress": {"opaqueCount": 12}}, {"fetch": {"url": "https://github.com/hermeticbuild/hermetic-llvm/releases/download/prebuilts-extras-20260429/toolchain-extra-prebuilts-20260429-linux-amd64-musl.tar.zst", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/hermeticbuild/hermetic-llvm/releases/download/prebuilts-extras-20260429/toolchain-extra-prebuilts-20260429-linux-amd64-musl.tar.zst", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 12}}, "children": [{"progress": {"opaqueCount": 13}}, {"configuration": {"id": "a761dad6cb265afa22dff477b2429585d2dd1d1cf3136fbb10fe3d167eaf5386"}}]}
+{"id": {"configuration": {"id": "a761dad6cb265afa22dff477b2429585d2dd1d1cf3136fbb10fe3d167eaf5386"}}}
+{"id": {"targetConfigured": {"label": "//test/rbe:qualification_report_test"}}, "children": [{"targetCompleted": {"label": "//test/rbe:qualification_report_test", "configuration": {"id": "a761dad6cb265afa22dff477b2429585d2dd1d1cf3136fbb10fe3d167eaf5386"}}}], "configured": {"targetKind": "py_test rule", "testSize": "MEDIUM", "tag": ["manual", "rbe-has-amd64-variant", "rbe-has-arm64-variant", "rbe-has-cgroup-v1-variant"]}}
+{"id": {"targetConfigured": {"label": "//:github_actions_test"}}, "children": [{"targetCompleted": {"label": "//:github_actions_test", "configuration": {"id": "0a7ec418872349bb35880c4ef5c8c056d686f6f087c32b4d5a1388c931da0911"}}}], "configured": {"targetKind": "native_test rule", "testSize": "MEDIUM", "tag": ["rbe-has-amd64-variant", "rbe-has-arm64-variant", "rbe-has-cgroup-v1-variant"]}}
+{"id": {"workspaceStatus": {}}}
+{"id": {"buildFinished": {}}, "children": [{"buildToolLogs": {}}, {"buildMetrics": {}}], "finished": {"finishTimeMillis": "1792182837472", "exitCode": {"name": "BUILD_FAILURE", "code": 1}, "finishTime": "2026-10-16T20:33:57.472Z"}}
+{"id": {"buildToolLogs": {}}}
+{"id": {"progress": {"opaqueCount": 13}}}
+{"id": {"targetCompleted": {"label": "//:github_actions_test", "configuration": {"id": "0a7ec418872349bb35880c4ef5c8c056d686f6f087c32b4d5a1388c931da0911"}}}, "aborted": {"reason": "NO_BUILD"}}
+{"id": {"targetCompleted": {"label": "//test/rbe:qualification_report_test", "configuration": {"id": "a761dad6cb265afa22dff477b2429585d2dd1d1cf3136fbb10fe3d167eaf5386"}}}, "aborted": {"reason": "NO_BUILD"}}
+{"id": {"buildMetrics": {}}}

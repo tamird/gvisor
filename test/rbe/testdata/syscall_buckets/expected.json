@@ -1,0 +1,47 @@
+{
+  "0": [
+    "//test/syscalls:accept_bind_stream_test_runsc_systrap_directfs_arm64"
+  ],
+  "1": [
+    "//test/rtnetlink:route_test_runsc_systrap_overlay_directfs_arm64"
+  ],
+  "2": [
+    "//test/rtnetlink:veth_test_runsc_ptrace_overlay_arm64"
+  ],
+  "3": [
+    "//test/syscalls:aio_test_runsc_systrap_overlay_arm64"
+  ],
+  "4": [
+    "//test/syscalls:arch_prctl_test_runsc_ptrace_arm64"
+  ],
+  "5": [
+    "//test/syscalls:accept_bind_stream_test_runsc_ptrace_arm64"
+  ],
+  "6": [
+    "//test/rtnetlink:bridge_test_runsc_systrap_overlay_directfs_arm64"
+  ],
+  "7": [
+    "//test/syscalls:32bit_test_runsc_systrap_directfs_arm64"
+  ],
+  "8": [
+    "//test/syscalls:access_test_runsc_ptrace_arm64"
+  ],
+  "9": [
+    "//test/rtnetlink:bridge_test_runsc_ptrace_overlay_arm64"
+  ],
+  "10": [
+    "//test/syscalls:accept_bind_stream_test_runsc_systrap_hostnet_arm64"
+  ],
+  "11": [
+    "//test/rtnetlink:route_test_runsc_ptrace_overlay_arm64"
+  ],
+  "12": [
+    "//test/syscalls:accept_bind_test_runsc_systrap_directfs_arm64"
+  ],
+  "13": [
+    "//test/syscalls:accept_bind_test_runsc_systrap_hostnet_arm64"
+  ],
+  "14": [
+    "//test/syscalls:32bit_test_runsc_ptrace_arm64"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "owners": {
+    "//test/benchmarks/network:iperf_test_continuous_kvm_owned": [
+      "benchmarks/iperf"
+    ]
+  },
+  "benchmarks": {
+    "//test/benchmarks/network:iperf_test_continuous_kvm_owned": [
+      {
+        "name": "BenchmarkIperfOneConnection/operation.Upload",
+        "count": 1,
+        "units": [
+          "ns/op",
+          "MB/s",
+          "bandwidth.bytes_per_second"
+        ]
+      },
+      {
+        "name": "BenchmarkIperfOneConnection/operation.Download",
+        "count": 1,
+        "units": [
+          "ns/op",
+          "MB/s",
+          "bandwidth.bytes_per_second"
+        ]
+      }
+    ]
+  }
+}

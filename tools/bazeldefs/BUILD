@@ -6,6 +6,17 @@ package(
     licenses = ["notice"],
 )
 
+platform(
+    name = "rbe_linux_amd64",
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+        "workload-isolation-type": "firecracker",
+    },
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
+)
+
 bzl_library(
     name = "platforms_bzl",
     srcs = ["platforms.bzl"],

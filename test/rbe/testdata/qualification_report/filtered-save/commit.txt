@@ -1,0 +1,20 @@
+tree 2a809d62d6ec93e2896113c04ed1b6e6bd116a6b
+parent a7e8647efe3da4f9c9f86b6f0550554137bc7176
+author Tamir Duberstein <tamird@gmail.com> 1792184243 +0200
+committer Tamir Duberstein <tamird@gmail.com> 1792184290 +0200
+gpgsig -----BEGIN SSH SIGNATURE-----
+ U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgtYz36g7iDMSkY5K7Ab51ksGX7h
+ JgsMRt+XVZTrIzMVIAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5
+ AAAAQNxRNBdGqUSFCYKFCHRN+n+1JdSPs6A8hcddKcLzbag969w5PhPEU3s7Ygn5V0Vp+Q
+ OrxGNukdLUbriHQ6W3qgc=
+ -----END SSH SIGNATURE-----
+
+Require executed cases for each test owner
+
+A mixed invocation could report PASS when one owner ran named cases
+and another reported only empty or skipped cases. Require positive
+executed-case coverage for every expected or observed owner, aggregated
+across its attempts and shards.
+
+Retain native and XML failures as the primary verdict. Cover mixed
+owners and an empty shard whose owner executes cases in another shard.

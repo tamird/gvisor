@@ -1,0 +1,27 @@
+{
+  "actions_run": 38940974369,
+  "archive_sha256": "00fedfbb5359c0c89557014f78cfea6e405ceb864f70b09572d8f026ec58a4c5",
+  "expected_outcome_sha256": "0891963db332237d6a6b47952a85176a3ea4a034072aa3079b7f00dc60c51a67",
+  "original_run_log_sha256": "cc27403488d33a60d3459aa515d0609f083e337ab8cd218bae3fdf2ac228c78b",
+  "originals": [
+    {
+      "bytes": 0,
+      "path": "source-before.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": "source-after.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 41,
+      "path": "final-head.txt",
+      "sha256": "2203a1b8548ee0f2ae8d58d2eea1bddd66ca8ae0c37766496b01c2407ff5ddab"
+    }
+  ],
+  "projection": "Original artifact has no BEP, commit or executed-arguments body: analysis failed before the capture wrapper. Empty events preserve that absence; 34 expected owners come from the sealed outcome. Same immutable commit body comes from sibling bucket 0. Native exit 1 is original Actions log; capture exit 1 and test-only argument are fixture declarations of missing capture, not recovered original command evidence.",
+  "receipt_sha256": "1822046e0802622bb58c36a56eb0ca3286e6d80d54eaf7f6bf22bf4925364786",
+  "same_source_commit_origin": "/private/tmp/gvisor-rbe-next/qualification-current-syscalls-resume-arm64-bucket-0-actions-artifact/qualification-arm64/syscalls-resume-full-profile/commit.txt",
+  "source": "eaf99ce23210a12f04fedae5bb68909d9bd71eaa"
+}

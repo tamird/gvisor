@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "native_exit": 0,
+  "source": "25e1c37002cfdb79b10c8f36efe0467f839a4d16",
+  "command_kind": "test",
+  "expected": [
+    {
+      "configuration": "30e6a884746014bfdcc7d465895a8cefc0a070b57e16f278b320811872ec515d",
+      "label": "//test/benchmarks/network:iperf_test_continuous_kvm_owned"
+    }
+  ],
+  "executed": [
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "strategy": "docker",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "213.844s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "213.844s"
+        }
+      },
+      "owner": {
+        "configuration": "30e6a884746014bfdcc7d465895a8cefc0a070b57e16f278b320811872ec515d",
+        "label": "//test/benchmarks/network:iperf_test_continuous_kvm_owned"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 3,
+        "skipped": 0,
+        "skips": []
+      }
+    }
+  ]
+}

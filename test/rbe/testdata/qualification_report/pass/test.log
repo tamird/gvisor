@@ -1,0 +1,241 @@
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //test/syscalls:exec_binary_test_native_amd64
+-----------------------------------------------------------------------------
+Test directory before: 755 1001:1001 /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046
+Test directory ready: 755 0:0 /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046
+Test directory before: 755 1001:1001 /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/exec_binary_test_native_amd64
+Test directory ready: 755 0:0 /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/exec_binary_test_native_amd64
+ ID TARGET FSTYPE OPTIONS
+263 /      ext4   rw,relatime,discard,journal_async_commit,nobarrier,errors=remount-ro,commit=30,data=writeback
+ ID TARGET                                                                                                                        FSTYPE OPTIONS
+403 /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046 ext4   rw,relatime,discard,journal_async_commit,nobarrier,errors=remount-ro,commit=30,data=writeback
+f: /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild-ST-27870fbec395/bin/release/runsc
+drwxr-xr-x root   root   /
+drwxr-xr-x root   root   home
+drwxr-x--x runner runner runner
+drwxr-xr-x runner runner .cache
+drwxr-xr-x runner runner bazel
+drwxr-xr-x runner runner _bazel_runner
+drwxr-xr-x runner runner 000ef9ee90a3e625fcf1f4edcfe0fd56
+drwxr-xr-x runner runner execroot
+drwxr-xr-x runner runner _main
+drwxr-xr-x runner runner bazel-out
+drwxr-xr-x runner runner k8-fastbuild-ST-27870fbec395
+drwxr-xr-x runner runner bin
+drwxr-xr-x runner runner release
+-r-xr-xr-x runner runner runsc
++ [[ -n /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/exec_binary_test_native_amd64/test.outputs ]]
++ mkdir -p /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/exec_binary_test_native_amd64/test.outputs
++ chmod a+rwx /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/exec_binary_test_native_amd64/test.outputs
++ exec test/runner/runner_/runner --platform=native --platform-support=32BIT:TRUE,ALIGNMENT_CHECK:TRUE,INT3:TRUE,MULTIPROCESS:TRUE,VSYSCALL:TRUE --network=none --use-tmpfs=False --fusefs=False --file-access=exclusive --overlay=False --add-host-uds=False --add-host-connector=False --add-host-fifo=False --add-host-tty=False --strace=True --debug=True --container=False --one-sandbox=True --iouring=False --directfs=False --leak-check=False --save=False --save-resume=False --nftables=False --kvm-use-cpu-nums=False --in-sandbox-cgroup=v1 test/syscalls/linux/exec_binary_test
+I1016 17:01:08.663478   11476 main.go:234] Executing: [/home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/bin/test/syscalls/exec_binary_test_native_amd64.local_root.runfiles/_main/test/syscalls/linux/exec_binary_test --gtest_filter=ElfTest.Execute:ElfTest.MissingText:ElfTest.DataSegment:ElfTest.ExtraMemPages:ElfTest.AnonOnlySegment:ElfTest.UnalignedOffset:ElfTest.DirectlyOverlappingSegments:ElfTest.OutOfOrderSegments:ElfTest.OutOfBoundsPhdrs:ElfTest.MissingPhdr:ElfTest.MissingHeader:ElfTest.PIE:ElfTest.PIENonZeroStart:ElfTest.PIEOutOfOrderSegments:ElfTest.PIEOverflow:ElfTest.ELFInterpreter:ElfTest.ExecuteOnlyELFInterpreter:ElfTest.PtraceExecuteOnlyBinary:ElfTest.UsernsAttachExecuteOnlyBinary:ElfTest.ExecuteOnlyScriptReadableInterpreter:ElfTest.ExecuteOnlyScriptReadableInterpreterEmptyPathFd:ElfTest.ExecuteOnlyScriptReadableInterpreterRelativeDirfd:ElfTest.ProcessVMReadExecuteOnlyBinary:ElfTest.ProcMemFdAcrossExecuteOnlyExec:ElfTest.ELFInterpreterRelative:ElfTest.ELFInterpreterWrongArch:ElfTest.NoExecute:ElfTest.NoRead:ElfTest.ElfInterpreterNoExecute:InterpreterScriptTest.Execute:InterpreterScriptTest.Whitespace:InterpreterScriptTest.InterpreterScriptNoExecute:InterpreterScriptTest.BinaryNoExecute:InterpreterScriptTest.MaxRecursion:InterpreterScriptTest.RelativePath:InterpreterScriptTest.UncleanPath:InterpreterScriptTest.Symlink:InterpreterScriptTest.SymlinkLoop:ExecveTest.SymlinkLoop:ExecveTest.Directory:ExecveTest.BinaryAsDirectory:ExecveTest.BrkAfterBinary:Cases/ElfInterpreterStaticTest.Test/0:Cases/ElfInterpreterStaticTest.Test/1:Cases/ElfInterpreterStaticTest.Test/2:Cases/ElfInterpreterBadPathTest.Test/0:Cases/ElfInterpreterBadPathTest.Test/1:Cases/ElfInterpreterBadPathTest.Test/2:Cases/ElfInterpreterBadPathTest.Test/3]
+Note: Google Test filter = ElfTest.Execute:ElfTest.MissingText:ElfTest.DataSegment:ElfTest.ExtraMemPages:ElfTest.AnonOnlySegment:ElfTest.UnalignedOffset:ElfTest.DirectlyOverlappingSegments:ElfTest.OutOfOrderSegments:ElfTest.OutOfBoundsPhdrs:ElfTest.MissingPhdr:ElfTest.MissingHeader:ElfTest.PIE:ElfTest.PIENonZeroStart:ElfTest.PIEOutOfOrderSegments:ElfTest.PIEOverflow:ElfTest.ELFInterpreter:ElfTest.ExecuteOnlyELFInterpreter:ElfTest.PtraceExecuteOnlyBinary:ElfTest.UsernsAttachExecuteOnlyBinary:ElfTest.ExecuteOnlyScriptReadableInterpreter:ElfTest.ExecuteOnlyScriptReadableInterpreterEmptyPathFd:ElfTest.ExecuteOnlyScriptReadableInterpreterRelativeDirfd:ElfTest.ProcessVMReadExecuteOnlyBinary:ElfTest.ProcMemFdAcrossExecuteOnlyExec:ElfTest.ELFInterpreterRelative:ElfTest.ELFInterpreterWrongArch:ElfTest.NoExecute:ElfTest.NoRead:ElfTest.ElfInterpreterNoExecute:InterpreterScriptTest.Execute:InterpreterScriptTest.Whitespace:InterpreterScriptTest.InterpreterScriptNoExecute:InterpreterScriptTest.BinaryNoExecute:InterpreterScriptTest.MaxRecursion:InterpreterScriptTest.RelativePath:InterpreterScriptTest.UncleanPath:InterpreterScriptTest.Symlink:InterpreterScriptTest.SymlinkLoop:ExecveTest.SymlinkLoop:ExecveTest.Directory:ExecveTest.BinaryAsDirectory:ExecveTest.BrkAfterBinary:Cases/ElfInterpreterStaticTest.Test/0:Cases/ElfInterpreterStaticTest.Test/1:Cases/ElfInterpreterStaticTest.Test/2:Cases/ElfInterpreterBadPathTest.Test/0:Cases/ElfInterpreterBadPathTest.Test/1:Cases/ElfInterpreterBadPathTest.Test/2:Cases/ElfInterpreterBadPathTest.Test/3
+[==========] Running 49 tests from 5 test suites.
+[----------] Global test environment set-up.
+[----------] 29 tests from ElfTest
+[ RUN      ] ElfTest.Execute
+line: 00040000-00041000 r-xp 00000000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_1_1792170068667821289
+line: 7f9904f07000-7f9904f0b000 r--p 00000000 00:00 0                          [vvar]
+line: 7f9904f0b000-7f9904f0d000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f9904f0d000-7f9904f0f000 r-xp 00000000 00:00 0                          [vdso]
+line: 7ffe2d41a000-7ffe2d43b000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.Execute (0 ms)
+[ RUN      ] ElfTest.MissingText
+[       OK ] ElfTest.MissingText (108 ms)
+[ RUN      ] ElfTest.DataSegment
+line: 00040000-00041000 r-xp 00000000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_3_1792170068777105859
+line: 00041000-00042000 rw-p 00001000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_3_1792170068777105859
+line: 00042000-00043000 rw-p 00000000 00:00 0 
+line: 7f037f1ef000-7f037f1f3000 r--p 00000000 00:00 0                          [vvar]
+line: 7f037f1f3000-7f037f1f5000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f037f1f5000-7f037f1f7000 r-xp 00000000 00:00 0                          [vdso]
+line: 7ffe6a906000-7ffe6a927000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.DataSegment (1 ms)
+[ RUN      ] ElfTest.ExtraMemPages
+line: 00040000-00041000 r-xp 00000000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_4_1792170068778378428
+line: 00041000-00042000 rwxp 00001000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_4_1792170068778378428
+line: 00042000-00043000 rwxp 00000000 00:00 0 
+line: 7f49e8412000-7f49e8416000 r--p 00000000 00:00 0                          [vvar]
+line: 7f49e8416000-7f49e8418000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f49e8418000-7f49e841a000 r-xp 00000000 00:00 0                          [vdso]
+line: 7fff74dd5000-7fff74df6000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.ExtraMemPages (1 ms)
+[ RUN      ] ElfTest.AnonOnlySegment
+line: 00040000-00041000 r-xp 00000000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_5_1792170068779338500
+line: 00041000-00042000 rw-p 00000000 00:00 0 
+line: 7f6cac5b8000-7f6cac5bc000 r--p 00000000 00:00 0                          [vvar]
+line: 7f6cac5bc000-7f6cac5be000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f6cac5be000-7f6cac5c0000 r-xp 00000000 00:00 0                          [vdso]
+line: 7ffea03ca000-7ffea03eb000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.AnonOnlySegment (0 ms)
+[ RUN      ] ElfTest.UnalignedOffset
+[       OK ] ElfTest.UnalignedOffset (0 ms)
+[ RUN      ] ElfTest.DirectlyOverlappingSegments
+line: 00040000-00041000 rwxp 00000000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_7_1792170068780508154
+line: 7f4d69fb5000-7f4d69fb9000 r--p 00000000 00:00 0                          [vvar]
+line: 7f4d69fb9000-7f4d69fbb000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f4d69fbb000-7f4d69fbd000 r-xp 00000000 00:00 0                          [vdso]
+line: 7ffd0b24b000-7ffd0b26c000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.DirectlyOverlappingSegments (0 ms)
+[ RUN      ] ElfTest.OutOfOrderSegments
+line: 00020000-00021000 r-xp 00000000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_8_1792170068781318585
+line: 00040000-00041000 r-xp 00000000 08:01 9703811                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_8_1792170068781318585
+line: 7f0f764b7000-7f0f764bb000 r--p 00000000 00:00 0                          [vvar]
+line: 7f0f764bb000-7f0f764bd000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f0f764bd000-7f0f764bf000 r-xp 00000000 00:00 0                          [vdso]
+line: 7ffe60083000-7ffe600a4000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.OutOfOrderSegments (0 ms)
+[ RUN      ] ElfTest.OutOfBoundsPhdrs
+[       OK ] ElfTest.OutOfBoundsPhdrs (0 ms)
+[ RUN      ] ElfTest.MissingPhdr
+[       OK ] ElfTest.MissingPhdr (0 ms)
+[ RUN      ] ElfTest.MissingHeader
+[       OK ] ElfTest.MissingHeader (0 ms)
+[ RUN      ] ElfTest.PIE
+line: 7f44216ee000-7f44216ef000 r-xp 00000000 08:01 9703811                    /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_12_1792170068783824205
+line: 7f4421706000-7f442170a000 r--p 00000000 00:00 0                          [vvar]
+line: 7f442170a000-7f442170c000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f442170c000-7f442170e000 r-xp 00000000 00:00 0                          [vdso]
+line: 7f442170e000-7f442170f000 rw-p 00001000 08:01 9703811                    /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_12_1792170068783824205
+line: 7f442170f000-7f4421710000 rw-p 00000000 00:00 0 
+line: 7fff6e875000-7fff6e896000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.PIE (0 ms)
+[ RUN      ] ElfTest.PIENonZeroStart
+line: 7fb475bc7000-7fb475bcb000 r--p 00000000 00:00 0                          [vvar]
+line: 7fb475bcb000-7fb475bcd000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7fb475bcd000-7fb475bcf000 r-xp 00000000 00:00 0                          [vdso]
+line: 7fffee812000-7fffee833000 rw-p 00000000 00:00 0                          [stack]
+line: ffffb475bad000-ffffb475bae000 r-xp 00000000 08:01 9703811                /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_13_1792170068784706079
+line: ffffb475bcd000-ffffb475bce000 rw-p 00001000 08:01 9703811                /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_13_1792170068784706079
+line: ffffb475bce000-ffffb475bcf000 rw-p 00000000 00:00 0 
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.PIENonZeroStart (0 ms)
+[ RUN      ] ElfTest.PIEOutOfOrderSegments
+test/syscalls/linux/exec_binary.cc:944: Skipped
+!IsRunningOnGvisor()
+
+[  SKIPPED ] ElfTest.PIEOutOfOrderSegments (0 ms)
+[ RUN      ] ElfTest.PIEOverflow
+[       OK ] ElfTest.PIEOverflow (0 ms)
+[ RUN      ] ElfTest.ELFInterpreter
+line: 00040000-00041000 r-xp 00000000 08:01 9703819                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_16_1792170068785794326
+line: 7ff38c415000-7ff38c419000 r--p 00000000 00:00 0                          [vvar]
+line: 7ff38c419000-7ff38c41b000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7ff38c41b000-7ff38c41d000 r-xp 00000000 00:00 0                          [vdso]
+line: 7ff38c41d000-7ff38c41e000 rwxp 00000000 08:01 9703811                    /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_15_1792170068785739921
+line: 7ffc7afb9000-7ffc7afda000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.ELFInterpreter (0 ms)
+[ RUN      ] ElfTest.ExecuteOnlyELFInterpreter
+[       OK ] ElfTest.ExecuteOnlyELFInterpreter (0 ms)
+[ RUN      ] ElfTest.PtraceExecuteOnlyBinary
+[       OK ] ElfTest.PtraceExecuteOnlyBinary (0 ms)
+[ RUN      ] ElfTest.UsernsAttachExecuteOnlyBinary
+[       OK ] ElfTest.UsernsAttachExecuteOnlyBinary (1 ms)
+[ RUN      ] ElfTest.ExecuteOnlyScriptReadableInterpreter
+[       OK ] ElfTest.ExecuteOnlyScriptReadableInterpreter (0 ms)
+[ RUN      ] ElfTest.ExecuteOnlyScriptReadableInterpreterEmptyPathFd
+[       OK ] ElfTest.ExecuteOnlyScriptReadableInterpreterEmptyPathFd (0 ms)
+[ RUN      ] ElfTest.ExecuteOnlyScriptReadableInterpreterRelativeDirfd
+[       OK ] ElfTest.ExecuteOnlyScriptReadableInterpreterRelativeDirfd (0 ms)
+[ RUN      ] ElfTest.ProcessVMReadExecuteOnlyBinary
+[       OK ] ElfTest.ProcessVMReadExecuteOnlyBinary (0 ms)
+[ RUN      ] ElfTest.ProcMemFdAcrossExecuteOnlyExec
+[       OK ] ElfTest.ProcMemFdAcrossExecuteOnlyExec (0 ms)
+[ RUN      ] ElfTest.ELFInterpreterRelative
+line: 00040000-00041000 r-xp 00000000 08:01 9703819                            /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_32_1792170068792161625
+line: 7f731d0b4000-7f731d0b8000 r--p 00000000 00:00 0                          [vvar]
+line: 7f731d0b8000-7f731d0ba000 r--p 00000000 00:00 0                          [vvar_vclock]
+line: 7f731d0ba000-7f731d0bc000 r-xp 00000000 00:00 0                          [vdso]
+line: 7f731d0bc000-7f731d0bd000 rwxp 00000000 08:01 9703811                    /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/_tmp/9da9b67d1d8821b276c0afc66c2d3046/3862253057/gvisor_test_temp_31_1792170068792093536
+line: 7ffda8536000-7ffda8557000 rw-p 00000000 00:00 0                          [stack]
+line: ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+[       OK ] ElfTest.ELFInterpreterRelative (0 ms)
+[ RUN      ] ElfTest.ELFInterpreterWrongArch
+[       OK ] ElfTest.ELFInterpreterWrongArch (0 ms)
+[ RUN      ] ElfTest.NoExecute
+[       OK ] ElfTest.NoExecute (0 ms)
+[ RUN      ] ElfTest.NoRead
+[       OK ] ElfTest.NoRead (0 ms)
+[ RUN      ] ElfTest.ElfInterpreterNoExecute
+[       OK ] ElfTest.ElfInterpreterNoExecute (0 ms)
+[----------] 29 tests from ElfTest (126 ms total)
+
+[----------] 9 tests from InterpreterScriptTest
+[ RUN      ] InterpreterScriptTest.Execute
+[       OK ] InterpreterScriptTest.Execute (0 ms)
+[ RUN      ] InterpreterScriptTest.Whitespace
+[       OK ] InterpreterScriptTest.Whitespace (0 ms)
+[ RUN      ] InterpreterScriptTest.InterpreterScriptNoExecute
+[       OK ] InterpreterScriptTest.InterpreterScriptNoExecute (0 ms)
+[ RUN      ] InterpreterScriptTest.BinaryNoExecute
+[       OK ] InterpreterScriptTest.BinaryNoExecute (0 ms)
+[ RUN      ] InterpreterScriptTest.MaxRecursion
+[       OK ] InterpreterScriptTest.MaxRecursion (18 ms)
+[ RUN      ] InterpreterScriptTest.RelativePath
+[       OK ] InterpreterScriptTest.RelativePath (0 ms)
+[ RUN      ] InterpreterScriptTest.UncleanPath
+[       OK ] InterpreterScriptTest.UncleanPath (0 ms)
+[ RUN      ] InterpreterScriptTest.Symlink
+[       OK ] InterpreterScriptTest.Symlink (0 ms)
+[ RUN      ] InterpreterScriptTest.SymlinkLoop
+[       OK ] InterpreterScriptTest.SymlinkLoop (0 ms)
+[----------] 9 tests from InterpreterScriptTest (22 ms total)
+
+[----------] 4 tests from ExecveTest
+[ RUN      ] ExecveTest.SymlinkLoop
+[       OK ] ExecveTest.SymlinkLoop (0 ms)
+[ RUN      ] ExecveTest.Directory
+[       OK ] ExecveTest.Directory (0 ms)
+[ RUN      ] ExecveTest.BinaryAsDirectory
+[       OK ] ExecveTest.BinaryAsDirectory (0 ms)
+[ RUN      ] ExecveTest.BrkAfterBinary
+[       OK ] ExecveTest.BrkAfterBinary (0 ms)
+[----------] 4 tests from ExecveTest (1 ms total)
+
+[----------] 3 tests from Cases/ElfInterpreterStaticTest
+[ RUN      ] Cases/ElfInterpreterStaticTest.Test/0
+test/syscalls/linux/exec_binary.cc:1565: Skipped
+version.major > 4
+
+[  SKIPPED ] Cases/ElfInterpreterStaticTest.Test/0 (0 ms)
+[ RUN      ] Cases/ElfInterpreterStaticTest.Test/1
+test/syscalls/linux/exec_binary.cc:1565: Skipped
+version.major > 4
+
+[  SKIPPED ] Cases/ElfInterpreterStaticTest.Test/1 (0 ms)
+[ RUN      ] Cases/ElfInterpreterStaticTest.Test/2
+test/syscalls/linux/exec_binary.cc:1565: Skipped
+version.major > 4
+
+[  SKIPPED ] Cases/ElfInterpreterStaticTest.Test/2 (0 ms)
+[----------] 3 tests from Cases/ElfInterpreterStaticTest (0 ms total)
+
+[----------] 4 tests from Cases/ElfInterpreterBadPathTest
+[ RUN      ] Cases/ElfInterpreterBadPathTest.Test/0
+[       OK ] Cases/ElfInterpreterBadPathTest.Test/0 (0 ms)
+[ RUN      ] Cases/ElfInterpreterBadPathTest.Test/1
+[       OK ] Cases/ElfInterpreterBadPathTest.Test/1 (0 ms)
+[ RUN      ] Cases/ElfInterpreterBadPathTest.Test/2
+[       OK ] Cases/ElfInterpreterBadPathTest.Test/2 (0 ms)
+[ RUN      ] Cases/ElfInterpreterBadPathTest.Test/3
+[       OK ] Cases/ElfInterpreterBadPathTest.Test/3 (0 ms)
+[----------] 4 tests from Cases/ElfInterpreterBadPathTest (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 49 tests from 5 test suites ran. (152 ms total)
+[  PASSED  ] 45 tests.
+[  SKIPPED ] 4 tests, listed below:
+[  SKIPPED ] ElfTest.PIEOutOfOrderSegments
+[  SKIPPED ] Cases/ElfInterpreterStaticTest.Test/0
+[  SKIPPED ] Cases/ElfInterpreterStaticTest.Test/1
+[  SKIPPED ] Cases/ElfInterpreterStaticTest.Test/2
+Failed to match any benchmarks against regex: .
+PASS
