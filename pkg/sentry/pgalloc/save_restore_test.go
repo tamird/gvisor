@@ -154,7 +154,7 @@ type readerFunc func([]byte) (int, error)
 func (r readerFunc) Read(p []byte) (int, error) { return r(p) }
 
 func TestLoadFromWithUpdateUsage(t *testing.T) {
-	const page = hostarch.PageSize
+	page := uint64(hostarch.PageSize)
 	src := newSaveTestMemoryFile(t, false)
 	fr, err := src.Allocate(3*page, AllocOpts{Mode: AllocateUncommitted})
 	if err != nil {
@@ -171,7 +171,7 @@ func TestLoadFromWithUpdateUsage(t *testing.T) {
 	dst := newSaveTestMemoryFile(t, false)
 	scanned := false
 	reader := readerFunc(func(p []byte) (int, error) {
-		if checkpoint.Len() == page {
+		if checkpoint.Len() == int(page) {
 			// The first page has been restored and only the last page's
 			// payload remains. Make the omitted middle page resident
 			// without changing its zero contents.
@@ -179,7 +179,7 @@ func TestLoadFromWithUpdateUsage(t *testing.T) {
 			if err := dst.UpdateUsage(nil); err != nil {
 				t.Fatal(err)
 			}
-			if got, want := dst.knownCommittedBytes, uint64(page); got != want {
+			if got, want := dst.knownCommittedBytes, page; got != want {
 				t.Errorf("committed bytes during restore: got %d, want %d", got, want)
 			}
 			scanned = true
@@ -193,13 +193,13 @@ func TestLoadFromWithUpdateUsage(t *testing.T) {
 	if !scanned {
 		t.Fatal("did not scan while restoring the last page")
 	}
-	if got, want := dst.knownCommittedBytes, uint64(2*page); got != want {
+	if got, want := dst.knownCommittedBytes, 2*page; got != want {
 		t.Errorf("committed bytes before post-restore scan: got %d, want %d", got, want)
 	}
 	if err := dst.UpdateUsage(nil); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := dst.knownCommittedBytes, uint64(3*page); got != want {
+	if got, want := dst.knownCommittedBytes, 3*page; got != want {
 		t.Errorf("committed bytes after restore: got %d, want %d", got, want)
 	}
 }
