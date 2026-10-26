@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T20:02:54.305667+00:00",
+    "updatedAt": "2026-10-26T20:21:18.267130+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23102,20 +23102,48 @@
       "repo": "google/gvisor",
       "number": 16337,
       "ref": "lazy-file-lock-trees",
-      "head": "a8f37898d52094b71fd786aa31af4476c1133d1d",
+      "head": "97cd922bdf94cc284ada76c9d26d397a819f9350",
       "title": "Allocate advisory file lock trees on first use",
       "url": "https://github.com/google/gvisor/pull/16337",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
-      "summary": "Published after the requested nil-check correction and current-source native qualification. Lazy allocation is independent of the typed-checkpoint prototype. Prior census and behavior evidence retain their exact source identities.",
+      "updatedAt": "2026-10-26T20:21:18.267130+00:00",
+      "summary": "Current public #16337 remains at 97cd922bd. The fork amendment at 710b3f2e9 is qualified and ready for contributor review. No upstream source update has been made.\n\nDocument lock-tree ownership and the unlock range precondition, and extend the existing zero-value test through first acquisition, conflict query and unlock.\n\nEarlier source-specific record:\n\nPublished after the requested nil-check correction and current-source native qualification. Lazy allocation is independent of the typed-checkpoint prototype. Prior census and behavior evidence retain their exact source identities.",
       "followup": {
         "owner": "root",
-        "sourceHead": "a8f37898d52094b71fd786aa31af4476c1133d1d",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Published; current public checks and maintainer review",
-        "nextAction": "Follow current-head public checks, review and import in the existing watcher. No new contributor question."
-      }
+        "sourceHead": "97cd922bdf94cc284ada76c9d26d397a819f9350",
+        "observedAt": "2026-10-26T20:21:18.267130+00:00",
+        "disposition": "Qualified amendment ready for contributor review",
+        "nextAction": "Review the fork amendment at 710b3f2e9 against the current public head; preserve the existing public PR and maintainer feedback until authorized publication.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/710b3f2e976929d4455fe5bc3c6587740a4879f3",
+          "https://app.buildbuddy.io/invocation/2b1c90f4-7c33-4259-a3dc-a4791b142898"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "710b3f2e976929d4455fe5bc3c6587740a4879f3",
+        "baseHead": "97cd922bdf94cc284ada76c9d26d397a819f9350",
+        "url": "https://github.com/tamird/gvisor/commit/710b3f2e976929d4455fe5bc3c6587740a4879f3",
+        "title": "Clarify lazy file-lock invariants and test first use",
+        "summary": "Document lock-tree ownership and the unlock range precondition, and extend the existing zero-value test through first acquisition, conflict query and unlock.",
+        "body": "The amendment adds the missing checklocks field annotation and Linux allocation reference. The existing test now proves that an unused query/unlock allocates nothing, the first write lock is visible to another owner, and unlocking clears it. The focused remote lock tests and analyzer checks passed."
+      },
+      "evidence": [
+        {
+          "label": "Proposed reviewed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/710b3f2e976929d4455fe5bc3c6587740a4879f3"
+        },
+        {
+          "label": "Exact current-public to proposed difference",
+          "url": "https://github.com/tamird/gvisor/compare/97cd922bdf94cc284ada76c9d26d397a819f9350..710b3f2e976929d4455fe5bc3c6587740a4879f3"
+        },
+        {
+          "label": "Focused native qualification",
+          "url": "https://app.buildbuddy.io/invocation/2b1c90f4-7c33-4259-a3dc-a4791b142898"
+        }
+      ]
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:883",
@@ -23349,14 +23377,49 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-proxy-port-bounds",
-      "head": "e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
+      "head": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
       "title": "Validate proxy ports before network setup",
       "url": "https://github.com/google/gvisor/pull/16345",
       "group": "analysis",
       "status": "open",
-      "summary": "The proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor\u2019s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
-      "updatedAt": "2026-10-24T15:25:05.305627+00:00",
-      "number": 16345
+      "summary": "Current public #16345 remains at d668992e7. The fork amendment at 641a5c300 is qualified and ready for contributor review. No upstream source update has been made.\n\nReject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.\n\nEarlier source-specific record:\n\nThe proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor\u2019s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
+      "updatedAt": "2026-10-26T20:21:18.267130+00:00",
+      "number": 16345,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "641a5c300750a72805d4cacbcd71c92f91f5d46f",
+        "baseHead": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
+        "url": "https://github.com/tamird/gvisor/commit/641a5c300750a72805d4cacbcd71c92f91f5d46f",
+        "title": "Validate native forwarding ports before retry",
+        "summary": "Reject malformed or out-of-range native forwarding ports before the TCP proxy starts retrying. Hostname resolution still happens for each connection attempt.",
+        "body": "The amendment adds net.SplitHostPort and net.LookupPort before profiling or network setup. The real executable CLI fixture passed, including a new invalid-native-port check and the existing native forwarding transfer. Netstack address handling is unchanged."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
+        "observedAt": "2026-10-26T20:21:18.267130+00:00",
+        "disposition": "Qualified amendment ready for contributor review",
+        "nextAction": "Review the fork amendment at 641a5c300 against the current public head; preserve the existing public PR and maintainer feedback until authorized publication.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/641a5c300750a72805d4cacbcd71c92f91f5d46f",
+          "https://app.buildbuddy.io/invocation/734750e6-0a08-4bd4-a355-1599af85e4d7"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Proposed reviewed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/641a5c300750a72805d4cacbcd71c92f91f5d46f"
+        },
+        {
+          "label": "Exact current-public to proposed difference",
+          "url": "https://github.com/tamird/gvisor/compare/d668992e704cf42e8915f8f7f3e347be9f4f07cc..641a5c300750a72805d4cacbcd71c92f91f5d46f"
+        },
+        {
+          "label": "Focused native qualification",
+          "url": "https://app.buildbuddy.io/invocation/734750e6-0a08-4bd4-a355-1599af85e4d7"
+        }
+      ]
     },
     {
       "id": "branch:tcp-rack-pipe-accounting",
