@@ -271,10 +271,16 @@ func checkCreateLocked(ctx context.Context, creds *auth.Credentials, name string
 	if parent.VFSDentry().IsDead() {
 		return linuxerr.ENOENT
 	}
-	if err := parent.inode.CheckPermissions(ctx, creds, vfs.MayWrite); err != nil {
-		return err
+	if forSyntheticMountpoint {
+		// An immutable directory may allow a synthetic mountpoint if
+		// creds would otherwise have write access.
+		if inode, ok := parent.inode.(interface {
+			CheckSyntheticMountpointWrite(context.Context, *auth.Credentials) error
+		}); ok {
+			return inode.CheckSyntheticMountpointWrite(ctx, creds)
+		}
 	}
-	return nil
+	return parent.inode.CheckPermissions(ctx, creds, vfs.MayWrite)
 }
 
 // checkDeleteLocked checks that the file represented by vfsd may be deleted.
