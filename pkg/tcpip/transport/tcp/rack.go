@@ -64,6 +64,11 @@ type rackControl struct {
 	// a TLP retransmission.
 	tlpHighRxt seqnum.Value
 
+	// tlpNewDataOut indicates whether there is an unacknowledged TLP that
+	// sent new data, and tlpNewDataEnd is sender.SndNxt after it.
+	tlpNewDataOut bool
+	tlpNewDataEnd seqnum.Value
+
 	// snd is a reference to the sender.
 	snd *sender
 }
@@ -209,16 +214,33 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	// At most one loss probe may be unacknowledged, so that at most one
+	// packet is in flight beyond the congestion window (RFC 8985, section
+	// 7.3; Linux's tlp_high_seq). A write can schedule the probe timer again
+	// while a probe is out.
+	if s.rc.tlpRxtOut || s.rc.tlpNewDataOut {
+		s.postXmit(false /* dataSent */, false /* shouldScheduleProbe */)
+		return nil
+	}
+
 	var dataSent bool
-	if s.writeNext != nil && s.writeNext.xmitCount == 0 && s.Outstanding < s.SndCwnd {
+	// The probe is new data when there is some and the receive window allows,
+	// even if the congestion window is full: it may then go one segment past
+	// the window (RFC 8985, sections 7.3 and 9.3; Linux's
+	// tcp_send_loss_probe). RACK can use the SACK of a new segment, but it
+	// ignores the SACK of a retransmission when it is ambiguous, and then only
+	// the RTO recovers the tail.
+	if s.writeNext != nil && s.writeNext.xmitCount == 0 && s.Outstanding <= s.SndCwnd {
 		dataSent = s.maybeSendSegment(s.writeNext, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
 		if dataSent {
 			s.Outstanding += s.pCount(s.writeNext, s.MaxPayloadSize)
 			s.updateWriteNext(s.writeNext.Next())
+			s.rc.tlpNewDataOut = true
+			s.rc.tlpNewDataEnd = s.SndNxt
 		}
 	}
 
-	if !dataSent && !s.rc.tlpRxtOut {
+	if !dataSent {
 		var highestSeqXmit *segment
 		for highestSeqXmit = s.writeList.Front(); highestSeqXmit != nil; highestSeqXmit = highestSeqXmit.Next() {
 			if highestSeqXmit.xmitCount == 0 {
@@ -256,6 +278,12 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 //
 // +checklocks:s.ep.mu
 func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
+	// A probe that sent new data is done once it is cumulatively
+	// acknowledged (RFC 8985, section 7.4).
+	if s.rc.tlpNewDataOut && s.rc.tlpNewDataEnd.LessThanEq(ack) {
+		s.rc.tlpNewDataOut = false
+	}
+
 	if !(s.ep.SACKPermitted && s.rc.tlpRxtOut) {
 		return
 	}
