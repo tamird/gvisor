@@ -670,7 +670,10 @@ _ARM64_GUEST_CASES = [
     arm64_tcg_test(
         name = owner.split(":")[1] + "_tcg_test",
         size = size,
-        args = ["-test.v=test2json", "-test.run=" + case],
+        args = [
+            "-test.v=test2json",
+            "-test.run=" + case,
+        ],
         guest_env = {
             "GO_TEST_RUN_FROM_BAZEL": "1",
             "GO_TEST_WRAP_TESTV": "1",
@@ -719,7 +722,10 @@ _ARM64_GUEST_UNITS = [
 arm64_tcg_test(
     name = "sandboxexec_python_nonroot_arm64_tcg_test",
     size = "medium",
-    args = ["-v", "SandboxTest.test_non_root_networking_error"],
+    args = [
+        "-v",
+        "SandboxTest.test_non_root_networking_error",
+    ],
     guest_user = "nobody",
     image = "//test/rbe/tcg:rc_guest",
     payload = "//sandboxexec/sandbox/python:sandbox_py_test_arm64",
