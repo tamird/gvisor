@@ -116,6 +116,14 @@ function approvedPatch(node) {
   }
   return proof;
 }
+function landedPatch(node) {
+  const pr = node?.github, proof = node?.landedPatch;
+  return pr?.status === "open" && !pr.revisionChanged && proof?.head === pr.head
+    && (!pr.branchHead || pr.branchHead === pr.head) && proof.method === "merge-tree-identical"
+    && [proof.head, proof.upstreamHead, proof.upstreamTree, proof.replayedTree].every(value => /^[a-f0-9]{40}$/.test(value))
+    && proof.upstreamTree === proof.replayedTree && /(?:Z|[+-]\d{2}:\d{2})$/.test(proof.verifiedAt) && Number.isFinite(Date.parse(proof.verifiedAt))
+    && proof.evidence?.length && proof.evidence.every(safeURL) ? proof : null;
+}
 function rebaseNeedsComparison(node) {
   const pr = node?.github;
   return pr?.status === "open" && pr.githubReviewDecision === "APPROVED"
@@ -154,10 +162,10 @@ function canceledBuildkiteRun(check) {
 }
 function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check) && !isApprovalGate(pr, check)); }
 function codeCheckStates(pr) {
-  const result = new Set(validationChecks(pr).map(check => check.state));
+  const result = new Set(validationChecks(pr).filter(check => !canceledBuildkiteRun(check)).map(check => check.state));
   const aggregate = pr?.checks?.state;
   const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check) || isApprovalGate(pr, check));
-  const explainedChecks = [...administrative, ...(pr?.checks?.supersededContexts || [])];
+  const explainedChecks = [...administrative, ...validationChecks(pr).filter(canceledBuildkiteRun), ...(pr?.checks?.supersededContexts || [])];
   const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
   const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && explainedChecks.some(check => FAILURE_STATES.has(check.state))
     || pending.has(aggregate) && explainedChecks.some(check => pending.has(check.state)));
@@ -168,18 +176,19 @@ function checkInfo(pr) {
   const checks = pr?.checks;
   if (!checks || !checks.total) return { text: "Unavailable", tone: "unknown", glyph: "?", detail: "No visible check rollup for this head; no test result is implied." };
   const states = codeCheckStates(pr), substantive = validationChecks(pr);
+  const canceled = substantive.filter(canceledBuildkiteRun);
   const approvalGates = checks.contexts.filter(check => isApprovalGate(pr, check));
   const failed = [...states].some(state => FAILURE_STATES.has(state));
   const pending = [...states].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state));
-  const passed = !approvalGates.length && completeChecks(pr) && substantive.length > 0 && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
+  const passed = !canceled.length && !approvalGates.length && completeChecks(pr) && substantive.length > 0 && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
   const assignmentFailures = checks.contexts.filter(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state));
   const importProblems = checks.contexts.filter(check => isImportStatus(check) && (FAILURE_STATES.has(check.state) || ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(check.state)));
   const serviceIssues = [assignmentFailures.length && "assignment", importProblems.length && "import"].filter(Boolean);
-  const result = failed ? { text: "Failure", tone: "bad", glyph: "!" } : pending ? { text: "Pending", tone: "pending", glyph: "○" }
+  const result = failed ? { text: "Failure", tone: "bad", glyph: "!" } : canceled.length ? { text: "Canceled", tone: "pending", glyph: "○" } : pending ? { text: "Pending", tone: "pending", glyph: "○" }
     : approvalGates.length ? { text: "Approval required", tone: "pending", glyph: "○" }
       : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
       : { text: "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "Buildkite reports a canceled run; its raw FAILURE status does not establish a failing test or CI configuration problem. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
 const ATTENTION_REASONS = [
@@ -195,7 +204,13 @@ const ATTENTION_REASONS = [
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   { id: "author-proposal", owner: "user", title: "Contributor decisions" },
   { id: "human-submission", owner: "user", title: "Human-only submissions" },
+  { id: "maintainer-import-refresh", owner: "maintainer", title: "Refresh earlier export" },
   { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
+  { id: "maintainer-ci-canceled", owner: "maintainer", title: "CI canceled" },
+  { id: "maintainer-ci-infrastructure", owner: "maintainer", title: "CI infrastructure retry" },
+  { id: "maintainer-reimport", owner: "maintainer", title: "Closed import needs another attempt" },
+  { id: "maintainer-import-landed", owner: "maintainer", title: "Reconcile merged export" },
+  { id: "maintainer-import-previous", owner: "maintainer", title: "Waiting for earlier export to merge" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
   { id: "maintainer-triaged", owner: "maintainer", title: "Awaiting maintainer follow-up" },
@@ -203,10 +218,10 @@ const ATTENTION_REASONS = [
   { id: "maintainer-review", owner: "maintainer", title: "Maintainer review" },
   { id: "maintainer-import-label", owner: "maintainer", title: "Needs import label" },
   { id: "maintainer-import", owner: "maintainer", title: "Ready for import" },
-  { id: "maintainer-reimport", owner: "maintainer", title: "Closed import needs another attempt" },
   { id: "maintainer-merge", owner: "maintainer", title: "Waiting for merge" },
   { id: "maintainer-assignment", owner: "maintainer", title: "Reviewer assignment" },
   { id: "maintainer-unknown", owner: "maintainer", title: "Import status update" },
+  { id: "landed-source-open", owner: "other", title: "Landed; source PR still open" },
 ];
 const OTHER_ATTENTION_GROUPS = [
   { id: "draft", owner: "other", title: "Draft PRs" },
@@ -337,7 +352,7 @@ function attentionDispositionEvidence(node, reason, replacementId, nodes = model
     headHistoryComplete: pr.headHistoryComplete ?? false, threads: pr.threads, feedback: pr.feedback };
   if (reason === "maintainer-import-checks" || reason === "author-conflicts") {
     if (pr.importsComplete !== true || !Array.isArray(pr.imports)) return null;
-    const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
+    const current = importLineage(node);
     if (reason === "maintainer-import-checks" && (!completeChecks(pr) || current.some(item => !completeChecks(item)))) return null;
     evidence.imports = current.map(item => ({ number: item.number, head: item.head, sourceHead: item.sourceHead,
       status: item.status, mergeable: item.mergeable, ...(reason === "maintainer-import-checks" ? { checks: item.checks } : {}) }));
@@ -358,14 +373,26 @@ function attentionDisposition(node, reason) {
   const current = attentionDispositionEvidence(node, reason, record.replacement);
   return current && evidenceJSON(current) === evidenceJSON(record.binding) ? record : null;
 }
+function importLineage(node) {
+  const pr = node.github, current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
+  const patch = approvedPatch(node);
+  return current.length ? current : patch ? pr.imports.filter(item => item.sourceHead === patch.approvedHead) : [];
+}
+function unresolvedImportChecks(imports) {
+  const active = imports.filter(item => ["open", "draft"].includes(item.status));
+  // Closing the only export does not resolve a public CI failure. An active
+  // or merged replacement supersedes the closed attempt's checks.
+  return active.length || imports.some(item => item.status === "merged") ? active : imports;
+}
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
     const disposition = attentionDisposition(node, id);
     if (disposition) {
-      const existing = reasons.find(item => item.id === "maintainer-triaged");
+      const dispositionId = disposition.action === "ci-infrastructure-retry" ? "maintainer-ci-infrastructure" : "maintainer-triaged";
+      const existing = reasons.find(item => item.id === dispositionId);
       const triage = `${disposition.title}. ${disposition.nextAction}`;
       if (existing) { if (!existing.detail.includes(triage)) existing.detail += ` ${triage}`; }
-      else reasons.push({ ...ATTENTION_REASONS.find(item => item.id === "maintainer-triaged"), detail: triage });
+      else reasons.push({ ...ATTENTION_REASONS.find(item => item.id === dispositionId), detail: triage });
     } else if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
   };
   if (states(node)["contributor-review"])
@@ -385,22 +412,23 @@ function attentionReasons(node, owner) {
     add("agent-refresh", `The source branch is ${pr.branchHead.slice(0, 9)}, but GitHub's PR still reports ${pr.head.slice(0, 9)}. Displayed reviews, checks and mergeability cover the older PR head; the branch's current mergeability is unknown.`);
     return reasons;
   }
-  if (pr.head && conflictRecord(pr)) add("author-conflicts", mergeDescription(pr));
+  const landed = landedPatch(node);
+  if (!landed && pr.head && conflictRecord(pr)) add("author-conflicts", mergeDescription(pr));
   if (pr.revisionChanged || !pr.head) {
     add("agent-refresh", "Current source revision or its review/check evidence needs a public snapshot refresh.");
     return reasons;
   }
   const contexts = pr.checks?.contexts || [];
   const sourceFix = sourceFixRecovery(node);
-  if (["inspect", "ready"].includes(sourceFix?.state)) add("author-ci-remedy", sourceFix.detail);
+  if (!landed && ["inspect", "ready"].includes(sourceFix?.state)) add("author-ci-remedy", sourceFix.detail);
   const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
   const sourceRecovery = sourceAuthenticationRecovery(node);
   const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state));
   const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id) && !canceledBuildkiteRun(check));
-  if (authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
+  if (!landed && authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
-  if (approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
+  if (!landed && approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
   const comment = actionableComment(node), feedback = [];
@@ -410,23 +438,31 @@ function attentionReasons(node, owner) {
   if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level comment: ${comment.url}. GitHub's review decision is unchanged.`);
   if (newWaitComment) feedback.push(`Triage the comment posted after the release hold was agreed: ${newWaitComment.url}. Reconfirm the hold if it still applies.`);
   if (feedback.length) add("author-feedback", feedback.join(" "));
+  if (landed) {
+    add("landed-source-open", `The exact source patch is already present on upstream ${landed.upstreamHead.slice(0, 12)}: replaying it left tree ${landed.upstreamTree.slice(0, 12)} unchanged. No import, approval or merge action is needed. The source PR remains open on GitHub.`);
+    return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
+  }
   if (rebaseNeedsComparison(node)) add("agent-rebase-check", "Approval predates the rebase. Compare the reviewed patch with the current head before requesting another review.");
   if (importStatus && FAILURE_STATES.has(importStatus.state)) add("maintainer-import-failed", `import/copybara: ${importStatus.state}. Internal error details are not public.`);
   if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
     add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
   const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
-  const active = current.filter(item => ["open", "draft"].includes(item.status));
-  for (const item of active) if (conflictRecord(item)) add("author-conflicts", `Import #${item.number}: ${mergeDescription(item)}`);
-  const failed = active.filter(item => checkInfo(item).tone === "bad");
+  const lineage = importLineage(node);
+  const active = lineage.filter(item => ["open", "draft"].includes(item.status));
+  for (const item of active) if (conflictRecord(item))
+    add(current.length ? "author-conflicts" : "maintainer-import-refresh", `Import #${item.number}: ${mergeDescription(item)}${current.length ? "" : " This export predates the equivalent source rebase. Refresh the export; its conflict does not establish a conflict on the current source."}`);
+  const failed = unresolvedImportChecks(lineage).filter(item => checkInfo(item).tone === "bad");
   const recoveries = new Map(failed.map(item => [item.number, blockedImportRetry(node, item)]));
   const retryDetails = sourceRecovery ? [sourceRecovery.detail] : [];
   retryDetails.push(...[...recoveries.values()].filter(Boolean).map(item => item.detail));
+  const cancellationDetails = [];
   for (const item of [pr, ...active]) {
     for (const check of validationChecks(item).filter(canceledBuildkiteRun)) {
-      retryDetails.push(`${item === pr ? "Source" : "Import"} #${item.number}: ${check.description}. Confirm whether ${check.url} needs a retry.`);
+      cancellationDetails.push(`${item === pr ? "Source" : "Import"} #${item.number}: ${check.description}. Review the cancellation at ${check.url} before scheduling another run.`);
     }
   }
   if (retryDetails.length) add("maintainer-ci-retry", retryDetails.join(" "), sourceRecovery && retryDetails.length === 1 ? "Maintainer CI configuration" : undefined);
+  if (cancellationDetails.length) add("maintainer-ci-canceled", cancellationDetails.join(" "));
   const publicImportFailures = failed.flatMap(item => validationChecks(item)
     .filter(check => FAILURE_STATES.has(check.state)
       && !recoveries.get(item.number)?.ids.has(check.id) && !canceledBuildkiteRun(check))
@@ -457,13 +493,13 @@ function attentionReasons(node, owner) {
     else add("agent-release-check", `${version ? `Upstream now lists ${version}.` : "The latest upstream release could not be verified."} ${wait.nextAction}`);
     return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
   }
-  const followupBlocked = reasons.some(item => item.owner === "agent" || item.id === "maintainer-triaged");
+  const followupBlocked = reasons.some(item => item.owner === "agent" || ["maintainer-triaged", "maintainer-ci-infrastructure", "maintainer-import-refresh"].includes(item.id));
   if (review.unknown && !review.incomplete && !followupBlocked)
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
   if (review.response && !newWaitComment) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
   if (!approved && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
-  if (approved && !followupBlocked && !retryDetails.length) {
+  if (approved && !followupBlocked && !retryDetails.length && !cancellationDetails.length) {
     const open = active.filter(item => item.status === "open");
     if (!usesImports(pr)) {
       if (pr.mergeable === "MERGEABLE" && checkInfo(pr).passed && pr.checks.state === "SUCCESS"
@@ -472,9 +508,9 @@ function attentionReasons(node, owner) {
     }
     else if (open.length) {
       const facts = open.map(item => `Import #${item.number}: ${checkInfo(item).text.toLowerCase()} checks${item.mergeable === "UNKNOWN" ? "; mergeability unknown" : item.mergeable === "CONFLICTING" ? "; conflicts" : ""}`);
-      add("maintainer-merge", `${facts.join(". ")}. Remaining internal gates are not established.`);
+      add(current.length ? "maintainer-merge" : "maintainer-import-previous", `${facts.join(". ")}.${current.length ? "" : " The export contains the equivalent approved patch before the rebase; these checks belong to that earlier head. No fresh approval is needed."} Remaining internal gates are not established.`);
     } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.", "Matching import is a draft");
-    else if (current.some(item => item.status === "merged")) add("maintainer-unknown", "Matching import merged; source PR remains open.", "Import merged; source still open");
+    else if (current.some(item => item.status === "merged")) add("maintainer-import-landed", `Import ${current.filter(item => item.status === "merged").map(item => "#" + item.number).join(", ")} merged; the source PR remains open. Verify the landed change and reconcile the source PR; another import is not indicated.`);
     else if (current.length) add("maintainer-reimport", `Import ${current.map(item => "#" + item.number).join(", ")} closed without merging. No matching import is open.`);
     else if (acceptedPatch && pr.imports.some(item => item.sourceHead === acceptedPatch.approvedHead)) {
       // This is the reviewed patch, but the import's checks belong to its original head.
@@ -482,7 +518,8 @@ function attentionReasons(node, owner) {
       const facts = attempts.map(item => `#${item.number} (${item.status})`).join(", ");
       if (attempts.every(item => item.status === "closed"))
         add("maintainer-reimport", `Import ${facts} closed without merging. The rebase preserved the approved patch; no export of the new head is visible.`);
-      else add("maintainer-unknown", `Import ${facts} covers the same approved patch before the rebase. No matching export of the current head is visible.`, "Earlier import of the approved patch");
+      else if (attempts.some(item => item.status === "merged"))
+        add("maintainer-import-landed", `Import ${facts} contains the approved pre-rebase patch, which is verified equivalent to the current source. Verify the landed change and reconcile the still-open source PR; do not request another import or fresh approval.`);
     }
     else if (importStatus?.state === "SUCCESS") add("maintainer-unknown", "Copybara reports a successful internal import, but no matching public export PR was found in the complete lookup. Internal checks are reported separately; public export is still pending.", "Waiting for public export");
     else if (importStatus && !FAILURE_STATES.has(importStatus.state)) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. Ask for the import's progress.`, "Import pending; no public PR");
@@ -671,6 +708,11 @@ function appendAttributes(container, node) {
   section.append(badge(reviewInfo(pr, node), "Fresh-head approval and verified approval of an unchanged rebased patch are distinct. Labels and comments do not grant approval."));
   const patch = approvedPatch(node);
   if (patch) section.append(element("p", "detail-meta", `Unchanged patch approved by ${patch.reviewer} at ${date(patch.submittedAt)} on ${patch.approvedHead.slice(0, 9)}; mechanical equivalence to ${patch.head.slice(0, 9)} verified ${date(patch.verifiedAt)}. This is not a new review submission.`));
+  const landed = landedPatch(node);
+  if (landed) {
+    section.append(element("p", "detail-meta", `Landed; source PR still open. Exact patch replay left upstream ${landed.upstreamHead.slice(0, 12)} unchanged, verified ${date(landed.verifiedAt)}. No maintainer action is needed.`));
+    for (const url of landed.evidence) section.append(link("Landing evidence ↗", url));
+  }
   const requests = pr.reviewRequests || [];
   if (requests.length) section.append(element("p", "detail-meta", `Review requested from: ${requests.map(item => item.login || item.name || item.slug).join(", ")}`));
   if (pr.reviewRequestsComplete === false) section.append(element("p", "detail-meta", "Review-request inventory incomplete."));
@@ -791,7 +833,7 @@ function age(record) {
 function failureSources(node) {
   const pr = node.github;
   if (!pr) return [];
-  return [pr, ...pr.imports.filter(item => item.matchesSourceHead && ["open", "draft"].includes(item.status))]
+  return [pr, ...unresolvedImportChecks(importLineage(node))]
     .filter(item => [...codeCheckStates(item)].some(state => FAILURE_STATES.has(state)))
     .map(item => ({ ...item, failureLabel: item === pr ? "PR checks failing" : `Import #${item.number} failing` }));
 }
@@ -1473,7 +1515,7 @@ function stateRecords(snapshot, node) {
     }
     // Reconcile legacy aggregate-failure records only from complete inventories.
     // Assignment and import service errors remain visible in raw check details.
-    const visible = [node.github, ...node.github.imports.filter(item => item.matchesSourceHead && ["open", "draft"].includes(item.status))];
+    const visible = [node.github, ...unresolvedImportChecks(importLineage(node))];
     if (node.github.importsComplete && visible.every(completeChecks)) {
       const failures = failureSources(node);
       if (!failures.length) delete records.failing;
@@ -1481,7 +1523,7 @@ function stateRecords(snapshot, node) {
         const scope = failures.map(item => `${item.number}:${item.head}`).join(",");
         if (records.failing.scope !== scope) records.failing = { scope, since: snapshot.checkedAt, basis: "observed", qualifier: failures.map(item => item.failureLabel).join("; ") };
       }
-      if (!visible.some(item => [...codeCheckStates(item)].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state)))) delete records["checks-pending"];
+      if (!visible.some(item => ["open", "draft"].includes(item.status) && [...codeCheckStates(item)].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state)))) delete records["checks-pending"];
     }
     const conflict = conflictRecord(node.github);
     if (conflict && ["open", "draft"].includes(node.github.status)) records.conflicts = { ...conflict,
@@ -1495,6 +1537,11 @@ function stateRecords(snapshot, node) {
       for (const key of Object.keys(records)) delete records[key];
       records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, observedAt: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
     }
+  }
+  const landed = landedPatch(node);
+  if (landed) {
+    for (const key of Object.keys(records)) delete records[key];
+    records.imported = { scope: node.github.head, since: landed.verifiedAt, basis: "observed", qualifier: "Landed; source PR still open" };
   }
   if (decision && !contributorAmendmentNeedsRefresh(node)) {
     const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];
@@ -1569,6 +1616,12 @@ function validateRegistry(candidate) {
       throw new Error("Invalid node group");
     const dispositions = node.followup?.attentionDispositions;
     const wait = node.releaseWait;
+    const landed = node.landedPatch;
+    if (landed !== undefined && (node.type !== "pr" || !landed || landed.method !== "merge-tree-identical"
+        || ![landed.head, landed.upstreamHead, landed.upstreamTree, landed.replayedTree].every(value => /^[a-f0-9]{40}$/.test(value))
+        || landed.upstreamTree !== landed.replayedTree || !/(?:Z|[+-]\d{2}:\d{2})$/.test(landed.verifiedAt) || !Number.isFinite(Date.parse(landed.verifiedAt))
+        || !Array.isArray(landed.evidence) || !landed.evidence.length || !landed.evidence.every(safeURL)))
+      throw new Error("Invalid landed patch evidence");
     if (wait !== undefined && (node.type !== "pr" || !wait || !/^[0-9a-f]{40}$/.test(wait.head)
         || !Number.isFinite(Date.parse(wait.confirmedAt)) || typeof wait.checkedVersion !== "string" || !wait.checkedVersion
         || typeof wait.nextAction !== "string" || !wait.nextAction.trim()
@@ -1583,6 +1636,7 @@ function validateRegistry(candidate) {
           || typeof item.nextAction !== "string" || !item.nextAction.trim()
           || !Array.isArray(item.evidence) || !item.evidence.length || !item.evidence.every(safeURL)
           || !item.binding || !/^[a-f0-9]{40}$/.test(item.binding.sourceHead)
+          || item.action !== undefined && (item.action !== "ci-infrastructure-retry" || item.reason !== "maintainer-import-checks")
           || item.replacement !== undefined && (item.reason !== "author-conflicts"
             || !candidate.nodes.some(other => other.id === item.replacement && other.type === "pr" && other.repo === node.repo && other.id !== node.id)))))
       throw new Error("Invalid attention disposition");

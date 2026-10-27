@@ -1068,12 +1068,34 @@ class ReapprovalReminderTest(unittest.TestCase):
         with mock.patch.dict(self.node, {"reapproval": {}}):
             self.assertEqual(self.plan()["status"], "needs-evidence")
         with mock.patch.dict(self.node, {"approvedPatch": {"head": f"{8:040x}"}}):
-            self.assertEqual(self.plan()["reason"], "reviewed-patch-preserving-rebase")
+            self.assertEqual(self.plan()["status"], "needs-evidence")
         for author, association in [({"login": "tamird", "__typename": "User"}, "OWNER"),
                                     ({"login": "bot", "__typename": "Bot"}, "MEMBER"),
                                     ({"login": "outsider", "__typename": "User"}, "NONE")]:
             with self.subTest(author=author), mock.patch.dict(self.review, {"author": author, "authorAssociation": association}):
                 self.assertNotEqual(self.plan()["status"], "due")
+
+    def test_skip_explains_equivalent_export_and_landed_patch(self) -> None:
+        old, head = f"{7:040x}", f"{8:040x}"
+        patch = {"method": "stable-patch-id", "head": head, "approvedHead": old,
+                 "reviewId": self.review["id"], "reviewer": "maintainer", "submittedAt": OLD,
+                 "verifiedAt": LATER, "oldPatchId": "a" * 40, "newPatchId": "a" * 40}
+        export = linked(imported(107, 7), 7)
+        pr = retained(self.raw, [export])
+        self.node["approvedPatch"] = patch
+        plan = updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers)
+        self.assertEqual((plan["status"], plan["reason"], plan["export"]),
+                         ("skipped", "open-export-of-approved-patch", export["url"]))
+        export["sourceHead"] = "f" * 40
+        self.assertEqual(updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers)["reason"],
+                         "reviewed-patch-preserving-rebase")
+        landing = {"method": "merge-tree-identical", "head": head, "upstreamHead": "d" * 40,
+                   "upstreamTree": "e" * 40, "replayedTree": "e" * 40, "verifiedAt": LATER,
+                   "evidence": [export["url"]]}
+        self.node["landedPatch"] = landing
+        self.assertEqual(self.plan()["reason"], "patch-already-on-master")
+        landing["head"] = old
+        self.assertEqual(self.plan()["reason"], "reviewed-patch-preserving-rebase")
 
     def test_current_approval_changes_requested_draft_and_closed_stop_reminders(self) -> None:
         for state, reason in [("APPROVED", "current-head-approved"),

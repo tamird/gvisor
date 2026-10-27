@@ -75,6 +75,14 @@ def is_approval_gate(pr: dict, check: dict) -> bool:
                                      "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"})
 
 
+def is_canceled_buildkite_run(check: dict) -> bool:
+    build = re.fullmatch(r"Build #(\d+) cancel(?:l)?ed by \S.*", check.get("description") or "")
+    name = check.get("name", "")
+    return bool(check.get("kind") == "status" and check.get("state") == "FAILURE" and build
+                and name.startswith("buildkite/")
+                and check.get("url") == f"https://buildkite.com/gvisor/{name.removeprefix('buildkite/')}/builds/{build[1]}")
+
+
 def complete_checks(pr: dict) -> bool:
     checks = pr.get("checks") or {}
     return bool(checks.get("complete") and checks.get("total", 0) > 0
@@ -89,16 +97,17 @@ def validation_checks(pr: dict) -> list[dict]:
 
 def check_states(pr: dict) -> set[str]:
     checks = pr.get("checks") or {}
-    states = {item["state"] for item in validation_checks(pr)}
+    states = {item["state"] for item in validation_checks(pr) if not is_canceled_buildkite_run(item)}
     aggregate = checks.get("state")
     administrative = {item["state"] for item in checks.get("contexts", [])
-                      if item.get("purpose") == "reviewer-assignment" or is_import_status(item) or is_approval_gate(pr, item)}
+                      if item.get("purpose") == "reviewer-assignment" or is_import_status(item)
+                      or is_approval_gate(pr, item) or is_canceled_buildkite_run(item)}
     explained_states = administrative | {item["state"] for item in checks.get("supersededContexts", [])}
     explained = complete_checks(pr) and (
         aggregate in FAILURES and bool(explained_states & FAILURES)
         or aggregate in PENDING and bool(explained_states & PENDING))
     # Preserve aggregate problems unless the complete inventory explains them
-    # with an administrative or superseded result of the same class.
+    # with an administrative, canceled, or superseded result of the same class.
     if isinstance(aggregate, str) and not explained:
         states.add(aggregate)
     return states
@@ -115,7 +124,8 @@ def checks_passed(pr: dict) -> bool:
 
 def check_qualifier(pr: dict) -> str:
     states = check_states(pr)
-    validation = ("Checks failing" if states & FAILURES else "Checks pending" if states & PENDING
+    canceled = any(is_canceled_buildkite_run(item) for item in validation_checks(pr))
+    validation = ("Checks failing" if states & FAILURES else "Checks canceled" if canceled else "Checks pending" if states & PENDING
                   else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
                   else "Checks unknown")
     services = {item["name"]: item for item in (pr.get("checks") or {}).get("contexts", [])
@@ -262,7 +272,24 @@ def conflict_qualifier(pr: dict) -> str | None:
     return None
 
 
-def pr_states(pr: dict, patch: dict | None = None) -> dict[str, StateEvidence]:
+def landed_patch(pr: dict, proof: dict | None) -> bool:
+    """Accept an exact-head, reviewed replay that left the upstream tree intact."""
+    if (not proof or pr.get("status") != "open" or pr.get("revisionChanged")
+            or proof.get("head") != pr.get("head") or pr.get("branchHead", pr["head"]) not in {None, pr["head"]}
+            or proof.get("method") != "merge-tree-identical"
+            or not all(isinstance(proof.get(key), str) and re.fullmatch(r"[a-f0-9]{40}", proof[key])
+                       for key in ("head", "upstreamHead", "upstreamTree", "replayedTree"))
+            or proof["upstreamTree"] != proof["replayedTree"]
+            or not isinstance(proof.get("evidence"), list) or not proof["evidence"]
+            or not all(isinstance(url, str) and url.startswith("https://") for url in proof["evidence"])):
+        return False
+    try:
+        return datetime.fromisoformat(proof["verifiedAt"].replace("Z", "+00:00")).tzinfo is not None
+    except (KeyError, AttributeError, ValueError):
+        return False
+
+
+def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict[str, StateEvidence]:
     """Keep source review, public import progress and check provenance distinct."""
     head = pr["head"]
     decision = review_decision(pr)
@@ -270,12 +297,16 @@ def pr_states(pr: dict, patch: dict | None = None) -> dict[str, StateEvidence]:
     if pr["status"] in {"merged", "closed"}:
         timestamp = pr.get("mergedAt" if pr["status"] == "merged" else "closedAt")
         return {pr["status"]: {"scope": head, "transitionAt": timestamp}}
+    if landed_patch(pr, landing):
+        return {"imported": {"scope": head, "qualifier": "Landed; source PR still open"}}
     states: dict[str, StateEvidence] = {}
     imports = [item for item in pr.get("imports", []) if item["matchesSourceHead"]]
+    if not imports and accepted_patch:
+        imports = [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
     active = [item for item in imports if item["status"] in {"open", "draft"}]
-    visible = [pr, *active]
+    visible = [pr, *(active if active or any(item["status"] == "merged" for item in imports) else imports)]
     failures = [item for item in visible if check_states(item) & FAILURES]
-    pending = [item for item in visible if check_states(item) & PENDING]
+    pending = [item for item in [pr, *active] if check_states(item) & PENDING]
     if failures:
         origins = ["Source checks failing" if item is pr else f"Import #{item['number']} failing" for item in failures]
         states["failing"] = {"scope": ",".join(f"{item['number']}:{item['head']}" for item in failures),
@@ -321,7 +352,8 @@ def pr_states(pr: dict, patch: dict | None = None) -> dict[str, StateEvidence]:
 def derive_states(prs: list[dict], registry: dict) -> StateMap:
     nodes = {node["id"]: node for node in registry["nodes"]}
     states = {pr_identity(pr, registry["meta"]["repo"]):
-              pr_states(pr, nodes.get(pr_identity(pr, registry["meta"]["repo"]), {}).get("approvedPatch"))
+              pr_states(pr, nodes.get(pr_identity(pr, registry["meta"]["repo"]), {}).get("approvedPatch"),
+                        nodes.get(pr_identity(pr, registry["meta"]["repo"]), {}).get("landedPatch"))
               for pr in prs}
     promoted = {(pr["headRepo"], pr["ref"]) for pr in prs
                 if pr.get("headRepo") and pr["status"] in {"open", "draft", "merged"}}

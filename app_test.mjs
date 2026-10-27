@@ -851,36 +851,47 @@ test('attention assigns simultaneous public and internal failures to their actua
   assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /refresh and investigate/);
 });
 
-test('canceled Buildkite runs need a retry decision; other failures still need diagnosis', () => {
+test('canceled Buildkite runs remain distinct from CI configuration and failed tests; other failures still need diagnosis', () => {
   const node = attentionNode(16374), imported = attentionImport(node, 16470);
   node.github.imports = [imported];
   const canceled = { ...serviceStatus('buildkite/first-pass', 'FAILURE'),
     description: 'Build #50 canceled by Ryan El Kochta', url: 'https://buildkite.com/gvisor/first-pass/builds/50' };
   imported.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [canceled] };
-  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry').detail, /Import #16470: Build #50 canceled/);
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-canceled').detail, /Import #16470: Build #50 canceled/);
   assert.ok(!idsFor(node).includes('maintainer-import-checks'));
   assert.ok(!idsFor(node).includes('maintainer-merge'));
   node.github.checks.contexts.push(serviceStatus('feedback/copybara', 'FAILURE'));
   node.github.checks.total++;
   node.github.checks.state = 'FAILURE';
   assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
-  assert.ok(idsFor(node).includes('maintainer-ci-retry'));
+  assert.ok(idsFor(node).includes('maintainer-ci-canceled'));
   imported.checks.contexts.push(serviceStatus('generate', 'FAILURE'));
   imported.checks.total++;
   const failed = reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail;
   assert.match(failed, /generate: FAILURE/);
   assert.doesNotMatch(failed, /buildkite\/first-pass/);
 
+  const context = client(); context.nodeInput = node;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github.imports[0]).text', context), 'Failure');
+  imported.checks.contexts.pop(); imported.checks.total--;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github.imports[0]).text', context), 'Canceled');
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github.imports[0]).passed', context), false);
+  assert.equal(vm.runInContext('failureSources(nodeInput).length', context), 0);
+  node.github.mergeable = 'CONFLICTING';
+  assert.equal(reasonsFor(node)[0].id, 'author-conflicts');
+  assert.equal(imported.mergeable, 'MERGEABLE');
+  node.github.mergeable = 'MERGEABLE';
+
   node.github.imports = [];
   node.github.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [canceled] };
-  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry').detail, /Source #16374/);
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-canceled').detail, /Source #16374/);
   assert.ok(!idsFor(node).includes('author-public-checks'));
   canceled.url = 'https://buildkite.com/gvisor/first-pass/builds/51';
   assert.ok(idsFor(node).includes('author-public-checks'));
   canceled.url = 'https://buildkite.com/gvisor/first-pass/builds/50';
   canceled.description = 'Build #50 failed (33 minutes, 41 seconds)';
   assert.ok(idsFor(node).includes('author-public-checks'));
-  assert.ok(!idsFor(node).includes('maintainer-ci-retry'));
+  assert.ok(!idsFor(node).includes('maintainer-ci-canceled'));
 });
 
 function deniedImportRetry() {
@@ -898,6 +909,44 @@ function deniedImportRetry() {
   node.github.imports = [imported];
   return node;
 }
+
+test('closed exports retain unresolved public failures without reviving canceled or superseded runs', () => {
+  const node = attentionNode(16382), imported = attentionImport(node, 16385);
+  imported.status = 'closed'; node.github.imports = [imported];
+  node.github.checks.contexts.push(serviceStatus('feedback/copybara', 'FAILURE'));
+  node.github.checks.total++; node.github.checks.state = 'FAILURE';
+  imported.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [{
+    ...serviceStatus('buildkite/first-pass', 'FAILURE'), description: 'Build #56 canceled by Ryan El Kochta',
+    url: 'https://buildkite.com/gvisor/first-pass/builds/56',
+  }] };
+  assert.deepEqual(idsFor(node), ['maintainer-reimport', 'maintainer-internal-feedback']);
+  assert.match(reasonsFor(node)[0].detail, /#16385 closed without merging/);
+  imported.checks.contexts[0].description = 'Build #56 failed';
+  assert.equal(reasonsFor(node)[0].id, 'maintainer-import-checks');
+  const context = client(); context.nodeInput = node;
+  assert.equal(vm.runInContext('failureSources(nodeInput)[0].number', context), 16385);
+  const replacement = attentionImport(node, 16520); node.github.imports.push(replacement);
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  assert.equal(vm.runInContext('failureSources(nodeInput).length', context), 0);
+  replacement.status = 'merged';
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  assert.equal(reasonsFor(node)[0].id, 'maintainer-import-landed');
+});
+
+test('a bound infrastructure diagnosis names the retry and expires on new failure evidence', () => {
+  const context = triagedContext(), node = context.nodesInput.find(node => node.number === 15499);
+  const disposition = node.followup.attentionDispositions[0];
+  disposition.action = 'ci-infrastructure-retry'; context.nodeInput = node;
+  vm.runInContext('validateRegistry(registryInput)', context);
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird").map(reason => reason.id))', context)), ['maintainer-ci-infrastructure']);
+  const text = vm.runInContext('attentionText(attentionGroups([nodeInput], "tamird"), registryInput.meta.updatedAt)', context);
+  assert.match(text, /CI infrastructure retry/); assert.doesNotMatch(text, /Awaiting maintainer follow-up/);
+  disposition.action = 'guess-from-description';
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid attention disposition/);
+  disposition.action = 'ci-infrastructure-retry';
+  node.github.imports[0].checks.contexts.find(check => check.state === 'FAILURE').id = 'new-failure';
+  assert.equal(vm.runInContext('attentionReasons(nodeInput, "tamird")[0].id', context), 'maintainer-import-checks');
+});
 
 function sourceAuthenticationFailure() {
   const node = attentionNode(13849);
@@ -1131,11 +1180,63 @@ test('a closed export of a verified unchanged patch calls for re-import, not rev
     method: 'stable-patch-id', oldPatchId: 'c'.repeat(40), newPatchId: 'c'.repeat(40) };
   assert.deepEqual(idsFor(node), ['maintainer-reimport']);
   assert.match(reasonsFor(node)[0].detail, new RegExp('#' + attempt.number));
+  attempt.status = 'open';
+  assert.deepEqual(idsFor(node), ['maintainer-import-previous']);
+  const context = client(); context.nodeInput = node;
+  assert.match(vm.runInContext('attentionText(attentionGroups([nodeInput], "tamird"), "2026-10-13T10:00:00Z")', context), /Waiting for earlier export to merge/);
+  attempt.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('buildkite/pipeline', 'FAILURE')] };
+  assert.equal(reasonsFor(node)[0].id, 'maintainer-import-checks');
+  node.followup = { attentionDispositions: [{ reason: 'maintainer-import-checks', action: 'ci-infrastructure-retry',
+    title: 'Dependency download failed', nextAction: 'Retry this job', evidence: [node.url] }] };
+  const disposition = node.followup.attentionDispositions[0];
+  disposition.binding = JSON.parse(vm.runInContext('JSON.stringify(attentionDispositionEvidence(nodeInput, "maintainer-import-checks"))', context));
+  assert.equal(disposition.binding.imports[0].sourceHead, old);
+  assert.equal(reasonsFor(node)[0].id, 'maintainer-ci-infrastructure');
+  attempt.checks.contexts[0].id = 'new-failed-attempt';
+  assert.equal(reasonsFor(node)[0].id, 'maintainer-import-checks');
+  delete node.followup;
+  attempt.checks = structuredClone(attentionImport(node).checks);
+  attempt.mergeable = 'CONFLICTING';
+  assert.deepEqual(idsFor(node), ['maintainer-import-refresh']);
+  pr.mergeable = 'CONFLICTING';
+  assert.equal(reasonsFor(node)[0].id, 'author-conflicts');
+  pr.mergeable = attempt.mergeable = 'MERGEABLE';
+  attempt.status = 'merged';
+  assert.deepEqual(idsFor(node), ['maintainer-import-landed']);
+  assert.match(vm.runInContext('attentionText(attentionGroups([nodeInput], "tamird"), "2026-10-13T10:00:00Z")', context), /Reconcile merged export/);
   pr.imports.push(attentionImport(node));
   assert.deepEqual(idsFor(node), ['maintainer-merge']);
   delete node.approvedPatch;
   node.reapproval = { head: pr.head, kind: 'content-amendment' };
   assert.deepEqual(idsFor(node), ['maintainer-review']);
+});
+
+test('exact landed-patch proof removes import action without closing GitHub or hiding feedback', () => {
+  const node = attentionNode(16053), pr = node.github;
+  const imported = attentionImport(node, 16326);
+  imported.status = 'merged'; imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false;
+  pr.imports = [imported];
+  assert.ok(!idsFor(node).includes('landed-source-open')); // An unrelated merged export is insufficient.
+  node.landedPatch = { head: pr.head, method: 'merge-tree-identical', upstreamHead: 'd'.repeat(40),
+    upstreamTree: 'e'.repeat(40), replayedTree: 'e'.repeat(40), verifiedAt: '2026-10-27T18:00:00Z',
+    evidence: ['https://github.com/google/gvisor/commit/' + 'd'.repeat(40)] };
+  assert.deepEqual(idsFor(node), ['landed-source-open']);
+  const context = client(); context.nodeInput = node;
+  const groups = JSON.parse(vm.runInContext('JSON.stringify(attentionGroups([nodeInput], "tamird"))', context));
+  assert.equal(groups[0].owner, 'other'); assert.equal(groups[0].title, 'Landed; source PR still open');
+  context.snapshotInput.workStates[node.id] = { 'awaiting-import': { scope: pr.head }, 'maintainer-review': { scope: pr.head } };
+  assert.deepEqual(Object.keys(vm.runInContext('stateRecords(snapshotInput, nodeInput)', context)), ['imported']);
+  assert.equal(pr.status, 'open');
+  pr.feedback.items.push({ kind: 'inline', threadId: 'new', isResolved: false, author: { login: 'reviewer' },
+    createdAt: '2026-10-27T18:10:00Z' });
+  pr.threads.unresolved = pr.threads.total = 1;
+  assert.deepEqual(idsFor(node), ['author-feedback', 'landed-source-open']);
+  pr.feedback.items = []; pr.threads.unresolved = pr.threads.total = 0;
+  for (const key of ['head', 'replayedTree']) {
+    const old = node.landedPatch[key]; node.landedPatch[key] = 'f'.repeat(40);
+    assert.ok(!idsFor(node).includes('landed-source-open'), key);
+    node.landedPatch[key] = old;
+  }
 });
 
 test('unanswered feedback stays author work after a mechanical new head or outdated location', () => {

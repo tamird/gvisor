@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
+from work_states import approved_patch, landed_patch
+
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
 PACIFIC = ZoneInfo("America/Los_Angeles")
@@ -45,6 +47,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
         return skip("not-an-open-owned-copybara-source")
     if pr.get("branchHead") and pr["branchHead"] != pr["head"]:
         return {**result, "status": "deferred", "reason": "source-branch-differs-from-pr"}
+    if landed_patch(pr, node.get("landedPatch")):
+        return {**skip("patch-already-on-master"), "evidence": node["landedPatch"]["evidence"]}
     if pr.get("mergeable") != "MERGEABLE":
         return {**result, "status": "deferred", "mergeable": pr.get("mergeable"),
                 "reason": "source-conflicted" if pr.get("mergeable") == "CONFLICTING" else "mergeability-unknown"}
@@ -97,7 +101,15 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                        and dismissed.get(item["id"]) == "APPROVED"]
     if not prior_approvals:
         return skip("no-prior-approval")
-    if node.get("approvedPatch", {}).get("head") == pr["head"]:
+    patch = node.get("approvedPatch", {})
+    if patch.get("head") == pr["head"]:
+        if not approved_patch(pr, patch):
+            return {**skip("unconfirmed-patch-equivalence"), "status": "needs-evidence"}
+        if pr.get("importsComplete"):
+            for item in pr.get("imports", []):
+                if (item["status"] == "open" and
+                        item.get("sourceHead") in {patch["approvedHead"], pr["head"]}):
+                    return {**skip("open-export-of-approved-patch"), "export": item["url"]}
         return skip("reviewed-patch-preserving-rebase")
     proof = node.get("reapproval", {})
     match proof:

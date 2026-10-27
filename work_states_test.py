@@ -6,7 +6,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from work_states import approved_patch, check_purpose, checks_passed, pr_states, record_states, remember_mergeability, review_decision
+from work_states import approved_patch, check_purpose, check_qualifier, checks_passed, pr_states, record_states, remember_mergeability, review_decision
 
 
 def original(**changes: object) -> dict:
@@ -126,6 +126,12 @@ class WorkStatesTest(unittest.TestCase):
         pr["imports"] = [imported]
         self.assertIn("importing", pr_states(pr, proof))
         self.assertNotIn("maintainer-review", pr_states(pr, proof))
+        imported.update(matchesSourceHead=False, sourceHead=proof["approvedHead"])
+        self.assertIn("importing", pr_states(pr, proof))
+        self.assertNotIn("importing", pr_states(pr))
+        imported["status"] = "merged"
+        self.assertIn("imported", pr_states(pr, proof))
+        self.assertNotIn("awaiting-import", pr_states(pr, proof))
         pr["imports"] = []
         self.assertEqual(pr, raw)
         # Provider reassociation does not alter the retained review provenance.
@@ -198,6 +204,50 @@ class WorkStatesTest(unittest.TestCase):
                        {"workflow": "Build"}, {"name": "lint"}):
             with self.subTest(change=change):
                 self.assertEqual(check_purpose({**check, **change}), "validation")
+
+    def test_canceled_buildkite_is_neither_failed_validation_nor_success(self):
+        canceled = {"kind": "status", "name": "buildkite/first-pass", "state": "FAILURE",
+                    "description": "Build #37 canceled by Ryan El Kochta",
+                    "url": "https://buildkite.com/gvisor/first-pass/builds/37"}
+        pr = original(checks={"state": "FAILURE", "total": 1, "complete": True, "contexts": [canceled]})
+        self.assertNotIn("failing", pr_states(pr))
+        self.assertEqual(check_qualifier(pr), "Checks canceled")
+        self.assertFalse(checks_passed(pr))
+        imported = {**pr, "number": 2, "matchesSourceHead": True}
+        source = original(imports=[imported])
+        self.assertNotIn("failing", pr_states(source))
+        self.assertIn("checks canceled", pr_states(source)["importing"]["qualifier"])
+        for change in ({"description": "Build #37 failed"}, {"url": canceled["url"] + "0"}):
+            with self.subTest(change=change):
+                pr["checks"]["contexts"] = [{**canceled, **change}]
+                self.assertIn("failing", pr_states(pr))
+        pr["checks"]["contexts"] = [canceled]
+        pr["checks"]["complete"] = False
+        self.assertIn("failing", pr_states(pr))
+
+    def test_closed_import_failure_stays_until_replaced(self):
+        imported = {**original(), "number": 2, "matchesSourceHead": True, "status": "closed",
+                    "checks": {"state": "FAILURE", "total": 1, "complete": True,
+                               "contexts": [{"name": "test", "state": "FAILURE"}]}}
+        source = original(imports=[imported])
+        self.assertIn("failing", pr_states(source))
+        replacement = {**original(), "number": 3, "matchesSourceHead": True}
+        source["imports"].append(replacement)
+        self.assertNotIn("failing", pr_states(source))
+        replacement["status"] = "merged"
+        self.assertNotIn("failing", pr_states(source))
+
+    def test_exact_landing_retires_import_action_without_rewriting_source(self):
+        pr = original(reviewDecision="APPROVED")
+        proof = {"head": pr["head"], "method": "merge-tree-identical", "upstreamHead": "b" * 40,
+                 "upstreamTree": "c" * 40, "replayedTree": "c" * 40,
+                 "verifiedAt": "2026-10-27T18:00:00Z", "evidence": ["https://github.com/google/gvisor/pull/16326"]}
+        self.assertEqual(pr_states(pr, landing=proof),
+                         {"imported": {"scope": pr["head"], "qualifier": "Landed; source PR still open"}})
+        self.assertEqual(pr["status"], "open")
+        for change in ({"head": "d" * 40}, {"replayedTree": "d" * 40}, {"verifiedAt": "unknown"}):
+            with self.subTest(change=change):
+                self.assertNotIn("imported", pr_states(pr, landing={**proof, **change}))
 
     def test_copybara_status_is_not_public_validation(self):
         lint = {"name": "lint", "state": "SUCCESS", "purpose": "validation"}

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T18:06:12+00:00",
+    "updatedAt": "2026-10-27T18:39:29+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -14809,18 +14809,19 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15940",
       "status": "open",
-      "updatedAt": "2026-10-27T16:52:09+00:00",
-      "summary": "The export of the approved patch, #16324, is open on the earlier head. The change before and after rebasing has the same stable patch ID.",
+      "updatedAt": "2026-10-27T18:39:29+00:00",
+      "summary": "Copybara PR #16324 is open and its checks passed. It contains the same LLVM change that Etienne approved before the rebase.",
       "followup": {
         "owner": "root",
-        "disposition": "Approved patch unchanged by rebase",
+        "disposition": "Waiting for Copybara PR #16324 to merge",
         "sourceHead": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
-        "observedAt": "2026-10-27T16:52:09+00:00",
-        "nextAction": "The export of the approved patch, #16324, is open on the earlier head.",
+        "observedAt": "2026-10-27T18:39:29+00:00",
+        "nextAction": "Follow #16324. Its approved patch replays exactly onto the new base; no reapproval is needed.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39083076451",
           "https://github.com/tamird/gvisor/commit/1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
-          "https://github.com/google/gvisor/pull/15940#pullrequestreview-5637142088"
+          "https://github.com/google/gvisor/pull/15940#pullrequestreview-5637142088",
+          "https://github.com/google/gvisor/pull/16324"
         ],
         "attentionDispositions": [
           {
@@ -17871,22 +17872,24 @@
       "url": "https://github.com/google/gvisor/pull/16053",
       "group": "runtime",
       "status": "open",
-      "summary": "Export #16326 merged on the earlier head. Verify what landed before requesting another import. The change before and after rebasing has the same stable patch ID.",
+      "summary": "The veth test fix is on master. Copybara PR #16326 merged; the source PR remains open.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
-        "observedAt": "2026-10-27T16:52:09+00:00",
-        "disposition": "Approved patch unchanged by rebase",
-        "nextAction": "Export #16326 merged on the earlier head. Verify what landed before requesting another import.",
+        "observedAt": "2026-10-27T18:39:29+00:00",
+        "disposition": "Landed; source PR still open",
+        "nextAction": "No maintainer action. Replaying the complete source patch onto the linked master commit produces its unchanged tree.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39424420500/job/118633224546",
           "https://github.com/google/gvisor/pull/16031",
           "https://github.com/google/gvisor/pull/16048",
           "https://github.com/tamird/gvisor/commit/46aadd608aa19c1bbc33a425475d8900d6c9b5a7",
-          "https://github.com/tamird/gvisor/commit/5e04edceda66b502e1cb5be55e04019aaf9fcba8"
+          "https://github.com/tamird/gvisor/commit/5e04edceda66b502e1cb5be55e04019aaf9fcba8",
+          "https://github.com/google/gvisor/pull/16326",
+          "https://github.com/google/gvisor/blob/0424a4b4fa3105cbe3271c301e8bf6cb8adf0277/test/syscalls/linux/socket_netlink_route.cc#L3720"
         ]
       },
-      "updatedAt": "2026-10-27T16:52:09+00:00",
+      "updatedAt": "2026-10-27T18:39:29+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -17951,6 +17954,18 @@
         "method": "stable-patch-id",
         "oldPatchId": "1359fb83d736d32deeb551ec4729e9631f8818c5",
         "newPatchId": "1359fb83d736d32deeb551ec4729e9631f8818c5"
+      },
+      "landedPatch": {
+        "head": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
+        "method": "merge-tree-identical",
+        "upstreamHead": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277",
+        "upstreamTree": "bc4f33133291f2c571bdc5e4a863f0c7671e7be0",
+        "replayedTree": "bc4f33133291f2c571bdc5e4a863f0c7671e7be0",
+        "verifiedAt": "2026-10-27T18:39:29+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16326",
+          "https://github.com/google/gvisor/blob/0424a4b4fa3105cbe3271c301e8bf6cb8adf0277/test/syscalls/linux/socket_netlink_route.cc#L3720"
+        ]
       }
     },
     {
@@ -23831,21 +23846,22 @@
       "group": "analysis",
       "status": "open",
       "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed. The contributor approved this exact revised head, now published as #16343. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
-      "updatedAt": "2026-10-27T04:17:44.655Z",
+      "updatedAt": "2026-10-27T18:39:29+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
-        "observedAt": "2026-10-27T04:17:44.655Z",
-        "disposition": "Maintainer retry for the failed dependency download",
-        "nextAction": "Retry the failed ARM64 Docker job on import #16432. Its setup received HTTP 504 fetching package_metadata before runsc compiled. The pinned archive is accessible again.",
+        "observedAt": "2026-10-27T18:39:29+00:00",
+        "disposition": "CI infrastructure retry",
+        "nextAction": "Retry ARM64 Docker shard 7 in Buildkite #52424. Dependency downloads returned HTTP 504 before Bazel ran. Shard 5 hit the same failure and passed on retry without a source change.",
         "attentionDispositions": [
           {
             "reason": "maintainer-import-checks",
             "title": "ARM64 Docker job failed fetching a Bazel dependency",
-            "nextAction": "Retry the failed ARM64 Docker job on import #16432. Its setup received HTTP 504 fetching package_metadata before runsc compiled. The pinned archive is accessible again.",
+            "nextAction": "Retry ARM64 Docker shard 7 in Buildkite #52424. Dependency downloads returned HTTP 504 before Bazel ran. Shard 5 hit the same failure and passed on retry without a source change.",
             "evidence": [
               "https://buildkite.com/gvisor/pipeline/builds/52424#01a1795f-e89c-4017-8db7-a2d3af3aedd4",
-              "https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.10/supply-chain-v0.0.10.tar.gz"
+              "https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.10/supply-chain-v0.0.10.tar.gz",
+              "https://buildkite.com/gvisor/pipeline/builds/52424#01a17961-4a6b-487b-a2c6-3c6f0898e346"
             ],
             "binding": {
               "sourceHead": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
@@ -24349,7 +24365,8 @@
                   }
                 ]
               }
-            }
+            },
+            "action": "ci-infrastructure-retry"
           }
         ]
       },
@@ -26332,19 +26349,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-python-upstream-context",
-      "head": "2e4cf26a2919edfb1c38d2b1b026f9b16e1e8008",
+      "head": "037a5a3f80a82c25c515181bb41538dafed055d4",
       "title": "Build the Python HTTP image with rules_img",
       "url": "https://github.com/google/gvisor/pull/16459",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "updatedAt": "2026-10-27T18:39:29+00:00",
       "summary": "The contributor-approved image change is published as #16459 at 2e4cf26a2 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The contributor subsequently approved this exact proposal.",
       "followup": {
         "owner": "root",
-        "sourceHead": "2e4cf26a2919edfb1c38d2b1b026f9b16e1e8008",
-        "observedAt": "2026-10-26T23:09:42.124781+00:00",
-        "disposition": "Approved image migration published as #16459",
-        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "sourceHead": "037a5a3f80a82c25c515181bb41538dafed055d4",
+        "observedAt": "2026-10-27T18:39:29+00:00",
+        "disposition": "Rebased; the approved Python image patch is unchanged",
+        "nextAction": "The source now includes fsstress and the Python image. Follow the export; Buildkite #37 on its previous revision was canceled by a user.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
           "https://github.com/google/gvisor/pull/16097",
@@ -26354,7 +26371,10 @@
           "https://github.com/google/gvisor/pull/16379",
           "https://github.com/google/gvisor/pull/16430",
           "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
-          "https://github.com/google/gvisor/pull/16459"
+          "https://github.com/google/gvisor/pull/16459",
+          "https://github.com/tamird/gvisor/commit/037a5a3f80a82c25c515181bb41538dafed055d4",
+          "https://github.com/google/gvisor/pull/16465",
+          "https://buildkite.com/gvisor/first-pass/builds/37"
         ]
       },
       "evidence": [
@@ -26379,7 +26399,18 @@
           "url": "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d"
         }
       ],
-      "number": 16459
+      "number": 16459,
+      "approvedPatch": {
+        "head": "037a5a3f80a82c25c515181bb41538dafed055d4",
+        "approvedHead": "2e4cf26a2919edfb1c38d2b1b026f9b16e1e8008",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABUWPnbg",
+        "reviewer": "manninglucas",
+        "submittedAt": "2026-10-26T23:30:20Z",
+        "verifiedAt": "2026-10-27T18:39:29+00:00",
+        "method": "reviewed-context-only",
+        "oldPatchId": "4f5c08529ed3f78d5b4daf412b8868c942f1ab7f",
+        "newPatchId": "aaef0318fee515d2e75a4affc2029e7e6cf594b5"
+      }
     },
     {
       "id": "pr:16458",
