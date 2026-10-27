@@ -46,9 +46,11 @@ jobs:
           mkdir test/rbe
           cp ../harness/test/rbe/{actions.sh,credential_artifacts.py,go_required_cases.py,qualification_report.py,unit_matrix.py,qualification.bazelrc} test/rbe/
           install -m 0755 ../harness/.github/native-cgroup-test.sh test/rbe/qualify.sh
+          cp ../harness/.github/native-cgroup-routing.py test/rbe/
           cp ../harness/.github/native-unit-platforms.BUILD test/rbe/BUILD
           cp ../harness/test/benchmarks/{lifecycle,unit}.json test/benchmarks/
-          export USE_BAZEL_VERSION="$(cat images/default/bazelversion)"
+          USE_BAZEL_VERSION=$(<images/default/bazelversion)
+          export USE_BAZEL_VERSION
           bazelisk cquery --config=x86_64 --compilation_mode=opt --lockfile_mode=update \
             --extra_execution_platforms=//test/rbe:native_amd64,//test/rbe:native_arm64 \
             --host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo \
@@ -80,7 +82,40 @@ jobs:
         if: always() && steps.qualification.outputs.artifacts_safe == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: qualification-native-cgroup-attempt-${{ github.run_attempt }}
+          name: qualification-arm64-attempt-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/qualification.tar.gz
+            ${{ runner.temp }}/qualification/verdict.json
+          if-no-files-found: error
+
+  collector:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-cgroup-owner' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_ARCH: amd64
+      QUALIFICATION_EXECUTION: remote-actions
+      QUALIFICATION_LANES: test
+      QUALIFICATION_TARGETS: //test/rbe:qualification_report_test
+      QUALIFICATION_CLOCK_SOURCE: calibrated
+      QUALIFICATION_HEADER_BASE: ''
+      QUALIFICATION_COS_GZIP_BASE64: ''
+      QUALIFICATION_COS_SHA256: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Exercise authenticated collection on retained outcomes
+        id: qualification
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          bash test/rbe/actions.sh --bazel-option=--test_arg=-k --bazel-option=--test_arg=actions_collection
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.qualification.outputs.artifacts_safe == 'true'
+        with:
+          name: qualification-amd64-attempt-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/qualification.tar.gz
             ${{ runner.temp }}/qualification/verdict.json

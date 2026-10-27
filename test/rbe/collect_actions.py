@@ -32,8 +32,10 @@ import qualification_report as report
 
 def collect_actions(run: int, source: str, architecture: str, prefix: Path,
                     poll_interval: int = 10, run_attempt: int | None = None,
-                    watch_seconds: int = 10000) -> dict[str, object]:
+                    watch_seconds: int = 10000, workflow_source: str | None = None) -> dict[str, object]:
     """Reuse gh watch/download and the canonical authenticated bundle receipt."""
+    if workflow_source is None:
+        workflow_source = source
     def output(suffix: str) -> Path:
         return Path(str(prefix) + suffix)
 
@@ -47,7 +49,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
     watch_exits: list[int] = []
     attached_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     report.write_json(output("-collector.json"), {
-        "run": run, "source": source, "collector_attached_at": attached_at,
+        "run": run, "source": source, "workflow_source": workflow_source, "collector_attached_at": attached_at,
         "poll_interval_seconds": poll_interval, "requested_run_attempt": run_attempt,
         "watch_seconds": watch_seconds,
     })
@@ -62,8 +64,8 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
         report.write_json(output("-actions.json"), metadata)
         if type(metadata.get("id")) is not int or metadata["id"] != run:
             raise ValueError("Actions returned a different or malformed workflow run")
-        if metadata.get("head_sha") != source:
-            raise ValueError("Workflow source differs from the requested source")
+        if metadata.get("head_sha") != workflow_source:
+            raise ValueError("Workflow source differs from the requested workflow source")
         attempt = metadata.get("run_attempt")
         if type(attempt) is not int or attempt <= 0:
             raise ValueError("Workflow run_attempt must be a positive integer")
@@ -75,6 +77,8 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
     try:
         if type(run) is not int or run <= 0 or re.fullmatch(r"[0-9a-f]{40}", source) is None:
             raise ValueError("Expected a positive workflow run ID and full source SHA")
+        if re.fullmatch(r"[0-9a-f]{40}", workflow_source) is None:
+            raise ValueError("Expected a full workflow source SHA")
         if architecture not in ("amd64", "arm64", "all"):
             raise ValueError("Unknown qualification architecture")
         if type(poll_interval) is not int or poll_interval <= 0:
@@ -153,11 +157,12 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
             result["status"] = "INCOMPLETE"
     elif result["status"] != "FAIL":
         result["status"] = "INCOMPLETE"
-    result.update({"workflow": workflow, "submitted_source": source, "requested_run": run,
+    workflow_verified = type(workflow.get("id")) is int and workflow["id"] == run and workflow.get("head_sha") == workflow_source
+    result.update({"workflow": workflow, "submitted_source": source, "workflow_source": workflow_source, "requested_run": run,
                    "requested_run_attempt": run_attempt, "bound_run_attempt": bound_attempt,
                    "actions_artifact": selected_artifact,
-                   "source_verified": type(workflow.get("id")) is int and workflow["id"] == run
-                   and workflow.get("head_sha") == source,
+                   "workflow_source_verified": workflow_verified,
+                   "source_verified": workflow_verified and (workflow_source == source or result.get("sources") == [source]),
                    "watch_exit": watch_exit, "watch_exits": watch_exits, "collector_attached_at": attached_at,
                    "poll_interval_seconds": poll_interval, "watch_seconds": watch_seconds,
                    "collection_finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat()})
@@ -169,6 +174,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", type=int, required=True)
     parser.add_argument("--source", required=True)
+    parser.add_argument("--workflow-source", help="Workflow commit if its checkout differs from the tested source")
     parser.add_argument("--architecture", choices=("amd64", "arm64", "all"), required=True)
     parser.add_argument("--prefix", type=Path, required=True)
     parser.add_argument("--run-attempt", type=int,
@@ -179,7 +185,7 @@ def main() -> int:
                         help="Positive total watch budget in seconds, shared across reattachments")
     args = parser.parse_args()
     result = collect_actions(args.run, args.source, args.architecture, args.prefix,
-                             args.poll_interval, args.run_attempt, args.watch_seconds)
+                             args.poll_interval, args.run_attempt, args.watch_seconds, args.workflow_source)
     print(f"{result['status']}: {args.prefix}-receipt.json", flush=True)
     return int(result["status"] != "PASS")
 

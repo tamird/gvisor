@@ -3917,7 +3917,10 @@ signal.pause()
             with self.subTest(fixture=name, conclusion=conclusion):
                 invocation = self.fixture(name)
                 artifact, producer = self.artifact(invocation)
-                metadata = {**retained, "head_sha": producer["sources"][0], "conclusion": conclusion}
+                product_source = producer["sources"][0]
+                # A workflow can check out a different commit for the product.
+                metadata = {**retained, "conclusion": conclusion}
+                self.assertNotEqual(metadata["head_sha"], product_source)
                 artifacts = {"artifacts": [{"id": 1, "name": "qualification-amd64", "expired": False,
                                             "digest": "sha256:" + report.file_record(artifact)["sha256"]}]}
                 pending = {**metadata, "status": "in_progress", "conclusion": None}
@@ -3929,12 +3932,14 @@ signal.pause()
                     return subprocess.CompletedProcess(command, 0)
                 with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
                       mock.patch.object(collect_actions.subprocess, "run", side_effect=download)):
-                    value = collect_actions.collect_actions(metadata["id"], metadata["head_sha"], "amd64", self.root / "actions")
+                    value = collect_actions.collect_actions(
+                        metadata["id"], product_source, "amd64", self.root / "actions", workflow_source=metadata["head_sha"])
                 self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
                                  (status, producer["status"], "COMPLETE"))
                 for field in ("case_counts", "failures", "missing", "zero_case_owners", "native_exits"):
                     self.assertEqual(value[field], producer[field])
                 self.assertTrue(value["source_verified"])
+                self.assertTrue(value["workflow_source_verified"])
                 self.assertEqual(value["watch_exits"], [1, 1])
                 shutil.rmtree(invocation)
 

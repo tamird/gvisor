@@ -148,6 +148,10 @@ python3 test/rbe/collect_actions.py --run "$run_id" --run-attempt "$run_attempt"
   --prefix "$receipt_prefix"
 ```
 
+For a workflow that checks out a separate product revision, pass
+`--workflow-source` with the workflow commit. The collector authenticates that
+commit with GitHub and checks `--source` against the bundled test results.
+
 All rows use Actions coordinators, including the three former hosted-only
 routes: AMD Docker/license checking and ARM KVM guests. Those routes retain a
 45-minute work budget with time reserved for reporting; long remote rows retain
