@@ -24,6 +24,7 @@ import (
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
@@ -319,6 +320,89 @@ func TestRACKTLPFallbackRTO(t *testing.T) {
 			}
 			c.SendAck(seq, bytesRead)
 		})
+	}
+}
+
+func TestRTOInterruptsSACKRecovery(t *testing.T) {
+	const rtt = 10 * time.Millisecond
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: clock})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	peer := e2e.CreateConnectedWithSACKPermittedOption(c)
+
+	info := func() tcpip.TCPInfoOption {
+		t.Helper()
+		var info tcpip.TCPInfoOption
+		if err := c.EP.GetSockOpt(&info); err != nil {
+			t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+		}
+		return info
+	}
+	ack := func(bytes int, sacks ...header.SACKBlock) {
+		c.SendAckWithSACK(peer.NextSeqNum, bytes, sacks)
+		c.Stack().Pause()
+		c.Stack().Resume()
+	}
+	write := func(data []byte) {
+		t.Helper()
+		if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+			t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+		}
+	}
+
+	// The peer has the first and the last segment of the flight. Its SACK
+	// starts fast recovery for the hole between them.
+	mss := int(info().SndMss)
+	data := make([]byte, 9*mss)
+	flight := data[:8*mss]
+	write(flight)
+	for offset := 0; offset < len(flight); offset += mss {
+		c.ReceiveAndCheckPacket(flight, offset, mss)
+	}
+	end := peer.AckNum.Add(seqnum.Size(len(flight)))
+	last := header.SACKBlock{Start: end - seqnum.Value(mss), End: end}
+	clock.Advance(rtt)
+	ack(mss, last)
+	clock.Advance(rtt)
+	if got, want := info().CcState, tcpip.SACKRecovery; got != want {
+		t.Fatalf("after reporting the hole: state = %v, want %v", got, want)
+	}
+
+	// Lose the repair, then ACK its retransmission. The repeated SACK
+	// reports genuinely new information because the RTO cleared the
+	// scoreboard. Neither it nor the reordering timer starts a new episode.
+	clock.Advance(info().RTO)
+	if got, want := info().CcState, tcpip.RTORecovery; got != want {
+		t.Fatalf("after losing the repair: state = %v, want %v", got, want)
+	}
+	clock.Advance(rtt)
+	ack(2*mss, last)
+	clock.Advance(rtt)
+	if got, want := info().CcState, tcpip.RTORecovery; got != want {
+		t.Fatalf("after partial ACK with SACK: state = %v, want %v", got, want)
+	}
+
+	// All but one byte of the interrupted flight is not enough. Send new
+	// data and time out once more: the retry must not move the boundary.
+	ack(len(flight) - 1)
+	if got, want := info().CcState, tcpip.RTORecovery; got != want {
+		t.Fatalf("one byte short of the recovery point: state = %v, want %v", got, want)
+	}
+	for pkt := c.GetPacketNonBlocking(); pkt != nil; pkt = c.GetPacketNonBlocking() {
+		pkt.Release()
+	}
+	write(data[len(flight):])
+	c.ReceiveAndCheckPacket(data, len(flight), mss)
+	timeouts := c.Stack().Stats().TCP.Timeouts
+	before := timeouts.Value()
+	clock.Advance(info().RTO)
+	if got, want := timeouts.Value(), before+1; got != want {
+		t.Fatalf("timeouts after losing the last byte again = %d, want %d", got, want)
+	}
+	ack(len(flight))
+	if got, want := info().CcState, tcpip.Open; got != want {
+		t.Fatalf("at the recovery point: state = %v, want %v", got, want)
 	}
 }
 
