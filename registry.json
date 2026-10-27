@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T17:49:48+00:00",
+    "updatedAt": "2026-10-27T18:06:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27630,27 +27630,26 @@
       "title": "Generate systrap stub offsets from the linked ELF",
       "url": "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
       "group": "bazel",
-      "status": "Contributor review",
-      "summary": "Replace the worker's nm/grep/tr/awk pipeline with a declared Go executable that reads the linked systrap stub ELF. The generated declarations match GNU for both AMD64 and ARM64 objects. The same native AMD64 tool also passed with only its executable and input object available; the AMD64 installed systrap smoke passed. This does not claim ARM runtime coverage.",
-      "updatedAt": "2026-10-27T17:49:48+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "url": "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
-        "head": "353fb5556844a9b683887f432cb19c123b3e4168",
-        "summary": "Review the qualified replacement of the systrap offset shell pipeline with a declared Go tool before opening an upstream PR."
-      },
+      "status": "Published as #16516",
+      "summary": "Published the contributor-approved systrap generator as #16516 at the exact qualified 353fb55568 head. A declared Go executable replaces the worker nm/grep/tr/awk pipeline and preserves generated declarations for AMD64 and ARM64 objects. The isolated native AMD64 tool and installed AMD64 systrap smoke passed. This is not ARM runtime coverage. The contributor decision is consumed; follow the live PR for review and checks.",
+      "updatedAt": "2026-10-27T18:06:12+00:00",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "353fb5556844a9b683887f432cb19c123b3e4168",
-        "observedAt": "2026-10-27T17:49:48+00:00",
-        "disposition": "Qualified fork proposal; contributor review requested",
-        "nextAction": "Wait for the contributor decision before opening an upstream PR.",
+        "observedAt": "2026-10-27T18:06:12+00:00",
+        "disposition": "Contributor-approved generator published as #16516",
+        "nextAction": "Follow maintainer review, public checks and import on #16516; no contributor decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16516",
           "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
           "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
         ]
       },
       "evidence": [
+        {
+          "label": "Published generator PR",
+          "url": "https://github.com/google/gvisor/pull/16516"
+        },
         {
           "label": "Review the exact three-file change",
           "url": "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...353fb5556844a9b683887f432cb19c123b3e4168"
@@ -27659,7 +27658,93 @@
           "label": "Both object architectures, isolated tool and installed AMD64 smoke",
           "url": "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
         }
+      ],
+      "inactive": true
+    },
+    {
+      "id": "pr:16513",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16513,
+      "ref": "review/epoll-failed-registration",
+      "head": "9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9",
+      "title": "Roll back failed epoll registrations",
+      "url": "https://github.com/google/gvisor/pull/16513",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Published the contributor-approved failed-registration fix as #16513. If waiter registration returns an error after signaling readability, remove both the epoll interest and the queued event. The published head has the exact tested tree: all 40 named AMD64 VFS cases passed; the control exposed both a phantom event and EEXIST on retry. The separate product-identical VFS Nogo checked AMD64 and ARM64. This is a synthetic registration-error fixture, not host exhaustion or ARM runtime coverage.",
+      "updatedAt": "2026-10-27T17:58:12+00:00",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9",
+        "observedAt": "2026-10-27T17:58:12+00:00",
+        "disposition": "Contributor-approved fix published; decision consumed",
+        "nextAction": "Follow maintainer review, public checks and import on #16513. The link back to #13245 is already posted; no contributor decision or repeated reply remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16513",
+          "https://github.com/google/gvisor/pull/13245#issuecomment-6449602415",
+          "https://app.buildbuddy.io/invocation/b4401931-d3f5-4d44-a486-bf0e1f795007",
+          "https://app.buildbuddy.io/invocation/e0678bdf-72c8-441e-be4a-661b3061af0b"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published exact tested tree",
+          "url": "https://github.com/tamird/gvisor/commit/9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9"
+        },
+        {
+          "label": "Forty named VFS cases passed; prior control and Nogo bound separately",
+          "url": "https://app.buildbuddy.io/invocation/b4401931-d3f5-4d44-a486-bf0e1f795007"
+        },
+        {
+          "label": "Control exposes phantom event and duplicate-registration error",
+          "url": "https://app.buildbuddy.io/invocation/e0678bdf-72c8-441e-be4a-661b3061af0b"
+        },
+        {
+          "label": "Existing reply to the original report",
+          "url": "https://github.com/google/gvisor/pull/13245#issuecomment-6449602415"
+        }
       ]
+    },
+    {
+      "id": "pr:16516",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/systrap-elf-offsets",
+      "head": "353fb5556844a9b683887f432cb19c123b3e4168",
+      "title": "Generate systrap stub offsets from the linked ELF",
+      "url": "https://github.com/google/gvisor/pull/16516",
+      "group": "bazel",
+      "status": "open",
+      "summary": "Published the contributor-approved systrap generator as #16516 at the exact qualified 353fb55568 head. A declared Go executable replaces the worker nm/grep/tr/awk pipeline and preserves generated declarations for AMD64 and ARM64 objects. The isolated native AMD64 tool and installed AMD64 systrap smoke passed. This is not ARM runtime coverage. The contributor decision is consumed; follow the live PR for review and checks.",
+      "updatedAt": "2026-10-27T18:06:12+00:00",
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "353fb5556844a9b683887f432cb19c123b3e4168",
+        "observedAt": "2026-10-27T18:06:12+00:00",
+        "disposition": "Contributor-approved generator published as #16516",
+        "nextAction": "Follow maintainer review, public checks and import on #16516; no contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16516",
+          "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
+          "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published generator PR",
+          "url": "https://github.com/google/gvisor/pull/16516"
+        },
+        {
+          "label": "Review the exact three-file change",
+          "url": "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...353fb5556844a9b683887f432cb19c123b3e4168"
+        },
+        {
+          "label": "Both object architectures, isolated tool and installed AMD64 smoke",
+          "url": "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
+        }
+      ],
+      "number": 16516
     }
   ],
   "edges": [
@@ -30578,9 +30663,30 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-27T17:49:48+00:00",
-      "summary": "The finite shared-FIFO experiment failed its SackedOut accounting assertion on both published #16495 (b7d9ced514) and its direct parent (9905813082). All eight schedules failed on both repeats for each source: 32 failed leaf executions. This is a virtual-time contention diagnostic, not a before/after throughput or fairness result. The existing SACK-credit correction #15634 addresses the implicated accounting path and remains the prerequisite for the approved flight-accounting follow-up; this run did not test those changes.\n\nWith the public recovery fix, Reno finished all four burst-loss transfers in 0.653\u20130.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288\u20130.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. The original FreeBSD failure has not been reproduced.",
+      "updatedAt": "2026-10-27T18:04:25+00:00",
+      "summary": "With the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
+        {
+          "text": "With the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements. All eight named schedules passed twice per source; both repeats reproduced the complete observation. The handshake packets and pre-write state matched, the first application write order was explicit, and no negative SackedOut was observed. The compared heads are 9d9c3f0f479b (parent plus accounting) and 431f54a4309b (#16495 plus the same accounting). The earlier uncorrected comparison remains a failed accounting diagnostic: it cannot supply a performance baseline. No default-controller decision or new contributor action follows.",
+          "evidence": [
+            {
+              "label": "Eight shared-FIFO schedules, two identical repeats per source",
+              "url": "https://app.buildbuddy.io/invocation/97d8d069-863a-4944-a97f-a24692f3c200"
+            },
+            {
+              "label": "Parent plus the common SACK-accounting correction",
+              "url": "https://github.com/tamird/gvisor/commit/9d9c3f0f479b3106b08d404f4f8604545f8d877d"
+            },
+            {
+              "label": "Published recovery fix plus the same SACK-accounting correction",
+              "url": "https://github.com/tamird/gvisor/commit/431f54a4309b2c0d7df2294af61bc38465962c17"
+            },
+            {
+              "label": "Common SACK-accounting prerequisite",
+              "url": "https://github.com/google/gvisor/pull/15634"
+            }
+          ]
+        },
         {
           "text": "The finite shared-FIFO experiment failed its SackedOut accounting assertion on both published #16495 (b7d9ced514) and its direct parent (9905813082). All eight schedules failed on both repeats for each source: 32 failed leaf executions. This is a virtual-time contention diagnostic, not a before/after throughput or fairness result. The existing SACK-credit correction #15634 addresses the implicated accounting path and remains the prerequisite for the approved flight-accounting follow-up; this run did not test those changes. The first retained negative observation in cubic_reno_setup01_write01 is identical in both arms: flow 1 has SackedOut -2 at 1.2377984 s, after a retained value of 31 at 1.1989504 s. The latest-probe sampling does not identify the exact first decrement.",
           "evidence": [
@@ -31941,8 +32047,24 @@
           ]
         }
       ],
-      "nextStep": "Follow the existing #15634 SACK-credit prerequisite and approved flight-accounting successor. Keep this failed finite-FIFO experiment distinct from the reporter transfer and the original FreeBSD incident; do not infer a throughput or fairness improvement.",
+      "nextStep": "Follow the existing #15634 SACK-accounting prerequisite and approved flight-accounting successor. Keep this common-base comparison, the earlier accounting failure and the reporter transfer distinct; no new contributor decision or default-controller change is requested.",
       "evidence": [
+        {
+          "label": "Eight shared-FIFO schedules, two identical repeats per source",
+          "url": "https://app.buildbuddy.io/invocation/97d8d069-863a-4944-a97f-a24692f3c200"
+        },
+        {
+          "label": "Parent plus the common SACK-accounting correction",
+          "url": "https://github.com/tamird/gvisor/commit/9d9c3f0f479b3106b08d404f4f8604545f8d877d"
+        },
+        {
+          "label": "Published recovery fix plus the same SACK-accounting correction",
+          "url": "https://github.com/tamird/gvisor/commit/431f54a4309b2c0d7df2294af61bc38465962c17"
+        },
+        {
+          "label": "Common SACK-accounting prerequisite",
+          "url": "https://github.com/google/gvisor/pull/15634"
+        },
         {
           "label": "Both sources: eight FIFO schedules, two repeats each",
           "url": "https://app.buildbuddy.io/invocation/4e09fbd4-c697-4a55-b864-f8aac7caee0e"
@@ -32285,6 +32407,80 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "Shared FIFO: published recovery fix on a common accounting base",
+          "description": "Before: 9d9c3f0f479b. With #16495: 431f54a4309b. Both include the same #15634 patch. Per-flow delivery and forward FIFO service use the same 2\u20136 second virtual interval.",
+          "columns": [
+            "Senders",
+            "First writer",
+            "Before delivered bytes",
+            "With #16495 delivered bytes",
+            "FIFO busy before \u2192 after"
+          ],
+          "rows": [
+            [
+              "CUBIC / Reno",
+              "CUBIC; either setup order",
+              "3,224,444 / 25,560",
+              "2,526,608 / 2,170,992",
+              "67.37% \u2192 97.63%"
+            ],
+            [
+              "CUBIC / Reno",
+              "Reno; either setup order",
+              "2,785,048 / 1,990,652",
+              "2,785,048 / 1,990,652",
+              "99.00% \u2192 99.00%"
+            ],
+            [
+              "Reno / Reno",
+              "Flow 0",
+              "26,980 / 2,457,028",
+              "2,631,072 / 1,919,652",
+              "52.34% \u2192 94.93%"
+            ],
+            [
+              "Reno / Reno",
+              "Flow 1",
+              "2,457,028 / 26,980",
+              "1,919,652 / 2,631,072",
+              "52.34% \u2192 94.93%"
+            ],
+            [
+              "CUBIC / CUBIC",
+              "Flow 0",
+              "2,282,368 / 2,540,808",
+              "2,282,368 / 2,540,808",
+              "100% \u2192 100%"
+            ],
+            [
+              "CUBIC / CUBIC",
+              "Flow 1",
+              "2,540,808 / 2,282,368",
+              "2,540,808 / 2,282,368",
+              "100% \u2192 100%"
+            ]
+          ],
+          "note": "All eight schedules ran twice on each source with identical repeated observations and matching pre-write handshake/state. Reverse mixed and CUBIC/CUBIC full observations were unchanged. FIFO busy is clipped serializer occupancy, not a delivery rate. These deterministic repetitions do not establish a population effect, Internet fairness or native throughput.",
+          "evidence": [
+            {
+              "label": "Eight shared-FIFO schedules, two identical repeats per source",
+              "url": "https://app.buildbuddy.io/invocation/97d8d069-863a-4944-a97f-a24692f3c200"
+            },
+            {
+              "label": "Parent plus the common SACK-accounting correction",
+              "url": "https://github.com/tamird/gvisor/commit/9d9c3f0f479b3106b08d404f4f8604545f8d877d"
+            },
+            {
+              "label": "Published recovery fix plus the same SACK-accounting correction",
+              "url": "https://github.com/tamird/gvisor/commit/431f54a4309b2c0d7df2294af61bc38465962c17"
+            },
+            {
+              "label": "Common SACK-accounting prerequisite",
+              "url": "https://github.com/google/gvisor/pull/15634"
+            }
+          ]
+        },
         {
           "title": "Interrupted SACK recovery \u00b7 same 512 KiB transfer",
           "description": "Both controllers lose a fast retransmission, receive the same partial cumulative ACK and SACK, and finish with the exact payload and FIN. Elapsed times are milliseconds after first data in the deterministic simulation.",
