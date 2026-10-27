@@ -22,7 +22,7 @@ if [[ ${1:-} != --private-mount ]]; then
   exec unshare --mount --propagation private -- "$0" --private-mount "$@"
 fi
 shift
-[[ $# == 4 && $EUID == 0 && $(uname -m) == x86_64 && $RUNTIME == runsc ]]
+[[ $# == 7 && $EUID == 0 && $(uname -m) == x86_64 && $RUNTIME == runsc ]]
 [[ ${DOCKER_HOST:?} == unix:///tmp/gvisor-docker-*/docker.sock ]]
 daemon_config=${DOCKER_HOST#unix://}
 daemon_config=${daemon_config%/docker.sock}/daemon.json
@@ -31,25 +31,15 @@ state=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["exec-r
 mkdir -p /run/containerd
 mount --bind "$state" /run/containerd
 
-binary=$(realpath "$1")
-benchstat=$(realpath "$2")
-reporter=$(realpath "$3")
-archive=$(realpath "$4")
-out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
+baseline=$(realpath "$1")
+candidate=$(realpath "$2")
+census=$(realpath "$3")
+benchstat=$(realpath "$4")
+reporter=$(realpath "$5")
+archive=$(realpath "$6")
+inputs=$(realpath "$7")
 cpu=$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')
 printf 'checkpointfile: arch=%s cpu=%s bundle_state=%s runtime=%s\n' "$(uname -m)" "$cpu" "$state" "$RUNTIME"
-grep -m1 'model name' /proc/cpuinfo
-sha256sum "$binary"
-printf '%s  %s\n' 26d929dac24fcba6a0b22c60db59f27fca01e070be2977ab380413e2f7a59401 "$benchstat" | sha256sum -c -
-python3 --version
-docker image inspect gvisor.dev/images/benchmarks/nginx:latest > "$out/nginx-inspect.json"
-python3 "$reporter" --image "$archive" "$out/nginx-inspect.json"
-GO_TEST_WRAP=1 GO_TEST_RUN_FROM_BAZEL=1 TEST_BINARY="$binary" \
-  XML_OUTPUT_FILE="$out/checkpointfile.xml" GOMAXPROCS=1 \
-  taskset -c "$cpu" "$binary" '-test.run=^$' '-test.bench=^BenchmarkCheckpointFile$' \
-  -test.benchtime=5x -test.benchmem -test.cpu=1 -test.count=1 \
-  -test-checkpoint=true -runtime="$RUNTIME" -config_path="$daemon_config" \
-  | tee "$out/checkpointfile.log"
-
-python3 "$reporter" "$out"
-"$benchstat" "codec=$out/codec.bench" "statefile=$out/statefile.bench" | tee "$out/benchstat.txt"
+python3 "$reporter" --baseline "$baseline" --candidate "$candidate" --census "$census" \
+  --benchstat "$benchstat" --archive "$archive" --inputs "$inputs" \
+  --config "$daemon_config" --cpu "$cpu"

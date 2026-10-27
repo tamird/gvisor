@@ -29,7 +29,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -95,8 +94,12 @@ func BenchmarkCheckpointFile(b *testing.B) {
 	defer machine.CleanUp()
 	ctx := context.Background()
 
-	stateFile, sizes, names, mounts := checkpointNginx(ctx, b, machine)
-	fmt.Printf("CHECKPOINT_PAIR_INPUT sha256=%x state=%d pages=%d page_metadata=%d\n", sha256.Sum256(stateFile), len(stateFile), sizes[checkpointfiles.PagesFileName], sizes[checkpointfiles.PagesMetadataFileName])
+	stateFile, sizes, names, mounts := checkpointInput(ctx, b, machine)
+	fmt.Printf("CHECKPOINT_LOAD_INPUT sha256=%x state=%d pages=%d page_metadata=%d mode=%s\n", sha256.Sum256(stateFile), len(stateFile), sizes[checkpointfiles.PagesFileName], sizes[checkpointfiles.PagesMetadataFileName], os.Getenv("CHECKPOINT_LOAD_MODE"))
+	if os.Getenv("CHECKPOINT_LOAD_MODE") == "capture" {
+		return
+	}
+	checkSliceAliases(b)
 	ctx = restoreContext(b, names, mounts)
 	// Tasks create their platform contexts when they are loaded.
 	sys, err := systrap.New(platform.Options{})
@@ -130,7 +133,7 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		}
 		b.ReportMetric(float64(total), "checkpoint-total-B")
 	})
-	runEncode := func(b *testing.B, framed bool) {
+	b.Run("Encode", func(b *testing.B) {
 		b.StopTimer()
 		b.ReportAllocs()
 		// checkpointNginx produced this unkeyed state file.
@@ -147,8 +150,6 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		var cpu time.Duration
 		var encoded bytes.Buffer
 		encoded.Grow(len(stateFile))
-		initialCapacity := encoded.Cap()
-		var raw countingWriter
 		for i := 0; i < b.N; i++ {
 			ctx, cleanup := withHostFDs(b, ctx, names)
 			// The memory files' pages are stored separately. Only encode the
@@ -159,71 +160,97 @@ func BenchmarkCheckpointFile(b *testing.B) {
 				b.Fatal(err)
 			}
 			encoded.Reset()
-			raw.n = 0
 			b.StartTimer()
 			cpu += cpuTime(b, func() error {
-				if !framed {
-					_, err := state.Save(ctx, &raw, k)
-					return err
-				}
 				return saveKernel(ctx, &encoded, k, metadata)
 			})
 			b.StopTimer()
 			cleanup()
-		}
-		b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
-		if !framed {
-			b.ReportMetric(float64(raw.n), "encoded-kernel-B")
-			return
 		}
 		ctx, cleanup := withHostFDs(b, ctx, names)
 		defer cleanup()
 		if _, err := loadKernel(ctx, plat, encoded.Bytes()); err != nil {
 			b.Fatalf("loading the encoded state file: %v", err)
 		}
-		reader, written, err := statefile.NewReader(io.NopCloser(bytes.NewReader(encoded.Bytes())), nil)
+		b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
+		b.ReportMetric(float64(encoded.Len()), "encoded-state-file-B")
+	})
+}
+
+// checkpointInput records one real fixture, then reuses its exact bytes and
+// host-resource names in both independently compiled benchmark processes.
+func checkpointInput(ctx context.Context, b *testing.B, machine harness.Machine) ([]byte, map[string]int64, []string, []string) {
+	path := os.Getenv("CHECKPOINT_LOAD_FIXTURE")
+	if path == "" {
+		b.Fatal("CHECKPOINT_LOAD_FIXTURE is required")
+	}
+	var input struct {
+		State  []byte
+		Sizes  map[string]int64
+		Names  []string
+		Mounts []string
+	}
+	switch os.Getenv("CHECKPOINT_LOAD_MODE") {
+	case "capture":
+		input.State, input.Sizes, input.Names, input.Mounts = checkpointNginx(ctx, b, machine)
+		data, err := json.Marshal(input)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := reader.Close(); err != nil {
+		if err := os.WriteFile(path, data, 0600); err != nil {
 			b.Fatal(err)
 		}
-		for key := range written {
-			if strings.HasPrefix(key, "_") {
-				delete(written, key)
-			}
+	case "read":
+		data, err := os.ReadFile(path)
+		if err != nil {
+			b.Fatal(err)
 		}
-		if !maps.Equal(written, metadata) {
-			b.Fatal("reloaded statefile metadata differs from the original")
+		if err := json.Unmarshal(data, &input); err != nil {
+			b.Fatal(err)
 		}
-		if got := written["compression"]; got != statefile.CompressionLevelNone.String() {
-			b.Fatalf("unexpected fixture compression %q", got)
+		if len(input.State) == 0 || int64(len(input.State)) != input.Sizes[checkpointfiles.StateFileName] || len(input.Names) == 0 || len(input.Mounts) == 0 {
+			b.Fatal("incomplete shared checkpoint input")
 		}
-		b.ReportMetric(float64(initialCapacity), "initial-capacity-B")
-		b.ReportMetric(float64(encoded.Cap()), "final-capacity-B")
-		b.ReportMetric(float64(len(written)), "metadata-keys")
-		b.ReportMetric(1, "decoded-state-files")
-		b.ReportMetric(float64(encoded.Len()), "encoded-state-file-B")
+	default:
+		b.Fatal("expected capture or read mode")
 	}
-	for pair := range 12 {
-		modes := [2]string{"Codec", "Statefile"}
-		if pair%2 != 0 {
-			modes[0], modes[1] = modes[1], modes[0]
-		}
-		for _, mode := range modes {
-			b.Run(fmt.Sprintf("Encode/pair=%02d/%s", pair, mode), func(b *testing.B) {
-				runEncode(b, mode == "Statefile")
-			})
-		}
-	}
+	return input.State, input.Sizes, input.Names, input.Mounts
 }
 
-// countingWriter is the original benchmark's unframed destination.
-type countingWriter struct{ n int64 }
-
-func (w *countingWriter) Write(p []byte) (int, error) {
-	w.n += int64(len(p))
-	return len(p), nil
+// checkSliceAliases is outside each timed child benchmark. A successful Load
+// must preserve shared backing storage as well as independent equal arrays.
+func checkSliceAliases(b *testing.B) {
+	for _, shared := range []bool{false, true} {
+		first := []uint64{1, 2, 3, 4}
+		second := []uint64{1, 2, 3, 4}
+		if shared {
+			second = first
+		}
+		input := [][]uint64{first, second}
+		var encoded bytes.Buffer
+		if _, err := state.Save(b.Context(), &encoded, &input); err != nil {
+			b.Fatal(err)
+		}
+		var output [][]uint64
+		if _, err := state.Load(b.Context(), &encoded, &output); err != nil {
+			b.Fatal(err)
+		}
+		if len(output) != 2 || len(output[0]) != 4 || len(output[1]) != 4 || cap(output[0]) != 4 || cap(output[1]) != 4 {
+			b.Fatal("slice shape changed")
+		}
+		for _, values := range output {
+			for i, value := range values {
+				if value != uint64(i+1) {
+					b.Fatal("slice payload changed")
+				}
+			}
+		}
+		output[0][0] = 99
+		if (output[1][0] == 99) != shared {
+			b.Fatalf("slice alias changed: shared=%t", shared)
+		}
+	}
+	fmt.Println("CHECKPOINT_LOAD_ALIAS_CONTROL PASS")
 }
 
 // checkpointNginx checkpoints an idle nginx container, and returns the
