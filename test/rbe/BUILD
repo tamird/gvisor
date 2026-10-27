@@ -783,6 +783,7 @@ docker_command_test(
         ":checkpointfile_pair.py",
         ":checkpointfile_pair_benchstat",
         ":checkpointfile_pair_nginx.tar",
+        "//test/benchmarks/checkpointfile/qualification:BUILD",
     ],
     docker_config = ":checkpointfile_nginx_config",
     exec_compatible_with = [
