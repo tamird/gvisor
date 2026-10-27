@@ -1018,7 +1018,8 @@ class ReapprovalReminderTest(unittest.TestCase):
         for row in fixture["rows"]:
             pr, node = row["pr"], row["node"]
             with self.subTest(number=pr["number"]):
-                plan = updater.reminder_plan(pr, node, now, "tamird", frozenset({"etienneperot", "lsfriend"}))
+                observed = datetime.fromisoformat(row.get("observedAt", fixture["cutoff"]).replace("Z", "+00:00"))
+                plan = updater.reminder_plan(pr, node, observed, "tamird", frozenset({"etienneperot", "lsfriend"}))
                 self.assertEqual(plan.get("action"), row["expectedAction"])
                 if row["expectedAction"] is None:
                     self.assertNotEqual(plan["status"], "due")
@@ -1063,6 +1064,9 @@ class ReapprovalReminderTest(unittest.TestCase):
                     "commit": {"oid": pr["head"]}, "body": ""}
         pr["feedback"]["items"].append(approval)
         pr["githubReviewDecision"] = "APPROVED"
+        # Model an exact-head closed export so subsequent author work does not
+        # invalidate an older-patch association before reaching the guard.
+        pr["imports"][0].update(sourceHead=pr["head"], matchesSourceHead=True)
         self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["action"], "restore-import-label")
         for field, value, reason in [
                 ("followup", {"actionableComment": {"head": pr["head"], "commentId": "author-task", "url": pr["url"] + "#issuecomment-1"}}, "registered-current-author-action"),
