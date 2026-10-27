@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T09:38:49+00:00",
+    "updatedAt": "2026-10-27T14:27:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7387,16 +7387,19 @@
       "title": "Current public-CI qualification",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/cb548161f537465fda2576793e6d6cea59a32260",
-      "status": "Mixed unit run failed; 664 of 668 test targets have recorded attempts",
-      "summary": "The AMD64/ARM64 unit run on d943b4a177 selected 668 test targets. At its deadline, 656 had recorded a test attempt: 174,566 cases passed, 52 failed and 69 skipped. Five previously unattempted targets then ran unchanged on native workers; all 34 cases passed. The verified report was available 14.6 seconds after execution. A second run reached the root build test and both AMD64 NVIDIA tests before its deadline. Four targets still lack an attempt on this source: the two ARM64 NVIDIA tests and the two cgroup variants.\n\nRelease qualification is separate. On cb548161f5, the mixed release smoke ran 32 cases successfully and skipped one bwrap case. AMD64 ran in Firecracker and ARM64 under QEMU. The optimized releases have also passed CLI checks on both native architectures.",
-      "updatedAt": "2026-10-27T09:38:49+00:00",
+      "status": "Mixed unit run failed; 666 of 668 test targets have recorded attempts",
+      "summary": "At its deadline the AMD64/ARM64 unit run at d943b4a177 had attempted 656 of 668 targets: 174,566 cases passed, 52 failed and 69 skipped. Five more targets passed all 34 cases on the same source. The root build test and both AMD64 NVIDIA tests ran in a second job. A native ARM64 run executed both NVIDIA tests: 60 cases passed, and nine skipped for unavailable driver sources. Only the AMD64 and ARM64 cgroup tests still have no attempt at d943b4a177. Both passed on the corrected source in #16496.\n\nOf 357 analyzer-dependent targets, 356 built; the remaining cgroup target required local compilation. These builds do not count as test attempts. The ARM64 SDK and docprocessor guest run separately stopped before any of its 58 cases because QEMU exhausted temporary disk.\n\nRelease qualification is separate. On cb548161f5, the mixed release smoke ran 32 cases successfully and skipped one bwrap case. AMD64 ran in Firecracker and ARM64 under QEMU. The optimized releases have also passed CLI checks on both native architectures.",
+      "updatedAt": "2026-10-27T14:27:09+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "d943b4a1776c8c2281cff19eed2ff02a2a892619",
-        "observedAt": "2026-10-27T09:38:49+00:00",
+        "observedAt": "2026-10-27T14:27:09+00:00",
         "disposition": "Mixed unit results are incomplete; no contributor action required",
-        "nextAction": "Finish the two ARM64 NVIDIA tests, distinguish the corrected cgroup results from the baseline, and check the 357 builds affected by two killed analyzers. The ARM64 SDK guest needs a QEMU build that can extract its sysroot without filling the worker\u2019s temporary directory.",
+        "nextAction": "Check the QEMU extraction with an explicit disk request before retrying the ARM64 SDK and docprocessor guest tests. Qualify the coordinator and sentry coverage builds, and record the baseline cgroup gap separately from the corrected result.",
         "evidence": [
+          "https://app.buildbuddy.io/invocation/8dd0fedd-1622-46af-b721-75831f948b57",
+          "https://app.buildbuddy.io/invocation/b76d82d8-8231-463c-8e98-71a4c8919ed3",
+          "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16",
           "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03",
           "https://app.buildbuddy.io/invocation/9cf85ae9-f6cb-49d5-8f4a-d8eba5268b74",
           "https://app.buildbuddy.io/invocation/17f4791a-1f6f-4ade-b8cf-40df45473096",
@@ -7468,6 +7471,18 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Native ARM64 NVIDIA: 60 cases passed, nine skipped for unavailable sources",
+          "url": "https://app.buildbuddy.io/invocation/8dd0fedd-1622-46af-b721-75831f948b57"
+        },
+        {
+          "label": "356 of 357 analyzer-dependent targets built; cgroup required local compilation",
+          "url": "https://app.buildbuddy.io/invocation/b76d82d8-8231-463c-8e98-71a4c8919ed3"
+        },
+        {
+          "label": "Cgroup tests passed on both architectures with the corrected source",
+          "url": "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
+        },
         {
           "label": "Mixed unit baseline: 668 selected, 656 attempted before the deadline",
           "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
