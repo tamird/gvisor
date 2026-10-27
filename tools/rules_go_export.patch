@@ -26,8 +26,8 @@ diff --git a/go/private/rules/library.bzl b/go/private/rules/library.bzl
 index 68a1d3b9..53c38cb2 100644
 --- a/go/private/rules/library.bzl
 +++ b/go/private/rules/library.bzl
-@@ -64,6 +64,8 @@ def _go_library_impl(ctx):
-             extensions = ["go"],
+@@ -71,6 +71,8 @@ def _go_library_impl(ctx):
+             **baseline_coverage_kwargs(go, ctx, ctx.files.srcs)
          ),
          OutputGroupInfo(
 +            export_files = archive.export_files,
