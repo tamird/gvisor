@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T20:03:08.106083+00:00",
+    "updatedAt": "2026-10-27T20:11:18.873559+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28058,9 +28058,9 @@
       "title": "Check licenses with the native Bazel module graph",
       "url": "https://github.com/tamird/gvisor/compare/845a4b61a9ba1dbd1dfc2594d1c67e3d82d9b826...08de865d4960ef353c1b1485230532aac3054175",
       "group": "release",
-      "status": "Contributor review",
-      "updatedAt": "2026-10-27T20:03:08.106083+00:00",
-      "summary": "Use the native Bazel module graph for license checking without requiring the Make/Docker wrapper. Both qualified paths checked all 201 dependencies and produced the same module graph and 163 repository definitions. The direct path invokes neither Make nor Docker. The CLI adapter preserves ordinary contributor behavior; this is not a full Docker runtime qualification. The change is independent of #15146.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-27T20:11:18.873559+00:00",
+      "summary": "The tested native Bazel module-graph change is being revised to remove its shell adapter while preserving the original Make arguments. The prior two qualified paths checked all 201 dependencies and the same graph and 163 repository definitions; that evidence remains attached to 08de865d49 and does not qualify the upcoming revision. Contributor review is pending that revision and validation.",
       "evidence": [
         {
           "label": "Exact reviewed proposal",
@@ -28075,11 +28075,11 @@
           "url": "https://app.buildbuddy.io/invocation/a0821749-32c3-49d8-b354-e40729ad4166"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "08de865d4960ef353c1b1485230532aac3054175",
-        "url": "https://github.com/tamird/gvisor/commit/08de865d4960ef353c1b1485230532aac3054175",
-        "summary": "Use the native Bazel module graph for license checking without requiring the Make/Docker wrapper. Both qualified paths checked all 201 dependencies and produced the same module graph and 163 repository definitions. The direct path invokes neither Make nor Docker. The CLI adapter preserves ordinary contributor behavior; this is not a full Docker runtime qualification. The change is independent of #15146."
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "08de865d4960ef353c1b1485230532aac3054175",
+        "observedAt": "2026-10-27T20:11:18.873559+00:00",
+        "nextAction": "Remove the shell adapter while preserving the original Make arguments, then qualify the revised head before contributor review."
       }
     }
   ],
