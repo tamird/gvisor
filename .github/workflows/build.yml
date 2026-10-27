@@ -34,6 +34,9 @@ jobs:
     if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers-podman' && (inputs.profile == 'podman-host' || inputs.profile == 'podman-host-runtime')
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 75
+    permissions:
+      contents: read
+      actions: read
     env:
       PRODUCT: 386044d6ad6446430b65e92269f5dc40f9b67737
       LOCK: ca984532b395b146a8d66b6d8f79d243665ac7ed126f93f7fca14b08c0007ea8
@@ -54,10 +57,19 @@ jobs:
           ref: ${{ env.PRODUCT }}
           path: source
           persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: inputs.profile == 'podman-host-runtime' && inputs.archive_run != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.archive_run }}
+          name: native-arm64-stock-podman-reports
+          path: ${{ runner.temp }}/podman-prior
       - name: Build and execute the source-bound Podman owner on the stock host
         if: inputs.profile == 'podman-host-runtime'
         working-directory: source
         shell: bash
+        env:
+          PRIOR_RUN: ${{ inputs.archive_run }}
         run: |
           set -euo pipefail
           [[ $(id -u) != 0 && $(uname -m) == aarch64 ]]
@@ -70,6 +82,21 @@ jobs:
           mkdir "$results"
           wrapper="$GITHUB_WORKSPACE/.github/native-podman-fixture.sh --host-runtime"
           test_options=()
+          if [[ -n $PRIOR_RUN ]]; then
+            [[ $PRIOR_RUN == 40428705894 && $DIRECTFS == false ]]
+            prior="$RUNNER_TEMP/podman-prior"
+            printf '%s  %s\n' 548dda7005589bd36b9284d86ce5553c9df682f91df78ca9e4543161a540db35 "$prior/native-inputs.tar.gz" | sha256sum -c -
+            mkdir test/podman/reused
+            tar -C test/podman/reused -xzf "$prior/native-inputs.tar.gz"
+            (cd test/podman/reused && sha256sum -c "$prior/input-sha256.txt")
+            test "$(cat test/podman/reused/source.txt)" = "$PRODUCT"
+            cmp test/podman/reused/smoke.sh test/podman/smoke.sh
+            cmp test/podman/reused/MODULE.bazel.lock MODULE.bazel.lock
+            cp "$GITHUB_WORKSPACE/.github/native-podman-reuse.BUILD" test/podman/BUILD
+            cp "$prior/input-sha256.txt" "$results/reused-input-sha256.txt"
+            printf '%s\n' "$PRIOR_RUN" > "$results/reused-input-run.txt"
+            test_options+=(--test_env=PODMAN_SANDBOX_TMPDIR_MODE=dedicated)
+          fi
           case "$DIRECTFS" in
             both) ;;
             false) test_options+=(--test_env=RUNTIME_ARGS=--directfs=false) ;;
@@ -86,11 +113,16 @@ jobs:
           finished=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
           # Record the native result before collection can fail independently.
           jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg finished "$finished" \
-            --arg selection "$DIRECTFS" --argjson bazel "$status" \
-            '{source:$source,owner:$owner,selection:$selection,bazel_exit:$bazel,execution_finished:$finished}' \
+            --arg selection "$DIRECTFS" --arg reused "$PRIOR_RUN" --argjson bazel "$status" \
+            '{source:$source,owner:$owner,selection:$selection,reused_input_run:$reused,bazel_exit:$bazel,execution_finished:$finished}' \
             | tee "$results/native-result.json"
           printf '%s  MODULE.bazel.lock\n' "$LOCK" | sha256sum -c -
-          test -z "$(git status --porcelain --untracked-files=no)"
+          if [[ -n $PRIOR_RUN ]]; then
+            git diff --exit-code -- . ':!test/podman/BUILD'
+            cmp "$GITHUB_WORKSPACE/.github/native-podman-reuse.BUILD" test/podman/BUILD
+          else
+            test -z "$(git status --porcelain --untracked-files=no)"
+          fi
           logs=bazel-testlogs/test/podman/podman_test_arm64
           for report in test.log test.xml; do
             if [[ -f "$logs/$report" ]]; then cp "$logs/$report" "$results/$report"; fi
@@ -109,10 +141,10 @@ jobs:
             if [[ $(grep -Fxc 'PASS: rootless Podman directfs=true' "$results/test.log") == 1 ]]; then direct=true; fi
             if [[ $DIRECTFS == false && $(grep -Fxc 'PASS: rootless Podman directfs=selected' "$results/test.log") == 1 ]]; then gofer=true; fi
           fi
-          jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg finished "$finished" --arg selection "$DIRECTFS" \
+          jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg finished "$finished" --arg selection "$DIRECTFS" --arg reused "$PRIOR_RUN" \
             --arg alpinesha "$PODMAN_ALPINE_SHA256" --argjson bazel "$status" --argjson native "$native" \
             --argjson gofer "$gofer" --argjson direct "$direct" \
-            '{source:$source,owner:$owner,environment:"stock-host-podman-4.9.3",selection:$selection,alpine_sha256:$alpinesha,bazel_exit:$bazel,native_host:$native,directfs_false:$gofer,directfs_true:(if $selection == "both" then $direct else null end),execution_finished:$finished}' \
+            '{source:$source,owner:$owner,environment:"stock-host-podman-4.9.3",selection:$selection,reused_input_run:$reused,alpine_sha256:$alpinesha,bazel_exit:$bazel,native_host:$native,directfs_false:$gofer,directfs_true:(if $selection == "both" then $direct else null end),execution_finished:$finished}' \
             | tee "$results/verdict.json"
           [[ $status == 0 && $native == true && $gofer == true && ( $DIRECTFS == false || $direct == true ) ]]
       - name: Retain source-built native inputs for focused diagnosis

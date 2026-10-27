@@ -135,6 +135,26 @@ if [[ $execution == host ]]; then
     "$(uname -m)" "$(id -u)" "$(id -g)" "$(stat -fc %T /sys/fs/cgroup)"
   printf 'HOST_PODMAN_RUNTIME_ARGS=%s\n' "${RUNTIME_ARGS:-}"
   sha256sum "$(command -v podman)"
+  if [[ ${PODMAN_SANDBOX_TMPDIR_MODE:-} == dedicated ]]; then
+    # Only the sandbox's empty mountpoint must be traversable by its mapped
+    # nobody identity. Keep the smoke test's private state and TMPDIR intact.
+    sandbox_tmp=$(mktemp -d /tmp/gvisor-podman-sandbox.XXXXXX)
+    adapter_dir=$(mktemp -d "${TEST_TMPDIR:?}/podman-runtime.XXXXXX")
+    cleanup_host_probe() {
+      local status=$?
+      trap - EXIT
+      rm -rf -- "$adapter_dir" || { if (( status == 0 )); then status=1; fi; }
+      rmdir -- "$sandbox_tmp" || { if (( status == 0 )); then status=1; fi; }
+      exit "$status"
+    }
+    trap cleanup_host_probe EXIT
+    chmod 0711 "$sandbox_tmp"
+    stat -Lc 'HOST_PODMAN_SANDBOX_TMPDIR=%n mode=%a uid=%u gid=%g' "$sandbox_tmp"
+    printf '#!/bin/bash\nexport TMPDIR=%q\nexec %q "$@"\n' "$sandbox_tmp" "$(realpath "$2")" > "$adapter_dir/runsc"
+    chmod 0700 "$adapter_dir/runsc"
+    "$1" "$adapter_dir/runsc" "$3" "$4"
+    exit "$?"
+  fi
   exec "$@"
 fi
 
