@@ -1,7 +1,7 @@
 """Collector history retention and reopening through the real main path."""
 
 import copy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import importlib
 import io
 import json
@@ -34,6 +34,7 @@ def raw_pr(number: int, state: str = "OPEN", *, author: str = "tamird", head: in
         "reviewDecision": None, "mergeable": "MERGEABLE", "mergeStateStatus": "CLEAN",
         "commits": {"nodes": [{"commit": {"oid": oid, "committedDate": OLD, "statusCheckRollup": None}}]},
         "labels": {"nodes": [], "pageInfo": {"hasNextPage": False}},
+        "labelHistory": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
         "comments": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
         "reviews": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
         "reviewDismissals": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
@@ -1010,6 +1011,112 @@ class ReapprovalReminderTest(unittest.TestCase):
 
     def plan(self, now: datetime | None = None) -> dict:
         return updater.reminder_plan(retained(self.raw), self.node, now or self.now, "tamird", self.maintainers)
+
+    def test_import_trigger_alarm_replays_three_actual_missing_labels(self) -> None:
+        fixture = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())
+        now = datetime.fromisoformat(fixture["cutoff"].replace("Z", "+00:00"))
+        for row in fixture["rows"]:
+            pr, node = row["pr"], row["node"]
+            with self.subTest(number=pr["number"]):
+                plan = updater.reminder_plan(pr, node, now, "tamird", frozenset({"etienneperot", "lsfriend"}))
+                self.assertEqual(plan.get("action"), row["expectedAction"])
+                if row["expectedAction"] is None:
+                    self.assertNotEqual(plan["status"], "due")
+                    self.assertEqual(plan["publicImportDisposition"]["state"],
+                                     "open" if pr["number"] == 16382 else "conflicting")
+                    continue
+                self.assertEqual(row["previousPlan"], {"status": "skipped", "reason": "reviewed-patch-preserving-rebase"})
+                self.assertEqual((plan["status"], plan["approvers"]), ("due", ["EtiennePerot"]))
+                self.assertIn("restore `ready to pull`", plan["body"])
+                self.assertNotIn("please reapprove", plan["body"])
+                self.assertEqual(plan["publicImportDisposition"]["trigger"]["state"], "missing")
+                with mock.patch.dict(pr, {"labels": ["ready to pull"]}):
+                    current = updater.reminder_plan(pr, node, now, "tamird", self.maintainers)
+                    self.assertEqual(current["reason"], "import-trigger-present-awaiting-replacement")
+                    self.assertIsNone(current["publicImportDisposition"]["action"])
+                for change in ({"labelsComplete": False}, {"labelHistory": {"complete": False, "items": []}},
+                               {"importsComplete": False}, {"mergeable": "CONFLICTING"},
+                               {"branchHead": "f" * 40}, {"revisionChanged": True}):
+                    with self.subTest(change=change), mock.patch.dict(pr, change):
+                        self.assertNotEqual(updater.reminder_plan(pr, node, now, "tamird", self.maintainers)["status"], "due")
+                with mock.patch.dict(pr, {"labelHistory": {"complete": True, "items": []}}):
+                    self.assertNotEqual(updater.reminder_plan(pr, node, now, "tamird", self.maintainers)["status"], "due")
+                comment = {"kind": "comment", "body": updater.reminder_plan(pr, node, now, "tamird", self.maintainers)["body"],
+                           "author": {"login": "tamird"}, "createdAt": now.isoformat()}
+                pr["feedback"]["items"].append(comment)
+                try:
+                    for hours, expected in [(2.99, "skipped"), (3, "due")]:
+                        result = updater.reminder_plan(pr, node, now + timedelta(hours=hours), "tamird", self.maintainers)
+                        self.assertEqual(result["status"], expected)
+                    result = updater.reminder_plan(pr, node, datetime(2026, 10, 31, 19, 50, tzinfo=timezone.utc), "tamird", self.maintainers)
+                    self.assertEqual(result["reason"], "outside-pacific-business-hours")
+                finally:
+                    pr["feedback"]["items"].pop()
+
+    def test_label_recovery_respects_current_approval_author_work_and_cross_action_cooldown(self) -> None:
+        row = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())["rows"][0]
+        pr, node = row["pr"], row["node"]
+        now = datetime(2026, 10, 27, 19, 50, tzinfo=timezone.utc)
+        maintainers = frozenset({"etienneperot"})
+        approval = {**next(item for item in pr["feedback"]["items"] if item["id"] == node["approvedPatch"]["reviewId"]),
+                    "id": "new-approval", "submittedAt": "2026-10-27T19:49:00Z", "updatedAt": "2026-10-27T19:49:00Z",
+                    "commit": {"oid": pr["head"]}, "body": ""}
+        pr["feedback"]["items"].append(approval)
+        pr["githubReviewDecision"] = "APPROVED"
+        self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["action"], "restore-import-label")
+        for field, value, reason in [
+                ("followup", {"actionableComment": {"head": pr["head"], "commentId": "author-task", "url": pr["url"] + "#issuecomment-1"}}, "registered-current-author-action"),
+                ("releaseWait", {"head": pr["head"]}, "registered-current-release-wait")]:
+            pr["feedback"]["items"].append({"kind": "comment", "id": "author-task", "url": pr["url"] + "#issuecomment-1",
+                "body": "Please fix the source", "author": {"login": "maintainer"}, "createdAt": OLD, "updatedAt": OLD})
+            with mock.patch.dict(node, {field: value}):
+                self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["reason"], reason)
+            pr["feedback"]["items"].pop()
+        with mock.patch.dict(pr["threads"], {"unresolved": 1}):
+            self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["reason"], "unresolved-or-incomplete-author-threads")
+        rebase = next(item for item in pr["feedback"]["items"] if item.get("body") == "[🤖] Needs rebase.")
+        with mock.patch.dict(rebase, {"updatedAt": now.isoformat()}):
+            self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["reason"],
+                             "rebase-request-not-yet-followed-by-source-update")
+        pr["feedback"]["items"].append({"kind": "comment", "body": "<!-- codex-reapproval-reminder:v1 head=older -->",
+            "author": {"login": "tamird"}, "createdAt": (now - timedelta(hours=2, minutes=59)).isoformat()})
+        self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["reason"], "reminded-within-three-hours")
+
+    def test_amendment_probe_cannot_post_new_label_recovery_with_stale_exports(self) -> None:
+        self.raw["reviewDecision"] = "APPROVED"
+        self.raw["reviews"]["nodes"] = [{**self.review, "commit": {"oid": f"{8:040x}"}, "submittedAt": LATER}]
+        self.raw["labelHistory"]["nodes"] = [
+            {"__typename": kind, "id": kind, "createdAt": stamp, "actor": {"login": "maintainer"},
+             "label": {"name": "ready to pull"}}
+            for kind, stamp in [("LabeledEvent", OLD), ("UnlabeledEvent", LATER)]]
+        source = retained(self.raw, [linked(imported(108, 8, "CLOSED"), 8)])
+        source["labels"] = ["ready to pull"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "github-status.json").write_text(json.dumps({"checkedAt": self.now.isoformat(), "prs": [source]}))
+            registry = {"meta": {"repo": "google/gvisor", "owner": "tamird"}, "nodes": [self.node]}
+            with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
+                    mock.patch.object(updater, "fetch_maintainers", return_value=self.maintainers), \
+                    mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}) as fetch, \
+                    mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "tamird\n", "")) as calls, \
+                    mock.patch("sys.stdout", new_callable=io.StringIO) as output:
+                updater.reapproval_reminders(post=True)
+            self.assertEqual(json.loads(output.getvalue().splitlines()[-1])["reason"],
+                             "import-trigger-changed-needs-fresh-lineage")
+            fetch.assert_called_once_with([7], timeline=False, repo="google/gvisor", team_details=False)
+            self.assertEqual(calls.call_args.args[0], ["gh", "api", "user", "--jq", ".login"])
+            self.assertEqual(calls.call_count, 1)
+
+    def test_reminder_export_refresh_discovers_exact_successor(self) -> None:
+        old = linked(imported(107, 7, "CLOSED"), 7)
+        source = retained(self.raw, [old])
+        successor = imported(108, 8)
+        successor["body"] = successor["body"].replace("/pull/8 from tamird:topic-8", "/pull/7 from tamird:topic-7")
+        self.raw["timelineItems"]["nodes"] = [{"source": successor}]
+        with mock.patch.object(updater, "fetch_numbers", return_value={107: imported(107, 7, "CLOSED"), 108: successor}) as fetch:
+            result = updater.refresh_reminder_imports(self.raw, source)
+        self.assertEqual([(item["number"], item["matchesSourceHead"]) for item in result], [(107, False), (108, True)])
+        fetch.assert_called_once_with([107, 108], timeline=False, repo="google/gvisor", team_details=False)
 
     def test_canonical_roster_supplements_repository_association(self) -> None:
         for login, association in [("nybidari", "CONTRIBUTOR"), ("aaltinaydev", "NONE")]:

@@ -304,6 +304,27 @@ def import_lineage(pr: dict, patch: dict | None = None) -> list[dict]:
     return [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
 
 
+def import_trigger(pr: dict) -> dict:
+    """Keep review approval separate from the label that starts Copybara."""
+    result = {"label": "ready to pull", "state": "unknown"}
+    if pr.get("labelsComplete") is not True:
+        return result
+    if result["label"] in pr.get("labels", []):
+        return {**result, "state": "present"}
+    history = pr.get("labelHistory", {})
+    if history.get("complete") is not True:
+        return result
+    events = sorted((item for item in history.get("items", [])
+                     if (item.get("label") or {}).get("name") == result["label"]),
+                    key=lambda item: item["createdAt"])
+    if (not events or events[-1].get("__typename") != "UnlabeledEvent"
+            or not any(item.get("__typename") == "LabeledEvent" for item in events[:-1])):
+        return result
+    removed = events[-1]
+    return {**result, "state": "missing", "removedAt": removed["createdAt"],
+            "actor": (removed.get("actor") or {}).get("login"), "eventId": removed["id"]}
+
+
 def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict:
     """Share public export progress separately from permission to post reminders."""
     imports = import_lineage(pr, patch)
@@ -312,6 +333,8 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     scope = "exact" if imports and imports[0]["sourceHead"] == pr["head"] else "equivalent" if imports else "none"
     binding = {"sourceHead": pr["head"], "approvedHead": patch["approvedHead"] if accepted else None,
                "complete": pr.get("importsComplete") is True,
+               "labels": sorted(pr.get("labels", [])), "labelsComplete": pr.get("labelsComplete") is True,
+               "labelHistory": pr.get("labelHistory"),
                "imports": [{**{key: item.get(key) for key in ("number", "head", "sourceHead", "status", "mergeable")},
                             "conflicting": item.get("mergeable") == "CONFLICTING" or bool(conflict_qualifier(item))}
                            for item in imports]}
@@ -346,7 +369,15 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
         "absent": "No matching public export was found in the complete lookup.",
         "unknown": "Public export inventory is incomplete; refresh before deciding.",
     }[state]
-    return {"binding": binding, "scope": scope, "state": state, "action": action, "description": description}
+    trigger = import_trigger(pr)
+    if state == "closed" and trigger["state"] == "missing":
+        description = ("The earlier export closed and the previously applied ready to pull label is missing. "
+                       "Restore the import trigger; patch approval and the label are separate.")
+    elif state == "closed" and trigger["state"] == "present":
+        description = "The ready to pull label is present; wait for Copybara to create a replacement export."
+        action = None
+    return {"binding": binding, "scope": scope, "state": state, "action": action,
+            "trigger": trigger, "description": description}
 
 
 def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict[str, StateEvidence]:

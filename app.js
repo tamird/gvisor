@@ -385,7 +385,8 @@ function publicImportDisposition(node) {
   const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);
   if (!record) return null; // Older paired snapshots use the same direct lineage below.
   const binding = { sourceHead: pr.head, approvedHead: patch?.approvedHead ?? null,
-    complete: pr.importsComplete === true, imports: importLineage(node).map(item => ({
+    complete: pr.importsComplete === true, labels: [...(pr.labels || [])].sort(), labelsComplete: pr.labelsComplete === true,
+    labelHistory: pr.labelHistory ?? null, imports: importLineage(node).map(item => ({
       number: item.number, head: item.head, sourceHead: item.sourceHead, status: item.status,
       mergeable: item.mergeable ?? null, conflicting: !!conflictRecord(item),
     })), eligible: usesImports(pr) && pr.status === "open" && !pr.revisionChanged
@@ -519,7 +520,11 @@ function attentionReasons(node, owner) {
   // Closing the only export is independent of its retained CI failure. Keep
   // both actions visible; skipping another approval request is not all-clear.
   if (importAction === "maintainer-reimport")
-    add("maintainer-reimport", `Import ${lineage.map(item => "#" + item.number).join(", ")} closed without merging. No matching public export is open.${acceptedPatch ? " The current source preserves the approved patch; another review is not required." : ""} Retained CI evidence remains separate.`);
+    add("maintainer-reimport", `Import ${lineage.map(item => "#" + item.number).join(", ")} closed without merging. No matching public export is open. ${importDisposition?.trigger?.state === "missing"
+      ? `The ready to pull label was removed at ${importDisposition.trigger.removedAt}${importDisposition.trigger.actor ? ` by ${importDisposition.trigger.actor}` : ""}. A qualified approving maintainer needs to restore that label to restart import; the periodic alarm checks this independently of patch approval.`
+      : "A maintainer needs to recover the import; the closure's cause is not established."} Retained CI evidence remains separate.`);
+  if (importDisposition?.binding.eligible && importDisposition.state === "closed" && importDisposition.trigger?.state === "present")
+    add("maintainer-unknown", "The ready to pull label is present again. Waiting for Copybara to create a replacement export; no label-restoration reminder is due.", "Relabeled; waiting for replacement export");
   if (importAction === "maintainer-import-landed")
     add("maintainer-import-landed", `Import ${lineage.filter(item => item.status === "merged").map(item => "#" + item.number).join(", ")} merged${acceptedPatch && !current.length ? " with the verified equivalent pre-rebase patch" : ""}; the source PR remains open. Verify the landed change and reconcile the source PR; another import or fresh approval is not indicated.`);
   const followupBlocked = reasons.some(item => item.owner === "agent" || ["maintainer-triaged", "maintainer-ci-infrastructure", "maintainer-import-refresh"].includes(item.id));

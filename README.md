@@ -162,7 +162,14 @@ successors take precedence over older exports. The site and periodic reminder
 report use this same decision: a skipped review reminder does not mean an
 export is current. Conflicted earlier exports need refresh; closed, unmerged
 exports need re-import, while their unresolved public CI evidence stays visible.
-`publicImportHandoff` is diagnostic only and does not authorize a public comment.
+`publicImportHandoff` is diagnostic only. The reminder planner separately
+recognizes a previously applied `ready to pull` label that is now missing:
+complete label history, a qualified human approval of the current or verified
+equivalent patch, closed exports, and no live successor are required. It asks
+the approving maintainer to restore the import trigger, not to repeat code
+review. Present labels, current successors, source conflicts and incomplete
+inventories suppress this reminder. Before posting it refreshes both label
+history and export lineage; the same per-PR cooldown covers both reminder kinds.
 
 Fresh-head approval requires a still-effective review of the exact head,
 submitted no earlier than its commit time and any observed force-push introducing
@@ -221,7 +228,7 @@ topic patches and preserve changed bytes, whitespace, modes and paths; a
 different commit SHA or patch ID does not establish an amendment. Verify the
 single-commit shape before using parent-to-head patches. The same reviewed
 evidence with `kind: patch-preserving-rebase` excludes a proven equivalent
-rebase only from this alarm. It does not restore a dismissed approval or remove
+rebase only from an amendment-review alarm, not from import-trigger recovery. It does not restore a dismissed approval or remove
 an explicit maintainer re-review request. Unknown changes are reported as `needs-evidence` for
 the delivery owner to reconcile, never guessed from stale approval alone.
 
@@ -231,7 +238,10 @@ the configured owner credential and refreshes each candidate's head, review
 history and comments immediately before posting. The comment links the exact
 old and amended commits and retains delegated attribution. Its hidden marker
 and GitHub creation time enforce three full hours between reminders, including
-across head changes; no separate reminder database is kept. Mutations are never
+across head changes and reminder purposes; no separate reminder database is kept.
+Posting is limited to weekdays, 09:00–17:00 America/Los_Angeles with DST.
+The ten-minute Actions cron is best-effort scheduling, not a guaranteed
+execution interval; a missed runner slot does not reset the cooldown. Mutations are never
 automatically retried after an ambiguous response. GitHub has no atomic
 expected-head condition for issue comments, so the post-read reports any
 observed head or closure race explicitly.

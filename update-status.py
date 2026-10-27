@@ -45,6 +45,13 @@ headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
   nodes { ... on HeadRefForcePushedEvent { createdAt afterCommit { oid } } }
 }
 labels(first:100) { nodes { name } pageInfo { hasNextPage } }
+labelHistory:timelineItems(last:100,itemTypes:[LABELED_EVENT,UNLABELED_EVENT]) {
+  pageInfo { hasPreviousPage }
+  nodes { __typename
+    ... on LabeledEvent { id createdAt actor { login __typename } label { name } }
+    ... on UnlabeledEvent { id createdAt actor { login __typename } label { name } }
+  }
+}
 comments(last:100) { pageInfo { hasPreviousPage } nodes {
   id url body createdAt updatedAt author { login __typename }
 } }
@@ -364,6 +371,8 @@ def normalize(pr: dict) -> dict:
         "mergeState": pr["mergeStateStatus"],
         "labels": [label["name"] for label in pr["labels"]["nodes"]],
         "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
+        "labelHistory": {"complete": not pr.get("labelHistory", {}).get("pageInfo", {}).get("hasPreviousPage", True),
+                         "items": pr.get("labelHistory", {}).get("nodes", [])},
         "threads": {"unresolved": sum(not thread["isResolved"] for thread in threads["nodes"]),
                     "total": threads["totalCount"], "complete": not threads["pageInfo"]["hasNextPage"]},
         "feedback": feedback(pr),
@@ -724,6 +733,26 @@ def fetch_maintainers() -> frozenset[str]:
     return maintainers
 
 
+def refresh_reminder_imports(raw: dict, previous: dict) -> list[dict]:
+    """Recheck the source timeline and its exact exports before restoring a trigger."""
+    matches = {item["number"]: item["sourceHead"] for item in previous.get("imports", [])}
+    for event in raw["timelineItems"]["nodes"]:
+        candidate = event.get("source") or {}
+        if head := import_source(candidate, raw["url"], (raw["headRepository"] or {}).get("owner", {}).get("login"),
+                                 raw["headRefName"], previous["repo"]):
+            matches[candidate["number"]] = head
+    exports = fetch_numbers(sorted(matches), timeline=False, repo=previous["repo"], team_details=False)
+    imports = []
+    for number, head in matches.items():
+        actual = import_source(exports[number], raw["url"], previous.get("headOwner"), raw["headRefName"], previous["repo"])
+        if actual != head:
+            raise RuntimeError(f"Import #{number} changed source during reminder verification")
+        item = normalize(exports[number])
+        item.update(sourceHead=head, matchesSourceHead=head == raw["headRefOid"], relationshipEvidence=item["url"])
+        imports.append(item)
+    return imports
+
+
 def reapproval_reminders(post: bool = False) -> None:
     """Use the existing snapshot as an index, then refresh before each write."""
     snapshot = json.loads((ROOT / "github-status.json").read_text())
@@ -744,24 +773,31 @@ def reapproval_reminders(post: bool = False) -> None:
         if disposition["action"]:
             print(json.dumps({"publicImportHandoff": {"number": pr["number"], "url": pr["url"],
                 "snapshotAt": snapshot["checkedAt"], **disposition, "posting": "Diagnostic only; no comment is authorized by this handoff."}}))
-        # Older snapshots lack author association. Refresh only recorded
-        # amendments; missing proof is visible without spending write budget.
-        if node.get("reapproval", {}).get("head") != pr["head"]:
+        initial = reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers)
+        restore_trigger = initial.get("action") == "restore-import-label"
+        # A label-recovery candidate needs a fresh timeline/export lookup as
+        # well as fresh labels. A new successor suppresses the public reminder.
+        if node.get("reapproval", {}).get("head") != pr["head"] and not restore_trigger:
             print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers)))
             continue
-        raw = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"], team_details=False)[pr["number"]]
+        raw = fetch_numbers([pr["number"]], timeline=restore_trigger, repo=pr["repo"], team_details=False)[pr["number"]]
         recheck_unknown_mergeability([raw], repo=pr["repo"])
         current = normalize(raw)
         current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
         if current["head"] == pr["head"]:
-            # This lightweight write guard does not collect exports. Keep the
-            # completed snapshot's lineage, with its own observation time.
-            current["imports"] = pr["imports"]
-            current["importsComplete"] = pr.get("importsComplete", False)
+            # Amendment-only probes retain the bound snapshot. Restoring a
+            # trigger additionally requires a fresh complete export lookup.
+            current["imports"] = refresh_reminder_imports(raw, pr) if restore_trigger else pr["imports"]
+            current["importsComplete"] = (not raw["timelineItems"]["pageInfo"]["hasPreviousPage"]
+                                          if restore_trigger else pr.get("importsComplete", False))
         plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER, maintainers)
         plan["importSnapshotAt"] = snapshot["checkedAt"] if current["head"] == pr["head"] else None
         if current["head"] != pr["head"]:
             plan.update(status="skipped", reason="head-changed-since-snapshot")
+        elif plan.get("action") == "restore-import-label" and not restore_trigger:
+            # An amendment probe did not refresh export lineage. A concurrent
+            # label loss must wait for that lookup, even if approval is fresh.
+            plan.update(status="deferred", reason="import-trigger-changed-needs-fresh-lineage")
         if not post or plan["status"] != "due":
             print(json.dumps(plan))
             continue

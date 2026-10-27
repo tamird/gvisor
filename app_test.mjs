@@ -62,6 +62,32 @@ print(json.dumps(rows))`;
   console.log(JSON.stringify({ publicImportAudit: { openPRs: rows.length, actions } }));
 });
 
+test('missing import labels remain actionable despite equivalent approval, then clear on relabel', () => {
+  const context = client();
+  const fixture = JSON.parse(readFileSync(new URL('./import-trigger-fixtures.json', import.meta.url)));
+  for (const row of fixture.rows.filter(row => row.expectedAction)) {
+    context.nodeInput = { ...row.node, github: row.pr };
+    // Obtain the same source-owned decision used by the alarm, not a test double.
+    const script = `import json, sys
+from work_states import public_import_disposition
+row = json.load(sys.stdin)
+print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedPatch'))))`;
+    row.pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', script], {
+      cwd: new URL('.', import.meta.url), input: JSON.stringify(row), encoding: 'utf8',
+    }));
+    const reasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+    assert.match(reasons.find(item => item.id === 'maintainer-reimport').detail, /restore that label/);
+    row.pr.labels = ['ready to pull'];
+    assert.equal(vm.runInContext('publicImportDisposition(nodeInput)', context), null);
+    row.pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', script], {
+      cwd: new URL('.', import.meta.url), input: JSON.stringify(row), encoding: 'utf8',
+    }));
+    const relabeled = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+    assert.equal(relabeled.some(item => item.id === 'maintainer-reimport'), false);
+    assert.match(relabeled.find(item => item.id === 'maintainer-unknown').detail, /Waiting for Copybara/);
+  }
+});
+
 test('registry rejects workstreams that cannot be selected in the filter', () => {
   const context = client();
   const node = { id: 'branch:task', type: 'branch', group: 'runtime' };

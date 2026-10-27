@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
-from work_states import approved_patch, landed_patch, public_import_disposition
+from work_states import approved_patch, effective_approval, landed_patch, public_import_disposition
 
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
@@ -32,9 +32,32 @@ def maintainer_logins(text: str) -> frozenset[str]:
     return frozenset(logins)
 
 
+def import_author_block(pr: dict, node: dict) -> str | None:
+    """Leave concrete current-source work with the author before import recovery."""
+    if pr.get("threads", {}).get("complete") is not True or pr["threads"].get("unresolved"):
+        return "unresolved-or-incomplete-author-threads"
+    comment = node.get("followup", {}).get("actionableComment", {})
+    if (comment.get("head") == pr["head"] and any(item.get("kind") == "comment"
+            and item.get("id") == comment.get("commentId") and item.get("url") == comment.get("url")
+            for item in pr.get("feedback", {}).get("items", [])):
+        return "registered-current-author-action"
+    if node.get("releaseWait", {}).get("head") == pr["head"]:
+        return "registered-current-release-wait"
+    for item in pr.get("feedback", {}).get("items", []):
+        if (item.get("kind") != "comment" or item.get("body", "").strip() != "[🤖] Needs rebase."
+                or (item.get("author") or {}).get("login") != "EtiennePerot"):
+            continue
+        introduced = pr.get("headIntroducedAt")
+        if (not pr.get("headHistoryComplete") or not introduced
+                or datetime.fromisoformat(item["updatedAt"].replace("Z", "+00:00"))
+                >= datetime.fromisoformat(introduced.replace("Z", "+00:00"))):
+            return "rebase-request-not-yet-followed-by-source-update"
+    return None
+
+
 def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                   maintainers: frozenset[str]) -> dict:
-    """Fail closed unless an exact reviewed amendment still needs approval."""
+    """Plan either an exact amendment review or a verified missing import trigger."""
     result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head"),
               "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))}
 
@@ -79,6 +102,36 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             return skip("missing-review-time")
         if author not in latest or item["submittedAt"] > latest[author]["submittedAt"]:
             latest[author] = item
+    disposition = result["publicImportDisposition"]
+    if (disposition["binding"]["eligible"] and disposition["state"] == "closed"
+            and disposition["trigger"]["state"] == "present"):
+        return skip("import-trigger-present-awaiting-replacement")
+    if disposition["action"] == "maintainer-reimport" and disposition["trigger"]["state"] == "missing":
+        if reason := import_author_block(pr, node):
+            return {**skip(reason), "status": "deferred"}
+        current_approval = effective_approval(pr)
+        patch = node.get("approvedPatch", {})
+        approved_ids = ({current_approval["id"]} if current_approval else set())
+        if approved_patch(pr, patch):
+            approved_ids.add(patch["reviewId"])
+        approvers = sorted(item["author"]["login"] for item in latest.values()
+                           if item["id"] in approved_ids and item["state"] == "APPROVED")
+        if not approvers:
+            return skip("no-qualified-import-approver")
+        trigger = disposition["trigger"]
+        exports = ", ".join(f"[#{item['number']}](https://github.com/google/gvisor/pull/{item['number']})"
+                            for item in disposition["binding"]["imports"])
+        head = pr["head"]
+        body = (f"🚨 {' '.join('@' + login for login in approvers)} please restore `ready to pull` "
+                f"for [{head[:12]}](https://github.com/google/gvisor/commit/{head}) and restart its import. "
+                f"The earlier export {exports} closed without merging, no matching successor is open, "
+                f"and the previously applied label is now absent (removed {trigger['removedAt']}). "
+                "Approval of this head or its verified equivalent patch remains recorded; this reminder "
+                "concerns the import trigger, not a new code-review request. Retained export CI results "
+                "remain separate.\n\n"
+                f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} action=restore-import-label -->")
+        return schedule_reminder(result, comments, now, owner, action="restore-import-label",
+                                 approvers=approvers, removedAt=trigger["removedAt"], body=body)
     current = [item for item in latest.values() if (item.get("commit") or {}).get("oid") == pr["head"]]
     for item in current:
         if item["state"] != "APPROVED":
@@ -130,16 +183,6 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                        if (item.get("commit") or {}).get("oid") == old)
     if not approvers:
         return skip("no-matching-prior-maintainer-approval")
-    for item in comments:
-        if ((item.get("author") or {}).get("login") != owner
-                or MARKER not in item.get("body", "")):
-            continue
-        try:
-            sent = datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00"))
-        except (KeyError, AttributeError, ValueError):
-            return skip("unreadable-prior-reminder-time")
-        if sent.tzinfo is None or now - sent < REMINDER_INTERVAL:
-            return skip("reminded-within-three-hours")
     commit_url = "https://github.com/google/gvisor/commit/"
     body = (f"🚨 {' '.join('@' + login for login in approvers)} please reapprove the amended head "
             f"[{head[:12]}]({commit_url}{head}) before it is imported. Your earlier approval covered "
@@ -147,8 +190,24 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             f"revision and omit this amendment.\n\n{summary}\n\n"
             f"[Amendment evidence]({evidence})\n\n"
             f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} -->")
-    planned = {**result, "status": "due", "approvedHead": old, "approvers": approvers,
-               "diffSha256": digest, "body": body}
+    return schedule_reminder(result, comments, now, owner, approvedHead=old,
+                             approvers=approvers, diffSha256=digest, body=body,
+                             action="reapprove-amendment")
+
+
+def schedule_reminder(result: dict, comments: list[dict], now: datetime, owner: str, **details: object) -> dict:
+    """Share the per-PR cooldown and Pacific-hours gate across reminder purposes."""
+    for item in comments:
+        if ((item.get("author") or {}).get("login") != owner
+                or MARKER not in item.get("body", "")):
+            continue
+        try:
+            sent = datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00"))
+        except (KeyError, AttributeError, ValueError):
+            return {**result, "status": "skipped", "reason": "unreadable-prior-reminder-time"}
+        if sent.tzinfo is None or now - sent < REMINDER_INTERVAL:
+            return {**result, "status": "skipped", "reason": "reminded-within-three-hours"}
+    planned = {**result, **details, "status": "due"}
     local = now.astimezone(PACIFIC)
     if local.weekday() >= 5 or not 9 <= local.hour < 17:
         planned.update(status="deferred", reason="outside-pacific-business-hours")
