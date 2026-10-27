@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T18:39:29+00:00",
+    "updatedAt": "2026-10-27T18:54:54+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -118,12 +118,12 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-22T14:12:37.334326+00:00",
-      "summary": "The current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne\u2019s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
+      "updatedAt": "2026-10-27T18:54:54+00:00",
+      "summary": "The source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne\u2019s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne\u2019s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
       "followup": {
-        "disposition": "Equivalent rebase delivered; existing maintainer hold remains",
-        "owner": "work_map_current",
-        "nextAction": "Follow substantive human review and import outcomes; do not repeat the completed rebase or send an unauthorized reminder.",
+        "disposition": "Equivalent conflict repair published; existing review requirements retained",
+        "owner": "root",
+        "nextAction": "Follow current-head public checks and substantive maintainer review through the existing intake; no repeat rebase or reapproval request for this equivalent change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
           "https://github.com/tamird/gvisor/commit/44d3ce3bc",
@@ -134,15 +134,17 @@
           "https://github.com/google/gvisor/pull/16031",
           "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021",
           "https://github.com/google/gvisor/pull/16048",
-          "https://github.com/tamird/gvisor/commit/04108da6a3cfe97d3990c7e36c1204ca9ca598f5"
+          "https://github.com/tamird/gvisor/commit/04108da6a3cfe97d3990c7e36c1204ca9ca598f5",
+          "https://github.com/tamird/gvisor/commit/afd34241a1b7e38e196e5d173632f658b7e5defc"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
-        "sourceHead": "bec06589fb87222be549eb253a81e7eb87e379e9",
+        "sourceHead": "afd34241a1b7e38e196e5d173632f658b7e5defc",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-22T14:12:37.334326+00:00"
+        "observedAt": "2026-10-27T18:54:54+00:00",
+        "providerHead": "afd34241a1b7e38e196e5d173632f658b7e5defc"
       },
-      "head": "bec06589fb87222be549eb253a81e7eb87e379e9",
+      "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
       "evidence": [
         {
           "label": "Published mechanical rebase",
@@ -171,6 +173,10 @@
         {
           "label": "Published equivalent current-master rebase",
           "url": "https://github.com/tamird/gvisor/commit/bec06589fb87222be549eb253a81e7eb87e379e9"
+        },
+        {
+          "label": "Published context-only conflict repair",
+          "url": "https://github.com/tamird/gvisor/commit/afd34241a1b7e38e196e5d173632f658b7e5defc"
         }
       ],
       "ciRecovery": {
@@ -1712,15 +1718,15 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The contributor-approved GNU replacement is published on #15153 at 85c742f25. This revision preserves the approved implementation and applies buildifier attribute ordering. Both ordinary GNU static consumers passed on 7d549676b, and the 203-record license audit remains bound to identical license inputs. No GNU runtime traffic is claimed. The contributor decision is complete; current public checks and the two existing maintainer requests are reported by the provider snapshot. The separate musl candidate ccae8886e has target-specific GNU and musl evidence but remains agent work pending full compiler-consumer proof.\n\nPreserved earlier amendment record:\n\nThe public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
+      "summary": "The source conflict is repaired at e22d4ffb69. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. The GNU amendment remains delivered; the independent musl follow-up keeps its own evidence and scope.\n\nEarlier source-specific record:\n\nThe contributor-approved GNU replacement is published on #15153 at 85c742f25. This revision preserves the approved implementation and applies buildifier attribute ordering. Both ordinary GNU static consumers passed on 7d549676b, and the 203-record license audit remains bound to identical license inputs. No GNU runtime traffic is claimed. The contributor decision is complete; current public checks and the two existing maintainer requests are reported by the provider snapshot. The separate musl candidate ccae8886e has target-specific GNU and musl evidence but remains agent work pending full compiler-consumer proof.\n\nPreserved earlier amendment record:\n\nThe public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-26T18:19:01.646721+00:00",
+      "updatedAt": "2026-10-27T18:54:54+00:00",
       "followup": {
-        "disposition": "Approved GNU amendment published; contributor decision complete",
+        "disposition": "Equivalent conflict repair published; existing review requirements retained",
         "owner": "root",
-        "nextAction": "Follow current-head public checks and the existing maintainer review requests through the ordinary intake. Keep the musl follow-up separate; no repeated contributor request.",
-        "sourceHead": "85c742f25194e6198c292e099754f09549f09cdf",
+        "nextAction": "Follow current-head public checks and substantive maintainer review through the existing intake; no repeat rebase or reapproval request for this equivalent change.",
+        "sourceHead": "e22d4ffb69d6f40ab3eb498435d918789da14fdb",
         "reviewedAt": "2026-10-16T08:57:33Z",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
@@ -1728,12 +1734,13 @@
           "https://github.com/google/gvisor/pull/15153",
           "https://github.com/tamird/gvisor/commit/85c742f25194e6198c292e099754f09549f09cdf",
           "https://app.buildbuddy.io/invocation/b3eaa3ec-3f47-4d1d-b778-1ab7c76958bc",
-          "https://app.buildbuddy.io/invocation/3adc7f41-8aef-4247-bc0a-1f78a05f2e7a"
+          "https://app.buildbuddy.io/invocation/3adc7f41-8aef-4247-bc0a-1f78a05f2e7a",
+          "https://github.com/tamird/gvisor/commit/e22d4ffb69d6f40ab3eb498435d918789da14fdb"
         ],
-        "observedAt": "2026-10-26T18:19:01.646721+00:00",
-        "providerHead": "85c742f25194e6198c292e099754f09549f09cdf"
+        "observedAt": "2026-10-27T18:54:54+00:00",
+        "providerHead": "e22d4ffb69d6f40ab3eb498435d918789da14fdb"
       },
-      "head": "85c742f25194e6198c292e099754f09549f09cdf",
+      "head": "e22d4ffb69d6f40ab3eb498435d918789da14fdb",
       "refinement": {
         "before": {
           "head": "a3818d1793b919df1feeeb1c028cc40158754a7e"
@@ -1774,6 +1781,10 @@
         {
           "label": "Published and independently verified conflict resolution",
           "url": "https://github.com/tamird/gvisor/commit/154d10c44a781c9bc7cdce0f6729a490386caf06"
+        },
+        {
+          "label": "Published context-only conflict repair",
+          "url": "https://github.com/tamird/gvisor/commit/e22d4ffb69d6f40ab3eb498435d918789da14fdb"
         }
       ]
     },
@@ -13663,26 +13674,29 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qemu-prebuilt-user",
-      "head": "aa691effa6f5ab741f9fefc8eab6bf6085b70cf3",
+      "head": "61088c907a7a2e7ae8027b201618cc8f000f1ecd",
       "title": "Use rules_qemu for cross-architecture generators",
       "url": "https://github.com/google/gvisor/pull/15929",
       "group": "bazel",
       "status": "open",
-      "summary": "The independently reviewed equivalent rebase is published to the exact fork branch at aa691effa6f5, while GitHub's PR and upstream pull ref still identify 4e7230767cb9 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Hostinet owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 4e7230767cb9 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe newly observed conflict is resolved and #15929 is published at signed fb113dfa51 on a9e9. Independent full generator review confirms that the merged ARM -cpu neoverse-n1 option precedes the guest executable only when QEMU is selected; native and fastbuild remain direct. The remaining differences are inherited x/net v0.60 catalog and pkg/zip changes. Exact-lease publication and tracking/API readback are verified; no comment or review request was sent. Old source qualification and the preserved 5f964 ref remain historical evidence, with no new runtime or performance claim.\n\nThe revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor approved 284970814f. Its unchanged patch is now delivered as #15929 at 5f964e3829 on current master. Original #15187 is closed; its source/review evidence and the earlier custom-archive proposal remain preserved. No contributor decision is pending.",
-      "updatedAt": "2026-10-22T17:07:05.995069+00:00",
+      "summary": "The source conflict is repaired at 61088c907a. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne\u2019s approval remains on adc403f944. Open export #16511 contains that approved patch and now needs its own conflict refresh; no new source review is required for this equivalent rebase.\n\nEarlier source-specific record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at aa691effa6f5, while GitHub's PR and upstream pull ref still identify 4e7230767cb9 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Hostinet owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 4e7230767cb9 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe newly observed conflict is resolved and #15929 is published at signed fb113dfa51 on a9e9. Independent full generator review confirms that the merged ARM -cpu neoverse-n1 option precedes the guest executable only when QEMU is selected; native and fastbuild remain direct. The remaining differences are inherited x/net v0.60 catalog and pkg/zip changes. Exact-lease publication and tracking/API readback are verified; no comment or review request was sent. Old source qualification and the preserved 5f964 ref remain historical evidence, with no new runtime or performance claim.\n\nThe revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor approved 284970814f. Its unchanged patch is now delivered as #15929 at 5f964e3829 on current master. Original #15187 is closed; its source/review evidence and the earlier custom-archive proposal remain preserved. No contributor decision is pending.",
+      "updatedAt": "2026-10-27T18:54:54+00:00",
       "followup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "aa691effa6f5ab741f9fefc8eab6bf6085b70cf3",
-        "observedAt": "2026-10-22T17:07:05.995069+00:00",
-        "disposition": "Equivalent rebase published; provider PR synchronization pending",
-        "nextAction": "Use the existing ordinary watcher to observe the replacement PR head and fresh mergeability/checks. Keep the old provider conflict observable until it catches up; no repush, new watcher or reapproval reminder for the equivalent rebase.",
+        "owner": "root",
+        "sourceHead": "61088c907a7a2e7ae8027b201618cc8f000f1ecd",
+        "observedAt": "2026-10-27T18:54:54+00:00",
+        "disposition": "Equivalent conflict repair published; existing review requirements retained",
+        "nextAction": "Wait for maintainers to refresh earlier equivalent export #16511; current source is mergeable and retains Etienne\u2019s approval through verified patch equivalence. No reapproval reminder.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15929",
           "https://github.com/tamird/gvisor/commit/4e7230767cb93cf1af9b8bd2a876e060bd62de5c",
-          "https://github.com/tamird/gvisor/commit/aa691effa6f5ab741f9fefc8eab6bf6085b70cf3"
+          "https://github.com/tamird/gvisor/commit/aa691effa6f5ab741f9fefc8eab6bf6085b70cf3",
+          "https://github.com/tamird/gvisor/commit/61088c907a7a2e7ae8027b201618cc8f000f1ecd",
+          "https://github.com/google/gvisor/pull/15929#pullrequestreview-5664391015",
+          "https://github.com/google/gvisor/pull/16511"
         ],
-        "mergeable": "CONFLICTING",
-        "providerHead": "4e7230767cb93cf1af9b8bd2a876e060bd62de5c"
+        "mergeable": "MERGEABLE",
+        "providerHead": "61088c907a7a2e7ae8027b201618cc8f000f1ecd"
       },
       "refinement": {
         "before": {
@@ -13705,8 +13719,23 @@
         {
           "label": "Published equivalent rebase awaiting provider synchronization",
           "url": "https://github.com/tamird/gvisor/commit/aa691effa6f5ab741f9fefc8eab6bf6085b70cf3"
+        },
+        {
+          "label": "Published context-only conflict repair",
+          "url": "https://github.com/tamird/gvisor/commit/61088c907a7a2e7ae8027b201618cc8f000f1ecd"
         }
-      ]
+      ],
+      "approvedPatch": {
+        "head": "61088c907a7a2e7ae8027b201618cc8f000f1ecd",
+        "approvedHead": "adc403f9444424da967f5262e4d8b649503c3615",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABUZ-_Zw",
+        "reviewer": "EtiennePerot",
+        "submittedAt": "2026-10-27T08:52:27Z",
+        "verifiedAt": "2026-10-27T18:54:54+00:00",
+        "method": "reviewed-context-only",
+        "oldPatchId": "e74bf9c689a4114f0ee8ee70dd1db3db45677fe5",
+        "newPatchId": "3587fccab10e0e3afcad3b235cbc049060f8cc99"
+      }
     },
     {
       "id": "branch:hostinet-port-range",
@@ -27776,6 +27805,56 @@
         }
       ],
       "number": 16516
+    },
+    {
+      "id": "branch:hermetic-arch-copy",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/declared-arch-output-copy",
+      "head": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
+      "title": "Declare the copy tool for architecture outputs",
+      "url": "https://github.com/tamird/gvisor/commit/42a8333d1e1e92d33e1b6bd244db296f347b7274",
+      "group": "bazel",
+      "status": "Contributor review",
+      "summary": "Replace arch_genrule\u2019s worker shell and PATH lookup of cp with the declared bazel_lib copy toolchain. All 16 fresh CopyFile outputs (eight output paths from four split-rule owners in each outer target configuration) matched their input bytes and modes; the AMD64 goid test passed. The parent run remains failed because an optional ARM aquery launcher executed on the AMD64 coordinator. Its retained action and output records independently establish the required results; this is not ARM runtime coverage.",
+      "updatedAt": "2026-10-27T18:52:32+00:00",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
+        "observedAt": "2026-10-27T18:52:32+00:00",
+        "disposition": "Exact fork proposal qualified; contributor review pending",
+        "nextAction": "Review the three-file proposal for upstream publication. Required copy, compile and embedded-output evidence is reconciled; the optional ARM aquery diagnostic remains failed, and no upstream PR has been opened.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...42a8333d1e1e92d33e1b6bd244db296f347b7274",
+          "https://app.buildbuddy.io/invocation/b5634328-5caa-47d9-8f09-c09386ce1346",
+          "https://app.buildbuddy.io/invocation/9901009d-cf02-47f5-9bdd-e5c1bd1a05cd",
+          "https://app.buildbuddy.io/invocation/d5dcef73-9184-47f4-8950-9b57b0b4c0c1"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Review the exact three-file change",
+          "url": "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...42a8333d1e1e92d33e1b6bd244db296f347b7274"
+        },
+        {
+          "label": "Original run: required outputs and AMD64 goid pass; optional ARM aquery fails",
+          "url": "https://app.buildbuddy.io/invocation/b5634328-5caa-47d9-8f09-c09386ce1346"
+        },
+        {
+          "label": "Original ARM-configured child: eight verified copy outputs",
+          "url": "https://app.buildbuddy.io/invocation/9901009d-cf02-47f5-9bdd-e5c1bd1a05cd"
+        },
+        {
+          "label": "Negative control: incorrect single-file check rejected valid split inputs",
+          "url": "https://app.buildbuddy.io/invocation/d5dcef73-9184-47f4-8950-9b57b0b4c0c1"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "url": "https://github.com/tamird/gvisor/commit/42a8333d1e1e92d33e1b6bd244db296f347b7274",
+        "head": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
+        "summary": "Review the declared copy-tool change for upstream publication. Sixteen copy outputs and the AMD64 goid case are verified; the parent\u2019s optional ARM aquery failure remains recorded."
+      }
     }
   ],
   "edges": [
