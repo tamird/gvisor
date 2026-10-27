@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T05:38:20+00:00",
+    "updatedAt": "2026-10-27T06:15:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3198,7 +3198,13 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-artifact-selection",
       "group": "rbe",
       "status": "extraction needed",
-      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed."
+      "summary": "The release portion now has a standalone candidate: one Make target builds the three existing package formats for x86_64 and aarch64 together, for both Buildkite consumers. The exact Make staging path is being qualified; the website and Python selections remain separate.\n\nUpstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed.",
+      "evidence": [
+        {
+          "label": "Standalone mixed release build under qualification",
+          "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9"
+        }
+      ]
     },
     {
       "id": "pr:15202",
@@ -40072,9 +40078,22 @@
       "title": "Run the source-built release smoke test on ARM64",
       "status": "concluded",
       "owner": "root",
-      "updatedAt": "2026-10-27T03:58:17.292865+00:00",
+      "updatedAt": "2026-10-27T06:15:52+00:00",
       "summary": "The mixed release smoke runs source-built AMD64 and ARM64 releases in one Bazel invocation; ARM64 passed as uid/gid 65534 under QEMU. On native ARM64 the same stock rootless command failed during self-reexec under AppArmor, but passed in Podman\u2019s caller-created user and mount namespaces. The latter run bypassed self-reexec because its caller already had the required capabilities.",
       "findings": [
+        {
+          "text": "On upstream 81883beb4f, one Bazel invocation built the Debian, bzip2 and zstd packages for both CPUs. All three formats contained the same eight ELF programs for their architecture. Fresh tests verified the bzip2 archive and executable hashes before running runsc and the containerd shim on native AMD64 and ARM64. AMD64 also ran /bin/true inside systrap; the native ARM64 result here is a CLI check. All eight named checks passed without skips. Bazel finished at 05:57:58 UTC and the authenticated verdict was available at 05:59:31, without manual intervention.",
+          "evidence": [
+            {
+              "label": "Six source-built packages and their executable hashes",
+              "url": "https://app.buildbuddy.io/invocation/6cd390ae-69c1-4880-b67b-1c6cdff1f92c"
+            },
+            {
+              "label": "Native release commands and sandbox startup",
+              "url": "https://app.buildbuddy.io/invocation/09619bba-f433-4304-8f7d-cdd8d0b158c4"
+            }
+          ]
+        },
         {
           "text": "On the native ubuntu-24.04-arm runner, the host UID was 1001. Podman mapped it to UID 0 in a separate user and mount namespace with the four effective capabilities runsc checks. The unchanged runsc --rootless do true command then ran its application as PID 1 and returned zero without re-executing itself. One owner ran and passed, with nothing skipped or missing. The verdict was available 0.288 s after execution, and the authenticated artifact after 23.889 s. The host\u2019s AppArmor policy remained enabled.",
           "evidence": [
