@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T21:34:24.221287+00:00",
+    "updatedAt": "2026-10-27T22:20:53.387967+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26184,8 +26184,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T19:45:36.534102+00:00",
-      "summary": "Published #892 is now at 039cde70e and uses llvm.configure alone. An explicit root configure declaration replaces LLVM\u2019s nine implicit defaults; every dependency still contributes all the backends it names. Omitting configure in the root keeps the defaults. An explicit empty root list selects only dependency requirements. Existing roots, including HEIR-style configurations, must list every backend they need rather than relying on unlisted defaults. No new policy tag or contributor decision remains.\n\nAll eleven real Bazel graph phases passed on this exact source: ordinary defaults, transitive AVR, a root that never uses the extension, HEIR\u2019s three-backend list, root/dependency union, empty roots with and without dependencies, both isolated modes, the actual upstream e2e module, and generated targets.bzl. The isolated version-only use remains empty; the isolated ARM request selects ARM alone.\n\nThe fresh gVisor comparison uses this same supplier revision for both arms. Ordinary configure selects AArch64/X86 rather than nine defaults: AMD64 LLVM C++ compiles fall from 3,184 to 2,705 and ARM64 from 3,181 to 2,702, with 1,105 fewer total configured actions per architecture. These are configured graph measurements, not elapsed build time or new binary execution. Earlier parser-binary equality remains scoped to the tested v0.8.24 backport. The LLVM source migration still depends on this supplier; keep #15940 until its replacement is delivered.\n\nPrevious API revision:\n\nThe superseded f468e1713 revision used a separate llvm.backends tag. Its eight-phase graph check and main-supplier comparisons remain linked as historical evidence; the current API removes that tag.\n\nEarlier source-specific qualification:\n\nThe supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe published supplier change restores root-module backend selection and clarifies which modules supply default backends. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until the replacement is ready for downstream use. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
+      "updatedAt": "2026-10-27T22:20:53.387967+00:00",
+      "summary": "A fork comparison puts the seven additional backends on a development-only use of the same extension. This would give unconfigured downstream consumers two backends instead of nine; that compatibility choice is under investigation. The upstream PR has not changed.\n\nPublished #892 is now at 039cde70e and uses llvm.configure alone. An explicit root configure declaration replaces LLVM\u2019s nine implicit defaults; every dependency still contributes all the backends it names. Omitting configure in the root keeps the defaults. An explicit empty root list selects only dependency requirements. Existing roots, including HEIR-style configurations, must list every backend they need rather than relying on unlisted defaults. No new policy tag or contributor decision remains.\n\nAll eleven real Bazel graph phases passed on this exact source: ordinary defaults, transitive AVR, a root that never uses the extension, HEIR\u2019s three-backend list, root/dependency union, empty roots with and without dependencies, both isolated modes, the actual upstream e2e module, and generated targets.bzl. The isolated version-only use remains empty; the isolated ARM request selects ARM alone.\n\nThe fresh gVisor comparison uses this same supplier revision for both arms. Ordinary configure selects AArch64/X86 rather than nine defaults: AMD64 LLVM C++ compiles fall from 3,184 to 2,705 and ARM64 from 3,181 to 2,702, with 1,105 fewer total configured actions per architecture. These are configured graph measurements, not elapsed build time or new binary execution. Earlier parser-binary equality remains scoped to the tested v0.8.24 backport. The LLVM source migration still depends on this supplier; keep #15940 until its replacement is delivered.\n\nPrevious API revision:\n\nThe superseded f468e1713 revision used a separate llvm.backends tag. Its eight-phase graph check and main-supplier comparisons remain linked as historical evidence; the current API removes that tag.\n\nEarlier source-specific qualification:\n\nThe supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe published supplier change restores root-module backend selection and clarifies which modules supply default backends. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until the replacement is ready for downstream use. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "039cde70ee3dc19174a9c240419270d1e048c036",
@@ -26203,6 +26203,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Development-only backend alternative (separate from the published head)",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/b18956ee24a60996dd51e52e826aedbf739bc57c"
+        },
         {
           "label": "Current configure-only supplier API",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/039cde70ee3dc19174a9c240419270d1e048c036"
@@ -27013,24 +27017,22 @@
       "group": "runtime",
       "status": "open",
       "summary": "Linux returns EPERM on writes to immutable /proc/PID and /proc/PID/task/TID directories. The change makes gVisor match Linux while preserving credential checks for internal mountpoint creation. Nine syscall cases, two mountpoint tests and the AMD64 and ARM64 analyzers passed on the reviewed patch. The published rebase has the same patch as the qualified commit.",
-      "updatedAt": "2026-10-27T01:25:59.823189+00:00",
+      "updatedAt": "2026-10-27T22:20:53.387967+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "native_runtime",
         "sourceHead": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
-        "observedAt": "2026-10-27T01:25:59.823189+00:00",
-        "disposition": "Published as #16473",
-        "nextAction": "Follow the review and public checks on #16473.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
-          "https://app.buildbuddy.io/invocation/b008f0ee-6b24-475f-acd4-c450723d0e26",
-          "https://app.buildbuddy.io/invocation/795ea49d-0536-4eb2-b9d7-55cb300e301e",
-          "https://app.buildbuddy.io/invocation/de996646-e3ba-4e6e-b78d-867d10ef9ca9",
-          "https://github.com/google/gvisor/pull/16057",
-          "https://github.com/google/gvisor/pull/16463",
-          "https://github.com/google/gvisor/pull/16473"
-        ]
+        "observedAt": "2026-10-27T22:20:53.387967+00:00",
+        "nextAction": "Finish the focused amendment checks before posting code and replies to the four review threads."
       },
       "evidence": [
+        {
+          "label": "Cold build timed out before runtime tests; recovery pending",
+          "url": "https://app.buildbuddy.io/invocation/ad22749c-1b96-45e1-a34a-d0bc795d5988"
+        },
+        {
+          "label": "Fork amendment addressing Lucas\u2019s four comments",
+          "url": "https://github.com/tamird/gvisor/commit/22b37bda56dbabffe7dbd2489f7a26e1c75268df"
+        },
         {
           "label": "Published follow-up",
           "url": "https://github.com/google/gvisor/pull/16473"
@@ -27752,12 +27754,12 @@
       "repo": "tamird/gvisor",
       "ref": "review/reproducible-debian-changelog",
       "head": "a7d1eb114e1859262b0d8ec2c08bc1b5e3504a67",
-      "title": "Use a reproducible date in the Debian package",
+      "title": "Keep the Debian changelog independent of the worker clock",
       "url": "https://github.com/tamird/gvisor/commit/a7d1eb114e1859262b0d8ec2c08bc1b5e3504a67",
       "group": "release",
-      "status": "Reviewable",
-      "summary": "The revised Debian date change is ready for contributor review on GNU AMD64. Actual Bazel builds preserve distinct Git versions and the release-labelled runsc version; the Debian control file and UTC changelog agree. Changing only SOURCE_DATE_EPOCH changes the changelog/package without relinking Go binaries or changing their configured owners. Real make debian and make artifacts preserve the commit-time default, accept explicit zero and reject an explicitly empty date. The source archive and nondigit Buildkite label retain their documented fallbacks. No ARM or LLVM qualification is claimed.\n\nThe initial 1496dd2f aggregate remains failed: all completed native commands succeeded, but the verifier incorrectly expected .tar.zst instead of the actual .tar.zstd artifact. Missing-only recovery 00b4c96a passed, checked the actual artifacts and remaining date/archive controls, and joined the earlier package hashes. This does not relabel the original aggregate as passing.\n\nEarlier revision history:\n\nThe earlier date fix was qualified at 744d7e646f. Revision 897566b7c8 separates Debian date metadata while preserving the source version used by runsc and its sidecars; remote validation is pending. The earlier package result does not qualify this revision.",
-      "updatedAt": "2026-10-27T21:32:33.895621+00:00",
+      "status": "Agent work",
+      "summary": "The contributor declined the eight-file metadata proposal. The original changelog samples the build worker\u2019s wall clock and time zone. The replacement will date the entry from the already-declared release version, without changing the global version, Bazel module graph, CI or Make. The existing results describe the earlier proposal.",
+      "updatedAt": "2026-10-27T22:20:53.387967+00:00",
       "evidence": [
         {
           "label": "Revision from the earlier Debian proposal",
@@ -27793,20 +27795,12 @@
         }
       },
       "followup": {
-        "owner": "root",
+        "owner": "pinring_source_scope",
         "sourceHead": "a7d1eb114e1859262b0d8ec2c08bc1b5e3504a67",
-        "observedAt": "2026-10-27T21:32:33.895621+00:00",
-        "nextAction": "Contributor decision on the qualified GNU Debian revision; preserve the separate LLVM supplier limitation."
+        "observedAt": "2026-10-27T22:20:53.387967+00:00",
+        "nextAction": "Replace the broad candidate with a changelog-only fix and compare two builds of the same release. There is no contributor decision pending."
       },
-      "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2",
-      "contributorReview": {
-        "status": "pending",
-        "head": "a7d1eb114e1859262b0d8ec2c08bc1b5e3504a67",
-        "url": "https://github.com/tamird/gvisor/commit/a7d1eb114e1859262b0d8ec2c08bc1b5e3504a67",
-        "title": "Use a reproducible date in the Debian package",
-        "summary": "The revised Debian date change is ready for contributor review on GNU AMD64. Actual Bazel builds preserve distinct Git versions and the release-labelled runsc version; the Debian control file and UTC changelog agree. Changing only SOURCE_DATE_EPOCH changes the changelog/package without relinking Go binaries or changing their configured owners. Real make debian and make artifacts preserve the commit-time default, accept explicit zero and reject an explicitly empty date. The source archive and nondigit Buildkite label retain their documented fallbacks. No ARM or LLVM qualification is claimed.",
-        "body": "The changelog records the build worker's local date. Two workers can\ntherefore produce different Debian packages from the same source.\n\nFormat the changelog in UTC with the same version used in the package\ncontrol file. Use SOURCE_DATE_EPOCH when set. For a release or a local\nMake build, default to the commit time; a direct Bazel build or a source\narchive defaults to the Unix epoch.\n\nMake the date an input to the changelog alone. Changing it should not\nrelink runsc or affect the Git version recorded in checkpoints."
-      }
+      "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2"
     },
     {
       "id": "pr:16508",
@@ -28184,15 +28178,23 @@
       "id": "branch:licensecheck-native-bazel-mod",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/licensecheck-native-bazel-mod",
-      "head": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
+      "ref": "review/licensecheck-builder-bazel",
+      "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
       "title": "Check licenses with the native Bazel module graph",
-      "url": "https://github.com/tamird/gvisor/compare/845a4b61a9ba1dbd1dfc2594d1c67e3d82d9b826...b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
+      "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
       "group": "release",
       "status": "Agent work",
-      "updatedAt": "2026-10-27T21:34:24.221287+00:00",
-      "summary": "The contributor requested removal of the Make fallback. The assigned implementation owner is revising that behavior; no contributor decision is pending while the revision is prepared and qualified. The existing b01c6c7e53 results remain evidence only for that earlier source.\n\nEarlier qualified revision:\n\nThe revised Go implementation removes the shell adapter and preserves the original Make arguments. Exact native Bazel and documented native Make both validated all 201 dependencies with identical module graphs and 163 repository definitions. The direct path invokes neither Make nor Docker; the Make control is not a full Docker runtime trial.\n\nPrior revision, retained separately:\n\nThe tested native Bazel module-graph change is being revised to remove its shell adapter while preserving the original Make arguments. The prior two qualified paths checked all 201 dependencies and the same graph and 163 repository definitions; that evidence remains attached to 08de865d49 and does not qualify the upcoming revision. Contributor review is pending that revision and validation.",
+      "updatedAt": "2026-10-27T22:20:53.387967+00:00",
+      "summary": "The checker invokes Bazel directly. The former make mod target and nested Make fallback have been removed. The two public Buildkite callers retain a make license-check wrapper to select the builder. A remote run is checking native verification, a writable catalog regeneration and the Docker entry point.",
       "evidence": [
+        {
+          "label": "Remote qualification of the replacement",
+          "url": "https://app.buildbuddy.io/invocation/4cde4f07-443c-4b57-b47c-dacf50a8807d"
+        },
+        {
+          "label": "Revision removing the Make fallback",
+          "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
+        },
         {
           "label": "Revised exact proposal without the shell adapter",
           "url": "https://github.com/tamird/gvisor/commit/b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46"
@@ -28216,19 +28218,17 @@
       ],
       "refinement": {
         "before": {
-          "base": "845a4b61a9ba1dbd1dfc2594d1c67e3d82d9b826",
-          "head": "08de865d4960ef353c1b1485230532aac3054175"
+          "head": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46"
         },
         "after": {
-          "base": "845a4b61a9ba1dbd1dfc2594d1c67e3d82d9b826",
-          "head": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46"
+          "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
         }
       },
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
-        "observedAt": "2026-10-27T21:34:24.221287+00:00",
-        "nextAction": "Remove the Make fallback as requested, then qualify the revised source before returning it to contributor review."
+        "sourceHead": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
+        "observedAt": "2026-10-27T22:20:53.387967+00:00",
+        "nextAction": "Reconcile the 201-entry catalog rewrite and both verification paths before requesting review."
       }
     },
     {
@@ -28279,6 +28279,56 @@
           "head": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
         }
       }
+    },
+    {
+      "id": "branch:systrap-stub-data",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/systrap-stub-data",
+      "head": "6ea2ab7b4b3d272f61677cfdfed3376cd156de85",
+      "title": "Extract the mapped systrap bytes and offsets from the same ELF",
+      "url": "https://github.com/tamird/gvisor/commit/6ea2ab7b4b3d272f61677cfdfed3376cd156de85",
+      "group": "bazel",
+      "status": "Agent work",
+      "summary": "The linker script puts the mapped program in .crblob at zero. The offsets generator also extracts that section; it rejects a second allocated section rather than silently dropping it. This replaces a separate objcopy shell action.",
+      "updatedAt": "2026-10-27T22:20:53.387967+00:00",
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "6ea2ab7b4b3d272f61677cfdfed3376cd156de85",
+        "observedAt": "2026-10-27T22:20:53.387967+00:00",
+        "nextAction": "Compare the raw bytes and exported offsets against the previous tools on identical ELF inputs, and run the installed AMD64 systrap smoke."
+      },
+      "evidence": [
+        {
+          "label": "Fork revision",
+          "url": "https://github.com/tamird/gvisor/commit/6ea2ab7b4b3d272f61677cfdfed3376cd156de85"
+        }
+      ]
+    },
+    {
+      "id": "branch:vfs-rollback-failed-async-handler",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "vfs-rollback-failed-async-handler",
+      "head": "bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
+      "title": "Undo asynchronous handler registration on failure",
+      "url": "https://github.com/tamird/gvisor/commit/bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
+      "group": "runtime",
+      "status": "Agent work",
+      "summary": "An unsuccessful asynchronous handler registration must leave the file description eligible for another attempt. The control and candidate have identical syscall regressions.",
+      "updatedAt": "2026-10-27T22:20:53.387967+00:00",
+      "followup": {
+        "owner": "lock_contract",
+        "sourceHead": "bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
+        "observedAt": "2026-10-27T22:20:53.387967+00:00",
+        "nextAction": "Check the failing control and corrected pidfd and VFS close/disable paths on Linux and gVisor."
+      },
+      "evidence": [
+        {
+          "label": "Control and candidate validation",
+          "url": "https://app.buildbuddy.io/invocation/5cb3f4de-fce0-4d73-afad-1243bb8e94f6"
+        }
+      ]
     }
   ],
   "edges": [
@@ -31188,6 +31238,26 @@
         "https://github.com/google/gvisor/pull/16057",
         "https://github.com/google/gvisor/pull/16463",
         "https://github.com/google/gvisor/commit/5357d4a46f96f183c5e36b5ff17f1308954bae99"
+      ]
+    },
+    {
+      "from": "pr:16516",
+      "to": "branch:systrap-native-stub",
+      "type": "depends_on",
+      "reason": "Both changes edit the sysmsg BUILD load; sequence the native compiler revision after the offsets PR so it does not introduce a conflict.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16516",
+        "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
+      ]
+    },
+    {
+      "from": "pr:16516",
+      "to": "branch:systrap-stub-data",
+      "type": "depends_on",
+      "reason": "Extends the offsets tool from #16516 to emit the bytes embedded in the Sentry.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16516",
+        "https://github.com/tamird/gvisor/commit/6ea2ab7b4b3d272f61677cfdfed3376cd156de85"
       ]
     }
   ],
