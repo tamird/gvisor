@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T07:28:05+00:00",
+    "updatedAt": "2026-10-27T07:53:19+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26925,19 +26925,79 @@
       "url": "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-27T07:28:05+00:00",
-      "summary": "The generic transport tests treated a computed UDP checksum of zero as a zero field. The mixed run hit a case where gVisor correctly transmitted 0xffff. Remote validation is in progress.",
+      "updatedAt": "2026-10-27T07:53:19+00:00",
+      "summary": "A computed UDP checksum of zero is sent as 0xffff. Deterministic cases pass on both CPUs, as does the full ARM64 suite. The full AMD64 owner reached its original 60-second timeout; a diagnostic run is measuring it separately.",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "beb37f745205fd9a9c9ef0a248787377d22e8d2a",
-        "observedAt": "2026-10-27T07:28:05+00:00",
+        "observedAt": "2026-10-27T07:53:19+00:00",
         "disposition": "Remote validation",
-        "nextAction": "Verify the complete header suite and deterministic port cases before requesting contributor review.",
+        "nextAction": "Reconcile the full AMD64 diagnostic with the original deadline before requesting review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
           "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Two native header suites and checksum controls",
+          "url": "https://app.buildbuddy.io/invocation/ee9a9ace-272f-4719-ae46-9769c305d23b"
+        },
+        {
+          "label": "AMD64 timeout diagnostic",
+          "url": "https://app.buildbuddy.io/invocation/b647754e-f85f-41b1-8836-5225a730127f"
+        }
+      ]
+    },
+    {
+      "id": "branch:review/kvm-vdso-declared-tools",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/kvm-vdso-declared-tools",
+      "head": "c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+      "title": "Declare vDSO disassembly tools",
+      "url": "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-27T07:53:19+00:00",
+      "summary": "Bazel ran all 23 AMD64 and 20 ARM64 cases with PATH=/nonexistent. Both native test actions used the declared LLVM tools. This covers the vDSO unit tests, which do not require /dev/kvm.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+        "url": "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+        "title": "Declare vDSO disassembly tools",
+        "summary": "Review the tool declarations and disassembly checks before opening a PR.",
+        "body": "The KVM vDSO tests invoked objdump from the worker's PATH without\nproviding it as a test input. Their disassembly checks failed on ARM64\nworkers without a system binutils installation.\n\nSupply the pinned LLVM object tools through the test's runfiles. Wrap\nraw instructions in an ELF text section so disassembly preserves their\nimage-relative branch destinations, and match LLVM's instruction\nspellings in the expected output. Keep the tools in the test's target\nconfiguration so they execute on the same architecture as the test."
+      },
+      "evidence": [
+        {
+          "label": "Native AMD64 and ARM64 runs with PATH disabled",
+          "url": "https://app.buildbuddy.io/invocation/1ed0c7c1-eae5-4cc0-8c89-dff268322054"
+        },
+        {
+          "label": "ARM64 suite on a worker without system objdump",
+          "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+        }
+      ]
+    },
+    {
+      "id": "branch:sandbox-python-null-netns-lifetime",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "sandbox-python-null-netns-lifetime",
+      "head": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
+      "title": "Keep gofer mounts out of temporary Python sandbox directories",
+      "url": "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-27T07:53:19+00:00",
+      "summary": "The Python SDK can leave a mount in a temporary directory, which makes cleanup fail with EBUSY. Remote qualification will exercise temporary roots and two sandboxes with a caller-owned shared namespace.",
+      "evidence": [
+        {
+          "label": "Original failures in the Python SDK suite",
+          "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+        }
+      ]
     }
   ],
   "edges": [
