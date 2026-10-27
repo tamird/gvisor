@@ -2,10 +2,12 @@
 """Publish public GitHub metadata using the existing authenticated gh session."""
 
 import argparse
+import http.client
 import json
 import re
 import subprocess
 import sys
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -635,6 +637,53 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             "mergeabilityIssues": mergeability, "changedMergeability": mergeability_changes}
 
 
+def release_version(wait: dict) -> str | None:
+    """Observe a published version; availability does not prove it contains a fix."""
+    module = wait.get("module")
+    repository = wait.get("repository")
+    if module and not repository and re.fullmatch(r"[a-z][a-z0-9._-]*", module):
+        url = f"https://bcr.bazel.build/modules/{module}/metadata.json"
+    elif repository and not module and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
+        url = f"https://api.github.com/repos/{repository}/releases/latest"
+    else:
+        raise ValueError("releaseWait needs one valid BCR module or GitHub repository")
+    request = urllib.request.Request(url, headers={"User-Agent": "gvisor-work-map"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        metadata = json.load(response)
+    if module:
+        match metadata:
+            case {"versions": list(versions), "yanked_versions": dict(yanked)} if all(
+                isinstance(version, str) and version for version in versions
+            ):
+                return next((version for version in reversed(versions) if version not in yanked), None)
+    else:
+        match metadata:
+            case {"tag_name": str(tag), "draft": False, "prerelease": False} if tag:
+                return tag
+    raise ValueError("release provider returned incomplete version metadata")
+
+
+def observe_release_versions(prs: list[dict]) -> None:
+    """Keep optional release checks independent of the required PR snapshot."""
+    nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]
+             if node.get("type") == "pr" and node.get("releaseWait")}
+    for pr in prs:
+        # Never retain an old successful observation after a failed lookup or
+        # a change to the registered source/head/release gate.
+        pr.pop("releaseVersion", None)
+        node = nodes.get((pr.get("repo", REPO), pr["number"]))
+        if node is None:
+            continue
+        pr["releaseVersion"] = None
+        wait = node["releaseWait"]
+        if pr["status"] not in {"open", "draft"} or pr["head"] != wait.get("head"):
+            continue
+        try:
+            pr["releaseVersion"] = release_version(wait)
+        except (OSError, ValueError, http.client.HTTPException) as error:
+            print(f"Release observation unavailable for {node['id']}: {error}", file=sys.stderr)
+
+
 def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
     """Keep current source blockers actionable even when no observation changed."""
     records = []
@@ -810,6 +859,7 @@ def main() -> None:
         refreshed.update({(repo, number): value for number, value in fresh.items()})
         prior_prs.update({(repo, number): value for number, value in prior.items()})
         inventories[repo] = inventory
+    observe_release_versions(prs)
     issues = collect_issues(previous)
     for record in issue_discussions(issues, previous):
         print(json.dumps({"issueDiscussion": record}), flush=True)

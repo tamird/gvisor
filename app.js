@@ -8,8 +8,8 @@ const VIEWS = ["dag", "table", "investigations"];
 const SORT_KEYS = ["number", "title", "impact", "direct", "age", "review", "checks", "group"];
 const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting public export", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
-  "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
-const FILTER_STATES = ["contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
+  "checks-pending": "Checks pending", "waiting-release": "Waiting for an upstream release", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
+const FILTER_STATES = ["contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "waiting-release", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
 const FAILURE_STATES = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"]);
 let stateFilters = new Set(), reasonFilters = new Set();
 let tableGrouping = false, visibleTableGroups = [];
@@ -116,7 +116,18 @@ function approvedPatch(node) {
   }
   return proof;
 }
+function rebaseNeedsComparison(node) {
+  const pr = node?.github;
+  return pr?.status === "open" && pr.githubReviewDecision === "APPROVED"
+    && effectiveReviewDecision(pr) === "REVIEW_REQUIRED" && !approvedPatch(node) && !pr.revisionChanged
+    && !(node.reapproval?.head === pr.head && node.reapproval.kind === "content-amendment")
+    && pr.imports?.some(item => item.sourceHead !== pr.head)
+    && pr.feedback?.items?.some(item => item.kind === "review" && item.state === "APPROVED"
+      && item.commit?.oid === pr.head && Date.parse(item.submittedAt) < Date.parse(pr.headIntroducedAt));
+}
 function reviewInfo(pr, node) {
+  if (releaseWait(node)) return { text: pr.releaseVersion === node.releaseWait.checkedVersion ? "Waiting on upstream" : "Check upstream release", tone: "pending", glyph: "○" };
+  if (rebaseNeedsComparison(node)) return { text: "Check rebased patch", tone: "pending", glyph: "○" };
   if (effectiveReviewDecision(pr) !== "APPROVED" && approvedPatch(node))
     return { text: "Approved patch · rebased", tone: "good", glyph: "✓" };
 
@@ -178,6 +189,9 @@ const ATTENTION_REASONS = [
   { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
+  { id: "agent-release-check", owner: "agent", title: "Check an upstream release" },
+  { id: "upstream-release", owner: "agent", title: "Waiting for an upstream release" },
+  { id: "agent-rebase-check", owner: "agent", title: "Compare rebased patch" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   { id: "author-proposal", owner: "user", title: "Contributor decisions" },
   { id: "human-submission", owner: "user", title: "Human-only submissions" },
@@ -189,6 +203,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-review", owner: "maintainer", title: "Maintainer review" },
   { id: "maintainer-import-label", owner: "maintainer", title: "Needs import label" },
   { id: "maintainer-import", owner: "maintainer", title: "Ready for import" },
+  { id: "maintainer-reimport", owner: "maintainer", title: "Closed import needs another attempt" },
   { id: "maintainer-merge", owner: "maintainer", title: "Waiting for merge" },
   { id: "maintainer-assignment", owner: "maintainer", title: "Reviewer assignment" },
   { id: "maintainer-unknown", owner: "maintainer", title: "Import status update" },
@@ -270,6 +285,15 @@ function actionableComment(node) {
       || record.head !== pr.head || pr.feedback?.complete !== true) return null;
   return pr.feedback.items.find(item => item.kind === "comment"
     && item.id === record.commentId && item.url === record.url) || null;
+}
+function releaseWait(node) {
+  const wait = node?.releaseWait, pr = node?.github;
+  if (!wait || pr?.status !== "open" || pr.head !== wait.head || pr.revisionChanged
+      || pr.branchHead && pr.branchHead !== pr.head || !pr.feedback?.complete || !pr.reviewsComplete
+      || !pr.threads?.complete || pr.threads.unresolved || actionableComment(node)) return null;
+  // A new review or reply can change what was agreed. Do not suppress it.
+  if (pr.feedback.items.some(item => Date.parse(item.updatedAt || item.submittedAt || item.createdAt) > Date.parse(wait.confirmedAt))) return null;
+  return wait;
 }
 function sourceFixRecovery(node, nodes = model?.nodes || []) {
   const recovery = node.ciRecovery, pr = node.github;
@@ -380,9 +404,13 @@ function attentionReasons(node, owner) {
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
   const comment = actionableComment(node), feedback = [];
+  const newWaitComment = node.releaseWait?.head === pr.head && pr.feedback?.items?.findLast(item => (item.kind === "comment" || item.kind === "review" && item.state !== "APPROVED" && item.body?.trim())
+    && item.author?.login !== owner && Date.parse(item.updatedAt || item.createdAt) > Date.parse(node.releaseWait.confirmedAt));
   if (review.author) feedback.push("A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
   if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level comment: ${comment.url}. GitHub's review decision is unchanged.`);
+  if (newWaitComment) feedback.push(`Triage the comment posted after the release hold was agreed: ${newWaitComment.url}. Reconfirm the hold if it still applies.`);
   if (feedback.length) add("author-feedback", feedback.join(" "));
+  if (rebaseNeedsComparison(node)) add("agent-rebase-check", "Approval predates the rebase. Compare the reviewed patch with the current head before requesting another review.");
   if (importStatus && FAILURE_STATES.has(importStatus.state)) add("maintainer-import-failed", `import/copybara: ${importStatus.state}. Internal error details are not public.`);
   if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
     add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
@@ -421,10 +449,18 @@ function attentionReasons(node, owner) {
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
     add("agent-refresh", "GitHub reports a source check failure without its failing context. Investigate the public check records.");
+  const wait = releaseWait(node);
+  if (wait) {
+    const version = pr.releaseVersion;
+    if (version === wait.checkedVersion)
+      add("upstream-release", `${version} does not include the required fix. ${wait.nextAction} No maintainer reply is due.`);
+    else add("agent-release-check", `${version ? `Upstream now lists ${version}.` : "The latest upstream release could not be verified."} ${wait.nextAction}`);
+    return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
+  }
   const followupBlocked = reasons.some(item => item.owner === "agent" || item.id === "maintainer-triaged");
   if (review.unknown && !review.incomplete && !followupBlocked)
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
-  if (review.response) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
+  if (review.response && !newWaitComment) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
   if (!approved && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
   if (approved && !followupBlocked && !retryDetails.length) {
@@ -438,7 +474,16 @@ function attentionReasons(node, owner) {
       const facts = open.map(item => `Import #${item.number}: ${checkInfo(item).text.toLowerCase()} checks${item.mergeable === "UNKNOWN" ? "; mergeability unknown" : item.mergeable === "CONFLICTING" ? "; conflicts" : ""}`);
       add("maintainer-merge", `${facts.join(". ")}. Remaining internal gates are not established.`);
     } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.", "Matching import is a draft");
-    else if (current.length) add("maintainer-unknown", current.some(item => item.status === "merged") ? "Matching import merged; source PR remains open." : "Matching import closed without a recorded merge; internal disposition unknown.", current.some(item => item.status === "merged") ? "Import merged; source still open" : "Import closed without merge");
+    else if (current.some(item => item.status === "merged")) add("maintainer-unknown", "Matching import merged; source PR remains open.", "Import merged; source still open");
+    else if (current.length) add("maintainer-reimport", `Import ${current.map(item => "#" + item.number).join(", ")} closed without merging. No matching import is open.`);
+    else if (acceptedPatch && pr.imports.some(item => item.sourceHead === acceptedPatch.approvedHead)) {
+      // This is the reviewed patch, but the import's checks belong to its original head.
+      const attempts = pr.imports.filter(item => item.sourceHead === acceptedPatch.approvedHead);
+      const facts = attempts.map(item => `#${item.number} (${item.status})`).join(", ");
+      if (attempts.every(item => item.status === "closed"))
+        add("maintainer-reimport", `Import ${facts} closed without merging. The rebase preserved the approved patch; no export of the new head is visible.`);
+      else add("maintainer-unknown", `Import ${facts} covers the same approved patch before the rebase. No matching export of the current head is visible.`, "Earlier import of the approved patch");
+    }
     else if (importStatus?.state === "SUCCESS") add("maintainer-unknown", "Copybara reports a successful internal import, but no matching public export PR was found in the complete lookup. Internal checks are reported separately; public export is still pending.", "Waiting for public export");
     else if (importStatus && !FAILURE_STATES.has(importStatus.state)) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. Ask for the import's progress.`, "Import pending; no public PR");
     else if (!importStatus && !feedbackStatus) {
@@ -1406,6 +1451,12 @@ function stateRecords(snapshot, node) {
     delete records.review;
   }
   if (approvedPatch(node)) delete records["maintainer-review"];
+  if (rebaseNeedsComparison(node)) delete records["maintainer-review"];
+  if (releaseWait(node)) {
+    delete records["maintainer-review"]; delete records["changes-requested"];
+    if (node.github.releaseVersion === node.releaseWait.checkedVersion)
+      records["waiting-release"] = { scope: node.github.head, since: node.releaseWait.confirmedAt, basis: "observed", qualifier: node.releaseWait.nextAction };
+  }
   if (node.github) {
     if (node.github.revisionChanged) {
       for (const key of Object.keys(records)) delete records[key];
@@ -1517,6 +1568,14 @@ function validateRegistry(candidate) {
     if (node.group !== undefined && !candidate.groups.some(group => group.id === node.group))
       throw new Error("Invalid node group");
     const dispositions = node.followup?.attentionDispositions;
+    const wait = node.releaseWait;
+    if (wait !== undefined && (node.type !== "pr" || !wait || !/^[0-9a-f]{40}$/.test(wait.head)
+        || !Number.isFinite(Date.parse(wait.confirmedAt)) || typeof wait.checkedVersion !== "string" || !wait.checkedVersion
+        || typeof wait.nextAction !== "string" || !wait.nextAction.trim()
+        || Boolean(wait.module) === Boolean(wait.repository)
+        || wait.module && !/^[a-z][a-z0-9._-]*$/.test(wait.module)
+        || wait.repository && !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(wait.repository)))
+      throw new Error("Invalid upstream release wait");
     if (dispositions !== undefined && (!Array.isArray(dispositions)
         || new Set(dispositions.map(item => item?.reason)).size !== dispositions.length
         || dispositions.some(item => !item || node.type !== "pr" || !TRIAGED_REASONS.has(item.reason)

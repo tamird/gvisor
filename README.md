@@ -325,6 +325,21 @@ evidence. Observation timestamps alone do not invalidate it. New unrelated reaso
 remain actionable, and an explicitly assigned comment always needs author work.
 Free-text follow-up notes never create or extend a disposition.
 
+When the next step depends on a public release, record a `releaseWait`
+on the owning PR with its source head, the version checked and the next
+verification step. The existing refresh reads the latest non-yanked BCR
+module version or published GitHub release. The row stays under **Waiting
+for an upstream release** until a different version appears. A new version
+or a failed lookup is **Check an upstream release** for the agent. Neither
+claims that an image has shipped or that the release contains the fix.
+New review feedback or a different source head reopens normal triage.
+
+If GitHub reassociates an earlier approval with a rebased head that already
+had an export, the agent compares patches before requesting another review.
+An export of the verified unchanged patch is shown with its actual outcome:
+a closed attempt without a successor needs re-import; an older open or merged
+attempt is linked without treating its CI as evidence for the new head.
+
 Copybara import links require a same-repository PR by `copybara-service` whose
 body contains the exact `FUTURE_COPYBARA_INTEGRATE_REVIEW` footer for the original
 PR URL and source owner/branch. The footer SHA is retained. An older source SHA

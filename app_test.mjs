@@ -1087,6 +1087,57 @@ test('attention uses current approvals and import associations without inventing
   assert.equal(reasonsFor(node)[0].owner, 'agent');
 });
 
+test('agreed release wait leaves the maintainer queue; new feedback and upstream versions surface', () => {
+  const node = attentionNode(), pr = node.github;
+  node.releaseWait = { head: pr.head, checkedVersion: 'v5.6.1', repository: 'docker/compose',
+    confirmedAt: '2026-10-14T00:00:00Z', nextAction: 'Verify the official dind image.' };
+  pr.releaseVersion = 'v5.6.1'; pr.reviewDecision = 'CHANGES_REQUESTED';
+  pr.feedback.items = [{ kind: 'review', state: 'CHANGES_REQUESTED', commit: { oid: 'b'.repeat(40) },
+    id: 'request', author: { login: 'reviewer' }, submittedAt: '2026-10-12T10:00:00Z' }];
+  assert.deepEqual(idsFor(node), ['upstream-release']);
+  const c = client(); c.nodeInput = node;
+  c.snapshotInput.workStates[node.id] = { 'changes-requested': { scope: pr.head } };
+  assert.deepEqual(Object.keys(vm.runInContext('stateRecords(snapshotInput, nodeInput)', c)), ['waiting-release']);
+  for (const version of ['v5.6.2', null]) {
+    pr.releaseVersion = version;
+    assert.deepEqual(idsFor(node), ['agent-release-check']);
+  }
+  pr.releaseVersion = 'v5.6.1';
+  const url = pr.url + '#issuecomment-123';
+  pr.feedback.items.push({ kind: 'comment', author: { login: 'reviewer' }, url, createdAt: '2026-10-15T09:00:00Z' });
+  assert.deepEqual(idsFor(node), ['author-feedback']);
+  assert.ok(reasonsFor(node)[0].detail.includes(url));
+  pr.feedback.items.pop();
+  pr.feedback.items.push({ kind: 'inline', threadId: 'later', author: { login: 'reviewer' },
+    createdAt: '2026-10-15T10:00:00Z', isResolved: false });
+  pr.threads = { complete: true, total: 1, unresolved: 1 };
+  assert.deepEqual(idsFor(node), ['author-feedback']);
+});
+
+test('a closed export of a verified unchanged patch calls for re-import, not review', () => {
+  const node = attentionNode(), pr = node.github;
+  node.repo = pr.repo = 'google/gvisor';
+  const old = 'b'.repeat(40);
+  pr.githubReviewDecision = 'APPROVED'; pr.reviewDecision = 'REVIEW_REQUIRED';
+  pr.headIntroducedAt = '2026-10-10T11:00:00Z'; pr.reviewRequestsComplete = true; pr.reviewRequests = [];
+  pr.feedback.items = [{ kind: 'review', id: 'review-1', state: 'APPROVED', author: { login: 'reviewer' },
+    submittedAt: '2026-10-09T12:00:00Z', commit: { oid: pr.head } }];
+  const attempt = attentionImport(node);
+  Object.assign(attempt, { sourceHead: old, matchesSourceHead: false, status: 'closed' });
+  pr.imports = [attempt];
+  assert.deepEqual(idsFor(node), ['agent-rebase-check']);
+  node.approvedPatch = { head: pr.head, approvedHead: old, reviewId: 'review-1', reviewer: 'reviewer',
+    submittedAt: '2026-10-09T12:00:00Z', verifiedAt: '2026-10-13T10:00:00Z',
+    method: 'stable-patch-id', oldPatchId: 'c'.repeat(40), newPatchId: 'c'.repeat(40) };
+  assert.deepEqual(idsFor(node), ['maintainer-reimport']);
+  assert.match(reasonsFor(node)[0].detail, new RegExp('#' + attempt.number));
+  pr.imports.push(attentionImport(node));
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  delete node.approvedPatch;
+  node.reapproval = { head: pr.head, kind: 'content-amendment' };
+  assert.deepEqual(idsFor(node), ['maintainer-review']);
+});
+
 test('unanswered feedback stays author work after a mechanical new head or outdated location', () => {
   const node = attentionNode(); node.github.reviewDecision = 'CHANGES_REQUESTED'; node.github.threads = { complete: true, total: 1, unresolved: 1 };
   const comment = { kind: 'inline', threadId: 'thread', isResolved: false, isOutdated: false, createdAt: '2026-10-13T09:10:00Z', author: { login: 'reviewer', __typename: 'User' } };
@@ -1246,7 +1297,7 @@ test('imported-unmerged does not assert readiness and administrative failures ar
   imported.mergeable = 'CONFLICTING';
   assert.deepEqual(idsFor(node), ['author-conflicts']);
   imported.status = 'closed'; assert.ok(!idsFor(node).includes('maintainer-import-failed'));
-  assert.ok(idsFor(node).includes('maintainer-unknown'));
+  assert.ok(idsFor(node).includes('maintainer-reimport'));
   node.github.imports = []; node.github.checks.contexts.push({ name: 'assign', state: 'FAILURE', purpose: 'reviewer-assignment' }); node.github.checks.total = 2; node.github.checks.state = 'FAILURE';
   assert.ok(!idsFor(node).includes('author-public-checks')); assert.ok(idsFor(node).includes('maintainer-assignment'));
 });

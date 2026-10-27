@@ -3,6 +3,7 @@
 import copy
 from datetime import datetime, timezone
 import importlib
+import io
 import json
 from pathlib import Path
 import re
@@ -60,6 +61,60 @@ def linked(pr: dict, source: int) -> dict:
     item = retained(pr)
     item.update(sourceHead=f"{source:040x}", matchesSourceHead=True, relationshipEvidence=item["url"])
     return item
+
+
+class ReleaseObservationTest(unittest.TestCase):
+    def observe(self, wait: dict, metadata: dict) -> tuple[str | None, str]:
+        with mock.patch.object(updater.urllib.request, "urlopen",
+                               return_value=io.BytesIO(json.dumps(metadata).encode())) as request:
+            version = updater.release_version(wait)
+        self.assertEqual(request.call_args.kwargs, {"timeout": 20})
+        return version, request.call_args.args[0].full_url
+
+    def test_bcr_excludes_yanked_versions(self) -> None:
+        self.assertEqual(self.observe({"module": "llvm"}, {
+            "versions": ["0.8.24", "0.8.25", "0.8.26"], "yanked_versions": {"0.8.26": "regression"},
+        }), ("0.8.25", "https://bcr.bazel.build/modules/llvm/metadata.json"))
+        self.assertEqual(self.observe({"module": "llvm"}, {
+            "versions": ["0.8.26"], "yanked_versions": {"0.8.26": "regression"},
+        })[0], None)
+
+    def test_github_uses_published_latest_release(self) -> None:
+        self.assertEqual(self.observe({"repository": "docker/compose"}, {
+            "tag_name": "v2.40.3", "draft": False, "prerelease": False,
+        }), ("v2.40.3", "https://api.github.com/repos/docker/compose/releases/latest"))
+        for fields in ({"draft": True}, {"prerelease": True}, {"tag_name": ""}):
+            with self.subTest(fields=fields), self.assertRaises(ValueError):
+                self.observe({"repository": "docker/compose"}, {
+                    "tag_name": "v2.40.3", "draft": False, "prerelease": False, **fields,
+                })
+
+    def test_exact_open_head_only_and_provider_failure_clears_old_value(self) -> None:
+        rows = [retained(raw_pr(number)) for number in range(1, 6)]
+        nodes = [{"id": f"pr:{row['number']}", "type": "pr", "repo": "google/gvisor", "number": row["number"],
+                  "releaseWait": {"head": row["head"], "module": "llvm", "checkedVersion": "0.8.24",
+                                  "confirmedAt": OLD, "nextAction": "Check the new release"}} for row in rows]
+        rows[1]["head"] = "a" * 40
+        rows[2]["status"] = "merged"
+        rows[3]["status"] = "closed"
+        for row in rows:
+            row["releaseVersion"] = "stale"
+        with mock.patch.object(updater, "REGISTRY", {"nodes": nodes}), \
+                mock.patch.object(updater, "release_version", side_effect=[OSError("provider unavailable"), "0.8.26"]) as fetch, \
+                mock.patch("sys.stderr", new_callable=io.StringIO) as diagnostic:
+            updater.observe_release_versions(rows)
+        self.assertEqual(fetch.call_args_list, [mock.call(nodes[0]["releaseWait"]), mock.call(nodes[4]["releaseWait"])])
+        self.assertEqual([row["releaseVersion"] for row in rows], [None, None, None, None, "0.8.26"])
+        self.assertIn("pr:1: provider unavailable", diagnostic.getvalue())
+        with mock.patch.object(updater, "REGISTRY", {"nodes": []}):
+            updater.observe_release_versions(rows)
+        self.assertEqual(["releaseVersion" in row for row in rows], [False] * 5)
+
+    def test_malformed_metadata_is_unavailable_not_a_stale_version(self) -> None:
+        for metadata in ({}, {"versions": "0.8.26", "yanked_versions": {}},
+                         {"versions": [None], "yanked_versions": {}}):
+            with self.subTest(metadata=metadata), self.assertRaises(ValueError):
+                self.observe({"module": "llvm"}, metadata)
 
 
 class IssueInventoryTest(unittest.TestCase):
@@ -272,6 +327,18 @@ class CollectorHistoryTest(unittest.TestCase):
                 mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
             updater.main()
         return json.loads(self.path.read_text())
+
+    def test_main_publishes_fresh_release_observation_and_survives_unavailability(self) -> None:
+        self.registry["nodes"].append({"id": "pr:3", "type": "pr", "repo": "google/gvisor", "number": 3,
+                                       "releaseWait": {"head": f"{3:040x}", "module": "llvm"}})
+        with mock.patch.object(updater, "release_version", side_effect=[
+            "0.8.26", updater.http.client.IncompleteRead(b"partial", 20),
+        ]):
+            first = self.collect()
+            second = self.collect()
+        self.assertEqual(next(pr for pr in first["prs"] if pr["number"] == 3)["releaseVersion"], "0.8.26")
+        self.assertIsNone(next(pr for pr in second["prs"] if pr["number"] == 3)["releaseVersion"])
+        self.assertEqual([pr["number"] for pr in second["prs"]], [pr["number"] for pr in first["prs"]])
 
     def test_explicit_external_review_subscription_and_event_deduplication(self) -> None:
         watch = {"owner": "root", "reviewers": ["hostinet_delivery", "node_tls_sni", "work_map_current"]}
