@@ -233,6 +233,13 @@ jobs:
           test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
           docker pull --platform=linux/arm64 "$PODMAN_FIXTURE"
           test "$(docker image inspect --format '{{.Architecture}}' "$PODMAN_FIXTURE")" = arm64
+      - name: Check rootless namespace setup before compiling
+        shell: bash
+        run: '"$GITHUB_WORKSPACE/harness/.github/native-podman-fixture.sh" --preflight'
+      - name: Install the declared GNU cross toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
           sudo apt-get -q update
           sudo apt-get -qy install --no-install-recommends crossbuild-essential-amd64 libnuma-dev
       - name: Build and execute the actual ARM64 Podman Bazel owner
