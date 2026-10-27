@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T16:03:03+00:00",
+    "updatedAt": "2026-10-27T16:21:47+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27344,41 +27344,34 @@
       "number": 16506
     },
     {
-      "id": "branch:declared-go-coverage",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16507",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/declared-go-coverage",
-      "head": "419aafc4542bcc84b33737d42ae344c49c43b567",
+      "head": "b952c8943eaeab391ab3a5b23c49932faebca94a",
       "title": "Build runsc and Sentry coverage binaries with rules_go",
-      "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567",
+      "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Open PR",
       "summary": "Replace the networked SDK bootstrap and private-import patch with rules_go. All eight binaries per CPU built; AMD64 ordinary runsc produced no report while both instrumented releases reported Sentry locations and passed the real KCOV case.",
-      "updatedAt": "2026-10-27T15:54:03+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "419aafc4542bcc84b33737d42ae344c49c43b567",
-        "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567",
-        "title": "Build runsc and Sentry coverage binaries with rules_go",
-        "summary": "Review the standalone coverage rule change.",
-        "body": "The coverage genrules fetch two Go distributions, rebuild the toolchain\nto disable cmd/go's internal-import check, and fetch modules during the\nbuild. None of those downloads are inputs to the action. A change to a\nGo package also makes the coverage target rebuild the entire SDK.\n\nBuild the coverage variants with the same declared SDK and dependencies\nas runsc and Sentry. rules_go invokes the compiler directly and uses\natomic counters, so KCOV can read Go's coverage metadata without a\nmodified SDK. Limit instrumentation to the existing first-party package\nset, and keep race detection and lock checking on the race variants."
-      },
+      "updatedAt": "2026-10-27T16:21:47+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-27T15:54:03+00:00",
-        "sourceHead": "419aafc4542bcc84b33737d42ae344c49c43b567",
-        "disposition": "Contributor review requested",
-        "nextAction": "Open the standalone PR after contributor review; reconcile the identical module pin if #15370 lands first.",
+        "observedAt": "2026-10-27T16:21:47+00:00",
+        "sourceHead": "b952c8943eaeab391ab3a5b23c49932faebca94a",
+        "disposition": "Reviewed and published as #16507",
+        "nextAction": "Follow maintainer review and public checks on #16507.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567",
+          "https://github.com/google/gvisor/pull/16507",
+          "https://github.com/tamird/gvisor/compare/419aafc4542bcc84b33737d42ae344c49c43b567...b952c8943eaeab391ab3a5b23c49932faebca94a",
           "https://app.buildbuddy.io/invocation/74fbdc14-840b-42be-a9e4-ced2114c9ef4",
           "https://app.buildbuddy.io/invocation/b51badd9-3b9d-419d-98f0-e4f8ac977e99"
         ]
       },
       "evidence": [
         {
-          "label": "Coverage rule and removed SDK bootstrap",
-          "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567"
+          "label": "Comment explaining the coverage exclusions",
+          "url": "https://github.com/tamird/gvisor/blob/b952c8943eaeab391ab3a5b23c49932faebca94a/tools/bazeldefs/go.bzl#L97-L110"
         },
         {
           "label": "AMD64 and ARM64 qualification",
@@ -27388,7 +27381,8 @@
           "label": "Ordinary, KCOV and race+KCOV runtime checks",
           "url": "https://app.buildbuddy.io/invocation/b51badd9-3b9d-419d-98f0-e4f8ac977e99"
         }
-      ]
+      ],
+      "number": 16507
     }
   ],
   "edges": [
@@ -40835,7 +40829,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-27T15:54:03+00:00",
+      "updatedAt": "2026-10-27T16:21:47+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -40859,8 +40853,8 @@
               "url": "https://github.com/google/gvisor/blob/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3/tools/bazel.mk#L51"
             },
             {
-              "label": "Coverage proposal and removed bootstrap",
-              "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567"
+              "label": "Go coverage without a patched SDK (#16507)",
+              "url": "https://github.com/google/gvisor/pull/16507"
             },
             {
               "label": "Qualification of the declared coverage toolchain",
@@ -40899,15 +40893,15 @@
           ]
         }
       ],
-      "nextStep": "Replay an actual Go compile action with only its declared input tree; compare its output with remote execution. Track the separate Debian package timestamp issue and the remaining default Make and cross-compiler dependencies.",
+      "nextStep": "Compare a real Go compilation in an empty Linux root with the original remote outputs. Qualify the Debian changelog change separately; the default Make builder and cross-compiler toolchain still remain.",
       "evidence": [
         {
           "label": "Make's builder selection",
           "url": "https://github.com/google/gvisor/blob/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3/tools/bazel.mk#L51"
         },
         {
-          "label": "Coverage proposal and removed bootstrap",
-          "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567"
+          "label": "Go coverage without a patched SDK (#16507)",
+          "url": "https://github.com/google/gvisor/pull/16507"
         },
         {
           "label": "vDSO tools use explicit runfiles",
@@ -40916,6 +40910,10 @@
         {
           "label": "Coverage build prerequisites",
           "url": "https://github.com/tamird/gvisor/blob/d943b4a1776c8c2281cff19eed2ff02a2a892619/tools/build_cover.sh#L17-L60"
+        },
+        {
+          "label": "Replay the original Go compiler action with its declared input tree",
+          "url": "https://app.buildbuddy.io/invocation/7fb14aad-09a4-4310-82d0-6e310a5989a7"
         }
       ],
       "group": "rbe"
