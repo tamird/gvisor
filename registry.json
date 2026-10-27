@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T01:25:59.823189+00:00",
+    "updatedAt": "2026-10-27T01:54:26.748123+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26090,6 +26090,58 @@
         }
       ],
       "number": 16473
+    },
+    {
+      "id": "branch:remove-obsolete-basic-ruby",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/remove-obsolete-basic-ruby",
+      "head": "523417fd8a8f4be8962250496b7fed0696cfd9c1",
+      "title": "Remove the unused basic Ruby image",
+      "url": "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "summary": "TestRuby uses the Sinatra fixture in image-test/ruby. No tracked caller uses basic/ruby; Make discovers it solely because its one-line Dockerfile still exists. Removing that file drops only basic_ruby from the tracked Make recipes on AMD64 (94 to 93) and ARM64 (70 to 69). The HTTP fixture and both Ruby benchmark images are unchanged.",
+      "updatedAt": "2026-10-27T01:54:26.748123+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "523417fd8a8f4be8962250496b7fed0696cfd9c1",
+        "url": "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1",
+        "title": "Remove the unused basic Ruby image",
+        "summary": "Review the one-file removal before upstream submission.",
+        "body": "TestRuby runs image-test/ruby, which includes the HTTP server and its\ngems. No test uses basic/ruby. Its Dockerfile still causes the CPU image\njobs and make load-basic to prepare a second image that only retags the\nupstream Ruby base.\n\nRemove the unused recipe from image discovery."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "523417fd8a8f4be8962250496b7fed0696cfd9c1",
+        "observedAt": "2026-10-27T01:54:26.748123+00:00",
+        "disposition": "Contributor decision requested",
+        "nextAction": "Open an independent PR after contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1",
+          "https://github.com/google/gvisor/commit/1f42df880e939581141cb196e3b0799542364024",
+          "https://github.com/google/gvisor/blob/4fd586389aadac43f0d95adcb2b1b4ae916fb30f/test/image/image_test.go#L302-L316",
+          "https://github.com/google/gvisor/blob/4fd586389aadac43f0d95adcb2b1b4ae916fb30f/tools/images.mk"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Proposed source",
+          "url": "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1"
+        },
+        {
+          "label": "Move TestRuby to the HTTP fixture",
+          "url": "https://github.com/google/gvisor/commit/1f42df880e939581141cb196e3b0799542364024"
+        },
+        {
+          "label": "Current TestRuby image selection",
+          "url": "https://github.com/google/gvisor/blob/4fd586389aadac43f0d95adcb2b1b4ae916fb30f/test/image/image_test.go#L302-L316"
+        },
+        {
+          "label": "Make image discovery",
+          "url": "https://github.com/google/gvisor/blob/4fd586389aadac43f0d95adcb2b1b4ae916fb30f/tools/images.mk"
+        }
+      ]
     }
   ],
   "edges": [
@@ -27741,12 +27793,6 @@
       "evidence": "https://github.com/tamird/gvisor/commit/0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc"
     },
     {
-      "from": "branch:fix/license-manual-artifacts",
-      "to": "branch:upgrade/nodejs-26.12.0",
-      "type": "depends_on",
-      "reason": "Public npm artifact audit support needs generic pinned manual-term retention; the standalone prerequisite is separately reviewed."
-    },
-    {
       "from": "pr:buildbuddy-io/buildbuddy:13781",
       "to": "pr:buildbuddy-io/buildbuddy:13849",
       "type": "depends_on",
@@ -27755,12 +27801,6 @@
         "https://github.com/buildbuddy-io/buildbuddy/pull/13781",
         "https://github.com/buildbuddy-io/buildbuddy/actions/runs/38129447672/job/114440533259"
       ]
-    },
-    {
-      "from": "branch:fix/license-manual-artifacts",
-      "to": "branch:fix/license-notice-source",
-      "type": "depends_on",
-      "reason": "This public prerequisite is based on the preceding independently reviewed mechanism."
     },
     {
       "from": "branch:fix/license-notice-source",
@@ -27802,15 +27842,21 @@
       "from": "pr:16051",
       "to": "branch:upgrade/nodejs-26.12.0",
       "type": "depends_on",
-      "reason": "Public npm artifact audit support needs generic pinned manual-term retention; the standalone prerequisite is separately reviewed. The approved prerequisite is now published as #16051.",
-      "evidence": "https://github.com/google/gvisor/pull/16051"
+      "reason": "The Node test-dependency catalog needs support for pinned, manually audited license artifacts.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16051",
+        "https://github.com/tamird/gvisor/commit/24cae478d49a084a93cd26aba9a57d528d67b7cc"
+      ]
     },
     {
       "from": "pr:16051",
       "to": "branch:fix/license-notice-source",
       "type": "depends_on",
-      "reason": "This public prerequisite is based on the preceding independently reviewed mechanism. The approved prerequisite is now published as #16051.",
-      "evidence": "https://github.com/google/gvisor/pull/16051"
+      "reason": "Immutable notice discovery uses the manual-artifact support from this PR.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16051",
+        "https://github.com/tamird/gvisor/commit/24cae478d49a084a93cd26aba9a57d528d67b7cc"
+      ]
     },
     {
       "from": "pr:16057",
@@ -38631,8 +38677,8 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "The user requested reassessing image migrations that rebuild substantial upstream software. Prefer pinned maintained upstream images with small Bazel-built layers when they satisfy the existing consumer contract; keep source-built project binaries and qualified shared utilities where needed. Hostinet owns the third-party image reassessment. The approved Nginx revision follows this approach; Apache is being adapted with its image-specific defaults preserved.\n\nThe scoped PHP runtime-owner gate is complete: one uncached AMD64 systrap owner passed all seven ordered batches at fc400d74. The retained raw new-image selection has five PASS and two SKIP. That historical scoped result is separate from the later full-suite result below; both-CPU image assembly does not establish ARM runtime coverage.\n\nThe full PHP 8.5.11 run c7ffc9ac on source 537a323d selected all 21,872 direct PHPT names in each AMD64 filesystem mode. After the retained suite-name correction, each mode has 15,691 PASSED, 6,297 SKIPPED, 9 XFAILED and one WARNED native body result; redirect children are counted separately from direct selection. The ten reporting-group errors and 500 missing results were resolved from the original artifacts without rerunning PHP. All 16 Bazel wrappers exited zero, satisfying the public process-exit policy on this retained source. PHP excludes WARNED from its failing exit states, and the public gVisor make/proctor/runner chain preserves that process result; the relevant current bf84 execution paths match the retained source. The stricter qualification still records watch_006.phpt as WARNED and keeps aggregate FAIL in both modes. A separate one-case native runc control a4f8a5ba used the exact original image archive, proctor and runner and produced the same WARNED result: its XFAIL marker was present although the expected output passed. This discrepancy does not support a gVisor runtime or exit-rule fix, a PHP backport or another full run. Exact-image parity and public process-exit success remain distinct from the preserved strict failure; neither is a new Buildkite result, a whole-matrix pass at bf84, full native parity or ARM runtime evidence.",
+      "updatedAt": "2026-10-27T01:54:26.748123+00:00",
+      "summary": "Pin the maintained upstream image when it already supplies what the test needs; add Bazel-built layers for gVisor binaries and test data. The published Apache and Bun changes follow this approach. The separate basic Ruby recipe has no remaining consumer.\n\nThe scoped PHP runtime-owner gate is complete: one uncached AMD64 systrap owner passed all seven ordered batches at fc400d74. The retained raw new-image selection has five PASS and two SKIP. That historical scoped result is separate from the later full-suite result below; both-CPU image assembly does not establish ARM runtime coverage.\n\nThe full PHP 8.5.11 run c7ffc9ac on source 537a323d selected all 21,872 direct PHPT names in each AMD64 filesystem mode. After the retained suite-name correction, each mode has 15,691 PASSED, 6,297 SKIPPED, 9 XFAILED and one WARNED native body result; redirect children are counted separately from direct selection. The ten reporting-group errors and 500 missing results were resolved from the original artifacts without rerunning PHP. All 16 Bazel wrappers exited zero, satisfying the public process-exit policy on this retained source. PHP excludes WARNED from its failing exit states, and the public gVisor make/proctor/runner chain preserves that process result; the relevant current bf84 execution paths match the retained source. The stricter qualification still records watch_006.phpt as WARNED and keeps aggregate FAIL in both modes. A separate one-case native runc control a4f8a5ba used the exact original image archive, proctor and runner and produced the same WARNED result: its XFAIL marker was present although the expected output passed. This discrepancy does not support a gVisor runtime or exit-rule fix, a PHP backport or another full run. Exact-image parity and public process-exit success remain distinct from the preserved strict failure; neither is a new Buildkite result, a whole-matrix pass at bf84, full native parity or ARM runtime evidence.",
       "findings": [
         {
           "text": "Native helpers, integration C, hackbench, hey, iperf, wrk2, ACL, filecap and sudo already use the scratch helper_base. Some explicitly add prebuilt distribution packages; that is declared packaging, not source compilation of those binaries.",
@@ -38792,7 +38838,7 @@
           ]
         }
       ],
-      "nextStep": "The shared mirror and basic image prerequisites have landed. Python #16459, MySQL #16458, PostgreSQL #16460 and Tomcat #16462 are published. Finish Apache delivery and Bun source-bundle validation; sequence approved MariaDB after #16460. Benchmark Nginx still needs Apache payloads, and combined stock Nginx/Redis still needs #16250. Preserve source-specific functional and performance evidence. The withdrawn local BusyBox build is not a prerequisite.",
+      "nextStep": "MariaDB waits for PostgreSQL #16460. Benchmark Nginx needs the Apache payloads in #16466; stock Nginx and Redis wait for #16250. The unused basic Ruby recipe is ready for contributor review. Keep the separate image-test/ruby Dockerfile until its native gems can be built for the selected Ruby ABI. The local BusyBox build was withdrawn.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
@@ -38801,6 +38847,18 @@
         {
           "label": "Scratch leaf-image source under qualification",
           "url": "https://github.com/tamird/gvisor/commit/6cae99aa007bf7b1f87e5fe0a8f047be228f7e03"
+        },
+        {
+          "label": "Apache image PR",
+          "url": "https://github.com/google/gvisor/pull/16466"
+        },
+        {
+          "label": "Bun image PR",
+          "url": "https://github.com/google/gvisor/pull/16467"
+        },
+        {
+          "label": "Unused basic Ruby recipe",
+          "url": "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1"
         }
       ]
     },
@@ -38911,6 +38969,65 @@
         {
           "label": "Contributor review: exact INET setup correction",
           "url": "https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Anft-compat-inet-autoload"
+        }
+      ]
+    },
+    {
+      "id": "investigation:arm64-podman-bwrap",
+      "title": "Qualify Podman and bwrap on a native ARM64 runner",
+      "status": "concluded",
+      "owner": "root",
+      "updatedAt": "2026-10-27T01:54:26.748123+00:00",
+      "summary": "GitHub\u2019s stock ubuntu-24.04-arm host can execute the Podman and bwrap tests using gVisor binaries compiled on BuildBuddy. Neither test requires relaxing the host\u2019s AppArmor user-namespace policy.",
+      "findings": [
+        {
+          "text": "Podman passed with DirectFS enabled. With DirectFS disabled, sandbox UID 65534 could not traverse the fixture\u2019s private temporary directory. A dedicated directory with search permission let that mode pass too. The user home and configuration stayed private.",
+          "evidence": [
+            {
+              "label": "Initial two-mode run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40427063052"
+            },
+            {
+              "label": "Runtime diagnostic",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40428705894"
+            },
+            {
+              "label": "Corrected fixture",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40430281832/job/121946001018"
+            }
+          ]
+        },
+        {
+          "text": "The bwrap owner ran natively in its usual mount namespace: 26 cases passed and TestUserns skipped because runsc does not support joining an existing user namespace. No result was missing. The test ended 01:44:56.190 UTC; the verdict was ready 3.06 seconds later and authenticated 35.76 seconds later, without manual collection.",
+          "evidence": [
+            {
+              "label": "Native job and bundled result",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40433693292/job/121957253943"
+            },
+            {
+              "label": "Bazel invocation",
+              "url": "https://app.buildbuddy.io/invocation/555ca059-38db-4eb2-a4c1-4da4068a5781"
+            },
+            {
+              "label": "Maintained qualification configuration",
+              "url": "https://github.com/tamird/gvisor/commit/7ec2cb71f255aae23a369e0d0cc3410320c51d34"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Reuse the maintained native ARM64 route for these two owners. Joining existing user namespaces remains unsupported; the skipped case is not covered.",
+      "evidence": [
+        {
+          "label": "Podman native execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40430281832/job/121946001018"
+        },
+        {
+          "label": "bwrap native execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40433693292/job/121957253943"
+        },
+        {
+          "label": "Maintained ARM configuration",
+          "url": "https://github.com/tamird/gvisor/commit/7ec2cb71f255aae23a369e0d0cc3410320c51d34"
         }
       ]
     }
