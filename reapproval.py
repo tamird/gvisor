@@ -39,7 +39,7 @@ def import_author_block(pr: dict, node: dict) -> str | None:
     comment = node.get("followup", {}).get("actionableComment", {})
     if (comment.get("head") == pr["head"] and any(item.get("kind") == "comment"
             and item.get("id") == comment.get("commentId") and item.get("url") == comment.get("url")
-            for item in pr.get("feedback", {}).get("items", [])):
+            for item in pr.get("feedback", {}).get("items", []))):
         return "registered-current-author-action"
     if node.get("releaseWait", {}).get("head") == pr["head"]:
         return "registered-current-release-wait"
