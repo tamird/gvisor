@@ -49,10 +49,10 @@ print(json.dumps(rows))`;
     context.nodeInput = { ...node, type: 'pr', github: pr };
     assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(publicImportDisposition(nodeInput))', context)), disposition, pr.url);
     const reasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, registry.meta.owner))', context));
-    const recoveryActions = ['maintainer-import-refresh', 'maintainer-reimport', 'maintainer-import-landed'];
+    const recoveryActions = ['maintainer-import-refresh', 'maintainer-reapproval', 'maintainer-reimport', 'maintainer-import-landed'];
     assert.deepEqual(reasons.filter(reason => recoveryActions.includes(reason.id)).map(reason => reason.id),
       recoveryActions.includes(disposition.action) ? [disposition.action] : [], pr.url);
-    if (['maintainer-import-refresh', 'maintainer-reimport'].includes(disposition.action)) {
+    if (['maintainer-import-refresh', 'maintainer-reapproval', 'maintainer-reimport'].includes(disposition.action)) {
       assert.ok(reasons.some(reason => reason.id === disposition.action), pr.url);
       actions.push({ number: pr.number, action: disposition.action, exports: disposition.binding.imports.map(item => item.number) });
     }
@@ -65,7 +65,7 @@ print(json.dumps(rows))`;
 test('missing import labels remain actionable despite equivalent approval, then clear on relabel', () => {
   const context = client();
   const fixture = JSON.parse(readFileSync(new URL('./import-trigger-fixtures.json', import.meta.url)));
-  for (const row of fixture.rows.filter(row => row.expectedAction)) {
+  for (const row of fixture.rows.filter(row => row.expectedAction === 'restore-import-label')) {
     context.nodeInput = { ...row.node, github: row.pr };
     // Obtain the same source-owned decision used by the alarm, not a test double.
     const script = `import json, sys
@@ -97,6 +97,55 @@ test('registry rejects workstreams that cannot be selected in the filter', () =>
   for (const group of ['runsc', 'state', 'kernel', 'netstack']) {
     node.group = group;
     assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid node group/);
+  }
+});
+
+test('old open Copybara PRs call for reapproval of the current source', () => {
+  const context = client();
+  const fixture = JSON.parse(readFileSync(new URL('./import-trigger-fixtures.json', import.meta.url)));
+  for (const row of fixture.openExportRows) {
+    context.nodeInput = { ...row.node, github: row.pr };
+    const script = `import json, sys
+from work_states import public_import_disposition
+row = json.load(sys.stdin)
+print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedPatch'))))`;
+    row.pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', script], {
+      cwd: new URL('.', import.meta.url), input: JSON.stringify(row), encoding: 'utf8',
+    }));
+    const reasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+    const reapproval = reasons.find(item => item.id === 'maintainer-reapproval');
+    assert.equal(!!reapproval, row.expectedAction === 'reapprove-amendment', String(row.pr.number));
+    if (reapproval) {
+      assert.equal(reapproval.title, 'Reapprove current source PR');
+      assert.match(reapproval.detail, new RegExp(row.pr.head.slice(0, 12)));
+      assert.match(reapproval.detail, new RegExp('#' + row.pr.imports[0].number));
+      assert.equal(reasons.some(item => ['maintainer-import-refresh', 'maintainer-import-previous'].includes(item.id)), false);
+      if (row.pr.number === 15940) assert.match(reapproval.detail, /success public checks \(15 reported\)/);
+      for (const reviewer of ['EtiennePerot', 'lsfriend']) for (const labels of [[], ['ready to pull']]) {
+        const current = structuredClone(row);
+        current.pr.githubReviewDecision = 'REVIEW_REQUIRED';
+        current.pr.labels = labels;
+        const oldReview = current.pr.feedback.items.find(item => item.id === current.node.approvedPatch.reviewId);
+        current.pr.feedback.items.push({ ...oldReview, id: 'fresh', author: { ...oldReview.author, login: reviewer },
+          commit: { oid: current.pr.head }, submittedAt: current.observedAt, updatedAt: current.observedAt, body: '' });
+        current.pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', script], {
+          cwd: new URL('.', import.meta.url), input: JSON.stringify(current), encoding: 'utf8',
+        }));
+        context.nodeInput = { ...current.node, github: current.pr };
+        const freshReasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+        assert.equal(freshReasons.some(item => ['maintainer-reapproval', 'maintainer-import-refresh'].includes(item.id)), false);
+        assert.ok(freshReasons.some(item => item.title === 'Reapproved; waiting for Copybara'));
+        const outsider = current.pr.feedback.items.at(-1);
+        outsider.author = { login: 'outsider', __typename: 'User' };
+        outsider.authorAssociation = 'NONE';
+        current.pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', script], {
+          cwd: new URL('.', import.meta.url), input: JSON.stringify(current), encoding: 'utf8',
+        }));
+        assert.equal(current.pr.publicImportDisposition.binding.currentApproval, false);
+        assert.ok(JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context))
+          .some(item => item.id === 'maintainer-reapproval'));
+      }
+    }
   }
 });
 

@@ -774,29 +774,29 @@ def reapproval_reminders(post: bool = False) -> None:
             print(json.dumps({"publicImportHandoff": {"number": pr["number"], "url": pr["url"],
                 "snapshotAt": snapshot["checkedAt"], **disposition, "posting": "Diagnostic only; no comment is authorized by this handoff."}}))
         initial = reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers)
-        restore_trigger = initial.get("action") == "restore-import-label"
-        # A label-recovery candidate needs a fresh timeline/export lookup as
-        # well as fresh labels. A new successor suppresses the public reminder.
-        if node.get("reapproval", {}).get("head") != pr["head"] and not restore_trigger:
+        refresh_imports = initial.get("action") == "restore-import-label" or initial.get("importReapproval") is True
+        # Import recovery needs fresh timeline, labels, and export lineage.
+        # A new successor suppresses the public reminder.
+        if node.get("reapproval", {}).get("head") != pr["head"] and not refresh_imports:
             print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers)))
             continue
-        raw = fetch_numbers([pr["number"]], timeline=restore_trigger, repo=pr["repo"], team_details=False)[pr["number"]]
+        raw = fetch_numbers([pr["number"]], timeline=refresh_imports, repo=pr["repo"], team_details=False)[pr["number"]]
         recheck_unknown_mergeability([raw], repo=pr["repo"])
         current = normalize(raw)
         current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
         if current["head"] == pr["head"]:
-            # Amendment-only probes retain the bound snapshot. Restoring a
-            # trigger additionally requires a fresh complete export lookup.
-            current["imports"] = refresh_reminder_imports(raw, pr) if restore_trigger else pr["imports"]
+            # Amendment-only probes retain the bound snapshot. Import recovery
+            # additionally requires a fresh complete export lookup.
+            current["imports"] = refresh_reminder_imports(raw, pr) if refresh_imports else pr["imports"]
             current["importsComplete"] = (not raw["timelineItems"]["pageInfo"]["hasPreviousPage"]
-                                          if restore_trigger else pr.get("importsComplete", False))
+                                          if refresh_imports else pr.get("importsComplete", False))
         plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER, maintainers)
         plan["importSnapshotAt"] = snapshot["checkedAt"] if current["head"] == pr["head"] else None
         if current["head"] != pr["head"]:
             plan.update(status="skipped", reason="head-changed-since-snapshot")
-        elif plan.get("action") == "restore-import-label" and not restore_trigger:
+        elif (plan.get("action") == "restore-import-label" or plan.get("importReapproval") is True) and not refresh_imports:
             # An amendment probe did not refresh export lineage. A concurrent
-            # label loss must wait for that lookup, even if approval is fresh.
+            # import-recovery transition must wait for that lookup.
             plan.update(status="deferred", reason="import-trigger-changed-needs-fresh-lineage")
         if not post or plan["status"] != "due":
             print(json.dumps(plan))

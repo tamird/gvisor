@@ -106,6 +106,34 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
     if (disposition["binding"]["eligible"] and disposition["state"] == "closed"
             and disposition["trigger"]["state"] == "present"):
         return skip("import-trigger-present-awaiting-replacement")
+    if disposition["action"] == "maintainer-reapproval":
+        if effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers):
+            return skip("current-head-approved")
+        if reason := import_author_block(pr, node):
+            return {**skip(reason), "status": "deferred"}
+        patch = node["approvedPatch"]
+        approvers = sorted(item["author"]["login"] for item in latest.values()
+                           if item["id"] == patch["reviewId"] and item["state"] == "APPROVED")
+        if not approvers:
+            return skip("no-matching-prior-maintainer-approval")
+        if not pr.get("headHistoryComplete") or not pr.get("headIntroducedAt"):
+            return {**skip("incomplete-head-time-evidence"), "status": "needs-evidence"}
+        if datetime.fromisoformat(patch["submittedAt"].replace("Z", "+00:00")) >= datetime.fromisoformat(pr["headIntroducedAt"].replace("Z", "+00:00")):
+            return {**skip("approval-does-not-predate-source-update"), "status": "needs-evidence"}
+        head, old = pr["head"], patch["approvedHead"]
+        exports = ", ".join(f"[#{item['number']}](https://github.com/google/gvisor/pull/{item['number']})"
+                            for item in disposition["binding"]["imports"] if item["status"] in {"open", "draft"})
+        body = (f"🚨 {' '.join('@' + login for login in approvers)} please reapprove the current source head "
+                f"[{head[:12]}](https://github.com/google/gvisor/commit/{head}) so Copybara can regenerate its import. "
+                f"Your earlier approval covered [{old[:12]}](https://github.com/google/gvisor/commit/{old}) "
+                f"and was submitted {patch['submittedAt']}, before this head was published {pr['headIntroducedAt']}. "
+                f"The open Copybara PR {exports} still names the earlier source revision. "
+                "The source rebase preserves the reviewed patch, but that comparison and the older export "
+                "do not establish approval of the current head.\n\n"
+                f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} -->")
+        return schedule_reminder(result, comments, now, owner, action="reapprove-amendment",
+                                 approvedHead=old, approvers=approvers, body=body,
+                                 importReapproval=True)
     if disposition["action"] == "maintainer-reimport" and disposition["trigger"]["state"] == "missing":
         if reason := import_author_block(pr, node):
             return {**skip(reason), "status": "deferred"}

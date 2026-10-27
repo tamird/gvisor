@@ -148,10 +148,11 @@ def check_qualifier(pr: dict) -> str:
     return "; ".join(qualifiers)
 
 
-def effective_approval(pr: dict) -> dict | None:
+def effective_approval(pr: dict, *, require_aggregate: bool = True,
+                       trusted_reviewers: frozenset[str] = frozenset()) -> dict | None:
     """Return a current-head approval submitted after the head's time evidence."""
     decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
-    if decision != "APPROVED":
+    if require_aggregate and decision != "APPROVED":
         return None
     if not pr.get("reviewsComplete") or not pr.get("reviewRequestsComplete") or not pr.get("headHistoryComplete"):
         return None
@@ -177,7 +178,13 @@ def effective_approval(pr: dict) -> dict | None:
             latest[author] = item
     approvals = []
     for author, item in latest.items():
-        if (author in requested or item["state"] != "APPROVED"
+        if not require_aggregate and (
+                (item.get("author") or {}).get("__typename") != "User"
+                or author == pr.get("authorLogin", pr.get("headOwner"))
+                or item.get("authorAssociation") not in {"MEMBER", "OWNER", "COLLABORATOR"}
+                and author.casefold() not in trusted_reviewers):
+            continue
+        if (require_aggregate and author in requested or item["state"] != "APPROVED"
                 or (item.get("commit") or {}).get("oid") != pr["head"]):
             continue
         try:
@@ -332,6 +339,8 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     active = [item for item in imports if item["status"] in {"open", "draft"}]
     scope = "exact" if imports and imports[0]["sourceHead"] == pr["head"] else "equivalent" if imports else "none"
     binding = {"sourceHead": pr["head"], "approvedHead": patch["approvedHead"] if accepted else None,
+               "currentApproval": effective_approval(pr, require_aggregate=False, trusted_reviewers=
+                   frozenset({patch["reviewer"].casefold()}) if accepted else frozenset()) is not None,
                "complete": pr.get("importsComplete") is True,
                "labels": sorted(pr.get("labels", [])), "labelsComplete": pr.get("labelsComplete") is True,
                "labelHistory": pr.get("labelHistory"),
@@ -354,7 +363,10 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     binding["eligible"] = bool(eligible)
     action = None
     if eligible:
-        if state == "conflicting":
+        if scope == "equivalent" and active:
+            if binding["complete"] and not binding["currentApproval"]:
+                action = "maintainer-reapproval"
+        elif state == "conflicting":
             action = "maintainer-import-refresh" if scope == "equivalent" else "author-conflicts"
         elif state == "closed":
             action = "maintainer-reimport"
@@ -370,7 +382,12 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
         "unknown": "Public export inventory is incomplete; refresh before deciding.",
     }[state]
     trigger = import_trigger(pr)
-    if state == "closed" and trigger["state"] == "missing":
+    if action == "maintainer-reapproval":
+        description = ("The approval predates the current source head and Copybara still exports the earlier revision. "
+                       "Ask the approving maintainer to reapprove the current source PR so Copybara regenerates it.")
+    elif scope == "equivalent" and active and binding["currentApproval"]:
+        description = "The current source has a fresh approval; wait for Copybara to replace the earlier export."
+    elif state == "closed" and trigger["state"] == "missing":
         description = ("The earlier export closed and the previously applied ready to pull label is missing. "
                        "Restore the import trigger; patch approval and the label are separate.")
     elif state == "closed" and trigger["state"] == "present":

@@ -160,7 +160,11 @@ The snapshot's `publicImportDisposition` binds the selected public exports to
 the current source head and any verified equivalent approval. Exact-head
 successors take precedence over older exports. The site and periodic reminder
 report use this same decision: a skipped review reminder does not mean an
-export is current. Conflicted earlier exports need refresh; closed, unmerged
+export is current. An older open export does not replace approval of the current
+source head, even when the source rebase preserves its patch or old public checks
+pass. The table asks for current-source reapproval and the ordinary alarm asks the
+approving maintainer to reapprove so Copybara regenerates its import. A genuinely
+fresh current-head approval waits for automatic replacement. Closed, unmerged
 exports need re-import, while their unresolved public CI evidence stays visible.
 `publicImportHandoff` is diagnostic only. The reminder planner separately
 recognizes a previously applied `ready to pull` label that is now missing:
@@ -228,7 +232,9 @@ topic patches and preserve changed bytes, whitespace, modes and paths; a
 different commit SHA or patch ID does not establish an amendment. Verify the
 single-commit shape before using parent-to-head patches. The same reviewed
 evidence with `kind: patch-preserving-rebase` excludes a proven equivalent
-rebase only from an amendment-review alarm, not from import-trigger recovery. It does not restore a dismissed approval or remove
+rebase only from an amendment-review alarm when there is no stale open export;
+it does not suppress current-source reapproval for an older open export or
+import-trigger recovery. It does not restore a dismissed approval or remove
 an explicit maintainer re-review request. Unknown changes are reported as `needs-evidence` for
 the delivery owner to reconcile, never guessed from stale approval alone.
 

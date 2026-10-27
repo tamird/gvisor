@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T20:46:28.700275+00:00",
+    "updatedAt": "2026-10-27T21:20:41.759940+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -13679,21 +13679,23 @@
       "url": "https://github.com/google/gvisor/pull/15929",
       "group": "bazel",
       "status": "open",
-      "summary": "The source conflict is repaired at 61088c907a. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne\u2019s approval remains on adc403f944. Open export #16511 contains that approved patch and now needs its own conflict refresh; no new source review is required for this equivalent rebase.\n\nEarlier source-specific record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at aa691effa6f5, while GitHub's PR and upstream pull ref still identify 4e7230767cb9 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Hostinet owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 4e7230767cb9 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe newly observed conflict is resolved and #15929 is published at signed fb113dfa51 on a9e9. Independent full generator review confirms that the merged ARM -cpu neoverse-n1 option precedes the guest executable only when QEMU is selected; native and fastbuild remain direct. The remaining differences are inherited x/net v0.60 catalog and pkg/zip changes. Exact-lease publication and tracking/API readback are verified; no comment or review request was sent. Old source qualification and the preserved 5f964 ref remain historical evidence, with no new runtime or performance claim.\n\nThe revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor approved 284970814f. Its unchanged patch is now delivered as #15929 at 5f964e3829 on current master. Original #15187 is closed; its source/review evidence and the earlier custom-archive proposal remain preserved. No contributor decision is pending.",
-      "updatedAt": "2026-10-27T18:54:54+00:00",
+      "summary": "The current source 61088c907a needs Etienne to reapprove it so Copybara regenerates its import. His approval was submitted before the current source push. The old export #16511 still names adc403f944 and has merge conflicts despite 17 passing public checks. Its actual PR delta differs from the current source in five paths; the current source rebase itself preserves the reviewed patch. No manual export edit is requested.\n\nSuperseded earlier interpretation and retained source history:\n\nThe source conflict is repaired at 61088c907a. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne\u2019s approval remains on adc403f944. Open export #16511 contains that approved patch and now needs its own conflict refresh; no new source review is required for this equivalent rebase.\n\nEarlier source-specific record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at aa691effa6f5, while GitHub's PR and upstream pull ref still identify 4e7230767cb9 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Hostinet owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 4e7230767cb9 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe newly observed conflict is resolved and #15929 is published at signed fb113dfa51 on a9e9. Independent full generator review confirms that the merged ARM -cpu neoverse-n1 option precedes the guest executable only when QEMU is selected; native and fastbuild remain direct. The remaining differences are inherited x/net v0.60 catalog and pkg/zip changes. Exact-lease publication and tracking/API readback are verified; no comment or review request was sent. Old source qualification and the preserved 5f964 ref remain historical evidence, with no new runtime or performance claim.\n\nThe revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor approved 284970814f. Its unchanged patch is now delivered as #15929 at 5f964e3829 on current master. Original #15187 is closed; its source/review evidence and the earlier custom-archive proposal remain preserved. No contributor decision is pending.",
+      "updatedAt": "2026-10-27T21:20:41.759940+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "work_map_current",
         "sourceHead": "61088c907a7a2e7ae8027b201618cc8f000f1ecd",
-        "observedAt": "2026-10-27T18:54:54+00:00",
-        "disposition": "Equivalent conflict repair published; existing review requirements retained",
-        "nextAction": "Wait for maintainers to refresh earlier equivalent export #16511; current source is mergeable and retains Etienne\u2019s approval through verified patch equivalence. No reapproval reminder.",
+        "observedAt": "2026-10-27T21:20:41.759940+00:00",
+        "disposition": "Current source head needs maintainer reapproval for Copybara",
+        "nextAction": "Ask the prior approving maintainer to reapprove the current source PR through the existing periodic alarm. The earlier open export is not current-head approval; preserve the three-hour per-PR cooldown and Pacific posting hours.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15929",
           "https://github.com/tamird/gvisor/commit/4e7230767cb93cf1af9b8bd2a876e060bd62de5c",
           "https://github.com/tamird/gvisor/commit/aa691effa6f5ab741f9fefc8eab6bf6085b70cf3",
           "https://github.com/tamird/gvisor/commit/61088c907a7a2e7ae8027b201618cc8f000f1ecd",
           "https://github.com/google/gvisor/pull/15929#pullrequestreview-5664391015",
-          "https://github.com/google/gvisor/pull/16511"
+          "https://github.com/google/gvisor/pull/16511",
+          "https://github.com/google/gvisor/pull/15929.diff",
+          "https://github.com/google/gvisor/pull/16511.diff"
         ],
         "mergeable": "MERGEABLE",
         "providerHead": "61088c907a7a2e7ae8027b201618cc8f000f1ecd"
@@ -13735,6 +13737,61 @@
         "method": "reviewed-context-only",
         "oldPatchId": "e74bf9c689a4114f0ee8ee70dd1db3db45677fe5",
         "newPatchId": "3587fccab10e0e3afcad3b235cbc049060f8cc99"
+      },
+      "importPatchComparison": {
+        "checkedAt": "2026-10-27T21:15:05.382689+00:00",
+        "source": {
+          "url": "https://github.com/google/gvisor/pull/15929",
+          "diff_url": "https://github.com/google/gvisor/pull/15929.diff",
+          "base": "845a4b61a9ba1dbd1dfc2594d1c67e3d82d9b826",
+          "head": "61088c907a7a2e7ae8027b201618cc8f000f1ecd",
+          "mergeable_state": "blocked",
+          "raw_diff": {
+            "sha256": "07f84c53aa4e9f0e1deb2f588e58d1a7deac012b015899f6f4eb6b6e3a6b8440",
+            "bytes": 53424
+          },
+          "normalized_change": {
+            "sha256": "bc1a9e968f15eba49ce5c0c247de9289f2b080ddab81b6b9f5bd3d8f3a758ddd",
+            "bytes": 46277
+          },
+          "modes": [
+            "deleted file mode 100644",
+            "deleted file mode 100755"
+          ]
+        },
+        "export": {
+          "url": "https://github.com/google/gvisor/pull/16511",
+          "diff_url": "https://github.com/google/gvisor/pull/16511.diff",
+          "base": "4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3",
+          "head": "1ad20edd817667b3567f15d0664ce15b5f8b80a4",
+          "mergeable_state": "dirty",
+          "raw_diff": {
+            "sha256": "4b9f1d43195004f756edeee6c44a3948740383ace844015932c03a1c364a4433",
+            "bytes": 61227
+          },
+          "normalized_change": {
+            "sha256": "b48f368345bc7227b113fb75b45d7ac18b072a8a870e33abfa58d1ec5fc9b5a6",
+            "bytes": 55009
+          },
+          "modes": [
+            "deleted file mode 100644",
+            "deleted file mode 100755"
+          ]
+        },
+        "comparison": {
+          "source": 15929,
+          "export": 16511,
+          "raw_diff_identical": false,
+          "normalized_delta_identical": false,
+          "modes_identical": true,
+          "different_change_paths": [
+            "pkg/seccomp/precompiledseccomp/defs.bzl",
+            "tools/bazeldefs/defs.bzl",
+            "tools/defs.bzl",
+            "tools/licensecheck/licensecheck.go",
+            "tools/licensecheck/licensecheck_test.go"
+          ]
+        }
       }
     },
     {
@@ -14838,19 +14895,21 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15940",
       "status": "open",
-      "updatedAt": "2026-10-27T18:39:29+00:00",
-      "summary": "Copybara PR #16324 is open and its checks passed. It contains the same LLVM change that Etienne approved before the rebase.",
+      "updatedAt": "2026-10-27T21:20:41.759940+00:00",
+      "summary": "The current source 786caf36a5 needs Etienne to reapprove it so Copybara regenerates its import. His genuine approval predates the source rebase; GitHub reassociated its commit without a new human review. Old export #16324 is open and mergeable with 15 passing public checks, but still names 1e4bf6e. Its actual MODULE.bazel PR delta matches the current source. That equality and the open older export do not replace current-source approval.\n\nSuperseded earlier interpretation and retained source history:\n\nCopybara PR #16324 is open and its checks passed. It contains the same LLVM change that Etienne approved before the rebase.",
       "followup": {
-        "owner": "root",
-        "disposition": "Waiting for Copybara PR #16324 to merge",
+        "owner": "work_map_current",
+        "disposition": "Current source head needs maintainer reapproval for Copybara",
         "sourceHead": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
-        "observedAt": "2026-10-27T18:39:29+00:00",
-        "nextAction": "Follow #16324. Its approved patch replays exactly onto the new base; no reapproval is needed.",
+        "observedAt": "2026-10-27T21:20:41.759940+00:00",
+        "nextAction": "Ask the prior approving maintainer to reapprove the current source PR through the existing periodic alarm. The earlier open export is not current-head approval; preserve the three-hour per-PR cooldown and Pacific posting hours.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39083076451",
           "https://github.com/tamird/gvisor/commit/1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
           "https://github.com/google/gvisor/pull/15940#pullrequestreview-5637142088",
-          "https://github.com/google/gvisor/pull/16324"
+          "https://github.com/google/gvisor/pull/16324",
+          "https://github.com/google/gvisor/pull/15940.diff",
+          "https://github.com/google/gvisor/pull/16324.diff"
         ],
         "attentionDispositions": [
           {
@@ -14944,6 +15003,49 @@
         "method": "stable-patch-id",
         "oldPatchId": "f67167a0221cbfe821a3c83860b9439e5bdb0949",
         "newPatchId": "f67167a0221cbfe821a3c83860b9439e5bdb0949"
+      },
+      "importPatchComparison": {
+        "checkedAt": "2026-10-27T21:15:05.382689+00:00",
+        "source": {
+          "url": "https://github.com/google/gvisor/pull/15940",
+          "diff_url": "https://github.com/google/gvisor/pull/15940.diff",
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
+          "head": "786caf36a569a33777cbfb194fcaf19c6bd028a0",
+          "mergeable_state": "blocked",
+          "raw_diff": {
+            "sha256": "05a8cd1854ec04cbae83788429058828e45c1607d07649f427b6c6ad116c2d9b",
+            "bytes": 515
+          },
+          "normalized_change": {
+            "sha256": "0e4993f3efae2b5c2a1775af62e9723fb90771961b2ef5691d2a9e8ad967083d",
+            "bytes": 349
+          },
+          "modes": []
+        },
+        "export": {
+          "url": "https://github.com/google/gvisor/pull/16324",
+          "diff_url": "https://github.com/google/gvisor/pull/16324.diff",
+          "base": "727a46ebf7f3e1b1c1d7108b015bc8a1db2e8da5",
+          "head": "716235c7bb29daa8da4e087f627547154785691a",
+          "mergeable_state": "blocked",
+          "raw_diff": {
+            "sha256": "b3a0205cc1b203b57efb67e9f386cc1d89e993f1e75b102e8d697c81fca1eddb",
+            "bytes": 515
+          },
+          "normalized_change": {
+            "sha256": "0e4993f3efae2b5c2a1775af62e9723fb90771961b2ef5691d2a9e8ad967083d",
+            "bytes": 349
+          },
+          "modes": []
+        },
+        "comparison": {
+          "source": 15940,
+          "export": 16324,
+          "raw_diff_identical": false,
+          "normalized_delta_identical": true,
+          "modes_identical": true,
+          "different_change_paths": []
+        }
       }
     },
     {
@@ -28100,6 +28202,41 @@
         "title": "Use native Bazel for license queries in bazel run",
         "summary": "The revised Go implementation removes the shell adapter and preserves the original Make arguments. Exact native Bazel and documented native Make both validated all 201 dependencies with identical module graphs and 163 repository definitions. The direct path invokes neither Make nor Docker; the Make control is not a full Docker runtime trial.",
         "body": "Running the license checker with `bazel run` can build the checker and\nthen try to build a Docker image just to read the module graph. Without\na Docker daemon, the audit stops before it checks any licenses.\n\nHave `bazel run` pass its native Bazel frontend to the checker. The same\ncode asks it for the module graph and the repository definitions used by\nthe audit. The documented `make license-check` and `make run` commands\nkeep their Make configuration, including on hosts where Bazel is only\navailable in the builder."
+      }
+    },
+    {
+      "id": "branch:systrap-native-stub",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/systrap-native-stub",
+      "head": "d68466bd10983234d1d530d1f4557282508ff53a",
+      "title": "Build the systrap signal stub with the C toolchain",
+      "url": "https://github.com/tamird/gvisor/compare/fe2049b9aa0e659ec0a3147e606a78e2332149d2...d68466bd10983234d1d530d1f4557282508ff53a",
+      "group": "bazel",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-27T21:17:06.374631+00:00",
+      "summary": "Replace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
+      "evidence": [
+        {
+          "label": "Exact signed two-file proposal",
+          "url": "https://github.com/tamird/gvisor/compare/fe2049b9aa0e659ec0a3147e606a78e2332149d2...d68466bd10983234d1d530d1f4557282508ff53a"
+        },
+        {
+          "label": "GNU compile/link, Go blobs and installed AMD64 systrap",
+          "url": "https://app.buildbuddy.io/invocation/8b3c876c-fe5e-4113-88e9-d255194e704f"
+        },
+        {
+          "label": "Earlier formatting failure; no native stub attempts",
+          "url": "https://app.buildbuddy.io/invocation/faf4bca8-828c-4ba9-8deb-90b5eaa1faf6"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "d68466bd10983234d1d530d1f4557282508ff53a",
+        "url": "https://github.com/tamird/gvisor/commit/d68466bd10983234d1d530d1f4557282508ff53a",
+        "title": "Build the systrap signal stub with the C toolchain",
+        "summary": "Replace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
+        "body": "Four shell rules use grep and tr to pick a source from lists of C,\nassembly and header files. Another shell rule passes the resulting\nobjects to ld. Declare those sources and the linker script on one\ncc_binary so Bazel selects the compile, assemble and link actions.\n\nLink without startup files or libc: gVisor maps this code as a blob,\nand the Go loader obtains its entry offsets from the linked ELF. Keep\nthe exported symbols even when only the Go loader references them."
       }
     }
   ],
