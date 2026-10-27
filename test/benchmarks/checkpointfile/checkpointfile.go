@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -127,31 +128,48 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		b.ReportMetric(float64(total), "checkpoint-total-B")
 	})
 	b.Run("Encode", func(b *testing.B) {
+		b.StopTimer()
 		b.ReportAllocs()
+		r, metadata, err := statefile.NewReader(io.NopCloser(bytes.NewReader(stateFile)), nil)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if err := r.Close(); err != nil {
+			b.Fatal(err)
+		}
+		// NewWriter generates its own internal metadata (e.g. _timestamp).
+		for key := range metadata {
+			if strings.HasPrefix(key, "_") {
+				delete(metadata, key)
+			}
+		}
 		var cpu time.Duration
-		var encodedBytes int64
+		var encoded bytes.Buffer
+		encoded.Grow(len(stateFile))
 		for i := 0; i < b.N; i++ {
-			b.StopTimer()
 			ctx, cleanup := withHostFDs(b, ctx, names)
-			// This kernel is only partially restored.
-			// Acceptable for purposes of benchmarking pkg/state alone.
+			// The memory files' pages are stored separately. Only encode the
+			// state file of this partially restored kernel.
 			k, err := loadKernel(ctx, plat, stateFile)
 			if err != nil {
+				cleanup()
 				b.Fatal(err)
 			}
-			w := &countingWriter{}
+			encoded.Reset()
 			b.StartTimer()
 			cpu += cpuTime(b, func() error {
-				_, err := state.Save(ctx, w, k)
-				return err
+				return saveKernel(ctx, &encoded, k, metadata)
 			})
 			b.StopTimer()
-			encodedBytes = w.n
 			cleanup()
-			b.StartTimer()
+		}
+		ctx, cleanup := withHostFDs(b, ctx, names)
+		defer cleanup()
+		if _, err := loadKernel(ctx, plat, encoded.Bytes()); err != nil {
+			b.Fatalf("loading the encoded state file: %v", err)
 		}
 		b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
-		b.ReportMetric(float64(encodedBytes), "encoded-kernel-B")
+		b.ReportMetric(float64(encoded.Len()), "encoded-state-file-B")
 	})
 }
 
@@ -374,6 +392,20 @@ func loadKernel(ctx context.Context, plat platform.Platform, data []byte) (*kern
 	return k, nil
 }
 
+// saveKernel writes the same two objects as Kernel.SaveTo does when the pages
+// are saved separately: the CPUID feature set followed by the kernel.
+func saveKernel(ctx context.Context, dst io.Writer, k *kernel.Kernel, metadata map[string]string) error {
+	w, err := statefile.NewWriter(dst, nil, metadata)
+	if err != nil {
+		return err
+	}
+	fs := k.FeatureSet()
+	if _, err = state.Save(ctx, w, &fs); err == nil {
+		_, err = state.Save(ctx, w, k)
+	}
+	return errors.Join(err, w.Close())
+}
+
 // cpuTime runs fn with automatic garbage collection disabled, and returns the
 // process CPU time it used. It collects garbage first, so that every call
 // starts from the same heap state. Thus, ns/op and cpu-ns exclude garbage
@@ -443,17 +475,6 @@ func (nopAddressSpace) PostFork() {}
 // UserModifiedGS implements platform.AddressSpace.UserModifiedGS.
 func (nopAddressSpace) UserModifiedGS(pkgcontext.Context, platform.MemoryManager) error {
 	return nil
-}
-
-// countingWriter counts the bytes written to it.
-type countingWriter struct {
-	n int64
-}
-
-// Write implements io.Writer.Write.
-func (w *countingWriter) Write(p []byte) (int, error) {
-	w.n += int64(len(p))
-	return len(p), nil
 }
 
 // Make sure that the kernel's state types are registered.
