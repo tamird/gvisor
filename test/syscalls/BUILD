@@ -912,6 +912,15 @@ syscall_test(
 )
 
 syscall_test(
+    size = "large",
+    add_hostinet = True,
+    save = False,
+    tcg_shard_count = 3,
+    tcg_timeout = "eternal",
+    test = "//test/syscalls/linux:socket_data_transfer_stress_test",
+)
+
+syscall_test(
     size = "medium",
     test = "//test/syscalls/linux:socket_domain_non_blocking_test",
 )
@@ -1185,12 +1194,13 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    limit_ephemeral_ports = True,
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
     # Keep each stress case in its own emulator action so it gets the full
     # deadline instead of sharing it with other long-running cases.
-    tcg_shard_count = 33,
+    tcg_shard_count = 30,
     tcg_timeout = "eternal",
     test = "//test/syscalls/linux:socket_stress_test",
 )
