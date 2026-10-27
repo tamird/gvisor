@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T15:44:30+00:00",
+    "updatedAt": "2026-10-27T16:03:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27265,33 +27265,34 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/checkpointfile-statefile-writer",
-      "head": "f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f",
+      "head": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
       "title": "Benchmark complete kernel state files",
-      "url": "https://github.com/tamird/gvisor/commit/f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f",
+      "url": "https://github.com/tamird/gvisor/commit/2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "summary": "The checkpoint Encode benchmark writes and closes an actual state file and reads it back outside the timer. Twelve framed outputs decoded in the measured integration comparison. The patch on current upstream is unchanged; the older comparison measured different work, not a serialization speedup.",
-      "updatedAt": "2026-10-27T15:36:03+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f",
-        "url": "https://github.com/tamird/gvisor/commit/f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f",
-        "title": "Benchmark complete kernel state files",
-        "summary": "Review the standalone benchmark fix before its upstream PR.",
-        "body": "The Encode benchmark discarded each write from state.Save. It measured\nthe kernel object graph but omitted the statefile writer, the separately\nsaved CPUID and the final flush used by a split checkpoint.\n\nEncode those objects into a reusable in-memory buffer using the input\ncheckpoint's metadata and compression. Decode the result outside the\ntimer so an incomplete file cannot produce a successful measurement.\nThe pages and their metadata remain separate; this measures no disk I/O."
-      },
+      "status": "Approved with requested changes; verifying revision",
+      "summary": "Encode writes and closes the kernel state file and reloads it outside the timer. The revision reports save/load errors at the operation that failed and restores GC and closes resources on failure. Run Decode/Encode once on this head before opening the PR.",
+      "updatedAt": "2026-10-27T16:03:03+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f",
-        "observedAt": "2026-10-27T15:36:03+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Submit the standalone benchmark after contributor review.",
+        "sourceHead": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
+        "observedAt": "2026-10-27T16:03:03+00:00",
+        "disposition": "Contributor approved with requested direct error handling; revision implemented",
+        "nextAction": "Check Decode and Encode plus the final reload on this source, then submit the contributor-approved change.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
           "https://github.com/tamird/gvisor/commit/f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f",
           "https://app.buildbuddy.io/invocation/2f18b8f1-b0c7-4396-9d98-a532b5b20aa5"
         ]
       },
       "evidence": [
+        {
+          "label": "Revision addressing contributor feedback",
+          "url": "https://github.com/tamird/gvisor/commit/2552104f3c33ae0e59c882f1cbc4fd369caaa33d"
+        },
+        {
+          "label": "Compare with the reviewed benchmark",
+          "url": "https://github.com/tamird/gvisor/compare/f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f...2552104f3c33ae0e59c882f1cbc4fd369caaa33d"
+        },
         {
           "label": "Benchmark on current upstream",
           "url": "https://github.com/tamird/gvisor/commit/f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f"
@@ -27307,32 +27308,25 @@
       ]
     },
     {
-      "id": "branch:hermetic-release-layout",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16506",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/hermetic-release-layout",
       "head": "679ce6be6e12e3d5d896b96294be4dd59473537f",
       "title": "Stage release binaries with a declared copy tool",
-      "url": "https://github.com/tamird/gvisor/commit/679ce6be6e12e3d5d896b96294be4dd59473537f",
+      "url": "https://github.com/google/gvisor/pull/16506",
       "group": "release",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "All 16 release-staging actions ran remotely. Eight files on each architecture match the producer digests and modes. The copy command runs in an empty Linux root with only its declared executable and input; the installed AMD64 runsc starts its sidecars.",
-      "updatedAt": "2026-10-27T15:44:30+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "679ce6be6e12e3d5d896b96294be4dd59473537f",
-        "url": "https://github.com/tamird/gvisor/commit/679ce6be6e12e3d5d896b96294be4dd59473537f",
-        "title": "Stage release binaries with a declared copy tool",
-        "summary": "Review the standalone release rule change before its upstream PR.",
-        "body": "Building //:release runs a shell script that expects cp, mkdir, and\ndirname on the worker. Use the copy toolchain from bazel_lib to stage\neach binary at its installed path. Keep regular executable files so\nrunsc can find its sidecars beside the staged binary."
-      },
+      "updatedAt": "2026-10-27T16:03:03+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-27T15:44:30+00:00",
+        "observedAt": "2026-10-27T16:03:03+00:00",
         "sourceHead": "679ce6be6e12e3d5d896b96294be4dd59473537f",
-        "disposition": "Contributor review requested",
-        "nextAction": "Open the standalone PR after contributor review.",
+        "disposition": "Published as #16506",
+        "nextAction": "Follow maintainer review and public checks on #16506.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16506",
           "https://github.com/tamird/gvisor/commit/679ce6be6e12e3d5d896b96294be4dd59473537f",
           "https://app.buildbuddy.io/invocation/a6890823-90b9-459e-ab59-81a5d530e87a"
         ]
@@ -27345,6 +27339,54 @@
         {
           "label": "Both release layouts, scratch copy replay and installed AMD64 smoke",
           "url": "https://app.buildbuddy.io/invocation/a6890823-90b9-459e-ab59-81a5d530e87a"
+        }
+      ],
+      "number": 16506
+    },
+    {
+      "id": "branch:declared-go-coverage",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/declared-go-coverage",
+      "head": "419aafc4542bcc84b33737d42ae344c49c43b567",
+      "title": "Build runsc and Sentry coverage binaries with rules_go",
+      "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "summary": "Replace the networked SDK bootstrap and private-import patch with rules_go. All eight binaries per CPU built; AMD64 ordinary runsc produced no report while both instrumented releases reported Sentry locations and passed the real KCOV case.",
+      "updatedAt": "2026-10-27T15:54:03+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "419aafc4542bcc84b33737d42ae344c49c43b567",
+        "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567",
+        "title": "Build runsc and Sentry coverage binaries with rules_go",
+        "summary": "Review the standalone coverage rule change.",
+        "body": "The coverage genrules fetch two Go distributions, rebuild the toolchain\nto disable cmd/go's internal-import check, and fetch modules during the\nbuild. None of those downloads are inputs to the action. A change to a\nGo package also makes the coverage target rebuild the entire SDK.\n\nBuild the coverage variants with the same declared SDK and dependencies\nas runsc and Sentry. rules_go invokes the compiler directly and uses\natomic counters, so KCOV can read Go's coverage metadata without a\nmodified SDK. Limit instrumentation to the existing first-party package\nset, and keep race detection and lock checking on the race variants."
+      },
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-27T15:54:03+00:00",
+        "sourceHead": "419aafc4542bcc84b33737d42ae344c49c43b567",
+        "disposition": "Contributor review requested",
+        "nextAction": "Open the standalone PR after contributor review; reconcile the identical module pin if #15370 lands first.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567",
+          "https://app.buildbuddy.io/invocation/74fbdc14-840b-42be-a9e4-ced2114c9ef4",
+          "https://app.buildbuddy.io/invocation/b51badd9-3b9d-419d-98f0-e4f8ac977e99"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Coverage rule and removed SDK bootstrap",
+          "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567"
+        },
+        {
+          "label": "AMD64 and ARM64 qualification",
+          "url": "https://app.buildbuddy.io/invocation/74fbdc14-840b-42be-a9e4-ced2114c9ef4"
+        },
+        {
+          "label": "Ordinary, KCOV and race+KCOV runtime checks",
+          "url": "https://app.buildbuddy.io/invocation/b51badd9-3b9d-419d-98f0-e4f8ac977e99"
         }
       ]
     }
@@ -40793,7 +40835,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-27T15:44:30+00:00",
+      "updatedAt": "2026-10-27T15:54:03+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -40810,7 +40852,7 @@
           ]
         },
         {
-          "text": "Make currently creates a Dockerized Bazel server. The separate coverage recipe fetches and rebuilds a Go compiler; the fork proposal removes the 95-line script and its private-import patch by using rules_go coverage. The proposal still needs runtime coverage checks on its published source.",
+          "text": "Make still creates a Dockerized Bazel server. Independently, the coverage proposal removes the networked Go compiler bootstrap and private-import patch. The declared Go toolchain built all eight runsc/Sentry binaries on each architecture. On AMD64 ordinary runsc emitted no coverage and both instrumented releases passed the actual KCOV case.",
           "evidence": [
             {
               "label": "Make's builder selection",
@@ -40857,7 +40899,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify ordinary and instrumented Go outputs and an actual KCOV case using the coverage proposal. Then trace the remaining cross-compiler and default Make dependencies, and prove representative actions can run on scratch. An artifact built on a provisioned worker is not that proof.",
+      "nextStep": "Replay an actual Go compile action with only its declared input tree; compare its output with remote execution. Track the separate Debian package timestamp issue and the remaining default Make and cross-compiler dependencies.",
       "evidence": [
         {
           "label": "Make's builder selection",
