@@ -1252,6 +1252,9 @@ run_lane() (
         # The existing variant binds the release and TestRunner to this CPU,
         # independently of the preferred remote compilation platform.
         targets=("//:release_smoke_test_$arch")
+        if [[ $arch == arm64 ]]; then
+          options+=(--run_under=//test/rbe:rootless_diagnostic)
+        fi
       fi
       ;;
     smoke-race)

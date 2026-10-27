@@ -85,6 +85,16 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
 
+# Fork-only tracing of the unchanged native ARM smoke command.
+sh_binary(
+    name = "rootless_diagnostic",
+    testonly = True,
+    srcs = ["rootless_diagnostic.sh"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//:__pkg__"],
+)
+
 # Infrastructure smoke coverage, not the complete unit or syscall test lanes.
 test_suite(
     name = "smoke",
