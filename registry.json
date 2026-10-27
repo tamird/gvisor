@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T19:04:01+00:00",
+    "updatedAt": "2026-10-27T19:29:35+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27928,6 +27928,35 @@
         }
       ],
       "number": 16518
+    },
+    {
+      "id": "branch:native-runsc-sidecars",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "qualification/native-sidecar-cc",
+      "head": "50188341ca87809d0d81fafac8cd10d7df64d11a",
+      "title": "Build runsc sidecars with the C toolchain",
+      "url": "https://github.com/tamird/gvisor/compare/0424a4b4fa3105cbe3271c301e8bf6cb8adf0277...50188341ca87809d0d81fafac8cd10d7df64d11a",
+      "group": "release",
+      "status": "Contributor review",
+      "updatedAt": "2026-10-27T19:29:35+00:00",
+      "summary": "Build the FD parker, proc unmounter, and sentry prewarmer with ordinary C compiler and linker actions. This removes three shell genrules while preserving their public target names and embedded filenames. Six ELF outputs and 12 fresh remote compile/link actions were verified across AMD64 and ARM64. All 13 native AMD64 test cases passed; ARM64 execution was not tested. The existing GNU toolchain still invokes /usr/bin compiler drivers. Only the ARM64 prewarmer and proc unmounter are byte-identical to the old build; the other four binaries differ. This proposal has no prerequisite on the separate LLVM comparison. The existing Go-source export PR #15106 adds exports_files in the same BUILD files; preserve those declarations when rebasing, with no delivery dependency.",
+      "evidence": [
+        {
+          "label": "Exact reviewed one-commit proposal",
+          "url": "https://github.com/tamird/gvisor/compare/0424a4b4fa3105cbe3271c301e8bf6cb8adf0277...50188341ca87809d0d81fafac8cd10d7df64d11a"
+        },
+        {
+          "label": "Both-architecture compile/link evidence and 13 AMD64 cases",
+          "url": "https://app.buildbuddy.io/invocation/ac6247f5-395b-4fe3-a118-c434304de1ac"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "50188341ca87809d0d81fafac8cd10d7df64d11a",
+        "url": "https://github.com/tamird/gvisor/commit/50188341ca87809d0d81fafac8cd10d7df64d11a",
+        "summary": "Build the FD parker, proc unmounter, and sentry prewarmer with ordinary C compiler and linker actions. This removes three shell genrules while preserving their public target names and embedded filenames. Source and retained-result reviews are complete; the GNU result covers both target architectures and 13 native AMD64 cases."
+      }
     }
   ],
   "edges": [
