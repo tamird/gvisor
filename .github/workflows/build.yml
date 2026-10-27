@@ -110,16 +110,16 @@ jobs:
           209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37 test/rbe/unit_matrix.py | sha256sum --check --strict
         ref=https://api.github.com/repos/tamird/gvisor/git/ref/heads/qualification/benchmark-alpine-3.24.3
         [[ $(curl --fail --silent "$ref" | jq -er '.object.sha') == d6731da5ade2667a4077a0bac939afbccd92e8e4 ]]
-    - name: Submit or attach to the one reviewed Alpine request
+    - name: Read the two original Alpine benchmark logs and XML
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 -B .github/benchmark-alpine-submit.py
-    - name: Retain the bounded result, including native failure
+      run: python3 -B .github/benchmark-alpine-result.py
+    - name: Retain the original benchmark observations
       if: always() && hashFiles('.github/benchmark-alpine-request.json') != ''
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: benchmark-alpine-result
-        path: ${{ runner.temp }}/benchmark-alpine-outcome.json
+        name: benchmark-alpine-retained
+        path: ${{ runner.temp }}/benchmark-alpine-retained.json
         if-no-files-found: error
 
   qualification-plan:
