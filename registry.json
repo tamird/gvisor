@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T22:42:55.254489+00:00",
+    "updatedAt": "2026-10-27T23:27:50.136123+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26054,20 +26054,24 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
       "status": "Published as hermetic-llvm #892",
-      "updatedAt": "2026-10-27T22:42:55.254489+00:00",
+      "updatedAt": "2026-10-27T23:27:50.136123+00:00",
       "summary": "The LLVM module requests AArch64 and X86 for downstream builds. It requests seven additional backends through a development-only use of the same extension. Bazel resolved two backends for an unconfigured consumer, three for a consumer with a transitive BPF request, and all nine when hermetic-llvm was the root. Projects that build Clang from source for another target must request that backend. Prebuilt compilers do not change.",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "b18956ee24a60996dd51e52e826aedbf739bc57c",
-        "observedAt": "2026-10-27T22:42:55.254489+00:00",
-        "disposition": "Reviewed amendment published to #892",
-        "nextAction": "Monitor upstream CI and maintainer feedback.",
+        "observedAt": "2026-10-27T23:27:50.136123+00:00",
+        "disposition": "Reviewed revision published; upstream CI passed",
+        "nextAction": "All 43 upstream checks passed on b18956ee. Await maintainer review.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/b18956ee24a60996dd51e52e826aedbf739bc57c",
           "https://app.buildbuddy.io/invocation/98d02265-ec22-4748-b956-9431ab4b6322"
         ]
       },
       "evidence": [
+        {
+          "label": "43 passing upstream checks",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892/checks?ref=b18956ee24a60996dd51e52e826aedbf739bc57c"
+        },
         {
           "label": "Published PR revision",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/b18956ee24a60996dd51e52e826aedbf739bc57c"
@@ -26191,20 +26195,24 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-27T22:42:55.254489+00:00",
+      "updatedAt": "2026-10-27T23:27:50.136123+00:00",
       "summary": "The LLVM module requests AArch64 and X86 for downstream builds. It requests seven additional backends through a development-only use of the same extension. Bazel resolved two backends for an unconfigured consumer, three for a consumer with a transitive BPF request, and all nine when hermetic-llvm was the root. Projects that build Clang from source for another target must request that backend. Prebuilt compilers do not change.",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "b18956ee24a60996dd51e52e826aedbf739bc57c",
-        "observedAt": "2026-10-27T22:42:55.254489+00:00",
-        "disposition": "Reviewed amendment published to #892",
-        "nextAction": "Monitor upstream CI and maintainer feedback.",
+        "observedAt": "2026-10-27T23:27:50.136123+00:00",
+        "disposition": "Reviewed revision published; upstream CI passed",
+        "nextAction": "All 43 upstream checks passed on b18956ee. Await maintainer review.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/b18956ee24a60996dd51e52e826aedbf739bc57c",
           "https://app.buildbuddy.io/invocation/98d02265-ec22-4748-b956-9431ab4b6322"
         ]
       },
       "evidence": [
+        {
+          "label": "43 passing upstream checks",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892/checks?ref=b18956ee24a60996dd51e52e826aedbf739bc57c"
+        },
         {
           "label": "Published PR revision",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/b18956ee24a60996dd51e52e826aedbf739bc57c"
@@ -28348,16 +28356,25 @@
       "title": "Discard failed O_ASYNC registrations",
       "url": "https://github.com/tamird/gvisor/commit/bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
       "group": "runtime",
-      "status": "Reviewable",
+      "status": "Published as #16539",
       "summary": "After a rejected asynchronous-handler registration, repeating FIOSETOWN on a pidfd succeeded incorrectly; closing a file or clearing O_ASYNC could panic. Both paths fail in the control and pass with the rollback. Native Linux passes the pidfd regression; both corrected gVisor configurations and both architecture analyzers pass.",
-      "updatedAt": "2026-10-27T22:42:55.254489+00:00",
+      "updatedAt": "2026-10-27T23:27:50.136123+00:00",
       "followup": {
         "owner": "lock_contract",
         "sourceHead": "bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
-        "observedAt": "2026-10-27T22:42:55.254489+00:00",
-        "nextAction": "Request contributor review before opening the upstream PR."
+        "observedAt": "2026-10-27T23:27:50.136123+00:00",
+        "nextAction": "Follow maintainer review, checks and import on #16539.",
+        "disposition": "Reviewed repair published as #16539",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16539",
+          "https://github.com/tamird/gvisor/commit/bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published PR",
+          "url": "https://github.com/google/gvisor/pull/16539"
+        },
         {
           "label": "Corrected VFS and AMD64/ARM64 Nogo",
           "url": "https://app.buildbuddy.io/invocation/7900f79e-4392-46c2-9bc6-f3feb728ca0e"
@@ -28379,14 +28396,58 @@
           "url": "https://app.buildbuddy.io/invocation/5cb3f4de-fce0-4d73-afad-1243bb8e94f6"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
-        "url": "https://github.com/tamird/gvisor/commit/bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
-        "title": "Discard failed O_ASYNC registrations",
-        "summary": "After a rejected asynchronous-handler registration, repeating FIOSETOWN on a pidfd succeeded incorrectly; closing a file or clearing O_ASYNC could panic. Both paths fail in the control and pass with the rollback. Native Linux passes the pidfd regression; both corrected gVisor configurations and both architecture analyzers pass.",
-        "body": "With O_ASYNC set on a pidfd, gVisor rejects the first FIOSETOWN but\nincorrectly succeeds on retry. FileDescription keeps the handler even\nthough registration failed.\n\nClear the handler under flagsMu when registration fails. A subsequent\nFIOSETOWN retries registration, and disabling O_ASYNC or closing the\nfile cannot unregister a handler that never registered."
-      }
+      "inactive": true
+    },
+    {
+      "id": "pr:16539",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "vfs-rollback-failed-async-handler",
+      "head": "bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
+      "title": "Discard failed O_ASYNC registrations",
+      "url": "https://github.com/google/gvisor/pull/16539",
+      "group": "runtime",
+      "status": "open",
+      "summary": "After a rejected asynchronous-handler registration, repeating FIOSETOWN on a pidfd succeeded incorrectly; closing a file or clearing O_ASYNC could panic. Both paths fail in the control and pass with the rollback. Native Linux passes the pidfd regression; both corrected gVisor configurations and both architecture analyzers pass.",
+      "updatedAt": "2026-10-27T23:27:50.136123+00:00",
+      "followup": {
+        "owner": "lock_contract",
+        "sourceHead": "bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc",
+        "observedAt": "2026-10-27T23:27:50.136123+00:00",
+        "nextAction": "Follow maintainer review, checks and import on #16539.",
+        "disposition": "Reviewed repair published as #16539",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16539",
+          "https://github.com/tamird/gvisor/commit/bb11bd99d4b4a2596c7b88e1f181a6853bdc1ebc"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published PR",
+          "url": "https://github.com/google/gvisor/pull/16539"
+        },
+        {
+          "label": "Corrected VFS and AMD64/ARM64 Nogo",
+          "url": "https://app.buildbuddy.io/invocation/7900f79e-4392-46c2-9bc6-f3feb728ca0e"
+        },
+        {
+          "label": "Corrected pidfd: Linux and both gVisor configurations",
+          "url": "https://app.buildbuddy.io/invocation/f0ba398a-5206-40fc-ac4c-b23a90e92bc7"
+        },
+        {
+          "label": "Stock pidfd: Linux rejects both attempts; both systrap configurations accept the second",
+          "url": "https://app.buildbuddy.io/invocation/8f9fb087-6ce8-48c4-a632-e9a91c3704ba"
+        },
+        {
+          "label": "Stock VFS: disable and close attempt to unregister the rejected handler",
+          "url": "https://app.buildbuddy.io/invocation/b95bc430-c9c2-4c2f-b905-49850e9a5551"
+        },
+        {
+          "label": "Control and candidate validation",
+          "url": "https://app.buildbuddy.io/invocation/5cb3f4de-fce0-4d73-afad-1243bb8e94f6"
+        }
+      ],
+      "number": 16539
     }
   ],
   "edges": [
