@@ -739,7 +739,9 @@ def collect_issues(previous: dict) -> dict[str, dict]:
         for alias, node in batch.items():
             owner, name = node["repo"].split("/")
             fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{issue(number:{node["number"]})'
-                          '{url state stateReason closedAt updatedAt}}')
+                          '{url state stateReason closedAt updatedAt '
+                          'comments(first:20,orderBy:{field:UPDATED_AT,direction:DESC}){'
+                          'nodes{url updatedAt author{login}} pageInfo{hasNextPage}}}}')
         response = graphql("query{" + " ".join(fields) + "}", missing_issue_aliases=set(batch))
         if set(response) != set(batch):
             raise RuntimeError("Issue inventory is incomplete; previous snapshot is unchanged")
@@ -756,8 +758,35 @@ def collect_issues(previous: dict) -> dict[str, dict]:
                 raise RuntimeError(f'Invalid provider state for issue {node["id"]}')
             issues[node["id"]] = {"githubState": issue["state"].lower(), "githubStateReason": issue["stateReason"],
                                   "githubURL": issue["url"], "closedAt": issue["closedAt"], "updatedAt": issue["updatedAt"],
-                                  "checkedAt": datetime.now(timezone.utc).isoformat()}
+                                  "checkedAt": datetime.now(timezone.utc).isoformat(),
+                                  "comments": issue["comments"]["nodes"],
+                                  "olderComments": issue["comments"]["pageInfo"]["hasNextPage"]}
     return issues
+
+
+def issue_discussions(issues: dict, previous: dict):
+    """Report new or edited issue comments; the first observation starts with the latest."""
+    for identity, issue in issues.items():
+        if issue.get("unavailable"):
+            continue
+        prior = previous.get("issues", {}).get(identity, {})
+        comments = issue["comments"]
+        if "comments" not in prior:
+            if comments:
+                yield {"issue": identity, "latest": comments[0]}
+            continue
+        known = {item["url"]: item["updatedAt"] for item in prior["comments"]}
+        oldest_known = prior["comments"][-1]["updatedAt"] if prior["comments"] else None
+        for item in comments:
+            if (item["url"] not in known and prior.get("olderComments") and oldest_known
+                    and item["updatedAt"] < oldest_known):
+                continue  # Deletion can move an older comment into the retained page.
+            if known.get(item["url"]) != item["updatedAt"]:
+                yield {"issue": identity, "comment": item}
+        if (issue["olderComments"] and comments and prior.get("checkedAt")
+                and datetime.fromisoformat(comments[-1]["updatedAt"].replace("Z", "+00:00"))
+                    >= datetime.fromisoformat(prior["checkedAt"])):
+            yield {"issue": identity, "gap": issue["githubURL"]}
 
 
 def main() -> None:
@@ -782,6 +811,8 @@ def main() -> None:
         prior_prs.update({(repo, number): value for number, value in prior.items()})
         inventories[repo] = inventory
     issues = collect_issues(previous)
+    for record in issue_discussions(issues, previous):
+        print(json.dumps({"issueDiscussion": record}), flush=True)
     checked_at = datetime.now(timezone.utc).isoformat()
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,

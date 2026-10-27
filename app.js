@@ -1303,6 +1303,10 @@ function drawDetails() {
     details.append(element("p", "detail-meta", `${node.unavailable} Last provider observation: ${node.checkedAt ? date(node.checkedAt) : "not recorded"}.`));
   if (node.type === "issue" && node.githubState === "closed" && !decision && !action)
     details.append(element("p", "detail-meta", "Closed upstream. No action is needed on this issue."));
+  if (node.type === "issue" && node.comments?.length) {
+    const latest = node.comments[0];
+    details.append(link(`Latest issue comment · ${date(latest.updatedAt)} ↗`, latest.url, "relation-source"));
+  }
   const statePanel = element("div", "detail-states"); appendStates(statePanel, node, true); details.append(statePanel);
   const relations = [
     ["Proposed updates", model.edges.filter((edge) => edge.to === node.id && edge.role === "proposed_update"), "from"],
@@ -1670,6 +1674,9 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         || (issue.githubState === "unknown" ? !issue.unavailable : !Number.isFinite(Date.parse(issue.updatedAt)))
         || (issue.githubStateReason != null && typeof issue.githubStateReason !== "string")
         || (issue.githubURL != null && issue.githubURL !== `https://github.com/${node.repo}/issues/${node.number}`)
+        || (issue.comments != null && (!Array.isArray(issue.comments) || issue.comments.some(comment =>
+          !comment || typeof comment.url !== "string" || comment.url.split("#")[0] !== issue.githubURL
+            || !/#issuecomment-\d+$/.test(comment.url) || !Number.isFinite(Date.parse(comment.updatedAt)))))
         || (issue.closedAt != null && !Number.isFinite(Date.parse(issue.closedAt)))
         || (issue.checkedAt != null && !Number.isFinite(Date.parse(issue.checkedAt)))
         || (issue.unavailable != null && (typeof issue.unavailable !== "string" || !issue.unavailable.trim()

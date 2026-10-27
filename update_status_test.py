@@ -69,6 +69,7 @@ class IssueInventoryTest(unittest.TestCase):
         self.rows = {f"i{index}": {"issue": {
             "url": f'https://github.com/{node["repo"]}/issues/{node["number"]}',
             "state": "CLOSED", "stateReason": "NOT_PLANNED", "closedAt": OLD, "updatedAt": LATER,
+            "comments": {"nodes": [], "pageInfo": {"hasNextPage": False}},
         }} for index, node in enumerate(self.nodes)}
         self.batches = []
 
@@ -109,6 +110,24 @@ class IssueInventoryTest(unittest.TestCase):
                 mock.patch.object(updater, "graphql", return_value={}):
             with self.assertRaisesRegex(RuntimeError, "inventory is incomplete"):
                 updater.collect_issues({})
+
+    def test_issue_discussion_reports_new_edits_and_truncation_once(self) -> None:
+        node = self.nodes[0]
+        issue = self.rows["i0"]["issue"]
+        original = {"url": issue["url"] + "#issuecomment-1", "updatedAt": OLD, "author": {"login": "reporter"}}
+        edited = {**original, "updatedAt": "2000-01-03T00:00:00Z"}
+        new = {**edited, "url": issue["url"] + "#issuecomment-2"}
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}), mock.patch.object(updater, "graphql", self.graphql):
+            issue["comments"]["nodes"] = [original]
+            before = updater.collect_issues({})
+            self.assertEqual(list(updater.issue_discussions(before, {})), [{"issue": node["id"], "latest": original}])
+            before[node["id"]]["checkedAt"] = LATER
+            issue["comments"] = {"nodes": [new, edited], "pageInfo": {"hasNextPage": True}}
+            after = updater.collect_issues({"issues": before})
+        self.assertEqual(list(updater.issue_discussions(after, {"issues": before})), [
+            {"issue": node["id"], "comment": new}, {"issue": node["id"], "comment": edited},
+            {"issue": node["id"], "gap": issue["url"]}])
+        self.assertEqual(list(updater.issue_discussions(after, {"issues": after})), [])
 
     def test_partial_gh_exit_retains_missing_issue_and_refreshes_sibling(self) -> None:
         prior = {"githubState": "closed", "updatedAt": OLD, "checkedAt": OLD}
