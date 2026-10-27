@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T00:06:30.348539+00:00",
+    "updatedAt": "2026-10-27T01:15:51.028625+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1952,9 +1952,16 @@
       "title": "Declare socket-stress resources",
       "url": "https://github.com/tamird/gvisor/tree/syscall-socket-stress-resources",
       "group": "tests",
-      "status": "extraction needed",
-      "summary": "The October 5 landing of #15131 clears the host-descriptor prerequisite. The separate syscall-memory forwarding prerequisite remains; the 179-commit branch still needs minimal extraction and contributor review.\n\nCurrent branch contains 179 qualification commits. Extract the three-line declaration, with syscall memory forwarding plus #15131 host-nofile support as real prerequisites. No dependency on the independent processes budget is needed. Obtain contributor review. All8 hostnet shards/33 cases pass with131072 descriptors and1GB; native port-allocation failure is separate.",
-      "updatedAt": "2026-10-05T14:03:07.549134+00:00"
+      "status": "Retired; replaced by isolated socket fixtures",
+      "summary": "The earlier proposal increased descriptor and memory limits for socket stress. The independent replacement qualifies the same cases with ordinary limits and a separate namespace for bulk transfers. No review or submission is needed for this resource workaround.\n\nEarlier qualification:\n\nThe October 5 landing of #15131 clears the host-descriptor prerequisite. The separate syscall-memory forwarding prerequisite remains; the 179-commit branch still needs minimal extraction and contributor review.\n\nCurrent branch contains 179 qualification commits. Extract the three-line declaration, with syscall memory forwarding plus #15131 host-nofile support as real prerequisites. No dependency on the independent processes budget is needed. Obtain contributor review. All8 hostnet shards/33 cases pass with131072 descriptors and1GB; native port-allocation failure is separate.",
+      "updatedAt": "2026-10-27T01:15:51.028625+00:00",
+      "inactive": true,
+      "evidence": [
+        {
+          "label": "Current socket fixture proposal",
+          "url": "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81"
+        }
+      ]
     },
     {
       "id": "pr:15163",
@@ -25945,6 +25952,76 @@
         }
       ],
       "inactive": true
+    },
+    {
+      "id": "branch:socket-stress-port-fixtures",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/socket-stress-port-fixtures",
+      "head": "127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+      "title": "Isolate socket tests that exhaust ephemeral ports",
+      "url": "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "summary": "The exhaustion test ran out of file descriptors before it ran out of ports. Using the runner\u2019s small port range repaired it, but a bulk-transfer listener in the same namespace then failed to bind. Separating the fixtures preserves the 30 stress cases and all three bulk-transfer cases. The AMD64 and ARM64 Linux runs covered native, hostnet and netstack: 198 of 198 case executions across 12 targets, without increasing memory or descriptor limits. ARM64 ran under QEMU. The native Bazel invocation passed. Two outer jobs failed in graph-reporting scripts; the retained query output independently showed matching sets of 102 labels per fixture, including all 12 executed targets.",
+      "updatedAt": "2026-10-27T01:15:51.028625+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+        "url": "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+        "title": "Isolate socket tests that exhaust ephemeral ports",
+        "summary": "Review the fixture split before opening its upstream PR.",
+        "body": "TooManyOpen holds sockets open until bind returns EADDRINUSE. On\na host-network worker, the sandbox could not change the host's\nephemeral port range. The process had a limit of 16,384 file\ndescriptors and a range of 28,232 ports (32768\u201360999). Socket\ncreation failed with EMFILE before the test could exhaust the ports.\n\nUse the runner's private 51-port range for the native and host-network\nexhaustion tests. BigDataTransfer checks that a large stream is echoed\nintact. When it ran after the exhaustion cases in the same shard, its\nlistener failed to bind in the narrow range. The sandbox also rejected\nits attempt to widen that range.\n\nGive the three transfer cases their own syscall binary and network\nnamespace. They no longer need to change ip_local_port_range or set\nSO_REUSEADDR on connected sockets."
+      },
+      "refinement": {
+        "before": {
+          "head": "4330034f0b2c9869139de6e1b22a9d69ecb18b5e"
+        },
+        "after": {
+          "head": "127a8f660c254f040b57fd0aaf2e4ab36a588d81"
+        }
+      },
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+        "observedAt": "2026-10-27T01:15:51.028625+00:00",
+        "disposition": "Contributor decision requested",
+        "nextAction": "Open the independent PR if approved.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+          "https://app.buildbuddy.io/invocation/885c9ae2-4afd-4620-a2b7-e08d897d721b",
+          "https://app.buildbuddy.io/invocation/1b7a70f3-f9e6-4e1f-aa96-54c96febf2a5",
+          "https://app.buildbuddy.io/invocation/4c66b3ea-c3ca-4c5c-a2cc-05b85941e75e",
+          "https://app.buildbuddy.io/invocation/7ad18ed0-2c9e-4f74-bd57-0f8a646f6219",
+          "https://app.buildbuddy.io/invocation/194088d0-874e-4445-80da-39613270eb4c"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Proposed source",
+          "url": "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81"
+        },
+        {
+          "label": "Original: port exhaustion hit EMFILE",
+          "url": "https://app.buildbuddy.io/invocation/1b7a70f3-f9e6-4e1f-aa96-54c96febf2a5"
+        },
+        {
+          "label": "First attempt: a bulk transfer could not bind",
+          "url": "https://app.buildbuddy.io/invocation/4c66b3ea-c3ca-4c5c-a2cc-05b85941e75e"
+        },
+        {
+          "label": "All 198 case executions passed",
+          "url": "https://app.buildbuddy.io/invocation/885c9ae2-4afd-4620-a2b7-e08d897d721b"
+        },
+        {
+          "label": "Host wrapper failed after the successful runtime suite",
+          "url": "https://app.buildbuddy.io/invocation/7ad18ed0-2c9e-4f74-bd57-0f8a646f6219"
+        },
+        {
+          "label": "Retained Bazel query: 102 labels per fixture",
+          "url": "https://app.buildbuddy.io/invocation/194088d0-874e-4445-80da-39613270eb4c"
+        }
+      ]
     }
   ],
   "edges": [

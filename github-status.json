@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-27T01:10:33.821843+00:00",
-  "registryDate": "2026-10-27T00:06:30.348539+00:00",
+  "registryDate": "2026-10-27T01:15:51.028625+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -197589,6 +197589,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-27T01:10:32.902515+00:00"
+      }
+    },
+    "branch:socket-stress-port-fixtures": {
+      "contributor-review": {
+        "scope": "127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+        "since": "2026-10-27T01:15:51.028625+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-27T01:15:51.028625+00:00"
       }
     }
   },
