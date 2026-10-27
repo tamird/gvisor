@@ -236,7 +236,13 @@ def approved_patch(pr: dict, evidence: dict | None) -> bool:
             updated = datetime.fromisoformat(item.get("updatedAt", value).replace("Z", "+00:00"))
         except (AttributeError, ValueError):
             return False
-        if at.tzinfo is None or updated.tzinfo is None or max(at, updated) > verified:
+        if at.tzinfo is None or updated.tzinfo is None:
+            return False
+        if (item.get("kind") == "review" and item.get("state") == "APPROVED"
+                and item.get("id") != evidence["reviewId"] and at > verified
+                and (item.get("commit") or {}).get("oid") == pr["head"] and not item.get("body", "").strip()):
+            continue  # A new empty approval of this head does not change its patch equivalence.
+        if max(at, updated) > verified:
             return False  # New feedback needs owner reconciliation first.
         if (item.get("kind") == "review" and item.get("state") in {"CHANGES_REQUESTED", "DISMISSED"}
                 and at >= submitted):
@@ -289,6 +295,60 @@ def landed_patch(pr: dict, proof: dict | None) -> bool:
         return False
 
 
+def import_lineage(pr: dict, patch: dict | None = None) -> list[dict]:
+    """An exact-head successor supersedes attempts at a certified earlier patch."""
+    current = [item for item in pr.get("imports", [])
+               if item.get("matchesSourceHead") and item.get("sourceHead") == pr["head"]]
+    if current or not approved_patch(pr, patch):
+        return current
+    return [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
+
+
+def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict:
+    """Share public export progress separately from permission to post reminders."""
+    imports = import_lineage(pr, patch)
+    accepted = approved_patch(pr, patch)
+    active = [item for item in imports if item["status"] in {"open", "draft"}]
+    scope = "exact" if imports and imports[0]["sourceHead"] == pr["head"] else "equivalent" if imports else "none"
+    binding = {"sourceHead": pr["head"], "approvedHead": patch["approvedHead"] if accepted else None,
+               "complete": pr.get("importsComplete") is True,
+               "imports": [{**{key: item.get(key) for key in ("number", "head", "sourceHead", "status", "mergeable")},
+                            "conflicting": item.get("mergeable") == "CONFLICTING" or bool(conflict_qualifier(item))}
+                           for item in imports]}
+    if active:
+        state = "conflicting" if any(item.get("mergeable") == "CONFLICTING" or conflict_qualifier(item)
+                                     for item in active) else "open" if any(item["status"] == "open" for item in active) else "draft"
+    elif any(item["status"] == "merged" for item in imports):
+        state = "merged"
+    elif not binding["complete"]:
+        state = "unknown"
+    else:
+        state = "closed" if imports else "absent"
+    eligible = (pr.get("importPolicy", "copybara") == "copybara" and pr.get("status") == "open"
+                and not pr.get("revisionChanged") and pr.get("branchHead", pr["head"]) in {None, pr["head"]}
+                and pr.get("mergeable") == "MERGEABLE" and not landed_patch(pr, landing)
+                and (review_decision(pr) == "APPROVED" or accepted))
+    binding["eligible"] = bool(eligible)
+    action = None
+    if eligible:
+        if state == "conflicting":
+            action = "maintainer-import-refresh" if scope == "equivalent" else "author-conflicts"
+        elif state == "closed":
+            action = "maintainer-reimport"
+        elif state == "merged":
+            action = "maintainer-import-landed"
+    description = {
+        "conflicting": "Refresh the earlier equivalent export." if scope == "equivalent" else "Resolve the matching export's conflict.",
+        "closed": "The export closed without merging; no matching public export is open.",
+        "merged": "The export merged; reconcile the source PR.",
+        "open": "Waiting for the public export; its checks remain separate.",
+        "draft": "The matching public export is a draft.",
+        "absent": "No matching public export was found in the complete lookup.",
+        "unknown": "Public export inventory is incomplete; refresh before deciding.",
+    }[state]
+    return {"binding": binding, "scope": scope, "state": state, "action": action, "description": description}
+
+
 def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict[str, StateEvidence]:
     """Keep source review, public import progress and check provenance distinct."""
     head = pr["head"]
@@ -300,9 +360,7 @@ def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) 
     if landed_patch(pr, landing):
         return {"imported": {"scope": head, "qualifier": "Landed; source PR still open"}}
     states: dict[str, StateEvidence] = {}
-    imports = [item for item in pr.get("imports", []) if item["matchesSourceHead"]]
-    if not imports and accepted_patch:
-        imports = [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
+    imports = import_lineage(pr, patch)
     active = [item for item in imports if item["status"] in {"open", "draft"}]
     visible = [pr, *(active if active or any(item["status"] == "merged" for item in imports) else imports)]
     failures = [item for item in visible if check_states(item) & FAILURES]

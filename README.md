@@ -156,6 +156,14 @@ entries; incomplete thread counts, label lists, check details and import lookups
 are explicitly marked. A null review decision is **not reported**, not approval.
 A `ready to pull` label is displayed as a label, not a merge-readiness decision.
 
+The snapshot's `publicImportDisposition` binds the selected public exports to
+the current source head and any verified equivalent approval. Exact-head
+successors take precedence over older exports. The site and periodic reminder
+report use this same decision: a skipped review reminder does not mean an
+export is current. Conflicted earlier exports need refresh; closed, unmerged
+exports need re-import, while their unresolved public CI evidence stays visible.
+`publicImportHandoff` is diagnostic only and does not authorize a public comment.
+
 Fresh-head approval requires a still-effective review of the exact head,
 submitted no earlier than its commit time and any observed force-push introducing
 that head, with retrieved latest force-push metadata. GitHub can

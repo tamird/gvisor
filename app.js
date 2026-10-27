@@ -111,7 +111,10 @@ function approvedPatch(node) {
   for (const item of pr.feedback.items) {
     if (item.author?.login === pr.headOwner) continue;
     const at = timestamp(item.submittedAt || item.createdAt), updated = timestamp(item.updatedAt || item.submittedAt || item.createdAt);
-    if (!Number.isFinite(at) || !Number.isFinite(updated) || Math.max(at, updated) > verified || item.kind === "review"
+    if (!Number.isFinite(at) || !Number.isFinite(updated)) return null;
+    if (item.kind === "review" && item.state === "APPROVED" && item.id !== proof.reviewId
+        && at > verified && item.commit?.oid === pr.head && !(item.body || "").trim()) continue;
+    if (Math.max(at, updated) > verified || item.kind === "review"
         && ["CHANGES_REQUESTED", "DISMISSED"].includes(item.state) && at >= submitted) return null;
   }
   return proof;
@@ -378,6 +381,18 @@ function importLineage(node) {
   const patch = approvedPatch(node);
   return current.length ? current : patch ? pr.imports.filter(item => item.sourceHead === patch.approvedHead) : [];
 }
+function publicImportDisposition(node) {
+  const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);
+  if (!record) return null; // Older paired snapshots use the same direct lineage below.
+  const binding = { sourceHead: pr.head, approvedHead: patch?.approvedHead ?? null,
+    complete: pr.importsComplete === true, imports: importLineage(node).map(item => ({
+      number: item.number, head: item.head, sourceHead: item.sourceHead, status: item.status,
+      mergeable: item.mergeable ?? null, conflicting: !!conflictRecord(item),
+    })), eligible: usesImports(pr) && pr.status === "open" && !pr.revisionChanged
+      && (!pr.branchHead || pr.branchHead === pr.head) && pr.mergeable === "MERGEABLE"
+      && !landedPatch(node) && (effectiveReviewDecision(pr) === "APPROVED" || !!patch) };
+  return evidenceJSON(record.binding) === evidenceJSON(binding) ? record : null;
+}
 function unresolvedImportChecks(imports) {
   const active = imports.filter(item => ["open", "draft"].includes(item.status));
   // Closing the only export does not resolve a public CI failure. An active
@@ -448,8 +463,16 @@ function attentionReasons(node, owner) {
     add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
   const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
   const lineage = importLineage(node);
+  const importDisposition = publicImportDisposition(node);
   const active = lineage.filter(item => ["open", "draft"].includes(item.status));
-  for (const item of active) if (conflictRecord(item))
+  // Only old snapshots need the direct fallback. New snapshots share this
+  // recovery decision with the periodic planner, including source readiness.
+  const importEligible = approved && usesImports(pr) && pr.mergeable === "MERGEABLE";
+  const importAction = importDisposition ? importDisposition.action : !importEligible ? null
+    : active.some(conflictRecord) ? current.length ? "author-conflicts" : "maintainer-import-refresh"
+    : !active.length && pr.importsComplete && lineage.length
+      ? lineage.some(item => item.status === "merged") ? "maintainer-import-landed" : "maintainer-reimport" : null;
+  for (const item of active) if (conflictRecord(item) && (current.length || importAction === "maintainer-import-refresh"))
     add(current.length ? "author-conflicts" : "maintainer-import-refresh", `Import #${item.number}: ${mergeDescription(item)}${current.length ? "" : " This export predates the equivalent source rebase. Refresh the export; its conflict does not establish a conflict on the current source."}`);
   const failed = unresolvedImportChecks(lineage).filter(item => checkInfo(item).tone === "bad");
   const recoveries = new Map(failed.map(item => [item.number, blockedImportRetry(node, item)]));
@@ -493,6 +516,12 @@ function attentionReasons(node, owner) {
     else add("agent-release-check", `${version ? `Upstream now lists ${version}.` : "The latest upstream release could not be verified."} ${wait.nextAction}`);
     return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
   }
+  // Closing the only export is independent of its retained CI failure. Keep
+  // both actions visible; skipping another approval request is not all-clear.
+  if (importAction === "maintainer-reimport")
+    add("maintainer-reimport", `Import ${lineage.map(item => "#" + item.number).join(", ")} closed without merging. No matching public export is open.${acceptedPatch ? " The current source preserves the approved patch; another review is not required." : ""} Retained CI evidence remains separate.`);
+  if (importAction === "maintainer-import-landed")
+    add("maintainer-import-landed", `Import ${lineage.filter(item => item.status === "merged").map(item => "#" + item.number).join(", ")} merged${acceptedPatch && !current.length ? " with the verified equivalent pre-rebase patch" : ""}; the source PR remains open. Verify the landed change and reconcile the source PR; another import or fresh approval is not indicated.`);
   const followupBlocked = reasons.some(item => item.owner === "agent" || ["maintainer-triaged", "maintainer-ci-infrastructure", "maintainer-import-refresh"].includes(item.id));
   if (review.unknown && !review.incomplete && !followupBlocked)
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
@@ -510,20 +539,9 @@ function attentionReasons(node, owner) {
       const facts = open.map(item => `Import #${item.number}: ${checkInfo(item).text.toLowerCase()} checks${item.mergeable === "UNKNOWN" ? "; mergeability unknown" : item.mergeable === "CONFLICTING" ? "; conflicts" : ""}`);
       add(current.length ? "maintainer-merge" : "maintainer-import-previous", `${facts.join(". ")}.${current.length ? "" : " The export contains the equivalent approved patch before the rebase; these checks belong to that earlier head. No fresh approval is needed."} Remaining internal gates are not established.`);
     } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.", "Matching import is a draft");
-    else if (current.some(item => item.status === "merged")) add("maintainer-import-landed", `Import ${current.filter(item => item.status === "merged").map(item => "#" + item.number).join(", ")} merged; the source PR remains open. Verify the landed change and reconcile the source PR; another import is not indicated.`);
-    else if (current.length) add("maintainer-reimport", `Import ${current.map(item => "#" + item.number).join(", ")} closed without merging. No matching import is open.`);
-    else if (acceptedPatch && pr.imports.some(item => item.sourceHead === acceptedPatch.approvedHead)) {
-      // This is the reviewed patch, but the import's checks belong to its original head.
-      const attempts = pr.imports.filter(item => item.sourceHead === acceptedPatch.approvedHead);
-      const facts = attempts.map(item => `#${item.number} (${item.status})`).join(", ");
-      if (attempts.every(item => item.status === "closed"))
-        add("maintainer-reimport", `Import ${facts} closed without merging. The rebase preserved the approved patch; no export of the new head is visible.`);
-      else if (attempts.some(item => item.status === "merged"))
-        add("maintainer-import-landed", `Import ${facts} contains the approved pre-rebase patch, which is verified equivalent to the current source. Verify the landed change and reconcile the still-open source PR; do not request another import or fresh approval.`);
-    }
-    else if (importStatus?.state === "SUCCESS") add("maintainer-unknown", "Copybara reports a successful internal import, but no matching public export PR was found in the complete lookup. Internal checks are reported separately; public export is still pending.", "Waiting for public export");
-    else if (importStatus && !FAILURE_STATES.has(importStatus.state)) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. Ask for the import's progress.`, "Import pending; no public PR");
-    else if (!importStatus && !feedbackStatus) {
+    else if (!lineage.length && importStatus?.state === "SUCCESS") add("maintainer-unknown", "Copybara reports a successful internal import, but no matching public export PR was found in the complete lookup. Internal checks are reported separately; public export is still pending.", "Waiting for public export");
+    else if (!lineage.length && importStatus && !FAILURE_STATES.has(importStatus.state)) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. Ask for the import's progress.`, "Import pending; no public PR");
+    else if (!lineage.length && !importStatus && !feedbackStatus) {
       if (!pr.labels.includes("ready to pull")) add("maintainer-import-label", `${acceptedPatch ? "Approval of the unchanged patch" : "Current-head approval"} is recorded, but the ready to pull label is absent. A maintainer needs to mark the PR for import; an internal CL may already exist.`);
       else add("maintainer-import", `${acceptedPatch ? "Approval of the unchanged patch" : "Current-head approval"} and the ready to pull label are recorded; no matching public import was found. An internal CL may already exist.`);
     }
@@ -1828,6 +1846,13 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         (pr.importPolicy !== undefined && pr.importPolicy !== policy) ||
         (policy === "none" && (pr.importPolicy !== "none" || pr.imports.length))) throw new Error("Invalid PR inventory");
     numbers.add(identity);
+    if (pr.publicImportDisposition !== undefined) {
+      const disposition = publicImportDisposition({ ...nextRegistry.nodes.find(node => node.id === identity), github: pr });
+      if (!disposition || !["exact", "equivalent", "none"].includes(disposition.scope)
+          || !["conflicting", "open", "draft", "merged", "closed", "absent", "unknown"].includes(disposition.state)
+          || ![null, "author-conflicts", "maintainer-import-refresh", "maintainer-reimport", "maintainer-import-landed"].includes(disposition.action)
+          || typeof disposition.description !== "string") throw new Error("Invalid public import disposition");
+    }
     for (const item of [pr, ...pr.imports]) {
       if (item.branchHead != null && !/^[a-f0-9]{40}$/.test(item.branchHead)) throw new Error("Invalid source branch head");
       if (prRepo(item, nextRegistry) !== repo || item.url !== `https://github.com/${repo}/pull/${item.number}`) throw new Error("Invalid PR URL identity");

@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from reapproval import maintainer_logins, reminder_plan
-from work_states import FAILURES, check_purpose, check_states, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
+from work_states import FAILURES, check_purpose, check_states, effective_approval, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies
 
 
 ROOT = Path(__file__).resolve().parent
@@ -735,10 +735,15 @@ def reapproval_reminders(post: bool = False) -> None:
         if identity.stdout.strip() != OWNER:
             raise RuntimeError("Reminder credential does not belong to the configured owner")
     maintainers = fetch_maintainers()
+    print("Review-reminder eligibility is separate from public-import progress. A skipped reminder is not an import all-clear.")
     for pr in snapshot["prs"]:
         if pr.get("repo") != "google/gvisor" or pr.get("status") != "open":
             continue
         node = nodes.get((pr["repo"], pr["number"]), {})
+        disposition = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
+        if disposition["action"]:
+            print(json.dumps({"publicImportHandoff": {"number": pr["number"], "url": pr["url"],
+                "snapshotAt": snapshot["checkedAt"], **disposition, "posting": "Diagnostic only; no comment is authorized by this handoff."}}))
         # Older snapshots lack author association. Refresh only recorded
         # amendments; missing proof is visible without spending write budget.
         if node.get("reapproval", {}).get("head") != pr["head"]:
@@ -748,7 +753,13 @@ def reapproval_reminders(post: bool = False) -> None:
         recheck_unknown_mergeability([raw], repo=pr["repo"])
         current = normalize(raw)
         current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
+        if current["head"] == pr["head"]:
+            # This lightweight write guard does not collect exports. Keep the
+            # completed snapshot's lineage, with its own observation time.
+            current["imports"] = pr["imports"]
+            current["importsComplete"] = pr.get("importsComplete", False)
         plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER, maintainers)
+        plan["importSnapshotAt"] = snapshot["checkedAt"] if current["head"] == pr["head"] else None
         if current["head"] != pr["head"]:
             plan.update(status="skipped", reason="head-changed-since-snapshot")
         if not post or plan["status"] != "due":
@@ -864,6 +875,10 @@ def main() -> None:
     for record in issue_discussions(issues, previous):
         print(json.dumps({"issueDiscussion": record}), flush=True)
     checked_at = datetime.now(timezone.utc).isoformat()
+    nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"] if node["type"] == "pr"}
+    for pr in prs:
+        node = nodes.get((pr.get("repo"), pr["number"]), {})
+        pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
@@ -890,6 +905,12 @@ def main() -> None:
         print(json.dumps({"reviewerHandoff": [record]}))
     for record in snapshot["mergeabilityHandoff"]:
         print(json.dumps({"mergeabilityHandoff": [record]}))
+    for pr in prs:
+        disposition = pr["publicImportDisposition"]
+        if disposition["action"]:
+            print(json.dumps({"publicImportHandoff": {"repo": pr.get("repo"), "number": pr["number"],
+                "url": pr["url"], **disposition,
+                "posting": "Diagnostic only; review-reminder eligibility is separate."}}))
     # gh run view scans lines with Go's default 64 KiB token limit. A single
     # aggregate report can hide the rest of this step, including human feedback.
     for kind, observations in report.items():

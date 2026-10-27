@@ -1086,6 +1086,21 @@ class ReapprovalReminderTest(unittest.TestCase):
         plan = updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers)
         self.assertEqual((plan["status"], plan["reason"], plan["export"]),
                          ("skipped", "open-export-of-approved-patch", export["url"]))
+        export["mergeable"] = "CONFLICTING"
+        plan = updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers)
+        self.assertEqual(plan["status"], "skipped")
+        self.assertEqual(plan["publicImportDisposition"]["action"], "maintainer-import-refresh")
+        export["status"] = "closed"
+        plan = updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers)
+        self.assertEqual(plan["reason"], "reviewed-patch-preserving-rebase")
+        self.assertEqual(plan["publicImportDisposition"]["action"], "maintainer-reimport")
+        replacement = linked(imported(108, 8), 8)
+        pr["imports"].append(replacement)
+        disposition = updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers)["publicImportDisposition"]
+        self.assertEqual((disposition["scope"], disposition["state"], disposition["action"]), ("exact", "open", None))
+        self.assertEqual([item["number"] for item in disposition["binding"]["imports"]], [108])
+        pr["imports"].pop()
+        export["status"] = "open"
         export["sourceHead"] = "f" * 40
         self.assertEqual(updater.reminder_plan(pr, self.node, self.now, "tamird", self.maintainers)["reason"],
                          "reviewed-patch-preserving-rebase")
@@ -1196,7 +1211,7 @@ class ReapprovalReminderTest(unittest.TestCase):
     def test_post_uses_fresh_state_and_never_retries_an_ambiguous_write(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "github-status.json").write_text(json.dumps({"prs": [retained(self.raw)]}))
+            (root / "github-status.json").write_text(json.dumps({"checkedAt": self.now.isoformat(), "prs": [retained(self.raw)]}))
             registry = {"meta": {"repo": "google/gvisor", "owner": "tamird"}, "nodes": [self.node]}
             comments = []
 
@@ -1260,6 +1275,31 @@ class ReapprovalReminderTest(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, r"permission denied \(HTTP 403\); not retried"):
                     updater.reapproval_reminders(post=True)
                 self.assertEqual(transport.call_count - calls, 2)
+
+    def test_lightweight_reminder_probe_keeps_only_same_head_import_inventory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = retained(self.raw, [linked(imported(108, 8), 8)])
+            snapshot = {"checkedAt": self.now.isoformat(), "prs": [source]}
+            (root / "github-status.json").write_text(json.dumps(snapshot))
+            registry = {"meta": {"repo": "google/gvisor", "owner": "tamird"}, "nodes": [self.node]}
+            with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
+                    mock.patch.object(updater, "fetch_maintainers", return_value=self.maintainers), \
+                    mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}), \
+                    mock.patch.object(updater, "reminder_plan", wraps=updater.reminder_plan) as planner, \
+                    mock.patch("sys.stdout", new_callable=io.StringIO) as output:
+                updater.reapproval_reminders()
+                current = planner.call_args.args[0]
+                self.assertEqual(current["imports"], source["imports"])
+                self.assertEqual(current["importsComplete"], source["importsComplete"])
+                result = json.loads(output.getvalue().splitlines()[-1])
+                self.assertEqual(result["importSnapshotAt"], snapshot["checkedAt"])
+                self.raw["headRefOid"] = "a" * 40
+                self.raw["commits"]["nodes"][0]["commit"]["oid"] = "a" * 40
+                updater.reapproval_reminders()
+                self.assertFalse(planner.call_args.args[0].get("importsComplete"))
+                result = json.loads(output.getvalue().splitlines()[-1])
+                self.assertIsNone(result["importSnapshotAt"])
 
 
 if __name__ == "__main__":

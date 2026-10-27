@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import test from 'node:test';
 import vm from 'node:vm';
 
@@ -14,6 +15,52 @@ function client() {
   vm.runInContext("registry = registryInput", context);
   return context;
 }
+
+test('every open snapshot PR shares its import decision with the periodic planner', () => {
+  const context = client();
+  const registry = JSON.parse(readFileSync(new URL('./registry.json', import.meta.url)));
+  const snapshot = JSON.parse(readFileSync(new URL('./github-status.json', import.meta.url)));
+  const script = `import json, sys
+from work_states import public_import_disposition
+from reapproval import reminder_plan
+from datetime import datetime
+registry, snapshot = json.load(sys.stdin)
+nodes = {(n.get('repo'), n.get('number')): n for n in registry['nodes'] if n['type'] == 'pr'}
+rows = []
+for pr in snapshot['prs']:
+    if pr['status'] != 'open': continue
+    node = nodes.get((pr.get('repo'), pr['number']), {})
+    disposition = public_import_disposition(pr, node.get('approvedPatch'), node.get('landedPatch'))
+    plan = reminder_plan(pr, node, datetime.fromisoformat(snapshot['checkedAt'].replace('Z', '+00:00')), snapshot['owner'], frozenset())
+    assert plan['publicImportDisposition'] == disposition
+    rows.append([pr.get('repo'), pr['number'], disposition])
+print(json.dumps(rows))`;
+  const rows = JSON.parse(execFileSync('python3', ['-c', script], {
+    cwd: new URL('.', import.meta.url), input: JSON.stringify([registry, snapshot]), encoding: 'utf8',
+  }));
+  assert.ok(rows.length > 0);
+  context.registryInput = registry;
+  vm.runInContext('registry = registryInput', context);
+  const actions = [];
+  for (const [repo, number, disposition] of rows) {
+    const pr = snapshot.prs.find(item => item.repo === repo && item.number === number);
+    const node = registry.nodes.find(item => item.type === 'pr' && item.repo === repo && item.number === number);
+    pr.publicImportDisposition = disposition;
+    context.nodeInput = { ...node, type: 'pr', github: pr };
+    assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(publicImportDisposition(nodeInput))', context)), disposition, pr.url);
+    const reasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, registry.meta.owner))', context));
+    const recoveryActions = ['maintainer-import-refresh', 'maintainer-reimport', 'maintainer-import-landed'];
+    assert.deepEqual(reasons.filter(reason => recoveryActions.includes(reason.id)).map(reason => reason.id),
+      recoveryActions.includes(disposition.action) ? [disposition.action] : [], pr.url);
+    if (['maintainer-import-refresh', 'maintainer-reimport'].includes(disposition.action)) {
+      assert.ok(reasons.some(reason => reason.id === disposition.action), pr.url);
+      actions.push({ number: pr.number, action: disposition.action, exports: disposition.binding.imports.map(item => item.number) });
+    }
+    disposition.binding.sourceHead = '0'.repeat(40);
+    assert.equal(vm.runInContext('publicImportDisposition(nodeInput)', context), null);
+  }
+  console.log(JSON.stringify({ publicImportAudit: { openPRs: rows.length, actions } }));
+});
 
 test('registry rejects workstreams that cannot be selected in the filter', () => {
   const context = client();
@@ -1180,12 +1227,23 @@ test('a closed export of a verified unchanged patch calls for re-import, not rev
     method: 'stable-patch-id', oldPatchId: 'c'.repeat(40), newPatchId: 'c'.repeat(40) };
   assert.deepEqual(idsFor(node), ['maintainer-reimport']);
   assert.match(reasonsFor(node)[0].detail, new RegExp('#' + attempt.number));
+  pr.feedback.items.push({ kind: 'review', id: 'new-approval', state: 'APPROVED', body: '',
+    submittedAt: '2026-10-14T10:00:00Z', author: { login: 'reviewer' }, commit: { oid: pr.head } });
+  assert.deepEqual(idsFor(node), ['maintainer-reimport']);
+  pr.feedback.items.at(-1).body = 'Approved, but wait for the dependency.';
+  assert.ok(!idsFor(node).includes('maintainer-reimport'));
+  pr.feedback.items.pop();
   attempt.status = 'open';
   assert.deepEqual(idsFor(node), ['maintainer-import-previous']);
   const context = client(); context.nodeInput = node;
   assert.match(vm.runInContext('attentionText(attentionGroups([nodeInput], "tamird"), "2026-10-13T10:00:00Z")', context), /Waiting for earlier export to merge/);
   attempt.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('buildkite/pipeline', 'FAILURE')] };
   assert.equal(reasonsFor(node)[0].id, 'maintainer-import-checks');
+  attempt.status = 'closed';
+  assert.deepEqual(idsFor(node), ['maintainer-import-checks', 'maintainer-reimport']);
+  const closedContext = client(); closedContext.nodeInput = node;
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird", true, new Set(["maintainer-reimport"]))[0].id', closedContext), 'maintainer-reimport');
+  attempt.status = 'open';
   node.followup = { attentionDispositions: [{ reason: 'maintainer-import-checks', action: 'ci-infrastructure-retry',
     title: 'Dependency download failed', nextAction: 'Retry this job', evidence: [node.url] }] };
   const disposition = node.followup.attentionDispositions[0];

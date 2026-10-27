@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
-from work_states import approved_patch, landed_patch
+from work_states import approved_patch, landed_patch, public_import_disposition
 
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
@@ -35,7 +35,8 @@ def maintainer_logins(text: str) -> frozenset[str]:
 def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                   maintainers: frozenset[str]) -> dict:
     """Fail closed unless an exact reviewed amendment still needs approval."""
-    result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head")}
+    result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head"),
+              "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))}
 
     def skip(reason: str) -> dict:
         return {**result, "status": "skipped", "reason": reason}

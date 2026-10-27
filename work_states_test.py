@@ -6,13 +6,13 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from work_states import approved_patch, check_purpose, check_qualifier, checks_passed, pr_states, record_states, remember_mergeability, review_decision
+from work_states import approved_patch, check_purpose, check_qualifier, checks_passed, pr_states, public_import_disposition, record_states, remember_mergeability, review_decision
 
 
 def original(**changes: object) -> dict:
     pr = {"number": 1, "status": "open", "head": "a" * 40, "ref": "topic", "headOwner": "tamird", "headRepo": "tamird/gvisor",
           "reviewDecision": None, "headHistoryComplete": True, "headCommittedAt": "2026-08-31T00:00:00Z",
-          "imports": [], "importsComplete": True,
+          "imports": [], "importsComplete": True, "sourceHead": "a" * 40,
           "labels": [], "labelsComplete": True, "checks": None}
     if changes.get("reviewDecision") == "APPROVED":
         pr.update(reviewsComplete=True, reviewRequestsComplete=True, reviewRequests=[],
@@ -134,6 +134,14 @@ class WorkStatesTest(unittest.TestCase):
         self.assertNotIn("awaiting-import", pr_states(pr, proof))
         pr["imports"] = []
         self.assertEqual(pr, raw)
+        later = {"kind": "review", "id": "new-approval", "state": "APPROVED", "body": "",
+                 "submittedAt": "2026-10-19T20:00:00Z", "author": {"login": "reviewer"},
+                 "commit": {"oid": pr["head"]}}
+        pr["feedback"]["items"].append(later)
+        self.assertTrue(approved_patch(pr, proof))
+        later["body"] = "Approved, but wait for the dependency."
+        self.assertFalse(approved_patch(pr, proof))
+        pr["feedback"]["items"].pop()
         # Provider reassociation does not alter the retained review provenance.
         pr["feedback"]["items"][0]["commit"]["oid"] = pr["head"]
         self.assertTrue(approved_patch(pr, proof))
@@ -236,6 +244,27 @@ class WorkStatesTest(unittest.TestCase):
         self.assertNotIn("failing", pr_states(source))
         replacement["status"] = "merged"
         self.assertNotIn("failing", pr_states(source))
+
+    def test_import_lifecycle_is_separate_from_checks_and_review_reminders(self):
+        pr = original(reviewDecision="APPROVED", mergeable="MERGEABLE")
+        imported = original(number=2, head="b" * 40, matchesSourceHead=True, status="closed",
+                            checks={"state": "FAILURE", "total": 1, "complete": True,
+                                    "contexts": [{"name": "test", "state": "FAILURE"}]})
+        pr["imports"] = [imported]
+        disposition = public_import_disposition(pr)
+        self.assertEqual((disposition["state"], disposition["action"]), ("closed", "maintainer-reimport"))
+        self.assertIn("failing", pr_states(pr))
+        pr["importsComplete"] = False
+        self.assertEqual(public_import_disposition(pr)["state"], "unknown")
+        self.assertIsNone(public_import_disposition(pr)["action"])
+        pr["importsComplete"] = True
+        pr["mergeable"] = "CONFLICTING"
+        self.assertIsNone(public_import_disposition(pr)["action"])
+        pr["mergeable"] = "MERGEABLE"
+        imported["status"] = "open"
+        self.assertEqual(public_import_disposition(pr)["state"], "open")
+        imported["sourceHead"] = "c" * 40
+        self.assertEqual(public_import_disposition(pr)["state"], "absent")
 
     def test_exact_landing_retires_import_action_without_rewriting_source(self):
         pr = original(reviewDecision="APPROVED")
