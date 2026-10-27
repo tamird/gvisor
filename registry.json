@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T23:54:30.014199+00:00",
+    "updatedAt": "2026-10-27T00:06:30.348539+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23899,8 +23899,8 @@
       "group": "bazel",
       "status": "open",
       "head": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
-      "summary": "Restores the basic:sources filegroup and its images:sources edge omitted from merged import #16307. Adding images/basic/BUILD made a Bazel package boundary, so the parent glob stopped including the remaining basic Docker contexts. The two complete BUILD postimages exactly match approved #16097 source 781d; only seven lines are added on public 7bffefa. Delivered ready for review with independent source/prose equivalence checked. Earlier image qualification remains source-specific; no new runtime or current-head CI result is claimed. This source export repair is not a blanket prerequisite for every image proposal.",
+      "updatedAt": "2026-10-27T00:06:30.348539+00:00",
+      "summary": "Restores the basic:sources filegroup and its images:sources edge omitted from merged import #16307. Adding images/basic/BUILD made a Bazel package boundary, so the parent glob stopped including the remaining basic Docker contexts. The two complete BUILD postimages exactly match approved #16097 source 781d; only seven lines are added on public 7bffefa. Delivered ready for review with independent source/prose equivalence checked. Earlier image qualification remains source-specific; no new runtime or current-head CI result is claimed. This source export repair is not a blanket prerequisite for every image proposal.\n\nSupplemental combined-source qualification 63f7b7ba passed on both architectures: the control omitted exactly 35 tracked basic members, including BUILD; the corrected combined archives matched all 178 tracked source files and modes, plus two generated CUDA helpers. All 34 archive/context owners and 16 image config/layer comparisons passed. The duplicate eeb55ea24 proposal has the same complete BUILD postimages as this existing repair and is withdrawn. This measured the combined image source, not the bare #16374 head, and makes no CUDA runtime claim.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
@@ -23911,9 +23911,16 @@
           "https://github.com/google/gvisor/pull/16374",
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/google/gvisor/pull/16307",
-          "https://github.com/tamird/gvisor/commit/8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd"
+          "https://github.com/tamird/gvisor/commit/8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
+          "https://app.buildbuddy.io/invocation/63f7b7ba-d75b-43fb-bb39-d90886e01f1e"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Supplemental combined image/source archive qualification (not the bare PR head)",
+          "url": "https://app.buildbuddy.io/invocation/63f7b7ba-d75b-43fb-bb39-d90886e01f1e"
+        }
+      ]
     },
     {
       "id": "pr:16379",
@@ -25903,30 +25910,27 @@
       "title": "Preserve basic image sources in context archives",
       "url": "https://github.com/tamird/gvisor/commit/eeb55ea24a7033bc0b2d9e3c24818de52b9364fd",
       "group": "bazel",
-      "status": "Contributor review",
-      "summary": "Introducing the images/basic package made the parent sources glob stop traversing that directory. Export the basic package's sources and include them in the parent filegroup, matching the existing Ollama forwarding. This restores the remaining basic context files to the upstream //images:source_contexts archive consumed by tools/images.mk. It does not restore intentionally removed Dockerfiles.\n\nOn upstream bcc22e169, 39 remaining basic context files plus BUILD are omitted. In the combined eight-image control, which has removed more replaced Dockerfiles, exactly 35 tracked basic members including BUILD were absent. With this correction, both architecture archives matched all 178 tracked source files' bytes and modes, plus two generated CUDA helpers. The same run passed all 34 archive/context owners and 16 config/layer comparisons. The earlier combined buildifier failure remains historical. No CUDA runtime failure or runtime fix is claimed.\n\nThis independently reviewed two-file proposal is ready for contributor review. No upstream PR exists.",
-      "updatedAt": "2026-10-26T23:54:30.014199+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "eeb55ea24a7033bc0b2d9e3c24818de52b9364fd",
-        "url": "https://github.com/tamird/gvisor/commit/eeb55ea24a7033bc0b2d9e3c24818de52b9364fd",
-        "title": "Preserve basic image sources in context archives",
-        "summary": "Restore omitted basic context files to the existing upstream archive. The controlled dual-architecture archive check passed.",
-        "body": "Introducing the images/basic package made the parent sources glob stop traversing that directory. Export the basic package's sources and include them in the parent filegroup, matching the existing Ollama forwarding. This restores the remaining basic context files to the upstream //images:source_contexts archive consumed by tools/images.mk. It does not restore intentionally removed Dockerfiles."
-      },
+      "status": "Withdrawn; duplicate of #16374",
+      "summary": "Introducing the images/basic package made the parent sources glob stop traversing that directory. Export the basic package's sources and include them in the parent filegroup, matching the existing Ollama forwarding. This restores the remaining basic context files to the upstream //images:source_contexts archive consumed by tools/images.mk. It does not restore intentionally removed Dockerfiles.\n\nOn upstream bcc22e169, 39 remaining basic context files plus BUILD are omitted. In the combined eight-image control, which has removed more replaced Dockerfiles, exactly 35 tracked basic members including BUILD were absent. With this correction, both architecture archives matched all 178 tracked source files' bytes and modes, plus two generated CUDA helpers. The same run passed all 34 archive/context owners and 16 config/layer comparisons. The earlier combined buildifier failure remains historical. No CUDA runtime failure or runtime fix is claimed.\n\nWithdrawn as a duplicate of the already approved, open #16374 at 8d851dcbc. The two complete BUILD postimages match that existing repair exactly. No contributor decision or separate publication remains. The combined qualification is supplemental evidence for #16374, not a run of its bare public head.",
+      "updatedAt": "2026-10-27T00:06:30.348539+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "eeb55ea24a7033bc0b2d9e3c24818de52b9364fd",
-        "observedAt": "2026-10-26T23:54:30.014199+00:00",
-        "disposition": "Reviewed and qualified; contributor decision pending",
-        "nextAction": "After contributor approval, publish this standalone two-file repair on current master. Preserve the distinction between source archive contents and runtime behavior.",
+        "observedAt": "2026-10-27T00:06:30.348539+00:00",
+        "disposition": "Withdrawn; existing #16374 owns the repair",
+        "nextAction": "Follow #16374; no action remains on this duplicate fork proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/eeb55ea24a7033bc0b2d9e3c24818de52b9364fd",
           "https://app.buildbuddy.io/invocation/63f7b7ba-d75b-43fb-bb39-d90886e01f1e",
-          "https://github.com/google/gvisor/commit/c3e0783a533c34c33e5fbaa57c915f622f85aa41"
+          "https://github.com/google/gvisor/commit/c3e0783a533c34c33e5fbaa57c915f622f85aa41",
+          "https://github.com/google/gvisor/pull/16374"
         ]
       },
       "evidence": [
+        {
+          "label": "Existing approved repair; no separate contributor action",
+          "url": "https://github.com/google/gvisor/pull/16374"
+        },
         {
           "label": "Exact standalone two-file proposal",
           "url": "https://github.com/tamird/gvisor/commit/eeb55ea24a7033bc0b2d9e3c24818de52b9364fd"
@@ -25939,7 +25943,8 @@
           "label": "Basic package boundary that omitted the remaining context files",
           "url": "https://github.com/google/gvisor/commit/c3e0783a533c34c33e5fbaa57c915f622f85aa41"
         }
-      ]
+      ],
+      "inactive": true
     }
   ],
   "edges": [
