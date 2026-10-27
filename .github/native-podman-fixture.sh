@@ -45,6 +45,7 @@ if [[ $# == 1 && $1 == --preflight ]]; then
     printf "FIXTURE_NAMESPACE\n"
     diagnostic cat /proc/self/uid_map /proc/self/gid_map /proc/1/uid_map /proc/1/gid_map
     diagnostic readlink /proc/self/ns/user /proc/1/ns/user
+    diagnostic cat /proc/self/attr/current
     diagnostic grep -E "^(Uid|Gid|Cap|NoNewPrivs|Seccomp)" /proc/self/status
     diagnostic cat /etc/subuid /etc/subgid
     diagnostic stat -Lc "%n mode=%a uid=%u gid=%g" /usr/bin/newuidmap /usr/bin/newgidmap
