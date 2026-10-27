@@ -449,6 +449,10 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	// retransmits and recovery on a path with little or no real loss
 	// (gvisor#9707/#9778). detectLoss arms the timer from rcvdTime-derived
 	// values, so evaluating it at the timer target keeps the two consistent.
+	if rc.snd.state == tcpip.RTORecovery {
+		rc.snd.observeRTO("timer_suppressed", nil, 0)
+		return nil
+	}
 	numLost := rc.detectLoss(rc.snd.reorderTimer.target)
 	if numLost == 0 {
 		return nil
