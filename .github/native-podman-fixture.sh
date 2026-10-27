@@ -133,6 +133,7 @@ if [[ $execution == host ]]; then
   [[ $(podman --version) == 'podman version 4.9.3' ]]
   printf 'HOST_PODMAN_IDENTITY arch=%s uid=%s gid=%s cgroup=%s\n' \
     "$(uname -m)" "$(id -u)" "$(id -g)" "$(stat -fc %T /sys/fs/cgroup)"
+  printf 'HOST_PODMAN_RUNTIME_ARGS=%s\n' "${RUNTIME_ARGS:-}"
   sha256sum "$(command -v podman)"
   exec "$@"
 fi

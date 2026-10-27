@@ -11,6 +11,11 @@ name: Native ARM64 image consumers
       archive_run:
         description: Reuse the verified image artifact from a prior run in this fork
         type: string
+      directfs:
+        description: Podman host runtime modes
+        type: choice
+        options: [both, "false"]
+        default: both
 
 permissions:
   contents: read
@@ -34,6 +39,7 @@ jobs:
       LOCK: ca984532b395b146a8d66b6d8f79d243665ac7ed126f93f7fca14b08c0007ea8
       TEST_TARGET: //test/podman:podman_test_arm64
       PODMAN_ALPINE_SHA256: f23115a502a379a64be824ff665a8ceb9fd17df522efc72a79ee21625afdbf8b
+      DIRECTFS: ${{ inputs.directfs || 'both' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,6 +69,12 @@ jobs:
           results="$RUNNER_TEMP/podman-results"
           mkdir "$results"
           wrapper="$GITHUB_WORKSPACE/.github/native-podman-fixture.sh --host-runtime"
+          test_options=()
+          case "$DIRECTFS" in
+            both) ;;
+            false) test_options+=(--test_env=RUNTIME_ARGS=--directfs=false) ;;
+            *) printf 'Unknown DirectFS selection: %s\n' "$DIRECTFS" >&2; exit 1 ;;
+          esac
           status=0
           bazelisk test --config=aarch64 --lockfile_mode=error --strip=never \
             --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed --strategy=TestRunner=local \
@@ -70,17 +82,24 @@ jobs:
             --test_env=PODMAN_ALPINE_SHA256 --run_under="$wrapper" \
             --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
             --build_event_json_file="$results/bep.json" \
-            --test_timeout=600 --test_output=all "$TEST_TARGET" || status=$?
+            --test_timeout=600 --test_output=all "${test_options[@]}" "$TEST_TARGET" || status=$?
           finished=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+          # Record the native result before collection can fail independently.
+          jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg finished "$finished" \
+            --arg selection "$DIRECTFS" --argjson bazel "$status" \
+            '{source:$source,owner:$owner,selection:$selection,bazel_exit:$bazel,execution_finished:$finished}' \
+            | tee "$results/native-result.json"
           printf '%s  MODULE.bazel.lock\n' "$LOCK" | sha256sum -c -
           test -z "$(git status --porcelain --untracked-files=no)"
           logs=bazel-testlogs/test/podman/podman_test_arm64
           for report in test.log test.xml; do
             if [[ -f "$logs/$report" ]]; then cp "$logs/$report" "$results/$report"; fi
           done
-          if [[ -f "$logs/test.outputs/outputs.zip" ]]; then
-            cp "$logs/test.outputs/outputs.zip" "$results/outputs.zip"
-          fi
+          # Bazel may emit unpacked files or outputs.zip. Preserve either form
+          # along with the native manifest.
+          for directory in test.outputs test.outputs_manifest; do
+            if [[ -d "$logs/$directory" ]]; then cp -a "$logs/$directory" "$results/$directory"; fi
+          done
           native=false
           gofer=false
           direct=false
@@ -88,13 +107,41 @@ jobs:
             if grep -Fxq "HOST_PODMAN_IDENTITY arch=aarch64 uid=$(id -u) gid=$(id -g) cgroup=cgroup2fs" "$results/test.log"; then native=true; fi
             if [[ $(grep -Fxc 'PASS: rootless Podman directfs=false' "$results/test.log") == 1 ]]; then gofer=true; fi
             if [[ $(grep -Fxc 'PASS: rootless Podman directfs=true' "$results/test.log") == 1 ]]; then direct=true; fi
+            if [[ $DIRECTFS == false && $(grep -Fxc 'PASS: rootless Podman directfs=selected' "$results/test.log") == 1 ]]; then gofer=true; fi
           fi
-          jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg finished "$finished" \
+          jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg finished "$finished" --arg selection "$DIRECTFS" \
             --arg alpinesha "$PODMAN_ALPINE_SHA256" --argjson bazel "$status" --argjson native "$native" \
             --argjson gofer "$gofer" --argjson direct "$direct" \
-            '{source:$source,owner:$owner,environment:"stock-host-podman-4.9.3",alpine_sha256:$alpinesha,bazel_exit:$bazel,native_host:$native,directfs_false:$gofer,directfs_true:$direct,execution_finished:$finished}' \
+            '{source:$source,owner:$owner,environment:"stock-host-podman-4.9.3",selection:$selection,alpine_sha256:$alpinesha,bazel_exit:$bazel,native_host:$native,directfs_false:$gofer,directfs_true:(if $selection == "both" then $direct else null end),execution_finished:$finished}' \
             | tee "$results/verdict.json"
-          [[ $status == 0 && $native == true && $gofer == true && $direct == true ]]
+          [[ $status == 0 && $native == true && $gofer == true && ( $DIRECTFS == false || $direct == true ) ]]
+      - name: Retain source-built native inputs for focused diagnosis
+        if: always() && inputs.profile == 'podman-host-runtime'
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          results="$RUNNER_TEMP/podman-results"
+          if [[ ! -x bazel-bin/release/runsc || ! -f bazel-bin/images/basic/alpine_load_docker.tar ]]; then
+            printf 'The build did not produce complete native inputs.\n'
+            exit 0
+          fi
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          printf '%s  MODULE.bazel.lock\n' "$LOCK" | sha256sum -c -
+          printf '%s  bazel-bin/images/basic/alpine_load_docker.tar\n' "$PODMAN_ALPINE_SHA256" | sha256sum -c -
+          inputs="$RUNNER_TEMP/podman-native-inputs"
+          mkdir "$inputs"
+          cp -RL bazel-bin/release "$inputs/release"
+          cp bazel-bin/images/basic/alpine_load_docker.tar "$inputs/alpine.tar"
+          cp test/podman/smoke.sh "$inputs/smoke.sh"
+          cp .bazelversion MODULE.bazel.lock "$inputs/"
+          printf '%s\n' "$PRODUCT" > "$inputs/source.txt"
+          # This artifact contains only explicit product outputs and source
+          # records, never the checkout, environment or credential directories.
+          [[ $(du -sb "$inputs" | cut -f1) -le 268435456 ]]
+          (cd "$inputs" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum) > "$results/input-sha256.txt"
+          tar -C "$inputs" -czf "$results/native-inputs.tar.gz" .
+          sha256sum "$results/native-inputs.tar.gz"
       - name: Retain native Podman reports
         if: always() && inputs.profile == 'podman-host-runtime'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
