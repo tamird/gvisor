@@ -32,7 +32,10 @@ bzl_library(
     name = "go_bzl",
     srcs = ["go.bzl"],
     visibility = ["//visibility:private"],
-    deps = [":defs_bzl"],
+    deps = [
+        ":defs_bzl",
+        "@with_cfg.bzl//:with_cfg",
+    ],
 )
 
 bzl_library(
