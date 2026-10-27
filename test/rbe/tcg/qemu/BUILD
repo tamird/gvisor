@@ -27,6 +27,7 @@ qemu_system(
     ],
     exec_properties = {
         "EstimatedCPU": "8",
+        "EstimatedFreeDiskBytes": "8GB",
         "EstimatedMemory": "16GB",
         "default-timeout": "30m",
     },

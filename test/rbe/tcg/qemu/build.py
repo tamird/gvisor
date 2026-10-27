@@ -43,6 +43,36 @@ def run_logged(command: list[str], cwd: Path, env: dict[str, str], log: Path) ->
         raise subprocess.CalledProcessError(result.returncode, command)
 
 
+def record_storage(evidence: Path, stage: str) -> None:
+    """Record the action's original temp and declared-output filesystems."""
+    locations = {"default_temp": Path(tempfile.gettempdir()), "action_output": evidence}
+    result = {}
+    mounts = Path("/proc/self/mountinfo").read_text().splitlines()
+    for name, path in locations.items():
+        path = path.resolve()
+        storage = path.stat()
+        capacity = os.statvfs(path)
+        result[name] = {
+            "path": str(path),
+            "device": storage.st_dev,
+            "mountinfo": max(
+                (line for line in mounts if path.is_relative_to(line.split()[4])),
+                key=lambda line: len(line.split()[4]),
+            ),
+            "available_bytes": capacity.f_bavail * capacity.f_frsize,
+            "free_bytes": capacity.f_bfree * capacity.f_frsize,
+            "total_bytes": capacity.f_blocks * capacity.f_frsize,
+            "available_inodes": capacity.f_favail,
+            "free_inodes": capacity.f_ffree,
+            "total_inodes": capacity.f_files,
+        }
+    data = json.dumps({"stage": stage, "locations": result}, sort_keys=True)
+    # Failed output trees may not be retained. Emit the small diagnostic before
+    # the operation that previously failed, independently of artifact capture.
+    print("QEMU_STORAGE " + data, file=sys.stderr, flush=True)
+    (evidence / ("storage-" + stage + ".json")).write_text(data + "\n")
+
+
 def main() -> None:
     match sys.argv[1:]:
         case [config_name]:
@@ -53,6 +83,11 @@ def main() -> None:
     root = Path.cwd()
     evidence = (root / config["evidence"]).resolve()
     evidence.mkdir(parents=True, exist_ok=True)
+    record_storage(evidence, "before-staging")
+    capacity = os.statvfs(tempfile.gettempdir())
+    if (capacity.f_bavail * capacity.f_frsize < 4 * 1024**3
+            or capacity.f_favail < 100_000):
+        raise RuntimeError("QEMU build scratch needs at least 4 GiB and 100,000 free inodes")
     with tempfile.TemporaryDirectory(prefix="qemu-system-") as temporary:
         work = Path(temporary)
         source = work / "source"
@@ -70,6 +105,7 @@ def main() -> None:
              "-C", str(sysroot), "--no-same-owner"],
             env=config["tar_env"], check=True,
         )
+        record_storage(evidence, "after-sysroot")
         loader = sysroot / "lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
         libraries = ":".join(str(sysroot / name) for name in ("lib/x86_64-linux-gnu", "usr/lib/x86_64-linux-gnu"))
         tools = work / "tools"
@@ -154,6 +190,7 @@ def main() -> None:
         build.mkdir()
         run_logged(options, build, env, evidence / "configure.log")
         run_logged([str(root / config["make"]), "-j8", "qemu-system-aarch64"], build, env, evidence / "build.log")
+        record_storage(evidence, "after-build")
         output = root / config["binary"]
         output.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(build / "qemu-system-aarch64", output)
