@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-27T02:11:49.164192+00:00",
-  "registryDate": "2026-10-27T02:14:28.573309+00:00",
+  "registryDate": "2026-10-27T02:44:28.931216+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -198054,6 +198054,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-27T02:01:40.799516+00:00"
+      }
+    },
+    "branch:tcp-interrupted-sack-recovery": {
+      "contributor-review": {
+        "scope": "1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
+        "since": "2026-10-27T02:42:33.270708+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-27T02:42:33.270708+00:00"
       }
     }
   },
