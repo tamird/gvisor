@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T19:29:35+00:00",
+    "updatedAt": "2026-10-27T19:36:46+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27956,6 +27956,39 @@
         "head": "50188341ca87809d0d81fafac8cd10d7df64d11a",
         "url": "https://github.com/tamird/gvisor/commit/50188341ca87809d0d81fafac8cd10d7df64d11a",
         "summary": "Build the FD parker, proc unmounter, and sentry prewarmer with ordinary C compiler and linker actions. This removes three shell genrules while preserving their public target names and embedded filenames. Source and retained-result reviews are complete; the GNU result covers both target architectures and 13 native AMD64 cases."
+      }
+    },
+    {
+      "id": "branch:checklocks-inotify-state",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/checklocks-inotify-state",
+      "head": "f64a22fd6a077ec02d9795b235236e1bf6af7fb9",
+      "title": "Enforce inotify state lock requirements",
+      "url": "https://github.com/tamird/gvisor/compare/7f10cf978883a209cb3770397fcc8366f9cc0729...f64a22fd6a077ec02d9795b235236e1bf6af7fb9",
+      "group": "analysis",
+      "status": "Contributor review",
+      "updatedAt": "2026-10-27T19:36:46+00:00",
+      "summary": "Make the inotify event buffer, watch map, and locked helper preconditions enforceable by checklocks. The change adds no locks, exemptions, or runtime behavior. The candidate passes the existing VFS analyzer for AMD64 and ARM64. Removing six lock/defer lines in an analyzer-only control produces all four intended diagnostic classes on each target architecture. The control remains a native failure and keeps the aggregate red; the independent mechanism check passes. Neither inotify runtime behavior nor native ARM execution was tested. The first attempt failed during shallow-checkout preparation before any analyzer ran.",
+      "evidence": [
+        {
+          "label": "Exact reviewed proposal",
+          "url": "https://github.com/tamird/gvisor/commit/f64a22fd6a077ec02d9795b235236e1bf6af7fb9"
+        },
+        {
+          "label": "Candidate passes; unlocked control is rejected on both target CPUs",
+          "url": "https://app.buildbuddy.io/invocation/41b62672-33df-4cf6-91e2-33be7c351e2d"
+        },
+        {
+          "label": "Original setup failure: no analyzer attempt",
+          "url": "https://app.buildbuddy.io/invocation/f25b94b1-87dd-415a-a267-8196c4f81370"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "f64a22fd6a077ec02d9795b235236e1bf6af7fb9",
+        "url": "https://github.com/tamird/gvisor/commit/f64a22fd6a077ec02d9795b235236e1bf6af7fb9",
+        "summary": "Make the inotify event buffer, watch map, and locked helper preconditions enforceable by checklocks. The change adds no locks, exemptions, or runtime behavior. Source and retained-result reviews are complete; both target-CPU analyses pass and the unlocked control is rejected."
       }
     }
   ],
