@@ -23,6 +23,10 @@ def with_test_architecture(test_rule, architecture, extra_providers = [], implic
         [target.platform],
     )
 
+def test_architecture_tags(architectures, tags):
+    """Advertises variants to the canonical mixed-platform test selector."""
+    return tags + ["rbe-has-%s-variant" % architecture for architecture in architectures]
+
 def test_architecture_variants(name, architectures, test_rules, kwargs):
     """Adds explicit, manual variants from the original test's complete attributes.
 
