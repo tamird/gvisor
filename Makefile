@@ -244,8 +244,11 @@ runsc-plugin-stack:
 	@$(call build,-c opt $(PLUGIN_STACK_FLAGS) //runsc:runsc-plugin-stack)
 .PHONY: runsc-plugin-stack
 
+# Date the package on the client so workers do not need the Git checkout.
+debian_date = --repo_env=SOURCE_DATE_EPOCH="$${SOURCE_DATE_EPOCH-$$(git log -1 --format=%ct 2>/dev/null || echo 0)}"
+
 debian: ## Builds the debian packages.
-	@$(call build,-c opt //debian:debian)
+	@$(call build,-c opt $(debian_date) //debian:debian)
 .PHONY: debian
 
 smoke-tests: $(RUNTIME_BIN) ## Runs a simple smoke test after building runsc.
@@ -975,7 +978,7 @@ $(RELEASE_KEY):
 
 $(RELEASE_ARTIFACTS)/%:
 	@mkdir -p $@
-	@$(call copy,//debian:debian,$@)
+	@$(call copy,$(debian_date) //debian:debian,$@)
 	@$(call copy,//debian:gvisor-release-tar-bz2,$@)
 	@$(call copy,//debian:gvisor-release-tar-zstd,$@)
 

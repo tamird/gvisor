@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("//tools:defs.bzl", "bzl_library", "string_flag", "target_emulators")
 
 package(
@@ -86,16 +87,21 @@ config_setting(
 # See target_emulator in defs.bzl.
 target_emulators(name = "qemu")
 
-genrule(
+run_binary(
     name = "version",
     outs = ["version.txt"],
-    cmd = "cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
+    args = [
+        "version",
+        "$(INFO_FILE)",
+        "$@",
+    ],
     stamp = 1,
     tags = [
         "manual",
         "nobuilder",
         "notap",
     ],
+    tool = "//debian:metadata",
     visibility = ["//:sandbox"],
 )
 

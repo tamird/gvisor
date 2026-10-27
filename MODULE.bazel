@@ -197,6 +197,10 @@ http_file(
     urls = ["https://raw.githubusercontent.com/SchemaStore/schemastore/166136b96a14f103a948053903e9339e63ad9170/src/schemas/json/github-workflow.json"],
 )
 
+source_date_epoch = use_repo_rule("//debian:source_date_epoch.bzl", "source_date_epoch")
+
+source_date_epoch(name = "debian_source_date")
+
 # Statically-linked QEMU user-mode emulators.
 QEMU_USER_EXPORTS = 'exports_files(["usr/bin/qemu-aarch64", "usr/bin/qemu-riscv64", "usr/bin/qemu-x86_64"])'
 

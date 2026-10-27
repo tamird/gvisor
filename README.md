@@ -103,6 +103,15 @@ After setting up dependencies, using Bazel is similar to the Makefile:
 bazel build -c opt //debian:gvisor-release-tar-bz2
 ```
 
+`make debian` dates the package changelog with the Git commit time, or the
+Unix epoch when building from a source archive. Set `SOURCE_DATE_EPOCH` to
+override the date. When building the package directly with Bazel, an unset
+`SOURCE_DATE_EPOCH` defaults to zero:
+
+```sh
+SOURCE_DATE_EPOCH=1790812800 bazel build -c opt //debian:debian
+```
+
 ### Testing
 
 To run standard test suites, you can use:

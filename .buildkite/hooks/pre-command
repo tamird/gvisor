@@ -63,10 +63,9 @@ PARTITION=$((${PARTITION}+1)) # 1-indexed, but PARALLEL_JOB is 0-indexed.
 export TOTAL_PARTITIONS=${BUILDKITE_PARALLEL_JOB_COUNT:-1}
 
 if [[ "${BUILDKITE_BRANCH}" =~ ^test/ ]]; then
-  # STABLE_VERSION depends on the most recent tag, so let's set the same tag
-  # for all tests changes to better utilize the bazel cache. We have to be sure
-  # that binaries depends only on code changes but not metadata such as commit
-  # id.
+  # Use one version and changelog date for presubmits so a commit with
+  # unrelated changes does not invalidate cached binaries or packages.
+  export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH-0}"
 
   # LINT.IfChange
   git tag -f buildkite-test-branch
