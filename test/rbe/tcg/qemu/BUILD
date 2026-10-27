@@ -32,6 +32,7 @@ qemu_system(
     },
     patch = "arm-rcsc.patch",
     visibility = [
+        "//:__pkg__",
         "//pkg/coretag:__pkg__",
         "//pkg/pinring:__pkg__",
         "//pkg/sentry/platform/kvm:__pkg__",
