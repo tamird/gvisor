@@ -1,0 +1,65 @@
+{
+  "name": "qualification-benchmark-alpine-d6731da5ad",
+  "git_repo": {
+    "repo_url": "https://github.com/tamird/gvisor"
+  },
+  "repo_state": {
+    "commit_sha": "d6731da5ade2667a4077a0bac939afbccd92e8e4",
+    "branch": "qualification/benchmark-alpine-3.24.3"
+  },
+  "steps": [
+    {
+      "run": "set -euo pipefail\n[[ $(git rev-parse HEAD) == d6731da5ade2667a4077a0bac939afbccd92e8e4 ]]\n[[ $(git rev-parse HEAD^) == 6d2fb27972fecac887ce8485cb0e6c4aef5be39b ]]\n[[ $(git rev-parse HEAD^^) == 137d19a0030e7f84dc570842e90e6b9ecf9aa3f8 ]]\nprintf \"%s  %s\\n\" 4fb6c453c66804817b34ca626a016d2b0739e93f626eafa293f673be3ead78e5 test/rbe/image_workload.py | sha256sum -c -\n[[ -z $(git status --porcelain --untracked-files=no) ]]\npython3 - <<'PY_CAPACITY'\nimport json, os\nv = os.statvfs('.')\navailable = v.f_bavail * v.f_frsize\nprint(json.dumps({'coordinator_workspace_available_bytes_before_fetch': available, 'required_bytes': 32000000000}), flush=True)\nif available < 32000000000:\n    raise SystemExit('Insufficient coordinator disk before repository downloads')\nPY_CAPACITY\nexport APPLICABILITY_QUALIFICATION_CONFIG='{\"source\":\"d6731da5ade2667a4077a0bac939afbccd92e8e4\",\"product\":\"6d2fb27972fecac887ce8485cb0e6c4aef5be39b\",\"targets\":[\"//images/benchmarks/alpine:alpine_context\",\"//test/benchmarks/base:startup_test\",\"//test/benchmarks/base:usage_test\"],\"action_prefixes\":[\"//images/benchmarks/alpine:\",\"//test/benchmarks/base:\",\"//:release\"],\"runtime\":true,\"graph_only\":false,\"expected_sources\":[\"d6731da5ade2667a4077a0bac939afbccd92e8e4\"],\"consumer_options\":[],\"image_targets\":{\"x86_64\":[\"//images/benchmarks/alpine:alpine_context\"],\"aarch64\":[\"//images/benchmarks/alpine:alpine_context\"]},\"preparation_targets\":{\"x86_64\":[\"//:release\",\"//test/benchmarks/base:startup_test\",\"//test/benchmarks/base:usage_test\"]},\"official\":{\"amd64\":{\"manifest\":\"sha256:c26612752c78b18faacd63c7d50f4592c2e7b0f25e0e20e82bd74e465c57ab0d\",\"config\":\"sha256:b92841763c5c2140a20eeb2a44e94ebb0e80fd51d9d6b5895ea72fa999525d68\",\"platform\":[\"linux\",\"amd64\"],\"created\":\"2026-10-21T22:37:22.870489069Z\",\"layers\":[{\"mediaType\":\"application/vnd.oci.image.layer.v1.tar+gzip\",\"digest\":\"sha256:7b229517ed222597277036d94892173207d01a731ab3a88eeb1de2e963a2c788\",\"size\":3853109}],\"diff_ids\":[\"sha256:75c137aedfb2760f88629236cb7b797630aed0c3d91d626d1d1bb694878fc2ba\"],\"runtime\":{\"User\":null,\"Entrypoint\":null,\"Cmd\":[\"/bin/sh\"],\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"],\"Labels\":null,\"WorkingDir\":\"/\"},\"url\":\"https://mirror.gcr.io/v2/library/alpine/manifests/sha256:c26612752c78b18faacd63c7d50f4592c2e7b0f25e0e20e82bd74e465c57ab0d\"},\"arm64\":{\"manifest\":\"sha256:e311ae748be7f56ae5cba304bc488f0786df68ee507513f654a5cc8597cffb42\",\"config\":\"sha256:f7bbaec1bd0330a8dba26f03e05f421bb3c8b807bb41873df3c3b0c3d1083d8f\",\"platform\":[\"linux\",\"arm64\"],\"created\":\"2026-10-21T22:51:39.084385804Z\",\"layers\":[{\"mediaType\":\"application/vnd.oci.image.layer.v1.tar+gzip\",\"digest\":\"sha256:d3531b7a4f217bdc3426c57bcff84c170f086f456a39689d4a615c6d026c4be0\",\"size\":4190488}],\"diff_ids\":[\"sha256:a278e6f39431cd0ed74238a3d377893ad0d905d68b676bf9a65529080669756b\"],\"runtime\":{\"User\":null,\"Entrypoint\":null,\"Cmd\":[\"/bin/sh\"],\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"],\"Labels\":null,\"WorkingDir\":\"/\"},\"url\":\"https://mirror.gcr.io/v2/library/alpine/manifests/sha256:e311ae748be7f56ae5cba304bc488f0786df68ee507513f654a5cc8597cffb42\"}}}'\nexec python3 test/rbe/image_bootstrap.py\n"
+    }
+  ],
+  "exec_properties": [
+    {
+      "name": "OSFamily",
+      "value": "linux"
+    },
+    {
+      "name": "Arch",
+      "value": "amd64"
+    },
+    {
+      "name": "EstimatedCPU",
+      "value": "4"
+    },
+    {
+      "name": "EstimatedMemory",
+      "value": "16GB"
+    },
+    {
+      "name": "EstimatedFreeDiskBytes",
+      "value": "40GB"
+    },
+    {
+      "name": "recycle-runner",
+      "value": "false"
+    },
+    {
+      "name": "dockerUser",
+      "value": "root"
+    },
+    {
+      "name": "network",
+      "value": "external"
+    },
+    {
+      "name": "workload-isolation-type",
+      "value": "firecracker"
+    },
+    {
+      "name": "init-dockerd",
+      "value": "true"
+    }
+  ],
+  "run_remotely": true,
+  "disable_retry": true,
+  "timeout": "45m",
+  "wait_until": "QUEUED",
+  "runner_flags": [
+    "--git_fetch_depth=3"
+  ],
+  "container_image": "docker://gcr.io/flame-public/rbe-ubuntu22-04@sha256:0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3"
+}

@@ -58,7 +58,7 @@ concurrency:
   # Explicit target lists can exceed GitHub's concurrency-key length limit.
   # Keep those runs independent; different selections must not cancel each other.
   group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.profile }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ (contains(fromJSON('["build","test","benchmarks","pgo"]'), inputs.lanes) || inputs.targets != '') && github.run_id || '' }}-${{ inputs.clock_source }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/qualification/benchmark-alpine-hosted' }}
 
 jobs:
   build:
@@ -86,8 +86,44 @@ jobs:
           name: runsc
           path: bin/
 
+  benchmark-alpine-hosted:
+    concurrency:
+      group: benchmark-alpine-d6731da5ad
+      cancel-in-progress: false
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/benchmark-alpine-hosted' && github.actor == 'tamird' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+    - name: Verify the frozen request, source ref and shared collector
+      shell: bash
+      run: |
+        set -euo pipefail
+        printf '%s  %s\n' \
+          8bb8c3c364c72e27b089ac3cc2b4dab7a8c7eb21568d1d4d659f4085a71e8e19 .github/benchmark-alpine-request.json \
+          b533caee13ec901cd17fd9e02b8f896a43a940d38e4a14d5199bc19f2ac133eb test/rbe/qualification_report.py \
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37 test/rbe/unit_matrix.py | sha256sum --check --strict
+        ref=https://api.github.com/repos/tamird/gvisor/git/ref/heads/qualification/benchmark-alpine-3.24.3
+        [[ $(curl --fail --silent "$ref" | jq -er '.object.sha') == d6731da5ade2667a4077a0bac939afbccd92e8e4 ]]
+    - name: Submit or attach to the one reviewed Alpine request
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 -B .github/benchmark-alpine-submit.py
+    - name: Retain the bounded result, including native failure
+      if: always() && hashFiles('.github/benchmark-alpine-request.json') != ''
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: benchmark-alpine-result
+        path: ${{ runner.temp }}/benchmark-alpine-outcome.json
+        if-no-files-found: error
+
   qualification-plan:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))
+    if: github.ref != 'refs/heads/qualification/benchmark-alpine-hosted' && github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))
     runs-on: ubuntu-24.04
     permissions:
       contents: read
