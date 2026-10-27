@@ -220,7 +220,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-import", owner: "maintainer", title: "Ready for import" },
   { id: "maintainer-merge", owner: "maintainer", title: "Waiting for merge" },
   { id: "maintainer-assignment", owner: "maintainer", title: "Reviewer assignment" },
-  { id: "maintainer-unknown", owner: "maintainer", title: "Import status update" },
+  { id: "maintainer-unknown", owner: "maintainer", title: "Public export pending or draft" },
   { id: "landed-source-open", owner: "other", title: "Landed; source PR still open" },
 ];
 const OTHER_ATTENTION_GROUPS = [

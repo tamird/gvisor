@@ -1312,6 +1312,7 @@ test('a confirmed conflict takes priority over opaque import progress', () => {
   assert.equal(vm.runInContext('checkInfo(nodeInput.github).passed', context), false);
   assert.deepEqual(idsFor(node), ['maintainer-unknown']);
   assert.equal(reasonsFor(node)[0].title, 'Waiting for public export');
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird")[0].title', context), 'Public export pending or draft');
   node.github.checks.complete = false;
   assert.deepEqual(idsFor(node), ['agent-refresh']);
   node.github.checks.complete = true;
