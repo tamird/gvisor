@@ -746,7 +746,8 @@ test_suite(
 docker_daemon_config(
     name = "checkpointfile_nginx_config",
     testonly = True,
-    images = ["//test/docker:images_benchmarks_nginx_amd64_tar"],
+    # Exact SourceImageOCI archive retained from be2b7034c5.
+    images = [":checkpointfile_pair_nginx.tar"],
     runtime_args = [
         "--platform=systrap",
         "--debug=false",
@@ -758,8 +759,18 @@ docker_command_test(
     name = "checkpointfile_nginx_test",
     size = "large",
     command = "checkpointfile_nginx.sh",
-    command_args = ["$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test_amd64)"],
-    data = ["//test/benchmarks/checkpointfile:checkpointfile_test_amd64"],
+    command_args = [
+        "$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test_amd64)",
+        "$(rootpath :checkpointfile_pair_benchstat)",
+        "$(rootpath :checkpointfile_pair.py)",
+        "$(rootpath :checkpointfile_pair_nginx.tar)",
+    ],
+    data = [
+        ":checkpointfile_pair.py",
+        ":checkpointfile_pair_benchstat",
+        ":checkpointfile_pair_nginx.tar",
+        "//test/benchmarks/checkpointfile:checkpointfile_test_amd64",
+    ],
     docker_config = ":checkpointfile_nginx_config",
     exec_compatible_with = [
         "@platforms//os:linux",
