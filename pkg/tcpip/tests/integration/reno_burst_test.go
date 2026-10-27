@@ -76,6 +76,7 @@ type wire struct {
 	Bytes                         int
 	Hash                          string
 	TS, Permitted, Dropped, Retry bool
+	Held                          bool
 	SACK                          []header.SACKBlock
 }
 
@@ -167,7 +168,7 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule) trial {
 		}
 		s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
 	}
-	var seq, high uint32
+	var seq, high, mss uint32
 	var first bool
 	var syn [2]int
 	capture := func(side int, pkt *stack.PacketBuffer) {
@@ -198,18 +199,17 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule) trial {
 			row.Offers++
 			w.Offer = row.Offers
 			if !first {
-				seq, first, row.FirstData = w.Seq, true, int64(now())
+				seq, first, row.FirstData, mss = w.Seq, true, int64(now()), uint32(w.Bytes)
 			}
 			offset := w.Seq - seq
 			w.Retry = offset < high
 			high = max(high, offset+uint32(w.Bytes))
 			w.Dropped = loss.First > 0 && w.Offer >= loss.First && w.Offer <= loss.Last
-			if loss.Name == "interrupted_sack" {
-				// Admit first-flight packets 1, 9 and 10 so the peer
-				// reports a hole. Further data would keep its SACK clock
-				// going, so drop it too until the link opens at 150 ms.
+			if loss.Name == "timer_before" || loss.Name == "timer_after" {
+				// Admit 1, 9, 10 and 12; let the receiver generate its
+				// ACKs from the bytes it really received.
 				w.Dropped = int64(now())-row.FirstData < int64(150*time.Millisecond) &&
-					w.Offer != 1 && w.Offer != 9 && w.Offer != 10
+					(w.Retry || (offset != 0 && offset != 8*mss && offset != 9*mss && offset != 11*mss))
 			}
 			if w.Dropped {
 				row.Drops++
@@ -217,6 +217,22 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule) trial {
 		}
 		tx[side] = max(tx[side], now()) + time.Duration((int64(pkt.Size())*int64(time.Second)+rate-1)/rate)
 		at := tx[side] + delay
+		// Delay only the real receiver ACK of segment 12. Hole 11 was
+		// sent at the same instant as segment 12, so RACK must give
+		// it its short settling window before declaring it lost.
+		if side == 1 && first && w.ACK-seq == mss {
+			for _, block := range w.SACK {
+				if uint32(block.End)-seq == 12*mss {
+					release := 218 * time.Millisecond
+					if loss.Name == "timer_after" {
+						release = 224 * time.Millisecond
+					}
+					if target := time.Duration(row.FirstData) + release; target > at {
+						at, w.Held = target, true
+					}
+				}
+			}
+		}
 		w.Due = int64(at)
 		record(&w)
 		pending = append(pending, delivery{at, side, stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: pkt.ToBuffer()}), w})
@@ -408,9 +424,7 @@ func TestVirtualTCPInterruptedSACK(t *testing.T) {
 	if got, want := runtime.GOMAXPROCS(0), 1; got != want {
 		t.Fatalf("GOMAXPROCS = %d, want %d", got, want)
 	}
-	for _, algorithm := range []string{"reno", "cubic"} {
-		for _, schedule := range []lossSchedule{{"none", 0, 0}, {"interrupted_sack", 2, 8}} {
-			t.Run(algorithm+"_"+schedule.Name, func(t *testing.T) { runTrial(t, algorithm, schedule) })
-		}
+	for _, schedule := range []lossSchedule{{"timer_before", 0, 0}, {"timer_after", 0, 0}} {
+		t.Run(schedule.Name, func(t *testing.T) { runTrial(t, "reno", schedule) })
 	}
 }

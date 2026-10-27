@@ -398,6 +398,9 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			// zero during recovery.
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
+				if !seg.lost {
+					rc.snd.observeRTO("rack_mark", seg, 0)
+				}
 				seg.lost = true
 				numLost++
 			} else {
@@ -418,6 +421,7 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 
 	if timeout != 0 && !rc.snd.reorderTimer.enabled() {
 		rc.snd.reorderTimer.enable(timeout)
+		rc.snd.observeRTO("timer_arm", nil, 0)
 	}
 	rc.snd.observeRTO("rack_scan", nil, numLost)
 	return numLost
@@ -434,6 +438,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	}
 
 	rc.snd.observeRTO("timer_expired", nil, 0)
+	defer rc.snd.observeRTO("timer_return", nil, 0)
 	// Evaluate loss as of the time the reorder timer was scheduled to fire (its
 	// target), not the current clock. The timer is armed for the instant a
 	// segment's reorder window elapses, but the timer callback itself can run
@@ -497,6 +502,7 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 			break
 		}
 		dataSent = true
+		snd.observeRTO("marked_repair", seg, 0)
 		snd.Outstanding += snd.pCount(seg, snd.MaxPayloadSize)
 	}
 

@@ -32,95 +32,60 @@ def point_row(e, t0, seq):
             'state': e['State'], 'active':e['Active'], 'cwnd':e['Cwnd'], 'threshold':e['Threshold'], 'outstanding':e['Flight']}
 
 
-def summarize(s, algorithm, schedule):
-    ev = s['Events']; t0=s['FirstData']; w=[e['Wire'] for e in ev if 'Wire' in e]; states=[e['Sender'] for e in ev if 'Sender' in e]; n=len(BODY)
-    spec = {'none':(0,0),'interrupted_sack':(2,8)}[schedule]
-    if ((s['Algorithm'],s['KernelOS'],s['KernelArch'],s['Go']) != (algorithm,'linux','amd64','go1.27.3') or
-        s['Schedule'] != {'Name':schedule,'First':spec[0],'Last':spec[1]} or s['Offered']!=n or s['Accepted']!=n or
-        not 0<=s['Delivered']<=n or not 0<=s['Acknowledged']<=n or
-        s['BodyHash'] != hashlib.sha256(BODY[:s['Delivered']]).hexdigest()):
-        raise ValueError(f"{s['Case']}: endpoints or receiver bytes differ")
-    if [(p['From'],p['Flags'],p['Permitted']) for p in w if p['Flags']&2] != [(0,2,True),(1,18,True)] or any(p['TS'] for p in w) or any(e['Timestamps'] or not e['SACKEnabled'] for e in states):
-        raise ValueError('incorrect SACK/timestamp negotiation')
-    data=[p for p in w if p['From']==0 and p['Bytes']]; rev=[p for p in w if p['From']==1]; seq=data[0]['Seq']; mss=data[0]['Bytes']; mod=2**32
-    if len(data)!=s['Offers'] or [p['Offer'] for p in data]!=list(range(1,len(data)+1)) or t0!=data[0]['At'] or len(data)<10:
-        raise ValueError('incomplete native forward wire offers')
-    if any((p['Seq']-seq)%mod!=i*mss or p['Bytes']!=mss or p['Retry'] for i,p in enumerate(data[:10])):
-        raise ValueError('first flight differs')
-    for p in data:
-        pos=(p['Seq']-seq)%mod
-        expect=(schedule=='interrupted_sack' and p['At']-t0<150_000_000 and (p['Retry'] or not (pos==0 or 8*mss<=pos<10*mss)))
-        if p['Dropped']!=expect:raise ValueError('physical time/sequence drop policy differs')
-    if any(p['Dropped'] for p in rev) or s['Drops']!=sum(p['Dropped'] for p in data):raise ValueError('drop count or reverse delivery differs')
-    complete=s['EOF'] and s['FinACK'] and s['Pending']==0; elapsed=s['End']-t0
-    if not 0<=elapsed<=35_000_000_000 or (complete and (s['Acknowledged'],s['Delivered'])!=(n,n)) or (not complete and elapsed!=35_000_000_000):raise ValueError('invalid virtual deadline/closure')
-    loss=algorithm+'_loss_'; timeout=algorithm+'_timeout_';
-    def callback_pairs(prefix):
-        observed=[(i,e) for i,e in enumerate(states) if e['Kind'].startswith(prefix)]
-        if len(observed)%2:raise ValueError('missing controller call endpoint')
-        pairs=[]
-        for (i,a),(j,b) in zip(observed[::2],observed[1::2]):
-            if (a['Kind'],b['Kind'],a['At'])!=(prefix+'begin',prefix+'end',b['At']) or j!=i+1:raise ValueError('unpaired controller call')
-            pairs.append((i,a,b))
-        return pairs
-    losses=callback_pairs(loss);timeouts=callback_pairs(timeout)
-    if sum(e['Kind']=='rto_interrupt' for e in states)!=s['RTOs'] or len(timeouts)!=s['RTOs'] or sum(e['Kind']=='rto_enter' for e in states)!=s['RTOs']:
-        raise ValueError('actual timeout/controller counter differs')
-    def cb(a,b): return {'before':point_row(a,t0,seq),'after':point_row(b,t0,seq)}
-    def ack_wire(a):
-        matches=[p for p in rev if p['ACK']==a['ACK'] and p['Due']==a['At'] and p['SACK']==a['SACK'] and not p['Dropped']]
-        if len(matches)!=1:raise ValueError('ambiguous receiving ACK on simulated wire')
-        return matches[0]
-    def ack_end(i,a):
-        z=next((e for e in states[i+1:] if e['Kind'] in ('ack_begin','ack_end')),None)
-        if z is None or z['Kind']!='ack_end' or z['ACK']!=a['ACK']:raise ValueError('unpaired receiver ACK')
-        return z
-    def evidence(i,a):
-        p=ack_wire(a);z=ack_end(i,a)
-        if z['UNA']!=a['ACK']:raise ValueError('cumulative ACK did not advance sender to acknowledged sequence')
-        return {**point_row(a,t0,seq),'ack':(a['ACK']-seq)%mod,'sacks':[[(b['Start']-seq)%mod,(b['End']-seq)%mod] for b in (a['SACK'] or [])], 'new_sack':z['NewSACK'],'wire_sha256':p['Hash']}
-    sparse_w=[p for p in rev if sparse(p['ACK'],p['SACK'])]; epochs=[]
-    for start,r in enumerate(states):
-        if r['Kind']!='rto_interrupt' or not r['Active'] or r['State']!=SACK_RECOVERY:continue
-        point=(r['NXT']-1)%mod; ep={'timeout':point_row(r,t0,seq),'point':(point-seq)%mod,'partial':[],'cover':None,'entries':[],'loss_callbacks':[],'preceding_sparse_sacks':sum(p['Due']<=r['At'] for p in sparse_w)}
-        for i in range(start+1,len(states)):
-            e=states[i]
-            if e['Kind']=='ack_begin' and ahead(e['ACK'],e['UNA']) and not ahead(e['ACK'],e['NXT']):
-                wire=evidence(i,e)
-                if ahead(e['ACK'],point): ep['cover']=wire;break
-                ep['partial'].append(wire)
-            if e['Kind']=='enter_recovery' and not ahead(e['UNA'],point):ep['entries'].append(point_row(e,t0,seq))
-            if e['Kind']==loss+'begin' and not ahead(e['UNA'],point):
-                (_,a,b)=next(p for p in losses if p[0]==i); ep['loss_callbacks'].append(cb(a,b))
-        epochs.append(ep)
-    if schedule=='none' and (not complete or s['RTOs'] or s['Retransmissions'] or s['Drops'] or losses or epochs): raise ValueError('lossless calibration failed')
-    return {'algorithm':algorithm,'path':schedule,'completed':complete,'elapsed_ns':elapsed,'delivered':s['Delivered'],'acked':s['Acknowledged'],'accepted':s['Accepted'],'eof':s['EOF'],'fin_ack':s['FinACK'],'pending':s['Pending'],'body_sha256':s['BodyHash'], 'rtos':s['RTOs'],'retransmissions':s['Retransmissions'],'sack_recoveries':s['SACKRecoveries'],'forward_drops':s['Drops'],'receiver_sacks':len(sparse_w), 'controller_losses':[cb(a,b) for _,a,b in losses],'controller_timeouts':[cb(a,b) for _,a,b in timeouts],'epochs':epochs,'enrolled':any(ep['preceding_sparse_sacks'] and any(p['sacks'] and p['new_sack'] and p['state']==RTO_RECOVERY for p in ep['partial']) for ep in epochs),'wire_sha256':digest(w),'events_sha256':digest(ev)}
-
-
 def measure(samples):
-    rows={}
-    for alg in ('reno','cubic'):
-        for path in ('none','interrupted_sack'):
-            name=alg+'_'+path; rows[name]=summarize(samples[ROOT+'/'+name],alg,path)
-    if len(samples)!=len(rows):raise ValueError('Unexpected native case')
+    if set(samples) != {ROOT + "/timer_before", ROOT + "/timer_after"}:
+        raise ValueError("Expected both actual reverse ACK schedules")
+    rows = {}
+    for name, sample in samples.items():
+        path = name.rsplit("/", 1)[-1]
+        ev = sample["Events"]
+        wire = [e["Wire"] for e in ev if "Wire" in e]
+        data = [w for w in wire if w["From"] == 0 and w["Bytes"]]
+        sender = [(i, e["Sender"]) for i, e in enumerate(ev) if "Sender" in e]
+        seq, t0, mss = data[0]["Seq"], sample["FirstData"], data[0]["Bytes"]
+        release = {"timer_before":218, "timer_after":224}[path]
+        if (sample["Algorithm"], sample["KernelOS"], sample["KernelArch"], sample["Go"]) != ("reno", "linux", "amd64", "go1.27.3"):
+            raise ValueError("Wrong native endpoint/toolchain identity")
+        if [(p["From"],p["Flags"],p["Permitted"]) for p in wire if p["Flags"]&2] != [(0,2,True),(1,18,True)] or any(p["TS"] for p in wire) or any(e["Timestamps"] or not e["SACKEnabled"] for _,e in sender):
+            raise ValueError("Timestamp/SACK contract violated")
+        if not (sample["Accepted"] == sample["Offered"] == len(BODY) and sample["BodyHash"] == hashlib.sha256(BODY[:sample["Delivered"]]).hexdigest()):
+            raise ValueError("Incorrect sender/receiver payload")
+        for i,w in enumerate(data):
+            pos = (w["Seq"]-seq)%2**32
+            expected_drop = w["At"]-t0 < 150_000_000 and (w["Retry"] or pos not in (0, 8*mss, 9*mss, 11*mss))
+            if w["Dropped"] != expected_drop or w["Offer"] != i+1:
+                raise ValueError("Changing forward loss conditions")
+        held = [w for w in wire if w["Held"]]
+        if len(held) != 1 or held[0]["From"] != 1 or held[0]["Due"] != t0+release*1_000_000 or not any((z["End"]-seq)%2**32==12*mss for z in held[0]["SACK"]) or any(w["Dropped"] for w in wire if w["From"]==1):
+            raise ValueError("The intended physical ACK was not held/delivered exactly once")
+        def compact(i,e):
+            d = {"i":i,"kind":e["Kind"],**point_row(e,t0,seq),"target_ms":(e["TimerTarget"]-t0)/1e6,"rack_rtt_ms":e["RackRTT"]/1e6,"reo_ms":e["ReoWnd"]/1e6,"loss_count":e["Lost"]}
+            if e["Kind"] in ("rack_mark","marked_repair"):
+                d.update(offset=(e["Segment"]-seq)%2**32,bytes=e["SegmentBytes"])
+            return d
+        rt = [(i,e) for i,e in sender if e["Kind"]=="rto_interrupt" and e["State"]==SACK_RECOVERY and e["Active"]]
+        holds = [(i,e) for i,e in sender if e["Kind"]=="ack_begin" and e["At"]==held[0]["Due"] and e["ACK"]==held[0]["ACK"] and e["SACK"]==held[0]["SACK"]]
+        if len(holds)!=1: raise ValueError("Missing correctly joined receiver wire ACK")
+        h=holds[0][0]; last = next(i for i,e in sender if i>h and e["Kind"]=="ack_end")
+        held_actions = [compact(i,e) for i,e in sender if h<=i<=last]
+        arms = [(i,e) for i,e in sender if h<=i<=last and e["Kind"]=="timer_arm"]
+        timers = []
+        for i,e in sender:
+            if e["Kind"]!="timer_expired":continue
+            stop = next(j for j,f in sender if j>i and f["Kind"]=="timer_return")
+            timers.append({"fire":compact(i,e),"during":[compact(j,f) for j,f in sender if i<j<stop]})
+        matched=[t for t in timers if any(t["fire"]["target_ms"]==compact(i,e)["target_ms"] for i,e in arms)]
+        first_rt = compact(*rt[0]) if rt else None
+        complete = sample["EOF"] and sample["FinACK"] and not sample["Pending"] and sample["Acknowledged"]==sample["Delivered"]==len(BODY)
+        if not complete and sample["End"]-t0!=35_000_000_000:raise ValueError("Incomplete trial ended prior to diagnostic deadline")
+        row={"path":path,"complete":complete,"acked":sample["Acknowledged"],"delivered":sample["Delivered"],"body_sha256":sample["BodyHash"],"eof":sample["EOF"],"fin_ack":sample["FinACK"],"pending":sample["Pending"],"ms":(sample["End"]-t0)/1e6,"rtos":sample["RTOs"],"retransmits":sample["Retransmissions"],"sack_episodes":sample["SACKRecoveries"],"held_ack_sha256":held[0]["Hash"],"held_ack":(held[0]["ACK"]-seq)%2**32,"held_sack":[[(b["Start"]-seq)%2**32,(b["End"]-seq)%2**32] for b in held[0]["SACK"]],"held_ack_actions":held_actions,"first_interrupted_rto":first_rt,"target_expirations":matched,"native_timers":timers,"early_wire":[{"i":i,"ms":(p["At"]-t0)/1e6,"arrives_ms":(p["Due"]-t0)/1e6,"offset":(p["Seq"]-seq)%2**32,"count":p["Bytes"],"retry":p["Retry"],"drop":p["Dropped"],"sha256":p["Hash"]} for i,x in enumerate(ev) if (p:=x.get("Wire")) and p["From"]==0 and p["Bytes"] and p["At"]-t0<=500_000_000],"events_sha256":digest(ev)}
+        if len(matched)==1 and first_rt is not None:
+            fire=matched[0]["fire"]
+            row["enrollment"] = ("before timeout" if fire["i"]<first_rt["i"] else "across timeout" if arms[0][0]<first_rt["i"] else "armed after timeout")
+        else:
+            row["enrollment"]="no matching expiration"
+        rows[path]=row
     return rows
-
-
-def compare(before,after):
-    comparisons={}
-    for name in before:
-        a,b=before[name]['Events'],after[name]['Events']
-        def first_diff(u,v):
-            i=next((i for i,(x,y) in enumerate(zip(u,v)) if x!=y),min(len(u),len(v)))
-            if len(u)==len(v)==i:return None
-            return {'index':i,'before':u[i] if i<len(u) else None,'after':v[i] if i<len(v) else None}
-        delta=first_diff(a,b)
-        w_a=[e['Wire'] for e in a if 'Wire' in e];w_b=[e['Wire'] for e in b if 'Wire' in e]
-        interrupted=[i for i,x in enumerate(a) if (r:=x.get('Sender')) and r['Kind']=='rto_interrupt' and r['Active'] and r['State']==SACK_RECOVERY]
-        if name.endswith('_none') and delta is not None:raise ValueError('No-loss source controls differed')
-        if delta is not None and (not interrupted or delta['index']<=interrupted[0]):raise ValueError('Comparison diverged before the interrupted recovery could act')
-        comparisons[name]={'identical_event_prefix':delta['index'] if delta else len(a),'first_interrupted_event':interrupted[0] if interrupted else None,'first_event_difference':delta,'first_wire_difference':first_diff(w_a,w_b),'equal_received_prefix':before[name]['BodyHash']==after[name]['BodyHash'], 'both_complete':all(x[name]['EOF'] and x[name]['FinACK'] and not x[name]['Pending'] and x[name]['Acknowledged']==len(BODY) and x[name]['Delivered']==len(BODY) for x in (before,after))}
-    return comparisons
 
 
 def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[dict, dict]:
@@ -228,9 +193,9 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    child, stock, base = (config[k] for k in ("source", "stock", "product_base"))
-    if (config["targets"] != [OWNER] or config["expected_sources"] != [child, stock]
-            or subprocess.check_output(["git", "rev-parse", child + "^", child + "^^"], text=True).splitlines() != [stock, base]):
+    child, fixed, stock = (config[k] for k in ("source", "fixed", "stock"))
+    if (config["targets"] != [OWNER] or config["expected_sources"] != [child, fixed, stock]
+            or subprocess.check_output(["git", "rev-parse", child + "^", child + "^^"], text=True).splitlines() != [fixed, stock]):
         raise ValueError("Unexpected source or native owner")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"], "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc"]
@@ -248,7 +213,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     result = {"status": "INCOMPLETE", "sources": config["expected_sources"], "phases": {}}
     full_samples = {}
     try:
-        for label, rev in (("stock", stock), ("boundary", child)):
+        for label, rev in (("stock", stock), ("boundary", fixed), ("suppress", child)):
             subprocess.run(["git", "switch", "--detach", rev], check=True)
             phase = invoke(label, ["test", *options, *selected, OWNER], "test", targets=[OWNER], source=rev)
             if phase["source"] != rev:
@@ -264,8 +229,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 result["phases"][label] = {"source": rev, "error": str(error)}
         if any("error" in r for r in result["phases"].values()):
             raise RuntimeError("One or more exact-source comparisons failed")
-        result["comparisons"] = compare(full_samples["stock"], full_samples["boundary"])
+        for path in ("timer_before","timer_after"):
+            arms = [r["measurements"][path] for r in result["phases"].values()]
+            if len({r["held_ack_sha256"] for r in arms})!=1:
+                raise RuntimeError("Mismatched receiver ACK on matched path")
+        result["enrolled"] = all(p["measurements"]["timer_after"]["enrollment"]=="across timeout" and p["measurements"]["timer_before"]["enrollment"]=="before timeout" for p in result["phases"].values())
         result["status"] = "PASS"
     finally:
         subprocess.run(["git", "switch", "--detach", child], check=True)
-        (evidence / "cubic-reno-interrupted.json").write_text(json.dumps(result, indent=2) + "\n")
+        (evidence / "rack-reorder-timer.json").write_text(json.dumps(result, indent=2) + "\n")

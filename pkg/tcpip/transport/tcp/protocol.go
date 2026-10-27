@@ -592,6 +592,9 @@ type RTODiagnostic struct{ Observe func(RTOEvent) }
 type RTOEvent struct {
 	Kind                                     string
 	At, RTO                                  int64
+	TimerTarget, RackRTT, ReoWnd             int64
+	Segment                                  uint32
+	SegmentBytes                             int
 	UNA, NXT, Last, ACK                      uint32
 	State                                    tcpip.CongestionControlState
 	Active, SACKEnabled, Timestamps, NewSACK bool
@@ -616,8 +619,10 @@ func (s *sender) observeRTO(kind string, seg *segment, lost int) {
 	row := RTOEvent{Kind: kind, At: int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{})),
 		RTO: int64(s.RTO), UNA: uint32(s.SndUna), NXT: uint32(s.SndNxt), Last: uint32(s.FastRecovery.Last),
 		State: s.state, Active: s.FastRecovery.Active, SACKEnabled: s.ep.SACKPermitted, Timestamps: s.ep.SendTSOk,
+		TimerTarget: int64(s.reorderTimer.target.Sub(tcpip.MonotonicTime{})), RackRTT: int64(s.rc.RTT), ReoWnd: int64(s.rc.ReoWnd),
 		Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Flight: s.Outstanding, Sacked: s.SackedOut, Lost: lost}
 	if seg != nil {
+		row.Segment, row.SegmentBytes = uint32(seg.sequenceNumber), seg.payloadSize()
 		row.ACK = uint32(seg.ackNumber)
 		row.SACK = append([]header.SACKBlock(nil), seg.parsedOptions.SACKBlocks...)
 		row.NewSACK = seg.hasNewSACKInfo
