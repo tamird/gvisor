@@ -1185,6 +1185,7 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    limit_ephemeral_ports = True,
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
