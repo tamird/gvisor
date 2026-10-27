@@ -70,6 +70,12 @@ if [[ $# == 1 && $1 == --host-preflight ]]; then
   exit "$status"
 fi
 
+execution=fixture
+if [[ ${1:-} == --host-runtime ]]; then
+  execution=host
+  shift
+fi
+
 fixture_args=(--rm --platform=linux/arm64 --cgroupns=private --user nonroot:nonroot
   --device=/dev/fuse --device=/dev/net/tun --security-opt=seccomp=unconfined
   --security-opt=apparmor=unconfined --security-opt=systempaths=unconfined)
@@ -121,6 +127,15 @@ for binary in "$2" "$(dirname "$2")"/gvisor-bin/*; do
   readelf -h "$binary" | grep -E 'Machine: +AArch64$'
   sha256sum "$binary"
 done
+
+if [[ $execution == host ]]; then
+  [[ $(id -u) != 0 && $(stat -fc %T /sys/fs/cgroup) == cgroup2fs ]]
+  [[ $(podman --version) == 'podman version 4.9.3' ]]
+  printf 'HOST_PODMAN_IDENTITY arch=%s uid=%s gid=%s cgroup=%s\n' \
+    "$(uname -m)" "$(id -u)" "$(id -g)" "$(stat -fc %T /sys/fs/cgroup)"
+  sha256sum "$(command -v podman)"
+  exec "$@"
+fi
 
 # Runfiles can refer outside the output tree through absolute symlinks.
 # Materialize only this test's declared inputs for the unprivileged container.

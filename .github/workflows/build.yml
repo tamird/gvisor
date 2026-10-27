@@ -6,7 +6,7 @@ name: Native ARM64 image consumers
       profile:
         description: Native image consumer to run
         type: choice
-        options: [fsstress, podman, podman-host]
+        options: [fsstress, podman, podman-host, podman-host-runtime]
         default: fsstress
       archive_run:
         description: Reuse the verified image artifact from a prior run in this fork
@@ -26,9 +26,14 @@ env:
 
 jobs:
   podman-host:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers-podman' && inputs.profile == 'podman-host'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers-podman' && (inputs.profile == 'podman-host' || inputs.profile == 'podman-host-runtime')
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 10
+    timeout-minutes: 75
+    env:
+      PRODUCT: 386044d6ad6446430b65e92269f5dc40f9b67737
+      LOCK: ca984532b395b146a8d66b6d8f79d243665ac7ed126f93f7fca14b08c0007ea8
+      TEST_TARGET: //test/podman:podman_test_arm64
+      PODMAN_ALPINE_SHA256: f23115a502a379a64be824ff665a8ceb9fd17df522efc72a79ee21625afdbf8b
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,6 +42,67 @@ jobs:
       - name: Check the stock host rootless Podman environment
         shell: bash
         run: .github/native-podman-fixture.sh --host-preflight
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: inputs.profile == 'podman-host-runtime'
+        with:
+          ref: ${{ env.PRODUCT }}
+          path: source
+          persist-credentials: false
+      - name: Build and execute the source-bound Podman owner on the stock host
+        if: inputs.profile == 'podman-host-runtime'
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ $(id -u) != 0 && $(uname -m) == aarch64 ]]
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          printf '%s  MODULE.bazel.lock\n' "$LOCK" | sha256sum -c -
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat .bazelversion)
+          results="$RUNNER_TEMP/podman-results"
+          mkdir "$results"
+          wrapper="$GITHUB_WORKSPACE/.github/native-podman-fixture.sh --host-runtime"
+          status=0
+          bazelisk test --config=aarch64 --lockfile_mode=error --strip=never \
+            --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed --strategy=TestRunner=local \
+            --define=gvisor_test_clock_source=calibrated --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated \
+            --test_env=PODMAN_ALPINE_SHA256 --run_under="$wrapper" \
+            --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
+            --build_event_json_file="$results/bep.json" \
+            --test_timeout=600 --test_output=all "$TEST_TARGET" || status=$?
+          finished=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+          printf '%s  MODULE.bazel.lock\n' "$LOCK" | sha256sum -c -
+          test -z "$(git status --porcelain --untracked-files=no)"
+          logs=bazel-testlogs/test/podman/podman_test_arm64
+          for report in test.log test.xml; do
+            if [[ -f "$logs/$report" ]]; then cp "$logs/$report" "$results/$report"; fi
+          done
+          if [[ -f "$logs/test.outputs/outputs.zip" ]]; then
+            cp "$logs/test.outputs/outputs.zip" "$results/outputs.zip"
+          fi
+          native=false
+          gofer=false
+          direct=false
+          if [[ -f "$results/test.log" ]]; then
+            if grep -Fxq "HOST_PODMAN_IDENTITY arch=aarch64 uid=$(id -u) gid=$(id -g) cgroup=cgroup2fs" "$results/test.log"; then native=true; fi
+            if [[ $(grep -Fxc 'PASS: rootless Podman directfs=false' "$results/test.log") == 1 ]]; then gofer=true; fi
+            if [[ $(grep -Fxc 'PASS: rootless Podman directfs=true' "$results/test.log") == 1 ]]; then direct=true; fi
+          fi
+          jq -cn --arg source "$PRODUCT" --arg owner "$TEST_TARGET" --arg finished "$finished" \
+            --arg alpinesha "$PODMAN_ALPINE_SHA256" --argjson bazel "$status" --argjson native "$native" \
+            --argjson gofer "$gofer" --argjson direct "$direct" \
+            '{source:$source,owner:$owner,environment:"stock-host-podman-4.9.3",alpine_sha256:$alpinesha,bazel_exit:$bazel,native_host:$native,directfs_false:$gofer,directfs_true:$direct,execution_finished:$finished}' \
+            | tee "$results/verdict.json"
+          [[ $status == 0 && $native == true && $gofer == true && $direct == true ]]
+      - name: Retain native Podman reports
+        if: always() && inputs.profile == 'podman-host-runtime'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-arm64-stock-podman-reports
+          path: ${{ runner.temp }}/podman-results
+          if-no-files-found: error
+          retention-days: 7
 
   image:
     if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers' && inputs.archive_run == ''
