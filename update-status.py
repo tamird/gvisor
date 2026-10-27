@@ -877,6 +877,9 @@ def main() -> None:
     checked_at = datetime.now(timezone.utc).isoformat()
     nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"] if node["type"] == "pr"}
     for pr in prs:
+        if pr["status"] != "open":
+            pr.pop("publicImportDisposition", None)
+            continue
         node = nodes.get((pr.get("repo"), pr["number"]), {})
         pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
     report = check_report(prs, previous)
@@ -906,8 +909,8 @@ def main() -> None:
     for record in snapshot["mergeabilityHandoff"]:
         print(json.dumps({"mergeabilityHandoff": [record]}))
     for pr in prs:
-        disposition = pr["publicImportDisposition"]
-        if disposition["action"]:
+        disposition = pr.get("publicImportDisposition")
+        if disposition and disposition["action"]:
             print(json.dumps({"publicImportHandoff": {"repo": pr.get("repo"), "number": pr["number"],
                 "url": pr["url"], **disposition,
                 "posting": "Diagnostic only; review-reminder eligibility is separate."}}))
