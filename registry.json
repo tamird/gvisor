@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T04:17:44.655Z",
+    "updatedAt": "2026-10-27T04:52:14.007Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26761,6 +26761,108 @@
           "url": "https://www.rfc-editor.org/rfc/rfc6675.html#section-5.1"
         }
       ]
+    },
+    {
+      "id": "branch:nginx-checkpoint-http-readiness",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/nginx-checkpoint-http-readiness",
+      "head": "a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+      "title": "Wait for Nginx to serve HTTP after restoring it",
+      "url": "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "summary": "A stopped Nginx worker still has an open listener: the old port check passed while the GET timed out. After resuming that worker, the same GET returned HTTP 200. Both existing AMD64 checkpoint and restore benchmarks completed with the new probe. The benchmark measures readiness to serve a request, including Docker exec time.",
+      "updatedAt": "2026-10-27T04:52:14.007Z",
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+        "observedAt": "2026-10-27T04:52:14.007Z",
+        "disposition": "Contributor decision requested",
+        "nextAction": "Open the independent PR after contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+          "https://app.buildbuddy.io/invocation/702a80ca-56a2-4851-b78a-aa24bdafdd49"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Proposed source",
+          "url": "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945"
+        },
+        {
+          "label": "Control and both existing benchmark owners",
+          "url": "https://app.buildbuddy.io/invocation/702a80ca-56a2-4851-b78a-aa24bdafdd49"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+        "url": "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+        "title": "Wait for Nginx to serve HTTP after restoring it",
+        "summary": "Review the new benchmark readiness criterion before opening its PR.",
+        "body": "The restore benchmark stops timing when port 80 appears in a TCP socket\ntable. A restored listener is enough to pass that check even when the\nNginx workers cannot yet answer a request.\n\nWait for Nginx to return HTTP 200 for `/index.html` before taking its\ncheckpoint and after restoring it. The request goes over loopback inside\nthe container, so the benchmark does not require publishing a port.\nRestore time includes Docker exec and the HTTP request."
+      }
+    },
+    {
+      "id": "branch:benchmark-alpine",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "image/benchmark-alpine-grouped",
+      "head": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+      "title": "Pin one Alpine release for empty-container benchmarks",
+      "url": "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "summary": "The cached benchmark images ran Alpine 3.19.1 on AMD64 and 3.20.3 on ARM64. Pinning Alpine 3.24.3 keeps the official layers and configuration. The shared //images target produced byte-identical Make contexts and Docker archives on both architectures. Original AMD64 logs confirm the startup and memory benchmarks ran; the original aggregate report remains incomplete.",
+      "updatedAt": "2026-10-27T04:52:14.007Z",
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+        "observedAt": "2026-10-27T04:52:14.007Z",
+        "disposition": "Contributor decision requested",
+        "nextAction": "Open the independent PR after contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+          "https://app.buildbuddy.io/invocation/99bceafe-b6bb-4747-9b2b-2d006d795f8e",
+          "https://github.com/tamird/gvisor/actions/runs/40449193521/job/122007636255",
+          "https://app.buildbuddy.io/invocation/b9310e28-93d3-494e-88d4-64262f614802"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Proposed source",
+          "url": "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07"
+        },
+        {
+          "label": "Original dual-architecture build",
+          "url": "https://app.buildbuddy.io/invocation/99bceafe-b6bb-4747-9b2b-2d006d795f8e"
+        },
+        {
+          "label": "Original benchmark logs recovered without rerunning",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40449193521/job/122007636255"
+        },
+        {
+          "label": "Both complete contexts and inner Docker archives match",
+          "url": "https://app.buildbuddy.io/invocation/b9310e28-93d3-494e-88d4-64262f614802"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "6d2fb27972fecac887ce8485cb0e6c4aef5be39b"
+        },
+        "after": {
+          "head": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+        "url": "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+        "title": "Pin one Alpine release for empty-container benchmarks",
+        "summary": "Review the pinned image and shared Bazel target before opening their PR.",
+        "body": "The benchmark Dockerfile used alpine:latest, but Make cached the image\nby the unchanged Dockerfile contents. The published AMD64 and ARM64\nimages consequently ran different Alpine versions, 3.19.1 and 3.20.3.\n\nPin both architectures to the official Alpine 3.24.3 release. Load each\nplatform manifest directly, without adding a layer or replacing its\nconfiguration. Keep the benchmarks/alpine name used by startup, memory,\ncheckpoint and restore benchmarks."
+      }
     }
   ],
   "edges": [
@@ -38524,9 +38626,22 @@
       "title": "Runtime startup performance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-27T03:55:03.418316+00:00",
+      "updatedAt": "2026-10-27T04:52:14.007Z",
       "summary": "Sandbox creation can return before the Sentry serves control RPCs. For a new startup comparison, put both arms on the same boot implementation and measure through a successful Start or control RPC.\n\nThe retired integrated state proposal 3a38641f0 has a matched startup comparison against its prerequisite base. CLI medians are 2.380 versus 2.397 ms (p=.410), and StartupEmpty medians are 283.7 versus 265.8 ms (p=.198); neither establishes a timing difference or equivalence. State initialization remains 3,032 bytes and 13 allocations in both runsc and Sentry. Production file growth is 98,304 bytes for AMD64 runsc, 253,952 for AMD64 Sentry, 131,072 for ARM64 runsc and 262,144 for ARM64 Sentry. This source-specific comparison is separate from the earlier scalar and rewrite measurements below; samples are not pooled.\n\nEarlier scalar-source record:\n\nThe scalar-store candidate 0fb39effd has verified matched CLI and StartupEmpty comparisons against original baseline 685d734a5: 6.104 to 6.113 ms (p=.887) and 479.1 to 476.5 ms (p=.551). Both are inconclusive, with unchanged pkg/state initialization allocations. The separate checkpoint/restore run failed and is under diagnosis. The earlier immediate-pair comparison against e0e088476 also found all ten package timing differences inconclusive; those samples are not pooled with the original-baseline startup comparisons. The candidate retains its verified code-size reduction, but remains 245,760 bytes larger per AMD64 binary and 196,608 bytes larger per ARM64 binary than the original implementation. It is not ready for contributor review.\n\nEarlier source-specific startup evidence:\n\nThe earlier state rewrite at 91323cf62 completed matched Linux AMD64 CLI and sandbox startup comparisons: 5.868 to 6.054 ms (p=.143) and 251.116 to 254.198 ms (p=.932). Both are inconclusive. Each current AMD64 runsc/Sentry file grows by 2,351,104 bytes and each ARM64 file by 2,293,760 bytes; this is not measured RSS.\n\nFixed Linux AMD64 CLI comparisons for netip, the earlier state design, the owned-Value successor and the compiler-only change found no statistically significant timing difference. The compiler-only comparison also found no statistically significant sandbox-start difference (346.079 to 341.365 ms, p=.977, twelve batch means per version). It uses matched Go 1.26.3 sources. The owned-Value state CLI result remains 6.814 to 6.973 ms (p=.478), with production-file growth of about 4.01 MB on AMD64 and 3.74 MB on ARM64. The matched netip sandbox comparison also found no statistically significant difference: 288.4 to 296.1 ms (p=.590), with twelve batch means of eight starts per arm. It uses frozen Go 1.27.0 sources 6212e4f7b and 86ea1d1f3, not current upstream. Earlier state sandbox results concern their then-current source. These measurements do not establish equal startup cost or qualify the owned-Value successor for sandbox startup. The independent contributor-approved gofer initialization correction is published as #15859; its public checks and review remain under observation.",
       "findings": [
+        {
+          "text": "A stopped Nginx worker still has an open listener: the old port check passed while the GET timed out. After resuming that worker, the same GET returned HTTP 200. Both existing AMD64 checkpoint and restore benchmarks completed with the new probe. The benchmark measures readiness to serve a request, including Docker exec time.",
+          "evidence": [
+            {
+              "label": "Proposed source",
+              "url": "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945"
+            },
+            {
+              "label": "Control and both existing benchmark owners",
+              "url": "https://app.buildbuddy.io/invocation/702a80ca-56a2-4851-b78a-aa24bdafdd49"
+            }
+          ]
+        },
         {
           "text": "runsc now restores pages in the background by default; runsc wait --restore marks completion of page loading. The Nginx benchmark says it times HTTP readiness, but its current probe only searches the socket tables for the port. A matching entry does not establish that Nginx has served a request. Record HTTP readiness and completed page loading as distinct milestones when comparing restore performance.",
           "evidence": [
@@ -38726,7 +38841,7 @@
           ]
         }
       ],
-      "nextStep": "Validate the Nginx benchmark against an actual HTTP response over its private Docker network. For startup/restore comparisons, use matched source and runtime settings and name the measured milestone: workload response, successful Start/control RPC, or finished page loading.",
+      "nextStep": "Review the Nginx readiness change. For matched restore measurements, record the first successful HTTP request and completion of background page loading separately.",
       "evidence": [
         {
           "label": "Defaults for background restore and committed zero pages",
@@ -38759,6 +38874,10 @@
         {
           "label": "Failed current-candidate checkpoint run; diagnosis pending",
           "url": "https://app.buildbuddy.io/invocation/f787d006-d2f3-4981-8d6d-2d5bf665ef1d"
+        },
+        {
+          "label": "Nginx stopped-worker control and original benchmark invocations",
+          "url": "https://app.buildbuddy.io/invocation/702a80ca-56a2-4851-b78a-aa24bdafdd49"
         }
       ],
       "comparisons": [
@@ -39276,7 +39395,7 @@
       "title": "Migrate Docker image construction to rules_img",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-23T16:48:35.250327+00:00",
+      "updatedAt": "2026-10-27T04:52:14.007Z",
       "summary": "The revised Rust proposal c82e52cb is contributor-approved and waits on its recorded image/compiler/license prerequisites. Its separate Protobuf 37 prerequisite is delivered as #16254; the former 35.1 lockfile backport and rules_rust override are removed. The final canonical module/formatter, generated-code consumers and five exact image-output equality gates pass. The public rules_rs notice alias preserves distribution-host notice provenance; prior AMD64 runtime evidence applies through exact output equality. ARM64 runtime remains untested.\n\nPreserved earlier source-specific qualification:\n\nThe fifteen-resource moves and controlled output comparisons are complete. Scratch PIDFD has passed both-architecture builds, AMD64 consumers and its complete catalog. Rust passes all 20 qualification phases: both-architecture static binaries and archive/context identities, selected Rust runtime inputs/notices, combined image index, Make and cleanup. Actual TestRust passes under runc and systrap on AMD64 with no skips; ARM64 runtime remains untested. Compiler composition is a qualification prerequisite; cached actions are not fresh compilation credit. The canonical audit now completes full Fetch and later own-lock Verify with 201 unchanged final records. The narrow upstream Protobuf lock backport explicitly binds the already-selected 35.1 release; three existing same-artifact license exceptions were reconciled. Original runtime, transport, module-patching and policy failures remain retained.",
       "nextStep": "Deliver the already-approved Rust and shared image proposals after their actual prerequisites land. Apply the user\u2019s maintained-upstream-image preference to remaining third-party image work; do not request the completed Rust decision again.",
       "evidence": [
@@ -39338,6 +39457,23 @@
         }
       ],
       "findings": [
+        {
+          "text": "The cached benchmark images ran Alpine 3.19.1 on AMD64 and 3.20.3 on ARM64. Pinning Alpine 3.24.3 keeps the official layers and configuration. The shared //images target produced byte-identical Make contexts and Docker archives on both architectures. Original AMD64 logs confirm the startup and memory benchmarks ran; the original aggregate report remains incomplete.",
+          "evidence": [
+            {
+              "label": "Proposed source",
+              "url": "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07"
+            },
+            {
+              "label": "Original benchmark logs recovered without rerunning",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40449193521/job/122007636255"
+            },
+            {
+              "label": "Both complete contexts and inner Docker archives match",
+              "url": "https://app.buildbuddy.io/invocation/b9310e28-93d3-494e-88d4-64262f614802"
+            }
+          ]
+        },
         {
           "text": "The fifteen requested resource moves are complete. Controlled comparisons ultimately proved both-CPU archive/context identity for all moved payloads. Initial historical gzip and alias-history mismatches remain failed evidence; the final sudo/ACL comparison used the same public labels on separate source layouts. No runtime or catalog replay was used for these byte-equivalent moves.",
           "evidence": [
