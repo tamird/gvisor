@@ -88,7 +88,7 @@ jobs:
 
   benchmark-alpine-hosted:
     concurrency:
-      group: benchmark-alpine-d6731da5ad
+      group: benchmark-alpine-grouped-86811f9a8a
       cancel-in-progress: false
     if: github.event_name == 'workflow_dispatch' && github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/benchmark-alpine-hosted' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-24.04
@@ -105,21 +105,21 @@ jobs:
       run: |
         set -euo pipefail
         printf '%s  %s\n' \
-          8bb8c3c364c72e27b089ac3cc2b4dab7a8c7eb21568d1d4d659f4085a71e8e19 .github/benchmark-alpine-request.json \
+          5ce6b7b2a651fd69b4983e0c9e66c19edf18320ec2a5e07da41173b4898173de .github/benchmark-alpine-request.json \
           b533caee13ec901cd17fd9e02b8f896a43a940d38e4a14d5199bc19f2ac133eb test/rbe/qualification_report.py \
           209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37 test/rbe/unit_matrix.py | sha256sum --check --strict
-        ref=https://api.github.com/repos/tamird/gvisor/git/ref/heads/qualification/benchmark-alpine-3.24.3
-        [[ $(curl --fail --silent "$ref" | jq -er '.object.sha') == d6731da5ade2667a4077a0bac939afbccd92e8e4 ]]
-    - name: Read the two original Alpine benchmark logs and XML
+        ref=https://api.github.com/repos/tamird/gvisor/git/ref/heads/image/benchmark-alpine-grouped
+        [[ $(curl --fail --silent "$ref" | jq -er '.object.sha') == 86811f9a8aa74e774ad061f8c252f1bf7c7b3f07 ]]
+    - name: Submit or attach to the grouped Alpine archive check
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 -B .github/benchmark-alpine-result.py
-    - name: Retain the original benchmark observations
+      run: python3 -B .github/benchmark-alpine-submit.py
+    - name: Retain the archive identities and native verdict
       if: always() && hashFiles('.github/benchmark-alpine-request.json') != ''
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: benchmark-alpine-retained
-        path: ${{ runner.temp }}/benchmark-alpine-retained.json
+        name: benchmark-alpine-result
+        path: ${{ runner.temp }}/benchmark-alpine-outcome.json
         if-no-files-found: error
 
   qualification-plan:

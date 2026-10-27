@@ -15,8 +15,8 @@ import uuid
 sys.path.insert(0, str(Path("test/rbe").resolve()))
 import qualification_report as report
 
-SOURCE = "d6731da5ade2667a4077a0bac939afbccd92e8e4"
-DIGEST = "8bb8c3c364c72e27b089ac3cc2b4dab7a8c7eb21568d1d4d659f4085a71e8e19"
+SOURCE = "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07"
+DIGEST = "5ce6b7b2a651fd69b4983e0c9e66c19edf18320ec2a5e07da41173b4898173de"
 
 
 def rpc(method: str, body: dict, key: str) -> dict:
@@ -45,8 +45,7 @@ def compact(bundle: Path) -> dict:
             if name == "benchmark-alpine.json":
                 workload = json.load(archive.extractfile(member))
                 result["workload_status"] = workload["status"]
-                result["release"] = workload.get("release", {})
-                result["benchmarks"] = workload.get("benchmarks", {})
+                result["label"] = workload["label"]
                 result["archives"] = {}
                 for cpu, row in workload["archives"].items():
                     result["archives"][cpu] = {
@@ -73,7 +72,7 @@ def main() -> int:
         raise ValueError("Request differs from the reviewed bytes")
     request = json.loads(raw)
     report.hosted_run_preflight(request)
-    if request["repo_state"] != {"commit_sha": SOURCE, "branch": "qualification/benchmark-alpine-3.24.3"}:
+    if request["repo_state"] != {"commit_sha": SOURCE, "branch": "image/benchmark-alpine-grouped"}:
         raise ValueError("Hosted source differs from the reviewed request")
     directory = Path(os.environ["RUNNER_TEMP"])
     key = os.environ.pop("BUILDBUDDY_API_KEY", "")
