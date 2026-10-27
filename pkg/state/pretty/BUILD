@@ -12,6 +12,5 @@ go_library(
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/state",
-        "//pkg/state/wire",
     ],
 )

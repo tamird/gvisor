@@ -1,81 +1,24 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-go_template_instance(
-    name = "deferred_list",
-    out = "deferred_list.go",
-    package = "state",
-    prefix = "deferred",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*objectEncodeState",
-        "Linker": "*objectEncodeState",
-    },
-)
-
-go_template_instance(
-    name = "ods_list",
-    out = "ods_list.go",
-    package = "state",
-    prefix = "ods",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*odsListElem",
-        "Linker": "*odsListElem",
-    },
-)
-
-go_template_instance(
-    name = "addr_range",
-    out = "addr_range.go",
-    package = "state",
-    prefix = "addr",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uintptr",
-    },
-)
-
-go_template_instance(
-    name = "addr_set",
-    out = "addr_set.go",
-    consts = {
-        "minDegree": "10",
-    },
-    imports = {
-        "reflect": "reflect",
-    },
-    package = "state",
-    prefix = "addr",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "uintptr",
-        "Range": "addrRange",
-        "Value": "*objectEncodeState",
-        "Functions": "addrSetFunctions",
-    },
-)
-
 go_library(
     name = "state",
     srcs = [
-        "addr_range.go",
-        "addr_set.go",
-        "decode.go",
+        "addrmap.go",
+        "buf_unsafe.go",
         "decode_unsafe.go",
-        "deferred_list.go",
-        "encode.go",
         "encode_unsafe.go",
-        "ods_list.go",
+        "print_unsafe.go",
         "state.go",
         "state_norace.go",
         "state_race.go",
         "stats.go",
+        "typed.go",
+        "typeinfo_unsafe.go",
         "types.go",
     ],
     importpath = "gvisor.dev/gvisor/pkg/state",
@@ -93,6 +36,10 @@ go_library(
 go_test(
     name = "state_test",
     size = "small",
-    srcs = ["types_test.go"],
+    srcs = [
+        "addrmap_test.go",
+        "typeinfo_test.go",
+        "types_test.go",
+    ],
     embed = [":state"],
 )

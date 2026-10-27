@@ -18,37 +18,45 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"sync/atomic"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/gohacks"
 )
+
+// collectStats is set by CollectStats.
+var collectStats atomic.Bool
+
+// CollectStats enables or disables the collection of per-type timing
+// statistics by Save and Load, which is costly.
+func CollectStats(enable bool) {
+	collectStats.Store(enable)
+}
 
 type statEntry struct {
 	count uint
 	total time.Duration
 }
 
-// Stats tracks encode / decode timing.
+// Stats describes a Save or Load.
 //
-// This currently provides a meaningful String function and no other way to
-// extract stats about individual types.
-//
-// All exported receivers accept nil.
+// Per-type timing is only collected if enabled by CollectStats.
 type Stats struct {
+	// enabled is true if per-type timing is collected.
+	enabled bool
+
+	// objects is the number of objects.
+	objects int
+	// bytes is the length of the encoded object graph.
+	bytes int
+	// elapsed is the duration of the operation, in nanoseconds.
+	elapsed int64
+
 	// byType contains a breakdown of time spent by type.
-	//
-	// This is indexed *directly* by typeID, including zero.
-	byType []statEntry
+	byType map[*typeInfo]*statEntry
 
-	// stack contains objects in progress.
-	stack []typeID
-
-	// names contains type names.
-	//
-	// This is also indexed *directly* by typeID, including zero, which we
-	// hard-code as "state.default". This is only resolved by calling fini
-	// on the stats object.
-	names []string
+	// stack contains types in progress. nil is the default entry.
+	stack []*typeInfo
 
 	// last is the monotonic time of the last sample.
 	last int64
@@ -56,82 +64,75 @@ type Stats struct {
 
 // init initializes statistics.
 func (s *Stats) init() {
+	s.byType = make(map[*typeInfo]*statEntry)
 	s.last = gohacks.Nanotime()
-	s.stack = append(s.stack, 0)
+	s.stack = append(s.stack, nil)
 }
 
 // fini finalizes statistics.
-func (s *Stats) fini(resolve func(id typeID) string) {
+func (s *Stats) fini() {
 	s.done()
-
-	// Resolve all type names.
-	s.names = make([]string, len(s.byType))
-	s.names[0] = "state.default" // See above.
-	for id := typeID(1); int(id) < len(s.names); id++ {
-		s.names[id] = resolve(id)
-	}
 }
 
-// sample adds the samples to the given object.
-func (s *Stats) sample(id typeID) {
+// sample adds the time since the last sample to ti.
+func (s *Stats) sample(ti *typeInfo) {
 	now := gohacks.Nanotime()
-	if len(s.byType) <= int(id) {
-		// Allocate all the missing entries in one fell swoop.
-		s.byType = append(s.byType, make([]statEntry, 1+int(id)-len(s.byType))...)
+	e, ok := s.byType[ti]
+	if !ok {
+		e = &statEntry{}
+		s.byType[ti] = e
 	}
-	s.byType[id].total += time.Duration(now - s.last)
+	e.total += time.Duration(now - s.last)
 	s.last = now
 }
 
 // start starts a sample.
-func (s *Stats) start(id typeID) {
-	last := s.stack[len(s.stack)-1]
-	s.sample(last)
-	s.stack = append(s.stack, id)
+func (s *Stats) start(ti *typeInfo) {
+	s.sample(s.stack[len(s.stack)-1])
+	s.stack = append(s.stack, ti)
 }
 
 // done finishes the current sample.
 func (s *Stats) done() {
-	last := s.stack[len(s.stack)-1]
-	s.sample(last)
-	s.byType[last].count++
+	ti := s.stack[len(s.stack)-1]
+	s.sample(ti)
+	s.byType[ti].count++
 	s.stack = s.stack[:len(s.stack)-1]
 }
 
-type sliceEntry struct {
-	name  string
-	entry *statEntry
-}
-
-// String returns a table representation of the stats.
+// String returns a description of the stats, with a table of per-type timing
+// if it was collected.
 func (s *Stats) String() string {
-	// Build a list of stat entries.
-	ss := make([]sliceEntry, 0, len(s.byType))
-	for id := 0; id < len(s.names); id++ {
-		ss = append(ss, sliceEntry{
-			name:  s.names[id],
-			entry: &s.byType[id],
-		})
+	summary := fmt.Sprintf("%d objects, %d bytes, %v", s.objects, s.bytes, time.Duration(s.elapsed))
+	if len(s.byType) == 0 {
+		return summary
 	}
-
-	// Sort by total time (descending).
+	type entry struct {
+		name  string
+		entry *statEntry
+	}
+	ss := make([]entry, 0, len(s.byType))
+	for ti, e := range s.byType {
+		name := "state.default"
+		if ti != nil {
+			name = ti.typ.String()
+		}
+		ss = append(ss, entry{name, e})
+	}
 	sort.Slice(ss, func(i, j int) bool {
 		return ss[i].entry.total > ss[j].entry.total
 	})
-
-	// Print the stat results.
 	var (
 		buf   bytes.Buffer
 		count uint
 		total time.Duration
 	)
+	buf.WriteString(summary)
 	buf.WriteString("\n")
 	fmt.Fprintf(&buf, "% 16s | % 8s | % 16s | %s\n", "total", "count", "per", "type")
 	buf.WriteString("-----------------+----------+------------------+----------------\n")
 	for _, se := range ss {
 		if se.entry.count == 0 {
-			// Since we store all types linearly, we are not
-			// guaranteed that any entry actually has time.
 			continue
 		}
 		count += se.entry.count
@@ -141,7 +142,8 @@ func (s *Stats) String() string {
 			se.entry.total, se.entry.count, per, se.name)
 	}
 	buf.WriteString("-----------------+----------+------------------+----------------\n")
-	fmt.Fprintf(&buf, "% 16s | % 8d | % 16s | [all]",
-		total, count, total/time.Duration(count))
+	if count > 0 {
+		fmt.Fprintf(&buf, "% 16s | % 8d | % 16s | [all]", total, count, total/time.Duration(count))
+	}
 	return buf.String()
 }

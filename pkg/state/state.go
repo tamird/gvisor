@@ -54,19 +54,9 @@ import (
 	"reflect"
 	"runtime"
 
+	"gvisor.dev/gvisor/pkg/gohacks"
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
-
-// objectID is a unique identifier assigned to each object to be serialized.
-// Each instance of an object is considered separately, i.e. if there are two
-// objects of the same type in the object graph being serialized, they'll be
-// assigned unique objectIDs.
-type objectID uint32
-
-// typeID is the identifier for a type. Types are serialized and tracked
-// alongside objects in order to avoid the overhead of encoding field names in
-// all objects.
-type typeID uint32
 
 // ErrState is returned when an error is encountered during encode/decode.
 type ErrState struct {
@@ -87,45 +77,101 @@ func (e *ErrState) Unwrap() error {
 	return e.err
 }
 
-// Save saves the given object state.
+// Save saves the object graph rooted at the value pointed to by rootPtr.
+//
+// The resulting stream can only be loaded by the same binary (more precisely,
+// by a binary with the same registered types).
 func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
-	// Create the encoding state.
-	es := encodeState{
-		ctx:            ctx,
-		w:              wire.Writer{Writer: w},
-		types:          makeTypeEncodeDatabase(),
-		zeroValues:     make(map[reflect.Type]*objectEncodeState),
-		pending:        make(map[objectID]*objectEncodeState),
-		encodedStructs: make(map[reflect.Value]*wire.Struct),
+	start := gohacks.Nanotime()
+	e := efaceOf(&rootPtr)
+	var ti *typeInfo
+	if err := safely(func() {
+		ti = typeInfoForRtype(e.typ)
+		if ti.kind != reflect.Pointer || e.data == nil {
+			Failf("Save requires a non-nil pointer, got %T", rootPtr)
+		}
+	}); err != nil {
+		return Stats{}, err
 	}
-
-	// Perform the encoding.
+	es := newEncodeState(ctx, ti.elem)
+	defer es.release()
+	es.stats.enabled = collectStats.Load()
+	out := &es.final
 	err := safely(func() {
-		es.Save(reflect.ValueOf(rootPtr).Elem())
+		if es.stats.enabled {
+			es.stats.init()
+			defer es.stats.fini()
+		}
+		es.save(e.data, ti.elem, out)
 	})
-	return es.stats, err
+	es.stats.bytes = len(out.b)
+	es.stats.elapsed = gohacks.Nanotime() - start
+	if err != nil {
+		return es.stats, err
+	}
+	ww := wire.Writer{Writer: w}
+	if err := WriteHeader(&ww, uint64(len(out.b)), true); err != nil {
+		return es.stats, err
+	}
+	if _, err := w.Write(out.b); err != nil {
+		return es.stats, err
+	}
+	return es.stats, nil
 }
 
-// Load loads a checkpoint.
+// Load loads the object graph saved by Save into the value pointed to by
+// rootPtr. It reads exactly the bytes written by Save.
 func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
-	// Create the decoding state.
-	ds := decodeState{
-		ctx:      ctx,
-		r:        wire.Reader{Reader: r},
-		types:    makeTypeDecodeDatabase(),
-		deferred: make(map[objectID]wire.Object),
+	ds := newDecodeState(ctx)
+	defer ds.release()
+	ds.stats.enabled = collectStats.Load()
+	start := gohacks.Nanotime()
+	length, object, err := ReadHeader(&wire.Reader{Reader: r})
+	if err != nil {
+		return ds.stats, err
 	}
-
-	// Attempt our decode.
-	err := safely(func() {
-		ds.Load(reflect.ValueOf(rootPtr).Elem())
+	if !object {
+		return ds.stats, fmt.Errorf("expected an object graph, got %d bytes of raw data", length)
+	}
+	if length > maxStreamLength {
+		return ds.stats, fmt.Errorf("invalid object graph length %d", length)
+	}
+	data := make([]byte, length)
+	if _, err := io.ReadFull(r, data); err != nil {
+		return ds.stats, err
+	}
+	ds.in = decBuf{b: data}
+	err = safely(func() {
+		e := efaceOf(&rootPtr)
+		ti := typeInfoForRtype(e.typ)
+		if ti.kind != reflect.Pointer || e.data == nil {
+			Failf("Load requires a non-nil pointer, got %T", rootPtr)
+		}
+		if ds.stats.enabled {
+			ds.stats.init()
+			defer ds.stats.fini()
+		}
+		ds.load(e.data, ti.elem)
 	})
+	ds.stats.bytes = len(data)
+	ds.stats.objects = len(ds.objs)
+	ds.stats.elapsed = gohacks.Nanotime() - start
 	return ds.stats, err
 }
+
+// maxStreamLength is the maximum length of an object graph.
+const maxStreamLength = 1 << 40
 
 // Sink is used for Type.StateSave.
 type Sink struct {
 	internal objectEncoder
+}
+
+// objectEncoder encodes the fields of a struct.
+type objectEncoder struct {
+	es *encodeState
+	// st is the type of the struct.
+	st *typeInfo
 }
 
 // Save adds the given object to the map.
@@ -156,8 +202,12 @@ type Sink struct {
 //		m.Load(0, &x.A) // Field is A.
 //		m.Load(1, &x.B) // Field is B.
 //	}
+//
+// Save and Load calls must be made in the same order.
 func (s Sink) Save(slot int, objPtr any) {
-	s.internal.save(slot, reflect.ValueOf(objPtr).Elem())
+	e := efaceOf(&objPtr)
+	ti := s.internal.st.slotType(slot, e.typ, true)
+	s.internal.es.encodeValue(ti, e.data)
 }
 
 // SaveValue adds the given object value to the map.
@@ -177,7 +227,9 @@ func (s Sink) Save(slot int, objPtr any) {
 //		})
 //	}
 func (s Sink) SaveValue(slot int, obj any) {
-	s.internal.save(slot, reflect.ValueOf(obj))
+	e := efaceOf(&obj)
+	ti := s.internal.st.slotType(slot, e.typ, false)
+	s.internal.es.encodeDynamic(ti, e.data)
 }
 
 // Context returns the context object provided at save time.
@@ -221,11 +273,20 @@ type Source struct {
 	internal objectDecoder
 }
 
+// objectDecoder decodes the fields of a struct.
+type objectDecoder struct {
+	ds *decodeState
+	// st is the type of the struct.
+	st *typeInfo
+}
+
 // Load loads the given object passed as a pointer..
 //
 // See Sink.Save for an example.
 func (s Source) Load(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), false, nil)
+	e := efaceOf(&objPtr)
+	ti := s.internal.st.slotType(slot, e.typ, true)
+	s.internal.ds.decodeValue(ti, e.data)
 }
 
 // LoadWait loads the given objects from the map, and marks it as requiring all
@@ -233,15 +294,71 @@ func (s Source) Load(slot int, objPtr any) {
 //
 // See Sink.Save for an example.
 func (s Source) LoadWait(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), true, nil)
+	e := efaceOf(&objPtr)
+	ti := s.internal.st.slotType(slot, e.typ, true)
+	ds := s.internal.ds
+	ds.lastRef = -1
+	ds.decodeValue(ti, e.data)
+	if ds.lastRef >= 0 {
+		ds.wait(ds.cur, ds.lastRef, callback{waiter: -1})
+	}
 }
 
 // LoadValue loads the given object value from the map.
 //
 // See Sink.SaveValue for an example.
 func (s Source) LoadValue(slot int, objPtr any, fn func(any)) {
-	o := reflect.ValueOf(objPtr)
-	s.internal.load(slot, o, true, func() { fn(o.Elem().Interface()) })
+	e := efaceOf(&objPtr)
+	ti := s.internal.st.slotType(slot, e.typ, true)
+	ds := s.internal.ds
+	ds.lastRef = -1
+	keepZero := ds.keepZero
+	ds.keepZero = false
+	ds.decodeValue(ti, e.data)
+	ds.keepZero = keepZero
+	cb := callback{valueFn: fn, value: makeAny(ti, e.data), waiter: -1}
+	if ds.lastRef >= 0 {
+		ds.wait(ds.cur, ds.lastRef, cb)
+	} else {
+		ds.runCallback(&cb)
+	}
+}
+
+// ValueLoader is implemented by the generated code of structs with fields
+// saved through values (see Source.LoadValueTo).
+type ValueLoader interface {
+	// StateLoadValue loads the value of the field in the given slot.
+	StateLoadValue(ctx context.Context, slot int, value any)
+}
+
+// AfterLoader is implemented by the generated code of structs with afterLoad
+// methods (see Source.AfterLoadTo).
+type AfterLoader interface {
+	// StateAfterLoad calls the afterLoad method.
+	StateAfterLoad(ctx context.Context)
+}
+
+// LoadValueTo is like LoadValue, but calls l.StateLoadValue(ctx, slot, value)
+// instead of a function. typ is a nil pointer to the type of the value.
+// StateLoadValue must not retain the address of the value, which it must
+// copy.
+//
+// This is used by go_stateify, and avoids the allocations of LoadValue.
+func (s Source) LoadValueTo(slot int, typ any, l ValueLoader) {
+	e := efaceOf(&typ)
+	ti := s.internal.st.slotType(slot, e.typ, true)
+	s.internal.ds.loadValue(ti, slot, l)
+}
+
+// AfterLoadTo is like AfterLoad, but calls l.StateAfterLoad.
+//
+// This is used by go_stateify, and avoids the allocation of a function.
+func (s Source) AfterLoadTo(l AfterLoader) {
+	ds := s.internal.ds
+	if ds.noCallbacks {
+		return
+	}
+	ds.addCallback(ds.cur, callback{afterLoader: l, waiter: -1})
 }
 
 // AfterLoad schedules a function execution when all objects have been
@@ -249,7 +366,11 @@ func (s Source) LoadValue(slot int, objPtr any, fn func(any)) {
 // executed. fn will not be executed until all of current object's
 // dependencies' AfterLoad() logic, if exist, have been executed.
 func (s Source) AfterLoad(fn func()) {
-	s.internal.afterLoad(fn)
+	ds := s.internal.ds
+	if ds.noCallbacks {
+		return
+	}
+	ds.addCallback(ds.cur, callback{fn: fn, waiter: -1})
 }
 
 // Context returns the context object provided at load time.
@@ -322,4 +443,49 @@ func safely(fn func()) (err error) {
 	// Execute the function.
 	fn()
 	return nil
+}
+
+// objectFlag indicates that the length is that of an object graph, rather
+// than of raw data. When this is set on a length header in the stream, it may
+// be decoded appropriately.
+const objectFlag uint64 = 1 << 63
+
+// WriteHeader writes a header.
+//
+// Each object graph written to the statefile is prefixed with a header. In
+// order to generate statefiles that play nicely with debugging tools, raw
+// writes should be prefixed with a header with object set to false and the
+// appropriate length. This will allow tools to skip these regions.
+func WriteHeader(w *wire.Writer, length uint64, object bool) error {
+	// Sanity check the length.
+	if length&objectFlag != 0 {
+		return fmt.Errorf("impossibly huge length: %d", length)
+	}
+	if object {
+		length |= objectFlag
+	}
+	return safely(func() {
+		wire.SaveUint(w, length)
+	})
+}
+
+// ReadHeader reads a header.
+//
+// Each object graph written to the statefile is prefixed with a header. See
+// WriteHeader for more information; these functions are exported to allow
+// non-state writes to the file to play nice with debugging tools.
+func ReadHeader(r *wire.Reader) (length uint64, object bool, err error) {
+	err = safely(func() {
+		length = wire.LoadUint(r)
+	})
+	if err != nil {
+		// On the header, pass raw I/O errors.
+		if sErr, ok := err.(*ErrState); ok {
+			return 0, false, sErr.Unwrap()
+		}
+		return 0, false, err
+	}
+	object = length&objectFlag != 0
+	length &^= objectFlag
+	return length, object, nil
 }

@@ -22,7 +22,6 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
-	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 var allMapPrimitives = []any{
@@ -134,89 +133,28 @@ func TestMapContainers(t *testing.T) {
 	})
 }
 
-// loadMapEntries fixes the wire order so a non-nil entry is always decoded
-// before a nil entry. Save's map iteration order cannot guarantee that order.
-func loadMapEntries(t *testing.T, dst any, entries *wire.Map, objects ...wire.Object) {
-	t.Helper()
-	var buf bytes.Buffer
-	w := wire.Writer{Writer: &buf}
-	if err := state.WriteHeader(&w, uint64(1+len(objects)), true); err != nil {
-		t.Fatalf("WriteHeader: %v", err)
-	}
-	// Interface entries below use type ID 1 for int, including *int.
-	wire.Save(&w, &wire.Type{Name: "int"})
-	wire.Save(&w, wire.Uint(1))
-	wire.Save(&w, entries)
-	for i, object := range objects {
-		wire.Save(&w, wire.Uint(i+2))
-		wire.Save(&w, object)
-	}
-	if _, err := state.Load(t.Context(), &buf, dst); err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-}
-
 func TestMapNilValues(t *testing.T) {
 	seven := 7
-	for _, test := range []struct {
-		name    string
-		values  []wire.Object
-		backing wire.Object
-		want    any
-	}{
-		{
-			name:    "pointer",
-			values:  []wire.Object{&wire.Ref{Root: 2}, &wire.Ref{}},
-			backing: wire.Int(7),
-			want:    map[int]*int{1: &seven, 2: nil},
-		},
-		{
-			name:    "map",
-			values:  []wire.Object{&wire.Ref{Root: 2}, &wire.Ref{}},
-			backing: &wire.Map{Keys: []wire.Object{wire.Int(7)}, Values: []wire.Object{wire.Int(9)}},
-			want:    map[int]map[int]int{1: {7: 9}, 2: nil},
-		},
-		{
-			name: "slice",
-			values: []wire.Object{
-				&wire.Slice{Length: 1, Capacity: 1, Ref: wire.Ref{Root: 2}},
-				&wire.Slice{},
-			},
-			backing: &wire.Array{Contents: []wire.Object{wire.Int(7)}},
-			want:    map[int][]int{1: {7}, 2: nil},
-		},
-		{
-			name: "interface",
-			values: []wire.Object{
-				&wire.Interface{Type: &wire.TypeSpecPointer{Type: wire.TypeID(1)}, Value: &wire.Ref{Root: 2}},
-				&wire.Interface{Type: &wire.TypeSpecPointer{Type: wire.TypeID(1)}, Value: &wire.Ref{}},
-				&wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}},
-			},
-			backing: wire.Int(7),
-			want:    map[int]any{1: &seven, 2: (*int)(nil), 3: nil},
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			entries := &wire.Map{Values: test.values}
-			for i := range test.values {
-				entries.Keys = append(entries.Keys, wire.Int(i+1))
-			}
-			loaded := reflect.New(reflect.TypeOf(test.want))
-			loadMapEntries(t, loaded.Interface(), entries, test.backing)
-			if got, want := loaded.Elem().Interface(), test.want; !reflect.DeepEqual(got, want) {
-				t.Errorf("loaded map = %#v, want %#v", got, want)
-			}
-		})
-	}
+	runTestCases(t, false, "", []any{
+		map[int]*int{1: &seven, 2: nil},
+		map[int]map[int]int{1: {7: 9}, 2: nil},
+		map[int][]int{1: {7}, 2: nil, 3: {}},
+		map[int]any{1: &seven, 2: (*int)(nil), 3: nil},
+	})
 }
 
 func TestMapNilKeys(t *testing.T) {
 	t.Run("pointer", func(t *testing.T) {
+		seven := 7
+		original := map[*int]int{&seven: 1, nil: 2}
+		var buf bytes.Buffer
+		if _, err := state.Save(t.Context(), &buf, &original); err != nil {
+			t.Fatalf("Save: %v", err)
+		}
 		var loaded map[*int]int
-		loadMapEntries(t, &loaded, &wire.Map{
-			Keys:   []wire.Object{&wire.Ref{Root: 2}, &wire.Ref{}},
-			Values: []wire.Object{wire.Int(1), wire.Int(2)},
-		}, wire.Int(7))
+		if _, err := state.Load(t.Context(), &buf, &loaded); err != nil {
+			t.Fatalf("Load: %v", err)
+		}
 		if got, want := len(loaded), 2; got != want {
 			t.Fatalf("map length = %d, want %d", got, want)
 		}
@@ -224,29 +162,13 @@ func TestMapNilKeys(t *testing.T) {
 			t.Errorf("nil key value = %d, want %d", got, want)
 		}
 		for key, value := range loaded {
-			if key != nil {
-				if got, want := *key, 7; got != want {
-					t.Errorf("pointed-to key = %d, want %d", got, want)
-				}
-				if got, want := value, 1; got != want {
-					t.Errorf("non-nil key value = %d, want %d", got, want)
-				}
+			if key != nil && (*key != 7 || value != 1) {
+				t.Errorf("non-nil key entry = %d: %d, want 7: 1", *key, value)
 			}
 		}
 	})
-	t.Run("interface", func(t *testing.T) {
-		var loaded map[any]int
-		loadMapEntries(t, &loaded, &wire.Map{
-			Keys: []wire.Object{
-				&wire.Interface{Type: wire.TypeID(1), Value: wire.Int(7)},
-				&wire.Interface{Type: &wire.TypeSpecPointer{Type: wire.TypeID(1)}, Value: &wire.Ref{}},
-				&wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}},
-			},
-			Values: []wire.Object{wire.Int(1), wire.Int(2), wire.Int(3)},
-		})
-		if got, want := loaded, (map[any]int{7: 1, (*int)(nil): 2, nil: 3}); !reflect.DeepEqual(got, want) {
-			t.Errorf("loaded map = %#v, want %#v", got, want)
-		}
+	runTestCases(t, false, "interface", []any{
+		map[any]int{7: 1, (*int)(nil): 2, nil: 3},
 	})
 }
 

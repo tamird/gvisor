@@ -1,3 +1,196 @@
+# Branch `state-rewrite`: a faster `pkg/state` (gvisor#16216)
+
+This branch rewrites `pkg/state`, the serializer used for checkpoint and
+restore, to make saving and loading the sentry's object graph much cheaper. It
+is based on upstream commit `d88e105cf`. See
+[google/gvisor#16216](https://github.com/google/gvisor/issues/16216).
+
+The checkpoint format is not compatible with earlier versions: a state file can
+only be restored by a binary with the same registered types. The stream starts
+with a schema fingerprint, and Load fails cleanly on a mismatch.
+
+## Results
+
+All results are from `//test/benchmarks/checkpointfile`, using `benchstat`.
+The benchmark checkpoints an idle nginx container with 4 workers, then decodes
+and re-encodes the kernel in-process. Each tree checkpoints with its own
+`runsc`.
+
+Two modes were measured:
+
+*   **Warm**: the benchmark as written, many iterations per process.
+*   **Cold**: one iteration per process. This includes the one-time cost of
+    building per-type information, as in a real restore.
+
+The `Statefile` variants read and write through the real `statefile` reader and
+writer, as `runsc` does.
+
+The measurements were taken on a shared 16-vCPU Intel Xeon @ 2.20GHz Linux VM,
+with 16 interleaved runs per tree (24 for the cold comparison with `ar/scg3`).
+
+### Against the legacy implementation (upstream `d88e105cf`)
+
+| Mode | Benchmark | Legacy | This branch | Change |
+|------|-----------|-------:|------------:|-------:|
+| Warm | Decode time | 21.43 ms | 2.73 ms | **−87.3%** |
+| Warm | Encode time | 24.77 ms | 3.01 ms | **−87.9%** |
+| Cold | Decode time | 26.04 ms | 7.64 ms | **−70.7%** |
+| Cold | Encode time | 24.33 ms | 3.86 ms | **−84.2%** |
+| Warm | Decode allocs/op | 91.2k | 3.39k | **−96.3%** |
+| Warm | Encode allocs/op | 77.4k | 1.28k | **−98.3%** |
+| Warm | Decode B/op | 4.57 MiB | 1.64 MiB | −64.0% |
+| Warm | Encode B/op | 5.71 MiB | 1.81 MiB | −68.3% |
+| | State file | 296.9 KiB | 146.3 KiB | **−50.7%** |
+
+### Against the codegen prototype ([`EtiennePerot/gvisor@ar/scg3`](https://github.com/EtiennePerot/gvisor/tree/ar/scg3))
+
+`ar/scg3` was applied to the same base and benchmarked with the same harness on
+the same machine. It generates typed `StateEncode`/`StateDecode` methods and
+uses a compact typed stream.
+
+| Benchmark | ar/scg3 (warm) | This branch (warm) | Change | ar/scg3 (cold) | This branch (cold) | Change |
+|-----------|---------------:|-------------------:|-------:|---------------:|-------------------:|-------:|
+| Decode | 4.65 ms | 2.72 ms | **−41.5%** | 8.48 ms | 7.85 ms | **−7.5%** |
+| Encode | 5.38 ms | 3.03 ms | **−43.7%** | 5.98 ms | 3.58 ms | **−40.2%** |
+| DecodeStatefile | 4.54 ms | 2.51 ms | **−44.7%** | 4.74 ms | 2.69 ms | **−43.3%** |
+| EncodeStatefile | 5.56 ms | 3.49 ms | **−37.1%** | 6.07 ms | 3.97 ms | **−34.7%** |
+| Decode allocs/op | 7.90k | 3.39k | −57.1% | 8.31k | 5.53k | −33.4% |
+| Encode allocs/op | 1.86k | 1.27k | −31.7% | 1.88k | 1.28k | −31.7% |
+| State file | 161.3 KiB | 146.3 KiB | −9.3% | | | |
+
+All differences above are significant (p ≤ 0.001). One result goes the other
+way: the warm `EncodeStatefile` allocates 18% more bytes than `ar/scg3` (2.56
+vs 2.16 MiB/op).
+
+## The new approach
+
+### Reflection once per type
+
+Each Go type gets a `typeInfo`, built once with reflection
+(`typeinfo_unsafe.go`). Values are then saved and loaded by switching on the
+kind and working on `unsafe.Pointer`s:
+
+*   The generated `StateSave`/`StateLoad` methods still pass `&x.field` as
+    `any`. The interface's type word is checked against a per-struct,
+    per-slot cache (one atomic load and a compare).
+*   Fields of predeclared types use typed methods (`SaveInt64`/`LoadInt64`,
+    etc.) emitted by `go_stateify`.
+*   Arrays of plain data are bulk-copied. Structs registered with
+    `RegisterNoHooks` whose fields are all plain data are saved as their
+    memory representation.
+*   Struct methods are called through interface tables (itabs). `go_stateify`
+    registers structs with `RegisterStruct`/`RegisterNoHooks(StructType)`, so
+    the `(*T, StructType)` itab is emitted by the compiler, not built at run
+    time.
+
+### Objects and targets (encoding)
+
+The object graph is split into *objects*: single values, the backing arrays of
+slices, and maps. A pointer is written as a *target index*, and the target
+table maps each index to an object and a byte offset.
+
+*   New pointers are first looked up by exact address. Misses go to a block
+    index, which finds objects whose address ranges overlap. Both use a custom
+    open-addressing hash table (`addrmap.go`).
+*   An object found later that contains earlier objects *absorbs* them: their
+    targets move into the container, and their finished encodings are spliced
+    into it. So `StateSave` runs exactly once per value, and interior pointers,
+    shared slice windows and aliasing are preserved.
+*   Of arrays, only the elements within some slice, or pointed to, are saved.
+    These are tracked as covered ranges and encoded as chunks.
+*   The whole stream is built in memory and written with a single `Write`.
+
+The stream holds, in order:
+
+1.  A magic number and the schema fingerprint.
+2.  The type table.
+3.  The object table, with the kind, type and length of each object, including
+    the entry count of maps.
+4.  The target table.
+5.  The data of each object.
+
+### Decoding
+
+Load reads the stream with a single `ReadFull`, allocates every object
+upfront, and resolves every target to a pointer. It then decodes each object
+in one pass, with no intermediate tree and no `FieldByName`:
+
+*   Maps are allocated at their final size.
+*   Map key and value temporaries are reused, unless code that may keep their
+    address ran while decoding the entry.
+*   Objects whose types include unregistered named interfaces or maps are
+    decoded once a reference reveals their exact static type.
+*   Load callbacks (`afterLoad`, `wait` fields, values loaded through
+    `state:".(T)"`) run in dependency order, with cycle detection.
+    `go_stateify` now generates `StateAfterLoad`/`StateLoadValue` methods, so
+    scheduling these callbacks does not allocate closures. Values loaded
+    through `.(T)` fields are decoded into reused storage when they are passed
+    on at once.
+
+### Cold start
+
+A restore is a single Load, so the one-time cost of building `typeInfo`s
+matters. Several changes keep it low:
+
+*   `typeInfo`s, slot caches and slot entries come from slabs that are never
+    freed.
+*   Lookups go through a map under an RWMutex, plus per-stream direct-mapped
+    caches for interface types and itabs. This replaces `sync.Map`.
+*   `reflect.SliceOf` is called lazily, and no zero values are allocated to
+    classify types.
+*   Static itabs are used where possible (see above).
+
+### Sentry-side changes
+
+Some of these come from ideas in
+[this comment](https://github.com/google/gvisor/issues/16216#issuecomment-6429916909)
+and `ar/scg3`:
+
+*   `vfs.FileLocks` allocates its lock sets on first use.
+*   The cpuid static function is saved as packed bytes.
+*   The unused IPv4 IP ID state is removed.
+*   Per-type stats are opt-in (`state.CollectStats`).
+
+### Correctness
+
+Tests were added before the engine was changed, and are used as the gate:
+
+*   `pkg/state/tests/isomorphism_test.go`: a graph-isomorphism checker (shared
+    pointers, interior pointers, slice windows, map identity), wired into
+    every existing test case.
+*   `pkg/state/tests/graph_test.go`: randomized object graphs and targeted
+    tests, including truncation at every byte.
+*   The save/restore syscall tests, netstack and kernfs save tests, and a kernel
+    round trip in `checkpointfile` (`TestCheckpointFileRoundTrip`) also pass.
+
+These tests found two bugs in the legacy encoder, both involving slices that
+share a backing array:
+
+*   Save cleared `s[len:cap]` of live slices.
+*   Sub-slices at a non-zero offset failed.
+
+### Behavior changes
+
+*   Restores require a binary with the same registered types. The pretty
+    printer (`runsc statefile`) needs a binary that links the saved types.
+*   Elements of backing arrays past `len` that are in no slice and not pointed
+    to are not saved, and load as zero.
+*   Values of unregistered named types (e.g. `type X []int`) can't be saved in
+    interfaces, since Load could not restore their type.
+
+### Running the benchmark without Docker
+
+`checkpointfile_test` accepts `--checkpoint_dir=<dir>`. The directory must
+hold the files of a `runsc checkpoint` and a `spec.json`, which lists the
+container names that `runsc` may use and the destinations of the container's
+root and mounts, as `{"names": [...], "mounts": [...]}`. For example:
+
+```
+checkpointfile_test --checkpoint_dir=/path/to/ckpt -test.bench=CheckpointFile -test.run=XXX
+```
+
+---
+
 ![gVisor](g3doc/logo.png)
 
 [![Build status](https://badge.buildkite.com/3b159f20b9830461a71112566c4171c0bdfd2f980a8e4c0ae6.svg?branch=master)](https://buildkite.com/gvisor/pipeline)

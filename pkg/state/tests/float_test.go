@@ -59,17 +59,6 @@ func TestFloat(t *testing.T) {
 	))))
 }
 
-const onlyDouble float64 = 1.0000000000000002
-
-func TestFloatTruncation(t *testing.T) {
-	runTestCases(t, true, "pass", []any{
-		truncatingFloat32{save: onlyDouble},
-	})
-	runTestCases(t, false, "fail", []any{
-		truncatingFloat32{save: 1.0},
-	})
-}
-
 var safeComplex64s = combine(safeFloat32s, safeFloat32s, func(i, j any) any {
 	return complex(i.(float32), j.(float32))
 })
@@ -104,15 +93,4 @@ func TestComplex(t *testing.T) {
 		safeComplex64s,
 		safeComplex128s,
 	))))
-}
-
-func TestComplexTruncation(t *testing.T) {
-	runTestCases(t, true, "pass", []any{
-		truncatingComplex64{save: complex(onlyDouble, onlyDouble)},
-		truncatingComplex64{save: complex(1.0, onlyDouble)},
-		truncatingComplex64{save: complex(onlyDouble, 1.0)},
-	})
-	runTestCases(t, false, "fail", []any{
-		truncatingComplex64{save: complex(1.0, 1.0)},
-	})
 }
