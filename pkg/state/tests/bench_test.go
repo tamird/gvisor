@@ -134,3 +134,50 @@ func BenchmarkDecoding(b *testing.B) {
 		}
 	}
 }
+
+// BenchmarkSliceViews compares repeated references to a backing array with
+// separate arrays. The latter exercises first-seen slice registration.
+func BenchmarkSliceViews(b *testing.B) {
+	for _, shared := range []bool{false, true} {
+		b.Run(fmt.Sprintf("shared=%t", shared), func(b *testing.B) {
+			data := make([][]uint64, 1024)
+			for i := range data {
+				if shared && i != 0 {
+					data[i] = data[0]
+				} else {
+					data[i] = []uint64{1, 2, 3, 4, 5, 6, 7, 8}
+				}
+			}
+			var encoded bytes.Buffer
+			if _, err := state.Save(b.Context(), &encoded, &data); err != nil {
+				b.Fatal(err)
+			}
+			b.ReportAllocs()
+			var loaded [][]uint64
+			var r bytes.Reader
+			for b.Loop() {
+				loaded = nil
+				r.Reset(encoded.Bytes())
+				if _, err := state.Load(b.Context(), &r, &loaded); err != nil {
+					b.Fatal(err)
+				}
+			}
+			if len(loaded) != len(data) {
+				b.Fatalf("restored %d slices, want %d", len(loaded), len(data))
+			}
+			for i, values := range loaded {
+				if len(values) != 8 {
+					b.Fatalf("slice %d has %d elements, want 8", i, len(values))
+				}
+				for j, value := range values {
+					if value != uint64(j+1) {
+						b.Fatalf("slice %d element %d = %d, want %d", i, j, value, j+1)
+					}
+				}
+			}
+			if got := &loaded[0][0] == &loaded[1][0]; got != shared {
+				b.Fatalf("restored backing arrays shared=%t, want %t", got, shared)
+			}
+		})
+	}
+}
