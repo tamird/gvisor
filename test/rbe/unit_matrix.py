@@ -164,6 +164,9 @@ def public_dispatch_rows(pgo_manifest: Path) -> list[DispatchRow]:
     # The public container-tests selection uses its declared KVM frontends.
     # container-v1-pilot is optional fork bring-up, not a public pipeline owner.
     rows.append(dispatch_row(["container"], "amd64", "local", requirements="kvm"))
+    # Retain native smoke coverage separately from the ARM64 emulated guest.
+    guest = dispatch_row(["test"], "amd64", "remote", targets=["//:release_smoke_arm64_tcg_test"])
+    rows.append(replace(guest, id="amd64-remote-arm64-smoke-tcg"))
     for image_class in ("cpu", "gpu"):
         row = dispatch_row(["test"], "all", "remote", targets=[f"//test/docker:{image_class}_image_sources_amd64_test"])
         rows.append(replace(row, id=f"amd64-remote-{image_class}-images"))
