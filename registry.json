@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T08:16:51+00:00",
+    "updatedAt": "2026-10-27T09:38:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3198,8 +3198,12 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-artifact-selection",
       "group": "rbe",
       "status": "extraction needed",
-      "summary": "The release portion is now a separate, qualified proposal. Review the mixed release Make change on its own branch. The website and Python selections remain separate.\n\nUpstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed.",
+      "summary": "The mixed release Make change is open as #16490. The website and Python selections remain separate.\n\nUpstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed.",
       "evidence": [
+        {
+          "label": "Build both release architectures in one Bazel invocation",
+          "url": "https://github.com/google/gvisor/pull/16490"
+        },
         {
           "label": "Standalone mixed release build under qualification",
           "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9"
@@ -7383,16 +7387,25 @@
       "title": "Current public-CI qualification",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/cb548161f537465fda2576793e6d6cea59a32260",
-      "status": "Mixed release smoke passed; full qualification remains incomplete",
-      "summary": "On the qualification fork, one Bazel invocation ran the source-built AMD64 and ARM64 releases together. Across seven targets, 32 cases passed and one bwrap case skipped. AMD64 ran in Firecracker; ARM64 ran under QEMU.\n\nThe last broad run used a different source (87d2a5dcd). It recorded 200,469 passes and 80 skips across 716 targets; four hardware targets ran no cases, so its verdict is incomplete. Neither result qualifies current upstream: the fork and upstream 9f2bc5e75c have 606 and 333 commits respectively since their common base. A trial merge conflicts in 93 files.",
-      "updatedAt": "2026-10-27T03:55:03.418316+00:00",
+      "status": "Mixed unit run failed; 664 of 668 test targets have recorded attempts",
+      "summary": "The AMD64/ARM64 unit run on d943b4a177 selected 668 test targets. At its deadline, 656 had recorded a test attempt: 174,566 cases passed, 52 failed and 69 skipped. Five previously unattempted targets then ran unchanged on native workers; all 34 cases passed. The verified report was available 14.6 seconds after execution. A second run reached the root build test and both AMD64 NVIDIA tests before its deadline. Four targets still lack an attempt on this source: the two ARM64 NVIDIA tests and the two cgroup variants.\n\nRelease qualification is separate. On cb548161f5, the mixed release smoke ran 32 cases successfully and skipped one bwrap case. AMD64 ran in Firecracker and ARM64 under QEMU. The optimized releases have also passed CLI checks on both native architectures.",
+      "updatedAt": "2026-10-27T09:38:49+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "cb548161f537465fda2576793e6d6cea59a32260",
-        "observedAt": "2026-10-27T03:55:03.418316+00:00",
-        "disposition": "Mixed release smoke passed on the maintained fork",
-        "nextAction": "Qualify current upstream sources separately from the fork. Reconcile changes by component before promoting another integrated head. Fill native ARM and hardware execution gaps with named runs on those platforms.",
+        "sourceHead": "d943b4a1776c8c2281cff19eed2ff02a2a892619",
+        "observedAt": "2026-10-27T09:38:49+00:00",
+        "disposition": "Mixed unit results are incomplete; no contributor action required",
+        "nextAction": "Finish the two ARM64 NVIDIA tests, distinguish the corrected cgroup results from the baseline, and check the 357 builds affected by two killed analyzers. The ARM64 SDK guest needs a QEMU build that can extract its sysroot without filling the worker\u2019s temporary directory.",
         "evidence": [
+          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03",
+          "https://app.buildbuddy.io/invocation/9cf85ae9-f6cb-49d5-8f4a-d8eba5268b74",
+          "https://app.buildbuddy.io/invocation/17f4791a-1f6f-4ade-b8cf-40df45473096",
+          "https://app.buildbuddy.io/invocation/9aa9b367-60e7-4eee-b3a6-42dce0a21121",
+          "https://github.com/tamird/gvisor/commit/d943b4a1776c8c2281cff19eed2ff02a2a892619",
+          "https://app.buildbuddy.io/invocation/9b77eff7-eaf0-4206-bcf2-43250fc1ae95",
+          "https://app.buildbuddy.io/invocation/f008c022-8902-43c7-89a0-39d9bb9d6f7d",
+          "https://app.buildbuddy.io/invocation/177b487c-5076-4077-a802-ec137f101777",
+          "https://app.buildbuddy.io/invocation/824dde53-337d-4e95-a238-dc4822fe57b4",
           "https://app.buildbuddy.io/invocation/064582da-4096-44f4-9dc8-8fb8067304fc",
           "https://github.com/tamird/gvisor/actions/runs/40443253054",
           "https://app.buildbuddy.io/invocation/0a1e43c5-42fd-4846-91eb-a6549bc70fad",
@@ -7455,6 +7468,42 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Mixed unit baseline: 668 selected, 656 attempted before the deadline",
+          "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+        },
+        {
+          "label": "Five original targets on native workers: all 34 cases passed",
+          "url": "https://app.buildbuddy.io/invocation/9cf85ae9-f6cb-49d5-8f4a-d8eba5268b74"
+        },
+        {
+          "label": "Root build test and AMD64 NVIDIA results; parent reached its deadline before ARM tests",
+          "url": "https://app.buildbuddy.io/invocation/17f4791a-1f6f-4ade-b8cf-40df45473096"
+        },
+        {
+          "label": "ARM64 SDK: exact runfiles prepared, QEMU ran out of space before any guest test",
+          "url": "https://app.buildbuddy.io/invocation/9aa9b367-60e7-4eee-b3a6-42dce0a21121"
+        },
+        {
+          "label": "Baseline product source and unit selection",
+          "url": "https://github.com/tamird/gvisor/commit/d943b4a1776c8c2281cff19eed2ff02a2a892619"
+        },
+        {
+          "label": "Optimized release artifacts: native AMD64 and ARM64 CLI checks",
+          "url": "https://app.buildbuddy.io/invocation/9b77eff7-eaf0-4206-bcf2-43250fc1ae95"
+        },
+        {
+          "label": "Linux ABI and Kubernetes: four uncached analyzer actions passed across target architectures",
+          "url": "https://app.buildbuddy.io/invocation/f008c022-8902-43c7-89a0-39d9bb9d6f7d"
+        },
+        {
+          "label": "Analyzer reporting failure: the wrapper mistook dependency facts for outputs",
+          "url": "https://app.buildbuddy.io/invocation/177b487c-5076-4077-a802-ec137f101777"
+        },
+        {
+          "label": "ARM64 SDK and documentation test executables built; guest packaging failed before any tests ran",
+          "url": "https://app.buildbuddy.io/invocation/824dde53-337d-4e95-a238-dc4822fe57b4"
+        },
         {
           "label": "Maintained mixed release-smoke run: seven targets, 32 passes, one skip",
           "url": "https://app.buildbuddy.io/invocation/064582da-4096-44f4-9dc8-8fb8067304fc"
@@ -26521,25 +26570,17 @@
       "inactive": true
     },
     {
-      "id": "branch:socket-stress-port-fixtures",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16494",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/socket-stress-port-fixtures",
-      "head": "127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+      "head": "89158277b62e30e7554108567bdf28510507c0c9",
       "title": "Isolate socket tests that exhaust ephemeral ports",
-      "url": "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81",
+      "url": "https://github.com/google/gvisor/pull/16494",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "The exhaustion test ran out of file descriptors before it ran out of ports. Using the runner\u2019s small port range repaired it, but a bulk-transfer listener in the same namespace then failed to bind. Separating the fixtures preserves the 30 stress cases and all three bulk-transfer cases. The AMD64 and ARM64 Linux runs covered native, hostnet and netstack: 198 of 198 case executions across 12 targets, without increasing memory or descriptor limits. ARM64 ran under QEMU. The native Bazel invocation passed. Two outer jobs failed in graph-reporting scripts; the retained query output independently showed matching sets of 102 labels per fixture, including all 12 executed targets.",
-      "updatedAt": "2026-10-27T01:15:51.028625+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "127a8f660c254f040b57fd0aaf2e4ab36a588d81",
-        "url": "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81",
-        "title": "Isolate socket tests that exhaust ephemeral ports",
-        "summary": "Review the fixture split before opening its upstream PR.",
-        "body": "TooManyOpen holds sockets open until bind returns EADDRINUSE. On\na host-network worker, the sandbox could not change the host's\nephemeral port range. The process had a limit of 16,384 file\ndescriptors and a range of 28,232 ports (32768\u201360999). Socket\ncreation failed with EMFILE before the test could exhaust the ports.\n\nUse the runner's private 51-port range for the native and host-network\nexhaustion tests. BigDataTransfer checks that a large stream is echoed\nintact. When it ran after the exhaustion cases in the same shard, its\nlistener failed to bind in the narrow range. The sandbox also rejected\nits attempt to widen that range.\n\nGive the three transfer cases their own syscall binary and network\nnamespace. They no longer need to change ip_local_port_range or set\nSO_REUSEADDR on connected sockets."
-      },
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "refinement": {
         "before": {
           "head": "4330034f0b2c9869139de6e1b22a9d69ecb18b5e"
@@ -26549,24 +26590,28 @@
         }
       },
       "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "127a8f660c254f040b57fd0aaf2e4ab36a588d81",
-        "observedAt": "2026-10-27T01:15:51.028625+00:00",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open the independent PR if approved.",
+        "owner": "root",
+        "sourceHead": "89158277b62e30e7554108567bdf28510507c0c9",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16494",
+        "nextAction": "Follow maintainer review and public checks on #16494.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16494",
           "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81",
-          "https://app.buildbuddy.io/invocation/885c9ae2-4afd-4620-a2b7-e08d897d721b",
+          "https://github.com/tamird/gvisor/commit/89158277b62e30e7554108567bdf28510507c0c9",
           "https://app.buildbuddy.io/invocation/1b7a70f3-f9e6-4e1f-aa96-54c96febf2a5",
           "https://app.buildbuddy.io/invocation/4c66b3ea-c3ca-4c5c-a2cc-05b85941e75e",
-          "https://app.buildbuddy.io/invocation/7ad18ed0-2c9e-4f74-bd57-0f8a646f6219",
-          "https://app.buildbuddy.io/invocation/194088d0-874e-4445-80da-39613270eb4c"
+          "https://app.buildbuddy.io/invocation/885c9ae2-4afd-4620-a2b7-e08d897d721b"
         ]
       },
       "evidence": [
         {
-          "label": "Proposed source",
+          "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/127a8f660c254f040b57fd0aaf2e4ab36a588d81"
+        },
+        {
+          "label": "Published, patch-identical rebase",
+          "url": "https://github.com/tamird/gvisor/commit/89158277b62e30e7554108567bdf28510507c0c9"
         },
         {
           "label": "Original: port exhaustion hit EMFILE",
@@ -26588,7 +26633,8 @@
           "label": "Retained Bazel query: 102 labels per fixture",
           "url": "https://app.buildbuddy.io/invocation/194088d0-874e-4445-80da-39613270eb4c"
         }
-      ]
+      ],
+      "number": 16494
     },
     {
       "id": "pr:16473",
@@ -26651,33 +26697,27 @@
       "number": 16473
     },
     {
-      "id": "branch:remove-obsolete-basic-ruby",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16498",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/remove-obsolete-basic-ruby",
-      "head": "523417fd8a8f4be8962250496b7fed0696cfd9c1",
+      "head": "c7cd9df3d78a1f7615a0bc72241370ed59fb6ff5",
       "title": "Remove the unused basic Ruby image",
-      "url": "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1",
+      "url": "https://github.com/google/gvisor/pull/16498",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "TestRuby uses the Sinatra fixture in image-test/ruby. No tracked caller uses basic/ruby; Make discovers it solely because its one-line Dockerfile still exists. Removing that file drops only basic_ruby from the tracked Make recipes on AMD64 (94 to 93) and ARM64 (70 to 69). The HTTP fixture and both Ruby benchmark images are unchanged.",
-      "updatedAt": "2026-10-27T01:54:26.748123+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "523417fd8a8f4be8962250496b7fed0696cfd9c1",
-        "url": "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1",
-        "title": "Remove the unused basic Ruby image",
-        "summary": "Review the one-file removal before upstream submission.",
-        "body": "TestRuby runs image-test/ruby, which includes the HTTP server and its\ngems. No test uses basic/ruby. Its Dockerfile still causes the CPU image\njobs and make load-basic to prepare a second image that only retags the\nupstream Ruby base.\n\nRemove the unused recipe from image discovery."
-      },
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "523417fd8a8f4be8962250496b7fed0696cfd9c1",
-        "observedAt": "2026-10-27T01:54:26.748123+00:00",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open an independent PR after contributor review.",
+        "sourceHead": "c7cd9df3d78a1f7615a0bc72241370ed59fb6ff5",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16498",
+        "nextAction": "Follow maintainer review and public checks on #16498.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16498",
           "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1",
+          "https://github.com/tamird/gvisor/commit/c7cd9df3d78a1f7615a0bc72241370ed59fb6ff5",
           "https://github.com/google/gvisor/commit/1f42df880e939581141cb196e3b0799542364024",
           "https://github.com/google/gvisor/blob/4fd586389aadac43f0d95adcb2b1b4ae916fb30f/test/image/image_test.go#L302-L316",
           "https://github.com/google/gvisor/blob/4fd586389aadac43f0d95adcb2b1b4ae916fb30f/tools/images.mk"
@@ -26685,8 +26725,12 @@
       },
       "evidence": [
         {
-          "label": "Proposed source",
+          "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/523417fd8a8f4be8962250496b7fed0696cfd9c1"
+        },
+        {
+          "label": "Published, patch-identical rebase",
+          "url": "https://github.com/tamird/gvisor/commit/c7cd9df3d78a1f7615a0bc72241370ed59fb6ff5"
         },
         {
           "label": "Move TestRuby to the HTTP fixture",
@@ -26700,28 +26744,21 @@
           "label": "Make image discovery",
           "url": "https://github.com/google/gvisor/blob/4fd586389aadac43f0d95adcb2b1b4ae916fb30f/tools/images.mk"
         }
-      ]
+      ],
+      "number": 16498
     },
     {
-      "id": "branch:tcp-interrupted-sack-recovery",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16495",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fixes/tcp-interrupted-sack-recovery",
-      "head": "1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
+      "head": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
       "title": "Keep timed-out SACK recovery from restarting",
-      "url": "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
+      "url": "https://github.com/google/gvisor/pull/16495",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "summary": "A partial cumulative ACK could start SACK recovery again after a retransmission timeout and make Reno cut its threshold twice. The new wire regression reproduces it and shows that, once the peer acknowledges the original flight, a later gap still triggers a retransmission. It passes normally and under race, and both owning analyzers pass on AMD64 and ARM64. Independent of #15634. The reporter supplied a stalled synthetic trial. A replay on the pinned revision is needed to tell whether this fix addresses it.",
-      "updatedAt": "2026-10-27T07:28:05+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
-        "url": "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
-        "title": "Keep timed-out SACK recovery from restarting",
-        "summary": "Review the fix and packet regression before opening the independent PR.",
-        "body": "If a retransmission times out during SACK recovery, the receiver may\nstill have only part of the flight. An ACK for that part, accompanied\nby a SACK for a later segment, could make RACK start another recovery.\nReno and CUBIC both treated it as another loss and cut their slow-start\nthreshold a second time.\n\nKeep the recovery point from the interrupting timeout until the receiver\nhas cumulatively acknowledged the last byte of that flight, as\n[RFC 6675 \u00a75.1](https://www.rfc-editor.org/rfc/rfc6675.html#section-5.1)\nrequires. RACK continues to detect loss and the sender continues to use\nnew SACK information to retransmit. If a second timeout occurs while\nnewer data is in flight, it does not extend the recovery point.\n\nThe regression loses a fast retransmission and sends a partial ACK\nwith a SACK block. The original sender reenters fast recovery. The\ncorrected sender stays in timeout recovery when the ACK is even one\nbyte short. Once the ACK covers the original flight, the peer can\nreport a new hole and observe the sender retransmit it."
-      },
+      "status": "open",
+      "summary": "A partial cumulative ACK could start SACK recovery again after a retransmission timeout and make Reno cut its threshold twice. The new wire regression reproduces it and shows that, once the peer acknowledges the original flight, a later gap still triggers a retransmission. It passes normally and under race, and both owning analyzers pass on AMD64 and ARM64. Independent of #15634. Stock gVisor stalled in all five runs of the reporter\u2019s reproducer. The corrected sender completed all five transfers in under a second.",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "refinement": {
         "before": {
           "head": "c31f03115fab5a3522a5acb6312393a7067f9f0f"
@@ -26731,27 +26768,36 @@
         }
       },
       "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
-        "observedAt": "2026-10-27T02:42:33.270708+00:00",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open the independent PR after contributor review.",
+        "owner": "root",
+        "sourceHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16495",
+        "nextAction": "Follow maintainer review and public checks on #16495.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16495",
           "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
-          "https://app.buildbuddy.io/invocation/836aabe4-87ff-4cdc-8367-93f9479de4ed",
-          "https://app.buildbuddy.io/invocation/6f138cb6-8861-4e14-bf49-7a62043a4b00",
-          "https://app.buildbuddy.io/invocation/828b510a-f477-42f5-9307-cb6c8b33a040",
-          "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335"
+          "https://github.com/tamird/gvisor/commit/b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
+          "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335",
+          "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838",
+          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144"
         ]
       },
       "evidence": [
         {
-          "label": "Reporter\u2019s pinned reproducer, stalled trial M003, and ablation results",
-          "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838"
+          "label": "Contributor-reviewed commit",
+          "url": "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b"
         },
         {
-          "label": "Proposed source and regression",
-          "url": "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b"
+          "label": "Published, patch-identical rebase",
+          "url": "https://github.com/tamird/gvisor/commit/b7d9ced514fd9ea5d4159b36b42ae16a22dbe634"
+        },
+        {
+          "label": "Five paired runs of the reporter\u2019s workload",
+          "url": "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335"
+        },
+        {
+          "label": "Reporter\u2019s pinned reproducer, stalled trial M003, and ablation results",
+          "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838"
         },
         {
           "label": "The same partial ACK invokes both Reno and CUBIC loss handlers on stock; neither on the fix",
@@ -26783,70 +26829,72 @@
           "label": "Same-worker replay: all 18 trial reports",
           "url": "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335"
         }
-      ]
+      ],
+      "number": 16495
     },
     {
-      "id": "branch:nginx-checkpoint-http-readiness",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16499",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/nginx-checkpoint-http-readiness",
-      "head": "a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
-      "title": "Wait for Nginx to serve HTTP after restoring it",
-      "url": "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+      "head": "5fc68d2b9e7f63884283293113f4d13933475667",
+      "title": "Wait for HTTP readiness after restoring Nginx",
+      "url": "https://github.com/google/gvisor/pull/16499",
       "group": "tests",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "A stopped Nginx worker still has an open listener: the old port check passed while the GET timed out. After resuming that worker, the same GET returned HTTP 200. Both existing AMD64 checkpoint and restore benchmarks completed with the new probe. The benchmark measures readiness to serve a request, including Docker exec time.",
-      "updatedAt": "2026-10-27T04:52:14.007Z",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
-        "observedAt": "2026-10-27T04:52:14.007Z",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open the independent PR after contributor review.",
+        "owner": "root",
+        "sourceHead": "5fc68d2b9e7f63884283293113f4d13933475667",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16499",
+        "nextAction": "Follow maintainer review and public checks on #16499.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16499",
           "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
+          "https://github.com/tamird/gvisor/commit/5fc68d2b9e7f63884283293113f4d13933475667",
           "https://app.buildbuddy.io/invocation/702a80ca-56a2-4851-b78a-aa24bdafdd49"
         ]
       },
       "evidence": [
         {
-          "label": "Proposed source",
+          "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945"
+        },
+        {
+          "label": "Published, patch-identical rebase",
+          "url": "https://github.com/tamird/gvisor/commit/5fc68d2b9e7f63884283293113f4d13933475667"
         },
         {
           "label": "Control and both existing benchmark owners",
           "url": "https://app.buildbuddy.io/invocation/702a80ca-56a2-4851-b78a-aa24bdafdd49"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
-        "url": "https://github.com/tamird/gvisor/commit/a7d6f35f88ceafce04ea8dee438e4c2dbcab2945",
-        "title": "Wait for Nginx to serve HTTP after restoring it",
-        "summary": "Review the new benchmark readiness criterion before opening its PR.",
-        "body": "The restore benchmark stops timing when port 80 appears in a TCP socket\ntable. A restored listener is enough to pass that check even when the\nNginx workers cannot yet answer a request.\n\nWait for Nginx to return HTTP 200 for `/index.html` before taking its\ncheckpoint and after restoring it. The request goes over loopback inside\nthe container, so the benchmark does not require publishing a port.\nRestore time includes Docker exec and the HTTP request."
-      }
+      "number": 16499
     },
     {
-      "id": "branch:benchmark-alpine",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16497",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "image/benchmark-alpine-grouped",
-      "head": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
-      "title": "Pin one Alpine release for empty-container benchmarks",
-      "url": "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+      "head": "0a730fd58273aac0d337929b69e2fbf884ffa78c",
+      "title": "Pin Alpine for the empty-container benchmarks",
+      "url": "https://github.com/google/gvisor/pull/16497",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "The cached benchmark images ran Alpine 3.19.1 on AMD64 and 3.20.3 on ARM64. Pinning Alpine 3.24.3 keeps the official layers and configuration. The shared //images target produced byte-identical Make contexts and Docker archives on both architectures. Original AMD64 logs confirm the startup and memory benchmarks ran; the original aggregate report remains incomplete.",
-      "updatedAt": "2026-10-27T04:52:14.007Z",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "followup": {
-        "owner": "pinring_source_scope",
-        "sourceHead": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
-        "observedAt": "2026-10-27T04:52:14.007Z",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open the independent PR after contributor review.",
+        "owner": "root",
+        "sourceHead": "0a730fd58273aac0d337929b69e2fbf884ffa78c",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16497",
+        "nextAction": "Follow maintainer review and public checks on #16497.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16497",
           "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
+          "https://github.com/tamird/gvisor/commit/0a730fd58273aac0d337929b69e2fbf884ffa78c",
           "https://app.buildbuddy.io/invocation/99bceafe-b6bb-4747-9b2b-2d006d795f8e",
           "https://github.com/tamird/gvisor/actions/runs/40449193521/job/122007636255",
           "https://app.buildbuddy.io/invocation/b9310e28-93d3-494e-88d4-64262f614802"
@@ -26854,8 +26902,12 @@
       },
       "evidence": [
         {
-          "label": "Proposed source",
+          "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07"
+        },
+        {
+          "label": "Published, patch-identical rebase",
+          "url": "https://github.com/tamird/gvisor/commit/0a730fd58273aac0d337929b69e2fbf884ffa78c"
         },
         {
           "label": "Original dual-architecture build",
@@ -26878,14 +26930,7 @@
           "head": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
-        "url": "https://github.com/tamird/gvisor/commit/86811f9a8aa74e774ad061f8c252f1bf7c7b3f07",
-        "title": "Pin one Alpine release for empty-container benchmarks",
-        "summary": "Review the pinned image and shared Bazel target before opening their PR.",
-        "body": "The benchmark Dockerfile used alpine:latest, but Make cached the image\nby the unchanged Dockerfile contents. The published AMD64 and ARM64\nimages consequently ran different Alpine versions, 3.19.1 and 3.20.3.\n\nPin both architectures to the official Alpine 3.24.3 release. Load each\nplatform manifest directly, without adding a layer or replacing its\nconfiguration. Keep the benchmarks/alpine name used by startup, memory,\ncheckpoint and restore benchmarks."
-      }
+      "number": 16497
     },
     {
       "id": "issue:16393",
@@ -26922,24 +26967,26 @@
       ]
     },
     {
-      "id": "branch:udp-checksum-wire-test",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16493",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "udp-checksum-wire-test",
       "head": "beb37f745205fd9a9c9ef0a248787377d22e8d2a",
       "title": "Compare UDP checksums as transmitted on the wire",
-      "url": "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
+      "url": "https://github.com/google/gvisor/pull/16493",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-27T08:08:47+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "summary": "The full header suite passed all 14,765 cases on each native CPU within its original deadline. The AMD64 Firecracker timeouts are retained as a separate worker failure.",
       "followup": {
-        "owner": "native_runtime",
+        "owner": "root",
         "sourceHead": "beb37f745205fd9a9c9ef0a248787377d22e8d2a",
-        "observedAt": "2026-10-27T08:08:47+00:00",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open the independent fixture fix after contributor review.",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16493",
+        "nextAction": "Follow maintainer review and public checks on #16493.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16493",
+          "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
           "https://app.buildbuddy.io/invocation/9e7ad1c9-b324-43f3-bf40-4be70ae7a297",
           "https://app.buildbuddy.io/invocation/9a31d2b0-f5f6-49f3-bc3c-3f2dfa2f08d4",
           "https://app.buildbuddy.io/invocation/ee9a9ace-272f-4719-ae46-9769c305d23b",
@@ -26947,6 +26994,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Contributor-reviewed commit",
+          "url": "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a"
+        },
         {
           "label": "Complete AMD64 header suite at the original deadline",
           "url": "https://app.buildbuddy.io/invocation/9e7ad1c9-b324-43f3-bf40-4be70ae7a297"
@@ -26964,36 +27015,25 @@
           "url": "https://app.buildbuddy.io/invocation/b647754e-f85f-41b1-8836-5225a730127f"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "beb37f745205fd9a9c9ef0a248787377d22e8d2a",
-        "url": "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
-        "title": "Compare UDP checksums as transmitted on the wire",
-        "summary": "Review the test fixture and its two deterministic UDP cases before opening a PR.",
-        "body": "A fully computed UDP checksum of zero is transmitted as 0xffff. The\nrandomized port and address tests compared against zero instead. They\nalso initialized some UDP headers with a zero checksum field, which\ninstructs the update methods to preserve disabled checksumming.\n\nUse the UDP wire encoding for both the initial and expected checksums.\nCompare raw sums for partial checksums and keep the ordinary complement\nfor TCP. Exercise port updates into and out of a computed zero checksum."
-      }
+      "number": 16493
     },
     {
-      "id": "branch:review/kvm-vdso-declared-tools",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16491",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/kvm-vdso-declared-tools",
       "head": "c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
       "title": "Declare vDSO disassembly tools",
-      "url": "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+      "url": "https://github.com/google/gvisor/pull/16491",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-27T07:53:19+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "summary": "Bazel ran all 23 AMD64 and 20 ARM64 cases with PATH=/nonexistent. Both native test actions used the declared LLVM tools. This covers the vDSO unit tests, which do not require /dev/kvm.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
-        "url": "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
-        "title": "Declare vDSO disassembly tools",
-        "summary": "Review the tool declarations and disassembly checks before opening a PR.",
-        "body": "The KVM vDSO tests invoked objdump from the worker's PATH without\nproviding it as a test input. Their disassembly checks failed on ARM64\nworkers without a system binutils installation.\n\nSupply the pinned LLVM object tools through the test's runfiles. Wrap\nraw instructions in an ELF text section so disassembly preserves their\nimage-relative branch destinations, and match LLVM's instruction\nspellings in the expected output. Keep the tools in the test's target\nconfiguration so they execute on the same architecture as the test."
-      },
       "evidence": [
+        {
+          "label": "Contributor-reviewed commit",
+          "url": "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e"
+        },
         {
           "label": "Native AMD64 and ARM64 runs with PATH disabled",
           "url": "https://app.buildbuddy.io/invocation/1ed0c7c1-eae5-4cc0-8c89-dff268322054"
@@ -27002,21 +27042,39 @@
           "label": "ARM64 suite on a worker without system objdump",
           "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
         }
-      ]
+      ],
+      "number": 16491,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16491",
+        "nextAction": "Follow maintainer review and public checks on #16491.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16491",
+          "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+          "https://app.buildbuddy.io/invocation/1ed0c7c1-eae5-4cc0-8c89-dff268322054",
+          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+        ]
+      }
     },
     {
-      "id": "branch:sandbox-python-null-netns-lifetime",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16492",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "sandbox-python-null-netns-lifetime",
       "head": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
-      "title": "Keep gofer mounts out of temporary Python sandbox directories",
-      "url": "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
+      "title": "Fix temporary Python sandbox namespace cleanup",
+      "url": "https://github.com/google/gvisor/pull/16492",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-27T08:16:51+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "summary": "The SDK now cleans up its temporary runsc root. On native AMD64, 38 existing tests passed and one non-root check skipped; two successive sandboxes also reused the same caller-owned namespace.",
       "evidence": [
+        {
+          "label": "Contributor-reviewed commit",
+          "url": "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb"
+        },
         {
           "label": "Original failures in the Python SDK suite",
           "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
@@ -27028,45 +27086,40 @@
       ],
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-27T08:16:51+00:00",
         "sourceHead": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open the standalone SDK fix after contributor review.",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16492",
+        "nextAction": "Follow maintainer review and public checks on #16492.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16492",
+          "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
           "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03",
           "https://app.buildbuddy.io/invocation/5c82c48e-554c-477e-89a4-a719dddbcedf"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
-        "url": "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
-        "title": "Keep gofer namespace mounts out of temporary Python sandbox directories",
-        "summary": "Review the new default for a temporary root and explicit sharing for callers with a persistent directory.",
-        "body": "runsc pins its empty gofer network namespace under its state directory\nso other sandboxes can reuse it. The Python SDK gives runsc a directory\nthat may be owned by a single Sandbox or by a TemporaryDirectory.\nDeleting that directory fails with EBUSY while the namespace is mounted.\n\nStart the gofer in a fresh empty network namespace by default. Callers\nthat start many sandboxes can pass a persistent shared_root to reuse the\nnamespace without tying its lifetime to an individual sandbox."
-      }
+      "number": 16492
     },
     {
-      "id": "branch:qualification/release-mixed-presubmit",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16490",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "qualification/release-mixed-presubmit",
-      "head": "eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
+      "head": "21d21cad8e54a5d2cf69319065167a1cc1b90b89",
       "title": "Build both release architectures in one Bazel invocation",
-      "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
+      "url": "https://github.com/google/gvisor/pull/16490",
       "group": "rbe",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-27T08:08:47+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "summary": "Buildkite currently asks Make to build six packages separately. This change builds all six in one Bazel invocation and keeps their existing filenames and staging directories.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
-        "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
-        "title": "Build both release architectures in one Bazel invocation",
-        "summary": "Review the combined selection, output staging and the two Buildkite consumers before opening a PR.",
-        "body": "Buildkite calls Make separately for x86_64 and aarch64. Each call\nbuilds the Debian package and the two release tarballs separately.\n\nAdd `make artifacts-all` to build all six packages in one Bazel\ninvocation and stage them in the existing architecture directories.\nUse it in presubmit and release CI. The release job still builds in\nopt mode. The single-architecture Make targets still produce their\nthree files, now in one build.\n\nVerified all six staged files through direct Make and the optimized\nDocker builder. The packaged runsc and shim reported their versions on\nnative AMD64 and ARM64. On AMD64, runsc also ran `/bin/true` with\nsystrap."
-      },
       "evidence": [
+        {
+          "label": "Contributor-reviewed commit",
+          "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9"
+        },
+        {
+          "label": "Published, patch-identical rebase",
+          "url": "https://github.com/tamird/gvisor/commit/21d21cad8e54a5d2cf69319065167a1cc1b90b89"
+        },
         {
           "label": "Single Docker/Make build: all six opt packages",
           "url": "https://app.buildbuddy.io/invocation/dfd11ffe-84f8-477f-8d24-20263fe973d8"
@@ -27079,32 +27132,54 @@
           "label": "Earlier smoke fixture rejected before running any tests",
           "url": "https://app.buildbuddy.io/invocation/2c0e4e9a-6c44-4b6f-87cc-30d4ab353413"
         }
-      ]
+      ],
+      "number": 16490,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "21d21cad8e54a5d2cf69319065167a1cc1b90b89",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16490",
+        "nextAction": "Follow maintainer review and public checks on #16490.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16490",
+          "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
+          "https://github.com/tamird/gvisor/commit/21d21cad8e54a5d2cf69319065167a1cc1b90b89",
+          "https://app.buildbuddy.io/invocation/dfd11ffe-84f8-477f-8d24-20263fe973d8",
+          "https://app.buildbuddy.io/invocation/9b77eff7-eaf0-4206-bcf2-43250fc1ae95",
+          "https://app.buildbuddy.io/invocation/2c0e4e9a-6c44-4b6f-87cc-30d4ab353413"
+        ]
+      }
     },
     {
-      "id": "branch:review/cgroup-remote-permission",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16496",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/cgroup-remote-permission",
       "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
-      "title": "Run the cgroup unit tests on remote workers",
-      "url": "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+      "title": "Run cgroup tests on remote workers",
+      "url": "https://github.com/google/gvisor/pull/16496",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-27T08:15:17+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "summary": "The permission fixture now exercises EACCES even on privileged workers. All 156 cgroup cases and the raw-socket test passed on AMD64 and ARM64, without skips.",
       "followup": {
-        "owner": "native_runtime",
+        "owner": "root",
         "sourceHead": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
-        "observedAt": "2026-10-27T08:15:17+00:00",
-        "disposition": "Contributor decision requested",
-        "nextAction": "Open the independent PR after contributor review.",
+        "observedAt": "2026-10-27T09:36:13+00:00",
+        "disposition": "Published as #16496",
+        "nextAction": "Follow maintainer review and public checks on #16496.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16496",
+          "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
           "https://app.buildbuddy.io/invocation/d1321eb7-9d50-42a3-bd84-01c8862b3205",
           "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
         ]
       },
       "evidence": [
+        {
+          "label": "Contributor-reviewed commit",
+          "url": "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
+        },
         {
           "label": "Default workers reproduced the permission failure on both architectures",
           "url": "https://app.buildbuddy.io/invocation/d1321eb7-9d50-42a3-bd84-01c8862b3205"
@@ -27114,14 +27189,6 @@
           "url": "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
-        "url": "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
-        "title": "Run the cgroup unit tests on remote workers",
-        "summary": "Review removal of the local restriction and the thread-scoped capability helper shared with the boot test.",
-        "body": "TestCreateController checked that MkdirAll failed with EACCES beneath\na mode-0555 directory. A worker with CAP_DAC_OVERRIDE could create the\nsubdirectory instead. Run that check without the effective capability.\nThe cgroup tests use test-owned directories and do not need a local\nexecutor or a writable host cgroup mount.\n\nShare the thread handling with the host-network test that must run\nwithout CAP_NET_RAW. Pin the test goroutine before reading its Linux\ncapabilities. When it drops a capability, let Go retire the thread on\ntest exit so the modified credentials cannot reach another goroutine."
-      },
       "refinement": {
         "before": {
           "head": "f10cbd23776663b17fc4abb1624b13ca62c35327"
@@ -27129,7 +27196,8 @@
         "after": {
           "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
         }
-      }
+      },
+      "number": 16496
     }
   ],
   "edges": [
@@ -30048,7 +30116,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-27T07:28:05+00:00",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "summary": "The reporter\u2019s standalone Reno workload stalled on stock gVisor in all five Linux trials at 134,684 of 524,288 bytes, matching the reporter\u2019s Windows trial M003. The interrupted SACK recovery fix and the reporter\u2019s ACK-only change each completed all five transfers in under a second. All three no-loss controls passed.",
       "findings": [
         {
@@ -31377,8 +31445,12 @@
           ]
         }
       ],
-      "nextStep": "Review the interrupted SACK recovery fix. The Linux replay explains the synthetic stall, not the original packet loss on the FreeBSD subnet router.",
+      "nextStep": "Follow the interrupted SACK recovery fix in #16495. The Linux replay explains the synthetic stall, not the original packet loss on the FreeBSD subnet router.",
       "evidence": [
+        {
+          "label": "Interrupted SACK recovery fix",
+          "url": "https://github.com/google/gvisor/pull/16495"
+        },
         {
           "label": "Same-worker replay: all 18 trial reports",
           "url": "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335"
@@ -40006,7 +40078,7 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-27T03:05:18.860442+00:00",
+      "updatedAt": "2026-10-27T09:36:13+00:00",
       "summary": "Pin the maintained upstream image when it already supplies what the test needs; add Bazel-built layers for gVisor binaries and test data. The published Apache and Bun changes follow this approach. The separate basic Ruby recipe has no remaining consumer.\n\nThe scoped PHP runtime-owner gate is complete: one uncached AMD64 systrap owner passed all seven ordered batches at fc400d74. The retained raw new-image selection has five PASS and two SKIP. That historical scoped result is separate from the later full-suite result below; both-CPU image assembly does not establish ARM runtime coverage.\n\nThe full PHP 8.5.11 run c7ffc9ac on source 537a323d selected all 21,872 direct PHPT names in each AMD64 filesystem mode. After the retained suite-name correction, each mode has 15,691 PASSED, 6,297 SKIPPED, 9 XFAILED and one WARNED native body result; redirect children are counted separately from direct selection. The ten reporting-group errors and 500 missing results were resolved from the original artifacts without rerunning PHP. All 16 Bazel wrappers exited zero, satisfying the public process-exit policy on this retained source. PHP excludes WARNED from its failing exit states, and the public gVisor make/proctor/runner chain preserves that process result; the relevant current bf84 execution paths match the retained source. The stricter qualification still records watch_006.phpt as WARNED and keeps aggregate FAIL in both modes. A separate one-case native runc control a4f8a5ba used the exact original image archive, proctor and runner and produced the same WARNED result: its XFAIL marker was present although the expected output passed. This discrepancy does not support a gVisor runtime or exit-rule fix, a PHP backport or another full run. Exact-image parity and public process-exit success remain distinct from the preserved strict failure; neither is a new Buildkite result, a whole-matrix pass at bf84, full native parity or ARM runtime evidence.",
       "findings": [
         {
@@ -40192,8 +40264,12 @@
           ]
         }
       ],
-      "nextStep": "MariaDB waits for PostgreSQL #16460. Benchmark Nginx needs the Apache payloads in #16466; stock Nginx and Redis wait for #16250. The unused basic Ruby recipe is ready for contributor review. Keep the separate image-test/ruby Dockerfile until its native gems can be built for the selected Ruby ABI. The local BusyBox build was withdrawn.",
+      "nextStep": "MariaDB waits for PostgreSQL #16460. Benchmark Nginx needs the Apache payloads in #16466; stock Nginx and Redis wait for #16250. PR #16498 removes the unused basic Ruby recipe. Keep the separate image-test/ruby Dockerfile until its native gems can be built for the selected Ruby ABI. The local BusyBox build was withdrawn.",
       "evidence": [
+        {
+          "label": "Remove the unused basic Ruby image",
+          "url": "https://github.com/google/gvisor/pull/16498"
+        },
         {
           "label": "Current base and runtime requirement audit",
           "url": "https://tamird.github.io/gvisor/image-base-audit.md"
@@ -40524,6 +40600,58 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40436271628/job/121965613080"
         }
       ]
+    },
+    {
+      "id": "investigation:scratch-build-actions",
+      "title": "Build on scratch workers with no undeclared tools",
+      "status": "active",
+      "owner": "root",
+      "updatedAt": "2026-10-27T09:27:48+00:00",
+      "summary": "Start RBE build actions with an empty image. Compilers, linkers, shells, interpreters, their runtimes and any helper commands must come from declared Bazel inputs or toolchains. A worker with /bin/sh installed can hide the same class of dependency as a worker with objdump installed.",
+      "findings": [
+        {
+          "text": "The KVM vDSO disassembly tests failed on an ARM64 worker without objdump. Passing the LLVM tools through Bazel runfiles let all 23 AMD64 and 20 ARM64 cases pass with PATH disabled. Those workers still had a filesystem; this proves the disassembler is declared, not that the entire build runs on scratch.",
+          "evidence": [
+            {
+              "label": "Declare the tools used to inspect the vDSO",
+              "url": "https://github.com/google/gvisor/pull/16491"
+            },
+            {
+              "label": "Native AMD64 and ARM64 vDSO tests with PATH disabled",
+              "url": "https://app.buildbuddy.io/invocation/1ed0c7c1-eae5-4cc0-8c89-dff268322054"
+            }
+          ]
+        },
+        {
+          "text": "The sentry race/coverage action uses a genrule and invokes a Bash script that downloads Go with curl and extracts it with tar. Its declared inputs include the script and Go sources, but not Bash, curl or tar. This build needs either declared tools or rules that do the work without those tools.",
+          "evidence": [
+            {
+              "label": "Coverage build script at the qualified product revision",
+              "url": "https://github.com/tamird/gvisor/blob/d943b4a1776c8c2281cff19eed2ff02a2a892619/tools/build_cover.sh#L17-L60"
+            },
+            {
+              "label": "Sentry coverage action and declared inputs",
+              "url": "https://github.com/tamird/gvisor/blob/d943b4a1776c8c2281cff19eed2ff02a2a892619/runsc/cmd/sentry/BUILD#L39-L76"
+            },
+            {
+              "label": "go_cov is Bazel's genrule",
+              "url": "https://github.com/tamird/gvisor/blob/d943b4a1776c8c2281cff19eed2ff02a2a892619/tools/bazeldefs/go.bzl#L16"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Compare a representative Go, C++ and shell-using action's inputs and command with the files supplied by its worker. Run those actions on scratch, declare what is missing, and extend the check to both architectures and the release builds.",
+      "evidence": [
+        {
+          "label": "vDSO tools use explicit runfiles",
+          "url": "https://github.com/google/gvisor/pull/16491"
+        },
+        {
+          "label": "Coverage build prerequisites",
+          "url": "https://github.com/tamird/gvisor/blob/d943b4a1776c8c2281cff19eed2ff02a2a892619/tools/build_cover.sh#L17-L60"
+        }
+      ],
+      "group": "rbe"
     }
   ]
 }
