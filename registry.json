@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T17:24:05+00:00",
+    "updatedAt": "2026-10-27T17:49:48+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27620,6 +27620,46 @@
           "url": "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e"
         }
       ]
+    },
+    {
+      "id": "branch:systrap-elf-offsets",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/systrap-elf-offsets",
+      "head": "353fb5556844a9b683887f432cb19c123b3e4168",
+      "title": "Generate systrap stub offsets from the linked ELF",
+      "url": "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
+      "group": "bazel",
+      "status": "Contributor review",
+      "summary": "Replace the worker's nm/grep/tr/awk pipeline with a declared Go executable that reads the linked systrap stub ELF. The generated declarations match GNU for both AMD64 and ARM64 objects. The same native AMD64 tool also passed with only its executable and input object available; the AMD64 installed systrap smoke passed. This does not claim ARM runtime coverage.",
+      "updatedAt": "2026-10-27T17:49:48+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "url": "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
+        "head": "353fb5556844a9b683887f432cb19c123b3e4168",
+        "summary": "Review the qualified replacement of the systrap offset shell pipeline with a declared Go tool before opening an upstream PR."
+      },
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "353fb5556844a9b683887f432cb19c123b3e4168",
+        "observedAt": "2026-10-27T17:49:48+00:00",
+        "disposition": "Qualified fork proposal; contributor review requested",
+        "nextAction": "Wait for the contributor decision before opening an upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
+          "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Review the exact three-file change",
+          "url": "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...353fb5556844a9b683887f432cb19c123b3e4168"
+        },
+        {
+          "label": "Both object architectures, isolated tool and installed AMD64 smoke",
+          "url": "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
+        }
+      ]
     }
   ],
   "edges": [
@@ -30538,9 +30578,30 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-27T15:15:10+00:00",
-      "summary": "With the public recovery fix, Reno finished all four burst-loss transfers in 0.653\u20130.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288\u20130.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. The original FreeBSD failure has not been reproduced.",
+      "updatedAt": "2026-10-27T17:49:48+00:00",
+      "summary": "The finite shared-FIFO experiment failed its SackedOut accounting assertion on both published #16495 (b7d9ced514) and its direct parent (9905813082). All eight schedules failed on both repeats for each source: 32 failed leaf executions. This is a virtual-time contention diagnostic, not a before/after throughput or fairness result. The existing SACK-credit correction #15634 addresses the implicated accounting path and remains the prerequisite for the approved flight-accounting follow-up; this run did not test those changes.\n\nWith the public recovery fix, Reno finished all four burst-loss transfers in 0.653\u20130.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288\u20130.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. The original FreeBSD failure has not been reproduced.",
       "findings": [
+        {
+          "text": "The finite shared-FIFO experiment failed its SackedOut accounting assertion on both published #16495 (b7d9ced514) and its direct parent (9905813082). All eight schedules failed on both repeats for each source: 32 failed leaf executions. This is a virtual-time contention diagnostic, not a before/after throughput or fairness result. The existing SACK-credit correction #15634 addresses the implicated accounting path and remains the prerequisite for the approved flight-accounting follow-up; this run did not test those changes. The first retained negative observation in cubic_reno_setup01_write01 is identical in both arms: flow 1 has SackedOut -2 at 1.2377984 s, after a retained value of 31 at 1.1989504 s. The latest-probe sampling does not identify the exact first decrement.",
+          "evidence": [
+            {
+              "label": "Both sources: eight FIFO schedules, two repeats each",
+              "url": "https://app.buildbuddy.io/invocation/4e09fbd4-c697-4a55-b864-f8aac7caee0e"
+            },
+            {
+              "label": "Existing SACK-credit correction",
+              "url": "https://github.com/google/gvisor/pull/15634"
+            },
+            {
+              "label": "Published interrupted-recovery source",
+              "url": "https://github.com/tamird/gvisor/commit/b7d9ced514fd9ea5d4159b36b42ae16a22dbe634"
+            },
+            {
+              "label": "Direct parent used as control",
+              "url": "https://github.com/tamird/gvisor/commit/99058130824e4d3166bf0e376f9b15b6ad50146c"
+            }
+          ]
+        },
         {
           "text": "With the public recovery fix, Reno finished all four burst-loss transfers in 0.653\u20130.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288\u20130.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. The original FreeBSD failure has not been reproduced.",
           "evidence": [
@@ -31880,8 +31941,24 @@
           ]
         }
       ],
-      "nextStep": "Follow #16495 through review and compare recovery on the existing shared queue with competing flows. Keep the reporter\u2019s synthetic transfer separate from the original FreeBSD incident.",
+      "nextStep": "Follow the existing #15634 SACK-credit prerequisite and approved flight-accounting successor. Keep this failed finite-FIFO experiment distinct from the reporter transfer and the original FreeBSD incident; do not infer a throughput or fairness improvement.",
       "evidence": [
+        {
+          "label": "Both sources: eight FIFO schedules, two repeats each",
+          "url": "https://app.buildbuddy.io/invocation/4e09fbd4-c697-4a55-b864-f8aac7caee0e"
+        },
+        {
+          "label": "Existing SACK-credit correction",
+          "url": "https://github.com/google/gvisor/pull/15634"
+        },
+        {
+          "label": "Published interrupted-recovery source",
+          "url": "https://github.com/tamird/gvisor/commit/b7d9ced514fd9ea5d4159b36b42ae16a22dbe634"
+        },
+        {
+          "label": "Direct parent used as control",
+          "url": "https://github.com/tamird/gvisor/commit/99058130824e4d3166bf0e376f9b15b6ad50146c"
+        },
         {
           "label": "Results reported to the author of the reproducer",
           "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6445217353"
