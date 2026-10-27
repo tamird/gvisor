@@ -34,6 +34,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -130,7 +131,7 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		}
 		b.ReportMetric(float64(total), "checkpoint-total-B")
 	})
-	runEncode := func(b *testing.B, framed bool) {
+	runEncode := func(b *testing.B, buffered bool) {
 		b.StopTimer()
 		b.ReportAllocs()
 		// checkpointNginx produced this unkeyed state file.
@@ -148,7 +149,6 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		var encoded bytes.Buffer
 		encoded.Grow(len(stateFile))
 		initialCapacity := encoded.Cap()
-		var raw countingWriter
 		for i := 0; i < b.N; i++ {
 			ctx, cleanup := withHostFDs(b, ctx, names)
 			// The memory files' pages are stored separately. Only encode the
@@ -159,23 +159,14 @@ func BenchmarkCheckpointFile(b *testing.B) {
 				b.Fatal(err)
 			}
 			encoded.Reset()
-			raw.n = 0
 			b.StartTimer()
 			cpu += cpuTime(b, func() error {
-				if !framed {
-					_, err := state.Save(ctx, &raw, k)
-					return err
-				}
-				return saveKernel(ctx, &encoded, k, metadata)
+				return saveKernel(ctx, &encoded, k, metadata, buffered)
 			})
 			b.StopTimer()
 			cleanup()
 		}
 		b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
-		if !framed {
-			b.ReportMetric(float64(raw.n), "encoded-kernel-B")
-			return
-		}
 		ctx, cleanup := withHostFDs(b, ctx, names)
 		defer cleanup()
 		if _, err := loadKernel(ctx, plat, encoded.Bytes()); err != nil {
@@ -206,24 +197,16 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		b.ReportMetric(float64(encoded.Len()), "encoded-state-file-B")
 	}
 	for pair := range 12 {
-		modes := [2]string{"Codec", "Statefile"}
+		modes := [2]string{"Statefile", "CallerBuffer"}
 		if pair%2 != 0 {
 			modes[0], modes[1] = modes[1], modes[0]
 		}
 		for _, mode := range modes {
 			b.Run(fmt.Sprintf("Encode/pair=%02d/%s", pair, mode), func(b *testing.B) {
-				runEncode(b, mode == "Statefile")
+				runEncode(b, mode == "CallerBuffer")
 			})
 		}
 	}
-}
-
-// countingWriter is the original benchmark's unframed destination.
-type countingWriter struct{ n int64 }
-
-func (w *countingWriter) Write(p []byte) (int, error) {
-	w.n += int64(len(p))
-	return len(p), nil
 }
 
 // checkpointNginx checkpoints an idle nginx container, and returns the
@@ -447,16 +430,143 @@ func loadKernel(ctx context.Context, plat platform.Platform, data []byte) (*kern
 
 // saveKernel writes the same two objects as Kernel.SaveTo does when the pages
 // are saved separately: the CPUID feature set followed by the kernel.
-func saveKernel(ctx context.Context, dst io.Writer, k *kernel.Kernel, metadata map[string]string) error {
+func saveKernel(ctx context.Context, dst io.Writer, k *kernel.Kernel, metadata map[string]string, buffered bool) error {
+	return writeStatefile(dst, metadata, buffered, func(w io.Writer) error {
+		fs := k.FeatureSet()
+		if _, err := state.Save(ctx, w, &fs); err != nil {
+			return err
+		}
+		_, err := state.Save(ctx, w, k)
+		return err
+	})
+}
+
+// writeStatefile measures an optional caller-owned buffer in front of the
+// statefile writer. The unkeyed, uncompressed statefile already buffers 256 KiB;
+// the additional 4 KiB buffer batches calls through that writer's interface.
+// Construction and both finalizers are part of the measured operation. Only
+// the buffer created here is explicitly flushed, never a caller-owned dst.
+func writeStatefile(dst io.Writer, metadata map[string]string, buffered bool, save func(io.Writer) error) error {
 	w, err := statefile.NewWriter(dst, nil, metadata)
 	if err != nil {
 		return err
 	}
-	fs := k.FeatureSet()
-	if _, err = state.Save(ctx, w, &fs); err == nil {
-		_, err = state.Save(ctx, w, k)
+	if !buffered {
+		return errors.Join(save(w), w.Close())
 	}
-	return errors.Join(err, w.Close())
+	bw := bufio.NewWriter(w)
+	err = save(bw)
+	flushErr := bw.Flush()
+	return errors.Join(err, flushErr, w.Close())
+}
+
+// TestCheckpointWriterPayload uses deterministic state objects to compare the
+// decoded payload and header metadata; independent kernel map traversals need
+// not serialize in the same order. Both actual benchmark arms also reload their
+// complete kernel state file.
+func TestCheckpointWriterPayload(t *testing.T) {
+	ctx := context.Background()
+	marker := uint64(0x12345678)
+	values := make([]uint64, 70000)
+	for i := range values {
+		values[i] = uint64(i)*0x102030405 + 1
+	}
+	metadata := map[string]string{"compression": "none", "fixture": "caller-buffer"}
+	var originalPayload []byte
+	for _, buffered := range []bool{false, true} {
+		var encoded bytes.Buffer
+		if err := writeStatefile(&encoded, maps.Clone(metadata), buffered, func(w io.Writer) error {
+			if _, err := state.Save(ctx, w, &marker); err != nil {
+				return err
+			}
+			_, err := state.Save(ctx, w, &values)
+			return err
+		}); err != nil {
+			t.Fatal(err)
+		}
+		r, gotMetadata, err := statefile.NewReader(io.NopCloser(bytes.NewReader(encoded.Bytes())), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		payload, readErr := io.ReadAll(r)
+		if err := errors.Join(readErr, r.Verify(), r.Close()); err != nil {
+			t.Fatal(err)
+		}
+		if gotMetadata["_timestamp"] == "" {
+			t.Fatal("missing generated timestamp")
+		}
+		delete(gotMetadata, "_timestamp")
+		if !maps.Equal(gotMetadata, metadata) {
+			t.Fatalf("buffered=%t: metadata=%v, want %v", buffered, gotMetadata, metadata)
+		}
+		if buffered && !bytes.Equal(payload, originalPayload) {
+			t.Fatal("caller buffering changed the decoded statefile payload")
+		}
+		originalPayload = payload
+		reader := bytes.NewReader(payload)
+		var gotMarker uint64
+		var gotValues []uint64
+		if _, err := state.Load(ctx, reader, &gotMarker); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := state.Load(ctx, reader, &gotValues); err != nil {
+			t.Fatal(err)
+		}
+		if gotMarker != marker || !slices.Equal(gotValues, values) || reader.Len() != 0 {
+			t.Fatalf("buffered=%t: decoded objects differ or leave %d trailing bytes", buffered, reader.Len())
+		}
+	}
+}
+
+type checkpointErrorWriter struct {
+	writeErr error
+	closeErr error
+	closed   bool
+}
+
+func (w *checkpointErrorWriter) Write(p []byte) (int, error) {
+	if w.writeErr != nil {
+		return 0, w.writeErr
+	}
+	return len(p), nil
+}
+
+func (w *checkpointErrorWriter) Close() error {
+	w.closed = true
+	return w.closeErr
+}
+
+func TestCheckpointWriterSaveAndCloseErrors(t *testing.T) {
+	saveErr := errors.New("save failed")
+	closeErr := errors.New("close failed")
+	for _, buffered := range []bool{false, true} {
+		dst := checkpointErrorWriter{closeErr: closeErr}
+		err := writeStatefile(&dst, nil, buffered, func(w io.Writer) error {
+			return saveErr
+		})
+		if !errors.Is(err, saveErr) || !errors.Is(err, closeErr) || !dst.closed {
+			t.Fatalf("buffered=%t: error=%v, closed=%t; want both errors and a close", buffered, err, dst.closed)
+		}
+	}
+}
+
+func TestCheckpointWriterDeferredWriteError(t *testing.T) {
+	writeErr := errors.New("destination write failed")
+	var dst checkpointErrorWriter
+	var saveErr error
+	err := writeStatefile(&dst, nil, true, func(w io.Writer) error {
+		// Fill the statefile's 256 KiB buffer, then leave the suffix in our
+		// 4 KiB buffer. The underlying failure is deferred until finalization.
+		dst.writeErr = writeErr
+		_, saveErr = w.Write(make([]byte, 256*1024))
+		if saveErr == nil {
+			_, saveErr = w.Write([]byte("suffix"))
+		}
+		return saveErr
+	})
+	if saveErr != nil || !errors.Is(err, writeErr) {
+		t.Fatalf("save=%v, final=%v; want successful save then the write error", saveErr, err)
+	}
 }
 
 // cpuTime runs fn with automatic garbage collection disabled, and returns the

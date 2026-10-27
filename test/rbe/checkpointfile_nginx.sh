@@ -46,10 +46,10 @@ docker image inspect gvisor.dev/images/benchmarks/nginx:latest > "$out/nginx-ins
 python3 "$reporter" --image "$archive" "$out/nginx-inspect.json"
 GO_TEST_WRAP=1 GO_TEST_RUN_FROM_BAZEL=1 TEST_BINARY="$binary" \
   XML_OUTPUT_FILE="$out/checkpointfile.xml" GOMAXPROCS=1 \
-  taskset -c "$cpu" "$binary" '-test.run=^$' '-test.bench=^BenchmarkCheckpointFile$' \
+  taskset -c "$cpu" "$binary" '-test.run=^TestCheckpointWriter' -test.v '-test.bench=^BenchmarkCheckpointFile$' \
   -test.benchtime=5x -test.benchmem -test.cpu=1 -test.count=1 \
   -test-checkpoint=true -runtime="$RUNTIME" -config_path="$daemon_config" \
   | tee "$out/checkpointfile.log"
 
 python3 "$reporter" "$out"
-"$benchstat" "codec=$out/codec.bench" "statefile=$out/statefile.bench" | tee "$out/benchstat.txt"
+"$benchstat" "statefile=$out/statefile.bench" "caller-buffer=$out/callerbuffer.bench" | tee "$out/benchstat.txt"

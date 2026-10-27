@@ -70,6 +70,10 @@ def check_image(archive: Path, inspect: Path) -> None:
 
 def main(output: Path) -> None:
     log = (output / "checkpointfile.log").read_text()
+    controls = ("TestCheckpointWriterPayload", "TestCheckpointWriterSaveAndCloseErrors", "TestCheckpointWriterDeferredWriteError")
+    for name in controls:
+        if len(re.findall(rf"^--- PASS: {name} \(", log, re.MULTILINE)) != 1:
+            raise ValueError(f"missing unique passing correctness control {name}")
     pattern = r"CHECKPOINT_PAIR_INPUT sha256=([0-9a-f]{64}) state=(\d+) pages=(\d+) page_metadata=(\d+)"
     match re.findall(pattern, log):
         case [(digest, state, pages, page_metadata)]:
@@ -80,7 +84,7 @@ def main(output: Path) -> None:
         raise ValueError(f"missing checkpoint component: {sizes}")
 
     order: list[tuple[int, str]] = []
-    results: dict[str, list[str]] = {"Codec": [], "Statefile": []}
+    results: dict[str, list[str]] = {"CallerBuffer": [], "Statefile": []}
     rows: list[dict[str, object]] = []
     decodes = 0
     units = ("ns/op", "cpu-ns", "B/op", "allocs/op")
@@ -95,27 +99,24 @@ def main(output: Path) -> None:
                 raise ValueError(f"Decode measured a different checkpoint: {line}")
             decodes += 1
             continue
-        if not (parsed := re.fullmatch(r"BenchmarkCheckpointFile/Encode/pair=(\d\d)/(Codec|Statefile)(?:-1)?", name)):
+        if not (parsed := re.fullmatch(r"BenchmarkCheckpointFile/Encode/pair=(\d\d)/(Statefile|CallerBuffer)(?:-1)?", name)):
             raise ValueError(f"unexpected benchmark row: {line}")
         pair, arm = int(parsed[1]), parsed[2]
         if min(values[unit] for unit in units) <= 0:
             raise ValueError(f"missing timing/allocation metrics: {line}")
-        if arm == "Statefile":
-            if values.get("decoded-state-files") != 1 or values.get("encoded-state-file-B", 0) <= 0 or values.get("metadata-keys", 0) <= 0:
-                raise ValueError(f"missing decoded state file or metadata: {line}")
-            if not (values["initial-capacity-B"] == values["final-capacity-B"] >= values["encoded-state-file-B"]):
-                raise ValueError(f"the memory destination grew during measurement: {line}")
-        elif values.get("encoded-kernel-B", 0) <= 0:
-            raise ValueError(f"missing original kernel encoding: {line}")
+        if values.get("decoded-state-files") != 1 or values.get("encoded-state-file-B", 0) <= 0 or values.get("metadata-keys", 0) <= 0:
+            raise ValueError(f"missing decoded state file or metadata: {line}")
+        if not (values["initial-capacity-B"] == values["final-capacity-B"] >= values["encoded-state-file-B"]):
+            raise ValueError(f"the memory destination grew during measurement: {line}")
         order.append((pair, arm))
         rows.append({"pair": pair, "arm": arm, "metrics": values})
         comparable = " ".join(f"{values[unit]:.17g} {unit}" for unit in units)
         results[arm].append(f"BenchmarkCheckpointFile/Encode 5 {comparable}")
 
-    expected = [(pair, arm) for pair in range(12) for arm in (("Statefile", "Codec") if pair % 2 else ("Codec", "Statefile"))]
+    expected = [(pair, arm) for pair in range(12) for arm in (("CallerBuffer", "Statefile") if pair % 2 else ("Statefile", "CallerBuffer"))]
     if decodes != 1 or order != expected:
         raise ValueError(f"expected one Decode and AB/BA pairs {expected}; got Decode={decodes}, {order}")
-    summary = {"fixture_sha256": digest, "fixture_bytes": sizes, "pairs": 12, "iterations_per_sample": 5, "measurements": rows}
+    summary = {"fixture_sha256": digest, "fixture_bytes": sizes, "pairs": 12, "iterations_per_sample": 5, "measurements": rows, "correctness_controls": list(controls), "statefile_buffer_bytes": 262144, "added_caller_buffer_bytes": 4096}
     (output / "pairs.json").write_text(json.dumps(summary, indent=2) + "\n")
     # The qualification reporter keeps the Bazel test log even if undeclared
     # outputs are not downloaded. Preserve the exact input and raw samples there.
