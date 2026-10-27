@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
+load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test", "write_source_files")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "SIDECARS", "race_smoke_test", "release_files")
@@ -68,6 +69,19 @@ release_files(
     visibility = ["//visibility:public"],
 )
 
+_SMOKE_ARGS = select({
+    ":reference_test_clock": ["--clock-source=reference"],
+    "//conditions:default": [],
+}) + [
+    "--alsologtostderr",
+    "--network=none",
+    "--debug",
+    "--TESTONLY-unsafe-nonroot=true",
+    "--rootless",
+    "do",
+    "true",
+]
+
 [
     smoke_test(
         name = "release_" + name + "_test",
@@ -77,18 +91,7 @@ release_files(
         # Remote execution may materialize the native_test executable as a file.
         # Keep it beside the declared sidecars without relying on symlink identity.
         out = "release/" + name + "_test.exe",
-        args = select({
-            ":reference_test_clock": ["--clock-source=reference"],
-            "//conditions:default": [],
-        }) + [
-            "--alsologtostderr",
-            "--network=none",
-            "--debug",
-            "--TESTONLY-unsafe-nonroot=true",
-            "--rootless",
-            "do",
-            "true",
-        ],
+        args = _SMOKE_ARGS,
         env = select({
             "//tools:gotsan": {"GLIBC_TUNABLES": "glibc.pthread.rseq=0"},
             "//conditions:default": {},
@@ -102,6 +105,18 @@ release_files(
         ("smoke_race", race_smoke_test),
     ]
 ]
+
+# Exercise the same rootless command in the existing isolated ARM64 guest.
+arm64_tcg_test(
+    name = "release_smoke_arm64_tcg_test",
+    size = "large",
+    args = _SMOKE_ARGS,
+    guest_user = "nobody",
+    image = "//test/rbe/tcg:rc_guest",
+    payload = ":release_smoke_test_arm64",
+    run_under = "//test/rbe:worker_identity",
+    tags = [],
+)
 
 # Preserve Make's three do-tests commands. Rootless cases must start without
 # privileges so they exercise capability acquisition in a new user namespace.
