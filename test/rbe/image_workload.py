@@ -59,8 +59,12 @@ def summarize(sample: dict, algorithm: str, schedule: str, guards: tuple[bool, b
         raise ValueError(f"{s['Case']}: missing MSS")
     for w in offers:
         offset = (w["Seq"] - first_seq) % 2**32
-        expected_drop = (w["At"] - s["FirstData"] < 150_000_000
-                         and offset < last * unit and offset + w["Bytes"] > (first - 1) * unit)
+        first_flight_edge = 10 * unit
+        if w["Offer"] <= 10 and (w["Retry"] or offset != (w["Offer"] - 1) * unit or w["Bytes"] != unit):
+            raise ValueError(f"{s['Case']}: first flight was not ten contiguous full-sized MSSes")
+        quiet = w["At"] - s["FirstData"] < 150_000_000
+        admitted_range = offset == 0 or last * unit <= offset < first_flight_edge
+        expected_drop = quiet and (w["Retry"] or not admitted_range)
         if w["Dropped"] != expected_drop:
             raise ValueError(f"{s['Case']}: drop policy differs at offer {w['Offer']}")
     if ([w["Offer"] for w in offers] != list(range(1, len(offers) + 1)) or s["Offers"] != len(offers)
@@ -169,6 +173,10 @@ def measure(samples: dict) -> dict:
         before = next((r for r in states if r["Kind"] == "rto_interrupt"), None)
         summary["sack_evidence_before_first_rto"] = [w for w in wires if w["From"] == 1
                                                      and w["Due"] <= before["At"] and sparse(w["ACK"], w["SACK"])]
+        if not summary["sack_evidence_before_first_rto"] or not summary["timeout_interrupts_sack_recovery"]:
+            raise ValueError(f"{name}: timeout did not interrupt recovery of wire-observed sparse SACK holes")
+        if not summary["sparse_sacks_on_rto_ingress"]:
+            raise ValueError(f"{name}: no wire-observed SACK reached the sender during RTO recovery")
         summary["first_seq"] = first_seq
         summary["epochs"] = epochs
         results[name] = summary

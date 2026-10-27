@@ -211,7 +211,6 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 		s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
 	}
 	var seq, high uint32
-	var firstPayload uint32
 	var first bool
 	var syn [2]int
 	capture := func(side int, pkt *stack.PacketBuffer) {
@@ -243,19 +242,17 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 			w.Offer = row.Offers
 			if !first {
 				seq, first, row.FirstData = w.Seq, true, int64(now())
-				firstPayload = uint32(w.Bytes)
 			}
 			offset := w.Seq - seq
 			w.Retry = offset < high
 			high = max(high, offset+uint32(w.Bytes))
 			w.Dropped = loss.First > 0 && w.Offer >= loss.First && w.Offer <= loss.Last
 			if loss.Name == "interrupted_sack" {
-				// Drop bytes from the second through the eighth full-sized
-				// packet, including repairs, for 150 ms. Every packet after
-				// that point gets through, regardless of the sender's state.
+				// Admit first-flight packets 1, 9 and 10 so the peer
+				// reports a hole. Further data would keep its SACK clock
+				// going, so drop it too until the link opens at 150 ms.
 				w.Dropped = int64(now())-row.FirstData < int64(150*time.Millisecond) &&
-					offset < uint32(loss.Last)*firstPayload &&
-					offset+uint32(w.Bytes) > uint32(loss.First-1)*firstPayload
+					w.Offer != 1 && w.Offer != 9 && w.Offer != 10
 			}
 			if loss.Name == "lost_repair" && w.Offer == 13 {
 				w.Dropped = true
