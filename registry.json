@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T23:27:50.136123+00:00",
+    "updatedAt": "2026-10-27T23:43:58.268726+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27035,14 +27035,30 @@
       "group": "runtime",
       "status": "open",
       "summary": "Linux returns EPERM on writes to immutable /proc/PID and /proc/PID/task/TID directories. The change makes gVisor match Linux while preserving credential checks for internal mountpoint creation. Nine syscall cases, two mountpoint tests and the AMD64 and ARM64 analyzers passed on the reviewed patch. The published rebase has the same patch as the qualified commit.",
-      "updatedAt": "2026-10-27T22:36:29.172008+00:00",
+      "updatedAt": "2026-10-27T23:43:30.964781+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
-        "observedAt": "2026-10-27T22:36:29.172008+00:00",
-        "nextAction": "Verify the native and gVisor errno cases, then submit the concrete amendment and four replies for contributor review."
+        "observedAt": "2026-10-27T23:43:30.964781+00:00",
+        "nextAction": "Check the revised fork source, then address Lucas\u2019s four threads. Ordinary writable-directory opens now agree with Linux; the high-level mountpoint assertion checks a wrapped EACCES."
       },
       "evidence": [
+        {
+          "label": "Focused Go and syscall validation of eb15b3a970",
+          "url": "https://app.buildbuddy.io/invocation/909220d4-aa1b-4620-a37e-c6f9c7ec8239"
+        },
+        {
+          "label": "Current fork amendment; not yet on the public PR",
+          "url": "https://github.com/tamird/gvisor/commit/eb15b3a9701bde116974715d17f34c6cc19251fc"
+        },
+        {
+          "label": "Native and systrap: corrected writable directory opens",
+          "url": "https://app.buildbuddy.io/invocation/33f79b39-30ba-41b9-9742-7c7b5577f435"
+        },
+        {
+          "label": "Native and systrap: ordinary directory opens on the control",
+          "url": "https://app.buildbuddy.io/invocation/63b6585a-31a7-4d27-9b6c-5a2873cf40ef"
+        },
         {
           "label": "Focused remote recovery for the four reviewer threads",
           "url": "https://app.buildbuddy.io/invocation/f909adf2-ee7a-4ca6-84b0-a7d87d7b86b4"
@@ -27779,10 +27795,18 @@
       "title": "Keep the Debian changelog independent of the worker clock",
       "url": "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
       "group": "release",
-      "status": "Agent work",
-      "summary": "Two builds of the same release put different worker times in the Debian control archive. The changelog now reads its UTC date from the release version. Unreleased builds use the Unix epoch. The fix changes only the changelog generator and its BUILD target.",
-      "updatedAt": "2026-10-27T22:36:29.172008+00:00",
+      "status": "Reviewable",
+      "summary": "The changelog used the worker\u2019s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
+      "updatedAt": "2026-10-27T23:43:30.964781+00:00",
       "evidence": [
+        {
+          "label": "Original UTC release package and its embedded changelog",
+          "url": "https://app.buildbuddy.io/invocation/e41d62cb-b16d-466a-93ac-e773ae178fd2"
+        },
+        {
+          "label": "HST10 package and formatter controls",
+          "url": "https://app.buildbuddy.io/invocation/8a79641a-5275-46ab-bc4b-e74a82c8ca52"
+        },
         {
           "label": "Two tagged packages in different time zones and a development build",
           "url": "https://app.buildbuddy.io/invocation/e9e709c7-4666-46e1-8383-5eceadd0c1ae"
@@ -27819,10 +27843,18 @@
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
-        "observedAt": "2026-10-27T22:36:29.172008+00:00",
-        "nextAction": "Check the control archives from both time zones before requesting contributor review."
+        "observedAt": "2026-10-27T23:43:30.964781+00:00",
+        "nextAction": "Review the changelog-only fix. The UTC and Hawaii packages matched byte for byte, and the development-version check passed."
       },
-      "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2"
+      "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2",
+      "contributorReview": {
+        "status": "pending",
+        "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
+        "url": "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
+        "title": "Date the Debian changelog from the release version",
+        "summary": "The changelog used the worker\u2019s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
+        "body": "The changelog uses the build worker\u2019s clock and time zone. Rebuilding\nthe same version can therefore change the changelog in runsc.deb.\n\nUse the date from the declared Debian version for a release such as\n20261019.0. Write midnight UTC on that date, or the Unix epoch for a\nbuild without a release date. Keep the package version and the rest\nof the entry unchanged."
+      }
     },
     {
       "id": "pr:16508",
@@ -28206,9 +28238,13 @@
       "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
       "group": "release",
       "status": "Agent work",
-      "updatedAt": "2026-10-27T22:20:53.387967+00:00",
+      "updatedAt": "2026-10-27T23:43:58.268726+00:00",
       "summary": "The checker invokes Bazel directly. The former make mod target and nested Make fallback have been removed. The two public Buildkite callers retain a make license-check wrapper to select the builder. A remote run is checking native verification, a writable catalog regeneration and the Docker entry point.",
       "evidence": [
+        {
+          "label": "Missing catalog-rewrite and Docker Make gates",
+          "url": "https://app.buildbuddy.io/invocation/bc5dc9b0-5294-4004-bc5b-376685eba513"
+        },
         {
           "label": "Remote qualification of the replacement",
           "url": "https://app.buildbuddy.io/invocation/4cde4f07-443c-4b57-b47c-dacf50a8807d"
@@ -28249,8 +28285,8 @@
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
-        "observedAt": "2026-10-27T22:20:53.387967+00:00",
-        "nextAction": "Reconcile the 201-entry catalog rewrite and both verification paths before requesting review."
+        "observedAt": "2026-10-27T23:43:58.268726+00:00",
+        "nextAction": "Verify the regenerated 201-entry catalog and Docker Make invocation. The original parent disconnected; its successful Bazel children alone do not establish either result."
       }
     },
     {
@@ -28313,12 +28349,12 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "The linker script puts the mapped program in .crblob at zero. The offsets generator also extracts that section; it rejects a second allocated section rather than silently dropping it. This replaces a separate objcopy shell action.",
-      "updatedAt": "2026-10-27T22:36:29.172008+00:00",
+      "updatedAt": "2026-10-27T23:40:07.261920+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "observedAt": "2026-10-27T22:36:29.172008+00:00",
-        "nextAction": "Compare the three ELF configurations and run the installed AMD64 systrap smoke. Rebase the shared arch_genrule change after #16518."
+        "observedAt": "2026-10-27T23:40:07.261920+00:00",
+        "nextAction": "All three configurations matched the previous raw stub bytes and offsets. The installed smoke and empty-root replay still lack complete evidence. Keep those gates open."
       },
       "evidence": [
         {
@@ -42355,6 +42391,36 @@
         {
           "label": "Existing TMPFS and VFS locking review",
           "url": "https://github.com/google/gvisor/pull/14343"
+        }
+      ]
+    },
+    {
+      "id": "investigation:procfs-tmpfile-errno",
+      "title": "O_TMPFILE on immutable procfs directories",
+      "status": "active",
+      "owner": "native_runtime",
+      "updatedAt": "2026-10-27T23:40:07.261920+00:00",
+      "summary": "O_TMPFILE | O_RDWR on /proc/self and /proc/thread-self returned EPERM on Linux but EOPNOTSUPP on gVisor, both before and after the ordinary directory-open correction in #16473.",
+      "findings": [
+        {
+          "text": "Comparing both gVisor versions with native Linux separates the existing O_TMPFILE difference from the EISDIR regression under review.",
+          "evidence": [
+            {
+              "label": "Unchanged gVisor and native Linux",
+              "url": "https://app.buildbuddy.io/invocation/63b6585a-31a7-4d27-9b6c-5a2873cf40ef"
+            },
+            {
+              "label": "Revised gVisor and native Linux",
+              "url": "https://app.buildbuddy.io/invocation/33f79b39-30ba-41b9-9742-7c7b5577f435"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Identify where gVisor returns EOPNOTSUPP and compare its permission checks with Linux before proposing a separate fix.",
+      "evidence": [
+        {
+          "label": "Reviewed directory-open path",
+          "url": "https://github.com/google/gvisor/pull/16473#discussion_r4393753819"
         }
       ]
     }
