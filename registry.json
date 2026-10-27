@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T18:58:56+00:00",
+    "updatedAt": "2026-10-27T19:04:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27838,16 +27838,17 @@
       "title": "Declare the copy tool for architecture outputs",
       "url": "https://github.com/tamird/gvisor/commit/42a8333d1e1e92d33e1b6bd244db296f347b7274",
       "group": "bazel",
-      "status": "Contributor review",
-      "summary": "Replace arch_genrule\u2019s worker shell and PATH lookup of cp with the declared bazel_lib copy toolchain. All 16 fresh CopyFile outputs (eight output paths from four split-rule owners in each outer target configuration) matched their input bytes and modes; the AMD64 goid test passed. The parent run remains failed because an optional ARM aquery launcher executed on the AMD64 coordinator. Its retained action and output records independently establish the required results; this is not ARM runtime coverage.",
-      "updatedAt": "2026-10-27T18:52:32+00:00",
+      "status": "Published as #16518",
+      "summary": "Contributor-approved change published as #16518 at the exact qualified 42a8333d1e head. The contributor decision is complete. Replace arch_genrule\u2019s worker shell and PATH lookup of cp with the declared bazel_lib copy toolchain. All 16 fresh CopyFile outputs (eight output paths from four split-rule owners in each outer target configuration) matched their input bytes and modes; the AMD64 goid test passed. The parent run remains failed because an optional ARM aquery launcher executed on the AMD64 coordinator. Its retained action and output records independently establish the required results; this is not ARM runtime coverage.",
+      "updatedAt": "2026-10-27T19:04:01+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
-        "observedAt": "2026-10-27T18:52:32+00:00",
-        "disposition": "Exact fork proposal qualified; contributor review pending",
-        "nextAction": "Review the three-file proposal for upstream publication. Required copy, compile and embedded-output evidence is reconciled; the optional ARM aquery diagnostic remains failed, and no upstream PR has been opened.",
+        "observedAt": "2026-10-27T19:04:01+00:00",
+        "disposition": "Contributor-approved copy-tool change published as #16518",
+        "nextAction": "Follow maintainer review, public checks and import on #16518 through the existing intake; no contributor decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16518",
           "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...42a8333d1e1e92d33e1b6bd244db296f347b7274",
           "https://app.buildbuddy.io/invocation/b5634328-5caa-47d9-8f09-c09386ce1346",
           "https://app.buildbuddy.io/invocation/9901009d-cf02-47f5-9bdd-e5c1bd1a05cd",
@@ -27855,6 +27856,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Published copy-tool PR",
+          "url": "https://github.com/google/gvisor/pull/16518"
+        },
         {
           "label": "Review the exact three-file change",
           "url": "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...42a8333d1e1e92d33e1b6bd244db296f347b7274"
@@ -27872,12 +27877,57 @@
           "url": "https://app.buildbuddy.io/invocation/d5dcef73-9184-47f4-8950-9b57b0b4c0c1"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "url": "https://github.com/tamird/gvisor/commit/42a8333d1e1e92d33e1b6bd244db296f347b7274",
-        "head": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
-        "summary": "Review the declared copy-tool change for upstream publication. Sixteen copy outputs and the AMD64 goid case are verified; the parent\u2019s optional ARM aquery failure remains recorded."
-      }
+      "inactive": true
+    },
+    {
+      "id": "pr:16518",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/declared-arch-output-copy",
+      "head": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
+      "title": "Declare the copy tool for architecture outputs",
+      "url": "https://github.com/google/gvisor/pull/16518",
+      "group": "bazel",
+      "status": "open",
+      "summary": "Contributor-approved change published as #16518 at the exact qualified 42a8333d1e head. The contributor decision is complete. Replace arch_genrule\u2019s worker shell and PATH lookup of cp with the declared bazel_lib copy toolchain. All 16 fresh CopyFile outputs (eight output paths from four split-rule owners in each outer target configuration) matched their input bytes and modes; the AMD64 goid test passed. The parent run remains failed because an optional ARM aquery launcher executed on the AMD64 coordinator. Its retained action and output records independently establish the required results; this is not ARM runtime coverage.",
+      "updatedAt": "2026-10-27T19:04:01+00:00",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
+        "observedAt": "2026-10-27T19:04:01+00:00",
+        "disposition": "Contributor-approved copy-tool change published as #16518",
+        "nextAction": "Follow maintainer review, public checks and import on #16518 through the existing intake; no contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16518",
+          "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...42a8333d1e1e92d33e1b6bd244db296f347b7274",
+          "https://app.buildbuddy.io/invocation/b5634328-5caa-47d9-8f09-c09386ce1346",
+          "https://app.buildbuddy.io/invocation/9901009d-cf02-47f5-9bdd-e5c1bd1a05cd",
+          "https://app.buildbuddy.io/invocation/d5dcef73-9184-47f4-8950-9b57b0b4c0c1"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published copy-tool PR",
+          "url": "https://github.com/google/gvisor/pull/16518"
+        },
+        {
+          "label": "Review the exact three-file change",
+          "url": "https://github.com/tamird/gvisor/compare/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3...42a8333d1e1e92d33e1b6bd244db296f347b7274"
+        },
+        {
+          "label": "Original run: required outputs and AMD64 goid pass; optional ARM aquery fails",
+          "url": "https://app.buildbuddy.io/invocation/b5634328-5caa-47d9-8f09-c09386ce1346"
+        },
+        {
+          "label": "Original ARM-configured child: eight verified copy outputs",
+          "url": "https://app.buildbuddy.io/invocation/9901009d-cf02-47f5-9bdd-e5c1bd1a05cd"
+        },
+        {
+          "label": "Negative control: incorrect single-file check rejected valid split inputs",
+          "url": "https://app.buildbuddy.io/invocation/d5dcef73-9184-47f4-8950-9b57b0b4c0c1"
+        }
+      ],
+      "number": 16518
     }
   ],
   "edges": [
