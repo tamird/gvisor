@@ -217,8 +217,6 @@ func (i *Inotify) Read(ctx context.Context, dst usermem.IOSequence, opts ReadOpt
 		return 0, linuxerr.EINVAL
 	}
 
-	i.evMu.Lock()
-	defer i.evMu.Unlock()
 
 	if i.events.Empty() {
 		// Nothing to read yet, tell caller to block.
@@ -341,8 +339,6 @@ func (i *Inotify) AddWatch(target *Dentry, mask uint32) int32 {
 	// Lookup() below. With the lock held, we know for sure the lookup result
 	// won't become stale because it's impossible for *this* instance to
 	// add/remove watches on target.
-	i.mu.Lock()
-	defer i.mu.Unlock()
 
 	ws := target.Watches()
 	// Does the target already have a watch from this inotify instance?
@@ -412,8 +408,6 @@ type Watches struct {
 
 // Size returns the number of watches held by w.
 func (w *Watches) Size() int {
-	w.mu.Lock()
-	defer w.mu.Unlock()
 	return len(w.ws)
 }
 
