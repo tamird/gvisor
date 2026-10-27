@@ -157,6 +157,88 @@ test('new contributor observation survives an older full snapshot and controls a
   assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid state observation/);
 });
 
+test('new registry decisions appear in table, DAG and counts before a provider refresh', () => {
+  const nodes = ['nginx-checkpoint-http-readiness', 'benchmark-alpine'].map((name, index) => {
+    const head = String(index + 1).repeat(40);
+    return { id: `branch:${name}`, type: 'branch', title: name, repo: 'tamird/gvisor', head,
+      contributorReview: { status: 'pending', head, url: `https://github.com/tamird/gvisor/commit/${head}` } };
+  });
+  nodes.push({ id: 'branch:approved', type: 'branch', title: 'Approved child', status: 'Awaiting prerequisites' });
+  const { context, controls } = historyView(nodes);
+  context.document.getElementById = id => {
+    if (!controls.has(id)) controls.set(id, { value: '', checked: false, scrollTop: 0, scrollLeft: 0,
+      querySelectorAll: () => [], scrollTo() {} });
+    return controls.get(id);
+  };
+  vm.runInContext(`validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput);
+    updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {};
+    applyLive(snapshotInput, registryInput); reasonFilters = new Set(['author-proposal']);`, context);
+  const expected = nodes.slice(0, 2).map(node => node.id);
+  for (const expression of ['tableNodes()', 'graphNodes()'])
+    assert.deepEqual(JSON.parse(vm.runInContext(`JSON.stringify(${expression}.map(node => node.id))`, context)), expected);
+  assert.equal(vm.runInContext('attentionGroups(tableNodes(), "tamird")[0].entries.length', context), 2);
+  for (const node of vm.runInContext('tableNodes()', context)) {
+    assert.equal(node.workStates['contributor-review'].scope, node.head);
+    assert.equal(node.workStates['contributor-review'].since, context.registryInput.meta.updatedAt);
+    assert.equal(node.workStates['contributor-review'].observedAt, context.registryInput.meta.updatedAt);
+  }
+  assert.deepEqual(context.snapshotInput.workStates, {});
+});
+
+test('startup keeps registry decisions visible when no GitHub snapshot is usable', async () => {
+  const head = 'c'.repeat(40), branch = { id: 'branch:proposal', type: 'branch', title: 'Proposal', repo: 'tamird/gvisor', head,
+    contributorReview: { status: 'pending', head, url: `https://github.com/tamird/gvisor/commit/${head}` } };
+  const pr = { id: 'pr:1', type: 'pr', title: 'Published work', repo: 'google/gvisor', number: 1,
+    url: 'https://github.com/google/gvisor/pull/1' };
+  const { context } = historyView([branch, pr]);
+  context.localStorage = { getItem: () => null };
+  context.AbortSignal = { timeout: () => undefined };
+  context.fetch = async url => url === 'registry.json'
+    ? { ok: true, json: async () => context.registryInput } : { ok: false, status: 503 };
+  vm.runInContext('updateRegistryControls = () => {}; initialize = () => {}; restoreView = () => false; render = () => {};', context);
+  await vm.runInContext('start()', context);
+  vm.runInContext('reasonFilters = new Set(["author-proposal"])', context);
+  for (const expression of ['tableNodes()', 'graphNodes()'])
+    assert.deepEqual(JSON.parse(vm.runInContext(`JSON.stringify(${expression}.map(node => node.id))`, context)), [branch.id]);
+  assert.equal(vm.runInContext('model.nodes[0].workStates["contributor-review"].since', context), context.registryInput.meta.updatedAt);
+  assert.equal(vm.runInContext('model.checkedAt', context), undefined);
+  assert.equal(vm.runInContext('model.nodes[1].github', context), undefined);
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(model.nodes[1].workStates)', context)), {});
+});
+
+test('registry decisions retain only same-candidate ages and never revive consumed decisions', () => {
+  const context = client(), head = 'a'.repeat(40), next = 'b'.repeat(40);
+  const node = { id: 'branch:proposal', type: 'branch', head,
+    contributorReview: { status: 'pending', head, url: `https://github.com/tamird/gvisor/commit/${head}` } };
+  const previous = { scope: head, since: '2026-10-12T10:00:00Z', observedAt: context.snapshotInput.checkedAt,
+    basis: 'observed', qualifier: null };
+  context.nodeInput = node;
+  context.snapshotInput.workStates[node.id] = { 'contributor-review': previous };
+  const record = () => vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context);
+  assert.equal(record().since, previous.since);
+  assert.equal(record().observedAt, context.registryInput.meta.updatedAt);
+  // Publishing another candidate cannot reuse the earlier candidate's clock.
+  node.head = node.contributorReview.head = next;
+  node.contributorReview.url = `https://github.com/tamird/gvisor/commit/${next}`;
+  assert.equal(record().scope, next);
+  assert.equal(record().since, context.registryInput.meta.updatedAt);
+  // Moving a branch without updating its decision does not authorize that head.
+  node.head = head;
+  assert.equal(record(), undefined);
+  node.head = next;
+  for (const status of ['approved', 'rejected']) {
+    node.contributorReview.status = status;
+    assert.equal(record(), undefined);
+  }
+  delete node.contributorReview;
+  node.status = 'Withdrawn'; node.inactive = true;
+  assert.equal(record(), undefined);
+  assert.equal(vm.runInContext('historical(nodeInput)', context), true);
+  node.contributorChangesRequested = { head: next };
+  assert.equal(record(), undefined);
+  assert.deepEqual(idsFor(node), ['author-feedback']);
+});
+
 test('contributor decisions bind the registered branch repository and exact proposal head', () => {
   const context = client(), head = 'c'.repeat(40);
   for (const repo of ['tamird/gvisor', 'tamird/go']) {
@@ -233,13 +315,29 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
   node.github.head = 'd'.repeat(40);
   assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), true);
   assert.equal(vm.runInContext('refinementComparison(nodeInput)', context), null);
-  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"].scope', context), head);
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'], undefined);
+  assert.ok(!idsFor(node).includes('author-proposal'));
+  const refresh = reasonsFor(node).find(reason => reason.id === 'agent-refresh');
+  assert.match(refresh.detail, new RegExp(node.contributorReview.baseHead.slice(0, 9)));
+  assert.match(refresh.detail, new RegExp(node.github.head.slice(0, 9)));
   for (const change of [{ baseHead: head }, { baseHead: 'unknown' }, { body: '' },
     { url: `https://github.com/tamird/other/commit/${head}` },
     { url: `https://github.com/other/gvisor/commit/${head}` }]) {
     const original = { ...node.contributorReview }; Object.assign(node.contributorReview, change);
     assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision/);
     node.contributorReview = original;
+  }
+  for (const status of ['open', 'closed', 'merged']) {
+    node.github.status = status;
+    node.github.head = status === 'open' ? head : 'd'.repeat(40);
+    node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+    assert.equal(node.workStates['contributor-review'], undefined);
+    assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
+    assert.equal(vm.runInContext('contributorAmendmentNeedsRefresh(nodeInput)', context), false);
+    assert.ok(!idsFor(node).includes('author-proposal'));
+    assert.ok(!idsFor(node).includes('agent-refresh'));
+    assert.equal(vm.runInContext('historical(nodeInput)', context), status !== 'open');
   }
   delete node.contributorReview;
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
@@ -1196,7 +1294,7 @@ function historyView(nodes, investigations = []) {
 test('default visibility hides inactive history but retains live, blocked and newly actionable work', () => {
   const old = { id: 'branch:delivered', type: 'branch', title: 'Delivered proposal', status: 'Published as #1', inactive: true };
   const open = { ...attentionNode(1), inactive: true };
-  const decision = { ...old, id: 'branch:new-decision', contributorReview: { status: 'pending', head: 'a'.repeat(40) } };
+  const decision = { ...old, id: 'branch:new-decision', head: 'a'.repeat(40), contributorReview: { status: 'pending', head: 'a'.repeat(40) } };
   const changes = { ...old, id: 'branch:changes', head: 'b'.repeat(40), contributorChangesRequested: { head: 'b'.repeat(40) } };
   const work = { ...old, id: 'branch:ongoing', status: 'Agent work' };
   const blocked = { id: 'branch:blocked', type: 'branch', title: 'Approved child', status: 'Awaiting prerequisites' };
@@ -1233,9 +1331,15 @@ test('provider issue closure removes active blockers without claiming deployment
   vm.runInContext('initializing = false; drawStateFilters()', context);
   assert.equal(controls.get('all-reasons').textContent, 'All 2');
   closed.contributorReview = { kind: 'reply', status: 'pending', url: 'https://github.com/buildbuddy-io/buildbuddy/issues/1' };
+  context.nodeInput = closed;
+  closed.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(closed.workStates['contributor-review'].scope, closed.contributorReview.url);
+  assert.deepEqual(idsFor(closed), ['author-proposal']);
   assert.deepEqual(ids('tableNodes()'), [closed.id, dependent.id, unrelated.id]);
   assert.equal(vm.runInContext('activeDependencyEdges().length', context), 0);
   delete closed.contributorReview;
+  closed.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(closed.workStates['contributor-review'], undefined);
   context.location = new URL('https://example.test/?view=dag#external%3Acapacity');
   vm.runInContext('applyView(readViewURL())', context);
   assert.deepEqual(ids('graphNodes()'), [closed.id, dependent.id]);
@@ -1503,7 +1607,7 @@ test('copying contributor decisions includes proposal and outgoing-review tracke
   pr.github.headOwner = 'EtiennePerot';
   pr.contributorReview = { status: 'pending', kind: 'review', head: pr.github.head, url: pr.url };
   pr.workStates['contributor-review'] = { scope: pr.github.head };
-  const branch = { id: 'branch:review/fix', type: 'branch', contributorReview: { status: 'pending', head: 'b'.repeat(40) },
+  const branch = { id: 'branch:review/fix', type: 'branch', head: 'b'.repeat(40), contributorReview: { status: 'pending', head: 'b'.repeat(40) },
     workStates: { 'contributor-review': { scope: 'b'.repeat(40) } } };
   context.location = { href: 'https://tamird.github.io/gvisor/?q=old#stale' };
   context.nodesInput = [pr, branch];
@@ -1546,7 +1650,7 @@ test('ungrouped combined human attention copies both reviews and manual actions'
   pr.github.headOwner = 'EtiennePerot';
   pr.contributorReview = { status: 'pending', kind: 'review', head: pr.github.head, url: pr.url };
   pr.workStates['contributor-review'] = { scope: pr.github.head };
-  const branch = { id: 'branch:fix', type: 'branch', contributorReview: { status: 'pending', head: 'b'.repeat(40) },
+  const branch = { id: 'branch:fix', type: 'branch', head: 'b'.repeat(40), contributorReview: { status: 'pending', head: 'b'.repeat(40) },
     workStates: { 'contributor-review': { scope: 'b'.repeat(40) } } };
   const manual = { id: 'issue:google/benchmark:1634', type: 'issue', head: 'c'.repeat(40),
     humanAction: { status: 'pending', kind: 'submission', head: 'c'.repeat(40), summary: 'Submit manually' } };

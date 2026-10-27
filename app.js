@@ -346,6 +346,8 @@ function attentionReasons(node, owner) {
   };
   if (states(node)["contributor-review"])
     add("author-proposal", contributorDecision(node)?.summary || "A contributor decision is pending; this does not change the published head's review status.");
+  if (contributorAmendmentNeedsRefresh(node))
+    add("agent-refresh", `The amendment was prepared against ${node.contributorReview.baseHead.slice(0, 9)}, but the published head is ${node.github.head.slice(0, 9)}. Reconcile the proposal before requesting a contributor decision.`);
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   if (node.type === "branch" && node.status === "Agent work" && node.repo?.split("/")[0] === owner
@@ -754,14 +756,17 @@ function contributorChanges(node) {
 }
 function contributorDecision(node) {
   const decision = node.contributorReview;
-  return decision?.status === "pending" && (node.type === "branch"
-    || node.type === "pr" && decision.kind === "amendment"
+  return decision?.status === "pending" && (node.type === "branch" && decision.head === node.head
+    || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
     || ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision.kind)) ? decision : null;
 }
 function contributorDecisionHeadChanged(node) {
   const decision = contributorDecision(node);
   const head = decision?.kind === "amendment" ? decision.baseHead : decision?.head;
   return Boolean(node.github?.head && head && head !== node.github.head);
+}
+function contributorAmendmentNeedsRefresh(node) {
+  return contributorDecision(node)?.kind === "amendment" && contributorDecisionHeadChanged(node);
 }
 function humanAction(node) {
   const action = node.humanAction;
@@ -1250,13 +1255,13 @@ function drawDetails() {
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
   const decision = contributorDecision(node);
-  if (decision && states(node)["contributor-review"]) {
+  if (decision && (states(node)["contributor-review"] || contributorAmendmentNeedsRefresh(node))) {
     const section = element("section", "detail-section contributor-decision");
-    section.append(element("h3", "", decision.title || "Contributor decision requested"));
+    section.append(element("h3", "", contributorAmendmentNeedsRefresh(node) ? "Proposal needs reconciliation" : decision.title || "Contributor decision requested"));
     if (decision.summary) section.append(element("p", "", decision.summary));
     if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
     if (contributorDecisionHeadChanged(node))
-      section.append(element("p", "", "The published head has changed. Reconcile this recorded decision with the new source before acting."));
+      section.append(element("p", "", `The published head has changed from ${decision.baseHead || decision.head} to ${node.github.head}. Reconcile this recorded decision with the new source before acting.`));
     if (decision.body) {
       section.append(element("div", "decision-body", decision.body));
     }
@@ -1380,7 +1385,7 @@ function stateRecords(snapshot, node) {
   const decision = contributorDecision(node);
   // Only explicit decisions survive; legacy amendment prose on a live PR is
   // not a decision. Outgoing replies/reviews are independent of GitHub review.
-  if (!decision) delete records["contributor-review"];
+  delete records["contributor-review"];
   if (node.type === "branch") {
     const changes = contributorChanges(node);
     if (!changes || records["changes-requested"]?.scope !== changes.head) delete records["changes-requested"];
@@ -1394,8 +1399,6 @@ function stateRecords(snapshot, node) {
   }
   if (records.review) {
     if (node.type === "pr") records["maintainer-review"] ||= records.review;
-    else if (node.contributorReview?.status === "pending" && node.contributorReview.head === records.review.scope)
-      records["contributor-review"] ||= records.review;
     delete records.review;
   }
   if (approvedPatch(node)) delete records["maintainer-review"];
@@ -1438,8 +1441,15 @@ function stateRecords(snapshot, node) {
       records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, observedAt: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
     }
   }
-  if (decision && snapshot.workStates?.[node.id]?.["contributor-review"])
-    records["contributor-review"] = snapshot.workStates[node.id]["contributor-review"];
+  if (decision && !contributorAmendmentNeedsRefresh(node)) {
+    const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];
+    const previous = history?.["contributor-review"] || (node.type === "branch" ? history?.review : null);
+    // Registry publication is the first observation of a new decision; an older
+    // provider snapshot must neither hide it nor lend it another candidate's age.
+    records["contributor-review"] = previous?.scope === scope && previous.since
+      ? { ...previous, observedAt: registry.meta.updatedAt }
+      : { scope, since: registry.meta.updatedAt, observedAt: registry.meta.updatedAt, basis: "observed", qualifier: null };
+  }
   return records;
 }
 function applyLive(snapshot, nextRegistry = registry) {
@@ -1885,7 +1895,8 @@ async function start() {
     const response = await fetch("registry.json", { cache: "no-cache" });
     if (!response.ok) throw new Error(`Registry returned ${response.status}`);
     registry = await response.json(); validateRegistry(registry);
-    model = { ...registry, nodes: registryNodes(registry), groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
+    model = { ...registry, nodes: registryNodes(registry).map(node => ({ ...node, workStates: stateRecords({}, node) })),
+      groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
     updateRegistryControls();
     // Resolve URLs against the full snapshot, including newly discovered PRs.
     // A failed refresh leaves the validated registry as the known inventory.
