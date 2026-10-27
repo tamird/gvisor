@@ -120,6 +120,7 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 	err := safely(func() {
 		ds.Load(reflect.ValueOf(rootPtr).Elem())
 	})
+	fmt.Printf("STATE_SLICE_CENSUS root=%T prior_root=%d first_registration=%d\n", rootPtr, ds.slicePriorRoot, ds.sliceFirstRegistration)
 	return ds.stats, err
 }
 

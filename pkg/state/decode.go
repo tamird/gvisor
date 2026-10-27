@@ -128,6 +128,10 @@ func (ods *objectDecodeState) callbackRun(ds *decodeState) {
 // to ensure that all callbacks are executed, otherwise the callback graph was
 // not acyclic.
 type decodeState struct {
+	// These counters are confined to the untimed qualification binary.
+	slicePriorRoot         uint64
+	sliceFirstRegistration uint64
+
 	// ctx is the decode context.
 	ctx context.Context
 
@@ -578,10 +582,12 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// contents will still be filled in later on.
 		var v reflect.Value
 		if registered := ds.lookup(id); registered != nil {
+			ds.slicePriorRoot++
 			// An existing backing array already has its type, including
 			// when it is a field within another object.
 			v = walkChild(x.Ref.Dots, registered.obj)
 		} else {
+			ds.sliceFirstRegistration++
 			typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem())
 			v = ds.register(&x.Ref, typ)
 		}
