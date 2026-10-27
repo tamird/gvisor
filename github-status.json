@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-27T21:26:40.442744+00:00",
-  "registryDate": "2026-10-27T21:32:33.895621+00:00",
+  "registryDate": "2026-10-27T21:34:24.221287+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -212928,25 +212928,16 @@
         "since": "2026-10-27T21:32:33.895621+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-27T21:32:33.895621+00:00"
-      }
-    },
-    "branch:licensecheck-native-bazel-mod": {
-      "contributor-review": {
-        "scope": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
-        "since": "2026-10-27T20:46:28.700275+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-27T21:32:33.895621+00:00"
+        "observedAt": "2026-10-27T21:34:24.221287+00:00"
       }
     },
     "branch:systrap-native-stub": {
       "contributor-review": {
-        "scope": "d68466bd10983234d1d530d1f4557282508ff53a",
-        "since": "2026-10-27T21:17:06.374631+00:00",
+        "scope": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
+        "since": "2026-10-27T21:34:24.221287+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-27T21:32:33.895621+00:00"
+        "observedAt": "2026-10-27T21:34:24.221287+00:00"
       }
     }
   },

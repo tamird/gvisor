@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T21:32:33.895621+00:00",
+    "updatedAt": "2026-10-27T21:34:24.221287+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28189,9 +28189,9 @@
       "title": "Check licenses with the native Bazel module graph",
       "url": "https://github.com/tamird/gvisor/compare/845a4b61a9ba1dbd1dfc2594d1c67e3d82d9b826...b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
       "group": "release",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-27T20:46:28.700275+00:00",
-      "summary": "The revised Go implementation removes the shell adapter and preserves the original Make arguments. Exact native Bazel and documented native Make both validated all 201 dependencies with identical module graphs and 163 repository definitions. The direct path invokes neither Make nor Docker; the Make control is not a full Docker runtime trial.\n\nPrior revision, retained separately:\n\nThe tested native Bazel module-graph change is being revised to remove its shell adapter while preserving the original Make arguments. The prior two qualified paths checked all 201 dependencies and the same graph and 163 repository definitions; that evidence remains attached to 08de865d49 and does not qualify the upcoming revision. Contributor review is pending that revision and validation.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-27T21:34:24.221287+00:00",
+      "summary": "The contributor requested removal of the Make fallback. The assigned implementation owner is revising that behavior; no contributor decision is pending while the revision is prepared and qualified. The existing b01c6c7e53 results remain evidence only for that earlier source.\n\nEarlier qualified revision:\n\nThe revised Go implementation removes the shell adapter and preserves the original Make arguments. Exact native Bazel and documented native Make both validated all 201 dependencies with identical module graphs and 163 repository definitions. The direct path invokes neither Make nor Docker; the Make control is not a full Docker runtime trial.\n\nPrior revision, retained separately:\n\nThe tested native Bazel module-graph change is being revised to remove its shell adapter while preserving the original Make arguments. The prior two qualified paths checked all 201 dependencies and the same graph and 163 repository definitions; that evidence remains attached to 08de865d49 and does not qualify the upcoming revision. Contributor review is pending that revision and validation.",
       "evidence": [
         {
           "label": "Revised exact proposal without the shell adapter",
@@ -28224,13 +28224,11 @@
           "head": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
-        "url": "https://github.com/tamird/gvisor/commit/b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
-        "title": "Use native Bazel for license queries in bazel run",
-        "summary": "The revised Go implementation removes the shell adapter and preserves the original Make arguments. Exact native Bazel and documented native Make both validated all 201 dependencies with identical module graphs and 163 repository definitions. The direct path invokes neither Make nor Docker; the Make control is not a full Docker runtime trial.",
-        "body": "Running the license checker with `bazel run` can build the checker and\nthen try to build a Docker image just to read the module graph. Without\na Docker daemon, the audit stops before it checks any licenses.\n\nHave `bazel run` pass its native Bazel frontend to the checker. The same\ncode asks it for the module graph and the repository definitions used by\nthe audit. The documented `make license-check` and `make run` commands\nkeep their Make configuration, including on hosts where Bazel is only\navailable in the builder."
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46",
+        "observedAt": "2026-10-27T21:34:24.221287+00:00",
+        "nextAction": "Remove the Make fallback as requested, then qualify the revised source before returning it to contributor review."
       }
     },
     {
@@ -28238,14 +28236,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/systrap-native-stub",
-      "head": "d68466bd10983234d1d530d1f4557282508ff53a",
+      "head": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
       "title": "Build the systrap signal stub with the C toolchain",
-      "url": "https://github.com/tamird/gvisor/compare/fe2049b9aa0e659ec0a3147e606a78e2332149d2...d68466bd10983234d1d530d1f4557282508ff53a",
+      "url": "https://github.com/tamird/gvisor/compare/fe2049b9aa0e659ec0a3147e606a78e2332149d2...7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
       "group": "bazel",
       "status": "Reviewable",
-      "updatedAt": "2026-10-27T21:17:06.374631+00:00",
-      "summary": "Replace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
+      "updatedAt": "2026-10-27T21:34:24.221287+00:00",
+      "summary": "Revision 7c9ca1cc77 restores the rationale for -g0 and ARM64 -O1. The complete old^!/new^! range-diff changes comments only; all non-comment lines match qualified d68466bd10. Buildifier passed on the revised source. The native results below remain bound to d68466bd10, with no additional build/runtime claim for the comment-only revision.\n\nReplace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
       "evidence": [
+        {
+          "label": "Comment-only revision restoring both flag rationales",
+          "url": "https://github.com/tamird/gvisor/compare/d68466bd10983234d1d530d1f4557282508ff53a..7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
+        },
         {
           "label": "Exact signed two-file proposal",
           "url": "https://github.com/tamird/gvisor/compare/fe2049b9aa0e659ec0a3147e606a78e2332149d2...d68466bd10983234d1d530d1f4557282508ff53a"
@@ -28261,11 +28263,21 @@
       ],
       "contributorReview": {
         "status": "pending",
-        "head": "d68466bd10983234d1d530d1f4557282508ff53a",
-        "url": "https://github.com/tamird/gvisor/commit/d68466bd10983234d1d530d1f4557282508ff53a",
+        "head": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
+        "url": "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
         "title": "Build the systrap signal stub with the C toolchain",
-        "summary": "Replace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
+        "summary": "The revised source restores both compiler-flag rationales; its non-comment lines match qualified d68466bd10. Replace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
         "body": "Four shell rules use grep and tr to pick a source from lists of C,\nassembly and header files. Another shell rule passes the resulting\nobjects to ld. Declare those sources and the linker script on one\ncc_binary so Bazel selects the compile, assemble and link actions.\n\nLink without startup files or libc: gVisor maps this code as a blob,\nand the Go loader obtains its entry offsets from the linked ELF. Keep\nthe exported symbols even when only the Go loader references them."
+      },
+      "refinement": {
+        "before": {
+          "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2",
+          "head": "d68466bd10983234d1d530d1f4557282508ff53a"
+        },
+        "after": {
+          "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2",
+          "head": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
+        }
       }
     }
   ],
