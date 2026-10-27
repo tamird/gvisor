@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T18:54:54+00:00",
+    "updatedAt": "2026-10-27T18:58:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25048,37 +25048,41 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fix/tcp-advertised-window-state",
-      "head": "f5e35772f5ff7143e634613dc55a0e2356556cec",
+      "head": "97aa81bc43f6d417a8a082c48f98adb87bb203ef",
       "title": "tcp: preserve the receive window advertised to the peer",
       "url": "https://github.com/google/gvisor/pull/16382",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
-      "summary": "Etienne approved the published f5e35772f amendment after the review fixes. All three Lucas threads are resolved and no contributor decision remains. Current source checks and import progress come from the provider snapshot.\n\nRound a retained receive window up when truncation would move its right edge left, and use the same decoded window for segment acceptance.\n\nThe negative control withdrew sixteen bytes from the advertised right edge. The corrected wire regression is present in the passing fixed qualification (407 records), covering partial-segment acceptance and the scaled-zero reopen boundary. Preserve the failed control separately; this does not qualify memory-pressure policy or performance.\n\nEarlier source-specific record:\n\nMatching Copybara import #16385 at 7089c937472a is open with both public Buildkite 52336 and internal 34045 reporting SUCCESS in the 19:52 UTC snapshot. This records the two service outcomes, without inferring internal test details. Neither source PR nor import has landed. The separate source generate TLS failure remains preserved.\n\nEtienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
+      "updatedAt": "2026-10-27T18:58:56+00:00",
+      "summary": "Published the patch-identical rebase at 97aa81bc43 on upstream 845a4b61a9 to retry import. The complete range-diff is equal and the stable patch ID is unchanged. Etienne and Lucas approved the prior f5e35772f head; those approvals are retained through verified equivalence, not presented as new reviews. Copybara export #16385 is closed and unmerged, and its Buildkite cancellation remains historical. A new export still needs to appear; no reapproval request or import success is claimed.\n\nEarlier source-specific record:\n\nEtienne approved the published f5e35772f amendment after the review fixes. All three Lucas threads are resolved and no contributor decision remains. Current source checks and import progress come from the provider snapshot.\n\nRound a retained receive window up when truncation would move its right edge left, and use the same decoded window for segment acceptance.\n\nThe negative control withdrew sixteen bytes from the advertised right edge. The corrected wire regression is present in the passing fixed qualification (407 records), covering partial-segment acceptance and the scaled-zero reopen boundary. Preserve the failed control separately; this does not qualify memory-pressure policy or performance.\n\nEarlier source-specific record:\n\nMatching Copybara import #16385 at 7089c937472a is open with both public Buildkite 52336 and internal 34045 reporting SUCCESS in the 19:52 UTC snapshot. This records the two service outcomes, without inferring internal test details. Neither source PR nor import has landed. The separate source generate TLS failure remains preserved.\n\nEtienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
       "followup": {
         "owner": "root",
-        "sourceHead": "f5e35772f5ff7143e634613dc55a0e2356556cec",
-        "observedAt": "2026-10-26T22:13:52.843363+00:00",
-        "disposition": "Current-head maintainer approval received",
-        "nextAction": "Follow current source checks and matching import progress; the fresh approval is recorded and no new review request is needed.",
+        "sourceHead": "97aa81bc43f6d417a8a082c48f98adb87bb203ef",
+        "observedAt": "2026-10-27T18:58:56+00:00",
+        "disposition": "Equivalent rebase published to retry closed import",
+        "nextAction": "Wait for a new Copybara export of the approved equivalent patch. Export #16385 is closed and unmerged; no new maintainer approval or reviewer reminder is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16382#discussion_r4381418318",
           "https://github.com/tamird/gvisor/commit/f5e35772f5ff7143e634613dc55a0e2356556cec",
           "https://app.buildbuddy.io/invocation/f5618af9-6101-4f2a-9d95-7412b586b762",
-          "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659669671"
+          "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659669671",
+          "https://github.com/tamird/gvisor/commit/97aa81bc43f6d417a8a082c48f98adb87bb203ef",
+          "https://github.com/google/gvisor/pull/16385",
+          "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659724612",
+          "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659960489"
         ]
       },
       "evidence": [
         {
-          "label": "Current matching import public Buildkite passed",
+          "label": "Earlier evidence: Current matching import public Buildkite passed",
           "url": "https://buildkite.com/gvisor/pipeline/builds/52336"
         },
         {
-          "label": "Matching import of the approved advertised-window correction",
+          "label": "Earlier evidence: Matching import of the approved advertised-window correction",
           "url": "https://github.com/google/gvisor/pull/16385"
         },
         {
-          "label": "Exact-head maintainer approval",
+          "label": "Earlier evidence: Exact-head maintainer approval",
           "url": "https://github.com/google/gvisor/pull/16382#pullrequestreview-5644687073"
         },
         {
@@ -25102,11 +25106,11 @@
           "url": "https://app.buildbuddy.io/invocation/41cf6335-3e81-477a-8613-c63f51340d35"
         },
         {
-          "label": "Current public generate check: dependency-fetch TLS timeout",
+          "label": "Earlier evidence: Current public generate check: dependency-fetch TLS timeout",
           "url": "https://github.com/google/gvisor/actions/runs/40214836088/job/121233607069"
         },
         {
-          "label": "Current review feedback",
+          "label": "Earlier evidence: Current review feedback",
           "url": "https://github.com/google/gvisor/pull/16382#discussion_r4381418318"
         },
         {
@@ -25132,9 +25136,28 @@
         {
           "label": "Etienne\u2019s approval of the amended head",
           "url": "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659724612"
+        },
+        {
+          "label": "Published patch-identical import retry",
+          "url": "https://github.com/tamird/gvisor/commit/97aa81bc43f6d417a8a082c48f98adb87bb203ef"
+        },
+        {
+          "label": "Lucas\u2019s approval of the equivalent prior head",
+          "url": "https://github.com/google/gvisor/pull/16382#pullrequestreview-5659960489"
         }
       ],
-      "number": 16382
+      "number": 16382,
+      "approvedPatch": {
+        "head": "97aa81bc43f6d417a8a082c48f98adb87bb203ef",
+        "approvedHead": "f5e35772f5ff7143e634613dc55a0e2356556cec",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABUViLRA",
+        "reviewer": "EtiennePerot",
+        "submittedAt": "2026-10-26T22:03:43Z",
+        "verifiedAt": "2026-10-27T18:58:56+00:00",
+        "method": "stable-patch-id",
+        "oldPatchId": "fa278fd8b01f2ece38c72ab541dd2ed59478bf4a",
+        "newPatchId": "fa278fd8b01f2ece38c72ab541dd2ed59478bf4a"
+      }
     },
     {
       "id": "pr:16403",
