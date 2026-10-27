@@ -31,6 +31,7 @@ arch_genrule = rule(
     implementation = _arch_genrule_impl,
     attrs = {
         "src": attr.label(
+            allow_files = True,
             doc = "Target producing one file per architecture.",
             cfg = arch_transition,
             mandatory = True,
