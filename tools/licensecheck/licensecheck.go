@@ -14,8 +14,7 @@
 
 // Package licensecheck audits the licenses of gVisor's external dependencies.
 //
-// Dependencies are enumerated by asking Bazel (`make mod`, which wraps `bazel
-// mod` in the dockerized build environment): the root module's direct
+// Dependencies are enumerated by asking Bazel: the root module's direct
 // bazel_deps, the http_archive/http_file repos declared in MODULE.bazel, and
 // the Go repos imported from the go_deps extension, unioned with go.mod's
 // requirements. Fetch downloads each dependency's license text, from the Go
@@ -55,11 +54,14 @@ import (
 	"gvisor.dev/gvisor/pkg/zip"
 )
 
-// Paths locates the audit's inputs and output, relative to the repo root.
+// Paths specifies the audit's files and optional Bazel executable.
 type Paths struct {
 	GoMod  string
 	YAML   string
 	Policy string
+
+	// Bazel is the executable for module queries. If empty, use make mod.
+	Bazel string
 }
 
 // Entry records the license of a single dependency.
@@ -367,7 +369,7 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 
 // enumerate returns all external dependencies, sorted by name.
 func enumerate(p Paths) ([]dep, error) {
-	graphOut, err := makeMod("graph", "--depth", "1", "--extension_info=all", "--output", "json")
+	graphOut, err := bazelMod(p.Bazel, "graph", "--depth", "1", "--extension_info=all", "--output", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +407,7 @@ func enumerate(p Paths) ([]dep, error) {
 	for _, r := range refs {
 		refNames = append(refNames, r.ref)
 	}
-	showOut, err := makeMod(refNames...)
+	showOut, err := bazelMod(p.Bazel, refNames...)
 	if err != nil {
 		return nil, err
 	}
@@ -469,14 +471,19 @@ func enumerate(p Paths) ([]dep, error) {
 	return deps, nil
 }
 
-// makeMod runs `make mod TARGETS="..."`, which wraps `bazel mod`.
-func makeMod(args ...string) (string, error) {
-	cmd := exec.Command("make", "-s", "mod", "OPTIONS=", "TARGETS="+strings.Join(args, " "))
+// bazelMod runs a module query through Bazel or the project's Make wrapper.
+func bazelMod(bazel string, args ...string) (string, error) {
+	var cmd *exec.Cmd
+	if bazel == "" {
+		cmd = exec.Command("make", "-s", "mod", "OPTIONS=", "TARGETS="+strings.Join(args, " "))
+	} else {
+		cmd = exec.Command(bazel, append([]string{"mod"}, args...)...)
+	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("cannot run make mod %s: %w\n%s", strings.Join(args, " "), err, stderr.String())
+		return "", fmt.Errorf("cannot run %s: %w\n%s", cmd, err, stderr.String())
 	}
 	return stdout.String(), nil
 }

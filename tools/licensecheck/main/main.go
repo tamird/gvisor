@@ -28,6 +28,7 @@ var (
 	goMod    = flag.String("go_mod", "go.mod", "path to go.mod")
 	yamlPath = flag.String("yaml", "tools/licensecheck/dependencies.yaml", "path to the license YAML file")
 	policy   = flag.String("policy", "governance/licensing.yaml", "path to the licensing policy YAML file")
+	bazel    = flag.String("bazel", "", "Bazel executable for module queries (default: use make mod)")
 )
 
 func main() {
@@ -42,6 +43,7 @@ func main() {
 		GoMod:  *goMod,
 		YAML:   *yamlPath,
 		Policy: *policy,
+		Bazel:  *bazel,
 	}
 	var err error
 	switch *mode {
