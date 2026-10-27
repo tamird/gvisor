@@ -570,13 +570,21 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		obj.SetString(string(*x))
 	case *wire.Slice:
 		// See *wire.Ref above; same applies.
-		if id := objectID(x.Ref.Root); id == 0 {
+		id := objectID(x.Ref.Root)
+		if id == 0 {
 			return
 		}
 		// Note that it's fine to slice the array here and assume that
 		// contents will still be filled in later on.
-		typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-		v := ds.register(&x.Ref, typ)
+		var v reflect.Value
+		if registered := ds.lookup(id); registered != nil {
+			// An existing backing array already has its type, including
+			// when it is a field within another object.
+			v = walkChild(x.Ref.Dots, registered.obj)
+		} else {
+			typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem())
+			v = ds.register(&x.Ref, typ)
+		}
 		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
 	case *wire.Array:
 		ds.decodeArray(ods, obj, x)
