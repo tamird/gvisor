@@ -241,7 +241,7 @@ jobs:
           status=0
           "$GITHUB_WORKSPACE/harness/.github/native-podman-fixture.sh" --preflight || status=$?
           # Read only the kernel's namespace/security records from this probe.
-          sudo journalctl --kernel --since "$started" --no-pager --output=short-iso \
+          sudo journalctl --dmesg --since "$started" --no-pager --output=short-iso \
             --grep='apparmor|uid_map|newuidmap|userns' || printf 'Kernel audit excerpt unavailable.\n' >&2
           exit "$status"
       - name: Install the declared GNU cross toolchain
