@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T23:43:58.268726+00:00",
+    "updatedAt": "2026-10-27T23:55:47.275886+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27035,16 +27035,16 @@
       "group": "runtime",
       "status": "open",
       "summary": "Linux returns EPERM on writes to immutable /proc/PID and /proc/PID/task/TID directories. The change makes gVisor match Linux while preserving credential checks for internal mountpoint creation. Nine syscall cases, two mountpoint tests and the AMD64 and ARM64 analyzers passed on the reviewed patch. The published rebase has the same patch as the qualified commit.",
-      "updatedAt": "2026-10-27T23:43:30.964781+00:00",
+      "updatedAt": "2026-10-27T23:55:47.275886+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
-        "observedAt": "2026-10-27T23:43:30.964781+00:00",
-        "nextAction": "Check the revised fork source, then address Lucas\u2019s four threads. Ordinary writable-directory opens now agree with Linux; the high-level mountpoint assertion checks a wrapped EACCES."
+        "observedAt": "2026-10-27T23:55:47.275886+00:00",
+        "nextAction": "Contributor review of the tested amendment and four prepared replies to Lucas. The public PR still points to the earlier commit."
       },
       "evidence": [
         {
-          "label": "Focused Go and syscall validation of eb15b3a970",
+          "label": "Final amendment: seven test/analyzer owners passed, 69 cases and no skips",
           "url": "https://app.buildbuddy.io/invocation/909220d4-aa1b-4620-a37e-c6f9c7ec8239"
         },
         {
@@ -27100,7 +27100,25 @@
           "url": "https://github.com/google/gvisor/pull/16057"
         }
       ],
-      "number": 16473
+      "number": 16473,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
+        "head": "eb15b3a9701bde116974715d17f34c6cc19251fc",
+        "url": "https://github.com/tamird/gvisor/commit/eb15b3a9701bde116974715d17f34c6cc19251fc",
+        "title": "Reject writes to immutable proc task directories",
+        "summary": "Linux rejects writable opens on existing task directories with EISDIR. Both gVisor configurations returned EPERM on the old code. The amendment also preserves the credential check on internal mountpoints. All seven fresh test and analyzer owners passed; 69 cases, none skipped or missing.",
+        "body": "Linux marks /proc/PID and /proc/PID/task/TID immutable [1][2]. Writes\nto those directories fail with EPERM before Linux tests their mode bits\n[3]. gVisor returned EACCES when a caller without CAP_DAC_OVERRIDE tried\nto rename /proc/self/status over /proc/version.\n\nCheck immutability before mode bits for writes to PID and TID\ndirectories. For open, Linux checks the file type first: a writable open\nor one with O_CREAT fails with EISDIR before Linux checks the inode\npermissions [4][5]. Apply that order wherever kernfs opens an existing\ndirectory.\n\nAn internal synthetic mountpoint does not add an entry to the proc\ndirectory. Continue to check whether the caller has write access to the\ndirectory before creating that mountpoint.\n\n[1]: https://github.com/torvalds/linux/blob/v6.12/fs/proc/base.c#L3480-L3492\n[2]: https://github.com/torvalds/linux/blob/v6.12/fs/proc/base.c#L3786-L3797\n[3]: https://github.com/torvalds/linux/blob/v6.12/fs/namei.c#L510-L535\n[4]: https://github.com/torvalds/linux/blob/v6.12/fs/namei.c#L3328-L3365\n[5]: https://github.com/torvalds/linux/blob/v6.12/fs/namei.c#L3743-L3758"
+      },
+      "refinement": {
+        "before": {
+          "head": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166"
+        },
+        "after": {
+          "head": "eb15b3a9701bde116974715d17f34c6cc19251fc"
+        }
+      }
     },
     {
       "id": "pr:16498",
@@ -28237,12 +28255,12 @@
       "title": "Check licenses with the native Bazel module graph",
       "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
       "group": "release",
-      "status": "Agent work",
-      "updatedAt": "2026-10-27T23:43:58.268726+00:00",
-      "summary": "The checker invokes Bazel directly. The former make mod target and nested Make fallback have been removed. The two public Buildkite callers retain a make license-check wrapper to select the builder. A remote run is checking native verification, a writable catalog regeneration and the Docker entry point.",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-27T23:55:47.275886+00:00",
+      "summary": "The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel.",
       "evidence": [
         {
-          "label": "Missing catalog-rewrite and Docker Make gates",
+          "label": "201-entry regenerated catalog and actual Docker Make verification passed; raw show_repo comparison failed",
           "url": "https://app.buildbuddy.io/invocation/bc5dc9b0-5294-4004-bc5b-376685eba513"
         },
         {
@@ -28285,8 +28303,16 @@
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
-        "observedAt": "2026-10-27T23:43:58.268726+00:00",
-        "nextAction": "Verify the regenerated 201-entry catalog and Docker Make invocation. The original parent disconnected; its successful Bazel children alone do not establish either result."
+        "observedAt": "2026-10-27T23:55:47.275886+00:00",
+        "nextAction": "Contributor review. Two Buildkite jobs still use make license-check to run pinned Bazel in the builder; the wrapper can go once they invoke Bazel directly."
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
+        "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
+        "title": "Run license queries in the selected Bazel environment",
+        "summary": "The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel. The strict comparison of unparsed bazel mod show_repo output failed: the Docker run printed 5,868 extra bytes across 163 repositories. Both verifiers accepted the identical catalog; raw-output equivalence is not established.",
+        "body": "The Buildkite first-pass and presubmit pipelines call make license-check.\nIts generic run helper builds the checker in the selected builder but\nexecutes it on the host. The checker then calls make mod, so a direct\nbazel run can start Docker just to read module metadata.\n\nRun the checker in the selected builder using bazel run. Both graph and\nshow_repo now use bazel mod directly. Make passes the same command and\noptions to keep the selected startup rc, output base and module registry.\nRemove the Make mod target that had no other callers and document the\nnative and Make commands for regenerating the catalog."
       }
     },
     {
@@ -28349,12 +28375,12 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "The linker script puts the mapped program in .crblob at zero. The offsets generator also extracts that section; it rejects a second allocated section rather than silently dropping it. This replaces a separate objcopy shell action.",
-      "updatedAt": "2026-10-27T23:40:07.261920+00:00",
+      "updatedAt": "2026-10-27T23:55:47.275886+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "observedAt": "2026-10-27T23:40:07.261920+00:00",
-        "nextAction": "All three configurations matched the previous raw stub bytes and offsets. The installed smoke and empty-root replay still lack complete evidence. Keep those gates open."
+        "observedAt": "2026-10-27T23:55:47.275886+00:00",
+        "nextAction": "Source and original action inputs confirm identical stub bytes and matching Go offsets for AMD64 and both ARM64 page sizes. Check the remaining installed smoke and empty-root runtime evidence."
       },
       "evidence": [
         {
