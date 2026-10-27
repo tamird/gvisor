@@ -624,6 +624,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		s.RTO = remaining
 	}
 
+	s.observeRTO("rto_interrupt", nil, 0)
 	// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 4.
 	//
 	// Retransmit timeouts:
@@ -669,6 +670,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// information is usable after an RTO.
 	s.ep.scoreboard.Reset()
 	s.updateWriteNext(s.writeList.Front())
+	s.observeRTO("rto_enter", nil, 0)
 
 	// RFC 1122 4.2.2.17: Start sending zero window probes when we still see a
 	// zero receive window after retransmission interval and we have data to
@@ -1154,6 +1156,7 @@ func (s *sender) sendData() {
 
 // +checklocks:s.ep.mu
 func (s *sender) enterRecovery() {
+	s.observeRTO("enter_recovery", nil, 0)
 	// Initialize the variables used to detect spurious recovery after
 	// entering recovery.
 	//
@@ -1555,6 +1558,8 @@ func (s *sender) inRecovery() bool {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
+	s.observeRTO("ack_begin", rcvdSeg, 0)
+	defer s.observeRTO("ack_end", rcvdSeg, 0)
 	bestRTT := unknownRTT
 
 	// Check if we can extract an RTT measurement from this ack. Measure against

@@ -419,6 +419,7 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 	if timeout != 0 && !rc.snd.reorderTimer.enabled() {
 		rc.snd.reorderTimer.enable(timeout)
 	}
+	rc.snd.observeRTO("rack_scan", nil, numLost)
 	return numLost
 }
 
@@ -432,6 +433,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	rc.snd.observeRTO("timer_expired", nil, 0)
 	// Evaluate loss as of the time the reorder timer was scheduled to fire (its
 	// target), not the current clock. The timer is armed for the instant a
 	// segment's reorder window elapses, but the timer callback itself can run

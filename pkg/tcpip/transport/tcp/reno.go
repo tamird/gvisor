@@ -98,6 +98,8 @@ func (r *renoState) Update(packetsAcked int, _ time.Duration, _ tcpip.MonotonicT
 //
 // +checklocks:r.s.ep.mu
 func (r *renoState) HandleLossDetected() {
+	r.s.observeRTO("reno_loss_begin", nil, 0)
+	defer r.s.observeRTO("reno_loss_end", nil, 0)
 	// A retransmit was triggered due to nDupAckThreshold or when RACK
 	// detected loss. Reduce our slow start threshold.
 	r.reduceSlowStartThreshold()
@@ -107,6 +109,8 @@ func (r *renoState) HandleLossDetected() {
 //
 // +checklocks:r.s.ep.mu
 func (r *renoState) HandleRTOExpired() {
+	r.s.observeRTO("reno_timeout_begin", nil, 0)
+	defer r.s.observeRTO("reno_timeout_end", nil, 0)
 	// We lost a packet, so reduce ssthresh.
 	r.reduceSlowStartThreshold()
 

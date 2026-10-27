@@ -300,6 +300,8 @@ func (c *cubicState) getCwnd(packetsAcked, sndCwnd int, srtt time.Duration) int 
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) HandleLossDetected() {
+	c.s.observeRTO("cubic_loss_begin", nil, 0)
+	defer c.s.observeRTO("cubic_loss_end", nil, 0)
 	// See: https://tools.ietf.org/html/rfc8312#section-4.5
 	c.numCongestionEvents++
 	c.T = c.s.ep.stack.Clock().NowMonotonic()
@@ -314,6 +316,8 @@ func (c *cubicState) HandleLossDetected() {
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) HandleRTOExpired() {
+	c.s.observeRTO("cubic_timeout_begin", nil, 0)
+	defer c.s.observeRTO("cubic_timeout_end", nil, 0)
 	// See: https://tools.ietf.org/html/rfc8312#section-4.6
 	c.T = c.s.ep.stack.Clock().NowMonotonic()
 	c.numCongestionEvents = 0
