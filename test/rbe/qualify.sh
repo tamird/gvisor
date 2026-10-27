@@ -976,6 +976,10 @@ PY
             "$selection_dir/$lane-$profile_arch-roots" --strip=never
           cat "$selection_dir/$lane-$profile_arch-targets" >> "$selection_dir/explicit-targets"
         done
+        if [[ $lane == smoke && $test_execution == remote ]]; then
+          # Keep TCG coverage distinct from the ordinary ARM worker selection.
+          printf '%s\n' '//:release_smoke_arm64_tcg_test' >> "$selection_dir/explicit-targets"
+        fi
         options+=(--strip=never)
         ;;
       smoke-race)
