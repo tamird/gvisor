@@ -6,7 +6,7 @@ name: Native ARM64 image consumers
       profile:
         description: Native image consumer to run
         type: choice
-        options: [fsstress, podman]
+        options: [fsstress, podman, podman-host]
         default: fsstress
       archive_run:
         description: Reuse the verified image artifact from a prior run in this fork
@@ -25,6 +25,19 @@ env:
   TEST_TARGET: //test/fsstress:fsstress_test
 
 jobs:
+  podman-host:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers-podman' && inputs.profile == 'podman-host'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Check the stock host rootless Podman environment
+        shell: bash
+        run: .github/native-podman-fixture.sh --host-preflight
+
   image:
     if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers' && inputs.archive_run == ''
     runs-on: ubuntu-24.04

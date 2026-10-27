@@ -18,6 +18,58 @@
 # without giving the nested runtime a host Docker socket or host credentials.
 set -euo pipefail
 
+# Qualify the runner's installed Podman before considering a native payload.
+# This path uses the ordinary Actions user and its existing distribution setup.
+if [[ $# == 1 && $1 == --host-preflight ]]; then
+  [[ $(uname -m) == aarch64 && $(id -u) != 0 ]]
+  uname -srmo
+  id
+  diagnostic() {
+    "$@" || printf 'Diagnostic unavailable (exit %s): %s\n' "$?" "$*" >&2
+  }
+  diagnostic cat /proc/self/uid_map /proc/self/gid_map /proc/self/attr/current
+  diagnostic grep -E '^(Uid|Gid|Cap|NoNewPrivs|Seccomp)' /proc/self/status
+  for setting in /proc/sys/kernel/unprivileged_userns_clone \
+    /proc/sys/kernel/apparmor_restrict_unprivileged_userns /proc/sys/user/max_user_namespaces; do
+    if [[ -r $setting ]]; then printf '%s=' "$setting"; cat "$setting"; fi
+  done
+  diagnostic awk -F: -v user="$(id -un)" -v uid="$(id -u)" \
+    '$1 == user || $1 == uid { print FILENAME ":" $0 }' /etc/subuid /etc/subgid
+  diagnostic stat -Lc '%n mode=%a uid=%u gid=%g' /usr/bin/newuidmap /usr/bin/newgidmap /dev/fuse /dev/net/tun
+  diagnostic sha256sum /usr/bin/newuidmap /usr/bin/newgidmap
+  if ! command -v podman; then
+    printf 'STOCK_PODMAN_PREFLIGHT status=UNAVAILABLE reason=podman-not-installed\n'
+    exit 127
+  fi
+  podman --version
+  sha256sum "$(command -v podman)"
+  directory=$(mktemp -d "${RUNNER_TEMP:?}/stock-podman-preflight.XXXXXX")
+  printf 'Stock Podman diagnostic directory: %s\n' "$directory"
+  trap 'rm -rf -- "$directory"' EXIT
+  status=0
+  podman --log-level=debug info --format=json > "$directory/info.json" || status=$?
+  cat "$directory/info.json"
+  if (( status == 0 )) && ! jq -e '.host.security.rootless == true' "$directory/info.json"; then
+    status=1
+  fi
+  for kind in uid gid; do
+    if [[ $kind == uid ]]; then caller=$(id -u); else caller=$(id -g); fi
+    mapping_status=0
+    podman --log-level=debug unshare cat "/proc/self/${kind}_map" > "$directory/${kind}_map" || mapping_status=$?
+    cat "$directory/${kind}_map"
+    if (( mapping_status == 0 )) && ! awk -v caller="$caller" \
+      '$1 == 0 && $2 == caller && $3 == 1 { root = 1 }
+       $1 > 0 && $3 > 1 { subordinate = 1 }
+       END { exit !(root && subordinate) }' "$directory/${kind}_map"; then
+      mapping_status=1
+    fi
+    printf 'STOCK_PODMAN_MAPPING kind=%s exit=%s\n' "$kind" "$mapping_status"
+    if (( status == 0 && mapping_status != 0 )); then status=$mapping_status; fi
+  done
+  printf 'STOCK_PODMAN_PREFLIGHT exit=%s finished=%s\n' "$status" "$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)"
+  exit "$status"
+fi
+
 fixture_args=(--rm --platform=linux/arm64 --cgroupns=private --user nonroot:nonroot
   --device=/dev/fuse --device=/dev/net/tun --security-opt=seccomp=unconfined
   --security-opt=apparmor=unconfined --security-opt=systempaths=unconfined)
