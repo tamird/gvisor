@@ -71,11 +71,7 @@ bzl_library(
     ],
 )
 
-exports_files([
-    "benchmark-umbrella-exports.patch",
-    "build_cover.sh",
-    "go-allow-internal.patch",
-])
+exports_files(["benchmark-umbrella-exports.patch"])
 
 py_test(
     name = "lint_test",
