@@ -49,6 +49,7 @@ arch_genrule = rule(
     implementation = _arch_genrule_impl,
     attrs = {
         "src": attr.label(
+            allow_files = True,
             doc = "Sources for the genrule.",
             cfg = arch_transition,
         ),
