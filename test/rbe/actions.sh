@@ -391,7 +391,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       sudo -n true
       # Match the Buildkite test-host setup on this ephemeral Actions VM.
       # Ubuntu's restriction prevents the rootless runtime's user namespace.
-      if [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
+      # bwrap runs through local_root and does not need this host policy change.
+      if [[ ${lanes[*]} != bwrap && $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
         sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns) == 0 ]]
       fi
