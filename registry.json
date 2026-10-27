@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T03:09:52.022903+00:00",
+    "updatedAt": "2026-10-27T03:23:34.515548+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26154,14 +26154,14 @@
       "group": "runtime",
       "status": "Contributor review requested",
       "summary": "A partial cumulative ACK could start SACK recovery again after a retransmission timeout and make Reno cut its threshold twice. The new wire regression reproduces it and shows that, once the peer acknowledges the original flight, a later gap still triggers a retransmission. It passes normally and under race, and both owning analyzers pass on AMD64 and ARM64. Independent of #15634. We do not yet have a trace linking this defect to the Windows stall in #16393.",
-      "updatedAt": "2026-10-27T02:42:33.270708+00:00",
+      "updatedAt": "2026-10-27T03:19:54.757561+00:00",
       "contributorReview": {
         "status": "pending",
         "head": "1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
         "url": "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
         "title": "Keep timed-out SACK recovery from restarting",
         "summary": "Review the fix and packet regression before opening the independent PR.",
-        "body": "If a retransmission times out during SACK recovery, the receiver may\nstill have only part of the flight. An ACK for that part, accompanied\nby a SACK for a later segment, could make RACK start another recovery\nand make Reno cut its slow-start threshold again.\n\nKeep the recovery point from the interrupting timeout until the receiver\nhas cumulatively acknowledged the last byte of that flight, as\n[RFC 6675 \u00a75.1](https://www.rfc-editor.org/rfc/rfc6675.html#section-5.1)\nrequires. RACK continues to detect loss and the sender continues to use\nnew SACK information to retransmit. If a second timeout occurs while\nnewer data is in flight, it does not extend the recovery point.\n\nThe regression loses a fast retransmission and sends a partial ACK\nwith a SACK block. The original sender reenters fast recovery. The\ncorrected sender stays in timeout recovery when the ACK is even one\nbyte short. Once the ACK covers the original flight, the peer can\nreport a new hole and observe the sender retransmit it."
+        "body": "If a retransmission times out during SACK recovery, the receiver may\nstill have only part of the flight. An ACK for that part, accompanied\nby a SACK for a later segment, could make RACK start another recovery.\nReno and CUBIC both treated it as another loss and cut their slow-start\nthreshold a second time.\n\nKeep the recovery point from the interrupting timeout until the receiver\nhas cumulatively acknowledged the last byte of that flight, as\n[RFC 6675 \u00a75.1](https://www.rfc-editor.org/rfc/rfc6675.html#section-5.1)\nrequires. RACK continues to detect loss and the sender continues to use\nnew SACK information to retransmit. If a second timeout occurs while\nnewer data is in flight, it does not extend the recovery point.\n\nThe regression loses a fast retransmission and sends a partial ACK\nwith a SACK block. The original sender reenters fast recovery. The\ncorrected sender stays in timeout recovery when the ACK is even one\nbyte short. Once the ACK covers the original flight, the peer can\nreport a new hole and observe the sender retransmit it."
       },
       "refinement": {
         "before": {
@@ -26188,6 +26188,10 @@
         {
           "label": "Proposed source and regression",
           "url": "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b"
+        },
+        {
+          "label": "The same partial ACK invokes both Reno and CUBIC loss handlers on stock; neither on the fix",
+          "url": "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144"
         },
         {
           "label": "Stock TCP enters SACK recovery a second time",
@@ -39285,11 +39289,28 @@
     {
       "id": "investigation:arm64-release-smoke",
       "title": "Run the source-built release smoke test on ARM64",
-      "status": "active",
+      "status": "concluded",
       "owner": "root",
-      "updatedAt": "2026-10-27T03:09:52.022903+00:00",
-      "summary": "The source-built ARM64 release passed its rootless smoke test as uid/gid 65534 in an ARM64 Linux 7.3 QEMU guest on AMD64 RBE. runsc re-executed in a user namespace and the application exited zero. On stock native ubuntu-24.04-arm, the release failed at that re-exec with EACCES. The guest establishes ARM64 coverage; the stock-host denial remains unexplained.",
+      "updatedAt": "2026-10-27T03:23:34.515548+00:00",
+      "summary": "The maintained release smoke job runs source-built ARM64 and AMD64 releases in one Bazel invocation. The ARM64 binary passed as uid/gid 65534 on ARM64 Linux 7.3 under QEMU. Native ARM Firecracker was unavailable; the separate native ubuntu-24.04-arm run failed with EACCES at re-exec.",
       "findings": [
+        {
+          "text": "One Bazel invocation ran seven owners: ordinary AMD64 smoke, race smoke, three runsc do variants and bwrap under AMD64 Firecracker, plus the ARM64 rootless release in an ARM64 QEMU guest on an AMD64 OCI worker. It reported 32 passing cases and one existing bwrap TestUserns skip. Native ARM Firecracker was unavailable and had no test attempt. A temporary analysis wrapper missed the canonical script\u2019s absolute path; these were actual runtime results, not analysis or verifier-unit results. The command finished at 03:15:26.963 UTC; the machine verdict was ready 0.282 s later and the authenticated result 5.485 s after completion. The dispatcher, qualification reporter and formatter passed in three separate test targets. The tested selector is now on qualification/final-public-ci.",
+          "evidence": [
+            {
+              "label": "Mixed release smoke, do and bwrap runtime results",
+              "url": "https://app.buildbuddy.io/invocation/064582da-4096-44f4-9dc8-8fb8067304fc"
+            },
+            {
+              "label": "Selector for the existing mixed smoke lane",
+              "url": "https://github.com/tamird/gvisor/commit/cb548161f537465fda2576793e6d6cea59a32260"
+            },
+            {
+              "label": "Dedicated verifier, dispatcher and formatter checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40443253054"
+            }
+          ]
+        },
         {
           "text": "The ARM guest ran the existing release binary and sidecars, with the original rootless arguments and one uncached passing case. The first submission stopped at Bazel visibility analysis without executing a test. After granting the root fixture access to the QEMU tool, the guest ran successfully. That aggregate job failed because Buildifier rejected two argument lists in test/rbe/BUILD. The formatting-only correction then passed independently; the guest runtime code and arguments were unchanged. The guest command finished at 02:35:05.940 UTC, its verdict was ready 0.230 s later, and the authenticated result was available 33.544 s after completion. No manual reconstruction was needed.",
           "evidence": [
@@ -39329,11 +39350,19 @@
           ]
         }
       ],
-      "nextStep": "The maintained qualification branch contains the guest target. Verify that the existing mixed remote smoke lane selects it once alongside the ordinary release variants. Keep stock native ARM EACCES distinct from emulated coverage.",
+      "nextStep": "Use the maintained mixed smoke profile for future release checks. The native ARM re-exec failure remains recorded separately.",
       "evidence": [
         {
-          "label": "Maintained fork with the source-built ARM guest target",
-          "url": "https://github.com/tamird/gvisor/commit/35823a7c1109d9feb64b63f6dd8d31f7397d078c"
+          "label": "Mixed release smoke, do and bwrap runtime results",
+          "url": "https://app.buildbuddy.io/invocation/064582da-4096-44f4-9dc8-8fb8067304fc"
+        },
+        {
+          "label": "Mixed smoke selector on the maintained qualification fork",
+          "url": "https://github.com/tamird/gvisor/commit/cb548161f537465fda2576793e6d6cea59a32260"
+        },
+        {
+          "label": "Dedicated verifier, dispatcher and formatter checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40443253054"
         },
         {
           "label": "ARM64 guest release smoke: application exited zero",
