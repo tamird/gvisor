@@ -135,6 +135,12 @@ function isApprovalGate(pr, check) {
     && check.description === "Check requires approving review"
     && ["https://app.buildbuddy.io", "https://app.buildbuddy.io/", "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"].includes(check.url);
 }
+function canceledBuildkiteRun(check) {
+  const build = /^Build #(\d+) cancel(?:l)?ed by \S.*$/.exec(check.description || "");
+  return check.kind === "status" && check.state === "FAILURE" && build
+    && check.name.startsWith("buildkite/")
+    && check.url === `https://buildkite.com/gvisor/${check.name.slice("buildkite/".length)}/builds/${build[1]}`;
+}
 function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check) && !isApprovalGate(pr, check)); }
 function codeCheckStates(pr) {
   const result = new Set(validationChecks(pr).map(check => check.state));
@@ -364,9 +370,8 @@ function attentionReasons(node, owner) {
   const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
   const sourceRecovery = sourceAuthenticationRecovery(node);
-  if (sourceRecovery) add("maintainer-ci-retry", sourceRecovery.detail, "Maintainer CI configuration");
   const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state));
-  const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id));
+  const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id) && !canceledBuildkiteRun(check));
   if (authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
   if (approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
@@ -384,22 +389,26 @@ function attentionReasons(node, owner) {
   for (const item of active) if (conflictRecord(item)) add("author-conflicts", `Import #${item.number}: ${mergeDescription(item)}`);
   const failed = active.filter(item => checkInfo(item).tone === "bad");
   const recoveries = new Map(failed.map(item => [item.number, blockedImportRetry(node, item)]));
-  const retryDetails = [...recoveries.values()].filter(Boolean).map(item => item.detail);
-  if (retryDetails.length) add("maintainer-ci-retry", retryDetails.join(" "));
+  const retryDetails = sourceRecovery ? [sourceRecovery.detail] : [];
+  retryDetails.push(...[...recoveries.values()].filter(Boolean).map(item => item.detail));
+  for (const item of [pr, ...active]) {
+    for (const check of validationChecks(item).filter(canceledBuildkiteRun)) {
+      retryDetails.push(`${item === pr ? "Source" : "Import"} #${item.number}: ${check.description}. Confirm whether ${check.url} needs a retry.`);
+    }
+  }
+  if (retryDetails.length) add("maintainer-ci-retry", retryDetails.join(" "), sourceRecovery && retryDetails.length === 1 ? "Maintainer CI configuration" : undefined);
   const publicImportFailures = failed.flatMap(item => validationChecks(item)
     .filter(check => FAILURE_STATES.has(check.state)
-      && !recoveries.get(item.number)?.ids.has(check.id))
+      && !recoveries.get(item.number)?.ids.has(check.id) && !canceledBuildkiteRun(check))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state} (${safeURL(check.url) || "direct link not recorded"})`));
   for (const item of failed) if (!completeChecks(item) || !validationChecks(item).some(check => FAILURE_STATES.has(check.state)))
     publicImportFailures.push(`Import #${item.number}: failure evidence is incomplete; refresh and investigate its public check records`);
-  const importFailures = failed.map(item => `Import #${item.number}: ${validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name}: ${check.state}`).join("; ") || "failing checks"}`);
   const internalImportFailures = active.flatMap(item => (item.checks?.contexts || [])
     .filter(check => isImportStatus(check) && FAILURE_STATES.has(check.state))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state}`));
-  if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) importFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
   if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) internalImportFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
   if (publicImportFailures.length)
-    add("maintainer-import-checks", `${publicImportFailures.join(". ")}. ${importFailures.join(". ")}. Investigate the import’s CI logs.`);
+    add("maintainer-import-checks", `${[...publicImportFailures, ...internalImportFailures].join(". ")}. Investigate the import’s CI logs.`);
   else if (internalImportFailures.length)
     add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Internal checks failed; public validation results remain separate. ${[pr, ...active].some(item => (item.checks?.contexts || []).some(check => isImportStatus(check) && FAILURE_STATES.has(check.state) && check.url)) ? "Inspect the reported service link." : "No public log URL was reported; internal diagnostics are needed."}`);
   if (pr.mergeable === "UNKNOWN" || active.some(item => item.mergeable === "UNKNOWN"))
@@ -416,7 +425,7 @@ function attentionReasons(node, owner) {
   if (review.response) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
   if (!approved && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
-  if (approved && !followupBlocked) {
+  if (approved && !followupBlocked && !retryDetails.length) {
     const open = active.filter(item => item.status === "open");
     if (!usesImports(pr)) {
       if (pr.mergeable === "MERGEABLE" && checkInfo(pr).passed && pr.checks.state === "SUCCESS"

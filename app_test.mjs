@@ -753,6 +753,38 @@ test('attention assigns simultaneous public and internal failures to their actua
   assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /refresh and investigate/);
 });
 
+test('canceled Buildkite runs need a retry decision; other failures still need diagnosis', () => {
+  const node = attentionNode(16374), imported = attentionImport(node, 16470);
+  node.github.imports = [imported];
+  const canceled = { ...serviceStatus('buildkite/first-pass', 'FAILURE'),
+    description: 'Build #50 canceled by Ryan El Kochta', url: 'https://buildkite.com/gvisor/first-pass/builds/50' };
+  imported.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [canceled] };
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry').detail, /Import #16470: Build #50 canceled/);
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  assert.ok(!idsFor(node).includes('maintainer-merge'));
+  node.github.checks.contexts.push(serviceStatus('feedback/copybara', 'FAILURE'));
+  node.github.checks.total++;
+  node.github.checks.state = 'FAILURE';
+  assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
+  assert.ok(idsFor(node).includes('maintainer-ci-retry'));
+  imported.checks.contexts.push(serviceStatus('generate', 'FAILURE'));
+  imported.checks.total++;
+  const failed = reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail;
+  assert.match(failed, /generate: FAILURE/);
+  assert.doesNotMatch(failed, /buildkite\/first-pass/);
+
+  node.github.imports = [];
+  node.github.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [canceled] };
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry').detail, /Source #16374/);
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+  canceled.url = 'https://buildkite.com/gvisor/first-pass/builds/51';
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  canceled.url = 'https://buildkite.com/gvisor/first-pass/builds/50';
+  canceled.description = 'Build #50 failed (33 minutes, 41 seconds)';
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  assert.ok(!idsFor(node).includes('maintainer-ci-retry'));
+});
+
 function deniedImportRetry() {
   const node = attentionNode(15333), imported = attentionImport(node, 15339);
   node.repo = 'google/gvisor';
