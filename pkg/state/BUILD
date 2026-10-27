@@ -73,7 +73,13 @@ go_library(
         "encode_unsafe.go",
         "graph_addrmap.go",
         "graph_buf_unsafe.go",
+        "graph_decode_callbacks_unsafe.go",
+        "graph_decode_unsafe.go",
+        "graph_decode_values_unsafe.go",
+        "graph_encode_objects_unsafe.go",
+        "graph_encode_stream_unsafe.go",
         "graph_encode_unsafe.go",
+        "graph_encode_values_unsafe.go",
         "graph_typecache_unsafe.go",
         "graph_typeinfo_unsafe.go",
         "ods_list.go",
@@ -101,7 +107,9 @@ go_test(
     srcs = [
         "graph_addrmap_test.go",
         "graph_buf_test.go",
+        "graph_decode_callbacks_test.go",
         "types_test.go",
     ],
     embed = [":state"],
+    deps = ["//pkg/state/wire"],
 )
