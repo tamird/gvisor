@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T15:15:10+00:00",
+    "updatedAt": "2026-10-27T15:25:19+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27223,6 +27223,48 @@
         }
       },
       "number": 16496
+    },
+    {
+      "id": "branch:checklocks-file-epoll-index",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/checklocks-file-epoll-index",
+      "head": "eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
+      "title": "Check locking of file epoll registrations",
+      "url": "https://github.com/tamird/gvisor/commit/eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "summary": "Check the reverse epoll registration index with its existing mutex. No runtime lock is added. Both architecture analyzers and the existing systrap CloseFile and DoubleLayerEpoll cases passed. The annotation covers ordinary VFS accesses; generated save/load routines are excluded by the existing analyzer.",
+      "updatedAt": "2026-10-27T15:25:19+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
+        "url": "https://github.com/tamird/gvisor/commit/eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
+        "title": "Check locking of file epoll registrations",
+        "summary": "Review the analyzer annotation and the lock-order explanation before its independent PR.",
+        "body": "FileDescription keeps a reverse index of epoll registrations so that the\nlast close can remove the file from every interested epoll instance.\nAdd a checklocks annotation for the mutex that protects the index.\n\nLast close detaches the index under epollMu and then drops the mutex\nbefore taking interestMu. Registration and deletion acquire those locks\nin the opposite order."
+      },
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-27T15:25:19+00:00",
+        "sourceHead": "eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
+        "disposition": "Contributor review requested",
+        "nextAction": "Open a standalone PR after contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
+          "https://app.buildbuddy.io/invocation/5aec9db8-30e7-4622-abbc-5bfbd1a27ee4"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Commit for review",
+          "url": "https://github.com/tamird/gvisor/commit/eec6ed445b3ba37ab6f0d5509c0681ff15a97cad"
+        },
+        {
+          "label": "Remote VFS Nogo and epoll syscall cases",
+          "url": "https://app.buildbuddy.io/invocation/5aec9db8-30e7-4622-abbc-5bfbd1a27ee4"
+        }
+      ]
     }
   ],
   "edges": [
@@ -40656,9 +40698,18 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-27T15:15:10+00:00",
+      "updatedAt": "2026-10-27T15:25:19+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The release layout uses the worker shell, cp, mkdir, and dirname to stage eight binaries. The proposed release rule delegates each copy to a declared Bazel toolchain; qualification will check the actual files and whether runsc can start its sidecars. This removes the shell from staging, not from the whole build.",
+          "evidence": [
+            {
+              "label": "Proposed release layout using declared copies",
+              "url": "https://github.com/tamird/gvisor/commit/679ce6be6e12e3d5d896b96294be4dd59473537f"
+            }
+          ]
+        },
         {
           "text": "Make currently creates a Dockerized Bazel server. The separate coverage recipe fetches and rebuilds a Go compiler; the fork proposal removes the 95-line script and its private-import patch by using rules_go coverage. The proposal still needs runtime coverage checks on its published source.",
           "evidence": [
@@ -40734,11 +40785,11 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-27T15:05:55+00:00",
+      "updatedAt": "2026-10-27T15:25:19+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
-          "text": "The last close of a file detaches its epoll registrations while holding epollMu, then releases it before taking an epoll instance\u2019s interestMu. The proposed annotation checks the existing lock without adding an acquisition.",
+          "text": "The last close of a file detaches its epoll registrations while holding epollMu, then releases it before taking an epoll instance\u2019s interestMu. The proposed annotation checks the existing lock without adding an acquisition. Both architecture analyzers and the existing systrap CloseFile and DoubleLayerEpoll cases passed. The annotation covers ordinary VFS accesses; generated save/load routines are excluded by the existing analyzer.",
           "evidence": [
             {
               "label": "Fork proposal: guard the reverse epoll registration index",
@@ -40747,7 +40798,7 @@
           ]
         }
       ],
-      "nextStep": "Check both architecture analyzers and the real epoll close and nesting cases. Coordinate any upstream submission with the existing VFS locking review.",
+      "nextStep": "The standalone epoll change is ready for contributor review. Keep the independent VFS locking discussion on #14343 separate.",
       "evidence": [
         {
           "label": "VFS analyzers and epoll syscall checks",
