@@ -211,6 +211,7 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 		s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
 	}
 	var seq, high uint32
+	var firstPayload uint32
 	var first bool
 	var syn [2]int
 	capture := func(side int, pkt *stack.PacketBuffer) {
@@ -242,11 +243,20 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 			w.Offer = row.Offers
 			if !first {
 				seq, first, row.FirstData = w.Seq, true, int64(now())
+				firstPayload = uint32(w.Bytes)
 			}
 			offset := w.Seq - seq
 			w.Retry = offset < high
 			high = max(high, offset+uint32(w.Bytes))
 			w.Dropped = loss.First > 0 && w.Offer >= loss.First && w.Offer <= loss.Last
+			if loss.Name == "interrupted_sack" {
+				// Drop bytes from the second through the eighth full-sized
+				// packet, including repairs, for 150 ms. Every packet after
+				// that point gets through, regardless of the sender's state.
+				w.Dropped = int64(now())-row.FirstData < int64(150*time.Millisecond) &&
+					offset < uint32(loss.Last)*firstPayload &&
+					offset+uint32(w.Bytes) > uint32(loss.First-1)*firstPayload
+			}
 			if loss.Name == "lost_repair" && w.Offer == 13 {
 				w.Dropped = true
 			}
@@ -452,6 +462,25 @@ func TestVirtualTCPRTOFlight(t *testing.T) {
 	for _, schedule := range []lossSchedule{{"blackout", 1, 11}, {"partial", 2, 8}, {"lost_repair", 1, 11}} {
 		t.Run(schedule.Name, func(t *testing.T) {
 			runTrial(t, "reno", schedule, false, false)
+		})
+	}
+}
+
+func TestVirtualTCPInterruptedSACK(t *testing.T) {
+	if got, want := runtime.GOMAXPROCS(0), 1; got != want {
+		t.Fatalf("GOMAXPROCS = %d, want %d", got, want)
+	}
+	for _, arm := range []struct {
+		name       string
+		ack, timer bool
+	}{
+		{"stock", false, false},
+		{"ack", true, false},
+		{"timer", false, true},
+		{"both", true, true},
+	} {
+		t.Run(arm.name, func(t *testing.T) {
+			runTrial(t, "reno", lossSchedule{"interrupted_sack", 2, 8}, arm.ack, arm.timer)
 		})
 	}
 }

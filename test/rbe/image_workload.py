@@ -8,8 +8,8 @@ import xml.etree.ElementTree as ET
 
 
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
-ROOT = "TestVirtualTCPRTOFlight"
-SCHEDULES = {"blackout": (1, 11), "partial": (2, 8), "lost_repair": (1, 11)}
+ROOT = "TestVirtualTCPInterruptedSACK"
+SCHEDULES = {"interrupted_sack": (2, 8)}
 BODY = bytes((i * 17 + i // 251) % 256 for i in range(512 << 10))
 RTO_RECOVERY = 1
 SACK_RECOVERY = 3
@@ -54,11 +54,20 @@ def summarize(sample: dict, algorithm: str, schedule: str, guards: tuple[bool, b
         raise ValueError(f"{s['Case']}: not actual SACK/no-timestamp negotiation")
     offers = [w for w in wire if w["From"] == 0 and w["Bytes"]]
     drops = [w for w in wire if w["Dropped"]]
-    expected_drops = list(range(first, last + 1)) + ([13] if schedule == "lost_repair" else [])
+    first_seq, unit = offers[0]["Seq"], offers[0]["Bytes"]
+    if unit <= 0:
+        raise ValueError(f"{s['Case']}: missing MSS")
+    for w in offers:
+        offset = (w["Seq"] - first_seq) % 2**32
+        expected_drop = (w["At"] - s["FirstData"] < 150_000_000
+                         and offset < last * unit and offset + w["Bytes"] > (first - 1) * unit)
+        if w["Dropped"] != expected_drop:
+            raise ValueError(f"{s['Case']}: drop policy differs at offer {w['Offer']}")
     if ([w["Offer"] for w in offers] != list(range(1, len(offers) + 1)) or s["Offers"] != len(offers)
             or offers[0]["At"] != s["FirstData"] or len(drops) != s["Drops"]
-            or [w["Offer"] for w in drops] != expected_drops):
-        raise ValueError(f"{s['Case']}: actual physical drop schedule changed")
+            or any(w["From"] != 0 or not w["Bytes"] for w in drops)
+            or [w["Offer"] for w in offers[:10] if w["Dropped"]] != list(range(2, 9))):
+        raise ValueError(f"{s['Case']}: first-flight holes or physical drop count differ")
     elapsed = s["End"] - s["FirstData"]
     completed = s["EOF"] and s["FinACK"] and not s["Pending"]
     if (not 0 <= elapsed <= 35_000_000_000
@@ -109,160 +118,77 @@ def summarize(sample: dict, algorithm: str, schedule: str, guards: tuple[bool, b
             "wire_sha256": digest(wire), "events_sha256": digest(events)}
 
 
-def positive_control(events: list, first_seq: int, scans: list) -> dict:
-    """Authenticate the deliberately lost copy and keep unresolved causality explicit."""
-    sender = [(i, e["Sender"]) for i, e in enumerate(events) if "Sender" in e]
-    wire = [(i, e["Wire"]) for i, e in enumerate(events) if "Wire" in e]
-    offers = [(i, w) for i, w in wire if w["From"] == 0 and w["Bytes"]]
-    (_, original), (i12, first_repair), (i13, extra) = offers[1], offers[11], offers[12]
-    start, end = extra["Seq"], (extra["Seq"] + extra["Bytes"]) % 2**32
+ARMS = {"stock": (False, False), "ack": (True, False), "timer": (False, True), "both": (True, True)}
 
-    def overlaps(left: int, right: int) -> bool:
-        return ahead(end, left) and ahead(right, start)
 
-    prior = [w for i, w in offers if i < i13 and overlaps(w["Seq"], (w["Seq"] + w["Bytes"]) % 2**32)]
-    resets = [(i, r) for i, r in sender if r["Kind"] == "rto_enter" and i < i13]
-    if (prior != [original] or original["Offer"] != 2 or original["Retry"] or not original["Dropped"]
-            or (original["Seq"], original["Bytes"]) != (start, extra["Bytes"])
-            or extra["Offer"] != 13 or not extra["Retry"] or not extra["Dropped"]
-            or (start - first_seq) % 2**32 != 1424 or extra["Bytes"] != 1424
-            or len(resets) != 1 or not resets[0][0] < i12 < i13
-            or resets[0][1]["NXT"] != (first_seq + 14240) % 2**32
-            or not resets[0][1]["At"] <= first_repair["At"] <= extra["At"]
-            or first_repair["Offer"] != 12 or not first_repair["Retry"] or first_repair["Dropped"]
-            or (offers[0][1]["Seq"], offers[0][1]["Bytes"]) != (first_seq, 1424)
-            or (first_repair["Seq"], first_repair["Bytes"]) != (first_seq, 1424)):
-        raise ValueError("Expected offer 12 to repair the first MSS after RTO, then offer 13 to drop copy two of the second MSS")
-
-    # Record all overlapping marks in all states, including any partial/unknown wire identity.
-    marks = []
-    for scan in scans:
-        for m in scan["copies"]:
-            cp, match = m["actual_mark"], m["matched_wire"]
-            if overlaps(cp["Start"], cp["End"]):
-                if match is None:
-                    identity = "unresolved"
-                elif match != extra:
-                    identity = "other_transmission"
-                else:
-                    identity = "already_marked" if cp["AlreadyLost"] else "fresh_target"
-                marks.append(dict(m, identity=identity, scan=scan["index"], callback=scan["callback"],
-                                  losses_in_scan=scan["decision"]["Lost"]))
-
-    repairs = [(i, w) for i, w in offers if i > i13 and not w["Dropped"]
-               and overlaps(w["Seq"], (w["Seq"] + w["Bytes"]) % 2**32)]
-    covers = [(i, w) for i, w in wire if i > i13 and w["From"] == 1 and w["Flags"] & 16
-              and not w["Dropped"] and ahead(w["ACK"], (end - 1) % 2**32)]
-    repair = repairs[0] if repairs else None
-    cover = covers[0] if covers else None
-    if cover and (not repair or repair[0] >= cover[0] or repair[1]["Due"] > cover[1]["At"]):
-        raise ValueError("Peer ACK covered the lost MSS before any admitted overlapping repair")
-    ack_begin = ack_end = None
-    if cover:
-        ack = cover[1]
-        matches = [(i, r) for i, r in sender if i > cover[0] and r["Kind"] == "ack_begin"
-                   and (r["At"], r["ACK"], r["SACK"]) == (ack["Due"], ack["ACK"], ack["SACK"])
-                   and not ahead(r["UNA"], (end - 1) % 2**32) and not ahead(r["ACK"], r["NXT"])]
-        if len(matches) == 1:
-            ack_begin = matches[0]
-            frontier = next(((i, r) for i, r in sender if i > ack_begin[0]
-                             and r["Kind"] in ("ack_begin", "ack_end")), None)
-            if (frontier and frontier[1]["Kind"] == "ack_end" and frontier[1]["ACK"] == ack["ACK"]
-                    and frontier[1]["At"] == ack["Due"] and ahead(frontier[1]["UNA"], (end - 1) % 2**32)):
-                ack_end = frontier
-
-    # A timed-out sender calls HandleRTOExpired and rearms the first unacknowledged
-    # MSS. Only identify fallback when that exact RTO epoch sends the matching repair.
-    timeout_repair = None
-    exact_repair = repair and (repair[1]["Seq"], repair[1]["Bytes"]) == (start, extra["Bytes"])
-    if exact_repair:
-        after = [(i, r) for i, r in sender if i13 < i < repair[0]]
-        if len(after) >= 3:
-            epoch = after[-3:]
-            if ([r["Kind"] for _, r in epoch] == ["rto_interrupt", "rto_cc", "rto_enter"]
-                    and all(r["UNA"] == start and r["At"] == epoch[0][1]["At"] for _, r in epoch)
-                    and 0 <= repair[1]["At"] - epoch[0][1]["At"] <= 1_000_000):
-                timeout_repair = epoch
-    chain = [m for m in marks if m["identity"] == "fresh_target" and m["callback"] is not None and exact_repair
-             and i13 < m["index"] < m["scan"] < m["callback"] < repair[0] and ack_end
-             and 0 <= repair[1]["At"] - events[m["callback"]]["Sender"]["At"] <= 1_000_000
-             and all(r["Kind"] not in ("ack_begin", "timer_expired", "rto_interrupt") and not r["Kind"].endswith("_cc")
-                     for i, r in sender if m["callback"] < i < repair[0])]
-    if not exact_repair or not ack_end:
-        verdict = "unresolved_repair_or_sender_ack"
-    elif chain:
-        verdict = "rack_scan_with_fresh_target_called_cc_repair_and_sender_ack"
-    elif timeout_repair:
-        verdict = "timeout_repair_and_sender_ack"
-    else:
-        verdict = "repair_and_sender_ack_origin_unresolved"
-    return {"original": original, "first_rto": resets[0], "first_mss_repair": first_repair,
-            "post_rto_drop": extra, "overlapping_marks": marks, "fresh_scan_response_chains": chain,
-            "admitted_repairs": repairs, "peer_covering_ack": cover, "sender_ack_begin": ack_begin,
-            "sender_ack_end": ack_end, "timeout_repair": timeout_repair, "outcome": verdict}
+def first_difference(left: list, right: list):
+    for index, (a, b) in enumerate(zip(left, right)):
+        if a != b:
+            return {"index": index, "without": a, "with": b}
+    if len(left) != len(right):
+        index = min(len(left), len(right))
+        return {"index": index, "without": left[index:index+1], "with": right[index:index+1]}
+    return None
 
 
 def measure(samples: dict) -> dict:
-    cases = {name.removeprefix(ROOT + "/"): s for name, s in samples.items()}
-    if set(cases) != set(SCHEDULES):
-        raise ValueError("Expected three unchanged Reno schedules, no diagnostic guard arms")
-    result = {}
-    for schedule, s in cases.items():
-        summary = summarize(s, "reno", schedule, (False, False))
-        events = s["Events"]
-        wire = [e["Wire"] for e in events if "Wire" in e]
-        first_seq = next(w["Seq"] for w in wire if w["From"] == 0 and w["Bytes"])
-        rows = [e["Sender"] for e in events if "Sender" in e]
-        old_events = [e for e in events if "Wire" in e or
-                      (e["Sender"]["Kind"] != "rack_loss_copy" and not e["Sender"]["Kind"].endswith("_cc"))]
-        pending = []
-        scans = []
-        bound_callbacks = set()
-        for i, event in enumerate(events):
-            if "Sender" not in event:
+    cases = {s["Case"][len(ROOT)+1:]: s for s in samples.values()}
+    if set(cases) != set(ARMS):
+        raise ValueError("Expected all four single-connection guard combinations")
+    results = {}
+    for name, guards in ARMS.items():
+        s = cases[name]
+        summary = summarize(s, "reno", "interrupted_sack", guards)
+        states = [e["Sender"] for e in s["Events"] if "Sender" in e]
+        wires = [e["Wire"] for e in s["Events"] if "Wire" in e]
+        first_seq = next(w["Seq"] for w in wires if w["From"] == 0 and w["Bytes"])
+        epochs = []
+        for at, event in enumerate(states):
+            if event["Kind"] != "rto_interrupt":
                 continue
-            r = event["Sender"]
-            if r["Kind"] == "rack_loss_copy":
-                cp = r["Copy"]
-                match = [w for w in wire if w["From"] == 0 and w["Bytes"] and w["Seq"] == cp["Start"]
-                         and (w["Seq"] + w["Bytes"]) % 2**32 == cp["End"]]
-                n = cp["Count"]
-                copy = match[n - 1] if 1 <= n <= len(match) else None
-                # Timer-generated sends are emitted after the parked processors'
-                # bounded tick. Do not use an apparent wire match without checking time.
-                if copy is not None and not 0 <= copy["At"] - cp["Sent"] <= 1_000_000:
-                    copy = None
-                pending.append({"index": i, "actual_mark": cp, "matched_wire": copy})
-            if r["Kind"] in ("ack_scan", "timer_scan"):
-                if r["Lost"] != len(pending) or len({m["actual_mark"]["Start"] for m in pending}) != len(pending):
-                    raise ValueError(f"{s['Case']}: per-transmission counts do not reproduce the actual RACK scan")
-                if pending:
-                    kind = {"ack_scan": "ack_cc", "timer_scan": "timer_cc"}[r["Kind"]]
-                    callback = None
-                    if i + 1 < len(events) and events[i + 1].get("Sender") == dict(r, Kind=kind):
-                        callback = i + 1
-                        bound_callbacks.add(callback)
-                    scans.append({"index": i, "decision": r, "copies": pending, "callback": callback})
-                pending = []
-            if r["Kind"] in ("ack_cc", "timer_cc") and i not in bound_callbacks:
-                raise ValueError(f"{s['Case']}: loss callback is not bound to its actual preceding RACK scan")
-        if pending:
-            raise ValueError(f"{s['Case']}: unbound RACK copy observations")
-        if any(m["matched_wire"] is None for scan in scans if scan["decision"]["State"] == RTO_RECOVERY for m in scan["copies"]):
-            raise ValueError(f"{s['Case']}: cannot authenticate each transmission counted in RTO recovery")
-        summary.update(first_seq=first_seq, first_data=s["FirstData"], prior_format_events_sha256=digest(old_events),
-                       scans=scans, responses=[r for r in rows if r["Kind"].endswith("_cc")],
-                       timeout_epochs=[r for r in rows if r["Kind"] in ("rto_interrupt", "rto_enter")])
-        if schedule == "lost_repair":
-            summary["genuine_copy"] = positive_control(events, first_seq, scans)
-        result[schedule] = summary
-    # The isolated positive control changes exactly one physical offer until its loss.
-    original, lost = cases["blackout"]["Events"], cases["lost_repair"]["Events"]
-    cut = next(i for i, e in enumerate(original) if e.get("Wire", {}).get("Offer") == 13)
-    if (original[:cut] != lost[:cut] or dict(original[cut]["Wire"], Dropped=True) != lost[cut].get("Wire")):
-        raise ValueError("The genuine-loss control diverged before its one additional drop")
-    result["lost_repair"]["identical_events_before_extra_drop"] = cut
-    return result
+            point = (event["NXT"] - 1) % 2**32
+            cover, entries, partial, max_threshold = None, [], [], event["Threshold"]
+            for r in states[at+1:]:
+                if r["Kind"] == "ack_begin" and ahead(r["ACK"], point) and not ahead(r["ACK"], r["NXT"]):
+                    cover = r
+                    break
+                if r["Kind"] == "enter_recovery":
+                    entries.append(r)
+                if r["Kind"] == "ack_begin" and ahead(r["ACK"], r["UNA"]) and not ahead(r["ACK"], point):
+                    # Bind the observed sender callback to the actual peer wire and its delivery.
+                    bound = [w for w in wires if w["From"] == 1 and w["ACK"] == r["ACK"]
+                             and w["Due"] == r["At"] and w["SACK"] == r["SACK"] and not w["Dropped"]]
+                    if len(bound) != 1:
+                        raise ValueError("Partial cumulative ACK cannot be identified on the wire")
+                    partial.append({"at": r["At"], "ack": r["ACK"], "sack": r["SACK"], "state": r["State"]})
+                max_threshold = max(max_threshold, r["Threshold"])
+            epochs.append({"interrupted": event, "point": point, "partial": partial, "entries": entries,
+                           "cover": cover, "max_threshold": max_threshold})
+        if not summary["real_sparse_sacks"] or not epochs:
+            raise ValueError(f"{name}: expected an actual sparse SACK and retransmission timeout")
+        before = next((r for r in states if r["Kind"] == "rto_interrupt"), None)
+        summary["sack_evidence_before_first_rto"] = [w for w in wires if w["From"] == 1
+                                                     and w["Due"] <= before["At"] and sparse(w["ACK"], w["SACK"])]
+        summary["first_seq"] = first_seq
+        summary["epochs"] = epochs
+        results[name] = summary
+
+    comparisons = {}
+    for lhs, rhs, decision in (("stock", "ack", "ack"), ("stock", "timer", "timer"),
+                               ("ack", "both", "timer"), ("timer", "both", "ack")):
+        l, r = cases[lhs]["Events"], cases[rhs]["Events"]
+        fired = next((i for i, event in enumerate(l) if trigger(event, decision)), None)
+        if fired is None and l != r:
+            raise ValueError(f"{lhs}/{rhs}: absent guard altered the events")
+        if fired is not None and l[:fired+1] != r[:fired+1]:
+            raise ValueError(f"{lhs}/{rhs}: pair diverged before the guard could act")
+        comparisons[lhs + ":" + rhs] = {
+            "guard": decision, "first_eligible_event": fired,
+            "first_event_difference": first_difference(l, r),
+            "first_wire_difference": first_difference([e["Wire"] for e in l if "Wire" in e],
+                                                     [e["Wire"] for e in r if "Wire" in e]),
+        }
+    return {"cases": results, "comparisons": comparisons}
 
 
 def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[dict, dict]:
@@ -316,7 +242,7 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
             raise ValueError(f"{phase}: report does not match an executed attempt")
         outputs = native[json.dumps(identity, sort_keys=True)]["testActionOutput"]
         matches = [item for item in outputs if item["name"] == row["name"]]
-        if len(matches) != 1 or not matches[0]["uri"].endswith("/" + row["path"].removeprefix("reports/")):
+        if not row["path"].startswith("reports/") or len(matches) != 1 or not matches[0]["uri"].endswith("/" + row["path"][len("reports/"):]):
             raise ValueError(f"{phase}: report has no unique native output")
         path = directory / row["path"]
         if path in paths:
@@ -371,7 +297,7 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     child, parent, stock = (config[k] for k in ("source", "prerequisite", "stock"))
-    if (config["targets"] != [OWNER] or config["expected_sources"] != [child, parent, stock]
+    if (config["targets"] != [OWNER] or config["expected_sources"] != [child, stock]
             or subprocess.check_output(["git", "rev-parse", child + "^", child + "^^"], text=True).splitlines() != [parent, stock]):
         raise ValueError("Unexpected source or native owner")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"], "--lockfile_mode=error",
@@ -389,7 +315,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 "--test_env=GO_TEST_WRAP_TESTV=1", "--runs_per_test=2", f"--test_arg=-test.run=^{ROOT}$"]
     result = {"status": "INCOMPLETE", "sources": config["expected_sources"], "phases": {}}
     try:
-        for label, rev in (("stock", stock), ("sack-credit", parent), ("rack-flight", child)):
+        for label, rev in (("stock", stock), ("rack-flight", child)):
             subprocess.run(["git", "switch", "--detach", rev], check=True)
             phase = invoke(label, ["test", *options, *selected, OWNER], "test", targets=[OWNER], source=rev)
             if phase["source"] != rev:
@@ -399,11 +325,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 continue
             try:
                 obs = observations(evidence, label, 2)
-                if label == "stock":
-                    for schedule, pins in config["historical_stock"].items():
-                        actual = obs["measurements"][schedule]
-                        if [actual["wire_sha256"], actual["prior_format_events_sha256"]] != pins:
-                            raise ValueError(f"{schedule}: stock diverged from both identical historical attempts")
                 result["phases"][label] = {"source": rev, **obs}
             except (ValueError, KeyError, OSError) as error:
                 result["phases"][label] = {"source": rev, "error": str(error)}
@@ -412,4 +333,4 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         result["status"] = "PASS"
     finally:
         subprocess.run(["git", "switch", "--detach", child], check=True)
-        (evidence / "reno-rto-loss-provenance.json").write_text(json.dumps(result, indent=2) + "\n")
+        (evidence / "reno-interrupted-sack.json").write_text(json.dumps(result, indent=2) + "\n")
