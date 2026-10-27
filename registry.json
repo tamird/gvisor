@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T07:53:19+00:00",
+    "updatedAt": "2026-10-27T08:16:51+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3198,10 +3198,16 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-artifact-selection",
       "group": "rbe",
       "status": "extraction needed",
-      "summary": "The release portion now has a standalone candidate: one Make target builds the three existing package formats for x86_64 and aarch64 together, for both Buildkite consumers. The exact Make staging path is being qualified; the website and Python selections remain separate.\n\nUpstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed.",
+      "summary": "The release portion is now a separate, qualified proposal. Review the mixed release Make change on its own branch. The website and Python selections remain separate.\n\nUpstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed.",
       "evidence": [
         {
           "label": "Standalone mixed release build under qualification",
+          "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9"
+        }
+      ],
+      "links": [
+        {
+          "label": "Standalone Make and Buildkite release proposal",
           "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9"
         }
       ]
@@ -26924,30 +26930,48 @@
       "title": "Compare UDP checksums as transmitted on the wire",
       "url": "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-27T07:53:19+00:00",
-      "summary": "A computed UDP checksum of zero is sent as 0xffff. Deterministic cases pass on both CPUs, as does the full ARM64 suite. The full AMD64 owner reached its original 60-second timeout; a diagnostic run is measuring it separately.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-27T08:08:47+00:00",
+      "summary": "The full header suite passed all 14,765 cases on each native CPU within its original deadline. The AMD64 Firecracker timeouts are retained as a separate worker failure.",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "beb37f745205fd9a9c9ef0a248787377d22e8d2a",
-        "observedAt": "2026-10-27T07:53:19+00:00",
-        "disposition": "Remote validation",
-        "nextAction": "Reconcile the full AMD64 diagnostic with the original deadline before requesting review.",
+        "observedAt": "2026-10-27T08:08:47+00:00",
+        "disposition": "Contributor decision requested",
+        "nextAction": "Open the independent fixture fix after contributor review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
-          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+          "https://app.buildbuddy.io/invocation/9e7ad1c9-b324-43f3-bf40-4be70ae7a297",
+          "https://app.buildbuddy.io/invocation/9a31d2b0-f5f6-49f3-bc3c-3f2dfa2f08d4",
+          "https://app.buildbuddy.io/invocation/ee9a9ace-272f-4719-ae46-9769c305d23b",
+          "https://app.buildbuddy.io/invocation/b647754e-f85f-41b1-8836-5225a730127f"
         ]
       },
       "evidence": [
         {
-          "label": "Two native header suites and checksum controls",
+          "label": "Complete AMD64 header suite at the original deadline",
+          "url": "https://app.buildbuddy.io/invocation/9e7ad1c9-b324-43f3-bf40-4be70ae7a297"
+        },
+        {
+          "label": "Complete ARM64 header suite",
+          "url": "https://app.buildbuddy.io/invocation/9a31d2b0-f5f6-49f3-bc3c-3f2dfa2f08d4"
+        },
+        {
+          "label": "Captured checksum regression and both-architecture Nogo",
           "url": "https://app.buildbuddy.io/invocation/ee9a9ace-272f-4719-ae46-9769c305d23b"
         },
         {
-          "label": "AMD64 timeout diagnostic",
+          "label": "Separate AMD64 Firecracker diagnostic killed before test reporting",
           "url": "https://app.buildbuddy.io/invocation/b647754e-f85f-41b1-8836-5225a730127f"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "beb37f745205fd9a9c9ef0a248787377d22e8d2a",
+        "url": "https://github.com/tamird/gvisor/commit/beb37f745205fd9a9c9ef0a248787377d22e8d2a",
+        "title": "Compare UDP checksums as transmitted on the wire",
+        "summary": "Review the test fixture and its two deterministic UDP cases before opening a PR.",
+        "body": "A fully computed UDP checksum of zero is transmitted as 0xffff. The\nrandomized port and address tests compared against zero instead. They\nalso initialized some UDP headers with a zero checksum field, which\ninstructs the update methods to preserve disabled checksumming.\n\nUse the UDP wire encoding for both the initial and expected checksums.\nCompare raw sums for partial checksums and keep the ordinary complement\nfor TCP. Exercise port updates into and out of a computed zero checksum."
+      }
     },
     {
       "id": "branch:review/kvm-vdso-declared-tools",
@@ -26989,15 +27013,123 @@
       "title": "Keep gofer mounts out of temporary Python sandbox directories",
       "url": "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-27T07:53:19+00:00",
-      "summary": "The Python SDK can leave a mount in a temporary directory, which makes cleanup fail with EBUSY. Remote qualification will exercise temporary roots and two sandboxes with a caller-owned shared namespace.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-27T08:16:51+00:00",
+      "summary": "The SDK now cleans up its temporary runsc root. On native AMD64, 38 existing tests passed and one non-root check skipped; two successive sandboxes also reused the same caller-owned namespace.",
       "evidence": [
         {
           "label": "Original failures in the Python SDK suite",
           "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+        },
+        {
+          "label": "Existing SDK suite and two successive sandboxes sharing one namespace",
+          "url": "https://app.buildbuddy.io/invocation/5c82c48e-554c-477e-89a4-a719dddbcedf"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-27T08:16:51+00:00",
+        "sourceHead": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
+        "disposition": "Contributor decision requested",
+        "nextAction": "Open the standalone SDK fix after contributor review.",
+        "evidence": [
+          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03",
+          "https://app.buildbuddy.io/invocation/5c82c48e-554c-477e-89a4-a719dddbcedf"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
+        "url": "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
+        "title": "Keep gofer namespace mounts out of temporary Python sandbox directories",
+        "summary": "Review the new default for a temporary root and explicit sharing for callers with a persistent directory.",
+        "body": "runsc pins its empty gofer network namespace under its state directory\nso other sandboxes can reuse it. The Python SDK gives runsc a directory\nthat may be owned by a single Sandbox or by a TemporaryDirectory.\nDeleting that directory fails with EBUSY while the namespace is mounted.\n\nStart the gofer in a fresh empty network namespace by default. Callers\nthat start many sandboxes can pass a persistent shared_root to reuse the\nnamespace without tying its lifetime to an individual sandbox."
+      }
+    },
+    {
+      "id": "branch:qualification/release-mixed-presubmit",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "qualification/release-mixed-presubmit",
+      "head": "eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
+      "title": "Build both release architectures in one Bazel invocation",
+      "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-27T08:08:47+00:00",
+      "summary": "Buildkite currently asks Make to build six packages separately. This change builds all six in one Bazel invocation and keeps their existing filenames and staging directories.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
+        "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
+        "title": "Build both release architectures in one Bazel invocation",
+        "summary": "Review the combined selection, output staging and the two Buildkite consumers before opening a PR.",
+        "body": "Buildkite calls Make separately for x86_64 and aarch64. Each call\nbuilds the Debian package and the two release tarballs separately.\n\nAdd `make artifacts-all` to build all six packages in one Bazel\ninvocation and stage them in the existing architecture directories.\nUse it in presubmit and release CI. The release job still builds in\nopt mode. The single-architecture Make targets still produce their\nthree files, now in one build.\n\nVerified all six staged files through direct Make and the optimized\nDocker builder. The packaged runsc and shim reported their versions on\nnative AMD64 and ARM64. On AMD64, runsc also ran `/bin/true` with\nsystrap."
+      },
+      "evidence": [
+        {
+          "label": "Single Docker/Make build: all six opt packages",
+          "url": "https://app.buildbuddy.io/invocation/dfd11ffe-84f8-477f-8d24-20263fe973d8"
+        },
+        {
+          "label": "Exact packaged binaries on native AMD64 and ARM64",
+          "url": "https://app.buildbuddy.io/invocation/9b77eff7-eaf0-4206-bcf2-43250fc1ae95"
+        },
+        {
+          "label": "Earlier smoke fixture rejected before running any tests",
+          "url": "https://app.buildbuddy.io/invocation/2c0e4e9a-6c44-4b6f-87cc-30d4ab353413"
         }
       ]
+    },
+    {
+      "id": "branch:review/cgroup-remote-permission",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/cgroup-remote-permission",
+      "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+      "title": "Run the cgroup unit tests on remote workers",
+      "url": "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-27T08:15:17+00:00",
+      "summary": "The permission fixture now exercises EACCES even on privileged workers. All 156 cgroup cases and the raw-socket test passed on AMD64 and ARM64, without skips.",
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+        "observedAt": "2026-10-27T08:15:17+00:00",
+        "disposition": "Contributor decision requested",
+        "nextAction": "Open the independent PR after contributor review.",
+        "evidence": [
+          "https://app.buildbuddy.io/invocation/d1321eb7-9d50-42a3-bd84-01c8862b3205",
+          "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Default workers reproduced the permission failure on both architectures",
+          "url": "https://app.buildbuddy.io/invocation/d1321eb7-9d50-42a3-bd84-01c8862b3205"
+        },
+        {
+          "label": "Corrected cgroup and boot cases on native AMD64 and ARM64",
+          "url": "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+        "url": "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+        "title": "Run the cgroup unit tests on remote workers",
+        "summary": "Review removal of the local restriction and the thread-scoped capability helper shared with the boot test.",
+        "body": "TestCreateController checked that MkdirAll failed with EACCES beneath\na mode-0555 directory. A worker with CAP_DAC_OVERRIDE could create the\nsubdirectory instead. Run that check without the effective capability.\nThe cgroup tests use test-owned directories and do not need a local\nexecutor or a writable host cgroup mount.\n\nShare the thread handling with the host-network test that must run\nwithout CAP_NET_RAW. Pin the test goroutine before reading its Linux\ncapabilities. When it drops a capability, let Go retire the thread on\ntest exit so the modified credentials cannot reach another goroutine."
+      },
+      "refinement": {
+        "before": {
+          "head": "f10cbd23776663b17fc4abb1624b13ca62c35327"
+        },
+        "after": {
+          "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
+        }
+      }
     }
   ],
   "edges": [
@@ -40258,7 +40390,7 @@
       "title": "Run the source-built release smoke test on ARM64",
       "status": "concluded",
       "owner": "root",
-      "updatedAt": "2026-10-27T06:15:52+00:00",
+      "updatedAt": "2026-10-27T08:08:47+00:00",
       "summary": "The mixed release smoke runs source-built AMD64 and ARM64 releases in one Bazel invocation; ARM64 passed as uid/gid 65534 under QEMU. On native ARM64 the same stock rootless command failed during self-reexec under AppArmor, but passed in Podman\u2019s caller-created user and mount namespaces. The latter run bypassed self-reexec because its caller already had the required capabilities.",
       "findings": [
         {
@@ -40344,6 +40476,19 @@
             {
               "label": "Exact fork harness and source",
               "url": "https://github.com/tamird/gvisor/commit/d2b30b2d0596c499708c9a2973231703cb4a5285"
+            }
+          ]
+        },
+        {
+          "text": "The exact optimized Docker/Make runsc and shim binaries ran on native AMD64 and ARM64. AMD64 also started a systrap sandbox and ran /bin/true. Three uncached TestRunners passed all eight cases. Authenticated results were available 4.26 seconds after execution ended; this run did not attempt ARM64 namespace startup.",
+          "evidence": [
+            {
+              "label": "Single Docker/Make build: all six opt packages",
+              "url": "https://app.buildbuddy.io/invocation/dfd11ffe-84f8-477f-8d24-20263fe973d8"
+            },
+            {
+              "label": "Exact packaged binaries on native AMD64 and ARM64",
+              "url": "https://app.buildbuddy.io/invocation/9b77eff7-eaf0-4206-bcf2-43250fc1ae95"
             }
           ]
         }
