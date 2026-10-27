@@ -392,7 +392,7 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(set(pr_states(labelled)), {"maintainer-review"})
         self.assertNotIn("awaiting-import", pr_states({**labelled, "labelsComplete": False}))
 
-    def test_only_current_active_import_failure_counts(self):
+    def test_current_import_failure_survives_closure_until_landing(self):
         imported = original(number=2, head="b" * 40, matchesSourceHead=False,
                             checks={"state": "FAILURE", "contexts": [{"state": "FAILURE"}], "complete": True})
         pr = original(reviewDecision="APPROVED", imports=[imported])
@@ -401,7 +401,7 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(set(pr_states(pr)), {"failing", "importing"})
         self.assertEqual(pr_states(pr)["failing"]["qualifier"], "Import #2 failing")
         imported["status"] = "closed"
-        self.assertEqual(set(pr_states(pr)), {"awaiting-import"})
+        self.assertEqual(set(pr_states(pr)), {"failing", "awaiting-import"})
         imported["status"] = "merged"
         self.assertEqual(set(pr_states(pr)), {"imported"})
 
