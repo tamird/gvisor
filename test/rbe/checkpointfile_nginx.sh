@@ -15,14 +15,14 @@
 
 set -euo pipefail
 
-# The unchanged benchmark reads OCI bundles at the system containerd path.
+# The benchmark reads OCI bundles at the system containerd path.
 # Give its process that view of the test daemon without changing the daemon
 # or the worker mount namespace.
 if [[ ${1:-} != --private-mount ]]; then
   exec unshare --mount --propagation private -- "$0" --private-mount "$@"
 fi
 shift
-[[ $# == 1 && $EUID == 0 && $(uname -m) == x86_64 && $RUNTIME == runsc ]]
+[[ $# == 4 && $EUID == 0 && $(uname -m) == x86_64 && $RUNTIME == runsc ]]
 [[ ${DOCKER_HOST:?} == unix:///tmp/gvisor-docker-*/docker.sock ]]
 daemon_config=${DOCKER_HOST#unix://}
 daemon_config=${daemon_config%/docker.sock}/daemon.json
@@ -32,26 +32,23 @@ mkdir -p /run/containerd
 mount --bind "$state" /run/containerd
 
 binary=$(realpath "$1")
+benchstat=$(realpath "$2")
+reporter=$(realpath "$3")
+archive=$(realpath "$4")
 out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
-printf 'checkpointfile: arch=%s bundle_state=%s runtime=%s\n' "$(uname -m)" "$state" "$RUNTIME"
+cpu=$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')
+printf 'checkpointfile: arch=%s cpu=%s bundle_state=%s runtime=%s\n' "$(uname -m)" "$cpu" "$state" "$RUNTIME"
+grep -m1 'model name' /proc/cpuinfo
 sha256sum "$binary"
-docker image inspect --format '{{.Id}}' gvisor.dev/images/benchmarks/nginx:latest
+printf '%s  %s\n' 26d929dac24fcba6a0b22c60db59f27fca01e070be2977ab380413e2f7a59401 "$benchstat" | sha256sum -c -
+docker image inspect gvisor.dev/images/benchmarks/nginx:latest > "$out/nginx-inspect.json"
+python3 "$reporter" --image "$archive" "$out/nginx-inspect.json"
 GO_TEST_WRAP=1 GO_TEST_RUN_FROM_BAZEL=1 TEST_BINARY="$binary" \
   XML_OUTPUT_FILE="$out/checkpointfile.xml" GOMAXPROCS=1 \
-  "$binary" '-test.run=^$' '-test.bench=^BenchmarkCheckpointFile$' \
-  -test.benchtime=1x -test.benchmem -test.cpu=1 -test.count=1 \
+  taskset -c "$cpu" "$binary" '-test.run=^$' '-test.bench=^BenchmarkCheckpointFile$' \
+  -test.benchtime=5x -test.benchmem -test.cpu=1 -test.count=1 \
   -test-checkpoint=true -runtime="$RUNTIME" -config_path="$daemon_config" \
   | tee "$out/checkpointfile.log"
 
-# A skipped benchmark or an empty test run can otherwise exit successfully.
-awk '
-  /^BenchmarkCheckpointFile\/Decode(-[0-9]+)?[[:space:]]/ && $2 == 1 {
-    for (i = 4; i <= NF; i += 2)
-      if ($i == "state-file-B" && $(i-1) > 0) ++decode
-  }
-  /^BenchmarkCheckpointFile\/Encode(-[0-9]+)?[[:space:]]/ && $2 == 1 {
-    for (i = 4; i <= NF; i += 2)
-      if ($i == "encoded-kernel-B" && $(i-1) > 0) ++encode
-  }
-  END { exit !(decode == 1 && encode == 1) }
-' "$out/checkpointfile.log"
+python3 "$reporter" "$out"
+"$benchstat" "codec=$out/codec.bench" "statefile=$out/statefile.bench" | tee "$out/benchstat.txt"
