@@ -4259,27 +4259,41 @@ signal.pause()
                 self.assertEqual((value["status"], value["producer_status"]), (expected, "PASS"))
                 self.assertEqual(value["native_invocation"]["bazelExitCode"], "INTERRUPTED")
 
+    def test_native_collection_waits_for_archive_after_disconnect(self) -> None:
+        artifact, producer = self.artifact(self.fixture(), native=True)
+        metadata = self.native_metadata(artifact, producer)
+        disconnected = {**metadata, "invocationStatus": "DISCONNECTED_INVOCATION_STATUS",
+                        "success": False, "artifacts": [{"name": "bootstrap.json"}]}
+        responses = [self.metadata_response(disconnected), self.metadata_response(metadata),
+                     self.native_response(artifact.read_bytes())]
+        with mock.patch.object(report.time, "sleep"):
+            value = self.native_collect(metadata, responses)
+        self.assertEqual((value["status"], value["collection_status"]), ("PASS", "COMPLETE"))
+        self.assertEqual(value["native_invocation"]["artifact"]["sha256"], report.file_record(artifact)["sha256"])
+
     def test_native_collection_timeout_is_not_an_execution_verdict(self) -> None:
         artifact, producer = self.artifact(self.fixture(), native=True)
         metadata = self.native_metadata(artifact, producer)
-        pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
-        for error in (None, TimeoutError("timed out"),
-                      socket.gaierror(socket.EAI_NONAME, "name unavailable"),
-                      socket.gaierror(socket.EAI_AGAIN, "temporary resolution failure")):
-            with self.subTest(error=error):
+        for observation in ("PARTIAL_INVOCATION_STATUS", "DISCONNECTED_INVOCATION_STATUS", TimeoutError("timed out"),
+                            socket.gaierror(socket.EAI_NONAME, "name unavailable"),
+                            socket.gaierror(socket.EAI_AGAIN, "temporary resolution failure")):
+            with self.subTest(observation=observation):
                 clock = [0]
 
                 def expire(_: float) -> None:
                     clock[0] = 31
 
-                responses = [error] if error is not None else [self.metadata_response(pending)]
+                if isinstance(observation, str):
+                    responses = [self.metadata_response({**metadata, "invocationStatus": observation, "artifacts": []})]
+                else:
+                    responses = [observation]
                 with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]), \
                      mock.patch.object(report.time, "sleep", side_effect=expire):
                     value = self.native_collect(metadata, responses)
                 self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
                 self.assertIn("deadline", value["collection_error"])
-                if error is None:
-                    self.assertEqual(value["native_invocation"]["invocationStatus"], "PARTIAL_INVOCATION_STATUS")
+                if isinstance(observation, str):
+                    self.assertEqual(value["native_invocation"]["invocationStatus"], observation)
                 self.assertNotIn("consumer_verified_at", value)
 
     def test_native_collection_does_not_retry_other_socket_errors(self) -> None:

@@ -3107,17 +3107,20 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
                         raise ValueError("BuildBuddy invocation source differs from the submitted source")
                 case _:
                     raise ValueError("BuildBuddy returned multiple or malformed invocations")
-            if invocation.get("invocationStatus") in ("COMPLETE_INVOCATION_STATUS", "DISCONNECTED_INVOCATION_STATUS"):
+            status = invocation.get("invocationStatus")
+            if status in ("COMPLETE_INVOCATION_STATUS", "DISCONNECTED_INVOCATION_STATUS"):
                 # Proto JSON may omit false; other JSON types are not booleans.
                 if not isinstance(invocation.get("success", False), bool):
                     raise ValueError("Terminal invocation success is not a boolean")
-                break
+                matches = [mapping(item) for item in sequence(invocation.get("artifacts", []))
+                           if mapping(item).get("name") == "qualification.tar.gz"]
+                # A disconnected runner can reconnect and publish its archive.
+                if status == "COMPLETE_INVOCATION_STATUS" or matches:
+                    break
             time.sleep(min(5, remaining()))
         execution["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         if invocation.get("commitSha") != checkout_source:
             raise ValueError("Terminal invocation is missing the submitted source")
-        matches = [mapping(item) for item in sequence(invocation.get("artifacts", []))
-                   if mapping(item).get("name") == "qualification.tar.gz"]
         match matches:
             case [bundle_record]:
                 uri = string(bundle_record.get("uri"))
