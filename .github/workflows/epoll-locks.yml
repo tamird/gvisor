@@ -1,0 +1,74 @@
+name: Check restored epoll watch locking
+
+"on":
+  push:
+    branches: [qualification/epoll-lock-restore-run]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/epoll-modify"
+          mkdir -p "$root/task"
+          cp .github/qualification/epoll-locks/{request.json,plan.json,submit.py} "$root/task/"
+          cp .github/qualification/epoll-locks/receipt.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          6f0fd81062143319dc99fd4f20327649722c678d4588284e7cee666f1e1f705f  receipt.py
+          e97bd6bfb0b7b7dec547842a457fd029ae0728bab03430830b8bceff442c8cc9  task/plan.json
+          9bdff003027d7e721b831ecc24a7f40d886769ae7ffd305295444aab6f1b35f8  task/request.json
+          a52d0b9a447a65aea5a39342cd4f8d5c53a6712433d6c2c8a7e9e52327ca1df3  task/submit.py
+          SUMS
+      - name: Verify all immutable qualification inputs before submission
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git b7cbb86f1edf369a28bd27d1c4817eab917abb8c
+          test "$(git rev-parse "b7cbb86f1edf369a28bd27d1c4817eab917abb8c^{tree}")" = ef51e8dcd55330bac84914fd82ef959d785ab79a
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git bbf65d6f80d666b7c44f34d7d8c0fa863fe7b222
+          test "$(git rev-parse "bbf65d6f80d666b7c44f34d7d8c0fa863fe7b222^{tree}")" = 2e0c5e6e10a7452a88d415416dd8d05c21cc89a5
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git 710c59cdadfb5f222b6a323a3b5eabeec7940a5a
+          test "$(git rev-parse "710c59cdadfb5f222b6a323a3b5eabeec7940a5a^{tree}")" = 810749dc1ee9122f6fa0f425eb0835d289de139d
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git 7e539708e684d583eef3bef82862cebce5285654
+          test "$(git rev-parse "7e539708e684d583eef3bef82862cebce5285654^{tree}")" = 4e0b06638a8062d4b418cfcf09366bf91117cb4e
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git 3d34483f9f4dda76fdb977d5978ddefb0032b417
+          test "$(git rev-parse "3d34483f9f4dda76fdb977d5978ddefb0032b417^{tree}")" = 2bdf3f31281df110fdefaa2612c080621cc89128
+          test "$(git rev-parse 7e539708e684d583eef3bef82862cebce5285654:pkg/sentry/epollqualification)" = 994ef2f42349d5dc74952efbda6432f879c78853
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"]) / "epoll-modify" / "receipt.py"))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epoll-modify-receipt
+          path: ${{ runner.temp }}/epoll-modify/verdict.json
+          if-no-files-found: error
+          retention-days: 14

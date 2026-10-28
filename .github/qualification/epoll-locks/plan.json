@@ -1,0 +1,55 @@
+{
+  "source": "7e539708e684d583eef3bef82862cebce5285654",
+  "before": "3d34483f9f4dda76fdb977d5978ddefb0032b417",
+  "product": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
+  "base": "b7cbb86f1edf369a28bd27d1c4817eab917abb8c",
+  "trees": {
+    "b7cbb86f1edf369a28bd27d1c4817eab917abb8c": "ef51e8dcd55330bac84914fd82ef959d785ab79a",
+    "bbf65d6f80d666b7c44f34d7d8c0fa863fe7b222": "2e0c5e6e10a7452a88d415416dd8d05c21cc89a5",
+    "710c59cdadfb5f222b6a323a3b5eabeec7940a5a": "810749dc1ee9122f6fa0f425eb0835d289de139d",
+    "7e539708e684d583eef3bef82862cebce5285654": "4e0b06638a8062d4b418cfcf09366bf91117cb4e",
+    "3d34483f9f4dda76fdb977d5978ddefb0032b417": "2bdf3f31281df110fdefaa2612c080621cc89128"
+  },
+  "targets": [
+    "//pkg/sentry/vfs:vfs_nogo",
+    "//pkg/sentry/vfs:vfs_test_nogo",
+    "//pkg/sentry/vfs:vfs_test",
+    "//pkg/sentry/epollqualification:epoll_contract_test"
+  ],
+  "phases": {
+    "guards": [
+      "7e539708e684d583eef3bef82862cebce5285654",
+      [
+        "//pkg/sentry/vfs:vfs_nogo",
+        "//pkg/sentry/vfs:vfs_test_nogo"
+      ]
+    ],
+    "race": [
+      "7e539708e684d583eef3bef82862cebce5285654",
+      [
+        "//pkg/sentry/vfs:vfs_test"
+      ]
+    ],
+    "restore": [
+      "7e539708e684d583eef3bef82862cebce5285654",
+      [
+        "//pkg/sentry/epollqualification:epoll_contract_test"
+      ]
+    ],
+    "before": [
+      "3d34483f9f4dda76fdb977d5978ddefb0032b417",
+      [
+        "//pkg/sentry/vfs:vfs_test"
+      ]
+    ]
+  },
+  "request_sha256": "9bdff003027d7e721b831ecc24a7f40d886769ae7ffd305295444aab6f1b35f8",
+  "host": "cb548161f537465fda2576793e6d6cea59a32260",
+  "bytes": 18252,
+  "file_digests": {
+    "image_bootstrap.py": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+    "image_execution.py": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+    "image_qualification.py": "3225c70bf3985c792040dfd3817dfe4e1d6a40157a5d2fff8754e991887df0d4",
+    "image_workload.py": "b01c06149347236a8b440c86cec750d9c286e1e1152e0f202e013c7ad49cb154"
+  }
+}
