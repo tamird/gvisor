@@ -221,6 +221,8 @@ review-dismissal event records its previous state as approved.
 Posting also requires fresh `MERGEABLE` status. Conflicts defer to source work;
 unknown mergeability gets one bounded, head-checked reread per PR, using the
 existing eight-PR batches and request ceiling, and still defers if unresolved.
+Snapshot rereads use only the budget left after collecting every repository and
+registered issue. When it runs out, unqueried PRs retain their initial UNKNOWN.
 Every normal sweep reports the full
 current conflict/unknown inventory and its changed or resolved observations,
 including source/import heads and assigned follow-up. No reminder asks a

@@ -91,9 +91,9 @@ def graphql(query: str, variables: dict[str, object] | None = None, *,
     global requests, query_cost, rate_remaining
     query = query.rstrip().removesuffix("}") + " rateLimit { cost remaining } }"
     for attempt in range(2):
-        requests += 1
-        if requests > REQUEST_LIMIT:
+        if requests >= REQUEST_LIMIT:
             raise RuntimeError("Snapshot request limit reached; previous file is unchanged")
+        requests += 1
         try:
             result = subprocess.run(
                 ["gh", "api", "graphql", "--input", "-"],
@@ -305,14 +305,20 @@ def current_check_attempts(contexts: list[dict]) -> tuple[list[dict], list[dict]
     return current, superseded
 
 
-def normalize(pr: dict) -> dict:
-    commits = pr["commits"]["nodes"]
-    if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
-        raise RuntimeError(f"PR #{pr['number']} head changed during retrieval")
+def mergeability_fields(pr: dict) -> dict:
     branch = pr.get("headRef")
     if branch and (branch["name"] != pr["headRefName"]
                    or not re.fullmatch(r"[a-f0-9]{40}", branch["target"]["oid"])):
         raise RuntimeError(f"PR #{pr['number']} has an invalid source branch identity")
+    return {"base": pr["baseRefOid"], "branchHead": branch["target"]["oid"] if branch else None,
+            "mergeable": pr["mergeable"], "mergeState": pr["mergeStateStatus"],
+            "mergeabilityCheckedAt": pr.get("_mergeabilityRetrievedAt", pr["_retrievedAt"])}
+
+
+def normalize(pr: dict) -> dict:
+    commits = pr["commits"]["nodes"]
+    if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
+        raise RuntimeError(f"PR #{pr['number']} head changed during retrieval")
     rollup = commits[0]["commit"]["statusCheckRollup"]
     checks = None
     if rollup is not None:
@@ -347,8 +353,7 @@ def normalize(pr: dict) -> dict:
     normalized = {
         "number": pr["number"], "repo": pr["repository"]["nameWithOwner"], "title": pr["title"], "url": pr["url"],
         "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
-        "ref": pr["headRefName"], "head": pr["headRefOid"], "base": pr["baseRefOid"],
-        "branchHead": branch["target"]["oid"] if branch else None,
+        "ref": pr["headRefName"], "head": pr["headRefOid"], **mergeability_fields(pr),
         "headCommittedAt": commits[0]["commit"]["committedDate"],
         "headHistoryComplete": "headHistory" in pr,
         "headIntroducedAt": max((event["createdAt"] for event in pr.get("headHistory", {}).get("nodes", [])
@@ -366,9 +371,6 @@ def normalize(pr: dict) -> dict:
                              "items": pr.get("reviewDismissals", {}).get("nodes", [])},
         "reviewRequests": [item["requestedReviewer"] for item in pr["reviewRequests"]["nodes"] if item["requestedReviewer"]],
         "reviewRequestsComplete": not pr["reviewRequests"]["pageInfo"]["hasNextPage"],
-        "mergeable": pr["mergeable"],
-        "mergeabilityCheckedAt": pr.get("_mergeabilityRetrievedAt", pr["_retrievedAt"]),
-        "mergeState": pr["mergeStateStatus"],
         "labels": [label["name"] for label in pr["labels"]["nodes"]],
         "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
         "labelHistory": {"complete": not pr.get("labelHistory", {}).get("pageInfo", {}).get("hasPreviousPage", True),
@@ -503,6 +505,20 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
     return {"status": "completed", "numbers": numbers}
 
 
+def recheck_snapshot_mergeability(raw_prs: list[dict], rows: list[dict], repo: str) -> dict[str, object]:
+    result = recheck_unknown_mergeability(raw_prs, repo)
+    observed = {pr["number"]: pr for pr in raw_prs if "_mergeabilityRetrievedAt" in pr}
+    for row in rows:
+        if (pr := observed.get(row["number"])) is None:
+            continue
+        if row["head"] != pr["headRefOid"]:
+            raise RuntimeError(f"PR #{row['number']} changed during mergeability recheck; previous snapshot is unchanged")
+        row.update(mergeability_fields(pr), checkedAt=pr["_mergeabilityRetrievedAt"])
+        if row["mergeable"] != "UNKNOWN":
+            row["mergeabilityObservation"] = remember_mergeability(row, {}, row["checkedAt"])
+    return result
+
+
 def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dict], dict, dict, dict]:
     numbers = {node["number"] for node in REGISTRY["nodes"]
                if node["type"] == "pr" and node["repo"] == repo}
@@ -543,15 +559,13 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
     imported = fetch_numbers(sorted(other for other in import_numbers
                                     if needs_refresh(other, prior_imports, open_numbers) or other in changed_relations),
                              timeline=False, repo=repo)
-    # Finish every required fetch before spending the remaining request budget
-    # on GitHub's optional asynchronous mergeability recalculation.
-    mergeability_recheck = recheck_unknown_mergeability([*originals.values(), *imported.values()], repo)
     # A merge can occur while these bounded requests are in flight. Stamp only
     # fresh detail observations; terminal history keeps its original clock.
     checked_at = datetime.now(timezone.utc).isoformat()
     prior_prs = {**prior_sources, **prior_imports}
+    fresh = {**originals, **imported}
     refreshed = {}
-    for number, raw in {**originals, **imported}.items():
+    for number, raw in fresh.items():
         item = normalize(raw)
         item["checkedAt"] = checked_at
         item["mergeabilityObservation"] = remember_mergeability(item, prior_prs.get(number, {}), item["mergeabilityCheckedAt"])
@@ -579,11 +593,11 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
         item["importPolicy"] = policy
         item["imports"] = imports
         prs.append(item)
-    return prs, refreshed, prior_prs, {
+    return prs, fresh, prior_prs, {
         "scope": "registered-only" if registered_only else "open-author-discovery",
         "registeredCount": len(refresh_numbers) if registered_only else None,
         "openInventoryTotal": None if registered_only else len(open_numbers), "retainedSources": len(numbers) - len(originals),
-        "retainedImports": len(import_numbers) - len(imported), "mergeabilityRecheck": mergeability_recheck,
+        "retainedImports": len(import_numbers) - len(imported),
     }
 
 
@@ -910,8 +924,14 @@ def main() -> None:
         refreshed.update({(repo, number): value for number, value in fresh.items()})
         prior_prs.update({(repo, number): value for number, value in prior.items()})
         inventories[repo] = inventory
-    observe_release_versions(prs)
     issues = collect_issues(previous)
+    observe_release_versions(prs)
+    # Use only the budget left by all repositories and issues. Otherwise
+    # UNKNOWNs in the first repository can crowd out required observations.
+    for repo, inventory in inventories.items():
+        raw_prs = [pr for (owner, _), pr in refreshed.items() if owner == repo]
+        rows = [pr for source in prs if source.get("repo", REPO) == repo for pr in (source, *source["imports"])]
+        inventory["mergeabilityRecheck"] = recheck_snapshot_mergeability(raw_prs, rows, repo)
     for record in issue_discussions(issues, previous):
         print(json.dumps({"issueDiscussion": record}), flush=True)
     checked_at = datetime.now(timezone.utc).isoformat()

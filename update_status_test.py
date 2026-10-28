@@ -270,6 +270,52 @@ class MergeabilityBatchTest(unittest.TestCase):
         self.assertEqual(self.batches, [list(range(1, 9))])
         self.assertEqual([row["mergeable"] for row in self.rows], ["MERGEABLE"] * 8 + ["UNKNOWN"] * 9)
 
+    def test_recheck_rejects_changed_export_and_preserves_all_copies(self) -> None:
+        first = retained(self.rows[12])
+        second = copy.deepcopy(first)
+        with mock.patch.object(updater, "graphql", side_effect=self.graphql), mock.patch.object(updater, "requests", 0):
+            updater.recheck_snapshot_mergeability([self.rows[12]], [first, second], "google/gvisor")
+            self.assertEqual(self.batches, [[13]])
+            self.assertEqual(first["mergeabilityObservation"]["state"], "CONFLICTING")
+            self.assertEqual(first, second)
+            for row in (first, second):
+                row["mergeable"] = "UNKNOWN"
+            self.rows[12]["mergeable"] = "UNKNOWN"
+            second["head"] = "a" * 40
+            with self.assertRaisesRegex(RuntimeError, "changed during mergeability recheck"):
+                updater.recheck_snapshot_mergeability([self.rows[12]], [first, second], "google/gvisor")
+
+    def test_reread_clocks_pass_the_snapshot_validator(self) -> None:
+        rows = [retained(raw) for raw in self.rows]
+        previous = {"state": "CONFLICTING", "head": rows[0]["head"], "base": rows[0]["base"], "checkedAt": OLD}
+        rows[0]["mergeabilityObservation"] = previous
+
+        def recheck(query: str) -> dict:
+            result = self.graphql(query)
+            result["repository"]["p1"]["mergeable"] = "UNKNOWN"
+            return result
+
+        with mock.patch.object(updater, "requests", updater.REQUEST_LIMIT - 1), \
+                mock.patch.object(updater, "graphql", side_effect=recheck):
+            result = updater.recheck_snapshot_mergeability(self.rows, rows, "google/gvisor")
+            self.assertEqual(updater.requests, updater.REQUEST_LIMIT)
+        self.assertEqual(result["status"], "budget-exhausted")
+        self.assertEqual(self.batches, [list(range(1, 9))])
+        self.assertEqual([row["mergeable"] for row in rows], ["UNKNOWN"] + ["MERGEABLE"] * 7 + ["UNKNOWN"] * 9)
+        self.assertEqual(rows[0]["mergeabilityObservation"], previous)
+        for row in rows:
+            self.assertEqual(row["checkedAt"], row["mergeabilityCheckedAt"])
+        self.assertEqual([row["number"] for row in rows if row["checkedAt"] != OLD], list(range(1, 9)))
+
+        # Exercise the same paired metadata validator the collector uses to publish.
+        snapshot = json.loads((updater.ROOT / "github-status.json").read_bytes())
+        snapshot.update(prs=rows, workStates={}, checkedAt=rows[0]["checkedAt"])
+        with tempfile.TemporaryDirectory() as directory:
+            candidate = Path(directory) / "snapshot.json"
+            candidate.write_text(json.dumps(snapshot))
+            subprocess.run(["node", updater.ROOT / "metadata-preflight.mjs", updater.ROOT, candidate],
+                           check=True, capture_output=True, text=True, timeout=30)
+
 
 class CollectorHistoryTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -410,6 +456,41 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(current["workStates"]["pr:1"]["merged"]["observedAt"], OLD)
         self.assertEqual(current["limits"]["retainedSources"], 101)
         self.assertEqual(current["limits"]["retainedImports"], 2)
+
+    def test_required_repositories_and_issues_get_budget_before_unknown_rechecks(self) -> None:
+        second_repo = "other/project"
+        self.registry["meta"].update(repositories={"google/gvisor": "copybara", second_repo: "none"},
+                                     registeredOnlyRepositories=[second_repo])
+        self.registry["nodes"].extend([
+            {"id": "other:17", "type": "pr", "repo": second_repo, "number": 17},
+            {"id": "issue:19", "type": "issue", "repo": second_repo, "number": 19},
+        ])
+        self.raw[3]["mergeable"] = "UNKNOWN"
+        self.raw[17] = raw_pr(17)
+        self.raw[17]["repository"]["nameWithOwner"] = second_repo
+        self.raw[17]["url"] = f"https://github.com/{second_repo}/pull/17"
+        regular_query = self.graphql
+
+        def query(text: str, variables: dict | None = None, *, missing_issue_aliases: set[str] | None = None) -> dict:
+            if missing_issue_aliases is not None:
+                updater.requests += 1
+                self.assertEqual(missing_issue_aliases, {"i0"})
+                return {"i0": {"issue": {"url": f"https://github.com/{second_repo}/issues/19", "state": "OPEN",
+                                         "stateReason": None, "closedAt": None, "updatedAt": LATER,
+                                         "comments": {"nodes": [], "pageInfo": {"hasNextPage": False}}}}}
+            return regular_query(text, variables)
+
+        # Two inventory pages, two PR detail queries, the second repository,
+        # and its issue use all six requests. There is no optional read left.
+        with mock.patch.object(self, "graphql", side_effect=query), mock.patch.object(updater, "REQUEST_LIMIT", 6):
+            snapshot = self.collect()
+        self.assertEqual(snapshot["limits"]["requests"], 6)
+        self.assertEqual(snapshot["issues"]["issue:19"]["githubState"], "open")
+        prs = {pr["number"]: pr for pr in snapshot["prs"]}
+        self.assertEqual(prs[17]["repo"], second_repo)
+        self.assertEqual(prs[3]["mergeable"], "UNKNOWN")
+        self.assertEqual(snapshot["limits"]["repositories"]["google/gvisor"]["mergeabilityRecheck"],
+                         {"status": "budget-exhausted", "numbers": [3]})
 
     def test_required_failure_or_footer_race_preserves_snapshot(self) -> None:
         for failure in ("inventory", "required", "footer"):
