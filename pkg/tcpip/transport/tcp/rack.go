@@ -250,43 +250,39 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 	return nil
 }
 
-// detectTLPRecovery detects if recovery was accomplished by the loss probes
-// and updates TLP state accordingly.
-// See https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.6.3.
+// detectTLPRecovery checks whether a retransmitted tail probe repaired a loss.
+// See RFC 8985 section 7.4.2.
 //
 // +checklocks:s.ep.mu
 func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
-	if !(s.ep.SACKPermitted && s.rc.tlpRxtOut) {
+	end := s.rc.tlpHighRxt
+	if !s.ep.SACKPermitted || !s.rc.tlpRxtOut || ack.LessThan(end) {
 		return
 	}
 
-	// Step 1.
-	if s.isDupAck(rcvdSeg) && ack == s.rc.tlpHighRxt {
-		var sbAboveTLPHighRxt bool
-		for _, sb := range rcvdSeg.parsedOptions.SACKBlocks {
-			if s.rc.tlpHighRxt.LessThan(sb.End) {
-				sbAboveTLPHighRxt = true
-				break
-			}
-		}
-		if !sbAboveTLPHighRxt {
-			// TLP episode is complete.
+	blocks := rcvdSeg.parsedOptions.SACKBlocks
+	if len(blocks) != 0 && blocks[0].End == end && blocks[0].Start.LessThan(end) {
+		// The cumulative ACK covers the probe. A first SACK block ending
+		// there reports duplicate delivery of the probed segment.
+		s.rc.tlpRxtOut = false
+		return
+	}
+	if ack == end {
+		// The first ACK here can be for either copy. A second, pure ACK
+		// with no SACK option indicates both arrived (even if nothing
+		// remains outstanding).
+		if ack == s.SndUna && rcvdSeg.logicalLen() == 0 && rcvdSeg.window == s.SndWnd && len(blocks) == 0 {
 			s.rc.tlpRxtOut = false
 		}
+		return
 	}
 
-	if s.rc.tlpRxtOut && s.rc.tlpHighRxt.LessThanEq(ack) {
-		// TLP episode is complete.
-		s.rc.tlpRxtOut = false
-		if !checkDSACK(rcvdSeg) {
-			// Step 2. Either the original packet or the retransmission (in the
-			// form of a probe) was lost. Invoke a congestion control response
-			// equivalent to fast recovery.
-			s.cc.HandleLossDetected()
-			s.enterRecovery()
-			s.leaveRecovery()
-		}
-	}
+	// New data beyond the probe was delivered without evidence that both
+	// copies arrived. Respond to the loss once, as in fast recovery.
+	s.rc.tlpRxtOut = false
+	s.cc.HandleLossDetected()
+	s.enterRecovery()
+	s.leaveRecovery()
 }
 
 // updateRACKReorderWindow updates the reorder window.
