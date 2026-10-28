@@ -14,7 +14,11 @@
 
 package tests
 
-import "context"
+import (
+	"context"
+
+	"gvisor.dev/gvisor/pkg/state"
+)
 
 // +stateify savable
 type genericContainer struct {
@@ -28,6 +32,64 @@ type afterLoadStruct struct {
 
 func (a *afterLoadStruct) afterLoad(context.Context) {
 	a.v++
+}
+
+// +stateify savable
+type convertedContainers struct {
+	fromMap       int `state:".(map[int]afterLoadStruct)"`
+	fromInterface int `state:".(genericContainer)"`
+}
+
+func (c *convertedContainers) saveFromMap() map[int]afterLoadStruct {
+	return map[int]afterLoadStruct{7: {v: c.fromMap}}
+}
+
+func (c *convertedContainers) loadFromMap(_ context.Context, m map[int]afterLoadStruct) {
+	c.fromMap = m[7].v
+}
+
+func (c *convertedContainers) saveFromInterface() genericContainer {
+	return genericContainer{v: afterLoadStruct{v: c.fromInterface}}
+}
+
+func (c *convertedContainers) loadFromInterface(_ context.Context, value genericContainer) {
+	c.fromInterface = value.v.(afterLoadStruct).v
+}
+
+// +stateify type
+type earlyAfterLoad struct {
+	value              int
+	observed           int `state:"nosave"`
+	seenFromConversion int `state:"nosave"`
+}
+
+func (a *earlyAfterLoad) StateSave(s state.Sink) {
+	v := a.value
+	s.SaveValue(0, &v)
+}
+
+func (a *earlyAfterLoad) StateLoad(_ context.Context, s state.Source) {
+	s.AfterLoad(func() { a.observed = a.value })
+	s.LoadValue(0, new(*int), func(v any) {
+		a.value = *v.(*int)
+		s.AfterLoad(func() { a.seenFromConversion = a.value })
+	})
+}
+
+// +stateify savable
+type sharedSliceLoad struct {
+	elements []afterLoadStruct
+	observed int  `state:".([]afterLoadStruct)"`
+	shared   bool `state:"nosave"`
+}
+
+func (s *sharedSliceLoad) saveObserved() []afterLoadStruct {
+	return s.elements
+}
+
+func (s *sharedSliceLoad) loadObserved(_ context.Context, elements []afterLoadStruct) {
+	s.observed = elements[0].v
+	s.shared = &s.elements[0] == &elements[0]
 }
 
 // +stateify savable
