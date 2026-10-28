@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T16:39:22.240365+00:00",
+    "updatedAt": "2026-10-28T16:53:04.988727+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34210,9 +34210,22 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-27T21:32:33.895621+00:00",
+      "updatedAt": "2026-10-28T16:53:04.988727+00:00",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
+        {
+          "text": "A real TCP endpoint retransmitted an unanswered SYN after 1.0003 seconds on the Linux worker. Under plain Go 1.27.3 synctest, the SYN was sent but Wait stayed blocked until the five-second watchdog: the idle TCP processor was parked in Sleeper.Fetch. Pausing the single stack once let Wait return without advancing time. No retransmission was queued one nanosecond before the RTO; the same SYN appeared at exactly one virtual second (4.1 ms wall time for the child). This proves a handshake timer can run while the dispatcher is paused. It does not establish a deterministic two-stack link simulator.",
+          "evidence": [
+            {
+              "label": "Real SYN, plain bubble and paused stack: native worker result",
+              "url": "https://app.buildbuddy.io/invocation/09e0e12c-3b66-42a2-9841-898eaffa8704"
+            },
+            {
+              "label": "Fork-only TCP timer fixture",
+              "url": "https://github.com/tamird/gvisor/commit/14c32e4dd2f1ffa49e58e240c4adfb82407023fe"
+            }
+          ]
+        },
         {
           "text": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.",
           "evidence": [
@@ -35611,7 +35624,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the existing #15634 SACK-accounting prerequisite and approved flight-accounting successor. Keep this common-base comparison, the earlier accounting failure and the reporter transfer distinct; no new contributor decision or default-controller change is requested.",
+      "nextStep": "Exercise two real stacks with a declared link delay and one lost data segment. Drain both stacks before each virtual-time advance; require the retransmission, cumulative ACK and exact delivered bytes, then compare wire schedules across runs and processor counts.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
