@@ -406,15 +406,16 @@ function importLineage(node) {
 function publicImportDisposition(node) {
   const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);
   if (!record) return null; // Older paired snapshots use the same direct lineage below.
-  const binding = { sourceHead: pr.head, approvedHead: patch?.approvedHead ?? null,
-    currentApproval: currentHeadApproval(pr, patch),
+  const currentApproval = currentHeadApproval(pr, patch);
+  const binding = { sourceHead: pr.head, approvedHead: patch?.approvedHead ?? null, currentApproval,
     complete: pr.importsComplete === true, labels: [...(pr.labels || [])].sort(), labelsComplete: pr.labelsComplete === true,
     labelHistory: pr.labelHistory ?? null, imports: importLineage(node).map(item => ({
       number: item.number, head: item.head, sourceHead: item.sourceHead, status: item.status,
       mergeable: item.mergeable ?? null, conflicting: !!conflictRecord(item),
     })), eligible: usesImports(pr) && pr.status === "open" && !pr.revisionChanged
       && (!pr.branchHead || pr.branchHead === pr.head) && pr.mergeable === "MERGEABLE"
-      && !landedPatch(node) && (effectiveReviewDecision(pr) === "APPROVED" || !!patch) };
+      && !landedPatch(node) && (effectiveReviewDecision(pr) === "APPROVED" || !!patch
+        || currentApproval && (pr.githubReviewDecision ?? pr.reviewDecision) !== "CHANGES_REQUESTED") };
   return evidenceJSON(record.binding) === evidenceJSON(binding) ? record : null;
 }
 function unresolvedImportChecks(imports) {
@@ -504,7 +505,6 @@ function attentionReasons(node, owner) {
     add("maintainer-reapproval", `Ask the approving maintainer to reapprove current source ${pr.head.slice(0, 12)} (${pr.url}), published ${pr.headIntroducedAt}. The prior approval was submitted ${acceptedPatch.submittedAt}. ${exports.join(". ")}. Reapproval of this source PR lets Copybara regenerate the import. Equivalent source patches and an open older export do not replace current-head approval; the periodic alarm uses the existing per-PR cooldown and business hours.`);
   }
   const restoreLabel = importAction === "maintainer-import-label";
-  if (restoreLabel) add("maintainer-import-label", importDisposition.description, "Restore ready to pull");
   const awaitingReapprovedExport = !restoreLabel && importDisposition?.binding.eligible && importDisposition.scope === "equivalent"
     && importDisposition.binding.currentApproval && active.length;
   if (awaitingReapprovedExport)
@@ -553,6 +553,8 @@ function attentionReasons(node, owner) {
     else add("agent-release-check", `${version ? `Upstream now lists ${version}.` : "The latest upstream release could not be verified."} ${wait.nextAction}`);
     return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
   }
+  if (restoreLabel && pr.threads?.complete && !pr.threads.unresolved && !comment)
+    add("maintainer-import-label", importDisposition.description, "Restore ready to pull");
   // Closing the only export is independent of its retained CI failure. Keep
   // both actions visible; skipping another approval request is not all-clear.
   if (importAction === "maintainer-reimport")
@@ -568,7 +570,7 @@ function attentionReasons(node, owner) {
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
   if (review.response && !newWaitComment && attentionDisposition(node, "author-feedback")?.action !== "batch-cleanup")
     add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
-  if (!approved && !followupBlocked && !review.response && !review.unknown)
+  if (!approved && !restoreLabel && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
   if (approved && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport && !restoreLabel) {
     const open = active.filter(item => item.status === "open");

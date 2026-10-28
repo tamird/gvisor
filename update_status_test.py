@@ -1140,6 +1140,10 @@ class ReapprovalReminderTest(unittest.TestCase):
             return updater.reminder_plan(pr, node, now, "tamird", frozenset({"etienneperot"}))
 
         self.assertEqual(plan({})["action"], "restore-import-label")
+        with mock.patch.dict(pr, {"githubReviewDecision": "REVIEW_REQUIRED"}):
+            self.assertEqual(plan({})["action"], "restore-import-label")
+        with mock.patch.dict(pr, {"githubReviewDecision": "CHANGES_REQUESTED"}):
+            self.assertNotEqual(plan({})["status"], "due")
         for change in ({"importsComplete": False}, {"labelsComplete": False}, {"labels": ["ready to pull"]},
                        {"labelHistory": {"complete": False, "items": []}}):
             with mock.patch.dict(pr, change):

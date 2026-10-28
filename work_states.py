@@ -363,7 +363,8 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     eligible = (pr.get("importPolicy", "copybara") == "copybara" and pr.get("status") == "open"
                 and not pr.get("revisionChanged") and pr.get("branchHead", pr["head"]) in {None, pr["head"]}
                 and pr.get("mergeable") == "MERGEABLE" and not landed_patch(pr, landing)
-                and (review_decision(pr) == "APPROVED" or accepted))
+                and (review_decision(pr) == "APPROVED" or accepted or approval
+                     and pr.get("githubReviewDecision", pr.get("reviewDecision")) != "CHANGES_REQUESTED"))
     binding["eligible"] = bool(eligible)
     trigger = import_trigger(pr)
     action = None
@@ -371,7 +372,8 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
         # A later approval without the import label leaves Copybara on the old
         # revision. Do not undo a maintainer's removal made after approval.
         if (binding["complete"] and approval and trigger["state"] == "missing"
-                and datetime.fromisoformat(approval["submittedAt"]) > datetime.fromisoformat(trigger["removedAt"])
+                and datetime.fromisoformat(approval["submittedAt"].replace("Z", "+00:00"))
+                > datetime.fromisoformat(trigger["removedAt"].replace("Z", "+00:00"))
                 and scope != "exact" and state != "closed"
                 and not any(item["status"] == "merged" for item in imports)):
             action = "maintainer-import-label"

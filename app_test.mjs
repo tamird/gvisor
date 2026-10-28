@@ -137,6 +137,13 @@ print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedP
         if (row.pr.number === 15940 && !labels.length) {
           assert.equal(freshReasons.find(item => item.id === 'maintainer-import-label').title, 'Restore ready to pull');
           assert.equal(freshReasons.some(item => item.title === 'Reapproved; waiting for Copybara'), false);
+          context.nodeInput.releaseWait = { head: current.pr.head, confirmedAt: current.observedAt,
+            checkedVersion: 'test-release', nextAction: 'Wait for the release.' };
+          current.pr.releaseVersion = 'test-release';
+          const held = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+          assert.ok(held.some(item => item.id === 'upstream-release'));
+          assert.equal(held.some(item => item.id === 'maintainer-import-label'), false);
+          delete context.nodeInput.releaseWait;
         } else {
           assert.ok(freshReasons.some(item => item.title === 'Reapproved; waiting for Copybara'));
         }
