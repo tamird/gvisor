@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T02:03:03.892792+00:00",
+    "updatedAt": "2026-10-28T02:20:33.505296+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28768,20 +28768,68 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/hostlayout-generator-inputs",
-      "head": "2dea1397056c738f66808dfea951d1943e4baafb",
-      "url": "https://github.com/tamird/gvisor/commit/2dea1397056c738f66808dfea951d1943e4baafb",
+      "head": "d678f172b527c75aac54b2d437566746e3a35696",
+      "url": "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696",
       "title": "Generate Go host-layout tests from source files",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
-      "summary": "The host-layout generator infers the import path from the compiled Go archive\u2019s name. Read the Go provider instead and generate the tests using only source inputs.",
+      "updatedAt": "2026-10-28T02:20:33.505296+00:00",
+      "summary": "Generate ABI layout tests from the Go source files and the library\u2019s declared import path, without invoking a shell or using the compiled archive to infer its name. Bazel rejected the first revision during package loading: the private generator rule ended in _test but was not a test rule. The revised rule is named _generate_hostlayout; its outputs and arguments are unchanged.",
       "followup": {
         "owner": "root",
-        "sourceHead": "2dea1397056c738f66808dfea951d1943e4baafb",
-        "observedAt": "2026-10-28T02:03:03.892792+00:00",
-        "disposition": "Remote qualification in progress",
-        "nextAction": "Compare generated files with master, inspect action inputs and run the ABI host-layout tests."
-      }
+        "sourceHead": "d678f172b527c75aac54b2d437566746e3a35696",
+        "observedAt": "2026-10-28T02:20:33.505296+00:00",
+        "disposition": "Revised generator under remote qualification",
+        "nextAction": "Compare all nine generated files with the original outputs, then verify the ABI tests and analyzers on the corrected revision."
+      },
+      "refinement": {
+        "before": {
+          "head": "2dea1397056c738f66808dfea951d1943e4baafb"
+        },
+        "after": {
+          "head": "d678f172b527c75aac54b2d437566746e3a35696"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Previous revision: Bazel rejected the rule name before any generator or test ran",
+          "url": "https://app.buildbuddy.io/invocation/e5025898-c1e6-4e89-b123-2f4ab9151777"
+        }
+      ]
+    },
+    {
+      "id": "branch:mount-promise-waiter-notification",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/mount-promise-waiter-notification",
+      "head": "61868f1ce83b855a80252331b7ccf4dc3816ccd9",
+      "url": "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9",
+      "title": "Avoid closing a registered mount promise waiter",
+      "group": "runtime",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T02:20:33.505296+00:00",
+      "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found.",
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "61868f1ce83b855a80252331b7ccf4dc3816ccd9",
+        "observedAt": "2026-10-28T02:20:33.505296+00:00",
+        "disposition": "Ready for contributor review",
+        "nextAction": "Open the standalone VFS fix after contributor review."
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "61868f1ce83b855a80252331b7ccf4dc3816ccd9",
+        "url": "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9",
+        "title": "Avoid closing a registered mount promise waiter",
+        "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found.",
+        "body": "A lookup that registers while a mount promise is being resolved may see\nthat the mount is ready before the resolver broadcasts. If the lookup\ncloses its waiter channel at that point, the broadcast sends to the\nclosed channel and panics.\n\nNotify the reader through its existing waiter entry instead. The lookup\nstill wakes when it registers after the broadcast, and a second\nnotification while it is still registered is safe.\n\nA controlled VFS test [1] reproduced the panic on the original code.\nWith the fix, the lookup returned the newly mounted root and left no\nwaiter registered. The original VFS suite and both Nogo target\narchitectures also passed. The run retains the intentional stock\nfailure.\n\n[1]: https://app.buildbuddy.io/invocation/fef76221-1149-4f30-be7b-a46532518fdd"
+      },
+      "evidence": [
+        {
+          "label": "Stock resolver panic, fixed lookup and unmodified VFS/Nogo tests (AMD64 worker)",
+          "url": "https://app.buildbuddy.io/invocation/fef76221-1149-4f30-be7b-a46532518fdd"
+        }
+      ]
     }
   ],
   "edges": [
