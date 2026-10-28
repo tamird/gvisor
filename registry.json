@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T17:17:22.041+00:00",
+    "updatedAt": "2026-10-28T17:23:06.439+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34282,9 +34282,26 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-28T16:53:04.988727+00:00",
+      "updatedAt": "2026-10-28T17:23:06.439+00:00",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
+        {
+          "text": "Two real gVisor TCP stacks reproduced the same packet schedule for one connection over a link with a 10 ms delay each way. The client sent 33 bytes at virtual time 30 ms. With no loss, the server acknowledged them at 40 ms; the sender recorded no timeout or retransmission. When the fixture dropped that segment, no packet or data appeared one nanosecond before the 200 ms timeout. At 230 ms the sender retransmitted the same sequence and payload; at 240 ms the server acknowledged all 33 bytes. The sender counted one timeout and one retransmission, and the receiver read the data only once. Both modes produced identical TCP headers, payloads and times across two trials each at GOMAXPROCS=1 and 2. The fixture pauses dispatchers and checks each expected packet before advancing time. This covers a single flow with tail-loss probes disabled; it does not establish that several flows drain in a deterministic order. An earlier fixture sent an already-parsed buffer to the receiver and stopped before the handshake completed.",
+          "evidence": [
+            {
+              "label": "Two-stack wire and retransmission traces on Linux AMD64",
+              "url": "https://app.buildbuddy.io/invocation/94ff648f-36a4-45d2-9599-6248f0af8329"
+            },
+            {
+              "label": "Fork fixture with the link, timeout and delivery checks",
+              "url": "https://github.com/tamird/gvisor/blob/0c23f33dfbe6569ea74eb52a88567e0c5f577607/pkg/tcpip/tests/integration/synctest_link_test.go"
+            },
+            {
+              "label": "Earlier fixture stopped after the initial SYN",
+              "url": "https://app.buildbuddy.io/invocation/585a63c2-942f-4bb9-b178-72f1b0eb2898"
+            }
+          ]
+        },
         {
           "text": "A real TCP endpoint retransmitted an unanswered SYN after 1.0003 seconds on the Linux worker. Under plain Go 1.27.3 synctest, the SYN was sent but Wait stayed blocked until the five-second watchdog: the idle TCP processor was parked in Sleeper.Fetch. Pausing the single stack once let Wait return without advancing time. No retransmission was queued one nanosecond before the RTO; the same SYN appeared at exactly one virtual second (4.1 ms wall time for the child). This proves a handshake timer can run while the dispatcher is paused. It does not establish a deterministic two-stack link simulator.",
           "evidence": [
@@ -35696,7 +35713,7 @@
           ]
         }
       ],
-      "nextStep": "Exercise two real stacks with a declared link delay and one lost data segment. Drain both stacks before each virtual-time advance; require the retransmission, cumulative ACK and exact delivered bytes, then compare wire schedules across runs and processor counts.",
+      "nextStep": "Before using this clock for the shared-FIFO CUBIC comparisons, test whether two senders contending for the same queue produce repeatable wire schedules when more than one flow can have work pending.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
