@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T15:02:38.028325+00:00",
+    "updatedAt": "2026-10-28T15:12:18.374560+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30453,18 +30453,14 @@
       "title": "Wake signalfd waiters when the signal mask changes",
       "url": "https://github.com/tamird/gvisor/commit/3257b4b2a6481c604f656db18c74456b0355f38b",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T14:53:34.398977+00:00",
-      "summary": "If a blocked signal is already pending, changing a signalfd mask to include it makes the fd readable. On stock gVisor, epoll registered under the old mask missed this transition for two signal variants even though read returned the pending signal. Notify waiters after updating the mask and releasing the lock. Linux and the corrected systrap passed both variants and both existing poll controls; the signalfd Nogo owner passed for AMD64 and ARM64. The combined run remains failed because its two stock negative cases failed as expected.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "3257b4b2a6481c604f656db18c74456b0355f38b",
-        "url": "https://github.com/tamird/gvisor/commit/3257b4b2a6481c604f656db18c74456b0355f38b",
-        "title": "Wake signalfd waiters when the signal mask changes",
-        "summary": "If a blocked signal is already pending, changing a signalfd mask to include it makes the fd readable. On stock gVisor, epoll registered under the old mask missed this transition for two signal variants even though read returned the pending signal. Notify waiters after updating the mask and releasing the lock. Linux and the corrected systrap passed both variants and both existing poll controls; the signalfd Nogo owner passed for AMD64 and ARM64. The combined run remains failed because its two stock negative cases failed as expected.",
-        "body": "A blocked signal can already be pending when a signalfd mask changes to\ninclude it. A read then returns the signal, but epoll can still report\nno event if it registered interest under the old mask.\n\nWake the signalfd's listeners after installing the mask and releasing its\nlock. [Linux does the same after updating the mask][linux]. The existing\nmask test now checks that epoll reports no event before the update and\none event afterward, without sending another signal.\n\nOn [stock gVisor][stock], both signal variants returned zero events\nafter the mask changed; the subsequent read still returned the signal.\n[Linux and fixed gVisor][fixed] passed both variants and both existing\npoll controls. The [signalfd analyzer][nogo] passed on amd64 and arm64.\n\n[linux]: https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/signalfd.c#L299-L303\n[stock]: https://app.buildbuddy.io/invocation/d50988d4-74e5-4eef-bad1-9f140b8fcc3a\n[fixed]: https://app.buildbuddy.io/invocation/f3382699-68a8-40bd-8f30-a386095e5148\n[nogo]: https://app.buildbuddy.io/invocation/46778d54-fae1-49f0-b7cb-9bb035c25c72"
-      },
+      "status": "Published as #16598",
+      "updatedAt": "2026-10-28T15:12:18.374560+00:00",
+      "summary": "Published at the approved 3257b4b2a6 as #16598. If a blocked signal is already pending, changing a signalfd mask to include it makes the fd readable. On stock gVisor, epoll registered under the old mask missed this transition for two signal variants even though read returned the pending signal. Notify waiters after updating the mask and releasing the lock. Linux and the corrected systrap passed both variants and both existing poll controls; the signalfd Nogo owner passed for AMD64 and ARM64. The combined run remains failed because its two stock negative cases failed as expected.",
       "evidence": [
+        {
+          "label": "Published upstream PR #16598",
+          "url": "https://github.com/google/gvisor/pull/16598"
+        },
         {
           "label": "Original comparison: two stock failures retained",
           "url": "https://app.buildbuddy.io/invocation/68312e1b-5021-47d5-89ac-c850a9590bf7"
@@ -30493,10 +30489,11 @@
       "followup": {
         "owner": "lock_contract",
         "sourceHead": "3257b4b2a6481c604f656db18c74456b0355f38b",
-        "observedAt": "2026-10-28T14:53:34.398977+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Review the one-commit signalfd fix and its stock, Linux and corrected gVisor evidence.",
+        "observedAt": "2026-10-28T15:12:18.374560+00:00",
+        "disposition": "Approved signalfd mask fix published as #16598",
+        "nextAction": "Follow checks and maintainer review on #16598. No contributor decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16598",
           "https://app.buildbuddy.io/invocation/68312e1b-5021-47d5-89ac-c850a9590bf7",
           "https://app.buildbuddy.io/invocation/d50988d4-74e5-4eef-bad1-9f140b8fcc3a",
           "https://app.buildbuddy.io/invocation/f3382699-68a8-40bd-8f30-a386095e5148",
@@ -30504,7 +30501,8 @@
           "https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/signalfd.c#L299-L303",
           "https://github.com/tamird/gvisor/commit/3257b4b2a6481c604f656db18c74456b0355f38b"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:rseq-native-cc",
@@ -30515,18 +30513,14 @@
       "title": "Build the RSEQ syscall helper with cc_binary",
       "url": "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
       "group": "bazel",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T15:02:38.028325+00:00",
-      "summary": "The RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed.\n\nNative Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
-        "url": "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
-        "title": "Build the RSEQ syscall helper with cc_binary",
-        "summary": "The RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed. Native Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
-        "body": "The RSEQ tests exec a separate helper so libc cannot register a\nrestartable sequence before the test. Build it with the C++ toolchain:\ncompile the two assembly files for the selected architecture and link\nthem with the C++ object, without startup files or runtime libraries.\nThe existing syscall test still finds the helper at the same path.\n\nThe [AMD64 and ARM64 executables][build] are static and have no ELF\ninterpreter or dynamic segment. The [AMD64 Linux runner][amd] passed all\n14 cases. The [ARM64 Linux runner][arm] passed all 13 cases compiled on\nthat architecture. AMD64 systrap skipped all 14 on its RSEQ capability\ncheck; the [aggregate][all] therefore did not pass.\n\n[build]: https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66\n[amd]: https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769\n[arm]: https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510\n[all]: https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
-      },
+      "status": "Published as #16597",
+      "updatedAt": "2026-10-28T15:10:14.979142+00:00",
+      "summary": "Published at the approved a0e3cf835f as #16597. The RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed.\n\nNative Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
       "evidence": [
+        {
+          "label": "Published upstream PR #16597",
+          "url": "https://github.com/google/gvisor/pull/16597"
+        },
         {
           "label": "Fork: one BUILD file",
           "url": "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91"
@@ -30555,16 +30549,138 @@
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
-        "observedAt": "2026-10-28T15:02:38.028325+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Review the standalone RSEQ helper build change. Its native cases passed; systrap skipped all cases.",
+        "observedAt": "2026-10-28T15:10:14.979142+00:00",
+        "disposition": "Approved RSEQ fixture build published as #16597",
+        "nextAction": "Follow checks and maintainer review on #16597. No contributor decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16597",
           "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
           "https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66",
           "https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769",
           "https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510",
           "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
+        ]
+      },
+      "inactive": true
+    },
+    {
+      "id": "pr:16597",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16597,
+      "ref": "review/rseq-native-cc",
+      "head": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+      "title": "Build the RSEQ fixture with the C++ toolchain",
+      "url": "https://github.com/google/gvisor/pull/16597",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-28T15:10:14.979142+00:00",
+      "summary": "The RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed.\n\nNative Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #16597",
+          "url": "https://github.com/google/gvisor/pull/16597"
+        },
+        {
+          "label": "Fork: one BUILD file",
+          "url": "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91"
+        },
+        {
+          "label": "Compare to immediate upstream parent",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...a0e3cf835fb57e9b08fb595a2854f0ddcb491f91"
+        },
+        {
+          "label": "Eight configured compile/link actions; two static ELFs",
+          "url": "https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66"
+        },
+        {
+          "label": "AMD64: 14 native passes, 14 systrap capability skips",
+          "url": "https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769"
+        },
+        {
+          "label": "ARM64: 13 native passes",
+          "url": "https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510"
+        },
+        {
+          "label": "Original aggregate: FAIL, producer INCOMPLETE",
+          "url": "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+        "observedAt": "2026-10-28T15:10:14.979142+00:00",
+        "disposition": "Approved RSEQ fixture build published as #16597",
+        "nextAction": "Follow checks and maintainer review on #16597. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16597",
+          "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+          "https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66",
+          "https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769",
+          "https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510",
+          "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
+        ]
+      }
+    },
+    {
+      "id": "pr:16598",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16598,
+      "ref": "review/signalfd-mask-wakeup",
+      "head": "3257b4b2a6481c604f656db18c74456b0355f38b",
+      "title": "Wake signalfd waiters when the signal mask changes",
+      "url": "https://github.com/google/gvisor/pull/16598",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-28T15:12:18.374560+00:00",
+      "summary": "If a blocked signal is already pending, changing a signalfd mask to include it makes the fd readable. On stock gVisor, epoll registered under the old mask missed this transition for two signal variants even though read returned the pending signal. Notify waiters after updating the mask and releasing the lock. Linux and the corrected systrap passed both variants and both existing poll controls; the signalfd Nogo owner passed for AMD64 and ARM64. The combined run remains failed because its two stock negative cases failed as expected.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #16598",
+          "url": "https://github.com/google/gvisor/pull/16598"
+        },
+        {
+          "label": "Original comparison: two stock failures retained",
+          "url": "https://app.buildbuddy.io/invocation/68312e1b-5021-47d5-89ac-c850a9590bf7"
+        },
+        {
+          "label": "Stock: signal readable but epoll returned zero",
+          "url": "https://app.buildbuddy.io/invocation/d50988d4-74e5-4eef-bad1-9f140b8fcc3a"
+        },
+        {
+          "label": "Linux and corrected systrap: eight cases passed",
+          "url": "https://app.buildbuddy.io/invocation/f3382699-68a8-40bd-8f30-a386095e5148"
+        },
+        {
+          "label": "AMD64 and ARM64 Nogo",
+          "url": "https://app.buildbuddy.io/invocation/46778d54-fae1-49f0-b7cb-9bb035c25c72"
+        },
+        {
+          "label": "Linux notifies listeners on mask changes",
+          "url": "https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/signalfd.c#L299-L303"
+        },
+        {
+          "label": "Fork commit",
+          "url": "https://github.com/tamird/gvisor/commit/3257b4b2a6481c604f656db18c74456b0355f38b"
+        }
+      ],
+      "followup": {
+        "owner": "lock_contract",
+        "sourceHead": "3257b4b2a6481c604f656db18c74456b0355f38b",
+        "observedAt": "2026-10-28T15:12:18.374560+00:00",
+        "disposition": "Approved signalfd mask fix published as #16598",
+        "nextAction": "Follow checks and maintainer review on #16598. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16598",
+          "https://app.buildbuddy.io/invocation/68312e1b-5021-47d5-89ac-c850a9590bf7",
+          "https://app.buildbuddy.io/invocation/d50988d4-74e5-4eef-bad1-9f140b8fcc3a",
+          "https://app.buildbuddy.io/invocation/f3382699-68a8-40bd-8f30-a386095e5148",
+          "https://app.buildbuddy.io/invocation/46778d54-fae1-49f0-b7cb-9bb035c25c72",
+          "https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/signalfd.c#L299-L303",
+          "https://github.com/tamird/gvisor/commit/3257b4b2a6481c604f656db18c74456b0355f38b"
         ]
       }
     }
