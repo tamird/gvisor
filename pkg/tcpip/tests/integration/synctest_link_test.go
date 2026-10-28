@@ -48,6 +48,10 @@ func TestTCPVirtualMiddleSACK(t *testing.T) {
 	runLinkModes(t, []string{"reno", "cubic"})
 }
 
+func TestTCPVirtualTwoFlows(t *testing.T) {
+	runLinkModes(t, []string{"two-forward", "two-reverse"})
+}
+
 func runLinkModes(t *testing.T, modes []string) {
 	name := t.Name()
 	if mode := os.Getenv("TCP_LINK_CHILD"); mode != "" {
@@ -97,12 +101,14 @@ func runLinkModes(t *testing.T, modes []string) {
 						t.Fatal("no complete trace")
 					}
 					if want != "" && want != trace {
-						t.Fatalf("different TCP schedules:\n%s\n%s", want, trace)
+						t.Errorf("different TCP schedules:\n%s\n%s", want, trace)
 					}
 					want = trace
 				}
 			}
-			t.Logf("MATCHED_SCHEDULE mode=%s traces=4", mode)
+			if !t.Failed() {
+				t.Logf("MATCHED_SCHEDULE mode=%s traces=4", mode)
+			}
 		})
 	}
 }
@@ -110,6 +116,7 @@ func runLinkModes(t *testing.T, modes []string) {
 type hop struct {
 	AtNS          int64
 	Side          int
+	ClientPort    uint16
 	Event         string
 	Seq, Ack      uint32
 	Flags         header.TCPFlags
@@ -126,6 +133,7 @@ type hop struct {
 func linkTrace(t *testing.T, mode string) {
 	drop := mode == "drop"
 	middle := mode == "reno" || mode == "cubic"
+	two := mode == "two-forward" || mode == "two-reverse"
 	const delay = 10 * time.Millisecond
 	const payload = "one deliberately isolated segment"
 	start := time.Now()
@@ -213,19 +221,6 @@ func linkTrace(t *testing.T, mode string) {
 	if err := listener.Listen(2); err != nil {
 		t.Fatal(err)
 	}
-	client := newEP(0)
-	if middle {
-		cc := tcpip.CongestionControlOption(mode)
-		if err := client.SetSockOpt(&cc); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := client.Bind(tcpip.FullAddress{Addr: addr[0], Port: 40000}); err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := client.Connect(remote).(*tcpip.ErrConnectStarted); !ok {
-		t.Fatal("expected pending connection")
-	}
 	var trace []hop
 	pull := func(i int, event string) (*stack.PacketBuffer, hop) {
 		t.Helper()
@@ -237,11 +232,14 @@ func linkTrace(t *testing.T, mode string) {
 		defer v.Release()
 		ip := header.IPv4(v.AsSlice())
 		sg := header.TCP(ip.Payload())
-		ports := [2]uint16{40000, 8080}
-		if ip.SourceAddress() != addr[i] || ip.DestinationAddress() != addr[1-i] || ip.TransportProtocol() != tcp.ProtocolNumber || sg.SourcePort() != ports[i] || sg.DestinationPort() != ports[1-i] {
+		clientPort, serverPort := sg.SourcePort(), sg.DestinationPort()
+		if i == 1 {
+			clientPort, serverPort = serverPort, clientPort
+		}
+		if ip.SourceAddress() != addr[i] || ip.DestinationAddress() != addr[1-i] || ip.TransportProtocol() != tcp.ProtocolNumber || serverPort != remote.Port || (clientPort != 40000 && (!two || clientPort != 40001)) {
 			t.Fatalf("unexpected link tuple on %d", i)
 		}
-		h := hop{AtNS: time.Since(start).Nanoseconds(), Side: i, Event: event, Seq: sg.SequenceNumber(), Ack: sg.AckNumber(), Flags: sg.Flags(), Data: string(sg.Payload()), TCPHash: fmt.Sprintf("%x", sha256.Sum256(ip.Payload()))}
+		h := hop{AtNS: time.Since(start).Nanoseconds(), Side: i, ClientPort: clientPort, Event: event, Seq: sg.SequenceNumber(), Ack: sg.AckNumber(), Flags: sg.Flags(), Data: string(sg.Payload()), TCPHash: fmt.Sprintf("%x", sha256.Sum256(ip.Payload()))}
 		if middle {
 			if h.Flags&header.TCPFlagSyn != 0 {
 				h.SACKPermitted = header.ParseSynOptions(sg.Options(), h.Flags&header.TCPFlagAck != 0).SACKPermitted
@@ -253,7 +251,7 @@ func linkTrace(t *testing.T, mode string) {
 		fmt.Printf("HOP mode=%s %+v\n", mode, h)
 		return p, h
 	}
-	inject := func(p *stack.PacketBuffer, i int) {
+	enqueue := func(p *stack.PacketBuffer, i int) {
 		t.Helper()
 		defer p.DecRef()
 		// The receiving stack must parse the bytes as a new wire packet; the
@@ -263,10 +261,13 @@ func linkTrace(t *testing.T, mode string) {
 		valid := sides[1-i].Stats().TCP.ValidSegmentsReceived
 		before := valid.Value()
 		links[1-i].InjectInbound(ipv4.ProtocolNumber, in)
-		freeze(1 - i)
 		if n := valid.Value() - before; n != 1 {
 			t.Fatalf("receiver %d accepted %d TCP segments for one wire delivery", 1-i, n)
 		}
+	}
+	inject := func(p *stack.PacketBuffer, i int) {
+		enqueue(p, i)
+		freeze(1 - i)
 	}
 	forward := func(p *stack.PacketBuffer, i int) {
 		advance(delay)
@@ -281,32 +282,57 @@ func linkTrace(t *testing.T, mode string) {
 			}
 		}
 	}
-	p, h := pull(0, "syn")
-	if h.Flags != header.TCPFlagSyn {
-		t.Fatal(h)
-	}
-	forward(p, 0)
-	p, h = pull(1, "synack")
-	if h.Flags != header.TCPFlagSyn|header.TCPFlagAck || h.Ack != trace[0].Seq+1 {
-		t.Fatal(h)
-	}
-	forward(p, 1)
-	p, h = pull(0, "ack")
-	if h.Flags != header.TCPFlagAck || h.Ack != trace[1].Seq+1 {
-		t.Fatal(h)
-	}
-	forward(p, 0)
-	server, _, err := listener.Accept(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	eps = append(eps, server)
-	for _, ep := range []tcpip.Endpoint{client, server} {
-		if tcp.EndpointState(ep.State()) != tcp.StateEstablished {
-			t.Fatal("handshake incomplete")
+	connect := func(port uint16) (tcpip.Endpoint, tcpip.Endpoint) {
+		client := newEP(0)
+		if middle {
+			cc := tcpip.CongestionControlOption(mode)
+			if err := client.SetSockOpt(&cc); err != nil {
+				t.Fatal(err)
+			}
 		}
+		if err := client.Bind(tcpip.FullAddress{Addr: addr[0], Port: port}); err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := client.Connect(remote).(*tcpip.ErrConnectStarted); !ok {
+			t.Fatal("expected pending connection")
+		}
+		p, h := pull(0, "syn")
+		syn := h
+		if h.Flags != header.TCPFlagSyn || h.ClientPort != port {
+			t.Fatal(h)
+		}
+		forward(p, 0)
+		p, h = pull(1, "synack")
+		if h.Flags != header.TCPFlagSyn|header.TCPFlagAck || h.ClientPort != port || h.Ack != syn.Seq+1 {
+			t.Fatal(h)
+		}
+		synAck := h
+		forward(p, 1)
+		p, h = pull(0, "ack")
+		if h.Flags != header.TCPFlagAck || h.ClientPort != port || h.Ack != synAck.Seq+1 {
+			t.Fatal(h)
+		}
+		forward(p, 0)
+		server, _, err := listener.Accept(nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		eps = append(eps, server)
+		for _, ep := range []tcpip.Endpoint{client, server} {
+			if tcp.EndpointState(ep.State()) != tcp.StateEstablished {
+				t.Fatal("handshake incomplete")
+			}
+		}
+		none()
+		return client, server
 	}
-	none()
+	client, server := connect(40000)
+	if two {
+		second, peer := connect(40001)
+		twoFlows(t, mode, [2]tcpip.Endpoint{client, second}, [2]tcpip.Endpoint{server, peer}, delay, pull, enqueue, freeze, advance, none)
+		writeTrace(t, trace)
+		return
+	}
 	var info tcpip.TCPInfoOption
 	if err := client.GetSockOpt(&info); err != nil || info.RTO <= delay {
 		t.Fatalf("TCP RTO %s: %v", info.RTO, err)
@@ -325,6 +351,7 @@ func linkTrace(t *testing.T, mode string) {
 	}
 	freeze(0)
 	p, original := pull(0, "data")
+	var h hop
 	if original.Data != payload || original.Seq != trace[0].Seq+1 {
 		t.Fatal(original)
 	}
@@ -378,6 +405,82 @@ func linkTrace(t *testing.T, mode string) {
 	}
 	fmt.Printf("DELIVERY drop=%t bytes=%d ack=%d timeouts=%d retransmits=%d RTO=%s\n", drop, got.Len(), h.Ack, stats.Timeouts.Value(), stats.Retransmits.Value(), info.RTO)
 	writeTrace(t, trace)
+}
+
+// Both clients share a NIC. Queue one segment from each flow on the receiving
+// stack before resuming its TCP workers; capture replies in actual wire order.
+func twoFlows(t *testing.T, mode string, clients, servers [2]tcpip.Endpoint, delay time.Duration,
+	pull func(int, string) (*stack.PacketBuffer, hop), enqueue func(*stack.PacketBuffer, int),
+	freeze func(int), advance func(time.Duration), none func()) {
+	t.Helper()
+	order := [2]int{0, 1}
+	if mode == "two-reverse" {
+		order = [2]int{1, 0}
+	}
+	payload := [2]string{"data from port 40000", "different data from port 40001"}
+	for _, i := range order {
+		if n, err := clients[i].Write(strings.NewReader(payload[i]), tcpip.WriteOptions{}); err != nil || n != int64(len(payload[i])) {
+			t.Fatalf("flow %d write %d, %v", i, n, err)
+		}
+	}
+	freeze(0)
+	var packets [2]*stack.PacketBuffer
+	var ends [2]uint32
+	var sent [2]bool
+	for i := range packets {
+		p, h := pull(0, "shared-data")
+		flow := int(h.ClientPort) - 40000
+		if h.Data != payload[flow] || sent[flow] {
+			t.Fatalf("wrong or duplicate outgoing data: %+v", h)
+		}
+		sent[flow] = true
+		ends[flow] = h.Seq + uint32(len(h.Data))
+		packets[i] = p
+	}
+	none()
+	advance(delay)
+	for _, p := range packets {
+		enqueue(p, 0)
+	}
+	freeze(1)
+	for i, server := range servers {
+		var got bytes.Buffer
+		if n, err := server.Read(&got, tcpip.ReadOptions{}); err != nil || got.String() != payload[i] || n.Count != len(payload[i]) {
+			t.Fatalf("flow %d read %v %q, %v", i, n, got.String(), err)
+		}
+		_, err := server.Read(&got, tcpip.ReadOptions{})
+		if _, blocked := err.(*tcpip.ErrWouldBlock); !blocked {
+			t.Fatalf("flow %d subsequent read returned %v, want would block", i, err)
+		}
+	}
+	freeze(1)
+	var acked [2]bool
+	for i := range packets {
+		p, h := pull(1, "shared-ack")
+		flow := int(h.ClientPort) - 40000
+		if h.Flags != header.TCPFlagAck || h.Data != "" || acked[flow] || h.Ack != ends[flow] {
+			t.Fatalf("wrong or duplicate ack: %+v", h)
+		}
+		acked[flow] = true
+		packets[i] = p
+	}
+	none()
+	advance(delay)
+	for _, p := range packets {
+		enqueue(p, 1)
+	}
+	freeze(0)
+	var maxRTO time.Duration
+	for _, ep := range clients {
+		var info tcpip.TCPInfoOption
+		if err := ep.GetSockOpt(&info); err != nil || info.RTO <= delay {
+			t.Fatalf("RTO %s, %v", info.RTO, err)
+		}
+		maxRTO = max(maxRTO, info.RTO)
+	}
+	advance(2*maxRTO + delay)
+	freeze(0)
+	none()
 }
 
 func writeTrace(t *testing.T, trace []hop) {
