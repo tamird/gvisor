@@ -37293,9 +37293,34 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-28T18:57:48Z",
+      "updatedAt": "2026-10-28T23:06:01Z",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
+        {
+          "text": "The integrated graph encoder rejected two partially overlapping slices of three-byte elements only when it discovered the lower-address window first. The unsigned address difference wrapped before the element-alignment test; reversing order and four-byte controls passed. Comparing the two address residues fixed the round trip: both overlapping positions retain pointer identity and writes are visible through the other restored view. The split #16584 source contains the same expression but was not executed.",
+          "evidence": [
+            {
+              "label": "Unmodified integrated encoder: order-dependent failure",
+              "url": "https://app.buildbuddy.io/invocation/a43efe4d-8466-4824-a4a4-cf5cfdab9fe7"
+            },
+            {
+              "label": "One-line correction",
+              "url": "https://github.com/tamird/gvisor/commit/32f19f8c8b2bcc074077d67915edaecc96d87650"
+            },
+            {
+              "label": "Round-trip fixture",
+              "url": "https://github.com/tamird/gvisor/commit/b589c648ad302cd8c41a355e85adf938fa8dc47e"
+            },
+            {
+              "label": "Corrected encoder: 23 selected test records passed",
+              "url": "https://app.buildbuddy.io/invocation/76bbe067-d8b8-4d00-9be6-a5fd60553867"
+            },
+            {
+              "label": "Corresponding split review",
+              "url": "https://github.com/google/gvisor/pull/16584"
+            }
+          ]
+        },
         {
           "text": "Two fields can share one Go map after a legal conversion to a named map type. Running the identical test on three sources showed that the legacy codec rejects it during Save; the integrated graph rewrite reports a successful Save, then rejects its own stream at Load. Comparing the key and element types on both paths lets the two views share one restored map without conflating an independent third map. All same-type controls passed on each source.",
           "evidence": [
