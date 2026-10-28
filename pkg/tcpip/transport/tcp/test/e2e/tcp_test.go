@@ -10609,3 +10609,122 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// This qualification-only clock pauses the actual SYN-ACK processor, not TCP
+// or its endpoint mutex. The test observes the blocked ICMP goroutine before
+// the handshake can publish ESTABLISHED.
+type icmpHandshakeClock struct {
+	tcpip.Clock
+	stopping chan struct{}
+	resume   chan struct{}
+	once     sync.Once
+}
+
+type icmpHandshakeTimer struct {
+	tcpip.Timer
+	clock *icmpHandshakeClock
+}
+
+func (c *icmpHandshakeClock) AfterFunc(d time.Duration, f func()) tcpip.Timer {
+	return &icmpHandshakeTimer{Timer: c.Clock.AfterFunc(d, f), clock: c}
+}
+
+func (t *icmpHandshakeTimer) Stop() bool {
+	var trace [8192]byte
+	if strings.Contains(string(trace[:runtime.Stack(trace[:], false)]), ".(*handshake).transitionToStateEstablishedLocked(") {
+		t.clock.once.Do(func() {
+			close(t.clock.stopping)
+			<-t.clock.resume
+		})
+	}
+	return t.Timer.Stop()
+}
+
+func TestICMPDuringCompletedHandshake(t *testing.T) {
+	clock := &icmpHandshakeClock{Clock: faketime.NewManualClock(), stopping: make(chan struct{}), resume: make(chan struct{})}
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: e2e.DefaultMTU, Clock: clock})
+	defer c.Cleanup()
+	var wg sync.WaitGroup
+	resume := sync.OnceFunc(func() { close(clock.resume) })
+	c.Create(-1)
+	c.EP.SocketOptions().SetIPv4RecvError(true)
+	if _, ok := c.EP.Connect(tcpip.FullAddress{Addr: context.TestAddr, Port: context.TestPort}).(*tcpip.ErrConnectStarted); !ok {
+		t.Fatal("connect did not begin handshake")
+	}
+	syn := c.GetPacket()
+	defer syn.Release()
+	defer func() { resume(); wg.Wait() }()
+	checker.IPv4(t, syn, checker.TCP(checker.TCPFlags(header.TCPFlagSyn)))
+	tcpHdr := header.TCP(header.IPv4(syn.AsSlice()).Payload())
+	port := tcpHdr.SourcePort()
+	isn := seqnum.Value(tcpHdr.SequenceNumber())
+	const peerISN = 73
+	wg.Go(func() {
+		c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: port, Flags: header.TCPFlagSyn | header.TCPFlagAck, SeqNum: peerISN, AckNum: isn.Add(1), RcvWnd: 30000})
+	})
+	select {
+	case <-clock.stopping:
+	case <-time.After(5 * time.Second):
+		t.Fatal("real SYN-ACK handler did not stop its handshake timer")
+	}
+	if s := tcp.EndpointState(c.EP.State()); s != tcp.StateSynSent {
+		t.Fatalf("state at timer stop = %s", s)
+	}
+	wg.Go(func() {
+		c.SendICMPPacket(header.ICMPv4DstUnreachable, header.ICMPv4HostUnreachable, nil, syn, e2e.DefaultMTU)
+	})
+	trace := make([]byte, 256<<10)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		n := runtime.Stack(trace, true)
+		if n == len(trace) {
+			trace = make([]byte, len(trace)*2)
+			continue
+		}
+		var found bool
+		for _, goroutine := range strings.Split(string(trace[:n]), "\n\n") {
+			if strings.Contains(goroutine, ".(*Endpoint).onICMPError(") && strings.Contains(goroutine, ".(*CrossGoroutineMutex).Lock(") && strings.Contains(goroutine, ".(*Mutex).lockSlow(") {
+				t.Logf("observed real ICMP delivery blocked on endpoint mutex:\n%s", goroutine)
+				found = true
+				break
+			}
+		}
+		if found {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("ICMP error did not reach the endpoint mutex")
+		}
+		runtime.Gosched()
+	}
+	resume()
+	wg.Wait()
+	ack := c.GetPacket()
+	defer ack.Release()
+	checker.IPv4(t, ack, checker.TCP(checker.TCPFlags(header.TCPFlagAck), checker.TCPSeqNum(uint32(isn)+1), checker.TCPAckNum(peerISN+1)))
+	es := c.EP.SocketOptions().DequeueErr()
+	if es == nil {
+		t.Fatal("no queued error for quoted TCP SYN")
+	}
+	defer es.Payload.Release()
+	if _, ok := es.Err.(*tcpip.ErrHostUnreachable); !ok {
+		t.Fatalf("queued error = %v", es.Err)
+	}
+	if !bytes.Equal(es.Payload.AsSlice(), tcpHdr) {
+		t.Fatal("queued ICMP error did not quote the actual SYN TCP header")
+	}
+	st := tcp.EndpointState(c.EP.State())
+	failed := c.Stack().Stats().TCP.FailedConnectionAttempts.Value()
+	t.Logf("post-SYN-ACK: state=%s failedConnections=%d queued=host-unreachable finalACK=true", st, failed)
+	if st != tcp.StateEstablished || failed != 0 {
+		t.Fatalf("after handshake ACK and ICMP: state=%s failedConnections=%d, want ESTABLISHED and 0", st, failed)
+	}
+	c.SendPacket([]byte("ok"), &context.Headers{SrcPort: context.TestPort, DstPort: port, Flags: header.TCPFlagAck, SeqNum: peerISN + 1, AckNum: isn.Add(1), RcvWnd: 30000})
+	c.Stack().Pause()
+	c.Stack().Resume()
+	var received bytes.Buffer
+	if result, err := c.EP.Read(&received, tcpip.ReadOptions{}); err != nil || result.Count != 2 || received.String() != "ok" {
+		t.Fatalf("read after ICMP = %v %v %q", result, err, received.String())
+	}
+	t.Log("read post-handshake payload: ok")
+}
