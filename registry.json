@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T20:55:05Z",
+    "updatedAt": "2026-10-28T21:10:30Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18630,17 +18630,18 @@
       "url": "https://github.com/google/gvisor/pull/16059",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T21:48:57.353917+00:00",
+      "updatedAt": "2026-10-28T21:10:30Z",
       "summary": "The approved amendment is published at b584529cb. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific history:\n\nCurrent public #16059 remains at 857926029. The reviewed fork amendment at b584529cb is qualified and ready for contributor review. No upstream source update has been made.\n\nRequire the two created veth peers, bridge and loopback by name, check their kind and netlink/ioctl flags, and ignore unrelated devices.\n\nThe fixture previously required every non-loopback device returned by the netlink dump to support multicast. The amendment checks the interfaces it owns and still requires each to be present. All three real native, systrap DirectFS and systrap shared executions passed.\n\nEarlier source-specific record:\n\nThe October 25 source reconciliation is delivered at 857926029bac and the 12:53 provider snapshot reports it mergeable. Preserves the multicast capability behavior with the landed interface id and NIC Kind fields; the two overlapping sites retain both changes. No runtime replay or fresh exact-head approval is claimed.\n\nHistorical source-specific record:\n\nMulticast correction rebased, preserving landed TUN MTU bounds and both bounds and multicast during namespace moves. Exact head 36aadebb1e is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 71a5b3cbd3d2 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at ef937e84f8. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at ef937e84f875e956938dc7d04f9aabadd1314854 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe approved multicast proposal is delivered as PR #16059 at b06ac692f7. Authoritative readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from the source-bound qualification. Its current Gazelle log requests only removal of the unused production //pkg/zip dependency from tools/nogo/check/BUILD, already corrected by pending #16031.\n\nUser approved the exact proposal, and root delivered public PR16059 at b06ac692f7. Authoritative PR-number readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from source-bound qualification. No repeated question or merge is authorized.\n\nRoot requested contributor review once on October20 after independent qualification acceptance. Independent source review and owning unit/analyzer, ABI and focused Java validation passed at 00c8. The unchanged-production negative case reproduces the missing flag. Imported flags and Linux defaults are preserved; no writable-flag or checkpoint roundtrip claim. No public PR has been opened.",
       "followup": {
         "owner": "root",
         "sourceHead": "b584529cbf05e11ed7ba8f59b2706c554bf78250",
-        "observedAt": "2026-10-26T21:48:57.353917+00:00",
-        "disposition": "Approved amendment published; review threads resolved",
-        "nextAction": "Follow current-head checks and maintainer review. No contributor decision or duplicate reply is needed.",
+        "observedAt": "2026-10-28T21:10:30Z",
+        "disposition": "Current head approved",
+        "nextAction": "Follow import and merge; the review confirms all previous comments were addressed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16059",
-          "https://github.com/google/gvisor/pull/16059#pullrequestreview-5658612539"
+          "https://github.com/google/gvisor/pull/16059#pullrequestreview-5658612539",
+          "https://github.com/google/gvisor/pull/16059#pullrequestreview-5689638274"
         ]
       },
       "evidence": [
@@ -23307,18 +23308,19 @@
       "url": "https://github.com/google/gvisor/pull/16336",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "updatedAt": "2026-10-28T21:10:30Z",
       "summary": "The reviewed amendment is published as #16336 at 0b06fce45. It documents the Linux timestamp-cookie analogue and the peer-controlled SACK bit, makes the protocol-lock contract explicit, and extends negotiation checks for missing peer SACK and timestamps. The verified remote result includes both TestSynCookieSACK executions. All six review threads are answered and resolved; no contributor decision remains. Current checks and maintainer review come from the provider snapshot.\n\nEarlier source-specific record:\n\nThe approved SACK timestamp-negotiation change is published at exact 8757001b. Initial readback is open/non-draft and mergeable, with public checks starting. The retained Linux/netstack controls and full e2e timestamp-owner validation remain tied to their source identities; no current-head maintainer approval or import is inferred. The window-scaling child still awaits its distinct contributor decision.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "0b06fce451fe2bff770f870740690f3e1772b859",
-        "observedAt": "2026-10-26T22:13:52.843363+00:00",
-        "disposition": "Published amendment; current review and CI remain",
-        "nextAction": "Follow the exact published source, current review responses and checks; do not repeat the consumed contributor decision.",
+        "observedAt": "2026-10-28T21:10:30Z",
+        "disposition": "Current head approved",
+        "nextAction": "Assess existing packet coverage before adding the suggested SYN-cookie SACK parity case in a follow-up. Keep the approved head unchanged.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
           "https://app.buildbuddy.io/invocation/098f63cd-c41f-498e-9d44-abf1fd9967de",
-          "https://app.buildbuddy.io/invocation/c0561e06-802a-4321-8f69-4c96c3adb96c"
+          "https://app.buildbuddy.io/invocation/c0561e06-802a-4321-8f69-4c96c3adb96c",
+          "https://github.com/google/gvisor/pull/16336#pullrequestreview-5689637781"
         ]
       },
       "evidence": [
@@ -25321,18 +25323,19 @@
       "url": "https://github.com/google/gvisor/pull/16403",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T22:04:39.373321+00:00",
+      "updatedAt": "2026-10-28T21:10:30Z",
       "summary": "The contributor-approved amendment is published on #16403 at c451fa7d6. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot.\n\nInclude a duplicate FIN sequence number and retain the duplicate report when filling a gap drains a queued FIN; simplify the SACK helper interface and comments.\n\nThe extended receiver fixture covers the queued-FIN ACK and retransmitted data/FIN in CLOSE-WAIT, with focused remote qualification passing. Duplicates wholly above the cumulative ACK remain outside this change. No production throughput or customer-outage claim follows.\n\nEarlier source-specific record:\n\nWith SACK negotiated, the receiver reports already acknowledged non-FIN data in its first SACK block. A wholly duplicate segment leaves the cumulative ACK and queued SACK ranges intact; a segment crossing the old ACK reports only the duplicate prefix. Both AMD64 and ARM64 controls failed as expected; the corrected SACK suites and analyzers passed on both CPUs.",
       "followup": {
         "owner": "root",
         "sourceHead": "c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
-        "observedAt": "2026-10-26T22:04:39.373321+00:00",
-        "disposition": "Published amendment; awaiting maintainer follow-up",
-        "nextAction": "Follow the current source checks and maintainer review. The contributor decision is complete; do not repeat the review request.",
+        "observedAt": "2026-10-28T21:10:30Z",
+        "disposition": "Current head approved",
+        "nextAction": "Compare duplicate out-of-order data and D-SACK packet traces against Linux separately; keep the approved head unchanged.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16403#pullrequestreview-5657638067",
           "https://github.com/tamird/gvisor/commit/c451fa7d68e7b7809142c5daba0cd46a9cffe4fc",
-          "https://app.buildbuddy.io/invocation/4c7ff6e6-8214-4380-8fe0-d55d6216698f"
+          "https://app.buildbuddy.io/invocation/4c7ff6e6-8214-4380-8fe0-d55d6216698f",
+          "https://github.com/google/gvisor/pull/16403#pullrequestreview-5689638780"
         ]
       },
       "evidence": [
@@ -31315,10 +31318,18 @@
       "title": "Register file lock waiters under the lock-set mutex",
       "url": "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7",
       "group": "runtime",
-      "status": "Agent work",
-      "summary": "Approved for submission after validation. The 36 lock tests passed both normally and with the race detector; the AMD64/ARM64 analyzers passed. The two syscall executables did not compile because GCC header paths differed. Only those runtime checks remain.",
-      "updatedAt": "2026-10-28T20:55:05Z",
+      "status": "Published as #16621",
+      "summary": "Blocking flock and fcntl requests register under the lock-set mutex before releasing it to wait. Defer pairs mutex acquisitions with releases, including interruptions, and removes two checklocks exemptions. On the submitted source, 36 unit cases, 36 race cases, both architecture analyzers, and eight systrap syscall cases passed.",
+      "updatedAt": "2026-10-28T21:05:27Z",
       "evidence": [
+        {
+          "label": "Published upstream as #16621",
+          "url": "https://github.com/google/gvisor/pull/16621"
+        },
+        {
+          "label": "Both AMD64 systrap suites: eight cases, no skips",
+          "url": "https://app.buildbuddy.io/invocation/25648b36-10d5-44ec-a4de-542b63fd23e8"
+        },
         {
           "label": "Revised lock waiter",
           "url": "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7"
@@ -31351,15 +31362,18 @@
       "followup": {
         "owner": "root",
         "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
-        "observedAt": "2026-10-28T20:55:05Z",
-        "disposition": "Contributor approved after checks pass",
-        "nextAction": "Verify the two syscall targets under a matching GCC toolchain, then open the reviewed source unchanged. No further contributor decision is needed.",
+        "observedAt": "2026-10-28T21:05:27Z",
+        "disposition": "Published as #16621",
+        "nextAction": "Follow checks and maintainer review on #16621.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16621",
+          "https://app.buildbuddy.io/invocation/25648b36-10d5-44ec-a4de-542b63fd23e8",
           "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7",
           "https://app.buildbuddy.io/invocation/88612f53-dd20-4695-bfcd-43525dd22ab0",
           "https://app.buildbuddy.io/invocation/41786c4e-1368-4717-922b-c6f019facc6b"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:mixed-owner-getlk",
@@ -31460,6 +31474,72 @@
         ]
       },
       "number": 16618
+    },
+    {
+      "id": "pr:16621",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "file-lock-wait-registration",
+      "head": "f292312cc3bb1516813e54b9438c839481c6e9f7",
+      "title": "Register file lock waiters under the lock-set mutex",
+      "url": "https://github.com/google/gvisor/pull/16621",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Blocking flock and fcntl requests register under the lock-set mutex before releasing it to wait. Defer pairs mutex acquisitions with releases, including interruptions, and removes two checklocks exemptions. On the submitted source, 36 unit cases, 36 race cases, both architecture analyzers, and eight systrap syscall cases passed.",
+      "updatedAt": "2026-10-28T21:05:27Z",
+      "evidence": [
+        {
+          "label": "Published upstream as #16621",
+          "url": "https://github.com/google/gvisor/pull/16621"
+        },
+        {
+          "label": "Both AMD64 systrap suites: eight cases, no skips",
+          "url": "https://app.buildbuddy.io/invocation/25648b36-10d5-44ec-a4de-542b63fd23e8"
+        },
+        {
+          "label": "Revised lock waiter",
+          "url": "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7"
+        },
+        {
+          "label": "36 normal, 36 race, analyzers passed; syscall build failed",
+          "url": "https://app.buildbuddy.io/invocation/88612f53-dd20-4695-bfcd-43525dd22ab0"
+        },
+        {
+          "label": "Previous revision: 46 checks, no skips",
+          "url": "https://app.buildbuddy.io/invocation/5240bd69-2863-4974-a32d-49e31b633510"
+        },
+        {
+          "label": "Package tests and AMD64/ARM64 lock analyzers",
+          "url": "https://app.buildbuddy.io/invocation/3e624b28-717a-4f64-8c58-3cac1e76e84c"
+        },
+        {
+          "label": "Blocking fcntl and interrupted flock in systrap",
+          "url": "https://app.buildbuddy.io/invocation/aad23ed7-ae1d-4dc7-ae8d-c4bf1fea36bb"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b"
+        },
+        "after": {
+          "head": "f292312cc3bb1516813e54b9438c839481c6e9f7"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "f292312cc3bb1516813e54b9438c839481c6e9f7",
+        "observedAt": "2026-10-28T21:05:27Z",
+        "disposition": "Published as #16621",
+        "nextAction": "Follow checks and maintainer review on #16621.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16621",
+          "https://app.buildbuddy.io/invocation/25648b36-10d5-44ec-a4de-542b63fd23e8",
+          "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7",
+          "https://app.buildbuddy.io/invocation/88612f53-dd20-4695-bfcd-43525dd22ab0",
+          "https://app.buildbuddy.io/invocation/41786c4e-1368-4717-922b-c6f019facc6b"
+        ]
+      },
+      "number": 16621
     }
   ],
   "edges": [
