@@ -143,9 +143,9 @@ as the relationship between objects are correctly encoded.
 Decoding reads the statefile and reconstructs the object graph. Decoding begins
 in `decodeState.Load`. Decoding is performed in a single pass over the object
 stream in the statefile, and a subsequent pass over all deserialized objects is
-done to fire off all loading callbacks in the correctly defined order. Note that
-introducing cycles is possible here, but these are detected and an error will be
-returned.
+used to finish writes that depend on other objects. Cycles of ordinary
+pointers are valid; a cycle in which each loader waits for the next object
+to finish is an error.
 
 Decoding is relatively straight forward. For most primitive values, the decoder
 constructs an appropriate object and fills it with the values encoded in the
@@ -156,3 +156,11 @@ resolved by searching for the target in this index by their `objectID`; see
 `decodeState.register`. For pointers to values inside another value (fields in a
 pointer, elements of an array), the decoder uses the accessor path to walk to
 the appropriate location; see `walkChild`.
+
+An object can have an address before it has its final value. This matters
+when restoring a map: assigning a key copies it, so a hook that later
+changes the original struct cannot repair the key in the map. The decoder
+fills addressable fields and array elements in place. It inserts a map
+entry, boxes a concrete value into an interface, or runs a `LoadValue`
+conversion only when the inputs to that operation are ready. A struct's
+fields and their conversions finish before its own `AfterLoad` hooks.

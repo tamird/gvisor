@@ -43,6 +43,36 @@ func TestLoadHooks(t *testing.T) {
 	})
 }
 
+func TestLoadHookValues(t *testing.T) {
+	hook := afterLoadStruct{v: 1}
+	for _, tc := range []struct {
+		name string
+		root any
+	}{
+		{"pointer", genericContainer{v: &hook}},
+		{"interface", genericContainer{v: hook}},
+		{"map-key", map[afterLoadStruct]int{hook: 7}},
+		{"map-value", map[int]afterLoadStruct{7: hook}},
+		{"map-interface-keys", map[any]int{hook: 7, "other": 8}},
+		{"map-interface-values", map[int]any{7: hook, 8: hook}},
+		{"indirect-load", genericContainer{v: innerFieldValue{v: 7}}},
+		{"conversion", convertedContainers{fromMap: 1, fromInterface: 1}},
+		{"early-after-load", earlyAfterLoad{value: 7, observed: 7, seenFromConversion: 7}},
+		// Both keys are zero until their pointer-backed conversions run.
+		{"colliding-map-keys", map[earlyAfterLoad]int{
+			{value: 1, observed: 1, seenFromConversion: 1}: 7,
+			{value: 2, observed: 2, seenFromConversion: 2}: 8,
+		}},
+		{"shared-slice-conversion", sharedSliceLoad{
+			elements: []afterLoadStruct{hook},
+			observed: 1,
+			shared:   true,
+		}},
+	} {
+		runTestCases(t, false, tc.name, []any{tc.root})
+	}
+}
+
 func TestCycles(t *testing.T) {
 	// cs is a single object cycle.
 	cs := cycleStruct{nil}
