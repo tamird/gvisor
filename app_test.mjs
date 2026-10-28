@@ -1603,7 +1603,7 @@ function historyView(nodes, investigations = []) {
 }
 
 test('graph selection outlines only direct prerequisites and dependents without changing arrows', () => {
-  const nodes = ['a', 'b', 'c', 'd', 'e'].map(id => ({ id, type: 'branch', title: id, url: 'https://example.test/' + id }));
+  const nodes = ['a', 'b', 'c', 'd', 'e'].map(id => ({ id, type: 'branch', title: id, status: 'Agent work', url: 'https://example.test/' + id }));
   const { context, controls } = historyView(nodes);
   context.edgesInput = [['a', 'b', 'depends_on'], ['b', 'c', 'blocked_by'], ['c', 'd', 'depends_on'], ['b', 'e', 'includes']]
     .map(([from, to, type]) => ({ from, to, type }));
