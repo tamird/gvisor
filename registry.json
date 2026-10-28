@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T21:34:06Z",
+    "updatedAt": "2026-10-28T21:39:20Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31668,10 +31668,14 @@
       "title": "Preserve the full counter when converting an eventfd to a host fd",
       "url": "https://github.com/tamird/gvisor/commit/57e4b376dd945b7488aec22685f524dfe86970c1",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T21:34:06Z",
+      "status": "Published as #16627",
+      "updatedAt": "2026-10-28T21:39:20Z",
       "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
       "evidence": [
+        {
+          "label": "Published upstream as #16627",
+          "url": "https://github.com/google/gvisor/pull/16627"
+        },
         {
           "label": "Unchanged Linux: six counter cases",
           "url": "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345"
@@ -31685,14 +31689,73 @@
           "url": "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "57e4b376dd945b7488aec22685f524dfe86970c1",
-        "url": "https://github.com/tamird/gvisor/commit/57e4b376dd945b7488aec22685f524dfe86970c1",
-        "title": "Preserve the full counter when converting an eventfd to a host fd",
-        "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
-        "body": "A guest can write more than 32 bits to an eventfd before a device asks\nfor the underlying Linux file descriptor. The Gasket and VFIO interrupt\npaths do this when registering an eventfd with the host. If a guest\ncreates an eventfd with 1 and writes 2^32, eventfd2's 32-bit initial\nargument leaves the host descriptor with 1 instead of 4,294,967,297.\n\nCreate the descriptor with the low 32 bits, then write the rest before\nhanding it to the device. If the write or notifier registration fails,\nclose the private descriptor and keep the guest's counter. Counters\nthat already fit in the eventfd2 argument need no additional syscall.\n\nThe regression reads the actual descriptor in ordinary and semaphore\nmodes at UINT32_MAX, 2^32+1 and UINT64_MAX\u22121. To check a large\nsemaphore without draining it, read once, fill its predicted remaining\ncapacity, then check that writing one more returns EAGAIN."
+      "inactive": true,
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "57e4b376dd945b7488aec22685f524dfe86970c1",
+        "observedAt": "2026-10-28T21:39:20Z",
+        "disposition": "Published as #16627",
+        "nextAction": "Follow checks and review on #16627.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16627",
+          "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345",
+          "https://app.buildbuddy.io/invocation/d3f600d1-1c45-4715-bd40-8c27146afea5",
+          "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
+        ]
       }
+    },
+    {
+      "id": "pr:16627",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/eventfd-preserve-host-counter",
+      "head": "57e4b376dd945b7488aec22685f524dfe86970c1",
+      "title": "Preserve the full counter when converting an eventfd to a host fd",
+      "url": "https://github.com/google/gvisor/pull/16627",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-28T21:39:20Z",
+      "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
+      "evidence": [
+        {
+          "label": "Published upstream as #16627",
+          "url": "https://github.com/google/gvisor/pull/16627"
+        },
+        {
+          "label": "Unchanged Linux: six counter cases",
+          "url": "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345"
+        },
+        {
+          "label": "Stock gVisor: four failing boundary cases",
+          "url": "https://app.buildbuddy.io/invocation/d3f600d1-1c45-4715-bd40-8c27146afea5"
+        },
+        {
+          "label": "Corrected gVisor: all nine records and both architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
+        },
+        {
+          "label": "Signal lock-scope amendment",
+          "url": "https://github.com/tamird/gvisor/compare/57e4b376dd945b7488aec22685f524dfe86970c1...d94cb4a5563d03e38f0b0d5e62ee1744c091cfbb"
+        },
+        {
+          "label": "Amended package and analyzer checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40774745270"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "57e4b376dd945b7488aec22685f524dfe86970c1",
+        "observedAt": "2026-10-28T21:39:20Z",
+        "disposition": "Published as #16627",
+        "nextAction": "Follow checks and review on #16627.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16627",
+          "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345",
+          "https://app.buildbuddy.io/invocation/d3f600d1-1c45-4715-bd40-8c27146afea5",
+          "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
+        ]
+      },
+      "number": 16627
     }
   ],
   "edges": [
