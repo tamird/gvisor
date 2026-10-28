@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T18:00:32.729+00:00",
+    "updatedAt": "2026-10-28T18:15:20.796+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31305,6 +31305,45 @@
           "https://app.buildbuddy.io/invocation/267172c0-774c-46f4-8218-22e8e73ef0dc"
         ]
       }
+    },
+    {
+      "id": "branch:file-lock-wait-registration",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "file-lock-wait-registration",
+      "head": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+      "title": "Register file lock waiters under the lock-set mutex",
+      "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+      "group": "runtime",
+      "status": "Reviewable",
+      "summary": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
+      "updatedAt": "2026-10-28T18:15:20.796+00:00",
+      "evidence": [
+        {
+          "label": "Fork change",
+          "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b"
+        },
+        {
+          "label": "Matched qualification: 46 checks, no skips",
+          "url": "https://app.buildbuddy.io/invocation/5240bd69-2863-4974-a32d-49e31b633510"
+        },
+        {
+          "label": "Package tests and AMD64/ARM64 lock analyzers",
+          "url": "https://app.buildbuddy.io/invocation/3e624b28-717a-4f64-8c58-3cac1e76e84c"
+        },
+        {
+          "label": "Blocking fcntl and interrupted flock in systrap",
+          "url": "https://app.buildbuddy.io/invocation/aad23ed7-ae1d-4dc7-ae8d-c4bf1fea36bb"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+        "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+        "title": "Register file lock waiters under the lock-set mutex",
+        "summary": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
+        "body": "A blocking flock or fcntl must register its waiter before releasing\nthe mutex, or a concurrent unlock can go unnoticed. LockRegion relied\non a waiter callback to release its mutex, hiding the lock transfer\nfrom checklocks and requiring two exemptions.\n\nRegister directly with the wait queue, release the mutex, and block on\nthe registered channel. This keeps registration atomic with the failed\nlock attempt and lets checklocks verify both sides of the wait."
+      }
     }
   ],
   "edges": [
@@ -45728,9 +45767,30 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T18:00:32.729+00:00",
+      "updatedAt": "2026-10-28T18:15:20.796+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
+          "evidence": [
+            {
+              "label": "Fork change",
+              "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b"
+            },
+            {
+              "label": "Matched qualification: 46 checks, no skips",
+              "url": "https://app.buildbuddy.io/invocation/5240bd69-2863-4974-a32d-49e31b633510"
+            },
+            {
+              "label": "Package tests and AMD64/ARM64 lock analyzers",
+              "url": "https://app.buildbuddy.io/invocation/3e624b28-717a-4f64-8c58-3cac1e76e84c"
+            },
+            {
+              "label": "Blocking fcntl and interrupted flock in systrap",
+              "url": "https://app.buildbuddy.io/invocation/aad23ed7-ae1d-4dc7-ae8d-c4bf1fea36bb"
+            }
+          ]
+        },
         {
           "text": "The last close of a file detaches its epoll registrations while holding epollMu, then releases it before taking an epoll instance\u2019s interestMu. The proposed annotation checks the existing lock without adding an acquisition. Both architecture analyzers and the existing systrap CloseFile and DoubleLayerEpoll cases passed. The annotation covers ordinary VFS accesses; generated save/load routines are excluded by the existing analyzer.",
           "evidence": [
@@ -45754,7 +45814,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the advisory file-lock registration change on the existing blocking and interrupted requests. The pipe cursor annotations are open as #16606. Follow #16505 and keep VFS initialization in #14343 separate.",
+      "nextStep": "The file-lock waiter refactor is ready for contributor review. The pipe cursor annotations are open as #16606. Follow #16505 and keep VFS initialization in #14343 separate.",
       "evidence": [
         {
           "label": "Verified epoll registration contract",
