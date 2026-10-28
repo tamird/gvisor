@@ -380,9 +380,7 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 		if err := file.EventRegister(&next.entry); err != nil {
 			return err
 		}
-		epi.epoll.readyMu.Lock()
 		epi.replacement = next
-		epi.epoll.readyMu.Unlock()
 		file.EventUnregister(old)
 	}
 
