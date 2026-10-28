@@ -1,116 +1,99 @@
-"""Reconcile the native reports and both original unmodified DUT captures."""
+"""Read the corrected run's original BEP, reports and capture before publishing."""
+from datetime import datetime
 import hashlib
 import io
 import json
-from datetime import datetime
 from pathlib import Path
-import sys
 import tarfile
+from uuid import UUID
 import xml.etree.ElementTree as ET
 import zipfile
 
-from wire import inspect_pcap, isolate_flow, need
+from wire import inspect_pcap, need
 
 base = Path(__file__).resolve().parent
 sha = lambda d: hashlib.sha256(d).hexdigest()
-plan = json.loads((base/"plan.json").read_text())
-receipt = json.loads((base/"receipt.json").read_text())
-sub = json.loads((base/"submission.json").read_text())
-need(plan["request_sha256"] == sub["request_sha256"] == sha((base/"request.json").read_bytes()),"different operation")
-out = {"source":plan["executed_source"],"parent":plan["parent"],"tree":plan["source_tree"],"outer":sub["invocationId"],
-       "status":receipt.get("status"),"producer_status":receipt.get("producer_status"),"collection_status":receipt.get("collection_status"),
-       "verified_at":receipt.get("consumer_verified_at"),"owners":{}}
+plan = json.loads((base/"plan.json").read_bytes())
+receipt = json.loads((base/"receipt.json").read_bytes())
+submission = json.loads((base/"submission.json").read_bytes())
+need(plan["request_sha256"] == sha((base/"request.json").read_bytes()) == submission["request_sha256"], "request mismatch")
+rows = {}
+out = {"source":plan["executed_source"], "request":plan["request_sha256"],"invocation":str(UUID(submission["invocationId"])),
+       "status":receipt.get("status"),"producer":receipt.get("producer_status"),"collection":receipt.get("collection_status"),"owners":rows}
 bundle = base/"qualification.tar.gz"
-if not bundle.is_file():
-    out["incomplete"] = "No original archive"
-else:
-    content = bundle.read_bytes()
-    out["bundle"] = {"sha256":sha(content),"bytes":len(content)}
-    with tarfile.open(fileobj=io.BytesIO(content)) as tar:
-        names = tar.getnames()
-        need(len(names) == len(set(names)), "duplicate archive members")
-        out["bundle"]["members"] = len(names)
-        get = lambda path: tar.extractfile(path).read()
-        read = lambda path: json.loads(get(path))
-        path = "invocation-packet-impact/"
-        record = read("dsack-observations.json") if "dsack-observations.json" in names else {}
-        out["source_guard"] = {k:record.get(k) for k in ("source","parent","tree")}
-        if path+"context.json" not in names:
-            out["incomplete"] = "No original PacketImpact child"
-        else:
-            ctx,verdict = read(path+"context.json"),read(path+"verdict.json")
-            # The BEP, not the per-command verdict, owns the invocation UUID.
-            out["native_exit"] = int(get(path+"native-exit").strip())
-            out["native_finished_at"] = ctx["execution_finished_at"]
-            for k in ("verified_at","finished_at"):
-                if receipt.get(k):
-                    out[k] = receipt[k]
-            if out["verified_at"]:
-                stamp = lambda s: datetime.fromisoformat(s.replace("Z","+00:00"))
-                out["native_finish_to_verified_s"] = (stamp(out["verified_at"])-stamp(ctx["execution_finished_at"])).total_seconds()
-            need(ctx["expected_source"] == out["source"] == get(path+"head.txt").decode().strip(),"wrong executed revision")
-            ev = get(path+"events.jsonl")
-            manifest = read(path+"events.jsonl.manifest.json")
-            need((len(ev),sha(ev)) == (manifest["events"]["bytes"],manifest["events"]["sha256"]), "BEP digest")
-            events = [json.loads(line) for line in ev.splitlines()]
-            from uuid import UUID
-            [out["child"]] = [str(UUID(e["started"]["uuid"])) for e in events if e.get("started",{}).get("uuid")]
-            for label in plan["owners"]:
-                original = [e for e in events if e.get("id",{}).get("testResult",{}).get("label") == label and "testResult" in e]
-                row = out["owners"][label] = {}
-                if len(original) != 1:
-                    row["incomplete"]="missing/duplicate original BEP"
-                    row["build_failures"]=[]
-                    for e in events:
-                        tc=e.get("id",{}).get("targetCompleted",{})
-                        if tc.get("label")!=label:continue
-                        fail=e.get("completed",{}).get("failureDetail",{})
-                        for category,detail in fail.items():
-                            if isinstance(detail,dict) and detail.get("code"):
-                                row["build_failures"].append((category,detail["code"],sha(fail.get("message","").encode())))
-                    continue
-                e = original[0]
-                row["status"] = e["testResult"]["status"]
-                row["producer"] = record.get("owners",{}).get(label,{})
-                reports = {r["name"]:r for r in manifest["reports"] if r["identity"] == e["id"]["testResult"]}
-                captures = []
-                for name,r in reports.items():
-                    d = get(path+r["path"])
-                    need((len(d),sha(d)) == (r["bytes"],r["sha256"]), "original report identity "+name)
-                    if name == "test.xml":
-                        nodes = ET.fromstring(d).findall(".//testcase")
-                        row["xml"] = r
-                        row["cases"] = [{"name":n.get("name"),"errors":[{"tag":v.tag,"message":v.get("message"),"text":"".join(v.itertext())} for v in n if v.tag in ("failure","error","skipped")]} for n in nodes]
-                    elif name == "test.log":
-                        row["log"] = r
-                        log=d.decode(errors="replace")
-                        row["named_log"]=[m for m in ("PASS","FAIL","SKIP") if "--- "+m+": "+plan["case"] in log]
-                        row["recv_error_count"]=sum(log.count(k) for k in ("recv after stream =","recv = "))
-                    elif name.endswith(".pcap"):
-                        captures.append((name,d))
-                    elif name == "test.outputs__outputs.zip":
-                        with zipfile.ZipFile(io.BytesIO(d)) as z:
-                            for i in z.infolist():
-                                if i.filename.endswith(".pcap"):
-                                    need(i.file_size <= 8 << 20,"pcap bound")
-                                    captures.append((i.filename,z.read(i)))
-                if len(captures) == 1:
-                    name,d = captures[0]
-                    try:
-                        capture = inspect_pcap(d)
-                    except (KeyError,ValueError) as err:
-                        try:
-                            selected=isolate_flow(d)
-                            capture=inspect_pcap(selected)
-                        except (ValueError,KeyError,AssertionError):
-                            row["pcap_unparsed"]={"sha256":sha(d),"bytes":len(d),"error":type(err).__name__}
-                            continue
-                        row["original_pcap"]={"sha256":sha(d),"bytes":len(d)}
-                        row["selected_wire"]=True
-                    row["wire"] = capture | {"name":name}
-                    row["raw_pcap_matches_producer"]=bool(row["producer"].get("wire")) and row["producer"]["wire"]==json.loads(json.dumps(row["wire"]))
-                else:
-                    row["incomplete"] = "missing or multiple capture files"
-out["scope"] = "One negotiated IPv4 TCP stream, matching test on native Linux and gVisor on the reviewed #16403 receiver. The producer can retain a failing native DUT and must not be treated as its passing result."
+if bundle.is_file():
+    data=bundle.read_bytes();out["bundle"]={"sha256":sha(data),"bytes":len(data)}
+    stamps=[]
+    with tarfile.open(fileobj=io.BytesIO(data)) as tar:
+        names=set(tar.getnames())
+        need(len(names)==len(tar.getnames()),"duplicate original member")
+        def get(name):
+            entry=tar.getmember(name)
+            need(entry.isfile() and 0<=entry.size<=64<<20,"invalid original member")
+            return tar.extractfile(entry).read()
+        prod=json.loads(get("dsack-corrected.json")) if "dsack-corrected.json" in names else {}
+        if prod:
+            need((prod["source"],prod["parent"],prod["tree"])==(out["source"],plan["parent"],plan["source_tree"]),"wrong source")
+        for phase,labels in plan["phases"].items():
+            prefix="invocation-"+phase+"/"
+            if prefix+"events.jsonl" not in names:continue
+            ctx=json.loads(get(prefix+"context.json"))
+            need(ctx["expected_source"]==out["source"]==get(prefix+"head.txt").decode().strip(),"wrong checkout")
+            stamps.append(datetime.fromisoformat(ctx["execution_finished_at"].replace("Z","+00:00")))
+            exit_code=int(get(prefix+"native-exit"))
+            raw=get(prefix+"events.jsonl");man=json.loads(get(prefix+"events.jsonl.manifest.json"))
+            need((len(raw),sha(raw))==(man["events"]["bytes"],man["events"]["sha256"]),"bad BEP identity")
+            events=[json.loads(x) for x in raw.splitlines()]
+            [child]=[str(UUID(e["started"]["uuid"])) for e in events if e.get("started",{}).get("uuid")]
+            for label in labels:
+                row=rows[label]={"child":child,"native_exit":exit_code}
+                src=prod.get("owners",{}).get(label,{})
+                row["producer_verified"]=src.get("verified") is True
+                row["worker_verified"]=src.get("worker_verified") is True
+                row["behavior_verified"]=src.get("behavior_verified") is True
+                found=[e for e in events if e.get("id",{}).get("testResult",{}).get("label")==label and "testResult" in e]
+                if len(found)!=1:continue
+                [e]=found;ident=e["id"]["testResult"];result=e["testResult"]
+                need(all(ident[k]==1 for k in ("run","shard","attempt")),"unexpected attempts")
+                row["status"]=result["status"]
+                row["uncached_remote"]=result.get("executionInfo",{}).get("strategy")=="remote" and not result.get("cachedLocally") and not result.get("executionInfo",{}).get("cachedRemotely")
+                captures=[]
+                for r in man["reports"]:
+                    if r["identity"]!=ident:continue
+                    name=r["name"];path=r["path"];b=get(prefix+path)
+                    need((len(b),sha(b))==(r["bytes"],r["sha256"]),"bad original report")
+                    need(path.startswith("reports/") and "/bazel-out/" in path and ".." not in Path(path).parts,"bad original path")
+                    rel="bazel-out/"+path.split("/bazel-out/",1)[1]
+                    need(sum(v["name"]==name and v["uri"].endswith("/"+rel) for v in result["testActionOutput"])==1,"bad original URI")
+                    if name in ("test.xml","test.log"):
+                        need(name not in row,"duplicate primary")
+                        row[name]={"sha256":sha(b),"bytes":len(b)}
+                    if name=="test.xml":
+                        cases=ET.fromstring(b).findall(".//testcase")
+                        row["cases"]=len(cases)
+                        row["failed"]=sum(any(n.find(t) is not None for t in ("error","failure")) for n in cases)
+                        row["skipped"]=sum(n.find("skipped") is not None for n in cases)
+                        names_in_xml={n.get("name") for n in cases}
+                        row["named_wire"]=names_in_xml=={"TestDSACKAboveGap"}
+                        row["receiver_controls"]=sorted(names_in_xml & {"TestReceiverDSACK/SACK=true","TestReceiverDSACK/SACK=false"})
+                    if name=="test.log":
+                        import re
+                        row["markers"]=[a for a in ("amd64","arm64") if re.search(a+r"\s*\.\.\.\s*PASS",b.decode(errors="replace"),re.I)]
+                    if name.endswith(".pcap"):captures.append(b)
+                    if name=="test.outputs__outputs.zip":
+                        with zipfile.ZipFile(io.BytesIO(b)) as z:
+                            for f in z.infolist():
+                                if f.filename.endswith(".pcap"):
+                                    need(0<f.file_size<8<<20,"capture bound")
+                                    captures.append(z.read(f))
+                if phase=="packet-impact" and len(captures)==1:
+                    w=inspect_pcap(captures[0])
+                    row["pcap"]={"sha256":sha(captures[0]),"bytes":len(captures[0])}
+                    row["observations"]=[{k:f[k] for k in ("sent","ack","blocks")} for f in w["frames"]]
+                    row["matches_original_linux"]=row["observations"]==plan["linux_observations"]
+                    row["matches_producer"]=w==src.get("wire")
+    if stamps and receipt.get("consumer_verified_at"):
+        end=max(stamps)
+        out["native_finished_at"]=end.isoformat()
+        out["native_finish_to_verified_s"]=(datetime.fromisoformat(receipt["consumer_verified_at"].replace("Z","+00:00"))-end).total_seconds()
 (base/"outcome.json").write_text(json.dumps(out,indent=2)+"\n")
-print(json.dumps({k:out.get(k) for k in ("outer","status","child","bundle","native_finish_to_verified_s")}))

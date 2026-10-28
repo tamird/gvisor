@@ -9,9 +9,9 @@ import runpy
 import sys
 
 
-SOURCE = "924c3e9f13ff3f7e7c888d3d70043076dfd7740e"
-REQUEST = "051e5f82bfda129ded159b0584db17bb3d0450ab8a6b7f6a033018644c912a25"
-OWNERS = ("//test/packetimpact/tests:tcp_rack_native_test", "//test/packetimpact/tests:tcp_rack_netstack_test")
+SOURCE = "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
+REQUEST = "c024d269bdb8d93e3aaa7f2bb34826509e2888e133ed6bcf50067ce4475fcb66"
+OWNERS = ('//test/packetimpact/tests:tcp_rack_netstack_test', '//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test', '//pkg/tcpip/transport/tcp:tcp_nogo', '//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test_nogo')
 
 
 def digest(s):
@@ -37,53 +37,39 @@ def pair(x):
 
 
 def public_result(z):
-    if z["source"] != SOURCE or z["parent"] != "c451fa7d68e7b7809142c5daba0cd46a9cffe4fc":
+    if z["source"] != SOURCE or z["request"] != REQUEST:
         raise ValueError("Unexpected source")
-    result = {"source": SOURCE, "request": REQUEST, "invocation": str(UUID(z["outer"])),
-              "status": enum(z["status"]), "producer": enum(z["producer_status"]),
-              "collection": enum(z["collection_status"]), "owners": {}}
-    if z.get("child"):
-        result["test_invocation"] = str(UUID(z["child"]))
+    result = {"source":SOURCE,"request":REQUEST,"invocation":str(UUID(z["invocation"])),"status":enum(z.get("status")),"producer":enum(z.get("producer")),"collection":enum(z.get("collection")),"owners":{}}
     if z.get("bundle"):
-        result["bundle_sha256"] = digest(z["bundle"]["sha256"])
-        result["bundle_bytes"] = number(z["bundle"]["bytes"])
-    delay = z.get("native_finish_to_verified_s")
-    if type(delay) in (int, float) and 0 <= delay < 86_400:
-        result["native_finish_to_verified_ms"] = round(delay * 1000, 3)
+        result["bundle"]={"sha256":digest(z["bundle"]["sha256"]),"bytes":number(z["bundle"]["bytes"])}
+    delay=z.get("native_finish_to_verified_s")
+    if type(delay) in (int,float) and 0<=delay<86400:
+        result["native_finish_to_verified_ms"]=round(delay*1000,3)
+    if "native_finished_at" in z:
+        from datetime import datetime
+        result["native_finished_at"]=datetime.fromisoformat(z["native_finished_at"]).isoformat()
     for label in OWNERS:
-        row = z["owners"].get(label, {})
-        item = result["owners"][label] = {"status": enum(row.get("status")), "verified": row.get("producer", {}).get("verified") is True}
-        for field in ("xml", "log"):
-            if row.get(field):
-                item[field] = {"sha256": digest(row[field]["sha256"]), "bytes": number(row[field]["bytes"])}
-        item["named_log"]=[m for m in row.get("named_log",[]) if m in ("PASS","FAIL","SKIP")]
-        item["recv_error_count"]=number(row.get("recv_error_count",0))
-        item["pcap_matches_producer"]=row.get("raw_pcap_matches_producer") is True
-        item["build_failures"]=[{"category":c if re.fullmatch(r"[a-zA-Z]{1,50}",c) else "UNKNOWN","code":code if re.fullmatch(r"[A-Z_0-9]{1,70}",code) else "UNKNOWN","message_sha256":digest(h)} for c,code,h in row.get("build_failures",[])][:4]
-        if row.get("original_pcap"):
-            item["original_pcap"]={"sha256":digest(row["original_pcap"]["sha256"]),"bytes":number(row["original_pcap"]["bytes"],8<<20)}
-            item["selected_single_payload_tuple"]=row.get("selected_wire") is True
-        if row.get("pcap_unparsed"):
-            item["pcap_unparsed"]={"sha256":digest(row["pcap_unparsed"]["sha256"]),"bytes":number(row["pcap_unparsed"]["bytes"])}
-        if row.get("cases"):
-            cases = row["cases"]
-            item["xml_case_count"]=number(len(cases),4096)
-            item["named_xml_cases"]=sum(c.get("name")=="TestDSACKAboveGap" for c in cases)
-            tags=[e["tag"] for c in cases for e in c["errors"]]
-            if item["named_xml_cases"]==1:item["case"]="TestDSACKAboveGap"
-            item["failures"] = tags.count("failure") + tags.count("error")
-            item["skipped"] = tags.count("skipped")
-        if row.get("wire"):
-            w = row["wire"]
-            if len(w["frames"]) != 5:
-                raise ValueError("Unexpected capture census")
-            item["pcap"] = {"sha256": digest(w["sha256"]), "bytes": number(w["bytes"], 8 << 20)}
-            item["observations"] = []
-            for f in w["frames"]:
-                if len(f["blocks"]) > 4:
-                    raise ValueError("Invalid SACK block count")
-                item["observations"].append({"sent": pair(f["sent"]), "ack": number(f["ack"]),
-                                             "blocks": [pair(x) for x in f["blocks"]]})
+        r=z["owners"].get(label,{})
+        row=result["owners"][label]={"status":enum(r.get("status"))}
+        for k in ("producer_verified","worker_verified","behavior_verified","uncached_remote","named_wire","matches_original_linux","matches_producer"):
+            if k in r:row[k]=r[k] is True
+        for k in ("cases","failed","skipped","native_exit"):
+            if k in r:row[k]=number(r[k],16384)
+        if "child" in r:row["child"]=str(UUID(r["child"]))
+        for k in ("test.xml","test.log","pcap"):
+            if k in r:row[k]={"sha256":digest(r[k]["sha256"]),"bytes":number(r[k]["bytes"])}
+        row["markers"]=[a for a in ("amd64","arm64") if a in r.get("markers",[])]
+        row["receiver_controls"]=[a for a in ("TestReceiverDSACK/SACK=true","TestReceiverDSACK/SACK=false") if a in r.get("receiver_controls",[])]
+        if r.get("observations"):
+            if len(r["observations"])!=5:raise ValueError("Unexpected frame census")
+            row["observations"]=[{"sent":pair(f["sent"]),"ack":number(f["ack"]),"blocks":[pair(v) for v in f["blocks"]]} for f in r["observations"] if len(f["blocks"])<=4]
+    if result["status"]=="PASS":
+        rows=result["owners"]
+        if not all(r.get("status")=="PASSED" and r.get("native_exit")==0 and r.get("uncached_remote") and r.get("behavior_verified") and r.get("producer_verified") and r.get("cases",0)>0 and r.get("failed")==r.get("skipped")==0 for r in rows.values()):
+            raise ValueError("Missing original corrected owner")
+        packet,sack,*analyzers=[rows[n] for n in OWNERS]
+        if not (packet.get("named_wire") and packet.get("worker_verified") and packet.get("matches_producer") and packet.get("matches_original_linux") and sack.get("worker_verified") and len(sack["receiver_controls"])==2 and all(r["markers"]==["amd64","arm64"] for r in analyzers)):
+            raise ValueError("Original corrected evidence does not match the requested contract")
     return result
 
 
@@ -105,8 +91,6 @@ def collect(key):
     public = {"source": SOURCE, "request": REQUEST, "stage": "submit"}
     rc = 1
     try:
-        gate=json.loads((root/"gcc-gate.json").read_bytes())
-        assert gate["status"]=="PASS" and gate["config"]=="sha256:7614139a81131983aa05e809ba1ca910c291cdb15021977e033800834fb76ce0" and len(gate["headers"])==13
         sender = runpy.run_path(str(task / "submit.py"))
         with redirect_stdout(SafeOutput()), redirect_stderr(SafeOutput()):
             rc = sender["main"](lambda _: key)
@@ -125,6 +109,5 @@ def collect(key):
         submission = task / "submission.json"
         if submission.is_file():
             public["invocation"] = str(UUID(json.loads(submission.read_text())["invocationId"]))
-        if (root/"gcc-gate.json").is_file():public["compiler"]=json.loads((root/"gcc-gate.json").read_text())
         (root / "verdict.json").write_text(json.dumps(public, indent=2) + "\n")
     raise SystemExit(rc)
