@@ -1,0 +1,65 @@
+name: Rules pkg zipped writer comparison
+
+"on":
+  push:
+    branches: [qualification/rules-pkg-zip-comparison-actions]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/supplier-zip"
+          mkdir -p "$root/task/job"
+          cp .github/qualification/supplier-zip/{request.json,plan.json,entry.json,submit.py,receipt.py} "$root/task/job/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          767618683b8a67c46108a8043dad3850083d301616a385cf40dc8da4ac419715  task/job/request.json
+          41bedf79cfc7f6925d892a028ef8ce05d620412a9413d6c1e90844d348f055bb  task/job/plan.json
+          891c65b9dbb86ee50fb0bbccb2c20df90468cdd1b48850e6bdf223708bf1d5b5  task/job/entry.json
+          c0f2dd09283751dc9423b270f76aea9f4e002533b0aa7f7557a74355d709307f  task/job/submit.py
+          5567e3fecef6499c811b365ee0d917e672e33ddf43a98b5f923015bac5b0684c  task/job/receipt.py
+          SUMS
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          job = Path("task/job")
+          (job/"request.sh").write_text(json.loads((job/"request.json").read_bytes())["steps"][0]["run"])
+          PYTHON
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          entry = Path(os.environ["RUNNER_TEMP"]) / "supplier-zip/task/job/receipt.py"
+          runpy.run_path(str(entry))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: supplier-zip-receipt
+          path: ${{ runner.temp }}/supplier-zip/verdict.json
+          if-no-files-found: error
+          retention-days: 14

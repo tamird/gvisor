@@ -1,0 +1,18 @@
+{
+  "action_budget": {
+    "action_budget_bytes": 44926,
+    "action_budget_limit": 45056,
+    "largest_step_argument_bytes": 44285
+  },
+  "request": {
+    "bytes": 44969,
+    "sha256": "767618683b8a67c46108a8043dad3850083d301616a385cf40dc8da4ac419715"
+  },
+  "scope": "Exact source, original stock digests, original static interpreter/descriptor, complete seed, original pinned inspector assets and host syntax; no Bazel action.",
+  "source": "9107384786056cdc05c9ad869bc07a577c66e746",
+  "source_bundle": {
+    "bytes": 2150,
+    "sha256": "32605f2b540d8933cb0e586a5f44ef81fa7c7c357ba896acaf404097079d8d7a"
+  },
+  "status": "PASS"
+}
