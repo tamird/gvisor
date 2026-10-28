@@ -423,6 +423,9 @@ function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
     const disposition = attentionDisposition(node, id);
     if (disposition) {
+      // The separate cleanup record owns this suggestion. Other reasons,
+      // including the import's normal merge state, still belong to this PR.
+      if (disposition.action === "batch-cleanup") return;
       const dispositionId = disposition.action === "ci-infrastructure-retry" ? "maintainer-ci-infrastructure" : "maintainer-triaged";
       const existing = reasons.find(item => item.id === dispositionId);
       const triage = `${disposition.title}. ${disposition.nextAction}`;
@@ -1686,7 +1689,9 @@ function validateRegistry(candidate) {
           || typeof item.nextAction !== "string" || !item.nextAction.trim()
           || !Array.isArray(item.evidence) || !item.evidence.length || !item.evidence.every(safeURL)
           || !item.binding || !/^[a-f0-9]{40}$/.test(item.binding.sourceHead)
-          || item.action !== undefined && (item.action !== "ci-infrastructure-retry" || item.reason !== "maintainer-import-checks")
+          || item.action !== undefined && !(item.action === "ci-infrastructure-retry" && item.reason === "maintainer-import-checks"
+            || item.action === "batch-cleanup" && item.reason === "author-feedback" && item.binding.reviewDecision === "APPROVED"
+            && item.binding.approvedHead === item.binding.sourceHead)
           || item.replacement !== undefined && (item.reason !== "author-conflicts"
             || !candidate.nodes.some(other => other.id === item.replacement && other.type === "pr" && other.repo === node.repo && other.id !== node.id)))))
       throw new Error("Invalid attention disposition");

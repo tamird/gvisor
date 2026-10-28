@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T03:18:20.250864+00:00",
+    "updatedAt": "2026-10-28T13:24:22.560053+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26556,6 +26556,10 @@
         {
           "label": "Exact matching standalone package-tree benchmark baseline",
           "url": "https://app.buildbuddy.io/invocation/536239b6-b9e8-4d32-96f3-8920a774508d"
+        },
+        {
+          "label": "Weekly review cleanup queue",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
         }
       ],
       "updatedAt": "2026-10-26T22:23:56.114433+00:00",
@@ -27497,6 +27501,10 @@
         {
           "label": "Separate AMD64 Firecracker diagnostic killed before test reporting",
           "url": "https://app.buildbuddy.io/invocation/b647754e-f85f-41b1-8836-5225a730127f"
+        },
+        {
+          "label": "Weekly review cleanup queue",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
         }
       ],
       "number": 16493
@@ -27679,6 +27687,73 @@
           "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
           "https://app.buildbuddy.io/invocation/d1321eb7-9d50-42a3-bd84-01c8862b3205",
           "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "action": "batch-cleanup",
+            "title": "Suggestion queued for weekly cleanup",
+            "nextAction": "Leave the approved source and import #16542 in place. The weekly cleanup contains this edit; reply on the original thread after verification.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16496#discussion_r4395670555",
+              "https://github.com/google/gvisor/pull/16496#pullrequestreview-5676270647",
+              "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067",
+              "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+              "approvedAt": "2026-10-28T00:22:21Z",
+              "headCommittedAt": "2026-10-27T07:52:26Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 1,
+                "total": 1,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABUlUENw",
+                    "url": "https://github.com/google/gvisor/pull/16496#pullrequestreview-5676270647",
+                    "body": "LGTM. This is a small, test-only change that does what it says:\n\n1. The `CAP_DAC_OVERRIDE` drop is the right fix for `TestCreateController`. `generic_permission()` would otherwise let a privileged worker create the subdirectory under the 0555 parent. The only cleanups that run afterwards are owner-permitted `chmod` and `RemoveAll`, so they keep working.\n2. The extracted `capabilitytest.DropEffective` keeps the old thread-safety properties and makes the failure path simpler: the modified thread is always discarded instead of being restored on a best-effort basis.\n3. I checked the remaining `runsc/cgroup` tests, and none of them need a host cgroup mount or D-Bus, so removing `local` looks safe.\n4. Optional nit: mention in the package doc that importing `capabilitytest` locks main to the initial thread through `init()`.\n\nThe PR merges cleanly into current master.\n\n---\n[\ud83e\udd16] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-by: Claude",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-28T00:22:21Z",
+                    "updatedAt": "2026-10-28T00:22:21Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6w8B51",
+                    "isResolved": false,
+                    "isOutdated": false,
+                    "path": "pkg/test/capabilitytest/capabilitytest.go",
+                    "line": 16,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBgCcGw",
+                    "url": "https://github.com/google/gvisor/pull/16496#discussion_r4395670555",
+                    "body": "Optional nit: since importing this package changes the whole test binary (main is locked to the initial thread in `init()`), it may be worth saying so in the package doc, e.g. \"Importing this package reserves the initial thread for main.\"",
+                    "createdAt": "2026-10-28T00:22:21Z",
+                    "updatedAt": "2026-10-28T00:22:21Z",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
+            }
+          }
         ]
       },
       "evidence": [
@@ -27693,6 +27768,10 @@
         {
           "label": "Corrected cgroup and boot cases on native AMD64 and ARM64",
           "url": "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
+        },
+        {
+          "label": "Weekly review cleanup queue",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
         }
       ],
       "refinement": {
@@ -27727,6 +27806,73 @@
           "https://github.com/google/gvisor/pull/16505",
           "https://github.com/tamird/gvisor/commit/eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
           "https://app.buildbuddy.io/invocation/5aec9db8-30e7-4622-abbc-5bfbd1a27ee4"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "action": "batch-cleanup",
+            "title": "Suggestion queued for weekly cleanup",
+            "nextAction": "Leave the approved source and import #16544 in place. The weekly cleanup contains this edit; reply on the original thread after verification.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16505#discussion_r4395670148",
+              "https://github.com/google/gvisor/pull/16505#pullrequestreview-5676270105",
+              "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067",
+              "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "eec6ed445b3ba37ab6f0d5509c0681ff15a97cad",
+              "approvedAt": "2026-10-28T00:22:18Z",
+              "headCommittedAt": "2026-10-27T14:58:57Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 1,
+                "total": 1,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABUlUCGQ",
+                    "url": "https://github.com/google/gvisor/pull/16505#pullrequestreview-5676270105",
+                    "body": "LGTM. This is a small, correct change:\n\n1. The `+checklocks:epollMu` annotation covers every access to `FileDescription.epolls`. `Release`, `addInterest`, `DeleteInterest` and `DecRef` all hold `epollMu`, and the generated stateify methods are already `+checklocksignore`.\n2. The new `DecRef` comment explains the detach-then-unlock pattern correctly, and it matches the lock order documented in `vfs.go`.\n3. Optional nit: mention that this mirrors Linux's `eventpoll_release_file()`, which also drops `file->f_lock` before taking `ep->mtx`.\n\nThe PR is based on a recent master and neither touched file has changed since, so I expect no conflicts.\n\n---\n[\ud83e\udd16] This review is part of an experimental auto-review process to help speed up gVisor review velocity. It is a work in progress. Assisted-by: Claude",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-28T00:22:18Z",
+                    "updatedAt": "2026-10-28T00:22:18Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "eec6ed445b3ba37ab6f0d5509c0681ff15a97cad"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6w8B11",
+                    "isResolved": false,
+                    "isOutdated": false,
+                    "path": "pkg/sentry/vfs/file_description.go",
+                    "line": 203,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBgCahA",
+                    "url": "https://github.com/google/gvisor/pull/16505#discussion_r4395670148",
+                    "body": "Optional nit: you could point to the Linux analogue here, e.g. \"...takes interestMu before epollMu. This mirrors Linux's eventpoll_release_file(), which drops file->f_lock before taking ep->mtx.\"",
+                    "createdAt": "2026-10-28T00:22:17Z",
+                    "updatedAt": "2026-10-28T00:22:17Z",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "eec6ed445b3ba37ab6f0d5509c0681ff15a97cad"
+            }
+          }
         ]
       },
       "evidence": [
@@ -27737,6 +27883,10 @@
         {
           "label": "Remote VFS Nogo and epoll syscall cases",
           "url": "https://app.buildbuddy.io/invocation/5aec9db8-30e7-4622-abbc-5bfbd1a27ee4"
+        },
+        {
+          "label": "Weekly review cleanup queue",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
         }
       ],
       "number": 16505
@@ -43215,6 +43365,92 @@
         {
           "label": "Reviewed directory-open path",
           "url": "https://github.com/google/gvisor/pull/16473#discussion_r4393753819"
+        }
+      ]
+    },
+    {
+      "id": "investigation:weekly-review-cleanup",
+      "title": "Weekly cleanup of approved review suggestions",
+      "status": "active",
+      "group": "tests",
+      "owner": "Tamir",
+      "updatedAt": "2026-10-28T13:24:22.560053+00:00",
+      "summary": "Four nonblocking suggestions from Lucas Manning are in one fork commit. Two original changes have landed; two have open Copybara imports. The cleanup does not amend any of their source heads.",
+      "findings": [
+        {
+          "text": "#16453 (landed): Explain when the state benchmark encounters the array after encoding its elements.",
+          "evidence": [
+            {
+              "label": "Lucas Manning\u2019s approval on #16453",
+              "url": "https://github.com/google/gvisor/pull/16453#pullrequestreview-5676271318"
+            },
+            {
+              "label": "Original suggestion on #16453",
+              "url": "https://github.com/google/gvisor/pull/16453#discussion_r4395671119"
+            },
+            {
+              "label": "Merged Copybara import #16547",
+              "url": "https://github.com/google/gvisor/pull/16547"
+            }
+          ]
+        },
+        {
+          "text": "#16493 (landed): Exercise the computed-zero checksum transition for destination-port updates as well as source-port updates.",
+          "evidence": [
+            {
+              "label": "Lucas Manning\u2019s approval on #16493",
+              "url": "https://github.com/google/gvisor/pull/16493#pullrequestreview-5676271004"
+            },
+            {
+              "label": "Original suggestion on #16493",
+              "url": "https://github.com/google/gvisor/pull/16493#discussion_r4395670845"
+            },
+            {
+              "label": "Merged Copybara import #16546",
+              "url": "https://github.com/google/gvisor/pull/16546"
+            }
+          ]
+        },
+        {
+          "text": "#16496 (importing): Document that importing capabilitytest reserves the initial thread for main.",
+          "evidence": [
+            {
+              "label": "Lucas Manning\u2019s approval on #16496",
+              "url": "https://github.com/google/gvisor/pull/16496#pullrequestreview-5676270647"
+            },
+            {
+              "label": "Original suggestion on #16496",
+              "url": "https://github.com/google/gvisor/pull/16496#discussion_r4395670555"
+            },
+            {
+              "label": "Open Copybara import #16542",
+              "url": "https://github.com/google/gvisor/pull/16542"
+            }
+          ]
+        },
+        {
+          "text": "#16505 (importing): Point readers to the Linux eventpoll_release_file lock order alongside the gVisor epoll cleanup.",
+          "evidence": [
+            {
+              "label": "Lucas Manning\u2019s approval on #16505",
+              "url": "https://github.com/google/gvisor/pull/16505#pullrequestreview-5676270105"
+            },
+            {
+              "label": "Original suggestion on #16505",
+              "url": "https://github.com/google/gvisor/pull/16505#discussion_r4395670148"
+            },
+            {
+              "label": "Open Copybara import #16544",
+              "url": "https://github.com/google/gvisor/pull/16544"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check new review suggestions daily and batch eligible changes into a weekly cleanup PR. A PR can enter the queue before its import lands. Verify the fork edits, then reply individually on the four original threads with the change that addressed each suggestion. The fork commit is prepared; upstream submission and thread replies are separate steps.",
+      "evidence": [
+        {
+          "label": "Four cleanup edits, excluding the prerequisite commits",
+          "url": "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067"
         }
       ]
     }

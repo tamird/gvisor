@@ -349,6 +349,15 @@ evidence. Observation timestamps alone do not invalidate it. New unrelated reaso
 remain actionable, and an explicitly assigned comment always needs author work.
 Free-text follow-up notes never create or extend a disposition.
 
+Check Lucas Manning’s nonblocking suggestions daily. With a current-head
+approval, record them in the [weekly cleanup queue](https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup),
+including the review and original thread. A change can enter the queue
+before its import lands. Keep the approved source head in place, batch
+the edits in a separate PR, and reply individually on the original threads
+after addressing them. `batch-cleanup` routes only the bound feedback to
+the queue; other PR actions and new feedback remain visible. A review
+that says “LGTM” without approving the change still gets direct triage.
+
 When the next step depends on a public release, record a `releaseWait`
 on the owning PR with its source head, the version checked and the next
 verification step. The existing refresh reads the latest non-yanked BCR

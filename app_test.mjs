@@ -767,6 +767,22 @@ function assignedCommentNode() {
   return node;
 }
 
+test('a queued nit leaves the approved import on its normal path and reopens on new feedback', () => {
+  const node = attentionNode(16496), pr = node.github, context = client();
+  pr.imports = [attentionImport(node, 16542)];
+  pr.threads = { complete: true, unresolved: 1, total: 1 };
+  const comment = { kind: 'inline', id: 'nit', threadId: 'thread', author: { login: 'reviewer' },
+    url: `${node.url}#discussion_r1`, body: 'Mention the reserved thread.', isResolved: false };
+  pr.feedback.items = [comment]; context.nodeInput = node;
+  assert.ok(idsFor(node).includes('author-feedback'));
+  const binding = JSON.parse(vm.runInContext('JSON.stringify(attentionDispositionEvidence(nodeInput, "author-feedback"))', context));
+  node.followup = { attentionDispositions: [{ reason: 'author-feedback', action: 'batch-cleanup',
+    title: 'Queued for cleanup', nextAction: 'Reply on the original thread after the cleanup.', evidence: [comment.url], binding }] };
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  comment.body = 'Please fix this before import.';
+  assert.ok(idsFor(node).includes('author-feedback'));
+});
+
 test('assigned top-level feedback blocks merge attention without rewriting approval', () => {
   const node = assignedCommentNode(), assignment = node.followup.actionableComment;
   delete node.followup.actionableComment;
