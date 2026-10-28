@@ -1,76 +1,143 @@
-diff --git a/pkg/private/tar/BUILD b/pkg/private/tar/BUILD
---- a/pkg/private/tar/BUILD
-+++ b/pkg/private/tar/BUILD
-@@ -20,6 +20,13 @@
+diff --git a/pkg/private/BUILD b/pkg/private/BUILD
+--- a/pkg/private/BUILD
++++ b/pkg/private/BUILD
+@@ -19,6 +19,13 @@
+ load("@rules_python//python:defs.bzl", "py_library")
  
- package(
-     default_applicable_licenses = ["//:license"],
-+)
+ package(default_applicable_licenses = ["//:license"])
 +
-+# Register a py_runtime_pair of this type to select a declared interpreter
-+# for packaging, independently of Python targets built by the consumer.
++# Packaging tools can use a declared Python in the execution configuration
++# without selecting a different runtime for Python targets in the main repo.
 +toolchain_type(
 +    name = "execution_runtime",
 +    visibility = ["//visibility:public"],
- )
++)
  
  filegroup(
-diff --git a/pkg/private/tar/tar.bzl b/pkg/private/tar/tar.bzl
---- a/pkg/private/tar/tar.bzl
-+++ b/pkg/private/tar/tar.bzl
-@@ -13,6 +13,7 @@
+     name = "standard_package",
+diff --git a/pkg/private/util.bzl b/pkg/private/util.bzl
+--- a/pkg/private/util.bzl
++++ b/pkg/private/util.bzl
+@@ -13,7 +13,48 @@
  # limitations under the License.
- """Rules for making .tar files."""
+ """Internal utilities for rules_pkg."""
  
 +load("@rules_python//python:py_info.bzl", "PyInfo")
  load("//pkg:providers.bzl", "PackageVariablesInfo")
- load(
-     "//pkg/private:pkg_files.bzl",
-@@ -38,6 +39,7 @@
-     ["", "gz", "bz2", "xz"] if HAS_XZ_SUPPORT else ["", "gz", "bz2"]
- )
- _DEFAULT_MTIME = -1
-+_execution_runtime = Label("//pkg/private/tar:execution_runtime")
- _stamp_condition = Label("//pkg/private:private_stamp_detect")
- 
- def _remap(remap_paths, path):
-@@ -184,20 +186,39 @@
-         transitive = mapping_context.file_deps,
-     )
- 
-+    executable = ctx.executable._build_tar
-+    arguments = [args]
++
++PACKAGE_RUNTIME = Label("//pkg/private:execution_runtime")
++
++def run_package_writer(ctx, writer, module, inputs, arguments, **kwargs):
++    """Run an internal rules_pkg writer with the selected execution runtime.
++
++    Args:
++      ctx: Rule context.
++      writer: The original executable target.
++      module: Its Python module under the rules_pkg repository root.
++      inputs: Depset of packaging inputs.
++      arguments: Original arguments to the writer.
++      **kwargs: Other ctx.actions.run arguments for this packaging rule.
++    """
++    executable = writer[DefaultInfo].files_to_run
 +    env = {
 +        "LANG": "en_US.UTF-8",
 +        "LC_CTYPE": "UTF-8",
 +        "PYTHONIOENCODING": "UTF-8",
 +        "PYTHONUTF8": "1",
 +    }
-+    toolchain = ctx.toolchains[_execution_runtime]
++    toolchain = ctx.toolchains[PACKAGE_RUNTIME]
 +    if toolchain:
-+        # Invoke the same packager with the execution platform's declared
-+        # interpreter. A py_binary launcher may need a system shell or Python.
++        # The py_binary launcher may need a system interpreter or a shell.
++        # Both in-repository writers import their modules from this root.
 +        runtime = toolchain.py3_runtime
 +        if not runtime or not runtime.interpreter:
-+            fail("PackageTar needs an in-build Python 3 runtime")
++            fail("Packaging needs an in-build Python 3 runtime")
 +        executable = runtime.interpreter
-+        arguments = ["-B", "-S", "-m", "pkg.private.tar.build_tar", args]
-+        env["PYTHONPATH"] = ctx.attr._build_tar.label.workspace_root or "."
-+        inputs = depset(transitive = [
-+            inputs,
-+            runtime.files,
-+            ctx.attr._build_tar[PyInfo].transitive_original_sources,
-+        ])
++        arguments = ["-B", "-S", "-m", module] + arguments
++        env["PYTHONPATH"] = writer.label.workspace_root or "."
++        inputs = depset(transitive = [inputs, runtime.files, writer[PyInfo].transitive_original_sources])
 +
-     ctx.actions.run(
++    ctx.actions.run(
++        executable = executable,
++        arguments = arguments,
++        inputs = inputs,
++        env = env,
++        **kwargs
++    )
+ 
+ def setup_output_files(ctx, package_file_name = None, default_output_file = None):
+     """Provide output file metadata for common packaging rules
+diff --git a/pkg/private/deb/deb.bzl b/pkg/private/deb/deb.bzl
+--- a/pkg/private/deb/deb.bzl
++++ b/pkg/private/deb/deb.bzl
+@@ -14,7 +14,7 @@
+ """Rule for creating Debian packages."""
+ 
+ load("//pkg:providers.bzl", "PackageVariablesInfo")
+-load("//pkg/private:util.bzl", "setup_output_files")
++load("//pkg/private:util.bzl", "PACKAGE_RUNTIME", "run_package_writer", "setup_output_files")
+ 
+ _tar_filetype = [".tar", ".tar.gz", ".tgz", ".tar.bz2", "tar.xz", "tar.zst"]
+ 
+@@ -148,18 +148,14 @@
+     args += ["--replaces=" + d for d in ctx.attr.replaces]
+     args += ["--provides=" + d for d in ctx.attr.provides]
+ 
+-    ctx.actions.run(
++    run_package_writer(
++        ctx,
++        writer = ctx.attr._make_deb,
++        module = "pkg.private.deb.make_deb",
+         mnemonic = "MakeDeb",
+-        executable = ctx.executable._make_deb,
+         arguments = args,
+-        inputs = files,
++        inputs = depset(files),
+         outputs = [output_file, changes_file],
+-        env = {
+-            "LANG": "en_US.UTF-8",
+-            "LC_CTYPE": "UTF-8",
+-            "PYTHONIOENCODING": "UTF-8",
+-            "PYTHONUTF8": "1",
+-        },
+     )
+     output_groups = {
+         "out": [ctx.outputs.out],
+@@ -367,6 +363,7 @@
+             allow_files = True,
+         ),
+     },
++    toolchains = [config_common.toolchain_type(PACKAGE_RUNTIME, mandatory = False)],
+ )
+ 
+ def pkg_deb(name, out = None, **kwargs):
+diff --git a/pkg/private/tar/tar.bzl b/pkg/private/tar/tar.bzl
+--- a/pkg/private/tar/tar.bzl
++++ b/pkg/private/tar/tar.bzl
+@@ -24,7 +24,7 @@
+     "create_mapping_context_from_ctx",
+     "write_manifest",
+ )
+-load("//pkg/private:util.bzl", "setup_output_files", "substitute_package_variables")
++load("//pkg/private:util.bzl", "PACKAGE_RUNTIME", "run_package_writer", "setup_output_files", "substitute_package_variables")
+ 
+ # TODO(aiuto): Figure  out how to get this from the python toolchain.
+ # See check for lzma in archive.py for a hint at a method.
+@@ -184,20 +184,16 @@
+         transitive = mapping_context.file_deps,
+     )
+ 
+-    ctx.actions.run(
++    run_package_writer(
++        ctx,
++        writer = ctx.attr._build_tar,
++        module = "pkg.private.tar.build_tar",
          mnemonic = "PackageTar",
          progress_message = "Writing: %s" % output_file.path,
          inputs = inputs,
          tools = [ctx.executable.compressor] if ctx.executable.compressor else [],
 -        executable = ctx.executable._build_tar,
--        arguments = [args],
-+        executable = executable,
-+        arguments = arguments,
+         arguments = [args],
          outputs = [output_file],
 -        env = {
 -            "LANG": "en_US.UTF-8",
@@ -78,15 +145,14 @@ diff --git a/pkg/private/tar/tar.bzl b/pkg/private/tar/tar.bzl
 -            "PYTHONIOENCODING": "UTF-8",
 -            "PYTHONUTF8": "1",
 -        },
-+        env = env,
          use_default_shell_env = True,
      )
      return [
-@@ -309,6 +330,7 @@
+@@ -309,6 +305,7 @@
              allow_files = True,
          ),
      },
-+    toolchains = [config_common.toolchain_type(_execution_runtime, mandatory = False)],
++    toolchains = [config_common.toolchain_type(PACKAGE_RUNTIME, mandatory = False)],
  )
  
  # buildifier: disable=function-docstring-args

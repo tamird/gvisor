@@ -96,7 +96,7 @@ toolchain(
         "@platforms//os:linux",
     ],
     toolchain = "@package_python_aarch64//:runtime",
-    toolchain_type = "@rules_pkg//pkg/private/tar:execution_runtime",
+    toolchain_type = "@rules_pkg//pkg/private:execution_runtime",
 )
 
 toolchain(
@@ -106,5 +106,5 @@ toolchain(
         "@platforms//os:linux",
     ],
     toolchain = "@package_python_x86_64//:runtime",
-    toolchain_type = "@rules_pkg//pkg/private/tar:execution_runtime",
+    toolchain_type = "@rules_pkg//pkg/private:execution_runtime",
 )
