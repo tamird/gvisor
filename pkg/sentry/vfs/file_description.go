@@ -211,7 +211,7 @@ func (fd *FileDescription) DecRef(ctx context.Context) {
 			// Check that epi has not been concurrently unregistered by
 			// EpollInstance.DeleteInterest() or EpollInstance.Release().
 			if _, ok := ep.interest[epi.key]; ok {
-				fd.EventUnregister(&epi.waiter)
+				fd.EventUnregister(epi.activeEntry())
 				ep.removeLocked(epi)
 			}
 			ep.interestMu.Unlock()
