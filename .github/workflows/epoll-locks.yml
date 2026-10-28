@@ -1,0 +1,73 @@
+name: Check epoll registration locking
+
+"on":
+  push:
+    branches: [qualification/epoll-lock-contract-run]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/epoll-modify"
+          mkdir -p "$root/task"
+          cp .github/qualification/epoll-locks/{request.json,plan.json,submit.py} "$root/task/"
+          cp .github/qualification/epoll-locks/receipt.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          92af4fda2a0bf8c4cea94b36f497b0d29c22bf06e1f9dd1b40361205ab930c60  receipt.py
+          72936482e07cc536ac6571f00df20706285d530f2d9275045589e8a57c19fbab  task/plan.json
+          d40c290447058586584e6d945e97be8e31bee58b35deadac0178389c52db4bf5  task/request.json
+          a34cb5d80df954db91efbee9c60d161ca725edebe96827ae600f97ba973b2b9e  task/submit.py
+          SUMS
+      - name: Verify all immutable qualification inputs before submission
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git 8c01e8c21b1601a43baf966daa0f511d08e137db
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git d3b2f1b94700fa7ad22b468282cdc3dd6fa4230b
+          test "$(git rev-parse 'd3b2f1b94700fa7ad22b468282cdc3dd6fa4230b^{tree}')" = 6b0e8ca7faabcbc0bcc748efa8f5a9c6dd2ebba9
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git 86fd94f0e8e695cb9977a0f028b43c9bce2fcc2a
+          test "$(git rev-parse '86fd94f0e8e695cb9977a0f028b43c9bce2fcc2a^{tree}')" = e0760a7fc32afea7386d14e2027cb16adc89bd80
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git bbf65d6f80d666b7c44f34d7d8c0fa863fe7b222
+          test "$(git rev-parse 'bbf65d6f80d666b7c44f34d7d8c0fa863fe7b222^{tree}')" = 2e0c5e6e10a7452a88d415416dd8d05c21cc89a5
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git c9e46d1694eb22f3f079e3a814ea27f69e0f443f
+          test "$(git rev-parse 'c9e46d1694eb22f3f079e3a814ea27f69e0f443f^{tree}')" = a06ce91744655fe0d474c77f44e1ddb936c09798
+          test "$(git rev-parse bbf65d6f80d666b7c44f34d7d8c0fa863fe7b222:pkg/sentry/epollqualification)" = 994ef2f42349d5dc74952efbda6432f879c78853
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"]) / "epoll-modify" / "receipt.py"))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epoll-modify-receipt
+          path: ${{ runner.temp }}/epoll-modify/verdict.json
+          if-no-files-found: error
+          retention-days: 14
