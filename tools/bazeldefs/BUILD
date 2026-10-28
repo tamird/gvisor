@@ -12,8 +12,9 @@ package(
 # Shared by ordinary and namespace-dependent remote test actions.
 _RBE_EXEC_PROPERTIES = {
     "OSFamily": "linux",
-    # Both Linux images contain only /pause, so every tool must come from Bazel.
-    "container-image": "docker://registry.k8s.io/pause@sha256:f548e0e8e3dc1896ca956272154dde3314e8cc4fde0a57577ee9fa1c63f5baf4",
+    # The AMD64 and ARM64 images contain only /hello. Their empty entrypoint
+    # leaves the executor free to launch Bazel's declared tool directly.
+    "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
     "workload-isolation-type": "oci",
 }
 
