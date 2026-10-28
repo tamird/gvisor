@@ -46,6 +46,7 @@ type EpollInstance struct {
 
 	// interest is the set of file descriptors that are registered with the
 	// EpollInstance for monitoring.
+	// +checklocks:interestMu
 	interest map[epollInterestKey]*epollInterest
 
 	// readyMu protects ready, readySeq, epollInterest.ready, and
@@ -101,9 +102,7 @@ type epollInterest struct {
 	waiter waiter.Entry
 
 	// replacement, if non-nil, is the active registration instead.
-	// +checklocks:epoll.interestMu
 	// +checklocks:epoll.readyMu
-	// +checklocksreadany
 	replacement *epollRegistration `state:"wait"`
 
 	// mask is the event mask associated with this registration, including
@@ -137,8 +136,9 @@ func (r *epollRegistration) NotifyEvent(waiter.EventMask) {
 	r.interest.notify(r)
 }
 
-// +checklocks:epi.epoll.interestMu
 func (epi *epollInterest) activeEntry() *waiter.Entry {
+	epi.epoll.readyMu.Lock()
+	defer epi.epoll.readyMu.Unlock()
 	if epi.replacement != nil {
 		return &epi.replacement.entry
 	}
@@ -380,9 +380,9 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 		if err := file.EventRegister(&next.entry); err != nil {
 			return err
 		}
-		ep.readyMu.Lock()
+		epi.epoll.readyMu.Lock()
 		epi.replacement = next
-		ep.readyMu.Unlock()
+		epi.epoll.readyMu.Unlock()
 		file.EventUnregister(old)
 	}
 
@@ -460,7 +460,7 @@ func (epi *epollInterest) queueReadyAndUnlock() {
 	}
 }
 
-// Preconditions: ep.interestMu must be locked.
+// +checklocks:ep.interestMu
 func (ep *EpollInstance) removeLocked(epi *epollInterest) {
 	delete(ep.interest, epi.key)
 	epi.mask = 0
