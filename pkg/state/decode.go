@@ -162,6 +162,9 @@ type decodeState struct {
 	// leaves are consumed from the front and appended to the back.
 	leaves odsList
 
+	// afterLoad holds hooks registered by StateLoad calls still on the stack.
+	afterLoad []userCallback
+
 	// stats tracks time data.
 	stats Stats
 }
@@ -367,9 +370,7 @@ func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func
 
 // afterLoad implements Source.AfterLoad.
 func (od *objectDecoder) afterLoad(fn func()) {
-	// Queue the local callback; this will execute when all of the above
-	// data dependencies have been cleared.
-	od.ods.addCallback(userCallback(fn))
+	od.ds.afterLoad = append(od.ds.afterLoad, userCallback(fn))
 }
 
 // decodeStruct decodes a struct value.
@@ -398,12 +399,20 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
+	start := len(ds.afterLoad)
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, Source{internal: od})
 	case binaryObject:
 		loadBinary(value, rte.Name, Source{internal: od})
 	}
+	// A loader may register its AfterLoad hook before loading its fields.
+	// Enqueue it only after their hooks and conversions have been queued.
+	for _, fn := range ds.afterLoad[start:] {
+		ods.addCallback(fn)
+	}
+	clear(ds.afterLoad[start:])
+	ds.afterLoad = ds.afterLoad[:start]
 }
 
 // decodeMap decodes a map value.
