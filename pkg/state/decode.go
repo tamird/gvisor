@@ -101,6 +101,17 @@ func (ods *objectDecodeState) addCallback(ic internalCallback) {
 	ods.callbacks = append(ods.callbacks, ic)
 }
 
+// pendingLoad identifies work that can still write to a decoded value:
+// local AfterLoad callbacks and LoadValue conversions waiting on other objects.
+type pendingLoad struct {
+	callbacks    int
+	dependencies int
+}
+
+func (ods *objectDecodeState) pendingLoad() pendingLoad {
+	return pendingLoad{len(ods.callbacks), ods.blockedBy}
+}
+
 // source implements internalCallback.source.
 func (ods *objectDecodeState) source() *objectDecodeState {
 	return ods
@@ -406,26 +417,35 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 	reuseValue := valueType.Kind() != reflect.Struct && valueType.Kind() != reflect.Array
 	var kv, vv reflect.Value
 	for i := 0; i < len(encoded.Keys); i++ {
-		if i == 0 || !reuseKey {
+		if !kv.IsValid() || !reuseKey {
 			kv = reflect.New(keyType).Elem()
 		} else {
 			// Nil wire values leave the destination unchanged.
 			kv.SetZero()
 		}
-		if i == 0 || !reuseValue {
+		if !vv.IsValid() || !reuseValue {
 			vv = reflect.New(valueType).Elem()
 		} else {
 			vv.SetZero()
 		}
 
 		// Decode the objects.
+		before := ods.pendingLoad()
 		ds.decodeObject(ods, kv, encoded.Keys[i])
 		ds.decodeObject(ods, vv, encoded.Values[i])
+		delayed := ods.pendingLoad() != before
 		ds.waitObject(ods, encoded.Keys[i], nil)
 		ds.waitObject(ods, encoded.Values[i], nil)
 
-		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+		if delayed {
+			// Inserting copies both values. Wait for their hooks, and
+			// leave the slots they write to intact for this entry.
+			key, value := kv, vv
+			ods.addCallback(userCallback(func() { obj.SetMapIndex(key, value) }))
+			kv, vv = reflect.Value{}, reflect.Value{}
+		} else {
+			obj.SetMapIndex(kv, vv)
+		}
 	}
 }
 
@@ -472,20 +492,15 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 		return
 	}
 
-	// We now need to resolve the actual type.
-	typ := ds.findType(encoded.Type)
-
-	// We need to imbue type information here, then we can proceed to
-	// decode normally. In order to avoid issues with setting value-types,
-	// we create a new non-interface version of this object. We will then
-	// set the interface object to be equal to whatever we decode.
-	origObj := obj
-	obj = reflect.New(typ).Elem()
-	defer origObj.Set(obj)
-
-	// With the object now having sufficient type information to actually
-	// have Set called on it, we can proceed to decode the value.
-	ds.decodeObject(ods, obj, encoded.Value)
+	value := reflect.New(ds.findType(encoded.Type)).Elem()
+	before := ods.pendingLoad()
+	ds.decodeObject(ods, value, encoded.Value)
+	obj.Set(value)
+	if ods.pendingLoad() != before {
+		// Setting an interface copies a concrete struct or array. A
+		// restore hook can still modify the temporary after that copy.
+		ods.addCallback(userCallback(func() { obj.Set(value) }))
+	}
 }
 
 // isFloatEq determines if x and y represent the same value.
