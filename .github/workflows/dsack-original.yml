@@ -1,0 +1,54 @@
+name: Read original D-SACK comparison
+
+"on":
+  push:
+    branches: [qualification/dsack-above-gap-original]
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the original-only reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/dsack-original"
+          mkdir -p "$root"
+          cp .github/qualification/dsack-original/read_original.py .github/qualification/dsack/wire.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          233eda907928490dbc87592d93d78a14930f9eb0f6e89406c3316bc9d8a5c31f  wire.py
+          cc83850b52652c762d6452787ce2cc70e4669826792a1871e77f0995e9f88529  read_original.py
+          SUMS
+      - name: Read only the original comparison
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"])/"dsack-original"/"read_original.py"), run_name="__main__")
+      - name: Publish only the bounded report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dsack-original-verdict
+          path: ${{ runner.temp }}/dsack-original/verdict.json
+          if-no-files-found: error
+          retention-days: 14
