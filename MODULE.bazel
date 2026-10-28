@@ -51,6 +51,12 @@ single_version_override(
     patches = ["//tools:benchmark-umbrella-exports.patch"],
 )
 
+single_version_override(
+    module_name = "rules_pkg",
+    patch_strip = 1,
+    patches = ["//tools:rules_pkg_execution_runtime.patch"],
+)
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -80,6 +86,29 @@ http_archive(
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
+
+# The ordinary install-only builds need the execution image's dynamic loader.
+# The full static distributions can start from the declared archive inputs.
+http_archive(
+    name = "package_python_aarch64",
+    build_file = "//tools:package_python.BUILD",
+    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+http_archive(
+    name = "package_python_x86_64",
+    build_file = "//tools:package_python.BUILD",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+register_toolchains(
+    "//tools:package_python_aarch64",
+    "//tools:package_python_x86_64",
+)
 
 ### Crosstool
 coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")

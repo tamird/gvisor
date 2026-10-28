@@ -75,6 +75,8 @@ exports_files([
     "benchmark-umbrella-exports.patch",
     "build_cover.sh",
     "go-allow-internal.patch",
+    "package_python.BUILD",
+    "rules_pkg_execution_runtime.patch",
 ])
 
 py_test(
@@ -85,4 +87,24 @@ py_test(
         "lint.sh",
         "//:.clang-format",
     ],
+)
+
+toolchain(
+    name = "package_python_aarch64",
+    exec_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+    ],
+    toolchain = "@package_python_aarch64//:runtime",
+    toolchain_type = "@rules_pkg//pkg/private/tar:execution_runtime",
+)
+
+toolchain(
+    name = "package_python_x86_64",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    toolchain = "@package_python_x86_64//:runtime",
+    toolchain_type = "@rules_pkg//pkg/private/tar:execution_runtime",
 )
