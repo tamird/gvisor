@@ -1,4 +1,5 @@
 """Bootstrap the pinned reporter with private, authenticated Bazel diagnostics."""
+from __future__ import annotations
 import hashlib
 import json
 import os
