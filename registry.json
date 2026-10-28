@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T13:53:26.177431+00:00",
+    "updatedAt": "2026-10-28T14:12:46.344996+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26823,30 +26823,33 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/proc-immutable-pid-dirs-synthetic",
-      "head": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
+      "head": "9e15e32f54af24eaf3b465b364148b93fe581e45",
       "title": "Honor immutable proc task directories",
-      "url": "https://github.com/google/gvisor/pull/16473",
+      "url": "https://github.com/tamird/gvisor/commit/9e15e32f54af24eaf3b465b364148b93fe581e45",
       "group": "runtime",
-      "status": "Delivered as #16473",
-      "summary": "Published as #16473 after #16057 landed. Linux returns EPERM on writes to immutable /proc/PID and /proc/PID/task/TID directories. The change makes gVisor match Linux while preserving credential checks for internal mountpoint creation. Nine syscall cases, two mountpoint tests and the AMD64 and ARM64 analyzers passed on the reviewed patch. The published rebase has the same patch as the qualified commit.",
-      "updatedAt": "2026-10-27T01:25:59.823189+00:00",
+      "status": "Published as #16473",
+      "summary": "Linux rejects writable opens on existing task directories with EISDIR. Both gVisor configurations returned EPERM on the old code. The amendment also preserves the credential check on internal mountpoints. All seven fresh test and analyzer owners passed; 69 cases, none skipped or missing. The four review threads have individual replies.",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
-        "observedAt": "2026-10-27T01:25:59.823189+00:00",
-        "disposition": "Delivered as #16473",
-        "nextAction": "Follow #16473; no separate branch action remains.",
+        "sourceHead": "9e15e32f54af24eaf3b465b364148b93fe581e45",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Amendment delivered on #16473",
+        "nextAction": "Follow #16473.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/0809155479e4e9efb8c0b8aa01c21bf5df64f2c6",
-          "https://app.buildbuddy.io/invocation/b008f0ee-6b24-475f-acd4-c450723d0e26",
-          "https://app.buildbuddy.io/invocation/795ea49d-0536-4eb2-b9d7-55cb300e301e",
-          "https://app.buildbuddy.io/invocation/de996646-e3ba-4e6e-b78d-867d10ef9ca9",
-          "https://github.com/google/gvisor/pull/16057",
-          "https://github.com/google/gvisor/pull/16463",
-          "https://github.com/google/gvisor/pull/16473"
+          "https://github.com/google/gvisor/pull/16473",
+          "https://github.com/tamird/gvisor/commit/9e15e32f54af24eaf3b465b364148b93fe581e45"
         ]
       },
       "evidence": [
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/eb15b3a9701bde116974715d17f34c6cc19251fc"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/google/gvisor/pull/16473"
+        },
         {
           "label": "Independently reviewed fork proposal",
           "url": "https://github.com/tamird/gvisor/commit/0809155479e4e9efb8c0b8aa01c21bf5df64f2c6"
@@ -27093,20 +27096,46 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/proc-immutable-pid-dirs-synthetic",
-      "head": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
-      "title": "procfs: Reject writes to immutable PID and TID directories",
+      "head": "9e15e32f54af24eaf3b465b364148b93fe581e45",
+      "title": "Reject writes to immutable proc task directories",
       "url": "https://github.com/google/gvisor/pull/16473",
       "group": "runtime",
       "status": "open",
-      "summary": "Linux returns EPERM on writes to immutable /proc/PID and /proc/PID/task/TID directories. The change makes gVisor match Linux while preserving credential checks for internal mountpoint creation. Nine syscall cases, two mountpoint tests and the AMD64 and ARM64 analyzers passed on the reviewed patch. The published rebase has the same patch as the qualified commit.",
-      "updatedAt": "2026-10-27T23:55:47.275886+00:00",
+      "summary": "Linux rejects writable opens on existing task directories with EISDIR. Both gVisor configurations returned EPERM on the old code. The amendment also preserves the credential check on internal mountpoints. All seven fresh test and analyzer owners passed; 69 cases, none skipped or missing. The four review threads have individual replies.",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
       "followup": {
         "owner": "native_runtime",
-        "sourceHead": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
-        "observedAt": "2026-10-27T23:55:47.275886+00:00",
-        "nextAction": "Contributor review of the tested amendment and four prepared replies to Lucas. The public PR still points to the earlier commit."
+        "sourceHead": "9e15e32f54af24eaf3b465b364148b93fe581e45",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16473.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16473",
+          "https://github.com/tamird/gvisor/commit/9e15e32f54af24eaf3b465b364148b93fe581e45",
+          "https://github.com/tamird/gvisor/commit/eb15b3a9701bde116974715d17f34c6cc19251fc"
+        ]
       },
       "evidence": [
+        {
+          "label": "Reply on original review thread",
+          "url": "https://github.com/google/gvisor/pull/16473#discussion_r4401529948"
+        },
+        {
+          "label": "Reply on original review thread",
+          "url": "https://github.com/google/gvisor/pull/16473#discussion_r4401530421"
+        },
+        {
+          "label": "Reply on original review thread",
+          "url": "https://github.com/google/gvisor/pull/16473#discussion_r4401530827"
+        },
+        {
+          "label": "Reply on original review thread",
+          "url": "https://github.com/google/gvisor/pull/16473#discussion_r4401529501"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/9e15e32f54af24eaf3b465b364148b93fe581e45"
+        },
         {
           "label": "Final amendment: seven test/analyzer owners passed, 69 cases and no skips",
           "url": "https://app.buildbuddy.io/invocation/909220d4-aa1b-4620-a37e-c6f9c7ec8239"
@@ -27165,22 +27194,13 @@
         }
       ],
       "number": 16473,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "baseHead": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166",
-        "head": "eb15b3a9701bde116974715d17f34c6cc19251fc",
-        "url": "https://github.com/tamird/gvisor/commit/eb15b3a9701bde116974715d17f34c6cc19251fc",
-        "title": "Reject writes to immutable proc task directories",
-        "summary": "Linux rejects writable opens on existing task directories with EISDIR. Both gVisor configurations returned EPERM on the old code. The amendment also preserves the credential check on internal mountpoints. All seven fresh test and analyzer owners passed; 69 cases, none skipped or missing.",
-        "body": "Linux marks /proc/PID and /proc/PID/task/TID immutable [1][2]. Writes\nto those directories fail with EPERM before Linux tests their mode bits\n[3]. gVisor returned EACCES when a caller without CAP_DAC_OVERRIDE tried\nto rename /proc/self/status over /proc/version.\n\nCheck immutability before mode bits for writes to PID and TID\ndirectories. For open, Linux checks the file type first: a writable open\nor one with O_CREAT fails with EISDIR before Linux checks the inode\npermissions [4][5]. Apply that order wherever kernfs opens an existing\ndirectory.\n\nAn internal synthetic mountpoint does not add an entry to the proc\ndirectory. Continue to check whether the caller has write access to the\ndirectory before creating that mountpoint.\n\n[1]: https://github.com/torvalds/linux/blob/v6.12/fs/proc/base.c#L3480-L3492\n[2]: https://github.com/torvalds/linux/blob/v6.12/fs/proc/base.c#L3786-L3797\n[3]: https://github.com/torvalds/linux/blob/v6.12/fs/namei.c#L510-L535\n[4]: https://github.com/torvalds/linux/blob/v6.12/fs/namei.c#L3328-L3365\n[5]: https://github.com/torvalds/linux/blob/v6.12/fs/namei.c#L3743-L3758"
-      },
       "refinement": {
         "before": {
           "head": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166"
         },
         "after": {
-          "head": "eb15b3a9701bde116974715d17f34c6cc19251fc"
+          "head": "9e15e32f54af24eaf3b465b364148b93fe581e45",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       }
     },
@@ -27565,14 +27585,38 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "sandbox-python-null-netns-lifetime",
-      "head": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
+      "head": "ca87e0a2feca78a38602066c0c70a8c8b78c3133",
       "title": "Fix temporary Python sandbox namespace cleanup",
       "url": "https://github.com/google/gvisor/pull/16492",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
-      "summary": "Normalizes an explicit shared_root relative to the caller\u2019s working directory, rejects an empty path, and documents how to clean up stacked mounts after all users exit. The 42-case SDK suite passed with one existing root-worker skip, and a separate real sandbox test verified sharing and teardown.",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Normalizes an explicit shared_root relative to the caller\u2019s working directory, rejects an empty path, and documents how to clean up stacked mounts after all users exit. The 42-case SDK suite passed with one existing root-worker skip, and a separate real sandbox test verified sharing and teardown. The three review threads have individual replies.",
       "evidence": [
+        {
+          "label": "Reply on original review thread",
+          "url": "https://github.com/google/gvisor/pull/16492#discussion_r4401528791"
+        },
+        {
+          "label": "Reply on original review thread",
+          "url": "https://github.com/google/gvisor/pull/16492#discussion_r4401528348"
+        },
+        {
+          "label": "Reply on original review thread",
+          "url": "https://github.com/google/gvisor/pull/16492#discussion_r4401527801"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16492"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/ca87e0a2feca78a38602066c0c70a8c8b78c3133"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/98f30c234d4d8840d34ebcec216106eaa9d8d57d"
+        },
         {
           "label": "Python constructor and live namespace checks",
           "url": "https://app.buildbuddy.io/invocation/cfa544e9-96d0-4979-bea5-1b6277633a68"
@@ -27592,34 +27636,24 @@
       ],
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
-        "observedAt": "2026-10-28T01:18:31.935784+00:00",
-        "disposition": "Tested amendment ready",
-        "nextAction": "Review the three code changes and the replies to Lucas. The published PR is still at cbb4e5690f.",
+        "sourceHead": "ca87e0a2feca78a38602066c0c70a8c8b78c3133",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16492.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16492",
-          "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
-          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03",
-          "https://app.buildbuddy.io/invocation/5c82c48e-554c-477e-89a4-a719dddbcedf"
+          "https://github.com/tamird/gvisor/commit/ca87e0a2feca78a38602066c0c70a8c8b78c3133",
+          "https://github.com/tamird/gvisor/commit/98f30c234d4d8840d34ebcec216106eaa9d8d57d"
         ]
       },
       "number": 16492,
-      "contributorReview": {
-        "status": "pending",
-        "head": "98f30c234d4d8840d34ebcec216106eaa9d8d57d",
-        "url": "https://github.com/tamird/gvisor/commit/98f30c234d4d8840d34ebcec216106eaa9d8d57d",
-        "title": "Fix temporary Python sandbox namespace cleanup",
-        "summary": "Normalizes an explicit shared_root relative to the caller\u2019s working directory, rejects an empty path, and documents how to clean up stacked mounts after all users exit. The 42-case SDK suite passed with one existing root-worker skip, and a separate real sandbox test verified sharing and teardown.",
-        "body": "runsc pins its empty gofer network namespace under the state directory\nby default. When that directory belongs to a Python Sandbox or its\ncaller, the bind mount can prevent temporary directory cleanup.\n\nGive each sandbox a new gofer network namespace by default. Reusing\n`runtime_dir` no longer shares that namespace implicitly. Callers that\nwant to share it can pass an existing `shared_root`. They own that\ndirectory and must unmount every bind mount on `null-netns` after its\nlast user exits; concurrent first users can stack mounts on the file.\n\nThe Go SDK detaches these mounts when it closes a state directory it\nowns. The Python SDK avoids creating the mount in its temporary state\ndirectory in the first place.",
-        "kind": "amendment",
-        "baseHead": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb"
-      },
       "refinement": {
         "before": {
           "head": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb"
         },
         "after": {
-          "head": "98f30c234d4d8840d34ebcec216106eaa9d8d57d"
+          "head": "ca87e0a2feca78a38602066c0c70a8c8b78c3133",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       }
     },
@@ -28136,14 +28170,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/debian-changelog-release-date",
-      "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
+      "head": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
       "title": "Keep the Debian changelog independent of the worker clock",
-      "url": "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
+      "url": "https://github.com/tamird/gvisor/commit/8311c4cdbffedf751449bfc1bb8560889dfda1fb",
       "group": "release",
-      "status": "Reviewable",
-      "summary": "The changelog used the worker\u2019s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
-      "updatedAt": "2026-10-27T23:43:30.964781+00:00",
+      "status": "Published as #16587",
+      "summary": "Published after contributor approval as #16587. The changelog used the worker\u2019s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16587"
+        },
         {
           "label": "Original UTC release package and its embedded changelog",
           "url": "https://app.buildbuddy.io/invocation/e41d62cb-b16d-466a-93ac-e773ae178fd2"
@@ -28182,24 +28220,24 @@
           "head": "a7d1eb114e1859262b0d8ec2c08bc1b5e3504a67"
         },
         "after": {
-          "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
+          "head": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       },
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
-        "observedAt": "2026-10-27T23:43:30.964781+00:00",
-        "nextAction": "Review the changelog-only fix. The UTC and Hawaii packages matched byte for byte, and the development-version check passed."
+        "sourceHead": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16587",
+        "nextAction": "Follow review, checks and import on #16587.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16587",
+          "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
+          "https://github.com/tamird/gvisor/commit/8311c4cdbffedf751449bfc1bb8560889dfda1fb"
+        ]
       },
       "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2",
-      "contributorReview": {
-        "status": "pending",
-        "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
-        "url": "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6",
-        "title": "Date the Debian changelog from the release version",
-        "summary": "The changelog used the worker\u2019s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
-        "body": "The changelog uses the build worker\u2019s clock and time zone. Rebuilding\nthe same version can therefore change the changelog in runsc.deb.\n\nUse the date from the declared Debian version for a release such as\n20261019.0. Write midnight UTC on that date, or the Unix epoch for a\nbuild without a release date. Keep the package version and the rest\nof the entry unchanged."
-      }
+      "inactive": true
     },
     {
       "id": "pr:16508",
@@ -28603,14 +28641,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/licensecheck-builder-bazel",
-      "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
+      "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
       "title": "Check licenses with the native Bazel module graph",
-      "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
+      "url": "https://github.com/tamird/gvisor/commit/ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
       "group": "release",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-27T23:55:47.275886+00:00",
-      "summary": "The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel.",
+      "status": "Published as #16589",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16589. The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel. The strict comparison of unparsed bazel mod show_repo output failed: the Docker run printed 5,868 extra bytes across 163 repositories. Both verifiers accepted the identical catalog; raw-output equivalence is not established.",
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16589"
+        },
         {
           "label": "201-entry regenerated catalog and actual Docker Make verification passed; raw show_repo comparison failed",
           "url": "https://app.buildbuddy.io/invocation/bc5dc9b0-5294-4004-bc5b-376685eba513"
@@ -28649,37 +28691,45 @@
           "head": "b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46"
         },
         "after": {
-          "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
+          "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       },
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
-        "observedAt": "2026-10-27T23:55:47.275886+00:00",
-        "nextAction": "Contributor review. Two Buildkite jobs still use make license-check to run pinned Bazel in the builder; the wrapper can go once they invoke Bazel directly."
+        "sourceHead": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16589",
+        "nextAction": "Follow review, checks and import on #16589.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16589",
+          "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
+          "https://github.com/tamird/gvisor/commit/ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe"
+        ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
-        "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4",
-        "title": "Run license queries in the selected Bazel environment",
-        "summary": "The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel. The strict comparison of unparsed bazel mod show_repo output failed: the Docker run printed 5,868 extra bytes across 163 repositories. Both verifiers accepted the identical catalog; raw-output equivalence is not established.",
-        "body": "The Buildkite first-pass and presubmit pipelines call make license-check.\nIts generic run helper builds the checker in the selected builder but\nexecutes it on the host. The checker then calls make mod, so a direct\nbazel run can start Docker just to read module metadata.\n\nRun the checker in the selected builder using bazel run. Both graph and\nshow_repo now use bazel mod directly. Make passes the same command and\noptions to keep the selected startup rc, output base and module registry.\nRemove the Make mod target that had no other callers and document the\nnative and Make commands for regenerating the catalog."
-      }
+      "inactive": true
     },
     {
       "id": "branch:systrap-native-stub",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/systrap-native-stub",
-      "head": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
+      "head": "dfd4d477424bd6172344728a125ae8737fb68992",
       "title": "Build the systrap signal stub with the C toolchain",
-      "url": "https://github.com/tamird/gvisor/compare/fe2049b9aa0e659ec0a3147e606a78e2332149d2...7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
+      "url": "https://github.com/tamird/gvisor/commit/dfd4d477424bd6172344728a125ae8737fb68992",
       "group": "bazel",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-27T21:34:24.221287+00:00",
-      "summary": "Revision 7c9ca1cc77 restores the rationale for -g0 and ARM64 -O1. The complete old^!/new^! range-diff changes comments only; all non-comment lines match qualified d68466bd10. Buildifier passed on the revised source. The native results below remain bound to d68466bd10, with no additional build/runtime claim for the comment-only revision.\n\nReplace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
+      "status": "Approved; waiting for #16516",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "The approved follow-up documents why ARM64 retains -O1: the older rule avoided an unoptimized memcpy call, and the stub now supplies memcpy; this does not rule out -O2. The linker script puts .debug* in the mapped blob, which explains -g0. Non-comment BUILD lines match the qualified source.",
       "evidence": [
+        {
+          "label": "Clarify the compiler and debug options",
+          "url": "https://github.com/tamird/gvisor/commit/dfd4d477424bd6172344728a125ae8737fb68992"
+        },
+        {
+          "label": "Approved source",
+          "url": "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
+        },
         {
           "label": "Comment-only revision restoring both flag rationales",
           "url": "https://github.com/tamird/gvisor/compare/d68466bd10983234d1d530d1f4557282508ff53a..7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
@@ -28697,23 +28747,27 @@
           "url": "https://app.buildbuddy.io/invocation/faf4bca8-828c-4ba9-8deb-90b5eaa1faf6"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
-        "url": "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
-        "title": "Build the systrap signal stub with the C toolchain",
-        "summary": "The revised source restores both compiler-flag rationales; its non-comment lines match qualified d68466bd10. Replace four shell compile rules and a shell linker with one declared C toolchain target. Fresh GNU C/assembly/link, zero-based ELF blob/export offsets and actual Go archive contents passed for AMD64/4K and ARM64/4K,64K. The installed AMD64 systrap workload also passed. This validates GNU only: the existing /usr/bin compiler, nm and objcopy boundary remains; there is no ARM runtime or LLVM qualification claim.",
-        "body": "Four shell rules use grep and tr to pick a source from lists of C,\nassembly and header files. Another shell rule passes the resulting\nobjects to ld. Declare those sources and the linker script on one\ncc_binary so Bazel selects the compile, assemble and link actions.\n\nLink without startup files or libc: gVisor maps this code as a blob,\nand the Go loader obtains its entry offsets from the linked ELF. Keep\nthe exported symbols even when only the Go loader references them."
-      },
       "refinement": {
         "before": {
           "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2",
           "head": "d68466bd10983234d1d530d1f4557282508ff53a"
         },
         "after": {
-          "base": "fe2049b9aa0e659ec0a3147e606a78e2332149d2",
-          "head": "7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
+          "head": "dfd4d477424bd6172344728a125ae8737fb68992",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "dfd4d477424bd6172344728a125ae8737fb68992",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Requested rationale addressed; approved",
+        "nextAction": "Wait for #16516 to land, then publish this source without another contributor decision.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/dfd4d477424bd6172344728a125ae8737fb68992",
+          "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
+          "https://github.com/google/gvisor/pull/16516"
+        ]
       }
     },
     {
@@ -28725,15 +28779,20 @@
       "title": "Extract the mapped systrap bytes and offsets from the same ELF",
       "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
       "group": "bazel",
-      "status": "Reviewable",
+      "status": "Approved; waiting for #16516 and #16518",
       "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.",
-      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "observedAt": "2026-10-28T01:18:31.935784+00:00",
-        "nextAction": "Review the extraction. Open after #16516 and #16518 land, preserving both the generated-file allowance and #16518\u2019s one-output check.",
-        "disposition": "Ready for contributor review"
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Approved; prerequisites are open",
+        "nextAction": "Publish after #16516 and #16518 land, preserving support for generated input files and the per-architecture single-output check.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
+          "https://github.com/google/gvisor/pull/16516",
+          "https://github.com/google/gvisor/pull/16518"
+        ]
       },
       "evidence": [
         {
@@ -28772,14 +28831,6 @@
         "after": {
           "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "title": "Extract the systrap stub directly from its ELF",
-        "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.",
-        "body": "The Sentry embeds the raw signal stub and uses symbol offsets to find\nentry points in those bytes. The systrap linker script puts the whole\nimage in .crblob at address zero. Have the Go tool that already reads\nthose symbols write the section bytes in the same action, removing the\nseparate objcopy command.\n\nFail if another nonempty allocated section lies outside .crblob:\nsilently omitting it would drop part of the linked program. The Sentry\nstill embeds the same per-architecture files and reads the same offsets."
       }
     },
     {
@@ -28920,25 +28971,30 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
       "head": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
-      "summary": "Exercises both destination-port checksum transitions from Lucas\u2019s review. All 14,779 header cases passed, including the two new cases. The source fix merged in #16493.",
+      "status": "Included in the approved weekly cleanup",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "The two reviewed assertions for computed-zero UDP destination checksums are included in the weekly cleanup. The calls match the standalone proposal; only the adjoining comment was clarified. The earlier qualification passed all 14,779 header cases.",
       "followup": {
-        "observedAt": "2026-10-28T02:03:03.892792+00:00",
-        "nextAction": "Open the two-line follow-up after contributor review. Reply to Lucas with the cases and the verified result.",
-        "disposition": "Ready for contributor review",
+        "owner": "lock_contract",
         "sourceHead": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
-        "owner": "lock_contract"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
-        "url": "https://github.com/tamird/gvisor/commit/d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
-        "title": "Cover computed-zero UDP checksums after destination port updates",
-        "summary": "Exercises both destination-port checksum transitions from Lucas\u2019s review. All 14,779 header cases passed, including the two new cases. The source fix merged in #16493.",
-        "body": "Hold the source port at 0xfffe and change the destination port from 1 to\n2 and back. This moves the wire checksum between 0xffff and 0xfffe,\ncovering computed zero on the destination update."
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Already included in the approved weekly cleanup",
+        "nextAction": "Track the weekly cleanup; no separate proposal or pull request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
+          "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726",
+          "https://github.com/google/gvisor/pull/16493#discussion_r4401158775"
+        ]
       },
       "evidence": [
+        {
+          "label": "Reply on the original #16493 thread",
+          "url": "https://github.com/google/gvisor/pull/16493#discussion_r4401158775"
+        },
+        {
+          "label": "Approved weekly cleanup",
+          "url": "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726"
+        },
         {
           "label": "Full header suite with both named destination cases",
           "url": "https://app.buildbuddy.io/invocation/5b159e2a-92f5-4b99-a7ad-9f60aef0b6bb"
@@ -28955,7 +29011,8 @@
         "after": {
           "head": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5"
         }
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:seccomp-generator-templates",
@@ -28964,32 +29021,47 @@
       "ref": "review/seccomp-generator-templates",
       "title": "Generate seccomp program loaders without a shell",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/4598fe8128aed1be205ee8b848c002b7f85bd897",
-      "head": "4598fe8128aed1be205ee8b848c002b7f85bd897",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T01:46:19.717334+00:00",
-      "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.",
+      "url": "https://github.com/tamird/gvisor/commit/b598877f1cfbf369d9dd1c07758707fadaa990c5",
+      "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
+      "status": "Published as #16590",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16590. Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.",
       "followup": {
-        "observedAt": "2026-10-28T01:46:19.717334+00:00",
-        "nextAction": "Open the standalone loader change after contributor review.",
-        "disposition": "Ready for contributor review",
-        "sourceHead": "4598fe8128aed1be205ee8b848c002b7f85bd897",
-        "owner": "pinring_source_scope"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "4598fe8128aed1be205ee8b848c002b7f85bd897",
-        "url": "https://github.com/tamird/gvisor/commit/4598fe8128aed1be205ee8b848c002b7f85bd897",
-        "title": "Generate seccomp program loaders without a shell",
-        "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.",
-        "body": "Each seccomp filter used to copy the same library template, then scan\nthe full Go generator with grep to replace an import, an embed path and\none function declaration. Only the choice of rules package varies\nbetween filters.\n\nCompile the shared generator beside its existing embedded template.\nBazel now expands a small Go file that refers to the selected package's\nPrecompiledPrograms function. The fastbuild version uses a nil function\nand continues to omit precompiled filters for boot and gofer.\n\nThis changes how Bazel constructs the generator. The later action that\nruns it and writes the final filter program is unchanged.\nVerified on AMD64 with Bazel. The six full loaders and two fastbuild\nloaders matched the expected template bytes. Optimized boot and gofer\nproduced 576 and 32 filters respectively; both fastbuild outputs were\nempty. The existing example compared both precompiled BPF programs\nwith freshly compiled instructions and checked lookup of a missing name.\n\n[Remote build and usage test][1]\n\n[1]: https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
+        "owner": "pinring_source_scope",
+        "sourceHead": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16590",
+        "nextAction": "Follow review, checks and import on #16590.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16590",
+          "https://github.com/tamird/gvisor/commit/4598fe8128aed1be205ee8b848c002b7f85bd897",
+          "https://github.com/tamird/gvisor/commit/b598877f1cfbf369d9dd1c07758707fadaa990c5"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16590"
+        },
+        {
+          "label": "Approved fork source",
+          "url": "https://github.com/tamird/gvisor/commit/4598fe8128aed1be205ee8b848c002b7f85bd897"
+        },
         {
           "label": "Eight loader actions, four uncached generator compiles, and example filter comparisons",
           "url": "https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
         }
-      ]
+      ],
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "4598fe8128aed1be205ee8b848c002b7f85bd897"
+        },
+        "after": {
+          "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "branch:tcp-persist-window-probe",
@@ -28998,27 +29070,32 @@
       "ref": "review/tcp-persist-window-probe",
       "title": "Keep the congestion window when probing a closed receive window",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
-      "head": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
-      "summary": "With no bytes in flight, stock gVisor entered loss recovery and reduced the congestion window to one packet when it sent a zero-window probe. Linux and the fixed stack stayed open and delivered the queued byte after the window reopened. Actual retransmission timeout, persist backoff and user timeout also passed. The fork head contains the same three changed files as the tested commit.",
+      "url": "https://github.com/tamird/gvisor/commit/3c02ab4811f4b92e3da7d61d6842c65700db335e",
+      "head": "3c02ab4811f4b92e3da7d61d6842c65700db335e",
+      "status": "Published as #16595",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16595. With no bytes in flight, stock gVisor entered loss recovery and reduced the congestion window to one packet when it sent a zero-window probe. Linux and the fixed stack stayed open and delivered the queued byte after the window reopened. Actual retransmission timeout, persist backoff and user timeout also passed. The fork head contains the same three changed files as the tested commit.",
       "followup": {
         "owner": "lock_contract",
-        "sourceHead": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
-        "observedAt": "2026-10-28T02:03:03.892792+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Open the standalone PR after contributor review."
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
-        "url": "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
-        "title": "Keep the congestion window when probing a closed receive window",
-        "summary": "With no bytes in flight, stock gVisor entered loss recovery and reduced the congestion window to one packet when it sent a zero-window probe. Linux and the fixed stack stayed open and delivered the queued byte after the window reopened. Actual retransmission timeout, persist backoff and user timeout also passed. The fork head contains the same three changed files as the tested commit.",
-        "body": "When a peer advertises a zero receive window after acknowledging all\nsent data, netstack enters loss recovery while probing a write it has\nnot yet sent. Send the probe without reducing the congestion window.\nKeep the existing timeout and recovery behavior for unacknowledged data.\n\nIn the [matched control], Linux passed and netstack reported loss with a\ncongestion window of one packet. [With the fix], both passed the same\nwire test and delivered the queued write when the window reopened. The\nexisting retransmission, probe-backoff and user-timeout checks also\npassed.\n\n[matched control]: https://app.buildbuddy.io/invocation/321fbf96-e947-4106-8ce4-c7e67fbb595d\n[With the fix]: https://app.buildbuddy.io/invocation/1e7537c8-48c5-46cb-9c96-267228473856"
+        "sourceHead": "3c02ab4811f4b92e3da7d61d6842c65700db335e",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16595",
+        "nextAction": "Follow review, checks and import on #16595.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16595",
+          "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
+          "https://github.com/tamird/gvisor/commit/3c02ab4811f4b92e3da7d61d6842c65700db335e"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16595"
+        },
+        {
+          "label": "Approved fork source",
+          "url": "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9"
+        },
         {
           "label": "Original netstack failure and passing Linux control",
           "url": "https://app.buildbuddy.io/invocation/321fbf96-e947-4106-8ce4-c7e67fbb595d"
@@ -29031,7 +29108,17 @@
           "label": "Both target architecture analyzers",
           "url": "https://app.buildbuddy.io/invocation/af1381b9-4fc2-4c9f-8194-3e6d449c6f3e"
         }
-      ]
+      ],
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9"
+        },
+        "after": {
+          "head": "3c02ab4811f4b92e3da7d61d6842c65700db335e",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "branch:fifo-reader-hangup",
@@ -29040,27 +29127,32 @@
       "ref": "review/fifo-reader-hangup",
       "title": "Report FIFO hangups per open reader",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06",
-      "head": "5b0087ad1eaec140a6f903b9702adaea722cdb06",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
-      "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
+      "url": "https://github.com/tamird/gvisor/commit/a8bbad97dfc28b8df159693cca8393b7466bd496",
+      "head": "a8bbad97dfc28b8df159693cca8393b7466bd496",
+      "status": "Published as #16588",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16588. Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
       "followup": {
         "owner": "native_runtime",
-        "sourceHead": "5b0087ad1eaec140a6f903b9702adaea722cdb06",
-        "observedAt": "2026-10-28T02:03:03.892792+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Open the standalone PR after contributor review."
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "5b0087ad1eaec140a6f903b9702adaea722cdb06",
-        "url": "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06",
-        "title": "Report FIFO hangups per open reader",
-        "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
-        "body": "A writer opens and closes a FIFO while one reader holds it open. A\nsecond nonblocking reader then opens the same FIFO. Linux reports\nPOLLHUP to the first reader only; gVisor remembers that the pipe once\nhad a writer and reports POLLHUP to both.\n\nRecord the writer generation when a nonblocking reader opens a FIFO\nwithout a writer. If the last writer has closed, report POLLHUP only\nwhen that generation has changed, as Linux does [1][2]. Once another\nwriter opens and closes, both readers see the hangup.\n\nA nonblocking writer that finds no readers returns ENXIO without\nadvancing the generation [3]. Otherwise a writer that never opened\ncould cause a concurrent reader to report a hangup.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/pipe.c#L1156-L1164\n[2]: https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/pipe.c#L686-L691\n[3]: https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/pipe.c#L1172-L1181"
+        "sourceHead": "a8bbad97dfc28b8df159693cca8393b7466bd496",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16588",
+        "nextAction": "Follow review, checks and import on #16588.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16588",
+          "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06",
+          "https://github.com/tamird/gvisor/commit/a8bbad97dfc28b8df159693cca8393b7466bd496"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16588"
+        },
+        {
+          "label": "Approved fork source",
+          "url": "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06"
+        },
         {
           "label": "Stock first poll: two readers instead of one",
           "url": "https://app.buildbuddy.io/invocation/033d4f62-fa83-40c2-b381-447c457c2804"
@@ -29073,36 +29165,60 @@
           "label": "Anonymous pipe unit cases and both-architecture analyzers",
           "url": "https://app.buildbuddy.io/invocation/d38e0b1d-3836-401f-b20d-9f4e41208f85"
         }
-      ]
+      ],
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "5b0087ad1eaec140a6f903b9702adaea722cdb06"
+        },
+        "after": {
+          "head": "a8bbad97dfc28b8df159693cca8393b7466bd496",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "branch:hostlayout-generator-inputs",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/hostlayout-generator-inputs",
-      "head": "d678f172b527c75aac54b2d437566746e3a35696",
-      "url": "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696",
+      "head": "71a996f3993d949dae24cc82fa396eb571d26087",
+      "url": "https://github.com/tamird/gvisor/commit/71a996f3993d949dae24cc82fa396eb571d26087",
       "title": "Generate Go host-layout tests from source files",
       "group": "bazel",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T02:36:46.022393+00:00",
-      "summary": "The generator now takes each Go source and the library\u2019s declared import path directly. Across nine ABI packages it produced the same 94,341 bytes as the previous generator. All 383 generated test cases passed on AMD64, and nine Nogo owners checked both AMD64 and ARM64. The attestation generator reproduced its 438-byte output in an empty filesystem containing only its executable and source. The previous revision failed while loading the rule; no generator or test ran on that revision.",
+      "status": "Published as #16591",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16591. The generator now takes each Go source and the library\u2019s declared import path directly. Across nine ABI packages it produced the same 94,341 bytes as the previous generator. All 383 generated test cases passed on AMD64, and nine Nogo owners checked both AMD64 and ARM64. The attestation generator reproduced its 438-byte output in an empty filesystem containing only its executable and source. The previous revision failed while loading the rule; no generator or test ran on that revision.",
       "followup": {
         "owner": "root",
-        "sourceHead": "d678f172b527c75aac54b2d437566746e3a35696",
-        "observedAt": "2026-10-28T02:36:46.022393+00:00",
-        "disposition": "Qualified; ready for contributor review",
-        "nextAction": "Open the standalone generator change after contributor review."
+        "sourceHead": "71a996f3993d949dae24cc82fa396eb571d26087",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16591",
+        "nextAction": "Follow review, checks and import on #16591.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16591",
+          "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696",
+          "https://github.com/tamird/gvisor/commit/71a996f3993d949dae24cc82fa396eb571d26087"
+        ]
       },
       "refinement": {
         "before": {
           "head": "2dea1397056c738f66808dfea951d1943e4baafb"
         },
         "after": {
-          "head": "d678f172b527c75aac54b2d437566746e3a35696"
+          "head": "71a996f3993d949dae24cc82fa396eb571d26087",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       },
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16591"
+        },
+        {
+          "label": "Approved fork source",
+          "url": "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696"
+        },
         {
           "label": "Complete nine-package comparison and isolated generator replay",
           "url": "https://app.buildbuddy.io/invocation/31d822b2-db6e-4fe5-9579-ba7d55ae9492"
@@ -29124,48 +29240,56 @@
           "url": "https://app.buildbuddy.io/invocation/e5025898-c1e6-4e89-b123-2f4ab9151777"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "d678f172b527c75aac54b2d437566746e3a35696",
-        "url": "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696",
-        "title": "Generate Go host-layout tests from source files",
-        "summary": "The generator now takes each Go source and the library\u2019s declared import path directly. Across nine ABI packages it produced the same 94,341 bytes as the previous generator. All 383 generated test cases passed on AMD64, and nine Nogo owners checked both AMD64 and ARM64. The attestation generator reproduced its 438-byte output in an empty filesystem containing only its executable and source. The previous revision failed while loading the rule; no generator or test ran on that revision.",
-        "body": "The host-layout test generator derives a package's Go import path from\nthe filename of its compiled archive. That makes Bazel build the archive\nbefore running a generator that only reads source files.\n\nPass the import path from the library's Go provider and run the\ngenerator directly on its Go sources. The generated test still depends\non the library it exercises.\n\nAll nine ABI packages produce byte-identical test files. Their 383\ngenerated checks passed on Linux AMD64; the nine package analyzers\npassed for AMD64 and ARM64. The attestation generator also reproduced\nits output with only its executable and one Go source file present."
-      }
+      "inactive": true
     },
     {
       "id": "branch:mount-promise-waiter-notification",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/mount-promise-waiter-notification",
-      "head": "61868f1ce83b855a80252331b7ccf4dc3816ccd9",
-      "url": "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9",
+      "head": "8d9ce8738115e23dec693545967f2c21124df6df",
+      "url": "https://github.com/tamird/gvisor/commit/8d9ce8738115e23dec693545967f2c21124df6df",
       "title": "Avoid closing a registered mount promise waiter",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T02:20:33.505296+00:00",
-      "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found.",
+      "status": "Published as #16594",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16594. Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found.",
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "61868f1ce83b855a80252331b7ccf4dc3816ccd9",
-        "observedAt": "2026-10-28T02:20:33.505296+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Open the standalone VFS fix after contributor review."
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "61868f1ce83b855a80252331b7ccf4dc3816ccd9",
-        "url": "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9",
-        "title": "Avoid closing a registered mount promise waiter",
-        "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found.",
-        "body": "A lookup that registers while a mount promise is being resolved may see\nthat the mount is ready before the resolver broadcasts. If the lookup\ncloses its waiter channel at that point, the broadcast sends to the\nclosed channel and panics.\n\nNotify the reader through its existing waiter entry instead. The lookup\nstill wakes when it registers after the broadcast, and a second\nnotification while it is still registered is safe.\n\nA controlled VFS test [1] reproduced the panic on the original code.\nWith the fix, the lookup returned the newly mounted root and left no\nwaiter registered. The original VFS suite and both Nogo target\narchitectures also passed. The run retains the intentional stock\nfailure.\n\n[1]: https://app.buildbuddy.io/invocation/fef76221-1149-4f30-be7b-a46532518fdd"
+        "sourceHead": "8d9ce8738115e23dec693545967f2c21124df6df",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16594",
+        "nextAction": "Follow review, checks and import on #16594.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16594",
+          "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9",
+          "https://github.com/tamird/gvisor/commit/8d9ce8738115e23dec693545967f2c21124df6df"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16594"
+        },
+        {
+          "label": "Approved fork source",
+          "url": "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9"
+        },
         {
           "label": "Stock resolver panic, fixed lookup and unmodified VFS/Nogo tests (AMD64 worker)",
           "url": "https://app.buildbuddy.io/invocation/fef76221-1149-4f30-be7b-a46532518fdd"
         }
-      ]
+      ],
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "61868f1ce83b855a80252331b7ccf4dc3816ccd9"
+        },
+        "after": {
+          "head": "8d9ce8738115e23dec693545967f2c21124df6df",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "pr:16551",
@@ -29286,63 +29410,87 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/sniffer-embed-symlink",
-      "head": "cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5",
-      "url": "https://github.com/tamird/gvisor/commit/cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5",
+      "head": "1b96205bdc8a21a33681fd2f2742253aca2c4a51",
+      "url": "https://github.com/tamird/gvisor/commit/1b96205bdc8a21a33681fd2f2742253aca2c4a51",
       "title": "Embed the ioctl sniffer without copying it through a shell",
       "group": "bazel",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T02:53:29.689698+00:00",
-      "summary": "Bazel staged the existing ioctl sniffer with a Symlink action and no shell. On Linux AMD64, the Docker test library extracted exactly the producer\u2019s 32,822,413-byte executable with mode 0555 for its read-only container mount. The original Docker API unit tests passed, including all three exec-status subcases. This check did not start Docker or run a GPU workload.",
+      "status": "Published as #16592",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16592. Bazel staged the existing ioctl sniffer with a Symlink action and no shell. On Linux AMD64, the Docker test library extracted exactly the producer\u2019s 32,822,413-byte executable with mode 0555 for its read-only container mount. The original Docker API unit tests passed, including all three exec-status subcases. This check did not start Docker or run a GPU workload.",
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5",
-        "observedAt": "2026-10-28T02:53:29.689698+00:00",
-        "disposition": "Qualified; ready for contributor review",
-        "nextAction": "Open the standalone BUILD change after contributor review."
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5",
-        "url": "https://github.com/tamird/gvisor/commit/cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5",
-        "title": "Embed the ioctl sniffer without copying it through a shell",
-        "summary": "Bazel staged the existing ioctl sniffer with a Symlink action and no shell. On Linux AMD64, the Docker test library extracted exactly the producer\u2019s 32,822,413-byte executable with mode 0555 for its read-only container mount. The original Docker API unit tests passed, including all three exec-status subcases. This check did not start Docker or run a GPU workload.",
-        "body": "Docker GPU tests carry the ioctl sniffer in their test binary so they\ncan mount it in a container. Go requires the embedded file to live under\nthe package containing the embed directive. The existing rule satisfies\nthat requirement by running a shell to copy the built executable.\n\nStage the executable at the same package-local path with a Bazel\nsymlink. The sniffer build, Go embed directive and container mount code\nstay the same.\n\nThe configured action has one input and no command line. On Linux AMD64,\nthe test library extracted the same executable that Bazel built, and\nthe existing Docker API unit tests passed. [1]\n\n[1]: https://app.buildbuddy.io/invocation/8a565aaf-6cd7-4e83-a063-4b833e9b2221"
+        "sourceHead": "1b96205bdc8a21a33681fd2f2742253aca2c4a51",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16592",
+        "nextAction": "Follow review, checks and import on #16592.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16592",
+          "https://github.com/tamird/gvisor/commit/cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5",
+          "https://github.com/tamird/gvisor/commit/1b96205bdc8a21a33681fd2f2742253aca2c4a51"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16592"
+        },
+        {
+          "label": "Approved fork source",
+          "url": "https://github.com/tamird/gvisor/commit/cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5"
+        },
         {
           "label": "Symlink action, source SHA, real consumer extraction and original Docker unit tests",
           "url": "https://app.buildbuddy.io/invocation/8a565aaf-6cd7-4e83-a063-4b833e9b2221"
         }
-      ]
+      ],
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5"
+        },
+        "after": {
+          "head": "1b96205bdc8a21a33681fd2f2742253aca2c4a51",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "branch:rules-go-reproducible-coverage",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/rules-go-reproducible-coverage",
-      "head": "bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+      "head": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
       "title": "Make Go coverage archives reproducible",
-      "url": "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+      "url": "https://github.com/tamird/gvisor/commit/66a00cb0a250d468a647dc8e95feaa61f52fe08a",
       "group": "bazel",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
-      "summary": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries. On the standalone source, the native license audit accepted all 200 catalog entries and the three native test owners reported 74 passing cases, no skips. The enclosing standalone check remained incomplete: module discovery added 13 extensions and two facts to the ignored lock, and the reporter did not capture all test XML. Neither a tracked lock nor a catalog correction is pending.",
+      "status": "Published as #16593",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "Published after contributor approval as #16593. Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries. The requested comment explains the purpose of the export-data patch; its applied contents are unchanged.",
       "followup": {
         "owner": "root",
-        "disposition": "First contributor decision requested for the standalone module upgrade",
-        "sourceHead": "bb6b2eeab45f28dc4b20110c0f1ee45779582386",
-        "observedAt": "2026-10-28T03:01:55.211624+00:00",
-        "nextAction": "Open the standalone rules_go upgrade after contributor review. No upstream PR is open for this branch."
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "bb6b2eeab45f28dc4b20110c0f1ee45779582386",
-        "url": "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386",
-        "title": "Make Go coverage archives reproducible",
-        "summary": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries.",
-        "body": "rules_go embedded the randomly named directory for covervars.go in\ncovered Go objects. Replaying one Sentry compile with the same inputs,\nenvironment and working directory changed the object archive even though\nits export data matched.\n\nUpgrade to rules_go 0.65.0, which [removes the temporary directory from\ncompiler output][1]. Keep the C archive registration for the plugin\nstack and adapt gVisor\u2019s export-data patch to the new GoArchive schema.\nDrop the test-symbol patch: the linker already strips symbols when\nrequested and retains them with `--strip=never`.\n\n[1]: https://github.com/bazel-contrib/rules_go/commit/c18ec4766d81c57cb84f545ea2823d2bd9714766"
+        "sourceHead": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Delivered as #16593",
+        "nextAction": "Follow review, checks and import on #16593.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16593",
+          "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+          "https://github.com/tamird/gvisor/commit/66a00cb0a250d468a647dc8e95feaa61f52fe08a"
+        ]
       },
       "evidence": [
+        {
+          "label": "Published upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16593"
+        },
+        {
+          "label": "Approved fork source",
+          "url": "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386"
+        },
+        {
+          "label": "Reviewed purpose comment (unchanged supplier patch body)",
+          "url": "https://github.com/tamird/gvisor/commit/f40708d2c0a6cd7db4b5653ed2174f95845176e1"
+        },
         {
           "label": "rules_go trimpath correction",
           "url": "https://github.com/bazel-contrib/rules_go/commit/c18ec4766d81c57cb84f545ea2823d2bd9714766"
@@ -29379,7 +29527,17 @@
           "label": "Separate upstream coverage toolchain proposal",
           "url": "https://github.com/google/gvisor/pull/16507"
         }
-      ]
+      ],
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "bb6b2eeab45f28dc4b20110c0f1ee45779582386"
+        },
+        "after": {
+          "head": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "branch:native-vdso-cc",
@@ -29489,6 +29647,656 @@
           "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae",
           "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
         ]
+      }
+    },
+    {
+      "id": "pr:16588",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16588,
+      "group": "runtime",
+      "ref": "review/fifo-reader-hangup",
+      "head": "a8bbad97dfc28b8df159693cca8393b7466bd496",
+      "title": "Report FIFO hangups per open reader",
+      "url": "https://github.com/google/gvisor/pull/16588",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16588"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/a8bbad97dfc28b8df159693cca8393b7466bd496"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06"
+        },
+        {
+          "label": "Stock first poll: two readers instead of one",
+          "url": "https://app.buildbuddy.io/invocation/033d4f62-fa83-40c2-b381-447c457c2804"
+        },
+        {
+          "label": "All seven FIFO cases on Linux and gVisor",
+          "url": "https://app.buildbuddy.io/invocation/405d3951-198c-4e7a-afe2-94608b4e7833"
+        },
+        {
+          "label": "Anonymous pipe unit cases and both-architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/d38e0b1d-3836-401f-b20d-9f4e41208f85"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
+      "refinement": {
+        "before": {
+          "head": "5b0087ad1eaec140a6f903b9702adaea722cdb06"
+        },
+        "after": {
+          "head": "a8bbad97dfc28b8df159693cca8393b7466bd496",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "a8bbad97dfc28b8df159693cca8393b7466bd496",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16588.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16588",
+          "https://github.com/tamird/gvisor/commit/a8bbad97dfc28b8df159693cca8393b7466bd496",
+          "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06"
+        ]
+      }
+    },
+    {
+      "id": "pr:16593",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16593,
+      "group": "bazel",
+      "ref": "review/rules-go-reproducible-coverage",
+      "head": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+      "title": "Make Go coverage archives reproducible",
+      "url": "https://github.com/google/gvisor/pull/16593",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16593"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/66a00cb0a250d468a647dc8e95feaa61f52fe08a"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386"
+        },
+        {
+          "label": "Reviewed purpose comment (unchanged supplier patch body)",
+          "url": "https://github.com/tamird/gvisor/commit/f40708d2c0a6cd7db4b5653ed2174f95845176e1"
+        },
+        {
+          "label": "rules_go trimpath correction",
+          "url": "https://github.com/bazel-contrib/rules_go/commit/c18ec4766d81c57cb84f545ea2823d2bd9714766"
+        },
+        {
+          "label": "Stock compiler replay: export data matched, archive differed",
+          "url": "https://app.buildbuddy.io/invocation/3d821a36-0d17-4fe6-a2b6-00ce975ceeec"
+        },
+        {
+          "label": "Coverage configuration with the proposed rules_go release",
+          "url": "https://github.com/tamird/gvisor/commit/90102a3f86f821146e29f383929c513427a748ab"
+        },
+        {
+          "label": "Original instrumented Sentry compile",
+          "url": "https://app.buildbuddy.io/invocation/6a40067c-5fbb-4c33-83b2-f3b1055e173f"
+        },
+        {
+          "label": "Isolated compile reproduced all three original outputs; enclosing run remained failed",
+          "url": "https://app.buildbuddy.io/invocation/af991f9a-8399-4c00-8649-07bb80460a85"
+        },
+        {
+          "label": "Standalone source: native license audit accepted 200 entries",
+          "url": "https://app.buildbuddy.io/invocation/e963ece6-d9b8-4b54-9aa6-c9e966f22195"
+        },
+        {
+          "label": "Standalone source: 74 passed, zero skipped, including Nogo for both target architectures",
+          "url": "https://app.buildbuddy.io/invocation/1a0ff657-19ee-4bed-9e49-7497734e379c"
+        },
+        {
+          "label": "Standalone aggregate stayed incomplete: ignored lock hash and XML capture",
+          "url": "https://app.buildbuddy.io/invocation/6024c7e9-6185-41af-a53a-5dccd0b8329b"
+        },
+        {
+          "label": "Separate upstream coverage toolchain proposal",
+          "url": "https://github.com/google/gvisor/pull/16507"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries. The requested comment explains the purpose of the export-data patch; its applied contents are unchanged.",
+      "refinement": {
+        "before": {
+          "head": "bb6b2eeab45f28dc4b20110c0f1ee45779582386"
+        },
+        "after": {
+          "head": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16593.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16593",
+          "https://github.com/tamird/gvisor/commit/66a00cb0a250d468a647dc8e95feaa61f52fe08a",
+          "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386"
+        ]
+      }
+    },
+    {
+      "id": "pr:16587",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16587,
+      "group": "release",
+      "ref": "review/debian-changelog-release-date",
+      "head": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
+      "title": "Date the Debian changelog from the release version",
+      "url": "https://github.com/google/gvisor/pull/16587",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16587"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/8311c4cdbffedf751449bfc1bb8560889dfda1fb"
+        },
+        {
+          "label": "Original UTC release package and its embedded changelog",
+          "url": "https://app.buildbuddy.io/invocation/e41d62cb-b16d-466a-93ac-e773ae178fd2"
+        },
+        {
+          "label": "HST10 package and formatter controls",
+          "url": "https://app.buildbuddy.io/invocation/8a79641a-5275-46ab-bc4b-e74a82c8ca52"
+        },
+        {
+          "label": "Two tagged packages in different time zones and a development build",
+          "url": "https://app.buildbuddy.io/invocation/e9e709c7-4666-46e1-8383-5eceadd0c1ae"
+        },
+        {
+          "label": "Changelog-only replacement",
+          "url": "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
+        },
+        {
+          "label": "Revision from the earlier Debian proposal",
+          "url": "https://github.com/tamird/gvisor/compare/897566b7c85437784636bef3dac64fdc8b52ce90...a7d1eb114e1859262b0d8ec2c08bc1b5e3504a67"
+        },
+        {
+          "label": "GNU version/package and date-only rebuild evidence; original verifier failure retained",
+          "url": "https://app.buildbuddy.io/invocation/1496dd2f-a1e4-4d7a-933e-00063e3be2fe"
+        },
+        {
+          "label": "Missing-only Make/artifact/archive recovery passed",
+          "url": "https://app.buildbuddy.io/invocation/00b4c96a-8a57-482b-a9dc-d6a757465cbe"
+        },
+        {
+          "label": "Build two packages in different time zones",
+          "url": "https://app.buildbuddy.io/invocation/ac5fd1f2-80bf-4421-846e-05d5f7d4cfe7"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "The changelog used the worker\u2019s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
+      "refinement": {
+        "before": {
+          "head": "dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
+        },
+        "after": {
+          "head": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "8311c4cdbffedf751449bfc1bb8560889dfda1fb",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16587.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16587",
+          "https://github.com/tamird/gvisor/commit/8311c4cdbffedf751449bfc1bb8560889dfda1fb",
+          "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
+        ]
+      }
+    },
+    {
+      "id": "pr:16595",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16595,
+      "group": "runtime",
+      "ref": "review/tcp-persist-window-probe",
+      "head": "3c02ab4811f4b92e3da7d61d6842c65700db335e",
+      "title": "Keep the congestion window when probing a closed receive window",
+      "url": "https://github.com/google/gvisor/pull/16595",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16595"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/3c02ab4811f4b92e3da7d61d6842c65700db335e"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9"
+        },
+        {
+          "label": "Original netstack failure and passing Linux control",
+          "url": "https://app.buildbuddy.io/invocation/321fbf96-e947-4106-8ce4-c7e67fbb595d"
+        },
+        {
+          "label": "Five corrected packet cases",
+          "url": "https://app.buildbuddy.io/invocation/1e7537c8-48c5-46cb-9c96-267228473856"
+        },
+        {
+          "label": "Both target architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/af1381b9-4fc2-4c9f-8194-3e6d449c6f3e"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "With no bytes in flight, stock gVisor entered loss recovery and reduced the congestion window to one packet when it sent a zero-window probe. Linux and the fixed stack stayed open and delivered the queued byte after the window reopened. Actual retransmission timeout, persist backoff and user timeout also passed. The fork head contains the same three changed files as the tested commit.",
+      "refinement": {
+        "before": {
+          "head": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9"
+        },
+        "after": {
+          "head": "3c02ab4811f4b92e3da7d61d6842c65700db335e",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "3c02ab4811f4b92e3da7d61d6842c65700db335e",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16595.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16595",
+          "https://github.com/tamird/gvisor/commit/3c02ab4811f4b92e3da7d61d6842c65700db335e",
+          "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9"
+        ]
+      }
+    },
+    {
+      "id": "pr:16590",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16590,
+      "group": "bazel",
+      "ref": "review/seccomp-generator-templates",
+      "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
+      "title": "Generate seccomp program loaders without a shell",
+      "url": "https://github.com/google/gvisor/pull/16590",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16590"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/b598877f1cfbf369d9dd1c07758707fadaa990c5"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/4598fe8128aed1be205ee8b848c002b7f85bd897"
+        },
+        {
+          "label": "Eight loader actions, four uncached generator compiles, and example filter comparisons",
+          "url": "https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "Bazel expands a small loader file instead of copying the generator and editing Go sources with shell tools. All eight loader actions matched their expected files; the AMD64 usage test compared both generated filters against freshly compiled BPF. The separate action that runs the generator is unchanged.",
+      "refinement": {
+        "before": {
+          "head": "4598fe8128aed1be205ee8b848c002b7f85bd897"
+        },
+        "after": {
+          "head": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "b598877f1cfbf369d9dd1c07758707fadaa990c5",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16590.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16590",
+          "https://github.com/tamird/gvisor/commit/b598877f1cfbf369d9dd1c07758707fadaa990c5",
+          "https://github.com/tamird/gvisor/commit/4598fe8128aed1be205ee8b848c002b7f85bd897"
+        ]
+      }
+    },
+    {
+      "id": "pr:16591",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16591,
+      "group": "bazel",
+      "ref": "review/hostlayout-generator-inputs",
+      "head": "71a996f3993d949dae24cc82fa396eb571d26087",
+      "title": "Generate Go host-layout tests from source files",
+      "url": "https://github.com/google/gvisor/pull/16591",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16591"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/71a996f3993d949dae24cc82fa396eb571d26087"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696"
+        },
+        {
+          "label": "Complete nine-package comparison and isolated generator replay",
+          "url": "https://app.buildbuddy.io/invocation/31d822b2-db6e-4fe5-9579-ba7d55ae9492"
+        },
+        {
+          "label": "Original generator outputs",
+          "url": "https://app.buildbuddy.io/invocation/0a5fc736-3152-4485-b296-d6eace6ad308"
+        },
+        {
+          "label": "Replacement generator outputs",
+          "url": "https://app.buildbuddy.io/invocation/cc740780-05be-4665-b951-3cede15e7365"
+        },
+        {
+          "label": "Generated AMD64 tests and both-architecture Nogo checks",
+          "url": "https://app.buildbuddy.io/invocation/820b04d0-2bf4-494e-acd5-48d9580d3a5c"
+        },
+        {
+          "label": "Previous revision: Bazel rejected the rule name before any generator or test ran",
+          "url": "https://app.buildbuddy.io/invocation/e5025898-c1e6-4e89-b123-2f4ab9151777"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "The generator now takes each Go source and the library\u2019s declared import path directly. Across nine ABI packages it produced the same 94,341 bytes as the previous generator. All 383 generated test cases passed on AMD64, and nine Nogo owners checked both AMD64 and ARM64. The attestation generator reproduced its 438-byte output in an empty filesystem containing only its executable and source. The previous revision failed while loading the rule; no generator or test ran on that revision.",
+      "refinement": {
+        "before": {
+          "head": "d678f172b527c75aac54b2d437566746e3a35696"
+        },
+        "after": {
+          "head": "71a996f3993d949dae24cc82fa396eb571d26087",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "71a996f3993d949dae24cc82fa396eb571d26087",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16591.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16591",
+          "https://github.com/tamird/gvisor/commit/71a996f3993d949dae24cc82fa396eb571d26087",
+          "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696"
+        ]
+      }
+    },
+    {
+      "id": "pr:16592",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16592,
+      "group": "bazel",
+      "ref": "review/sniffer-embed-symlink",
+      "head": "1b96205bdc8a21a33681fd2f2742253aca2c4a51",
+      "title": "Stage the embedded ioctl sniffer with a symlink",
+      "url": "https://github.com/google/gvisor/pull/16592",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16592"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/1b96205bdc8a21a33681fd2f2742253aca2c4a51"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5"
+        },
+        {
+          "label": "Symlink action, source SHA, real consumer extraction and original Docker unit tests",
+          "url": "https://app.buildbuddy.io/invocation/8a565aaf-6cd7-4e83-a063-4b833e9b2221"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "Bazel staged the existing ioctl sniffer with a Symlink action and no shell. On Linux AMD64, the Docker test library extracted exactly the producer\u2019s 32,822,413-byte executable with mode 0555 for its read-only container mount. The original Docker API unit tests passed, including all three exec-status subcases. This check did not start Docker or run a GPU workload.",
+      "refinement": {
+        "before": {
+          "head": "cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5"
+        },
+        "after": {
+          "head": "1b96205bdc8a21a33681fd2f2742253aca2c4a51",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1b96205bdc8a21a33681fd2f2742253aca2c4a51",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16592.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16592",
+          "https://github.com/tamird/gvisor/commit/1b96205bdc8a21a33681fd2f2742253aca2c4a51",
+          "https://github.com/tamird/gvisor/commit/cdf08d52a9bfb6287b3921c2883c3a253cc6e7b5"
+        ]
+      }
+    },
+    {
+      "id": "pr:16589",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16589,
+      "group": "release",
+      "ref": "review/licensecheck-builder-bazel",
+      "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+      "title": "Run license queries in the selected Bazel environment",
+      "url": "https://github.com/google/gvisor/pull/16589",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16589"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe"
+        },
+        {
+          "label": "201-entry regenerated catalog and actual Docker Make verification passed; raw show_repo comparison failed",
+          "url": "https://app.buildbuddy.io/invocation/bc5dc9b0-5294-4004-bc5b-376685eba513"
+        },
+        {
+          "label": "Remote qualification of the replacement",
+          "url": "https://app.buildbuddy.io/invocation/4cde4f07-443c-4b57-b47c-dacf50a8807d"
+        },
+        {
+          "label": "Revision removing the Make fallback",
+          "url": "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
+        },
+        {
+          "label": "Revised exact proposal without the shell adapter",
+          "url": "https://github.com/tamird/gvisor/commit/b01c6c7e537ab8dc5450a4c13bd0ebd1472cce46"
+        },
+        {
+          "label": "Native Bazel and Make: 201 dependencies, identical graph and repository definitions",
+          "url": "https://app.buildbuddy.io/invocation/8c85542c-3fe9-4855-a165-ead27c6bc1e5"
+        },
+        {
+          "label": "Exact reviewed proposal",
+          "url": "https://github.com/tamird/gvisor/compare/845a4b61a9ba1dbd1dfc2594d1c67e3d82d9b826...08de865d4960ef353c1b1485230532aac3054175"
+        },
+        {
+          "label": "Both paths verify all 201 dependencies",
+          "url": "https://app.buildbuddy.io/invocation/ea1408a4-80c7-4d1a-ae8b-8db77c5151c8"
+        },
+        {
+          "label": "Original direct invocation failure",
+          "url": "https://app.buildbuddy.io/invocation/a0821749-32c3-49d8-b354-e40729ad4166"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel. The strict comparison of unparsed bazel mod show_repo output failed: the Docker run printed 5,868 extra bytes across 163 repositories. Both verifiers accepted the identical catalog; raw-output equivalence is not established.",
+      "refinement": {
+        "before": {
+          "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
+        },
+        "after": {
+          "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16589.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16589",
+          "https://github.com/tamird/gvisor/commit/ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+          "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
+        ]
+      }
+    },
+    {
+      "id": "pr:16594",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16594,
+      "group": "runtime",
+      "ref": "review/mount-promise-waiter-notification",
+      "head": "8d9ce8738115e23dec693545967f2c21124df6df",
+      "title": "Avoid closing a registered mount promise waiter",
+      "url": "https://github.com/google/gvisor/pull/16594",
+      "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16594"
+        },
+        {
+          "label": "Published head",
+          "url": "https://github.com/tamird/gvisor/commit/8d9ce8738115e23dec693545967f2c21124df6df"
+        },
+        {
+          "label": "Contributor-approved source",
+          "url": "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9"
+        },
+        {
+          "label": "Stock resolver panic, fixed lookup and unmodified VFS/Nogo tests (AMD64 worker)",
+          "url": "https://app.buildbuddy.io/invocation/fef76221-1149-4f30-be7b-a46532518fdd"
+        }
+      ],
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "status": "open",
+      "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found.",
+      "refinement": {
+        "before": {
+          "head": "61868f1ce83b855a80252331b7ccf4dc3816ccd9"
+        },
+        "after": {
+          "head": "8d9ce8738115e23dec693545967f2c21124df6df",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "8d9ce8738115e23dec693545967f2c21124df6df",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks, maintainer review and import on #16594.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16594",
+          "https://github.com/tamird/gvisor/commit/8d9ce8738115e23dec693545967f2c21124df6df",
+          "https://github.com/tamird/gvisor/commit/61868f1ce83b855a80252331b7ccf4dc3816ccd9"
+        ]
+      }
+    },
+    {
+      "id": "branch:tcp-tail-probe-window-update",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-tail-probe-window-update",
+      "head": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+      "title": "Wait for evidence of loss after a TCP tail probe",
+      "url": "https://github.com/tamird/gvisor/commit/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+      "group": "runtime",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "summary": "The first ambiguous ACK for a retransmitted tail probe reduced stock Reno\u2019s congestion window from 20 packets to 3 in all five controlled traces. Linux and the fix agree in all five cases, including a peer sequence advance with an unchanged advertised window width. This measures ACK handling, not throughput.",
+      "evidence": [
+        {
+          "label": "Reviewable source",
+          "url": "https://github.com/tamird/gvisor/commit/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4"
+        },
+        {
+          "label": "TCP analyzer",
+          "url": "https://app.buildbuddy.io/invocation/d5c1faba-3fe7-4752-9d41-9ebd21dff862"
+        },
+        {
+          "label": "TCP recovery tests",
+          "url": "https://app.buildbuddy.io/invocation/dea215a4-78bb-4acb-804b-54583419d20a"
+        },
+        {
+          "label": "Linux and corrected netstack",
+          "url": "https://app.buildbuddy.io/invocation/df6869ae-9333-48b7-8304-41995b1754e4"
+        },
+        {
+          "label": "Stock: five wire traces",
+          "url": "https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019"
+        }
+      ],
+      "followup": {
+        "owner": "lock_contract",
+        "sourceHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+        "observedAt": "2026-10-28T14:12:46.344996+00:00",
+        "disposition": "Ready for contributor review",
+        "nextAction": "Review the tail-probe ACK change for a standalone upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+          "https://app.buildbuddy.io/invocation/d5c1faba-3fe7-4752-9d41-9ebd21dff862",
+          "https://app.buildbuddy.io/invocation/dea215a4-78bb-4acb-804b-54583419d20a",
+          "https://app.buildbuddy.io/invocation/df6869ae-9333-48b7-8304-41995b1754e4",
+          "https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+        "title": "Wait for evidence of loss after a TCP tail probe",
+        "url": "https://github.com/tamird/gvisor/commit/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+        "summary": "The first ambiguous ACK for a retransmitted tail probe reduced stock Reno\u2019s congestion window from 20 packets to 3 in all five controlled traces. Linux and the fix agree in all five cases, including a peer sequence advance with an unchanged advertised window width. This measures ACK handling, not throughput.",
+        "body": "An ACK at the end of a retransmitted TCP tail probe can acknowledge\neither copy. Netstack treated that first ACK as proof of loss and cut\nthe Reno congestion window from 20 packets to 3 in all five\n[stock traces](https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019).\n\nKeep the probe pending until a duplicate ACK or matching DSACK shows\nthat both copies arrived, or a later ACK advances past the probe\nwithout that evidence. A newer peer sequence is a window update even\nwhen the advertised width is unchanged.\n\n[Linux 6.18.57 and corrected netstack](https://app.buildbuddy.io/invocation/df6869ae-9333-48b7-8304-41995b1754e4)\nagree in all five wire cases. The existing\n[TCP recovery tests](https://app.buildbuddy.io/invocation/dea215a4-78bb-4acb-804b-54583419d20a)\nand [TCP analyzer](https://app.buildbuddy.io/invocation/d5c1faba-3fe7-4752-9d41-9ebd21dff862)\nalso pass."
       }
     }
   ],
@@ -43374,7 +44182,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -43501,8 +44309,12 @@
           ]
         }
       ],
-      "nextStep": "The rules_go coverage replay is complete. Review the standalone upgrade bb6b2eeab4 before upstream submission; continue removing undeclared tools from other supported build actions.",
+      "nextStep": "The rules_go coverage replay is complete, and the approved upgrade is open as #16593. Follow its checks and review; the retained native catalog pass and incomplete standalone aggregate remain distinct. Continue removing undeclared tools from the other supported actions.",
       "evidence": [
+        {
+          "label": "Published rules_go upgrade #16593",
+          "url": "https://github.com/google/gvisor/pull/16593"
+        },
         {
           "label": "Make's builder selection",
           "url": "https://github.com/google/gvisor/blob/4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3/tools/bazel.mk#L51"
@@ -43651,7 +44463,7 @@
       "status": "active",
       "group": "tests",
       "owner": "Tamir",
-      "updatedAt": "2026-10-28T13:35:28.650630+00:00",
+      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
       "summary": "All four suggestions from Lucas Manning have individual replies in their original threads. The contributor approved the fork cleanup; its last refinement changes only comments. #16453 and #16493 have landed. #16496 and #16505 still have open Copybara imports.",
       "findings": [
         {
@@ -43735,6 +44547,19 @@
             {
               "label": "Author\u2019s reply with the tested fix",
               "url": "https://github.com/google/gvisor/pull/16505#discussion_r4401160104"
+            }
+          ]
+        },
+        {
+          "text": "The approved standalone computed-zero UDP tests (d774b6a0b4) are already in the weekly commit; the two destination-port calls match. There is no separate PR for those assertions.",
+          "evidence": [
+            {
+              "label": "Approved standalone tests",
+              "url": "https://github.com/tamird/gvisor/commit/d774b6a0b49c7ce6914c33ad028c924a85c71ff5"
+            },
+            {
+              "label": "Weekly cleanup commit",
+              "url": "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726"
             }
           ]
         }
