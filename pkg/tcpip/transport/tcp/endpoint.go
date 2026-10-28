@@ -378,13 +378,15 @@ type Endpoint struct {
 
 	// hardError is meaningful only when state is stateError. It stores the
 	// error to be returned when read/write syscalls are called and the
-	// endpoint is in this state. hardError is protected by endpoint mu.
+	// endpoint is in this state.
+	// +checklocks:mu
 	hardError tcpip.Error
 
-	// lastError represents the last error that the endpoint reported;
-	// access to it is protected by the following mutex.
 	lastErrorMu lastErrorMutex `state:"nosave"`
-	lastError   tcpip.Error
+
+	// lastError represents the last error that the endpoint reported.
+	// +checklocks:lastErrorMu
+	lastError tcpip.Error
 
 	rcvQueueMu rcvQueueMutex `state:"nosave"`
 
@@ -3040,6 +3042,11 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 
 	if e.EndpointState().connecting() {
 		e.mu.Lock()
+		// The handshake may have completed while we waited for the lock.
+		if !e.EndpointState().connecting() {
+			e.mu.Unlock()
+			return
+		}
 		if e.h != nil && e.h.listenEP != nil {
 			lEP := e.h.listenEP
 			// Remove from listening endpoints pending list.
