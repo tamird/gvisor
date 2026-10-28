@@ -1,0 +1,22 @@
+{
+  "source": "32f19f8c8b2bcc074077d67915edaecc96d87650",
+  "stock": "b589c648ad302cd8c41a355e85adf938fa8dc47e",
+  "base": "8c93a8892c82c359fde47860db9af205c4d2015d",
+  "trees": {
+    "b589c648ad302cd8c41a355e85adf938fa8dc47e": "da2cfa8377bcfc05c8a30a33ac045a65b03b7d79",
+    "32f19f8c8b2bcc074077d67915edaecc96d87650": "48dbbc2fe47ab5bae134dda4276e4aa22274291b"
+  },
+  "targets": [
+    "//pkg/state/tests:tests_test"
+  ],
+  "request_sha256": "d44a365ce480ecbd7998af2f8488f4fd9b1f7ffdcc7cfa35e90599b7e1124a1d",
+  "bytes": 17615,
+  "donor": "4480709420cc7d34e52859486176979b7e75dddf41517dd3df738af63f3ed7f5",
+  "files": {
+    "image_bootstrap.py": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+    "image_execution.py": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+    "image_qualification.py": "3225c70bf3985c792040dfd3817dfe4e1d6a40157a5d2fff8754e991887df0d4",
+    "image_workload.py": "35cb8d826a333ee936f8ad52a9db2a800b7d0a41ee02609f2bbd7ea0ccbc083b"
+  },
+  "selector": "three named top-levels, no ARM/race/performance or full-suite claim"
+}

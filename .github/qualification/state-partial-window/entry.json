@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "request_sha256": "d44a365ce480ecbd7998af2f8488f4fd9b1f7ffdcc7cfa35e90599b7e1124a1d",
+  "stock": "b589c648ad302cd8c41a355e85adf938fa8dc47e",
+  "source": "32f19f8c8b2bcc074077d67915edaecc96d87650",
+  "cases": [
+    "TestInteriorPointersIntoSlices",
+    "TestInteriorPointersIntoSlices/ptr_first=false",
+    "TestInteriorPointersIntoSlices/ptr_first=true",
+    "TestPartiallyOverlappingSliceWindows",
+    "TestPartiallyOverlappingSliceWindows/four_bytes",
+    "TestPartiallyOverlappingSliceWindows/four_bytes/left_first",
+    "TestPartiallyOverlappingSliceWindows/four_bytes/right_first",
+    "TestPartiallyOverlappingSliceWindows/three_bytes",
+    "TestPartiallyOverlappingSliceWindows/three_bytes/left_first",
+    "TestPartiallyOverlappingSliceWindows/three_bytes/right_first",
+    "TestSharedSliceWindows",
+    "TestSharedSliceWindows/beyond_len/window_first=false",
+    "TestSharedSliceWindows/beyond_len/window_first=true",
+    "TestSharedSliceWindows/empty/window_first=false",
+    "TestSharedSliceWindows/empty/window_first=true",
+    "TestSharedSliceWindows/full/window_first=false",
+    "TestSharedSliceWindows/full/window_first=true",
+    "TestSharedSliceWindows/middle/window_first=false",
+    "TestSharedSliceWindows/middle/window_first=true",
+    "TestSharedSliceWindows/prefix/window_first=false",
+    "TestSharedSliceWindows/prefix/window_first=true",
+    "TestSharedSliceWindows/suffix/window_first=false",
+    "TestSharedSliceWindows/suffix/window_first=true"
+  ],
+  "original_host_entry": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+  "scope": "Immutable source/donor, original host bootstrap definitions, exact overlay/selector and physical receipt; no native action."
+}

@@ -1,0 +1,65 @@
+name: State partial-overlap comparison
+
+"on":
+  push:
+    branches: [qualification/state-partial-window-rbe]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/state-partial-window"
+          mkdir -p "$root/task"
+          cp .github/qualification/state-partial-window/{request.json,plan.json,entry.json,submit.py,receipt.py} "$root/task/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          d44a365ce480ecbd7998af2f8488f4fd9b1f7ffdcc7cfa35e90599b7e1124a1d  task/request.json
+          46d024c9a01605067f1c65cdbd78456945f9f8f8a8e4c0e215a016e3a9112d71  task/plan.json
+          0a34a696ff8cba730f6707b79fac643025677e5158bc266ae4c2242c3c5611d5  task/entry.json
+          bb8be99026e36ca1ca7c94d48a74a57be1e186cb82a445550fc9b9cc295b5139  task/submit.py
+          15de93a158bbb20ff6bac7a5026ba43c8b8ecd225a8a02d2bd8c1ba46f4845c2  task/receipt.py
+          SUMS
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          job = Path("task")
+          (job/"request.sh").write_text(json.loads((job/"request.json").read_bytes())["steps"][0]["run"])
+          PYTHON
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          entry = Path(os.environ["RUNNER_TEMP"]) / "state-partial-window/task/receipt.py"
+          runpy.run_path(str(entry))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-partial-window-receipt
+          path: ${{ runner.temp }}/state-partial-window/verdict.json
+          if-no-files-found: error
+          retention-days: 14
