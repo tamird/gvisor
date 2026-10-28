@@ -75,6 +75,9 @@ build:rbe-common --define=rbe=true
 build:rbe-common --spawn_strategy=remote
 build:rbe-common --noremote_local_fallback
 build:rbe-common --noremote_accept_cached
+# The scratch worker has no /tmp; the action working directory is writable.
+build:rbe-common --action_env=TMPDIR=.
+build:rbe-common --host_action_env=TMPDIR=.
 build:rbe-common --compilation_mode=opt
 build:rbe-common --remote_cache_compression
 test:rbe-common --strategy=TestRunner=remote
