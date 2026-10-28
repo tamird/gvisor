@@ -16,6 +16,15 @@ package tests
 
 import "context"
 
+type namedMap map[int]int
+
+// +stateify savable
+type mapViews struct {
+	plain    map[int]int
+	named    namedMap
+	distinct namedMap
+}
+
 // +stateify savable
 type mapContainer struct {
 	v map[int]any

@@ -64,6 +64,30 @@ func TestMapAliasing(t *testing.T) {
 	runTestCases(t, false, "", []any{ptrToV, aliases})
 }
 
+func TestMapAliasingAcrossTypes(t *testing.T) {
+	m := map[int]int{1: 7}
+	original := mapViews{plain: m, named: namedMap(m), distinct: namedMap{1: 7}}
+	var buf bytes.Buffer
+	if _, err := state.Save(t.Context(), &buf, &original); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	var restored mapViews
+	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	restored.named[2] = 8
+	if got, want := restored.plain[2], 8; got != want {
+		t.Errorf("plain[2] after writing named[2] = %d, want %d", got, want)
+	}
+	delete(restored.plain, 1)
+	if _, ok := restored.named[1]; ok {
+		t.Error("named[1] still present after deleting plain[1]")
+	}
+	if got, want := restored.distinct, (namedMap{1: 7}); !reflect.DeepEqual(got, want) {
+		t.Errorf("distinct = %v, want %v", got, want)
+	}
+}
+
 func TestMapScalarEntries(t *testing.T) {
 	type key int
 	type value string
