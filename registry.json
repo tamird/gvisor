@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T20:30:39Z",
+    "updatedAt": "2026-10-28T20:39:07Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45779,9 +45779,34 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T18:45:44Z",
+      "updatedAt": "2026-10-28T20:39:07Z",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The stock Debian package writer could not start with all its inputs staged because its launcher invoked /usr/bin/env. Running the same writer with its declared CPython interpreter produced the original 76,605,470-byte .deb byte for byte in an empty AMD64 root. The .changes file also matched the corrected native build; no historical .changes digest was available. This qualifies the package action with its existing inputs; it does not establish that runsc or the complete release already builds in an empty root.",
+          "evidence": [
+            {
+              "label": "Stock MakeDeb: all inputs staged, /usr/bin/env absent",
+              "url": "https://app.buildbuddy.io/invocation/25b99dbc-3132-4e2a-a526-a98f4bab6c45"
+            },
+            {
+              "label": "Candidate and original sources",
+              "url": "https://github.com/tamird/gvisor/commit/87940072f386c4c9706f5042f1fbdfaae81b8033"
+            },
+            {
+              "label": "Native Bazel package action",
+              "url": "https://app.buildbuddy.io/invocation/bf857068-455e-47ec-beb7-25f42fe35dae"
+            },
+            {
+              "label": "Verified empty-root replay",
+              "url": "https://app.buildbuddy.io/invocation/659550aa-a1dc-42dc-a463-5b38943dc117"
+            },
+            {
+              "label": "Earlier inspector failure: package action not exercised",
+              "url": "https://app.buildbuddy.io/invocation/7cb0db86-d88b-4b25-91be-0467f71fad4b"
+            }
+          ]
+        },
         {
           "text": "Both recorded outer packaging commands succeeded in an empty root and reproduced their fresh AMD64 and ARM64 archives exactly. Historical AMD64 tar headers, order and metadata match; four of eight ELF files differ only in .rodata. On ARM64, original Bazel input manifests show that the same four executables already differed before packaging: runsc, gvisor_sentry, checkpointgofer and runsc-metric-server. Each embeds the source version. The historical ARM64 outer CAS object returned 404, so its tar headers were not compared.",
           "evidence": [
@@ -45996,7 +46021,7 @@
           ]
         }
       ],
-      "nextStep": "The outer release tar command needs no host tools on the tested AMD64 executor for either payload architecture. Check the next unqualified release action in an empty root; do not repeat these tar builds. Whether the exact embedded version alone explains the differing .rodata bytes remains unverified.",
+      "nextStep": "Prepare a shared supplier change for tar and Debian packaging, and continue identifying undeclared tools in other physical release actions. The empty-root MakeDeb comparison is complete.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
