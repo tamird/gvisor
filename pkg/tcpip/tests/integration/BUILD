@@ -203,7 +203,10 @@ go_test(
 go_test(
     name = "synctest_tcp_test",
     size = "small",
-    srcs = ["synctest_tcp_test.go"],
+    srcs = [
+        "synctest_link_test.go",
+        "synctest_tcp_test.go",
+    ],
     env = {"GOMAXPROCS": "1"},
     deps = [
         "//pkg/tcpip",
