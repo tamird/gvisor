@@ -31756,6 +31756,50 @@
         ]
       },
       "number": 16627
+    },
+    {
+      "id": "branch:epoll-modify-preserve",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/epoll-modify-preserve",
+      "head": "8c01e8c21b1601a43baf966daa0f511d08e137db",
+      "title": "Keep an epoll watch intact when MOD fails",
+      "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-28T22:38:25Z",
+      "summary": "Preserve the original epoll watch when a replacement registration fails. Same-mask changes reuse the active registration. The three stock regressions reproduced, the corrected FUSE fixture and all 44 normal/race VFS cases passed, and checkpoint restore passed.",
+      "evidence": [
+        {
+          "label": "Proposed fix",
+          "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db"
+        },
+        {
+          "label": "Stock: pending edge, delivered edge, disarmed one-shot and controlled FUSE abort",
+          "url": "https://app.buildbuddy.io/invocation/83329566-0448-4561-8b33-6ee433c9f811"
+        },
+        {
+          "label": "Corrected FUSE comparison",
+          "url": "https://app.buildbuddy.io/invocation/400d0fe5-ffb9-46f9-abfa-399f23b7f557"
+        },
+        {
+          "label": "Corrected VFS, restore, Linux ABI and both architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/ac07cca3-cb19-4448-908a-4d9b49e1e0f9"
+        },
+        {
+          "label": "Corrected VFS race run",
+          "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "8c01e8c21b1601a43baf966daa0f511d08e137db",
+        "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db",
+        "title": "Keep an epoll watch intact when MOD fails",
+        "summary": "Preserve the original epoll watch when a replacement registration fails. Same-mask changes reuse the active registration. The three stock regressions reproduced, the corrected FUSE fixture and all 44 normal/race VFS cases passed, and checkpoint restore passed.",
+        "body": "Keep an epoll watch intact when MOD fails\n\nIf a file cannot register the events requested by EPOLL_CTL_MOD, the\ncaller receives an error but the existing watch has already lost its\nwaiter. A pending event can also carry the rejected user data, and a\nfailed MOD can rearm a one-shot watch.\n\nRegister the new wait mask before retiring the old one. Deliver\nnotifications only from the active registration, then recheck readiness\nwith the new mask. When only the data or flags change, reuse the\nexisting waiter. Host-backed files use the wait queue to choose the\nLinux epoll mask; registering all events would subscribe an IN-only\nwatch to EPOLLOUT too.\n\nDepends on #16513 for the shared registration-failure test fixture.\n\nThe [stock comparison](https://app.buildbuddy.io/invocation/83329566-0448-4561-8b33-6ee433c9f811)\nreproduced all three failed-MOD cases. The corrected VFS suite passed\n[normally](https://app.buildbuddy.io/invocation/ac07cca3-cb19-4448-908a-4d9b49e1e0f9)\nand [under the race detector](https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084).\nChanging the waiter mask takes one allocation per call; changing only\nthe user data takes none."
+      }
     }
   ],
   "edges": [
@@ -34725,6 +34769,15 @@
       "type": "includes",
       "reason": "The approved combined proposal was submitted as #16551. Its earlier source-specific qualification remains on the proposal record.",
       "evidence": "https://github.com/google/gvisor/pull/16551"
+    },
+    {
+      "from": "branch:epoll-modify-preserve",
+      "to": "pr:16513",
+      "type": "depends_on",
+      "reason": "Uses the failed-registration test fixture from the EPOLL_CTL_ADD change.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16513"
+      ]
     }
   ],
   "investigations": [
@@ -46684,12 +46737,37 @@
     {
       "id": "investigation:epoll-modify-watch",
       "title": "Preserve a live epoll watch when changing its interest",
-      "status": "active",
+      "status": "concluded",
       "owner": "native_runtime",
       "group": "runtime",
-      "updatedAt": "2026-10-28T22:24:10Z",
-      "summary": "The approved EPOLL_CTL_ADD fix is separate. On MOD, gVisor publishes new user data and removes the old waiter before a replacement can fail.",
+      "updatedAt": "2026-10-28T22:38:25Z",
+      "summary": "When an epoll watch could not register a replacement, stock gVisor changed the old watch anyway. Reusing the existing registration for data-only updates also fixes a spurious EPERM on a mounted FUSE device after a controlled connection abort.",
       "findings": [
+        {
+          "text": "The stock controls reproduced loss of a pending edge, rearming a delivered edge and rearming a disarmed one-shot. All 44 corrected VFS cases passed normally and under race detection. Checkpoint restore, the native Linux reference and both analyzers passed. A same-mask update added no allocation in the fixture; a changing mask added one.",
+          "evidence": [
+            {
+              "label": "Proposed fix",
+              "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db"
+            },
+            {
+              "label": "Stock: pending edge, delivered edge, disarmed one-shot and controlled FUSE abort",
+              "url": "https://app.buildbuddy.io/invocation/83329566-0448-4561-8b33-6ee433c9f811"
+            },
+            {
+              "label": "Corrected FUSE comparison",
+              "url": "https://app.buildbuddy.io/invocation/400d0fe5-ffb9-46f9-abfa-399f23b7f557"
+            },
+            {
+              "label": "Corrected VFS, restore, Linux ABI and both architecture analyzers",
+              "url": "https://app.buildbuddy.io/invocation/ac07cca3-cb19-4448-908a-4d9b49e1e0f9"
+            },
+            {
+              "label": "Corrected VFS race run",
+              "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
+            }
+          ]
+        },
         {
           "text": "The candidate passed all 44 VFS cases normally and under the race detector. A real checkpoint restored the replacement waiter. A same-mask MOD allocated nothing in the fixture; alternating the physical mask allocated one registration per change. The parent job rejected the FUSE fixture because it changed a tracked source, so it established no FUSE or stock result.",
           "evidence": [
@@ -46725,15 +46803,62 @@
           ]
         }
       ],
-      "nextStep": "Run the missing stock and FUSE comparisons with the same fixture committed on both sources. Reuse the completed normal, race and checkpoint evidence.",
+      "nextStep": "Track the proposed fix on the dependent epoll-modify-preserve branch.",
       "evidence": [
         {
-          "label": "Lucas\u2019s review",
-          "url": "https://github.com/google/gvisor/pull/16513#pullrequestreview-5689766487"
+          "label": "Proposed fix",
+          "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db"
         },
         {
-          "label": "ModifyInterest",
-          "url": "https://github.com/tamird/gvisor/blob/9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9/pkg/sentry/vfs/epoll.go#L332-L366"
+          "label": "Stock: pending edge, delivered edge, disarmed one-shot and controlled FUSE abort",
+          "url": "https://app.buildbuddy.io/invocation/83329566-0448-4561-8b33-6ee433c9f811"
+        },
+        {
+          "label": "Corrected FUSE comparison",
+          "url": "https://app.buildbuddy.io/invocation/400d0fe5-ffb9-46f9-abfa-399f23b7f557"
+        },
+        {
+          "label": "Corrected VFS, restore, Linux ABI and both architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/ac07cca3-cb19-4448-908a-4d9b49e1e0f9"
+        },
+        {
+          "label": "Corrected VFS race run",
+          "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
+        }
+      ]
+    },
+    {
+      "id": "investigation:dsack-above-gap",
+      "title": "Report duplicate TCP data above a receive gap",
+      "status": "active",
+      "owner": "pinring_source_scope",
+      "group": "runtime",
+      "updatedAt": "2026-10-28T22:35:12Z",
+      "summary": "Compare TCP duplicate-SACK reports when a retransmission overlaps data already queued above the cumulative ACK. This is separate from #16403, which handles duplicates below that ACK.",
+      "findings": [
+        {
+          "text": "At cumulative ACK 0, both Linux and gVisor first reported bytes [8,16). On a repeated [8,16), Linux sent two identical blocks; on a contained [10,14), Linux sent [10,14) followed by [8,16). The gVisor source under review for #16403 reported only [8,16) in both cases. Both peers subsequently acknowledged 16 bytes and FIN and delivered the correct stream. These traces measure protocol behavior, not throughput.",
+          "evidence": [
+            {
+              "label": "Original packet traces, Linux and gVisor",
+              "url": "https://app.buildbuddy.io/invocation/953a668c-cd3a-43b1-b030-0670bbef843f"
+            },
+            {
+              "label": "Verified comparison; expected gVisor failure",
+              "url": "https://app.buildbuddy.io/invocation/661fdb89-e442-4ac4-90cf-c1423462fbd6"
+            },
+            {
+              "label": "Initial compiler failure: zero tests",
+              "url": "https://app.buildbuddy.io/invocation/9338d47b-f11d-4b67-be9f-3d35e36b8360"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Fix duplicate reporting for queued data and repeat both packet sequences. Keep the usual in-order receive path out of the overlap search.",
+      "evidence": [
+        {
+          "label": "Related below-ACK change (#16403)",
+          "url": "https://github.com/google/gvisor/pull/16403"
         }
       ]
     }
