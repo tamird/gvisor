@@ -112,6 +112,7 @@ go_test(
     srcs = [
         "connection_test.go",
         "dev_test.go",
+        "epoll_qualification_test.go",
         "host_connection_integration_test.go",
         "host_connection_test.go",
         "interrupt_test.go",
