@@ -217,6 +217,40 @@ func TestSharedSliceWindows(t *testing.T) {
 	}
 }
 
+// TestPartiallyOverlappingSliceWindows saves only the windows, so neither an
+// enclosing array nor one of the slices can supply the full backing storage.
+func TestPartiallyOverlappingSliceWindows(t *testing.T) {
+	t.Run("three_bytes", func(t *testing.T) { checkPartialWindows(t, [3]byte{1}) })
+	t.Run("four_bytes", func(t *testing.T) { checkPartialWindows(t, [4]byte{1}) })
+}
+
+func checkPartialWindows[T comparable](t *testing.T, marker T) {
+	for _, test := range []struct {
+		name string
+		left int
+	}{
+		{"left_first", 0},
+		{"right_first", 1},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf [4]T
+			windows := make([][]T, 2)
+			windows[test.left], windows[1-test.left] = buf[:3:3], buf[1:4:4]
+			got := *loadBytes[[][]T](t, saveBytes(t, &windows))
+			left, right := got[test.left], got[1-test.left]
+			for i := range 2 {
+				if &left[i+1] != &right[i] {
+					t.Errorf("left[%d] and right[%d] no longer share an address", i+1, i)
+				}
+				left[i+1] = marker
+				if right[i] != marker {
+					t.Errorf("right[%d] = %v after write through left; want %v", i, right[i], marker)
+				}
+			}
+		})
+	}
+}
+
 // TestInteriorPointersIntoSlices checks pointers to the elements of slices and
 // to fields of those elements, discovered before or after the slice.
 func TestInteriorPointersIntoSlices(t *testing.T) {
