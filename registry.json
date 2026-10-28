@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T21:39:20Z",
+    "updatedAt": "2026-10-28T21:55:52Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31709,12 +31709,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/eventfd-preserve-host-counter",
-      "head": "57e4b376dd945b7488aec22685f524dfe86970c1",
+      "head": "d94cb4a5563d03e38f0b0d5e62ee1744c091cfbb",
       "title": "Preserve the full counter when converting an eventfd to a host fd",
       "url": "https://github.com/google/gvisor/pull/16627",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-28T21:39:20Z",
+      "updatedAt": "2026-10-28T21:55:52Z",
       "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
       "evidence": [
         {
@@ -31744,10 +31744,10 @@
       ],
       "followup": {
         "owner": "native_runtime",
-        "sourceHead": "57e4b376dd945b7488aec22685f524dfe86970c1",
-        "observedAt": "2026-10-28T21:39:20Z",
-        "disposition": "Published as #16627",
-        "nextAction": "Follow checks and review on #16627.",
+        "sourceHead": "d94cb4a5563d03e38f0b0d5e62ee1744c091cfbb",
+        "observedAt": "2026-10-28T21:55:52Z",
+        "disposition": "Signal now unlocks before the write to an installed host eventfd.",
+        "nextAction": "Follow maintainer review on #16627. The amended package and both analyzer targets passed in the Linux AMD64 qualification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16627",
           "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345",
