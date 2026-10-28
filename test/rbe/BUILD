@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
@@ -21,6 +22,12 @@ load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+copy_file(
+    name = "scratch_worker_copy",
+    src = "README.md",
+    out = "scratch-worker-readme",
 )
 
 py_test(

@@ -12,7 +12,8 @@ package(
 # Shared by ordinary and namespace-dependent remote test actions.
 _RBE_EXEC_PROPERTIES = {
     "OSFamily": "linux",
-    "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+    # Both Linux images contain only /pause, so every tool must come from Bazel.
+    "container-image": "docker://registry.k8s.io/pause@sha256:f548e0e8e3dc1896ca956272154dde3314e8cc4fde0a57577ee9fa1c63f5baf4",
     "workload-isolation-type": "oci",
 }
 
