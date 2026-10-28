@@ -46100,9 +46100,43 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T20:39:07Z",
+      "updatedAt": "2026-10-28T22:22:17Z",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The matched stock and changed rules_pkg runs produced byte-identical tar.gz, .deb, .changes and preserve-mode tar outputs. Both had the same single failure: the worker input had mode 0755 and the test expected 0644. A smaller alternative feeds the existing Python ZIP directly to the declared interpreter; its output and cost are being measured.",
+          "evidence": [
+            {
+              "label": "Stock package writer and original outputs",
+              "url": "https://app.buildbuddy.io/invocation/5c9c3db6-896e-46ab-a508-76384f758688"
+            },
+            {
+              "label": "Declared interpreter; identical four outputs",
+              "url": "https://app.buildbuddy.io/invocation/7ba01350-d9fd-447a-b3d8-1a587bfcd9a1"
+            },
+            {
+              "label": "Upstream native Python launcher discussion",
+              "url": "https://github.com/bazel-contrib/rules_python/issues/2500"
+            }
+          ]
+        },
+        {
+          "text": "The earlier six-archive build ran on Ubuntu. The OCI diagnostic pins the pause 3.10.2 index. The verified AMD64 and ARM64 Linux layers each contain only /pause. Both target architectures are built in one graph using AMD64 execution tools. Execution on that worker still needs a positive control.",
+          "evidence": [
+            {
+              "label": "Kubernetes image registry: pause digests",
+              "url": "https://github.com/kubernetes/k8s.io/blob/62b767034c25d1bc560cc3d46dccf66d6200e253/registry.k8s.io/images/k8s-staging-kubernetes/images.yaml"
+            },
+            {
+              "label": "Pinned scratch worker and declared copy control",
+              "url": "https://github.com/tamird/gvisor/commit/ea3f8fe97e47f91df5782547cc680cf68a6e6fe0"
+            },
+            {
+              "label": "Control: execute the copy tool without cache reuse",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40778413882"
+            }
+          ]
+        },
         {
           "text": "The stock Debian package writer could not start with all its inputs staged because its launcher invoked /usr/bin/env. Running the same writer with its declared CPython interpreter produced the original 76,605,470-byte .deb byte for byte in an empty AMD64 root. The .changes file also matched the corrected native build; no historical .changes digest was available. This qualifies the package action with its existing inputs; it does not establish that runsc or the complete release already builds in an empty root.",
           "evidence": [
@@ -46342,7 +46376,7 @@
           ]
         }
       ],
-      "nextStep": "Prepare a shared supplier change for tar and Debian packaging, and continue identifying undeclared tools in other physical release actions. The empty-root MakeDeb comparison is complete.",
+      "nextStep": "Verify the physical copy action on the scratch worker, then qualify the same six AMD64/ARM64 release archives and trace the first undeclared tool. Compare the Python ZIP alternative against the four retained supplier outputs.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
@@ -46653,9 +46687,30 @@
       "status": "active",
       "owner": "native_runtime",
       "group": "runtime",
-      "updatedAt": "2026-10-28T21:25:12Z",
+      "updatedAt": "2026-10-28T22:24:10Z",
       "summary": "The approved EPOLL_CTL_ADD fix is separate. On MOD, gVisor publishes new user data and removes the old waiter before a replacement can fail.",
       "findings": [
+        {
+          "text": "The candidate passed all 44 VFS cases normally and under the race detector. A real checkpoint restored the replacement waiter. A same-mask MOD allocated nothing in the fixture; alternating the physical mask allocated one registration per change. The parent job rejected the FUSE fixture because it changed a tracked source, so it established no FUSE or stock result.",
+          "evidence": [
+            {
+              "label": "Reviewed production source; test-only fixtures kept separate",
+              "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db"
+            },
+            {
+              "label": "Original VFS, Linux reference and checkpoint results",
+              "url": "https://app.buildbuddy.io/invocation/ac07cca3-cb19-4448-908a-4d9b49e1e0f9"
+            },
+            {
+              "label": "Original race run",
+              "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
+            },
+            {
+              "label": "Incomplete parent receipt",
+              "url": "https://app.buildbuddy.io/invocation/e1e3053d-b1e3-4e18-b866-1143ec84679a"
+            }
+          ]
+        },
         {
           "text": "Linux changes the existing interest in place and polls it for readiness. A FUSE connection that was live at ADD and has since disconnected is an in-tree path where gVisor can refuse a second registration. This finding comes from source inspection.",
           "evidence": [
@@ -46670,7 +46725,7 @@
           ]
         }
       ],
-      "nextStep": "Run the baseline and corrected regression; check what the caller receives after a failed change, including queued and one-shot notifications.",
+      "nextStep": "Run the missing stock and FUSE comparisons with the same fixture committed on both sources. Reuse the completed normal, race and checkpoint evidence.",
       "evidence": [
         {
           "label": "Lucas\u2019s review",
