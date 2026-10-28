@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T21:10:30Z",
+    "updatedAt": "2026-10-28T21:17:19Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31540,6 +31540,53 @@
         ]
       },
       "number": 16621
+    },
+    {
+      "id": "branch:sack-repair-rto",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/sack-repair-rto",
+      "head": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+      "title": "Give the oldest SACK retransmission a full timeout",
+      "url": "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+      "group": "runtime",
+      "status": "Reviewable",
+      "summary": "Stock retransmitted the same 500 bytes after only 1.5 seconds with a three-second RTO. The fix restarts the timer for a successful repair of the oldest outstanding segment. All 92 TCP, SACK and RACK cases passed, and both analyzer owners report success for AMD64 and ARM64.",
+      "updatedAt": "2026-10-28T21:17:19Z",
+      "evidence": [
+        {
+          "label": "Fork change",
+          "url": "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8"
+        },
+        {
+          "label": "Stock 1.5-second retransmission under a three-second timeout",
+          "url": "https://app.buildbuddy.io/invocation/4f657386-402a-4999-9c14-624df58270ea"
+        },
+        {
+          "label": "Stock with both holes repaired: timed out early",
+          "url": "https://app.buildbuddy.io/invocation/d7f6bd2a-01ed-4442-8ff8-9a27a5d67b12"
+        },
+        {
+          "label": "Corrected TCP, SACK and RACK suites: 92 passed, no skips",
+          "url": "https://app.buildbuddy.io/invocation/a20120b5-bc2e-4be7-8e71-c3883b8fc46b"
+        },
+        {
+          "label": "Two analyzer outputs pass for AMD64/ARM64; parent verifier did not join individual worker XMLs",
+          "url": "https://app.buildbuddy.io/invocation/06a21fde-5f55-4fe1-a3f9-9768b0307bc1"
+        },
+        {
+          "label": "Parent failed; original reports retained and reconciled",
+          "url": "https://app.buildbuddy.io/invocation/7c9d1e0d-d803-4047-b5e2-0b9a8eba5737"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+        "url": "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+        "title": "Give the oldest SACK retransmission a full timeout",
+        "summary": "Stock retransmitted the same 500 bytes after only 1.5 seconds with a three-second RTO. The fix restarts the timer for a successful repair of the oldest outstanding segment. All 92 TCP, SACK and RACK cases passed, and both analyzer owners report success for AMD64 and ARM64.",
+        "body": "When selective acknowledgments identify a missing segment, TCP can\nretransmit it before its timeout expires. A successful repair leaves the\nold timer running. With a three-second timeout, the sender retransmits\nthe same 500 bytes twice only 1.5 seconds apart.\n\nRestart the timer after a successful repair of the oldest outstanding\ndata. Leave that deadline alone when repairing a later hole, so that\nrepeated repairs cannot indefinitely postpone a timeout. A failed send\nkeeps the existing retry timer or starts one if needed.\n\nThe regression sends nine segments and keeps the cumulative ACK fixed\nwhile reporting two separate holes. It checks that the next timeout\nfalls exactly one retransmission interval after the repair of the oldest\nsegment."
+      }
     }
   ],
   "edges": [
@@ -34517,9 +34564,30 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-28T20:30:39Z",
+      "updatedAt": "2026-10-28T21:17:19Z",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
+        {
+          "text": "In an independent SACK recovery test, the oldest 500-byte hole was retransmitted after only 1.5 s despite a 3 s RTO. A later covering ACK arrived after the old deadline. With two holes, restarting the timer on the successful repair of the oldest hole gives it a full RTO; repairing the later hole does not postpone it. All 92 corrected TCP/SACK/RACK cases passed. This timer bug does not account for the previously measured queue delay in the sparse-loss Reno run.",
+          "evidence": [
+            {
+              "label": "Stock 1.5-second retransmission under a three-second timeout",
+              "url": "https://app.buildbuddy.io/invocation/4f657386-402a-4999-9c14-624df58270ea"
+            },
+            {
+              "label": "Stock with both holes repaired: timed out early",
+              "url": "https://app.buildbuddy.io/invocation/d7f6bd2a-01ed-4442-8ff8-9a27a5d67b12"
+            },
+            {
+              "label": "Corrected TCP, SACK and RACK suites: 92 passed, no skips",
+              "url": "https://app.buildbuddy.io/invocation/a20120b5-bc2e-4be7-8e71-c3883b8fc46b"
+            },
+            {
+              "label": "Two analyzer outputs pass for AMD64/ARM64; parent verifier did not join individual worker XMLs",
+              "url": "https://app.buildbuddy.io/invocation/06a21fde-5f55-4fe1-a3f9-9768b0307bc1"
+            }
+          ]
+        },
         {
           "text": "Both algorithms first repaired the same 1,420-byte range at the same time. Reno had built a larger queue; its timer fired before the ACK for that repair could return. CUBIC repaired the range without a timeout. This explains a divergence in this fixture, not a general CUBIC advantage or the cause of the reported outage.",
           "evidence": [

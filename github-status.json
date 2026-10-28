@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-28T21:09:25.363879+00:00",
-  "registryDate": "2026-10-28T21:10:30Z",
+  "registryDate": "2026-10-28T21:17:19Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -225586,6 +225586,15 @@
         "basis": "transition",
         "qualifier": null,
         "observedAt": "2026-10-28T21:09:23.846409+00:00"
+      }
+    },
+    "branch:sack-repair-rto": {
+      "contributor-review": {
+        "scope": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+        "since": "2026-10-28T21:17:19Z",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-28T21:17:19Z"
       }
     }
   },
