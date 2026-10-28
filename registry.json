@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T03:01:55.211624+00:00",
+    "updatedAt": "2026-10-28T03:18:20.250864+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43141,13 +43141,30 @@
     {
       "id": "investigation:procfs-tmpfile-errno",
       "title": "O_TMPFILE on immutable procfs directories",
-      "status": "active",
+      "status": "concluded",
       "owner": "native_runtime",
-      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
-      "summary": "O_TMPFILE | O_RDWR on /proc/self and /proc/thread-self returned EPERM on Linux but EOPNOTSUPP on gVisor, both before and after the ordinary directory-open correction in #16473.",
+      "updatedAt": "2026-10-28T03:18:20.250864+00:00",
+      "summary": "With the gofer path-walk change from #15773 and the immutable-directory check from #16473, gVisor returns EPERM like Linux when O_TMPFILE | O_RDWR targets /proc/self or /proc/thread-self. This closes the observed errno difference on writable procfs.",
       "findings": [
         {
-          "text": "In the tested gofer-root configuration, gofer rejects O_TMPFILE before walking into /proc. Linux resolves the target directory and checks write/search permission before testing whether the filesystem implements anonymous files; immutable PID/TID directories reject the write with EPERM. Open #15773 defers gofer\u2019s unsupported-operation check until the dentry is resolved; #16473 supplies the immutable-directory write check. The existing runs tested the ordinary procfs change without that path-walk correction, not the two changes together.",
+          "text": "The comparison added only the seven-line gofer change from #15773 (bd3f9073e4) to the tested #16473 revision (eb15b3a970). Linux, systrap with directfs, and systrap in shared mode all returned EPERM for both directories, by absolute path and relative to an O_PATH descriptor for /proc, with CAP_DAC_OVERRIDE both effective and dropped (24 calls). #16473 alone already returned EPERM for the eight descriptor-relative guest calls. Its earlier absolute-path controls returned EOPNOTSUPP in both guest modes and EPERM on Linux; those controls did not explicitly vary the capability. These results concern the rejection of writes to immutable directories, not whether anonymous-file creation works on other filesystems.",
+          "evidence": [
+            {
+              "label": "Composed-source qualification: five AMD64 test executions, eight named cases, no skips",
+              "url": "https://app.buildbuddy.io/invocation/85db5038-19c9-4a12-bd93-e97e908c2f4c"
+            },
+            {
+              "label": "Both changes: native Linux and both systrap modes",
+              "url": "https://app.buildbuddy.io/invocation/b1e30c6c-13b0-4dd1-af1d-972539959067"
+            },
+            {
+              "label": "#16473 alone: calls relative to the proc directory",
+              "url": "https://app.buildbuddy.io/invocation/9ce1fe36-8b97-4707-a9c0-5ff197182c22"
+            }
+          ]
+        },
+        {
+          "text": "In the tested gofer-root configuration, gofer rejects O_TMPFILE before walking into /proc. Linux resolves the target directory and checks write/search permission before testing whether the filesystem implements anonymous files; immutable PID/TID directories reject the write with EPERM. Open #15773 defers gofer\u2019s unsupported-operation check until the dentry is resolved; #16473 supplies the immutable-directory write check. The earlier runs tested the ordinary procfs change without that path-walk correction, not the two changes together.",
           "evidence": [
             {
               "label": "Current gofer: early EOPNOTSUPP before the path walk",
@@ -43185,8 +43202,16 @@
           ]
         }
       ],
-      "nextStep": "Compare O_TMPFILE | O_RDWR using absolute /proc paths and paths relative to an O_PATH /proc directory descriptor with the #15773 path-walk change and #16473 permission check together. Preserve native Linux, systrap direct and shared-mode results. No result for the combination is established.",
+      "nextStep": "The fixes are already under review in #15773 (gofer path walking) and #16473 (procfs permissions). No separate patch is needed for this errno difference.",
       "evidence": [
+        {
+          "label": "#15773: resolve the path before gofer rejects O_TMPFILE",
+          "url": "https://github.com/google/gvisor/pull/15773"
+        },
+        {
+          "label": "#16473: reject writes to immutable PID and TID directories",
+          "url": "https://github.com/google/gvisor/pull/16473"
+        },
         {
           "label": "Reviewed directory-open path",
           "url": "https://github.com/google/gvisor/pull/16473#discussion_r4393753819"
