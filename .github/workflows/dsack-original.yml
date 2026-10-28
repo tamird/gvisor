@@ -2,7 +2,7 @@ name: Read original D-SACK comparison
 
 "on":
   push:
-    branches: [qualification/dsack-above-gap-original]
+    branches: [qualification/dsack-above-gap-reports]
 
 permissions:
   contents: read
@@ -34,7 +34,7 @@ jobs:
           0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
           209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
           233eda907928490dbc87592d93d78a14930f9eb0f6e89406c3316bc9d8a5c31f  wire.py
-          cc83850b52652c762d6452787ce2cc70e4669826792a1871e77f0995e9f88529  read_original.py
+          8e7f02df62cab5c876fe9bca7b337fc4a87a5a6d6c91fd1646ee9e0ea0ad0613  read_original.py
           SUMS
       - name: Read only the original comparison
         shell: python

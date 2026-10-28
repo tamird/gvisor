@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+import struct
 import tarfile
 import traceback
 import zipfile
@@ -41,6 +42,30 @@ def typed(s):
 def trace(exc):
     return {"class":type(exc).__name__,"lines":[(Path(x.filename).name,x.lineno) for x in traceback.extract_tb(exc.__traceback__) if Path(x.filename).name in ("read_original.py","wire.py","qualification_report.py")],
             "reason":typed(str(exc))}
+
+
+def isolate_flow(raw):
+    """Keep original records for the unique tuple carrying our eight test bytes."""
+    ends={b"\xd4\xc3\xb2\xa1":"<",b"\xa1\xb2\xc3\xd4":">",b"\x4d\x3c\xb2\xa1":"<",b"\xa1\xb2\x3c\x4d":">"}
+    endian=ends[raw[:4]]
+    assert len(raw)>=24 and struct.unpack_from(endian+"I",raw,20)[0]==1
+    records=[];payloads=set();i=24
+    while i<len(raw):
+        begin=i;assert i+16<=len(raw)
+        cap=struct.unpack_from(endian+"I",raw,i+8)[0];i+=16
+        assert i+cap<=len(raw)
+        f=raw[i:i+cap];i+=cap
+        if len(f)<54 or f[12:14]!=b"\x08\x00" or f[23]!=6:continue
+        tcp_start=14+(f[14]&15)*4
+        if tcp_start+20>len(f):continue
+        sp,dp=struct.unpack_from("!HH",f,tcp_start)
+        endpoint=((f[26:30],sp),(f[30:34],dp))
+        pay=tcp_start+(f[tcp_start+12]>>4)*4
+        if f[pay:14+struct.unpack_from("!H",f,16)[0]]==b"ijklmnop":payloads.add(endpoint)
+        records.append((endpoint,raw[begin:i]))
+    if len(payloads)!=1:raise ValueError("no unique controlled tuple")
+    [peer]=payloads
+    return raw[:24]+b"".join(record for ends,record in records if ends==peer or ends==peer[::-1])
 
 
 def main():
@@ -89,6 +114,10 @@ def main():
                     if p+"verdict.json" not in names:continue
                     v=obj(p+"verdict.json")
                     stage=public["stages"][ph]={"status":v.get("status"),"exit":v.get("native_exit")}
+                    stage["per_command_uuid_field_present"]="invocation_id" in v
+                    if p+"stderr.log" in names:
+                        stage["command_stderr"]=typed(data(p+"stderr.log").decode(errors="replace"))
+                    if p+"events.jsonl" not in names:continue
                     ev=[json.loads(e) for e in data(p+"events.jsonl").splitlines()]
                     stage["child"]=[str(UUID(e["started"]["uuid"])) for e in ev if re.fullmatch(r"[0-9a-f-]{36}",e.get("started",{}).get("uuid",""))]
                     stage["progress"]=typed("\n".join(e.get("progress",{}).get(f,"") for e in ev for f in ("stderr","stdout")))
@@ -150,7 +179,15 @@ def main():
                                     public_wire={k:v for k,v in stored.items() if k!="name"}
                                     cap["original_projection_equal"]=public_wire==w
                                     cap["canonical_projection_equal"]=public_wire==json.loads(json.dumps(w))
-                            except (KeyError,ValueError) as exc:cap["error"]=trace(exc)
+                            except (KeyError,ValueError,AssertionError,struct.error) as exc:
+                                cap["error"]=trace(exc)
+                                try:
+                                    filtered=isolate_flow(d)
+                                    w=inspect_pcap(filtered)
+                                    cap["original_filtered_flow"]=ident(filtered)
+                                    cap["observations"]=[{k:f[k] for k in ("sent","ack","blocks")} for f in w["frames"]]
+                                except (KeyError,ValueError,AssertionError,struct.error) as inner:
+                                    cap["filtered_error"]=trace(inner)
         if not public.get("owners") or any(not r.get("captures") for r in public["owners"].values()):
             page="0000";pages=[];seen=set()
             for _ in range(8):
@@ -163,7 +200,7 @@ def main():
     finally:
         key=None
         (root/"verdict.json").write_text(json.dumps(public,indent=2)+"\n")
-    if "read_error" in public or "archive" not in public:
+    if "read_error" in public or "archive" not in public or set(public["owners"])!=set(OWNERS) or any(not row.get("bep_count") for row in public["owners"].values()):
         raise SystemExit(1)
 
 if __name__=="__main__": main()
