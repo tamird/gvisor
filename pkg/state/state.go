@@ -216,16 +216,18 @@ type SaverLoader interface {
 	StateLoad(context.Context, Source)
 }
 
-// Source is used for Type.StateLoad.
+// Source provides the fields of a struct. Call Load, LoadWait, and
+// LoadValue during StateLoad. A LoadValue conversion may also register
+// AfterLoad hooks on the struct it is restoring.
 type Source struct {
-	internal objectDecoder
+	internal *objectDecoder
 }
 
 // Load loads the given object passed as a pointer..
 //
 // See Sink.Save for an example.
 func (s Source) Load(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), false, nil)
+	s.internal.load(slot, reflect.ValueOf(objPtr).Elem(), false)
 }
 
 // LoadWait loads the given objects from the map, and marks it as requiring all
@@ -233,15 +235,17 @@ func (s Source) Load(slot int, objPtr any) {
 //
 // See Sink.Save for an example.
 func (s Source) LoadWait(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), true, nil)
+	s.internal.load(slot, reflect.ValueOf(objPtr).Elem(), true)
 }
 
 // LoadValue loads the given object value from the map.
 //
 // See Sink.SaveValue for an example.
 func (s Source) LoadValue(slot int, objPtr any, fn func(any)) {
-	o := reflect.ValueOf(objPtr)
-	s.internal.load(slot, o, true, func() { fn(o.Elem().Interface()) })
+	od := s.internal
+	v := reflect.ValueOf(objPtr).Elem()
+	w := decodeForPublication(od.ds, od.ods, v, func(value reflect.Value) { fn(value.Interface()) }, true, loadSlot{v, od.field(slot)})
+	od.fields = od.fields.join(w)
 }
 
 // AfterLoad schedules a function execution when all objects have been
