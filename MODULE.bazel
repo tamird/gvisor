@@ -34,6 +34,14 @@ bazel_dep(name = "cel-spec", version = "0.25.1")
 governance = use_extension("//governance/tools/maintainers:repositories.bzl", "governance")
 use_repo(governance, "governance_areas")
 
+# Test the merged backend defaults until they are available in the registry.
+archive_override(
+    module_name = "llvm",
+    integrity = "sha256-0jY4Xc0tIRFX1/MjTny70DUvMMAvOLM0jaCaCa2X1wA=",
+    strip_prefix = "hermetic-llvm-17f6a300884d73de0b903316f85c420c45471268",
+    urls = ["https://github.com/hermeticbuild/hermetic-llvm/archive/17f6a300884d73de0b903316f85c420c45471268.tar.gz"],
+)
+
 single_version_override(
     module_name = "rules_go",
     patch_strip = 1,

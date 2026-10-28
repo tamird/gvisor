@@ -1116,10 +1116,10 @@
   sha256: 7ab5feffbf78557f626f2e3e3204788528394494715a30fc2070fcddc2051b7b
   license: BSD-2-Clause
 - dependency: llvm
-  version: https://github.com/hermeticbuild/hermetic-llvm/releases/download/v0.8.24/hermetic-llvm-v0.8.24.tar.gz
-  retrieved: "2026-10-02"
-  commit: 39e71f9391895169b05ccd62cbb1956ae5322ff3
-  sha256: 64d421959bba30cb3bcdd1e57a01b8ef2f12b93db3d1ab4a34fe5f4d2ca78aa4
+  version: https://github.com/hermeticbuild/hermetic-llvm/archive/17f6a300884d73de0b903316f85c420c45471268.tar.gz
+  retrieved: "2026-10-28"
+  commit: 17f6a300884d73de0b903316f85c420c45471268
+  sha256: d236385dcd2d211157d7f3234e7cbbd0352f30c02f38b3348da09a09ad97d700
   license: MIT
 - dependency: llvm-project
   version: https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-23.1.2-r1/llvm-project-23.1.2.src.tar.zst
