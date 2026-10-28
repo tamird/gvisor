@@ -73,4 +73,28 @@ def inspect_pcap(data):
         a = acks[0]
         out.append(dict(sent=[lo,hi],sent_timestamp=f["timestamp"],ack=rel(a["ack"]),
                         blocks=[[rel(x),rel(y)] for x,y in a["sacks"]],ack_timestamp=a["timestamp"]))
-    return {"sha256":hashlib.sha256(data).hexdigest(),"bytes":len(data),"isn":syn["seq"],"ports":peer,"frames":out}
+    return {"sha256":hashlib.sha256(data).hexdigest(),"bytes":len(data),"isn":syn["seq"],"ports":list(peer),"frames":out}
+
+
+def isolate_flow(raw):
+    """Keep original records for the unique tuple carrying our eight test bytes."""
+    ends={b"\xd4\xc3\xb2\xa1":"<",b"\xa1\xb2\xc3\xd4":">",b"\x4d\x3c\xb2\xa1":"<",b"\xa1\xb2\x3c\x4d":">"}
+    endian=ends[raw[:4]]
+    assert len(raw)>=24 and struct.unpack_from(endian+"I",raw,20)[0]==1
+    records=[];payloads=set();i=24
+    while i<len(raw):
+        begin=i;assert i+16<=len(raw)
+        cap=struct.unpack_from(endian+"I",raw,i+8)[0];i+=16
+        assert i+cap<=len(raw)
+        f=raw[i:i+cap];i+=cap
+        if len(f)<54 or f[12:14]!=b"\x08\x00" or f[23]!=6:continue
+        tcp_start=14+(f[14]&15)*4
+        if tcp_start+20>len(f):continue
+        sp,dp=struct.unpack_from("!HH",f,tcp_start)
+        endpoint=((f[26:30],sp),(f[30:34],dp))
+        pay=tcp_start+(f[tcp_start+12]>>4)*4
+        if f[pay:14+struct.unpack_from("!H",f,16)[0]]==b"ijklmnop":payloads.add(endpoint)
+        records.append((endpoint,raw[begin:i]))
+    if len(payloads)!=1:raise ValueError("no unique controlled tuple")
+    [peer]=payloads
+    return raw[:24]+b"".join(record for ends,record in records if ends==peer or ends==peer[::-1])

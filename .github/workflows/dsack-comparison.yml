@@ -2,7 +2,7 @@ name: D-SACK receiver comparison
 
 "on":
   push:
-    branches: [qualification/dsack-above-gap-actions]
+    branches: [qualification/dsack-above-gap-gcc]
 
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
           root="$RUNNER_TEMP/dsack-comparison"
           mkdir -p "$root/task"
           cp .github/qualification/dsack/{request.json,plan.json,submit.py,wire.py,reconcile.py} "$root/task/"
-          cp .github/qualification/dsack/receipt.py "$root/"
+          cp .github/qualification/dsack/{receipt.py,header_gate.py} "$root/"
           cd "$root"
           src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
           for module in qualification_report.py unit_matrix.py; do
@@ -34,14 +34,21 @@ jobs:
           sha256sum --check <<'SUMS'
           0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
           209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
-          a090c325a644b7922d078425282d43f65a55a61bbfb191b9e0607028690fde9f  receipt.py
-          dafdd52f7a5ed982274ca89746392c6bfd85a1279752d60d50f80f0e3911e12e  task/request.json
-          eeb8d55e050fab7aceeb39420bfac118c79b9409a75276688da7621c26d990d2  task/plan.json
-          b676276131d8138f9a0a75c3c2ffdd3a873c89519d944e04869d8d9b1b0bc575  task/submit.py
-          233eda907928490dbc87592d93d78a14930f9eb0f6e89406c3316bc9d8a5c31f  task/wire.py
-          dec1a6b0bceb5d0db40d8adaf2ecfc451d85fa6df5585684d0aed69b0a13c25b  task/reconcile.py
+          e50cd93bad465bdefb3f039778337a28ce32c6af1ad8646f9c345b6225e6a79c  receipt.py
+          dcdd950f1466fe86818327397b02685ead033c1bc690d17137d3bf42f6286515  header_gate.py
+          051e5f82bfda129ded159b0584db17bb3d0450ab8a6b7f6a033018644c912a25  task/request.json
+          74e2da65b878c89d86f6a883c6ecc8dff8a6fa19104bc06a7b6dceeb8b0d2e98  task/plan.json
+          4c27d3c1d2bda87dbe064551f708238852c8657cc27b646efe8a530c43796ed6  task/submit.py
+          3b39e3f25b35967e409d0de1729f29288b32e83352ec84bf114ae3864818893b  task/wire.py
+          bde69b236354cfd775dcb8ec12aa7381a22815fd57b1b7885129a74bb7ed4a5f  task/reconcile.py
           SUMS
-      - name: Submit once and collect the original result
+      - name: Check the pinned coordinator compiler and all original missing headers
+        shell: python
+        run: |
+          import os, runpy
+          from pathlib import Path
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"])/"dsack-comparison"/"header_gate.py"), run_name="__main__")
+      - name: Submit the two unexecuted owners once and collect the original result
         shell: python
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}

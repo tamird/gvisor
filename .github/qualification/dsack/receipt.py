@@ -10,7 +10,7 @@ import sys
 
 
 SOURCE = "924c3e9f13ff3f7e7c888d3d70043076dfd7740e"
-REQUEST = "dafdd52f7a5ed982274ca89746392c6bfd85a1279752d60d50f80f0e3911e12e"
+REQUEST = "051e5f82bfda129ded159b0584db17bb3d0450ab8a6b7f6a033018644c912a25"
 OWNERS = ("//test/packetimpact/tests:tcp_rack_native_test", "//test/packetimpact/tests:tcp_rack_netstack_test")
 
 
@@ -56,12 +56,21 @@ def public_result(z):
         for field in ("xml", "log"):
             if row.get(field):
                 item[field] = {"sha256": digest(row[field]["sha256"]), "bytes": number(row[field]["bytes"])}
+        item["named_log"]=[m for m in row.get("named_log",[]) if m in ("PASS","FAIL","SKIP")]
+        item["recv_error_count"]=number(row.get("recv_error_count",0))
+        item["pcap_matches_producer"]=row.get("raw_pcap_matches_producer") is True
+        item["build_failures"]=[{"category":c if re.fullmatch(r"[a-zA-Z]{1,50}",c) else "UNKNOWN","code":code if re.fullmatch(r"[A-Z_0-9]{1,70}",code) else "UNKNOWN","message_sha256":digest(h)} for c,code,h in row.get("build_failures",[])][:4]
+        if row.get("original_pcap"):
+            item["original_pcap"]={"sha256":digest(row["original_pcap"]["sha256"]),"bytes":number(row["original_pcap"]["bytes"],8<<20)}
+            item["selected_single_payload_tuple"]=row.get("selected_wire") is True
+        if row.get("pcap_unparsed"):
+            item["pcap_unparsed"]={"sha256":digest(row["pcap_unparsed"]["sha256"]),"bytes":number(row["pcap_unparsed"]["bytes"])}
         if row.get("cases"):
             cases = row["cases"]
-            if len(cases) != 1 or cases[0].get("name") != "TestDSACKAboveGap":
-                raise ValueError("Unexpected XML cases")
-            tags = [e["tag"] for e in cases[0]["errors"]]
-            item["case"] = "TestDSACKAboveGap"
+            item["xml_case_count"]=number(len(cases),4096)
+            item["named_xml_cases"]=sum(c.get("name")=="TestDSACKAboveGap" for c in cases)
+            tags=[e["tag"] for c in cases for e in c["errors"]]
+            if item["named_xml_cases"]==1:item["case"]="TestDSACKAboveGap"
             item["failures"] = tags.count("failure") + tags.count("error")
             item["skipped"] = tags.count("skipped")
         if row.get("wire"):
@@ -96,6 +105,8 @@ def collect(key):
     public = {"source": SOURCE, "request": REQUEST, "stage": "submit"}
     rc = 1
     try:
+        gate=json.loads((root/"gcc-gate.json").read_bytes())
+        assert gate["status"]=="PASS" and gate["config"]=="sha256:7614139a81131983aa05e809ba1ca910c291cdb15021977e033800834fb76ce0" and len(gate["headers"])==13
         sender = runpy.run_path(str(task / "submit.py"))
         with redirect_stdout(SafeOutput()), redirect_stderr(SafeOutput()):
             rc = sender["main"](lambda _: key)
@@ -104,12 +115,16 @@ def collect(key):
         with redirect_stdout(SafeOutput()), redirect_stderr(SafeOutput()):
             runpy.run_path(str(task / "reconcile.py"))
         public = public_result(json.loads((task / "outcome.json").read_text()))
-    except BaseException:
-        rc = 1
+    except BaseException as exc:
+        rc=1
+        public["projection_error"]=type(exc).__name__
+        import traceback
+        public["projection_frames"]=[(Path(x.filename).name,x.lineno) for x in traceback.extract_tb(exc.__traceback__) if Path(x.filename).name in ("receipt.py","reconcile.py","wire.py","submit.py")]
     finally:
         key = None
         submission = task / "submission.json"
         if submission.is_file():
             public["invocation"] = str(UUID(json.loads(submission.read_text())["invocationId"]))
+        if (root/"gcc-gate.json").is_file():public["compiler"]=json.loads((root/"gcc-gate.json").read_text())
         (root / "verdict.json").write_text(json.dumps(public, indent=2) + "\n")
     raise SystemExit(rc)

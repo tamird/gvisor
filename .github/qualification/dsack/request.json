@@ -13,8 +13,12 @@
   "platform_properties": {
     "OSFamily": "linux",
     "Arch": "amd64",
-    "EstimatedFreeDiskBytes": "60GB"
+    "EstimatedFreeDiskBytes": "60GB",
+    "dockerUser": "root"
   },
   "timeout": "2700s",
-  "wait_until": "STARTED"
+  "wait_until": "STARTED",
+  "remote_headers": [
+    "x-buildbuddy-platform.container-image=docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
+  ]
 }
