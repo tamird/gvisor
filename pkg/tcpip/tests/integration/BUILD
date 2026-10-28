@@ -199,3 +199,19 @@ go_test(
         "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
     ],
 )
+
+go_test(
+    name = "synctest_tcp_test",
+    size = "small",
+    srcs = ["synctest_tcp_test.go"],
+    env = {"GOMAXPROCS": "1"},
+    deps = [
+        "//pkg/tcpip",
+        "//pkg/tcpip/header",
+        "//pkg/tcpip/link/channel",
+        "//pkg/tcpip/network/ipv4",
+        "//pkg/tcpip/stack",
+        "//pkg/tcpip/transport/tcp",
+        "//pkg/waiter",
+    ],
+)
