@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T15:41:47.016219+00:00",
+    "updatedAt": "2026-10-28T15:48:09.605364+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30685,18 +30685,14 @@
       "title": "Compare RACK timestamps across a clock wrap",
       "url": "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T15:25:38.203291+00:00",
-      "summary": "RACK compares a peer\u2019s echoed TCP timestamp with the time a segment was retransmitted. When the 32-bit counter wraps, stock RACK records a 5 ms RTT from an older echo and ignores a later echo that should produce a 5 ms sample. Use the existing serial-number comparison. All 45 TCP tests passed on each native architecture, and both owning Nogo checks passed for AMD64 and ARM64. This changes RTT attribution; the test does not measure throughput.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
-        "url": "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
-        "title": "Compare RACK timestamps across a clock wrap",
-        "summary": "RACK compares a peer\u2019s echoed TCP timestamp with the time a segment was retransmitted. When the 32-bit counter wraps, stock RACK records a 5 ms RTT from an older echo and ignores a later echo that should produce a 5 ms sample. Use the existing serial-number comparison. All 45 TCP tests passed on each native architecture, and both owning Nogo checks passed for AMD64 and ARM64. This changes RTT attribution; the test does not measure throughput.",
-        "body": "When the TCP timestamp clock wraps, RACK can mistake an ACK that echoes\nthe original transmission for evidence that the retransmission arrived.\nIt can also discard a valid RTT sample when the echoed timestamp is\nnewer but numerically smaller.\n\nCompare the echo and retransmission timestamps as TCP serial numbers,\nas the stack already does for incoming timestamps. Exercise both\ndirections with a manual clock: an older echo must leave the RTT\nunchanged, and a later echo must record the 5 ms sample.\n\n[Stock] failed both cases. The full TCP test passed all 45 cases on\n[AMD64] and [ARM64]. The TCP library and test [Nogo checks] passed for\nboth target architectures.\n\n[Stock]: https://app.buildbuddy.io/invocation/17351f03-a10c-4db3-8196-ea3e5b234a18\n[AMD64]: https://app.buildbuddy.io/invocation/0cd800e1-9d29-486c-8b47-4d17f522ec06\n[ARM64]: https://app.buildbuddy.io/invocation/816c7a92-d4c8-45dd-ad4e-d81b7e0354af\n[Nogo checks]: https://app.buildbuddy.io/invocation/efbc0549-8cf0-4ab6-936d-2e5543215283"
-      },
+      "status": "Published as #16600",
+      "updatedAt": "2026-10-28T15:48:09.605364+00:00",
+      "summary": "Published at the approved 2a7fbd97ab as #16600. RACK compares a peer\u2019s echoed TCP timestamp with the time a segment was retransmitted. When the 32-bit counter wraps, stock RACK records a 5 ms RTT from an older echo and ignores a later echo that should produce a 5 ms sample. Use the existing serial-number comparison. All 45 TCP tests passed on each native architecture, and both owning Nogo checks passed for AMD64 and ARM64. This changes RTT attribution; the test does not measure throughput.",
       "evidence": [
+        {
+          "label": "Published upstream PR #16600",
+          "url": "https://github.com/google/gvisor/pull/16600"
+        },
         {
           "label": "Fork: RACK comparison and both clock-wrap cases",
           "url": "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8"
@@ -30733,10 +30729,11 @@
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
-        "observedAt": "2026-10-28T15:25:38.203291+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Review the standalone RACK timestamp comparison and its two wraparound cases.",
+        "observedAt": "2026-10-28T15:48:09.605364+00:00",
+        "disposition": "Approved timestamp fix published as #16600",
+        "nextAction": "Follow upstream checks and maintainer review on #16600. No contributor decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16600",
           "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
           "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2",
@@ -30746,7 +30743,8 @@
           "https://app.buildbuddy.io/invocation/efbc0549-8cf0-4ab6-936d-2e5543215283",
           "https://app.buildbuddy.io/invocation/a826ae43-e48b-4604-ad07-7ac64424365b"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:eifel-ack-timestamps",
@@ -30757,18 +30755,14 @@
       "title": "Require a TCP timestamp echo for Eifel detection",
       "url": "https://github.com/tamird/gvisor/commit/978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T15:41:47.016219+00:00",
-      "summary": "After an RTO, the stock sender counted a timestamp-free ACK as evidence of spurious recovery. Both counters increased to one even though the post-ACK flag was clear. The fix requires negotiated timestamps and a timestamp option on this ACK. With the same partial ACK, both counters stayed zero without timestamps and reached one with a valid echo. The complete TCP SACK wire suite passed 31 cases each on native AMD64 and ARM64. This tests recovery detection, not throughput.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
-        "url": "https://github.com/tamird/gvisor/commit/978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
-        "title": "Require a TCP timestamp echo for Eifel detection",
-        "summary": "After an RTO, the stock sender counted a timestamp-free ACK as evidence of spurious recovery. Both counters increased to one even though the post-ACK flag was clear. The fix requires negotiated timestamps and a timestamp option on this ACK. With the same partial ACK, both counters stayed zero without timestamps and reached one with a valid echo. The complete TCP SACK wire suite passed 31 cases each on native AMD64 and ARM64. This tests recovery detection, not throughput.",
-        "body": "After a retransmission timeout, a peer that did not negotiate TCP\ntimestamps can send a cumulative ACK with no timestamp option. The\nsender compared the absent echo's zero value with its retransmission\ntimestamp and counted a spurious recovery.\n\nOnly run Eifel detection when the connection negotiated timestamps and\nthe ACK actually carries that option. Exercise the same tail loss probe,\ntimeout retransmission, and partial ACK on both kinds of connections.\nThe sender can identify a spurious recovery when the peer echoes the\noriginal transmission. Without a timestamp echo it has no such evidence.\n\nOn the [stock sender], both spurious-recovery counters incremented on\nthe no-timestamp ACK. The post-ACK flag was already clear. With the fix,\nboth counters stayed zero. The full wire suite passed all 31 cases on\n[AMD64] and [ARM64], and the TCP and wire-test [Nogo checks] passed for\nboth target architectures.\n\n[stock sender]: https://app.buildbuddy.io/invocation/3cc4f0dc-a289-4641-81b4-b8eb67b4d1e1\n[AMD64]: https://app.buildbuddy.io/invocation/f25416df-8db5-4c72-b3d1-add8f6b14dbd\n[ARM64]: https://app.buildbuddy.io/invocation/980dc920-88a5-4eb9-92c3-2055232218ba\n[Nogo checks]: https://app.buildbuddy.io/invocation/4a520250-7bf1-4288-b410-e1a1064e8e85"
-      },
+      "status": "Published as #16601",
+      "updatedAt": "2026-10-28T15:48:09.605364+00:00",
+      "summary": "Published at the approved 978bcdf025 as #16601. After an RTO, the stock sender counted a timestamp-free ACK as evidence of spurious recovery. Both counters increased to one even though the post-ACK flag was clear. The fix requires negotiated timestamps and a timestamp option on this ACK. With the same partial ACK, both counters stayed zero without timestamps and reached one with a valid echo. The complete TCP SACK wire suite passed 31 cases each on native AMD64 and ARM64. This tests recovery detection, not throughput.",
       "evidence": [
+        {
+          "label": "Published upstream PR #16601",
+          "url": "https://github.com/google/gvisor/pull/16601"
+        },
         {
           "label": "Fork: detect spurious recovery only with a timestamp echo",
           "url": "https://github.com/tamird/gvisor/commit/978bcdf025e2226dff0c3cbfb4554c2f0b9ea853"
@@ -30809,10 +30803,157 @@
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
-        "observedAt": "2026-10-28T15:41:47.016219+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Review the timestamp guard and the matched wire regression. The original verifier's extra flag expectation failed; the same original test reports establish the counter difference.",
+        "observedAt": "2026-10-28T15:48:09.605364+00:00",
+        "disposition": "Approved timestamp fix published as #16601",
+        "nextAction": "Follow upstream checks and maintainer review on #16601. No contributor decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16601",
+          "https://github.com/tamird/gvisor/commit/978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
+          "https://github.com/tamird/gvisor/commit/3fb5b0d352641c19d98719abc70dcd7fb291ef96",
+          "https://www.rfc-editor.org/rfc/rfc3522.html#section-3.2",
+          "https://app.buildbuddy.io/invocation/3cc4f0dc-a289-4641-81b4-b8eb67b4d1e1",
+          "https://app.buildbuddy.io/invocation/f25416df-8db5-4c72-b3d1-add8f6b14dbd",
+          "https://app.buildbuddy.io/invocation/980dc920-88a5-4eb9-92c3-2055232218ba",
+          "https://app.buildbuddy.io/invocation/4a520250-7bf1-4288-b410-e1a1064e8e85",
+          "https://app.buildbuddy.io/invocation/63be4163-22da-46bb-b7d5-800730876d82"
+        ]
+      },
+      "inactive": true
+    },
+    {
+      "id": "pr:16600",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16600,
+      "ref": "review/rack-timestamp-wrap",
+      "head": "2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+      "title": "Compare RACK timestamps across a clock wrap",
+      "url": "https://github.com/google/gvisor/pull/16600",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-28T15:48:09.605364+00:00",
+      "summary": "RACK compares a peer\u2019s echoed TCP timestamp with the time a segment was retransmitted. When the 32-bit counter wraps, stock RACK records a 5 ms RTT from an older echo and ignores a later echo that should produce a 5 ms sample. Use the existing serial-number comparison. All 45 TCP tests passed on each native architecture, and both owning Nogo checks passed for AMD64 and ARM64. This changes RTT attribution; the test does not measure throughput.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #16600",
+          "url": "https://github.com/google/gvisor/pull/16600"
+        },
+        {
+          "label": "Fork: RACK comparison and both clock-wrap cases",
+          "url": "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8"
+        },
+        {
+          "label": "Compare with the upstream parent",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...2a7fbd97ab07a3df881e6e20b9613a3b613796c8"
+        },
+        {
+          "label": "RFC 8985 \u00a76.2: ACKs of retransmitted data",
+          "url": "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2"
+        },
+        {
+          "label": "Stock AMD64: both wrap cases fail",
+          "url": "https://app.buildbuddy.io/invocation/17351f03-a10c-4db3-8196-ea3e5b234a18"
+        },
+        {
+          "label": "Corrected native AMD64: 45 passed",
+          "url": "https://app.buildbuddy.io/invocation/0cd800e1-9d29-486c-8b47-4d17f522ec06"
+        },
+        {
+          "label": "Corrected native ARM64: 45 passed",
+          "url": "https://app.buildbuddy.io/invocation/816c7a92-d4c8-45dd-ad4e-d81b7e0354af"
+        },
+        {
+          "label": "TCP and test Nogo: both target architectures passed",
+          "url": "https://app.buildbuddy.io/invocation/efbc0549-8cf0-4ab6-936d-2e5543215283"
+        },
+        {
+          "label": "Original paired run: FAIL on the stock cases",
+          "url": "https://app.buildbuddy.io/invocation/a826ae43-e48b-4604-ad07-7ac64424365b"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+        "observedAt": "2026-10-28T15:48:09.605364+00:00",
+        "disposition": "Approved timestamp fix published as #16600",
+        "nextAction": "Follow upstream checks and maintainer review on #16600. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16600",
+          "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+          "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2",
+          "https://app.buildbuddy.io/invocation/17351f03-a10c-4db3-8196-ea3e5b234a18",
+          "https://app.buildbuddy.io/invocation/0cd800e1-9d29-486c-8b47-4d17f522ec06",
+          "https://app.buildbuddy.io/invocation/816c7a92-d4c8-45dd-ad4e-d81b7e0354af",
+          "https://app.buildbuddy.io/invocation/efbc0549-8cf0-4ab6-936d-2e5543215283",
+          "https://app.buildbuddy.io/invocation/a826ae43-e48b-4604-ad07-7ac64424365b"
+        ]
+      }
+    },
+    {
+      "id": "pr:16601",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16601,
+      "ref": "review/eifel-ack-timestamps",
+      "head": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
+      "title": "Require a TCP timestamp echo for Eifel detection",
+      "url": "https://github.com/google/gvisor/pull/16601",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-28T15:48:09.605364+00:00",
+      "summary": "After an RTO, the stock sender counted a timestamp-free ACK as evidence of spurious recovery. Both counters increased to one even though the post-ACK flag was clear. The fix requires negotiated timestamps and a timestamp option on this ACK. With the same partial ACK, both counters stayed zero without timestamps and reached one with a valid echo. The complete TCP SACK wire suite passed 31 cases each on native AMD64 and ARM64. This tests recovery detection, not throughput.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #16601",
+          "url": "https://github.com/google/gvisor/pull/16601"
+        },
+        {
+          "label": "Fork: detect spurious recovery only with a timestamp echo",
+          "url": "https://github.com/tamird/gvisor/commit/978bcdf025e2226dff0c3cbfb4554c2f0b9ea853"
+        },
+        {
+          "label": "Compare with the common upstream parent",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...978bcdf025e2226dff0c3cbfb4554c2f0b9ea853"
+        },
+        {
+          "label": "Test-only control: identical wire fixture",
+          "url": "https://github.com/tamird/gvisor/commit/3fb5b0d352641c19d98719abc70dcd7fb291ef96"
+        },
+        {
+          "label": "RFC 3522 \u00a73.2: compare the echoed timestamp",
+          "url": "https://www.rfc-editor.org/rfc/rfc3522.html#section-3.2"
+        },
+        {
+          "label": "Stock AMD64: both counters incremented without timestamps",
+          "url": "https://app.buildbuddy.io/invocation/3cc4f0dc-a289-4641-81b4-b8eb67b4d1e1"
+        },
+        {
+          "label": "Corrected native AMD64: 31 passed",
+          "url": "https://app.buildbuddy.io/invocation/f25416df-8db5-4c72-b3d1-add8f6b14dbd"
+        },
+        {
+          "label": "Corrected native ARM64: 31 passed",
+          "url": "https://app.buildbuddy.io/invocation/980dc920-88a5-4eb9-92c3-2055232218ba"
+        },
+        {
+          "label": "Library and wire-test Nogo: AMD64 and ARM64 passed",
+          "url": "https://app.buildbuddy.io/invocation/4a520250-7bf1-4288-b410-e1a1064e8e85"
+        },
+        {
+          "label": "Original comparison FAIL: stock counters differed, but the verifier also expected the post-ACK flag to differ",
+          "url": "https://app.buildbuddy.io/invocation/63be4163-22da-46bb-b7d5-800730876d82"
+        }
+      ],
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
+        "observedAt": "2026-10-28T15:48:09.605364+00:00",
+        "disposition": "Approved timestamp fix published as #16601",
+        "nextAction": "Follow upstream checks and maintainer review on #16601. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16601",
           "https://github.com/tamird/gvisor/commit/978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
           "https://github.com/tamird/gvisor/commit/3fb5b0d352641c19d98719abc70dcd7fb291ef96",
