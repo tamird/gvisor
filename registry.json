@@ -31766,9 +31766,9 @@
       "title": "Keep an epoll watch intact when MOD fails",
       "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-28T22:38:25Z",
-      "summary": "Preserve the original epoll watch when a replacement registration fails. Same-mask changes reuse the active registration. The three stock regressions reproduced, the corrected FUSE fixture and all 44 normal/race VFS cases passed, and checkpoint restore passed.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-28T22:45:37Z",
+      "summary": "Contributor requested machine-checked lock ownership on the replacement registration. The existing Go analyzer supports any-one guard for reads and both guards for writes. Working on the annotation, guarded calls and negative check; source, race, checkpoint and Linux evidence for prior head are preserved.",
       "evidence": [
         {
           "label": "Proposed fix",
@@ -31791,14 +31791,9 @@
           "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "contributorChangesRequested": {
         "head": "8c01e8c21b1601a43baf966daa0f511d08e137db",
-        "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db",
-        "title": "Keep an epoll watch intact when MOD fails",
-        "summary": "Preserve the original epoll watch when a replacement registration fails. Same-mask changes reuse the active registration. The three stock regressions reproduced, the corrected FUSE fixture and all 44 normal/race VFS cases passed, and checkpoint restore passed.",
-        "body": "Keep an epoll watch intact when MOD fails\n\nIf a file cannot register the events requested by EPOLL_CTL_MOD, the\ncaller receives an error but the existing watch has already lost its\nwaiter. A pending event can also carry the rejected user data, and a\nfailed MOD can rearm a one-shot watch.\n\nRegister the new wait mask before retiring the old one. Deliver\nnotifications only from the active registration, then recheck readiness\nwith the new mask. When only the data or flags change, reuse the\nexisting waiter. Host-backed files use the wait queue to choose the\nLinux epoll mask; registering all events would subscribe an IN-only\nwatch to EPOLLOUT too.\n\nDepends on #16513 for the shared registration-failure test fixture.\n\nThe [stock comparison](https://app.buildbuddy.io/invocation/83329566-0448-4561-8b33-6ee433c9f811)\nreproduced all three failed-MOD cases. The corrected VFS suite passed\n[normally](https://app.buildbuddy.io/invocation/ac07cca3-cb19-4448-908a-4d9b49e1e0f9)\nand [under the race detector](https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084).\nChanging the waiter mask takes one allocation per call; changing only\nthe user data takes none."
+        "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db"
       }
     }
   ],
