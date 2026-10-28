@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T17:43:12.599+00:00",
+    "updatedAt": "2026-10-28T18:00:32.729+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34282,9 +34282,22 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-28T17:23:06.439+00:00",
+      "updatedAt": "2026-10-28T18:00:32.729+00:00",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
+        {
+          "text": "After dropping the second of five 1,420-byte segments, the virtual link recorded three acknowledgments with growing SACK blocks. Reno and CUBIC each retransmitted just the missing segment after 20 ms, before the 200 ms retransmission timer. The receiver delivered all 7,100 bytes exactly once; each sender counted one fast retransmit, one SACK recovery and zero timeouts. All eight runs (two algorithms, one or two processors, two trials) reproduced the same 14 packets. During recovery Reno\u2019s window fell from 10 segments to 5; CUBIC\u2019s stayed at 10 at that sample. This measures a single connection recovering from one loss. The trace does not establish a throughput advantage or distinguish the effect of the SACK information from that of duplicate ACKs.",
+          "evidence": [
+            {
+              "label": "Original packet traces and TCP counters",
+              "url": "https://app.buildbuddy.io/invocation/035b55c3-f381-4e12-9910-15554353cbbf"
+            },
+            {
+              "label": "Two-stack link, deliberate loss and assertions",
+              "url": "https://github.com/tamird/gvisor/blob/b46dbae69885543f7ade562a05e4f25c445f9e37/pkg/tcpip/tests/integration/synctest_link_test.go"
+            }
+          ]
+        },
         {
           "text": "Two real gVisor TCP stacks reproduced the same packet schedule for one connection over a link with a 10 ms delay each way. The client sent 33 bytes at virtual time 30 ms. With no loss, the server acknowledged them at 40 ms; the sender recorded no timeout or retransmission. When the fixture dropped that segment, no packet or data appeared one nanosecond before the 200 ms timeout. At 230 ms the sender retransmitted the same sequence and payload; at 240 ms the server acknowledged all 33 bytes. The sender counted one timeout and one retransmission, and the receiver read the data only once. Both modes produced identical TCP headers, payloads and times across two trials each at GOMAXPROCS=1 and 2. The fixture pauses dispatchers and checks each expected packet before advancing time. This covers a single flow with tail-loss probes disabled; it does not establish that several flows drain in a deterministic order. An earlier fixture sent an already-parsed buffer to the receiver and stopped before the handshake completed.",
           "evidence": [
@@ -45715,7 +45728,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T16:21:00.860349+00:00",
+      "updatedAt": "2026-10-28T18:00:32.729+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -45741,7 +45754,7 @@
           ]
         }
       ],
-      "nextStep": "The pipe cursor annotations are ready for contributor review. Follow #16505 and keep the VFS initialization discussion in #14343 separate.",
+      "nextStep": "Qualify the advisory file-lock registration change on the existing blocking and interrupted requests. The pipe cursor annotations are open as #16606. Follow #16505 and keep VFS initialization in #14343 separate.",
       "evidence": [
         {
           "label": "Verified epoll registration contract",
