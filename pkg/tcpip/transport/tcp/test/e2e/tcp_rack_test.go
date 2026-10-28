@@ -1393,6 +1393,112 @@ func TestRACKWithWindowFull(t *testing.T) {
 	c.CheckNoPacket("unexpected packet received after userTimeout has expired")
 }
 
+func TestSACKRepairRTO(t *testing.T) {
+	for _, late := range []bool{false, true} {
+		name := "ack_before_old_deadline"
+		if late {
+			name = "ack_after_old_deadline"
+		}
+		t.Run(name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: clock})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			// Use duplicate SACKs to trigger the repair; no TLP or RACK timers.
+			e2e.SetStackTCPRecovery(t, c, 0)
+			peer := e2e.CreateConnectedWithSACKPermittedOption(c)
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var v tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&v); err != nil {
+					t.Fatalf("TCP_INFO: %v", err)
+				}
+				return v
+			}
+			ack := func(n int, blocks ...header.SACKBlock) {
+				c.SendAckWithSACK(peer.NextSeqNum, n, blocks)
+				c.Stack().Pause()
+				c.Stack().Resume()
+			}
+			mss := int(info().SndMss)
+			data := make([]byte, 5*mss)
+			for i := range data {
+				data[i] = byte(i / mss)
+			}
+			if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+				t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+			}
+			for i := 0; i < len(data); i += mss {
+				c.ReceiveAndCheckPacket(data, i, mss)
+			}
+			coverAll := func() {
+				t.Helper()
+				ack(len(data))
+				if state := info().CcState; state != tcpip.Open {
+					t.Fatalf("after covering ACK: state=%v, want Open", state)
+				}
+			}
+
+			// ACK packet 1. Half an RTO later, report packets 3, 4, and 5,
+			// leaving only packet 2 missing. All times are relative to this ACK.
+			clock.Advance(100 * time.Millisecond)
+			ack(mss)
+			rto := info().RTO
+			repair := rto / 2
+			clock.Advance(repair)
+			start := peer.AckNum.Add(seqnum.Size(2 * mss))
+			for i := 1; i <= 3; i++ {
+				ack(mss, header.SACKBlock{Start: start, End: start.Add(seqnum.Size(i * mss))})
+			}
+			c.ReceiveAndCheckPacket(data, mss, mss)
+			stats := c.Stack().Stats().TCP
+			if s := info(); s.CcState != tcpip.SACKRecovery || s.RTO != rto || stats.FastRetransmit.Value() != 1 || stats.Timeouts.Value() != 0 {
+				t.Fatalf("repair: state=%v RTO=%s (was %s) fast=%d timeouts=%d", s.CcState, s.RTO, rto, stats.FastRetransmit.Value(), stats.Timeouts.Value())
+			}
+
+			// The covering ACK is the only input that differs. Both choices
+			// arrive less than one RTO after the successful repair.
+			cover := repair + rto/4
+			if late {
+				cover = rto + rto/4
+			}
+			if !late {
+				clock.Advance(cover - repair)
+				coverAll()
+				clock.Advance(rto - cover - time.Nanosecond)
+			} else {
+				clock.Advance(rto - repair - time.Nanosecond)
+			}
+			if n := stats.Timeouts.Value(); n != 0 {
+				t.Fatalf("before old deadline: timeouts=%d, want 0", n)
+			}
+			clock.Advance(time.Nanosecond)
+			c.Stack().Pause()
+			c.Stack().Resume()
+			n := stats.Timeouts.Value()
+			state := info().CcState
+			if n != 0 {
+				if n != 1 || state != tcpip.RTORecovery {
+					t.Fatalf("at old deadline: timeouts=%d state=%v, want one RTO recovery", n, state)
+				}
+				c.ReceiveAndCheckPacket(data, mss, mss)
+			}
+			if late {
+				clock.Advance(cover - rto)
+				coverAll()
+			}
+			clock.Advance(2 * rto)
+			t.Logf("TIMER rto_ns=%d repair_ns=%d cover_ns=%d old_deadline_ns=%d timeout_count=%d final_count=%d mss=%d", rto.Nanoseconds(), repair.Nanoseconds(), cover.Nanoseconds(), rto.Nanoseconds(), n, stats.Timeouts.Value(), mss)
+			if n != 0 {
+				t.Errorf("RTO resent the repaired segment %s after its previous transmission; RTO was %s", rto-repair, rto)
+			}
+			if got := stats.Timeouts.Value(); got != n {
+				t.Errorf("after covering ACK: timeouts=%d, want %d", got, n)
+			}
+		})
+	}
+}
+
 func TestMain(m *testing.M) {
 	refs.SetLeakMode(refs.LeaksPanic)
 	code := m.Run()
