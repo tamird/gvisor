@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T02:20:33.505296+00:00",
+    "updatedAt": "2026-10-28T02:29:44.806571+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21882,20 +21882,23 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/portforward-stock-images",
-      "head": "97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
+      "head": "149bb94456e2889ffa2e72ef44acd03fe5ac3215",
       "title": "Use official Nginx and Redis images in port-forward tests",
-      "url": "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
+      "url": "https://github.com/google/gvisor/pull/16551",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16250",
-      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "The contributor approved exact combined port-forward stock-image proposal 97c92ed7353dc4c304c7682c8b2a33453e8ea82a for automatic upstream opening after #16250 and #16379 land. No contributor decision remains pending. The tests use the official Nginx and Redis images unchanged: their existing clients wait for HTTP 200 and PONG, eliminating net-tools installation. This replaces the two separate basic-image proposals while preserving their links, range-diffs and source-specific evidence below. The shared mirror prerequisite #16379 has landed through #16430. Only #16250 remains open; its old import #16321 closed unmerged. No upstream PR has been opened for the combined source.\n\nAll eight AMD64/ARM64 archive and Make-context artifacts were built from combined source 97c92ed7353d in invocation caea451c and were byte-identical to the independent builds. Four selected runtime cases also passed in the original 94558fe7 run, but that run remains FAIL/producer INCOMPLETE because the required-case manifest used unqualified names. A separate retained-only recovery uses the exact configured Go helper and canonical reporter; it reproduces all four original misses and then verifies four classname/name positives from the same authenticated CAS outputs. The recovery did not rerun the runtime cases. Canonical license Verify on the exact combined source passed for all 200 source entries without changing the catalog or policy. That catalog does not enumerate OCI image pulls, so it is not a new catalog audit of the upstream image contents. Delivery now requires only the actual landing of #16250.\n\nCompare the earlier proposals with the combined source:\nNginx: git -C ~/code/gvisor range-diff --creation-factor=999 0d29bd346^! 97c92ed735^!\nRedis: git -C ~/code/gvisor range-diff --creation-factor=999 e3f204357^! 97c92ed735^!\n\nEarlier Nginx proposal and validation:\n\nThe fork-only mirror amendment is 0d29bd34650d, replacing proposal source e2b318ab2eec. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. That prerequisite is now satisfied by #16430.\n\nHistorical proposal and validation:\n\nThe contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.\n\nEarlier Redis proposal and validation:\n\nThe fork-only mirror amendment is e3f204357353, replacing proposal source d16b540dc2e9. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. That prerequisite is now satisfied by #16430.\n\nHistorical proposal and validation:\n\nThe contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
+      "status": "Delivered as PR #16551",
+      "updatedAt": "2026-10-28T02:29:44.806571+00:00",
+      "summary": "Upstream PR #16551 uses the official Nginx and Redis images unchanged. The port-forward tests use their existing clients to wait for HTTP 200 or Redis PONG, eliminating the net-tools installation. The approved change is open at 149bb94456e2 on 05154faacf50, where #16250 landed through #16527. The shared mirror prerequisite had already landed through #16430. The executable changes match the previously qualified proposal at 97c92ed7353d; an independent peer checked that comparison. No runtime tests were rerun for the delivery.\n\nAll eight AMD64/ARM64 archive and Make-context artifacts were built from combined source 97c92ed7353d in invocation caea451c and were byte-identical to the independent builds. Four selected runtime cases also passed in the original 94558fe7 run, but that run remains FAIL/producer INCOMPLETE because the required-case manifest used unqualified names. A separate retained-only recovery uses the exact configured Go helper and canonical reporter; it reproduces all four original misses and then verifies four classname/name positives from the same authenticated CAS outputs. The recovery did not rerun the runtime cases. Canonical license Verify on the exact combined source passed for all 200 source entries without changing the catalog or policy. That catalog does not enumerate OCI image pulls, so it is not a new catalog audit of the upstream image contents.\n\nCompare the earlier proposals with the combined source:\nNginx: git -C ~/code/gvisor range-diff --creation-factor=999 0d29bd346^! 97c92ed735^!\nRedis: git -C ~/code/gvisor range-diff --creation-factor=999 e3f204357^! 97c92ed735^!\n\nEarlier Nginx proposal and validation:\n\nThe fork-only mirror amendment is 0d29bd34650d, replacing proposal source e2b318ab2eec. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. That prerequisite is now satisfied by #16430.\n\nHistorical proposal and validation:\n\nThe contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.\n\nEarlier Redis proposal and validation:\n\nThe fork-only mirror amendment is e3f204357353, replacing proposal source d16b540dc2e9. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. That prerequisite is now satisfied by #16430.\n\nHistorical proposal and validation:\n\nThe contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
       "followup": {
         "owner": "root",
-        "sourceHead": "97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
-        "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; #16250 is the remaining prerequisite",
-        "nextAction": "Open the approved combined proposal after #16250 lands. The shared mirror gate is satisfied through #16430. Preserve original runtime FAIL/INCOMPLETE alongside the separate retained canonical PASS; do not repeat the contributor question.",
+        "sourceHead": "149bb94456e2889ffa2e72ef44acd03fe5ac3215",
+        "observedAt": "2026-10-28T02:29:44.806571+00:00",
+        "disposition": "Approved combined change delivered as #16551",
+        "nextAction": "Follow review, CI and import on #16551. The earlier runtime receipt remains attached to its qualified source.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16551",
+          "https://github.com/google/gvisor/commit/05154faacf50471f5e5bdfd19de09ae6f983ddf1",
+          "https://github.com/google/gvisor/pull/16527",
           "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
           "https://app.buildbuddy.io/invocation/94558fe7-29bb-4541-802f-26229e15ef94",
           "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850",
@@ -21947,6 +21950,22 @@
       ],
       "evidence": [
         {
+          "label": "Open upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16551"
+        },
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/149bb94456e2889ffa2e72ef44acd03fe5ac3215"
+        },
+        {
+          "label": "Compare the previously qualified and published revisions",
+          "url": "https://github.com/tamird/gvisor/compare/97c92ed7353dc4c304c7682c8b2a33453e8ea82a..149bb94456e2889ffa2e72ef44acd03fe5ac3215"
+        },
+        {
+          "label": "Prerequisite #16250 landed through this import",
+          "url": "https://github.com/google/gvisor/pull/16527"
+        },
+        {
           "label": "Exact combined source: canonical Verify passed for 200 source entries",
           "url": "https://app.buildbuddy.io/invocation/50d20319-56f5-4dcf-8808-762d6c4dc61c"
         },
@@ -21959,7 +21978,7 @@
           "url": "https://app.buildbuddy.io/invocation/caea451c-40ef-49b4-9c83-493c741629ba"
         },
         {
-          "label": "Exact combined source under agent validation",
+          "label": "Previously qualified combined source",
           "url": "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
         },
         {
@@ -21970,7 +21989,16 @@
           "label": "Remote configured-case lookup; audit command failure preserved",
           "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
-      ]
+      ],
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        },
+        "after": {
+          "head": "149bb94456e2889ffa2e72ef44acd03fe5ac3215"
+        }
+      }
     },
     {
       "id": "pr:16250",
@@ -22698,16 +22726,17 @@
       "title": "Use the pinned official Redis image for benchmarks",
       "url": "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
       "group": "bazel",
-      "status": "Contributor approved; waiting for combined basic-image proposal",
-      "updatedAt": "2026-10-25T20:03:08.024980+00:00",
-      "summary": "The existing benchmark approval remains recorded. Its basic Redis declaration is now owned by the combined official Nginx/Redis proposal 97c92ed7353d, currently in contributor review and gated by #16250 and #16379. No repeated benchmark contributor decision is needed.\n\nHistorical prerequisite and qualification:\n\nThe contributor approved exact 2b507a7bac for delivery after basic Redis d16b540dc2 after #16097. Deliver after the approved basic Redis prerequisite lands; basic Redis itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image uses the existing pinned Redis 7.0.12 declaration and adds both architecture archives and Make contexts. It removes the one-line Dockerfile without changing Go consumers, Redis binaries or runtime configuration. Native validation passed nine phases, both CPU image/context identities and one uncached AMD64 benchmark owner with SET, LPUSH and LRANGE_100 at 10,000 iterations each. All three raw rows carry eight metrics; cleanup passed. The two image configurations match the qualified basic image, with six upstream layers and no appended layer. This is functional benchmark coverage, not a measured migration speedup or ARM runtime result. The benchmark proposal has its own contributor decision; the existing basic Redis approval remains unchanged.",
+      "status": "Contributor approved; waiting for #16551 to land",
+      "updatedAt": "2026-10-28T02:29:44.806571+00:00",
+      "summary": "The contributor approved this benchmark change. It reuses the basic Redis image declaration now under review in #16551 and can be delivered after that PR lands.\n\nHistorical prerequisite and qualification:\n\nThe contributor approved exact 2b507a7bac for delivery after basic Redis d16b540dc2 after #16097. Deliver after the approved basic Redis prerequisite lands; basic Redis itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image uses the existing pinned Redis 7.0.12 declaration and adds both architecture archives and Make contexts. It removes the one-line Dockerfile without changing Go consumers, Redis binaries or runtime configuration. Native validation passed nine phases, both CPU image/context identities and one uncached AMD64 benchmark owner with SET, LPUSH and LRANGE_100 at 10,000 iterations each. All three raw rows carry eight metrics; cleanup passed. The two image configurations match the qualified basic image, with six upstream layers and no appended layer. This is functional benchmark coverage, not a measured migration speedup or ARM runtime result. The benchmark proposal has its own contributor decision; the existing basic Redis approval remains unchanged.",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
-        "observedAt": "2026-10-25T19:59:37.513818+00:00",
-        "disposition": "Contributor approved; waiting for combined basic-image proposal",
-        "nextAction": "Deliver after the combined basic Redis declaration lands; follow its validation, contributor decision and #16250/#16379 gates. Preserve this benchmark grant and historical runtime evidence.",
+        "observedAt": "2026-10-28T02:29:44.806571+00:00",
+        "disposition": "Contributor approved; waiting for #16551 to land",
+        "nextAction": "Deliver the approved benchmark change after the basic Redis declaration in #16551 lands.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16551",
           "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
           "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
           "https://app.buildbuddy.io/invocation/e30ef608-ff4c-441f-834a-a8dcf2cfd512"
@@ -28830,6 +28859,120 @@
           "url": "https://app.buildbuddy.io/invocation/fef76221-1149-4f30-be7b-a46532518fdd"
         }
       ]
+    },
+    {
+      "id": "pr:16551",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16551,
+      "ref": "review/portforward-stock-images",
+      "title": "Use the official server images in port-forward tests",
+      "group": "bazel",
+      "url": "https://github.com/google/gvisor/pull/16551",
+      "head": "149bb94456e2889ffa2e72ef44acd03fe5ac3215",
+      "status": "open",
+      "updatedAt": "2026-10-28T02:29:44.806571+00:00",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "149bb94456e2889ffa2e72ef44acd03fe5ac3215",
+        "observedAt": "2026-10-28T02:29:44.806571+00:00",
+        "disposition": "Approved combined change delivered as #16551",
+        "nextAction": "Follow review, CI and import on #16551. The earlier runtime receipt remains attached to its qualified source.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16551",
+          "https://github.com/google/gvisor/commit/05154faacf50471f5e5bdfd19de09ae6f983ddf1",
+          "https://github.com/google/gvisor/pull/16527",
+          "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
+          "https://app.buildbuddy.io/invocation/94558fe7-29bb-4541-802f-26229e15ef94",
+          "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850",
+          "https://app.buildbuddy.io/invocation/50d20319-56f5-4dcf-8808-762d6c4dc61c",
+          "https://github.com/google/gvisor/pull/16430"
+        ]
+      },
+      "links": [
+        {
+          "label": "Historical Nginx proposal",
+          "url": "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
+        },
+        {
+          "label": "Historical: Existing image-version PR and separate grant",
+          "url": "https://github.com/google/gvisor/pull/16058"
+        },
+        {
+          "label": "Historical: Shared source utilities prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+        },
+        {
+          "label": "Historical: Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/e2b318ab2eec75d29ab9b91ef242c43bf9804163...0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
+        },
+        {
+          "label": "Historical: Approved maintained-upstream revision",
+          "url": "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163"
+        },
+        {
+          "label": "Historical: Qualified image layers and existing consumers",
+          "url": "https://app.buildbuddy.io/invocation/7822d280-5261-49ce-b613-d898095a447d"
+        },
+        {
+          "label": "Historical Redis proposal",
+          "url": "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21"
+        },
+        {
+          "label": "Historical: Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/d16b540dc2e98d32f818df666c651e7cecc169b2...e3f204357353f305f932098b7651591f8c242a21"
+        },
+        {
+          "label": "Nginx previous proposal to combined source",
+          "url": "https://github.com/tamird/gvisor/compare/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6..97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        },
+        {
+          "label": "Redis previous proposal to combined source",
+          "url": "https://github.com/tamird/gvisor/compare/e3f204357353f305f932098b7651591f8c242a21..97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Open upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16551"
+        },
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/149bb94456e2889ffa2e72ef44acd03fe5ac3215"
+        },
+        {
+          "label": "Compare the previously qualified and published revisions",
+          "url": "https://github.com/tamird/gvisor/compare/97c92ed7353dc4c304c7682c8b2a33453e8ea82a..149bb94456e2889ffa2e72ef44acd03fe5ac3215"
+        },
+        {
+          "label": "Prerequisite #16250 landed through this import",
+          "url": "https://github.com/google/gvisor/pull/16527"
+        },
+        {
+          "label": "Exact combined source: canonical Verify passed for 200 source entries",
+          "url": "https://app.buildbuddy.io/invocation/50d20319-56f5-4dcf-8808-762d6c4dc61c"
+        },
+        {
+          "label": "Complete combined change on the composed prerequisites",
+          "url": "https://github.com/tamird/gvisor/compare/0928e1b2d818db7372038896ea78e10b336bcc67...97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        },
+        {
+          "label": "Combined source: eight archive/context outputs passed",
+          "url": "https://app.buildbuddy.io/invocation/caea451c-40ef-49b4-9c83-493c741629ba"
+        },
+        {
+          "label": "Previously qualified combined source",
+          "url": "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        },
+        {
+          "label": "Original four positive runtime records; incomplete manifest preserved",
+          "url": "https://app.buildbuddy.io/invocation/94558fe7-29bb-4541-802f-26229e15ef94"
+        },
+        {
+          "label": "Remote configured-case lookup; audit command failure preserved",
+          "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
+        }
+      ]
     }
   ],
   "edges": [
@@ -31170,8 +31313,9 @@
       "from": "branch:portforward-stock-images",
       "to": "branch:rules-img-redis-benchmark-upstream",
       "type": "depends_on",
-      "reason": "Reuses the basic Redis image declaration now owned by the combined official-image proposal; preserve the separate benchmark approval and its historical evidence.",
+      "reason": "The benchmark reuses the basic Redis image declaration submitted in #16551. Its separate contributor approval and earlier runtime evidence are unchanged.",
       "evidence": [
+        "https://github.com/google/gvisor/pull/16551",
         "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
         "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
       ]
@@ -31575,8 +31719,12 @@
       "from": "pr:16250",
       "to": "branch:portforward-stock-images",
       "type": "depends_on",
-      "reason": "The combined proposal requires this actual prerequisite landing before upstream opening.",
-      "evidence": "https://github.com/google/gvisor/pull/16250"
+      "reason": "Satisfied: #16250 and its import #16527 merged at 05154faacf50, the base of #16551.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16250",
+        "https://github.com/google/gvisor/pull/16527",
+        "https://github.com/google/gvisor/commit/05154faacf50471f5e5bdfd19de09ae6f983ddf1"
+      ]
     },
     {
       "from": "pr:16379",
@@ -31784,6 +31932,13 @@
       "reason": "Keep the tested follow-up independent of the approved PR and its active Copybara import.",
       "evidence": "https://github.com/google/gvisor/pull/16546",
       "from": "pr:16493"
+    },
+    {
+      "from": "branch:portforward-stock-images",
+      "to": "pr:16551",
+      "type": "includes",
+      "reason": "The approved combined proposal was submitted as #16551. Its earlier source-specific qualification remains on the proposal record.",
+      "evidence": "https://github.com/google/gvisor/pull/16551"
     }
   ],
   "investigations": [
