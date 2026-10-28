@@ -46148,9 +46148,55 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T22:22:17Z",
+      "updatedAt": "2026-10-28T23:02:45Z",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The pause image passed a filesystem inventory but had ENTRYPOINT /pause on AMD64 and ARM64. BuildBuddy\u2019s OCI runner prepends that entrypoint to the requested action. The first control was cancelled and retained a failed verdict with no executed row. The replacement is a digest-pinned hello-world image: both Linux roots contain only /hello and have no ENTRYPOINT. Its default CMD does not override Bazel\u2019s executable. The replacement executed the CopyFile action remotely with no cached result; Bazel reported two internal actions and exactly one remote action. Its profile recorded 6.179 s for CopyFile. The row finished at 23:00:52.000 UTC; a verified verdict followed at 23:00:52.223 UTC. The six AMD64/ARM64 archive owners are now running on this same source.",
+          "evidence": [
+            {
+              "label": "Cancelled control; zero executed rows",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40778413882"
+            },
+            {
+              "label": "Corrected fork source",
+              "url": "https://github.com/tamird/gvisor/commit/a522ede359"
+            },
+            {
+              "label": "New physical copy control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40784133399"
+            },
+            {
+              "label": "Native remote copy action and original process count",
+              "url": "https://app.buildbuddy.io/invocation/49a493db-7bae-40de-96a3-b6416ab19b52"
+            },
+            {
+              "label": "Full six-archive qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40784463297"
+            }
+          ]
+        },
+        {
+          "text": "An existing rules_python ZIP plus a declared interpreter reproduced the stock tar.gz, .deb and .changes bytes in a strict empty root. On default supplier toolchains, creating the two ZIPs took 19.859 s and 22.496 s, and each ZIP was 81.6 MB. Both packaging variants passed 40/41 default tests and failed the same preserved-file-mode assertion. The reported 255 MB per ZIP is the sum of uncompressed members, not a measurement of bytes unpacked per invocation.",
+          "evidence": [
+            {
+              "label": "Matched default supplier action outputs",
+              "url": "https://app.buildbuddy.io/invocation/211053ef-e8f1-4653-acb7-710a5065ef37"
+            },
+            {
+              "label": "ZIP actions and measured sizes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40781849950"
+            },
+            {
+              "label": "Strict empty-root PackageTar and MakeDeb executions",
+              "url": "https://app.buildbuddy.io/invocation/01a435fb-ac8f-4817-b574-630614c98931"
+            },
+            {
+              "label": "rules_python native launcher discussion",
+              "url": "https://github.com/bazel-contrib/rules_python/issues/2500"
+            }
+          ]
+        },
         {
           "text": "The matched stock and changed rules_pkg runs produced byte-identical tar.gz, .deb, .changes and preserve-mode tar outputs. Both had the same single failure: the worker input had mode 0755 and the test expected 0644. A smaller alternative feeds the existing Python ZIP directly to the declared interpreter; its output and cost are being measured.",
           "evidence": [
@@ -46424,7 +46470,7 @@
           ]
         }
       ],
-      "nextStep": "Verify the physical copy action on the scratch worker, then qualify the same six AMD64/ARM64 release archives and trace the first undeclared tool. Compare the Python ZIP alternative against the four retained supplier outputs.",
+      "nextStep": "Reconcile the six-archive release build on the verified shell-free worker; identify and fix the first undeclared tool or missing declared input. For rules_pkg, retain the direct declared-interpreter alternative to expensive ZIP launchers.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
