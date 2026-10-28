@@ -1,0 +1,52 @@
+"""Submit or reattach to this one source-bound supplier run and return its verdict."""
+import datetime
+import getpass
+import hashlib
+import http.client
+import json
+from pathlib import Path
+import sys
+import uuid
+sys.dont_write_bytecode=True
+here=Path(__file__).resolve().parent
+sys.path.insert(0,str(here.parent.parent))
+import qualification_report as report
+
+def main(read_key=getpass.getpass):
+    digest='70d0fa39b4e0eed99e9a097a10129176c7d66bb4023396cf2b8c81145061301d'
+    source='01446201fd8e758267f4e1abd9727926655110b7'
+    host='cb548161f537465fda2576793e6d6cea59a32260'
+    raw=(here/'request.json').read_bytes();req=json.loads(raw);plan=json.loads((here/'plan.json').read_text())
+    assert len(raw)==21755 and hashlib.sha256(raw).hexdigest()==digest
+    assert req['steps']==[{'run':(here/'request.sh').read_text()}] and req['repo']=='https://github.com/tamird/gvisor' and req['commit_sha']==host and req['branch']=='qualification/final-public-ci'
+    assert report.hosted_run_preflight(req)==plan['preflight'] and plan['config']['source']==source
+    assert json.loads((here/'entry.json').read_bytes())['request']==plan['request']
+    marker=here/'attempt.json';submitted=here/'submitted.json'
+    if marker.exists() and not submitted.exists():raise SystemExit('Submission already attempted: reconcile the original result.')
+    class Key:
+        def __init__(self):self.value=read_key('One rules_pkg stock comparison and original FileNode read (hidden): ').strip()
+        def read_text(self):return self.value
+    key=Key();assert key.value
+    def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
+    if not submitted.exists():
+        with marker.open('x') as f:json.dump({'request':digest,'attempt':now()},f)
+        c=http.client.HTTPSConnection('app.buildbuddy.io',timeout=180)
+        try:
+            c.request('POST','/api/v1/Run',raw,{'Content-Type':'application/json','x-buildbuddy-api-key':key.value})
+            resp=c.getresponse();data=resp.read(65537);assert len(data)<=65536
+            if resp.status!=200:raise SystemExit('Run rejected (HTTP '+str(resp.status)+'): '+data.decode(errors='replace').replace(key.value,'[REDACTED]')[:600])
+            val=json.loads(data);inv=val.get('invocationId',val.get('invocation_id'));assert str(uuid.UUID(inv))==inv
+            with submitted.open('x') as f:json.dump({'invocation_id':inv,'source':source,'request':digest,'accepted':now()},f)
+        finally:c.close()
+    s=json.loads(submitted.read_bytes());assert s['source']==source and s['request']==digest
+    print('https://app.buildbuddy.io/invocation/'+s['invocation_id'],flush=True)
+    # native-receipt's callable supports distinct initial-host and executed-source
+    # identities. Preserve its complete receipt and its CLI's non-PASS exit.
+    result=report.native_receipt(s['invocation_id'],key,here/'qualification.tar.gz',here/'receipt.json',source,None,3700,expected_sources=[source],hosted_source=host)
+    print(result['status']+': '+str(here/'receipt.json'),flush=True)
+    from read_mode import verify
+    mode_ok=verify(key.value,result) if result.get('collection_status')=='COMPLETE' else False
+    return int(result['status']!='PASS' or not mode_ok)
+
+if __name__ == '__main__':
+    raise SystemExit(main())

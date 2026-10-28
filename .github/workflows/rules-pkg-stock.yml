@@ -1,0 +1,67 @@
+name: Rules pkg stock writer comparison
+
+"on":
+  push:
+    branches: [qualification/rules-pkg-stock-writers-actions]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/supplier-stock"
+          mkdir -p "$root/task/job"
+          cp .github/qualification/supplier-stock/{request.json,plan.json,entry.json,submit.py,read_mode.py,metadata.py,receipt.py} "$root/task/job/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          70d0fa39b4e0eed99e9a097a10129176c7d66bb4023396cf2b8c81145061301d  task/job/request.json
+          6f09c2181d1735dad63c5972ea5bd73f4a1cd8580af07882b401f9dbb9a05d99  task/job/plan.json
+          a2212c7c7d3ac4f0a8ad203643a4d79180e0e4fb23ac10f397bcba425db1dd5f  task/job/entry.json
+          5439eeedcb31fd7ea60bab7301d8d9a706c97255301c49875fe529cb0b34c331  task/job/submit.py
+          9d6be95d527ca6a49a264fa30fe464f8940b5cec57d4c2b9808d1e6ca6bd1124  task/job/read_mode.py
+          14bb1c531b0020b9480444cbe7c56bf57050e18a8b0fdd3df7160b8f328bf8db  task/job/metadata.py
+          678cf5c83931f3601a267135c265c8a863b0c1d80cf99207de47bdc5ef561564  task/job/receipt.py
+          SUMS
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          job = Path("task/job")
+          (job/"request.sh").write_text(json.loads((job/"request.json").read_bytes())["steps"][0]["run"])
+          PYTHON
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          entry = Path(os.environ["RUNNER_TEMP"]) / "supplier-stock/task/job/receipt.py"
+          runpy.run_path(str(entry))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: supplier-stock-receipt
+          path: ${{ runner.temp }}/supplier-stock/verdict.json
+          if-no-files-found: error
+          retention-days: 14
