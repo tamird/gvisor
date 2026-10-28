@@ -1741,8 +1741,8 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// Clear SACK information for all acked data.
 		s.ep.scoreboard.Delete(s.SndUna)
 
-		// Detect if the sender entered recovery spuriously.
-		if s.inRecovery() {
+		// Eifel uses the timestamp echoed by the ACK to identify the original transmission.
+		if s.inRecovery() && s.ep.SendTSOk && rcvdSeg.parsedOptions.TS {
 			s.detectSpuriousRecovery(hasDSACK, rcvdSeg.parsedOptions.TSEcr)
 		}
 
