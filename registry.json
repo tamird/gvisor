@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T19:54:39Z",
+    "updatedAt": "2026-10-28T20:30:39Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34433,9 +34433,22 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-28T19:01:44Z",
+      "updatedAt": "2026-10-28T20:30:39Z",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
+        {
+          "text": "Both algorithms first repaired the same 1,420-byte range at the same time. Reno had built a larger queue; its timer fired before the ACK for that repair could return. CUBIC repaired the range without a timeout. This explains a divergence in this fixture, not a general CUBIC advantage or the cause of the reported outage.",
+          "evidence": [
+            {
+              "label": "Fixture and exact source",
+              "url": "https://github.com/tamird/gvisor/commit/ebb3246e222f54a5a40be638215a3a7d6910a701"
+            },
+            {
+              "label": "Native test and original packet traces",
+              "url": "https://app.buildbuddy.io/invocation/d64172f9-3dc6-4774-abcd-78d87f9b6d8d"
+            }
+          ]
+        },
         {
           "text": "On the same 10 Mbit/s finite queue, the manual clock and Go synctest produced identical packet and stream traces in both CUBIC/Reno write orders. CUBIC writing first produced 12,405 events and 119 drops; Reno writing first produced 12,430 events and 98 drops. Both clocks agreed on which flow sent first at 250 ms, on every drop and scheduled delivery, and on each flow's delivered bytes. This was one trial per clock and order on one native AMD64 worker at GOMAXPROCS=1. Automated verification took 7.9 seconds from execution finish.",
           "evidence": [
@@ -35915,7 +35928,7 @@
           ]
         }
       ],
-      "nextStep": "Use the validated finite-queue fixture to test whether recovery or fairness changes under a different bottleneck. Keep the packet traces and report the link conditions for each comparison.",
+      "nextStep": "Separate slow-start exit, forward-path queuing and retransmission timing at the first common loss. Use matched packet evidence before attributing the result to a particular HyStart rule or changing the default controller.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -36287,6 +36300,52 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "Reno and CUBIC with isolated losses on a 100 Mbit/s, 100 ms path",
+          "description": "One 64 MiB transfer per controller on the same source. Both offered data throughout the prespecified 3\u20135 second interval. The link dropped first transmissions at fixed byte offsets.",
+          "columns": [
+            "Measurement",
+            "Reno",
+            "CUBIC"
+          ],
+          "rows": [
+            [
+              "Delivery from 3 to 5 s",
+              "17.21 Mbit/s",
+              "64.62 Mbit/s"
+            ],
+            [
+              "First repair: send to receive",
+              "297.21 ms",
+              "75.23 ms"
+            ],
+            [
+              "Transfer at 30 s",
+              "Timed out at 59.09 MiB",
+              "64 MiB complete at 9.37 s"
+            ],
+            [
+              "Selected losses reached",
+              "4 of 5",
+              "5 of 5"
+            ]
+          ],
+          "note": "Times in the table are simulated. Reno retransmitted the same first repair again 24.26 ms before its covering ACK arrived. The extra delay was forward-path queuing. The third drop affected different segment boundaries, and only CUBIC reached the fifth; these runs do not compare completion times for five identical packet losses.",
+          "evidence": [
+            {
+              "label": "Fixture and exact source",
+              "url": "https://github.com/tamird/gvisor/commit/ebb3246e222f54a5a40be638215a3a7d6910a701"
+            },
+            {
+              "label": "Native test and original packet traces",
+              "url": "https://app.buildbuddy.io/invocation/d64172f9-3dc6-4774-abcd-78d87f9b6d8d"
+            },
+            {
+              "label": "Verified run (Reno timed out)",
+              "url": "https://app.buildbuddy.io/invocation/85830f7c-276c-47b7-8a67-53f95f1d1430"
+            }
+          ]
+        },
         {
           "title": "Shared FIFO: published recovery fix on a common accounting base",
           "description": "Before: 9d9c3f0f479b. With #16495: 431f54a4309b. Both include the same #15634 patch. Per-flow delivery and forward FIFO service use the same 2\u20136 second virtual interval.",
