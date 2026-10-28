@@ -222,10 +222,20 @@ func linkTrace(t *testing.T, drop bool) {
 		return p, h
 	}
 	forward := func(p *stack.PacketBuffer, i int) {
+		t.Helper()
 		defer p.DecRef()
 		advance(delay)
-		links[1-i].InjectInbound(ipv4.ProtocolNumber, p)
+		// The receiving stack must parse the bytes as a new wire packet; the
+		// transmitter has already marked its network and transport headers.
+		in := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: p.ToBuffer()})
+		defer in.DecRef()
+		valid := sides[1-i].Stats().TCP.ValidSegmentsReceived
+		before := valid.Value()
+		links[1-i].InjectInbound(ipv4.ProtocolNumber, in)
 		freeze(1 - i)
+		if n := valid.Value() - before; n != 1 {
+			t.Fatalf("receiver %d accepted %d TCP segments for one wire delivery", 1-i, n)
+		}
 	}
 	none := func() {
 		t.Helper()
