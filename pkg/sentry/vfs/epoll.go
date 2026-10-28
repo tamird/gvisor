@@ -96,9 +96,11 @@ type epollInterest struct {
 	// key is the file to which this epollInterest applies. key is immutable.
 	key epollInterestKey
 
-	// waiter is registered with key.file. entry is protected by
-	// epoll.interestMu.
-	waiter waiter.Entry
+	// waiter is the initial registration with key.file. replacement, if
+	// non-nil, is the active registration instead. Reading replacement
+	// requires interestMu or readyMu; changing it requires both.
+	waiter      waiter.Entry
+	replacement *epollRegistration `state:"wait"`
 
 	// mask is the event mask associated with this registration, including
 	// flags EPOLLET and EPOLLONESHOT. If mask is 0, the epollInterest has been
@@ -116,6 +118,26 @@ type epollInterest struct {
 	// userData is the struct epoll_event::data associated with this
 	// epollInterest. userData is protected by epoll.interestMu.
 	userData [2]int32
+}
+
+// epollRegistration is allocated only when MOD changes the wait mask.
+// Its identity distinguishes notifications from the old and new waiters.
+//
+// +stateify savable
+type epollRegistration struct {
+	interest *epollInterest
+	entry    waiter.Entry
+}
+
+func (r *epollRegistration) NotifyEvent(waiter.EventMask) {
+	r.interest.notify(r)
+}
+
+func (epi *epollInterest) activeEntry() *waiter.Entry {
+	if epi.replacement != nil {
+		return &epi.replacement.entry
+	}
+	return &epi.waiter
 }
 
 // NewEpollInstanceFD returns a FileDescription representing a new epoll
@@ -143,7 +165,7 @@ func (ep *EpollInstance) Release(ctx context.Context) {
 	defer ep.interestMu.Unlock()
 	for key, epi := range ep.interest {
 		file := key.file
-		file.EventUnregister(&epi.waiter)
+		file.EventUnregister(epi.activeEntry())
 		epi.mask = 0
 		file.epollMu.Lock()
 		delete(file.epolls, epi)
@@ -342,22 +364,29 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 		return linuxerr.ENOENT
 	}
 
-	// Update epi for the next call to ep.ReadEvents().
 	mask := event.Events | linux.EPOLLERR | linux.EPOLLHUP
-	epi.mask = mask
-	epi.userData = event.Data
-
-	// Re-register with the new mask.
-	file.EventUnregister(&epi.waiter)
 	wmask := waiter.EventMaskFromLinux(mask)
-	epi.waiter.Init(epi, wmask)
-	if err := file.EventRegister(&epi.waiter); err != nil {
-		return err
+	if old := epi.activeEntry(); old.Mask() != wmask {
+		// Keep the old waiter active until we know the new one is usable.
+		// Registering can fail, and registering the old waiter again
+		// afterward could fail too.
+		next := &epollRegistration{interest: epi}
+		next.entry.Init(next, wmask)
+		if err := file.EventRegister(&next.entry); err != nil {
+			return err
+		}
+		ep.readyMu.Lock()
+		epi.replacement = next
+		ep.readyMu.Unlock()
+		file.EventUnregister(old)
 	}
 
-	// Check if the file is already ready with the new mask.
+	epi.mask = mask
+	epi.userData = event.Data
+	// Recheck after activation: a notification may have arrived while the
+	// replacement was still ignoring events.
 	if m := file.Readiness(wmask) & wmask; m != 0 {
-		epi.NotifyEvent(m)
+		epi.notify(epi.replacement)
 	}
 
 	return nil
@@ -380,7 +409,7 @@ func (ep *EpollInstance) DeleteInterest(file *FileDescription, num int32) error 
 	}
 
 	// Unregister from the file so that epi will no longer be readied.
-	file.EventUnregister(&epi.waiter)
+	file.EventUnregister(epi.activeEntry())
 
 	// Forget about epi.
 	ep.removeLocked(epi)
@@ -394,8 +423,16 @@ func (ep *EpollInstance) DeleteInterest(file *FileDescription, num int32) error 
 
 // NotifyEvent implements waiter.EventListener.NotifyEvent.
 func (epi *epollInterest) NotifyEvent(waiter.EventMask) {
+	epi.notify(nil)
+}
+
+func (epi *epollInterest) notify(reg *epollRegistration) {
 	newReady := false
 	epi.epoll.readyMu.Lock()
+	if epi.replacement != reg {
+		epi.epoll.readyMu.Unlock()
+		return
+	}
 	if !epi.ready {
 		newReady = true
 		epi.ready = true
