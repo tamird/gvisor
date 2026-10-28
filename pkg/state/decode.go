@@ -24,28 +24,23 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// internalCallback is a interface called on object completion.
-//
-// There are two implementations: objectDecodeState & userCallback.
-type internalCallback interface {
-	// source returns the dependent object. May be nil.
-	source() *objectDecodeState
+// loadWork finishes an inline value once its enclosing object's dependencies
+// are ready. A nil result means the value can already be copied or read. A
+// non-nil, empty result waits for a referent but has no local writes to make.
+type loadWork []func()
 
-	// callbackRun executes the callback.
-	callbackRun(ds *decodeState)
+func (w loadWork) join(other loadWork) loadWork {
+	if w == nil {
+		return other
+	}
+	return append(w, other...)
 }
 
-// userCallback is an implementation of internalCallback.
-type userCallback func()
-
-// source implements internalCallback.source.
-func (userCallback) source() *objectDecodeState {
-	return nil
-}
-
-// callbackRun implements internalCallback.callbackRun.
-func (uc userCallback) callbackRun(*decodeState) {
-	uc()
+func (w loadWork) wait(blocked bool) loadWork {
+	if blocked && w == nil {
+		return loadWork{}
+	}
+	return w
 }
 
 // objectDecodeState represents an object that may be in the process of being
@@ -78,11 +73,11 @@ type objectDecodeState struct {
 	// blockedBy is the number of dependencies this object has.
 	blockedBy int
 
-	// callbacksInline is inline storage for callbacks.
-	callbacksInline [2]internalCallback
-
-	// callbacks is a set of callbacks to execute on load.
-	callbacks []internalCallback
+	// finish performs the remaining writes to this object. Its dependents
+	// are released only after those writes are complete.
+	finish        loadWork
+	waitersInline [2]*objectDecodeState
+	waiters       []*objectDecodeState
 
 	pendingEntry odsListElem
 	leafEntry    odsListElem
@@ -91,29 +86,6 @@ type objectDecodeState struct {
 type odsListElem struct {
 	ods *objectDecodeState
 	odsEntry
-}
-
-// addCallback adds a callback to the objectDecodeState.
-func (ods *objectDecodeState) addCallback(ic internalCallback) {
-	if ods.callbacks == nil {
-		ods.callbacks = ods.callbacksInline[:0]
-	}
-	ods.callbacks = append(ods.callbacks, ic)
-}
-
-// source implements internalCallback.source.
-func (ods *objectDecodeState) source() *objectDecodeState {
-	return ods
-}
-
-// callbackRun implements internalCallback.callbackRun.
-func (ods *objectDecodeState) callbackRun(ds *decodeState) {
-	ods.blockedBy--
-	if ods.blockedBy == 0 {
-		ds.leaves.PushBack(&ods.leafEntry)
-	} else if ods.blockedBy < 0 {
-		Failf("object %d has negative blockedBy: %d", ods.id, ods.blockedBy)
-	}
 }
 
 // decodeState is a graph of objects in the process of being decoded.
@@ -151,6 +123,11 @@ type decodeState struct {
 	// leaves are consumed from the front and appended to the back.
 	leaves odsList
 
+	// pendingStructs holds only structs with deferred fields or hooks.
+	// Key by StateLoad invocation: the same wire struct may be loaded twice.
+	nextStruct     uint64
+	pendingStructs map[uint64]*structCompletion
+
 	// stats tracks time data.
 	stats Stats
 }
@@ -172,18 +149,23 @@ func (ds *decodeState) checkComplete(ods *objectDecodeState) bool {
 	}
 
 	// Track stats if relevant.
-	if ods.callbacks != nil && ods.typ != 0 {
+	if ods.finish != nil && ods.typ != 0 {
 		ds.stats.start(ods.typ)
 		defer ds.stats.done()
 	}
 
-	// Fire all callbacks.
-	for _, ic := range ods.callbacks {
-		ic.callbackRun(ds)
+	for _, write := range ods.finish {
+		write()
+	}
+	ods.finish = nil
+	for _, waiter := range ods.waiters {
+		waiter.blockedBy--
+		if waiter.blockedBy == 0 {
+			ds.leaves.PushBack(&waiter.leafEntry)
+		}
 	}
 
-	// Mark completed.
-	ods.callbacks = nil
+	ods.waiters = nil
 	ds.pending.Remove(&ods.pendingEntry)
 
 	return true // All set.
@@ -194,17 +176,14 @@ func (ds *decodeState) checkComplete(ods *objectDecodeState) bool {
 // As a special case, we always allow _useable_ references back to the first
 // decoding object because it may have fields that are already decoded. We also
 // allow trivial self reference, since they can be handled internally.
-func (ds *decodeState) wait(waiter *objectDecodeState, id objectID, callback func()) {
+func (ds *decodeState) wait(waiter *objectDecodeState, id objectID) bool {
 	switch id {
 	case waiter.id:
 		// Trivial self reference.
 		fallthrough
 	case 1:
 		// Root object; see above.
-		if callback != nil {
-			callback()
-		}
-		return
+		return false
 	}
 
 	// Mark as blocked.
@@ -215,30 +194,27 @@ func (ds *decodeState) wait(waiter *objectDecodeState, id objectID, callback fun
 
 	// No nil can be returned here.
 	other := ds.lookup(id)
-	if callback != nil {
-		// Add the additional user callback.
-		other.addCallback(userCallback(callback))
+	if other.waiters == nil {
+		other.waiters = other.waitersInline[:0]
 	}
-
-	// Mark waiter as unblocked.
-	other.addCallback(waiter)
+	other.waiters = append(other.waiters, waiter)
+	return true
 }
 
-// waitObject notes a blocking relationship.
-func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object, callback func()) {
+// waitObject records a dependency and reports whether the referent must
+// finish before its contents can be read.
+func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object) bool {
 	if rv, ok := encoded.(*wire.Ref); ok && rv.Root != 0 {
 		// Refs can encode pointers and maps.
-		ds.wait(ods, objectID(rv.Root), callback)
+		return ds.wait(ods, objectID(rv.Root))
 	} else if sv, ok := encoded.(*wire.Slice); ok && sv.Ref.Root != 0 {
-		// See decodeObject; we need to wait for the array (if non-nil).
-		ds.wait(ods, objectID(sv.Ref.Root), callback)
+		// A slice's elements live in a separately decoded array.
+		return ds.wait(ods, objectID(sv.Ref.Root))
 	} else if iv, ok := encoded.(*wire.Interface); ok {
 		// It's an interface (wait recursively).
-		ds.waitObject(ods, iv.Value, callback)
-	} else if callback != nil {
-		// Nothing to wait for: execute the callback immediately.
-		callback()
+		return ds.waitObject(ods, iv.Value)
 	}
+	return false
 }
 
 // walkChild returns a child object from obj, given an accessor path. This is
@@ -315,7 +291,7 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 	// Process any deferred objects & callbacks.
 	if encoded, ok := ds.deferred[id]; ok {
 		delete(ds.deferred, id)
-		ds.decodeObject(ods, ods.obj, encoded)
+		ods.finish = ds.decodeInto(ods, ods.obj, encoded)
 	}
 
 	return walkChild(r.Dots, ods.obj)
@@ -334,37 +310,82 @@ type objectDecoder struct {
 
 	// encoded is the encoded object state.
 	encoded *wire.Struct
+
+	// id identifies this invocation, including copies of its Source.
+	id uint64
 }
 
-// load is helper for the public methods on Source.
-func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func()) {
-	// Note that we have reconciled the type and may remap the fields here
-	// to match what's expected by the decoder. The "slot" parameter here
-	// is in terms of the local type, where the fields in the encoded
-	// object are in terms of the wire object's type, which might be in a
-	// different order (but will have the same fields).
-	v := *od.encoded.Field(od.rte.FieldOrder[slot])
-	od.ds.decodeObject(od.ods, objPtr.Elem(), v)
-	if wait {
-		// Mark this individual object a blocker.
-		od.ds.waitObject(od.ods, v, fn)
+type structCompletion struct {
+	fields loadWork // Includes LoadValue conversions.
+	hooks  loadWork // Run after fields, before publishing the struct.
+}
+
+func (od *objectDecoder) completion() *structCompletion {
+	if c := od.ds.pendingStructs[od.id]; c != nil {
+		return c
+	}
+	if od.ds.pendingStructs == nil {
+		od.ds.pendingStructs = make(map[uint64]*structCompletion)
+	}
+	c := new(structCompletion)
+	od.ds.pendingStructs[od.id] = c
+	return c
+}
+
+func (od *objectDecoder) deferField(w loadWork) {
+	if w != nil {
+		c := od.completion()
+		c.fields = c.fields.join(w)
 	}
 }
 
-// aterLoad implements Source.AfterLoad.
-func (od *objectDecoder) afterLoad(fn func()) {
-	// Queue the local callback; this will execute when all of the above
-	// data dependencies have been cleared.
-	od.ods.addCallback(userCallback(fn))
+// field maps a slot in the local type to the corresponding wire field.
+func (od *objectDecoder) field(slot int) wire.Object {
+	return *od.encoded.Field(od.rte.FieldOrder[slot])
+}
+
+func (od *objectDecoder) load(slot int, dst reflect.Value, wait bool) {
+	v := od.field(slot)
+	w := od.ds.decodeInto(od.ods, dst, v)
+	if wait {
+		w = w.wait(od.ds.waitObject(od.ods, v))
+	}
+	od.deferField(w)
+}
+
+// A loadSlot is temporary storage whose value will be copied out. The
+// decoder owns the storage until it has performed the last write to it.
+type loadSlot struct {
+	dst  reflect.Value
+	wire wire.Object
+}
+
+// decodeForPublication stores a result exactly once. It may copy a reference
+// as soon as its identity is known; a conversion that reads through the
+// reference must also wait for the object it names.
+func decodeForPublication[T any](ds *decodeState, ods *objectDecodeState, result T, store func(T), readThrough bool, slots ...loadSlot) loadWork {
+	var work loadWork
+	for _, slot := range slots {
+		w := ds.decodeInto(ods, slot.dst, slot.wire)
+		if readThrough {
+			w = w.wait(ds.waitObject(ods, slot.wire))
+		}
+		work = work.join(w)
+	}
+	if work == nil {
+		store(result)
+		return nil
+	}
+	return append(work, func() { store(result) })
 }
 
 // decodeStruct decodes a struct value.
-func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, encoded *wire.Struct) {
+func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, encoded *wire.Struct) loadWork {
 	if encoded.TypeID == 0 {
 		// Allow anonymous empty structs, but only if the encoded
 		// object also has no fields.
 		if encoded.Fields() == 0 && obj.NumField() == 0 {
-			return
+			return nil
 		}
 
 		// Propagate an error.
@@ -376,24 +397,44 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	ods.typ = typeID(encoded.TypeID)
 
 	// Invoke the loader.
-	od := objectDecoder{
-		ds:      ds,
-		ods:     ods,
-		rte:     rte,
-		encoded: encoded,
-	}
+	ds.nextStruct++
+	id := ds.nextStruct
+	s := Source{internal: objectDecoder{ds: ds, ods: ods, rte: rte, encoded: encoded, id: id}}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
-		value.StateLoad(ds.ctx, Source{internal: od})
+		value.StateLoad(ds.ctx, s)
 	case binaryObject:
-		loadBinary(value, rte.Name, Source{internal: od})
+		loadBinary(value, rte.Name, s)
 	}
+	if len(ds.pendingStructs) == 0 {
+		return nil
+	}
+	c := ds.pendingStructs[id]
+	if c == nil {
+		return nil
+	}
+	// A field conversion or a hook can register another hook on this
+	// Source. Keep accepting hooks until this value is ready to copy.
+	work := c.fields
+	c.fields = nil
+	return append(work, func() {
+		for i := 0; i < len(c.hooks); i++ {
+			c.hooks[i]()
+		}
+		delete(ds.pendingStructs, id)
+	})
 }
 
+type mapEntry struct {
+	m, key, value reflect.Value
+}
+
+func (e mapEntry) insert() { e.m.SetMapIndex(e.key, e.value) }
+
 // decodeMap decodes a map value.
-func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) {
+func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) loadWork {
 	if obj.IsNil() {
 		// See pointerTo.
 		obj.Set(reflect.MakeMap(obj.Type()))
@@ -405,40 +446,46 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 	reuseKey := keyType.Kind() != reflect.Struct && keyType.Kind() != reflect.Array
 	reuseValue := valueType.Kind() != reflect.Struct && valueType.Kind() != reflect.Array
 	var kv, vv reflect.Value
+	var work loadWork
 	for i := 0; i < len(encoded.Keys); i++ {
-		if i == 0 || !reuseKey {
+		if !kv.IsValid() || !reuseKey {
 			kv = reflect.New(keyType).Elem()
 		} else {
 			// Nil wire values leave the destination unchanged.
 			kv.SetZero()
 		}
-		if i == 0 || !reuseValue {
+		if !vv.IsValid() || !reuseValue {
 			vv = reflect.New(valueType).Elem()
 		} else {
 			vv.SetZero()
 		}
 
-		// Decode the objects.
-		ds.decodeObject(ods, kv, encoded.Keys[i])
-		ds.decodeObject(ods, vv, encoded.Values[i])
-		ds.waitObject(ods, encoded.Keys[i], nil)
-		ds.waitObject(ods, encoded.Values[i], nil)
-
-		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+		key, value := encoded.Keys[i], encoded.Values[i]
+		w := decodeForPublication(ds, ods, mapEntry{obj, kv, vv}, mapEntry.insert, false, loadSlot{kv, key}, loadSlot{vv, value})
+		if w != nil {
+			// The pending insertion owns both slots.
+			kv, vv = reflect.Value{}, reflect.Value{}
+		}
+		work = work.join(w)
+		// Reading the restored map's contents also requires its referents.
+		ds.waitObject(ods, key)
+		ds.waitObject(ods, value)
 	}
+	return work
 }
 
 // decodeArray decodes an array value.
-func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, encoded *wire.Array) {
+func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, encoded *wire.Array) loadWork {
 	if len(encoded.Contents) != obj.Len() {
 		Failf("mismatching array length expect=%d, actual=%d", obj.Len(), len(encoded.Contents))
 	}
 	// Decode the contents into the array.
-	for i := 0; i < len(encoded.Contents); i++ {
-		ds.decodeObject(ods, obj.Index(i), encoded.Contents[i])
-		ds.waitObject(ods, encoded.Contents[i], nil)
+	var work loadWork
+	for i, elem := range encoded.Contents {
+		w := ds.decodeInto(ods, obj.Index(i), elem)
+		work = work.join(w.wait(ds.waitObject(ods, elem)))
 	}
+	return work
 }
 
 // findType finds the type for the given wire.TypeSpecs.
@@ -463,29 +510,23 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 	panic("unreachable")
 }
 
+type interfaceValue struct {
+	dst, value reflect.Value
+}
+
+func (v interfaceValue) assign() { v.dst.Set(v.value) }
+
 // decodeInterface decodes an interface value.
-func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value, encoded *wire.Interface) {
+func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value, encoded *wire.Interface) loadWork {
 	if _, ok := encoded.Type.(wire.TypeSpecNil); ok {
 		// Special case; the nil object. Just decode directly, which
 		// will read nil from the wire (if encoded correctly).
-		ds.decodeObject(ods, obj, encoded.Value)
-		return
+		return ds.decodeInto(ods, obj, encoded.Value)
 	}
 
-	// We now need to resolve the actual type.
-	typ := ds.findType(encoded.Type)
-
-	// We need to imbue type information here, then we can proceed to
-	// decode normally. In order to avoid issues with setting value-types,
-	// we create a new non-interface version of this object. We will then
-	// set the interface object to be equal to whatever we decode.
-	origObj := obj
-	obj = reflect.New(typ).Elem()
-	defer origObj.Set(obj)
-
-	// With the object now having sufficient type information to actually
-	// have Set called on it, we can proceed to decode the value.
-	ds.decodeObject(ods, obj, encoded.Value)
+	// Boxing a struct or array copies it. Decode the concrete value first.
+	value := reflect.New(ds.findType(encoded.Type)).Elem()
+	return decodeForPublication(ds, ods, interfaceValue{obj, value}, interfaceValue.assign, false, loadSlot{value, encoded.Value})
 }
 
 // isFloatEq determines if x and y represent the same value.
@@ -507,8 +548,9 @@ func isComplexEq(x complex128, y complex128) bool {
 	return isFloatEq(real(x), real(y)) && isFloatEq(imag(x), imag(y))
 }
 
-// decodeObject decodes a object value.
-func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, encoded wire.Object) {
+// decodeInto decodes into stable storage and returns its remaining writes.
+// Consumers that copy out of temporary storage use decodeForPublication.
+func (ds *decodeState) decodeInto(ods *objectDecodeState, obj reflect.Value, encoded wire.Object) loadWork {
 	switch x := encoded.(type) {
 	case wire.Nil: // Fast path: first.
 		// We leave obj alone here. That's because if obj represents an
@@ -519,7 +561,7 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// those we just leave it alone as the value will already be
 		// correct (nil).
 		if id := objectID(x.Root); id == 0 {
-			return
+			return nil
 		}
 
 		// Note that if this is a map type, we go through a level of
@@ -534,7 +576,7 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 				v.Set(reflect.MakeMap(v.Type()))
 			}
 			obj.Set(v)
-			return
+			return nil
 		}
 
 		// Normal assignment: authoritative only if no dots.
@@ -571,7 +613,7 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 	case *wire.Slice:
 		// See *wire.Ref above; same applies.
 		if id := objectID(x.Ref.Root); id == 0 {
-			return
+			return nil
 		}
 		// Note that it's fine to slice the array here and assume that
 		// contents will still be filled in later on.
@@ -579,17 +621,18 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		v := ds.register(&x.Ref, typ)
 		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
 	case *wire.Array:
-		ds.decodeArray(ods, obj, x)
+		return ds.decodeArray(ods, obj, x)
 	case *wire.Struct:
-		ds.decodeStruct(ods, obj, x)
+		return ds.decodeStruct(ods, obj, x)
 	case *wire.Map:
-		ds.decodeMap(ods, obj, x)
+		return ds.decodeMap(ods, obj, x)
 	case *wire.Interface:
-		ds.decodeInterface(ods, obj, x)
+		return ds.decodeInterface(ods, obj, x)
 	default:
 		// Should not happen, not propagated as an error.
 		Failf("unknown object %#v for %q", encoded, obj.Type().Name())
 	}
+	return nil
 }
 
 // findCycle finds a dependency cycle after all unblocked objects have completed.
@@ -603,11 +646,8 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 func (ds *decodeState) findCycle() []*objectDecodeState {
 	blockers := make(map[*objectDecodeState]*objectDecodeState)
 	for elem := ds.pending.Front(); elem != nil; elem = elem.Next() {
-		for _, callback := range elem.ods.callbacks {
-			// User callbacks do not represent blocking dependencies.
-			if waiter := callback.source(); waiter != nil {
-				blockers[waiter] = elem.ods
-			}
+		for _, waiter := range elem.ods.waiters {
+			blockers[waiter] = elem.ods
 		}
 	}
 	visited := make(map[*objectDecodeState]int)
@@ -671,7 +711,7 @@ func (ds *decodeState) Load(obj reflect.Value) {
 				ods = ds.lookup(id)
 				if ods != nil {
 					// Decode the object.
-					ds.decodeObject(ods, ods.obj, encoded)
+					ods.finish = ds.decodeInto(ods, ods.obj, encoded)
 				} else {
 					// If an object hasn't had interest registered
 					// previously or isn't yet valid, we deferred
@@ -739,6 +779,9 @@ func (ds *decodeState) Load(obj reflect.Value) {
 		}
 		buf.WriteString("}")
 		Failf("incomplete graph: %s", buf.String())
+	}
+	if len(ds.pendingStructs) != 0 {
+		Failf("load work registered after its struct was complete")
 	}
 }
 

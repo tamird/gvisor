@@ -319,8 +319,8 @@ func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
 		Failf("encoding %s: %w", name, err)
 	}
 	// Copy before reusing binaryBuf: wire objects are serialized only after
-	// the full graph is encoded. Strings also decode inline, so map keys are
-	// complete when decodeMap inserts them into the restored map.
+	// the full graph is encoded. A string also lets loadBinary read the bytes
+	// inline without waiting for a separately decoded slice backing array.
 	s.SaveValue(0, string(data))
 }
 
