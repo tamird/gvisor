@@ -137,8 +137,32 @@ type virtualScenario struct {
 	bytes         int
 	dropOffset    int
 	burstSegments int
+	dropStride    int // Nonzero: space first-transmission holes by stream bytes.
 	streaming     bool
 	measureWindow bool
+}
+
+// TestVirtualTCPSparseLoss gives each controller the same five isolated losses
+// on the 100 Mbit/s, 100 ms path. Drops are specified in application bytes:
+// sending or repairing a segment earlier does not change which data is lost.
+func TestVirtualTCPSparseLoss(t *testing.T) {
+	const mss = 1420
+	for _, algorithm := range []string{"reno", "cubic"} {
+		t.Run(algorithm, func(t *testing.T) {
+			runVirtualTCP(t, algorithm, nil, virtualScenario{
+				delay: 50 * time.Millisecond, rate: 12500000,
+				maxTime: 30 * time.Second, bytes: 64 << 20,
+				dropOffset: 5000 * mss, dropStride: 10000 * mss, burstSegments: 5,
+				streaming: true, measureWindow: true,
+			})
+		})
+	}
+}
+
+type sparseLossPhase struct {
+	Before      streamRound
+	After       streamRound
+	CoveringACK packetObservation
 }
 
 type senderObservation struct {
@@ -377,6 +401,8 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	var acceptedBytes, packetCount, retainedSACKs int
 	var burstDropped int
 	var holes []packetObservation
+	var sparsePhases []sparseLossPhase
+	var coveredHoles int
 	repaired := make(map[uint32]bool)
 	var rounds []streamRound
 	var preBurst *streamRound
@@ -440,6 +466,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			PreBurst                        *streamRound
 			Rounds                          []streamRound
 			Holes                           []packetObservation
+			SparsePhases                    []sparseLossPhase `json:",omitempty"`
 			HolesAcknowledgedNS             int64
 			DemandEndedNS                   int64
 			DemandEndedDeliveredBytes       int
@@ -461,7 +488,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			OfferedBytes: scenario.bytes, AcceptedBytes: acceptedBytes,
 			BDPBytes: rate * int64(2*delay) / int64(time.Second), RateBytesPerSecond: rate, OneWayDelayNS: int64(delay),
 			AllPacketsSHA256: fmt.Sprintf("%x", allPackets.Sum(nil)), PacketCount: packetCount,
-			PreBurst: preBurst, Rounds: rounds, Holes: holes,
+			PreBurst: preBurst, Rounds: rounds, Holes: holes, SparsePhases: sparsePhases,
 			HolesAcknowledgedNS: holesAcknowledgedNS, DemandEndedNS: demandEndedNS,
 			DemandEndedDeliveredBytes: demandEndedDeliveredBytes, HolesAcknowledgedDeliveredBytes: holesAcknowledgedDeliveredBytes,
 			MaxOutstandingBeforeBurst: maxOutstandingBeforeBurst, Window: window,
@@ -529,6 +556,11 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 						}
 						beginsBurst := dropOffset >= 0 && !dropped && int(offset) <= dropOffset && dropOffset < int(offset)+len(payload)
 						isLoss = !retransmitted && (beginsBurst || (dropped && burstDropped < scenario.burstSegments))
+						if scenario.dropStride != 0 {
+							nextOffset := dropOffset + len(holes)*scenario.dropStride
+							isLoss = !retransmitted && len(holes) < scenario.burstSegments &&
+								int(offset) <= nextOffset && nextOffset < int(offset)+len(payload)
+						}
 						if isLoss {
 							if !dropped {
 								dropped, lostSequence, lostPayload = true, segment.SequenceNumber(), payloadHash
@@ -536,11 +568,14 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 									row := sample()
 									preBurst = &row
 								}
-							} else if segment.SequenceNumber() != lostEnd {
+							} else if scenario.dropStride == 0 && segment.SequenceNumber() != lostEnd {
 								sequence := segment.SequenceNumber()
 								view.Release()
 								packet.DecRef()
 								t.Fatalf("burst segment starts %d, want %d", sequence, lostEnd)
+							}
+							if scenario.dropStride != 0 {
+								sparsePhases = append(sparsePhases, sparseLossPhase{Before: sample()})
 							}
 							burstDropped++
 							lostEnd = segment.SequenceNumber() + uint32(len(payload))
@@ -630,6 +665,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		// Timer-generated output is observed at this tick's end. The link
 		// schedule models that explicit 1 ms resolution, not exact emission.
 		fence()
+		newlyCovered := false
 		if index != -1 {
 			packet := pending[index]
 			pending = append(pending[:index], pending[index+1:]...)
@@ -666,11 +702,20 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 						holesAcknowledgedNS = int64(now())
 						holesAcknowledgedDeliveredBytes = received.Len()
 					}
+					if scenario.dropStride != 0 && coveredHoles < len(holes) &&
+						packet.row.Acknowledgment-dataSequence >= holes[coveredHoles].EndSequence-dataSequence {
+						sparsePhases[coveredHoles].CoveringACK = packet.row
+						newlyCovered = true
+					}
 				}
 			}
 			packet.packet.DecRef()
 		}
 		fence()
+		if newlyCovered {
+			sparsePhases[coveredHoles].After = sample()
+			coveredHoles++
+		}
 	}
 	newEndpoint := func(side int) tcpip.Endpoint {
 		t.Helper()
@@ -857,6 +902,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			if got, want := len(repaired), len(holes); got != want {
 				t.Fatalf("repaired exact ranges=%d,want%d", got, want)
 			}
+			if scenario.dropStride != 0 && coveredHoles != len(holes) {
+				t.Fatalf("observed covering ACK for %d of %d sparse losses", coveredHoles, len(holes))
+			}
 			if holesAcknowledgedNS == 0 {
 				t.Fatal("burst was not cumulatively acknowledged")
 			}
@@ -874,6 +922,8 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	stats := stacks[0].Stats().TCP
 	if dropOffset < 0 {
 		classification = "no_loss"
+	} else if scenario.dropStride != 0 {
+		classification = "sparse_loss_recovered"
 	} else if scenario.streaming {
 		classification = "burst_recovered"
 	} else {
