@@ -31,6 +31,28 @@ func (a *afterLoadStruct) afterLoad(context.Context) {
 }
 
 // +stateify savable
+type convertedContainers struct {
+	fromMap       int `state:".(map[int]afterLoadStruct)"`
+	fromInterface int `state:".(genericContainer)"`
+}
+
+func (c *convertedContainers) saveFromMap() map[int]afterLoadStruct {
+	return map[int]afterLoadStruct{7: {v: c.fromMap}}
+}
+
+func (c *convertedContainers) loadFromMap(_ context.Context, m map[int]afterLoadStruct) {
+	c.fromMap = m[7].v
+}
+
+func (c *convertedContainers) saveFromInterface() genericContainer {
+	return genericContainer{v: afterLoadStruct{v: c.fromInterface}}
+}
+
+func (c *convertedContainers) loadFromInterface(_ context.Context, value genericContainer) {
+	c.fromInterface = value.v.(afterLoadStruct).v
+}
+
+// +stateify savable
 type valueLoadStruct struct {
 	v int `state:".(int64)"`
 }

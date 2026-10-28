@@ -56,6 +56,7 @@ func TestLoadHookValues(t *testing.T) {
 		{"map-interface-keys", map[any]int{hook: 7, "other": 8}},
 		{"map-interface-values", map[int]any{7: hook, 8: hook}},
 		{"indirect-load", genericContainer{v: innerFieldValue{v: 7}}},
+		{"conversion", convertedContainers{fromMap: 1, fromInterface: 1}},
 	} {
 		runTestCases(t, false, tc.name, []any{tc.root})
 	}
