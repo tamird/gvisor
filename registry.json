@@ -37293,7 +37293,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-28T23:06:01Z",
+      "updatedAt": "2026-10-28T23:12:29Z",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -37318,6 +37318,10 @@
             {
               "label": "Corresponding split review",
               "url": "https://github.com/google/gvisor/pull/16584"
+            },
+            {
+              "label": "Inline review with reproducer, addressed to Parth",
+              "url": "https://github.com/google/gvisor/pull/16584#discussion_r4407027588"
             }
           ]
         },
@@ -46173,11 +46177,32 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T23:02:45Z",
+      "updatedAt": "2026-10-28T23:12:29Z",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
-          "text": "The pause image passed a filesystem inventory but had ENTRYPOINT /pause on AMD64 and ARM64. BuildBuddy\u2019s OCI runner prepends that entrypoint to the requested action. The first control was cancelled and retained a failed verdict with no executed row. The replacement is a digest-pinned hello-world image: both Linux roots contain only /hello and have no ENTRYPOINT. Its default CMD does not override Bazel\u2019s executable. The replacement executed the CopyFile action remotely with no cached result; Bazel reported two internal actions and exactly one remote action. Its profile recorded 6.179 s for CopyFile. The row finished at 23:00:52.000 UTC; a verified verdict followed at 23:00:52.223 UTC. The six AMD64/ARM64 archive owners are now running on this same source.",
+          "text": "The complete six-archive release target failed on the same physical shell-free worker where the copy control passed. The action log identifies five failure types: Bash-based gVisor version and seccomp genrules, rules_python build metadata, rules_go bootstrap, the Protobuf toolchain version check, and Clang assembly intermediates on an image without /tmp. The seccomp generator already has PR #16590. Clang alone accounted for 139 compiler action errors in the log; a focused compiler-rt run tests a writable action-local temporary directory. The source is the fork integration branch, not current master. No archive success is claimed. Native execution finished at 23:06:04.789 UTC; the invocation verdict was available at 23:06:05.048 (+0.259 s), and the complete row at 23:06:05.344 (+0.555 s). Reading the action log to identify the five causes was the remaining manual work.",
+          "evidence": [
+            {
+              "label": "Original failed release build",
+              "url": "https://app.buildbuddy.io/invocation/7ba3fa37-8c32-4a2a-826c-8cb96e3ec646"
+            },
+            {
+              "label": "Complete qualification report",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40784463297"
+            },
+            {
+              "label": "Existing seccomp generator fix",
+              "url": "https://github.com/google/gvisor/pull/16590"
+            },
+            {
+              "label": "Isolated compiler-rt follow-up",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40785588320"
+            }
+          ]
+        },
+        {
+          "text": "The pause image passed a filesystem inventory but had ENTRYPOINT /pause on AMD64 and ARM64. BuildBuddy\u2019s OCI runner prepends that entrypoint to the requested action. The first control was cancelled and retained a failed verdict with no executed row. The replacement is a digest-pinned hello-world image: both Linux roots contain only /hello and have no ENTRYPOINT. Its default CMD does not override Bazel\u2019s executable. The replacement executed the CopyFile action remotely with no cached result; Bazel reported two internal actions and exactly one remote action. Its profile recorded 6.179 s for CopyFile. The row finished at 23:00:52.000 UTC; a verified verdict followed at 23:00:52.223 UTC.",
           "evidence": [
             {
               "label": "Cancelled control; zero executed rows",
