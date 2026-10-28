@@ -1243,21 +1243,25 @@ function drawGraph(nodes) {
   bounds = layout;
   const { positions } = layout;
   const edges = svg("g", { "aria-hidden": "true" });
+  const neighbors = new Map();
   for (const edge of displayDependencyEdges()) {
     const from = positions.get(edge.from), to = positions.get(edge.to); if (!from || !to) continue;
+    if (edge.to === selected) neighbors.set(edge.from, "prerequisite");
+    if (edge.from === selected) neighbors.set(edge.to, "dependent");
     const x1 = from.x + CARD.width, x2 = to.x, y1 = from.y + CARD.height / 2, y2 = to.y + CARD.height / 2;
     const bend = Math.max((x2 - x1) / 2, 20);
     edges.append(svg("path", { d: `M ${x1},${y1} C ${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`,
-      class: `edge ${edge.type}${edge.from === selected || edge.to === selected ? " active" : ""}`,
+      class: `edge ${edge.type}`,
       "data-from": edge.from, "data-to": edge.to }));
   }
   content.append(edges);
   const filtering = filtered();
   for (const node of nodes) {
     const pos = positions.get(node.id);
-    const group = svg("g", { class: `node ${node.type}${selected === node.id ? " selected" : ""}${filtering && !matches(node) ? " context-node" : ""}`,
+    const relation = neighbors.get(node.id);
+    const group = svg("g", { class: `node ${node.type}${selected === node.id ? " selected" : ""}${relation ? " " + relation : ""}${filtering && !matches(node) ? " context-node" : ""}`,
       transform: `translate(${pos.x},${pos.y})`, role: "group" });
-    const card = svg("g", { tabindex: "0", role: "button", "aria-label": `${label(node)}: ${node.title}. Select details.`, "aria-pressed": selected === node.id, "data-node": node.id });
+    const card = svg("g", { tabindex: "0", role: "button", "aria-pressed": selected === node.id, "data-node": node.id });
     card.append(svg("rect", { class: "node-shape", width: CARD.width, height: CARD.height, rx: 5 }));
     card.append(svg("text", { class: "node-label", x: 10, y: 15 }, node.type === "branch" ? wrap(status(node), 21, 1)[0] : label(node)));
     const reach = impact(node.id).prs;
@@ -1272,7 +1276,8 @@ function drawGraph(nodes) {
     const primary = entries.find(([state]) => stateFilters.has(state)) || entries[0];
     const stateLine = primary ? `${stateLabel(node, primary[0])} ${age(primary[1])}${entries.length > 1 ? ` · +${entries.length - 1}` : ""}` : status(node);
     card.append(svg("text", { class: "node-state", x: 10, y: 61 }, wrap(stateLine, 35, 1)[0]));
-    card.setAttribute("aria-label", `${label(node)}: ${node.title}. ${entries.map(([state, record]) => stateTitle(state, record)).join(" ")} Select details.`);
+    const relationLabel = relation === "prerequisite" ? "Prerequisite of the selected task." : relation === "dependent" ? "Depends on the selected task." : "";
+    card.setAttribute("aria-label", [`${label(node)}: ${node.title}.`, ...entries.map(([state, record]) => stateTitle(state, record)), relationLabel, "Select details."].filter(Boolean).join(" "));
     card.append(svg("title", {}, `${node.title}\n${status(node)}\n${Object.entries(states(node)).map(([state, record]) => stateTitle(state, record)).join("\n")}${node.type === "pr" ? "\n" + attributeTitle(node) : ""}`));
     card.addEventListener("click", () => { if (!moved) select(node.id); });
     card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); select(node.id); } });

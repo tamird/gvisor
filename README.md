@@ -614,7 +614,9 @@ review threads, exact revisions and each import’s own checks. DAG cards retain
 Search titles, numbers, refs, or summaries; filter by workstream. In DAG, matching
 chains retain their dependency context, and independent matches appear as nodes. The visible ↗ on every node is a native source anchor,
 supporting keyboard activation, new tabs, and normal browser link actions.
-The separate node control selects details. Relationship titles navigate the
+Selecting a task opens its details and outlines its direct prerequisites in
+solid blue and its direct dependents in dashed amber. Other cards and the
+arrows keep their usual appearance. Relationship titles navigate the
 selection, with an adjacent source link.
 
 Drag the graph to pan; use arrow keys with the graph focused, zoom controls,

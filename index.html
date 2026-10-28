@@ -8,8 +8,8 @@
   <meta name="description" content="Track gVisor and BuildBuddy reviews, checks and dependencies, with branchless investigations and their findings.">
   <title>gVisor + BuildBuddy · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=attention-table-2">
-  <script src="app.js?v=20261026-history" defer></script>
+  <link rel="stylesheet" href="style.css?v=20261028-neighbors">
+  <script src="app.js?v=20261028-neighbors" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -42,7 +42,7 @@
           <div id="graph-stage" class="graph-stage">
             <svg id="graph" tabindex="0" role="group" aria-label="Prerequisite to dependent graph. Drag to pan; pinch to zoom, or use zoom controls and arrow keys."><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="arrow-blocked" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><g id="graph-content"></g></svg>
             <div class="map-controls" aria-label="Graph controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit">Fit</button><button id="reset-view">100%</button></div>
-            <span class="map-hint">R maintainer · C source checks · select for details · ↗ source · drag to pan</span>
+            <span class="map-hint">R maintainer · C source checks · solid blue: prerequisite · dashed amber: dependent</span>
           </div>
         </section>
         <section id="table-pane" class="table-pane" aria-label="All work table" hidden>

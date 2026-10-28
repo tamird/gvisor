@@ -1602,6 +1602,39 @@ function historyView(nodes, investigations = []) {
   return { context, controls };
 }
 
+test('graph selection outlines only direct prerequisites and dependents without changing arrows', () => {
+  const nodes = ['a', 'b', 'c', 'd', 'e'].map(id => ({ id, type: 'branch', title: id, url: 'https://example.test/' + id }));
+  const { context, controls } = historyView(nodes);
+  context.edgesInput = [['a', 'b', 'depends_on'], ['b', 'c', 'blocked_by'], ['c', 'd', 'depends_on'], ['b', 'e', 'includes']]
+    .map(([from, to, type]) => ({ from, to, type }));
+  function svgNode(tag) {
+    return { tag, attrs: {}, children: [], setAttribute(k, v) { this.attrs[k] = String(v); },
+      append(...children) { this.children.push(...children); }, replaceChildren() { this.children = []; }, addEventListener() {} };
+  }
+  const content = svgNode('g'); controls.set('graph-content', content);
+  context.document.createElementNS = (_, tag) => svgNode(tag);
+  vm.runInContext('model.edges = edgesInput; view = "dag"', context);
+  function render(id) {
+    context.selectedInput = id;
+    vm.runInContext('selected = selectedInput; drawGraph(nodesInput)', context);
+    const groups = content.children.filter(el => el.attrs.class?.startsWith('node '));
+    const related = groups.filter(el => / (?:prerequisite|dependent)$/.test(el.attrs.class));
+    const arrows = content.children.find(el => el.attrs['aria-hidden'] === 'true');
+    return { related: related.map(el => [el.children[0].attrs['data-node'], el.attrs.class.split(' ').at(-1)]),
+      selected: groups.filter(el => el.children[0].attrs['aria-pressed'] === 'true').map(el => el.children[0].attrs['data-node']),
+      labels: Object.fromEntries(groups.map(el => [el.children[0].attrs['data-node'], el.children[0].attrs['aria-label']])),
+      arrows: arrows.children.map(el => el.attrs) };
+  }
+  const baseline = render(null), b = render('b'), c = render('c');
+  assert.deepEqual(b.selected, ['b']);
+  assert.deepEqual(b.related, [['a', 'prerequisite'], ['c', 'dependent']]);
+  assert.match(b.labels.a, /Prerequisite of the selected task/); assert.match(b.labels.c, /Depends on the selected task/);
+  assert.deepEqual(c.related, [['b', 'prerequisite'], ['d', 'dependent']]);
+  assert.deepEqual(b.arrows, baseline.arrows); assert.deepEqual(c.arrows, baseline.arrows);
+  assert.deepEqual(baseline.arrows.map(el => el.class), ['edge depends_on', 'edge blocked_by', 'edge depends_on']);
+  assert.deepEqual(render(null), baseline);
+});
+
 test('default visibility hides inactive history but retains live, blocked and newly actionable work', () => {
   const old = { id: 'branch:delivered', type: 'branch', title: 'Delivered proposal', status: 'Published as #1', inactive: true };
   const open = { ...attentionNode(1), inactive: true };
