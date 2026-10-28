@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T01:46:19.717334+00:00",
+    "updatedAt": "2026-10-28T02:03:03.892792+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28603,25 +28603,25 @@
       "id": "branch:udp-destination-checksum-zero",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/udp-destination-checksum-zero",
+      "ref": "review/udp-destination-checksum-zero-upstream",
       "title": "Cover computed-zero UDP checksums after destination port updates",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/801898b8b63a212befdf21f861bf6e5c7955e648",
-      "head": "801898b8b63a212befdf21f861bf6e5c7955e648",
+      "url": "https://github.com/tamird/gvisor/commit/d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
+      "head": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
       "status": "Reviewable",
-      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
       "summary": "Exercises both destination-port checksum transitions from Lucas\u2019s review. All 14,779 header cases passed, including the two new cases. The source fix merged in #16493.",
       "followup": {
-        "observedAt": "2026-10-28T01:18:31.935784+00:00",
+        "observedAt": "2026-10-28T02:03:03.892792+00:00",
         "nextAction": "Open the two-line follow-up after contributor review. Reply to Lucas with the cases and the verified result.",
         "disposition": "Ready for contributor review",
-        "sourceHead": "801898b8b63a212befdf21f861bf6e5c7955e648",
+        "sourceHead": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
         "owner": "lock_contract"
       },
       "contributorReview": {
         "status": "pending",
-        "head": "801898b8b63a212befdf21f861bf6e5c7955e648",
-        "url": "https://github.com/tamird/gvisor/commit/801898b8b63a212befdf21f861bf6e5c7955e648",
+        "head": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
+        "url": "https://github.com/tamird/gvisor/commit/d774b6a0b49c7ce6914c33ad028c924a85c71ff5",
         "title": "Cover computed-zero UDP checksums after destination port updates",
         "summary": "Exercises both destination-port checksum transitions from Lucas\u2019s review. All 14,779 header cases passed, including the two new cases. The source fix merged in #16493.",
         "body": "Hold the source port at 0xfffe and change the destination port from 1 to\n2 and back. This moves the wire checksum between 0xffff and 0xfffe,\ncovering computed zero on the destination update."
@@ -28630,8 +28630,20 @@
         {
           "label": "Full header suite with both named destination cases",
           "url": "https://app.buildbuddy.io/invocation/5b159e2a-92f5-4b99-a7ad-9f60aef0b6bb"
+        },
+        {
+          "label": "One-commit follow-up to the merged checksum fix",
+          "url": "https://github.com/google/gvisor/compare/master...tamird:gvisor:review/udp-destination-checksum-zero-upstream"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "801898b8b63a212befdf21f861bf6e5c7955e648"
+        },
+        "after": {
+          "head": "d774b6a0b49c7ce6914c33ad028c924a85c71ff5"
+        }
+      }
     },
     {
       "id": "branch:seccomp-generator-templates",
@@ -28666,6 +28678,110 @@
           "url": "https://app.buildbuddy.io/invocation/ac6766ce-ae1d-4007-aca1-5c4a148fd244"
         }
       ]
+    },
+    {
+      "id": "branch:tcp-persist-window-probe",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-persist-window-probe",
+      "title": "Keep the congestion window when probing a closed receive window",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
+      "head": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
+      "summary": "With no bytes in flight, stock gVisor entered loss recovery and reduced the congestion window to one packet when it sent a zero-window probe. Linux and the fixed stack stayed open and delivered the queued byte after the window reopened. Actual retransmission timeout, persist backoff and user timeout also passed. The fork head contains the same three changed files as the tested commit.",
+      "followup": {
+        "owner": "lock_contract",
+        "sourceHead": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
+        "observedAt": "2026-10-28T02:03:03.892792+00:00",
+        "disposition": "Ready for contributor review",
+        "nextAction": "Open the standalone PR after contributor review."
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
+        "url": "https://github.com/tamird/gvisor/commit/82e29c0c5e1fa0cf37150d37df738014eeedcfb9",
+        "title": "Keep the congestion window when probing a closed receive window",
+        "summary": "With no bytes in flight, stock gVisor entered loss recovery and reduced the congestion window to one packet when it sent a zero-window probe. Linux and the fixed stack stayed open and delivered the queued byte after the window reopened. Actual retransmission timeout, persist backoff and user timeout also passed. The fork head contains the same three changed files as the tested commit.",
+        "body": "When a peer advertises a zero receive window after acknowledging all\nsent data, netstack enters loss recovery while probing a write it has\nnot yet sent. Send the probe without reducing the congestion window.\nKeep the existing timeout and recovery behavior for unacknowledged data.\n\nIn the [matched control], Linux passed and netstack reported loss with a\ncongestion window of one packet. [With the fix], both passed the same\nwire test and delivered the queued write when the window reopened. The\nexisting retransmission, probe-backoff and user-timeout checks also\npassed.\n\n[matched control]: https://app.buildbuddy.io/invocation/321fbf96-e947-4106-8ce4-c7e67fbb595d\n[With the fix]: https://app.buildbuddy.io/invocation/1e7537c8-48c5-46cb-9c96-267228473856"
+      },
+      "evidence": [
+        {
+          "label": "Original netstack failure and passing Linux control",
+          "url": "https://app.buildbuddy.io/invocation/321fbf96-e947-4106-8ce4-c7e67fbb595d"
+        },
+        {
+          "label": "Five corrected packet cases",
+          "url": "https://app.buildbuddy.io/invocation/1e7537c8-48c5-46cb-9c96-267228473856"
+        },
+        {
+          "label": "Both target architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/af1381b9-4fc2-4c9f-8194-3e6d449c6f3e"
+        }
+      ]
+    },
+    {
+      "id": "branch:fifo-reader-hangup",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/fifo-reader-hangup",
+      "title": "Report FIFO hangups per open reader",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06",
+      "head": "5b0087ad1eaec140a6f903b9702adaea722cdb06",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
+      "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "5b0087ad1eaec140a6f903b9702adaea722cdb06",
+        "observedAt": "2026-10-28T02:03:03.892792+00:00",
+        "disposition": "Ready for contributor review",
+        "nextAction": "Open the standalone PR after contributor review."
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "5b0087ad1eaec140a6f903b9702adaea722cdb06",
+        "url": "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06",
+        "title": "Report FIFO hangups per open reader",
+        "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
+        "body": "A writer opens and closes a FIFO while one reader holds it open. A\nsecond nonblocking reader then opens the same FIFO. Linux reports\nPOLLHUP to the first reader only; gVisor remembers that the pipe once\nhad a writer and reports POLLHUP to both.\n\nRecord the writer generation when a nonblocking reader opens a FIFO\nwithout a writer. If the last writer has closed, report POLLHUP only\nwhen that generation has changed, as Linux does [1][2]. Once another\nwriter opens and closes, both readers see the hangup.\n\nA nonblocking writer that finds no readers returns ENXIO without\nadvancing the generation [3]. Otherwise a writer that never opened\ncould cause a concurrent reader to report a hangup.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/pipe.c#L1156-L1164\n[2]: https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/pipe.c#L686-L691\n[3]: https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/pipe.c#L1172-L1181"
+      },
+      "evidence": [
+        {
+          "label": "Stock first poll: two readers instead of one",
+          "url": "https://app.buildbuddy.io/invocation/033d4f62-fa83-40c2-b381-447c457c2804"
+        },
+        {
+          "label": "All seven FIFO cases on Linux and gVisor",
+          "url": "https://app.buildbuddy.io/invocation/405d3951-198c-4e7a-afe2-94608b4e7833"
+        },
+        {
+          "label": "Anonymous pipe unit cases and both-architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/d38e0b1d-3836-401f-b20d-9f4e41208f85"
+        }
+      ]
+    },
+    {
+      "id": "branch:hostlayout-generator-inputs",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/hostlayout-generator-inputs",
+      "head": "2dea1397056c738f66808dfea951d1943e4baafb",
+      "url": "https://github.com/tamird/gvisor/commit/2dea1397056c738f66808dfea951d1943e4baafb",
+      "title": "Generate Go host-layout tests from source files",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-28T02:03:03.892792+00:00",
+      "summary": "The host-layout generator infers the import path from the compiled Go archive\u2019s name. Read the Go provider instead and generate the tests using only source inputs.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "2dea1397056c738f66808dfea951d1943e4baafb",
+        "observedAt": "2026-10-28T02:03:03.892792+00:00",
+        "disposition": "Remote qualification in progress",
+        "nextAction": "Compare generated files with master, inspect action inputs and run the ABI host-layout tests."
+      }
     }
   ],
   "edges": [
