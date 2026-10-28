@@ -603,8 +603,8 @@ func (ds *decodeState) mapRef(ti *typeInfo, v uint64) unsafe.Pointer {
 		// Limit the size hint of invalid streams by their length.
 		hint := min(int(o.size), len(ds.in.b))
 		o.base = reflect.MakeMapWithSize(ti.typ, hint).UnsafePointer()
-	} else if o.mapType != ti {
-		Failf("map is both %v and %v", o.mapType.typ, ti.typ)
+	} else {
+		o.mapType.checkMapView(ti)
 	}
 	ds.lastRef = obj
 	return o.base

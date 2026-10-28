@@ -809,6 +809,7 @@ func (es *encodeState) sliceTarget(dataPtr unsafe.Pointer, elem *typeInfo, lengt
 // mapTarget returns the target for a map.
 func (es *encodeState) mapTarget(m unsafe.Pointer, ti *typeInfo) int32 {
 	if tid, ok := es.maps[m]; ok {
+		es.target(tid).ti.checkMapView(ti)
 		return tid
 	}
 	obj := es.newObject(m, uintptr(m)+1, ti, 1, false)

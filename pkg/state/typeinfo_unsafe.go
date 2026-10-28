@@ -195,6 +195,14 @@ func newSlotEntry(rt unsafe.Pointer, ti *typeInfo) *slotEntry {
 	return e
 }
 
+// checkMapView checks whether two references can share map storage. A named
+// map and its underlying map have the same keys and values.
+func (st *typeInfo) checkMapView(other *typeInfo) {
+	if st.key != other.key || st.elem != other.elem {
+		Failf("map is both %v and %v", st.typ, other.typ)
+	}
+}
+
 // sliceTypeOf returns the type of slices of st.
 func (st *typeInfo) sliceTypeOf() reflect.Type {
 	if t := st.sliceType.Load(); t != nil {
