@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T21:17:19Z",
+    "updatedAt": "2026-10-28T21:34:06Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28359,18 +28359,16 @@
       "group": "runtime",
       "status": "open",
       "summary": "Published the contributor-approved failed-registration fix as #16513. If waiter registration returns an error after signaling readability, remove both the epoll interest and the queued event. The published head has the exact tested tree: all 40 named AMD64 VFS cases passed; the control exposed both a phantom event and EEXIST on retry. The separate product-identical VFS Nogo checked AMD64 and ARM64. This is a synthetic registration-error fixture, not host exhaustion or ARM runtime coverage.",
-      "updatedAt": "2026-10-27T17:58:12+00:00",
+      "updatedAt": "2026-10-28T21:25:12Z",
       "followup": {
-        "owner": "root",
+        "owner": "native_runtime",
         "sourceHead": "9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9",
-        "observedAt": "2026-10-27T17:58:12+00:00",
-        "disposition": "Contributor-approved fix published; decision consumed",
-        "nextAction": "Follow maintainer review, public checks and import on #16513. The link back to #13245 is already posted; no contributor decision or repeated reply remains.",
+        "observedAt": "2026-10-28T21:25:12Z",
+        "disposition": "Approved; separate ModifyInterest follow-up under investigation",
+        "nextAction": "Keep the approved ADD fix unchanged. Reproduce the MOD re-registration failure and compare Linux behavior before preparing a separate fix.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16513",
-          "https://github.com/google/gvisor/pull/13245#issuecomment-6449602415",
-          "https://app.buildbuddy.io/invocation/b4401931-d3f5-4d44-a486-bf0e1f795007",
-          "https://app.buildbuddy.io/invocation/e0678bdf-72c8-441e-be4a-661b3061af0b"
+          "https://github.com/google/gvisor/pull/16513#pullrequestreview-5689766487",
+          "https://github.com/torvalds/linux/blob/v6.18/fs/eventpoll.c#L1586-L1651"
         ]
       },
       "evidence": [
@@ -31550,10 +31548,14 @@
       "title": "Give the oldest SACK retransmission a full timeout",
       "url": "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
       "group": "runtime",
-      "status": "Reviewable",
+      "status": "Published as #16624",
       "summary": "Stock retransmitted the same 500 bytes after only 1.5 seconds with a three-second RTO. The fix restarts the timer for a successful repair of the oldest outstanding segment. All 92 TCP, SACK and RACK cases passed, and both analyzer owners report success for AMD64 and ARM64.",
-      "updatedAt": "2026-10-28T21:17:19Z",
+      "updatedAt": "2026-10-28T21:25:12Z",
       "evidence": [
+        {
+          "label": "Published upstream as #16624",
+          "url": "https://github.com/google/gvisor/pull/16624"
+        },
         {
           "label": "Fork change",
           "url": "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8"
@@ -31579,13 +31581,117 @@
           "url": "https://app.buildbuddy.io/invocation/7c9d1e0d-d803-4047-b5e2-0b9a8eba5737"
         }
       ],
+      "inactive": true,
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+        "observedAt": "2026-10-28T21:25:12Z",
+        "disposition": "Published as #16624",
+        "nextAction": "Follow upstream checks and review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16624",
+          "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+          "https://app.buildbuddy.io/invocation/4f657386-402a-4999-9c14-624df58270ea",
+          "https://app.buildbuddy.io/invocation/d7f6bd2a-01ed-4442-8ff8-9a27a5d67b12",
+          "https://app.buildbuddy.io/invocation/a20120b5-bc2e-4be7-8e71-c3883b8fc46b",
+          "https://app.buildbuddy.io/invocation/06a21fde-5f55-4fe1-a3f9-9768b0307bc1",
+          "https://app.buildbuddy.io/invocation/7c9d1e0d-d803-4047-b5e2-0b9a8eba5737"
+        ]
+      }
+    },
+    {
+      "id": "pr:16624",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/sack-repair-rto",
+      "head": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+      "title": "Give the oldest SACK retransmission a full timeout",
+      "url": "https://github.com/google/gvisor/pull/16624",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Stock retransmitted the same 500 bytes after only 1.5 seconds with a three-second RTO. The fix restarts the timer for a successful repair of the oldest outstanding segment. All 92 TCP, SACK and RACK cases passed, and both analyzer owners report success for AMD64 and ARM64.",
+      "updatedAt": "2026-10-28T21:25:12Z",
+      "evidence": [
+        {
+          "label": "Published upstream as #16624",
+          "url": "https://github.com/google/gvisor/pull/16624"
+        },
+        {
+          "label": "Fork change",
+          "url": "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8"
+        },
+        {
+          "label": "Stock 1.5-second retransmission under a three-second timeout",
+          "url": "https://app.buildbuddy.io/invocation/4f657386-402a-4999-9c14-624df58270ea"
+        },
+        {
+          "label": "Stock with both holes repaired: timed out early",
+          "url": "https://app.buildbuddy.io/invocation/d7f6bd2a-01ed-4442-8ff8-9a27a5d67b12"
+        },
+        {
+          "label": "Corrected TCP, SACK and RACK suites: 92 passed, no skips",
+          "url": "https://app.buildbuddy.io/invocation/a20120b5-bc2e-4be7-8e71-c3883b8fc46b"
+        },
+        {
+          "label": "Two analyzer outputs pass for AMD64/ARM64; parent verifier did not join individual worker XMLs",
+          "url": "https://app.buildbuddy.io/invocation/06a21fde-5f55-4fe1-a3f9-9768b0307bc1"
+        },
+        {
+          "label": "Parent failed; original reports retained and reconciled",
+          "url": "https://app.buildbuddy.io/invocation/7c9d1e0d-d803-4047-b5e2-0b9a8eba5737"
+        }
+      ],
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+        "observedAt": "2026-10-28T21:25:12Z",
+        "disposition": "Published as #16624",
+        "nextAction": "Follow upstream checks and review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16624",
+          "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+          "https://app.buildbuddy.io/invocation/4f657386-402a-4999-9c14-624df58270ea",
+          "https://app.buildbuddy.io/invocation/d7f6bd2a-01ed-4442-8ff8-9a27a5d67b12",
+          "https://app.buildbuddy.io/invocation/a20120b5-bc2e-4be7-8e71-c3883b8fc46b",
+          "https://app.buildbuddy.io/invocation/06a21fde-5f55-4fe1-a3f9-9768b0307bc1",
+          "https://app.buildbuddy.io/invocation/7c9d1e0d-d803-4047-b5e2-0b9a8eba5737"
+        ]
+      },
+      "number": 16624
+    },
+    {
+      "id": "branch:eventfd-preserve-host-counter",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/eventfd-preserve-host-counter",
+      "head": "57e4b376dd945b7488aec22685f524dfe86970c1",
+      "title": "Preserve the full counter when converting an eventfd to a host fd",
+      "url": "https://github.com/tamird/gvisor/commit/57e4b376dd945b7488aec22685f524dfe86970c1",
+      "group": "runtime",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T21:34:06Z",
+      "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
+      "evidence": [
+        {
+          "label": "Unchanged Linux: six counter cases",
+          "url": "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345"
+        },
+        {
+          "label": "Stock gVisor: four failing boundary cases",
+          "url": "https://app.buildbuddy.io/invocation/d3f600d1-1c45-4715-bd40-8c27146afea5"
+        },
+        {
+          "label": "Corrected gVisor: all nine records and both architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
+        }
+      ],
       "contributorReview": {
         "status": "pending",
-        "head": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
-        "url": "https://github.com/tamird/gvisor/commit/9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
-        "title": "Give the oldest SACK retransmission a full timeout",
-        "summary": "Stock retransmitted the same 500 bytes after only 1.5 seconds with a three-second RTO. The fix restarts the timer for a successful repair of the oldest outstanding segment. All 92 TCP, SACK and RACK cases passed, and both analyzer owners report success for AMD64 and ARM64.",
-        "body": "When selective acknowledgments identify a missing segment, TCP can\nretransmit it before its timeout expires. A successful repair leaves the\nold timer running. With a three-second timeout, the sender retransmits\nthe same 500 bytes twice only 1.5 seconds apart.\n\nRestart the timer after a successful repair of the oldest outstanding\ndata. Leave that deadline alone when repairing a later hole, so that\nrepeated repairs cannot indefinitely postpone a timeout. A failed send\nkeeps the existing retry timer or starts one if needed.\n\nThe regression sends nine segments and keeps the cumulative ACK fixed\nwhile reporting two separate holes. It checks that the next timeout\nfalls exactly one retransmission interval after the repair of the oldest\nsegment."
+        "head": "57e4b376dd945b7488aec22685f524dfe86970c1",
+        "url": "https://github.com/tamird/gvisor/commit/57e4b376dd945b7488aec22685f524dfe86970c1",
+        "title": "Preserve the full counter when converting an eventfd to a host fd",
+        "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
+        "body": "A guest can write more than 32 bits to an eventfd before a device asks\nfor the underlying Linux file descriptor. The Gasket and VFIO interrupt\npaths do this when registering an eventfd with the host. If a guest\ncreates an eventfd with 1 and writes 2^32, eventfd2's 32-bit initial\nargument leaves the host descriptor with 1 instead of 4,294,967,297.\n\nCreate the descriptor with the low 32 bits, then write the rest before\nhanding it to the device. If the write or notifier registration fails,\nclose the private descriptor and keep the guest's counter. Counters\nthat already fit in the eventfd2 argument need no additional syscall.\n\nThe regression reads the actual descriptor in ordinary and semaphore\nmodes at UINT32_MAX, 2^32+1 and UINT64_MAX\u22121. To check a large\nsemaphore without draining it, read once, fill its predicted remaining\ncapacity, then check that writing one more returns EAGAIN."
       }
     }
   ],
@@ -46475,6 +46581,41 @@
         {
           "label": "Previously tested four edits (before the comment-only refinement)",
           "url": "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067"
+        }
+      ]
+    },
+    {
+      "id": "investigation:epoll-modify-watch",
+      "title": "Preserve a live epoll watch when changing its interest",
+      "status": "active",
+      "owner": "native_runtime",
+      "group": "runtime",
+      "updatedAt": "2026-10-28T21:25:12Z",
+      "summary": "The approved EPOLL_CTL_ADD fix is separate. On MOD, gVisor publishes new user data and removes the old waiter before a replacement can fail.",
+      "findings": [
+        {
+          "text": "Linux changes the existing interest in place and polls it for readiness. A FUSE connection that was live at ADD and has since disconnected is an in-tree path where gVisor can refuse a second registration. This finding comes from source inspection.",
+          "evidence": [
+            {
+              "label": "Linux ep_modify",
+              "url": "https://github.com/torvalds/linux/blob/v6.18/fs/eventpoll.c#L1586-L1651"
+            },
+            {
+              "label": "FUSE device event registration",
+              "url": "https://github.com/tamird/gvisor/blob/9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9/pkg/sentry/fsimpl/fuse/dev.go#L150-L181"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Run the baseline and corrected regression; check what the caller receives after a failed change, including queued and one-shot notifications.",
+      "evidence": [
+        {
+          "label": "Lucas\u2019s review",
+          "url": "https://github.com/google/gvisor/pull/16513#pullrequestreview-5689766487"
+        },
+        {
+          "label": "ModifyInterest",
+          "url": "https://github.com/tamird/gvisor/blob/9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9/pkg/sentry/vfs/epoll.go#L332-L366"
         }
       ]
     }
