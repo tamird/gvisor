@@ -306,9 +306,12 @@ def import_lineage(pr: dict, patch: dict | None = None) -> list[dict]:
     """An exact-head successor supersedes attempts at a certified earlier patch."""
     current = [item for item in pr.get("imports", [])
                if item.get("matchesSourceHead") and item.get("sourceHead") == pr["head"]]
-    if current or not approved_patch(pr, patch):
+    if any(item["status"] != "closed" for item in current) or not approved_patch(pr, patch):
         return current
-    return [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
+    earlier = [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
+    if current:
+        return [item for item in earlier if item["status"] == "merged"] or current
+    return earlier
 
 
 def import_trigger(pr: dict) -> dict:
@@ -338,9 +341,10 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     accepted = approved_patch(pr, patch)
     active = [item for item in imports if item["status"] in {"open", "draft"}]
     scope = "exact" if imports and imports[0]["sourceHead"] == pr["head"] else "equivalent" if imports else "none"
+    approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=
+                                 frozenset({patch["reviewer"].casefold()}) if accepted else frozenset())
     binding = {"sourceHead": pr["head"], "approvedHead": patch["approvedHead"] if accepted else None,
-               "currentApproval": effective_approval(pr, require_aggregate=False, trusted_reviewers=
-                   frozenset({patch["reviewer"].casefold()}) if accepted else frozenset()) is not None,
+               "currentApproval": approval is not None,
                "complete": pr.get("importsComplete") is True,
                "labels": sorted(pr.get("labels", [])), "labelsComplete": pr.get("labelsComplete") is True,
                "labelHistory": pr.get("labelHistory"),
@@ -361,9 +365,17 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
                 and pr.get("mergeable") == "MERGEABLE" and not landed_patch(pr, landing)
                 and (review_decision(pr) == "APPROVED" or accepted))
     binding["eligible"] = bool(eligible)
+    trigger = import_trigger(pr)
     action = None
     if eligible:
-        if scope == "equivalent" and active:
+        # A later approval without the import label leaves Copybara on the old
+        # revision. Do not undo a maintainer's removal made after approval.
+        if (binding["complete"] and approval and trigger["state"] == "missing"
+                and datetime.fromisoformat(approval["submittedAt"]) > datetime.fromisoformat(trigger["removedAt"])
+                and scope != "exact" and state != "closed"
+                and not any(item["status"] == "merged" for item in imports)):
+            action = "maintainer-import-label"
+        elif scope == "equivalent" and active:
             if binding["complete"] and not binding["currentApproval"]:
                 action = "maintainer-reapproval"
         elif state == "conflicting":
@@ -381,10 +393,12 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
         "absent": "No matching public export was found in the complete lookup.",
         "unknown": "Public export inventory is incomplete; refresh before deciding.",
     }[state]
-    trigger = import_trigger(pr)
     if action == "maintainer-reapproval":
         description = ("The approval predates the current source head and Copybara still exports the earlier revision. "
                        "Ask the approving maintainer to reapprove the current source PR so Copybara regenerates it.")
+    elif action == "maintainer-import-label":
+        description = ("The current source has been approved, but its ready to pull label was removed "
+                       "and there is no export of this head. Restore the label to start its import.")
     elif scope == "equivalent" and active and binding["currentApproval"]:
         description = "The current source has a fresh approval; wait for Copybara to replace the earlier export."
     elif state == "closed" and trigger["state"] == "missing":

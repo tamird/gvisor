@@ -1095,16 +1095,26 @@ class ReapprovalReminderTest(unittest.TestCase):
                 fresh = {**review, "id": "fresh", "commit": {"oid": pr["head"]},
                          "submittedAt": now.isoformat(), "updatedAt": now.isoformat(), "body": ""}
                 with mock.patch.dict(pr["feedback"], {"items": [*pr["feedback"]["items"], fresh]}):
-                    self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["reason"], "current-head-approved")
+                    fresh_plan = updater.reminder_plan(pr, node, now, "tamird", maintainers)
+                    if pr["number"] == 15940:
+                        self.assertEqual(fresh_plan["action"], "restore-import-label")
+                    else:
+                        self.assertEqual(fresh_plan["reason"], "current-head-approved")
                 for reviewer in ("EtiennePerot", "lsfriend"):
                     for labels in ([], ["ready to pull"]):
                         current_review = {**fresh, "author": {**fresh["author"], "login": reviewer}}
                         with mock.patch.dict(pr, {"githubReviewDecision": "REVIEW_REQUIRED", "labels": labels}), \
                                 mock.patch.dict(pr["feedback"], {"items": [*pr["feedback"]["items"], current_review]}):
                             current_plan = updater.reminder_plan(pr, node, now, "tamird", maintainers)
-                            self.assertEqual(current_plan["reason"], "current-head-approved")
                             self.assertTrue(current_plan["publicImportDisposition"]["binding"]["currentApproval"])
-                            self.assertIsNone(current_plan["publicImportDisposition"]["action"])
+                            if pr["number"] == 15940 and not labels:
+                                self.assertEqual((current_plan["action"], current_plan["status"], current_plan["approvers"]),
+                                                 ("restore-import-label", "due", [reviewer]))
+                                self.assertIn("#16324", current_plan["body"])
+                                self.assertNotIn("closed", current_plan["body"])
+                            else:
+                                self.assertEqual(current_plan["reason"], "current-head-approved")
+                                self.assertIsNone(current_plan["publicImportDisposition"]["action"])
                 for login, kind in (("outsider", "User"), ("tamird", "User"), ("review-bot", "Bot")):
                     unqualified = {**fresh, "author": {"login": login, "__typename": kind}, "authorAssociation": "NONE"}
                     with mock.patch.dict(pr, {"githubReviewDecision": "REVIEW_REQUIRED"}), \
@@ -1116,6 +1126,34 @@ class ReapprovalReminderTest(unittest.TestCase):
                         "createdAt": (now - timedelta(hours=2, minutes=59)).isoformat()}
                 with mock.patch.dict(pr["feedback"], {"items": [*pr["feedback"]["items"], sent]}):
                     self.assertEqual(updater.reminder_plan(pr, node, now, "tamird", maintainers)["reason"], "reminded-within-three-hours")
+
+    def test_reapproval_after_label_removal_does_not_need_a_patch_comparison(self) -> None:
+        fixture = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())
+        row = next(row for row in fixture["openExportRows"] if row["pr"]["number"] == 15940)
+        pr, node = row["pr"], row["node"]
+        old = next(item for item in pr["feedback"]["items"] if item["id"] == node["approvedPatch"]["reviewId"])
+        pr["feedback"]["items"].append({**old, "id": "fresh", "body": "", "commit": {"oid": pr["head"]},
+                                        "submittedAt": "2026-10-27T21:50:56Z", "updatedAt": "2026-10-27T21:50:56Z"})
+        pr["githubReviewDecision"] = "APPROVED"
+        now = datetime(2026, 10, 28, 17, tzinfo=timezone.utc)
+        def plan(node):
+            return updater.reminder_plan(pr, node, now, "tamird", frozenset({"etienneperot"}))
+
+        self.assertEqual(plan({})["action"], "restore-import-label")
+        for change in ({"importsComplete": False}, {"labelsComplete": False}, {"labels": ["ready to pull"]},
+                       {"labelHistory": {"complete": False, "items": []}}):
+            with mock.patch.dict(pr, change):
+                self.assertNotEqual(plan({})["status"], "due")
+        with mock.patch.dict(pr["labelHistory"]["items"][-1], {"createdAt": "2026-10-28T16:00:00Z"}):
+            self.assertNotEqual(plan({})["status"], "due")  # Removal came after approval.
+        earlier = pr["imports"][0]
+        for status in ("open", "draft", "merged"):
+            successor = {**earlier, "number": 99999, "sourceHead": pr["head"], "matchesSourceHead": True, "status": status}
+            with mock.patch.dict(pr, {"imports": [earlier, successor]}):
+                self.assertNotEqual(plan({})["status"], "due")
+        with mock.patch.dict(pr, {"imports": [{**earlier, "status": "merged"}, {**successor, "status": "closed"}]}):
+            self.assertEqual(plan(node)["publicImportDisposition"]["action"], "maintainer-import-landed")
+            self.assertNotEqual(plan(node)["status"], "due")
 
     def test_label_recovery_respects_current_approval_author_work_and_cross_action_cooldown(self) -> None:
         row = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())["rows"][0]

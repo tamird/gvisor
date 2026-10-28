@@ -134,7 +134,12 @@ print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedP
         context.nodeInput = { ...current.node, github: current.pr };
         const freshReasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
         assert.equal(freshReasons.some(item => ['maintainer-reapproval', 'maintainer-import-refresh'].includes(item.id)), false);
-        assert.ok(freshReasons.some(item => item.title === 'Reapproved; waiting for Copybara'));
+        if (row.pr.number === 15940 && !labels.length) {
+          assert.equal(freshReasons.find(item => item.id === 'maintainer-import-label').title, 'Restore ready to pull');
+          assert.equal(freshReasons.some(item => item.title === 'Reapproved; waiting for Copybara'), false);
+        } else {
+          assert.ok(freshReasons.some(item => item.title === 'Reapproved; waiting for Copybara'));
+        }
         const outsider = current.pr.feedback.items.at(-1);
         outsider.author = { login: 'outsider', __typename: 'User' };
         outsider.authorAssociation = 'NONE';

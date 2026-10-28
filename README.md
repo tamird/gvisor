@@ -164,12 +164,15 @@ export is current. An older open export does not replace approval of the current
 source head, even when the source rebase preserves its patch or old public checks
 pass. The table asks for current-source reapproval and the ordinary alarm asks the
 approving maintainer to reapprove so Copybara regenerates its import. A genuinely
-fresh current-head approval waits for automatic replacement. Closed, unmerged
+fresh current-head approval waits for automatic replacement when the import
+label is present. Closed, unmerged
 exports need re-import, while their unresolved public CI evidence stays visible.
 `publicImportHandoff` is diagnostic only. The reminder planner separately
 recognizes a previously applied `ready to pull` label that is now missing:
-complete label history, a qualified human approval of the current or verified
-equivalent patch, closed exports, and no live successor are required. It asks
+one case is a closed export of the approved patch with no successor. Another
+is a maintainer who reapproves the current head after the label was removed:
+the earlier export can still be open, but Copybara has no export for the new
+head. Both cases require complete label history and export inventory. It asks
 the approving maintainer to restore the import trigger, not to repeat code
 review. Present labels, current successors, source conflicts and incomplete
 inventories suppress this reminder. Before posting it refreshes both label

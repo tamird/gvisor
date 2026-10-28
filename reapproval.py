@@ -134,29 +134,35 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
         return schedule_reminder(result, comments, now, owner, action="reapprove-amendment",
                                  approvedHead=old, approvers=approvers, body=body,
                                  importReapproval=True)
-    if disposition["action"] == "maintainer-reimport" and disposition["trigger"]["state"] == "missing":
+    if disposition["action"] in {"maintainer-import-label", "maintainer-reimport"} and disposition["trigger"]["state"] == "missing":
         if reason := import_author_block(pr, node):
             return {**skip(reason), "status": "deferred"}
-        current_approval = effective_approval(pr)
+        current_approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
         patch = node.get("approvedPatch", {})
-        approved_ids = ({current_approval["id"]} if current_approval else set())
-        if approved_patch(pr, patch):
-            approved_ids.add(patch["reviewId"])
-        approvers = sorted(item["author"]["login"] for item in latest.values()
-                           if item["id"] in approved_ids and item["state"] == "APPROVED")
-        if not approvers:
+        approval = current_approval
+        if not approval and approved_patch(pr, patch):
+            approval = latest.get(patch["reviewer"])
+            if approval and approval["id"] != patch["reviewId"]:
+                approval = None
+        if not approval or approval["state"] != "APPROVED":
             return skip("no-qualified-import-approver")
+        approvers = [approval["author"]["login"]]
         trigger = disposition["trigger"]
-        exports = ", ".join(f"[#{item['number']}](https://github.com/google/gvisor/pull/{item['number']})"
-                            for item in disposition["binding"]["imports"])
+        imports = disposition["binding"]["imports"]
+        if disposition["state"] != "closed":
+            imports = [item for item in imports if item["status"] in {"open", "draft"}]
+        exports = ", ".join(f"[#{item['number']}](https://github.com/google/gvisor/pull/{item['number']})" for item in imports)
+        if disposition["state"] == "closed":
+            export_status = f"The export ({exports}) closed without merging."
+        elif exports:
+            export_status = f"Copybara still exports an earlier revision ({exports})."
+        else:
+            export_status = "There is no public export for this head."
         head = pr["head"]
         body = (f"🚨 {' '.join('@' + login for login in approvers)} please restore `ready to pull` "
-                f"for [{head[:12]}](https://github.com/google/gvisor/commit/{head}) and restart its import. "
-                f"The earlier export {exports} closed without merging, no matching successor is open, "
-                f"and the previously applied label is now absent (removed {trigger['removedAt']}). "
-                "Approval of this head or its verified equivalent patch remains recorded; this reminder "
-                "concerns the import trigger, not a new code-review request. Retained export CI results "
-                "remain separate.\n\n"
+                f"to import [{head[:12]}](https://github.com/google/gvisor/commit/{head}). "
+                f"{'You already approved this head.' if current_approval else 'The reviewed patch is unchanged.'} "
+                f"{export_status}\n\n"
                 f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} action=restore-import-label -->")
         return schedule_reminder(result, comments, now, owner, action="restore-import-label",
                                  approvers=approvers, removedAt=trigger["removedAt"], body=body)

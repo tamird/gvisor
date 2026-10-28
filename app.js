@@ -397,7 +397,11 @@ function attentionDisposition(node, reason) {
 function importLineage(node) {
   const pr = node.github, current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
   const patch = approvedPatch(node);
-  return current.length ? current : patch ? pr.imports.filter(item => item.sourceHead === patch.approvedHead) : [];
+  if (current.some(item => item.status !== "closed") || !patch) return current;
+  const earlier = pr.imports.filter(item => item.sourceHead === patch.approvedHead);
+  if (!current.length) return earlier;
+  const merged = earlier.filter(item => item.status === "merged");
+  return merged.length ? merged : current;
 }
 function publicImportDisposition(node) {
   const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);
@@ -499,7 +503,9 @@ function attentionReasons(node, owner) {
     const exports = active.map(item => `Copybara PR #${item.number} (${item.url}) still exports ${item.sourceHead.slice(0, 12)}: ${checkInfo(item).text.toLowerCase()} public checks (${item.checks.total} reported)${conflictRecord(item) ? "; merge conflicts" : ""}`);
     add("maintainer-reapproval", `Ask the approving maintainer to reapprove current source ${pr.head.slice(0, 12)} (${pr.url}), published ${pr.headIntroducedAt}. The prior approval was submitted ${acceptedPatch.submittedAt}. ${exports.join(". ")}. Reapproval of this source PR lets Copybara regenerate the import. Equivalent source patches and an open older export do not replace current-head approval; the periodic alarm uses the existing per-PR cooldown and business hours.`);
   }
-  const awaitingReapprovedExport = importDisposition?.binding.eligible && importDisposition.scope === "equivalent"
+  const restoreLabel = importAction === "maintainer-import-label";
+  if (restoreLabel) add("maintainer-import-label", importDisposition.description, "Restore ready to pull");
+  const awaitingReapprovedExport = !restoreLabel && importDisposition?.binding.eligible && importDisposition.scope === "equivalent"
     && importDisposition.binding.currentApproval && active.length;
   if (awaitingReapprovedExport)
     add("maintainer-unknown", `Current source ${pr.head.slice(0, 12)} has a fresh approval. Copybara still shows the earlier export ${active.map(item => "#" + item.number).join(", ")}; wait for its replacement. The earlier export is not a request for manual conflict repair.`, "Reapproved; waiting for Copybara");
@@ -564,7 +570,7 @@ function attentionReasons(node, owner) {
     add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
   if (!approved && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
-  if (approved && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport) {
+  if (approved && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport && !restoreLabel) {
     const open = active.filter(item => item.status === "open");
     if (!usesImports(pr)) {
       if (pr.mergeable === "MERGEABLE" && checkInfo(pr).passed && pr.checks.state === "SUCCESS"
@@ -1893,7 +1899,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       const disposition = publicImportDisposition({ ...nextRegistry.nodes.find(node => node.id === identity), github: pr });
       if (!disposition || !["exact", "equivalent", "none"].includes(disposition.scope)
           || !["conflicting", "open", "draft", "merged", "closed", "absent", "unknown"].includes(disposition.state)
-          || ![null, "author-conflicts", "maintainer-import-refresh", "maintainer-reapproval", "maintainer-reimport", "maintainer-import-landed"].includes(disposition.action)
+          || ![null, "author-conflicts", "maintainer-import-refresh", "maintainer-reapproval", "maintainer-import-label", "maintainer-reimport", "maintainer-import-landed"].includes(disposition.action)
           || typeof disposition.description !== "string") throw new Error("Invalid public import disposition");
     }
     for (const item of [pr, ...pr.imports]) {
