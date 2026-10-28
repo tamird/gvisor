@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T18:15:20.796+00:00",
+    "updatedAt": "2026-10-28T19:01:44Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31344,6 +31344,45 @@
         "summary": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
         "body": "A blocking flock or fcntl must register its waiter before releasing\nthe mutex, or a concurrent unlock can go unnoticed. LockRegion relied\non a waiter callback to release its mutex, hiding the lock transfer\nfrom checklocks and requiring two exemptions.\n\nRegister directly with the wait queue, release the mutex, and block on\nthe registered channel. This keeps registration atomic with the failed\nlock attempt and lets checklocks verify both sides of the wait."
       }
+    },
+    {
+      "id": "branch:mixed-owner-getlk",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/mixed-owner-getlk",
+      "head": "60b75d53510bf35b648bfec78626133007e926c3",
+      "title": "Report the conflicting record lock's owner",
+      "url": "https://github.com/tamird/gvisor/commit/60b75d53510bf35b648bfec78626133007e926c3",
+      "group": "runtime",
+      "status": "Reviewable",
+      "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
+      "updatedAt": "2026-10-28T18:41:41Z",
+      "evidence": [
+        {
+          "label": "Four original failures in each stock gVisor mode",
+          "url": "https://app.buildbuddy.io/invocation/b5e4efe5-5b46-4a87-bd9a-feb53b07b4ad"
+        },
+        {
+          "label": "Linux and both corrected gVisor modes: 21 syscall cases",
+          "url": "https://app.buildbuddy.io/invocation/140b1024-3c79-42c9-98ec-671d08e7ac12"
+        },
+        {
+          "label": "36 unit cases and three analyzer targets across both architectures",
+          "url": "https://app.buildbuddy.io/invocation/7ca7f89b-d19b-4cf4-9fd1-f6ae70f3ae13"
+        },
+        {
+          "label": "Aggregate failed matching symbolic vs. numeric errno/lock output; original XML and logs reconciled without reruns",
+          "url": "https://app.buildbuddy.io/invocation/d7c4215d-5666-40f1-b951-cc14acc7fafb"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "60b75d53510bf35b648bfec78626133007e926c3",
+        "url": "https://github.com/tamird/gvisor/commit/60b75d53510bf35b648bfec78626133007e926c3",
+        "title": "Report the conflicting record lock's owner",
+        "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
+        "body": "A process can hold both a POSIX read lock and an open file description\nread lock on the same bytes. When it asks whether a write lock would\nconflict, Linux ignores the lock owned by the caller but reports the\nother reader [1]. gVisor ignored both readers and returned F_UNLCK.\n\nCompare the querying owner with each reader regardless of how the lock\nwas acquired. Report the PID of the conflicting lock: -1 for an open\nfile description, or the process ID as seen from the caller's PID\nnamespace for a POSIX lock. This applies to both F_GETLK and\nF_OFD_GETLK. Also reject F_OFD_GETLK with EINVAL when its input l_pid is\nnonzero, as Linux requires [2].\n\n[1]: https://github.com/torvalds/linux/blob/65ba8f34ec886ec72b2c07ddc8cf3d815c32869d/fs/locks.c#L958\n[2]: https://github.com/torvalds/linux/blob/65ba8f34ec886ec72b2c07ddc8cf3d815c32869d/fs/locks.c#L2437"
+      }
     }
   ],
   "edges": [
@@ -34321,9 +34360,47 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-28T18:00:32.729+00:00",
+      "updatedAt": "2026-10-28T19:01:44Z",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
+        {
+          "text": "On the same 10 Mbit/s finite queue, the manual clock and Go synctest produced identical packet and stream traces in both CUBIC/Reno write orders. CUBIC writing first produced 12,405 events and 119 drops; Reno writing first produced 12,430 events and 98 drops. Both clocks agreed on which flow sent first at 250 ms, on every drop and scheduled delivery, and on each flow's delivered bytes. This was one trial per clock and order on one native AMD64 worker at GOMAXPROCS=1. Automated verification took 7.9 seconds from execution finish.",
+          "evidence": [
+            {
+              "label": "Clock comparison source",
+              "url": "https://github.com/tamird/gvisor/commit/0999dbf18b41795d68a7c38ff15d10649317b361"
+            },
+            {
+              "label": "Four native runs and their packet traces",
+              "url": "https://app.buildbuddy.io/invocation/4bad9684-2803-43d3-80d1-3e29ef16a918"
+            },
+            {
+              "label": "Verified qualification",
+              "url": "https://app.buildbuddy.io/invocation/708d637e-004c-4c2d-b0b5-b631e2d89bd9"
+            }
+          ]
+        },
+        {
+          "text": "Two established TCP flows shared one NIC. Across eight runs, each write order produced the same ten packets at GOMAXPROCS=1 and 2. Writing the second flow first reversed both the data at 60 ms and the ACKs at 70 ms. Both payloads (20 and 30 bytes) arrived once; neither flow retransmitted during two RTOs. This tests simultaneous readiness, not competition for a full queue.",
+          "evidence": [
+            {
+              "label": "Two-flow fixture",
+              "url": "https://github.com/tamird/gvisor/commit/3b3b2e51e4"
+            },
+            {
+              "label": "Native trace and test results",
+              "url": "https://app.buildbuddy.io/invocation/308712b4-6811-4489-bdce-492d9a42327c"
+            },
+            {
+              "label": "Verified qualification bundle",
+              "url": "https://app.buildbuddy.io/invocation/0a226bac-6cfe-4521-aa14-3e4474eff9ec"
+            },
+            {
+              "label": "Comparable finite queue with both clock drivers (fixture, awaiting results)",
+              "url": "https://github.com/tamird/gvisor/commit/0999dbf18b41795d68a7c38ff15d10649317b361"
+            }
+          ]
+        },
         {
           "text": "After dropping the second of five 1,420-byte segments, the virtual link recorded three acknowledgments with growing SACK blocks. Reno and CUBIC each retransmitted just the missing segment after 20 ms, before the 200 ms retransmission timer. The receiver delivered all 7,100 bytes exactly once; each sender counted one fast retransmit, one SACK recovery and zero timeouts. All eight runs (two algorithms, one or two processors, two trials) reproduced the same 14 packets. During recovery Reno\u2019s window fell from 10 segments to 5; CUBIC\u2019s stayed at 10 at that sample. This measures a single connection recovering from one loss. The trace does not establish a throughput advantage or distinguish the effect of the SACK information from that of duplicate ACKs.",
           "evidence": [
@@ -35765,7 +35842,7 @@
           ]
         }
       ],
-      "nextStep": "Before using this clock for the shared-FIFO CUBIC comparisons, test whether two senders contending for the same queue produce repeatable wire schedules when more than one flow can have work pending.",
+      "nextStep": "Use the validated finite-queue fixture to test whether recovery or fairness changes under a different bottleneck. Keep the packet traces and report the link conditions for each comparison.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -36715,9 +36792,38 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-28T17:43:12.599+00:00",
-      "summary": "The decoder experiment that replaced a bound interface setter passed the correctness checks, but GraphLoad slowed from 883.6 to 988.6 ms/op and used 91,921 more allocations per operation than stock. The experiment is closed without an upstream proposal.",
+      "updatedAt": "2026-10-28T18:57:48Z",
+      "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
+        {
+          "text": "Two fields can share one Go map after a legal conversion to a named map type. Running the identical test on three sources showed that the legacy codec rejects it during Save; the integrated graph rewrite reports a successful Save, then rejects its own stream at Load. Comparing the key and element types on both paths lets the two views share one restored map without conflating an independent third map. All same-type controls passed on each source.",
+          "evidence": [
+            {
+              "label": "Inline review on the graph decoder",
+              "url": "https://github.com/google/gvisor/pull/16584#discussion_r4404769756"
+            },
+            {
+              "label": "Integrated rewrite and failing fixture",
+              "url": "https://github.com/tamird/gvisor/commit/c397067e24d51f19438677832f8b1f05e7f5bcf5"
+            },
+            {
+              "label": "Legacy: failure at Save",
+              "url": "https://app.buildbuddy.io/invocation/ebfc042e-c1c1-4d38-988d-9a2d652aa694"
+            },
+            {
+              "label": "Integrated graph codec: failure at Load",
+              "url": "https://app.buildbuddy.io/invocation/890ac53d-ef37-4d4d-8108-56e214145f3d"
+            },
+            {
+              "label": "Candidate and tests",
+              "url": "https://github.com/tamird/gvisor/compare/c397067e24d51f19438677832f8b1f05e7f5bcf5...d4d37d21a86a2bab7e8faef555720ae94ed2cda7"
+            },
+            {
+              "label": "Corrected round trip on native AMD64",
+              "url": "https://app.buildbuddy.io/invocation/a65f9eed-848b-41d3-9549-1fed01490cfe"
+            }
+          ]
+        },
         {
           "text": "The unbound-assignment prototype (9b688698c7) passed the normal and race suites: 10,798 and 10,844 cases, with the same 87 expected skips in each. All 11 hook subcases passed; on both sources, two loads from the same slot restored 7 and each destination\u2019s hook observed [7]. In 12 paired runs against stock (bd7e3d2a8a), GraphLoad was slower in 11 pairs and allocated more in all 12. Neither the map nor plain-struct timing difference was significant (p=.932 and p=.347). These are decoder benchmarks, not full checkpoint restore or startup.",
           "evidence": [
@@ -39019,7 +39125,7 @@
           ]
         }
       ],
-      "nextStep": "Keep this prototype closed. Any successor should preserve both destinations\u2019 hook observations and address the GraphLoad regression before upstream review.",
+      "nextStep": "Recheck the shared-map round trip when the graph codec changes. Keep the interface-setter prototype closed unless a successor preserves both destinations' hooks and fixes the measured GraphLoad regression.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
@@ -45541,9 +45647,35 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T17:03:23.521831+00:00",
+      "updatedAt": "2026-10-28T18:45:44Z",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Both recorded outer packaging commands succeeded in an empty root and reproduced their fresh AMD64 and ARM64 archives exactly. Historical AMD64 tar headers, order and metadata match; four of eight ELF files differ only in .rodata. On ARM64, original Bazel input manifests show that the same four executables already differed before packaging: runsc, gvisor_sentry, checkpointgofer and runsc-metric-server. Each embeds the source version. The historical ARM64 outer CAS object returned 404, so its tar headers were not compared.",
+          "evidence": [
+            {
+              "label": "Original action replay and member comparison (aggregate incomplete)",
+              "url": "https://app.buildbuddy.io/invocation/609837ff-eaed-45f8-a51b-5f0ef545d80e"
+            },
+            {
+              "label": "Native release build whose outputs were reproduced",
+              "url": "https://app.buildbuddy.io/invocation/699a01cf-5e67-4829-846e-e43d1ed9d40f"
+            }
+          ]
+        },
+        {
+          "text": "Four fresh PackageTar actions built AMD64 and ARM64 release payloads on the AMD64 executor with the declared Python interpreter. The uncompressed tar sizes matched the earlier outputs but their digests did not. Both empty-root inspections stopped during input download when the worker could not resolve the CAS host; neither replay reached the packager.",
+          "evidence": [
+            {
+              "label": "Completed release build",
+              "url": "https://app.buildbuddy.io/invocation/699a01cf-5e67-4829-846e-e43d1ed9d40f"
+            },
+            {
+              "label": "Incomplete replay and retained evidence",
+              "url": "https://app.buildbuddy.io/invocation/f7093575-d51d-4822-ae79-effe9bf626f4"
+            }
+          ]
+        },
         {
           "text": "A fresh native AMD64 release on 81883beb4f reproduced all 73,980,610 bytes of the original gvisor.tar.bz2. Replaying its PackageTar action in an empty root with all 2,298 declared input leaves failed before the packager ran: build_tar starts with #!/usr/bin/env bash, but /usr/bin/env is absent. Neither Python nor bzip2 ran. The earlier replay never reached execve because its CAS input root had expired; it remains a separate result.",
           "evidence": [
@@ -45732,7 +45864,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the rules_python launcher dependency and qualify a declared launch path for PackageTar. The current empty-root run stopped before Python or bzip2; neither is established as the next missing input.",
+      "nextStep": "The outer release tar command needs no host tools on the tested AMD64 executor for either payload architecture. Check the next unqualified release action in an empty root; do not repeat these tar builds. Whether the exact embedded version alone explains the differing .rodata bytes remains unverified.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
