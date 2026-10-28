@@ -20,6 +20,5 @@
   "wait_until": "STARTED",
   "remote_headers": [
     "x-buildbuddy-platform.container-image=docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
-  ],
-  "name": "Verify D-SACK for duplicates wholly inside a queued SACK block"
+  ]
 }

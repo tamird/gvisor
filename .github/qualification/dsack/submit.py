@@ -15,7 +15,7 @@ base = Path(__file__).parent
 SOURCE = "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
 HOST = "cb548161f537465fda2576793e6d6cea59a32260"
 OWNERS = ['//test/packetimpact/tests:tcp_rack_netstack_test', '//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test', '//pkg/tcpip/transport/tcp:tcp_nogo', '//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test_nogo']
-REQUEST = "c024d269bdb8d93e3aaa7f2bb34826509e2888e133ed6bcf50067ce4475fcb66"
+REQUEST = "8fe6c3c1e95e418ef8dda770db492f920e0475a39990e67356597d5dbfd928c4"
 
 
 class MemoryKey:
@@ -30,6 +30,7 @@ def main(read_key=getpass):
     raw = (base/"request.json").read_bytes()
     packet = json.loads(raw)
     assert hashlib.sha256(raw).hexdigest() == REQUEST
+    assert set(packet)=={"repo","branch","commit_sha","steps","env","platform_properties","timeout","wait_until","remote_headers"}
     assert packet["repo"] == "https://github.com/tamird/gvisor" and packet["commit_sha"] == HOST
     assert packet["branch"] == "qualification/final-public-ci" and len(packet["steps"]) == 1
     assert json.loads(packet["env"]["APPLICABILITY_QUALIFICATION_CONFIG"])["targets"] == OWNERS
@@ -48,7 +49,10 @@ def main(read_key=getpass):
         c.request("POST", "/api/v1/Run", raw, {"Content-Type":"application/json","x-buildbuddy-api-key":key})
         with c.getresponse() as r:
             if r.status != 200:
-                raise RuntimeError(f"BuildBuddy Run returned HTTP {r.status}; no retry")
+                # Keep the HTTP code and a boolean parse clue only.
+                response=r.read(4096)
+                (base/"rejected.json").write_text(json.dumps({"http_status":r.status,"unknown_field":b"unknown field" in response.lower()})+"\n")
+                raise RuntimeError("BuildBuddy did not accept the request; no retry")
             body = r.read(4097)
             if len(body) > 4096:
                 raise ValueError("Unexpected Run reply size")

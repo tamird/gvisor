@@ -10,7 +10,7 @@ import sys
 
 
 SOURCE = "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
-REQUEST = "c024d269bdb8d93e3aaa7f2bb34826509e2888e133ed6bcf50067ce4475fcb66"
+REQUEST = "8fe6c3c1e95e418ef8dda770db492f920e0475a39990e67356597d5dbfd928c4"
 OWNERS = ('//test/packetimpact/tests:tcp_rack_netstack_test', '//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test', '//pkg/tcpip/transport/tcp:tcp_nogo', '//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test_nogo')
 
 
@@ -107,6 +107,11 @@ def collect(key):
     finally:
         key = None
         submission = task / "submission.json"
+        rejected=task/"rejected.json"
+        if rejected.is_file():
+            info=json.loads(rejected.read_text())
+            public["http_status"]=number(info["http_status"],599)
+            public["unknown_field"]=info["unknown_field"] is True
         if submission.is_file():
             public["invocation"] = str(UUID(json.loads(submission.read_text())["invocationId"]))
         (root / "verdict.json").write_text(json.dumps(public, indent=2) + "\n")
