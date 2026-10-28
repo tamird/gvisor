@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T15:12:18.374560+00:00",
+    "updatedAt": "2026-10-28T15:25:38.203291+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30381,9 +30381,9 @@
       "title": "Finish restore hooks before copying map and interface values",
       "url": "https://github.com/tamird/gvisor/commit/0a10d127a226b19165c820a24b20a71bcf5a5a3c",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T14:46:42.817788+00:00",
-      "summary": "Restore hooks previously updated temporary structs after their values had already been copied into interfaces or maps, including map keys. Delay those copies when callbacks or dependencies can still change them; preserve immediate decoding for ordinary values. The standalone commit has the exact tree tested in the full normal and race suites (21,638 passes, 174 existing skips). All nine hook cases passed in each mode. The wire format is unchanged. Paired map and graph benchmarks found no significant timing difference; map allocations rose by one per operation.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-28T15:25:38.203291+00:00",
+      "summary": "The contributor requested a redesign of 0a10d127a2. The next revision will separate decoding into stable storage from publishing a copied value. The decoded value\u2019s own dependencies will determine when it is ready. The test and benchmark results below apply to the earlier revision.\n\nRestore hooks previously updated temporary structs after their values had already been copied into interfaces or maps, including map keys. Delay those copies when callbacks or dependencies can still change them; preserve immediate decoding for ordinary values. The standalone commit has the exact tree tested in the full normal and race suites (21,638 passes, 174 existing skips). All nine hook cases passed in each mode. The wire format is unchanged. Paired map and graph benchmarks found no significant timing difference; map allocations rose by one per operation.",
       "evidence": [
         {
           "label": "Paired map and graph load benchmarks: 48 original rows",
@@ -30421,9 +30421,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "0a10d127a226b19165c820a24b20a71bcf5a5a3c",
-        "observedAt": "2026-10-28T14:53:34.398977+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Review the standalone restore-hook correctness change. The paired map and graph benchmarks found no significant timing difference.",
+        "observedAt": "2026-10-28T15:25:38.203291+00:00",
+        "disposition": "Redesign requested after contributor review",
+        "nextAction": "Separate decoding into stable storage from publishing a copied value, then qualify the revision against the existing restore-hook controls before requesting review again.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/caafd179-be7f-4a75-81d8-1cb0ad60533a",
           "https://app.buildbuddy.io/invocation/61a6a795-6b28-41f7-970e-6a66075898b8",
@@ -30434,14 +30434,6 @@
           "https://app.buildbuddy.io/invocation/32f90ac8-bf85-4a61-bf77-7f402b3a516d",
           "https://app.buildbuddy.io/invocation/0454c309-69f3-4e7c-8437-bfb8f03b982e"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "0a10d127a226b19165c820a24b20a71bcf5a5a3c",
-        "url": "https://github.com/tamird/gvisor/commit/0a10d127a226b19165c820a24b20a71bcf5a5a3c",
-        "title": "Finish restore hooks before copying map and interface values",
-        "summary": "Restore hooks previously updated temporary structs after their values had already been copied into interfaces or maps, including map keys. Delay those copies when callbacks or dependencies can still change them; preserve immediate decoding for ordinary values. The standalone commit has the exact tree tested in the full normal and race suites (21,638 passes, 174 existing skips). All nine hook cases passed in each mode. The wire format is unchanged. Paired map and graph benchmarks found no significant timing difference; map allocations rose by one per operation.",
-        "body": "An `AfterLoad` hook can restore a Go value correctly while the\ncheckpoint still gives its caller the wrong value. Putting a struct in\na map or interface copies it. If the decoder copies the struct before\nits hook runs, the hook updates a temporary and the caller never sees\nthe result. For map keys, this can also put the entry under the wrong\nkey. A field conversion that reads the map while it is being restored\ncan observe a missing entry even if the map looks right afterward.\n\nUse the decoder's existing callback queue to order these copies after\nthe work that can still change the value. Values with nothing pending\nare copied immediately; a conversion that reads a restored container\nruns after its entries and hooks are ready. A loader may register\n`AfterLoad` before reading a field, so enqueue that struct's hooks\nafter all its field conversions. The wire format is unchanged.\n\nThe [master control](https://app.buildbuddy.io/invocation/032a74cd-085d-4ddb-8693-46cc671cb05b)\nlost six by-value updates; the pointer control passed. A separate\n[field conversion](https://app.buildbuddy.io/invocation/32f90ac8-bf85-4a61-bf77-7f402b3a516d)\nread zero from both its map and its interface instead of one.\n[The corrected normal and race suites](https://app.buildbuddy.io/invocation/5181816f-4108-41d2-a3d9-978c69435461)\npass all nine regression cases, including a handwritten loader that\nregisters its observer before reading its field."
       }
     },
     {
@@ -30681,6 +30673,78 @@
           "https://app.buildbuddy.io/invocation/46778d54-fae1-49f0-b7cb-9bb035c25c72",
           "https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/signalfd.c#L299-L303",
           "https://github.com/tamird/gvisor/commit/3257b4b2a6481c604f656db18c74456b0355f38b"
+        ]
+      }
+    },
+    {
+      "id": "branch:rack-timestamp-wrap",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rack-timestamp-wrap",
+      "head": "2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+      "title": "Compare RACK timestamps across a clock wrap",
+      "url": "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+      "group": "runtime",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T15:25:38.203291+00:00",
+      "summary": "RACK compares a peer\u2019s echoed TCP timestamp with the time a segment was retransmitted. When the 32-bit counter wraps, stock RACK records a 5 ms RTT from an older echo and ignores a later echo that should produce a 5 ms sample. Use the existing serial-number comparison. All 45 TCP tests passed on each native architecture, and both owning Nogo checks passed for AMD64 and ARM64. This changes RTT attribution; the test does not measure throughput.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+        "url": "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+        "title": "Compare RACK timestamps across a clock wrap",
+        "summary": "RACK compares a peer\u2019s echoed TCP timestamp with the time a segment was retransmitted. When the 32-bit counter wraps, stock RACK records a 5 ms RTT from an older echo and ignores a later echo that should produce a 5 ms sample. Use the existing serial-number comparison. All 45 TCP tests passed on each native architecture, and both owning Nogo checks passed for AMD64 and ARM64. This changes RTT attribution; the test does not measure throughput.",
+        "body": "When the TCP timestamp clock wraps, RACK can mistake an ACK that echoes\nthe original transmission for evidence that the retransmission arrived.\nIt can also discard a valid RTT sample when the echoed timestamp is\nnewer but numerically smaller.\n\nCompare the echo and retransmission timestamps as TCP serial numbers,\nas the stack already does for incoming timestamps. Exercise both\ndirections with a manual clock: an older echo must leave the RTT\nunchanged, and a later echo must record the 5 ms sample.\n\n[Stock] failed both cases. The full TCP test passed all 45 cases on\n[AMD64] and [ARM64]. The TCP library and test [Nogo checks] passed for\nboth target architectures.\n\n[Stock]: https://app.buildbuddy.io/invocation/17351f03-a10c-4db3-8196-ea3e5b234a18\n[AMD64]: https://app.buildbuddy.io/invocation/0cd800e1-9d29-486c-8b47-4d17f522ec06\n[ARM64]: https://app.buildbuddy.io/invocation/816c7a92-d4c8-45dd-ad4e-d81b7e0354af\n[Nogo checks]: https://app.buildbuddy.io/invocation/efbc0549-8cf0-4ab6-936d-2e5543215283"
+      },
+      "evidence": [
+        {
+          "label": "Fork: RACK comparison and both clock-wrap cases",
+          "url": "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8"
+        },
+        {
+          "label": "Compare with the upstream parent",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...2a7fbd97ab07a3df881e6e20b9613a3b613796c8"
+        },
+        {
+          "label": "RFC 8985 \u00a76.2: ACKs of retransmitted data",
+          "url": "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2"
+        },
+        {
+          "label": "Stock AMD64: both wrap cases fail",
+          "url": "https://app.buildbuddy.io/invocation/17351f03-a10c-4db3-8196-ea3e5b234a18"
+        },
+        {
+          "label": "Corrected native AMD64: 45 passed",
+          "url": "https://app.buildbuddy.io/invocation/0cd800e1-9d29-486c-8b47-4d17f522ec06"
+        },
+        {
+          "label": "Corrected native ARM64: 45 passed",
+          "url": "https://app.buildbuddy.io/invocation/816c7a92-d4c8-45dd-ad4e-d81b7e0354af"
+        },
+        {
+          "label": "TCP and test Nogo: both target architectures passed",
+          "url": "https://app.buildbuddy.io/invocation/efbc0549-8cf0-4ab6-936d-2e5543215283"
+        },
+        {
+          "label": "Original paired run: FAIL on the stock cases",
+          "url": "https://app.buildbuddy.io/invocation/a826ae43-e48b-4604-ad07-7ac64424365b"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+        "observedAt": "2026-10-28T15:25:38.203291+00:00",
+        "disposition": "Ready for contributor review",
+        "nextAction": "Review the standalone RACK timestamp comparison and its two wraparound cases.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...2a7fbd97ab07a3df881e6e20b9613a3b613796c8",
+          "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2",
+          "https://app.buildbuddy.io/invocation/17351f03-a10c-4db3-8196-ea3e5b234a18",
+          "https://app.buildbuddy.io/invocation/0cd800e1-9d29-486c-8b47-4d17f522ec06",
+          "https://app.buildbuddy.io/invocation/816c7a92-d4c8-45dd-ad4e-d81b7e0354af",
+          "https://app.buildbuddy.io/invocation/efbc0549-8cf0-4ab6-936d-2e5543215283",
+          "https://app.buildbuddy.io/invocation/a826ae43-e48b-4604-ad07-7ac64424365b"
         ]
       }
     }
