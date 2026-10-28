@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   read:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.before == '1a90f0565a4aa3136f73d586a53dcba77d74cc35' && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -34,7 +34,7 @@ jobs:
           0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
           209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
           233eda907928490dbc87592d93d78a14930f9eb0f6e89406c3316bc9d8a5c31f  wire.py
-          1081dd9ee542673b35de54a2f314a1e98da4285df0256d477980dd1b904d5aa7  read_original.py
+          3c0189fab8ad221ab5e8bf77ec93f827f4488bfa37fdfb5718c95af968a7caaa  read_original.py
           SUMS
       - name: Read only the original comparison
         shell: python

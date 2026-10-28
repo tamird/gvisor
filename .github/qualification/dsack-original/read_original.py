@@ -42,6 +42,15 @@ def typed(s):
 # Only words from this fixed diagnostic vocabulary can leave the private runner.
 ERROR_WORDS=set("""failed fail failure fatal error errors executing command action build bazel remote executor executors execution worker workers available unavailable no matching eligible matches matched platform properties property isolation-type workload-isolation-type network-enable-ipv6 architecture arch amd64 linux firecracker container-image constraint constraints requested not found package target packages targets incompatible option invalid illegal argument arguments flag configuration config configured compiler compile compiling linking linker link running exited exit code terminated killed signal resource exhausted deadline exceeded timeout timed out memory disk space filesystem file directory header required missing declared support supported unsupported unsupported class strict dependency dependencies imports cannot use find undefined load loading image pulling docker toolchain c++ gcc g++ cc clang ld ar go cppcompile gocompilepkg golink genrule test test-setup unexpected internal external exception java io server busy scheduling denied unauthenticated permission forbidden authorization denied rate capacity available register registered architecture pool allowed sandbox connection server artifact from for on to with by of and or in while the an a as this that is was are were only too many too large too small true false tcpdump tshark pcap libpcap disallowed CGO gccgo filegroup read download compiler memory expected different requiring permissions quota actionkey filesystem stale error checking repository packages retry attempts interrupted core dumped runtime cache network protobuf protoc mapper syntax dependency generation conflict flag resourceexhausted deadlineexceeded failedprecondition outofrange notfound unauthenticated permissiondenied cancelled invalidargument aborted internal unknown no matching architectures disabled enabled rejected no-sandbox mode base priv capabilities --config network-enable-ipv6 exec properties input output state checker fork exec errno eacces enoent sigkill sigterm killed task test gcc assembler collect2 clang++ rule repos visibility incompatible ignored project source invalid arguments dependencies failed to initialize setup unable find registered execution remote execution errors cpu cores action result node platform properties build grpc rpc capped operations invoking option incompatible changes cpu request memory overhead not enough signing region namespace operation implements interfaces aborted timeout systrap ptrace docker process status version working file object executable cpu milliseconds no such host stdout stderr data discarded flakes node excluded allowed rbe buildbuddy linux-sandbox nonzero linux-gnu tests ran success successfully unsuccessful did not complete no run could not start""".lower().split())
 DIAG_KEYS=("error","failed","cannot","fatal","aborted","exception","missing","denied","timeout","killed","unavailable","exhausted","not found","no such","not supported","not match","invalid","incompatible","no registered","not allowed","did not","wrong","unable","not enough","disallowed","expired","reason","rejected","no tests")
+def include_identity(text):
+    # Only compiler include roots and public Abseil source paths have meaning
+    # for this confirmed UNDECLARED_INCLUSIONS failure.
+    roots=sorted(set(re.findall(r"(/usr/(?:lib/gcc/[a-z0-9_-]+/[0-9.]+/include(?:-fixed)?|include/c[+][+]/[0-9.]+|include/[a-z0-9_-]+/c[+][+]/[0-9.]+)(?:/[a-zA-Z0-9_.+/-]+\.(?:h|hpp|inc)|/[a-zA-Z0-9_+-]+))(?=[ '\"\n\r,;:]|$)",text)))
+    src=sorted(set(re.findall(r"(?:^|[/\s'\"])(absl/[a-zA-Z0-9_.+/-]+[.](?:cc|h|inc))(?=[ '\"\n\r,;:]|$)",text)))
+    return {"compiler_include_paths":[x for x in roots if ".." not in Path(x).parts][:40],
+            "absl_source_files":[x for x in src if ".." not in Path(x).parts][:30]}
+
+
 def details(s):
     lines=[]
     for line in re.sub(r"\x1b\[[;\d]*[A-Za-z]","",s).replace("\r","\n").splitlines():
@@ -137,7 +146,7 @@ def main():
                     if p+"stderr.log" in names:
                         cmdtext=data(p+"stderr.log").decode(errors="replace")
                         stage["command_stderr"]=typed(cmdtext)
-                        if ph=="packet-impact":stage["stderr_diagnostic"]=details(cmdtext)
+                        if ph=="packet-impact":stage["stderr_diagnostic"]=details(cmdtext);stage["includes"]=include_identity(cmdtext)
                     if p+"events.jsonl" not in names:continue
                     ev=[json.loads(e) for e in data(p+"events.jsonl").splitlines()]
                     stage["child"]=[str(UUID(e["started"]["uuid"])) for e in ev if re.fullmatch(r"[0-9a-f-]{36}",e.get("started",{}).get("uuid",""))]
@@ -159,7 +168,7 @@ def main():
                             if k=="finished" and isinstance(val.get("exitCode"),dict):row["exit"]={"code":val["exitCode"].get("code"),"name":val["exitCode"].get("name") if re.fullmatch(r"[A-Z_]{1,80}",val["exitCode"].get("name","")) else None}
                             if k=="action" and re.fullmatch(r"[A-Za-z0-9]{1,60}",val.get("type","")):row["mnemonic"]=val["type"]
                             msg=d.get("message","")+"\n"+val.get("description","")
-                            row["message"]=typed(msg);row["message_diagnostic"]=details(msg)
+                            row["message"]=typed(msg);row["message_diagnostic"]=details(msg);row["includes"]=include_identity(msg)
                             eid=next((x for x in event.get("id",{}).values() if isinstance(x,dict) and x.get("label")),{}).get("label","")
                             if re.fullmatch(r"(?:@@?)?//(?:pkg|test|tools|runsc)/[a-zA-Z0-9_./-]+:[a-zA-Z0-9_+.-]+",eid):row["public_owner"]=eid
                             if k=="action" and stderr_reads<2:
