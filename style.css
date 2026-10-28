@@ -31,7 +31,7 @@
 .range-diff{margin:8px 0}.range-diff-command{display:block;width:100%;min-width:0;box-sizing:border-box;font-family:monospace;font-size:11px;margin:5px 0}.range-diff .detail-meta{display:block;margin-top:4px}
 
 /* Branchless work shares its investigation record with the dependency graph. */
-.node.investigation:not(.selected) .node-shape{stroke:var(--blue);stroke-dasharray:4 3}.node.investigation .node-label,.detail-top.investigation{fill:var(--blue);color:var(--blue)}
+.node.investigation:where(:not(.selected,.prerequisite,.dependent)) .node-shape{stroke:var(--blue);stroke-dasharray:4 3}.node.investigation .node-label,.detail-top.investigation{fill:var(--blue);color:var(--blue)}
 .node.prerequisite .node-shape{stroke:var(--blue);stroke-width:3;stroke-dasharray:none}.node.dependent .node-shape{stroke:var(--amber);stroke-width:3;stroke-dasharray:6 3}
 
 /* A pending decision links to its source and exposes the proposed text in details. */
