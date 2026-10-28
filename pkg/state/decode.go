@@ -101,6 +101,17 @@ func (ods *objectDecodeState) addCallback(ic internalCallback) {
 	ods.callbacks = append(ods.callbacks, ic)
 }
 
+// pendingLoad identifies work that can still write to a decoded value:
+// local AfterLoad callbacks and LoadValue conversions waiting on other objects.
+type pendingLoad struct {
+	callbacks    int
+	dependencies int
+}
+
+func (ods *objectDecodeState) pendingLoad() pendingLoad {
+	return pendingLoad{len(ods.callbacks), ods.blockedBy}
+}
+
 // source implements internalCallback.source.
 func (ods *objectDecodeState) source() *objectDecodeState {
 	return ods
@@ -151,6 +162,9 @@ type decodeState struct {
 	// leaves are consumed from the front and appended to the back.
 	leaves odsList
 
+	// afterLoad holds hooks registered by StateLoad calls still on the stack.
+	afterLoad []userCallback
+
 	// stats tracks time data.
 	stats Stats
 }
@@ -194,16 +208,13 @@ func (ds *decodeState) checkComplete(ods *objectDecodeState) bool {
 // As a special case, we always allow _useable_ references back to the first
 // decoding object because it may have fields that are already decoded. We also
 // allow trivial self reference, since they can be handled internally.
-func (ds *decodeState) wait(waiter *objectDecodeState, id objectID, callback func()) {
+func (ds *decodeState) wait(waiter *objectDecodeState, id objectID) {
 	switch id {
 	case waiter.id:
 		// Trivial self reference.
 		fallthrough
 	case 1:
 		// Root object; see above.
-		if callback != nil {
-			callback()
-		}
 		return
 	}
 
@@ -215,29 +226,22 @@ func (ds *decodeState) wait(waiter *objectDecodeState, id objectID, callback fun
 
 	// No nil can be returned here.
 	other := ds.lookup(id)
-	if callback != nil {
-		// Add the additional user callback.
-		other.addCallback(userCallback(callback))
-	}
 
 	// Mark waiter as unblocked.
 	other.addCallback(waiter)
 }
 
 // waitObject notes a blocking relationship.
-func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object, callback func()) {
+func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object) {
 	if rv, ok := encoded.(*wire.Ref); ok && rv.Root != 0 {
 		// Refs can encode pointers and maps.
-		ds.wait(ods, objectID(rv.Root), callback)
+		ds.wait(ods, objectID(rv.Root))
 	} else if sv, ok := encoded.(*wire.Slice); ok && sv.Ref.Root != 0 {
 		// See decodeObject; we need to wait for the array (if non-nil).
-		ds.wait(ods, objectID(sv.Ref.Root), callback)
+		ds.wait(ods, objectID(sv.Ref.Root))
 	} else if iv, ok := encoded.(*wire.Interface); ok {
 		// It's an interface (wait recursively).
-		ds.waitObject(ods, iv.Value, callback)
-	} else if callback != nil {
-		// Nothing to wait for: execute the callback immediately.
-		callback()
+		ds.waitObject(ods, iv.Value)
 	}
 }
 
@@ -344,18 +348,29 @@ func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func
 	// object are in terms of the wire object's type, which might be in a
 	// different order (but will have the same fields).
 	v := *od.encoded.Field(od.rte.FieldOrder[slot])
+	var before pendingLoad
+	if fn != nil {
+		before = od.ods.pendingLoad()
+	}
 	od.ds.decodeObject(od.ods, objPtr.Elem(), v)
 	if wait {
 		// Mark this individual object a blocker.
-		od.ds.waitObject(od.ods, v, fn)
+		od.ds.waitObject(od.ods, v)
+	}
+	if fn != nil {
+		// A conversion can copy the value. Run it after any restore hook
+		// or dependency that can still change that value.
+		if before == od.ods.pendingLoad() {
+			fn()
+		} else {
+			od.ods.addCallback(userCallback(fn))
+		}
 	}
 }
 
-// aterLoad implements Source.AfterLoad.
+// afterLoad implements Source.AfterLoad.
 func (od *objectDecoder) afterLoad(fn func()) {
-	// Queue the local callback; this will execute when all of the above
-	// data dependencies have been cleared.
-	od.ods.addCallback(userCallback(fn))
+	od.ds.afterLoad = append(od.ds.afterLoad, userCallback(fn))
 }
 
 // decodeStruct decodes a struct value.
@@ -384,12 +399,20 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
+	start := len(ds.afterLoad)
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, Source{internal: od})
 	case binaryObject:
 		loadBinary(value, rte.Name, Source{internal: od})
 	}
+	// A loader may register its AfterLoad hook before loading its fields.
+	// Enqueue it only after their hooks and conversions have been queued.
+	for _, fn := range ds.afterLoad[start:] {
+		ods.addCallback(fn)
+	}
+	clear(ds.afterLoad[start:])
+	ds.afterLoad = ds.afterLoad[:start]
 }
 
 // decodeMap decodes a map value.
@@ -406,26 +429,35 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 	reuseValue := valueType.Kind() != reflect.Struct && valueType.Kind() != reflect.Array
 	var kv, vv reflect.Value
 	for i := 0; i < len(encoded.Keys); i++ {
-		if i == 0 || !reuseKey {
+		if !kv.IsValid() || !reuseKey {
 			kv = reflect.New(keyType).Elem()
 		} else {
 			// Nil wire values leave the destination unchanged.
 			kv.SetZero()
 		}
-		if i == 0 || !reuseValue {
+		if !vv.IsValid() || !reuseValue {
 			vv = reflect.New(valueType).Elem()
 		} else {
 			vv.SetZero()
 		}
 
 		// Decode the objects.
+		before := ods.pendingLoad()
 		ds.decodeObject(ods, kv, encoded.Keys[i])
 		ds.decodeObject(ods, vv, encoded.Values[i])
-		ds.waitObject(ods, encoded.Keys[i], nil)
-		ds.waitObject(ods, encoded.Values[i], nil)
+		delayed := ods.pendingLoad() != before
+		ds.waitObject(ods, encoded.Keys[i])
+		ds.waitObject(ods, encoded.Values[i])
 
-		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+		if delayed {
+			// Inserting copies both values. Wait for their hooks, and
+			// leave the slots they write to intact for this entry.
+			key, value := kv, vv
+			ods.addCallback(userCallback(func() { obj.SetMapIndex(key, value) }))
+			kv, vv = reflect.Value{}, reflect.Value{}
+		} else {
+			obj.SetMapIndex(kv, vv)
+		}
 	}
 }
 
@@ -437,7 +469,7 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, en
 	// Decode the contents into the array.
 	for i := 0; i < len(encoded.Contents); i++ {
 		ds.decodeObject(ods, obj.Index(i), encoded.Contents[i])
-		ds.waitObject(ods, encoded.Contents[i], nil)
+		ds.waitObject(ods, encoded.Contents[i])
 	}
 }
 
@@ -472,20 +504,15 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 		return
 	}
 
-	// We now need to resolve the actual type.
-	typ := ds.findType(encoded.Type)
-
-	// We need to imbue type information here, then we can proceed to
-	// decode normally. In order to avoid issues with setting value-types,
-	// we create a new non-interface version of this object. We will then
-	// set the interface object to be equal to whatever we decode.
-	origObj := obj
-	obj = reflect.New(typ).Elem()
-	defer origObj.Set(obj)
-
-	// With the object now having sufficient type information to actually
-	// have Set called on it, we can proceed to decode the value.
-	ds.decodeObject(ods, obj, encoded.Value)
+	value := reflect.New(ds.findType(encoded.Type)).Elem()
+	before := ods.pendingLoad()
+	ds.decodeObject(ods, value, encoded.Value)
+	obj.Set(value)
+	if ods.pendingLoad() != before {
+		// Setting an interface copies a concrete struct or array. A
+		// restore hook can still modify the temporary after that copy.
+		ods.addCallback(userCallback(func() { obj.Set(value) }))
+	}
 }
 
 // isFloatEq determines if x and y represent the same value.
