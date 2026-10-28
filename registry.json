@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-27T23:55:47.275886+00:00",
+    "updatedAt": "2026-10-28T01:18:31.935784+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4699,13 +4699,13 @@
       "url": "https://github.com/google/gvisor/pull/15322",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-26T10:23:56.436935+00:00",
-      "summary": "The approved runtime page-size amendment is published in #15322 at 7b9b29bfb, replacing 8cb774707. No contributor decision remains pending. The earlier restore regression treated hostarch.PageSize as a constant. The runtime page-size change in #15802 makes it a variable and removes the save/restore test guards. This five-expression amendment uses a uint64 runtime value and adjusts the comparisons and casts; the production restore guard is unchanged.\n\nThe actual combined #15322/#15802 product source on ec4ced798 passed TestLoadFromWithUpdateUsage in a real ARM64 guest with 65,536-byte pages. The source had no test build tags. Exactly one regression executed, and its result was authenticated 4.80 seconds after native execution. This is focused runtime page-size compatibility evidence, not a new full allocator or race run.\n\nPublished 7b9b29bfb has the same tree as the qualified five-expression revision. Earlier full-suite and race results remain bound to 8cb774707; current public checks and maintainer review are tracked separately.\n\nEarlier 8cb774707 regression and validation:\n\nThe published amendment pauses memory accounting scans while restore installs the saved commitment ranges. In the regression, a scan counted an omitted page halfway through restore: both control runs reported 8,192 committed bytes when only 4,096 had been restored. The full allocator suite, both Nogo architectures, and two race-enabled executions passed on the published commit. Ayush has the results and the revised patch.",
+      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "summary": "Both sides added tests at the end of save_restore_test.go. The rebase preserves the published restore test and the newly merged exit-after-saving tests. All 69 allocator cases passed together on Linux AMD64, with no skips.\n\nPrior source-specific evidence:\n\nThe approved runtime page-size amendment is published in #15322 at 7b9b29bfb, replacing 8cb774707. No contributor decision remains pending. The earlier restore regression treated hostarch.PageSize as a constant. The runtime page-size change in #15802 makes it a variable and removes the save/restore test guards. This five-expression amendment uses a uint64 runtime value and adjusts the comparisons and casts; the production restore guard is unchanged.\n\nThe actual combined #15322/#15802 product source on ec4ced798 passed TestLoadFromWithUpdateUsage in a real ARM64 guest with 65,536-byte pages. The source had no test build tags. Exactly one regression executed, and its result was authenticated 4.80 seconds after native execution. This is focused runtime page-size compatibility evidence, not a new full allocator or race run.\n\nPublished 7b9b29bfb has the same tree as the qualified five-expression revision. Earlier full-suite and race results remain bound to 8cb774707; current public checks and maintainer review are tracked separately.\n\nEarlier 8cb774707 regression and validation:\n\nThe published amendment pauses memory accounting scans while restore installs the saved commitment ranges. In the regression, a scan counted an omitted page halfway through restore: both control runs reported 8,192 committed bytes when only 4,096 had been restored. The full allocator suite, both Nogo architectures, and two race-enabled executions passed on the published commit. Ayush has the results and the revised patch.",
       "number": 15322,
       "followup": {
-        "disposition": "Approved runtime page-size amendment published",
+        "disposition": "Conflict repaired and published",
         "owner": "root",
-        "nextAction": "Follow the current public checks and maintainer review on #15322. The approved 7b9b29bfb amendment is delivered; retain the focused ARM64 64 KiB compatibility result separately from earlier full-suite and race validation.",
+        "nextAction": "Follow review and checks on #15322.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7b9b29bfb883412abd3f0cebf1c08e33b930af38",
           "https://github.com/tamird/gvisor/compare/8cb774707423e9bce5656fff4f242459964523d8..7b9b29bfb883412abd3f0cebf1c08e33b930af38",
@@ -4731,20 +4731,28 @@
           "https://app.buildbuddy.io/invocation/b1bb84d1-7089-4ce8-aeea-1fbd426c913a"
         ],
         "reviewedAt": "2026-10-26T02:34:15.299322+00:00",
-        "sourceHead": "7b9b29bfb883412abd3f0cebf1c08e33b930af38",
+        "sourceHead": "3562ce1685038ecf0455cebfc1de40e2bace13f9",
         "reviewDecision": null,
-        "observedAt": "2026-10-26T10:23:56.436935+00:00"
+        "observedAt": "2026-10-28T01:18:31.935784+00:00"
       },
-      "head": "7b9b29bfb883412abd3f0cebf1c08e33b930af38",
+      "head": "3562ce1685038ecf0455cebfc1de40e2bace13f9",
       "refinement": {
         "before": {
-          "head": "8cb774707423e9bce5656fff4f242459964523d8"
+          "head": "907950785e9eb14b8d82e99ad86127d8a56c16de"
         },
         "after": {
-          "head": "7b9b29bfb883412abd3f0cebf1c08e33b930af38"
+          "head": "3562ce1685038ecf0455cebfc1de40e2bace13f9"
         }
       },
       "evidence": [
+        {
+          "label": "Published conflict resolution",
+          "url": "https://github.com/tamird/gvisor/commit/3562ce1685038ecf0455cebfc1de40e2bace13f9"
+        },
+        {
+          "label": "69 original allocator cases at the rebased source",
+          "url": "https://app.buildbuddy.io/invocation/6ba80a1e-34c7-4164-b82f-44fd276aa5db"
+        },
         {
           "label": "Published runtime page-size amendment",
           "url": "https://github.com/tamird/gvisor/commit/7b9b29bfb883412abd3f0cebf1c08e33b930af38"
@@ -20558,13 +20566,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/resolver-official-image-current",
-      "head": "deeab667e259802ce059b9964378a471ebe85018",
+      "head": "e4d530d2aa5499b279d08a1c88abc17c99abf933",
       "title": "Build the resolver fixture on the official BusyBox image",
-      "url": "https://github.com/tamird/gvisor/commit/deeab667e259802ce059b9964378a471ebe85018",
+      "url": "https://github.com/tamird/gvisor/commit/e4d530d2aa5499b279d08a1c88abc17c99abf933",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16401",
-      "updatedAt": "2026-10-26T00:26:52.688267+00:00",
-      "summary": "The approved official-image resolver is rebased and published to review/resolver-official-image-current at deeab667e2 on fb7341a1ad. The exact range-diff from 06a1ac32a3 is equal: the same pinned official BusyBox base and one relative /etc/resolv.conf symlink remain. Its prior contributor approval is retained; no new decision or runtime result is claimed.\n\nPublish after #16401 lands through its import. The two proposals currently conflict in images/basic/BUILD and tools/images.mk, so this order keeps one live rebasing surface. This is coordinated edit sequencing, not a base-image, compiler or local-utility dependency. Root owns the subsequent rebase/publication. Original e4b77e91 archive, Make and containerd evidence keeps its exact source and AMD64-runtime scope.\n\nCopyable patch comparison:\ngit range-diff --creation-factor=999 06a1ac32a39a557612731961754132d5b07d2d76^! deeab667e259802ce059b9964378a471ebe85018^!\n\nPreserved source-specific official-image record:\n\nThe retained approved resolver source is 06a1ac32a3 at rules-img-symlink-resolv. It uses the pinned official @test_busybox base and adds only the declared relative /etc/resolv.conf symlink to ../tmp/resolv.conf. The later local-BusyBox descendant e6ee9af099 is superseded and will not be shipped. The existing resolver approval remains; root owns current-base integration and upstream delivery review, with no new contributor decision.\n\nThe basic-image foundation landed through #16307, satisfying the old #16097 condition. There is no need for the scratch-leaf or local-BusyBox source stack. Earlier e4b77e91 validation covers the two architecture archives/contexts, AMD64 Make identity and existing containerd mount-over-symlink cases on the recorded official-image source. No new runtime result or ARM runtime is claimed.\n\nHistorical local-utility refinement and original official-image evidence:\n\nThe final resolver commit e6ee preserves the relative /etc/resolv.conf symlink and per-image cat/readlink/sleep links using the shared source-built BusyBox. Its complete child patch is unchanged from the reviewed split. Both-CPU archives and existing AMD64 containerd grouping cases are qualified in the separate root result; exact common config and BusyBox identities bind that result to the final union tree. The prior conditional child grant remains; there is no duplicate contributor question or ARM runtime claim.\n\nPreserved earlier source-specific record:\n\nThe requested scratch refinement builds BusyBox cat, readlink and sleep, preserves the relative resolver symlink and Make image name, and adds explicit BusyBox/musl notices. Complete source and existing containerd consumer review found that ordinary image targets also need native musl platform selection; the shared two-BUILD correction is independently accepted and being integrated. Resolver both-CPU archives and TestMountOverSymlinks grouping cases remain unexecuted for this refinement. Root owns shared source integration and resolver qualification remains queued while WorkMap handles the Rust refinement; Node shares the exact BusyBox input checks with other scratch leaf images. The prior 06a source approval and results remain preserved below.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
+      "status": "Published as #16549",
+      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "summary": "Declare the relative /etc/resolv.conf symlink as a layer on the pinned BusyBox image. #16549 preserves the approved resolver edits and the merged fsstress target. Earlier qualification covered both architecture archives, Make loading and AMD64 containerd mount-over-symlink tests.\n\nPreviously reviewed source:\n\nThe approved official-image resolver is rebased and published to review/resolver-official-image-current at deeab667e2 on fb7341a1ad. The exact range-diff from 06a1ac32a3 is equal: the same pinned official BusyBox base and one relative /etc/resolv.conf symlink remain. Its prior contributor approval is retained; no new decision or runtime result is claimed.\n\nPublish after #16401 lands through its import. The two proposals currently conflict in images/basic/BUILD and tools/images.mk, so this order keeps one live rebasing surface. This is coordinated edit sequencing, not a base-image, compiler or local-utility dependency. Root owns the subsequent rebase/publication. Original e4b77e91 archive, Make and containerd evidence keeps its exact source and AMD64-runtime scope.\n\nCopyable patch comparison:\ngit range-diff --creation-factor=999 06a1ac32a39a557612731961754132d5b07d2d76^! deeab667e259802ce059b9964378a471ebe85018^!\n\nPreserved source-specific official-image record:\n\nThe retained approved resolver source is 06a1ac32a3 at rules-img-symlink-resolv. It uses the pinned official @test_busybox base and adds only the declared relative /etc/resolv.conf symlink to ../tmp/resolv.conf. The later local-BusyBox descendant e6ee9af099 is superseded and will not be shipped. The existing resolver approval remains; root owns current-base integration and upstream delivery review, with no new contributor decision.\n\nThe basic-image foundation landed through #16307, satisfying the old #16097 condition. There is no need for the scratch-leaf or local-BusyBox source stack. Earlier e4b77e91 validation covers the two architecture archives/contexts, AMD64 Make identity and existing containerd mount-over-symlink cases on the recorded official-image source. No new runtime result or ARM runtime is claimed.\n\nHistorical local-utility refinement and original official-image evidence:\n\nThe final resolver commit e6ee preserves the relative /etc/resolv.conf symlink and per-image cat/readlink/sleep links using the shared source-built BusyBox. Its complete child patch is unchanged from the reviewed split. Both-CPU archives and existing AMD64 containerd grouping cases are qualified in the separate root result; exact common config and BusyBox identities bind that result to the final union tree. The prior conditional child grant remains; there is no duplicate contributor question or ARM runtime claim.\n\nPreserved earlier source-specific record:\n\nThe requested scratch refinement builds BusyBox cat, readlink and sleep, preserves the relative resolver symlink and Make image name, and adds explicit BusyBox/musl notices. Complete source and existing containerd consumer review found that ordinary image targets also need native musl platform selection; the shared two-BUILD correction is independently accepted and being integrated. Resolver both-CPU archives and TestMountOverSymlinks grouping cases remain unexecuted for this refinement. Root owns shared source integration and resolver qualification remains queued while WorkMap handles the Rust refinement; Node shares the exact BusyBox input checks with other scratch leaf images. The prior 06a source approval and results remain preserved below.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
       "links": [
         {
           "label": "Exact equal-patch official resolver rebase",
@@ -20597,10 +20605,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "deeab667e259802ce059b9964378a471ebe85018",
-        "observedAt": "2026-10-26T00:26:52.688267+00:00",
-        "disposition": "Approved equal-patch resolver rebase; publication sequenced after #16401",
-        "nextAction": "Wait for #16401/import landing, then reconcile the shared images/basic/BUILD and tools/images.mk edits and publish the retained-approved resolver. This is edit-order coordination only; no new contributor decision, compiler/base-image gate or runtime replay is inferred.",
+        "sourceHead": "e4d530d2aa5499b279d08a1c88abc17c99abf933",
+        "observedAt": "2026-10-28T01:18:31.935784+00:00",
+        "disposition": "Published as #16549",
+        "nextAction": "Follow #16549.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/deeab667e259802ce059b9964378a471ebe85018",
           "https://github.com/google/gvisor/pull/16401",
@@ -20613,12 +20621,19 @@
       },
       "refinement": {
         "before": {
-          "head": "06a1ac32a39a557612731961754132d5b07d2d76"
+          "head": "deeab667e259802ce059b9964378a471ebe85018"
         },
         "after": {
-          "head": "deeab667e259802ce059b9964378a471ebe85018"
+          "head": "e4d530d2aa5499b279d08a1c88abc17c99abf933"
         }
-      }
+      },
+      "inactive": true,
+      "evidence": [
+        {
+          "label": "Published resolver PR",
+          "url": "https://github.com/google/gvisor/pull/16549"
+        }
+      ]
     },
     {
       "id": "branch:rules-img-tcpdump",
@@ -27502,9 +27517,13 @@
       "url": "https://github.com/google/gvisor/pull/16492",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
-      "summary": "The SDK now cleans up its temporary runsc root. On native AMD64, 38 existing tests passed and one non-root check skipped; two successive sandboxes also reused the same caller-owned namespace.",
+      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "summary": "Normalizes an explicit shared_root relative to the caller\u2019s working directory, rejects an empty path, and documents how to clean up stacked mounts after all users exit. The 42-case SDK suite passed with one existing root-worker skip, and a separate real sandbox test verified sharing and teardown.",
       "evidence": [
+        {
+          "label": "Python constructor and live namespace checks",
+          "url": "https://app.buildbuddy.io/invocation/cfa544e9-96d0-4979-bea5-1b6277633a68"
+        },
         {
           "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb"
@@ -27519,11 +27538,11 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "pinring_source_scope",
         "sourceHead": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
-        "observedAt": "2026-10-27T09:36:13+00:00",
-        "disposition": "Published as #16492",
-        "nextAction": "Follow maintainer review and public checks on #16492.",
+        "observedAt": "2026-10-28T01:18:31.935784+00:00",
+        "disposition": "Tested amendment ready",
+        "nextAction": "Review the three code changes and the replies to Lucas. The published PR is still at cbb4e5690f.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16492",
           "https://github.com/tamird/gvisor/commit/cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb",
@@ -27531,7 +27550,25 @@
           "https://app.buildbuddy.io/invocation/5c82c48e-554c-477e-89a4-a719dddbcedf"
         ]
       },
-      "number": 16492
+      "number": 16492,
+      "contributorReview": {
+        "status": "pending",
+        "head": "98f30c234d4d8840d34ebcec216106eaa9d8d57d",
+        "url": "https://github.com/tamird/gvisor/commit/98f30c234d4d8840d34ebcec216106eaa9d8d57d",
+        "title": "Fix temporary Python sandbox namespace cleanup",
+        "summary": "Normalizes an explicit shared_root relative to the caller\u2019s working directory, rejects an empty path, and documents how to clean up stacked mounts after all users exit. The 42-case SDK suite passed with one existing root-worker skip, and a separate real sandbox test verified sharing and teardown.",
+        "body": "runsc pins its empty gofer network namespace under the state directory\nby default. When that directory belongs to a Python Sandbox or its\ncaller, the bind mount can prevent temporary directory cleanup.\n\nGive each sandbox a new gofer network namespace by default. Reusing\n`runtime_dir` no longer shares that namespace implicitly. Callers that\nwant to share it can pass an existing `shared_root`. They own that\ndirectory and must unmount every bind mount on `null-netns` after its\nlast user exits; concurrent first users can stack mounts on the file.\n\nThe Go SDK detaches these mounts when it closes a state directory it\nowns. The Python SDK avoids creating the mount in its temporary state\ndirectory in the first place.",
+        "kind": "amendment",
+        "baseHead": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb"
+      },
+      "refinement": {
+        "before": {
+          "head": "cbb4e5690fc29df11d2681f9e69a32ae0b4a3ebb"
+        },
+        "after": {
+          "head": "98f30c234d4d8840d34ebcec216106eaa9d8d57d"
+        }
+      }
     },
     {
       "id": "pr:16490",
@@ -28373,16 +28410,29 @@
       "title": "Extract the mapped systrap bytes and offsets from the same ELF",
       "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
       "group": "bazel",
-      "status": "Agent work",
-      "summary": "The linker script puts the mapped program in .crblob at zero. The offsets generator also extracts that section; it rejects a second allocated section rather than silently dropping it. This replaces a separate objcopy shell action.",
-      "updatedAt": "2026-10-27T23:55:47.275886+00:00",
+      "status": "Reviewable",
+      "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.",
+      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "observedAt": "2026-10-27T23:55:47.275886+00:00",
-        "nextAction": "Source and original action inputs confirm identical stub bytes and matching Go offsets for AMD64 and both ARM64 page sizes. Check the remaining installed smoke and empty-root runtime evidence."
+        "observedAt": "2026-10-28T01:18:31.935784+00:00",
+        "nextAction": "Review the extraction. Open after #16516 and #16518 land, preserving both the generated-file allowance and #16518\u2019s one-output check.",
+        "disposition": "Ready for contributor review"
       },
       "evidence": [
+        {
+          "label": "Outer harness: archival callback failed after the worker finished",
+          "url": "https://app.buildbuddy.io/invocation/cf01acfc-5718-4f07-85de-aff1fc057278"
+        },
+        {
+          "label": "Installed AMD64 systrap smoke",
+          "url": "https://app.buildbuddy.io/invocation/57e08911-5dce-4a04-a03f-e4728f5f9c95"
+        },
+        {
+          "label": "Empty-root run: original bytes, offsets, and exits for three inputs",
+          "url": "https://app.buildbuddy.io/invocation/29281644-0554-4e8f-afd6-c754b22487e5"
+        },
         {
           "label": "Same-ELF byte and offset comparisons and AMD64 runtime check",
           "url": "https://app.buildbuddy.io/invocation/7cda24be-0d9a-4ff1-b92d-a0af721e06b5"
@@ -28407,6 +28457,14 @@
         "after": {
           "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
+        "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
+        "title": "Extract the systrap stub directly from its ELF",
+        "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.",
+        "body": "The Sentry embeds the raw signal stub and uses symbol offsets to find\nentry points in those bytes. The systrap linker script puts the whole\nimage in .crblob at address zero. Have the Go tool that already reads\nthose symbols write the section bytes in the same action, removing the\nseparate objcopy command.\n\nFail if another nonempty allocated section lies outside .crblob:\nsilently omitting it would drop part of the linked program. The Sentry\nstill embeds the same per-architecture files and reads the same offsets."
       }
     },
     {
@@ -28510,6 +28568,67 @@
         }
       ],
       "number": 16539
+    },
+    {
+      "id": "pr:16549",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16549,
+      "ref": "review/resolver-official-image-current",
+      "title": "Build the resolver-symlink image with Bazel",
+      "group": "bazel",
+      "url": "https://github.com/google/gvisor/pull/16549",
+      "head": "e4d530d2aa5499b279d08a1c88abc17c99abf933",
+      "status": "open",
+      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "summary": "Declare the relative /etc/resolv.conf symlink as a layer on the pinned BusyBox image. #16549 preserves the approved resolver edits and the merged fsstress target. Earlier qualification covered both architecture archives, Make loading and AMD64 containerd mount-over-symlink tests.",
+      "followup": {
+        "observedAt": "2026-10-28T01:18:31.935784+00:00",
+        "nextAction": "Follow upstream review, CI and import.",
+        "disposition": "Approved resolver submitted",
+        "sourceHead": "e4d530d2aa5499b279d08a1c88abc17c99abf933",
+        "owner": "root"
+      },
+      "evidence": [
+        {
+          "label": "Rebased resolver",
+          "url": "https://github.com/tamird/gvisor/commit/e4d530d2aa5499b279d08a1c88abc17c99abf933"
+        }
+      ]
+    },
+    {
+      "id": "branch:udp-destination-checksum-zero",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/udp-destination-checksum-zero",
+      "title": "Cover computed-zero UDP checksums after destination port updates",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/801898b8b63a212befdf21f861bf6e5c7955e648",
+      "head": "801898b8b63a212befdf21f861bf6e5c7955e648",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "summary": "Exercises the two destination-port transitions from Lucas\u2019s review. All 14,779 cases in the header suite passed, including both added destination-port cases. The approved source PR already has an open Copybara import.",
+      "followup": {
+        "observedAt": "2026-10-28T01:18:31.935784+00:00",
+        "nextAction": "Open the two-line follow-up after #16493 lands. Reply to Lucas with the cases and the verified result.",
+        "disposition": "Ready for contributor review",
+        "sourceHead": "801898b8b63a212befdf21f861bf6e5c7955e648",
+        "owner": "lock_contract"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "801898b8b63a212befdf21f861bf6e5c7955e648",
+        "url": "https://github.com/tamird/gvisor/commit/801898b8b63a212befdf21f861bf6e5c7955e648",
+        "title": "Cover computed-zero UDP checksums after destination port updates",
+        "summary": "Exercises the two destination-port transitions from Lucas\u2019s review. All 14,779 cases in the header suite passed, including both added destination-port cases. The approved source PR already has an open Copybara import.",
+        "body": "Hold the source port at 0xfffe and change the destination port from 1 to\n2 and back. This moves the wire checksum between 0xffff and 0xfffe,\ncovering computed zero on the destination update."
+      },
+      "evidence": [
+        {
+          "label": "Full header suite with both named destination cases",
+          "url": "https://app.buildbuddy.io/invocation/5b159e2a-92f5-4b99-a7ad-9f60aef0b6bb"
+        }
+      ]
     }
   ],
   "edges": [
@@ -31316,7 +31435,7 @@
       "from": "pr:16401",
       "to": "branch:rules-img-symlink-resolv",
       "type": "depends_on",
-      "reason": "Publication-order gate: both proposals edit images/basic/BUILD and tools/images.mk and currently conflict there. Sequence the approved resolver after the fsstress import lands to keep one live rebasing surface; not a compiler or base-image dependency.",
+      "reason": "The fsstress image merged; the resolver preserves both additions in the shared BUILD and Make lists.",
       "evidence": "https://github.com/google/gvisor/pull/16401"
     },
     {
@@ -31450,6 +31569,20 @@
         "https://github.com/google/gvisor/pull/16518",
         "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7"
       ]
+    },
+    {
+      "to": "pr:16549",
+      "type": "includes",
+      "reason": "The approved image is published in #16549.",
+      "evidence": "https://github.com/google/gvisor/pull/16549",
+      "from": "branch:rules-img-symlink-resolv"
+    },
+    {
+      "to": "branch:udp-destination-checksum-zero",
+      "type": "depends_on",
+      "reason": "Keep the tested follow-up independent of the approved PR and its active Copybara import.",
+      "evidence": "https://github.com/google/gvisor/pull/16546",
+      "from": "pr:16493"
     }
   ],
   "investigations": [
