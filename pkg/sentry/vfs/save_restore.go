@@ -193,10 +193,10 @@ func (mnt *Mount) afterLoad(goContext.Context) {
 
 // afterLoad is called by stateify.
 func (epi *epollInterest) afterLoad(goContext.Context) {
-	// Mark all epollInterests as ready after restore so that the next call to
-	// EpollInstance.ReadEvents() rechecks their readiness.
-	if epi.mask != 0 {
-		epi.waiter.NotifyEvent(waiter.EventMaskFromLinux(epi.mask))
+	// Recheck armed interests on the next ReadEvents. A disarmed one-shot
+	// retains its flags but has no event bits.
+	if waiter.EventMaskFromLinux(epi.mask) != 0 {
+		epi.queueReady(nil)
 	}
 }
 
