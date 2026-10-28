@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/sync"
@@ -262,6 +263,64 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 }
 
 func runSharedFIFOScenario(t *testing.T, algorithms []string, order []int, stagger time.Duration, application *fifoApplicationOrder, scenario fifoScenario) {
+	clock := &completedClock{ManualClock: faketime.NewManualClock()}
+	runFIFOWithClock(t, algorithms, order, stagger, application, scenario, clock,
+		func(stacks []*stack.Stack, observe func()) { drainVirtualTCP(t, clock, stacks, observe) },
+		func(stacks []*stack.Stack, d time.Duration) { advanceVirtualTCP(clock, stacks, d) })
+}
+
+// Compare the two clocks on the same FIFO, application and pair of TCP stacks.
+// Keep the packet observations from each driver even if their schedules differ.
+func TestVirtualTCPClockComparison(t *testing.T) {
+	scenario := fifoScenario{capacity: 125000, windowStart: 2 * time.Second, windowEnd: 6 * time.Second,
+		maxTime: 30 * time.Second, dataBytes: 16 << 20}
+	algorithms, order := []string{"cubic", "reno"}, []int{0, 1}
+	for _, write := range [][2]int{{0, 1}, {1, 0}} {
+		t.Run(fmt.Sprintf("write%d%d", write[0], write[1]), func(t *testing.T) {
+			t.Run("manual", func(t *testing.T) {
+				runSharedFIFOScenario(t, algorithms, order, 0, &fifoApplicationOrder{FirstWriteOrder: write[:]}, scenario)
+			})
+			t.Run("synctest", func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					park := func(stacks []*stack.Stack, f func()) {
+						for _, s := range stacks {
+							s.Pause()
+						}
+						defer func() {
+							for _, s := range stacks {
+								s.Resume()
+							}
+						}()
+						synctest.Wait()
+						f()
+					}
+					drain := func(stacks []*stack.Stack, observe func()) {
+						before := time.Now()
+						park(stacks, observe)
+						if !time.Now().Equal(before) {
+							t.Fatal("clock advanced while draining TCP work")
+						}
+					}
+					advance := func(stacks []*stack.Stack, d time.Duration) {
+						before := time.Now()
+						park(stacks, func() {
+							time.Sleep(d)
+							synctest.Wait()
+						})
+						if got := time.Since(before); got != d {
+							t.Fatalf("clock advanced %s, want %s", got, d)
+						}
+					}
+					runFIFOWithClock(t, algorithms, order, 0, &fifoApplicationOrder{FirstWriteOrder: write[:]},
+						scenario, tcpip.NewStdClock(), drain, advance)
+				})
+			})
+		})
+	}
+}
+
+func runFIFOWithClock(t *testing.T, algorithms []string, order []int, stagger time.Duration, application *fifoApplicationOrder, scenario fifoScenario,
+	clock tcpip.Clock, drain func([]*stack.Stack, func()), advance func([]*stack.Stack, time.Duration)) {
 	t.Helper()
 	const quantum = time.Millisecond
 	const rate = int64(1250000)
@@ -278,7 +337,6 @@ func runSharedFIFOScenario(t *testing.T, algorithms []string, order []int, stagg
 	if application != nil {
 		diagnostic = application.diagnostic
 	}
-	clock := &completedClock{ManualClock: faketime.NewManualClock()}
 	now := func() time.Duration { return clock.NowMonotonic().Sub(tcpip.MonotonicTime{}) }
 	var stacks [2]*stack.Stack
 	var links [2]*channel.Endpoint
@@ -501,7 +559,7 @@ func runSharedFIFOScenario(t *testing.T, algorithms []string, order []int, stagg
 		}
 	}
 	fence := func() {
-		drainVirtualTCP(t, clock, stacks[:], capture)
+		drain(stacks[:], capture)
 		if diagnostic == nil || now() < 600*time.Millisecond || now() > windowEnd {
 			return
 		}
@@ -769,7 +827,7 @@ func runSharedFIFOScenario(t *testing.T, algorithms []string, order []int, stagg
 				next, selected = packet.at, index
 			}
 		}
-		advanceVirtualTCP(clock, stacks[:], next-now())
+		advance(stacks[:], next-now())
 		fence()
 		if selected != -1 {
 			packet := pending[selected]
