@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T17:03:23.521831+00:00",
+    "updatedAt": "2026-10-28T17:17:22.041+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31022,26 +31022,22 @@
       }
     },
     {
-      "id": "branch:secfuzz-coverage-generator",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16604",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/secfuzz-bounded-coverage-generator",
       "head": "de106f647e5e2157aa3d6ac91d09727f698daca4",
       "title": "Generate bounded secfuzz coverage without a shell",
-      "url": "https://github.com/tamird/gvisor/commit/de106f647e5e2157aa3d6ac91d09727f698daca4",
+      "url": "https://github.com/google/gvisor/pull/16604",
       "group": "bazel",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T16:14:00.758481+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-28T17:17:22.041+00:00",
       "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The second commit splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "de106f647e5e2157aa3d6ac91d09727f698daca4",
-        "url": "https://github.com/tamird/gvisor/commit/de106f647e5e2157aa3d6ac91d09727f698daca4",
-        "title": "Generate bounded secfuzz coverage without a shell",
-        "summary": "The seccomp filter fuzzer compares two BPF programs. A declared Go generator replaces the shell pipeline and uses bpf.MaxInstructions for the bound. The second commit splits the two 4,096-case switches into functions of 64 cases. The original fuzz-tagged filter corpus passed. With Go fuzz instrumentation, each of the 8,192 program/instruction pairs changed a counter that no other pair changed.",
-        "body": "The seccomp filter fuzzer needs a distinct Go coverage branch for each\nBPF instruction in each of the two programs it compares. Generate\nthose branches in a declared Go action using bpf.MaxInstructions, so\nthe Bazel rule no longer runs a grep/awk shell pipeline or maintains a\nsecond instruction limit.\n\nThe old shape put all 4,096 cases for each program in a single Go\nfunction. With that shape preserved, the Go compiler was killed on\ntwo remote workers before the tagged filter test could run. Split each\nprogram's cases into functions of 64 instructions, preserving the\ndescending visit order and a separate branch for every instruction.\n\nThe [native Linux validation][fixed] ran the original fuzz-tagged\nfilter corpus and checked the bits recorded by each program. With Go\nfuzz instrumentation enabled, setting each instruction's bit in turn\nchanged a coverage counter that no other instruction in either program\nchanged. All 8,192 program/instruction pairs remained distinguishable.\n\n[fixed]: https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362"
-      },
       "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/16604"
+        },
         {
           "label": "Review both commits against their tested upstream base",
           "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...de106f647e5e2157aa3d6ac91d09727f698daca4"
@@ -31074,10 +31070,11 @@
       "followup": {
         "owner": "lock_contract",
         "sourceHead": "de106f647e5e2157aa3d6ac91d09727f698daca4",
-        "observedAt": "2026-10-28T16:14:00.758481+00:00",
-        "disposition": "Ready for contributor review",
-        "nextAction": "Review the two-commit fork range for standalone upstream submission.",
+        "observedAt": "2026-10-28T17:17:22.041+00:00",
+        "disposition": "Reviewed and opened upstream",
+        "nextAction": "Follow upstream checks and maintainer review on #16604.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16604",
           "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...de106f647e5e2157aa3d6ac91d09727f698daca4",
           "https://github.com/tamird/gvisor/commit/a82fee74de5e90ef3f015c2ac566fc88745046ba",
           "https://github.com/tamird/gvisor/commit/de106f647e5e2157aa3d6ac91d09727f698daca4",
@@ -31086,29 +31083,26 @@
           "https://app.buildbuddy.io/invocation/ffb30ec2-2ae4-46e9-8d6a-8b913509d48b",
           "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362"
         ]
-      }
+      },
+      "number": 16604
     },
     {
-      "id": "branch:pipe-splice-cursor-guard",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16606",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/pipe-splice-cursor-guard",
-      "head": "fc328dc0b24cf21da8b08dd6e84f10203a867859",
+      "head": "7022c23618d6fc91c8b08594d9dd3bfa4af327a9",
       "title": "Check locking of the pipe splice cursor",
-      "url": "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859",
+      "url": "https://github.com/google/gvisor/pull/16606",
       "group": "analysis",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T16:21:00.860349+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-28T17:17:22.041+00:00",
       "summary": "A pipe splice uses the same cursor across I/O callbacks. Both splice directions hold the pipe mutex from the cursor reset through the callbacks. The annotations let Nogo check those field accesses. AMD64 and ARM64 analyzers and four native systrap splice cases passed.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "fc328dc0b24cf21da8b08dd6e84f10203a867859",
-        "url": "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859",
-        "title": "Check locking of the pipe splice cursor",
-        "summary": "A pipe splice uses the same cursor across I/O callbacks. Both splice directions hold the pipe mutex from the cursor reset through the callbacks. The annotations let Nogo check those field accesses. AMD64 and ARM64 analyzers and four native systrap splice cases passed.",
-        "body": "A splice hands the pipe file description to another file as its I/O\nsource or destination. Its copy methods share a cursor so successive\ncalls consume the same transfer in order. The pipe mutex serializes\nboth the cursor reset and the callbacks. Teach checklocks that contract\nso an unlocked access to the cursor is diagnosed."
-      },
       "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/16606"
+        },
         {
           "label": "Both architecture analyzers and all four syscall cases",
           "url": "https://app.buildbuddy.io/invocation/4a9a3fbd-d196-46dc-a233-15ad67ca6316"
@@ -31116,22 +31110,44 @@
         {
           "label": "Complete qualification verdict",
           "url": "https://app.buildbuddy.io/invocation/edefa6df-e704-46e7-b4ed-73e4e7ac4f6c"
+        },
+        {
+          "label": "Reviewed fork change",
+          "url": "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859"
         }
-      ]
+      ],
+      "number": 16606,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "7022c23618d6fc91c8b08594d9dd3bfa4af327a9",
+        "observedAt": "2026-10-28T17:17:22.041+00:00",
+        "disposition": "Reviewed and opened upstream",
+        "nextAction": "Follow upstream checks and maintainer review on #16606.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16606",
+          "https://app.buildbuddy.io/invocation/4a9a3fbd-d196-46dc-a233-15ad67ca6316",
+          "https://app.buildbuddy.io/invocation/edefa6df-e704-46e7-b4ed-73e4e7ac4f6c",
+          "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859"
+        ]
+      }
     },
     {
-      "id": "branch:rack-reordering-window-persistence",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16602",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/rack-reordering-window-persistence",
       "head": "0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
       "title": "Age the RACK reordering window only when loss recovery ends",
-      "url": "https://github.com/tamird/gvisor/commit/0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+      "url": "https://github.com/google/gvisor/pull/16602",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T17:03:23.521831+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-28T17:17:22.041+00:00",
       "summary": "Sixteen ordinary ACKs reduced stock\u2019s reordering allowance from 50 to 25 ms after a duplicate SACK. The revised sender passes the exit from recovery directly to the RACK update for that ACK. The same wire test retained the 50 ms window and all 16 recoveries, then counted the second DSACK-free recovery once (16 to 15). The standalone AMD64 suite passed 21 wire cases; the original log contains both retransmitted holes and all sixteen ordinary ACKs. Three connected-stack migrations saved and loaded successfully, and three Nogo owners passed both target architectures. A separate combined ARM64 source passed the wire case and five multiplier/initial-round cases. The earlier stock stopped at its first mismatch, so its second recovery was not measured. Removing the saved boolean changes the state layout; these migration checks cover checkpoints from the same build.",
       "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/16602"
+        },
         {
           "label": "Revised standalone source on upstream 509ad53373",
           "url": "https://github.com/tamird/gvisor/commit/0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8"
@@ -31197,46 +31213,51 @@
           "url": "https://app.buildbuddy.io/invocation/695fb745-1883-40eb-84f0-bd767ee6ca76"
         }
       ],
-      "refinement": {
-        "before": {
-          "head": "fd52b82575252fa1a40925e63ff42d5a1b80afbb",
-          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
-        },
-        "after": {
-          "head": "0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
-          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
-        }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
-        "url": "https://github.com/tamird/gvisor/commit/0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
-        "title": "Age the RACK reordering window only when loss recovery ends",
-        "summary": "Sixteen ordinary ACKs reduced stock\u2019s reordering allowance from 50 to 25 ms after a duplicate SACK. The revised sender passes the exit from recovery directly to the RACK update for that ACK. The same wire test retained the 50 ms window and all 16 recoveries, then counted the second DSACK-free recovery once (16 to 15). The standalone AMD64 suite passed 21 wire cases; the original log contains both retransmitted holes and all sixteen ordinary ACKs. Three connected-stack migrations saved and loaded successfully, and three Nogo owners passed both target architectures. A separate combined ARM64 source passed the wire case and five multiplier/initial-round cases. The earlier stock stopped at its first mismatch, so its second recovery was not measured. Removing the saved boolean changes the state layout; these migration checks cover checkpoints from the same build.",
-        "body": "A duplicate SACK can indicate that TCP retransmitted a segment too soon.\nRACK then increases the time it allows for reordering. [RFC 8985,\nsection 6.2](https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2)\nkeeps that increase for sixteen loss recoveries. The sender instead\ncounted ordinary ACKs after advancing past the last recovery point. With\na 100 ms RTT, sixteen such ACKs shrank the window from 50 ms to 25 ms\neven though no further segment had been lost.\n\nPass the transition out of recovery directly to the RACK update for\nthat ACK. A duplicate SACK on the exiting ACK refreshes persistence;\nthe next recovery without a duplicate SACK decrements it once.\n\nThe regression retransmits a hole in each of two SACK recovery\nepisodes. It checks that sixteen ordinary ACKs between them retain the\n50 ms window and that the second recovery reduces the count from 16 to\n15. The previous saved boolean only carried information within one ACK\nhandler. Removing it changes the saved TCP state layout across versions."
+      "number": 16602,
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+        "observedAt": "2026-10-28T17:17:22.041+00:00",
+        "disposition": "Reviewed and opened upstream",
+        "nextAction": "Follow upstream checks and maintainer review on #16602.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16602",
+          "https://github.com/tamird/gvisor/commit/0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+          "https://github.com/tamird/gvisor/compare/fd52b82575252fa1a40925e63ff42d5a1b80afbb..0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+          "https://app.buildbuddy.io/invocation/0d05cb1f-c9d9-4e2a-ae1a-cb45e0703f38",
+          "https://app.buildbuddy.io/invocation/ef4535cc-ac25-4d55-bf08-233a2b5d8f0e",
+          "https://app.buildbuddy.io/invocation/8a0c36df-7bf0-41f9-95fc-cdd7923b64e5",
+          "https://app.buildbuddy.io/invocation/17e0bbaf-b6e3-4c2c-bccc-d345ec298b9a",
+          "https://app.buildbuddy.io/invocation/3171c673-d6ca-42be-92bf-6b660bf30bb9",
+          "https://github.com/tamird/gvisor/commit/fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+          "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2",
+          "https://app.buildbuddy.io/invocation/52153ec5-b73d-4d4a-9371-67f7fcf1297a",
+          "https://app.buildbuddy.io/invocation/a79cad18-fa38-403b-a750-89f1e6b318c2",
+          "https://app.buildbuddy.io/invocation/ebfffe49-5f6d-40f9-a54b-e7b1a2bdb4a0",
+          "https://app.buildbuddy.io/invocation/6f146c4a-618f-47d3-b34b-801c86e1cff8",
+          "https://app.buildbuddy.io/invocation/695fb745-1883-40eb-84f0-bd767ee6ca76"
+        ]
       }
     },
     {
-      "id": "branch:rack-multiplier-saturation",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16605",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/rack-multiplier-saturation",
       "head": "d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
       "title": "Saturate the RACK reordering window multiplier",
-      "url": "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+      "url": "https://github.com/google/gvisor/pull/16605",
       "group": "runtime",
-      "status": "Reviewable",
-      "updatedAt": "2026-10-28T16:26:23.012630+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-28T17:17:22.041+00:00",
       "summary": "On the 255th eligible duplicate SACK, stock wrapped its byte-sized multiplier to zero and eliminated the reordering window. The fix saturates the increment without changing which reports qualify. On native AMD64 the focused sender test retained 255 and a 100 ms window on rounds 255 and 256; three existing sequence-round controls passed on both revisions. Both Nogo owners passed AMD64 and ARM64 analysis. The combined run keeps its expected stock failure. No live Linux traffic, ARM runtime, or throughput was measured.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
-        "url": "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
-        "title": "Saturate the RACK reordering window multiplier",
-        "summary": "On the 255th eligible duplicate SACK, stock wrapped its byte-sized multiplier to zero and eliminated the reordering window. The fix saturates the increment without changing which reports qualify. On native AMD64 the focused sender test retained 255 and a 100 ms window on rounds 255 and 256; three existing sequence-round controls passed on both revisions. Both Nogo owners passed AMD64 and ARM64 analysis. The combined run keeps its expected stock failure. No live Linux traffic, ARM runtime, or throughput was measured.",
-        "body": "A duplicate SACK can increase the time RACK allows for packet\nreordering. The multiplier starts at one and is stored in a byte. Once\nit reaches 255, another eligible duplicate report wraps it to zero,\neliminating the reordering allowance instead of retaining its maximum.\n\nSaturate the multiplier while continuing to update the DSACK round and\nrefresh its persistence. The test checks each of 256 eligible rounds,\nincluding the RTT-capped window at and beyond the boundary.\n\nLinux also caps the multiplier at 255:\nhttps://github.com/torvalds/linux/blob/v6.18/net/ipv4/tcp_recovery.c#L187"
-      },
       "evidence": [
+        {
+          "label": "Published pull request",
+          "url": "https://github.com/google/gvisor/pull/16605"
+        },
         {
           "label": "Fork change on upstream 509ad53373",
           "url": "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c"
@@ -31265,7 +31286,25 @@
           "label": "Source-matched comparison; original stock failure retained",
           "url": "https://app.buildbuddy.io/invocation/267172c0-774c-46f4-8218-22e8e73ef0dc"
         }
-      ]
+      ],
+      "number": 16605,
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+        "observedAt": "2026-10-28T17:17:22.041+00:00",
+        "disposition": "Reviewed and opened upstream",
+        "nextAction": "Follow upstream checks and maintainer review on #16605.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16605",
+          "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+          "https://github.com/torvalds/linux/blob/v6.18/net/ipv4/tcp_recovery.c#L187",
+          "https://app.buildbuddy.io/invocation/5865c898-a7a7-46b6-9e9d-bd8bceb4488a",
+          "https://app.buildbuddy.io/invocation/25d233db-fadd-45e2-b901-9af05e387a30",
+          "https://app.buildbuddy.io/invocation/38e12f63-6dc3-434f-bed0-5516067a7d50",
+          "https://app.buildbuddy.io/invocation/267172c0-774c-46f4-8218-22e8e73ef0dc"
+        ]
+      }
     }
   ],
   "edges": [
@@ -36607,9 +36646,22 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-28T16:37:49.176783+00:00",
+      "updatedAt": "2026-10-28T17:17:22.041+00:00",
       "summary": "The decoder prototype now finishes a value before copying it into a map or interface, and tracks pending writes only for structs that actually have them. This fixes the observed map-key and shared-slice restore bugs. Loading the same wire slot into two destinations also runs each hook exactly once on the right value. On 1,024 ordinary structs, stock and candidate both used 5,702 allocations in every sample; bytes fell 11.90%. The graph fixture still used 3.45% more allocations and 1.80% more bytes. None of these three Load fixtures established a timing improvement.",
       "findings": [
+        {
+          "text": "Four uncached AMD64 allocation profiles ran the same seeded 20,000-node graph on one CPU, in stock/candidate then candidate/stock order. In both pairs the largest new allocation site in the decoder was passing the bound Set method for an interface value to the publication helper. The struct completion callback and waiter slice also grew; the stock callback queue disappeared. The benchmark counted 146,581\u2013146,582 extra allocations per Load, consistent with the earlier 3.45% increase. The profile counts are estimates over three loads per process, not per-operation benchmark measurements.",
+          "evidence": [
+            {
+              "label": "Original GraphLoad allocation profiles",
+              "url": "https://app.buildbuddy.io/invocation/1874c767-706e-4f58-bb20-e5bc2aac5a3f"
+            },
+            {
+              "label": "Interface publication call site",
+              "url": "https://github.com/tamird/gvisor/blob/e21422fdb32136e7f57586c2e4d7ff994f144705/pkg/state/decode.go#L523"
+            }
+          ]
+        },
         {
           "text": "The decoder prototype now finishes a value before copying it into a map or interface, and tracks pending writes only for structs that actually have them. This fixes the observed map-key and shared-slice restore bugs. Loading the same wire slot into two destinations also runs each hook exactly once on the right value. On 1,024 ordinary structs, stock and candidate both used 5,702 allocations in every sample; bytes fell 11.90%. The graph fixture still used 3.45% more allocations and 1.80% more bytes. None of these three Load fixtures established a timing improvement. The full normal and race suites passed (10,798 and 10,844 cases respectively; each retained 87 skips), as did the three analyzer targets on AMD64 and ARM64. In twelve paired AMD64 samples, plain struct Load took 557.9 vs. 556.0 \u00b5s (p=.478). The map fixture used 12.99% fewer bytes and six more allocations per operation. No whole-checkpoint or startup measurement was made.",
           "evidence": [
@@ -38865,8 +38917,12 @@
           ]
         }
       ],
-      "nextStep": "Measure where the additional graph allocations come from and whether they affect checkpoint restore. Keep this as a fork prototype and share the correctness fixtures in support of the maintainers\u2019 rewrite.",
+      "nextStep": "Test an interface publication that acquires its destination without allocating a bound Set method. Re-run the map, interface, duplicate-slot and shared-slice correctness cases and compare the same graph before considering a wider change. This is a fork prototype for the maintainers\u2019 rewrite.",
       "evidence": [
+        {
+          "label": "Two GraphLoad profile pairs; exact binaries, benchmem and pprof",
+          "url": "https://app.buildbuddy.io/invocation/1874c767-706e-4f58-bb20-e5bc2aac5a3f"
+        },
         {
           "label": "Decoder refactor: finish each value before publishing it",
           "url": "https://github.com/tamird/gvisor/commit/e21422fdb32136e7f57586c2e4d7ff994f144705"
