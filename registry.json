@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T17:23:06.439+00:00",
+    "updatedAt": "2026-10-28T17:43:12.599+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36663,9 +36663,42 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-28T17:17:22.041+00:00",
-      "summary": "The decoder prototype now finishes a value before copying it into a map or interface, and tracks pending writes only for structs that actually have them. This fixes the observed map-key and shared-slice restore bugs. Loading the same wire slot into two destinations also runs each hook exactly once on the right value. On 1,024 ordinary structs, stock and candidate both used 5,702 allocations in every sample; bytes fell 11.90%. The graph fixture still used 3.45% more allocations and 1.80% more bytes. None of these three Load fixtures established a timing improvement.",
+      "updatedAt": "2026-10-28T17:43:12.599+00:00",
+      "summary": "The decoder experiment that replaced a bound interface setter passed the correctness checks, but GraphLoad slowed from 883.6 to 988.6 ms/op and used 91,921 more allocations per operation than stock. The experiment is closed without an upstream proposal.",
       "findings": [
+        {
+          "text": "The unbound-assignment prototype (9b688698c7) passed the normal and race suites: 10,798 and 10,844 cases, with the same 87 expected skips in each. All 11 hook subcases passed; on both sources, two loads from the same slot restored 7 and each destination\u2019s hook observed [7]. In 12 paired runs against stock (bd7e3d2a8a), GraphLoad was slower in 11 pairs and allocated more in all 12. Neither the map nor plain-struct timing difference was significant (p=.932 and p=.347). These are decoder benchmarks, not full checkpoint restore or startup.",
+          "evidence": [
+            {
+              "label": "Unbound interface assignment: measured source",
+              "url": "https://github.com/tamird/gvisor/commit/9b688698c730367d341a8fa3998ac6f89903844c"
+            },
+            {
+              "label": "Stock and candidate: 12 paired AMD64 benchmark samples per operation",
+              "url": "https://app.buildbuddy.io/invocation/e3c8fd47-c788-4fd2-87d6-f9e5cc84c802"
+            },
+            {
+              "label": "Source comparison and original receipt",
+              "url": "https://app.buildbuddy.io/invocation/42f2bba8-8480-4915-baa4-55857272ddd2"
+            },
+            {
+              "label": "Candidate: full state suite",
+              "url": "https://app.buildbuddy.io/invocation/a9efcf96-12ee-4707-9530-9103202d7f0e"
+            },
+            {
+              "label": "Candidate: full race suite",
+              "url": "https://app.buildbuddy.io/invocation/8f1665cf-4fb1-4a5c-9b7e-601cf8f0f0fe"
+            },
+            {
+              "label": "Candidate: both destinations saw their value in their hook",
+              "url": "https://app.buildbuddy.io/invocation/f9849ffd-bdd5-43e7-83e5-58496d744f71"
+            },
+            {
+              "label": "Stock: same two-destination control",
+              "url": "https://app.buildbuddy.io/invocation/295fff95-c7a0-4712-b675-ff46aca89d15"
+            }
+          ]
+        },
         {
           "text": "Four uncached AMD64 allocation profiles ran the same seeded 20,000-node graph on one CPU, in stock/candidate then candidate/stock order. In both pairs the largest new allocation site in the decoder was passing the bound Set method for an interface value to the publication helper. The struct completion callback and waiter slice also grew; the stock callback queue disappeared. The benchmark counted 146,581\u2013146,582 extra allocations per Load, consistent with the earlier 3.45% increase. The profile counts are estimates over three loads per process, not per-operation benchmark measurements.",
           "evidence": [
@@ -38934,8 +38967,36 @@
           ]
         }
       ],
-      "nextStep": "Test an interface publication that acquires its destination without allocating a bound Set method. Re-run the map, interface, duplicate-slot and shared-slice correctness cases and compare the same graph before considering a wider change. This is a fork prototype for the maintainers\u2019 rewrite.",
+      "nextStep": "Keep this prototype closed. Any successor should preserve both destinations\u2019 hook observations and address the GraphLoad regression before upstream review.",
       "evidence": [
+        {
+          "label": "Unbound interface assignment: measured source",
+          "url": "https://github.com/tamird/gvisor/commit/9b688698c730367d341a8fa3998ac6f89903844c"
+        },
+        {
+          "label": "Stock and candidate: 12 paired AMD64 benchmark samples per operation",
+          "url": "https://app.buildbuddy.io/invocation/e3c8fd47-c788-4fd2-87d6-f9e5cc84c802"
+        },
+        {
+          "label": "Source comparison and original receipt",
+          "url": "https://app.buildbuddy.io/invocation/42f2bba8-8480-4915-baa4-55857272ddd2"
+        },
+        {
+          "label": "Candidate: full state suite",
+          "url": "https://app.buildbuddy.io/invocation/a9efcf96-12ee-4707-9530-9103202d7f0e"
+        },
+        {
+          "label": "Candidate: full race suite",
+          "url": "https://app.buildbuddy.io/invocation/8f1665cf-4fb1-4a5c-9b7e-601cf8f0f0fe"
+        },
+        {
+          "label": "Candidate: both destinations saw their value in their hook",
+          "url": "https://app.buildbuddy.io/invocation/f9849ffd-bdd5-43e7-83e5-58496d744f71"
+        },
+        {
+          "label": "Stock: same two-destination control",
+          "url": "https://app.buildbuddy.io/invocation/295fff95-c7a0-4712-b675-ff46aca89d15"
+        },
         {
           "label": "Two GraphLoad profile pairs; exact binaries, benchmem and pprof",
           "url": "https://app.buildbuddy.io/invocation/1874c767-706e-4f58-bb20-e5bc2aac5a3f"
@@ -39830,6 +39891,51 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "Unbound interface assignment: GraphLoad versus stock",
+          "description": "Medians from 12 pairs on one pinned Linux AMD64 CPU, alternating which source ran first. Stock: bd7e3d2a8a; unbound assignment: 9b688698c7.",
+          "columns": [
+            "GraphLoad measure",
+            "Stock",
+            "Unbound assignment",
+            "Change"
+          ],
+          "rows": [
+            [
+              "Time/op",
+              "883.6 ms",
+              "988.6 ms",
+              "+11.89%; p=.010"
+            ],
+            [
+              "Allocations/op",
+              "4,246,135",
+              "4,338,056",
+              "+91,921 (+2.16%)"
+            ],
+            [
+              "Bytes/op",
+              "181,346,736",
+              "182,861,624",
+              "+1,514,888 (+0.84%)"
+            ]
+          ],
+          "note": "The map and plain-struct fixtures allocated fewer bytes, but neither established a timing improvement. The GraphLoad regression rules out this prototype for upstream submission.",
+          "evidence": [
+            {
+              "label": "Unbound interface assignment: measured source",
+              "url": "https://github.com/tamird/gvisor/commit/9b688698c730367d341a8fa3998ac6f89903844c"
+            },
+            {
+              "label": "Stock and candidate: 12 paired AMD64 benchmark samples per operation",
+              "url": "https://app.buildbuddy.io/invocation/e3c8fd47-c788-4fd2-87d6-f9e5cc84c802"
+            },
+            {
+              "label": "Source comparison and original receipt",
+              "url": "https://app.buildbuddy.io/invocation/42f2bba8-8480-4915-baa4-55857272ddd2"
+            }
+          ]
+        },
         {
           "title": "Slice backing-array reuse on the real Nginx checkpoint",
           "description": "Twelve alternating AB/BA pairs on one AMD64 CPU, five Decode iterations per sample, all using the same 309,276-byte framed state file. Baseline 50740a5a8d; candidate 93f13af029.",
