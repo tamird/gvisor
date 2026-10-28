@@ -1,0 +1,31 @@
+{
+  "request_sha256": "34863f8dfa25ad5ef0b911209b011cd749660e96d446d6eee1855e39c237412f",
+  "bytes": 21203,
+  "source": "e070894f5170984643df90e9f0bbe100c87329a7",
+  "stock": "81c2e35f06fc1d0ba9b7dee48a4fc0af3b691978",
+  "parent": "b7cbb86f1edf369a28bd27d1c4817eab917abb8c",
+  "trees": {
+    "81c2e35f06fc1d0ba9b7dee48a4fc0af3b691978": "0ca64a6ee31aa52aac70fef976562c073503dc71",
+    "e070894f5170984643df90e9f0bbe100c87329a7": "33b225f32a3d06317ac1ca1481bb91f4d79ecd30"
+  },
+  "host": "cb548161f537465fda2576793e6d6cea59a32260",
+  "donor": "fbd653480396cc04fbac1b6ea52222516818364b2d3166cdc85d75f69bf4dfb0",
+  "targets": [
+    "//pkg/sentry/vfs:vfs_test",
+    "//pkg/sentry/fsimpl/fuse:fuse_test",
+    "//pkg/sentry/epollqualification:epoll_contract_test",
+    "//pkg/sentry/vfs:vfs_nogo",
+    "//pkg/sentry/vfs:vfs_test_nogo"
+  ],
+  "files": {
+    "image_bootstrap.py": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+    "image_execution.py": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+    "image_qualification.py": "3225c70bf3985c792040dfd3817dfe4e1d6a40157a5d2fff8754e991887df0d4",
+    "image_workload.py": "876e0d6a0b727d9a79b1f4bd6438d74a5a1d2ca2cdc71320a92b962d630ac554",
+    "BUILD.bazel": "3436ba5a7d3676ba8092465bac201155830700f7059bac4baedbda24fe8f0fd5",
+    "checkpoint_test.go": "dd66ad51f8e0cb69f79d688ba508744b109383945ca4e3571d646141f9a6879c",
+    "linux_epoll_test.go": "d99afb3f8b38ecb5ec55809d286ce5bafccae21c214ff95a5e9ca6d677b4b317",
+    "fuse.fragment": "d28d15f1acd19346c19eef1768ffe55edd23108f4ad1bd0ff63ff6ab88e04215"
+  },
+  "qualification_package": "pkg/sentry/epollqualification"
+}

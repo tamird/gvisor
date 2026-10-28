@@ -1,0 +1,67 @@
+name: Check epoll modification on Sentry and Linux
+
+"on":
+  push:
+    branches: [qualification/epoll-modify-internal-actions]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/epoll-modify"
+          mkdir -p "$root/task"
+          cp .github/qualification/epoll/{request.json,plan.json,submit.py} "$root/task/"
+          cp .github/qualification/epoll/{receipt,graph}.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          94b57a00d55f3f8f71114931c18a1f688d027eaf857ea6fa4edb90bc3cfcb690  receipt.py
+          5dfe9dce1a7465b9f05312b4c91b2255bc3bc64135ffeed292db6ee86ebe784a  graph.py
+          34863f8dfa25ad5ef0b911209b011cd749660e96d446d6eee1855e39c237412f  task/request.json
+          b018844796e436af6ecbb8f67ef48283ebc8db62e3ee707d5a341febf5307fd5  task/plan.json
+          a8445740e16d3dad9154351851eb0a6b57ff500c0d19452bc43a7c0d78cdb121  task/submit.py
+          SUMS
+      - name: Check the fixture's Bazel visibility on the exact candidate
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          git checkout --detach e070894f5170984643df90e9f0bbe100c87329a7
+          python3 "$RUNNER_TEMP/epoll-modify/graph.py" "$RUNNER_TEMP/epoll-modify"
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"]) / "epoll-modify" / "receipt.py"))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epoll-modify-receipt
+          path: ${{ runner.temp }}/epoll-modify/verdict.json
+          if-no-files-found: error
+          retention-days: 14
