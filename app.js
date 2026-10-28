@@ -560,7 +560,8 @@ function attentionReasons(node, owner) {
   const followupBlocked = reasons.some(item => item.owner === "agent" || ["maintainer-triaged", "maintainer-ci-infrastructure", "maintainer-import-refresh", "maintainer-reapproval"].includes(item.id));
   if (review.unknown && !review.incomplete && !followupBlocked)
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
-  if (review.response && !newWaitComment) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
+  if (review.response && !newWaitComment && attentionDisposition(node, "author-feedback")?.action !== "batch-cleanup")
+    add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
   if (!approved && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
   if (approved && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport) {

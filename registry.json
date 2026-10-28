@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T13:24:22.560053+00:00",
+    "updatedAt": "2026-10-28T13:38:53.803726+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25987,19 +25987,20 @@
       "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T19:45:36.534102+00:00",
-      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nThe separate supplier change is open as hermetic-llvm #892 at 039cde70e. It uses ordinary llvm.configure: an explicit root list selects the initial backends and every dependency contributes its requirements. The fresh same-supplier nine-versus-two-backend graph removes 479 configured LLVM C++ compile actions per CPU, matching the earlier comparisons. Those are graph counts, not measured build-time savings. Preserve #15940 until the replacement is delivered; the supplier and compiler switch remain separate.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
+      "updatedAt": "2026-10-28T13:33:48.579068+00:00",
+      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nThe separate supplier change landed in hermetic-llvm #892 at 17f6a30088. It uses ordinary llvm.configure: an explicit root list selects the initial backends and every dependency contributes its requirements. The fresh same-supplier nine-versus-two-backend graph removes 479 configured LLVM C++ compile actions per CPU, matching the earlier comparisons. Those are graph counts, not measured build-time savings. Preserve #15940 until the replacement is delivered; the supplier and compiler switch remain separate.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
       "followup": {
         "owner": "root",
         "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
-        "observedAt": "2026-10-26T19:45:36.534102+00:00",
-        "disposition": "Source and GNU parser qualification passed; supplier delivery remains separate",
-        "nextAction": "Complete the independently reviewed supplier backend proposal and prerequisite delivery before presenting the final source migration. Keep #15940 active and the compiler switch separate.",
+        "observedAt": "2026-10-28T13:33:48.579068+00:00",
+        "disposition": "Source and GNU parser checks passed; supplier change landed",
+        "nextAction": "Check which published supplier version contains #892 and the remaining gVisor prerequisites before presenting the source migration. Keep #15940 active and the compiler switch separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
           "https://app.buildbuddy.io/invocation/2476c02c-1d7a-4ecd-9ce5-9ed8c5635e55",
-          "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9"
+          "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9",
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268"
         ]
       },
       "evidence": [
@@ -26046,6 +26047,10 @@
         {
           "label": "Original catalog qualification with archive-pin mismatch",
           "url": "https://app.buildbuddy.io/invocation/e4a15677-7002-4234-b992-d8e740917831"
+        },
+        {
+          "label": "Upstream merge of hermetic-llvm #892",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268"
         }
       ],
       "refinement": {
@@ -26244,18 +26249,19 @@
       "title": "Make extra LLVM backends development dependencies",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-27T23:27:50.136123+00:00",
-      "summary": "The LLVM module requests AArch64 and X86 for downstream builds. It requests seven additional backends through a development-only use of the same extension. Bazel resolved two backends for an unconfigured consumer, three for a consumer with a transitive BPF request, and all nine when hermetic-llvm was the root. Projects that build Clang from source for another target must request that backend. Prebuilt compilers do not change.",
+      "status": "merged",
+      "updatedAt": "2026-10-28T13:33:48.579068+00:00",
+      "summary": "Merged on October 28 at 17f6a30088. The LLVM module requests AArch64 and X86 for downstream builds. It requests seven additional backends through a development-only use of the same extension. Bazel resolved two backends for an unconfigured consumer, three for a consumer with a transitive BPF request, and all nine when hermetic-llvm was the root. Projects that build Clang from source for another target must request that backend. Prebuilt compilers do not change.",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "b18956ee24a60996dd51e52e826aedbf739bc57c",
-        "observedAt": "2026-10-27T23:27:50.136123+00:00",
-        "disposition": "Reviewed revision published; upstream CI passed",
-        "nextAction": "All 43 upstream checks passed on b18956ee. Await maintainer review.",
+        "observedAt": "2026-10-28T13:33:48.579068+00:00",
+        "disposition": "Delivered upstream in hermetic-llvm #892",
+        "nextAction": "No action on this PR. Check the published module version separately before changing its gVisor consumer.",
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/b18956ee24a60996dd51e52e826aedbf739bc57c",
-          "https://app.buildbuddy.io/invocation/98d02265-ec22-4748-b956-9431ab4b6322"
+          "https://app.buildbuddy.io/invocation/98d02265-ec22-4748-b956-9431ab4b6322",
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268"
         ]
       },
       "evidence": [
@@ -26362,6 +26368,10 @@
         {
           "label": "Target-selection suite",
           "url": "https://app.buildbuddy.io/invocation/3b67af27-49f4-4aaa-acb8-951364f00c4d"
+        },
+        {
+          "label": "Upstream merge of hermetic-llvm #892",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268"
         }
       ],
       "refinement": {
@@ -27692,13 +27702,14 @@
           {
             "reason": "author-feedback",
             "action": "batch-cleanup",
-            "title": "Suggestion queued for weekly cleanup",
-            "nextAction": "Leave the approved source and import #16542 in place. The weekly cleanup contains this edit; reply on the original thread after verification.",
+            "title": "Replied with the weekly cleanup",
+            "nextAction": "The tested fix is linked on the original thread. No reviewer reply or edit to this source is needed; follow the existing import separately.",
             "evidence": [
               "https://github.com/google/gvisor/pull/16496#discussion_r4395670555",
               "https://github.com/google/gvisor/pull/16496#pullrequestreview-5676270647",
-              "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067",
-              "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
+              "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726",
+              "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup",
+              "https://github.com/google/gvisor/pull/16496#discussion_r4401159367"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
@@ -27733,6 +27744,23 @@
                     }
                   },
                   {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABUsG2Hw",
+                    "url": "https://github.com/google/gvisor/pull/16496#pullrequestreview-5683394079",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-28T13:30:20Z",
+                    "updatedAt": "2026-10-28T13:30:20Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
+                    }
+                  },
+                  {
                     "kind": "inline",
                     "threadId": "PRRT_kwDOB9IlXs6w8B51",
                     "isResolved": false,
@@ -27746,6 +27774,23 @@
                     "updatedAt": "2026-10-28T00:22:21Z",
                     "author": {
                       "login": "manninglucas",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6w8B51",
+                    "isResolved": false,
+                    "isOutdated": false,
+                    "path": "pkg/test/capabilitytest/capabilitytest.go",
+                    "line": 16,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBlRcxw",
+                    "url": "https://github.com/google/gvisor/pull/16496#discussion_r4401159367",
+                    "body": "I added this to the [package comment](https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726): importing `capabilitytest` locks the main goroutine to the initial OS thread so tests can discard threads whose capabilities they change. The edit is in a separate cleanup so this PR can finish importing.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-10-28T13:30:20Z",
+                    "updatedAt": "2026-10-28T13:33:52Z",
+                    "author": {
+                      "login": "tamird",
                       "__typename": "User"
                     }
                   }
@@ -27811,13 +27856,14 @@
           {
             "reason": "author-feedback",
             "action": "batch-cleanup",
-            "title": "Suggestion queued for weekly cleanup",
-            "nextAction": "Leave the approved source and import #16544 in place. The weekly cleanup contains this edit; reply on the original thread after verification.",
+            "title": "Replied with the weekly cleanup",
+            "nextAction": "The tested fix is linked on the original thread. No reviewer reply or edit to this source is needed; follow the existing import separately.",
             "evidence": [
               "https://github.com/google/gvisor/pull/16505#discussion_r4395670148",
               "https://github.com/google/gvisor/pull/16505#pullrequestreview-5676270105",
-              "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067",
-              "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
+              "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726",
+              "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup",
+              "https://github.com/google/gvisor/pull/16505#discussion_r4401160104"
             ],
             "binding": {
               "reviewDecision": "APPROVED",
@@ -27852,6 +27898,23 @@
                     }
                   },
                   {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABUsG5_Q",
+                    "url": "https://github.com/google/gvisor/pull/16505#pullrequestreview-5683395069",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-28T13:30:23Z",
+                    "updatedAt": "2026-10-28T13:30:23Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "eec6ed445b3ba37ab6f0d5509c0681ff15a97cad"
+                    }
+                  },
+                  {
                     "kind": "inline",
                     "threadId": "PRRT_kwDOB9IlXs6w8B11",
                     "isResolved": false,
@@ -27865,6 +27928,23 @@
                     "updatedAt": "2026-10-28T00:22:17Z",
                     "author": {
                       "login": "manninglucas",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6w8B11",
+                    "isResolved": false,
+                    "isOutdated": false,
+                    "path": "pkg/sentry/vfs/file_description.go",
+                    "line": 203,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBlRfqA",
+                    "url": "https://github.com/google/gvisor/pull/16505#discussion_r4401160104",
+                    "body": "I added the Linux comparison in [the cleanup](https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726). [`eventpoll_release_file()`](https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/eventpoll.c#L1095-L1107) drops `file->f_lock` before taking `ep->mtx`, the same lock ordering as in `DecRef`. This PR can finish importing with its approved head.\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-10-28T13:30:23Z",
+                    "updatedAt": "2026-10-28T13:33:53Z",
+                    "author": {
+                      "login": "tamird",
                       "__typename": "User"
                     }
                   }
@@ -27896,25 +27976,28 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/checkpointfile-statefile-writer",
-      "head": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
-      "title": "Benchmark complete kernel state files",
-      "url": "https://github.com/tamird/gvisor/commit/2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
+      "head": "0e53bb437a08531aa1220066f123c1a2ec827fe6",
+      "title": "Reload the state file produced by the EncodeStatefile benchmark",
+      "url": "https://github.com/tamird/gvisor/commit/0e53bb437a08531aa1220066f123c1a2ec827fe6",
       "group": "analysis",
       "status": "Published as #16508",
-      "summary": "Published as #16508 at the approved 2552104f3c revision. One source-matched Nginx checkpoint passed Decode and framed Encode plus the final reload on AMD64. The contributor decision is consumed; follow the live PR for review and checks. This validates the benchmark, not a performance improvement or page restore.",
-      "updatedAt": "2026-10-27T17:24:05+00:00",
+      "summary": "Published as #16508 at 2552104f3c, then amended on current master to 0e53bb437a. The source-matched Nginx run reloaded the final measured frame; follow the open PR for checks and review.",
+      "updatedAt": "2026-10-28T13:38:53.803726+00:00",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
-        "observedAt": "2026-10-27T17:24:05+00:00",
-        "disposition": "Contributor-approved benchmark published as #16508",
-        "nextAction": "Follow maintainer review, public checks and import on #16508; no contributor decision remains.",
+        "sourceHead": "0e53bb437a08531aa1220066f123c1a2ec827fe6",
+        "observedAt": "2026-10-28T13:38:53.803726+00:00",
+        "disposition": "Approved amendment published as #16508",
+        "nextAction": "Follow the open PR. No contributor decision remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
           "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
           "https://github.com/tamird/gvisor/commit/2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
           "https://github.com/tamird/gvisor/commit/f5eae8e0d7ad3d83cf259e2e84830ca85cd8be6f",
-          "https://app.buildbuddy.io/invocation/2f18b8f1-b0c7-4396-9d98-a532b5b20aa5"
+          "https://app.buildbuddy.io/invocation/2f18b8f1-b0c7-4396-9d98-a532b5b20aa5",
+          "https://github.com/tamird/gvisor/commit/0e53bb437a08531aa1220066f123c1a2ec827fe6",
+          "https://github.com/google/gvisor/pull/16574",
+          "https://app.buildbuddy.io/invocation/15ed87c1-0921-474e-854d-4026b584a3c8"
         ]
       },
       "evidence": [
@@ -27945,9 +28028,31 @@
         {
           "label": "Maintainer\u2019s description of the counting writer limitation",
           "url": "https://github.com/google/gvisor/issues/16216#issuecomment-6429916909"
+        },
+        {
+          "label": "Proposed amendment on current benchmark",
+          "url": "https://github.com/tamird/gvisor/commit/0e53bb437a08531aa1220066f123c1a2ec827fe6"
+        },
+        {
+          "label": "Upstream checkpoint benchmark already in master",
+          "url": "https://github.com/google/gvisor/pull/16574"
+        },
+        {
+          "label": "Actual Nginx checkpoint: one DecodeStatefile and EncodeStatefile with reload",
+          "url": "https://app.buildbuddy.io/invocation/15ed87c1-0921-474e-854d-4026b584a3c8"
         }
       ],
-      "inactive": true
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
+          "base": "4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3"
+        },
+        "after": {
+          "head": "0e53bb437a08531aa1220066f123c1a2ec827fe6",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "pr:16506",
@@ -28102,22 +28207,25 @@
       "repo": "google/gvisor",
       "number": 16508,
       "ref": "review/checkpointfile-statefile-writer",
-      "head": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
-      "title": "Benchmark complete kernel state files",
+      "head": "0e53bb437a08531aa1220066f123c1a2ec827fe6",
+      "title": "Reload the state file produced by the EncodeStatefile benchmark",
       "url": "https://github.com/google/gvisor/pull/16508",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-27T17:24:05+00:00",
-      "summary": "Benchmark the complete in-memory state file: CPUID, kernel, framing and final close. Decode the result outside the timer. Exact-source Decode and Encode plus reload passed on one AMD64 Nginx checkpoint; pages and storage I/O are outside this benchmark.",
+      "updatedAt": "2026-10-28T13:38:53.803726+00:00",
+      "summary": "The amended EncodeStatefile benchmark preserves the raw modes, uses the input checkpoint\u2019s metadata and compression, and reloads the final output after timing stops. An AMD64 Nginx checkpoint run decoded a 296,028-byte state file and reloaded the 296,018-byte output. #16508 is open; this checks one iteration, not a speedup.",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
-        "observedAt": "2026-10-27T17:24:05+00:00",
-        "disposition": "Approved change published",
-        "nextAction": "Follow maintainer review, public checks and import on #16508.",
+        "owner": "pinring_source_scope",
+        "sourceHead": "0e53bb437a08531aa1220066f123c1a2ec827fe6",
+        "observedAt": "2026-10-28T13:38:53.803726+00:00",
+        "disposition": "Approved amendment published to existing PR",
+        "nextAction": "Follow checks, fresh review of 0e53bb437a, and import on #16508. The earlier approval covered the previous 2552104f3c head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16508",
-          "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e"
+          "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e",
+          "https://github.com/tamird/gvisor/commit/0e53bb437a08531aa1220066f123c1a2ec827fe6",
+          "https://github.com/google/gvisor/pull/16574",
+          "https://app.buildbuddy.io/invocation/15ed87c1-0921-474e-854d-4026b584a3c8"
         ]
       },
       "evidence": [
@@ -28128,8 +28236,30 @@
         {
           "label": "Source-matched Decode, framed Encode and reload passed",
           "url": "https://app.buildbuddy.io/invocation/7cd3432a-9763-4eb0-91d6-2a59ea477f9e"
+        },
+        {
+          "label": "Proposed amendment on current benchmark",
+          "url": "https://github.com/tamird/gvisor/commit/0e53bb437a08531aa1220066f123c1a2ec827fe6"
+        },
+        {
+          "label": "Upstream checkpoint benchmark already in master",
+          "url": "https://github.com/google/gvisor/pull/16574"
+        },
+        {
+          "label": "Actual Nginx checkpoint: one DecodeStatefile and EncodeStatefile with reload",
+          "url": "https://app.buildbuddy.io/invocation/15ed87c1-0921-474e-854d-4026b584a3c8"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "2552104f3c33ae0e59c882f1cbc4fd369caaa33d",
+          "base": "4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3"
+        },
+        "after": {
+          "head": "0e53bb437a08531aa1220066f123c1a2ec827fe6",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      }
     },
     {
       "id": "branch:systrap-elf-offsets",
@@ -29250,6 +29380,116 @@
           "url": "https://github.com/google/gvisor/pull/16507"
         }
       ]
+    },
+    {
+      "id": "branch:native-vdso-cc",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/native-vdso-cc",
+      "head": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
+      "title": "Build the vDSO with the C++ toolchain",
+      "url": "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
+      "group": "bazel",
+      "status": "Published as #16586",
+      "updatedAt": "2026-10-28T13:38:53.803726+00:00",
+      "summary": "Published at immutable 1d73cd4965 as #16586 after contributor approval. Use the C++ toolchain for the Sentry vDSO. Both target ELFs kept their public symbols, versions and offsets, and both were embedded in the matching Go archive. Native AMD64 passed the layout and two Systrap clock tests; a separate QEMU user-mode probe exercised the ARM64 entry point. The outer verifier failed on a wrapper-argv assumption; the original test logs verify the actual runner and sandbox arguments.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #16586",
+          "url": "https://github.com/google/gvisor/pull/16586"
+        },
+        {
+          "label": "Proposed fork commit",
+          "url": "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae"
+        },
+        {
+          "label": "Parent vDSO build",
+          "url": "https://app.buildbuddy.io/invocation/f3ce256d-20de-4ff3-bbce-65ec04180ea1"
+        },
+        {
+          "label": "Candidate: actual AMD64/ARM64 vDSO builds and embeds",
+          "url": "https://app.buildbuddy.io/invocation/59864f06-e0f1-4216-ab2a-fd50aea5bacc"
+        },
+        {
+          "label": "AMD64: layout and Systrap monotonic/boot-time clocks",
+          "url": "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae"
+        },
+        {
+          "label": "Original aggregate: verification predicate failed, native stages passed",
+          "url": "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
+        "observedAt": "2026-10-28T13:38:53.803726+00:00",
+        "disposition": "Approved native vDSO change published as #16586",
+        "nextAction": "Follow checks, maintainer review and import on #16586. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16586",
+          "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
+          "https://app.buildbuddy.io/invocation/f3ce256d-20de-4ff3-bbce-65ec04180ea1",
+          "https://app.buildbuddy.io/invocation/59864f06-e0f1-4216-ab2a-fd50aea5bacc",
+          "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae",
+          "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+        ]
+      },
+      "inactive": true
+    },
+    {
+      "id": "pr:16586",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16586,
+      "ref": "review/native-vdso-cc",
+      "head": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
+      "title": "Build the vDSO with the C++ toolchain",
+      "url": "https://github.com/google/gvisor/pull/16586",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-28T13:38:53.803726+00:00",
+      "summary": "Use the C++ toolchain for the Sentry vDSO. Both target ELFs kept their public symbols, versions and offsets, and both were embedded in the matching Go archive. Native AMD64 passed the layout and two Systrap clock tests; a separate QEMU user-mode probe exercised the ARM64 entry point. The outer verifier failed on a wrapper-argv assumption; the original test logs verify the actual runner and sandbox arguments.",
+      "evidence": [
+        {
+          "label": "Published upstream PR #16586",
+          "url": "https://github.com/google/gvisor/pull/16586"
+        },
+        {
+          "label": "Proposed fork commit",
+          "url": "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae"
+        },
+        {
+          "label": "Parent vDSO build",
+          "url": "https://app.buildbuddy.io/invocation/f3ce256d-20de-4ff3-bbce-65ec04180ea1"
+        },
+        {
+          "label": "Candidate: actual AMD64/ARM64 vDSO builds and embeds",
+          "url": "https://app.buildbuddy.io/invocation/59864f06-e0f1-4216-ab2a-fd50aea5bacc"
+        },
+        {
+          "label": "AMD64: layout and Systrap monotonic/boot-time clocks",
+          "url": "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae"
+        },
+        {
+          "label": "Original aggregate: verification predicate failed, native stages passed",
+          "url": "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
+        "observedAt": "2026-10-28T13:38:53.803726+00:00",
+        "disposition": "Approved native vDSO change published as #16586",
+        "nextAction": "Follow checks, maintainer review and import on #16586. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16586",
+          "https://github.com/tamird/gvisor/commit/1d73cd49653e6b8c4c266168173b991c0e5fb4ae",
+          "https://app.buildbuddy.io/invocation/f3ce256d-20de-4ff3-bbce-65ec04180ea1",
+          "https://app.buildbuddy.io/invocation/59864f06-e0f1-4216-ab2a-fd50aea5bacc",
+          "https://app.buildbuddy.io/invocation/7a1ab121-b817-4289-b61c-56e26d0a09ae",
+          "https://app.buildbuddy.io/invocation/8f1742b1-8587-403b-a2fe-6ea49709118a"
+        ]
+      }
     }
   ],
   "edges": [
@@ -43374,8 +43614,8 @@
       "status": "active",
       "group": "tests",
       "owner": "Tamir",
-      "updatedAt": "2026-10-28T13:24:22.560053+00:00",
-      "summary": "Four nonblocking suggestions from Lucas Manning are in one fork commit. Two original changes have landed; two have open Copybara imports. The cleanup does not amend any of their source heads.",
+      "updatedAt": "2026-10-28T13:35:28.650630+00:00",
+      "summary": "All four suggestions from Lucas Manning have individual replies in their original threads. The contributor approved the fork cleanup; its last refinement changes only comments. #16453 and #16493 have landed. #16496 and #16505 still have open Copybara imports.",
       "findings": [
         {
           "text": "#16453 (landed): Explain when the state benchmark encounters the array after encoding its elements.",
@@ -43391,6 +43631,10 @@
             {
               "label": "Merged Copybara import #16547",
               "url": "https://github.com/google/gvisor/pull/16547"
+            },
+            {
+              "label": "Author\u2019s reply with the tested fix",
+              "url": "https://github.com/google/gvisor/pull/16453#discussion_r4401158151"
             }
           ]
         },
@@ -43408,6 +43652,10 @@
             {
               "label": "Merged Copybara import #16546",
               "url": "https://github.com/google/gvisor/pull/16546"
+            },
+            {
+              "label": "Author\u2019s reply with the tested fix",
+              "url": "https://github.com/google/gvisor/pull/16493#discussion_r4401158775"
             }
           ]
         },
@@ -43425,6 +43673,10 @@
             {
               "label": "Open Copybara import #16542",
               "url": "https://github.com/google/gvisor/pull/16542"
+            },
+            {
+              "label": "Author\u2019s reply with the tested fix",
+              "url": "https://github.com/google/gvisor/pull/16496#discussion_r4401159367"
             }
           ]
         },
@@ -43442,14 +43694,22 @@
             {
               "label": "Open Copybara import #16544",
               "url": "https://github.com/google/gvisor/pull/16544"
+            },
+            {
+              "label": "Author\u2019s reply with the tested fix",
+              "url": "https://github.com/google/gvisor/pull/16505#discussion_r4401160104"
             }
           ]
         }
       ],
-      "nextStep": "Check new review suggestions daily and batch eligible changes into a weekly cleanup PR. A PR can enter the queue before its import lands. Verify the fork edits, then reply individually on the four original threads with the change that addressed each suggestion. The fork commit is prepared; upstream submission and thread replies are separate steps.",
+      "nextStep": "Submit the approved cleanup PR once the two remaining source changes land upstream. Continue the daily sweep for the weekly batch; suggestions can be queued while an import is open. The four original threads remain open, with no source amendment or maintainer reply requested for these nits.",
       "evidence": [
         {
-          "label": "Four cleanup edits, excluding the prerequisite commits",
+          "label": "Approved cleanup with final comment wording and Linux source link",
+          "url": "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726"
+        },
+        {
+          "label": "Previously tested four edits (before the comment-only refinement)",
           "url": "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067"
         }
       ]

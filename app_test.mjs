@@ -781,6 +781,15 @@ test('a queued nit leaves the approved import on its normal path and reopens on 
   assert.deepEqual(idsFor(node), ['maintainer-merge']);
   comment.body = 'Please fix this before import.';
   assert.ok(idsFor(node).includes('author-feedback'));
+  comment.body = 'Mention the reserved thread.';
+  const reply = { ...comment, id: 'reply', author: { login: 'tamird' }, body: 'Fixed in the cleanup commit.', createdAt: '2026-10-28T13:00:00Z' };
+  comment.createdAt = '2026-10-28T00:00:00Z';
+  pr.feedback.items.push(reply);
+  assert.ok(idsFor(node).includes('maintainer-response')); // The reply is not bound yet.
+  node.followup.attentionDispositions[0].binding = JSON.parse(vm.runInContext('JSON.stringify(attentionDispositionEvidence(nodeInput, "author-feedback"))', context));
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  pr.feedback.items.push({ ...comment, id: 'followup', body: 'Found another issue.', createdAt: '2026-10-28T14:00:00Z' });
+  assert.ok(idsFor(node).includes('author-feedback'));
 });
 
 test('assigned top-level feedback blocks merge attention without rewriting approval', () => {
