@@ -14,7 +14,11 @@
 
 package tests
 
-import "context"
+import (
+	"context"
+
+	"gvisor.dev/gvisor/pkg/state"
+)
 
 // +stateify savable
 type genericContainer struct {
@@ -50,6 +54,22 @@ func (c *convertedContainers) saveFromInterface() genericContainer {
 
 func (c *convertedContainers) loadFromInterface(_ context.Context, value genericContainer) {
 	c.fromInterface = value.v.(afterLoadStruct).v
+}
+
+// +stateify type
+type earlyAfterLoad struct {
+	value    int
+	observed int `state:"nosave"`
+}
+
+func (a *earlyAfterLoad) StateSave(s state.Sink) {
+	v := a.value
+	s.SaveValue(0, &v)
+}
+
+func (a *earlyAfterLoad) StateLoad(_ context.Context, s state.Source) {
+	s.AfterLoad(func() { a.observed = a.value })
+	s.LoadValue(0, new(*int), func(v any) { a.value = *v.(*int) })
 }
 
 // +stateify savable
