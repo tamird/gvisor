@@ -42,15 +42,17 @@ type reconciledTypeEntry struct {
 	SingleField []int
 }
 
-var singleFieldSaverLoaderType = reflect.TypeFor[singleFieldSaverLoader]()
-
-// singleFieldIndex returns the index of the saved field of typ if typ is a
-// singleFieldSaverLoader, or nil otherwise.
-func singleFieldIndex(typ reflect.Type, fields []string) []int {
-	if len(fields) != 1 || typ.Kind() != reflect.Struct || !reflect.PointerTo(typ).Implements(singleFieldSaverLoaderType) {
+// singleFieldIndex returns the saved field of a struct registered for direct
+// access. Eligibility belongs to the concrete type, not a type it embeds.
+func singleFieldIndex(typ reflect.Type, info wire.Type) []int {
+	if len(info.Fields) != 1 {
 		return nil
 	}
-	f, ok := typ.FieldByName(fields[0])
+	entry := globalTypeDatabase[info.Name]
+	if !entry.singleField || entry.typ != typ {
+		return nil
+	}
+	f, ok := typ.FieldByName(info.Fields[0])
 	if !ok {
 		return nil
 	}
@@ -144,7 +146,7 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 		te = &typeEntry{
 			ID:          tdb.lastID,
 			Type:        info,
-			singleField: singleFieldIndex(typ, info.Fields),
+			singleField: singleFieldIndex(typ, info),
 		}
 
 		// All done.
@@ -171,22 +173,17 @@ func (tbd *typeDecodeDatabase) LookupName(id typeID) string {
 // LookupType looks up the type by ID.
 func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 	name := tbd.LookupName(id)
-	typ, ok := globalTypeDatabase[name]
-	if !ok {
-		// If not available, see if it's primitive.
-		typ, ok = primitiveTypeDatabase[name]
-		if !ok && name == interfaceType {
-			// Matches the built-in interface type.
-			var i any
-			return reflect.TypeOf(&i).Elem()
-		}
-		if !ok {
-			// The type is perhaps not registered?
-			Failf("type name %q is not available", name)
-		}
-		return typ // Primitive type.
+	if entry, ok := globalTypeDatabase[name]; ok {
+		return entry.typ
 	}
-	return typ // Registered type.
+	typ, ok := primitiveTypeDatabase[name]
+	if !ok {
+		if name == interfaceType {
+			return reflect.TypeFor[any]()
+		}
+		Failf("type name %q is not available", name)
+	}
+	return typ
 }
 
 // singleFieldOrder defines the field order for a single field.
@@ -250,7 +247,7 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 	if len(fields) == 1 && fields[0] == pending.Fields[0] {
 		tbd.byID[id-1] = rte // Save.
 		rte.FieldOrder = singleFieldOrder
-		rte.SingleField = singleFieldIndex(typ, fields)
+		rte.SingleField = singleFieldIndex(typ, info)
 		return rte
 	}
 	// Local field names are unique. Equal lengths and a match for every
@@ -314,7 +311,12 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 }()
 
 // globalTypeDatabase is used for dispatching interfaces on decode.
-var globalTypeDatabase = map[string]reflect.Type{}
+var globalTypeDatabase = map[string]registeredType{}
+
+type registeredType struct {
+	typ         reflect.Type
+	singleField bool
+}
 
 // reverseTypeDatabase holds immutable metadata indexed by the original type.
 var reverseTypeDatabase = map[reflect.Type]wire.Type{}
@@ -366,9 +368,19 @@ var eagerTypeInfo = raceEnabled
 // This must be called on init and only done once. Registration lets Load
 // reconstruct concrete types held in interfaces without a preceding Save.
 func Register(t Type) {
+	register(t, false)
+}
+
+// RegisterSingleField registers a struct whose generated StateSave and
+// StateLoad only save and load one field. Like Register, it is called at init.
+func RegisterSingleField(t Type) {
+	register(t, true)
+}
+
+func register(t Type, singleField bool) {
 	typ := reflect.TypeOf(t)
 	if !eagerTypeInfo {
-		registerName(typ.Elem(), t.StateTypeName())
+		registerName(typ.Elem(), t.StateTypeName(), singleField)
 		return
 	}
 	// Register must always be called on pointers.
@@ -399,7 +411,7 @@ func Register(t Type) {
 			Failf("non-struct %T implements SaverLoader", t)
 		}
 	}
-	registerInfo(typ, wire.Type{Name: t.StateTypeName(), Fields: fields})
+	registerInfo(typ, wire.Type{Name: t.StateTypeName(), Fields: fields}, singleField)
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
@@ -410,19 +422,19 @@ func registerBinary(value binaryObject) {
 	registerInfo(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
 		Fields: []string{"value"},
-	})
+	}, false)
 }
 
 // registerInfo validates and publishes `typ`'s metadata,
 // and registers in the reverse type database.
-func registerInfo(typ reflect.Type, info wire.Type) {
+func registerInfo(typ reflect.Type, info wire.Type, singleField bool) {
 	validateTypeInfo(info)
-	registerName(typ, info.Name)
+	registerName(typ, info.Name, singleField)
 	reverseTypeDatabase[typ] = info
 }
 
 // registerName publishes `typ` but does not validate.
-func registerName(typ reflect.Type, name string) {
+func registerName(typ reflect.Type, name string, singleField bool) {
 	if raceEnabled {
 		if _, ok := primitiveTypeDatabase[name]; ok {
 			Failf("conflicting primitiveTypeDatabase entry for %v: used by primitive", typ)
@@ -434,7 +446,7 @@ func registerName(typ reflect.Type, name string) {
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	globalTypeDatabase[name] = typ
+	globalTypeDatabase[name] = registeredType{typ: typ, singleField: singleField}
 }
 
 // validateTypeInfo checks that a type has a name and unique, non-empty field

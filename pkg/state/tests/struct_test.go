@@ -109,6 +109,7 @@ func TestSingleField(t *testing.T) {
 	values := []any{
 		inner{},
 		inner{1},
+		derivedFromInner{inner: inner{21}, doubled: 42},
 		outerSame{},
 		outerSame{inner{2}},
 		[2]outerSame{{}, {inner{3}}},

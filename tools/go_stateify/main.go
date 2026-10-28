@@ -212,8 +212,12 @@ func main() {
 	var initCalls []string
 
 	// Common closures.
-	emitRegister := func(name string) {
-		initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
+	emitRegister := func(name string, singleField bool) {
+		fn := "Register"
+		if singleField {
+			fn = "RegisterSingleField"
+		}
+		initCalls = append(initCalls, fmt.Sprintf("%s%s((*%s)(nil))", statePrefix, fn, name))
 	}
 
 	// Automated warning.
@@ -470,12 +474,7 @@ func main() {
 						wait:      func(string) { otherFields++ },
 						value:     func(string, string) { otherFields++ },
 					})
-					if generateSaverLoader && !hasBeforeSave && !hasAfterLoad && normalFields == 1 && otherFields == 0 {
-						fmt.Fprintf(outputFile, "func (%s *%s) StateSingleField() {}\n\n", recv, ts.Name.Name)
-					}
-
-					// Add to our registration.
-					emitRegister(ts.Name.Name)
+					emitRegister(ts.Name.Name, generateSaverLoader && !hasBeforeSave && !hasAfterLoad && normalFields == 1 && otherFields == 0)
 
 				case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
 					maybeEmitImports()
@@ -520,8 +519,7 @@ func main() {
 						}
 					}
 
-					// See above.
-					emitRegister(ts.Name.Name)
+					emitRegister(ts.Name.Name, false)
 				}
 			}
 		}

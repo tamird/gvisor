@@ -75,6 +75,16 @@ type inner struct {
 }
 
 // +stateify savable
+type derivedFromInner struct {
+	inner
+	doubled int64 `state:"nosave"`
+}
+
+func (d *derivedFromInner) afterLoad(context.Context) {
+	d.doubled = 2 * d.v
+}
+
+// +stateify savable
 type outerFieldValue struct {
 	inner innerFieldValue
 }
