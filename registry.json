@@ -31311,20 +31311,24 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "file-lock-wait-registration",
-      "head": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+      "head": "f292312cc3bb1516813e54b9438c839481c6e9f7",
       "title": "Register file lock waiters under the lock-set mutex",
-      "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+      "url": "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7",
       "group": "runtime",
-      "status": "Agent work",
-      "summary": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
-      "updatedAt": "2026-10-28T19:54:39Z",
+      "status": "Reviewable",
+      "summary": "LockRegion now defers its unlock. The wait helper registers before releasing the mutex, drops the registration before reacquiring it, and returns with the mutex held whether it wakes or is interrupted. The previous revision passed the lock suite, both analyzers and eight systrap cases; the new revision is in remote validation.",
+      "updatedAt": "2026-10-28T20:23:23Z",
       "evidence": [
         {
-          "label": "Fork change",
-          "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b"
+          "label": "Revised lock waiter",
+          "url": "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7"
         },
         {
-          "label": "Matched qualification: 46 checks, no skips",
+          "label": "Remote validation of the deferred lock change",
+          "url": "https://app.buildbuddy.io/invocation/88612f53-dd20-4695-bfcd-43525dd22ab0"
+        },
+        {
+          "label": "Previous revision: 46 checks, no skips",
           "url": "https://app.buildbuddy.io/invocation/5240bd69-2863-4974-a32d-49e31b633510"
         },
         {
@@ -31336,18 +31340,21 @@
           "url": "https://app.buildbuddy.io/invocation/aad23ed7-ae1d-4dc7-ae8d-c4bf1fea36bb"
         }
       ],
-      "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
-        "observedAt": "2026-10-28T19:54:39Z",
-        "disposition": "Contributor requested defer for lock management",
-        "nextAction": "Scope the mutex to checking the lock and registering the waiter. Release it before sleeping, then validate the revised branch.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
-          "https://app.buildbuddy.io/invocation/5240bd69-2863-4974-a32d-49e31b633510",
-          "https://app.buildbuddy.io/invocation/3e624b28-717a-4f64-8c58-3cac1e76e84c",
-          "https://app.buildbuddy.io/invocation/aad23ed7-ae1d-4dc7-ae8d-c4bf1fea36bb"
-        ]
+      "refinement": {
+        "before": {
+          "head": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b"
+        },
+        "after": {
+          "head": "f292312cc3bb1516813e54b9438c839481c6e9f7"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "f292312cc3bb1516813e54b9438c839481c6e9f7",
+        "url": "https://github.com/tamird/gvisor/commit/f292312cc3bb1516813e54b9438c839481c6e9f7",
+        "title": "Register file lock waiters under the lock-set mutex",
+        "summary": "LockRegion now defers its unlock. The wait helper registers before releasing the mutex, drops the registration before reacquiring it, and returns with the mutex held whether it wakes or is interrupted. The previous revision passed the lock suite, both analyzers and eight systrap cases; the new revision is in remote validation.",
+        "body": "A blocking flock or fcntl must register its waiter before releasing\nthe mutex, or a concurrent unlock can go unnoticed. LockRegion relied\non a waiter callback to release its mutex, hiding the lock transfer\nfrom checklocks and requiring two exemptions.\n\nRegister directly with the wait queue, release the mutex, and block on\nthe registered channel. This keeps registration atomic with the failed\nlock attempt and lets checklocks verify both sides of the wait."
       }
     },
     {
