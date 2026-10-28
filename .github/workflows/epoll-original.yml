@@ -1,0 +1,55 @@
+name: Read original epoll comparison
+
+"on":
+  push:
+    branches: [qualification/epoll-modify-original]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/epoll-original"
+          mkdir -p "$root/task"
+          cp .github/qualification/epoll-original/{read_original,projection}.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          4bf3a7abf1f103d0c221c7f3d69e9d78724126808149c279a790aa8ebdf5a08b  read_original.py
+          cdd13783406676dd58efe96fa787744d16cfa18326660d5dd3b47586f32548d1  projection.py
+          SUMS
+      - name: Read only the original invocation
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"]) / "epoll-original" / "read_original.py"))["main"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epoll-original-receipt
+          path: ${{ runner.temp }}/epoll-original/verdict.json
+          if-no-files-found: error
+          retention-days: 14
