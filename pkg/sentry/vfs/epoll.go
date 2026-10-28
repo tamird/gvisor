@@ -68,9 +68,10 @@ type EpollInstance struct {
 	ready epollInterestList `state:"nosave"`
 
 	// readySeq is used to detect calls to epollInterest.NotifyEvent() while
-	// Readiness() or ReadEvents() are running with readyMu unlocked. readySeq
-	// is protected by both interestMu and readyMu; reading requires either
-	// mutex to be locked, but mutation requires both mutexes to be locked.
+	// Readiness() or ReadEvents() are running with readyMu unlocked.
+	// +checklocks:interestMu
+	// +checklocks:readyMu
+	// +checklocksreadany
 	readySeq uint32
 }
 
@@ -96,10 +97,13 @@ type epollInterest struct {
 	// key is the file to which this epollInterest applies. key is immutable.
 	key epollInterestKey
 
-	// waiter is the initial registration with key.file. replacement, if
-	// non-nil, is the active registration instead. Reading replacement
-	// requires interestMu or readyMu; changing it requires both.
-	waiter      waiter.Entry
+	// waiter is the initial registration with key.file.
+	waiter waiter.Entry
+
+	// replacement, if non-nil, is the active registration instead.
+	// +checklocks:epoll.interestMu
+	// +checklocks:epoll.readyMu
+	// +checklocksreadany
 	replacement *epollRegistration `state:"wait"`
 
 	// mask is the event mask associated with this registration, including
@@ -133,6 +137,7 @@ func (r *epollRegistration) NotifyEvent(waiter.EventMask) {
 	r.interest.notify(r)
 }
 
+// +checklocks:epi.epoll.interestMu
 func (epi *epollInterest) activeEntry() *waiter.Entry {
 	if epi.replacement != nil {
 		return &epi.replacement.entry
@@ -386,7 +391,7 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 	// Recheck after activation: a notification may have arrived while the
 	// replacement was still ignoring events.
 	if m := file.Readiness(wmask) & wmask; m != 0 {
-		epi.notify(epi.replacement)
+		epi.queueReady()
 	}
 
 	return nil
@@ -427,12 +432,22 @@ func (epi *epollInterest) NotifyEvent(waiter.EventMask) {
 }
 
 func (epi *epollInterest) notify(reg *epollRegistration) {
-	newReady := false
 	epi.epoll.readyMu.Lock()
 	if epi.replacement != reg {
 		epi.epoll.readyMu.Unlock()
 		return
 	}
+	epi.queueReadyAndUnlock()
+}
+
+func (epi *epollInterest) queueReady() {
+	epi.epoll.readyMu.Lock()
+	epi.queueReadyAndUnlock()
+}
+
+// +checklocksrelease:epi.epoll.readyMu
+func (epi *epollInterest) queueReadyAndUnlock() {
+	newReady := false
 	if !epi.ready {
 		newReady = true
 		epi.ready = true

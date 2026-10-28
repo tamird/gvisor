@@ -21,7 +21,6 @@ import (
 
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/refs"
-	"gvisor.dev/gvisor/pkg/waiter"
 )
 
 // ErrCorruption indicates a failed restore due to external file system state in
@@ -196,7 +195,7 @@ func (epi *epollInterest) afterLoad(goContext.Context) {
 	// Mark all epollInterests as ready after restore so that the next call to
 	// EpollInstance.ReadEvents() rechecks their readiness.
 	if epi.mask != 0 {
-		epi.activeEntry().NotifyEvent(waiter.EventMaskFromLinux(epi.mask))
+		epi.queueReady()
 	}
 }
 
