@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T16:14:00.758481+00:00",
+    "updatedAt": "2026-10-28T16:28:18.358443+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31062,6 +31062,152 @@
           "https://app.buildbuddy.io/invocation/5db47752-0b5b-4d00-8857-be90ae4d4362"
         ]
       }
+    },
+    {
+      "id": "branch:pipe-splice-cursor-guard",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/pipe-splice-cursor-guard",
+      "head": "fc328dc0b24cf21da8b08dd6e84f10203a867859",
+      "title": "Check locking of the pipe splice cursor",
+      "url": "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859",
+      "group": "analysis",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T16:21:00.860349+00:00",
+      "summary": "A pipe splice uses the same cursor across I/O callbacks. Both splice directions hold the pipe mutex from the cursor reset through the callbacks. The annotations let Nogo check those field accesses. AMD64 and ARM64 analyzers and four native systrap splice cases passed.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "fc328dc0b24cf21da8b08dd6e84f10203a867859",
+        "url": "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859",
+        "title": "Check locking of the pipe splice cursor",
+        "summary": "A pipe splice uses the same cursor across I/O callbacks. Both splice directions hold the pipe mutex from the cursor reset through the callbacks. The annotations let Nogo check those field accesses. AMD64 and ARM64 analyzers and four native systrap splice cases passed.",
+        "body": "A splice hands the pipe file description to another file as its I/O\nsource or destination. Its copy methods share a cursor so successive\ncalls consume the same transfer in order. The pipe mutex serializes\nboth the cursor reset and the callbacks. Teach checklocks that contract\nso an unlocked access to the cursor is diagnosed."
+      },
+      "evidence": [
+        {
+          "label": "Both architecture analyzers and all four syscall cases",
+          "url": "https://app.buildbuddy.io/invocation/4a9a3fbd-d196-46dc-a233-15ad67ca6316"
+        },
+        {
+          "label": "Complete qualification verdict",
+          "url": "https://app.buildbuddy.io/invocation/edefa6df-e704-46e7-b4ed-73e4e7ac4f6c"
+        }
+      ]
+    },
+    {
+      "id": "branch:rack-reordering-window-persistence",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rack-reordering-window-persistence",
+      "head": "fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+      "title": "Age the RACK reordering window only on recovery exit",
+      "url": "https://github.com/tamird/gvisor/commit/fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-28T16:28:18.358443+00:00",
+      "summary": "Stock cut the reordering allowance from 50 to 25 ms after sixteen ordinary ACKs. The first fix, fd52b82575, retained the 50 ms window and all 16 recoveries, then counted one subsequent DSACK-free recovery (16 to 15). The complete wire suite passed 21/21 on native AMD64 and ARM64, and both Nogo owners passed both target architectures. The original comparison stayed failed: the first stock mismatch stopped its packet checker before another stock recovery could be observed. Source refinement is underway: pass the recovery exit within its ACK handler rather than save it on the sender. The revised source is not yet qualified. No contributor decision is requested.",
+      "evidence": [
+        {
+          "label": "Fork change on upstream 509ad53373",
+          "url": "https://github.com/tamird/gvisor/commit/fd52b82575252fa1a40925e63ff42d5a1b80afbb"
+        },
+        {
+          "label": "Complete diff against its direct parent",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...fd52b82575252fa1a40925e63ff42d5a1b80afbb"
+        },
+        {
+          "label": "RFC 8985 \u00a76.2: count DSACK-free loss recoveries",
+          "url": "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2"
+        },
+        {
+          "label": "Stock: 16 ordinary wire ACKs collapsed the multiplier/count/window to 1/0/25 ms",
+          "url": "https://app.buildbuddy.io/invocation/52153ec5-b73d-4d4a-9371-67f7fcf1297a"
+        },
+        {
+          "label": "Corrected AMD64: 21 RACK wire cases passed",
+          "url": "https://app.buildbuddy.io/invocation/a79cad18-fa38-403b-a750-89f1e6b318c2"
+        },
+        {
+          "label": "Corrected ARM64: 21 RACK wire cases passed",
+          "url": "https://app.buildbuddy.io/invocation/ebfffe49-5f6d-40f9-a54b-e7b1a2bdb4a0"
+        },
+        {
+          "label": "TCP and wire-test Nogo: AMD64 and ARM64 passed",
+          "url": "https://app.buildbuddy.io/invocation/6f146c4a-618f-47d3-b34b-801c86e1cff8"
+        },
+        {
+          "label": "Original comparison remains failed: second stock recovery was not observed",
+          "url": "https://app.buildbuddy.io/invocation/695fb745-1883-40eb-84f0-bd767ee6ca76"
+        }
+      ],
+      "followup": {
+        "owner": "pinring_source_scope",
+        "sourceHead": "fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+        "observedAt": "2026-10-28T16:28:18.358443+00:00",
+        "disposition": "Refining the qualified persistence fix",
+        "nextAction": "Remove the saved ACK-local exit marker, check the checkpoint boundary, and verify the revised sender against the original wire regression.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+          "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2",
+          "https://app.buildbuddy.io/invocation/52153ec5-b73d-4d4a-9371-67f7fcf1297a",
+          "https://app.buildbuddy.io/invocation/a79cad18-fa38-403b-a750-89f1e6b318c2",
+          "https://app.buildbuddy.io/invocation/ebfffe49-5f6d-40f9-a54b-e7b1a2bdb4a0",
+          "https://app.buildbuddy.io/invocation/6f146c4a-618f-47d3-b34b-801c86e1cff8",
+          "https://app.buildbuddy.io/invocation/695fb745-1883-40eb-84f0-bd767ee6ca76"
+        ]
+      }
+    },
+    {
+      "id": "branch:rack-multiplier-saturation",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rack-multiplier-saturation",
+      "head": "d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+      "title": "Saturate the RACK reordering window multiplier",
+      "url": "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+      "group": "runtime",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T16:26:23.012630+00:00",
+      "summary": "On the 255th eligible duplicate SACK, stock wrapped its byte-sized multiplier to zero and eliminated the reordering window. The fix saturates the increment without changing which reports qualify. On native AMD64 the focused sender test retained 255 and a 100 ms window on rounds 255 and 256; three existing sequence-round controls passed on both revisions. Both Nogo owners passed AMD64 and ARM64 analysis. The combined run keeps its expected stock failure. No live Linux traffic, ARM runtime, or throughput was measured.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+        "url": "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
+        "title": "Saturate the RACK reordering window multiplier",
+        "summary": "On the 255th eligible duplicate SACK, stock wrapped its byte-sized multiplier to zero and eliminated the reordering window. The fix saturates the increment without changing which reports qualify. On native AMD64 the focused sender test retained 255 and a 100 ms window on rounds 255 and 256; three existing sequence-round controls passed on both revisions. Both Nogo owners passed AMD64 and ARM64 analysis. The combined run keeps its expected stock failure. No live Linux traffic, ARM runtime, or throughput was measured.",
+        "body": "A duplicate SACK can increase the time RACK allows for packet\nreordering. The multiplier starts at one and is stored in a byte. Once\nit reaches 255, another eligible duplicate report wraps it to zero,\neliminating the reordering allowance instead of retaining its maximum.\n\nSaturate the multiplier while continuing to update the DSACK round and\nrefresh its persistence. The test checks each of 256 eligible rounds,\nincluding the RTT-capped window at and beyond the boundary.\n\nLinux also caps the multiplier at 255:\nhttps://github.com/torvalds/linux/blob/v6.18/net/ipv4/tcp_recovery.c#L187"
+      },
+      "evidence": [
+        {
+          "label": "Fork change on upstream 509ad53373",
+          "url": "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c"
+        },
+        {
+          "label": "Complete diff against its direct parent",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c"
+        },
+        {
+          "label": "Linux v6.18 caps the increment at 255",
+          "url": "https://github.com/torvalds/linux/blob/v6.18/net/ipv4/tcp_recovery.c#L187"
+        },
+        {
+          "label": "Stock: eligible round 255 produced multiplier 0 and window 0",
+          "url": "https://app.buildbuddy.io/invocation/5865c898-a7a7-46b6-9e9d-bd8bceb4488a"
+        },
+        {
+          "label": "Corrected AMD64 sender: five XML rows passed, including the 256-round test",
+          "url": "https://app.buildbuddy.io/invocation/25d233db-fadd-45e2-b901-9af05e387a30"
+        },
+        {
+          "label": "TCP and sender-test Nogo: AMD64 and ARM64 passed",
+          "url": "https://app.buildbuddy.io/invocation/38e12f63-6dc3-434f-bed0-5516067a7d50"
+        },
+        {
+          "label": "Source-matched comparison; original stock failure retained",
+          "url": "https://app.buildbuddy.io/invocation/267172c0-774c-46f4-8218-22e8e73ef0dc"
+        }
+      ]
     }
   ],
   "edges": [
@@ -45044,9 +45190,43 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-10-28T16:28:18.358443+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The instrumented Sentry link action at source 90102a3f86 reproduced all 66,703,598 output bytes using its 1,095 recorded inputs (751,924,517 bytes). Inside the isolated root it had only the declared files in /workspace, /tmp and /dev/null. This establishes byte-for-byte reproduction of that link, not a complete build in an empty filesystem.",
+          "evidence": [
+            {
+              "label": "Sentry source with the qualified rules_go update",
+              "url": "https://github.com/tamird/gvisor/commit/90102a3f86f821146e29f383929c513427a748ab"
+            },
+            {
+              "label": "Original Sentry link action",
+              "url": "https://app.buildbuddy.io/invocation/6a40067c-5fbb-4c33-83b2-f3b1055e173f"
+            },
+            {
+              "label": "Isolated Sentry link: all 66,703,598 output bytes matched",
+              "url": "https://app.buildbuddy.io/invocation/3995ff24-8cca-484f-9dd7-42431713ec88"
+            }
+          ]
+        },
+        {
+          "text": "On the separate 419aafc454 source, the plain runsc CLI link reproduced all 18,827,551 original bytes (SHA-256 1dfea0377406cb0a37429d5fcda122539e3537e02a4ffbfaaf40c94306943f93). The recorded link ran with 615 regular inputs (453,477,246 bytes including directories) and only /workspace, /tmp and /dev/null. This replays the link; it does not run the CLI, build the whole graph in an empty filesystem, or establish coverage behavior.",
+          "evidence": [
+            {
+              "label": "Exact plain runsc CLI source",
+              "url": "https://github.com/tamird/gvisor/commit/419aafc4542bcc84b33737d42ae344c49c43b567"
+            },
+            {
+              "label": "Original plain runsc CLI link",
+              "url": "https://app.buildbuddy.io/invocation/005d2315-6ad0-4536-8829-cba25ee7ed12"
+            },
+            {
+              "label": "Isolated CLI link: full executable matched",
+              "url": "https://app.buildbuddy.io/invocation/70f4aa74-0a48-41f2-b876-0d5ebc695f6b"
+            }
+          ]
+        },
         {
           "text": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries. The covered compilation ran on integration source 90102a3f86 with /workspace, /tmp and /dev/null. The stock 0.63.0 archive mismatch and the failed outer receipts remain recorded. The separate native catalog and bitmap, license, and Nogo tests passed on the standalone source.",
           "evidence": [
@@ -45171,7 +45351,7 @@
           ]
         }
       ],
-      "nextStep": "The rules_go coverage replay is complete, and the approved upgrade is open as #16593. Follow its checks and review; the retained native catalog pass and incomplete standalone aggregate remain distinct. Continue removing undeclared tools from the other supported actions.",
+      "nextStep": "The rules_go coverage replay is complete, and the approved upgrade is open as #16593. Follow its checks and review; the retained native catalog pass and incomplete standalone aggregate remain distinct. Continue removing undeclared tools from the other supported actions. The isolated Sentry and plain CLI links reproduced their outputs at their respective revisions; neither needs another replay.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
@@ -45206,7 +45386,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T16:14:00.758481+00:00",
+      "updatedAt": "2026-10-28T16:21:00.860349+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -45219,16 +45399,20 @@
           ]
         },
         {
-          "text": "Pipe splices through a non-pipe file hold the pipe mutex while using five usermem.IO callbacks to advance a shared cursor. The fork annotates that existing obligation in both splice directions. Runtime code is unchanged. Analyzer and splice qualification are pending.",
+          "text": "Both non-pipe splice paths hold the pipe mutex across five usermem.IO methods that can advance the cursor. The field and method preconditions are now checked on AMD64 and ARM64. Four splice cases passed, including concurrent I/O. Interface dispatch still relies on the originating splice path holding the mutex.",
           "evidence": [
             {
-              "label": "Fork: document the lock protecting the splice cursor",
+              "label": "Check locking of the pipe splice cursor",
               "url": "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859"
+            },
+            {
+              "label": "Uncached analyzer and splice tests",
+              "url": "https://app.buildbuddy.io/invocation/4a9a3fbd-d196-46dc-a233-15ad67ca6316"
             }
           ]
         }
       ],
-      "nextStep": "Qualify the pipe splice cursor annotation before requesting contributor review. Follow #16505 and keep the existing VFS locking discussion in #14343 separate.",
+      "nextStep": "The pipe cursor annotations are ready for contributor review. Follow #16505 and keep the VFS initialization discussion in #14343 separate.",
       "evidence": [
         {
           "label": "Verified epoll registration contract",
