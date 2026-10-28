@@ -652,23 +652,27 @@ def release_version(wait: dict) -> str | None:
     repository = wait.get("repository")
     if module and not repository and re.fullmatch(r"[a-z][a-z0-9._-]*", module):
         url = f"https://bcr.bazel.build/modules/{module}/metadata.json"
-    elif repository and not module and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
-        url = f"https://api.github.com/repos/{repository}/releases/latest"
-    else:
-        raise ValueError("releaseWait needs one valid BCR module or GitHub repository")
-    request = urllib.request.Request(url, headers={"User-Agent": "gvisor-work-map"})
-    with urllib.request.urlopen(request, timeout=20) as response:
-        metadata = json.load(response)
-    if module:
+        request = urllib.request.Request(url, headers={"User-Agent": "gvisor-work-map"})
+        with urllib.request.urlopen(request, timeout=20) as response:
+            metadata = json.load(response)
         match metadata:
             case {"versions": list(versions), "yanked_versions": dict(yanked)} if all(
                 isinstance(version, str) and version for version in versions
             ):
                 return next((version for version in reversed(versions) if version not in yanked), None)
-    else:
-        match metadata:
-            case {"tag_name": str(tag), "draft": False, "prerelease": False} if tag:
+    elif repository and not module and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
+        owner, name = repository.split("/")
+        match graphql("""
+            query($owner: String!, $name: String!) {
+              repository(owner: $owner, name: $name) { latestRelease { tagName isDraft isPrerelease } }
+            }
+        """, {"owner": owner, "name": name}):
+            case {"repository": {"latestRelease": {"tagName": str(tag), "isDraft": False, "isPrerelease": False}}} if tag:
                 return tag
+            case {"repository": {"latestRelease": None}}:
+                return None
+    else:
+        raise ValueError("releaseWait needs one valid BCR module or GitHub repository")
     raise ValueError("release provider returned incomplete version metadata")
 
 
@@ -689,7 +693,7 @@ def observe_release_versions(prs: list[dict]) -> None:
             continue
         try:
             pr["releaseVersion"] = release_version(wait)
-        except (OSError, ValueError, http.client.HTTPException) as error:
+        except (OSError, ValueError, RuntimeError, http.client.HTTPException) as error:
             print(f"Release observation unavailable for {node['id']}: {error}", file=sys.stderr)
 
 

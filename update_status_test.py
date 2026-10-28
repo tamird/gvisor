@@ -81,14 +81,17 @@ class ReleaseObservationTest(unittest.TestCase):
         })[0], None)
 
     def test_github_uses_published_latest_release(self) -> None:
-        self.assertEqual(self.observe({"repository": "docker/compose"}, {
-            "tag_name": "v2.40.3", "draft": False, "prerelease": False,
-        }), ("v2.40.3", "https://api.github.com/repos/docker/compose/releases/latest"))
-        for fields in ({"draft": True}, {"prerelease": True}, {"tag_name": ""}):
+        wait = {"repository": "docker/compose"}
+        release = {"tagName": "v2.40.3", "isDraft": False, "isPrerelease": False}
+        with mock.patch.object(updater, "graphql", return_value={"repository": {"latestRelease": release}}) as fetch:
+            self.assertEqual(updater.release_version(wait), "v2.40.3")
+            self.assertEqual(fetch.call_args.args[1], {"owner": "docker", "name": "compose"})
+        with mock.patch.object(updater, "graphql", return_value={"repository": {"latestRelease": None}}):
+            self.assertIsNone(updater.release_version(wait))
+        for fields in ({"isDraft": True}, {"isPrerelease": True}, {"tagName": ""}):
             with self.subTest(fields=fields), self.assertRaises(ValueError):
-                self.observe({"repository": "docker/compose"}, {
-                    "tag_name": "v2.40.3", "draft": False, "prerelease": False, **fields,
-                })
+                with mock.patch.object(updater, "graphql", return_value={"repository": {"latestRelease": release | fields}}):
+                    updater.release_version(wait)
 
     def test_exact_open_head_only_and_provider_failure_clears_old_value(self) -> None:
         rows = [retained(raw_pr(number)) for number in range(1, 6)]
@@ -98,15 +101,17 @@ class ReleaseObservationTest(unittest.TestCase):
         rows[1]["head"] = "a" * 40
         rows[2]["status"] = "merged"
         rows[3]["status"] = "closed"
-        for row in rows:
-            row["releaseVersion"] = "stale"
-        with mock.patch.object(updater, "REGISTRY", {"nodes": nodes}), \
-                mock.patch.object(updater, "release_version", side_effect=[OSError("provider unavailable"), "0.8.26"]) as fetch, \
-                mock.patch("sys.stderr", new_callable=io.StringIO) as diagnostic:
-            updater.observe_release_versions(rows)
-        self.assertEqual(fetch.call_args_list, [mock.call(nodes[0]["releaseWait"]), mock.call(nodes[4]["releaseWait"])])
-        self.assertEqual([row["releaseVersion"] for row in rows], [None, None, None, None, "0.8.26"])
-        self.assertIn("pr:1: provider unavailable", diagnostic.getvalue())
+        for failure in (OSError("BCR unavailable"), RuntimeError("GitHub query failed")):
+            with self.subTest(failure=failure):
+                for row in rows:
+                    row["releaseVersion"] = "stale"
+                with mock.patch.object(updater, "REGISTRY", {"nodes": nodes}), \
+                        mock.patch.object(updater, "release_version", side_effect=[failure, "0.8.26"]) as fetch, \
+                        mock.patch("sys.stderr", new_callable=io.StringIO) as diagnostic:
+                    updater.observe_release_versions(rows)
+                self.assertEqual(fetch.call_args_list, [mock.call(nodes[0]["releaseWait"]), mock.call(nodes[4]["releaseWait"])])
+                self.assertEqual([row["releaseVersion"] for row in rows], [None, None, None, None, "0.8.26"])
+                self.assertIn(f"pr:1: {failure}", diagnostic.getvalue())
         with mock.patch.object(updater, "REGISTRY", {"nodes": []}):
             updater.observe_release_versions(rows)
         self.assertEqual(["releaseVersion" in row for row in rows], [False] * 5)
