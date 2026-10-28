@@ -1,0 +1,60 @@
+name: D-SACK receiver comparison
+
+"on":
+  push:
+    branches: [qualification/dsack-above-gap-actions]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/dsack-comparison"
+          mkdir -p "$root/task"
+          cp .github/qualification/dsack/{request.json,plan.json,submit.py,wire.py,reconcile.py} "$root/task/"
+          cp .github/qualification/dsack/receipt.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          a090c325a644b7922d078425282d43f65a55a61bbfb191b9e0607028690fde9f  receipt.py
+          dafdd52f7a5ed982274ca89746392c6bfd85a1279752d60d50f80f0e3911e12e  task/request.json
+          eeb8d55e050fab7aceeb39420bfac118c79b9409a75276688da7621c26d990d2  task/plan.json
+          b676276131d8138f9a0a75c3c2ffdd3a873c89519d944e04869d8d9b1b0bc575  task/submit.py
+          233eda907928490dbc87592d93d78a14930f9eb0f6e89406c3316bc9d8a5c31f  task/wire.py
+          dec1a6b0bceb5d0db40d8adaf2ecfc451d85fa6df5585684d0aed69b0a13c25b  task/reconcile.py
+          SUMS
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"]) / "dsack-comparison" / "receipt.py"))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dsack-comparison-receipt
+          path: ${{ runner.temp }}/dsack-comparison/verdict.json
+          if-no-files-found: error
+          retention-days: 14
