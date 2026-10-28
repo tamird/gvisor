@@ -1,0 +1,67 @@
+name: Check the remaining epoll controls
+
+"on":
+  push:
+    branches: [qualification/epoll-mod-tracked-actions]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/epoll-modify"
+          mkdir -p "$root/task"
+          cp .github/qualification/epoll/{request.json,plan.json,submit.py} "$root/task/"
+          cp .github/qualification/epoll/{receipt,graph}.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          0d7f944c3163e7e6d4f0b4d6b13673f8da5966e76c856f8032006aa53133ddf4  receipt.py
+          bd67a989ba3b7eecf2b2f53b28069df291fbb2415d7be3e822c6602b8af8a1ac  graph.py
+          4480709420cc7d34e52859486176979b7e75dddf41517dd3df738af63f3ed7f5  task/request.json
+          d10d39d59da291049574a619d7b615fb2123b7034c6de2acd5f3501d0ba02d85  task/plan.json
+          6070e7f056e651fece469ffe9961c5824288cbe9aebf768a031139a610b4468d  task/submit.py
+          SUMS
+      - name: Check the committed fixture on the exact candidate
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          git checkout --detach 7e25037831c056d13872250d6abe98b027221355
+          python3 "$RUNNER_TEMP/epoll-modify/graph.py" "$RUNNER_TEMP/epoll-modify"
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"]) / "epoll-modify" / "receipt.py"))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epoll-modify-receipt
+          path: ${{ runner.temp }}/epoll-modify/verdict.json
+          if-no-files-found: error
+          retention-days: 14

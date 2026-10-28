@@ -1,0 +1,35 @@
+{
+  "request_sha256": "4480709420cc7d34e52859486176979b7e75dddf41517dd3df738af63f3ed7f5",
+  "bytes": 18943,
+  "source": "7e25037831c056d13872250d6abe98b027221355",
+  "stock": "7db6b651678316a1f1ffbe7debcf194c8b709795",
+  "parent": "b7cbb86f1edf369a28bd27d1c4817eab917abb8c",
+  "trees": {
+    "7db6b651678316a1f1ffbe7debcf194c8b709795": "6e46a3bc21f38c0e99fd1700a3890fc0eb75d4c9",
+    "7e25037831c056d13872250d6abe98b027221355": "7a6e20daa48d42ca73cb326bf8aa1c476e251bcb"
+  },
+  "host": "cb548161f537465fda2576793e6d6cea59a32260",
+  "donor": "34863f8dfa25ad5ef0b911209b011cd749660e96d446d6eee1855e39c237412f",
+  "targets": [
+    "//pkg/sentry/vfs:vfs_test",
+    "//pkg/sentry/fsimpl/fuse:fuse_test",
+    "//pkg/sentry/epollqualification:epoll_contract_test"
+  ],
+  "files": {
+    "image_bootstrap.py": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+    "image_execution.py": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+    "image_qualification.py": "3225c70bf3985c792040dfd3817dfe4e1d6a40157a5d2fff8754e991887df0d4",
+    "image_workload.py": "9e3c6ded552d9a3f90f30e23a0c8f71eeedea3157c2072d33d4ea59cd05913b3"
+  },
+  "qualification_package": "pkg/sentry/epollqualification",
+  "products": {
+    "stock": "81c2e35f06fc1d0ba9b7dee48a4fc0af3b691978",
+    "source": "e070894f5170984643df90e9f0bbe100c87329a7"
+  },
+  "previous_invocation": "e1e3053d-b1e3-4e18-b866-1143ec84679a",
+  "previous_archive": {
+    "bytes": 344387,
+    "sha256": "d6ce5e09331304fb8cba3408e04a3d3f9f39fd7abc6e8721a77f44091583e4ae"
+  },
+  "tracked_package_tree": "994ef2f42349d5dc74952efbda6432f879c78853"
+}
