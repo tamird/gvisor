@@ -1,0 +1,146 @@
+{
+  "bazel": "8.8.1",
+  "callback": "75b79a5cdfa877b39cee72b1ec9a808f244dbb1df1f749a26a0a8a40eeaf036c",
+  "changed": [
+    "pkg/private/deb/deb.bzl",
+    "pkg/private/tar/tar.bzl",
+    "pkg/private/util.bzl"
+  ],
+  "config": {
+    "action_prefixes": [
+      "//tests/deb:",
+      "//pkg/private/tar:",
+      "//pkg/private/deb:"
+    ],
+    "bundle": {
+      "bytes": 2150,
+      "sha256": "32605f2b540d8933cb0e586a5f44ef81fa7c7c357ba896acaf404097079d8d7a"
+    },
+    "descriptor": [
+      "ad43c88a461429d96f357319effbed1898cb8210a7d4feb8c3ab26114e23bccc",
+      3660
+    ],
+    "expected_sources": [
+      "9107384786056cdc05c9ad869bc07a577c66e746"
+    ],
+    "gold": {
+      "//tests/deb:tar_input": {
+        "tar.gz": [
+          "43dd22fcee196b7c988da129ba64207b24f86b5a8251ccf89514b7bdd329faad",
+          312
+        ]
+      },
+      "//tests/deb:test_deb": {
+        "changes": [
+          "3437315a043c54152570f501be1bd571443760bf0361209486d5ee5401c0a72c",
+          674
+        ],
+        "deb": [
+          "ed3db7d16a7918d9361878ea05fa808d2afe9678bf23fdc34b8eb17ef442ae82",
+          1372
+        ]
+      },
+      "//tests/tar:test-tar-preserve_mode-True": {
+        "tar": [
+          "96ab9007d0d98f663167713e74f95416dd6009207a0a941c503d65d58d3d35c5",
+          10240
+        ]
+      }
+    },
+    "image_targets": {
+      "x86_64": [
+        "//tests/deb:pkg_deb_test",
+        "//tests/deb:control_field_test",
+        "//tests/tar:pkg_tar_test",
+        "//tests/tar:is_compressed_test"
+      ]
+    },
+    "locale": {
+      "LANG": "en_US.UTF-8",
+      "LC_CTYPE": "UTF-8",
+      "PYTHONIOENCODING": "UTF-8",
+      "PYTHONUTF8": "1"
+    },
+    "original_default": {
+      "archive": [
+        "59722fdc6a35483d07a9853515cb314601c6c421ce87d3d104c13c80377a534b",
+        76275
+      ],
+      "child": "211053ef-e8f1-4653-acb7-710a5065ef37",
+      "parent": "a288512e-7fcd-4126-adce-232ddb22bfa9",
+      "reconciled": {
+        "bytes": 9347,
+        "sha256": "cd8bfdbf552f212492694f0eda7e817fff3e6a21626a5a62c0d52f8c81ec5574"
+      },
+      "source": "9107384786056cdc05c9ad869bc07a577c66e746"
+    },
+    "parent": "01446201fd8e758267f4e1abd9727926655110b7",
+    "source": "9107384786056cdc05c9ad869bc07a577c66e746",
+    "static_interpreter": [
+      "02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394",
+      43532776
+    ],
+    "static_owners": [
+      "//tests/deb:tar_input",
+      "//tests/deb:test_deb"
+    ],
+    "stock": {
+      "archive": {
+        "bytes": 79135,
+        "sha256": "e1d1d005a35569c36b6dae7246fab5482c5e5dae29eacace16ba0dfeaa8fe46c"
+      },
+      "invocation": "5c9c3db6-896e-46ab-a508-76384f758688",
+      "source": "01446201fd8e758267f4e1abd9727926655110b7",
+      "verified": {
+        "bytes": 4503,
+        "sha256": "e43c3c45f6f8feaf02354bfff2c5a75f2c9707ad01245a1fb7f899eb25b91b0a"
+      }
+    },
+    "targets": [
+      "//tests/deb:tar_input",
+      "//tests/deb:test_deb"
+    ],
+    "tree": "6083f0c21f92d633b5c86ea773bd7a55ac8bcce1",
+    "worker": {
+      "Arch": "amd64",
+      "EstimatedMemory": "2GB",
+      "OSFamily": "linux",
+      "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+      "workload-isolation-type": "firecracker"
+    }
+  },
+  "host": "cb548161f537465fda2576793e6d6cea59a32260",
+  "note": "Only the two previously unstarted static package owners and their exact native replay roots. Original default archive/reconciled receipt explicitly pinned; no TestRunner and no default archive requested.",
+  "overlays": {
+    "qualification_scratch_go/BUILD.bazel": "6d73374f012149ad8704d814b108b2a7577542c1a23ee407a2da8d6004912e09",
+    "qualification_scratch_go/action_tree.proto": "694ccc5117337acb624f80c179713e38763b943d6c1cea95a4f18a27d0c2807b",
+    "qualification_scratch_go/scratch_replay.py": "1f8cfc3228450ee2dbf6caa0636bedac6fce29b5d4f4759ea679d284633bbea6",
+    "test/rbe/static_fixture.py": "26fe049efa5b471ab19067857ce51c05942836df3b479c4f39532f5a043d5c50"
+  },
+  "preflight": {
+    "action_budget_bytes": 43857,
+    "action_budget_limit": 45056,
+    "largest_step_argument_bytes": 43192
+  },
+  "producers": {
+    "image_bootstrap.py": {
+      "original": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+      "qualified": "64316581be0654bc8bd5f26ce5073e770b13ba140379d54a64d9c23fb3d51982",
+      "source": "5905cb7d382b625b39b7c9d3cf4194c5d4e2d261"
+    },
+    "image_execution.py": {
+      "original": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+      "qualified": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+      "source": "9ceda74d2fff6589533386ada151b6fe28b5bd5e"
+    },
+    "image_qualification.py": {
+      "original": "515e002ec49ee76c89c0b75978420d1c16be318aacdd1097cf9e1f8603914ad4",
+      "qualified": "9b781a35be54dea82afb5672053fbbdd497f8052a7ec2b7f8e41f8e6a0fad615",
+      "source": "9ceda74d2fff6589533386ada151b6fe28b5bd5e"
+    }
+  },
+  "request": {
+    "bytes": 43900,
+    "sha256": "15a52682dbd12af6ff738472ac096f6434b02bf851b6cb072dbe0f98def2df99"
+  }
+}
