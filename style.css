@@ -33,6 +33,7 @@
 /* Branchless work shares its investigation record with the dependency graph. */
 .node.investigation:where(:not(.selected,.prerequisite,.dependent)) .node-shape{stroke:var(--blue);stroke-dasharray:4 3}.node.investigation .node-label,.detail-top.investigation{fill:var(--blue);color:var(--blue)}
 .node.prerequisite .node-shape{stroke:var(--blue);stroke-width:3;stroke-dasharray:none}.node.dependent .node-shape{stroke:var(--amber);stroke-width:3;stroke-dasharray:6 3}
+.node:is(.selected,.prerequisite,.dependent) .node-shape{vector-effect:non-scaling-stroke}
 
 /* A pending decision links to its source and exposes the proposed text in details. */
 .decision-source{display:block;margin-top:5px;font-size:11px;color:var(--blue);text-decoration:underline}.decision-body{font-size:12px;line-height:1.6;color:var(--text);white-space:pre-wrap}
