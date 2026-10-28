@@ -31762,17 +31762,37 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/epoll-modify-preserve",
-      "head": "8c01e8c21b1601a43baf966daa0f511d08e137db",
+      "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
       "title": "Keep an epoll watch intact when MOD fails",
-      "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db",
+      "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-28T22:45:37Z",
-      "summary": "Contributor requested machine-checked lock ownership on the replacement registration. The existing Go analyzer supports any-one guard for reads and both guards for writes. Working on the annotation, guarded calls and negative check; source, race, checkpoint and Linux evidence for prior head are preserved.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-28T23:57:16Z",
+      "summary": "The replacement waiter, interest map, ready list, sequence number and locked helper now have checked guards. Removing the writer lock triggers checklocks. Final production sources passed race (47 records), both architecture analyzers, the Linux/checkpoint/allocation cases, and the matched armed and disarmed restore comparison. Opening waits for #16513 and contributor review.",
       "evidence": [
         {
-          "label": "Proposed fix",
-          "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db"
+          "label": "Revised proposal",
+          "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
+        },
+        {
+          "label": "Missing writer lock: Nogo rejected the write",
+          "url": "https://app.buildbuddy.io/invocation/d26b3f80-5094-4b71-8aad-f772ddb024d5"
+        },
+        {
+          "label": "VFS race suite and both restore cases",
+          "url": "https://app.buildbuddy.io/invocation/a97b05cd-aece-4109-bf5f-3c5cf96f3613"
+        },
+        {
+          "label": "Owning Nogo tests: AMD64 and ARM64",
+          "url": "https://app.buildbuddy.io/invocation/38f4f946-7549-4052-a01d-fa937bdce104"
+        },
+        {
+          "label": "Linux, checkpoints and measured allocations",
+          "url": "https://app.buildbuddy.io/invocation/7df78c87-af21-448a-bb2b-34b86783a625"
+        },
+        {
+          "label": "Earlier checkpoint variant: armed passes; disarmed fails",
+          "url": "https://app.buildbuddy.io/invocation/9492cefc-8a12-45f0-8caf-dcb49763ff7f"
         },
         {
           "label": "Stock: pending edge, delivered edge, disarmed one-shot and controlled FUSE abort",
@@ -31791,9 +31811,22 @@
           "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "8c01e8c21b1601a43baf966daa0f511d08e137db",
-        "url": "https://github.com/tamird/gvisor/commit/8c01e8c21b1601a43baf966daa0f511d08e137db"
+      "refinement": {
+        "before": {
+          "head": "8c01e8c21b1601a43baf966daa0f511d08e137db"
+        },
+        "after": {
+          "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
+        "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
+        "title": "Keep an epoll watch intact when MOD fails",
+        "summary": "Use checklocks to enforce ownership of the waiter pointer and ready list. Race and restore tests pass; the analyzer rejects an unguarded write. Open after #16513.",
+        "body": "Field and helper guards replace lock requirements in prose; queueing and waiter identity checks use one critical section."
       }
     }
   ],
@@ -46177,9 +46210,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T23:12:29Z",
+      "updatedAt": "2026-10-28T23:57:16Z",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Giving compiler-rt a writable temporary directory eliminated the Clang temporary-file diagnostics in the isolated AMD64 build. It still failed: the only failed action was the supplier\u2019s CppModuleMap helper. The OCI executor could not start the staged native module-map-generator; the executable\u2019s exact missing dependency remains to be identified. The 233 remote processes are not a successful full target.",
+          "evidence": [
+            {
+              "label": "Physical compiler-rt action log",
+              "url": "https://app.buildbuddy.io/invocation/3631ddbc-bf53-4f00-8f6b-e428da1f3254"
+            },
+            {
+              "label": "Failed qualification with complete results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40785588320"
+            }
+          ]
+        },
         {
           "text": "The complete six-archive release target failed on the same physical shell-free worker where the copy control passed. The action log identifies five failure types: Bash-based gVisor version and seccomp genrules, rules_python build metadata, rules_go bootstrap, the Protobuf toolchain version check, and Clang assembly intermediates on an image without /tmp. The seccomp generator already has PR #16590. Clang alone accounted for 139 compiler action errors in the log; a focused compiler-rt run tests a writable action-local temporary directory. The source is the fork integration branch, not current master. No archive success is claimed. Native execution finished at 23:06:04.789 UTC; the invocation verdict was available at 23:06:05.048 (+0.259 s), and the complete row at 23:06:05.344 (+0.555 s). Reading the action log to identify the five causes was the remaining manual work.",
           "evidence": [
