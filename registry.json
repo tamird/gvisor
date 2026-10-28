@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T19:01:44Z",
+    "updatedAt": "2026-10-28T19:54:39Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31315,9 +31315,9 @@
       "title": "Register file lock waiters under the lock-set mutex",
       "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
       "group": "runtime",
-      "status": "Reviewable",
+      "status": "Agent work",
       "summary": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
-      "updatedAt": "2026-10-28T18:15:20.796+00:00",
+      "updatedAt": "2026-10-28T19:54:39Z",
       "evidence": [
         {
           "label": "Fork change",
@@ -31336,13 +31336,18 @@
           "url": "https://app.buildbuddy.io/invocation/aad23ed7-ae1d-4dc7-ae8d-c4bf1fea36bb"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
-        "url": "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
-        "title": "Register file lock waiters under the lock-set mutex",
-        "summary": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
-        "body": "A blocking flock or fcntl must register its waiter before releasing\nthe mutex, or a concurrent unlock can go unnoticed. LockRegion relied\non a waiter callback to release its mutex, hiding the lock transfer\nfrom checklocks and requiring two exemptions.\n\nRegister directly with the wait queue, release the mutex, and block on\nthe registered channel. This keeps registration atomic with the failed\nlock attempt and lets checklocks verify both sides of the wait."
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+        "observedAt": "2026-10-28T19:54:39Z",
+        "disposition": "Contributor requested defer for lock management",
+        "nextAction": "Scope the mutex to checking the lock and registering the waiter. Release it before sleeping, then validate the revised branch.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/53702ee2aba0e43f9cdd6bc6fefdc1322fb3d82b",
+          "https://app.buildbuddy.io/invocation/5240bd69-2863-4974-a32d-49e31b633510",
+          "https://app.buildbuddy.io/invocation/3e624b28-717a-4f64-8c58-3cac1e76e84c",
+          "https://app.buildbuddy.io/invocation/aad23ed7-ae1d-4dc7-ae8d-c4bf1fea36bb"
+        ]
       }
     },
     {
@@ -31354,10 +31359,14 @@
       "title": "Report the conflicting record lock's owner",
       "url": "https://github.com/tamird/gvisor/commit/60b75d53510bf35b648bfec78626133007e926c3",
       "group": "runtime",
-      "status": "Reviewable",
+      "status": "Published as #16618",
       "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
-      "updatedAt": "2026-10-28T18:41:41Z",
+      "updatedAt": "2026-10-28T19:54:39Z",
       "evidence": [
+        {
+          "label": "Published upstream as #16618",
+          "url": "https://github.com/google/gvisor/pull/16618"
+        },
         {
           "label": "Four original failures in each stock gVisor mode",
           "url": "https://app.buildbuddy.io/invocation/b5e4efe5-5b46-4a87-bd9a-feb53b07b4ad"
@@ -31375,14 +31384,71 @@
           "url": "https://app.buildbuddy.io/invocation/d7c4215d-5666-40f1-b951-cc14acc7fafb"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "60b75d53510bf35b648bfec78626133007e926c3",
-        "url": "https://github.com/tamird/gvisor/commit/60b75d53510bf35b648bfec78626133007e926c3",
-        "title": "Report the conflicting record lock's owner",
-        "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
-        "body": "A process can hold both a POSIX read lock and an open file description\nread lock on the same bytes. When it asks whether a write lock would\nconflict, Linux ignores the lock owned by the caller but reports the\nother reader [1]. gVisor ignored both readers and returned F_UNLCK.\n\nCompare the querying owner with each reader regardless of how the lock\nwas acquired. Report the PID of the conflicting lock: -1 for an open\nfile description, or the process ID as seen from the caller's PID\nnamespace for a POSIX lock. This applies to both F_GETLK and\nF_OFD_GETLK. Also reject F_OFD_GETLK with EINVAL when its input l_pid is\nnonzero, as Linux requires [2].\n\n[1]: https://github.com/torvalds/linux/blob/65ba8f34ec886ec72b2c07ddc8cf3d815c32869d/fs/locks.c#L958\n[2]: https://github.com/torvalds/linux/blob/65ba8f34ec886ec72b2c07ddc8cf3d815c32869d/fs/locks.c#L2437"
-      }
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "60b75d53510bf35b648bfec78626133007e926c3",
+        "observedAt": "2026-10-28T19:54:39Z",
+        "disposition": "Published as #16618",
+        "nextAction": "Follow checks and maintainer review on #16618.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16618",
+          "https://app.buildbuddy.io/invocation/b5e4efe5-5b46-4a87-bd9a-feb53b07b4ad",
+          "https://app.buildbuddy.io/invocation/140b1024-3c79-42c9-98ec-671d08e7ac12",
+          "https://app.buildbuddy.io/invocation/7ca7f89b-d19b-4cf4-9fd1-f6ae70f3ae13",
+          "https://app.buildbuddy.io/invocation/d7c4215d-5666-40f1-b951-cc14acc7fafb"
+        ]
+      },
+      "inactive": true
+    },
+    {
+      "id": "pr:16618",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/mixed-owner-getlk",
+      "head": "60b75d53510bf35b648bfec78626133007e926c3",
+      "title": "Report the conflicting record lock's owner",
+      "url": "https://github.com/google/gvisor/pull/16618",
+      "group": "runtime",
+      "status": "open",
+      "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
+      "updatedAt": "2026-10-28T19:54:39Z",
+      "evidence": [
+        {
+          "label": "Published upstream as #16618",
+          "url": "https://github.com/google/gvisor/pull/16618"
+        },
+        {
+          "label": "Four original failures in each stock gVisor mode",
+          "url": "https://app.buildbuddy.io/invocation/b5e4efe5-5b46-4a87-bd9a-feb53b07b4ad"
+        },
+        {
+          "label": "Linux and both corrected gVisor modes: 21 syscall cases",
+          "url": "https://app.buildbuddy.io/invocation/140b1024-3c79-42c9-98ec-671d08e7ac12"
+        },
+        {
+          "label": "36 unit cases and three analyzer targets across both architectures",
+          "url": "https://app.buildbuddy.io/invocation/7ca7f89b-d19b-4cf4-9fd1-f6ae70f3ae13"
+        },
+        {
+          "label": "Aggregate failed matching symbolic vs. numeric errno/lock output; original XML and logs reconciled without reruns",
+          "url": "https://app.buildbuddy.io/invocation/d7c4215d-5666-40f1-b951-cc14acc7fafb"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "60b75d53510bf35b648bfec78626133007e926c3",
+        "observedAt": "2026-10-28T19:54:39Z",
+        "disposition": "Published as #16618",
+        "nextAction": "Follow checks and maintainer review on #16618.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16618",
+          "https://app.buildbuddy.io/invocation/b5e4efe5-5b46-4a87-bd9a-feb53b07b4ad",
+          "https://app.buildbuddy.io/invocation/140b1024-3c79-42c9-98ec-671d08e7ac12",
+          "https://app.buildbuddy.io/invocation/7ca7f89b-d19b-4cf4-9fd1-f6ae70f3ae13",
+          "https://app.buildbuddy.io/invocation/d7c4215d-5666-40f1-b951-cc14acc7fafb"
+        ]
+      },
+      "number": 16618
     }
   ],
   "edges": [
