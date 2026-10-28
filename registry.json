@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T16:53:04.988727+00:00",
+    "updatedAt": "2026-10-28T17:03:23.521831+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31124,20 +31124,52 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/rack-reordering-window-persistence",
-      "head": "fd52b82575252fa1a40925e63ff42d5a1b80afbb",
-      "title": "Age the RACK reordering window only on recovery exit",
-      "url": "https://github.com/tamird/gvisor/commit/fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+      "head": "0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+      "title": "Age the RACK reordering window only when loss recovery ends",
+      "url": "https://github.com/tamird/gvisor/commit/0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-28T16:28:18.358443+00:00",
-      "summary": "Stock cut the reordering allowance from 50 to 25 ms after sixteen ordinary ACKs. The first fix, fd52b82575, retained the 50 ms window and all 16 recoveries, then counted one subsequent DSACK-free recovery (16 to 15). The complete wire suite passed 21/21 on native AMD64 and ARM64, and both Nogo owners passed both target architectures. The original comparison stayed failed: the first stock mismatch stopped its packet checker before another stock recovery could be observed. Source refinement is underway: pass the recovery exit within its ACK handler rather than save it on the sender. The revised source is not yet qualified. No contributor decision is requested.",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T17:03:23.521831+00:00",
+      "summary": "Sixteen ordinary ACKs reduced stock\u2019s reordering allowance from 50 to 25 ms after a duplicate SACK. The revised sender passes the exit from recovery directly to the RACK update for that ACK. The same wire test retained the 50 ms window and all 16 recoveries, then counted the second DSACK-free recovery once (16 to 15). The standalone AMD64 suite passed 21 wire cases; the original log contains both retransmitted holes and all sixteen ordinary ACKs. Three connected-stack migrations saved and loaded successfully, and three Nogo owners passed both target architectures. A separate combined ARM64 source passed the wire case and five multiplier/initial-round cases. The earlier stock stopped at its first mismatch, so its second recovery was not measured. Removing the saved boolean changes the state layout; these migration checks cover checkpoints from the same build.",
       "evidence": [
         {
-          "label": "Fork change on upstream 509ad53373",
+          "label": "Revised standalone source on upstream 509ad53373",
+          "url": "https://github.com/tamird/gvisor/commit/0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8"
+        },
+        {
+          "label": "Complete diff of the revised proposal",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8"
+        },
+        {
+          "label": "Previous source \u2192 per-ACK revision; identical wire fixture",
+          "url": "https://github.com/tamird/gvisor/compare/fd52b82575252fa1a40925e63ff42d5a1b80afbb..0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8"
+        },
+        {
+          "label": "Original revised qualification: PASS",
+          "url": "https://app.buildbuddy.io/invocation/0d05cb1f-c9d9-4e2a-ae1a-cb45e0703f38"
+        },
+        {
+          "label": "Revised AMD64: 21 wire cases, 52 packets in the regression",
+          "url": "https://app.buildbuddy.io/invocation/ef4535cc-ac25-4d55-bf08-233a2b5d8f0e"
+        },
+        {
+          "label": "Three actual TCP Save/Load migrations on the standalone source",
+          "url": "https://app.buildbuddy.io/invocation/8a0c36df-7bf0-41f9-95fc-cdd7923b64e5"
+        },
+        {
+          "label": "Three Nogo owners, each covering AMD64 and ARM64",
+          "url": "https://app.buildbuddy.io/invocation/17e0bbaf-b6e3-4c2c-bccc-d345ec298b9a"
+        },
+        {
+          "label": "Integration-only ARM64: wire persistence plus five focused saturation/initial-round cases",
+          "url": "https://app.buildbuddy.io/invocation/3171c673-d6ca-42be-92bf-6b660bf30bb9"
+        },
+        {
+          "label": "Earlier source: Fork change on upstream 509ad53373",
           "url": "https://github.com/tamird/gvisor/commit/fd52b82575252fa1a40925e63ff42d5a1b80afbb"
         },
         {
-          "label": "Complete diff against its direct parent",
+          "label": "Earlier source: Complete diff against its direct parent",
           "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...fd52b82575252fa1a40925e63ff42d5a1b80afbb"
         },
         {
@@ -31149,15 +31181,15 @@
           "url": "https://app.buildbuddy.io/invocation/52153ec5-b73d-4d4a-9371-67f7fcf1297a"
         },
         {
-          "label": "Corrected AMD64: 21 RACK wire cases passed",
+          "label": "Earlier source: Corrected AMD64: 21 RACK wire cases passed",
           "url": "https://app.buildbuddy.io/invocation/a79cad18-fa38-403b-a750-89f1e6b318c2"
         },
         {
-          "label": "Corrected ARM64: 21 RACK wire cases passed",
+          "label": "Earlier source: Corrected ARM64: 21 RACK wire cases passed",
           "url": "https://app.buildbuddy.io/invocation/ebfffe49-5f6d-40f9-a54b-e7b1a2bdb4a0"
         },
         {
-          "label": "TCP and wire-test Nogo: AMD64 and ARM64 passed",
+          "label": "Earlier source: TCP and wire-test Nogo: AMD64 and ARM64 passed",
           "url": "https://app.buildbuddy.io/invocation/6f146c4a-618f-47d3-b34b-801c86e1cff8"
         },
         {
@@ -31165,22 +31197,23 @@
           "url": "https://app.buildbuddy.io/invocation/695fb745-1883-40eb-84f0-bd767ee6ca76"
         }
       ],
-      "followup": {
-        "owner": "pinring_source_scope",
-        "sourceHead": "fd52b82575252fa1a40925e63ff42d5a1b80afbb",
-        "observedAt": "2026-10-28T16:28:18.358443+00:00",
-        "disposition": "Refining the qualified persistence fix",
-        "nextAction": "Remove the saved ACK-local exit marker, check the checkpoint boundary, and verify the revised sender against the original wire regression.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/fd52b82575252fa1a40925e63ff42d5a1b80afbb",
-          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...fd52b82575252fa1a40925e63ff42d5a1b80afbb",
-          "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2",
-          "https://app.buildbuddy.io/invocation/52153ec5-b73d-4d4a-9371-67f7fcf1297a",
-          "https://app.buildbuddy.io/invocation/a79cad18-fa38-403b-a750-89f1e6b318c2",
-          "https://app.buildbuddy.io/invocation/ebfffe49-5f6d-40f9-a54b-e7b1a2bdb4a0",
-          "https://app.buildbuddy.io/invocation/6f146c4a-618f-47d3-b34b-801c86e1cff8",
-          "https://app.buildbuddy.io/invocation/695fb745-1883-40eb-84f0-bd767ee6ca76"
-        ]
+      "refinement": {
+        "before": {
+          "head": "fd52b82575252fa1a40925e63ff42d5a1b80afbb",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        },
+        "after": {
+          "head": "0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+        "url": "https://github.com/tamird/gvisor/commit/0b8d2b09b19d868824d9cc4bfbb9d9091ebff5f8",
+        "title": "Age the RACK reordering window only when loss recovery ends",
+        "summary": "Sixteen ordinary ACKs reduced stock\u2019s reordering allowance from 50 to 25 ms after a duplicate SACK. The revised sender passes the exit from recovery directly to the RACK update for that ACK. The same wire test retained the 50 ms window and all 16 recoveries, then counted the second DSACK-free recovery once (16 to 15). The standalone AMD64 suite passed 21 wire cases; the original log contains both retransmitted holes and all sixteen ordinary ACKs. Three connected-stack migrations saved and loaded successfully, and three Nogo owners passed both target architectures. A separate combined ARM64 source passed the wire case and five multiplier/initial-round cases. The earlier stock stopped at its first mismatch, so its second recovery was not measured. Removing the saved boolean changes the state layout; these migration checks cover checkpoints from the same build.",
+        "body": "A duplicate SACK can indicate that TCP retransmitted a segment too soon.\nRACK then increases the time it allows for reordering. [RFC 8985,\nsection 6.2](https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2)\nkeeps that increase for sixteen loss recoveries. The sender instead\ncounted ordinary ACKs after advancing past the last recovery point. With\na 100 ms RTT, sixteen such ACKs shrank the window from 50 ms to 25 ms\neven though no further segment had been lost.\n\nPass the transition out of recovery directly to the RACK update for\nthat ACK. A duplicate SACK on the exiting ACK refreshes persistence;\nthe next recovery without a duplicate SACK decrements it once.\n\nThe regression retransmits a hole in each of two SACK recovery\nepisodes. It checks that sixteen ordinary ACKs between them retain the\n50 ms window and that the second recovery reduces the count from 16 to\n15. The previous saved boolean only carried information within one ACK\nhandler. Removing it changes the saved TCP state layout across versions."
       }
     },
     {
@@ -45277,9 +45310,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T16:39:22.240365+00:00",
+      "updatedAt": "2026-10-28T17:03:23.521831+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "A fresh native AMD64 release on 81883beb4f reproduced all 73,980,610 bytes of the original gvisor.tar.bz2. Replaying its PackageTar action in an empty root with all 2,298 declared input leaves failed before the packager ran: build_tar starts with #!/usr/bin/env bash, but /usr/bin/env is absent. Neither Python nor bzip2 ran. The earlier replay never reached execve because its CAS input root had expired; it remains a separate result.",
+          "evidence": [
+            {
+              "label": "Fresh native AMD64 package: 73,980,610 bytes match the historical TAR",
+              "url": "https://app.buildbuddy.io/invocation/cb88bc53-a8a6-442c-b7f1-92eb5d767854"
+            },
+            {
+              "label": "Original action in an empty root: execve returns ENOENT for the undeclared launcher interpreter",
+              "url": "https://app.buildbuddy.io/invocation/2dc5828c-bcdc-45f9-87b6-55b366a67d1e"
+            },
+            {
+              "label": "Upstream rules_python launcher tracking",
+              "url": "https://github.com/bazel-contrib/rules_python/issues/2500"
+            }
+          ]
+        },
         {
           "text": "The original release tar action succeeded, but the later isolated replay did not execute it: the service returned HTTP 404 for its Command and root Directory. The retained action metadata reproduced the exact 971-byte Command digest, but the input root was still unavailable on a separate authenticated read. This establishes an evidence retention gap; it says nothing about whether Python or its launcher needs an undeclared worker tool.",
           "evidence": [
@@ -45451,7 +45501,7 @@
           ]
         }
       ],
-      "nextStep": "Regenerate the release tar on its pinned source and replay that fresh action from its declared inputs before the CAS records expire. Both isolated Go link checks are complete.",
+      "nextStep": "Follow the rules_python launcher dependency and qualify a declared launch path for PackageTar. The current empty-root run stopped before Python or bzip2; neither is established as the next missing input.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
