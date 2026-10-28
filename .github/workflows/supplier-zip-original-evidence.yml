@@ -1,0 +1,45 @@
+name: Read original supplier ZIP evidence
+
+"on":
+  push:
+    branches: [qualification/rules-pkg-zip-original-evidence]
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the one original archive reader
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/supplier-zip-original-evidence"
+          sha256sum --check <<'SUMS'
+          fe73a501e95e69d5b0500525eb8fb24b04ab5ac31754dc5ad6e44966166f2ab1  .github/qualification/supplier-zip-original-evidence/read.py
+          35c3d3af6a0583154cb0dcac99b887faef230841416a896ea0217be0e69a6861  .github/qualification/supplier-zip-original-evidence/execution_records.py
+          7c211c8878c04269feb91a684480fef2e66f940f9e5785310055056f19428cb3  .github/qualification/supplier-zip-original-evidence/metadata.py
+          41bedf79cfc7f6925d892a028ef8ce05d620412a9413d6c1e90844d348f055bb  .github/qualification/supplier-zip-original-evidence/plan.json
+          SUMS
+      - name: Read original records only
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          raise SystemExit(runpy.run_path(".github/qualification/supplier-zip-original-evidence/read.py")["main"](key))
+      - name: Upload typed original result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: supplier-zip-original-evidence
+          path: ${{ runner.temp }}/supplier-zip-original-evidence/verdict.json
+          if-no-files-found: error
+          retention-days: 14
