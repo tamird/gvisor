@@ -1,0 +1,92 @@
+diff --git a/pkg/private/tar/BUILD b/pkg/private/tar/BUILD
+--- a/pkg/private/tar/BUILD
++++ b/pkg/private/tar/BUILD
+@@ -20,6 +20,13 @@
+ 
+ package(
+     default_applicable_licenses = ["//:license"],
++)
++
++# Register a py_runtime_pair of this type to select a declared interpreter
++# for packaging, independently of Python targets built by the consumer.
++toolchain_type(
++    name = "execution_runtime",
++    visibility = ["//visibility:public"],
+ )
+ 
+ filegroup(
+diff --git a/pkg/private/tar/tar.bzl b/pkg/private/tar/tar.bzl
+--- a/pkg/private/tar/tar.bzl
++++ b/pkg/private/tar/tar.bzl
+@@ -13,6 +13,7 @@
+ # limitations under the License.
+ """Rules for making .tar files."""
+ 
++load("@rules_python//python:py_info.bzl", "PyInfo")
+ load("//pkg:providers.bzl", "PackageVariablesInfo")
+ load(
+     "//pkg/private:pkg_files.bzl",
+@@ -38,6 +39,7 @@
+     ["", "gz", "bz2", "xz"] if HAS_XZ_SUPPORT else ["", "gz", "bz2"]
+ )
+ _DEFAULT_MTIME = -1
++_execution_runtime = Label("//pkg/private/tar:execution_runtime")
+ _stamp_condition = Label("//pkg/private:private_stamp_detect")
+ 
+ def _remap(remap_paths, path):
+@@ -184,20 +186,39 @@
+         transitive = mapping_context.file_deps,
+     )
+ 
++    executable = ctx.executable._build_tar
++    arguments = [args]
++    env = {
++        "LANG": "en_US.UTF-8",
++        "LC_CTYPE": "UTF-8",
++        "PYTHONIOENCODING": "UTF-8",
++        "PYTHONUTF8": "1",
++    }
++    toolchain = ctx.toolchains[_execution_runtime]
++    if toolchain:
++        # Invoke the same packager with the execution platform's declared
++        # interpreter. A py_binary launcher may need a system shell or Python.
++        runtime = toolchain.py3_runtime
++        if not runtime or not runtime.interpreter:
++            fail("PackageTar needs an in-build Python 3 runtime")
++        executable = runtime.interpreter
++        arguments = ["-B", "-S", "-m", "pkg.private.tar.build_tar", args]
++        env["PYTHONPATH"] = ctx.attr._build_tar.label.workspace_root or "."
++        inputs = depset(transitive = [
++            inputs,
++            runtime.files,
++            ctx.attr._build_tar[PyInfo].transitive_original_sources,
++        ])
++
+     ctx.actions.run(
+         mnemonic = "PackageTar",
+         progress_message = "Writing: %s" % output_file.path,
+         inputs = inputs,
+         tools = [ctx.executable.compressor] if ctx.executable.compressor else [],
+-        executable = ctx.executable._build_tar,
+-        arguments = [args],
++        executable = executable,
++        arguments = arguments,
+         outputs = [output_file],
+-        env = {
+-            "LANG": "en_US.UTF-8",
+-            "LC_CTYPE": "UTF-8",
+-            "PYTHONIOENCODING": "UTF-8",
+-            "PYTHONUTF8": "1",
+-        },
++        env = env,
+         use_default_shell_env = True,
+     )
+     return [
+@@ -309,6 +330,7 @@
+             allow_files = True,
+         ),
+     },
++    toolchains = [config_common.toolchain_type(_execution_runtime, mandatory = False)],
+ )
+ 
+ # buildifier: disable=function-docstring-args
