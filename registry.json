@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T14:53:34.398977+00:00",
+    "updatedAt": "2026-10-28T15:02:38.028325+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30503,6 +30503,68 @@
           "https://app.buildbuddy.io/invocation/46778d54-fae1-49f0-b7cb-9bb035c25c72",
           "https://github.com/torvalds/linux/blob/adc218676eef25575469234709c2d87185ca223a/fs/signalfd.c#L299-L303",
           "https://github.com/tamird/gvisor/commit/3257b4b2a6481c604f656db18c74456b0355f38b"
+        ]
+      }
+    },
+    {
+      "id": "branch:rseq-native-cc",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rseq-native-cc",
+      "head": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+      "title": "Build the RSEQ syscall helper with cc_binary",
+      "url": "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+      "group": "bazel",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T15:02:38.028325+00:00",
+      "summary": "The RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed.\n\nNative Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+        "url": "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+        "title": "Build the RSEQ syscall helper with cc_binary",
+        "summary": "The RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed. Native Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
+        "body": "The RSEQ tests exec a separate helper so libc cannot register a\nrestartable sequence before the test. Build it with the C++ toolchain:\ncompile the two assembly files for the selected architecture and link\nthem with the C++ object, without startup files or runtime libraries.\nThe existing syscall test still finds the helper at the same path.\n\nThe [AMD64 and ARM64 executables][build] are static and have no ELF\ninterpreter or dynamic segment. The [AMD64 Linux runner][amd] passed all\n14 cases. The [ARM64 Linux runner][arm] passed all 13 cases compiled on\nthat architecture. AMD64 systrap skipped all 14 on its RSEQ capability\ncheck; the [aggregate][all] therefore did not pass.\n\n[build]: https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66\n[amd]: https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769\n[arm]: https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510\n[all]: https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
+      },
+      "evidence": [
+        {
+          "label": "Fork: one BUILD file",
+          "url": "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91"
+        },
+        {
+          "label": "Compare to immediate upstream parent",
+          "url": "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...a0e3cf835fb57e9b08fb595a2854f0ddcb491f91"
+        },
+        {
+          "label": "Eight configured compile/link actions; two static ELFs",
+          "url": "https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66"
+        },
+        {
+          "label": "AMD64: 14 native passes, 14 systrap capability skips",
+          "url": "https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769"
+        },
+        {
+          "label": "ARM64: 13 native passes",
+          "url": "https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510"
+        },
+        {
+          "label": "Original aggregate: FAIL, producer INCOMPLETE",
+          "url": "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
+        }
+      ],
+      "followup": {
+        "owner": "native_runtime",
+        "sourceHead": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+        "observedAt": "2026-10-28T15:02:38.028325+00:00",
+        "disposition": "Ready for contributor review",
+        "nextAction": "Review the standalone RSEQ helper build change. Its native cases passed; systrap skipped all cases.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+          "https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66",
+          "https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769",
+          "https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510",
+          "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
         ]
       }
     }
