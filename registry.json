@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T02:53:29.689698+00:00",
+    "updatedAt": "2026-10-28T03:01:55.211624+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1901,15 +1901,17 @@
       "group": "release",
       "status": "Contributor approved; waiting for prerequisites",
       "summary": "Contributor acceptance is complete after removing four unused manual fixture files (83 lines) that obscured how validation worked. The production implementation is unchanged from the validated source. Actual LLVM positive and negative controls and the full two-architecture lint result remain valid: 371 AMD64 and 370 ARM64 actions. The failed standalone GNU probe is preserved; no GNU compatibility is claimed.\n\nEarlier source-specific record:\n\nRefreshed source ab759926b0 retains the compiler prerequisite. The standalone GNU probe failed on a GCC-only flag and missing <vector>; configured graph preparation and buildifier passed, but ARM execution was not attempted. Root will qualify the unchanged lint implementation on the refreshed compiler composition. No contributor review or current LLVM result is claimed.\n\nEarlier source-specific evidence:\n\nCurrent disposition: code dependency. Root to reconcile the actual source prerequisite or replacement. Preserve source; a review request alone cannot clear the dependency.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nUses clang-tidy from the existing hermetic LLVM compiler supplier. On the qualification branch, focused AMD64 and ARM64 checks pass, and full AMD64 lint produces 368 reports. Canonical Fetch/Verify passes for 706 catalog entries. Current source 40dc10a02 and the generated catalog are integrated in d6a21b8b7. Contributor review remains pending; the old wheel-based branch is historical.",
-      "updatedAt": "2026-10-22T21:20:23.041098+00:00",
+      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "e312033b85f31626dacbece4fb65db81adaca947",
-        "observedAt": "2026-10-22T21:20:23.041098+00:00",
+        "observedAt": "2026-10-28T03:01:55.211624+00:00",
         "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Open after the compiler migration, independent Linux UAPI selection and Benchmark umbrella fix #16313 land. Direct-header #16204 and Benchmark-version #15376 have already merged. No further contributor question is pending.",
+        "nextAction": "Open after the compiler migration and independent Linux UAPI header selection #16236 land. Benchmark umbrella headers #16313, direct headers #16204 and the Benchmark version change #15376 have merged. Contributor approval is already recorded.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/e312033b85f31626dacbece4fb65db81adaca947"
+          "https://github.com/tamird/gvisor/commit/e312033b85f31626dacbece4fb65db81adaca947",
+          "https://github.com/google/gvisor/pull/16313",
+          "https://github.com/google/gvisor/pull/16236"
         ]
       },
       "head": "e312033b85f31626dacbece4fb65db81adaca947"
@@ -11360,13 +11362,13 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd",
       "status": "Contributor approved; awaiting prerequisites",
-      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
+      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
       "summary": "The contributor explicitly approved the complete reviewed range 5ac1aa8e95..4094323ff5 for upstream delivery after its image and license prerequisites. The modernized rules_img/grouped-layout proposal preserves the approved lean package choices and both Go sources. Both-architecture archive checks, actual AMD64 Make/runtime tests and the complete 244-entry canonical catalog are independently accepted. The catalog has 46 APT entries; the two libcrypt manual records and existing classifier policy remain explicit prerequisites. Final 409 adds only the exact generated catalog to the qualified image/policy source. No fresh ARM runtime or same-head replay is claimed. No contributor decision is pending.\n\nRetained original proposal and qualification:\n\nThe complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
       "followup": {
         "owner": "node_tls_sni",
         "disposition": "Contributor approved; awaiting image and license prerequisites",
         "sourceHead": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
-        "nextAction": "Deliver the approved range 5ac1aa8e95..4094323ff5 after the grouped image parent, APT enumeration, classifier/policy #15146 and manual-artifact validation #16051 prerequisites land. Do not repeat contributor review unless the source changes substantively.",
+        "nextAction": "Deliver the approved range 5ac1aa8e95..4094323ff5 after APT license enumeration, classifier/policy #15146 and manual-artifact validation #16051 land. The grouped image prerequisite #16376 has merged. Do not repeat contributor review unless the source changes substantively.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
           "https://github.com/tamird/gvisor/commit/624a360f322f816c7d3be5c971ec2e8381c4b40b",
@@ -11379,7 +11381,7 @@
           "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae",
           "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
         ],
-        "observedAt": "2026-10-21T15:42:01.457765+00:00"
+        "observedAt": "2026-10-28T03:01:55.211624+00:00"
       },
       "refinement": {
         "before": {
@@ -19768,14 +19770,14 @@
       "url": "https://github.com/tamird/gvisor/commit/b6308c182377932007a10c08b7bb075737ea9141",
       "group": "bazel",
       "status": "Contributor approved; waiting for native Go image prerequisites",
-      "updatedAt": "2026-10-25T21:35:51.221293+00:00",
-      "summary": "The contributor approved the complete C image proposal for opening after its existing prerequisites. Published b6308 is a message-only amendment of approved e894 and tested 00c: source trees are identical, and the requested commit trailer was removed. Both CPU archives pass, and the exact corrected AMD64 image passes all six nested-runtime variants and existing negative controls: 19 positive records, zero failures or skips. Canonical Fetch/Verify accepts the complete 372-entry catalog. The separately approved host-cgroup-namespace fixture landed as #16168 / ecdbdd5eef. That fixture gate is satisfied; the native-Go image chain still waits on APT license enumeration, #16376 and #16051. No repeated contributor decision is needed.\n\nPreserved earlier observations:\n\nExact archive inspection confirmed that /run and /var/run were separate directories while pinned iproute2 creates /run/netns and runsc opens /var/run/netns. The reviewed final image overlay now restores /var/run as a symlink to /run, reproducing the base-files installer migration without changing packages or runtime. Source00c011 is published; both-CPU archive validation bf4860e3 passed with all eighteen static helpers and the corrected symlink. The existing full six-variant runtime parent is running as0bccee95, pinned to the exact accepted AMD config fd936b84. The independent cgroup fixture correction remains required; earlier full-parent failures and catalog evidence are preserved. No changed-image runtime success is claimed.\n\nPreserved earlier observations:\n\nThe corrected cgroup fixture passed its focused before/after comparison. The full six-variant parent then completed with 10 positive records, three failures including the parent, and no skips. The earlier gofer ENOENT is absent; two networked variants fail later opening /var/run/netns. The exact image and all seven mounted runtime files were preserved. Package inspection shows base-files supplies separate /run and /var/run directories whose post-install migration is not executed by flat image assembly; final archive and pinned iproute2 evidence still need to establish the layout cause. No runtime readiness or image correction is claimed.\n\nPreserved earlier observations:\n\nFresh new-image-first tracing reproduces the actual failing clone3(CLONE_INTO_CGROUP) call with ENOENT before any gofer exec. The test intentionally mounts host cgroupfs but left Docker\u2019s cgroup namespace private. The reviewed three-line fixture correction selects the host cgroup namespace only for variants using that mount. Same-worker untraced comparison d34c reproduces the original failure and passes the corrected variant plus both negative controls, with identical image, seven runtime files and host cgroup mount still using nsdelegate. Raw baseline failure and two local transport collection recoveries remain preserved. The existing full six-variant parent is now running as29b651c5; image delivery is not yet ready.\n\nPreserved earlier observations:\n\nA controlled same-worker diagnostic now reproduces ENOENT before the original-source Bionic build and passes the identical selected new-image test afterward, with the same image digest and all seven mounted runtime bytes. The raw result remains FAIL: two attempts, four positive records and two failures, with no skips. The retained host mount state changes from cgroup2 rw,nsdelegate to rw; other recorded cgroup identity/controllers are unchanged. This is a specific preparation-state lead, not proof of the failed syscall or a valid workaround. Fresh-worker diagnostic b453d3f1 is now running one traced new-image leaf before any old-image build or preceding test, with the exact runtime and image identities retained. Full-parent runtime qualification remains failed.\n\nPreserved earlier observations:\n\nThe complete existing nested-runtime parent was rerun without tracing against the exact new image and the same seven prepared runtime binaries. Run 0b23ab26 completed with seven positive and four failed XML records, including the failed parent; no cases were skipped. The three cgroup-enabled Rootful variants again fail starting the gofer with /proc/self/exe ENOENT. The no-cgroup Rootful and both Rootless variants pass, including existing negative controls. All mounted runtime, image, source and lock identities passed their checks. This preserves the earlier isolated new-image success but prevents delivery readiness; the discrepancy is under source/environment investigation, with no speculative package or runtime change. Canonical archives and the full 372-entry catalog remain accepted separately.\n\nPreserved earlier observations:\n\nSame-worker comparison 38e3810f is complete with all four actual attempts and exact prepared 55f runtime bytes. Both the fresh original-source image and exact new image pass the untraced rootful/no-network path, including its two existing nested controls (eight positive XML records total). Both traced arms successfully clone into the cgroup and exec the gofer through /proc/self/exe, then fail later because systrap attachment returns operation not permitted under tracing (four failed XML records). The aggregate canonical result remains FAIL and the traces are complete. The earlier gofer ENOENT was not reproduced; this observation establishes neither an image-file cause nor full image qualification. The earlier procps runtime failures remain preserved and require integration assessment before any further affected checks.\n\nPreserved earlier observations:\n\nThe first trace recovery ce8cbdec completed with four actual attempts and eight failed child/parent XML records. Every arm stopped at the mounted-runtime identity guard before starting its container, so there are zero traces and no image or syscall-stage conclusion. Setup had prepared the exact required 55f runtime, but the test selected separately rebuilt diagnostic runfiles. The qualification-only correction e420aa027d now selects the absolute prepared directory from its existing identity manifest before the unchanged file-count, hash and mount checks; ordinary test discovery is unchanged. The independently reviewed recovery 38e3810f is running with the same four old/new traced and untraced arms, fixed runtime bytes, image requirements and limits. Earlier setup, runtime and archive/catalog results remain separate.\n\nPreserved earlier observations:\n\nThe first same-worker diagnostic attempt a303e962 ended with an authenticated setup failure before any of the four test arms ran. Both comparison images and all runtime bytes were bound, but the isolated trace-tool dependency guard rejected a path whose actual mapping was not retained. No image or syscall conclusion follows. The reviewed setup-only recovery records both loader listings before validation, accepts only the exact copied loader or immediate isolated-library files, and checks tooling before expensive image preparation. Retry ce8cbdec is now running with the same diagnostic source 08cf, runtime bytes, image requirements, four test arms and limits. Earlier procps runtime failures, the old-image control and accepted archive/catalog evidence remain separate.\n\nPreserved earlier observations:\n\nThe procps image fixes the missing sysctl command, but three cgroup-enabled rootful cases still fail with gofer startup ENOENT; seven records pass and none skip. The old-image control passed on a separate worker with identical runtime bytes, which does not identify the failing syscall. A reviewed four-arm comparison is now running on one worker: old/new images, each untraced and traced from the initial runtime exec. It keeps the original runtime and sidecars fixed, requires the exact corrected image identity, and freshly rebuilds the old source with its pinned Bionic base. Native failures and trace outcomes remain separate; no cause or passing runtime is inferred before completion. The 372-entry canonical catalog and both-CPU archive evidence remain accepted.\n\nPreserved earlier observations:\n\nThe reviewed procps image is undergoing the existing nested-runtime checks with the original 55f runtime and test source held fixed. The complete 372-entry dependency catalog passed canonical Verify without changing the prior Fetch output. The old Bionic-image control passed the previously failing cgroup-enabled leaf with byte-identical runsc and sidecars; because it used a separate worker and freshly rebuilt image, this supports an image association without proving the failing syscall or file. The scoped compiler bootstrap now uses the pinned worker\u2019s existing Ubuntu sources and verifies that Git and global APT configuration stay unchanged; the ambient Git PPA no longer blocks these checks. If the gofer failure persists, the next diagnostic will compare both images on one worker and trace the actual clone/exec path. No cgroup bypass or speculative runtime change is planned.\n\nPreserved earlier observations:\n\nThe reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
+      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
+      "summary": "The contributor approved the complete C image proposal for opening after its existing prerequisites. Published b6308 is a message-only amendment of approved e894 and tested 00c: source trees are identical, and the requested commit trailer was removed. Both CPU archives pass, and the exact corrected AMD64 image passes all six nested-runtime variants and existing negative controls: 19 positive records, zero failures or skips. Canonical Fetch/Verify accepts the complete 372-entry catalog. The separately approved host-cgroup-namespace fixture landed as #16168 / ecdbdd5eef. That fixture gate is satisfied; the grouped image change #16376 has also merged. The native Go image chain still waits on APT license enumeration and #16051. No repeated contributor decision is needed.\n\nPreserved earlier observations:\n\nExact archive inspection confirmed that /run and /var/run were separate directories while pinned iproute2 creates /run/netns and runsc opens /var/run/netns. The reviewed final image overlay now restores /var/run as a symlink to /run, reproducing the base-files installer migration without changing packages or runtime. Source00c011 is published; both-CPU archive validation bf4860e3 passed with all eighteen static helpers and the corrected symlink. The existing full six-variant runtime parent is running as0bccee95, pinned to the exact accepted AMD config fd936b84. The independent cgroup fixture correction remains required; earlier full-parent failures and catalog evidence are preserved. No changed-image runtime success is claimed.\n\nPreserved earlier observations:\n\nThe corrected cgroup fixture passed its focused before/after comparison. The full six-variant parent then completed with 10 positive records, three failures including the parent, and no skips. The earlier gofer ENOENT is absent; two networked variants fail later opening /var/run/netns. The exact image and all seven mounted runtime files were preserved. Package inspection shows base-files supplies separate /run and /var/run directories whose post-install migration is not executed by flat image assembly; final archive and pinned iproute2 evidence still need to establish the layout cause. No runtime readiness or image correction is claimed.\n\nPreserved earlier observations:\n\nFresh new-image-first tracing reproduces the actual failing clone3(CLONE_INTO_CGROUP) call with ENOENT before any gofer exec. The test intentionally mounts host cgroupfs but left Docker\u2019s cgroup namespace private. The reviewed three-line fixture correction selects the host cgroup namespace only for variants using that mount. Same-worker untraced comparison d34c reproduces the original failure and passes the corrected variant plus both negative controls, with identical image, seven runtime files and host cgroup mount still using nsdelegate. Raw baseline failure and two local transport collection recoveries remain preserved. The existing full six-variant parent is now running as29b651c5; image delivery is not yet ready.\n\nPreserved earlier observations:\n\nA controlled same-worker diagnostic now reproduces ENOENT before the original-source Bionic build and passes the identical selected new-image test afterward, with the same image digest and all seven mounted runtime bytes. The raw result remains FAIL: two attempts, four positive records and two failures, with no skips. The retained host mount state changes from cgroup2 rw,nsdelegate to rw; other recorded cgroup identity/controllers are unchanged. This is a specific preparation-state lead, not proof of the failed syscall or a valid workaround. Fresh-worker diagnostic b453d3f1 is now running one traced new-image leaf before any old-image build or preceding test, with the exact runtime and image identities retained. Full-parent runtime qualification remains failed.\n\nPreserved earlier observations:\n\nThe complete existing nested-runtime parent was rerun without tracing against the exact new image and the same seven prepared runtime binaries. Run 0b23ab26 completed with seven positive and four failed XML records, including the failed parent; no cases were skipped. The three cgroup-enabled Rootful variants again fail starting the gofer with /proc/self/exe ENOENT. The no-cgroup Rootful and both Rootless variants pass, including existing negative controls. All mounted runtime, image, source and lock identities passed their checks. This preserves the earlier isolated new-image success but prevents delivery readiness; the discrepancy is under source/environment investigation, with no speculative package or runtime change. Canonical archives and the full 372-entry catalog remain accepted separately.\n\nPreserved earlier observations:\n\nSame-worker comparison 38e3810f is complete with all four actual attempts and exact prepared 55f runtime bytes. Both the fresh original-source image and exact new image pass the untraced rootful/no-network path, including its two existing nested controls (eight positive XML records total). Both traced arms successfully clone into the cgroup and exec the gofer through /proc/self/exe, then fail later because systrap attachment returns operation not permitted under tracing (four failed XML records). The aggregate canonical result remains FAIL and the traces are complete. The earlier gofer ENOENT was not reproduced; this observation establishes neither an image-file cause nor full image qualification. The earlier procps runtime failures remain preserved and require integration assessment before any further affected checks.\n\nPreserved earlier observations:\n\nThe first trace recovery ce8cbdec completed with four actual attempts and eight failed child/parent XML records. Every arm stopped at the mounted-runtime identity guard before starting its container, so there are zero traces and no image or syscall-stage conclusion. Setup had prepared the exact required 55f runtime, but the test selected separately rebuilt diagnostic runfiles. The qualification-only correction e420aa027d now selects the absolute prepared directory from its existing identity manifest before the unchanged file-count, hash and mount checks; ordinary test discovery is unchanged. The independently reviewed recovery 38e3810f is running with the same four old/new traced and untraced arms, fixed runtime bytes, image requirements and limits. Earlier setup, runtime and archive/catalog results remain separate.\n\nPreserved earlier observations:\n\nThe first same-worker diagnostic attempt a303e962 ended with an authenticated setup failure before any of the four test arms ran. Both comparison images and all runtime bytes were bound, but the isolated trace-tool dependency guard rejected a path whose actual mapping was not retained. No image or syscall conclusion follows. The reviewed setup-only recovery records both loader listings before validation, accepts only the exact copied loader or immediate isolated-library files, and checks tooling before expensive image preparation. Retry ce8cbdec is now running with the same diagnostic source 08cf, runtime bytes, image requirements, four test arms and limits. Earlier procps runtime failures, the old-image control and accepted archive/catalog evidence remain separate.\n\nPreserved earlier observations:\n\nThe procps image fixes the missing sysctl command, but three cgroup-enabled rootful cases still fail with gofer startup ENOENT; seven records pass and none skip. The old-image control passed on a separate worker with identical runtime bytes, which does not identify the failing syscall. A reviewed four-arm comparison is now running on one worker: old/new images, each untraced and traced from the initial runtime exec. It keeps the original runtime and sidecars fixed, requires the exact corrected image identity, and freshly rebuilds the old source with its pinned Bionic base. Native failures and trace outcomes remain separate; no cause or passing runtime is inferred before completion. The 372-entry canonical catalog and both-CPU archive evidence remain accepted.\n\nPreserved earlier observations:\n\nThe reviewed procps image is undergoing the existing nested-runtime checks with the original 55f runtime and test source held fixed. The complete 372-entry dependency catalog passed canonical Verify without changing the prior Fetch output. The old Bionic-image control passed the previously failing cgroup-enabled leaf with byte-identical runsc and sidecars; because it used a separate worker and freshly rebuilt image, this supports an image association without proving the failing syscall or file. The scoped compiler bootstrap now uses the pinned worker\u2019s existing Ubuntu sources and verifies that Git and global APT configuration stay unchanged; the ambient Git PPA no longer blocks these checks. If the gofer failure persists, the next diagnostic will compare both images on one worker and trace the actual clone/exec path. No cgroup bypass or speculative runtime change is planned.\n\nPreserved earlier observations:\n\nThe reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
       "followup": {
         "owner": "work_map_current",
         "disposition": "Contributor approved; waiting for native Go image prerequisites",
         "sourceHead": "b6308c182377932007a10c08b7bb075737ea9141",
-        "observedAt": "2026-10-25T21:34:49.542422+00:00",
-        "nextAction": "Open the approved equivalent image proposal after branch:native-go-images and its existing APT-license, #16376 and #16051 prerequisites are delivered. Fixture #16168 is already landed. Preserve the existing contributor approval across verified mechanical refreshes.",
+        "observedAt": "2026-10-28T03:01:55.211624+00:00",
+        "nextAction": "Open the approved C image proposal after the native Go image foundation, its APT license enumeration, and manual-artifact validation #16051 land. The grouped image change #16376 and the host-cgroup fixture #16168 have merged.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de",
           "https://app.buildbuddy.io/invocation/718c961b-d2b2-46e4-9d48-e6be2378020b",
@@ -19802,7 +19804,8 @@
           "https://app.buildbuddy.io/invocation/0bccee95-c3ba-442d-abc7-5bdee79d5dee",
           "https://github.com/tamird/gvisor/commit/b6308c182377932007a10c08b7bb075737ea9141",
           "https://github.com/google/gvisor/pull/16168",
-          "https://github.com/google/gvisor/commit/ecdbdd5eef1152738add22404bd674ed49b683a1"
+          "https://github.com/google/gvisor/commit/ecdbdd5eef1152738add22404bd674ed49b683a1",
+          "https://github.com/google/gvisor/pull/16376"
         ],
         "reviewedHead": "e894c877c55083015c4f212aa236a3de176e474c"
       },
@@ -29031,6 +29034,72 @@
           "url": "https://app.buildbuddy.io/invocation/8a565aaf-6cd7-4e83-a063-4b833e9b2221"
         }
       ]
+    },
+    {
+      "id": "branch:rules-go-reproducible-coverage",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rules-go-reproducible-coverage",
+      "head": "bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+      "title": "Make Go coverage archives reproducible",
+      "url": "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+      "group": "bazel",
+      "status": "Reviewable",
+      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
+      "summary": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries. On the standalone source, the native license audit accepted all 200 catalog entries and the three native test owners reported 74 passing cases, no skips. The enclosing standalone check remained incomplete: module discovery added 13 extensions and two facts to the ignored lock, and the reporter did not capture all test XML. Neither a tracked lock nor a catalog correction is pending.",
+      "followup": {
+        "owner": "root",
+        "disposition": "First contributor decision requested for the standalone module upgrade",
+        "sourceHead": "bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+        "observedAt": "2026-10-28T03:01:55.211624+00:00",
+        "nextAction": "Open the standalone rules_go upgrade after contributor review. No upstream PR is open for this branch."
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+        "url": "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386",
+        "title": "Make Go coverage archives reproducible",
+        "summary": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries.",
+        "body": "rules_go embedded the randomly named directory for covervars.go in\ncovered Go objects. Replaying one Sentry compile with the same inputs,\nenvironment and working directory changed the object archive even though\nits export data matched.\n\nUpgrade to rules_go 0.65.0, which [removes the temporary directory from\ncompiler output][1]. Keep the C archive registration for the plugin\nstack and adapt gVisor\u2019s export-data patch to the new GoArchive schema.\nDrop the test-symbol patch: the linker already strips symbols when\nrequested and retains them with `--strip=never`.\n\n[1]: https://github.com/bazel-contrib/rules_go/commit/c18ec4766d81c57cb84f545ea2823d2bd9714766"
+      },
+      "evidence": [
+        {
+          "label": "rules_go trimpath correction",
+          "url": "https://github.com/bazel-contrib/rules_go/commit/c18ec4766d81c57cb84f545ea2823d2bd9714766"
+        },
+        {
+          "label": "Stock compiler replay: export data matched, archive differed",
+          "url": "https://app.buildbuddy.io/invocation/3d821a36-0d17-4fe6-a2b6-00ce975ceeec"
+        },
+        {
+          "label": "Coverage configuration with the proposed rules_go release",
+          "url": "https://github.com/tamird/gvisor/commit/90102a3f86f821146e29f383929c513427a748ab"
+        },
+        {
+          "label": "Original instrumented Sentry compile",
+          "url": "https://app.buildbuddy.io/invocation/6a40067c-5fbb-4c33-83b2-f3b1055e173f"
+        },
+        {
+          "label": "Isolated compile reproduced all three original outputs; enclosing run remained failed",
+          "url": "https://app.buildbuddy.io/invocation/af991f9a-8399-4c00-8649-07bb80460a85"
+        },
+        {
+          "label": "Standalone source: native license audit accepted 200 entries",
+          "url": "https://app.buildbuddy.io/invocation/e963ece6-d9b8-4b54-9aa6-c9e966f22195"
+        },
+        {
+          "label": "Standalone source: 74 passed, zero skipped, including Nogo for both target architectures",
+          "url": "https://app.buildbuddy.io/invocation/1a0ff657-19ee-4bed-9e49-7497734e379c"
+        },
+        {
+          "label": "Standalone aggregate stayed incomplete: ignored lock hash and XML capture",
+          "url": "https://app.buildbuddy.io/invocation/6024c7e9-6185-41af-a53a-5dccd0b8329b"
+        },
+        {
+          "label": "Separate upstream coverage toolchain proposal",
+          "url": "https://github.com/google/gvisor/pull/16507"
+        }
+      ]
     }
   ],
   "edges": [
@@ -30982,10 +31051,10 @@
       "from": "pr:16376",
       "to": "branch:native-go-images",
       "type": "depends_on",
-      "reason": "The current cc4 modernization is based on the accepted grouped image lineage at 5ac1; it reuses the basic image adapter and shared benchmark package. No Ollama-source or CUDA prerequisite remains.",
+      "reason": "Satisfied: the grouped image change #16376 merged at 7eaeaab647. Its basic image adapter and shared benchmark package are retained as historical dependencies.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3",
-        "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
+        "https://github.com/google/gvisor/pull/16376",
+        "https://github.com/google/gvisor/commit/7eaeaab647d0a537dbfc5bc4202d1947bf722002"
       ]
     },
     {
@@ -31409,8 +31478,11 @@
       "from": "pr:16313",
       "to": "branch:bazel-clang-tidy-llvm",
       "type": "depends_on",
-      "reason": "The independently reviewed umbrella-header exports are now tracked in standalone #16313 after the Benchmark version update landed.",
-      "evidence": "https://github.com/google/gvisor/pull/16313"
+      "reason": "Satisfied: #16313 exported the Benchmark umbrella headers and merged at d88e105cf6. The independent compiler and UAPI prerequisites remain open.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16313",
+        "https://github.com/google/gvisor/commit/d88e105cf6cf967939c0beb5b4798537144fd084"
+      ]
     },
     {
       "from": "pr:16097",
@@ -42875,9 +42947,46 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-27T16:52:09+00:00",
+      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Upgrading rules_go to 0.65.0 removes a random temporary path from covered object files. A replay of one Sentry coverage compile with the upgrade and all 405 declared input files reproduced its archive, export data and imports list byte for byte. This is the standalone module update; #16507 separately changes how gVisor builds coverage binaries. The covered compilation ran on integration source 90102a3f86 with /workspace, /tmp and /dev/null. The stock 0.63.0 archive mismatch and the failed outer receipts remain recorded. The separate native catalog and bitmap, license, and Nogo tests passed on the standalone source.",
+          "evidence": [
+            {
+              "label": "Stock compiler replay: export data matched, archive differed",
+              "url": "https://app.buildbuddy.io/invocation/3d821a36-0d17-4fe6-a2b6-00ce975ceeec"
+            },
+            {
+              "label": "Coverage configuration with the proposed rules_go release",
+              "url": "https://github.com/tamird/gvisor/commit/90102a3f86f821146e29f383929c513427a748ab"
+            },
+            {
+              "label": "Original instrumented Sentry compile",
+              "url": "https://app.buildbuddy.io/invocation/6a40067c-5fbb-4c33-83b2-f3b1055e173f"
+            },
+            {
+              "label": "Isolated compile reproduced all three original outputs; enclosing run remained failed",
+              "url": "https://app.buildbuddy.io/invocation/af991f9a-8399-4c00-8649-07bb80460a85"
+            },
+            {
+              "label": "Standalone source: native license audit accepted 200 entries",
+              "url": "https://app.buildbuddy.io/invocation/e963ece6-d9b8-4b54-9aa6-c9e966f22195"
+            },
+            {
+              "label": "Standalone source: 74 passed, zero skipped, including Nogo for both target architectures",
+              "url": "https://app.buildbuddy.io/invocation/1a0ff657-19ee-4bed-9e49-7497734e379c"
+            },
+            {
+              "label": "Standalone aggregate stayed incomplete: ignored lock hash and XML capture",
+              "url": "https://app.buildbuddy.io/invocation/6024c7e9-6185-41af-a53a-5dccd0b8329b"
+            },
+            {
+              "label": "Standalone upgrade awaiting contributor review",
+              "url": "https://github.com/tamird/gvisor/commit/bb6b2eeab45f28dc4b20110c0f1ee45779582386"
+            }
+          ]
+        },
         {
           "text": "All 16 AMD64/ARM64 release staging actions used the declared copy tool remotely. The staged files matched the corresponding source binaries in digest and executable mode. One copy was replayed in an empty Linux root with just its tool and input. The installed AMD64 release ran /bin/true under systrap. ARM64 runtime and scratch compilation were not tested by this run.",
           "evidence": [
@@ -42965,7 +43074,7 @@
           ]
         }
       ],
-      "nextStep": "Validate the same coverage archive with a released rules_go containing the temporary-path fix. Continue removing undeclared build tools and the Make builder.",
+      "nextStep": "The rules_go coverage replay is complete. Review the standalone upgrade bb6b2eeab4 before upstream submission; continue removing undeclared tools from other supported build actions.",
       "evidence": [
         {
           "label": "Make's builder selection",
@@ -43034,9 +43143,34 @@
       "title": "O_TMPFILE on immutable procfs directories",
       "status": "active",
       "owner": "native_runtime",
-      "updatedAt": "2026-10-27T23:40:07.261920+00:00",
+      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
       "summary": "O_TMPFILE | O_RDWR on /proc/self and /proc/thread-self returned EPERM on Linux but EOPNOTSUPP on gVisor, both before and after the ordinary directory-open correction in #16473.",
       "findings": [
+        {
+          "text": "In the tested gofer-root configuration, gofer rejects O_TMPFILE before walking into /proc. Linux resolves the target directory and checks write/search permission before testing whether the filesystem implements anonymous files; immutable PID/TID directories reject the write with EPERM. Open #15773 defers gofer\u2019s unsupported-operation check until the dentry is resolved; #16473 supplies the immutable-directory write check. The existing runs tested the ordinary procfs change without that path-walk correction, not the two changes together.",
+          "evidence": [
+            {
+              "label": "Current gofer: early EOPNOTSUPP before the path walk",
+              "url": "https://github.com/google/gvisor/blob/06b9eb2c3aed39988952d8dc71732a4a0a2e2368/pkg/sentry/fsimpl/gofer/filesystem.go#L959-L968"
+            },
+            {
+              "label": "#15773: check after resolving the dentry",
+              "url": "https://github.com/deadcaf3/gvisor/blob/bd3f9073e4be6ce83789f378ba341e1e3a3ec723/pkg/sentry/fsimpl/gofer/filesystem.go#L1090-L1098"
+            },
+            {
+              "label": "Maintainer review of the path-walk order",
+              "url": "https://github.com/google/gvisor/pull/15773#discussion_r4274530608"
+            },
+            {
+              "label": "#16473: immutable PID/TID write check",
+              "url": "https://github.com/tamird/gvisor/blob/eb15b3a9701bde116974715d17f34c6cc19251fc/pkg/sentry/fsimpl/proc/task.go#L293-L302"
+            },
+            {
+              "label": "Linux checks directory permissions before looking for a tmpfile operation",
+              "url": "https://github.com/torvalds/linux/blob/v6.12/fs/namei.c#L3813-L3818"
+            }
+          ]
+        },
         {
           "text": "Comparing both gVisor versions with native Linux separates the existing O_TMPFILE difference from the EISDIR regression under review.",
           "evidence": [
@@ -43051,7 +43185,7 @@
           ]
         }
       ],
-      "nextStep": "Identify where gVisor returns EOPNOTSUPP and compare its permission checks with Linux before proposing a separate fix.",
+      "nextStep": "Compare O_TMPFILE | O_RDWR using absolute /proc paths and paths relative to an O_PATH /proc directory descriptor with the #15773 path-walk change and #16473 permission check together. Preserve native Linux, systrap direct and shared-mode results. No result for the combination is established.",
       "evidence": [
         {
           "label": "Reviewed directory-open path",
