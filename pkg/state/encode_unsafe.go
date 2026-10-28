@@ -789,7 +789,7 @@ func (es *encodeState) sliceTarget(dataPtr unsafe.Pointer, elem *typeInfo, lengt
 			if co.addr >= lo && co.end <= hi {
 				continue
 			}
-			if !co.isArray || co.ti != elem || (co.addr-lo)%esz != 0 {
+			if !co.isArray || co.ti != elem || co.addr%esz != lo%esz {
 				Failf("slice of %v at %#x overlaps %v at %#x", elem.typ, data, co.ti.typ, co.addr)
 			}
 			lo, hi = min(lo, co.addr), max(hi, co.end)
