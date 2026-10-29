@@ -10,8 +10,8 @@ import subprocess
 import traceback
 
 work = Path(os.environ["RUNNER_TEMP"])
-source = "4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e"
-tree = "dc44cd1ac936ef5ea93f5a28ba652e202b2dbe20"
+source = os.environ["SOURCE"]
+tree = subprocess.check_output(["git", "rev-parse", source + "^{tree}"], text=True).strip()
 binary = "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7"
 missing = (
     "MODULE.bazel", "governance/tools/maintainers/repositories.bzl",

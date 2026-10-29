@@ -1,7 +1,7 @@
 name: Check the declared Buildifier and tracked input boundary
 on:
   push:
-    branches: [qualification/source-lint-composition-final]
+    branches: [qualification/source-lint-pinned]
 permissions:
   contents: read
   actions: read
