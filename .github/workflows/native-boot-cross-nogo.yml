@@ -1,0 +1,54 @@
+name: Check the native cross-architecture boot Nogo owner
+on:
+  push:
+    branches: [qualification/native-boot-cross-nogo]
+permissions:
+  contents: read
+jobs:
+  boot:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 52
+    env:
+      SOURCE: 3a4ebb6f5dd619d5bf2246af3447498b0fdff6d3
+      DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select the published assembled source and pinned native Bazel
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          test "$(uname -m)" = x86_64
+          mkdir -p "$RUNNER_TEMP/boot-nogo" "$RUNNER_TEMP/boot-bin"
+          cp .github/qualification/boot-nogo/check.py "$RUNNER_TEMP/boot-check.py"
+          git checkout --detach "$SOURCE"
+          test "$(cat .bazelversion)" = 8.8.1
+          exe="$RUNNER_TEMP/boot-bin/bazel"
+          curl -fsSL --retry 3 https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$exe"
+          echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $exe" | sha256sum -c
+          chmod +x "$exe"
+          echo "$RUNNER_TEMP/boot-bin" >> "$GITHUB_PATH"
+          printf 'host cross driver: '; command -v aarch64-linux-gnu-gcc || true
+          df -h .
+      - name: Run the original two-target Nogo owner on native Linux
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/boot-nogo"
+          bazel info execution_root >"$root/execroot"
+          status=0
+          timeout 45m bazel test --jobs=4 --spawn_strategy=sandboxed,local --remote_executor= --remote_cache= \
+            --test_tag_filters=nogo --build_tests_only --nocache_test_results --build_event_publish_all_actions \
+            --build_event_json_file="$root/events.jsonl" //runsc/boot:boot_nogo >"$root/native.log" 2>&1 || status=$?
+          printf '%s\n' "$status" >"$root/exit"
+          tail -12 "$root/native.log"
+          df -h .
+          python3 "$RUNNER_TEMP/boot-check.py" >"$root/result.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: declared-boot-nogo
+          path: ${{ runner.temp }}/boot-nogo/result.json
+          if-no-files-found: warn
