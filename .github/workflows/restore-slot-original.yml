@@ -1,0 +1,40 @@
+name: Read the original paired Nginx benchmark rows
+on:
+  push:
+    branches: [qualification/state-nginx-slot-wrapper-receipt]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Restore the exact original pointer report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/tamird/gvisor/actions/artifacts/12876531492/zip >"$RUNNER_TEMP/initial.zip"
+          echo "68f97ed765216ecfcd66bca62d0f2c7fdcc15f1fa05abcbe773623714e896de3  $RUNNER_TEMP/initial.zip" | sha256sum -c -
+          mkdir "$RUNNER_TEMP/original"
+          unzip -q "$RUNNER_TEMP/initial.zip" -d "$RUNNER_TEMP/original"
+      - name: Read the original archive and benchmark records
+        env:
+          ORIGINAL_RECEIPT_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 .github/qualification/restore_phases/read_slot_original.py "$RUNNER_TEMP/original"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: nginx-slot-original
+          path: |
+            ${{ runner.temp }}/original/pointer-summary.json
+            ${{ runner.temp }}/original/native-meta.json
+            ${{ runner.temp }}/original/raw-benchmark.log
+            ${{ runner.temp }}/original/mount-status.json
+          if-no-files-found: error
+          retention-days: 30
