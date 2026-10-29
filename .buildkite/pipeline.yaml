@@ -299,8 +299,11 @@ steps:
   - <<: *common
     label: ":package: Staged binaries consistency check"
     if: build.env("STAGED_BINARIES") != null
-    commands:
-      - make staged-binaries-check
+    env:
+      DOCKER_BUILD: "false"
+    command: |
+      set -o pipefail
+      gcloud storage cat "$$STAGED_BINARIES" | bazel run //tools/stagedcheck
     agents:
       arch: "amd64"
       queue: "default"

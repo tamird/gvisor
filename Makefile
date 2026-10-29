@@ -998,20 +998,11 @@ release-tarball: ## Builds optimized release tarballs (gvisor.tar.bz2, gvisor.ta
 	@$(call copy,-c opt //debian:gvisor-release-tar-zstd,$(DESTINATION))
 .PHONY: release-tarball
 
-staged-binaries-check: ## Verifies STAGED_BINARIES contains all files from the //debian:gvisor-release-tar-bz2 fileset.
+staged-binaries-check: ## Checks the staged archive against the release layout.
 ifeq (,$(STAGED_BINARIES))
 	@echo "STAGED_BINARIES not set; nothing to check."
 else
-	@# T is exported so the nested `cp` inside the copy macro (a child process)
-	@# sees it; the rest of the recipe runs in this shell directly.
-	@export T=$$(mktemp -d --tmpdir staged-check.XXXXXX); \
-	$(call copy,//debian:gvisor-release-tar-bz2,$$T) && \
-	tar -tjf "$$T/gvisor.tar.bz2" | sed 's#^\./##' | grep -v '/$$' | sort >"$$T/release.txt" && \
-	gcloud storage cat "$(STAGED_BINARIES)" | tar -tzf - | sed 's#^\./##' | grep -v '/$$' | sort >"$$T/staged.txt" && \
-	comm -23 "$$T/release.txt" "$$T/staged.txt" >"$$T/missing.txt" && \
-	test ! -s "$$T/missing.txt" \
-	  || { echo "ERROR: STAGED_BINARIES missing members from //debian:gvisor-release-tar-bz2:" >&2; cat "$$T/missing.txt" >&2; rm -rf "$$T"; exit 1; }; \
-	rm -rf "$$T"
+	@set -o pipefail; gcloud storage cat "$(STAGED_BINARIES)" | $(BAZEL) run //tools/stagedcheck
 endif
 .PHONY: staged-binaries-check
 

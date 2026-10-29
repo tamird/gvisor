@@ -61,6 +61,15 @@ def sidecars(flavor):
 # to find under the `gvisor-bin/` directory next to its own binary.
 SIDECARS = sidecars("default")
 
+# Containerd finds its shim through PATH, so it lives beside runsc.
+EXTRA_RELEASE_FILES = {"//shim:containerd-shim-runsc-v1": "containerd-shim-runsc-v1"}
+
+# The two downloadable archives and the staged-binary check use these names.
+RELEASE_FILES = {RUNSC["default"]: "runsc"} | EXTRA_RELEASE_FILES | {
+    label: "gvisor-bin/" + filename
+    for label, filename in SIDECARS.items()
+}
+
 # RELEASE_RUNSC and RELEASE_SIDECARS are the runsc binary and the sidecars of
 # the flavor matching the build configuration: race under --config=race,
 # default otherwise.
@@ -143,7 +152,7 @@ release_files = rule(
           "`gvisor-bin/` directory.",
 )
 
-def instrumented_release_tars(name, flavor, bins = [], visibility = None):
+def instrumented_release_tars(name, flavor, bins = [], visibility = None, files = {}):
     """Defines release tarballs of gVisor built with the given instrumentation flavor.
 
     Defines `<name>-tar-bz2` and `<name>-tar-zstd` targets.
@@ -153,6 +162,7 @@ def instrumented_release_tars(name, flavor, bins = [], visibility = None):
       flavor: one of FLAVORS.
       bins: additional top-level binaries, e.g. the containerd shim.
       visibility: visibility of the tarball targets.
+      files: extra binaries mapped to their installed paths.
     """
     if not cov_available and ("coverage" in flavor):
         return
@@ -170,7 +180,7 @@ def instrumented_release_tars(name, flavor, bins = [], visibility = None):
             srcs = bins,
             compressor = compressor,
             extension = extension,
-            files = {runsc: "runsc"},
+            files = files | {runsc: "runsc"},
             mode = "0755",
             package_file_name = "%s.%s" % (name, extension),
             visibility = visibility,
