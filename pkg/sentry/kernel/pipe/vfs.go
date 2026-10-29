@@ -261,8 +261,6 @@ func (fd *VFSPipeFD) Ioctl(ctx context.Context, uio usermem.IO, sysno uintptr, a
 
 // PipeSize implements fcntl(F_GETPIPE_SZ).
 func (fd *VFSPipeFD) PipeSize() int64 {
-	fd.pipe.mu.Lock()
-	defer fd.pipe.mu.Unlock()
 	return fd.pipe.max
 }
 
