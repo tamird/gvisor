@@ -1,4 +1,4 @@
-name: Check the hermetic-llvm module-map-generator formatting
+name: Probe native and gVisor epoll on an aborted FUSE device
 on: workflow_dispatch
 permissions:
   contents: read
@@ -6,54 +6,51 @@ jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          repository: tamird/hermetic-llvm
-          ref: 42c0ec3431abc8f08a298d191e7063e7e59bc515
-          fetch-depth: 2
+          ref: f4c23779b4e5179eb368f425a90a16ab859d90b2
           persist-credentials: false
-      - name: Generate the correction from the approved head
+      - name: Build the native syscall fixture and exercise the gVisor component
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 317378dd0778ebc15d190e4ebb018b5903b1039e
-          git restore --source HEAD^ -- tools/internal/BUILD.bazel
-          bazel run --config=remote //gazelle:gazelle -- -mode=fix
-          git diff --exit-code HEAD
-      - name: Run the repository's Gazelle and Buildifier checks
+          test "$(git rev-parse HEAD)" = f4c23779b4e5179eb368f425a90a16ab859d90b2
+          bazel test --config=x86_64 --jobs=4 --local_ram_resources=HOST_RAM*.65 \
+            --test_filter='^TestEpollDeviceAcrossAbort$' --test_arg=-test.v --test_output=all \
+            //pkg/sentry/fsimpl/fuse:fuse_test //test/syscalls/linux:fuse_test 2>&1 | tee "$RUNNER_TEMP/fuse-build.log"
+      - name: Exercise the mounted device on native Linux
         run: |
           set -euo pipefail
-          bazel run --config=remote //gazelle:gazelle -- -mode=diff
-          bazel run //internal_tools:buildifier.check
-      - name: Generate the public Starlark documentation
-        run: |
-          set -euo pipefail
-          bash .github/workflows/build_public_starlark_docs.sh "$RUNNER_TEMP/stardoc-targets"
-          test -s "$RUNNER_TEMP/stardoc-targets"
-          wc -l "$RUNNER_TEMP/stardoc-targets"
-          git diff --exit-code HEAD
-      - name: Record exact source and verdict
+          test -e /dev/fuse || sudo modprobe fuse
+          test -e /dev/fuse || sudo mknod /dev/fuse c 10 229
+          uname -sr | tee "$RUNNER_TEMP/fuse-kernel.txt"
+          sudo unshare --mount --propagation private bash -euo pipefail -c '
+            if ! mountpoint -q /sys/fs/fuse/connections; then mount -t fusectl fusectl /sys/fs/fuse/connections; fi
+            exec timeout 45s "$1" --gtest_filter=FuseTest.EpollDeviceAcrossAbort --gtest_output=xml:"$2"
+          ' _ "$PWD/bazel-bin/test/syscalls/linux/fuse_test" "$RUNNER_TEMP/fuse-native.xml" | tee "$RUNNER_TEMP/fuse-native.log"
+      - name: Summarize actual controls
         if: always()
         env:
           RESULT: ${{ job.status }}
         run: |
           python3 - <<'PY'
-          import json, os, subprocess
+          import json, os, re
           from pathlib import Path
-          d = Path(os.environ["RUNNER_TEMP"])
-          targets = d / "stardoc-targets"
-          out = {
-              "verdict": "PASS" if os.environ["RESULT"] == "success" else "FAIL",
-              "source": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-              "parent": subprocess.check_output(["git", "rev-parse", "HEAD^"], text=True).strip(),
-              "stardocTargets": targets.read_text().splitlines() if targets.is_file() else [],
-          }
-          (d / "llvm-899.json").write_text(json.dumps(out, indent=2) + "\n")
+          from xml.etree import ElementTree as ET
+          tmp = Path(os.environ["RUNNER_TEMP"]); get = lambda name:(tmp/name).read_text() if (tmp/name).exists() else ""
+          native = tmp/"fuse-native.xml"; log = get("fuse-native.log")
+          ctl = re.findall(r"after abort (?:same|changed|fresh): ctl=.*",get("fuse-build.log"))
+          case = native.exists() and any(n.get("name")=="EpollDeviceAcrossAbort" and n.get("status")=="run" and not list(n) for n in ET.parse(native).iter("testcase"))
+          good = os.environ["RESULT"]=="success" and case and len(ctl)==3
+          record = {"verdict":"PASS" if good else "FAIL","source":"f4c23779b4e5179eb368f425a90a16ab859d90b2","nativeKernel":get("fuse-kernel.txt").strip(),"nativeCase":bool(case),"native":re.findall(r"(?:^tag=|^poll after abort=).*",log,flags=re.M),"gvisor":ctl}
+          (tmp/"fuse-epoll.json").write_text(json.dumps(record,indent=2)+"\n")
+          print(record)
+          if not good: raise SystemExit(1)
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: llvm-899
-          path: ${{ runner.temp }}/llvm-899.json
+          name: fuse-epoll-abort
+          path: ${{ runner.temp }}/fuse-epoll.json
           if-no-files-found: error
