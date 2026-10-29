@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T21:10:41.864614+00:00",
+    "updatedAt": "2026-10-29T21:18:46.688370+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32033,25 +32033,37 @@
       "id": "branch:epoll-modify-preserve",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/epoll-modify-preserve",
-      "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
+      "ref": "research/epoll-modify-in-place",
+      "head": "bbadaaacb49e1f5cb40e44804762efee036928d1",
       "title": "Keep an epoll watch intact when MOD fails",
-      "url": "https://github.com/tamird/gvisor/commit/710c59cda",
+      "url": "https://github.com/tamird/gvisor/commit/bbadaaacb",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T20:08:11.241282+00:00",
-      "summary": "A second waiter is no longer proposed. The prototype changes the mask on the installed waiter. Host and plugin registration failures, overlay copy-up and checkpoint/restore are being checked before review.",
+      "updatedAt": "2026-10-29T21:18:46.688370+00:00",
+      "summary": "Modifying an epoll watch updates its existing waiter. A rejected mask leaves the old subscription active. Rearming the same mask checks readiness without relinking the waiter or reprogramming the host. The watch gains no field. Host and guest comparisons, benchmarks, and analyzer checks are in progress.",
       "evidence": [
         {
-          "label": "Single-entry prototype and restore checks",
+          "label": "Watch update, checkpoint, race and analyzer checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40952859734"
+        },
+        {
+          "label": "Native Linux behavior, watch size and operation costs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40947066773"
+        },
+        {
+          "label": "Host registration rollback and mask checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40949926715"
+        },
+        {
+          "label": "Earlier revision: Single-entry prototype and restore checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/40944208728"
         },
         {
-          "label": "Socket plugin mask failure comparison",
+          "label": "Earlier revision: Socket plugin mask failure comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/40944327957"
         },
         {
-          "label": "Revision returned for further work",
+          "label": "Earlier revision: Revision returned for further work",
           "url": "https://github.com/tamird/gvisor/commit/710c59cda"
         },
         {
@@ -32059,27 +32071,27 @@
           "url": "https://app.buildbuddy.io/invocation/8b1fe2d9-0a82-4fb8-8e62-a252f4fdc832"
         },
         {
-          "label": "One-entry implementation under test",
+          "label": "Earlier revision: One-entry implementation under test",
           "url": "https://github.com/tamird/gvisor/commit/98d75aea0"
         },
         {
-          "label": "Missing writer lock: Nogo rejected the write",
+          "label": "Earlier revision: Missing writer lock: Nogo rejected the write",
           "url": "https://app.buildbuddy.io/invocation/d26b3f80-5094-4b71-8aad-f772ddb024d5"
         },
         {
-          "label": "VFS race suite and both restore cases",
+          "label": "Earlier revision: VFS race suite and both restore cases",
           "url": "https://app.buildbuddy.io/invocation/a97b05cd-aece-4109-bf5f-3c5cf96f3613"
         },
         {
-          "label": "Owning Nogo tests: AMD64 and ARM64",
+          "label": "Earlier revision: Owning Nogo tests: AMD64 and ARM64",
           "url": "https://app.buildbuddy.io/invocation/38f4f946-7549-4052-a01d-fa937bdce104"
         },
         {
-          "label": "Linux, checkpoints and measured allocations",
+          "label": "Earlier revision: Linux, checkpoints and measured allocations",
           "url": "https://app.buildbuddy.io/invocation/7df78c87-af21-448a-bb2b-34b86783a625"
         },
         {
-          "label": "Earlier checkpoint variant: armed passes; disarmed fails",
+          "label": "Earlier revision: Earlier checkpoint variant: armed passes; disarmed fails",
           "url": "https://app.buildbuddy.io/invocation/9492cefc-8a12-45f0-8caf-dcb49763ff7f"
         },
         {
@@ -32087,24 +32099,24 @@
           "url": "https://app.buildbuddy.io/invocation/83329566-0448-4561-8b33-6ee433c9f811"
         },
         {
-          "label": "Corrected FUSE comparison",
+          "label": "Earlier revision: Corrected FUSE comparison",
           "url": "https://app.buildbuddy.io/invocation/400d0fe5-ffb9-46f9-abfa-399f23b7f557"
         },
         {
-          "label": "Corrected VFS, restore, Linux ABI and both architecture analyzers",
+          "label": "Earlier revision: Corrected VFS, restore, Linux ABI and both architecture analyzers",
           "url": "https://app.buildbuddy.io/invocation/ac07cca3-cb19-4448-908a-4d9b49e1e0f9"
         },
         {
-          "label": "Corrected VFS race run",
+          "label": "Earlier revision: Corrected VFS race run",
           "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
         }
       ],
       "refinement": {
         "before": {
-          "head": "8c01e8c21b1601a43baf966daa0f511d08e137db"
+          "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
         },
         "after": {
-          "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
+          "head": "bbadaaacb49e1f5cb40e44804762efee036928d1"
         }
       },
       "settledReviews": [
@@ -32114,11 +32126,7 @@
           "outcome": "changes-requested",
           "at": "2026-10-29T18:56:07.113045+00:00"
         }
-      ],
-      "contributorChangesRequested": {
-        "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
-        "url": "https://github.com/tamird/gvisor/commit/710c59cda"
-      }
+      ]
     },
     {
       "id": "branch:tcp-dsack-above-gap",
