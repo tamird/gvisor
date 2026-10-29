@@ -1,11 +1,11 @@
-name: Compare local retry and peer window probes
+name: Check the first persist deadline across application writes
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-local-window-pair'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-persist-deadline'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,14 +13,14 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Check local refusal and the peer’s window independently
+    - name: Measure the effect of a second write on the first probe
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "9d4ba78a148b6b555a5738083c1f4c5d3af78ebe"
+        test "$(git rev-parse HEAD^1)" = "2e6be31ca50798303de14b235a1432095b9d932b"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -85,10 +85,10 @@ jobs:
         overall=0
         label=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in prototype correction; do
+        for arm in stock correction; do
           case $arm in
-            prototype) source=933c6dfd369615ea9396283ae5a59abf6b8fc847; parent=b9ae3192313a2ed1fd7e5b31f2011aaf78c563f2 ;;
-            correction) source=c27d9c4ac17f92bd5acad26be2184c64a7bc2c52; parent=933c6dfd369615ea9396283ae5a59abf6b8fc847 ;;
+            stock) source=21d4bc9828185c921ae355cc725765607ba7e045; parent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4 ;;
+            correction) source=6e83e25594f96341d6115cb8cfc269168df7adfb; parent=21d4bc9828185c921ae355cc725765607ba7e045 ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -96,7 +96,7 @@ jobs:
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
-          git diff --quiet 933c6dfd369615ea9396283ae5a59abf6b8fc847 "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
+          git diff --quiet 21d4bc9828185c921ae355cc725765607ba7e045 "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
@@ -107,21 +107,21 @@ jobs:
           code=0
           bash test/rbe/qualify.sh --arch=amd64 "--test-target=$label" \
             "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
-            --bazel-option=--test_arg=-test.v --bazel-option=--test_filter=TestLocalRetryMeetsPeerWindow --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--test_arg=-test.v --bazel-option=--test_filter=TestZeroWindowProbeDeadline --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
             --bazel-option=--remote_download_outputs=toplevel test || code=$?
           printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
           # If the common target cannot compile, repeating three builds cannot add measurements.
-          if [[ $arm == prototype && ! -s "$raw" ]]; then break; fi
-          if [[ $arm == prototype && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
+          if [[ $arm == stock && ! -s "$raw" ]]; then break; fi
+          if [[ $arm == stock && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
         done
         python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["prototype","correction"]
+        arms = ["stock","correction"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["status"] == "PASS" for v in verdicts.values()) else "FAIL"}
@@ -134,6 +134,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-local-window-verdict
+        name: tcp-persist-deadline-verdict
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error

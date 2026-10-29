@@ -23,13 +23,13 @@ def main():
     for row in captured["reports"]:
         if row["name"] == "test.log":
             log = (out / row["path"]).read_text()
-            for reject, probe, resumed in re.findall(r"TCP-PERSIST refused=(true|false) probe=(true|false) resumed=(\d+)", log):
-                metrics.append(dict(refused=reject == "true", probe=probe == "true", resumed=int(resumed)))
+            for extra, first, later in re.findall(r"TCP-PERSIST extra=(true|false) first=(true|false) later=(true|false)", log):
+                metrics.append(dict(extra=extra == "true", first=first == "true", later=later == "true"))
     results = [e["testResult"] for line in events.read_text().splitlines() if "testResult" in (e := json.loads(line))]
     invocation = next((e["started"]["uuid"] for line in events.read_text().splitlines() if "started" in (e := json.loads(line))), None)
-    expected=[(False, True), (True, arm == "correction")]
-    if [(m["refused"],m["probe"]) for m in metrics] != expected or not all(m["resumed"] > 0 for m in metrics):
-        errors.append("observed probes or resumed writes do not match the two packet cases")
+    expected = [(False, True, False), (True, arm=="correction", arm=="stock")]
+    if [(m["extra"],m["first"],m["later"]) for m in metrics] != expected:
+        errors.append("first and half-RTO-later observations differ from the expected pair")
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
         errors.append("expected one uncached remote result")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
