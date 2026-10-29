@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T22:42:22.871924+00:00",
+    "updatedAt": "2026-10-29T22:47:07.619108+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37873,9 +37873,39 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T17:24:29.864587+00:00",
+      "updatedAt": "2026-10-29T22:47:07.619108+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "In progress: Linux and gVisor senders share a 20 Mbit/s bottleneck using Reno or CUBIC, rotating sender roles and comparing disabled, historical empty and explicitly enabled probes. The 12 trials run on the same production source; each sender pair has one trial per observation mode. No fairness result is claimed yet.",
+          "evidence": [
+            {
+              "label": "Shared-bottleneck trials (results pending)",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40967570301"
+            },
+            {
+              "label": "Benchmark-only change: leave the optional TCP probe nil",
+              "url": "https://github.com/tamird/gvisor/commit/5f466d879"
+            },
+            {
+              "label": "Common production source",
+              "url": "https://github.com/google/gvisor/commit/d8ff47859"
+            }
+          ]
+        },
+        {
+          "text": "Older tcp_proxy runs without a trace file still assembled TCP endpoint state on every incoming segment and passed it to an empty callback. Those runs measured throughput with that instrumentation; they do not establish uninstrumented throughput. How much it changes the senders’ relative shares is not yet measured.",
+          "evidence": [
+            {
+              "label": "Per-segment state collection when a probe is installed",
+              "url": "https://github.com/google/gvisor/blob/d8ff47859/pkg/tcpip/transport/tcp/connect.go#L1309"
+            },
+            {
+              "label": "Benchmark-only change: leave the optional TCP probe nil",
+              "url": "https://github.com/tamird/gvisor/commit/5f466d879"
+            }
+          ]
+        },
         {
           "text": "A fork prototype for retrying locally rejected writes suppressed the first window probe when the peer subsequently advertised zero. A peer that closed its window without the prior refusal did receive the probe. Clearing the local retry when the persist timer takes over restored the probe in both cases. All four connections sent the original 536 bytes when the peer reopened the window. This result is about the prototype, not stock gVisor or a public PR.",
           "evidence": [
@@ -39616,6 +39646,18 @@
       ],
       "nextStep": "Compare #16081 and #16495 after a second timeout. For a locally refused first write, distinguish retrying unsent data, probing the peer’s window and retransmitting data already in flight. Qualify those transitions before proposing the change upstream.",
       "evidence": [
+        {
+          "label": "Shared-bottleneck trials (results pending)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40967570301"
+        },
+        {
+          "label": "Benchmark-only change: leave the optional TCP probe nil",
+          "url": "https://github.com/tamird/gvisor/commit/5f466d879"
+        },
+        {
+          "label": "Common production source",
+          "url": "https://github.com/google/gvisor/commit/d8ff47859"
+        },
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
           "url": "https://app.buildbuddy.io/invocation/86deda9d-ef54-4922-9f73-0302342f7b84"
