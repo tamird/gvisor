@@ -15,13 +15,10 @@
 package vfio
 
 import (
-	"fmt"
-
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
-	"gvisor.dev/gvisor/pkg/fdnotifier"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
@@ -72,33 +69,21 @@ func (fd *pciDeviceFD) Release(context.Context) {
 	if fd.isRestored() {
 		return
 	}
-	fdnotifier.RemoveFD(fd.hostFD)
 	fd.queue.Notify(waiter.EventHUp)
 	fd.memmapFile.MappableRelease() // eventually closes fd.hostFD
 }
 
 // EventRegister implements waiter.Waitable.EventRegister.
 func (fd *pciDeviceFD) EventRegister(e *waiter.Entry) error {
-	if fd.isRestored() {
-		return nil
-	}
+	// A restored descriptor can retain waiters from the checkpoint even
+	// though it no longer has a host device.
 	fd.queue.EventRegister(e)
-	if err := fdnotifier.UpdateFD(fd.hostFD); err != nil {
-		fd.queue.EventUnregister(e)
-		return err
-	}
 	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *pciDeviceFD) EventUnregister(e *waiter.Entry) {
-	if fd.isRestored() {
-		return
-	}
 	fd.queue.EventUnregister(e)
-	if err := fdnotifier.UpdateFD(fd.hostFD); err != nil {
-		panic(fmt.Sprint("UpdateFD:", err))
-	}
 }
 
 // Readiness implements waiter.Waitable.Readiness.
@@ -106,12 +91,9 @@ func (fd *pciDeviceFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	if fd.isRestored() {
 		return 0
 	}
-	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
-}
-
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (fd *pciDeviceFD) Epollable() bool {
-	return true
+	// vfio_device_fops has no poll operation:
+	// https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/vfio/vfio_main.c#L1375
+	return fd.FileDescriptionDefaultImpl.Readiness(mask) & mask
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.
