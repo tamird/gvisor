@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T02:45:30.281737+00:00",
-  "registryDate": "2026-10-29T04:48:31.223825+00:00",
+  "registryDate": "2026-10-29T05:12:30.144224+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -231958,6 +231958,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T04:48:31.223825+00:00"
+      }
+    },
+    "branch:tcp-cwnd-use": {
+      "contributor-review": {
+        "scope": "5a22e6beaa402db7b9e182f9e72b321f46205504",
+        "since": "2026-10-29T05:12:30.144224+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T05:12:30.144224+00:00"
       }
     }
   },
