@@ -15,7 +15,10 @@ import qualification_report as reporter
 
 
 def main():
-    inv, decoder, output = map(Path, sys.argv[1:])
+    inv, decoder, output = map(Path, sys.argv[1:4])
+    # Original-only replay supplies the observations from the retained
+    # runner/ActionResult instead of re-materializing or running the release.
+    replay = json.loads(Path(sys.argv[4]).read_text()) if len(sys.argv) == 5 else None
     events = inv / 'events.jsonl'
     rows = [json.loads(line) for line in events.read_text().splitlines()]
     targets = [reporter.Owner.parse(row['id']['targetCompleted']) for row in rows
@@ -51,11 +54,21 @@ def main():
             source_ids.setdefault(file['path'], []).append(key)
     cpu = os.environ['QUALIFICATION_ARCH']
     machine = {'amd64': ('x86_64', 62), 'arm64': ('aarch64', 183)}[cpu]
-    assert platform.machine() == machine[0]
+    child = next(row['started']['uuid'] for row in rows if 'started' in row)
+    host = platform.machine()
+    if replay is not None:
+        assert (replay['source'], replay['child']) == (source, child) and set(replay['files']) == names
+        host = replay['host']
+    assert host == machine[0]
+    # The build lane uses --config=rbe even for --config=aarch64. The copy
+    # tool runs on the execution platform; the staged file targets the guest.
+    configs = set((inv / 'arguments.txt').read_text().splitlines())
+    [worker] = [arch for flag, arch in (('--config=rbe', 'amd64'), ('--config=rbe-arm64', 'arm64')) if flag in configs]
     actual = {}
     for spawn in actions:
         props = {p['name']: p['value'] for p in spawn['platform']['properties']}
-        assert props['Arch'] == cpu and props['OSFamily'] == 'linux' and props['container-image'] == (
+        assert props['Arch'] == worker and props['OSFamily'] == 'linux' and props['workload-isolation-type'] == 'oci'
+        assert props['container-image'] == (
             'docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef')
         assert spawn['runner'] == 'remote' and not spawn.get('cacheHit') and not spawn.get('exitCode')
         [out] = spawn['outputs']
@@ -69,18 +82,25 @@ def main():
         assert by_path[path]['sha256'] == digest['hash'] and by_path[path]['bytes'] == int(digest['sizeBytes'])
         name = path.split('/bin/release/', 1)[1]
         assert name in names and name not in actual
-        staged = Path('bazel-bin/release') / name
-        mode = staged.lstat().st_mode
-        assert stat.S_ISREG(mode) and (mode & 0o111) == 0o111 and staged.stat().st_size == by_path[path]['bytes']
-        with staged.open('rb') as f:
-            head = f.read(20)
-            assert head[:6] == b'\x7fELF\x02\x01' and struct.unpack_from('<H', head, 18) == (machine[1],)
-            f.seek(0)
-            assert hashlib.file_digest(f, 'sha256').hexdigest() == digest['hash']
-        actual[name] = {'sha256': digest['hash'], 'bytes': int(digest['sizeBytes']), 'mode': oct(stat.S_IMODE(mode)),
+        if replay is None:
+            staged = Path('bazel-bin/release') / name
+            mode = staged.lstat().st_mode
+            with staged.open('rb') as f:
+                head = f.read(20)
+                assert head[:6] == b'\x7fELF\x02\x01'
+                f.seek(0)
+                proof = {'sha256': hashlib.file_digest(f, 'sha256').hexdigest(), 'bytes': staged.stat().st_size,
+                         'machine': struct.unpack_from('<H', head, 18)[0], 'regular': stat.S_ISREG(mode),
+                         'executable': bool(mode & 0o111), 'mode': oct(stat.S_IMODE(mode)), 'mode_source': 'lstat'}
+        else:
+            proof = replay['files'][name]
+        assert proof['regular'] and proof['executable'] and proof['machine'] == machine[1]
+        if proof['mode'] is not None:
+            assert int(proof['mode'], 8) & 0o111 == 0o111
+        assert proof['sha256'] == digest['hash'] and proof['bytes'] == int(digest['sizeBytes'])
+        actual[name] = {**proof,
                         'source': src, 'copy_action': spawn['digest'], 'worker': props}
     assert set(actual) == names
-    child = next(row['started']['uuid'] for row in rows if 'started' in row)
     output.write_text(json.dumps({'source': source, 'child': child, 'host': machine[0], 'files': actual}, indent=2) + '\n')
 
 

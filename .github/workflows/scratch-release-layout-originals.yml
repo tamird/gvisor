@@ -1,0 +1,46 @@
+name: Read original ARM release files
+on:
+  push:
+    branches: [qualification/scratch-release-layout-originals]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify the fixed list from the original build
+        run: |
+          test "$(git rev-parse HEAD^)" = 4a2b2a00efd0c7aa19e7b58c98d380e58b7db5c2
+          printf '%s  %s\n' 6f0f9c76fde7ddfe705e0680b90937aa6e26d77f922955149d1db3dced1793c8 test/rbe/release_layout_check/arm-original.json | sha256sum --check --strict
+          printf '%s  %s\n' e885b4d78cdc1b4b18f98dce2c7e21912ed9cdfc0ad457d0360fedffb623a3ce test/rbe/release_layout_check/original.py | sha256sum --check --strict
+      - name: Recover both sealed archives and the original log decoder
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for arch in amd64 arm64; do
+            gh run download 40816183575 -R tamird/gvisor -n "release-layout-$arch" -D "$RUNNER_TEMP/$arch"
+          done
+          curl -fsSL --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          printf '%s  %s\n' f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb "$RUNNER_TEMP/bb" | sha256sum --check --strict
+          chmod +x "$RUNNER_TEMP/bb"
+      - name: Read the existing outputs and copy results
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/release_layout_check/original.py "$RUNNER_TEMP/arm-original.json"
+      - name: Apply the same verifier to the original build output on both architectures
+        run: python3 test/rbe/release_layout_check/replay.py
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: arm-release-original
+          path: |
+            ${{ runner.temp }}/arm-original.json
+            ${{ runner.temp }}/*-replay.json
+          if-no-files-found: error

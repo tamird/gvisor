@@ -1,0 +1,78 @@
+{
+  "archive": "2f271465f503de4a9d93926110c4cea28856402d40b1ae083b2016f00bd933a2",
+  "child": "1ca9c3ce-f1ef-4342-9f0d-439307a755e2",
+  "files": {
+    "containerd-shim-runsc-v1": {
+      "action": {
+        "hash": "c0af80abc147f1d99d3c1da259999a84a311b5f1476b37ed7e9dec0ab956ac11",
+        "sizeBytes": "353"
+      },
+      "bytes": 22744643,
+      "path": "bazel-out/aarch64-opt/bin/release/containerd-shim-runsc-v1",
+      "sha256": "d9bf3f16386a20ef7062c9c86ac0ddcb11f2afb1c0a8182b7b5793d14460d2e3"
+    },
+    "gvisor-bin/checkpointgofer": {
+      "action": {
+        "hash": "d39a9897ca9f461fbc04f102d598df66f076679e89aa7e4021b1c5b4098e8601",
+        "sizeBytes": "353"
+      },
+      "bytes": 46216328,
+      "path": "bazel-out/aarch64-opt/bin/release/gvisor-bin/checkpointgofer",
+      "sha256": "d83ffe9143d3b9a034017c5399742c8975e12ba7d9020a3ccd4aaec2d658aea1"
+    },
+    "gvisor-bin/gvisor-proc-umounter": {
+      "action": {
+        "hash": "3f2caedd712db32bd1f68a2746a96517bc1c12ad5fad31eeccc7e4c12f59bd1b",
+        "sizeBytes": "353"
+      },
+      "bytes": 1128,
+      "path": "bazel-out/aarch64-opt/bin/release/gvisor-bin/gvisor-proc-umounter",
+      "sha256": "c58adb3e05f2d8116a28b4588a17bdb07975b00bdc5a617d14ce08037ab5da36"
+    },
+    "gvisor-bin/gvisor-sentry-prewarmer": {
+      "action": {
+        "hash": "fe5a257ca68aa9bc9e2b2bf9a3dec0b928fbaaf5e1394ebb0dd6a883461ad304",
+        "sizeBytes": "353"
+      },
+      "bytes": 1296,
+      "path": "bazel-out/aarch64-opt/bin/release/gvisor-bin/gvisor-sentry-prewarmer",
+      "sha256": "2cc8fd84eb9f97f15bd62bb0a52ebbf0ae1aaaad8ce170323a772f8bde08cdef"
+    },
+    "gvisor-bin/gvisor_sentry": {
+      "action": {
+        "hash": "fbe10352c6a243901b9e3a6f85919502eeaf630f15fa21d29ad523a9c0ed5bb9",
+        "sizeBytes": "353"
+      },
+      "bytes": 49883950,
+      "path": "bazel-out/aarch64-opt/bin/release/gvisor-bin/gvisor_sentry",
+      "sha256": "bf5eda4a08cd89536a65ead508307c8479cb96cab84a03c1c85650244cd59227"
+    },
+    "gvisor-bin/runsc-fd-parking": {
+      "action": {
+        "hash": "7007e3e280e86c493ef12a0903a5d734ab837b4138a9792e1557421bc624ae9f",
+        "sizeBytes": "353"
+      },
+      "bytes": 65928,
+      "path": "bazel-out/aarch64-opt/bin/release/gvisor-bin/runsc-fd-parking",
+      "sha256": "28f5206c05ce4cffb2a7e55090c3ba7e1fbb285aa59b1f6f152939b964e32600"
+    },
+    "gvisor-bin/runsc-metric-server": {
+      "action": {
+        "hash": "eadc5eecc9f1f6d29ef25f2c1213be655895861313f2ec20228a4e60fc59e534",
+        "sizeBytes": "353"
+      },
+      "bytes": 19698329,
+      "path": "bazel-out/aarch64-opt/bin/release/gvisor-bin/runsc-metric-server",
+      "sha256": "f4a49b39bea0498c369f2118ae0e6b12d38f29bf4ba09a2c8c9df06bf98b16ca"
+    },
+    "runsc": {
+      "action": {
+        "hash": "bd6d0af3c0740dc720b0391a47cdfef5d5080632528302cc266f867d92416ca4",
+        "sizeBytes": "353"
+      },
+      "bytes": 17510863,
+      "path": "bazel-out/aarch64-opt/bin/release/runsc",
+      "sha256": "7b6efb241f198dc8d87f9292eda3326d8bab138612b64162f6ea2141f10feaf9"
+    }
+  }
+}
