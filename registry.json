@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T16:16:33.703333+00:00",
+    "updatedAt": "2026-10-29T16:41:32.410566+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32212,12 +32212,12 @@
       "repo": "google/gvisor",
       "number": 16584,
       "ref": "test/cl1008391846",
-      "head": "8137978fffffa7f5efa74819d9217a2e3442e1c3",
+      "head": "d09828cec993fd489eccabcff27aa68c024f2080",
       "title": "Review the graph decoder",
       "url": "https://github.com/google/gvisor/pull/16584",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T00:45:15.187460+00:00",
+      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
       "summary": "Review Parth’s graph decoder for round trips that lose shared backing storage. A new fixture fails to save overlapping views when one is a pointer to an array.",
       "evidence": [
         {
@@ -32236,11 +32236,11 @@
       "contributorReview": {
         "kind": "review",
         "status": "pending",
-        "head": "8137978fffffa7f5efa74819d9217a2e3442e1c3",
+        "head": "d09828cec993fd489eccabcff27aa68c024f2080",
         "url": "https://github.com/google/gvisor/pull/16584",
         "title": "Send Parth the overlapping array-pointer report",
         "summary": "Authorize an inline report on graph_encode_objects_unsafe.go:390. Both traversal orders fail; using two slices passes.",
-        "body": "@parth-opensrc, this overlap is possible in safe Go. Take two views of a `buf [4]*byte`: `buf[:3:3]` and `buf[1:4:4]`. As named slices, they round-trip in either traversal order. Convert the second to `*[3]*byte` and Save fails in both: slice-first reaches this check; pointer-first reaches the corresponding check in `sliceTarget`. Can the array pointer and slice share their restored backing storage just as the two slices do?\n\nThe [fixture on the integrated rewrite](https://github.com/tamird/gvisor/blob/bd3cab255359dcaa97607d78eac4ba4c59eb7299/pkg/state/tests/graph_test.go#L475) checks both shared slots, writes through one view, and the final pointee reachable only from the other. [Both failures](https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6) are also recorded in the [fork run](https://github.com/tamird/gvisor/actions/runs/40795069761).\n\nPosted by Codex on behalf of @tamird."
+        "body": "@parth-opensrc, this overlap is possible in safe Go. Take two views of a `buf [4]*byte`: `buf[:3:3]` and `buf[1:4:4]`. As named slices, they round-trip in either traversal order. Convert the second to `*[3]*byte` and Save fails in both: slice-first reaches this check; pointer-first reaches the corresponding check in `sliceTarget`. Can the array pointer and slice share their restored backing storage just as the two slices do?\n\nThe [fixture on the integrated rewrite](https://github.com/tamird/gvisor/blob/bd3cab255/pkg/state/tests/graph_test.go#L475) checks both shared slots, writes through one view, and the final pointee reachable only from the other. [Both failures](https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6) are also recorded in the [fork run](https://github.com/tamird/gvisor/actions/runs/40795069761).\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -33989,6 +33989,52 @@
           "url": "https://app.buildbuddy.io/invocation/0a520392-8d77-48f3-8f65-2417af7d8802"
         }
       ]
+    },
+    {
+      "id": "pr:15432",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15432,
+      "ref": "test/cl994869229",
+      "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+      "title": "Review the TCP recovery flight estimate",
+      "url": "https://github.com/google/gvisor/pull/15432",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
+      "summary": "After retransmission the estimate charges a lost original twice; before a probe is acknowledged it can charge one packet too few. The review asks how to distinguish those cases.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+        "url": "https://github.com/google/gvisor/pull/15432",
+        "title": "Post the first-flight packet findings",
+        "summary": "After retransmission the estimate charges a lost original twice; before a probe is acknowledged it can charge one packet too few. The review asks how to distinguish those cases.",
+        "body": "After RACK marks #2 lost, retransmitting it clears `s1.lost`. This\nbranch then counts #2 once, and the `HighRxt` branch below counts it a\nsecond time. In this PR’s tail-loss test, the ACK of #1 opens a\nfive-packet window, but [only #2–#5 are sent](https://app.buildbuddy.io/invocation/e771617b-851e-4019-a76e-f73015f02f74).\n[Omitting the second count](https://app.buildbuddy.io/invocation/e3b6733c-2ae1-4ac3-a4a8-93f4a7b9a126)\nlets #6 go as well, with GSO both on and off.\n\nCan the flight estimate distinguish a **lost original** from an\n**unacknowledged tail probe** whose original might still arrive? The\n[probe case](https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef)\nhas the opposite error: four transmissions are outstanding at a window\nof 11, yet the next write sends eight new packets rather than seven.\n\nPosted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "pr:16620",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16620,
+      "ref": "test/cl1009024537",
+      "head": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
+      "title": "Review LoadValue callback snapshots",
+      "url": "https://github.com/google/gvisor/pull/16620",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
+      "summary": "The graph reader returned 22 to a callback that had received 11; the legacy reader retained 11. A private copy restores the original callback value.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
+        "url": "https://github.com/google/gvisor/pull/16620",
+        "title": "Post the LoadValue callback regression",
+        "summary": "The graph reader returned 22 to a callback that had received 11; the legacy reader retained 11. A private copy restores the original callback value.",
+        "body": "@parth-opensrc, this boxes the caller’s destination by reference. After\n`Load` returns, assigning to the field can change a scalar the callback\nalready received:\n\n```go\nsrc.LoadValue(0, &x.n, func(v any) { x.saved = v }) // uint64(11)\n// After Load returns:\nx.n = 22\n```\n\nThe [matched test](https://github.com/tamird/gvisor/blob/dcaa864e7/pkg/state/graph_loadvalue_snapshot_test.go#L42)\nkept `x.saved` at 11 with the legacy reader but observed 22 with the\ngraph reader. A typed copy inside the callback stayed 11 with both.\n[Original run](https://app.buildbuddy.io/invocation/858adf22-8ee6-4cd3-967c-ba4b5a5d40f9).\n\nCould ordinary `LoadValue` snapshot the value when it calls the\ncallback? [This prototype](https://github.com/tamird/gvisor/commit/5c28e8d33)\n[keeps 11 with both readers](https://app.buildbuddy.io/invocation/6fc0d435-5595-4817-a6c1-52f1f64c8dd4).\nI found no direct in-tree caller; stateify uses the separate\n`LoadValueTo` API.\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [

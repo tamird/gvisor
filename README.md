@@ -21,6 +21,11 @@ facts and unresolved causes in every relationship.
 - `nodes` have a stable `id`, a `type` (`pr`, `branch`, or `issue`), a title,
   HTTPS source URL, workstream `group`, and status. PR and GitHub issue records
   also carry `repo` and `number`; branch and PR records carry `ref`.
+- Add a `contributorReview` to the target PR, branch, or issue when asking
+  for a decision, including outgoing reviews on someone else's PR. Record the
+  exact proposed text or commit. Remove the request when answered; keep any
+  checks or publication left to the agent in the work item. After a PR head
+  changes, verify the draft against the new source before asking for review.
 - `edges` point **from prerequisite to dependent**. `depends_on` is an explicit
   dependency; `blocked_by` records an external blocker. `includes` relationships
   only identify work included in an integration branch, not a required PR stack.

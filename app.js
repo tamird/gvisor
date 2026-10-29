@@ -450,8 +450,10 @@ function attentionReasons(node, owner) {
   };
   if (states(node)["contributor-review"])
     add("author-proposal", contributorDecision(node)?.summary || "A contributor decision is pending; this does not change the published head's review status.");
-  if (contributorAmendmentNeedsRefresh(node))
-    add("agent-refresh", `The amendment was prepared against ${node.contributorReview.baseHead.slice(0, 9)}, but the published head is ${node.github.head.slice(0, 9)}. Reconcile the proposal before requesting a contributor decision.`);
+  if (contributorDecisionNeedsRefresh(node)) {
+    const decision = contributorDecision(node), base = decision.baseHead || decision.head;
+    add("agent-refresh", `The ${decision.kind === "review" ? "review" : "amendment"} was prepared against ${base.slice(0, 9)}, but the published head is ${node.github.head.slice(0, 9)}. Check the new source before requesting a contributor decision.`);
+  }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   if (node.type === "branch" && node.status === "Agent work" && node.repo?.split("/")[0] === owner
@@ -917,15 +919,16 @@ function contributorDecision(node) {
   const decision = node.contributorReview;
   return decision?.status === "pending" && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
-    || ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision.kind)) ? decision : null;
+    || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
+    || node.type === "pr" && decision.kind === "review" && !providerClosed(node)) ? decision : null;
 }
 function contributorDecisionHeadChanged(node) {
   const decision = contributorDecision(node);
   const head = decision?.kind === "amendment" ? decision.baseHead : decision?.head;
   return Boolean(node.github?.head && head && head !== node.github.head);
 }
-function contributorAmendmentNeedsRefresh(node) {
-  return contributorDecision(node)?.kind === "amendment" && contributorDecisionHeadChanged(node);
+function contributorDecisionNeedsRefresh(node) {
+  return ["amendment", "review"].includes(contributorDecision(node)?.kind) && contributorDecisionHeadChanged(node);
 }
 function humanAction(node) {
   const action = node.humanAction;
@@ -1419,9 +1422,9 @@ function drawDetails() {
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
   const decision = contributorDecision(node);
-  if (decision && (states(node)["contributor-review"] || contributorAmendmentNeedsRefresh(node))) {
+  if (decision && (states(node)["contributor-review"] || contributorDecisionNeedsRefresh(node))) {
     const section = element("section", "detail-section contributor-decision");
-    section.append(element("h3", "", contributorAmendmentNeedsRefresh(node) ? "Proposal needs reconciliation" : decision.title || "Contributor decision requested"));
+    section.append(element("h3", "", contributorDecisionNeedsRefresh(node) ? "Check the new PR head" : decision.title || "Contributor decision requested"));
     if (decision.summary) section.append(element("p", "", decision.summary));
     if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
     if (contributorDecisionHeadChanged(node))
@@ -1620,7 +1623,7 @@ function stateRecords(snapshot, node) {
     for (const key of Object.keys(records)) delete records[key];
     records.imported = { scope: node.github.head, since: landed.verifiedAt, basis: "observed", qualifier: "Landed; source PR still open" };
   }
-  if (decision && !contributorAmendmentNeedsRefresh(node)) {
+  if (decision && !contributorDecisionNeedsRefresh(node)) {
     const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];
     const previous = history?.["contributor-review"] || (node.type === "branch" ? history?.review : null);
     // Registry publication is the first observation of a new decision; an older

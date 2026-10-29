@@ -402,7 +402,7 @@ test('contributor decisions bind the registered branch repository and exact prop
   }
 });
 
-test('outgoing review decisions remain visible on external PRs and across public head changes', () => {
+test('outgoing reviews return to the agent when the public head changes', () => {
   const context = client(), node = attentionNode();
   node.github.headOwner = 'EtiennePerot';
   node.github.checkedAt = context.snapshotInput.checkedAt;
@@ -418,7 +418,17 @@ test('outgoing review decisions remain visible on external PRs and across public
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
   assert.equal(reasonsFor(node).find(reason => reason.id === 'author-proposal').owner, 'user');
   node.github.revisionChanged = true; node.github.head = 'd'.repeat(40);
-  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"].scope', context), record.scope);
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'], undefined);
+  assert.ok(idsFor(node).includes('agent-refresh'));
+  assert.ok(!idsFor(node).includes('author-proposal'));
+  node.contributorReview.head = node.github.head;
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'].scope, node.github.head);
+  node.github.status = 'merged';
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'], undefined);
+  assert.ok(!idsFor(node).includes('agent-refresh'));
   delete node.contributorReview;
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
 });
@@ -468,7 +478,7 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
     node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
     assert.equal(node.workStates['contributor-review'], undefined);
     assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
-    assert.equal(vm.runInContext('contributorAmendmentNeedsRefresh(nodeInput)', context), false);
+    assert.equal(vm.runInContext('contributorDecisionNeedsRefresh(nodeInput)', context), false);
     assert.ok(!idsFor(node).includes('author-proposal'));
     assert.ok(!idsFor(node).includes('agent-refresh'));
     assert.equal(vm.runInContext('historical(nodeInput)', context), status !== 'open');
