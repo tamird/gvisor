@@ -17,6 +17,7 @@ jobs:
           persist-credentials: false
       - name: Build the example tar and Debian package in three environments
         run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           export USE_BAZEL_VERSION=8.8.1
           export REPORT="$RUNNER_TEMP/report"
           mkdir -p "$REPORT"
@@ -32,7 +33,7 @@ jobs:
                 noenv) opts+=(--sandbox_block_path=/usr/bin/env);;
               esac
               set +e
-              bazelisk build --lockfile_mode=update --spawn_strategy=linux-sandbox --@rules_python//python/config_settings:bootstrap_impl=script "${opts[@]}" //:a_deb_package > "$REPORT/$ref-$mode.log" 2>&1
+              bazelisk build --lockfile_mode=update --spawn_strategy=sandboxed --@rules_python//python/config_settings:bootstrap_impl=script "${opts[@]}" //:a_deb_package > "$REPORT/$ref-$mode.log" 2>&1
               status=$?
               set -e
               echo "$status" > "$REPORT/$ref-$mode.status"
