@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T03:22:07.307518+00:00",
+    "updatedAt": "2026-10-29T03:50:12.442027+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4263,15 +4263,15 @@
       "url": "https://github.com/tamird/gvisor/commit/8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
       "group": "bazel",
       "status": "Contributor approval retained; waiting for prerequisites",
-      "summary": "The crosstool replacement is fork branch hermetic-compiler-reconciled-review at 8306976db, not an upstream PR. Prior conditional contributor approval remains, with the open source prerequisites and their own review states shown separately. The standalone LLVM source migration is now split out as llvm-project-qualified@17d37fc9a and is being qualified with GNU/Coral unchanged. Completed historical compiler qualifications below remain tied to their original sources. Benchmark-version prerequisite #15376 has landed; it is no longer a delivery gate.\n\nPreserved earlier source-specific record:\n\nThe reconciled compiler is published at 8306976 with the public @llvm-project source supplier. Its prior conditional contributor approval is retained. Current validation is complete: the scoped 42-output/eight-owner checks, mixed 40-output comparison, full lint, fixed startup comparison and parser completion retain their exact source boundaries. The canonical source audit passes 206 records and 33 owning cases. Earlier failed and interrupted invocations remain failed; no broad replay or performance equivalence is claimed. The six static call-site corrections are now a separate delivery prerequisite, not a hidden qualification-only change. Existing #15153, #15376, #15368, #15146 and #16051 dependencies remain.\n\nPreserved earlier source-specific record:\n\nThe current compiler migration is published at 0a766 on the four remaining prerequisites. The historical 87cfd branch is preserved separately. The latest broad run retained 40 outputs but expired before the plugin outputs and final inspection/tests; it remains FAIL/INCOMPLETE. A single completion run reuses those exact retained outputs and checks the two plugin binaries, all 42 outputs and eight test owners. Procumounter builds and its two named static/page-size tests are separately accepted. The canonical 207-entry-seed audit is prepared but held; the startup comparison has not run. Six restored static attributes are qualification-only.\n\nEarlier source-specific record:\n\nCurrent compiler source 1a8e5ab72a composes the four remaining prerequisites above master b4bb99d. Independent source review verifies the 29 preserved compiler payloads and removes the obsolete Coral link-flags patch with its supplier. Current Go 1.27.3 and dependency inputs require fresh focused validation; prior compiler outcomes remain historical. The original BPF implementation and Python, Abseil and cgo support have landed. The Go static-attribute change was rolled back upstream, so it is explicitly restored only in the qualification child until its delivery disposition is resolved. Remaining source prerequisites are #15153, #15376, #15368 and #15146; BCR cleanup #16194 is independent. RBE configuration and nvproxy delivery still require the compiler proposal.\n\nEarlier implementation and validation records:\n\nThe refreshed compiler candidate is public at 87cfd11a4 on prerequisite composition 97487b52b and master e1bc74024. It amends the preceding dc22 proposal with the validated GNU preload boundary. Independent source reconciliation (peer 748c346ae987) confirms all 28 retained compiler changes match the earlier reviewed implementation. The approved Abseil release graph from #15414 replaces the obsolete backport; stale Benchmark patch-header edits are removed. Current upstream exports are preserved. The validation-only child a41144e7b adds the exact existing six-file RBE adapter. The bounded parent 9f365c22 ended at its shared deadline with exit 124. Four release build commands succeeded and three test owners passed. The bounded continuation 90ab completes the remaining five test owners; saved Action/Command/log/XML records bind those results. Its license phase did not reach enumeration because the method omitted DOCKER_BUILD=false and attempted unavailable Docker. That is a validation-method failure, not evidence of a source licensing defect. Saved ELF inspection found a PT_INTERP segment in the race shim despite its legacy fully_static_link feature. The independent go-static-attributes@60a4c080d prerequisite replaces that C/C++ feature request with the owning Go static attribute at six callers. Compiler composition 6614 adds a GNU ABI boundary for the embedded ioctl preload library. Its focused validation exposed a real Go embed error: wrapping cc_binary relocated libioctl_hook.so into a subdirectory, so the package-relative embed pattern did not match. The correction is public and tracked at compiler validation head 4cd7db30d; it applies the transition to a filegroup and preserves the C++ output path. Source peer f8ca3c005005 closes that correction and explicitly supersedes the earlier source approval that missed the relative-path contract. Corrected builds at 4cd now pass for both target CPUs in normal and race modes. Independent saved peer 55aa5b34b797 verifies eight static executables, four GNU hooks and each complete hook embedded in the matching sniffer binary. Original parent 671eb968 remains Failed because its post-build oracle mishandled an omitted zero-valued protobuf field. The separate loader parent b89f8b4c passes: the exact GNU hook loads into a hash-bound dynamic /bin/true with eager symbol resolution and exits zero (peer 3fe4607f41f7). This is AMD64 GNU loading only, with no sniffer CLI, ioctl, GPU or ARM64 loader claim. The preceding fc881 partial result remains failed; peer 078b18867e0f verifies its forty successful static executables, four GNU libraries and canonical Fetch/Verify for 203 byte-identical catalog entries. Together these source-specific packets close the intended static-output and loader checks without relabeling either failed parent. Final proposal amendment 87cfd11a48dbc80beffc410423856d1092442916 is public and tracked. Independent composition peer 5f6267508559 and immutable binding 65922e5e0dce verify the GNU filegroup correction while keeping the six-callsite static prerequisite separate. The complete proposal plus that prerequisite and the unchanged RBE adapter equals the tested 4cd tree. The five superseded compiler refs (current, corrected, go126, review and rbe-fresh-master-compiler) are retired after independent source/dependency review. Their exact heads are recoverable from the verified 73,653-byte native Git bundle in the disclosed scratch record (bundle 8a77f359478a; retirement receipt 854cf64e88ef). All three historical validation descendants, the approved RBE adapter and raw evidence remain preserved. No new compiler contributor question is pending.\n\nThe eight source prerequisites are #15414 (released Abseil and compatible gRPC/Protobuf graph), #15337 (declared BPF/LLVM inputs), #15153 (plugin build foundation), #15376 (Benchmark annotations), #15368 (allocator behavior and tests), #15120 (declared Python bootstrap), #15146 (license classifier), and seccomp-cgo-thread-clone@51a4d7127. The last prerequisite is demonstrated by the musl plugin failure and corrected passing Actions execution. Its own contributor question is pending. The explicit one-week #15146 maintainer hold remains on upstream delivery; no live prerequisite PR was changed by this source composition. Previously recorded #15034, #15332, #15036, #15042 and #14984 prerequisites are merged and retained only as history. Go 1.27 is not required by this compiler candidate.\n\nHistorical source and validation record:\n\nThe C++ dependency prerequisite #14984 landed through import #15210 at 07:24:33 UTC on October 3. That edge is cleared. Other recorded source prerequisites remain open, including the explicit one-week #15146 review hold; approved RBE configuration delivery is not yet unblocked.\n\nPublic, clean and tracked at 7a0dc16e5c2822e3aa4a93f981b2131a399dc043. The isolated 30-path compiler commit sits above 12 separately reviewed prerequisites. Its tree 0325a2b723c4ee53b88a7321aefe45ff54f6da53 equals catalog descendant f4e41e90c6984807b033cddf0ea73128190e6c67. At the original source head, source and record peers passed and a contributor request was recorded. That historical request is not a current unanswered question; source reconciliation must establish the refreshed candidate and its remaining prerequisites before a new review request. It registers declared LLVM compilers, preserves current Go 1.26.3/x/net 0.54, configures static Go consumers for musl, forwards analyzer/dependency providers, migrates freestanding inputs, and specializes the retained #15153 plugin foundation to declared LLVM tools and its supported Linux AMD64 musl boundary. The LLVM 23.1.2 parser-source/zlib change and their owning catalog entries are folded into this compiler commit; dcd8ef29951708fc054db8b5630222f979fd861a is preserved predecessor evidence, not an independently ready PR candidate. Its source-only master base lacked @llvm referenced by the release overlay; the BPF precursor supplies that module in the final composition. Existing #15146 classifier and #15120 Python bootstrap remain separate prerequisites. Independent Go 1.27/x/net upgrades are not compiler prerequisites.\n\nValidation is closed with exact source boundaries. Original Go 1.26 parent 48bcb09d-92cd-4b21-9b7f-c3bbf809614f at 51901f9a1084f731d54ac4409f199ed5be656fc6 remains FAILED. Independently reviewed outcome 6004b9b94284 verifies eight normal/race outputs across both target CPUs, four static race ELF/link joins, two uncached deps/Nogo test passes and the canonical 189-entry catalog audit with five retained warnings. Its parser bootstrap and supported musl plugin tool-path failures are preserved. Corrected focused parent 9683afe5-ec68-4d76-b29f-ba485ca34efb at 7f82a4f5ba3e845089c87300ae06a71ff48b9fb0 closed OK in 364.747 seconds (outcome d85568400905, independent root peer): actual TestParser and TestDumpStack each pass with no skips, and both public plugin binaries build. The foreign Make action ran uncached; saved action/input paths bind the declared ld.lld and llvm-objdump. Both tests and that action used pinned AMD64 Ubuntu OCI. The two plugin binaries were not executed; no full CI, plugin-network/vhost runtime, native ARM runtime or Coral-parser pass is claimed. The catalog-only f4 descendant imports exact canonical 222bec9a4891 (47,463 bytes/189 entries); final 7a0 changes commit organization without changing that tree. Catalog enumeration excludes toolchain runtime payloads, so this is not a complete runtime-license audit.\n\nEarlier failed compiler predecessors remain recoverable and are omitted from active work. Source 1087b901f92a02c0f50ee834d841a8ae69dfae1d / parent 8f466163-1541-4a59-9725-a8e4de057c3a remains FAILED after 417.191 seconds (580480fa44e7): SDK and 186-entry catalog passed, six of eight normal AMD roots built, and gRPC/x/net, BPF headers, Benchmark macro and ncalls failures stopped later gates. Source b9effe541574ce1ac8f0d15624733e046efc9116, public tree-identical 1cb132b03918e0963308fb7f24fde59a76ca8574 / parent 3d44639e-10ca-4350-a97a-5bc3ce1f5fc0 remains FAILED after 2389.437 seconds (b141c241ec0a): both normal target-CPU builds, four static race joins and nine uncached AMD test owners passed, while the old LLVM Hexagon parser and plugin GLIBC boundaries failed. Those are actual Go 1.27 results, not transferred Go 1.26 runtime credit. The extra direct GNU-libc archive experiment in 48b remains FAILED and unsupported by the public plugin contract. All original source heads are archived and complete historical validation records remain preserved. This compiler delivery preparation made no source change to the qualification branch; its subsequent primary advances are recorded on the qualification node.",
-      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "summary": "The static-mode prerequisite #16234 merged but its six changes were reverted in #16656. The qualified release already used the restored shim setting. Race and cgo consumers need a separate check before deciding whether this is a compiler dependency.\n\nThe crosstool replacement is fork branch hermetic-compiler-reconciled-review at 8306976db, not an upstream PR. Prior conditional contributor approval remains, with the open source prerequisites and their own review states shown separately. The standalone LLVM source migration is now split out as llvm-project-qualified@17d37fc9a and is being qualified with GNU/Coral unchanged. Completed historical compiler qualifications below remain tied to their original sources. Benchmark-version prerequisite #15376 has landed; it is no longer a delivery gate.\n\nPreserved earlier source-specific record:\n\nThe reconciled compiler is published at 8306976 with the public @llvm-project source supplier. Its prior conditional contributor approval is retained. Current validation is complete: the scoped 42-output/eight-owner checks, mixed 40-output comparison, full lint, fixed startup comparison and parser completion retain their exact source boundaries. The canonical source audit passes 206 records and 33 owning cases. Earlier failed and interrupted invocations remain failed; no broad replay or performance equivalence is claimed. The six static call-site corrections are now a separate delivery prerequisite, not a hidden qualification-only change. Existing #15153, #15376, #15368, #15146 and #16051 dependencies remain.\n\nPreserved earlier source-specific record:\n\nThe current compiler migration is published at 0a766 on the four remaining prerequisites. The historical 87cfd branch is preserved separately. The latest broad run retained 40 outputs but expired before the plugin outputs and final inspection/tests; it remains FAIL/INCOMPLETE. A single completion run reuses those exact retained outputs and checks the two plugin binaries, all 42 outputs and eight test owners. Procumounter builds and its two named static/page-size tests are separately accepted. The canonical 207-entry-seed audit is prepared but held; the startup comparison has not run. Six restored static attributes are qualification-only.\n\nEarlier source-specific record:\n\nCurrent compiler source 1a8e5ab72a composes the four remaining prerequisites above master b4bb99d. Independent source review verifies the 29 preserved compiler payloads and removes the obsolete Coral link-flags patch with its supplier. Current Go 1.27.3 and dependency inputs require fresh focused validation; prior compiler outcomes remain historical. The original BPF implementation and Python, Abseil and cgo support have landed. The Go static-attribute change was rolled back upstream, so it is explicitly restored only in the qualification child until its delivery disposition is resolved. Remaining source prerequisites are #15153, #15376, #15368 and #15146; BCR cleanup #16194 is independent. RBE configuration and nvproxy delivery still require the compiler proposal.\n\nEarlier implementation and validation records:\n\nThe refreshed compiler candidate is public at 87cfd11a4 on prerequisite composition 97487b52b and master e1bc74024. It amends the preceding dc22 proposal with the validated GNU preload boundary. Independent source reconciliation (peer 748c346ae987) confirms all 28 retained compiler changes match the earlier reviewed implementation. The approved Abseil release graph from #15414 replaces the obsolete backport; stale Benchmark patch-header edits are removed. Current upstream exports are preserved. The validation-only child a41144e7b adds the exact existing six-file RBE adapter. The bounded parent 9f365c22 ended at its shared deadline with exit 124. Four release build commands succeeded and three test owners passed. The bounded continuation 90ab completes the remaining five test owners; saved Action/Command/log/XML records bind those results. Its license phase did not reach enumeration because the method omitted DOCKER_BUILD=false and attempted unavailable Docker. That is a validation-method failure, not evidence of a source licensing defect. Saved ELF inspection found a PT_INTERP segment in the race shim despite its legacy fully_static_link feature. The independent go-static-attributes@60a4c080d prerequisite replaces that C/C++ feature request with the owning Go static attribute at six callers. Compiler composition 6614 adds a GNU ABI boundary for the embedded ioctl preload library. Its focused validation exposed a real Go embed error: wrapping cc_binary relocated libioctl_hook.so into a subdirectory, so the package-relative embed pattern did not match. The correction is public and tracked at compiler validation head 4cd7db30d; it applies the transition to a filegroup and preserves the C++ output path. Source peer f8ca3c005005 closes that correction and explicitly supersedes the earlier source approval that missed the relative-path contract. Corrected builds at 4cd now pass for both target CPUs in normal and race modes. Independent saved peer 55aa5b34b797 verifies eight static executables, four GNU hooks and each complete hook embedded in the matching sniffer binary. Original parent 671eb968 remains Failed because its post-build oracle mishandled an omitted zero-valued protobuf field. The separate loader parent b89f8b4c passes: the exact GNU hook loads into a hash-bound dynamic /bin/true with eager symbol resolution and exits zero (peer 3fe4607f41f7). This is AMD64 GNU loading only, with no sniffer CLI, ioctl, GPU or ARM64 loader claim. The preceding fc881 partial result remains failed; peer 078b18867e0f verifies its forty successful static executables, four GNU libraries and canonical Fetch/Verify for 203 byte-identical catalog entries. Together these source-specific packets close the intended static-output and loader checks without relabeling either failed parent. Final proposal amendment 87cfd11a48dbc80beffc410423856d1092442916 is public and tracked. Independent composition peer 5f6267508559 and immutable binding 65922e5e0dce verify the GNU filegroup correction while keeping the six-callsite static prerequisite separate. The complete proposal plus that prerequisite and the unchanged RBE adapter equals the tested 4cd tree. The five superseded compiler refs (current, corrected, go126, review and rbe-fresh-master-compiler) are retired after independent source/dependency review. Their exact heads are recoverable from the verified 73,653-byte native Git bundle in the disclosed scratch record (bundle 8a77f359478a; retirement receipt 854cf64e88ef). All three historical validation descendants, the approved RBE adapter and raw evidence remain preserved. No new compiler contributor question is pending.\n\nThe eight source prerequisites are #15414 (released Abseil and compatible gRPC/Protobuf graph), #15337 (declared BPF/LLVM inputs), #15153 (plugin build foundation), #15376 (Benchmark annotations), #15368 (allocator behavior and tests), #15120 (declared Python bootstrap), #15146 (license classifier), and seccomp-cgo-thread-clone@51a4d7127. The last prerequisite is demonstrated by the musl plugin failure and corrected passing Actions execution. Its own contributor question is pending. The explicit one-week #15146 maintainer hold remains on upstream delivery; no live prerequisite PR was changed by this source composition. Previously recorded #15034, #15332, #15036, #15042 and #14984 prerequisites are merged and retained only as history. Go 1.27 is not required by this compiler candidate.\n\nHistorical source and validation record:\n\nThe C++ dependency prerequisite #14984 landed through import #15210 at 07:24:33 UTC on October 3. That edge is cleared. Other recorded source prerequisites remain open, including the explicit one-week #15146 review hold; approved RBE configuration delivery is not yet unblocked.\n\nPublic, clean and tracked at 7a0dc16e5c2822e3aa4a93f981b2131a399dc043. The isolated 30-path compiler commit sits above 12 separately reviewed prerequisites. Its tree 0325a2b723c4ee53b88a7321aefe45ff54f6da53 equals catalog descendant f4e41e90c6984807b033cddf0ea73128190e6c67. At the original source head, source and record peers passed and a contributor request was recorded. That historical request is not a current unanswered question; source reconciliation must establish the refreshed candidate and its remaining prerequisites before a new review request. It registers declared LLVM compilers, preserves current Go 1.26.3/x/net 0.54, configures static Go consumers for musl, forwards analyzer/dependency providers, migrates freestanding inputs, and specializes the retained #15153 plugin foundation to declared LLVM tools and its supported Linux AMD64 musl boundary. The LLVM 23.1.2 parser-source/zlib change and their owning catalog entries are folded into this compiler commit; dcd8ef29951708fc054db8b5630222f979fd861a is preserved predecessor evidence, not an independently ready PR candidate. Its source-only master base lacked @llvm referenced by the release overlay; the BPF precursor supplies that module in the final composition. Existing #15146 classifier and #15120 Python bootstrap remain separate prerequisites. Independent Go 1.27/x/net upgrades are not compiler prerequisites.\n\nValidation is closed with exact source boundaries. Original Go 1.26 parent 48bcb09d-92cd-4b21-9b7f-c3bbf809614f at 51901f9a1084f731d54ac4409f199ed5be656fc6 remains FAILED. Independently reviewed outcome 6004b9b94284 verifies eight normal/race outputs across both target CPUs, four static race ELF/link joins, two uncached deps/Nogo test passes and the canonical 189-entry catalog audit with five retained warnings. Its parser bootstrap and supported musl plugin tool-path failures are preserved. Corrected focused parent 9683afe5-ec68-4d76-b29f-ba485ca34efb at 7f82a4f5ba3e845089c87300ae06a71ff48b9fb0 closed OK in 364.747 seconds (outcome d85568400905, independent root peer): actual TestParser and TestDumpStack each pass with no skips, and both public plugin binaries build. The foreign Make action ran uncached; saved action/input paths bind the declared ld.lld and llvm-objdump. Both tests and that action used pinned AMD64 Ubuntu OCI. The two plugin binaries were not executed; no full CI, plugin-network/vhost runtime, native ARM runtime or Coral-parser pass is claimed. The catalog-only f4 descendant imports exact canonical 222bec9a4891 (47,463 bytes/189 entries); final 7a0 changes commit organization without changing that tree. Catalog enumeration excludes toolchain runtime payloads, so this is not a complete runtime-license audit.\n\nEarlier failed compiler predecessors remain recoverable and are omitted from active work. Source 1087b901f92a02c0f50ee834d841a8ae69dfae1d / parent 8f466163-1541-4a59-9725-a8e4de057c3a remains FAILED after 417.191 seconds (580480fa44e7): SDK and 186-entry catalog passed, six of eight normal AMD roots built, and gRPC/x/net, BPF headers, Benchmark macro and ncalls failures stopped later gates. Source b9effe541574ce1ac8f0d15624733e046efc9116, public tree-identical 1cb132b03918e0963308fb7f24fde59a76ca8574 / parent 3d44639e-10ca-4350-a97a-5bc3ce1f5fc0 remains FAILED after 2389.437 seconds (b141c241ec0a): both normal target-CPU builds, four static race joins and nine uncached AMD test owners passed, while the old LLVM Hexagon parser and plugin GLIBC boundaries failed. Those are actual Go 1.27 results, not transferred Go 1.26 runtime credit. The extra direct GNU-libc archive experiment in 48b remains FAILED and unsupported by the public plugin contract. All original source heads are archived and complete historical validation records remain preserved. This compiler delivery preparation made no source change to the qualification branch; its subsequent primary advances are recorded on the qualification node.",
+      "updatedAt": "2026-10-29T03:50:12.442027+00:00",
       "head": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
-        "observedAt": "2026-10-26T16:09:24.625274+00:00",
+        "observedAt": "2026-10-29T03:50:12.442027+00:00",
         "disposition": "Contributor approval retained; waiting for prerequisites",
-        "nextAction": "Deliver the retained-approved compiler proposal only after its still-open plugin, allocator, license, static-mode, header-selection and source-enumeration prerequisites land. The separate LLVM source migration is in qualification; no upstream compiler PR is open.",
+        "nextAction": "Check the six static-tool consumers in cgo and race configurations after the #16234 rollback. The plugin, allocator, license and header prerequisites remain tracked separately.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
         ]
@@ -21735,19 +21735,19 @@
       "ref": "go-static-portable-tools",
       "title": "Use Go static mode for portable tools",
       "url": "https://github.com/google/gvisor/pull/16234",
-      "status": "open",
-      "summary": "The rebase preserved the approved patch, as verified by stable patch ID.",
-      "updatedAt": "2026-10-28T01:47:57.552546+00:00",
+      "status": "merged",
+      "summary": "The source PR and its Copybara import merged. Upstream subsequently reverted all six static-mode changes in #16656. The rollback did not give a reason.",
+      "updatedAt": "2026-10-29T03:50:12.442027+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "76919b76075ddd8031cd0f35b42f5dc94f51feb7",
-        "observedAt": "2026-10-28T01:47:57.552546+00:00",
-        "disposition": "Approved patch unchanged by rebase",
-        "nextAction": "Use the live import and checks for this source head.",
+        "observedAt": "2026-10-29T03:50:12.442027+00:00",
+        "disposition": "Merged, then rolled back upstream",
+        "nextAction": "Track the rollback separately from this completed PR. Determine whether the LLVM compiler needs a replacement under race and cgo.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16234",
-          "https://github.com/tamird/gvisor/commit/fcad05c687d355637e4f91ea73831cd4a406da13",
-          "https://github.com/google/gvisor/pull/16525"
+          "https://github.com/google/gvisor/pull/16656",
+          "https://github.com/google/gvisor/commit/f4c82a02fc3e8452463d5b58f013ba2140003f17"
         ]
       },
       "number": 16234,
@@ -21782,6 +21782,10 @@
         {
           "label": "Copybara export",
           "url": "https://github.com/google/gvisor/pull/16322"
+        },
+        {
+          "label": "Rollback of all six changes",
+          "url": "https://github.com/google/gvisor/commit/f4c82a02fc3e8452463d5b58f013ba2140003f17"
         }
       ]
     },
@@ -34438,8 +34442,8 @@
       "from": "pr:16234",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "The declared compiler composition requires the separate approved six-callsite Go static-mode correction.",
-      "evidence": "https://github.com/google/gvisor/pull/16234"
+      "reason": "Upstream reverted #16234 after merge. Check the real cgo/race tools before deciding whether a replacement is needed.",
+      "evidence": "https://github.com/google/gvisor/commit/f4c82a02fc3e8452463d5b58f013ba2140003f17"
     },
     {
       "from": "pr:16249",
@@ -35262,9 +35266,26 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T03:19:38.015225+00:00",
-      "summary": "TCP recovery fixes reproduce and resolve the reporter\u2019s stalled transfer. A separate six-case packet experiment shows CUBIC sends 29 segments after spaced writes versus 17 after identical writes without gaps. Reno sends 16 in either case. A continuously busy loss-free path showed no delivery advantage from disabling HyStart\u2019s ACK-train detector.",
+      "updatedAt": "2026-10-29T03:50:12.442027+00:00",
+      "summary": "The reporter\u2019s original stall has a tested repair. Separately, after 64 one-segment writes, current-master CUBIC sent a burst of 17 segments without gaps or 29 after spaced writes; its no-history control sent 14. The candidate sent 14 across all three layouts. This measures burst size, not throughput.",
       "findings": [
+        {
+          "text": "The current-master control failed the small-flight slow-start cases: a ten-segment window grew to 11 after one outstanding segment and to 15 after five. The corrected sender passed those cases and the 10\u219220\u219240 continuously backlogged rounds. Its CUBIC first burst was 14 and its Reno first burst 12 with or without the spaced writes. A Linux comparison remains outstanding.",
+          "evidence": [
+            {
+              "label": "Current-master stock packet traces",
+              "url": "https://app.buildbuddy.io/invocation/d09d1185-6493-4a01-b2ad-0b44ddd94045"
+            },
+            {
+              "label": "Corrected traces",
+              "url": "https://app.buildbuddy.io/invocation/f4cc23bc-4010-4753-905a-d4230a3e6500"
+            },
+            {
+              "label": "Backlogged Reno control",
+              "url": "https://app.buildbuddy.io/invocation/e41b0a11-25bd-4c0a-a576-46f2b09c157b"
+            }
+          ]
+        },
         {
           "text": "In an independent SACK recovery test, the oldest 500-byte hole was retransmitted after only 1.5 s despite a 3 s RTO. A later covering ACK arrived after the old deadline. With two holes, restarting the timer on the successful repair of the oldest hole gives it a full RTO; repairing the later hole does not postpone it. All 92 corrected TCP/SACK/RACK cases passed. This timer bug does not account for the previously measured queue delay in the sparse-loss Reno run.",
           "evidence": [
@@ -36834,7 +36855,7 @@
           ]
         }
       ],
-      "nextStep": "Test sender-side window validation and CUBIC epoch handling against the sparse-write traces, a continuously busy sender, small-flight slow start, and native Linux.",
+      "nextStep": "Compare the paced-write and slow-start traces with native Linux. Then decide which congestion-window and epoch changes should be proposed, and measure their effect on throughput separately.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -37830,9 +37851,22 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T03:20:17.623196+00:00",
+      "updatedAt": "2026-10-29T03:50:12.442027+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
+        {
+          "text": "Both restore strategies passed the graph identity checks. For a 22-byte checkpoint with one 2-byte string, bounding the decoder slab reduced backing capacity from 16,384 to 2 bytes. On the seeded 20,000-node graph both strategies reserved exactly 1,490,944 bytes in 91 slabs for the same 145,654 small strings. This measures buffer capacity; it does not establish a heap or speed improvement.",
+          "evidence": [
+            {
+              "label": "Seven uncached restore checks",
+              "url": "https://app.buildbuddy.io/invocation/3f165969-c940-4552-a2b5-f72e393437ae"
+            },
+            {
+              "label": "Qualification and graph accounting",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40813391448"
+            }
+          ]
+        },
         {
           "text": "Two overlapping named slices of pointers round-trip in both traversal orders. Converting one to a pointer to a three-element array in safe Go makes Save reject both orders on the integrated rewrite. The control and both failures use the same backing array.",
           "evidence": [
@@ -40214,7 +40248,7 @@
           ]
         }
       ],
-      "nextStep": "Measure the graph decoder\u2019s string backing arrays on identical small, 20,000-node, and nginx kernel checkpoints. Compare reserved capacity and restored values; capacity alone does not establish retained heap or restore time. The separate slice/array-pointer review is awaiting authorization to post.",
+      "nextStep": "Measure the same two strategies on a real Nginx kernel checkpoint. Keep the two-byte result separate from the unchanged large graph and measure retained heap or timing before recommending a decoder change.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
@@ -46736,11 +46770,32 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T03:22:07.307518+00:00",
+      "updatedAt": "2026-10-29T03:50:12.442027+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
-          "text": "The combined empty-worker release reached //test/release:artifacts and failed: source genrules invoked /bin/bash, the Go standard-library build required /tmp, and PackageTar used a Bash launcher. Its single-target verdict was available 0.253 s after the Bazel command returned. Separately invoking the declared Python directly for PackageTar and MakeDeb produced byte-identical tar and .deb artifacts on empty AMD64 and ordinary AMD64/ARM64 workers. The full release has not passed.",
+          "text": "A single build produced both architectures\u2019 Debian, bzip2 and zstd packages: six outputs, totaling 399,083,591 bytes. Each digest was traced to an uncached packaging action and staging action on the empty worker. The Actions wrapper failed afterward on a cquery option. The public //:release binary directory is a separate target: its GitHub upload must be checked separately. Reconciliation on the original artifacts resolved the cquery alias and passed the source-image audit. The GitHub workflow then reproduced another dependency: an AMD64 release invoked /usr/bin/aarch64-linux-gnu-gcc to build the ARM64 systrap stub and failed because the runner has no cross compiler.",
+          "evidence": [
+            {
+              "label": "Original six-package native build",
+              "url": "https://app.buildbuddy.io/invocation/46b7348c-bd0b-41e3-9480-4ce4635e6c1f"
+            },
+            {
+              "label": "Original parent with failed report",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40811831714"
+            },
+            {
+              "label": "Analysis-only report recovery",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40814054687"
+            },
+            {
+              "label": "Actual native GitHub release workflow",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40814078431"
+            }
+          ]
+        },
+        {
+          "text": "The combined empty-worker release reached //test/release:artifacts and failed: source genrules invoked /bin/bash, the Go standard-library build required /tmp, and PackageTar used a Bash launcher. Its single-target verdict was available 0.253 s after the Bazel command returned. Separately invoking the declared Python directly for PackageTar and MakeDeb produced byte-identical tar and .deb artifacts on empty AMD64 and ordinary AMD64/ARM64 workers. That attempt did not produce the full set of release packages.",
           "evidence": [
             {
               "label": "Combined release on scratch: target failed; complete verifier receipt",
@@ -47270,7 +47325,7 @@
           ]
         }
       ],
-      "nextStep": "Reunite the capture planner with its matching target record, then run the actual AMD64 and ARM64 package builds. Contributor review is pending on stateify, the package version action and the LLVM module-map tool.",
+      "nextStep": "Qualify the actual //:release binary directory on empty workers. Check the architecture split that makes an AMD64 release build the ARM64 stub; preserve both architectures in the Go source ZIP. Stateify, the package version writer and the LLVM module-map tool await contributor review.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
@@ -47763,6 +47818,41 @@
         {
           "label": "Related below-ACK change (#16403)",
           "url": "https://github.com/google/gvisor/pull/16403"
+        }
+      ]
+    },
+    {
+      "id": "investigation:static-tool-rollback",
+      "title": "Check static Go tools after the upstream rollback",
+      "status": "active",
+      "owner": "root",
+      "group": "bazel",
+      "updatedAt": "2026-10-29T03:50:12.442027+00:00",
+      "summary": "Upstream reverted the six build declarations from #16234. The rollback gives no reason. Its affected tools include the shim, test helper, webhook and benchmarks.",
+      "findings": [
+        {
+          "text": "The decisive public evidence is the inverse patch in #16656. The tested package build used the restored shim setting and succeeded; that says nothing about the other tools under cgo or race.",
+          "evidence": [
+            {
+              "label": "Original change",
+              "url": "https://github.com/google/gvisor/pull/16234"
+            },
+            {
+              "label": "Rollback",
+              "url": "https://github.com/google/gvisor/pull/16656"
+            },
+            {
+              "label": "Native two-architecture package build",
+              "url": "https://app.buildbuddy.io/invocation/46b7348c-bd0b-41e3-9480-4ce4635e6c1f"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Check whether the compiler migration actually needs a replacement and isolate any failing configuration before proposing one.",
+      "evidence": [
+        {
+          "label": "Upstream revert",
+          "url": "https://github.com/google/gvisor/commit/f4c82a02fc3e8452463d5b58f013ba2140003f17"
         }
       ]
     }
