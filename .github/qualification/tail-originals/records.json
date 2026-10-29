@@ -1,0 +1,86 @@
+[
+  {
+    "source": "8b8d09a82c08bde3b2f9a964ca372f3004148976",
+    "product": "949510d08e9ce3e8cccb3fd7fc1d7f3348a057cd",
+    "invocation": "c6b63f3f-e4fe-43bf-b837-e8c5e48a2125",
+    "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test",
+    "suite": "TestTailProbeLastPacket",
+    "stock": true,
+    "wrapper": 1,
+    "lane": 3,
+    "reports": {
+      "test.log": {
+        "bytes": 9920,
+        "sha256": "517dba2486bb52c574e14dabd8b3078cca6f662d9f21366cc6a08503594f5baa"
+      },
+      "test.xml": {
+        "bytes": 3794,
+        "sha256": "65279ba30b100095e6a1be0fcae02caa10ba325531742dd88ba7f247e7f5c2d3"
+      }
+    },
+    "runner_original": 40880742688
+  },
+  {
+    "source": "57f554326895bc7a2ef971ea2c811f4f1c5ec86d",
+    "product": "81e3444fede09fe593134603cc0facbf231e4cb3",
+    "invocation": "195f961b-1df4-42d1-a2ea-f3ce04d236ca",
+    "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test",
+    "suite": "TestTailProbeLastPacket",
+    "stock": false,
+    "wrapper": 0,
+    "lane": 0,
+    "reports": {
+      "test.log": {
+        "bytes": 9704,
+        "sha256": "2cc5d46b373a070e261c141fcfdf43c1d3ea5d98ce5a472fa5bcc433dc7a97fd"
+      },
+      "test.xml": {
+        "bytes": 639,
+        "sha256": "4ff3094bd88d3bcafcd24e5dce1e4d0bda816a98fbbd1e8b8a795f49a6df36fd"
+      }
+    },
+    "runner_original": 40881738867
+  },
+  {
+    "source": "4c31b4fc4c319eb6aa71cda9bc1b8365739c20d6",
+    "product": "4c31b4fc4c319eb6aa71cda9bc1b8365739c20d6",
+    "invocation": "fa107bb6-b1db-4e42-a705-3c120234e97c",
+    "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test",
+    "suite": "TestGSOTailLossProbe",
+    "stock": false,
+    "wrapper": 0,
+    "lane": 0,
+    "reports": {
+      "test.log": {
+        "bytes": 6866,
+        "sha256": "67f1688dd672b23ff3c46e9c8e357b03b4543d35da257422f32713cc983134b9"
+      },
+      "test.xml": {
+        "bytes": 508,
+        "sha256": "951386a4470d223015f652b3948a8763e405ff05e824ef95fb7b4c99f0ee198d"
+      }
+    },
+    "runner_original": 40884589206
+  },
+  {
+    "source": "54dd721a4650c8c5f6afb72dfcc590442b4a13a0",
+    "product": "54dd721a4650c8c5f6afb72dfcc590442b4a13a0",
+    "invocation": "9ec3b669-c853-4c77-9ab0-5d723cbc8b06",
+    "owner": "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test",
+    "suite": "TestGSOTailLossProbe",
+    "stock": true,
+    "wrapper": 1,
+    "lane": 3,
+    "reports": {
+      "test.log": {
+        "bytes": 7116,
+        "sha256": "044bf8e0d29d7ab85a9e28169f0d1503159a8866916f1f43d41e70ee17e73e3c"
+      },
+      "test.xml": {
+        "bytes": 7699,
+        "sha256": "45f20a8f9a56970f233f216a236425633e7105291167a0a84633dec7d2995b64"
+      }
+    },
+    "runner_original": 40884589206
+  }
+]
