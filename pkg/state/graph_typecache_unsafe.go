@@ -218,7 +218,8 @@ func hashTypeSig(h uint64, t reflect.Type, depth int) uint64 {
 
 // typeTable assigns stream indices to types.
 type typeTable struct {
-	// exact and shape map typeInfo ids to indices plus one.
+	// exact and shape map typeInfo ids to indices plus one. A negative shape
+	// entry marks a named composite whose descriptor is being written.
 	exact, shape []int32
 	types        []*typeInfo
 	buf          encBuf
@@ -248,6 +249,9 @@ func (tt *typeTable) reset() {
 func lookupIndex(m []int32, ti *typeInfo) (int, bool) {
 	if int(ti.id) < len(m) {
 		if v := m[ti.id]; v != 0 {
+			if v < 0 {
+				Failf("recursive type %v must be registered", ti.typ)
+			}
 			return int(v - 1), true
 		}
 	}
@@ -265,13 +269,13 @@ const (
 	objInexact = 0x80
 )
 
-func setIndex(m *[]int32, ti *typeInfo, idx int) {
+func storeIndex(m *[]int32, ti *typeInfo, entry int32) {
 	if int(ti.id) >= len(*m) {
 		grown := make([]int32, max(2*len(*m), int(ti.id)+256))
 		copy(grown, *m)
 		*m = grown
 	}
-	(*m)[ti.id] = int32(idx + 1)
+	(*m)[ti.id] = entry
 }
 
 // exactIndex returns the index of a type, which the decoder must be able to
@@ -303,10 +307,19 @@ func (tt *typeTable) add(ti *typeInfo, exact bool) int {
 	var key, elem int
 	if !registered {
 		switch ti.kind {
-		case reflect.Pointer, reflect.Slice, reflect.Array:
-			elem = tt.index(ti.elem, exact)
-		case reflect.Map:
-			key = tt.index(ti.key, exact)
+		case reflect.Pointer, reflect.Slice, reflect.Array, reflect.Map:
+			if ti.typ.Name() != "" {
+				if exact {
+					Failf("type %q is not registered", ti.typ)
+				}
+				// Every recursive Go type passes through a named type.
+				// A registered name can break the cycle; a shape
+				// descriptor can only refer to earlier entries.
+				storeIndex(&tt.shape, ti, -1)
+			}
+			if ti.kind == reflect.Map {
+				key = tt.index(ti.key, exact)
+			}
 			elem = tt.index(ti.elem, exact)
 		}
 	}
@@ -347,9 +360,9 @@ func (tt *typeTable) add(ti *typeInfo, exact bool) int {
 	idx := len(tt.types)
 	tt.types = append(tt.types, ti)
 	if exact || registered {
-		setIndex(&tt.exact, ti, idx)
+		storeIndex(&tt.exact, ti, int32(idx+1))
 	}
-	setIndex(&tt.shape, ti, idx)
+	storeIndex(&tt.shape, ti, int32(idx+1))
 	return idx
 }
 
