@@ -26,10 +26,6 @@ import (
 
 	"gvisor.dev/gvisor/pkg/seccomp/precompiledseccomp"
 	"gvisor.dev/gvisor/runsc/flag"
-
-	// This import will be replaced by the one specified in the genrule,
-	// or removed if stubbed out in fastbuild mode.
-	"gvisor.dev/gvisor/pkg/seccomp/precompiledseccomp/example" // REPLACED_IMPORT_THIS_IS_A_LOAD_BEARING_COMMENT
 )
 
 //go:embed precompiled_lib.tmpl.go
