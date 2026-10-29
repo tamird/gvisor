@@ -1,0 +1,191 @@
+{
+  "error": {
+    "class": "RuntimeError",
+    "reason": "wrong expected source rejection"
+  },
+  "one_package_queries": [
+    {
+      "exit": 0,
+      "phase": "candidate unchanged source set",
+      "root_package_direct_source_count": 617,
+      "stderr": {
+        "bytes": 464,
+        "sha256": "ee6fb07a9476ae5c20b4c3bcd86737444233fb192bfb9362ba8735efcb1c4756"
+      },
+      "stdout": {
+        "bytes": 31502,
+        "sha256": "8f4d2466f5c1741f706c5817ed996a2725528d0a257d8833572039e1eb073f13"
+      }
+    },
+    {
+      "exit": 0,
+      "phase": "new BUILD.bazel and root WORKSPACE.bazel; nested repositories excluded",
+      "root_package_direct_source_count": 619,
+      "stderr": {
+        "bytes": 27,
+        "sha256": "ab590410c0e232e6f833351016e42483185e6e46aaf4522771dbb5101beffc39"
+      },
+      "stdout": {
+        "bytes": 31614,
+        "sha256": "ebc1d209532d5ff6dacb39caae02c621a9b342848a40340102f4acbf4a6dd731"
+      }
+    }
+  ],
+  "original": {
+    "content": {
+      "bytes": 46,
+      "sha256": "0853236adef53d1344eee03310ec7a6a2b10b2aae76aeffc27c047b01ccb601e"
+    },
+    "known_malformed_file": "pkg/.buildifier-declared-new/BUILD",
+    "source": "4089e4d00cf2cf178639b7ff6d83e0613e7814a0"
+  },
+  "phases": [
+    {
+      "action_exit": 0,
+      "ambient_example_requested": true,
+      "arch": "amd64",
+      "build_finish": [
+        {
+          "name": "SUCCESS"
+        }
+      ],
+      "cache_hit": false,
+      "content_hashes": "48cc61500d59d50ced12d305ab34f525321eeb614377f1a0db6b8dda31be7dd6",
+      "count": 618,
+      "diagnostic": [],
+      "driver": {
+        "hash": "c380cf7987dcb8ae251ef10b82b35226c7c3c01cb71532f5d5ec5f6659890246",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "2867360"
+      },
+      "error_count": 0,
+      "error_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "example_emitted": true,
+      "exit": 0,
+      "finished": "2026-10-29T15:16:13.641985+00:00",
+      "formatting": [],
+      "invocation": "8c9b0ad3-f334-4735-8717-8ed9c6a5e413",
+      "label": "//:buildifier",
+      "lint_locations": [],
+      "log": {
+        "bytes": 7108,
+        "sha256": "4bf8a1703a7429d52a8331f056189b74ed9f3184d38092626a00c34a9b508ba0"
+      },
+      "manifest": {
+        "hash": "aa32e4f6641340fe46869c181c302cdc0358bc0498678bc7f68cb7055c88cabc",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "17966"
+      },
+      "name": "old-example-false-green",
+      "outputs": [
+        {
+          "digest": {
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "hashFunctionName": "SHA-256",
+            "sizeBytes": "0"
+          },
+          "isTool": false,
+          "path": "bazel-out/k8-fastbuild/bin/buildifier.ok",
+          "symlinkTargetPath": ""
+        }
+      ],
+      "platform": {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+        "workload-isolation-type": "oci"
+      },
+      "previously_unexposed": {
+        "MODULE.bazel": "ee33f12524e6f6f486ae2486ec47bf255e097540fa0039f733bf3dfc4d2bdd51",
+        "governance/tools/maintainers/repositories.bzl": "e71729097506b6ffa1b53868f878d2c65330917536efc454d02011ae944a658a",
+        "tools/bazeldefs/extensions/coral_crosstool.bzl": "ccfd48b9cebd6e9d3a4a774e7a0594500752e33a8984bda6d5100a94e25fee09",
+        "tools/bazeldefs/extensions/crosstool.bzl": "effba2b607bb214ba1cc017c09c638d8ce718a1e144347c658b1d62cf4980976",
+        "tools/bazeldefs/extensions/llvm_zlib.bzl": "b60c5cfc676806d04977f42a672c2f30be7d72041ea1a5fe658f01651e91e8e1",
+        "tools/cc_compile_inputs.bzl": "83727129384d3fb8ccb90b295ee09304a5c6c49d9e37cbf398f4b00a009ab15e",
+        "tools/show_paths.bzl": "bc3307c460a8c701f53881d39a9e53f6cefa9ab6fbdd1fe5f3fd0b5fc2913b9a"
+      },
+      "runner": "remote",
+      "source_membership": "0e222c46d451b963630f5f0db7a81ced903e4e448f47b84f21bb2cd8e4f75ee1",
+      "started": "2026-10-29T15:15:23.967337+00:00",
+      "supplier_resolution_failed": false,
+      "tool": {
+        "hash": "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "7757842"
+      },
+      "vcs_input": false
+    },
+    {
+      "action_exit": 4,
+      "ambient_example_requested": true,
+      "arch": "amd64",
+      "build_finish": [
+        {
+          "code": 1,
+          "name": "BUILD_FAILURE"
+        }
+      ],
+      "cache_hit": false,
+      "content_hashes": "0e0f1b8b2beb16da88b28f9a1e684196c41924b8f2f268d8b7da787999896b31",
+      "count": 619,
+      "diagnostic": [],
+      "driver": {
+        "hash": "b8cd59e38b3075fa14cd6dd5336f8e61fb72b5f4c2be9503e19d115d075ea221",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "2867360"
+      },
+      "error_count": 2,
+      "error_digest": "fccde4afd01958184038a63a05cabc2acfaeefae9110da1a5e7834fb913dbbe9",
+      "exit": 1,
+      "finished": "2026-10-29T15:16:39.508588+00:00",
+      "formatting": [
+        "pkg/.buildifier-declared-new/nested/BUILD.bazel # reformat",
+        "tools/lint_sources.bzl # reformat"
+      ],
+      "invocation": "e57405aa-6561-47cb-a22a-1dd8cdd176e3",
+      "label": "//:buildifier",
+      "lint_locations": [],
+      "log": {
+        "bytes": 4661,
+        "sha256": "c70b079fa51809ca613efeee75a460851af878f9d2d6e531e3baecfbbfd2d599"
+      },
+      "manifest": {
+        "hash": "2285073a1ae00642172b466e1272aa1c8dd47a0fac4cc51a98c916e0243db92a",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "18019"
+      },
+      "name": "ambient-example-refused",
+      "outputs": [],
+      "platform": {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+        "workload-isolation-type": "oci"
+      },
+      "previously_unexposed": {
+        "MODULE.bazel": "f9665ffd2f0f039c7822523adeff57a590085c0d4e945fdb5beffa3fdbfffcbd",
+        "governance/tools/maintainers/repositories.bzl": "e71729097506b6ffa1b53868f878d2c65330917536efc454d02011ae944a658a",
+        "tools/bazeldefs/extensions/coral_crosstool.bzl": "ccfd48b9cebd6e9d3a4a774e7a0594500752e33a8984bda6d5100a94e25fee09",
+        "tools/bazeldefs/extensions/crosstool.bzl": "effba2b607bb214ba1cc017c09c638d8ce718a1e144347c658b1d62cf4980976",
+        "tools/bazeldefs/extensions/llvm_zlib.bzl": "b60c5cfc676806d04977f42a672c2f30be7d72041ea1a5fe658f01651e91e8e1",
+        "tools/cc_compile_inputs.bzl": "83727129384d3fb8ccb90b295ee09304a5c6c49d9e37cbf398f4b00a009ab15e",
+        "tools/show_paths.bzl": "bc3307c460a8c701f53881d39a9e53f6cefa9ab6fbdd1fe5f3fd0b5fc2913b9a"
+      },
+      "runner": "remote",
+      "source_membership": "c9f74cf5937f1e174177027b622dcaf313e5152c5add4e0a4876d51f5a0d12c2",
+      "started": "2026-10-29T15:16:15.221254+00:00",
+      "supplier_resolution_failed": false,
+      "tool": {
+        "hash": "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "7757842"
+      },
+      "vcs_input": false
+    }
+  ],
+  "real_package_target": "//pkg/.buildifier-declared-new/nested:nested",
+  "source": "2efeae631d80b7a8358cffa31552d902144b443e",
+  "tree": "5e5354ec2c8925491e4d4ce4f687ea3d2986ff3c",
+  "verdict": "INCOMPLETE",
+  "verified_at": "2026-10-29T15:16:39.551308+00:00"
+}
