@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T02:50:43.309284+00:00",
+    "updatedAt": "2026-10-29T02:59:54.299228+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31901,7 +31901,7 @@
       "group": "runtime",
       "status": "Contributor review requested",
       "updatedAt": "2026-10-28T23:57:16Z",
-      "summary": "The replacement waiter, interest map, ready list, sequence number and locked helper now have checked guards. Removing the writer lock triggers checklocks. Final production sources passed race (47 records), both architecture analyzers, the Linux/checkpoint/allocation cases, and the matched armed and disarmed restore comparison. Opening waits for #16513 and contributor review.",
+      "summary": "The replacement waiter, interest map, ready list, sequence number and locked helper now have checked guards. Removing the writer lock triggers checklocks. Final production sources passed race (47 records), both architecture analyzers, the Linux/checkpoint/allocation cases, and the matched armed and disarmed restore comparison. #16513 has merged; the revision awaits contributor review.",
       "evidence": [
         {
           "label": "Revised proposal",
@@ -31958,7 +31958,7 @@
         "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
         "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
         "title": "Keep an epoll watch intact when MOD fails",
-        "summary": "Use checklocks to enforce ownership of the waiter pointer and ready list. Race and restore tests pass; the analyzer rejects an unguarded write. Open after #16513.",
+        "summary": "Use checklocks to enforce ownership of the waiter pointer and ready list. Race and restore tests pass; the analyzer rejects an unguarded write. #16513 has merged.",
         "body": "Field and helper guards replace lock requirements in prose; queueing and waiter identity checks use one critical section."
       }
     },
@@ -32121,6 +32121,86 @@
         "title": "Update rules_python to 2.4.5",
         "summary": "Bazel writes unstamped Python tool metadata without a shell. Both architectures built the same tarball and Debian package. The empty worker progressed to their launchers, which still depend on a missing executable.",
         "body": "One module version and its license record change. The archive writers ran on both architectures; this does not yet make the complete package build shell-free."
+      }
+    },
+    {
+      "id": "branch:package-version-status",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/package-version-status",
+      "head": "dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
+      "title": "Write the Debian package version from stable workspace status",
+      "url": "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
+      "group": "release",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T02:59:54.299228+00:00",
+      "summary": "A declared Go tool replaces the shell pipeline that creates version.txt. The tagged and ordinary outputs matched the original bytes in both target architectures; the writer ran on empty AMD64 workers.",
+      "evidence": [
+        {
+          "label": "Proposed commit",
+          "url": "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc"
+        },
+        {
+          "label": "Tagged output, AMD64 target",
+          "url": "https://app.buildbuddy.io/invocation/1c42d01f-a781-4ec4-9169-4c03d8ee2756"
+        },
+        {
+          "label": "Tagged output, ARM64 target",
+          "url": "https://app.buildbuddy.io/invocation/597b1ace-0ff2-4342-95fd-d80158d37212"
+        },
+        {
+          "label": "Ordinary output, AMD64 target",
+          "url": "https://app.buildbuddy.io/invocation/90b54e24-93fe-40a5-b3c1-2c730b38e2c7"
+        },
+        {
+          "label": "Ordinary output, ARM64 target",
+          "url": "https://app.buildbuddy.io/invocation/4522aa74-1939-4b15-a25c-7ae36e312d42"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
+        "url": "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
+        "title": "Write the Debian package version from stable workspace status",
+        "summary": "A declared Go tool replaces the shell pipeline that creates version.txt. The tagged and ordinary outputs matched the original bytes in both target architectures; the writer ran on empty AMD64 workers.",
+        "body": "The package label and runsc revision stay unchanged. This change only covers the package-version action."
+      }
+    },
+    {
+      "id": "branch:module-map-generator-musl",
+      "type": "branch",
+      "repo": "tamird/hermetic-llvm",
+      "ref": "fix/module-map-generator-musl",
+      "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
+      "title": "Link the Linux module map generator with musl",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T02:59:54.299228+00:00",
+      "summary": "The Linux worker could not start the helper because it needed the host glibc loader. With the patch on the release used by gVisor, empty AMD64 and ARM64 workers generated the maps used in real compiler-rt builds.",
+      "evidence": [
+        {
+          "label": "Proposed commit",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e"
+        },
+        {
+          "label": "Empty AMD64 worker and original map comparison",
+          "url": "https://app.buildbuddy.io/invocation/dc95c65b-2755-432d-ba72-e81936f11684"
+        },
+        {
+          "label": "Empty ARM64 worker and compiler-rt archive",
+          "url": "https://app.buildbuddy.io/invocation/d2a6d142-2596-42cf-9dd8-421151106437"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e",
+        "title": "Link the Linux module map generator with musl",
+        "summary": "The Linux worker could not start the helper because it needed the host glibc loader. With the patch on the release used by gVisor, empty AMD64 and ARM64 workers generated the maps used in real compiler-rt builds.",
+        "body": "The supplier-main proposal changes one BUILD file. The identical hunk was qualified on v0.8.24. Darwin and Windows selection were inspected but not executed."
       }
     }
   ],

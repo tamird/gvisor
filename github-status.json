@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T02:45:30.281737+00:00",
-  "registryDate": "2026-10-29T02:50:43.309284+00:00",
+  "registryDate": "2026-10-29T02:59:54.299228+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -230513,7 +230513,7 @@
         "since": "2026-10-29T01:35:12.698800+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     },
     "pr:16052": {
@@ -230793,7 +230793,7 @@
         "since": "2026-10-29T01:35:12.698800+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     },
     "pr:16250": {
@@ -231398,7 +231398,7 @@
         "since": "2026-10-29T01:38:37.117895+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     },
     "pr:16539": {
@@ -231455,7 +231455,7 @@
         "since": "2026-10-29T00:45:15.187460+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     },
     "pr:16586": {
@@ -231505,7 +231505,7 @@
         "since": "2026-10-29T01:35:12.698800+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     },
     "pr:16590": {
@@ -231618,7 +231618,7 @@
         "since": "2026-10-29T00:45:15.187460+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     },
     "pr:16602": {
@@ -231903,7 +231903,7 @@
         "since": "2026-10-29T00:45:15.187460+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     },
     "branch:rules-python-unstamped-build-data": {
@@ -231912,7 +231912,25 @@
         "since": "2026-10-29T01:16:05.610781+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T02:50:43.309284+00:00"
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
+      }
+    },
+    "branch:package-version-status": {
+      "contributor-review": {
+        "scope": "dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
+        "since": "2026-10-29T02:59:54.299228+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
+      }
+    },
+    "branch:module-map-generator-musl": {
+      "contributor-review": {
+        "scope": "317378dd0778ebc15d190e4ebb018b5903b1039e",
+        "since": "2026-10-29T02:59:54.299228+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T02:59:54.299228+00:00"
       }
     }
   },
