@@ -1079,6 +1079,9 @@ func (s *sender) sendZeroWindowProbe() {
 
 // +checklocks:s.ep.mu
 func (s *sender) enableZeroWindowProbing() {
+	// Once the peer closes its window, the next timer expiry must probe
+	// that window even if the first transmission was refused locally.
+	s.localWriteRetries = 0
 	s.zeroWindowProbing = true
 	// We piggyback the probing on the retransmit timer with the
 	// current retranmission interval, as we may start probing while
