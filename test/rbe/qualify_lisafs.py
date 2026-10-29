@@ -1,4 +1,4 @@
-"""Run the four LisaFS owners once and verify both socket fixtures from their original XML."""
+"""Run selected package owners and verify required cases from their original XML."""
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -9,9 +9,28 @@ import xml.etree.ElementTree as ET
 
 import qualification_report as report
 
-source, rc, destination = sys.argv[1:]
-owners = ["//pkg/lisafs:sock_test", "//pkg/lisafs:connection_test", "//pkg/lisafs:node_test", "//runsc/gofer/fs:lisafs_test"]
-required = {"TestFSGofer/passthrough/UDS", "TestFSGofer/virtual/UDS"}
+pr, architecture, source, rc, destination = sys.argv[1:]
+if pr == "15647":
+    case_owners = {
+        "//runsc/config:config_test": ["TestFromFlags"],
+        "//pkg/sentry/time:time_test": ["TestReferenceClocks"],
+        "//runsc/boot:boot_nogo": [],
+        "//test/runner:runner_nogo": [],
+    }
+elif pr == "15730":
+    case_owners = {
+        "//pkg/tcpip/network/ipv4:ipv4_test": ["TestIPv4Sanity", "TestForwarding"],
+        "//pkg/tcpip/header:header_x_test": ["TestICMPv4Checksum"],
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": ["TestConnectICMPError"],
+        "//pkg/tcpip/network/ipv4:ipv4_nogo": [],
+        "//pkg/tcpip/transport/tcp:tcp_nogo": [],
+        "//pkg/tcpip/sample/tun_tcp_connect:tun_tcp_connect_nogo": [],
+        "//pkg/tcpip/sample/tun_tcp_echo:tun_tcp_echo_nogo": [],
+    }
+else:
+    raise ValueError(f"unexpected PR {pr}")
+owners = list(case_owners)
+required = {(label, case) for label, cases in case_owners.items() for case in cases}
 d = Path(destination)
 d.mkdir()
 def now():
@@ -21,7 +40,7 @@ def git(*args):
 def save(name, value):
     (d/name).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
-r = {"source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
+r = {"pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
 try:
     assert git("rev-parse", "HEAD").decode().strip() == source
     assert git("rev-parse", "HEAD^").decode().strip() == "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
@@ -47,6 +66,7 @@ try:
                      "native_exit": "exit", "capture_exit": "capture", "executed_arguments": "args"})
     log=(d/"command.log").read_text(errors="replace")
     r["invocations"] = re.findall(r"Invocation ID: ([0-9a-f-]{36})", log)
+    r["failure_excerpt"] = [line[:1000] for line in log.splitlines() if line.startswith("ERROR:") or ": error:" in line][:24] if code else []
     r["hints"] = [h for h in ("RESOURCE_EXHAUSTED", "no such target", "Permission denied", "not found", "signal: killed") if h.lower() in log.lower()]
     clean=d/"events.jsonl"
     outroot=Path(subprocess.check_output(bazel+["info","output_base"],stderr=subprocess.DEVNULL,text=True).strip())
@@ -69,7 +89,7 @@ try:
             records.append({"name":case.get("name"),"owner":f["identity"]["label"],
                             "result":next((c.tag for c in case if c.tag in ("skipped","failure","error")),"pass")})
     r["cases"]=records
-    found={row["name"] for row in records if row["owner"]==owners[-1] and row["result"]=="pass"}
+    found={(row["owner"],row["name"]) for row in records if row["result"]=="pass"}
     r["missing_required"]=sorted(required-found)
     ran={e["owner"] for e in r["executions"] if e["remote"] and not e["cached"]}
     r["status"]="PASS" if v["status"]=="PASS" and ran==set(owners) and not r["missing_required"] and not code else "FAIL"

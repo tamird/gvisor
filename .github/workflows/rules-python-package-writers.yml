@@ -1,20 +1,23 @@
-name: Qualify LisaFS inode modes and host sockets
+name: Verify clock and netip conflict repairs
 on:
   push:
-    branches: [qualification/lisafs-inode-modes]
+    branches: [qualification/clock-netip-oct29]
 permissions:
   contents: read
 jobs:
   catalog:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    name: "${{ matrix.pr }} (${{ matrix.arch }})"
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 80
     strategy:
       fail-fast: false
       matrix:
         include:
-          - pr: "14361"
-            sha: 75ffc8b5c76b03639ea7502f305d5708663a29ea
+          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04"}
+          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm"}
+          - {"pr": "15730", "sha": "d698920baa1ec2fe3142a14143bcb3e221fa7129", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04"}
+          - {"pr": "15730", "sha": "d698920baa1ec2fe3142a14143bcb3e221fa7129", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -26,11 +29,13 @@ jobs:
           path: source
           fetch-depth: 2
           persist-credentials: false
-      - name: Run the owning LisaFS suites with XML reporting
+      - name: Exercise changed packages and original regression cases
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
           PR: ${{ matrix.pr }}
+          ARCH: ${{ matrix.arch }}
+          CPU: ${{ matrix.cpu }}
           SHA: ${{ matrix.sha }}
         shell: bash
         run: |
@@ -42,12 +47,12 @@ jobs:
           mkdir -p "$RUNNER_TEMP/catalog_platform"
           platform=$RUNNER_TEMP/catalog_platform
           printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
-          cat > "$platform/BUILD" <<'BUILD'
+          cat > "$platform/BUILD" <<BUILD
           platform(
               name = "ubuntu",
-              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
               exec_properties = {
-                  "Arch": "amd64",
+                  "Arch": "$ARCH",
                   "OSFamily": "linux",
                   "workload-isolation-type": "oci",
                   "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
@@ -70,15 +75,15 @@ jobs:
               "build --inject_repository=catalog_platform=$platform" \
               'build --host_platform=@catalog_platform//:ubuntu' \
               'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
-              'build --platforms=//tools/bazeldefs:linux_amd64'
+              "build --platforms=//tools/bazeldefs:linux_$ARCH"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
-          python3 -B ../carrier/test/rbe/qualify_lisafs.py "$SHA" "$rc" "$RUNNER_TEMP/catalog"
+          python3 -B ../carrier/test/rbe/qualify_lisafs.py "$PR" "$ARCH" "$SHA" "$rc" "$RUNNER_TEMP/catalog"
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: lisafs-verdict
+          name: conflict-verdict-${{ matrix.pr }}-${{ matrix.arch }}
           path: ${{ runner.temp }}/catalog/result.json
           if-no-files-found: error
