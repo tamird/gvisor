@@ -5,6 +5,7 @@ load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools/bzlformat:defs.bzl", "buildifier")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -12,6 +13,18 @@ load("//website:defs.bzl", "doc")
 package(
     default_applicable_licenses = [":license"],
     licenses = ["notice"],
+)
+
+buildifier(name = "buildifier")
+
+build_test(
+    name = "buildifier_test",
+    targets = [":buildifier"],
+)
+
+alias(
+    name = "buildifier_fix",
+    actual = "//tools/bzlformat:fix",
 )
 
 license(
