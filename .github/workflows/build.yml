@@ -1,17 +1,17 @@
-name: Reporter end-of-transfer handshake study
+name: RACK retransmission origin control
 'on':
   workflow_dispatch: {}
 permissions:
   contents: read
 jobs:
   qualification:
-    name: Run the original two-stack transfer
+    name: Compare original and retransmitted packet delivery
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_TARGETS: //test/rbe/handshakefloor:study_test
-      QUALIFICATION_TEST_FILTER: ^TestEndOfTransfer$
+      QUALIFICATION_TARGETS: //test/rbe/probeorigin:study_test
+      QUALIFICATION_TEST_FILTER: ^TestProbeOrigin$
       QUALIFICATION_LANES: test
       QUALIFICATION_ARCH: amd64
     steps:
@@ -26,7 +26,7 @@ jobs:
         ref: ${{ github.sha }}
         persist-credentials: false
         fetch-depth: 10
-    - name: Measure the same external source in forty new connections
+    - name: Run the matched receiver histories
       timeout-minutes: 38
       shell: bash
       env:
@@ -34,8 +34,8 @@ jobs:
       run: |
         set -euo pipefail
         test "$QUALIFICATION_COMMIT" = "$(git rev-parse HEAD)"
-        test "$QUALIFICATION_TARGETS" = "//test/rbe/handshakefloor:study_test"
-        test "$QUALIFICATION_TEST_FILTER" = '^TestEndOfTransfer$'
+        test "$QUALIFICATION_TARGETS" = "//test/rbe/probeorigin:study_test"
+        test "$QUALIFICATION_TEST_FILTER" = '^TestProbeOrigin$'
         test "$QUALIFICATION_LANES" = "test"
         test "$QUALIFICATION_ARCH" = "amd64"
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
@@ -92,12 +92,12 @@ jobs:
           "--bazel-option=--test_timeout=1500" "--bazel-option=--test_env=GO_TEST_WRAP_TESTV=1" \
           "--bazel-option=--test_arg=-test.v" "--bazel-option=--test_arg=-test.timeout=23m" \
           "--bazel-option=--remote_download_outputs=toplevel" test || status=$?
-        python3 -B test/rbe/handshakefloor/result.py "$out" "$status"
+        python3 -B test/rbe/probeorigin/result.py "$out" "$status"
     - name: Retain native wire reports, XML, and verdict
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: reporter-handshake-study
+        name: probe-origin-study
         path: ${{ runner.temp }}/fifo/original
         if-no-files-found: error
     if: ${{ github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1 }}
