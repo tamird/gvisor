@@ -1,7 +1,7 @@
 name: Measure string storage in one Nginx kernel checkpoint
 on:
   push:
-    branches: [qualification/state-string-slab-kernel-source-depth]
+    branches: [qualification/state-string-slab-gnu]
 permissions:
   contents: read
 jobs:
@@ -61,7 +61,7 @@ jobs:
             temp=$1
             out=$temp/string-results
             status=0
-            bazel --bazelrc="$temp/study.bazelrc" test --config=x86_64 -c opt --extra_toolchains=@llvm//toolchain:all --test_timeout=900 --jobs=80 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --build_event_json_file="$temp/kernel.bep" //test/rbe/string_kernel:nginx >"$temp/kernel-build.log" 2>&1 || status=$?
+            bazel --bazelrc="$temp/study.bazelrc" test --config=x86_64 -c opt --test_timeout=900 --jobs=80 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --build_event_json_file="$temp/kernel.bep" //test/rbe/string_kernel:nginx >"$temp/kernel-build.log" 2>&1 || status=$?
             printf "%s\n" "$status" >"$out/bazel-exit"
             for name in test.xml test.log; do
               path=bazel-testlogs/test/rbe/string_kernel/nginx/$name
@@ -75,3 +75,19 @@ jobs:
         with:
           name: one-nginx-kernel
           path: ${{ runner.temp }}/string-results/
+  graph-original:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - name: Read the earlier graph invocation's actual package failure
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/string_kernel/graph_original.py
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: graph-origin
+          path: ${{ runner.temp }}/graph-origin.json
