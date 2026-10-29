@@ -1,3 +1,4 @@
+diff --git a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl b/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
 --- a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
 +++ b/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
 @@ -18 +18,8 @@
@@ -52,6 +53,8 @@
 +            cfg = "exec",
 +            default = "@rules_python//python:current_py_toolchain",
 +        ),
+diff --git a/bazel/private/oss/toolchains/prebuilt/check_protoc_version.py b/bazel/private/oss/toolchains/prebuilt/check_protoc_version.py
+new file mode 100644
 --- /dev/null
 +++ b/bazel/private/oss/toolchains/prebuilt/check_protoc_version.py
 @@ -0,0 +1,45 @@
