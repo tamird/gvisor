@@ -75,6 +75,7 @@ build:rbe-common --define=rbe=true
 build:rbe-common --spawn_strategy=remote
 build:rbe-common --noremote_local_fallback
 build:rbe-common --noremote_accept_cached
+build:rbe-common --extra_toolchains=//test/rbe/protoc_check:static_python
 build:rbe-common --compilation_mode=opt
 build:rbe-common --remote_cache_compression
 test:rbe-common --strategy=TestRunner=remote
