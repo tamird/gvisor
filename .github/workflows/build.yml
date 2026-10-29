@@ -55,8 +55,8 @@ jobs:
         \nexport PATH=\"$RUNNER_TEMP/fifo-bin:$PATH\"\noverall=0\nfor source in 54dd721a4650c8c5f6afb72dfcc590442b4a13a0\
         \ 4c31b4fc4c319eb6aa71cda9bc1b8365739c20d6; do\n  git switch --detach \"$source\"\n  export QUALIFICATION_COMMIT=$source\n\
         \  out=$RUNNER_TEMP/fifo/$source\n  mkdir -p \"$out\" test/rbe\n  for runner in qualify.sh unit_matrix.py\
-        \ first_loss_result.py; do\n    git show \"$GITHUB_SHA:test/rbe/$runner\" > \"test/rbe/$runner\"\
-        \n  done\n  status=0\nbash test/rbe/qualify.sh --arch=amd64 \"--test-target=$QUALIFICATION_TARGETS\"\
+        \ first_loss_result.py matched_test_result.py tail_probe_observation.py; do\n    git show \"$GITHUB_SHA:test/rbe/$runner\" > \"test/rbe/$runner\"\
+        \n  done\n  status=0\nQUALIFICATION_LANE_RESULTS=\"$out/lanes.jsonl\" bash test/rbe/qualify.sh --arch=amd64 \"--test-target=$QUALIFICATION_TARGETS\"\
         \ \\\n  \"--test-filter=$QUALIFICATION_TEST_FILTER\" \"--bazel-option=--build_event_json_file=$out/events.jsonl\"\
         \ \\\n  \"--bazel-option=--test_sharding_strategy=disabled\" \"--bazel-option=--cache_test_results=no\"\
         \ \"--bazel-option=--remote_download_outputs=toplevel\" test || status=$?\npython3 -B test/rbe/first_loss_result.py\
