@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T22:57:17.831574+00:00",
+    "updatedAt": "2026-10-29T23:12:26.596881+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32260,14 +32260,22 @@
       "repo": "google/gvisor",
       "number": 16584,
       "ref": "test/cl1008391846",
-      "head": "3e8ad410e8f8b4d7fd3ded0d40c87d3bd4dbc51a",
+      "head": "3dd75fc57e6b26ab5b4d8378a7c66959c7f3b9f6",
       "title": "Review the graph decoder",
       "url": "https://github.com/google/gvisor/pull/16584",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-29T18:28:16.486458+00:00",
-      "summary": "The revised graph code preserves both shared slots and the last pointee when overlapping views are restored as two slices or as a slice and an array pointer, in either traversal order.",
+      "status": "merged",
+      "updatedAt": "2026-10-29T23:12:26.596881+00:00",
+      "summary": "The decoder merged. The named-map and overlapping-slice regressions pass; the map-copy callback finding remains open in #16715.",
       "evidence": [
+        {
+          "label": "Open and verified graph findings",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        },
+        {
+          "label": "Key insertion reproducer on #16681",
+          "url": "https://github.com/google/gvisor/pull/16681#discussion_r4418825326"
+        },
         {
           "label": "Slice/array-pointer round trips on the revised decoder",
           "url": "https://app.buildbuddy.io/invocation/1f7d1c19-b6c4-4d9d-8cfb-ee67126b3472"
@@ -40725,8 +40733,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T18:28:16.486458+00:00",
-      "summary": "Parth leads the graph codec. The integrated series fixes named-map aliases and partially overlapping slices. Open findings include recursive type descriptors, map values copied before callbacks finish, and a retained LoadValue result that changes after restore when the destination is written. No production caller of that last API was found.",
+      "updatedAt": "2026-10-29T23:12:26.596881+00:00",
+      "summary": "Parth leads the graph codec. The shared map and slice regressions now pass. Issue #16715 tracks the open map callback, recursive type, LoadValue and encoder scratch findings, with reproducers and the revisions they exercised.",
       "findings": [
         {
           "text": "The revised graph code preserves both shared slots and the last pointee when overlapping views are restored as two slices or as a slice and an array pointer, in either traversal order. The earlier review draft is obsolete.",
@@ -43385,8 +43393,16 @@
           ]
         }
       ],
-      "nextStep": "Follow the existing callback report as Parth updates map reconstruction. Retest the direct map value and the parent callback; both must observe the restored pointer.",
+      "nextStep": "Add new reproduced graph findings to the description of #16715. Mark an item fixed after its regression passes on the revised code; update the checklist in place without routine comments.",
       "evidence": [
+        {
+          "label": "Living graph checkpoint correctness checklist",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        },
+        {
+          "label": "Map keys collapse when hooks finish after insertion (#16681)",
+          "url": "https://github.com/google/gvisor/pull/16681#discussion_r4418825326"
+        },
         {
           "label": "Slice/array-pointer round trips on the revised decoder",
           "url": "https://app.buildbuddy.io/invocation/1f7d1c19-b6c4-4d9d-8cfb-ee67126b3472"
