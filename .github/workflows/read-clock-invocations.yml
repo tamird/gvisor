@@ -1,7 +1,7 @@
 name: Locate original clock invocations
 on:
   push:
-    branches: [qualification/clock-original-receipts-oct29]
+    branches: [qualification/clock-carrier-receipts-oct29]
 permissions: {}
 jobs:
   lookup:
@@ -18,7 +18,7 @@ jobs:
           source = "a1e81990e7b88a144b9650063e790d7c6f00003d"
           conn = http.client.HTTPSConnection("app.buildbuddy.io", timeout=25)
           headers = {"content-type":"application/json", "x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]}
-          request = {"selector":{"commit_sha":source},"include_metadata":True}
+          request = {"selector":{"commit_sha":"6afa2a6e70a868b5334c2b5106dfb0f5289c477f"},"include_metadata":True}
           answer=[]
           for page in range(8):
               conn.request("POST","/api/v1/GetInvocation",json.dumps(request),headers)
@@ -34,12 +34,18 @@ jobs:
                   ident=row["id"]["invocationId"] if "invocationId" in row["id"] else row["id"]["invocation_id"]
                   assert re.fullmatch("[a-f0-9-]{36}",ident)
                   commit=value("commitSha","commit_sha")
-                  assert commit==source
+                  assert commit=="6afa2a6e70a868b5334c2b5106dfb0f5289c477f"
                   answer.append(dict(id=ident,command=row.get("command"),patterns=row.get("pattern"),status=value("invocationStatus","invocation_status"),exit=value("bazelExitCode","bazel_exit_code"),start=value("createdAtUsec","created_at_usec"),end=value("updatedAtUsec","updated_at_usec"),metadata={m["key"]:m.get("value") for m in row.get("buildMetadata",row.get("build_metadata",[])) if m["key"] in {"CI_RUN_ID","GITHUB_RUN_ID","ROLE"}}))
               token=data.get("nextPageToken",data.get("next_page_token"))
               if not token: break
               request["page_token"]=token
           else: raise RuntimeError("results truncated at eight pages")
           answer.sort(key=lambda x:int(x["start"]))
-          print(json.dumps({"source":source, "count":len(answer), "invocations":answer},indent=2))
+          # A known success distinguishes a different Git identity from a missing record.
+          conn.request("POST","/api/v1/GetInvocation",json.dumps({"selector":{"invocation_id":"e25229a3-1dd2-4df7-ab37-494e445c6ad3"},"include_metadata":True}),headers)
+          res=conn.getresponse()
+          if res.status!=200: raise RuntimeError(f"known GetInvocation HTTP {res.status}")
+          check=json.loads(res.read(1_000_000)).get("invocation",[])
+          identity=[{"commit":r.get("commitSha",r.get("commit_sha")),"branch":r.get("branchName",r.get("branch_name")),"repo":r.get("repoUrl",r.get("repo_url"))} for r in check]
+          print(json.dumps({"source":source, "known_arm_identity":identity, "count":len(answer), "invocations":answer},indent=2))
           PYTHON
