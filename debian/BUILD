@@ -1,5 +1,6 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "pkg_deb", "pkg_tar", "version")
+load("//tools:defs.bzl", "go_binary", "pkg_deb", "pkg_tar", "version")
 load("//tools:release.bzl", "SIDECARS", "instrumented_release_tars")
 
 package(
@@ -42,12 +43,22 @@ pkg_tar(
     ],
 )
 
-genrule(
+go_binary(
+    name = "changelog_tool",
+    srcs = ["changelog.go"],
+    pure = True,
+)
+
+run_binary(
     name = "changelog",
-    srcs = ["//tools/bazeldefs:version"],
+    exec_properties = {"container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"},
+    srcs = [version],
     outs = ["changelog"],
-    cmd = "VERSION=$$(cat $(location //tools/bazeldefs:version)); printf 'runsc (%s) unstable; urgency=medium\\n\\n  * See https://gvisor.dev/docs/ for release details.\\n\\n -- The gVisor Authors <gvisor-dev@googlegroups.com>  %s\\n' \"$$VERSION\" \"$$(date -R)\" > \"$@\"",
-    stamp = 1,
+    args = [
+        "$(location %s)" % version,
+        "$@",
+    ],
+    tool = ":changelog_tool",
 )
 
 pkg_deb(
