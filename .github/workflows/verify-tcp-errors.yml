@@ -1,7 +1,7 @@
-name: Qualify the TCP endpoint error guards
+name: Verify native rack-split-loss-standalone
 on:
   push:
-    branches: [qualification/tcp-error-owners-oct29]
+    branches: [qualification/rack-split-loss-standalone-oct29]
 permissions:
   contents: read
 jobs:
@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
+          - {"pr": "rack-split-loss-standalone", "sha": "b3df55ce7cabde538fce7822d84bbe6df679c8c0", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
+          - {"pr": "rack-split-loss-standalone", "sha": "b3df55ce7cabde538fce7822d84bbe6df679c8c0", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
