@@ -1,7 +1,7 @@
 name: Measure string storage in one Nginx kernel checkpoint
 on:
   push:
-    branches: [qualification/state-string-slab-kernel-rbe]
+    branches: [qualification/state-string-slab-kernel-source-depth]
 permissions:
   contents: read
 jobs:
@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: b82bcb81eaf72cb64d8bda2c26cbdb7024ddd6d7
+          fetch-depth: 3
           persist-credentials: false
       - name: Stage the repository's pinned Nginx benchmark input
         shell: bash
