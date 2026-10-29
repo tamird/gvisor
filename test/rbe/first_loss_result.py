@@ -25,9 +25,9 @@ def git(*args):
 result = {"status": "FAIL", "source": git("rev-parse", "HEAD"), "fixture": fixture, "product": product, "owner": owner, "native_exit": code, "modes": {}}
 stage = "source"
 try:
-    assert result["source"] == fixture and git("rev-parse", "HEAD^^") == product
+    assert result["source"] == fixture and git("merge-base",product,"HEAD") == product
     assert set(git("diff","--name-only",product,fixture,"--","pkg").splitlines()) == {"pkg/tcpip/transport/tcp/cubic.go","pkg/tcpip/transport/tcp/test/e2e/tcp_test.go"}
-    assert git("diff","--name-only","HEAD^","HEAD","--","test/packetimpact").splitlines() == ["test/packetimpact/tests/tcp_rack_test.go"]
+    assert git("diff","--name-only","059e6b9527","HEAD","--","test/packetimpact").splitlines() == ["test/packetimpact/tests/tcp_rack_test.go"]
     rows = [json.loads(line) for line in (out / "events.jsonl").open()]
     stage = "BEP"
     attempts = [r for r in rows if r.get("id", {}).get("testResult", {}).get("label") == owner]

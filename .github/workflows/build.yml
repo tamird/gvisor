@@ -187,6 +187,8 @@ jobs:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
+        # The hosted checkout action and the pinned root container have different UIDs.
+        export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
         test "$QUALIFICATION_COMMIT" = "$(git rev-parse HEAD)"
         test "$QUALIFICATION_TARGETS" = "//test/packetimpact/tests:tcp_rack_native_test"
         test "$QUALIFICATION_TEST_FILTER" = '^TestApplicationLimitedLinuxWindow$'
