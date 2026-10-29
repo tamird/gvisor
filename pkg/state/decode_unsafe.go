@@ -852,6 +852,13 @@ func (ds *decodeState) addCallback(obj int32, cb callback) {
 		ds.hooks++
 	}
 	cb.next = -1
+	if len(ds.cbs) == cap(ds.cbs) {
+		// Study only: on an actual grow, try one callback per object,
+		// capped at 2,048 slots. The format does not give a callback count.
+		if hint := min(len(ds.objs), 2048); hint > len(ds.cbs) {
+			ds.cbs = slices.Grow(ds.cbs, hint-len(ds.cbs))
+		}
+	}
 	ds.cbs = append(ds.cbs, cb)
 	i := int32(len(ds.cbs) - 1)
 	o := &ds.ods[obj]
