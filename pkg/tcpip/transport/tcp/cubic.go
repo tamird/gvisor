@@ -66,6 +66,10 @@ type cubicState struct {
 	// RTO.
 	numCongestionEvents int
 
+	firstLossNoHyStart bool
+	firstLossExit      int
+	firstLossExitNS    int64
+
 	s *sender
 }
 
@@ -126,7 +130,7 @@ func (c *cubicState) enterCongestionAvoidance() {
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) updateHyStart(rtt time.Duration, ackTime tcpip.MonotonicTime) {
-	if rtt < 0 {
+	if c.firstLossNoHyStart || rtt < 0 {
 		// negative indicates unknown
 		return
 	}
@@ -147,6 +151,8 @@ func (c *cubicState) updateHyStart(rtt time.Duration, ackTime tcpip.MonotonicTim
 		c.LastAck = now
 		if thresh := c.LastRTT / 2; now.Sub(c.RoundStart) > thresh {
 			c.s.Ssthresh = c.s.SndCwnd
+			c.firstLossExit |= 1
+			c.firstLossExitNS = int64(now.Sub(tcpip.MonotonicTime{}))
 		}
 	}
 
@@ -163,6 +169,8 @@ func (c *cubicState) updateHyStart(rtt time.Duration, ackTime tcpip.MonotonicTim
 		if c.CurrRTT >= (c.LastRTT + thresh) {
 			// Triggered HyStart safe exit threshold
 			c.s.Ssthresh = c.s.SndCwnd
+			c.firstLossExit |= 2
+			c.firstLossExitNS = int64(now.Sub(tcpip.MonotonicTime{}))
 		}
 	}
 }
@@ -368,4 +376,44 @@ func (c *cubicState) HandleWindowRestart() {
 // +checklocks:c.s.ep.mu
 func (c *cubicState) reduceSlowStartThreshold() {
 	c.s.Ssthresh = max(int(float64(c.s.SndCwnd)*c.Beta), 2)
+}
+
+// FirstLossSender is qualification-only state sampled after the packet processor is fenced.
+type FirstLossSender struct {
+	Cwnd, Threshold, Outstanding, SackedOut int
+	SndUna, SndNxt                          uint32
+	Recovery                                bool
+	TimerArmed                              bool
+	TimerTargetNS, RTONS                    int64
+	HyStartExit                             int // Bit 1: ACK train; bit 2: delay.
+	HyStartExitNS                           int64
+	HyStartDisabled                         bool
+}
+
+func (e *Endpoint) FirstLossSender() FirstLossSender {
+	e.LockUser()
+	defer e.UnlockUser()
+	s := e.snd
+	if s == nil {
+		return FirstLossSender{}
+	}
+	row := FirstLossSender{Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Outstanding: s.Outstanding, SackedOut: s.SackedOut,
+		SndUna: uint32(s.SndUna), SndNxt: uint32(s.SndNxt), Recovery: s.FastRecovery.Active,
+		TimerArmed: s.resendTimer.enabled(), RTONS: int64(s.RTO)}
+	if row.TimerArmed {
+		row.TimerTargetNS = int64(s.resendTimer.target.Sub(tcpip.MonotonicTime{}))
+	}
+	if c, ok := s.cc.(*cubicState); ok {
+		row.HyStartExit = c.firstLossExit
+		row.HyStartExitNS = c.firstLossExitNS
+		row.HyStartDisabled = c.firstLossNoHyStart
+	}
+	return row
+}
+
+// FirstLossDisableHyStart changes only the counterfactual CUBIC connection.
+func (e *Endpoint) FirstLossDisableHyStart() {
+	e.LockUser()
+	defer e.UnlockUser()
+	e.snd.cc.(*cubicState).firstLossNoHyStart = true
 }
