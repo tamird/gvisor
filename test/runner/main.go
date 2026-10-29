@@ -51,6 +51,7 @@ import (
 
 var (
 	debug              = flag.Bool("debug", false, "enable debug logs")
+	collectCoverage    = flag.Bool("collect-coverage", true, "collect runsc coverage reports (disable for KCOV tests)")
 	hostNofile         = flag.Uint64("host-nofile", 0, "minimum host descriptor limit required by the test (zero preserves the inherited limit)")
 	oneSandbox         = flag.Bool("one-sandbox", false, "run all test cases in one sandbox")
 	strace             = flag.Bool("strace", false, "enable strace logs")
@@ -490,7 +491,6 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 
 	testLogDir := ""
 	runscLogDir := ""
-	runscCoverageDir := ""
 	undeclaredOutputsDir := ""
 	var currentSaveDir string
 	var saveArgs []string
@@ -511,8 +511,10 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		// Pass a trailing slash to --debug-log flag to ensure that runscLogDir is
 		// populated with per-command log files. See specutils.DebugLogFile().
 		args = append(args, "-debug-log", runscLogDir+"/")
-		runscCoverageDir = filepath.Join(tmpDir, "coverage")
-		args = append(args, "-coverage-report", runscCoverageDir+"/")
+		if *collectCoverage {
+			runscCoverageDir := filepath.Join(tmpDir, "coverage")
+			args = append(args, "-coverage-report", runscCoverageDir+"/")
+		}
 
 		// Default -log sends messages to stderr which makes reading the test log
 		// difficult. Instead, drop them when debug log is enabled given it's a
