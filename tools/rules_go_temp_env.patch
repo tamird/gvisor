@@ -1,0 +1,17 @@
+diff --git a/go/private/context.bzl b/go/private/context.bzl
+--- a/go/private/context.bzl
++++ b/go/private/context.bzl
+@@ -699,6 +699,13 @@
+         # the old behavior.
+         "GODEBUG": "winsymlink=0",
+     }
++
++    # Remote workers need not provide a system temporary directory. Honor
++    # explicitly configured tool and OS temporary directories without importing
++    # the rest of the shell environment.
++    for name in ("GOTMPDIR", "TEMP", "TMP", "TMPDIR"):
++        if name in ctx.configuration.default_shell_env:
++            env[name] = ctx.configuration.default_shell_env[name]
+ 
+     # The level of support is determined by the platform constraints in
+     # //go/constraints/amd64.

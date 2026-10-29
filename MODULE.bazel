@@ -73,6 +73,7 @@ single_version_override(
         "//tools:rules_go_benchmark_xml.patch",
         "//tools:rules_go_package_provenance.patch",
         "//tools:rules_go_bootstrap_shell.patch",
+        "//tools:rules_go_temp_env.patch",
     ],
     version = "0.63.0",
 )
