@@ -1,13 +1,13 @@
-name: Check restored map-key identity on current legacy and graph sources
+name: Check deferred map entries and compare map Load on Linux
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-map-key-identity'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-legacy-map-fix'
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 90
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
@@ -26,7 +26,7 @@ jobs:
         [[ "$(git rev-parse b85788dac43cf1e00af9edb3bf0b5fd36356173b^)" == "6fb2e9fe20ab30f5b9cf1c0df8037a92b0317e0f" ]]
         [[ "$(git rev-parse ca5ef187687dd348e1dd8d9e04e7a57271773023^)" == "6163ec9a6d6d1a343eba0d39bf379d2fced4ffb4" ]]
         mkdir -p "$RUNNER_TEMP/checker"
-        for file in qualify.sh unit_matrix.py snapshot_report.py; do
+        for file in qualify.sh unit_matrix.py snapshot_report.py map_fix_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
         done
         mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/focused"
@@ -75,29 +75,32 @@ jobs:
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
         overall=0
-        for mode in legacy graph; do
-          args=()
-          source=b85788dac43cf1e00af9edb3bf0b5fd36356173b
-          if [[ "$mode" = graph ]]; then source=ca5ef187687dd348e1dd8d9e04e7a57271773023; fi
-          owner=//pkg/state:state_test
-          filter='^TestMapKeyIdentity$'
+        for mode in stock fixed; do
+          source=4b2344950a68a76acecf16e078789af5768c2fe4
+          if [[ "$mode" == fixed ]]; then source=e697e3a6906717066f900d5ec670e223ad039f0c; fi
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test -z "$(git status --porcelain --untracked-files=no)"
           mkdir -p test/rbe "$RUNNER_TEMP/focused/$mode"
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
           out="$RUNNER_TEMP/focused/$mode"
+          args=()
+          if [[ "$mode" == stock ]]; then args+=('--test-filter=^TestMapKeyIdentity$|^TestMapLoadHookReceivers$'); fi
           code=0
-          if [[ -n "$filter" ]]; then args+=("--test-filter=$filter"); fi
-          bash test/rbe/qualify.sh --arch=amd64 "--test-target=$owner" "${args[@]}"             "--bazel-option=--build_event_json_file=$out/events.jsonl"             --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no             --bazel-option=--remote_download_outputs=toplevel '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
-          test -z "$(git status --porcelain --untracked-files=no)"
-          python3 -B "$RUNNER_TEMP/checker/snapshot_report.py" "$out" "$mode" "$source" "$owner" "$code" || overall=1
+          bash test/rbe/qualify.sh --arch=amd64 --test-target=//pkg/state:state_test --test-target=//pkg/state/tests:tests_test "${args[@]}" \
+            "--bazel-option=--build_event_json_file=$out/events.jsonl" --bazel-option=--test_sharding_strategy=disabled \
+            --bazel-option=--cache_test_results=no --bazel-option=--remote_download_outputs=toplevel \
+            '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
+          python3 -B "$RUNNER_TEMP/checker/map_fix_report.py" suite "$mode" "$source" "$code" "$out" || overall=1
         done
+        python3 -B "$RUNNER_TEMP/checker/map_fix_report.py" bench 4b2344950a68a76acecf16e078789af5768c2fe4 e697e3a6906717066f900d5ec670e223ad039f0c "$RUNNER_TEMP/focused" || overall=1
         exit "$overall"
     - name: Save only the typed results
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: map-key-identity
-        path: ${{ runner.temp }}/focused/*/result.json
+        name: state-legacy-map-fix
+        path: |
+          ${{ runner.temp }}/focused/*/result.json
+          ${{ runner.temp }}/focused/bench/*.txt
         if-no-files-found: error
