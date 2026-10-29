@@ -456,3 +456,93 @@ func TestRootZeroFields(t *testing.T) {
 		t.Errorf("Load of non-zero fields: got %+v, want %+v", got, want)
 	}
 }
+
+type leftSlotView []*byte
+type rightSlotView []*byte
+
+func (*leftSlotView) StateTypeName() string  { return "tests.leftSlotView" }
+func (*leftSlotView) StateFields() []string  { return nil }
+func (*rightSlotView) StateTypeName() string { return "tests.rightSlotView" }
+func (*rightSlotView) StateFields() []string { return nil }
+
+func init() {
+	state.Register((*leftSlotView)(nil))
+	state.Register((*rightSlotView)(nil))
+}
+
+// TestSliceArrayPointerWindows saves overlapping views without separately
+// saving their backing array. The last pointee is reachable only on the right.
+func TestSliceArrayPointerWindows(t *testing.T) {
+	for _, kind := range []string{"slice", "array"} {
+		for _, first := range []string{"left", "right"} {
+			t.Run(kind+"/"+first, func(t *testing.T) {
+				values := [4]byte{4, 8, 15, 16}
+				buf := [4]*byte{&values[0], &values[1], &values[2], &values[3]}
+				left := leftSlotView(buf[:3:3])
+				right := rightSlotView(buf[1:4:4])
+				var rv any = right
+				if kind == "array" {
+					rv = (*[3]*byte)(right)
+				}
+				li, ri := 0, 1
+				if first == "right" {
+					li, ri = 1, 0
+				}
+				var root [2]any
+				root[li], root[ri] = left, rv
+				got := loadBytes[[2]any](t, saveBytes(t, &root))
+				l := got[li].(leftSlotView)
+				var r []*byte
+				if kind == "array" {
+					r = got[ri].(*[3]*byte)[:]
+				} else {
+					r = got[ri].(rightSlotView)
+				}
+				if len(l) != 3 || cap(l) != 3 || len(r) != 3 || cap(r) != 3 ||
+					&l[1] != &r[0] || &l[2] != &r[1] || r[2] == nil || *r[2] != 16 {
+					t.Fatalf("restored views lost their shared slots or final pointee: %v, %v", l, r)
+				}
+				l[1] = new(byte)
+				if r[0] != l[1] {
+					t.Fatal("updating a shared slot through the left view did not update the right")
+				}
+			})
+		}
+	}
+}
+
+// TestNestedSliceElementViews saves two slices with different element sizes.
+// The narrower slice is inside a single element of the wider one.
+func TestNestedSliceElementViews(t *testing.T) {
+	for _, innerFirst := range []bool{false, true} {
+		t.Run(fmt.Sprintf("innerFirst=%v", innerFirst), func(t *testing.T) {
+			n := byte(23)
+			rows := [][2]*byte{{nil, nil}, {nil, &n}}
+			cells := leftSlotView(rows[1][1:2:2])
+			wi, ni := 0, 1
+			if innerFirst {
+				wi, ni = 1, 0
+			}
+			var root [2]any
+			root[wi], root[ni] = rows, cells
+			got := loadBytes[[2]any](t, saveBytes(t, &root))
+			wide := got[wi].([][2]*byte)
+			narrow := got[ni].(leftSlotView)
+			if &wide[1][1] != &narrow[0] || narrow[0] == nil || *narrow[0] != 23 {
+				t.Fatalf("restored views no longer share their interior slot: %v, %v", wide, narrow)
+			}
+		})
+	}
+}
+
+// TestArrayPointerUnknownElement checks that the pointer supplies its static
+// element type when decoding a backing array of unregistered named elements.
+func TestArrayPointerUnknownElement(t *testing.T) {
+	type cell []*byte
+	n := byte(42)
+	p := &[2]cell{nil, {&n}}
+	got := *loadBytes[*[2]cell](t, saveBytes(t, &p))
+	if got == nil || len(got[1]) != 1 || got[1][0] == nil || *got[1][0] != 42 {
+		t.Fatalf("lost element reached through a pointer to an array: %v", got)
+	}
+}
