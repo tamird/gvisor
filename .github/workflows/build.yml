@@ -1,4 +1,4 @@
-name: Qualify stateify import resolution
+name: Qualify stateify with declared siblings on scratch
 on: workflow_dispatch
 permissions:
   contents: read
@@ -11,8 +11,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: source, ref: b33d195deb0c528d5b2a843fff8a2e32813ff7b9, fetch-depth: 2, persist-credentials: false}
-      - name: Compile both alias fixtures and verify their scratch outputs
+        with: {path: source, ref: 250f1a64449754e811e33111090736ad6db8d727, fetch-depth: 2, persist-credentials: false}
+      - name: Compile three import cases and check the previous resolver
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -27,6 +27,7 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$QA_RC"
           unset BUILDBUDDY_API_KEY
+          git fetch --no-tags --depth=1 origin b33d195deb0c528d5b2a843fff8a2e32813ff7b9
           python3 -B ../carrier/.github/qualification/lint-runtime/stateify.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
