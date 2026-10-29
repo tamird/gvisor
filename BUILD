@@ -245,6 +245,12 @@ GITHUB_WORKFLOWS = glob(
 ) or fail("No GitHub workflow YAML files were found")
 
 filegroup(
+    name = "qualification_actions",
+    srcs = glob([".github/actions/qualification-*/action.yml"]),
+    visibility = ["//test/rbe:__pkg__"],
+)
+
+filegroup(
     name = "github_workflows",
     srcs = GITHUB_WORKFLOWS,
     visibility = ["//test/rbe:__pkg__"],
@@ -277,7 +283,10 @@ native_test(
     ] + ['"$(rootpath %s)"' % workflow for workflow in GITHUB_WORKFLOWS],
     # These optional configuration files may be absent.
     # buildifier: disable=constant-glob
-    data = GITHUB_WORKFLOWS + [":actionlint_project_marker"] + glob(
+    data = GITHUB_WORKFLOWS + [
+        ":actionlint_project_marker",
+        ":qualification_actions",
+    ] + glob(
         [
             ".github/actionlint.yaml",
             ".github/actionlint.yml",

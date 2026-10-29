@@ -1,9 +1,6 @@
 name: CI
 
 "on":
-  push:
-    branches:
-      - "*"
   workflow_dispatch:
     inputs:
       profile:
@@ -61,38 +58,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (!startsWith(github.ref, 'refs/heads/qualification/') && github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
-
   qualification-plan:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation')))
+    # All remote rows use this coordinator; run a sole matching row here.
+    name: ${{ inputs.profile == 'single' && inputs.execution == 'remote' && format('Qualification {0} remote {1}', inputs.architecture, inputs.lanes) || 'Plan qualification' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
+      in_place: ${{ steps.plan.outputs.in_place }}
     env:
       QUALIFICATION_PROFILE: ${{ inputs.profile || 'single' }}
       QUALIFICATION_COMMIT: ${{ github.sha }}
@@ -119,9 +94,31 @@ jobs:
       run: |
         plan=$(bash test/rbe/qualify.sh --dispatch-plan)
         printf 'plan=%s\n' "$plan" >> "$GITHUB_OUTPUT"
+        in_place=$(jq -r '.profile == "single" and (.rows | length == 1) and .rows[0].runner == "ubuntu-24.04"' <<<"$plan")
+        printf 'in_place=%s\n' "$in_place" >> "$GITHUB_OUTPUT"
+
+    - name: Run the single selected row
+      id: row
+      if: steps.plan.outputs.in_place == 'true'
+      timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[0].job_minutes }}
+      uses: ./.github/actions/qualification-row
+      with:
+        plan: ${{ steps.plan.outputs.plan }}
+        row: ${{ toJSON(fromJSON(steps.plan.outputs.plan).rows[0]) }}
+        cos: ${{ inputs.cos_catalog_gzip_base64 }}
+        key: ${{ secrets.BUILDBUDDY_API_KEY }}
+
+    - name: Verify the original row bytes
+      if: always() && steps.plan.outputs.in_place == 'true'
+      uses: ./.github/actions/qualification-result
+      with:
+        plan: ${{ steps.plan.outputs.plan }}
+        outcome: ${{ steps.row.outcome }}
+        label: ${{ inputs.architecture }}
 
   remote-qualification:
     needs: qualification-plan
+    if: needs.qualification-plan.outputs.in_place != 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -131,160 +128,46 @@ jobs:
     timeout-minutes: ${{ matrix.job_minutes }}
     permissions:
       contents: read
-    env:
-      QUALIFICATION_PLAN_JSON: ${{ needs.qualification-plan.outputs.plan }}
-      QUALIFICATION_ROW_ID: ${{ matrix.id }}
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_EXECUTION: ${{ matrix.coordinator }}
-      QUALIFICATION_CLOCK_SOURCE: ${{ fromJSON(needs.qualification-plan.outputs.plan).side_inputs.clock_source }}
-      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ matrix.local_test_requirements }}
-      QUALIFICATION_LANES: ${{ join(matrix.lanes, ' ') }}
-      QUALIFICATION_ARCH: ${{ matrix.architecture }}
-      QUALIFICATION_SYSCALL_BUCKET: ${{ matrix.syscall_bucket }}
-      QUALIFICATION_TARGETS: ${{ join(matrix.targets, ' ') }}
-      QUALIFICATION_TEST_FILTER: ${{ matrix.test_filter }}
-      QUALIFICATION_HEADER_BASE: ${{ fromJSON(needs.qualification-plan.outputs.plan).side_inputs.header_base }}
-      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
-      QUALIFICATION_COS_SHA256: ${{ fromJSON(needs.qualification-plan.outputs.plan).side_inputs.cos_catalog_sha256 }}
     steps:
-    - name: Check the Remote Bazel credential
-      shell: bash
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: ': "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"'
-
     - name: Checkout the triggering commit
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ github.sha }}
         persist-credentials: false
-
-    - name: Download the pinned compact-log decoder
-      if: contains(matrix.required_audits, 'source-images')
-      shell: bash
-      run: |
-        decoder=$RUNNER_TEMP/bb
-        case $(uname -m) in
-          x86_64) cpu=x86_64; digest=f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb ;;
-          aarch64) cpu=arm64; digest=1f4c3ede4b5e147ab698f6e6c6f4fdd48c48f3d2e3c75fe5bc8dd744ddcdbc4c ;;
-          *) printf 'Unsupported decoder host: %s\n' "$(uname -m)" >&2; exit 1 ;;
-        esac
-        curl --fail --silent --show-error --location --max-time 120 \
-          "https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-$cpu" \
-          --output "$decoder"
-        printf '%s  %s\n' "$digest" "$decoder" | sha256sum --check --strict
-        chmod +x "$decoder"
-        printf 'QUALIFICATION_DECODER=%s\n' "$decoder" >> "$GITHUB_ENV"
-
-    - name: Coordinate qualification on Actions
-      id: qualification
-      timeout-minutes: ${{ matrix.step_minutes }}
-      shell: bash
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        options=()
-        if [[ $QUALIFICATION_LANES == build && $QUALIFICATION_TARGETS == //test/docker:gpu_sglang_source_amd64 ]]; then
-          # Preserve the existing native source-action route and disk guard.
-          docker_root=$(docker info --format '{{.DockerRootDir}}')
-          for path in "${TMPDIR:-/tmp}" "$GITHUB_WORKSPACE" "$docker_root"; do
-            available=$(df -B1 --output=avail "$path" | tail -n 1)
-            printf 'Available bytes at %s: %s\n' "$path" "$available"
-            (( available >= 80000000000 ))
-          done
-          options+=(--bazel-option=--spawn_strategy=remote,local
-            --bazel-option=--strategy=SourceImageOCI=local)
-        fi
-        bash test/rbe/actions.sh "${options[@]}"
-
-    - name: Retain this row's unchanged verdict and evidence
-      if: always() && steps.qualification.outputs.artifacts_safe == 'true'
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - name: Run this planned row on its selected coordinator
+      id: row
+      timeout-minutes: ${{ matrix.job_minutes }}
+      uses: ./.github/actions/qualification-row
       with:
-        name: qualification-row-${{ matrix.id }}-attempt-${{ github.run_attempt }}
-        path: |
-          ${{ runner.temp }}/qualification.tar.gz
-          ${{ runner.temp }}/qualification/verdict.json
-        if-no-files-found: error
+        plan: ${{ needs.qualification-plan.outputs.plan }}
+        row: ${{ toJSON(matrix) }}
+        cos: ${{ inputs.cos_catalog_gzip_base64 }}
+        key: ${{ secrets.BUILDBUDDY_API_KEY }}
+
+    - name: Verify a lone row on its native runner
+      if: always() && inputs.profile == 'single'
+      uses: ./.github/actions/qualification-result
+      with:
+        plan: ${{ needs.qualification-plan.outputs.plan }}
+        outcome: ${{ steps.row.outcome }}
+        label: ${{ inputs.architecture }}
 
   qualification-result:
     needs: [qualification-plan, remote-qualification]
-    if: always() && needs.qualification-plan.result == 'success'
+    if: always() && inputs.profile == 'public-cpu' && needs.qualification-plan.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      QUALIFICATION_PLAN_JSON: ${{ needs.qualification-plan.outputs.plan }}
-      QUALIFICATION_MATRIX_RESULT: ${{ needs.remote-qualification.result }}
     steps:
     - name: Checkout the triggering commit
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ github.sha }}
         persist-credentials: false
-    - name: Receive this attempt's row artifacts
-      id: download
-      # The workflow runtime token restricts transfer to this run. No PAT or
-      # cross-run artifact permission is needed; digest mismatch is fatal.
-      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+    - name: Verify every planned public CPU row
+      uses: ./.github/actions/qualification-result
       with:
-        pattern: qualification-row-*-attempt-${{ github.run_attempt }}
-        path: ${{ runner.temp }}/rows
-        digest-mismatch: error
-    - name: Compose the exact planned result set
-      if: always()
-      shell: bash
-      env:
-        QUALIFICATION_TRANSFER_RESULT: ${{ steps.download.outcome }}
-      run: |
-        python3 - <<'PYTHON'
-        import hashlib
-        import json
-        import os
-        from pathlib import Path
-
-        directory = Path(os.environ['RUNNER_TEMP'])
-        plan_bytes = (os.environ['QUALIFICATION_PLAN_JSON'] + '\n').encode()
-        (directory / 'matrix-plan.json').write_bytes(plan_bytes)
-        plan = json.loads(plan_bytes)
-        rows = []
-        received = directory / 'rows'
-        candidates = []
-        # download-artifact extracts a single match directly into its destination.
-        # The composer authenticates this metadata against the retained child tar.
-        if (received / 'qualification.tar.gz').is_file():
-            verdict = json.loads((received / 'qualification/verdict.json').read_text())
-            candidates.append((verdict['matrix_row']['row']['id'], received))
-        for path in sorted(received.glob('qualification-row-*-attempt-*')):
-            prefix, suffix = 'qualification-row-', '-attempt-' + str(plan['run_attempt'])
-            if not path.name.endswith(suffix):
-                raise ValueError('Unexpected artifact attempt: ' + path.name)
-            candidates.append((path.name[len(prefix):-len(suffix)], path))
-        for row_id, path in candidates:
-            artifact = path / 'qualification.tar.gz'
-            if not artifact.is_file():
-                continue  # Exact-set composition records the missing result.
-            with artifact.open('rb') as stream:
-                digest = hashlib.file_digest(stream, 'sha256').hexdigest()
-            rows.append({'id': row_id, 'artifact': {
-                'path': str(artifact.relative_to(directory)), 'sha256': digest,
-                'bytes': artifact.stat().st_size}})
-        result = {key: plan[key] for key in ('schema_version', 'source', 'run_id', 'run_attempt')}
-        result.update(plan_sha256=hashlib.sha256(plan_bytes).hexdigest(), rows=rows,
-                      matrix_result=os.environ['QUALIFICATION_MATRIX_RESULT'],
-                      transfer_result=os.environ['QUALIFICATION_TRANSFER_RESULT'])
-        (directory / 'matrix-results.json').write_text(json.dumps(result) + '\n')
-        PYTHON
-        python3 test/rbe/qualification_report.py compose \
-          --plan "$RUNNER_TEMP/matrix-plan.json" --results "$RUNNER_TEMP/matrix-results.json" \
-          --directory "$RUNNER_TEMP/qualification" --output "$RUNNER_TEMP/qualification.tar.gz"
-    - name: Retain the composed qualification verdict and evidence
-      if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: qualification-${{ inputs.profile == 'public-cpu' && 'all' || inputs.architecture || 'amd64' }}-attempt-${{ github.run_attempt }}
-        path: |
-          ${{ runner.temp }}/qualification.tar.gz
-          ${{ runner.temp }}/qualification/verdict.json
-        if-no-files-found: error
+        plan: ${{ needs.qualification-plan.outputs.plan }}
+        outcome: ${{ needs.remote-qualification.result }}
+        label: all

@@ -1,0 +1,80 @@
+name: qualification-row
+description: Run one source-planned native row and retain its safe evidence.
+inputs:
+  plan:
+    description: Complete source-owned plan.
+    required: true
+  row:
+    description: One row from this plan.
+    required: true
+  cos:
+    description: Optional encoded COS catalog.
+    required: true
+  key:
+    description: Remote Bazel credential.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Download the pinned compact-log decoder
+      if: contains(fromJSON(inputs.row).required_audits, 'source-images')
+      shell: bash
+      run: |
+        decoder=$RUNNER_TEMP/bb
+        case $(uname -m) in
+          x86_64) cpu=x86_64; digest=f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb ;;
+          aarch64) cpu=arm64; digest=1f4c3ede4b5e147ab698f6e6c6f4fdd48c48f3d2e3c75fe5bc8dd744ddcdbc4c ;;
+          *) printf 'Unsupported decoder host: %s\n' "$(uname -m)" >&2; exit 1 ;;
+        esac
+        curl --fail --silent --show-error --location --max-time 120 \
+          "https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-$cpu" \
+          --output "$decoder"
+        printf '%s  %s\n' "$digest" "$decoder" | sha256sum --check --strict
+        chmod +x "$decoder"
+        printf 'QUALIFICATION_DECODER=%s\n' "$decoder" >> "$GITHUB_ENV"
+
+    - name: Coordinate qualification on Actions
+      id: qualification
+      shell: bash
+      env:
+        QUALIFICATION_PLAN_JSON: ${{ inputs.plan }}
+        QUALIFICATION_ROW_ID: ${{ fromJSON(inputs.row).id }}
+        QUALIFICATION_COMMIT: ${{ github.sha }}
+        QUALIFICATION_EXECUTION: ${{ fromJSON(inputs.row).coordinator }}
+        QUALIFICATION_CLOCK_SOURCE: ${{ fromJSON(inputs.plan).side_inputs.clock_source }}
+        QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ fromJSON(inputs.row).local_test_requirements }}
+        QUALIFICATION_LANES: ${{ join(fromJSON(inputs.row).lanes, ' ') }}
+        QUALIFICATION_ARCH: ${{ fromJSON(inputs.row).architecture }}
+        QUALIFICATION_SYSCALL_BUCKET: ${{ fromJSON(inputs.row).syscall_bucket }}
+        QUALIFICATION_TARGETS: ${{ join(fromJSON(inputs.row).targets, ' ') }}
+        QUALIFICATION_TEST_FILTER: ${{ fromJSON(inputs.row).test_filter }}
+        QUALIFICATION_HEADER_BASE: ${{ fromJSON(inputs.plan).side_inputs.header_base }}
+        QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos }}
+        QUALIFICATION_COS_SHA256: ${{ fromJSON(inputs.plan).side_inputs.cos_catalog_sha256 }}
+        BUILDBUDDY_API_KEY: ${{ inputs.key }}
+        ROW_MINUTES: ${{ fromJSON(inputs.row).step_minutes }}
+      run: |
+        : "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"
+        options=()
+        if [[ $QUALIFICATION_LANES == build && $QUALIFICATION_TARGETS == //test/docker:gpu_sglang_source_amd64 ]]; then
+          # Preserve the existing native source-action route and disk guard.
+          docker_root=$(docker info --format '{{.DockerRootDir}}')
+          for path in "${TMPDIR:-/tmp}" "$GITHUB_WORKSPACE" "$docker_root"; do
+            available=$(df -B1 --output=avail "$path" | tail -n 1)
+            printf 'Available bytes at %s: %s\n' "$path" "$available"
+            (( available >= 80000000000 ))
+          done
+          options+=(--bazel-option=--spawn_strategy=remote,local
+            --bazel-option=--strategy=SourceImageOCI=local)
+        fi
+        timeout --foreground "${ROW_MINUTES}m" bash test/rbe/actions.sh "${options[@]}"
+
+    - name: Retain this row's unchanged verdict and evidence
+      if: always() && steps.qualification.outputs.artifacts_safe == 'true'
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: qualification-row-${{ fromJSON(inputs.row).id }}-attempt-${{ github.run_attempt }}
+        path: |
+          ${{ runner.temp }}/qualification.tar.gz
+          ${{ runner.temp }}/qualification/verdict.json
+        if-no-files-found: error

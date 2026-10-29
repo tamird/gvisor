@@ -1,0 +1,82 @@
+name: qualification-result
+description: Authenticate the exact planned set of original native artifacts.
+inputs:
+  plan:
+    description: Complete source-owned plan.
+    required: true
+  outcome:
+    description: Actual row or matrix job outcome.
+    required: true
+  label:
+    description: Architecture label used by the existing artifact contract.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Receive this attempt's row artifacts
+      id: download
+      # The workflow runtime token restricts transfer to this run. No PAT or
+      # cross-run artifact permission is needed; digest mismatch is fatal.
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        pattern: qualification-row-*-attempt-${{ github.run_attempt }}
+        path: ${{ runner.temp }}/rows
+        digest-mismatch: error
+    - name: Compose the exact planned result set
+      if: always()
+      shell: bash
+      env:
+        QUALIFICATION_PLAN_JSON: ${{ inputs.plan }}
+        QUALIFICATION_MATRIX_RESULT: ${{ inputs.outcome }}
+        QUALIFICATION_TRANSFER_RESULT: ${{ steps.download.outcome }}
+      run: |
+        python3 - <<'PYTHON'
+        import hashlib
+        import json
+        import os
+        from pathlib import Path
+
+        directory = Path(os.environ['RUNNER_TEMP'])
+        plan_bytes = (os.environ['QUALIFICATION_PLAN_JSON'] + '\n').encode()
+        (directory / 'matrix-plan.json').write_bytes(plan_bytes)
+        plan = json.loads(plan_bytes)
+        rows = []
+        received = directory / 'rows'
+        candidates = []
+        # download-artifact extracts a single match directly into its destination.
+        # The composer authenticates this metadata against the retained child tar.
+        if (received / 'qualification.tar.gz').is_file():
+            verdict = json.loads((received / 'qualification/verdict.json').read_text())
+            candidates.append((verdict['matrix_row']['row']['id'], received))
+        for path in sorted(received.glob('qualification-row-*-attempt-*')):
+            prefix, suffix = 'qualification-row-', '-attempt-' + str(plan['run_attempt'])
+            if not path.name.endswith(suffix):
+                raise ValueError('Unexpected artifact attempt: ' + path.name)
+            candidates.append((path.name[len(prefix):-len(suffix)], path))
+        for row_id, path in candidates:
+            artifact = path / 'qualification.tar.gz'
+            if not artifact.is_file():
+                continue  # Exact-set composition records the missing result.
+            with artifact.open('rb') as stream:
+                digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+            rows.append({'id': row_id, 'artifact': {
+                'path': str(artifact.relative_to(directory)), 'sha256': digest,
+                'bytes': artifact.stat().st_size}})
+        result = {key: plan[key] for key in ('schema_version', 'source', 'run_id', 'run_attempt')}
+        result.update(plan_sha256=hashlib.sha256(plan_bytes).hexdigest(), rows=rows,
+                      matrix_result=os.environ['QUALIFICATION_MATRIX_RESULT'],
+                      transfer_result=os.environ['QUALIFICATION_TRANSFER_RESULT'])
+        (directory / 'matrix-results.json').write_text(json.dumps(result) + '\n')
+        PYTHON
+        python3 test/rbe/qualification_report.py compose --report-existing-job-failure \
+          --plan "$RUNNER_TEMP/matrix-plan.json" --results "$RUNNER_TEMP/matrix-results.json" \
+          --directory "$RUNNER_TEMP/composed/qualification" --output "$RUNNER_TEMP/composed/qualification.tar.gz"
+    - name: Retain the composed qualification verdict and evidence
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: qualification-${{ inputs.label }}-attempt-${{ github.run_attempt }}
+        path: |
+          ${{ runner.temp }}/composed/qualification.tar.gz
+          ${{ runner.temp }}/composed/qualification/verdict.json
+        if-no-files-found: error

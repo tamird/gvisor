@@ -3475,7 +3475,7 @@ signal.pause()
             self.assertEqual(row["receipt"]["status"], "PASS")
 
     def test_matrix_workflow_discovers_flat_and_named_artifacts(self) -> None:
-        workflow = Path(__file__).parents[2] / ".github/workflows/build.yml"
+        workflow = Path(__file__).parents[2] / ".github/actions/qualification-result/action.yml"
         script = textwrap.dedent(workflow.read_text().split("python3 - <<'PYTHON'\n", 1)[1].split("\n        PYTHON", 1)[0])
         for row_count, flat, status in ((1, True, "PASS"), (2, True, "INCOMPLETE"), (2, False, "PASS")):
             with self.subTest(rows=row_count, flat=flat):
@@ -3525,6 +3525,19 @@ signal.pause()
                     shutil.rmtree(self.evidence)
                     self.evidence.mkdir()
                     shutil.rmtree(self.root / "composed")
+
+    def test_record_original_matrix_failure_only_if_all_rows_are_accounted_for(self) -> None:
+        plan, results, _ = self.matrix_fixture("fail", row_count=2)
+        manifest = report.read_json(results)
+        manifest["matrix_result"] = "failure"
+        for missing in (False, True):
+            if missing:
+                manifest["rows"].pop()
+            report.write_json(results, manifest)
+            value = report.compose(plan, results, self.root / "composed", self.root / "matrix.tar.gz")
+            self.assertEqual(value["status"], "FAIL")
+            self.assertEqual(report.native_matrix_failure(value), not missing, value)
+            shutil.rmtree(self.root / "composed")
 
     def test_matrix_rejects_wrong_identity_coverage_or_transfer(self) -> None:
         for fault in ("duplicate", "extra", "missing", "plan", "source", "attempt", "digest", "size", "transfer", "row", "side-inputs", "query-only", "partial-lanes", "duplicate-lanes", "declaration-missing", "declaration-changed"):

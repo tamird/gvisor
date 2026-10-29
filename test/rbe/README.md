@@ -129,6 +129,23 @@ The all/local RC row retains both AMD KVM and ARM TCG guest profiles. The
 `container-v1-pilot` is an optional fork guest bring-up diagnostic; public
 `container-tests` does not select it, and the full profile claims no pilot run.
 
+The qualification workflow on this fork is dispatch-only. Publishing or
+updating a qualification ref does not start a build. For a single selection
+the native row downloads and verifies its own uploaded result. A common
+remote selection runs in one Actions job. Local ARM/KVM selections still
+use their planned runner; public CPU runs still authenticate every planned
+row across runners. A missing row, wrong source/attempt/digest, transfer
+failure or unexpected native result fails the workflow. The combined
+receipt retains FAIL when a complete multi-row result merely confirms the
+native job's failure.
+
+Start new qualification refs from `qualification/final-public-ci`. For
+existing refs using this harness, carry the workflow, both
+`.github/actions/qualification-*` actions and the corresponding reporter
+and test changes together. Dispatch the same `build.yml` command below.
+Keep test-specific expected-negative predicates in the owning study; a
+nonzero Bazel exit or an unrelated failed case is not such a predicate.
+
 To run one selection, keep `profile=single` (the default) and pass the existing
 lane inputs. For example:
 

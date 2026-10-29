@@ -3079,6 +3079,19 @@ def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identi
     return audits
 
 
+def native_matrix_failure(result: dict[str, object]) -> bool:
+    """The matrix job already failed, and all its row evidence arrived intact."""
+    matrix = mapping(result["matrix"])
+    rows = [mapping(row) for row in sequence(matrix["rows"])]
+    failed = [row["id"] for row in rows if row["status"] == "FAIL"]
+    return (result["status"] == "FAIL" and matrix["matrix_result"] == "failure"
+            and matrix["transfer_result"] == "success" and len(rows) > 1 and bool(failed)
+            and sorted(row["id"] for row in rows) == matrix["required_rows"]
+            and all(row["status"] in ("PASS", "FAIL") and "error" not in row
+                    and "audits" in row for row in rows)
+            and sorted(result["errors"]) == sorted(f"Row {name} retains FAIL" for name in failed))
+
+
 def compose(plan_path: Path, results_path: Path, directory: Path, output: Path) -> dict[str, object]:
     """Compose exactly the planned rows from authenticated, unchanged child bundles."""
     errors: list[str] = []
@@ -3417,6 +3430,8 @@ def main() -> int:
     for name in ("directory", "decoder"):
         row_audit.add_argument("--" + name, type=Path, required=True)
     matrix = commands.add_parser("compose", help="Compose exactly the planned qualification rows")
+    matrix.add_argument("--report-existing-job-failure", action="store_true",
+                        help="Publish an authenticated matrix failure without failing a second Actions job for it")
     for name in ("plan", "results", "directory", "output"):
         matrix.add_argument("--" + name, type=Path, required=True)
     command_check = commands.add_parser("command-verdict")
@@ -3464,7 +3479,7 @@ def main() -> int:
         except (OSError, ValueError, KeyError) as error:
             parser.error(str(error))
         print(f"{result['status']}: {args.output}")
-        return int(result["status"] != "PASS")
+        return int(result["status"] != "PASS" and not (args.report_existing_job_failure and native_matrix_failure(result)))
     if args.command == "source-images":
         result = audit_source_images(args.execution_log, args.decoder, args.verdict, args.manifest, args.expectations)
         write_json(args.output, result)
