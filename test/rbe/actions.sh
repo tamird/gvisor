@@ -577,6 +577,14 @@ PREPARATION
         --events "$directory/expected.jsonl" --native-exit "$result" --kind "$command_kind" \
         --output "$directory/selection.json" --output-options "$directory/output-options.txt"; then
         result=0
+        # For alias roots only, retain Bazel's configured FileWrite owner. Read
+        # the existing analysis graph; do not build the target a second time.
+        if [[ $qualification_source_images == true ]] && python3 -c \
+          'import json, sys; sys.exit(not json.load(open(sys.argv[1]))["source_image_aliases"])' "$directory/selection.json"; then
+          qualification_bazel aquery --skyframe_state --output=jsonproto --include_file_write_contents \
+            --noinclude_commandline 'outputs(".*[.]source-images[.]json$")' \
+            > "$directory/source-image-writers.json" || capture_status=$?
+        fi
       else
         preflight_status=$?
         if (( result == 0 )); then capture_status=$preflight_status; fi

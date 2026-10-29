@@ -2059,6 +2059,8 @@ def preflight(events: Path, native_exit: int, kind: str, case_manifest: Path | N
     return {"schema_version": 1, "status": "INCOMPLETE" if errors else "PASS",
             "kind": kind, "native_exit": native_exit, "errors": errors,
             "output_options": output_options,
+            "source_image_aliases": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())
+                                     if target.is_alias and SOURCE_IMAGE_ASPECT in target.aspects],
             "expected": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())]}
 
 
@@ -2819,6 +2821,43 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
             "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 
 
+def source_image_writer(graph: dict[str, object], output: str, contents: bytes) -> Owner:
+    """Identify the configured aspect action that wrote this exact output-group artifact."""
+    def rows(name: str) -> dict[int, dict[str, object]]:
+        items = [mapping(raw) for raw in sequence(graph.get(name))]
+        return {number(item["id"]): item for item in items}
+
+    fragments = rows("pathFragments")
+    artifacts = rows("artifacts")
+    targets = rows("targets")
+    configurations = rows("configuration")
+    aspects = rows("aspectDescriptors")
+    writers = []
+    for raw in sequence(graph.get("actions")):
+        action = mapping(raw)
+        if (action.get("mnemonic") != "FileWrite"
+                or action.get("fileContents") != contents.decode()
+                or not any(string(aspects[number(aspect_id)]["name"]).removeprefix("@@") == SOURCE_IMAGE_ASPECT
+                           for aspect_id in sequence(action.get("aspectDescriptorIds", [])))):
+            continue
+        for output_id in sequence(action.get("outputIds")):
+            id = number(artifacts[number(output_id)]["pathFragmentId"])
+            parts = []
+            while id:
+                if len(parts) >= len(fragments):
+                    raise ValueError("Cycle in Bazel output path fragments")
+                fragment = fragments[id]
+                parts.append(string(fragment["label"]))
+                id = number(fragment.get("parentId", 0))
+            if "/".join(reversed(parts)) == output:
+                label = string(targets[number(action["targetId"])]["label"])
+                writers.append(Owner(label.removeprefix("@@") if label.startswith("@@//") else label,
+                                     string(configurations[number(action["configurationId"])]["checksum"])))
+    if len(writers) != 1:
+        raise ValueError(f"Expected one configured aspect writer for {output}, found {len(writers)}")
+    return writers[0]
+
+
 def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, object]:
     """Read complete configured contracts, including empty and dynamic-builder roots."""
     verdict = read_json(canonical)
@@ -2849,8 +2888,20 @@ def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, obje
         if not name.endswith(".source-images.json"):
             continue
         contract = read_json(path)
-        if contract.get("schema_version") != 1 or contract.get("owner") != owner.label or owner in configured:
+        if contract.get("schema_version") != 1 or owner in configured:
             raise ValueError(f"Wrong or duplicate configured source-image contract: {owner}")
+        producer = None
+        if contract.get("owner") != owner.label:
+            # Bazel reports the alias in the aspect completion, while the generating
+            # action belongs to its configured referent. Join them through the artifact.
+            selection = read_json(canonical.parent / "selection.json")
+            if asdict(owner) not in sequence(selection.get("source_image_aliases")):
+                raise ValueError(f"Wrong configured source-image contract for {owner}")
+            graph = canonical.parent / "source-image-writers.json"
+            writer = source_image_writer(read_json(graph), name, path.read_bytes())
+            if writer != Owner(string(contract.get("owner")), owner.configuration):
+                raise ValueError(f"Configured source-image writer differs for {owner}: {writer}")
+            producer = {**asdict(writer), "graph": {"path": str(graph), **file_record(graph)}}
         used.add((owner, name))
         images = declared_source_images(contract.get("images"))
         commands = [mapping(command) for command in sequence(contract.get("source_commands"))]
@@ -2894,6 +2945,8 @@ def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, obje
         owners[owner.label] = sorted(set(owners.get(owner.label, [])) | set(names))
         configured[owner] = {**asdict(owner), "images": images, "source_commands": commands, "pins": pins, "indexes": indexes,
                              "contract": {"path": str(path), **file_record(path)}}
+        if producer is not None:
+            configured[owner]["producer"] = producer
     if not expected or configured.keys() != expected or used != retained.keys():
         raise ValueError("Source-image contracts differ from complete configured owners or pin outputs")
     return {"owners": owners, "configured_owners": [configured[owner] for owner in sorted(configured)]}
@@ -2931,6 +2984,10 @@ def source_image_row(directory: Path, decoder: Path) -> dict[str, object]:
                                                       ("verdict", canonical), ("manifest", manifest))}
                 evidence = invocation / "source-image-audit.json"
                 result = audit_source_images(execution, decoder, canonical, manifest, expectations)
+                if any("producer" in owner for owner in read_json(expectations)["configured_owners"]):
+                    graph = invocation / "source-image-writers.json"
+                    entry["inputs"]["writers"] = {"path": str(graph.relative_to(directory)), **file_record(graph)}
+                    result.setdefault("input_roles", {})["writers"] = {"path": str(graph), **file_record(graph)}
                 write_json(evidence, result)
                 entry["evidence"] = {"path": str(evidence.relative_to(directory)), **file_record(evidence)}
                 if result.get("audit_status") != "PASS":
@@ -3006,8 +3063,19 @@ def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identi
         for entry in entries:
             phase = phases[string(entry["path"])]
             inputs = mapping(entry.get("inputs"))
-            if inputs.keys() != {"expectations", "execution", "verdict", "manifest"}:
-                raise ValueError("Audit requires expectations, execution, verdict and manifest identities")
+            expectations = audit_member(members, inputs.get("expectations"))
+            producers = [mapping(owner["producer"]) for raw in sequence(expectations.get("configured_owners", []))
+                         if "producer" in (owner := mapping(raw))]
+            required = {"expectations", "execution", "verdict", "manifest"}
+            if producers:
+                required.add("writers")
+                writers = mapping(inputs.get("writers"))
+                for producer in producers:
+                    graph = mapping(producer.get("graph"))
+                    if any(graph.get(key) != writers.get(key) for key in ("sha256", "bytes")):
+                        raise ValueError("Configured producer graph differs from its retained input")
+            if inputs.keys() != required:
+                raise ValueError("Missing or unexpected source-image audit input")
             canonical = mapping(inputs["verdict"])
             if canonical.get("path") != entry["path"] or any(canonical.get(key) != phase.get(key) for key in ("sha256", "bytes")):
                 raise ValueError("Audit canonical verdict differs from its authenticated invocation")
@@ -3023,7 +3091,6 @@ def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identi
                 if (not relative or actual[-len(relative):] != relative
                         or any(retained.get(key) != descriptor.get(key) for key in ("sha256", "bytes"))):
                     raise ValueError(f"Audit does not bind its declared {name} input role/path")
-            expectations = audit_member(members, inputs["expectations"])
             outputs = [mapping(raw) for raw in sequence(mapping(phase["verdict"]).get("build_outputs", []))
                        if mapping(raw).get("group") == "source_image_contracts"]
             referenced = set()
