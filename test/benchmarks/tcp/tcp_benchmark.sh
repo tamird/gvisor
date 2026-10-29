@@ -77,8 +77,13 @@ function checktmp() {
   fi
 }
 
+observation=plain
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --sender-observation)
+      shift
+      case $1 in plain|historical|measured) observation=$1 ;; *) exit 2 ;; esac
+      ;;
     --client)
       client=true
       ;;
@@ -725,7 +730,7 @@ run_flow() {
       client_command+=(${netstack_opts} -client -mtu ${mtu} -iface client2.0 -addr 10.0.0.6 -mask ${mask} -gso=${gso} -swgso=${swgso} --gro=${gro} --xdp=false)
     fi
   fi
-  client_command+=("-observation=\${TCP_BENCHMARK_OBSERVATION:-plain}")
+  client_command+=("-observation=${observation}")
   record_flow_phase() {
     local uptime ignored
     read -r uptime ignored < /proc/uptime

@@ -19,7 +19,7 @@ sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recom
 sudo -n modprobe sch_netem
 uname -a > "$out/worker.txt"
 phase=build
-bazel run --jobs=5 --local_resources=memory=HOST_RAM*.65 --script_path="$RUNNER_TEMP/start-tcp-trial" //test/benchmarks/tcp:tcp_benchmark
+bazel run --jobs=5 --script_path="$RUNNER_TEMP/start-tcp-trial" //test/benchmarks/tcp:tcp_benchmark
 phase=trials
 printf 'mode\tcase\tprimary\tcc\tsecondary\n' > "$out/cases.tsv"
 # Each controller and role occurs once per observation mode. Rotate the modes
@@ -40,7 +40,7 @@ for round in 0 1 2; do
     mkdir -p "$dir"
     printf '%s\t%s\t%s\t%s\t%s\n' "$mode" "$name" "$primary" "$cc" "$other" >> "$out/cases.tsv"
     ec=0
-    sudo -n env TCP_BENCHMARK_OBSERVATION="$mode" timeout --signal=INT --kill-after=15s 180s "$RUNNER_TEMP/start-tcp-trial" "$flag" --no-user-ns --congestion-control "$cc" --second-client "$other" --second-congestion-control "$cc" --second-start-delay 0 --latency-probe --output-dir "$dir/results" --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 --duration 120 --num-client-threads 1 --sack --disable-linux-gso --disable-linux-gro > "$dir/stdout" 2> "$dir/stderr" || ec=$?
+    sudo -n timeout --signal=INT --kill-after=15s 180s "$RUNNER_TEMP/start-tcp-trial" --sender-observation "$mode" "$flag" --no-user-ns --congestion-control "$cc" --second-client "$other" --second-congestion-control "$cc" --second-start-delay 0 --latency-probe --output-dir "$dir/results" --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 --duration 120 --num-client-threads 1 --sack --disable-linux-gso --disable-linux-gro > "$dir/stdout" 2> "$dir/stderr" || ec=$?
     sudo -n chown -hR "$(id -u):$(id -g)" "$dir"
     echo "$ec" > "$dir/exit.txt"
     if (( ec != 0 )); then
