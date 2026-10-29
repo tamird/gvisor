@@ -2,3 +2,8 @@ module(name = "upstream_format_probe")
 
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
 bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "bazel_lib", version = "3.7.2")
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
+
+buildtools = use_extension("@buildifier_prebuilt//:defs.bzl", "buildifier_prebuilt_deps_extension")
+use_repo(buildtools, "buildifier_linux_amd64")

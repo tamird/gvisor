@@ -102,6 +102,39 @@ def run(name, platform, cli=False):
     save()
 
 
+def native_adapter(case):
+    folder = TEMP / ("native-adapter-" + case)
+    folder.mkdir()
+    be, ex = folder / "be", folder / "ex"
+    target = "//:native_"+case
+    cmd = ["bazel", "--bazelrc="+os.environ["PROOF_RC"], "build", "--host_platform=//:scratch", "--platforms=//:scratch", "--extra_execution_platforms=//:scratch", "--build_event_json_file="+str(be), "--execution_log_json_file="+str(ex), "--noremote_accept_cached", target]
+    row = {"name":"upstream-native-"+case, "label":target, "start":datetime.now(timezone.utc).isoformat()}
+    RESULT["phases"].append(row)
+    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    msg = p.stdout.decode(errors="replace")
+    row.update(finish=datetime.now(timezone.utc).isoformat(), exit=p.returncode, log_sha256=sha256(p.stdout).hexdigest(), dirty_diagnostic="dirty.bzl # reformat" in msg)
+    ev = list(records(be))
+    row["invocation"] = next((x["started"]["uuid"] for x in ev if "started" in x), None)
+    row["finish_code"] = [x["finished"]["exitCode"] for x in ev if "finished" in x]
+    row["errors"] = sorted({s for s in ["No matching toolchains", "no such target", "no such package", "is not visible", "Unrecognized option", "no such file or directory", "does not contain a repository", "not in scope"] if s in msg})
+    acts = [x for x in records(ex) if x.get("mnemonic") == "UpstreamFormat" and x.get("targetLabel")==target]
+    row["actions"] = len(acts)
+    save()
+    need(len(acts)==1, "native adapter original action missing")
+    a=acts[0]
+    argv=a["commandArgs"]
+    props={v["name"]:v["value"] for v in a.get("platform",{}).get("properties",[])}
+    inputs={v["path"]:v for v in a["inputs"]}
+    source=sha256(SOURCES[case]).hexdigest()
+    row.update(argv=argv, runner=a.get("runner"), cache=a.get("cacheHit",False), action_exit=a.get("exitCode",0), image=props.get("container-image"), arch=props.get("Arch"), spawn_digest=inputs.get(argv[0],{}).get("digest"), source_proven=any(v.get("digest",{}).get("hash")==source and v["path"].endswith(case+".bzl") for v in inputs.values()), tool_proven=any(v.get("digest",{}).get("hash")==TOOL for v in inputs.values()), outputs=[v.get("digest") for v in a.get("actualOutputs",[]) if v["path"].endswith(case+".report")])
+    save()
+    need(row["invocation"] and row["finish_code"] and row["runner"]=="remote" and not row["cache"] and row["image"]==IMAGES["scratch"] and row["arch"]=="amd64" and row["spawn_digest"] and row["source_proven"] and row["tool_proven"] and "--mode=check" in argv, "native adapter worker, tool or source unproved")
+    if case=="clean":
+        need(p.returncode==0 and row["action_exit"]==0 and any(o and o.get("hash")==sha256(b"").hexdigest() for o in row["outputs"]), "missing successful captured report")
+    else:
+        need(p.returncode==1 and row["action_exit"]==4 and row["dirty_diagnostic"], "native adapter didn't propagate known format failure")
+
+
 def main():
     save()
     need(all(Path(n+".bzl").read_bytes()==v for n,v in SOURCES.items()), "unexpected fixture")
@@ -118,6 +151,14 @@ def main():
             } else type(e).__name__
             errors.append({"name":name,"reason":message})
             RESULT["errors"] = errors
+            save()
+    for case in SOURCES:
+        try:
+            native_adapter(case)
+        except (KeyError, ValueError, TypeError, OSError) as e:
+            messages = {"native adapter original action missing","native adapter worker, tool or source unproved","missing successful captured report","native adapter didn't propagate known format failure"}
+            errors.append({"name":"upstream-native-" + case,"reason":str(e) if isinstance(e,ValueError) and str(e) in messages else type(e).__name__})
+            RESULT["errors"]=errors
             save()
     RESULT["verdict"] = "INCOMPLETE" if errors else "COMPLETE"
     save()
