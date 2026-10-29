@@ -1,4 +1,4 @@
-name: Qualify stateify import resolution
+name: Check the hermetic-llvm module-map-generator formatting
 on: workflow_dispatch
 permissions:
   contents: read
@@ -6,31 +6,54 @@ jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: carrier, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: source, ref: b33d195deb0c528d5b2a843fff8a2e32813ff7b9, fetch-depth: 2, persist-credentials: false}
-      - name: Compile both alias fixtures and verify their scratch outputs
-        working-directory: source
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        with:
+          repository: tamird/hermetic-llvm
+          ref: 42c0ec3431abc8f08a298d191e7063e7e59bc515
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Generate the correction from the approved head
         run: |
           set -euo pipefail
-          export QA_RC="$RUNNER_TEMP/state-review.bazelrc"
-          umask 077
-          trap 'rm -f "$QA_RC"' EXIT
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$QA_RC"
-          unset BUILDBUDDY_API_KEY
-          python3 -B ../carrier/.github/qualification/lint-runtime/stateify.py
+          test "$(git rev-parse HEAD^)" = 317378dd0778ebc15d190e4ebb018b5903b1039e
+          git restore --source HEAD^ -- tools/internal/BUILD.bazel
+          bazel run --config=remote //gazelle:gazelle -- -mode=fix
+          git diff --exit-code HEAD
+      - name: Run the repository's Gazelle and Buildifier checks
+        run: |
+          set -euo pipefail
+          bazel run --config=remote //gazelle:gazelle -- -mode=diff
+          bazel run //internal_tools:buildifier.check
+      - name: Generate the public Starlark documentation
+        run: |
+          set -euo pipefail
+          bash .github/workflows/build_public_starlark_docs.sh "$RUNNER_TEMP/stardoc-targets"
+          test -s "$RUNNER_TEMP/stardoc-targets"
+          wc -l "$RUNNER_TEMP/stardoc-targets"
+          git diff --exit-code HEAD
+      - name: Record exact source and verdict
+        if: always()
+        env:
+          RESULT: ${{ job.status }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          d = Path(os.environ["RUNNER_TEMP"])
+          targets = d / "stardoc-targets"
+          out = {
+              "verdict": "PASS" if os.environ["RESULT"] == "success" else "FAIL",
+              "source": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+              "parent": subprocess.check_output(["git", "rev-parse", "HEAD^"], text=True).strip(),
+              "stardocTargets": targets.read_text().splitlines() if targets.is_file() else [],
+          }
+          (d / "llvm-899.json").write_text(json.dumps(out, indent=2) + "\n")
+          PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: stateify-comments
-          path: ${{ runner.temp }}/stateify-comments.json
+          name: llvm-899
+          path: ${{ runner.temp }}/llvm-899.json
           if-no-files-found: error
