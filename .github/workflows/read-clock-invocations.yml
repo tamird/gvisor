@@ -1,7 +1,7 @@
 name: Locate original clock invocations
 on:
   push:
-    branches: [qualification/clock-original-receipts-oct29]
+    branches: [qualification/clock-original-owners-oct29]
 permissions: {}
 jobs:
   lookup:
@@ -14,32 +14,49 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           python3 - <<'PYTHON'
-          import datetime, http.client, json, os, re
-          source = "a1e81990e7b88a144b9650063e790d7c6f00003d"
-          conn = http.client.HTTPSConnection("app.buildbuddy.io", timeout=25)
-          headers = {"content-type":"application/json", "x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]}
-          request = {"selector":{"commit_sha":source},"include_metadata":True}
-          answer=[]
-          for page in range(8):
-              conn.request("POST","/api/v1/GetInvocation",json.dumps(request),headers)
-              result = conn.getresponse()
-              if result.status != 200:
-                  raise RuntimeError(f"GetInvocation HTTP {result.status}")
-              raw=result.read(4_000_001)
-              assert len(raw)<=4_000_000
-              data=json.loads(raw)
-              for row in data.get("invocation", []):
-                  def value(camel,snake,default=None):
-                      return row.get(camel,row.get(snake,default))
-                  ident=row["id"]["invocationId"] if "invocationId" in row["id"] else row["id"]["invocation_id"]
-                  assert re.fullmatch("[a-f0-9-]{36}",ident)
-                  commit=value("commitSha","commit_sha")
-                  assert commit==source
-                  answer.append(dict(id=ident,command=row.get("command"),patterns=row.get("pattern"),status=value("invocationStatus","invocation_status"),exit=value("bazelExitCode","bazel_exit_code"),start=value("createdAtUsec","created_at_usec"),end=value("updatedAtUsec","updated_at_usec"),metadata={m["key"]:m.get("value") for m in row.get("buildMetadata",row.get("build_metadata",[])) if m["key"] in {"CI_RUN_ID","GITHUB_RUN_ID","ROLE"}}))
-              token=data.get("nextPageToken",data.get("next_page_token"))
-              if not token: break
-              request["page_token"]=token
-          else: raise RuntimeError("results truncated at eight pages")
-          answer.sort(key=lambda x:int(x["start"]))
-          print(json.dumps({"source":source, "count":len(answer), "invocations":answer},indent=2))
+          import base64, hashlib, http.client, json, os, re, xml.etree.ElementTree as ET
+          from collections import Counter
+          inv="a4862ff8-3ccb-4adb-914e-c05580e55fc4"
+          owners={"//runsc/config:config_test":"TestFromFlags","//pkg/sentry/time:time_test":"TestReferenceClocks","//runsc/boot:boot_nogo":None,"//test/runner:runner_nogo":None}
+          def get(method,request,raw=False):
+              assert method in ("GetInvocation","GetTarget","GetAction","GetFile","GetLog")
+              conn=http.client.HTTPSConnection("app.buildbuddy.io",timeout=30)
+              conn.request("POST","/api/v1/"+method,json.dumps(request),{"content-type":"application/json","x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
+              res=conn.getresponse()
+              if res.status!=200: raise RuntimeError(f"{method} HTTP {res.status}")
+              data=res.read(7_000_001)
+              conn.close()
+              assert len(data)<=7_000_000
+              return data if raw else json.loads(data)
+          iv,=get("GetInvocation",{"selector":{"invocation_id":inv}})["invocation"]
+          assert iv.get("commitSha",iv.get("commit_sha"))=="6afa2a6e70a868b5334c2b5106dfb0f5289c477f"
+          sel={"invocation_id":inv}
+          targets=get("GetTarget",{"selector":sel})
+          assert not targets.get("nextPageToken")
+          report={"invocation":inv,"invocation_status":iv.get("invocationStatus",iv.get("invocation_status")),"targets":{}}
+          for name,case in owners.items():
+              ts=[t for t in targets.get("target",[]) if t["label"]==name]
+              acts=get("GetAction",{"selector":dict(sel,target_label=name)})
+              assert not acts.get("nextPageToken")
+              item={"status":[t.get("status") for t in ts],"reports":[]}
+              for a in acts.get("action",[]):
+                  for f in a.get("file",[]):
+                      if f.get("name")!="test.xml": continue
+                      if f.get("contents"):
+                          data=base64.b64decode(f["contents"],validate=True)
+                      else:
+                          uri=f["uri"]
+                          m=re.fullmatch(r"bytestream://[^/]+/(?:[^ ]*/)?blobs/([0-9a-f]{64})/([0-9]+)",uri)
+                          assert m and 0<int(m[2])<7_000_000
+                          data=get("GetFile",{"uri":uri},True)
+                          assert len(data)==int(m[2]) and hashlib.sha256(data).hexdigest()==m[1]
+                      rows=ET.fromstring(data).findall(".//testcase")
+                      coverage={r.get("name"):next((t for t in ("failure","error","skipped") if r.find(t) is not None),"pass") for r in rows}
+                      item["reports"].append({"count":len(rows),"counts":dict(Counter(coverage.values())),"required":coverage.get(case) if case else None,"xml_sha256":hashlib.sha256(data).hexdigest()})
+              report["targets"][name]=item
+          # If the client disconnected while running, preserve the last labels named by Bazel.
+          log=get("GetLog",{"selector":sel}).get("log",{}).get("contents","")
+          report["log_hints"]={t:log.lower().count(t.lower()) for t in ("timeout","RESOURCE_EXHAUSTED","DeadlineExceeded","no space left","waiting for remote","Connecting","test PASSED","Action backpressure")}
+          report["last_owners_in_log"]=list(dict.fromkeys(re.findall(r"//[A-Za-z0-9_./+-]+:[A-Za-z0-9_.+-]+",log)[-16:]))
+          print(json.dumps(report,indent=2))
           PYTHON
