@@ -47,7 +47,7 @@ readonly module origpwd othersrc
 
 # Build a full gopath.
 declare -r go_output="${tmp_dir}/output"
-make build BAZEL_OPTIONS="" TARGETS="//:gopath"
+bazel build --remote_download_outputs=toplevel //:gopath
 unzip bazel-bin/gopath.zip -d "${go_output}"
 
 # We expect to have an existing go branch that we will use as the basis for this
