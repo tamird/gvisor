@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T06:26:17.580095+00:00",
+    "updatedAt": "2026-10-29T06:44:03.442743+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32503,22 +32503,22 @@
       "id": "branch:bazel-cpplint",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/bazel-cpplint-bcr-nostamp",
-      "head": "d463cc2d90dfa1cb04956016051ba868af187fd4",
+      "ref": "review/bazel-cpplint-package-owners",
+      "head": "869a7b324568a5743e32724096ed06207dcd0b93",
       "title": "Check tracked C++ sources with package-local Bazel tests",
-      "url": "https://github.com/tamird/gvisor/commit/d463cc2d90dfa1cb04956016051ba868af187fd4",
+      "url": "https://github.com/tamird/gvisor/commit/869a7b324568a5743e32724096ed06207dcd0b93",
       "group": "analysis",
       "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
-      "updatedAt": "2026-10-29T06:26:17.580095+00:00",
+      "updatedAt": "2026-10-29T06:44:03.442743+00:00",
       "status": "Contributor review requested",
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "d463cc2d90dfa1cb04956016051ba868af187fd4",
-        "url": "https://github.com/tamird/gvisor/commit/d463cc2d90dfa1cb04956016051ba868af187fd4",
+        "head": "869a7b324568a5743e32724096ed06207dcd0b93",
+        "url": "https://github.com/tamird/gvisor/commit/869a7b324568a5743e32724096ed06207dcd0b93",
         "title": "Check tracked C++ sources with package-local Bazel tests",
         "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
-        "body": "Open independently on upstream master. The lint command disables stamping; untracked-file selection remains a checkout operation. The corrected verifier reconciled the original package results without rerunning tests."
+        "body": "Open independently on upstream master. CI lists the actual untracked sources and unsupported CPPLINT.cfg files. The lint entrypoint disables stamping; local tracked-file selection remains a checkout operation."
       },
       "evidence": [
         {
@@ -32532,8 +32532,20 @@
         {
           "label": "Replay of the 46 original results",
           "url": "https://github.com/tamird/gvisor/actions/runs/40829033959"
+        },
+        {
+          "label": "Untracked sources, configuration, and combined failure checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40830617674"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "d463cc2d90dfa1cb04956016051ba868af187fd4"
+        },
+        "after": {
+          "head": "869a7b324568a5743e32724096ed06207dcd0b93"
+        }
+      }
     }
   ],
   "edges": [
