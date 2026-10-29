@@ -105,6 +105,10 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+    deps = [
+        ":defs_bzl",
+        "@bazel_lib//lib:copy_file",
+    ],
 )
 
 exports_files([
