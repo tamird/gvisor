@@ -1,10 +1,10 @@
-name: Qualify bwrap UID/GID setup
+name: Verify both native bwrap suites and their original XML
 on: workflow_dispatch
 permissions:
   contents: read
 jobs:
   bwrap:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/bwrap-owner-exact'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/bwrap-native-xml'
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     env:
@@ -15,7 +15,7 @@ jobs:
       with:
         fetch-depth: 2
         persist-credentials: false
-    - name: Run the complete package, analyzer and privileged runtime suites
+    - name: Verify native runtime reports in their owning test actions
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -25,6 +25,7 @@ jobs:
         checker=$RUNNER_TEMP/bwrap-checker
         mkdir -p "$out" "$checker" "$RUNNER_TEMP/gnu"
         cp .github/qualification/bwrap/*.py "$checker"
+        git fetch --no-tags --depth=1 origin "$SOURCE"
         git checkout --quiet --detach "$SOURCE"
         [[ $(git rev-parse HEAD) == "$SOURCE" ]]
         git cat-file -p HEAD > "$out/commit.txt"
@@ -43,9 +44,9 @@ jobs:
         unset BUILDBUDDY_API_KEY
         sudo -n true
         command -v bazelisk
-        labels=(//runsc/cmd/alias/bwrap:bwrap_test //runsc/cmd/alias/bwrap:bwrap_nogo //runsc/cmd/alias/bwrap:bwrap_integration_test)
+        labels=(//runsc/cmd/alias/bwrap:bwrap_test //runsc/cmd/alias/bwrap:bwrap_integration_test)
         printf '%s\n' "${labels[@]}" > "$out/targets.txt"
-        args=(test --config=x86_64 -c opt --jobs=100 --nocache_test_results --keep_going --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v '--run_under=/usr/bin/sudo -n -E' --test_output=errors --build_event_json_file_path_conversion=false "--build_event_json_file=$RUNNER_TEMP/raw.jsonl" "${labels[@]}")
+        args=(test --config=x86_64 -c opt --jobs=20 --noexperimental_split_xml_generation --modify_execution_info=^TestRunner$=+no-remote-cache --nocache_test_results --keep_going --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v '--run_under=/usr/bin/sudo -n -E' --test_output=errors --build_event_json_file_path_conversion=false "--build_event_json_file=$RUNNER_TEMP/raw.jsonl" "${labels[@]}")
         printf '%s\n' "${args[@]}" > "$out/arguments.txt"
         code=0; capture=0; verify=0
         bazelisk --bazelrc="$rc" "${args[@]}" || code=$?
@@ -69,6 +70,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: bwrap-owner-verdict
+        name: bwrap-native-verdict
         path: ${{ runner.temp }}/bwrap-result
         if-no-files-found: error
