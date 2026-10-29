@@ -71,6 +71,7 @@ type EpollInstance struct {
 	// Readiness() or ReadEvents() are running with readyMu unlocked. readySeq
 	// is protected by both interestMu and readyMu; reading requires either
 	// mutex to be locked, but mutation requires both mutexes to be locked.
+	// +checklocks:readyMu
 	readySeq uint32
 }
 
@@ -96,8 +97,10 @@ type epollInterest struct {
 	// key is the file to which this epollInterest applies. key is immutable.
 	key epollInterestKey
 
-	// waiter is registered with key.file. entry is protected by
-	// epoll.interestMu.
+	// source owns the waiter throughout its registration.
+	source EpollSource
+
+	// waiter is registered with source. Its mask is updated under epoll.interestMu.
 	waiter waiter.Entry
 
 	// mask is the event mask associated with this registration, including
@@ -143,7 +146,7 @@ func (ep *EpollInstance) Release(ctx context.Context) {
 	defer ep.interestMu.Unlock()
 	for key, epi := range ep.interest {
 		file := key.file
-		file.EventUnregister(&epi.waiter)
+		epi.source.EventUnregister(&epi.waiter)
 		epi.mask = 0
 		file.epollMu.Lock()
 		delete(file.epolls, epi)
@@ -224,9 +227,9 @@ func (ep *EpollInstance) EventUnregister(e *waiter.Entry) {
 	ep.q.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (ep *EpollInstance) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (ep *EpollInstance) EpollSource() EpollSource {
+	return &ep.q
 }
 
 // Seek implements FileDescriptionImpl.Seek.
@@ -239,10 +242,10 @@ func (ep *EpollInstance) Seek(ctx context.Context, offset int64, whence int32) (
 //
 // Preconditions: A reference must be held on file.
 func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event linux.EpollEvent) error {
-	if !file.Epollable() {
+	source := file.EpollSource()
+	if source == nil {
 		return linuxerr.EPERM
 	}
-
 	// Check for cyclic polling if necessary.
 	subep, _ := file.impl.(*EpollInstance)
 	if subep != nil {
@@ -271,6 +274,7 @@ func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event lin
 	mask := event.Events | linux.EPOLLERR | linux.EPOLLHUP
 	epi := &epollInterest{
 		epoll:    ep,
+		source:   source,
 		key:      key,
 		mask:     mask,
 		userData: event.Data,
@@ -342,18 +346,15 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 		return linuxerr.ENOENT
 	}
 
-	// Update epi for the next call to ep.ReadEvents().
 	mask := event.Events | linux.EPOLLERR | linux.EPOLLHUP
+	wmask := waiter.EventMaskFromLinux(mask)
+	if epi.waiter.Mask() != wmask {
+		if err := epi.source.UpdateMask(&epi.waiter, wmask); err != nil {
+			return err
+		}
+	}
 	epi.mask = mask
 	epi.userData = event.Data
-
-	// Re-register with the new mask.
-	file.EventUnregister(&epi.waiter)
-	wmask := waiter.EventMaskFromLinux(mask)
-	epi.waiter.Init(epi, wmask)
-	if err := file.EventRegister(&epi.waiter); err != nil {
-		return err
-	}
 
 	// Check if the file is already ready with the new mask.
 	if m := file.Readiness(wmask) & wmask; m != 0 {
@@ -380,7 +381,7 @@ func (ep *EpollInstance) DeleteInterest(file *FileDescription, num int32) error 
 	}
 
 	// Unregister from the file so that epi will no longer be readied.
-	file.EventUnregister(&epi.waiter)
+	epi.source.EventUnregister(&epi.waiter)
 
 	// Forget about epi.
 	ep.removeLocked(epi)

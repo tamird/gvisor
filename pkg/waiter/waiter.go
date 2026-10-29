@@ -108,7 +108,8 @@ type Waitable interface {
 
 	// EventRegister registers the given waiter entry to receive
 	// notifications when an event occurs that makes the object ready for
-	// at least one of the events in mask.
+	// at least one of the requested events. On error, the entry must not
+	// remain registered.
 	EventRegister(e *Entry) error
 
 	// EventUnregister unregisters a waiter entry previously registered with
@@ -142,8 +143,8 @@ type Entry struct {
 	// eventListener receives the notification.
 	eventListener EventListener
 
-	// mask is initialized before registration. While queued, SetQueuedMask
-	// updates it under the owning queue's mu. Calls to Mask or NotifyEvent
+	// mask is initialized before registration. While queued, the owning Queue
+	// updates it under its mutex. Calls to Mask or NotifyEvent
 	// must not race with mask updates. The queue is not stored in Entry, so
 	// its lock cannot be named by a field annotation.
 	mask EventMask
@@ -155,17 +156,6 @@ type Entry struct {
 func (e *Entry) Init(eventListener EventListener, mask EventMask) {
 	e.eventListener = eventListener
 	e.mask = mask
-}
-
-// SetQueuedMask changes the entry mask.
-//
-// Preconditions: The Entry must be registered to the given Queue.
-//
-// +checklocksexclude:q.mu
-func (e *Entry) SetQueuedMask(q *Queue, mask EventMask) {
-	q.mu.Lock()
-	e.mask = mask
-	q.mu.Unlock()
 }
 
 // Mask returns the entry mask.
@@ -233,6 +223,34 @@ type Queue struct {
 	// +checklocks:mu
 	list waiterList
 	mu   sync.RWMutex `state:"nosave"`
+}
+
+// UpdateMask changes the events requested by an entry registered on q.
+func (q *Queue) UpdateMask(e *Entry, mask EventMask) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	e.mask = mask
+	return nil
+}
+
+// UpdateHostMask changes the entry mask only if program accepts the new union
+// of all registered masks. program must not reenter q.
+//
+// +checklocksexclude:q.mu
+func (q *Queue) UpdateHostMask(e *Entry, mask EventMask, program func(EventMask) error) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	aggregate := mask
+	for other := q.list.Front(); other != nil; other = other.Next() {
+		if other != e {
+			aggregate |= other.mask
+		}
+	}
+	if err := program(aggregate); err != nil {
+		return err
+	}
+	e.mask = mask
+	return nil
 }
 
 // EventRegister adds a waiter to the wait queue.

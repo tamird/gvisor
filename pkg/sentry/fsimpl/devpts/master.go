@@ -128,9 +128,9 @@ func (mfd *masterFileDescription) Readiness(mask waiter.EventMask) waiter.EventM
 	return mfd.t.ld.masterReadiness()
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (mfd *masterFileDescription) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (mfd *masterFileDescription) EpollSource() vfs.EpollSource {
+	return &mfd.t.ld.masterWaiter
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.

@@ -704,6 +704,21 @@ func (e *connectionedEndpoint) EventRegister(we *waiter.Entry) error {
 	return nil
 }
 
+// UpdateMask implements Endpoint.UpdateMask.
+func (e *connectionedEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
+	e.Lock()
+	defer e.Unlock()
+	// A bound socket can subsequently connect to a peer. Readiness then
+	// comes from that peer, not from the socket used to listen for connects.
+	if e.peer != nil {
+		return e.peer.UpdateMask(e.WaitQueue, entry, mask)
+	}
+	if e.boundSocketFD != nil {
+		return fdnotifier.UpdateMask(e.boundSocketFD.NotificationFD(), e.WaitQueue, entry, mask)
+	}
+	return e.WaitQueue.UpdateMask(entry, mask)
+}
+
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (e *connectionedEndpoint) EventUnregister(we *waiter.Entry) {
 	e.baseEndpoint.EventUnregister(we)

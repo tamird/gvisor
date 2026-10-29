@@ -181,9 +181,14 @@ func (fd *DeviceFD) EventUnregister(e *waiter.Entry) {
 	fd.conn.waitQueue.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (fd *DeviceFD) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (fd *DeviceFD) EpollSource() vfs.EpollSource {
+	fd.mu.Lock()
+	defer fd.mu.Unlock()
+	if fd.conn == nil {
+		return nil
+	}
+	return &fd.conn.waitQueue
 }
 
 // Seek implements vfs.FileDescriptionImpl.Seek.

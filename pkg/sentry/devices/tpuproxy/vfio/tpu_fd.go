@@ -121,9 +121,17 @@ func (fd *tpuFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
 }
 
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (fd *tpuFD) Epollable() bool {
-	return true
+// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
+func (fd *tpuFD) EpollSource() vfs.EpollSource {
+	return fd
+}
+
+// UpdateMask implements vfs.EpollSource.UpdateMask.
+func (fd *tpuFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	if fd.isRestored() {
+		return nil
+	}
+	return fdnotifier.UpdateMask(fd.hostFD, &fd.queue, e, mask)
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.

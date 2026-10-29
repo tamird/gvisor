@@ -116,9 +116,14 @@ func (fd *uvmFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
 }
 
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (fd *uvmFD) Epollable() bool {
-	return true
+// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
+func (fd *uvmFD) EpollSource() vfs.EpollSource {
+	return fd
+}
+
+// UpdateMask implements vfs.EpollSource.UpdateMask.
+func (fd *uvmFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	return fdnotifier.UpdateMask(fd.hostFD, &fd.queue, e, mask)
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.
