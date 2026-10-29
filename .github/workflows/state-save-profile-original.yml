@@ -1,0 +1,42 @@
+name: Read the completed Nginx Save profiles
+on:
+  push:
+    branches: [qualification/state-save-profile-original]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Recover the immutable native result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/tamird/gvisor/actions/artifacts/12890351735/zip > "$RUNNER_TEMP/original.zip"
+          (cd "$RUNNER_TEMP" && echo '028f657ca7d632903dec67c24335b0f8825ff51a06be93d7cda1ad625b81a489  original.zip' | sha256sum -c -)
+          mkdir "$RUNNER_TEMP/phase-results"
+          unzip -q "$RUNNER_TEMP/original.zip" -d "$RUNNER_TEMP/phase-results"
+          for name in qualification_report unit_matrix; do
+            curl --fail --silent --show-error --proto '=https' "https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe/$name.py" --output "$RUNNER_TEMP/$name.py"
+          done
+          (cd "$RUNNER_TEMP" && printf '%s\n' '209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py' '0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py' | sha256sum -c -)
+      - name: Join the published profile archive to the original BuildBuddy test
+        env:
+          ORIGINAL_READ_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: PYTHONPATH="$RUNNER_TEMP" python3 .github/qualification/save_profile/original.py "$RUNNER_TEMP"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: original-nginx-save-result
+          path: |
+            ${{ runner.temp }}/phase-results/result.json
+            ${{ runner.temp }}/phase-results/native.json
+          if-no-files-found: error
+          retention-days: 30

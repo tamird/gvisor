@@ -40,15 +40,22 @@ def main(temp: Path) -> None:
     events = [json.loads(line) for line in (temp / "kernel.bep").open()]
     [inv] = [e["started"]["uuid"] for e in events if "started" in e]
     [tr] = [e["testResult"] for e in events if e["id"].get("testResult", {}).get("label") == OWNER]
-    [worker] = [json.loads(l) for l in (out / "worker.jsonl").open()]
-    props = {p["name"]:p["value"] for p in worker["platform"]["properties"]}
-    assert (out / "bazel-exit").read_text().strip() == "0" and tr["status"] == "PASSED"
-    assert worker["targetLabel"] == OWNER and worker["runner"] == "remote" and not worker.get("cacheHit") and not worker.get("exitCode") and not tr.get("cachedLocally")
-    assert props["Arch"] == "amd64" and props["workload-isolation-type"] == "firecracker" and props["container-image"].endswith("0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3")
+    assert tr["status"] == "PASSED" and not tr.get("cachedLocally")
+    finish=int(tr["testAttemptStartMillisEpoch"])+int(tr["testAttemptDurationMillis"])
+    verify(temp, out, inv, tr["testActionOutput"], finish)
+
+
+def verify(temp: Path, out: Path, inv: str, files: list, finish: int) -> None:
+    workers = [json.loads(l) for l in (out / "worker.jsonl").open()]
+    assert workers and (out / "bazel-exit").read_text().strip() == "0"
+    for worker in workers:
+        props = {p["name"]:p["value"] for p in worker["platform"]["properties"]}
+        assert worker["targetLabel"] == OWNER and worker["runner"] == "remote" and not worker.get("cacheHit") and not worker.get("exitCode")
+        assert props["Arch"] == "amd64" and props["workload-isolation-type"] == "firecracker" and props["container-image"].endswith("0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3")
     reports = {}
     for name in ("test.log","test.xml","profiles.zip"):
         lookup = "outputs.zip" if name == "profiles.zip" else name
-        [f] = [item for item in tr["testActionOutput"] if Path(item["name"]).name == lookup]
+        [f] = [item for item in files if Path(item["name"]).name == lookup]
         reports[name] = verified_file(f,out/name)
     log = (out / "test.log").read_text()
     [capture] = re.findall(r"phase-capture digest=([0-9a-f]{64}) state=(\d+) pages=(\d+) pagemeta=(\d+)",log)
@@ -85,9 +92,8 @@ def main(temp: Path) -> None:
                 matched=summary["Groups"].get("fixture-save/"+kind,{}).get("Total",0)
                 assert all_values>0 and sum(summary["Nearest"].get(kind,{}).values())==matched
     matched_cpu=sum(summaries[f"cpu{i}.pprof"]["Groups"].get("fixture-save/samples",{}).get("Total",0) for i in (1,2))
-    finish=int(tr["testAttemptStartMillisEpoch"])+int(tr["testAttemptDurationMillis"])
     now=datetime.now(timezone.utc)
-    result={"source":SOURCE,"base":"8c93a8892c82c359fde47860db9af205c4d2015d","owner":OWNER,"child":inv,"worker":props,"reports":reports,"capture":capture,"children":children,"validated_stream":validation,"raw_profiles":raw,"summaries":summaries,"attributed_cpu":matched_cpu,"cpu_ranking_floor":100,"rankable":matched_cpu>=100,"native_finished_ms":finish,"verified":now.isoformat(),"report_lag_seconds":now.timestamp()-finish/1000}
+    result={"source":SOURCE,"base":"8c93a8892c82c359fde47860db9af205c4d2015d","owner":OWNER,"child":inv,"workers":workers,"reports":reports,"capture":capture,"children":children,"validated_stream":validation,"raw_profiles":raw,"summaries":summaries,"attributed_cpu":matched_cpu,"cpu_ranking_floor":100,"rankable":matched_cpu>=100,"native_finished_ms":finish,"verified":now.isoformat(),"report_lag_seconds":now.timestamp()-finish/1000}
     (out/"result.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
 
 if __name__=="__main__":
