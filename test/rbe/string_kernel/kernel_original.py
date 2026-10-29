@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import re
 
-ID = "aa4c0043-ac29-4807-bb59-aa9e295fea33"
+ID = "ff0d4b55-5793-42d1-af0a-c4c75476dde2"
 key = os.environ.pop("BUILDBUDDY_API_KEY")
 token = "0000"
 seen, parts = set(), []
@@ -35,9 +35,9 @@ text = re.sub(r"\x1b\[[;\d]*[A-Za-z]", "", "\n".join(parts)).replace("\r","\n")
 assert text and key not in text
 selected = []
 for line in text.splitlines():
-    if not any(word in line.lower() for word in ("authorization", "secret", "api-key", "header=", "password", "token=", "--remote_header", "--bes_header")) and any(word in line.lower() for word in ("error:", "fatal:", "no such file", "not found", "unrecognized", "unexpected", "syntax error", "permission denied", "unbound variable", "cannot ", "undefined reference", "segmentation", "usage:", "unknown option", "illegal", "not executable")):
+    if not any(word in line.lower() for word in ("authorization", "secret", "api-key", "header=", "password", "token=", "--remote_header", "--bes_header")) and any(word in line.lower() for word in ("error:", "fatal:", "fatal error:", "killed", "required", "required from", "aborted", "no such file", "not found", "unrecognized", "unexpected", "syntax error", "permission denied", "unbound variable", "cannot ", "undefined reference", "segmentation", "usage:", "unknown option", "illegal", "not executable")):
         line = re.sub(r"https?://[^ ]+", lambda m: m.group().split("?")[0], line)
         selected.append(line[:850])
-record = {"id":ID, "bytes":len(text), "sha256":sha256(text.encode()).hexdigest(),"diagnostics":list(dict.fromkeys(selected))[-24:]}
+record = {"id":ID, "bytes":len(text), "sha256":sha256(text.encode()).hexdigest(),"diagnostics":list(dict.fromkeys(selected))[:36]}
 (Path(os.environ["RUNNER_TEMP"])/"kernel-origin.json").write_text(json.dumps(record,indent=2)+"\n")
 assert record["diagnostics"], "no original GNU diagnostic"

@@ -1,7 +1,7 @@
 name: Measure string storage in one Nginx kernel checkpoint
 on:
   push:
-    branches: [qualification/state-string-slab-original-gnu]
+    branches: [qualification/state-string-slab-compiler-readback]
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
-      - name: Read the original GNU packaging diagnostic
+      - name: Read the original protobuf compiler diagnostic
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: python3 test/rbe/string_kernel/kernel_original.py
