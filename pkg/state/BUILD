@@ -38,6 +38,7 @@ go_test(
     size = "small",
     srcs = [
         "addrmap_test.go",
+        "callback_order_test.go",
         "typeinfo_test.go",
         "types_test.go",
     ],

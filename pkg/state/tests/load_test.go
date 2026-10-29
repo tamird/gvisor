@@ -115,3 +115,49 @@ func checkDependencyCycle[T any](t *testing.T, root *T) {
 		t.Fatalf("Load = %v, want a dependency cycle diagnostic", err)
 	}
 }
+
+// hookDenseFrame has many AfterLoad callbacks and no pointers between
+// elements. It is a counterexample to estimating waiter density from the
+// callback count of a kernel checkpoint.
+func hookDenseFrame(t testing.TB) []byte {
+	t.Helper()
+	input := make([]afterLoadStruct, 2048)
+	for i := range input {
+		input[i].v = 1
+	}
+	var frame bytes.Buffer
+	if _, err := state.Save(t.Context(), &frame, &input); err != nil {
+		t.Fatal(err)
+	}
+	return frame.Bytes()
+}
+
+func restoreHookDense(t testing.TB, frame []byte) {
+	t.Helper()
+	var output []afterLoadStruct
+	if _, err := state.Load(t.Context(), bytes.NewReader(frame), &output); err != nil {
+		t.Fatal(err)
+	}
+	if len(output) != 2048 {
+		t.Fatalf("got %d hook objects, want 2048", len(output))
+	}
+	for i, x := range output {
+		if x.v != 1 {
+			t.Fatalf("object %d: afterLoad count=%d, want 1", i, x.v)
+		}
+	}
+}
+
+func TestRestoreHookDense(t *testing.T) {
+	frame := hookDenseFrame(t)
+	restoreHookDense(t, frame)
+	restoreHookDense(t, frame)
+}
+
+func BenchmarkRestoreHookDense(b *testing.B) {
+	frame := hookDenseFrame(b)
+	b.ReportAllocs()
+	for b.Loop() {
+		restoreHookDense(b, frame)
+	}
+}
