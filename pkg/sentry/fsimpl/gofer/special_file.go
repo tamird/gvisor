@@ -203,12 +203,17 @@ func (fd *specialFileFD) EventUnregister(e *waiter.Entry) {
 	fd.fileDescription.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (fd *specialFileFD) Epollable() bool {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *specialFileFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	if fd.haveQueue {
-		return true
+		return fd
 	}
-	return fd.fileDescription.Epollable()
+	return fd.fileDescription.EpollMaskUpdater()
+}
+
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
+func (fd *specialFileFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	return fdnotifier.UpdateMask(fd.handle.fd, e, mask)
 }
 
 func (fd *specialFileFD) Allocate(ctx context.Context, mode, offset, length uint64) error {

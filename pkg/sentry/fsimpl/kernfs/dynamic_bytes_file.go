@@ -244,9 +244,9 @@ func (fd *PollableDynamicBytesFD) Init(m *vfs.Mount, d *Dentry, data vfs.Dynamic
 	return nil
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (fd *PollableDynamicBytesFD) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *PollableDynamicBytesFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return fd.poller
 }
 
 // Readiness implements waiter.Waitable.Readiness.

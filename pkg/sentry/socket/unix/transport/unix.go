@@ -181,6 +181,8 @@ type RecvOutput struct {
 // implementations that expose functionality like sendmsg, recvmsg, connect,
 // etc. to Unix socket implementations.
 type Endpoint interface {
+	// UpdateMask changes the events requested by an already registered entry.
+	UpdateMask(*waiter.Entry, waiter.EventMask) error
 	Credentialer
 	PeerCredentialer
 	waiter.Waitable
@@ -777,6 +779,9 @@ type Sender interface {
 	// have changed.
 	EventUpdate() error
 
+	// UpdateMask changes an existing waiter and reports errors from the host.
+	UpdateMask(*waiter.Queue, *waiter.Entry, waiter.EventMask) error
+
 	// SendQueuedSize returns the total amount of data currently queued for
 	// sending. SendQueuedSize should return -1 if the operation isn't
 	// supported.
@@ -879,6 +884,11 @@ func (e *queueSender) Writable() bool {
 // EventUpdate implements Sender.EventUpdate.
 func (*queueSender) EventUpdate() error {
 	return nil
+}
+
+// UpdateMask implements Sender.UpdateMask.
+func (*queueSender) UpdateMask(q *waiter.Queue, entry *waiter.Entry, mask waiter.EventMask) error {
+	return q.UpdateMask(entry, mask)
 }
 
 // SendQueuedSize implements Sender.SendQueuedSize.
@@ -986,6 +996,24 @@ func (e *baseEndpoint) updateEventsLocked(bound BoundSocketFD) error {
 		return fdnotifier.UpdateFD(bound.NotificationFD())
 	}
 	return nil
+}
+
+// UpdateMask implements Endpoint.UpdateMask.
+func (e *baseEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
+	e.Lock()
+	defer e.Unlock()
+	return e.updateMaskLocked(entry, mask, nil)
+}
+
+// +checklocks:e.endpointMutex
+func (e *baseEndpoint) updateMaskLocked(entry *waiter.Entry, mask waiter.EventMask, bound BoundSocketFD) error {
+	if e.peer != nil {
+		return e.peer.UpdateMask(e.WaitQueue, entry, mask)
+	}
+	if bound != nil {
+		return fdnotifier.UpdateMask(bound.NotificationFD(), entry, mask)
+	}
+	return e.WaitQueue.UpdateMask(entry, mask)
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
