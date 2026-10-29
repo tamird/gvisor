@@ -1,7 +1,7 @@
 name: Check the declared Buildifier and tracked input boundary
 on:
   push:
-    branches: [qualification/combine-source-lints]
+    branches: [qualification/source-lint-composition-diagnostics]
 permissions:
   contents: read
   actions: read
@@ -49,5 +49,7 @@ jobs:
         if: always()
         with:
           name: buildifier-check
-          path: ${{ runner.temp }}/buildifier.json
+          path: |
+            ${{ runner.temp }}/buildifier.json
+            ${{ runner.temp }}/buildifier.patch
           if-no-files-found: error

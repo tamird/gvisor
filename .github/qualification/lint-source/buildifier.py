@@ -39,21 +39,37 @@ def run(name, args):
 def main():
     assert output("git", "rev-parse", "HEAD").strip() == source
     assert output("git", "rev-parse", "HEAD^{tree}").strip() == tree
+    errors = []
     for name, args in (
         ("registered formatter", ["tools/lint.sh", "buildifier"]),
-        ("C++ formatter", ["tools/lint.sh", "cpplint"]),
+        ("C++ lint", ["tools/lint.sh", "cpplint"]),
         ("driver tests", ["bazel", "test", "--test_output=all", "//tools:lint_test"]),
         ("merged licenses", ["bazel", "run", "--run_in_cwd", "//tools/licensecheck/main:licensecheck", "--", "--mode=verify"]),
     ):
         code, text = run(name, args)
-        if name == "driver tests":
-            assert "Ran 4 tests" in text and "OK" in text
+        if name == "registered formatter":
+            record["formatter_findings"] = [line[:400] for line in text.splitlines()
+                if line.startswith(("--- ", "+++ ")) or bool(re.match(r"^[^\s:]+(?:/[^\s:]+)*:\d+:", line))]
+        if name == "driver tests" and not ("Ran 4 tests" in text and "OK" in text):
+            errors.append("driver case count")
         if name == "merged licenses":
             matches = re.findall(r"all ([0-9]+) dependencies have up-to-date license entries", text, re.I)
-            assert len(matches) == 1
-            record["license_count"] = int(matches[0])
-        if code:
-            raise RuntimeError(f"{name}: exit {code}")
+            record["license_count"] = matches
+            if len(matches) != 1:
+                record["catalog_diagnostics"] = [line[:600] for line in text.splitlines() if "license" in line.lower() and "header" not in line.lower()][-10:]
+                errors.append("license count")
+        if code: errors.append(f"{name}: exit {code}")
+    # Capture the changes the actual formatter would make to the clean source checkout.
+    rc, _ = run("formatter fix", ["tools/lint.sh", "--fix", "buildifier"])
+    paths = output("git", "diff", "--name-only").splitlines()
+    assert all(Path(p).name in ("BUILD", "MODULE.bazel", "WORKSPACE") or p.endswith(".bzl") for p in paths)
+    patch = output("git", "diff", "--", *paths) if paths else ""
+    (work / "buildifier.patch").write_text(patch)
+    record["changed_files"] = paths
+    record["patch_sha256"] = sha256(patch.encode()).hexdigest()
+    record["errors"] = errors
+    if rc or errors:
+        raise ValueError("see preserved original checks and source diff")
     record["status"] = "PASS"
 
 try:
