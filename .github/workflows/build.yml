@@ -1,35 +1,72 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Qualify Buildkite release entry points
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/stamped-builder-paths'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    env:
+      PRODUCT: 63c6f8ceec5e07ead94ca4970a632b8b9e238470
+      IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Prepare a builder with a private cache and a separate publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$PRODUCT" HEAD
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!test/rbe/version_label' ':!.github/workflows/build.yml'
+          d=$RUNNER_TEMP/release-paths
+          mkdir -p "$d/platform" "$d/result" "$d/native"
+          docker pull --platform=linux/amd64 "$IMAGE"
+          common=(--detach --entrypoint /bin/bash --user=root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$d:$d" -w "$GITHUB_WORKSPACE")
+          docker run "${common[@]}" --name release-builder --env VERSION_TEMP="$d" \
+            -v release-private-bazel:/root/.cache/bazel "$IMAGE" -c 'exec sleep infinity'
+          docker exec release-builder install -m755 test/rbe/version_label/bazel.sh /opt/builder-bazel
+          docker run "${common[@]}" --name release-publisher -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$(command -v docker):/usr/local/bin/docker:ro" "$IMAGE" -c 'exec sleep infinity'
+          docker exec release-publisher /bin/bash -euc '
+            export DEBIAN_FRONTEND=noninteractive
+            apt_opts=(-o Dir::Etc::sourcelist=/etc/apt/sources.list -o Dir::Etc::sourceparts=- -o Acquire::Retries=3)
+            apt-get "${apt_opts[@]}" update
+            apt-get "${apt_opts[@]}" install --no-install-recommends -y dpkg-sig apt-utils
+            docker inspect release-builder > /dev/null
+            command -v dpkg-sig apt-ftparchive'
+      - name: Run the production Make and signing paths
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          d=$RUNNER_TEMP/release-paths
+          printf 'module(name="version_platform")\n' > "$d/platform/MODULE.bazel"
+          cat > "$d/platform/BUILD" <<BUILD
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "EstimatedMemory":"6GB", "container-image":"docker://$IMAGE"},
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc=$d/version.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --jobs=64' "build --inject_repository=version_platform=$d/platform" 'build --host_platform=@version_platform//:gnu' 'build --extra_execution_platforms=@version_platform//:gnu' 'build --remote_download_outputs=toplevel'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          docker exec release-publisher /bin/bash test/rbe/version_label/builder_paths.sh "$d"
+      - name: Return safe bounded release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-builder-paths
+          path: ${{ runner.temp }}/release-paths/result/
+          if-no-files-found: error
