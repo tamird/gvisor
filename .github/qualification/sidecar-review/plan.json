@@ -1,0 +1,21 @@
+{
+  "source": "5e86e9792316c6b512763bcbdb430beec01e8a37",
+  "parent": "50188341ca87809d0d81fafac8cd10d7df64d11a",
+  "tree": "569ec17150c9791a7e2b023b941e303018958068",
+  "host": "cb548161f537465fda2576793e6d6cea59a32260",
+  "targets": [
+    "//runsc/fdparking:fdparking_binary",
+    "//runsc/prewarmer:prewarmer_binary",
+    "//runsc/procumounter:procumounter_binary",
+    "//runsc/fdparking:fdparking_test",
+    "//runsc/prewarmer:prewarmer_single_page_test",
+    "//runsc/procumounter:procumounter_test"
+  ],
+  "request_sha256": "94b14a5325365329029679e478a9d39f782f592fcff0cf9d067fe102a06de438",
+  "file_sha256": {
+    "image_bootstrap.py": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+    "image_execution.py": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+    "image_qualification.py": "3225c70bf3985c792040dfd3817dfe4e1d6a40157a5d2fff8754e991887df0d4",
+    "image_workload.py": "53013abac085b6fb10a1f88ee10b2881b3b042dbb93ebaeb0e786a09f1437a35"
+  }
+}
