@@ -17,7 +17,7 @@ from first_loss_pcap import pcap_frames, sacks
 
 SOURCE = "d66cc79f194a3341766fc69c2822f18c09a3f737"
 CHILD = "43474d02-9e00-4aa2-aa14-162c9005ae13"
-ZIP = "7814ab1ddc221408962427713dadd1bf311ad50f1c1725fad208faf166f43778"
+OUTPUT = "7814ab1ddc221408962427713dadd1bf311ad50f1c1725fad208faf166f43778"
 SIZE = 128386
 SOCKETS = "54b8e91a917b132367e0286e46604b164cdc0038f113a3a6a3c2811b0368458f"
 TMP = Path(os.environ["RUNNER_TEMP"])
@@ -28,10 +28,10 @@ def transfer():
     from original_reader import request
     body = bytearray()
     count = request(os.environ.pop("BUILDBUDDY_API_KEY"), "/api/v1/GetFile",
-                    {"uri": f"bytestream://remote.buildbuddy.io/blobs/{ZIP}/{SIZE}"},
+                    {"uri": f"bytestream://remote.buildbuddy.io/blobs/{OUTPUT}/{SIZE}"},
                     SIZE, body.extend)
-    assert count == len(body) == SIZE and hashlib.sha256(body).hexdigest() == ZIP
-    (TMP / "original.zip").write_bytes(body)
+    assert count == len(body) == SIZE and hashlib.sha256(body).hexdigest() == OUTPUT
+    (TMP / "original.output").write_bytes(body)
 
 
 def records(data):
@@ -120,16 +120,22 @@ def summarize():
     assert hashlib.sha256(body).hexdigest() == SOCKETS
     socket = json.loads(body)
     assert socket["child"]==CHILD and socket["source"]==SOURCE and socket["native_exit"]==0
-    raw = (TMP / "original.zip").read_bytes()
-    assert len(raw)==SIZE and hashlib.sha256(raw).hexdigest()==ZIP
-    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-        [entry] = [v for v in archive.infolist() if v.filename.endswith(".pcap")]
-        assert 24 <= entry.file_size < 8<<20
-        data = archive.read(entry)
-    digest = hashlib.sha256(data).hexdigest()
+    raw = (TMP / "original.output").read_bytes()
+    assert len(raw)==SIZE and hashlib.sha256(raw).hexdigest()==OUTPUT
     result = {"source":SOURCE, "child":CHILD, "original_native_exit":0, "original_projection":socket["status"],
-              "zip":{"bytes":SIZE,"sha256":ZIP},"pcap":{"bytes":len(data),"sha256":digest},"modes":{}}
+              "advertised_output":{"bytes":SIZE,"sha256":OUTPUT}, "modes":{}}
     try:
+        if raw[:4] in (b"\xd4\xc3\xb2\xa1", b"\xa1\xb2\xc3\xd4", b"\x4d\x3c\xb2\xa1", b"\xa1\xb2\x3c\x4d"):
+            kind, data = "pcap", raw
+        else:
+            assert zipfile.is_zipfile(io.BytesIO(raw))
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                [entry] = [v for v in archive.infolist() if v.filename.endswith(".pcap")]
+                assert 24 <= entry.file_size < 8<<20
+                kind, data = "zip", archive.read(entry)
+        digest = hashlib.sha256(data).hexdigest()
+        result["advertised_output"]["kind"] = kind
+        result["pcap"] = {"bytes":len(data),"sha256":digest}
         source = Path("test/rbe/first_loss_result.py").read_text()
         old = source[source.index("    parsed ="):source.index("    assert not code")]
         env = dict(captures={digest:data}, result=copy.deepcopy(socket), pcap_frames=pcap_frames)
