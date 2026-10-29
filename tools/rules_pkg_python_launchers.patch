@@ -1,0 +1,148 @@
+diff --git a/pkg/private/deb/deb.bzl b/pkg/private/deb/deb.bzl
+--- a/pkg/private/deb/deb.bzl
++++ b/pkg/private/deb/deb.bzl
+@@ -14,6 +14,7 @@
+ """Rule for creating Debian packages."""
+ 
+ load("//pkg:providers.bzl", "PackageVariablesInfo")
++load("//pkg/private:package_writer.bzl", "run_package_writer")
+ load("//pkg/private:util.bzl", "setup_output_files")
+ 
+ _tar_filetype = [".tar", ".tar.gz", ".tgz", ".tar.bz2", "tar.xz", "tar.zst"]
+@@ -148,18 +149,13 @@
+     args += ["--replaces=" + d for d in ctx.attr.replaces]
+     args += ["--provides=" + d for d in ctx.attr.provides]
+ 
+-    ctx.actions.run(
++    run_package_writer(
++        ctx,
++        writer = ctx.attr._make_deb,
+         mnemonic = "MakeDeb",
+-        executable = ctx.executable._make_deb,
+         arguments = args,
+-        inputs = files,
++        inputs = depset(files),
+         outputs = [output_file, changes_file],
+-        env = {
+-            "LANG": "en_US.UTF-8",
+-            "LC_CTYPE": "UTF-8",
+-            "PYTHONIOENCODING": "UTF-8",
+-            "PYTHONUTF8": "1",
+-        },
+     )
+     output_groups = {
+         "out": [ctx.outputs.out],
+diff --git a/pkg/private/tar/tar.bzl b/pkg/private/tar/tar.bzl
+--- a/pkg/private/tar/tar.bzl
++++ b/pkg/private/tar/tar.bzl
+@@ -24,6 +24,7 @@
+     "create_mapping_context_from_ctx",
+     "write_manifest",
+ )
++load("//pkg/private:package_writer.bzl", "run_package_writer")
+ load("//pkg/private:util.bzl", "setup_output_files", "substitute_package_variables")
+ 
+ # TODO(aiuto): Figure  out how to get this from the python toolchain.
+@@ -184,20 +185,15 @@
+         transitive = mapping_context.file_deps,
+     )
+ 
+-    ctx.actions.run(
++    run_package_writer(
++        ctx,
++        writer = ctx.attr._build_tar,
+         mnemonic = "PackageTar",
+         progress_message = "Writing: %s" % output_file.path,
+         inputs = inputs,
+         tools = [ctx.executable.compressor] if ctx.executable.compressor else [],
+-        executable = ctx.executable._build_tar,
+         arguments = [args],
+         outputs = [output_file],
+-        env = {
+-            "LANG": "en_US.UTF-8",
+-            "LC_CTYPE": "UTF-8",
+-            "PYTHONIOENCODING": "UTF-8",
+-            "PYTHONUTF8": "1",
+-        },
+         use_default_shell_env = True,
+     )
+     return [
+diff --git a/pkg/private/package_writer.bzl b/pkg/private/package_writer.bzl
+new file mode 100644
+--- /dev/null
++++ b/pkg/private/package_writer.bzl
+@@ -0,0 +1,74 @@
++# Copyright 2026 The Bazel Authors. All rights reserved.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#    http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++"""Run the Python tools that write tar and Debian packages."""
++
++load("@rules_python//python:py_executable_info.bzl", "PyExecutableInfo")
++load("@rules_python//python:py_info.bzl", "PyInfo")
++load("@rules_python//python:py_runtime_info.bzl", "PyRuntimeInfo")
++
++def _writer_pythonpath(ctx, writer):
++    # PyInfo.imports contains runfiles paths. Translate imports from the
++    # writer's own repository to execpaths; let the normal launcher handle
++    # other repositories and their runfiles mappings.
++    repo = writer.label.workspace_name or ctx.workspace_name
++    root = writer.label.workspace_root or "."
++    roots = []
++    for path in writer[PyInfo].imports.to_list():
++        name, _, suffix = path.partition("/")
++        if name != repo:
++            return None
++        roots.append(root + "/" + suffix if suffix else root)
++    return ":".join(roots)
++
++def run_package_writer(ctx, writer, inputs, arguments, **kwargs):
++    """Run an internal writer with the interpreter selected for its py_binary.
++
++    Args:
++      ctx: The packaging rule's context.
++      writer: The writer py_binary in the execution configuration.
++      inputs: Depset of packaging inputs.
++      arguments: Original arguments to the writer.
++      **kwargs: Remaining arguments to ctx.actions.run.
++    """
++    executable = writer[DefaultInfo].files_to_run
++    env = {
++        "LANG": "en_US.UTF-8",
++        "LC_CTYPE": "UTF-8",
++        "PYTHONIOENCODING": "UTF-8",
++        "PYTHONUTF8": "1",
++    }
++
++    # The POSIX py_binary launcher can require /usr/bin/env and a shell even
++    # when the interpreter itself is a declared tool. These two writers have
++    # only stdlib and rules_pkg imports, all rooted in this repository.
++    # Preserve native Windows launchers, platform interpreters, and older
++    # rules_python configurations that cannot supply the original sources.
++    main = writer[PyExecutableInfo].main if PyExecutableInfo in writer else None
++    runtime = writer[PyRuntimeInfo] if PyRuntimeInfo in writer else None
++    sources = getattr(writer[PyInfo], "transitive_original_sources", None) if PyInfo in writer else None
++    if executable.executable.extension != "exe" and main and runtime and runtime.interpreter and sources != None:
++        pythonpath = _writer_pythonpath(ctx, writer)
++        if pythonpath:
++            executable = runtime.interpreter
++            inputs = depset([main], transitive = [inputs, sources, runtime.files])
++            env["PYTHONPATH"] = pythonpath
++            arguments = ["-B", "-S", main.path] + arguments
++
++    ctx.actions.run(
++        executable = executable,
++        inputs = inputs,
++        arguments = arguments,
++        env = env,
++        **kwargs
++    )
