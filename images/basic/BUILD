@@ -1,6 +1,7 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -91,3 +92,5 @@ image_outputs(
     image = ":tmpfile",
     image_name = "basic/tmpfile",
 )
+
+cpplint_test()
