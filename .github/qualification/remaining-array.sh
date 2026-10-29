@@ -25,7 +25,7 @@ cmd=(test "--config=$arch" -c opt --jobs=12 --keep_going --test_timeout=1200 --n
 printf '%s\n' "${cmd[@]}" >"$d/arguments.txt"
 code=0;capture=0;verify=0
 bazel "--bazelrc=$work/array.bazelrc" "${cmd[@]}" >"$work/private/$lane.bazel-log" 2>&1 || code=$?
-date -u +%Y-%m-%dT%H:%M:%S.%3NZ >"$d/finished.txt"
+date -u +%Y-%m-%dT%H:%M:%S.%3N+00:00 >"$d/finished.txt"
 echo "$code" >"$d/native-exit.txt"
 git rev-parse HEAD >"$d/final-head.txt"
 git status --porcelain --untracked-files=no >"$d/source-after.txt"

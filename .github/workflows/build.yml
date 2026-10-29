@@ -1,67 +1,69 @@
-name: Complete array tests and ARM filters on suitable Linux workers
+name: Assemble the exact array evidence without rerunning tests
 on:
   push:
     branches: [qualification/array-remaining]
-permissions: {contents: read}
+permissions: {contents: read, actions: read}
 jobs:
-  verify:
+  report:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
-    env:
-      SOURCE: f76d229c04d56c4a800f0e3561d36e75410f91a1
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+    timeout-minutes: 10
+    env: {SOURCE: f76d229c04d56c4a800f0e3561d36e75410f91a1}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 8, persist-credentials: false}
-    - name: Preserve the original reporter and enable the AArch64 filter
+      with: {persist-credentials: false}
+    - name: Authenticate the four original artifacts
       env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        [[ $(git rev-parse 60f94419afbf505effb2f88dd823d385992d76c6^2) == "$SOURCE" ]]
-        git merge-base --is-ancestor "$SOURCE" HEAD
-        mkdir -p "$RUNNER_TEMP/array-tools" "$RUNNER_TEMP/public" "$RUNNER_TEMP/private" "$RUNNER_TEMP/cache" "$RUNNER_TEMP/poll-gnu-platform"
-        cp test/rbe/{qualification_report,unit_matrix}.py .github/qualification/remaining-array.sh "$RUNNER_TEMP/array-tools/"
-        (cd "$RUNNER_TEMP/array-tools"; python3 -B -c 'import qualification_report, unit_matrix')
-        git checkout --quiet --detach "$SOURCE"
-        if ! test -s /proc/sys/fs/binfmt_misc/qemu-aarch64; then
-          sudo apt-get -qq update
-          sudo apt-get -qq install --no-install-recommends qemu-user-static binfmt-support
-          sudo update-binfmts --enable qemu-aarch64
-        fi
-        cat /proc/sys/fs/binfmt_misc/qemu-aarch64 > "$RUNNER_TEMP/array-tools/filter-interpreter.txt"
-        grep -q 'flags:.*F' "$RUNNER_TEMP/array-tools/filter-interpreter.txt"
-        docker pull --platform=linux/amd64 "$GNU"
-        plat="$RUNNER_TEMP/poll-gnu-platform"
-        printf 'module(name="poll_gnu_platform")\n' > "$plat/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$plat/BUILD"
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/array.bazelrc"
-    - name: Full missing test package
-      env: {LANE: normal}
-      run: &run |
-        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$RUNNER_TEMP/cache:/root/.cache" -w "$GITHUB_WORKSPACE" "$GNU" "$RUNNER_TEMP/array-tools/remaining-array.sh" "$RUNNER_TEMP" "$LANE" "$SOURCE"
+        proof="$RUNNER_TEMP/evidence"
+        mkdir "$proof" "$RUNNER_TEMP/summary"
+        for item in normal:12942087616 race:12942287938 arm:12943075303 original:12941388479; do
+          arm=${item%:*}; id=${item#*:}
+          dir="$proof/$arm"; mkdir "$dir"
+          checksum=$(gh api "repos/tamird/gvisor/actions/artifacts/$id" --jq '.digest|ltrimstr("sha256:")')
+          gh api "repos/tamird/gvisor/actions/artifacts/$id/zip" > "$dir.zip"
+          printf '%s  %s\n' "$checksum" "$dir.zip" | sha256sum --check
+          unzip -q "$dir.zip" -d "$dir"
+          printf '%s %s %s\n' "$arm" "$id" "$checksum" >> "$RUNNER_TEMP/summary/origins.txt"
+        done
+    - name: Verify the retained XML and combine all 20 owners
+      run: |
+        set -euo pipefail
+        proof="$RUNNER_TEMP/evidence"; summary="$RUNNER_TEMP/summary"
+        for lane in normal race arm; do
+          dir="$proof/$lane"
+          python3 -B test/rbe/qualification_report.py verdict --context "$dir/context.json" --events "$dir/events.jsonl" --manifest "$dir/events.jsonl.manifest.json" --expected-targets "$dir/targets.txt" --output "$summary/$lane.json"
+        done
+        python3 - "$proof" "$summary" "$SOURCE" <<'PY'
+        import json,pathlib,sys
+        proof,summary=map(pathlib.Path,sys.argv[1:3]); source=sys.argv[3]
+        result={}
+        for lane in ("normal","race","amd64-check","arm64-check"):
+            original=json.loads((proof/"original"/(lane+".json")).read_text())
+            assert original["source"]==source
+            labels=set(original["expected_labels"])
+            if lane=="amd64-check":
+                assert original["verified"] and not original["errors"] and not original["failures"] and not original["missing"]
+                counts=original["case_counts"]
+                result[lane]={"owners":len(labels),"reused":len(labels),"recovered":0,"cases":counts}
+                continue
+            new=json.loads((summary/({"arm64-check":"arm"}.get(lane,lane)+".json")).read_text())
+            assert new["source"]==source and new["status"]=="PASS" and new["native_exit"]==0 and not (new["missing"] or new["failures"] or new["errors"])
+            recovered=set(new["expected_labels"])
+            reused={rec["owner"]["label"] for rec in original["executed"] if rec["owner"]["label"] not in recovered}
+            assert labels==recovered|reused
+            assert len(reused)==(0 if lane=="arm64-check" else 2)
+            cases=new["case_counts"].copy()
+            for k in cases:
+                if k!="failed":cases[k]+=original["case_counts"][k]
+            result[lane]={"owners":len(labels),"reused":len(reused),"recovered":len(recovered),"cases":cases}
+        assert sum(x["owners"] for x in result.values())==20 and sum(x["reused"] for x in result.values())==11 and sum(x["recovered"] for x in result.values())==9
+        report={"source":source,"status":"PASS","lanes":result,"failed":[],"missing":[]}
+        print(json.dumps(report,indent=2))
+        (summary/"summary.json").write_text(json.dumps(report,indent=2)+"\n")
+        PY
     - if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with: {name: array-remaining-normal, path: '${{ runner.temp }}/public/normal', if-no-files-found: warn}
-    - name: Full missing race package
-      if: ${{ !cancelled() }}
-      env: {LANE: race}
-      run: *run
-    - if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with: {name: array-remaining-race, path: '${{ runner.temp }}/public/race', if-no-files-found: warn}
-    - name: Run the seven ARM64 analyzer filters
-      if: ${{ !cancelled() }}
-      env: {LANE: arm}
-      run: *run
-    - if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with: {name: array-remaining-arm, path: '${{ runner.temp }}/public/arm', if-no-files-found: warn}
-    - if: always()
-      run: rm -f "$RUNNER_TEMP/array.bazelrc"
+      with: {name: combined-array-qualified, path: '${{ runner.temp }}/summary'}
