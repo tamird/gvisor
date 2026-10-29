@@ -1,7 +1,7 @@
-name: Verify TCP endpoint error guards
+name: Qualify the TCP endpoint error guards
 on:
   push:
-    branches: [qualification/tcp-error-guards-oct29]
+    branches: [qualification/tcp-error-owners-oct29]
 permissions:
   contents: read
 jobs:
@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04"}
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm"}
+          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
+          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -34,6 +34,8 @@ jobs:
           PR: ${{ matrix.pr }}
           ARCH: ${{ matrix.arch }}
           CPU: ${{ matrix.cpu }}
+          WORKER_IMAGE: ${{ matrix.image }}
+          ISOLATION: ${{ matrix.isolation }}
           SHA: ${{ matrix.sha }}
         shell: bash
         run: |
@@ -47,13 +49,13 @@ jobs:
           printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
           cat > "$platform/BUILD" <<BUILD
           platform(
-              name = "ubuntu",
+              name = "gnu",
               constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
               exec_properties = {
                   "Arch": "$ARCH",
                   "OSFamily": "linux",
-                  "workload-isolation-type": "oci",
-                  "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+                  "workload-isolation-type": "$ISOLATION",
+                  "container-image": "$WORKER_IMAGE",
               },
               visibility = ["//visibility:public"],
           )
@@ -71,8 +73,8 @@ jobs:
               'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
               'build --remote_accept_cached' \
               "build --inject_repository=catalog_platform=$platform" \
-              'build --host_platform=@catalog_platform//:ubuntu' \
-              'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
+              'build --host_platform=@catalog_platform//:gnu' \
+              'build --extra_execution_platforms=@catalog_platform//:gnu' \
               "build --platforms=//tools/bazeldefs:linux_$ARCH"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"

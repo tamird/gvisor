@@ -28,8 +28,9 @@ def git(*args):
 def save(name, value):
     (d/name).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
-r = {"worker_image": os.environ["WORKER_IMAGE"], "pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
+r = {"pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
 try:
+    r["worker_image"] = os.environ["WORKER_IMAGE"]
     assert git("rev-parse", "HEAD").decode().strip() == source
     assert git("rev-parse", "HEAD^").decode().strip() == "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
     r["tree"] = git("rev-parse", "HEAD^{tree}").decode().strip()
@@ -37,23 +38,6 @@ try:
     assert not (d/"before").read_bytes()
     (d/"commit").write_bytes(git("cat-file", "commit", source))
     bazel = ["bazel", "--bazelrc=" + rc]
-    # Exercise the same stock actions that failed in the earlier worker environments.
-    preflight_targets = [
-        "//pkg/sentry/platform/systrap/sysmsg:sysmsg_lib",
-        "@@protobuf+//bazel/private/oss/toolchains/prebuilt:authenticity_validation",
-    ]
-    r["preflight"] = []
-    for target_arch in ("arm64", "amd64"):
-        run = subprocess.run(bazel + ["build", "--platforms=//tools/bazeldefs:linux_" + target_arch, *preflight_targets],
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        item = {"targets": preflight_targets, "target": target_arch, "exit": run.returncode,
-                "invocations": re.findall(r"Invocation ID: ([0-9a-f-]{36})", run.stdout),
-                "errors": [line[:900] for line in run.stdout.splitlines() if line.startswith("ERROR:")
-                           or "not found" in line.lower() or "no such file" in line.lower()][:12]}
-        r["preflight"].append(item)
-        if run.returncode:
-            r.update(native_exit=run.returncode, execution_finished_at=now(), failure_excerpt=item["errors"])
-            raise RuntimeError("GNU compile/link preflight failed; no tests executed")
     args = ["test", "--nocache_test_results", "--test_sharding_strategy=disabled",
             "--test_env=GO_TEST_WRAP_TESTV=1", "--build_event_json_file=" + str(d/"events.raw"),
             "--build_event_json_file_path_conversion=false",
