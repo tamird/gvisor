@@ -8,7 +8,7 @@ jobs:
   qualify:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 85
     env:
       QUALIFICATION_COMMIT: ${{ github.sha }}
       QUALIFICATION_EXECUTION: remote-actions
@@ -18,7 +18,7 @@ jobs:
       QUALIFICATION_HEADER_BASE: ''
       QUALIFICATION_COS_SHA256: ''
       QUALIFICATION_COS_GZIP_BASE64: ''
-      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package
+      QUALIFICATION_TARGETS: //shim:config //debian:debian //debian:gvisor-release-tar-bz2
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
@@ -49,12 +49,13 @@ jobs:
             export RUNNER_TEMP="$job_root/$QUALIFICATION_ARCH"
             mkdir "$RUNNER_TEMP"
             bash test/rbe/actions.sh \
-              "--bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
-              "--bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
+              "--bazel-option=--host_platform=//test/rbe/python_package_writers:ubuntu_$QUALIFICATION_ARCH" \
+              "--bazel-option=--extra_execution_platforms=//test/rbe/python_package_writers:ubuntu_$QUALIFICATION_ARCH" \
               "--bazel-option=--extra_toolchains=//test/rbe/python_package_writers:python_${entry#*:}" \
-              --bazel-option=--lockfile_mode=error --bazel-option=--remote_download_outputs=all \
+              --bazel-option=--lockfile_mode=error --bazel-option=--remote_download_outputs=toplevel \
+              --bazel-option=--remote_accept_cached --bazel-option=--stamp \
               '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || status=1
-            python3 test/rbe/python_package_writers/stage2_evidence.py || status=1
+            python3 test/rbe/python_package_writers/release_evidence.py || status=1
           done
           exit "$status"
       - if: always()
