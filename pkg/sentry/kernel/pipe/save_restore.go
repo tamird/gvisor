@@ -18,6 +18,7 @@ import "context"
 
 // afterLoad is called by stateify.
 func (p *Pipe) afterLoad(context.Context) {
-	// Restore owns the pipe exclusively until the callback returns.
-	p.rebuildBufferViews() // +checklocksignore
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.rebuildBufferViews()
 }

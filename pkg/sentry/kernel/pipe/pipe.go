@@ -192,7 +192,6 @@ func newPipe(isNamed bool, sizeBytes int64) Pipe {
 // unlocked.)
 //
 // Preconditions:
-//   - p.mu must be locked.
 //   - This pipe must have readers.
 //   - off <= p.size.
 //
@@ -230,7 +229,6 @@ func (p *Pipe) peekLocked(off, count int64, f func(safemem.BlockSeq) (uint64, er
 // longer be visible to future reads.
 //
 // Preconditions:
-//   - p.mu must be locked.
 //   - The pipe must contain at least n bytes.
 //
 // +checklocks:p.mu
@@ -253,9 +251,6 @@ func (p *Pipe) consumeLocked(n int64) {
 // written to the pipe, and increases the number of bytes stored in the pipe
 // accordingly. Callers are still responsible for calling
 // p.queue.Notify(waiter.ReadableEvents) with p.mu unlocked.
-//
-// Preconditions:
-//   - p.mu must be locked.
 //
 // +checklocks:p.mu
 func (p *Pipe) writeLocked(count int64, f func(safemem.BlockSeq) (uint64, error)) (int64, error) {
@@ -384,8 +379,6 @@ func (p *Pipe) HasWriters() bool {
 
 // rReadinessLocked calculates the read readiness.
 //
-// Precondition: mu must be held.
-//
 // +checklocks:p.mu
 func (p *Pipe) rReadinessLocked() waiter.EventMask {
 	ready := waiter.EventMask(0)
@@ -411,8 +404,6 @@ func (p *Pipe) rReadiness() waiter.EventMask {
 }
 
 // wReadinessLocked calculates the write readiness.
-//
-// Precondition: mu must be held.
 //
 // +checklocks:p.mu
 func (p *Pipe) wReadinessLocked() waiter.EventMask {
