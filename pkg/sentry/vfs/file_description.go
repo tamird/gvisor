@@ -405,8 +405,10 @@ type FileDescriptionImpl interface {
 	// waiter.Waitable methods may be used to poll for I/O events.
 	waiter.Waitable
 
-	// Epollable indicates whether this file can be used with epoll_ctl(2).
-	Epollable() bool
+	// EpollMaskUpdater returns nil if this file does not support epoll. Once
+	// EventRegister succeeds, EpollMaskUpdater must remain available to update
+	// the registered waiter until EventUnregister.
+	EpollMaskUpdater() EpollMaskUpdater
 
 	// PRead reads from the file into dst, starting at the given offset, and
 	// returns the number of bytes read. PRead is permitted to return partial
@@ -684,9 +686,15 @@ func (fd *FileDescription) EventUnregister(e *waiter.Entry) {
 	fd.impl.EventUnregister(e)
 }
 
-// Epollable returns whether this file can be used with epoll_ctl(2).
-func (fd *FileDescription) Epollable() bool {
-	return fd.impl.Epollable()
+// EpollMaskUpdater updates an existing waiter's mask without removing it. On error
+// both its mask and the underlying subscription must remain intact.
+type EpollMaskUpdater interface {
+	UpdateMask(*waiter.Entry, waiter.EventMask) error
+}
+
+// EpollMaskUpdater returns the file's epoll mask updater, or nil if unsupported.
+func (fd *FileDescription) EpollMaskUpdater() EpollMaskUpdater {
+	return fd.impl.EpollMaskUpdater()
 }
 
 // PRead reads from the file represented by fd into dst, starting at the given

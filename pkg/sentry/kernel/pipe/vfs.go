@@ -241,9 +241,9 @@ func (fd *VFSPipeFD) EventUnregister(e *waiter.Entry) {
 	fd.pipe.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (fd *VFSPipeFD) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *VFSPipeFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return &fd.pipe.queue
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.

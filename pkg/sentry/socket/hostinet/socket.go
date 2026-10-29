@@ -198,9 +198,9 @@ func (s *Socket) Release(ctx context.Context) {
 	_ = unix.Close(s.fd)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (s *Socket) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (s *Socket) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return s
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.
@@ -363,32 +363,46 @@ func (s *Socket) Readiness(mask waiter.EventMask) waiter.EventMask {
 //
 // +checklocksexclude:s.persistentEventMu
 func (s *Socket) EventRegister(e *waiter.Entry) error {
-	if s.fd < 0 {
-		s.queue.EventRegister(e)
-		return nil
-	}
-	if em, pem := e.Mask(), waiter.EventMask(s.persistentEventMask.Load()); em&^pem != 0 {
-		s.persistentEventMu.Lock()
-		pem = waiter.EventMask(s.persistentEventMask.RacyLoad())
-		if newMask := pem | em; pem != newMask {
-			if pem == 0 {
-				s.persistentEntry.Init(waiter.NoopListener{}, newMask)
-				s.queue.EventRegister(&s.persistentEntry)
-			} else {
-				s.persistentEntry.SetQueuedMask(&s.queue, newMask)
-			}
-			if err := fdnotifier.UpdateFD(int32(s.fd)); err != nil {
-				if pem == 0 {
-					s.queue.EventUnregister(&s.persistentEntry)
-				}
-				s.persistentEventMu.Unlock()
-				return err
-			}
-			s.persistentEventMask.Store(uint64(newMask))
-		}
-		s.persistentEventMu.Unlock()
+	if err := s.ensurePersistentMask(e.Mask()); err != nil {
+		return err
 	}
 	s.queue.EventRegister(e)
+	return nil
+}
+
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
+//
+// +checklocksexclude:s.persistentEventMu
+func (s *Socket) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	if err := s.ensurePersistentMask(mask); err != nil {
+		return err
+	}
+	return s.queue.UpdateMask(e, mask)
+}
+
+// +checklocksexclude:s.persistentEventMu
+func (s *Socket) ensurePersistentMask(mask waiter.EventMask) error {
+	if s.fd < 0 || mask&^waiter.EventMask(s.persistentEventMask.Load()) == 0 {
+		return nil
+	}
+	s.persistentEventMu.Lock()
+	defer s.persistentEventMu.Unlock()
+	old := waiter.EventMask(s.persistentEventMask.RacyLoad())
+	newMask := old | mask
+	if old == newMask {
+		return nil
+	}
+	if old == 0 {
+		s.persistentEntry.Init(waiter.NoopListener{}, newMask)
+		s.queue.EventRegister(&s.persistentEntry)
+		if err := fdnotifier.UpdateFD(int32(s.fd)); err != nil {
+			s.queue.EventUnregister(&s.persistentEntry)
+			return err
+		}
+	} else if err := fdnotifier.UpdateMask(int32(s.fd), &s.persistentEntry, newMask); err != nil {
+		return err
+	}
+	s.persistentEventMask.Store(uint64(newMask))
 	return nil
 }
 

@@ -118,9 +118,9 @@ func (rfd *replicaFileDescription) Readiness(mask waiter.EventMask) waiter.Event
 	return rfd.inode.t.ld.replicaReadiness()
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (rfd *replicaFileDescription) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (rfd *replicaFileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return &rfd.inode.t.ld.replicaWaiter
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.

@@ -698,6 +698,13 @@ func (e *connectionedEndpoint) EventRegister(we *waiter.Entry) error {
 	return e.eventRegisterLocked(we, e.boundSocketFD)
 }
 
+// UpdateMask implements Endpoint.UpdateMask.
+func (e *connectionedEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
+	e.Lock()
+	defer e.Unlock()
+	return e.updateMaskLocked(entry, mask, e.boundSocketFD)
+}
+
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (e *connectionedEndpoint) EventUnregister(we *waiter.Entry) {
 	e.Lock()

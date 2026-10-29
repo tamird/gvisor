@@ -291,12 +291,12 @@ func (s *socketOperations) Readiness(mask waiter.EventMask) waiter.EventMask {
 	}
 }
 
-// Epollable implements socket.Socket.Epollable.
-func (s *socketOperations) Epollable() bool {
-	return true
+// EpollMaskUpdater implements socket.Socket.EpollMaskUpdater.
+func (s *socketOperations) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return s
 }
 
-// UpdateMask changes the mask of an installed socket waiter.
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
 func (s *socketOperations) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	return stack.notifier.updateMask(s, e, mask)
 }

@@ -204,9 +204,9 @@ func (s *Socket) Release(ctx context.Context) {
 	s.netns.DecRef(ctx)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (s *Socket) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (s *Socket) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return s.ep
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.

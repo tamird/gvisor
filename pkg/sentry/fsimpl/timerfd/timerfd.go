@@ -122,9 +122,9 @@ func (tfd *TimerFileDescription) EventUnregister(e *waiter.Entry) {
 	tfd.events.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (tfd *TimerFileDescription) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (tfd *TimerFileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return &tfd.events
 }
 
 // PauseTimer pauses the associated Timer.

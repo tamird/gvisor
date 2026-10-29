@@ -81,9 +81,9 @@ func (f *pidFD) EventUnregister(e *waiter.Entry) {
 	f.pid.notifier.EventUnregister(e)
 }
 
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (f *pidFD) Epollable() bool {
-	return true
+// EpollMaskUpdater implements vfs.FileDescriptionImpl.EpollMaskUpdater.
+func (f *pidFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return &f.pid.notifier
 }
 
 // RegisterFileAsyncHandler implements vfs.FileDescriptionImpl.RegisterFileAsyncHandler.

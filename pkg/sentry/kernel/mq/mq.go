@@ -290,6 +290,7 @@ type View interface {
 	Flush(ctx context.Context)
 
 	waiter.Waitable
+	UpdateMask(*waiter.Entry, waiter.EventMask) error
 }
 
 // ReaderWriter provides a send and receive view into a queue.
@@ -417,6 +418,13 @@ func (q *Queue) EventRegister(e *waiter.Entry) error {
 	defer q.mu.Unlock()
 	q.queue.EventRegister(e)
 	return nil
+}
+
+// UpdateMask changes an entry already registered on the queue.
+func (q *Queue) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.queue.UpdateMask(e, mask)
 }
 
 // EventUnregister implements Waitable.EventUnregister.
