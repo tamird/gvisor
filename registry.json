@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T23:37:44.208153+00:00",
+    "updatedAt": "2026-10-29T23:51:50.493908+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40832,9 +40832,34 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T23:12:26.596881+00:00",
-      "summary": "Parth leads the graph codec. The shared map and slice regressions now pass. Issue #16715 tracks the open map callback, recursive type, LoadValue and encoder scratch findings, with reproducers and the revisions they exercised.",
+      "updatedAt": "2026-10-29T23:51:50.493908+00:00",
+      "summary": "Parth leads the graph codec. The graph preserves the tested shared maps, slice aliases and saver self-pointers. Neither legacy slice prototype is suitable for submission. Issue #16715 tracks the open map callback, recursive type, LoadValue and encoder scratch findings, with reproducers and the revisions they exercised.",
       "findings": [
+        {
+          "text": "Legacy Save cleared bytes still visible through another slice, whichever slice it visited first. Two attempted fixes are off the submission queue: tracking byte ranges saved an unrelated sibling field; copying reachable values into a private array changed the identity of both self-pointers produced by a save hook. The integrated graph preserved the live bytes, slice aliases and self-pointers. It covers whole array elements: a pointer to one field can also save its sibling. Dropping the legacy clear would revive a kernfs failure by following a destroyed dentry in unused capacity.",
+          "evidence": [
+            {
+              "label": "Legacy Save cleared live slice data in both orders",
+              "url": "https://app.buildbuddy.io/invocation/ca94264a-5dd7-45e6-9d36-a98804675e73"
+            },
+            {
+              "label": "Range-based prototype: hidden sibling appeared in checkpoint",
+              "url": "https://app.buildbuddy.io/invocation/da4cd55c-40e0-4869-bd5b-18218ba8dfdd"
+            },
+            {
+              "label": "Typed-copy prototype: restored self-pointers targeted different objects",
+              "url": "https://app.buildbuddy.io/invocation/88458913-7963-42a8-b3a6-a333873933a9"
+            },
+            {
+              "label": "Integrated graph: live slices, aliases and self-pointers preserved",
+              "url": "https://app.buildbuddy.io/invocation/4d4ed618-2576-479a-85f2-131fa55bc6dc"
+            },
+            {
+              "label": "Why unused capacity must not be followed: destroyed kernfs dentry",
+              "url": "https://github.com/google/gvisor/blob/5d1560f19/pkg/sentry/fsimpl/kernfs/kernfs_test.go#L575"
+            }
+          ]
+        },
         {
           "text": "The revised graph code preserves both shared slots and the last pointee when overlapping views are restored as two slices or as a slice and an array pointer, in either traversal order. The earlier review draft is obsolete.",
           "evidence": [
@@ -43494,6 +43519,26 @@
       ],
       "nextStep": "Add new reproduced graph findings to the description of #16715. Mark an item fixed after its regression passes on the revised code; update the checklist in place without routine comments.",
       "evidence": [
+        {
+          "label": "Legacy Save cleared live slice data in both orders",
+          "url": "https://app.buildbuddy.io/invocation/ca94264a-5dd7-45e6-9d36-a98804675e73"
+        },
+        {
+          "label": "Range-based prototype: hidden sibling appeared in checkpoint",
+          "url": "https://app.buildbuddy.io/invocation/da4cd55c-40e0-4869-bd5b-18218ba8dfdd"
+        },
+        {
+          "label": "Typed-copy prototype: restored self-pointers targeted different objects",
+          "url": "https://app.buildbuddy.io/invocation/88458913-7963-42a8-b3a6-a333873933a9"
+        },
+        {
+          "label": "Integrated graph: live slices, aliases and self-pointers preserved",
+          "url": "https://app.buildbuddy.io/invocation/4d4ed618-2576-479a-85f2-131fa55bc6dc"
+        },
+        {
+          "label": "Why unused capacity must not be followed: destroyed kernfs dentry",
+          "url": "https://github.com/google/gvisor/blob/5d1560f19/pkg/sentry/fsimpl/kernfs/kernfs_test.go#L575"
+        },
         {
           "label": "Living graph checkpoint correctness checklist",
           "url": "https://github.com/google/gvisor/issues/16715"
