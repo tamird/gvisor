@@ -1,35 +1,93 @@
-name: CI
-
-"on":
+name: Check staged release archives
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/staged-archive-check]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
+    env:
+      SOURCE: c5ec52f3721be40a16c730f6fa3147cbd90cdc22
+      BASE: eafcb8392effca7769ef6e220d24feaadb3bdf17
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Bind source, common Bazel config and evidence
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^) == "$SOURCE" && $(git rev-parse HEAD^^) == "$BASE" ]]
+        cp .github/qualification/stagedcheck.py "$RUNNER_TEMP/"
+        mkdir "$RUNNER_TEMP/evidence" "$RUNNER_TEMP/gnu"
+        printf 'module(name="stage_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+        printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+        printf "build --remote_executor=grpcs://remote.buildbuddy.io\nbuild --remote_cache=grpcs://remote.buildbuddy.io\nbuild --bes_backend=grpcs://remote.buildbuddy.io\nbuild --bes_results_url=https://app.buildbuddy.io/invocation/\nbuild --spawn_strategy=remote\nbuild --noremote_local_fallback\nbuild --inject_repository=stage_gnu=$RUNNER_TEMP/gnu\nbuild --host_platform=@stage_gnu//:gnu\nbuild --extra_execution_platforms=@stage_gnu//:gnu\nbuild --config=x86_64\nbuild --nostamp\nbuild --remote_download_outputs=toplevel\n" > "$RUNNER_TEMP/staged.bazelrc"
+        chmod 600 "$RUNNER_TEMP/staged.bazelrc"
+        printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >> "$RUNNER_TEMP/staged.bazelrc"
+        printf 'source=%s\nbase=%s\n' "$SOURCE" "$BASE" > "$RUNNER_TEMP/evidence/source.txt"
+        git checkout --quiet --detach "$SOURCE"
+    - name: Build the check, audit its actions and exercise the actual binary
+      run: |
+        set -euo pipefail
+        bazelisk --bazelrc="$RUNNER_TEMP/staged.bazelrc" build --execution_log_json_file="$RUNNER_TEMP/executed.json" //tools/stagedcheck //tools/stagedcheck:members
+        bazelisk --bazelrc="$RUNNER_TEMP/staged.bazelrc" aquery --output=jsonproto --noinclude_artifacts //tools/stagedcheck > "$RUNNER_TEMP/actions.json"
+        bazelisk --bazelrc="$RUNNER_TEMP/staged.bazelrc" cquery --output=label 'filter("//(runsc|shim|pkg/sentry)[/:]", deps(//tools/stagedcheck))' > "$RUNNER_TEMP/evidence/configured-release-targets.txt"
+        test ! -s "$RUNNER_TEMP/evidence/configured-release-targets.txt"
+        bazelisk --bazelrc="$RUNNER_TEMP/staged.bazelrc" run --run_in_cwd @buildifier_prebuilt//:buildifier -- -mode=check debian/BUILD tools/release.bzl tools/stagedcheck/BUILD
+        test -z "$(gofmt -l tools/stagedcheck/main.go)"
+        binary="$PWD/bazel-bin/tools/stagedcheck/stagedcheck_/stagedcheck"
+        python3 "$RUNNER_TEMP/stagedcheck.py" check "$RUNNER_TEMP/evidence" "$binary" bazel-bin/tools/stagedcheck/members.txt "$RUNNER_TEMP/actions.json" "$RUNNER_TEMP/executed.json"
+        empty="$RUNNER_TEMP/empty"
+        mkdir "$empty"; cp "$binary" "$empty/check"
+        sudo chroot "$empty" /check < "$RUNNER_TEMP/staged-complete.tar.gz"
+        mkdir "$RUNNER_TEMP/cli"
+        printf '#!/bin/bash\nset -eu\n[[ $# == 3 && $1 == storage && $2 == cat ]]\ncat -- "$3"\n' > "$RUNNER_TEMP/cli/gcloud"
+        printf '#!/bin/bash\nexec bazelisk --bazelrc="$RUNNER_TEMP/staged.bazelrc" "$@"\n' > "$RUNNER_TEMP/cli/bazel"
+        chmod +x "$RUNNER_TEMP/cli/gcloud" "$RUNNER_TEMP/cli/bazel"
+        export PATH="$RUNNER_TEMP/cli:$PATH"
+        make STAGED_BINARIES="$RUNNER_TEMP/staged-complete.tar.gz" staged-binaries-check
+        ! make STAGED_BINARIES="$RUNNER_TEMP/staged-missing.tar.gz" staged-binaries-check || exit 1
+        ! make STAGED_BINARIES="$RUNNER_TEMP/no-file" staged-binaries-check || exit 1
+        echo 'binary in empty root, complete, extra, absent, corrupt, producer failure checked' > "$RUNNER_TEMP/evidence/verdict.txt"
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: staged-verifier
+        path: ${{ runner.temp }}/evidence
+    - name: Build the actual old and new release archives
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        mkdir "$RUNNER_TEMP/gnu-cache"
+        for rev in "$BASE" "$SOURCE"; do
+          git checkout --quiet --detach "$rev"
+          [[ $(git rev-parse HEAD) == "$rev" ]]
+          mkdir "$RUNNER_TEMP/$rev"
+          # The configured C compiler and its builtin include paths must match the GNU worker.
+          docker run --rm --entrypoint /bin/bash --user root -w "$PWD" -v "$PWD:$PWD" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$RUNNER_TEMP/gnu-cache:/root/.cache" "$GNU" -c '
+            set -euo pipefail
+            export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
+            work=$1 rev=$2
+            bazel --bazelrc="$work/staged.bazelrc" build -c opt //debian:gvisor-release-tar-bz2 //debian:gvisor-release-tar-zstd
+            for suffix in tar.bz2 tar.zstd; do cp -L "bazel-bin/debian/gvisor.$suffix" "$work/$rev/gvisor.$rev.$suffix"; done
+          ' _ "$RUNNER_TEMP" "$rev"
+          python3 "$RUNNER_TEMP/stagedcheck.py" archive "$RUNNER_TEMP/evidence" "$RUNNER_TEMP/$rev/gvisor.$rev.tar.bz2" "$RUNNER_TEMP/$rev/gvisor.$rev.tar.zstd"
+        done
+        python3 "$RUNNER_TEMP/stagedcheck.py" compare "$RUNNER_TEMP/evidence"
+        bzip2 -dc "$RUNNER_TEMP/$SOURCE/gvisor.$SOURCE.tar.bz2" | gzip -1 > "$RUNNER_TEMP/real-staged.tar.gz"
+        bazelisk --bazelrc="$RUNNER_TEMP/staged.bazelrc" run //tools/stagedcheck < "$RUNNER_TEMP/real-staged.tar.gz"
+        date -u '+%FT%TZ' > "$RUNNER_TEMP/evidence/archives-finished.txt"
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: staged-real-archives
+        path: ${{ runner.temp }}/evidence
+    - if: always()
+      run: rm -f "$RUNNER_TEMP/staged.bazelrc"
