@@ -158,7 +158,7 @@ jobs:
       with:
         ref: ${{ github.sha }}
         persist-credentials: false
-        fetch-depth: 5
+        fetch-depth: 10
 
     - name: Download the pinned compact-log decoder
       if: contains(matrix.required_audits, 'source-images')
@@ -186,7 +186,7 @@ jobs:
         set -euo pipefail
         test "$QUALIFICATION_COMMIT" = "$(git rev-parse HEAD)"
         test "$QUALIFICATION_TARGETS" = "//pkg/tcpip/tests/integration:virtual_tcp_test"
-        test "$QUALIFICATION_TEST_FILTER" = "^TestVirtualTCPFirstCommonLoss$"
+        test "$QUALIFICATION_TEST_FILTER" = "^TestVirtualTCPRecoveryDecision$"
         test "$QUALIFICATION_LANES" = "test"
         test "$QUALIFICATION_ARCH" = "amd64"
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
@@ -238,21 +238,21 @@ jobs:
         bash test/rbe/qualify.sh --arch=amd64 "--test-target=$QUALIFICATION_TARGETS" \
           "--test-filter=$QUALIFICATION_TEST_FILTER" "--bazel-option=--build_event_json_file=$RUNNER_TEMP/fifo/events.jsonl" \
           "--bazel-option=--cache_test_results=yes" "--bazel-option=--remote_download_outputs=toplevel" test || status=$?
-        # Expose only the fixture's three numeric observations. Keep raw Bazel events private.
+        # Retain typed recovery/packet evidence even if the receipt rejects metadata.
         testlog=bazel-testlogs/pkg/tcpip/tests/integration/virtual_tcp_test/test.log
         if test -f "$testlog"; then
-          sed -n '/FIRST_LOSS {/p' "$testlog" > "$RUNNER_TEMP/fifo/packet-rows.txt"
-          cat "$RUNNER_TEMP/fifo/packet-rows.txt"
+          sed -n -E '/FIFO_WIRE [a-z_]+ \[|FIFO_DECISIONS \{/p' "$testlog" | gzip -c > "$RUNNER_TEMP/fifo/events-only.log.gz"
         fi
         python3 -B test/rbe/first_loss_result.py "$RUNNER_TEMP/fifo" "$status"
     - name: Retain the measured event and original report digests
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: first-shared-fifo-loss
+        name: shared-fifo-recovery
         path: |
           ${{ runner.temp }}/fifo/result.json
-          ${{ runner.temp }}/fifo/packet-rows.txt
+          ${{ runner.temp }}/fifo/events-only.log.gz
+          ${{ runner.temp }}/fifo/recovery.json.gz
         if-no-files-found: error
 
   qualification-result:
