@@ -23,7 +23,7 @@ def main():
                 row.update(exit=code.get("code",0) if code.get("name")=="SUCCESS" else code.get("code"), name=code.get("name"), finish=event["finished"].get("finishTime"))
             ident = event.get("id", {})
             if "targetCompleted" in ident:
-                row["targets"].append([ident["targetCompleted"]["label"], event["completed"].get("success", False)])
+                row["targets"].append([ident["targetCompleted"]["label"], event.get("completed", {}).get("success", False)])
             if "testResult" in ident:
                 result = event["testResult"]
                 row["tests"].append({"label":ident["testResult"]["label"], "status":result["status"], "cached":result.get("cachedLocally",False),

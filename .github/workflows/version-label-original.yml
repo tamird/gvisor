@@ -1,0 +1,47 @@
+name: Read the original declared-version package outputs
+on:
+  push:
+    branches: [qualification/version-label-original]
+permissions:
+  contents: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Bind the original fixture and inspect the original coordinator tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ $(git rev-parse HEAD^) == 3a9e0219f76441cdbc08f1c1722b654085f6c765 ]]
+          git diff --exit-code HEAD^ HEAD -- test/rbe/version_label/packages.py
+          command -v zstd dpkg-deb
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          docker pull --platform=linux/amd64 "$image"
+          docker run --rm --network=none --entrypoint /bin/bash "$image" -c 'for cmd in zstd dpkg-deb; do command -v "$cmd" || echo "$cmd unavailable"; done'
+      - name: Read only the original two-architecture package artifacts
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/version_label/original.py
+      - name: Reconcile the original package-reader exit in its own image
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          d=$RUNNER_TEMP/version-original
+          [[ -f $d/aarch64/gvisor.tar.zstd ]] || exit 0
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          status=0
+          docker run --rm --entrypoint python3 --network=none -v "$PWD/test/rbe/version_label/packages.py:/packages.py:ro" -v "$d:/data:ro" "$image" /packages.py /data release-20261029.0 /tmp/output.json >"$RUNNER_TEMP/packager-log" 2>&1 || status=$?
+          { printf 'original coordinator reader exit: %s\n' "$status"; tail -5 "$RUNNER_TEMP/packager-log"; } >"$d/receipt/package-reader.txt"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-version-original-receipt
+          path: ${{ runner.temp }}/version-original/receipt/
+          if-no-files-found: error
