@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T22:24:19.679728+00:00",
+    "updatedAt": "2026-10-29T22:32:40.423771+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4309,9 +4309,9 @@
       "title": "Use declared LLVM C and C++ toolchains",
       "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2",
       "group": "bazel",
-      "status": "Contributor review requested",
+      "status": "Contributor approved; waiting for prerequisites",
       "summary": "The compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051.",
-      "updatedAt": "2026-10-29T22:24:19.679728+00:00",
+      "updatedAt": "2026-10-29T22:32:40.423771+00:00",
       "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
       "evidence": [
         {
@@ -4343,15 +4343,20 @@
           "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
-        "baseHead": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
-        "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2",
-        "title": "Review the LLVM SPDX license policy",
-        "body": "Please review only the switch to standard SPDX identifiers before submission. Both canonical fetches reproduced the submitted catalog without unrelated changes; Verify accepted all 206 records, and the SHA-256 of each of the five pinned notices was checked. Prior conditional approval of the compiler code is retained.",
-        "requestedAt": "2026-10-29T22:24:19.679728+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
+          "outcome": "approved",
+          "at": "2026-10-29T22:32:40.423771+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "release_owner",
+        "sourceHead": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
+        "observedAt": "2026-10-29T22:32:40.423771+00:00",
+        "disposition": "Approved after prerequisites",
+        "nextAction": "Open after source enumeration, SPDX verification and the reviewed compiler/static-linking prerequisites land."
       }
     },
     {
@@ -34597,19 +34602,14 @@
       "title": "Preserve live monotonic time when saving the TCP/IP clock",
       "url": "https://github.com/tamird/gvisor/commit/a38d73f8a",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T22:10:16.342263+00:00",
+      "status": "Published as #16711",
+      "updatedAt": "2026-10-29T22:32:40.423771+00:00",
       "summary": "Taking a checkpoint added the clock’s uptime to its live reading. Save that reading without advancing the clock that is still running.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a38d73f8a29df5e0c4546026e93a39a108753b54",
-        "url": "https://github.com/tamird/gvisor/commit/a38d73f8a",
-        "title": "Preserve live monotonic time when saving the TCP/IP clock",
-        "body": "Review for independent upstream submission. The checkpoint regression checks elapsed time on both the live and restored clock. The full 20-case package suite and both analyzers passed on this commit.",
-        "requestedAt": "2026-10-29T22:10:16.342263+00:00"
-      },
       "evidence": [
+        {
+          "label": "Reviewed proposal opened upstream as #16711",
+          "url": "https://github.com/google/gvisor/pull/16711"
+        },
         {
           "label": "All 20 TCP/IP package cases",
           "url": "https://app.buildbuddy.io/invocation/949d4700-1b74-43f4-970a-695558de77bf"
@@ -34618,7 +34618,27 @@
           "label": "Both owning analyzers",
           "url": "https://app.buildbuddy.io/invocation/7f82e410-88fc-452c-a525-8f8a5d706a9a"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a38d73f8a29df5e0c4546026e93a39a108753b54",
+          "outcome": "approved",
+          "at": "2026-10-29T22:32:40.423771+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "tcp_recovery",
+        "sourceHead": "a38d73f8a29df5e0c4546026e93a39a108753b54",
+        "observedAt": "2026-10-29T22:32:40.423771+00:00",
+        "disposition": "Approved and delivered as #16711",
+        "nextAction": "Follow review, checks and import on #16711.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16711",
+          "https://github.com/tamird/gvisor/commit/a38d73f8a"
+        ]
+      }
     },
     {
       "id": "pr:16710",
@@ -34655,6 +34675,30 @@
           "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f"
         }
       }
+    },
+    {
+      "id": "pr:16711",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16711,
+      "group": "runtime",
+      "ref": "research/tcpip-checkpoint-clock",
+      "head": "a38d73f8a29df5e0c4546026e93a39a108753b54",
+      "title": "Preserve live monotonic time when saving the TCP/IP clock",
+      "url": "https://github.com/google/gvisor/pull/16711",
+      "status": "open",
+      "summary": "Taking a checkpoint added the clock’s uptime to its live reading. Save that reading without advancing the clock that is still running.",
+      "updatedAt": "2026-10-29T22:32:40.423771+00:00",
+      "evidence": [
+        {
+          "label": "All 20 TCP/IP package cases",
+          "url": "https://app.buildbuddy.io/invocation/949d4700-1b74-43f4-970a-695558de77bf"
+        },
+        {
+          "label": "Both owning analyzers",
+          "url": "https://app.buildbuddy.io/invocation/7f82e410-88fc-452c-a525-8f8a5d706a9a"
+        }
+      ]
     }
   ],
   "edges": [
