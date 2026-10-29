@@ -29,6 +29,7 @@ try:
     assert set(git("diff","--name-only",product,fixture,"--","pkg").splitlines()) == {"pkg/tcpip/transport/tcp/cubic.go","pkg/tcpip/transport/tcp/test/e2e/tcp_test.go"}
     assert git("diff","--name-only","059e6b9527","HEAD","--","test/packetimpact").splitlines() == ["test/packetimpact/tests/tcp_rack_test.go"]
     rows = [json.loads(line) for line in (out / "events.jsonl").open()]
+    result["child"] = next((r["started"].get("uuid") for r in rows if "started" in r), None)
     stage = "BEP"
     attempts = [r for r in rows if r.get("id", {}).get("testResult", {}).get("label") == owner]
     result["attempts"] = len(attempts)
@@ -37,7 +38,6 @@ try:
     test = attempts[0]["testResult"]
     result["remote"] = test.get("executionInfo", {}).get("strategy") == "remote"
     result["cached"] = bool(test.get("cachedLocally") or test.get("executionInfo", {}).get("cachedRemotely"))
-    result["child"] = next((r["started"].get("uuid") for r in rows if "started" in r), None)
     assert result["remote"] and not result["cached"]
     result["test_status"] = test["status"]
     stage = "reports"
@@ -114,6 +114,34 @@ try:
         assert matches
         r["wire"] = matches
     assert not code and result["test_status"] == "PASSED" and all(c["passed"] for c in result["cases"])
+    # Original TestRunner output path+digest and its actual execution-group
+    # properties distinguish the native worker from its compiler prerequisites.
+    stage = "placement"
+    files_by_id, tests, compilers = {}, [], []
+    if (out / "exec.binpb").is_file():
+        proc = subprocess.Popen([os.environ["QUALIFICATION_DECODER"],"print","--raw=true","--sort=false","--compact_execution_log="+str(out/"exec.binpb")],stdout=subprocess.PIPE)
+        chunk = []
+        for line in proc.stdout:
+            chunk.append(line)
+            if line.rstrip(b"\r\n") != b"}": continue
+            entry=json.loads(b"".join(chunk)); chunk.clear()
+            if "file" in entry and "id" in entry: files_by_id[entry["id"]]=entry["file"]
+            spawn=entry.get("spawn",{}); mnemonic=spawn.get("mnemonic")
+            if mnemonic != "TestRunner" and not (mnemonic == "CppCompile" and any(a.endswith("protobuf/text_format.cc") for a in spawn.get("args",[]))): continue
+            props={p["name"]:p["value"] for p in spawn["platform"]["properties"]}
+            row={"action":spawn["digest"],"runner":spawn.get("runner"),"cached":bool(spawn.get("cacheHit")),"exit":spawn.get("exitCode",0),
+                 "isolation":props.get("workload-isolation-type"),"memory":props.get("EstimatedMemory"),"ipv6":props.get("network-enable-ipv6"),
+                 "image":props.get("container-image")}
+            if mnemonic == "TestRunner":
+                row["xml"]=[f["digest"].get("hash") for item in spawn.get("outputs",[]) if (f:=files_by_id.get(item.get("outputId"),{})).get("path","").endswith("/test.xml")]
+                tests.append(row)
+            else: compilers.append(row)
+        assert not chunk and proc.wait() == 0
+    result["placement"]={"tests":tests,"protobuf_compilers":compilers}
+    assert len(tests)==1 and tests[0]["runner"]=="remote" and not tests[0]["cached"] and tests[0]["exit"]==0
+    assert tests[0]["isolation"]=="firecracker" and tests[0]["ipv6"]=="true" and tests[0]["xml"]==[result["reports"]["test.xml"]["sha256"]]
+    assert tests[0]["image"].endswith("cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a")
+    assert all(row["isolation"]=="oci" and row["memory"]=="8GB" for row in compilers)
     result["status"] = "PASS"
 except (AssertionError, KeyError, ValueError, OSError, StopIteration, ET.ParseError, subprocess.CalledProcessError) as err:
     result["error"] = {"stage":stage, "kind":type(err).__name__}

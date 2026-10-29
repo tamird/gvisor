@@ -164,7 +164,6 @@ jobs:
         fetch-depth: 10
 
     - name: Download the pinned compact-log decoder
-      if: contains(matrix.required_audits, 'source-images')
       shell: bash
       run: |
         decoder=$RUNNER_TEMP/bb
@@ -181,7 +180,7 @@ jobs:
         printf 'QUALIFICATION_DECODER=%s\n' "$decoder" >> "$GITHUB_ENV"
 
     - name: Run the selected sparse-write TCP owner on the ordinary remote AMD64 platform
-      timeout-minutes: 30
+      timeout-minutes: 45
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -204,8 +203,11 @@ jobs:
             exec_properties = {
                 "Arch": "amd64",
                 "OSFamily": "linux",
-                "workload-isolation-type": "firecracker",
-                "network-enable-ipv6": "true",
+                "workload-isolation-type": "oci",
+                "EstimatedMemory": "8GB",
+                "test.workload-isolation-type": "firecracker",
+                "test.network-enable-ipv6": "true",
+                "test.EstimatedMemory": "2GB",
                 "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
             },
             visibility = ["//visibility:public"],
@@ -253,7 +255,7 @@ jobs:
         status=0
         bash test/rbe/qualify.sh --arch=amd64 "--test-target=$QUALIFICATION_TARGETS" \
           ${QUALIFICATION_TEST_FILTER:+"--test-filter=$QUALIFICATION_TEST_FILTER"} "--bazel-option=--build_event_json_file=$RUNNER_TEMP/fifo/events.jsonl" \
-          "--bazel-option=--cache_test_results=no" "--bazel-option=--remote_default_exec_properties=network-enable-ipv6=true" "--bazel-option=--modify_execution_info=^TestRunner$=+no-remote-cache" "--bazel-option=--remote_download_regex=.*[/](test[.](log|xml)|outputs[.]zip|[^/]*[.]pcap)$" "--bazel-option=--test_timeout=240" "--bazel-option=--test_sharding_strategy=disabled" "--bazel-option=--remote_download_outputs=toplevel" test || status=$?
+          "--bazel-option=--cache_test_results=no" "--bazel-option=--execution_log_compact_file=$RUNNER_TEMP/fifo/exec.binpb" "--bazel-option=--jobs=24" "--bazel-option=--nokeep_going" "--bazel-option=--modify_execution_info=^TestRunner$=+no-remote-cache" "--bazel-option=--remote_download_regex=.*[/](test[.](log|xml)|outputs[.]zip|[^/]*[.]pcap)$" "--bazel-option=--test_timeout=240" "--bazel-option=--test_sharding_strategy=disabled" "--bazel-option=--remote_download_outputs=toplevel" test || status=$?
         # Extract only TCP observations; keep all Bazel/BEP logs private.
         testlog=bazel-testlogs/test/packetimpact/tests/tcp_rack_native_test/test.log
         if test -f "$testlog"; then
