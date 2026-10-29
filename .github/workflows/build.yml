@@ -65,6 +65,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+      actions: read
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
       in_place: ${{ steps.plan.outputs.in_place }}
@@ -92,7 +93,9 @@ jobs:
       id: plan
       shell: bash
       run: |
-        plan=$(bash test/rbe/qualify.sh --dispatch-plan)
+        QUALIFICATION_LANES=test QUALIFICATION_TARGETS='//test/rbe:qualification_report_test //test/rbe:unit_matrix_test' bash test/rbe/qualify.sh --dispatch-plan > "$RUNNER_TEMP/early-plan.json"
+        QUALIFICATION_LANES=build QUALIFICATION_TARGETS=//pkg/waiter:waiter bash test/rbe/qualify.sh --dispatch-plan > "$RUNNER_TEMP/late-plan.json"
+        plan=$(jq -cs '.[0]+{rows:[.[0].rows[0],.[1].rows[0]]}' "$RUNNER_TEMP/early-plan.json" "$RUNNER_TEMP/late-plan.json")
         printf 'plan=%s\n' "$plan" >> "$GITHUB_OUTPUT"
         in_place=$(jq -r '.profile == "single" and (.rows | length <= 2) and all(.rows[]; .runner == "ubuntu-24.04")' <<<"$plan")
         printf 'in_place=%s\n' "$in_place" >> "$GITHUB_OUTPUT"
@@ -108,7 +111,17 @@ jobs:
         cos: ${{ inputs.cos_catalog_gzip_base64 }}
         key: ${{ secrets.BUILDBUDDY_API_KEY }}
 
-    - name: Run the remaining Nogo checks
+    - name: Read the completed artifact from GitHub while the second row is pending
+      if: always() && steps.row.outcome == 'success'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        ROW: ${{ fromJSON(steps.plan.outputs.plan).rows[0].id }}
+      run: |
+        python3 test/rbe/collect_actions.py --run "$GITHUB_RUN_ID" --source "$GITHUB_SHA" --architecture amd64 --run-attempt "$GITHUB_RUN_ATTEMPT" --row "$ROW" --prefix "$RUNNER_TEMP/early"
+        jq -e '.scope=="row" and .source_verified and .status=="INCOMPLETE" and .producer_status=="PASS" and .workflow.status=="in_progress" and .watch_exit==null' "$RUNNER_TEMP/early-receipt.json"
+        jq '{producer_status,status,execution_finished_at,collection_finished_at,actions_artifact}' "$RUNNER_TEMP/early-receipt.json"
+
+    - name: Run an independent bounded build after the first evidence is verified
       id: nogo
       if: always() && steps.plan.outputs.in_place == 'true' && fromJSON(steps.plan.outputs.plan).rows[1].id != ''
       timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[1].job_minutes }}
