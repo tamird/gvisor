@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T08:05:53.717544+00:00",
-  "registryDate": "2026-10-29T08:29:16.268400+00:00",
+  "registryDate": "2026-10-29T08:52:37.351418+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -232455,6 +232455,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T08:01:30.444021+00:00"
+      }
+    },
+    "branch:pipe-ring-locks": {
+      "contributor-review": {
+        "scope": "6d92728f18ba35b130ca178de202096adf67f544",
+        "since": "2026-10-29T08:29:16.268400+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T08:29:16.268400+00:00"
       }
     }
   },
