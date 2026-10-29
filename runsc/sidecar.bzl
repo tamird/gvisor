@@ -1,6 +1,15 @@
 """C programs shipped alongside runsc that run without a C runtime."""
 
+load("@with_cfg.bzl", "with_cfg")
 load("//tools:defs.bzl", "cc_binary")
+
+# --custom_malloc overrides cc_binary's malloc attribute, even under -nostdlib.
+# These programs issue syscalls directly and have no allocator or sanitizer runtime.
+# Bazel needs a name for the transition rule returned alongside the macro.
+_sidecar_binary, sidecar_transition = with_cfg(cc_binary, executable = True).set(
+    "custom_malloc",
+    Label("@bazel_tools//tools/cpp:malloc"),  # Bazel's empty default allocator.
+).extend("linkopt", ["-fno-sanitize=all"]).build()
 
 def freestanding_sidecar(name, src, out):
     """Builds a static executable with its own process entry point.
@@ -10,7 +19,7 @@ def freestanding_sidecar(name, src, out):
       src: C source file defining _start.
       out: Filename used by runsc and the sidecar tests.
     """
-    cc_binary(
+    _sidecar_binary(
         name = out,
         srcs = [src],
         copts = [
@@ -23,9 +32,17 @@ def freestanding_sidecar(name, src, out):
             "-fno-unwind-tables",
         ],
         # These executables have their own entry point and use only syscalls.
-        # The toolchain's default link flags would add the C++ and math libraries.
-        features = ["-coverage", "-default_link_flags", "-pie"],
-        link_extra_lib = None,
+        # Do not add either toolchain's hosted libraries or startup code.
+        features = [
+            "-coverage",
+            "-default_link_flags",
+            "-default_linker_libraries",
+            "-heap_partitioning",
+            "-pie",
+            "-static_linking_mode",
+            "-use_header_modules",
+            "-use_pthread",
+        ],
         linkopts = [
             "-static",
             "-nostdlib",
@@ -38,6 +55,7 @@ def freestanding_sidecar(name, src, out):
         ],
         linkstatic = True,
         stamp = 0,
+        tcmalloc = False,
         visibility = ["//visibility:public"],
     )
     native.alias(
