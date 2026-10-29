@@ -408,3 +408,142 @@ func TestGraphDecodeValueIntegerOverflow(t *testing.T) {
 		}
 	}
 }
+
+type qaNamedMap map[int]int
+
+type qaMapViews struct {
+	plain        map[int]int
+	named, other qaNamedMap
+}
+
+func (*qaMapViews) StateTypeName() string { return "state.qaMapViews" }
+func (*qaMapViews) StateFields() []string { return []string{"plain", "named", "other"} }
+func (v *qaMapViews) StateSave(s Sink) {
+	s.graph.save(0, &v.plain)
+	s.graph.save(1, &v.named)
+	s.graph.save(2, &v.other)
+}
+func (v *qaMapViews) StateLoad(_ context.Context, s Source) {
+	s.graph.load(0, &v.plain)
+	s.graph.load(1, &v.named)
+	s.graph.load(2, &v.other)
+}
+
+type qaWord struct{ p *int }
+type qaReport struct {
+	token, wordCalls, parentCalls, wordsSeenByParent int
+	parentSawToken                                   bool
+}
+type qaContextKey struct{}
+
+func (*qaWord) StateTypeName() string                   { return "state.qaDirectWord" }
+func (*qaWord) StateFields() []string                   { return nil }
+func (*qaWord) StateSave(Sink)                          {}
+func (v *qaWord) StateLoad(_ context.Context, s Source) { s.graph.afterLoadTo(v) }
+func (v *qaWord) StateAfterLoad(ctx context.Context) {
+	o := ctx.Value(qaContextKey{}).(*qaReport)
+	o.wordCalls++
+	v.p = &o.token
+}
+
+type qaParent struct{ values map[uint8]any }
+
+func (*qaParent) StateTypeName() string { return "state.qaWaitingParent" }
+func (*qaParent) StateFields() []string { return []string{"values"} }
+func (v *qaParent) StateSave(s Sink)    { s.graph.save(0, &v.values) }
+func (v *qaParent) StateLoad(_ context.Context, s Source) {
+	s.graph.loadWait(0, &v.values)
+	s.graph.afterLoadTo(v)
+}
+func (v *qaParent) StateAfterLoad(ctx context.Context) {
+	o := ctx.Value(qaContextKey{}).(*qaReport)
+	o.parentCalls++
+	o.wordsSeenByParent = o.wordCalls
+	if w, ok := v.values[7].(qaWord); ok {
+		o.parentSawToken = w.p == &o.token
+	}
+}
+
+func qaRoundTrip[T any](t *testing.T, ctx context.Context, in T) (out T) {
+	t.Helper()
+	var buf bytes.Buffer
+	if _, err := saveGraph(ctx, &buf, &in); err != nil {
+		t.Fatalf("saveGraph: %v", err)
+	}
+	wr := wire.Reader{Reader: &buf}
+	hdr, err := ReadHeaderMode(&wr)
+	if err != nil || !hdr.Graph || !hdr.Object {
+		t.Fatalf("header=%v err=%v", hdr, err)
+	}
+	if _, err := loadGraph(ctx, &buf, &out, hdr.Length, 0); err != nil {
+		t.Fatalf("loadGraph: %v", err)
+	}
+	return out
+}
+
+func qaPartialWindows[T comparable](t *testing.T, marker T) {
+	for _, test := range []struct {
+		name string
+		left int
+	}{{"left_first", 0}, {"right_first", 1}} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf [4]T
+			windows := make([][]T, 2)
+			windows[test.left], windows[1-test.left] = buf[:3:3], buf[1:4:4]
+			got := qaRoundTrip(t, t.Context(), windows)
+			left, right := got[test.left], got[1-test.left]
+			for i := range 2 {
+				if &left[i+1] != &right[i] {
+					t.Errorf("lost shared address for element %d", i)
+				}
+				left[i+1] = marker
+				if right[i] != marker {
+					t.Errorf("lost write through left[%d]", i+1)
+				}
+			}
+		})
+	}
+}
+
+func TestQADecoderReview(t *testing.T) {
+	RegisterStruct((*qaMapViews)(nil))
+	RegisterStruct((*qaWord)(nil))
+	RegisterStruct((*qaParent)(nil))
+	fingerprint.Store(0)
+	t.Run("map_views", func(t *testing.T) {
+		plain := map[int]int{1: 7}
+		got := qaRoundTrip(t, t.Context(), &qaMapViews{plain: plain, named: qaNamedMap(plain), other: qaNamedMap{1: 7}})
+		got.named[2] = 9
+		delete(got.plain, 1)
+		if _, present := got.named[1]; present || got.plain[2] != 9 || !reflect.DeepEqual(got.other, qaNamedMap{1: 7}) {
+			t.Errorf("plain=%v named=%v other=%v", got.plain, got.named, got.other)
+		}
+	})
+	t.Run("three_bytes", func(t *testing.T) { qaPartialWindows(t, [3]byte{1}) })
+	t.Run("four_bytes", func(t *testing.T) { qaPartialWindows(t, [4]byte{1}) })
+	for _, dest := range []string{"interface_slot", "map_value", "map_pointer", "waiting_parent"} {
+		t.Run(dest, func(t *testing.T) {
+			o := &qaReport{token: 73}
+			ctx := context.WithValue(t.Context(), qaContextKey{}, o)
+			src := qaWord{p: &o.token}
+			var got *int
+			switch dest {
+			case "interface_slot":
+				got = qaRoundTrip[any](t, ctx, src).(qaWord).p
+			case "map_value":
+				got = qaRoundTrip(t, ctx, map[uint8]any{7: src})[7].(qaWord).p
+			case "map_pointer":
+				got = qaRoundTrip(t, ctx, map[uint8]any{7: &src})[7].(*qaWord).p
+			case "waiting_parent":
+				got = qaRoundTrip(t, ctx, &qaParent{values: map[uint8]any{7: src}}).values[7].(qaWord).p
+				if o.parentCalls != 1 || o.wordsSeenByParent != 1 || !o.parentSawToken {
+					t.Errorf("parent hooks=%d word hooks seen=%d parent saw restored pointer=%v", o.parentCalls, o.wordsSeenByParent, o.parentSawToken)
+				}
+			}
+			t.Logf("word hooks=%d restored pointer=%v", o.wordCalls, got == &o.token)
+			if o.wordCalls != 1 || got != &o.token {
+				t.Errorf("want exactly one hook and the restored token")
+			}
+		})
+	}
+}
