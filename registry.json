@@ -32933,6 +32933,42 @@
         "summary": "After checkpoint restore, a connection with queued data could divide by zero on its first send. Rebuild segmentation settings from the new route and retain the negotiated segment size even when the MTU is unchanged.",
         "body": "Open a standalone PR. The four cases cover unchanged segmentation support, enabling it, disabling it, and reducing the MTU. The first standalone run exposed a misplaced test-helper condition; the final run passed all four with no skips."
       }
+    },
+    {
+      "id": "branch:tcp-error-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-error-locks",
+      "head": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
+      "title": "Check the locks protecting TCP endpoint errors",
+      "url": "https://github.com/tamird/gvisor/commit/2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T09:47:25.116552+00:00",
+      "summary": "The connection error is protected by the endpoint mutex. ICMP can update the last socket error while holding only its separate mutex. Annotate both fields so Nogo checks the actual contract.",
+      "evidence": [
+        {
+          "label": "AMD64: 448 passing TCP cases and all three uncached owners",
+          "url": "https://app.buildbuddy.io/invocation/0b7531a4-8c05-4ca0-af36-329811e2639f"
+        },
+        {
+          "label": "ARM64: 448 passing TCP cases and all three uncached owners",
+          "url": "https://app.buildbuddy.io/invocation/bbf41caf-c4d8-4fb5-87e1-ddeec3cff0ad"
+        },
+        {
+          "label": "Negative control: Nogo caught both deliberately removed guards",
+          "url": "https://app.buildbuddy.io/invocation/9bc78c7f-93bd-4066-b38a-34d562709545"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
+        "url": "https://github.com/tamird/gvisor/commit/2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
+        "title": "Check the locks protecting TCP endpoint errors",
+        "summary": "The connection error is protected by the endpoint mutex. ICMP can update the last socket error while holding only its separate mutex. Annotate both fields so Nogo checks the actual contract.",
+        "body": "Open a standalone annotation PR. The negative control reports separately on the unguarded hard-error read/clear and the last-error write under the wrong mutex."
+      }
     }
   ],
   "edges": [
