@@ -1287,3 +1287,106 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestRACKSelectiveProbeExtent varies only how much of the retransmitted
+// tail the SACK covers. The cumulative frontier and echoed timestamp stay put.
+func TestRACKSelectiveProbeExtent(t *testing.T) {
+	for _, length := range []int{maxPayload / 2, maxPayload} {
+		t.Run(fmt.Sprintf("sack_%d_bytes", length), func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			states := make(chan tcp.TCPSenderState, 4)
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true, MTU: uint32(mtu), Clock: clock,
+				Probe: func(s *tcp.TCPEndpointState) {
+					select {
+					case states <- s.Sender:
+					default:
+					}
+				},
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			peer := c.CreateConnectedWithOptions(header.TCPSynOptions{SACKPermitted: true, TS: true}, 0)
+			data := make([]byte, 4*maxPayload)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			read := func(v *buffer.View, start int) uint32 {
+				t.Helper()
+				defer v.Release()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				if got, want := h.SequenceNumber(), uint32(c.IRS.Add(seqnum.Size(1+start))); got != want || !bytes.Equal(h.Payload(), data[start:start+maxPayload]) || !h.ParsedOptions().TS {
+					t.Fatalf("bad packet at byte %d: seq=%d want=%d", start, got, want)
+				}
+				return h.ParsedOptions().TSVal
+			}
+			write := func(data []byte) {
+				t.Helper()
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); n != int64(len(data)) || err != nil {
+					t.Fatalf("write = %d, %v", n, err)
+				}
+			}
+			ack := func(echo uint32, sack []header.SACKBlock) tcp.TCPSenderState {
+				t.Helper()
+				for len(states) > 0 {
+					<-states
+				}
+				var options [40]byte
+				options[0], options[1] = header.TCPOptionNOP, header.TCPOptionNOP
+				peer.TSVal++
+				n := 2 + header.EncodeTSOption(peer.TSVal, echo, options[2:])
+				if len(sack) > 0 {
+					options[n], options[n+1] = header.TCPOptionNOP, header.TCPOptionNOP
+					n += 2
+					n += header.EncodeSACKBlocks(sack, options[n:])
+				}
+				peer.AckNum = c.IRS.Add(1 + maxPayload)
+				peer.SendPacket(nil, options[:n])
+				c.Stack().Pause()
+				c.Stack().Resume()
+				select {
+				case s := <-states:
+					return s
+				case <-time.After(3 * time.Second):
+					t.Fatal("no snapshot on ACK")
+					return tcp.TCPSenderState{}
+				}
+			}
+			write(data[:maxPayload])
+			echo := read(c.GetPacket(), 0)
+			clock.Advance(30 * time.Millisecond)
+			seed := ack(echo, nil)
+			if got, want := seed.RACKState.EndSequence, c.IRS.Add(1+maxPayload); got != want {
+				t.Fatalf("seed frontier=%d want=%d", got, want)
+			}
+			write(data[maxPayload:])
+			for i := 1; i <= 3; i++ {
+				read(c.GetPacket(), i*maxPayload)
+			}
+			var probe *buffer.View
+			for elapsed := time.Duration(0); elapsed < 2*time.Second && probe == nil; elapsed += time.Millisecond {
+				clock.Advance(time.Millisecond)
+				probe = c.GetPacketNonBlocking()
+			}
+			if probe == nil {
+				t.Fatal("no tail probe")
+			}
+			probeTS := read(probe, 3*maxPayload)
+			if d := int32(probeTS - echo); d <= 0 || echo == 0 || c.Stack().Stats().TCP.Timeouts.Value() != 0 {
+				t.Fatalf("expected older nonzero echo on real tail probe; delta=%d", d)
+			}
+			clock.Advance(60 * time.Millisecond)
+			start := c.IRS.Add(1 + 3*maxPayload)
+			end := start.Add(seqnum.Size(length))
+			s := ack(echo, []header.SACKBlock{{Start: start, End: end}})
+			front := int(c.IRS.Add(1).Size(s.RACKState.EndSequence))
+			t.Logf("FLIGHT SACK bytes=[%d,%d) cumulative=%d probe end=%d RACK end=%d timeouts=%d", 3*maxPayload, 3*maxPayload+length, maxPayload, 4*maxPayload, front, c.Stack().Stats().TCP.Timeouts.Value())
+			if s.RACKState.EndSequence.LessThan(c.IRS.Add(1+maxPayload)) || end.LessThan(s.RACKState.EndSequence) {
+				t.Errorf("RACK recorded byte %d beyond this SACK's end %d", front, 3*maxPayload+length)
+			}
+			if length == maxPayload && s.RACKState.EndSequence != end {
+				t.Errorf("fully SACKed retransmission did not advance RACK to %d; got %d", 4*maxPayload, front)
+			}
+		})
+	}
+}
