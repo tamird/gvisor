@@ -1,57 +1,65 @@
-name: Verify primitive array storage with the graph decoder
+name: Complete array tests and ARM filters on suitable Linux workers
 on:
-  workflow_dispatch:
-permissions:
-  contents: read
+  push:
+    branches: [qualification/array-remaining]
+permissions: {contents: read}
 jobs:
-  compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-primitive-signed-zero'
+  verify:
+    if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 100
+    env:
+      SOURCE: f76d229c04d56c4a800f0e3561d36e75410f91a1
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with:
-        fetch-depth: 5
-        persist-credentials: false
-    - name: Qualify arrays on the signed-zero prerequisite
+      with: {fetch-depth: 4, persist-credentials: false}
+    - name: Preserve the original reporter and enable the AArch64 filter
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      shell: bash
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^2)" = "f76d229c04d56c4a800f0e3561d36e75410f91a1"
-        test "$(git rev-parse HEAD^2^)" = "40eb760888e9c00c8aaeeee71e42a4f91800734b"
-        mkdir -p "$RUNNER_TEMP/checker"
-        cp test/rbe/{unit_matrix,qualification_report,tcp_long_replay}.py "$RUNNER_TEMP/checker/"
-        PYTHONPATH="$RUNNER_TEMP/checker" python3 -B -c 'import qualification_report'
-        cp .github/qualification/array-check.sh "$RUNNER_TEMP/checker/"
-        GNU="gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
+        [[ $(git rev-parse HEAD^^2) == "$SOURCE" ]]
+        mkdir -p "$RUNNER_TEMP/array-tools" "$RUNNER_TEMP/public" "$RUNNER_TEMP/private" "$RUNNER_TEMP/cache" "$RUNNER_TEMP/poll-gnu-platform"
+        cp test/rbe/{qualification_report,unit_matrix}.py .github/qualification/remaining-array.sh "$RUNNER_TEMP/array-tools/"
+        (cd "$RUNNER_TEMP/array-tools"; python3 -B -c 'import qualification_report, unit_matrix')
+        git checkout --quiet --detach "$SOURCE"
+        if ! test -s /proc/sys/fs/binfmt_misc/qemu-aarch64; then
+          sudo apt-get -qq update
+          sudo apt-get -qq install --no-install-recommends qemu-user-static binfmt-support
+          sudo update-binfmts --enable qemu-aarch64
+        fi
+        grep -q 'flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
         docker pull --platform=linux/amd64 "$GNU"
-        plat=$RUNNER_TEMP/poll-gnu-platform
-        mkdir -p "$plat"
-        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
-        cat >"$plat/BUILD" <<BUILD
-        platform(
-            name = "gnu",
-            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-            exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "container-image":"docker://$GNU"},
-            visibility = ["//visibility:public"],
-        )
-        BUILD
-        rc=$RUNNER_TEMP/poll-gnu.bazelrc
+        plat="$RUNNER_TEMP/poll-gnu-platform"
+        printf 'module(name="poll_gnu_platform")\n' > "$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$plat/BUILD"
         umask 077
-        trap 'rm -f "$rc"' EXIT
         {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
           printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } >"$rc"
-        unset BUILDBUDDY_API_KEY
-        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" "$RUNNER_TEMP/checker/array-check.sh" "$RUNNER_TEMP" f76d229c04d56c4a800f0e3561d36e75410f91a1
-    - name: Save only the typed results
-      if: always()
+        } > "$RUNNER_TEMP/array.bazelrc"
+    - name: Full missing test package
+      env: {LANE: normal}
+      run: &run |
+        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$RUNNER_TEMP/cache:/root/.cache" -w "$GITHUB_WORKSPACE" "$GNU" "$RUNNER_TEMP/array-tools/remaining-array.sh" "$RUNNER_TEMP" "$LANE" "$SOURCE"
+    - if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: combined-array-verdicts
-        path: ${{ runner.temp }}/replay-public/*.json
-        if-no-files-found: error
+      with: {name: array-remaining-normal, path: '${{ runner.temp }}/public/normal', if-no-files-found: warn}
+    - name: Full missing race package
+      if: ${{ !cancelled() }}
+      env: {LANE: race}
+      run: *run
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with: {name: array-remaining-race, path: '${{ runner.temp }}/public/race', if-no-files-found: warn}
+    - name: Run the seven ARM64 analyzer filters
+      if: ${{ !cancelled() }}
+      env: {LANE: arm}
+      run: *run
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with: {name: array-remaining-arm, path: '${{ runner.temp }}/public/arm', if-no-files-found: warn}
+    - if: always()
+      run: rm -f "$RUNNER_TEMP/array.bazelrc"
