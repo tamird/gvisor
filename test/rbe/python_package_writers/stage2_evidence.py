@@ -2,6 +2,7 @@
 
 import datetime
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -14,6 +15,7 @@ def check(result):
     folder = Path(os.environ["RUNNER_TEMP"])
     expected = {
         "PackageTar": ("payload.tar", "3a57a5fe4121f867ccd0c26c89c511dd0f5851712ae6723babed02f950193898"),
+        "ShimConfig": ("config.tar", None),
         "MakeDeb": ("gvisor-writer-input_1_all.deb", "486d93a4ea624b12536af762811caeac49ab801c05169c7dc744d737673ab015"),
     }
     result["expected"] = expected
@@ -37,6 +39,8 @@ def check(result):
         row, pos = json.JSONDecoder().raw_decode(printed)
         printed = printed[pos:]
         name = row.get("mnemonic")
+        if name == "PackageTar" and any(o["path"].endswith("/config.tar") for o in row.get("actualOutputs", [])):
+            name = "ShimConfig"
         if name not in expected:
             continue
         assert name not in result["workers"], name
@@ -56,7 +60,14 @@ def check(result):
         package, = (o for o in row["actualOutputs"] if o["path"].endswith("/" + filename))
         content = (execroot / package["path"]).read_bytes()
         rec["output"] = {"sha256": hashlib.sha256(content).hexdigest(), "size": len(content)}
-        assert rec["output"]["sha256"] == sha == package["digest"]["hash"], rec
+        assert rec["output"]["sha256"] == package["digest"]["hash"], rec
+        if name == "ShimConfig":
+            with tarfile.open(fileobj=io.BytesIO(content)) as config:
+                member, = (m for m in config if m.isfile())
+                assert member.name.removeprefix("./").lstrip("/") == "etc/containerd/runsc.toml" and member.mode == 0o644
+                assert config.extractfile(member).read() == Path("shim/runsc.toml").read_bytes()
+        else:
+            assert rec["output"]["sha256"] == sha, rec
     assert result["exit"] == 0 and result["workers"].keys() == expected.keys(), result
 
 
@@ -64,7 +75,11 @@ result = {"source": os.environ["GITHUB_SHA"], "arch": os.environ["QUALIFICATION_
 try:
     check(result)
     result["status"] = "PASS"
+except Exception as err:
+    result["error"] = str(err)
+    raise
 finally:
+    result["missing"] = sorted(set(result.get("expected", {})) - set(result["workers"]))
     result["verified"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     path = Path(os.environ["REPORT_DIR"]) / (result["arch"] + ".json")
     path.write_text(json.dumps(result, indent=2) + "\n")

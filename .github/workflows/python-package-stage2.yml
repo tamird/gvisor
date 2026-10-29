@@ -18,7 +18,7 @@ jobs:
       QUALIFICATION_HEADER_BASE: ''
       QUALIFICATION_COS_SHA256: ''
       QUALIFICATION_COS_GZIP_BASE64: ''
-      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package
+      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //shim:config
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
