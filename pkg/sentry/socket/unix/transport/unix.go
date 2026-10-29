@@ -984,10 +984,9 @@ func (e *baseEndpoint) EventRegister(we *waiter.Entry) error {
 // UpdateMask implements Endpoint.UpdateMask.
 func (e *baseEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
 	e.Lock()
-	peer := e.peer
-	e.Unlock()
-	if peer != nil {
-		return peer.UpdateMask(e.WaitQueue, entry, mask)
+	defer e.Unlock()
+	if e.peer != nil {
+		return e.peer.UpdateMask(e.WaitQueue, entry, mask)
 	}
 	return e.WaitQueue.UpdateMask(entry, mask)
 }
