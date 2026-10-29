@@ -1,11 +1,11 @@
-name: Check partially elapsed TCP send deadlines after restore
+name: Verify clock and TCP checkpoint owners
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-restore-send-deadline-v2'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-clock-checkpoint-owners'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,14 +13,14 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Verify the original TCP deadlines and byte sequence
+    - name: Verify checkpoint package tests and analyzers
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "e585c8e981a15ce57d1bf0580ac88eb224680656"
+        test "$(git rev-parse HEAD^1)" = "4ee30fe39409d91e02eacd6e221bd1ddf119c72d"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -83,12 +83,11 @@ jobs:
         chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
-        label=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in stock correction; do
+        for arm in clock tcp clock-check tcp-check tcp-race; do
           case $arm in
-            stock) source=474beb15fb459105c5727937647947c298477fcb; parent=5edf5d13c7a6749df466add29d8811260edb4cda ;;
-            correction|analyzers) source=f8209127c69afca04a531e0feb46ca17183c9df2; parent=5edf5d13c7a6749df466add29d8811260edb4cda ;;
+            clock*) source=a38d73f8a29df5e0c4546026e93a39a108753b54; parent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4 ;;
+            tcp*) source=f8209127c69afca04a531e0feb46ca17183c9df2; parent=5edf5d13c7a6749df466add29d8811260edb4cda ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -96,8 +95,6 @@ jobs:
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
-          git diff --exit-code 474beb15fb459105c5727937647947c298477fcb "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/endpoint_state.go' ':(exclude)pkg/tcpip/transport/tcp/snd.go' ':(exclude)pkg/tcpip/transport/tcp/timer.go'
-          git diff --quiet 474beb15fb459105c5727937647947c298477fcb "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
@@ -106,12 +103,14 @@ jobs:
           git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
-          labels=("$label")
-          opts=(--bazel-option=--test_arg=-test.v --bazel-option=--test_filter=^TestRestoreSendTimer$)
-          if [[ $arm == analyzers ]]; then
-            labels=(//pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo)
-            opts=()
-          fi
+          opts=()
+          case $arm in
+            clock) labels=(//pkg/tcpip:tcpip_test) ;;
+            tcp) labels=(//pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_test) ;;
+            clock-check) labels=(//pkg/tcpip:tcpip_nogo //pkg/tcpip:tcpip_test_nogo) ;;
+            tcp-check) labels=(//pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo) ;;
+            tcp-race) labels=(//pkg/tcpip/transport/tcp/test/e2e:tcp_test); opts=(--bazel-option=--config=race --bazel-option=--test_filter=^TestRestoreSendTimer$) ;;
+          esac
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
@@ -122,15 +121,12 @@ jobs:
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "${labels[*]}" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
-          # If the common target cannot compile, repeating three builds cannot add measurements.
-          if [[ $arm == stock && ! -s "$raw" ]]; then break; fi
-          if [[ $arm == stock && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
         done
         python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["stock","correction"]
+        arms = ["clock","tcp","clock-check","tcp-check","tcp-race"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -143,6 +139,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-restore-send-deadline-verdict
+        name: checkpoint-owner-verdicts
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
