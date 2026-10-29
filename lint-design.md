@@ -6,6 +6,14 @@ one opt-in writing command, `bazel run //tools/lint:format`. These are
 proposed interfaces. A temporary `make lint` alias can call Bazel but
 should own no policy.
 
+On the [working branch](https://github.com/tamird/gvisor/commit/378946ccd),
+the check runs Buildifier and cpplint independently. On an
+[AMD64 scratch worker](https://app.buildbuddy.io/invocation/1c7ef0fa-8529-4c89-9410-71be0a31c57a)
+they checked 617 Bazel files and 485 C++ files using the registered
+tools. A [new C++ file with a bad include](https://app.buildbuddy.io/invocation/c118d0f9-150a-44dc-8c5b-d3c177052d09)
+failed cpplint. These results cover running the checks; bootstrapping
+all their tools on scratch is still open.
+
 | Check | Where it belongs |
 | --- | --- |
 | Buildifier, goimports, clang-format | Independent source actions. The format command uses the same files, tools, configs and options as the checks. |
@@ -60,6 +68,16 @@ from [invalid configuration](https://app.buildbuddy.io/invocation/df00c424-5308-
 That establishes parity for these inputs, not a reason to downgrade the
 formatter. Keep the supplier and the lint inputs dev-only.
 
+Use Buildifier's filename diagnostic in CI. Its diff mode invokes
+`/usr/bin/env`, Bash and `diff`; its check mode [names the same bad file
+without those programs](https://github.com/tamird/gvisor/actions/runs/40931472870).
+For edits, the [format target](https://github.com/tamird/gvisor/actions/runs/40927701416)
+uses the check's file list and configuration, including when invoked
+from a subdirectory. Running it twice leaves already-formatted files
+untouched. The formatter can run in an empty root; the
+[Bazel 8.8.1 Linux client](https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/runtime/commands/RunCommandLine.java#L158-L176)
+still starts `bazel run` targets through `sh -c`.
+
 ## Declare files once, and keep lint out of downstream builds
 
 A [Bazel glob](https://bazel.build/reference/be/functions#glob) stops at
@@ -99,10 +117,11 @@ requires a separate fix.
 
 ## Migration order
 
-1. Hold [#16663](https://github.com/google/gvisor/pull/16663). Prove
-   Buildifier and cpplint share file discovery, fail independently on
-   bad inputs, run without host tools, and do not leak lint-only
-   dependencies into a consuming module’s repository mapping.
+1. [#16663](https://github.com/google/gvisor/pull/16663) can use the
+   shared file list and the supplier's native executable. The switch
+   still needs a released native target or the small supplier patch
+   above. The [integrated license check](https://github.com/tamird/gvisor/actions/runs/40931472870)
+   verified 222 records.
 2. Migrate clang-format, goimports and codespell to the same interface.
    Preserve useful controls: [485 C/C++ files on scratch](https://app.buildbuddy.io/invocation/a98b6745-cb67-4e80-942a-1b9d286a60d3),
    a [new-package violation](https://app.buildbuddy.io/invocation/5b88fc8b-dd38-400a-a493-4ede1ba9c0d7),
