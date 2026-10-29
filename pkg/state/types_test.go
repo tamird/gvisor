@@ -290,27 +290,12 @@ func TestWrongDestinationShape(t *testing.T) {
 // Zero elision is a wire-format choice, not just a round-trip optimization.
 // In full-value contexts, zero values still establish the element's wire type.
 func TestZeroWireRepresentations(t *testing.T) {
-	negativeZero := math.Copysign(0, -1)
-	for _, test := range []struct {
+	type sample struct {
 		name  string
 		value any
 		full  wire.Object
-	}{
-		{"bool", new(bool), wire.Bool(false)},
-		{"int", new(int64), wire.Int(0)},
-		{"uint", new(uint64), wire.Uint(0)},
-		{"float32", new(float32(negativeZero)), wire.Float32(negativeZero)},
-		{"float64", &negativeZero, wire.Float64(negativeZero)},
-		{"complex64", new(complex64(complex(negativeZero, negativeZero))), new(wire.Complex64(complex(negativeZero, negativeZero)))},
-		{"complex128", new(complex(negativeZero, negativeZero)), new(wire.Complex128(complex(negativeZero, negativeZero)))},
-		{"string", new(string), new(wire.String(""))},
-		{"pointer", new(*int), &wire.Ref{}},
-		{"slice", new([]int), &wire.Slice{}},
-		{"map", new(map[int]int), &wire.Ref{}},
-		{"interface", new(any), &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}},
-		{"array", new([2]int), &wire.ObjectArray{Contents: []wire.Object{wire.Int(0), wire.Int(0)}}},
-		{"nested_array", new([1][1]int), &wire.ObjectArray{Contents: []wire.Object{&wire.ObjectArray{Contents: []wire.Object{wire.Int(0)}}}}},
-	} {
+	}
+	check := func(test sample, defaultWire wire.Object) {
 		t.Run(test.name, func(t *testing.T) {
 			for _, how := range []encodeStrategy{encodeDefault, encodeAsValue} {
 				var es encodeState
@@ -318,7 +303,7 @@ func TestZeroWireRepresentations(t *testing.T) {
 				es.encodeObject(reflect.ValueOf(test.value).Elem(), how, &encoded)
 				want := test.full
 				if how == encodeDefault {
-					want = wire.Nil{}
+					want = defaultWire
 				}
 				var gotBytes, wantBytes bytes.Buffer
 				wire.Save(&wire.Writer{Writer: &gotBytes}, encoded)
@@ -328,6 +313,36 @@ func TestZeroWireRepresentations(t *testing.T) {
 				}
 			}
 		})
+	}
+	for _, test := range []sample{
+		{"bool", new(bool), wire.Bool(false)},
+		{"int", new(int64), wire.Int(0)},
+		{"uint", new(uint64), wire.Uint(0)},
+		{"float32", new(float32), wire.Float32(0)},
+		{"float64", new(float64), wire.Float64(0)},
+		{"complex64", new(complex64), new(wire.Complex64)},
+		{"complex128", new(complex128), new(wire.Complex128)},
+		{"string", new(string), new(wire.String(""))},
+		{"pointer", new(*int), &wire.Ref{}},
+		{"slice", new([]int), &wire.Slice{}},
+		{"map", new(map[int]int), &wire.Ref{}},
+		{"interface", new(any), &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}},
+		{"array", new([2]int), &wire.ObjectArray{Contents: []wire.Object{wire.Int(0), wire.Int(0)}}},
+		{"float_array", new([2]float64), &wire.ObjectArray{Contents: []wire.Object{wire.Float64(0), wire.Float64(0)}}},
+		{"nested_array", new([1][1]int), &wire.ObjectArray{Contents: []wire.Object{&wire.ObjectArray{Contents: []wire.Object{wire.Int(0)}}}}},
+	} {
+		check(test, wire.Nil{})
+	}
+	negativeZero := math.Copysign(0, -1)
+	for _, test := range []sample{
+		{"negative_float32", new(float32(negativeZero)), wire.Float32(negativeZero)},
+		{"negative_float64", &negativeZero, wire.Float64(negativeZero)},
+		{"negative_complex64", new(complex64(complex(negativeZero, negativeZero))), new(wire.Complex64(complex(negativeZero, negativeZero)))},
+		{"negative_complex128", new(complex(negativeZero, negativeZero)), new(wire.Complex128(complex(negativeZero, negativeZero)))},
+		{"negative_float_array", new([2]float64{negativeZero, 0}), &wire.ObjectArray{Contents: []wire.Object{wire.Float64(negativeZero), wire.Float64(0)}}},
+		{"negative_complex_array", new([2]complex128{complex(negativeZero, 0), 0}), &wire.ObjectArray{Contents: []wire.Object{new(wire.Complex128(complex(negativeZero, 0))), new(wire.Complex128)}}},
+	} {
+		check(test, test.full)
 	}
 }
 
