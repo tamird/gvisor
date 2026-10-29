@@ -90,8 +90,14 @@ def container(runsc, direct, bundle, case):
             call(["wait", cid])
             return patches
         finally:
-            call(["delete", "--force", cid], check=False)
-            shutil.copytree(debug_dir, evidence / (case + "-debug"))
+            try:
+                call(["delete", "--force", cid], check=False)
+            finally:
+                # Match specutils.UnmountNullNetNS: this mount survives delete.
+                while subprocess.run(["umount", "--lazy", root / "null-netns"],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+                    pass
+                shutil.copytree(debug_dir, evidence / (case + "-debug"))
 
 with tempfile.TemporaryDirectory(prefix="gpr-", dir="/tmp") as tmp:
     work = Path(tmp)

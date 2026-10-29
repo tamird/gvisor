@@ -1,4 +1,4 @@
-name: Compare epoll checkpoints of a host character device
+name: Compare gofer epoll behavior across restore
 on: workflow_dispatch
 permissions:
   contents: read
@@ -6,21 +6,29 @@ jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Retain the controller outside the two source checkouts
+      - name: Retain both controllers outside the source checkouts
         run: |
-          cp test/epoll_restore_probe/qualify.py "$RUNNER_TEMP/gofer_qualify.py"
-          mkdir -p "$RUNNER_TEMP/gofer-evidence"
-          echo '{"verdict":"INCOMPLETE","expected":["linux","stock-lisafs","stock-directfs","fixed-lisafs","fixed-directfs"],"observations":{}}' >"$RUNNER_TEMP/gofer-evidence/verdict.json"
-      - name: Install the cross compiler used for runsc's embedded vDSO
+          set -euo pipefail
+          cp test/epoll_restore_probe/{qualify.py,missing_donor.py} "$RUNNER_TEMP/"
+          git fetch --depth=1 origin affb09fd174947c38510814cd9d4526df47f538f
+          for f in inject.py probe.c BUILD; do
+            git show FETCH_HEAD:test/epoll_restore_probe/"$f" > "$RUNNER_TEMP/donor-$f"
+          done
+          mkdir -p "$RUNNER_TEMP/evidence"/{normal,donor} "$RUNNER_TEMP/bundles"
+          for name in normal donor; do
+            echo '{"verdict":"INCOMPLETE","observations":{}}' > "$RUNNER_TEMP/evidence/$name/verdict.json"
+          done
+      - name: Install required cross compiler
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq install g++-aarch64-linux-gnu
-      - name: Build the original and corrected runsc with the same ELF
+      - name: Build the four release layouts using Bazel
+        id: build
         run: |
           set -euo pipefail
           opts=(--config=x86_64 --jobs=4 --local_ram_resources=HOST_RAM*.65)
@@ -29,32 +37,62 @@ jobs:
             git switch --detach "$1"
             test "$(git rev-parse HEAD)" = "$1"
           }
-          binary() { bazel cquery --config=x86_64 --output=files "$1"; }
-          fetch_source 039367497d16b4fd96ee7a3da0564d98fa235030
-          test "$(git rev-parse HEAD^^)" = e82a0e179198f72260185166fb2be5336abee8b2
-          bazel build "${opts[@]}" //runsc:runsc //test/epoll_restore_probe:probe
-          cp "$(binary //runsc:runsc)" "$RUNNER_TEMP/stock-runsc"
-          cp "$(binary //test/epoll_restore_probe:probe)" "$RUNNER_TEMP/gofer-probe"
-          cp test/epoll_restore_probe/probe.c "$RUNNER_TEMP/gofer-probe.c"
-          file "$RUNNER_TEMP/gofer-probe" | grep 'statically linked'
-          fetch_source b5b6ac4ac4c120c583929dd7c770aa149c781134
-          test "$(git rev-parse HEAD^^)" = 64758ff8b5b9c25a780afc75f830260c68b58bbb
-          cmp "$RUNNER_TEMP/gofer-probe.c" test/epoll_restore_probe/probe.c
-          bazel build "${opts[@]}" //runsc:runsc
-          cp "$(binary //runsc:runsc)" "$RUNNER_TEMP/fixed-runsc"
-      - name: Exercise native and guest syscall behavior
+          for variant in stock fixed old-watch rejected-watch; do
+            case "$variant" in
+              stock) source=039367497d16b4fd96ee7a3da0564d98fa235030 ;;
+              fixed) source=b5b6ac4ac4c120c583929dd7c770aa149c781134 ;;
+              old-watch) source=64758ff8b5b9c25a780afc75f830260c68b58bbb ;;
+              rejected-watch) source=d971b7abc867da47292289eba8792aa62775df0c ;;
+            esac
+            fetch_source "$source"
+            case "$variant" in
+              old-watch|rejected-watch)
+                mkdir -p test/epoll_restore_probe
+                cp "$RUNNER_TEMP/donor-probe.c" test/epoll_restore_probe/probe.c
+                cp "$RUNNER_TEMP/donor-BUILD" test/epoll_restore_probe/BUILD
+                python3 "$RUNNER_TEMP/donor-inject.py"
+                git diff -- runsc/gofer/fs/lisafs.go > "$RUNNER_TEMP/evidence/donor/$variant-provider.diff"
+                test -s "$RUNNER_TEMP/evidence/donor/$variant-provider.diff"
+                ;;
+              stock) test "$(git rev-parse HEAD^^)" = e82a0e179198f72260185166fb2be5336abee8b2 ;;
+              fixed) test "$(git rev-parse HEAD^^)" = 64758ff8b5b9c25a780afc75f830260c68b58bbb ;;
+            esac
+            bazel build "${opts[@]}" //:release //test/epoll_restore_probe:probe
+            out=$(bazel cquery --config=x86_64 --output=files //:release | grep '/release/runsc$')
+            dest="$RUNNER_TEMP/bundles/$variant"
+            mkdir -p "$dest"
+            cp -RL --preserve=mode "$(dirname "$out")/." "$dest/"
+            for name in runsc gvisor-bin/gvisor_sentry gvisor-bin/checkpointgofer; do test -x "$dest/$name"; done
+            cp "$(bazel cquery --config=x86_64 --output=files //test/epoll_restore_probe:probe)" "$dest/probe"
+            sha256sum "$dest/runsc" "$dest"/gvisor-bin/* "$dest/probe" > "$RUNNER_TEMP/evidence/$variant.sha256"
+            git restore --source=HEAD -- runsc/gofer/fs/lisafs.go
+          done
+          cmp "$RUNNER_TEMP/bundles/stock/probe" "$RUNNER_TEMP/bundles/fixed/probe"
+          cmp "$RUNNER_TEMP/bundles/old-watch/probe" "$RUNNER_TEMP/bundles/rejected-watch/probe"
+          cmp "$RUNNER_TEMP/evidence/donor/old-watch-provider.diff" "$RUNNER_TEMP/evidence/donor/rejected-watch-provider.diff"
+      - name: Native and real-donation runtime traces
         run: |
-          sudo python3 "$RUNNER_TEMP/gofer_qualify.py" "$RUNNER_TEMP/gofer-probe"             "$RUNNER_TEMP/stock-runsc" "$RUNNER_TEMP/fixed-runsc" "$RUNNER_TEMP/gofer-evidence"
-      - name: Show runtime diagnostics if a required trace is missing
-        if: failure()
+          b="$RUNNER_TEMP/bundles"
+          sudo python3 "$RUNNER_TEMP/qualify.py" "$b/stock/probe" "$b/stock/runsc" "$b/fixed/runsc" "$RUNNER_TEMP/evidence/normal"
+      - name: Missing-donor runtime traces
+        if: '!cancelled() && steps.build.outcome == ''success'''
         run: |
-          sudo find "$RUNNER_TEMP/gofer-evidence" -maxdepth 1 -name '*.log' -exec tail -30 '{}' ';'
-          sudo grep -irE 'FATAL|WARNING.*(error|failed)|panic:' "$RUNNER_TEMP/gofer-evidence" | cut -c1-1200 | tail -55 || :
+          b="$RUNNER_TEMP/bundles"
+          sudo python3 "$RUNNER_TEMP/missing_donor.py" "$b/old-watch/probe" "$b/old-watch/runsc" "$b/rejected-watch/runsc" "$RUNNER_TEMP/evidence/donor"
+      - name: Preserve runnable releases and report diagnostics on failure
+        if: failure() && steps.build.outcome == 'success'
+        run: |
+          tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/evidence/runtime-recovery.tgz" bundles
+          sudo find "$RUNNER_TEMP/evidence" -name '*.log' -exec tail -12 '{}' ';' | tail -100
+          sudo grep -irE 'FATAL ERROR|panic:' "$RUNNER_TEMP/evidence" --exclude='*.tgz' | cut -c1-600 | tail -30 || :
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: gofer-device-epoll-restore
+          name: gofer-epoll-checkpoint
           path: |
-            ${{ runner.temp }}/gofer-evidence/verdict.json
-            ${{ runner.temp }}/gofer-evidence/*.log
+            ${{ runner.temp }}/evidence/**/*.json
+            ${{ runner.temp }}/evidence/**/*.log
+            ${{ runner.temp }}/evidence/**/*.diff
+            ${{ runner.temp }}/evidence/*.sha256
+            ${{ runner.temp }}/evidence/*.tgz
           if-no-files-found: error
