@@ -15,6 +15,8 @@
 package tcp_rack_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"testing"
 	"time"
@@ -433,5 +435,146 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 	info := dut.GetSockOptTCPInfo(t, acceptFd)
 	if info.CaState != linux.TCP_CA_Recovery {
 		t.Fatalf("expected connection to be in fast recovery, want: %v got: %v", linux.TCP_CA_Recovery, info.CaState)
+	}
+}
+
+// TestApplicationLimitedLinuxWindow measures the native sender using actual
+// data/ACK sequence numbers and TCP_INFO. Time is wall time on this DUT.
+func TestApplicationLimitedLinuxWindow(t *testing.T) {
+	for _, algorithm := range []string{"cubic", "reno"} {
+		for _, schedule := range []struct {
+			name string
+			gap  time.Duration
+		}{{"dense", 0}, {"spaced", 40 * time.Millisecond}} {
+			t.Run(algorithm+"_"+schedule.name, func(t *testing.T) {
+				dut, conn, fd, mss := createSACKConnection(t)
+				dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte(algorithm))
+				if got := string(bytes.TrimRight(dut.GetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, 16), "\x00")); got != algorithm {
+					t.Fatalf("TCP_CONGESTION = %q, want %q", got, algorithm)
+				}
+				dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+				const window = 60000
+				payload := make([]byte, mss)
+				expected := &testbench.Payload{Bytes: payload}
+				info := func() linux.TCPInfo { return dut.GetSockOptTCPInfo(t, fd) }
+				ack := func(sn seqnum.Value, options []byte) {
+					conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(sn)), WindowSize: testbench.Uint16(window), Options: options})
+				}
+				drain := func() linux.TCPInfo {
+					t.Helper()
+					start := time.Now()
+					for {
+						st := info()
+						if st.Unacked == 0 && st.CaState == linux.TCP_CA_Open {
+							return st
+						}
+						if time.Since(start) > time.Second {
+							t.Fatalf("connection failed to drain: unacked=%d state=%d", st.Unacked, st.CaState)
+						}
+						time.Sleep(time.Millisecond)
+					}
+				}
+				send := func(sn seqnum.Value) {
+					t.Helper()
+					if n := dut.Send(t, fd, payload, 0); int(n) != mss {
+						t.Fatalf("send = %d, want %d", n, mss)
+					}
+					if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(sn))}, expected, time.Second); err != nil {
+						t.Fatal(err)
+					}
+				}
+				head := *conn.RemoteSeqNum(t)
+				send(head)
+				head = head.Add(seqnum.Size(mss))
+				time.Sleep(10 * time.Millisecond)
+				ack(head, nil)
+				initial := drain()
+				for n := range 5 {
+					send(head.Add(seqnum.Size(n * mss)))
+				}
+				for n := 2; n <= 4; n++ {
+					var options [40]byte
+					l := header.EncodeNOP(options[:])
+					l += header.EncodeNOP(options[l:])
+					l += header.EncodeSACKBlocks([]header.SACKBlock{{Start: head.Add(seqnum.Size(mss)), End: head.Add(seqnum.Size(n * mss))}}, options[l:])
+					ack(head, options[:l])
+				}
+				if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(head))}, expected, time.Second); err != nil {
+					t.Fatalf("missing head repair: %v", err)
+				}
+				loss := info()
+				if loss.CaState != linux.TCP_CA_Recovery || loss.Retransmits != 0 || loss.TotalRetrans != initial.TotalRetrans+1 {
+					t.Fatalf("repair state=%d, timeouts=%d total retransmits=%d (initial %d)", loss.CaState, loss.Retransmits, loss.TotalRetrans, initial.TotalRetrans)
+				}
+				cursor := head.Add(seqnum.Size(5 * mss))
+				ack(cursor, nil)
+				base := drain()
+				if base.SndCwnd < base.SndSsthresh || int(base.SndCwnd)*mss >= window {
+					t.Fatalf("not unconstrained congestion avoidance: cwnd=%d threshold=%d mss=%d", base.SndCwnd, base.SndSsthresh, mss)
+				}
+				type sample struct {
+					AtNS                             int64
+					Cwnd, Unacked, NotSent, RTT, RTO uint32
+				}
+				samples := []sample{}
+				start := time.Now()
+				for range 32 {
+					time.Sleep(schedule.gap)
+					send(cursor)
+					flight := info()
+					if flight.Unacked != 1 || flight.NotSentBytes != 0 || flight.TotalRetrans != base.TotalRetrans {
+						t.Fatalf("trickle unacked=%d unsent=%d total retrans=%d", flight.Unacked, flight.NotSentBytes, flight.TotalRetrans)
+					}
+					cursor = cursor.Add(seqnum.Size(mss))
+					time.Sleep(10 * time.Millisecond)
+					ack(cursor, nil)
+					st := drain()
+					if st.TotalRetrans != base.TotalRetrans || st.Retransmits != 0 {
+						t.Fatalf("trickle retransmits=%d RTOs=%d", st.TotalRetrans, st.Retransmits)
+					}
+					samples = append(samples, sample{time.Since(start).Nanoseconds(), st.SndCwnd, flight.Unacked, flight.NotSentBytes, st.RTT, st.RTO})
+				}
+				pre := drain()
+				target := int(pre.SndCwnd) * mss
+				if target >= window || target <= 0 {
+					t.Fatalf("receiver limits burst: %d/%d", target, window)
+				}
+				offer := make([]byte, target+4*mss)
+				if n := dut.Send(t, fd, offer, 0); int(n) != len(offer) {
+					t.Fatalf("burst Send=%d want %d", n, len(offer))
+				}
+				wire, frames := 0, 0
+				for wire < target {
+					sn := cursor.Add(seqnum.Size(wire))
+					ls, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(sn))}, nil, time.Second)
+					if err != nil {
+						t.Fatalf("burst after %d bytes: %v", wire, err)
+					}
+					data, ok := ls[len(ls)-1].(*testbench.Payload)
+					if !ok || len(data.Bytes) == 0 || len(data.Bytes) > len(offer)-wire || !bytes.Equal(offer[wire:wire+len(data.Bytes)], data.Bytes) {
+						t.Fatal("invalid burst payload")
+					}
+					wire += len(data.Bytes)
+					frames++
+				}
+				full := info()
+				if wire != target || full.Unacked != pre.SndCwnd || full.TotalRetrans != base.TotalRetrans || full.NotSentBytes != 4*uint32(mss) {
+					t.Fatalf("burst bytes=%d expected=%d unacked=%d unsent=%d retransmits=%d", wire, target, full.Unacked, full.NotSentBytes, full.TotalRetrans)
+				}
+				out := struct {
+					Algorithm, Profile                                                  string
+					MSS, Window, BurstBytes, Frames                                     int
+					InitialCwnd, PostLossCwnd, Threshold, BeforeBurstCwnd, TotalRetrans uint32
+					RepairSeq, BurstSeq                                                 uint32
+					GapNS                                                               int64
+					Samples                                                             []sample
+				}{algorithm, schedule.name, mss, window, wire, frames, initial.SndCwnd, base.SndCwnd, base.SndSsthresh, pre.SndCwnd, full.TotalRetrans, uint32(head), uint32(cursor), int64(schedule.gap), samples}
+				b, err := json.Marshal(out)
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Logf("LINUX_DEMAND_RESULT %s", b)
+			})
+		}
 	}
 }
