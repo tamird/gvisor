@@ -1,35 +1,52 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Qualify declared cpplint
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  cpplint:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: source, ref: 808d2f9d97f8d2fdffef980b65adea14300e2f06, persist-credentials: false}
+      - name: Prepare the previously qualified file-backed Python runtime
+        env:
+          ARCHIVE: https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/cpplint_qualification"
+          mkdir "$p"
+          curl --fail --location --silent --show-error --retry 3 "$ARCHIVE" -o "$RUNNER_TEMP/python.tar.zst"
+          printf '%s  %s\n' 2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4 "$RUNNER_TEMP/python.tar.zst" | sha256sum --check
+          tar --zstd -xf "$RUNNER_TEMP/python.tar.zst" --strip-components=2 -C "$p" python/install
+          printf '%s  %s\n' 02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394 "$p/bin/python3.11" | sha256sum --check
+          cp carrier/.github/qualification/cpplint-declared/platform.BUILD "$p/BUILD.bazel"
+          echo 'module(name="cpplint_qualification")' > "$p/MODULE.bazel"
+          readelf -h "$p/bin/python3.11" | grep -F 'Advanced Micro Devices X86-64'
+          if readelf -lW "$p/bin/python3.11" | grep -q INTERP; then exit 1; fi
+          if readelf -dW "$p/bin/python3.11" | grep -q NEEDED; then exit 1; fi
+      - name: Check declared inputs and actual remote outcomes
+        working-directory: source
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          export CPPLINT_RC="$RUNNER_TEMP/cpplint.bazelrc"
+          umask 077
+          trap 'rm -f "$CPPLINT_RC"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' "build --inject_repository=cpplint_qualification=$RUNNER_TEMP/cpplint_qualification"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$CPPLINT_RC"
+          unset BUILDBUDDY_API_KEY
+          python3 ../carrier/.github/qualification/cpplint-declared/check.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: declared-cpplint
+          path: ${{ runner.temp }}/cpplint-evidence/result.json
+          if-no-files-found: error
