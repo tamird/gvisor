@@ -274,6 +274,9 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			e.timeWaitTimer = e.stack.Clock().AfterFunc(e.getTimeWaitDuration(), e.timeWaitTimerExpired)
 		}
 
+		// Restore the timer for unacknowledged data or a pending window
+		// probe. Neither case requires another packet from the peer.
+		e.snd.postXmit(false /* dataSent */, false /* shouldScheduleProbe */)
 		if e.ops.GetCorkOption() {
 			// Rearm the timer if TCP_CORK is enabled which will
 			// drain all the segments in the queue after restore.
