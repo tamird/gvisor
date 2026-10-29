@@ -682,7 +682,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// NOTE: We take the stricter interpretation and just expunge all
 	// information as we lack more rigorous checks to validate if the SACK
 	// information is usable after an RTO.
-	s.resetSACK()
+	s.resetSACK(true /* timedOut */)
 	s.updateWriteNext(s.writeList.Front())
 
 	// RFC 1122 4.2.2.17: Start sending zero window probes when we still see a
@@ -712,12 +712,14 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 
 // resetSACK discards the scoreboard and the credits associated with its ranges.
 // +checklocks:s.ep.mu
-func (s *sender) resetSACK() {
+func (s *sender) resetSACK(timedOut bool) {
 	s.ep.scoreboard.Reset()
 	s.SackedOut = 0
 	for seg := s.writeList.Front(); seg != nil; seg = seg.Next() {
 		seg.acked = false
-		seg.rackInFlight = 0
+		if timedOut {
+			seg.rackInFlight = 0
+		}
 	}
 }
 
