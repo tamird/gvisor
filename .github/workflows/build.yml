@@ -20,7 +20,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "8d06a0e9cfc665ad72022a4fe961020f59a402bd"
+        test "$(git rev-parse HEAD^1)" = "9d4ba78a148b6b555a5738083c1f4c5d3af78ebe"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -87,10 +87,10 @@ jobs:
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in stock pr15432 pr16081 pr16495; do
           case $arm in
-            stock) source=8d06a0e9cfc665ad72022a4fe961020f59a402bd; parent=4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3 ;;
-            pr15432) source=0705d657889b586c51561fe3577d2da537526f74; parent=8d06a0e9cfc665ad72022a4fe961020f59a402bd ;;
-            pr16081) source=73e2b4cfe9db7f31b918238bc1b1c5195d644287; parent=8d06a0e9cfc665ad72022a4fe961020f59a402bd ;;
-            pr16495) source=0005cfbda92b17bfa98694ec470fa1407aeb594c; parent=8d06a0e9cfc665ad72022a4fe961020f59a402bd ;;
+            stock) source=34e5dee6edbeda0f5498d835b27dd01b4160b0fa; parent=8d06a0e9cfc665ad72022a4fe961020f59a402bd ;;
+            pr15432) source=8d0f00356ead9af2fb4ee556cf7727ee30f87b6d; parent=0705d657889b586c51561fe3577d2da537526f74 ;;
+            pr16081) source=59d8a847d6ff30731c4148089486992b00ee789a; parent=73e2b4cfe9db7f31b918238bc1b1c5195d644287 ;;
+            pr16495) source=2d0037b83d28b9e638d7b7bf3e72e1075058fed9; parent=0005cfbda92b17bfa98694ec470fa1407aeb594c ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -98,6 +98,7 @@ jobs:
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
+          git diff --quiet 34e5dee6edbeda0f5498d835b27dd01b4160b0fa "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
