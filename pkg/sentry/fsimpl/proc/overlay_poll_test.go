@@ -85,9 +85,24 @@ func TestOverlayPollUnregisterAfterCopyUp(t *testing.T) {
 				if err := fd.SetStat(s.Ctx, vfs.SetStatOptions{Stat: linux.Statx{Mask: linux.STATX_MODE, Mode: 0600}}); err != nil {
 					t.Fatalf("copy hostname up through chmod: %v", err)
 				}
-				if fd.Epollable() {
+				source := fd.EpollSource()
+				if source.Backing != nil {
+					source.Backing.DecRef(s.Ctx)
+				}
+				if source.Owner != nil {
 					t.Fatal("file still uses the epollable proc lower after copy-up")
 				}
+			}
+			// Only the original proc file can report priority events. The
+			// tmpfs upper is now the file chosen by new operations.
+			k.RootUTSNamespace().SetHostName(s.Ctx, tc.name+"-while-registered")
+			select {
+			case <-ch:
+			default:
+				t.Fatal("hostname changed but the installed watch did not wake")
+			}
+			if got := ep.ReadEvents(nil, 1); len(got) != 1 || got[0].Events != linux.EPOLLPRI {
+				t.Fatalf("hostname changed on registered backing: got %v, want EPOLLPRI", got)
 			}
 			if err := ep.DeleteInterest(fd, 3); err != nil {
 				t.Fatalf("delete hostname interest: %v", err)
