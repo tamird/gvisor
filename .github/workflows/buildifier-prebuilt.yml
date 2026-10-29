@@ -1,7 +1,7 @@
 name: Check the declared Buildifier and tracked input boundary
 on:
   push:
-    branches: [qualification/source-lint-composition-diagnostics]
+    branches: [qualification/source-lint-composition-final]
 permissions:
   contents: read
   actions: read
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      SOURCE: 5fef0e7301bf61aa5043c8014222c1b8f3b6ca77
+      SOURCE: 4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
