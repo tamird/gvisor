@@ -129,7 +129,10 @@ func (fd *regularFileFD) OnClose(ctx context.Context) error {
 		fd.cachedFlags = statusFlags
 	}
 	wrappedFD := fd.cachedFD
+	// A concurrent copy-up may replace cachedFD while OnClose runs.
+	wrappedFD.IncRef()
 	fd.mu.Unlock()
+	defer wrappedFD.DecRef(ctx)
 	return wrappedFD.OnClose(ctx)
 }
 
