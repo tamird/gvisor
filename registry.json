@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T18:08:56.766082+00:00",
+    "updatedAt": "2026-10-29T18:28:16.486458+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32207,14 +32207,18 @@
       "repo": "google/gvisor",
       "number": 16584,
       "ref": "test/cl1008391846",
-      "head": "d09828cec993fd489eccabcff27aa68c024f2080",
+      "head": "3e8ad410e8f8b4d7fd3ded0d40c87d3bd4dbc51a",
       "title": "Review the graph decoder",
       "url": "https://github.com/google/gvisor/pull/16584",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
-      "summary": "Review Parth’s graph decoder for round trips that lose shared backing storage. A new fixture fails to save overlapping views when one is a pointer to an array.",
+      "updatedAt": "2026-10-29T18:28:16.486458+00:00",
+      "summary": "The revised graph code preserves both shared slots and the last pointee when overlapping views are restored as two slices or as a slice and an array pointer, in either traversal order.",
       "evidence": [
+        {
+          "label": "Slice/array-pointer round trips on the revised decoder",
+          "url": "https://app.buildbuddy.io/invocation/1f7d1c19-b6c4-4d9d-8cfb-ee67126b3472"
+        },
         {
           "label": "Overlapping slice and array-pointer fixture",
           "url": "https://github.com/tamird/gvisor/blob/bd3cab255359dcaa97607d78eac4ba4c59eb7299/pkg/state/tests/graph_test.go#L475"
@@ -32227,16 +32231,7 @@
           "label": "First overlap review",
           "url": "https://github.com/google/gvisor/pull/16584#discussion_r4407027588"
         }
-      ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "d09828cec993fd489eccabcff27aa68c024f2080",
-        "url": "https://github.com/google/gvisor/pull/16584",
-        "title": "Send Parth the overlapping array-pointer report",
-        "summary": "Authorize an inline report on graph_encode_objects_unsafe.go:390. Both traversal orders fail; using two slices passes.",
-        "body": "@parth-opensrc, this overlap is possible in safe Go. Take two views of a `buf [4]*byte`: `buf[:3:3]` and `buf[1:4:4]`. As named slices, they round-trip in either traversal order. Convert the second to `*[3]*byte` and Save fails in both: slice-first reaches this check; pointer-first reaches the corresponding check in `sliceTarget`. Can the array pointer and slice share their restored backing storage just as the two slices do?\n\nThe [fixture on the integrated rewrite](https://github.com/tamird/gvisor/blob/bd3cab255/pkg/state/tests/graph_test.go#L475) checks both shared slots, writes through one view, and the final pointee reachable only from the other. [Both failures](https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6) are also recorded in the [fork run](https://github.com/tamird/gvisor/actions/runs/40795069761).\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:rules-python-unstamped-build-data",
@@ -40023,9 +40018,18 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
+      "updatedAt": "2026-10-29T18:28:16.486458+00:00",
       "summary": "Parth leads the graph codec. The integrated series fixes named-map aliases and partially overlapping slices. Open findings include recursive type descriptors, map values copied before callbacks finish, and a retained LoadValue result that changes after restore when the destination is written. No production caller of that last API was found.",
       "findings": [
+        {
+          "text": "The revised graph code preserves both shared slots and the last pointee when overlapping views are restored as two slices or as a slice and an array pointer, in either traversal order. The earlier review draft is obsolete.",
+          "evidence": [
+            {
+              "label": "Slice/array-pointer round trips on the revised decoder",
+              "url": "https://app.buildbuddy.io/invocation/1f7d1c19-b6c4-4d9d-8cfb-ee67126b3472"
+            }
+          ]
+        },
         {
           "text": "A LoadValue callback retained uint64(11). Assigning 22 to the restored field afterward changed the callback’s retained value to 22 under the graph reader; the legacy reader and a typed copy taken inside the callback both kept 11. Materializing the Go value when the callback runs makes both readers keep 11. This is public API behavior, not a demonstrated kernel checkpoint bug: stateify uses LoadValueTo and no direct in-tree caller was found.",
           "evidence": [
@@ -42676,6 +42680,10 @@
       ],
       "nextStep": "Follow the existing callback report as Parth updates map reconstruction. Retest the direct map value and the parent callback; both must observe the restored pointer.",
       "evidence": [
+        {
+          "label": "Slice/array-pointer round trips on the revised decoder",
+          "url": "https://app.buildbuddy.io/invocation/1f7d1c19-b6c4-4d9d-8cfb-ee67126b3472"
+        },
         {
           "label": "Unbound interface assignment: measured source",
           "url": "https://github.com/tamird/gvisor/commit/9b688698c730367d341a8fa3998ac6f89903844c"
