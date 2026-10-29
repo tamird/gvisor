@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(default_applicable_licenses = ["//:license"])
@@ -44,6 +44,19 @@ go_library(
         "//pkg/sentry/vfs",
         "//pkg/sync",
         "//pkg/usermem",
+        "//pkg/waiter",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+go_test(
+    name = "vfio_test",
+    srcs = ["pci_device_fd_test.go"],
+    embed = [":vfio"],
+    deps = [
+        "//pkg/context",
+        "//pkg/fdnotifier",
+        "//pkg/state",
         "//pkg/waiter",
         "@org_golang_x_sys//unix:go_default_library",
     ],
