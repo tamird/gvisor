@@ -1,0 +1,41 @@
+name: Read original sidecar and module-map results
+"on":
+  push:
+    branches: [qualification/sidecar-originals-91556820]
+permissions:
+  contents: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify original-only reader and fixture
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/sidecar-originals"
+          mkdir -p "$root"
+          cp .github/qualification/sidecar-review/originals.py "$root/"
+          cd "$root"
+          sha256sum --check <<'SUMS'
+          338e495410b8fe0f81cc5dbcf0ce93b9265444fc429ed1671c8999b1bb479469  originals.py
+          SUMS
+      - name: Read only the authenticated original archive
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          cd "$RUNNER_TEMP/sidecar-originals"
+          python3 originals.py
+      - name: Publish only the bounded evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sidecar-originals-verdict
+          path: ${{ runner.temp }}/sidecar-originals/verdict.json
+          if-no-files-found: error
+          retention-days: 14
