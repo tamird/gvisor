@@ -1,5 +1,6 @@
 """Retain only the selected Make build owners and public artifact identities."""
 
+import hashlib
 import json
 import re
 import sys
@@ -34,8 +35,8 @@ def event_row(path):
                     name = opt.get("optionName")
                     if name in ("compilation_mode", "embed_label", "stamp"):
                         options[name] = opt.get("optionValue")
-        if "namedSetOfFiles" in identity:
-            ids[identity["namedSetOfFiles"]["id"]] = event["namedSetOfFiles"]
+        if "namedSet" in identity:
+            ids[identity["namedSet"]["id"]] = event["namedSetOfFiles"]
         if "targetCompleted" in identity and identity["targetCompleted"]["label"] in EXPECTED:
             item = event["completed"]
             if item.get("success") and not identity["targetCompleted"].get("aspect"):
@@ -77,7 +78,7 @@ def event_row(path):
 def main():
     root, rc = Path(sys.argv[1]), int(sys.argv[2])
     out = root / "result"
-    rows = [event_row(p) for p in sorted((root / "native").glob("build-*"))]
+    rows = []
     report = {"product": "0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5", "label": LABEL,
               "shell_exit": rc, "native": rows, "observed_at": datetime.now(timezone.utc).isoformat()}
     # Keep native owners even if an ancillary runtime or publication check fails.
@@ -91,8 +92,22 @@ def main():
             log = root / (name + ".log")
             if log.exists():
                 content = log.read_bytes()
-                stages[name] = sorted(k for k, pat in classes.items() if re.search(pat.encode(), content, re.M | re.I))
+                stages[name] = {
+                    "classes": sorted(k for k, pat in classes.items() if re.search(pat.encode(), content, re.M | re.I)),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "bytes": len(content),
+                    "comparison_lines": [int(n) for n in re.findall(rb'packages[.]py", line (\d+)', content)],
+                }
         (out / "failure-classes.json").write_text(json.dumps(stages, indent=2) + "\n")
+    try:
+        for p in sorted((root / "native").glob("build-*")):
+            rows.append(event_row(p))
+    except Exception as exc:
+        report["retention_error"] = type(exc).__name__
+        raise
+    finally:
+        (out / "native.json").write_text(json.dumps(report, indent=2) + "\n")
+    if rc:
         return
     assert len(rows) == 3 and all(r["exit"] == 0 and r["status"] == "SUCCESS" and r["finish"] for r in rows)
     assert sorted(t for row in rows for t in row["targets"]) == sorted(EXPECTED)

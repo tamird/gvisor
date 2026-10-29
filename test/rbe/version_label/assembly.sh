@@ -26,7 +26,10 @@ trap finish EXIT
 record() {
   local stage=$1; shift
   printf '%s %s\n' "$stage" "$(date -u --iso-8601=seconds)" >> "$out/stages.txt"
-  "$@" >"$d/$stage.log" 2>&1
+  local rc=0
+  "$@" >"$d/$stage.log" 2>&1 || rc=$?
+  printf '%s %s\n' "$stage" "$rc" >> "$out/stage-exits.txt"
+  return "$rc"
 }
 record prior-opt "$baz" build -c opt //tools/bazeldefs:version
 opt=$(readlink bazel-bin)

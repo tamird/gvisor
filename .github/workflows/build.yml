@@ -13,13 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - name: Check product source and install native publisher tools
         shell: bash
         run: |
           set -euo pipefail
-          [[ $(git rev-parse HEAD^) == "$PRODUCT" ]]
+          git merge-base --is-ancestor "$PRODUCT" HEAD
           git diff --exit-code "$PRODUCT" HEAD -- . ':!test/rbe/version_label' ':!.github/workflows/build.yml'
           d=$RUNNER_TEMP/version-proof
           mkdir -p "$d/platform" "$d/result"
