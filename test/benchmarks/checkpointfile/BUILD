@@ -7,7 +7,7 @@ package(
 
 benchmark_test(
     name = "checkpointfile_test",
-    srcs = ["checkpointfile.go"],
+    srcs = ["checkpointfile.go", "restore_phases.go"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
@@ -27,6 +27,7 @@ benchmark_test(
         "//pkg/sentry/vfs",
         "//pkg/state",
         "//pkg/state/statefile",
+        "//pkg/state/wire",
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
         "//runsc/boot",
