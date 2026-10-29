@@ -38,7 +38,7 @@ def native(work):
             p.kill()
             p.wait()
 
-def container(runsc, direct, bundle, case):
+def container(runsc, direct, bundle, case, drop_watch):
     rootfs = bundle / "rootfs"
     hostwork = bundle / "work"
     image = bundle / "image"
@@ -59,6 +59,8 @@ def container(runsc, direct, bundle, case):
         "mounts": mounts,
         "linux": {"namespaces": [{"type": t} for t in ("pid", "mount", "ipc", "uts", "network")]},
     }
+    if drop_watch:
+        spec["process"]["args"].append("drop-watch")
     (bundle / "config.json").write_text(json.dumps(spec))
     log_path = evidence / (case + ".log")
     debug_dir = bundle / "debug"
@@ -68,12 +70,13 @@ def container(runsc, direct, bundle, case):
     command = [runsc, "--root=" + str(root), "--platform=systrap", "--network=none",
                "--overlay2=none", "--character-device-policy=passthrough",
                "--directfs=" + str(direct).lower(), "--host-settings=ignore",
-               "--ignore-cgroups", "--debug", "--debug-log=" + str(debug_dir) + "/"]
+               "--ignore-cgroups", "--debug-log=" + str(debug_dir) + "/"]
     patches = {}
     with log_path.open("w") as log:
         def call(args, *, check=True):
             print("$ runsc", *args, file=log, flush=True)
-            return subprocess.run(command + args, stdin=subprocess.DEVNULL, stdout=log,
+            opts = ["--debug"] if args[0] == "restore" else []
+            return subprocess.run(command + opts + args, stdin=subprocess.DEVNULL, stdout=log,
                                   stderr=subprocess.STDOUT, check=check, timeout=90)
         cid = "gofer-test"
         try:
@@ -83,8 +86,11 @@ def container(runsc, direct, bundle, case):
             patches["checkpoint"] = {p.name: p.stat().st_size for p in image.iterdir()}
             assert any(p.stat().st_size > 0 for p in image.iterdir()), patches
             call(["delete", "--force", cid])
-            call(["restore", "--detach", "--bundle=" + str(bundle),
-                  "--image-path=" + str(image), cid])
+            status = call(["restore", "--detach", "--bundle=" + str(bundle),
+                           "--image-path=" + str(image), cid], check=False).returncode
+            patches["restore_status"] = status
+            if status:
+                return patches
             call(["kill", cid, "USR1"])
             patches["after"] = read_record(hostwork / "after")
             call(["wait", cid])
@@ -93,35 +99,37 @@ def container(runsc, direct, bundle, case):
             call(["delete", "--force", cid], check=False)
             shutil.copytree(debug_dir, evidence / (case + "-debug"))
 
-with tempfile.TemporaryDirectory(prefix="gpr-", dir="/tmp") as tmp:
+
+with tempfile.TemporaryDirectory(prefix="gpd-", dir="/tmp") as tmp:
     work = Path(tmp)
-    try:
-        observations["linux"] = native(work)
-    except Exception:
-        observations["linux"] = {"error": traceback.format_exc()}
-    for impl, runsc in (("stock", stock_runsc), ("fixed", fixed_runsc)):
-        for direct in (False, True):
-            case = impl + ("-directfs" if direct else "-lisafs")
-            path = work / case
-            path.mkdir()
-            try:
-                observations[case] = container(runsc, direct, path, case)
-            except Exception:
-                observations[case] = {"error": traceback.format_exc()}
-            print(case, observations[case], flush=True)
-results = {}
-for case, got in observations.items():
-    if case.startswith("stock"):
-        # Classify only the demonstrated defect, retaining all independent MOD/DEL observations.
-        results[case] = got.get("before") == before_trace and " fresh=1,0,0,0" in got.get("after", "")
-    else:
-        results[case] = got.get("before") == before_trace and got.get("after") == native_trace
-record = {"verdict": "PASS" if len(results) == 5 and all(results.values()) else "FAIL",
-          "sources": {"original": "e82a0e179", "corrected": "64758ff8b",
-                      "originalWithProbe": "039367497d", "correctedWithProbe": "b5b6ac4ac4"},
-          "kernel": os.uname().release, "expected": ["linux", "stock-lisafs", "stock-directfs",
-                       "fixed-lisafs", "fixed-directfs"], "observations": observations,
-          "checks": results}
+    for name, runsc, drop in (("old-watch", stock_runsc, False),
+                              ("fixed-watch", fixed_runsc, False),
+                              ("fixed-empty", fixed_runsc, True)):
+        bundle = work / name
+        bundle.mkdir()
+        try:
+            observations[name] = container(runsc, False, bundle, name, drop)
+        except Exception:
+            observations[name] = {"error": traceback.format_exc()}
+        logs = [evidence / (name + ".log"), *(evidence / (name + "-debug")).glob("*")]
+        out = "\n".join(p.read_text(errors="replace") for p in logs if p.is_file())
+        observations[name]["omitted"] = "TEST_ONLY omitted host device donor" in out
+        observations[name]["guard_message"] = "gofer did not donate a host file descriptor" in out
+        print(name, observations[name], flush=True)
+old, corrected, empty = (observations[key] for key in ("old-watch", "fixed-watch", "fixed-empty"))
+checks = {
+    "old-watch": old.get("before") == before_trace and old.get("restore_status") == 0
+                 and "fresh=1,0,0,0" in old.get("after", ""),
+    "fixed-watch": corrected.get("before") == before_trace and
+                   corrected.get("restore_status", 0) != 0 and corrected["guard_message"],
+    "fixed-empty": empty.get("before") == empty.get("after") == "rdev=1:8 no watch"
+                   and empty.get("restore_status") == 0,
+}
+checks = {k: passed and observations[k]["omitted"] for k, passed in checks.items()}
+record = {"verdict": "PASS" if all(checks.values()) else "FAIL", "checks": checks,
+          "expected": list(checks), "observations": observations,
+          "sources": {"original": "64758ff8b", "changed": "d971b7abc"},
+          "kernel": os.uname().release}
 (evidence / "verdict.json").write_text(json.dumps(record, indent=2) + "\n")
-print(json.dumps(record, indent=2), flush=True)
+print(json.dumps(record, indent=2))
 sys.exit(record["verdict"] != "PASS")

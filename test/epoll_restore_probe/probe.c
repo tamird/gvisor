@@ -40,12 +40,18 @@ static int ready(int ep, int *mask, int *tag) {
   return n;
 }
 
+// A PID-namespace init accepts external signals only with an installed handler.
+// SIGUSR1 stays blocked and is consumed synchronously by sigwait().
+static void accept_signal(int signo) { (void)signo; }
+
 int main(int argc, char **argv) {
-  check(argc == 3, "probe device result-dir");
+  check(argc == 3 || argc == 4, "probe device result-dir [drop-watch]");
   sigset_t signals;
   sigemptyset(&signals);
   sigaddset(&signals, SIGUSR1);
   check(sigprocmask(SIG_BLOCK, &signals, NULL) == 0, "sigprocmask");
+  struct sigaction sa = {.sa_handler = accept_signal};
+  check(sigaction(SIGUSR1, &sa, NULL) == 0, "sigaction");
   int fd = open(argv[1], O_RDONLY | O_NONBLOCK);
   struct stat st;
   check(fd >= 0 && fstat(fd, &st) == 0, "open/fstat");
@@ -56,9 +62,20 @@ int main(int argc, char **argv) {
   int mask, tag;
   check(ready(ep, &mask, &tag) == 1 && mask == EPOLLIN && tag == 11,
         "initial IN with original tag");
-  emit(argv[2], "before", "rdev=1:8 add=0 mask=1 tag=11");
+  if (argc == 4) {
+    check(!ctl(ep, EPOLL_CTL_DEL, fd, 0), "remove last watch before checkpoint");
+    emit(argv[2], "before", "rdev=1:8 no watch");
+  } else {
+    emit(argv[2], "before", "rdev=1:8 add=0 mask=1 tag=11");
+  }
   int signo;
   check(sigwait(&signals, &signo) == 0 && signo == SIGUSR1, "sigwait");
+  if (argc == 4) {
+    check(fstat(fd, &st) == 0 && S_ISCHR(st.st_mode) && major(st.st_rdev) == 1 &&
+          minor(st.st_rdev) == 8, "restored open character device");
+    emit(argv[2], "after", "rdev=1:8 no watch");
+    return 0;
+  }
   int live_mask, live_tag, mod_mask, mod_tag, fresh_mask, fresh_tag;
   int live = ready(ep, &live_mask, &live_tag);
   int mod = ctl(ep, EPOLL_CTL_MOD, fd, 22);
