@@ -40,9 +40,19 @@ function safeURL(value) {
   try { const url = new URL(value); return url.protocol === "https:" ? url.href : null; }
   catch { return null; }
 }
+function citationURL(value) {
+  const href = safeURL(value);
+  if (!href) return "#";
+  const url = new URL(href), parts = url.pathname.split("/");
+  if (url.origin === "https://github.com" && ["blob", "tree", "commit", "compare"].includes(parts[3]) && parts[4]) {
+    parts[4] = parts[4].replace(/(^|\.{2,3})([0-9a-f]{9})[0-9a-f]{31}(?=\.{2,3}|$)/g, "$1$2");
+    url.pathname = parts.join("/");
+  }
+  return url.href;
+}
 function link(text, url, className) {
   const node = element("a", className, text);
-  node.href = safeURL(url) || "#";
+  node.href = citationURL(url);
   node.target = "_blank";
   node.rel = "noopener noreferrer";
   return node;
@@ -1290,7 +1300,7 @@ function drawGraph(nodes) {
     card.addEventListener("click", () => { if (!moved) select(node.id); });
     card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); select(node.id); } });
     group.append(card);
-    const open = svg("a", { href: safeURL(node.url) || "#", target: "_blank", rel: "noopener noreferrer", tabindex: "0", class: "node-link", "aria-label": `Open ${label(node)}: ${node.title}` });
+    const open = svg("a", { href: citationURL(node.url), target: "_blank", rel: "noopener noreferrer", tabindex: "0", class: "node-link", "aria-label": `Open ${label(node)}: ${node.title}` });
     open.append(svg("rect", { class: "node-link-hit", x: CARD.width - 29, y: 1, width: 28, height: 26, rx: 4 }),
       svg("text", { class: "node-outlink", x: CARD.width - 21, y: 18, "aria-hidden": "true" }, "↗"));
     open.addEventListener("click", (event) => { event.stopPropagation(); if (moved && event.detail !== 0) event.preventDefault(); });
