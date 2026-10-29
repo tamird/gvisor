@@ -1,0 +1,67 @@
+name: Compare Python package writer runfiles
+on:
+  push:
+    branches: [qualification/package-writer-runfiles]
+permissions: {contents: read}
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/rules_pkg
+          ref: c4cda85160250ea814c5a5f8e6fce1fc997273ed
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Build the example tar and Debian package in three environments
+        run: |
+          export USE_BAZEL_VERSION=8.8.1
+          export REPORT="$RUNNER_TEMP/report"
+          mkdir -p "$REPORT"
+          for ref in old new; do
+            if [[ $ref == old ]]; then git checkout 01446201f; else git checkout c4cda8516; fi
+            cd examples/naming_package_files
+            cp MODULE.bazel "$REPORT/module"
+            echo 'bazel_dep(name = "rules_python", version = "2.4.5")' >> MODULE.bazel
+            for mode in normal manifest noenv; do
+              opts=()
+              case "$mode" in
+                manifest) opts+=(--enable_runfiles=no);;
+                noenv) opts+=(--sandbox_block_path=/usr/bin/env);;
+              esac
+              set +e
+              bazelisk build --lockfile_mode=update --spawn_strategy=linux-sandbox --@rules_python//python/config_settings:bootstrap_impl=script "${opts[@]}" //:a_deb_package > "$REPORT/$ref-$mode.log" 2>&1
+              status=$?
+              set -e
+              echo "$status" > "$REPORT/$ref-$mode.status"
+              if [[ $status == 0 ]]; then
+                dpkg-deb --field bazel-bin/foo-tools_*-*.deb Package | grep -Fx foo-tools
+                dpkg-deb --fsys-tarfile bazel-bin/foo-tools_*-*.deb | tar tf - | grep -E '/?BUILD$'
+                sha256sum bazel-bin/foo-tools_*-*.deb > "$REPORT/$ref-$mode.sha"
+              else
+                grep -m2 -E 'ERROR|not found|No such file' "$REPORT/$ref-$mode.log" || true
+              fi
+            done
+            mv "$REPORT/module" MODULE.bazel
+            cd ../..
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, os
+          folder = Path(os.environ["REPORT"])
+          result = {f"{ref}-{mode}": int((folder / f"{ref}-{mode}.status").read_text())
+                    for ref in ("old", "new") for mode in ("normal", "manifest", "noenv")}
+          print(result)
+          (folder / "verdict.json").write_text(json.dumps(result))
+          assert result["old-normal"] == result["new-normal"] == 0, result
+          assert bool(result["old-manifest"]) == bool(result["new-manifest"]), result
+          assert result["old-noenv"] != 0 and result["new-noenv"] == 0, result
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: runfiles-comparison
+          path: ${{ runner.temp }}/report
+          if-no-files-found: error
