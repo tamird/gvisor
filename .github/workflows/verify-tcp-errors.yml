@@ -1,0 +1,87 @@
+name: Verify TCP endpoint error guards
+on:
+  push:
+    branches: [qualification/tcp-error-guards-oct29]
+permissions:
+  contents: read
+jobs:
+  catalog:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    name: "${{ matrix.pr }} (${{ matrix.arch }})"
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04"}
+          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm"}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: carrier
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.sha }}
+          path: source
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Exercise changed packages and original regression cases
+        working-directory: source
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          PR: ${{ matrix.pr }}
+          ARCH: ${{ matrix.arch }}
+          CPU: ${{ matrix.cpu }}
+          SHA: ${{ matrix.sha }}
+        shell: bash
+        run: |
+          set -eu -o pipefail
+          test "$(git rev-parse HEAD)" = "$SHA"
+          test "$(git -C ../carrier rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C ../carrier rev-parse HEAD:test/rbe/qualification_report.py)" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+          test "$(git -C ../carrier rev-parse HEAD:test/rbe/unit_matrix.py)" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          mkdir -p "$RUNNER_TEMP/catalog_platform"
+          platform=$RUNNER_TEMP/catalog_platform
+          printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<BUILD
+          platform(
+              name = "ubuntu",
+              constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "$ARCH",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "oci",
+                  "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          rc=$RUNNER_TEMP/catalog.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+              'build --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build --bes_backend=grpcs://remote.buildbuddy.io' \
+              'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+              'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+              'build --remote_accept_cached' \
+              "build --inject_repository=catalog_platform=$platform" \
+              'build --host_platform=@catalog_platform//:ubuntu' \
+              'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
+              "build --platforms=//tools/bazeldefs:linux_$ARCH"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -B ../carrier/test/rbe/qualify_lisafs.py "$PR" "$ARCH" "$SHA" "$rc" "$RUNNER_TEMP/catalog"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: conflict-verdict-${{ matrix.pr }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/catalog/result.json
+          if-no-files-found: error
