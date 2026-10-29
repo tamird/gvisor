@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T15:57:38.198175+00:00",
+    "updatedAt": "2026-10-29T16:12:19.927326+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50445,6 +50445,23 @@
               "url": "https://datatracker.ietf.org/doc/html/rfc8985#section-6.2"
             }
           ]
+        },
+        {
+          "text": "On #15432, the first ACK after timeout sent four repairs with room for five, both with and without GSO. Omitting the second HighRxt count sent five in both cases. This is the opposite of the known live tail-probe case, which sends eight packets when only seven slots are free. The same count cannot stand in for a declared-lost original and for an original that might still arrive.",
+          "evidence": [
+            {
+              "label": "Current head: four repairs",
+              "url": "https://app.buildbuddy.io/invocation/e771617b-851e-4019-a76e-f73015f02f74"
+            },
+            {
+              "label": "Count once: five repairs",
+              "url": "https://app.buildbuddy.io/invocation/e3b6733c-2ae1-4ac3-a4a8-93f4a7b9a126"
+            },
+            {
+              "label": "Outstanding tail probe",
+              "url": "https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -50598,9 +50615,22 @@
               "url": "https://app.buildbuddy.io/invocation/959cb581-ace8-4cfb-b95e-b88a2d1527f4"
             }
           ]
+        },
+        {
+          "text": "Keep production Go policy separate from lint. A dev-only override swapped patched protobuf for the upstream code that reads the executable at startup, both under --ignore_dev_dependency and in a plain consumer. An explicitly adopting root retained the patch. Neither stock nor explicitly adopting waiter completed its build; both stopped in Go toolchain setup.",
+          "evidence": [
+            {
+              "label": "Two-module source comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40906632925"
+            },
+            {
+              "label": "Reason for the production patch",
+              "url": "https://github.com/google/gvisor/commit/dba564686"
+            }
+          ]
         }
       ],
-      "nextStep": "Build one pilot using the released runner and a shared inventory for Buildifier and cpplint. Qualify the external Go dependency contract separately. Keep the public Buildifier PR unchanged until review.",
+      "nextStep": "Qualify the shared inventory and direct Buildifier/cpplint actions together on scratch, including a file in a new package and package-local configuration. Leave #16663 unchanged pending that result.",
       "evidence": [
         {
           "label": "Design and qualification controls",

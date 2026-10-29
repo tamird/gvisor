@@ -61,7 +61,16 @@ Isolating that load fixed the root license target under
 and the [isolated proposal](https://app.buildbuddy.io/invocation/b294a411-549f-4a42-98e5-f96236fc99da)
 both still fail in Gazelle. gVisor [declares overrides](https://github.com/google/gvisor/blob/0fa6803f2/MODULE.bazel#L830-L849)
 that [Gazelle rejects in a non-root, non-isolated module](https://github.com/bazel-contrib/bazel-gazelle/blob/b66b19ce4/internal/bzlmod/go_deps.bzl#L81-L94).
-Treat this as a separate production compatibility gate.
+Moving the Go overrides into a dev-only extension hides that error but
+also changes what gVisor builds. In a [two-module comparison](https://github.com/tamird/gvisor/actions/runs/40906632925),
+the ordinary gVisor root and an external root that explicitly applied the
+overrides both got the patched protobuf source. A plain consumer and a
+gVisor build with dev dependencies disabled both got the upstream source
+that reads the executable at startup. [Removing that read was intentional](https://github.com/google/gvisor/commit/dba564686).
+The comparison verified source contents; both attempts to compile
+`waiter` stopped during Go toolchain setup. Keep production Go overrides
+out of the lint migration. Proving that gVisor builds as a dependency
+requires a separate fix.
 
 ## Migration order
 
