@@ -81,6 +81,19 @@ make release-tarball DESTINATION=bin/
 sudo tar -C /usr/local/bin -xf bin/gvisor.tar.bz2
 ```
 
+To build the amd64 and arm64 release packages from a source export, supply
+the release label once. Bazel uses it for the binaries, checkpoint identity
+and package versions without running the Git workspace status command:
+
+```sh
+make release-artifacts RELEASE_VERSION=release-20261029.0
+```
+
+Ordinary builds still use the Git revision or tag. A custom workspace status
+command that supplies `STABLE_VERSION` takes precedence over `--embed_label`.
+The historical `0.0.0` fallback in a checkout without Git does not distinguish
+different source exports; supply an explicit label for release builds.
+
 To build specific libraries or binaries, you can specify the target:
 
 ```sh

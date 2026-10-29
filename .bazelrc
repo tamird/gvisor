@@ -27,6 +27,9 @@ build --host_cxxopt=-std=c++17 --host_cxxopt=-Wno-error=maybe-uninitialized
 # Display the current git revision in the info block.
 build --stamp --workspace_status_command tools/workspace_status.sh
 
+# Use with --embed_label=<version> when the caller knows the source identity.
+build:release_version --stamp --workspace_status_command=
+
 build:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
 test:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
 

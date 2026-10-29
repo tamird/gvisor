@@ -26,17 +26,30 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var label, legacy string
 	for line := range strings.SplitSeq(string(status), "\n") {
-		version, ok := strings.CutPrefix(line, "STABLE_VERSION ")
+		key, value, ok := strings.Cut(line, " ")
 		if !ok {
 			continue
 		}
-		// A Debian version starts at the first digit in the revision or tag.
-		version = strings.TrimLeftFunc(version, func(r rune) bool { return r < '0' || r > '9' })
-		if err := os.WriteFile(os.Args[1], []byte(version+"\n"), 0o644); err != nil {
-			log.Fatal(err)
+		switch key {
+		case "BUILD_EMBED_LABEL":
+			label = value
+		case "STABLE_VERSION":
+			legacy = value
 		}
-		return
 	}
-	log.Fatal("stable workspace status has no STABLE_VERSION")
+	if legacy != "" {
+		label = legacy
+	} else if label == "" || label == "0.0.0" || label == "VERSION_MISSING" {
+		log.Fatal("missing package version: set --embed_label or supply STABLE_VERSION")
+	}
+	// A Debian version starts at the first digit in the revision or tag.
+	version := strings.TrimLeftFunc(label, func(r rune) bool { return r < '0' || r > '9' })
+	if version == "" && legacy == "" {
+		log.Fatalf("package version %q must contain a digit", label)
+	}
+	if err := os.WriteFile(os.Args[1], []byte(version+"\n"), 0o644); err != nil {
+		log.Fatal(err)
+	}
 }

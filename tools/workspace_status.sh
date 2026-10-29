@@ -14,5 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The STABLE_ prefix will trigger a re-link if it changes.
-echo STABLE_VERSION "$(git describe --always --tags --exclude 'release-*-staging' --abbrev=12 --dirty 2>/dev/null || echo 0.0.0)"
+git_version() {
+  git describe --always --tags --exclude 'release-*-staging' --abbrev=12 --dirty
+}
+
+# Release jobs can resolve the checkout once, before starting Bazel.
+if [[ "${1:-}" == --label ]]; then
+  git_version
+  exit $?
+fi
+
+version=$(git_version 2>/dev/null || echo 0.0.0)
+printf 'STABLE_VERSION %s\n' "$version"

@@ -162,7 +162,7 @@ func VerifyMatchingRelease(b *Binary) {
 		want, skip = wantTest, true
 	}
 	if !skip {
-		if got != val {
+		if !version.Matches(val) {
 			errMsg := fmt.Sprintf("this binary's build label %q%s does not match the expected release %q; all gVisor binaries must come from the same release (fix your gVisor installation deployment, or disable enforcement with `--sidecar-release-enforcement-policy=...` at your own risk)", got, who, val)
 			log.Warningf("Release check: %s.", errMsg)
 			panic(errMsg)
