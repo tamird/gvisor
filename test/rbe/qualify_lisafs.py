@@ -1,6 +1,7 @@
 """Run selected package owners and verify required cases from their original XML."""
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -40,7 +41,7 @@ def git(*args):
 def save(name, value):
     (d/name).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
-r = {"pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
+r = {"worker_image": os.environ["WORKER_IMAGE"], "pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
 try:
     assert git("rev-parse", "HEAD").decode().strip() == source
     assert git("rev-parse", "HEAD^").decode().strip() == "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
@@ -66,7 +67,7 @@ try:
                      "native_exit": "exit", "capture_exit": "capture", "executed_arguments": "args"})
     log=(d/"command.log").read_text(errors="replace")
     r["invocations"] = re.findall(r"Invocation ID: ([0-9a-f-]{36})", log)
-    r["failure_excerpt"] = [line[:1000] for line in log.splitlines() if line.startswith("ERROR:") or ": error:" in line][:24] if code else []
+    r["failure_excerpt"] = [line[:1000] for line in log.splitlines() if line.startswith("ERROR:") or ": error:" in line or "not found" in line.lower() or "No such file" in line or "undefined reference" in line][:24] if code else []
     r["hints"] = [h for h in ("RESOURCE_EXHAUSTED", "no such target", "Permission denied", "not found", "signal: killed") if h.lower() in log.lower()]
     clean=d/"events.jsonl"
     outroot=Path(subprocess.check_output(bazel+["info","output_base"],stderr=subprocess.DEVNULL,text=True).strip())

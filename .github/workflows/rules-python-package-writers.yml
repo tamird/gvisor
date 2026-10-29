@@ -1,7 +1,7 @@
-name: Verify clock and netip conflict repairs
+name: Qualify the clock rebase with the gVisor GNU worker
 on:
   push:
-    branches: [qualification/clock-netip-oct29]
+    branches: [qualification/clock-rebase-gnu-oct29]
 permissions:
   contents: read
 jobs:
@@ -14,10 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04"}
-          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm"}
-          - {"pr": "15730", "sha": "d698920baa1ec2fe3142a14143bcb3e221fa7129", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04"}
-          - {"pr": "15730", "sha": "d698920baa1ec2fe3142a14143bcb3e221fa7129", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm"}
+          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"}
+          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://gcr.io/gvisor-presubmit/default_aarch64@sha256:76cdcaa38feb618b971c97ca2570a7b2cfa4f85b8d9d8a4c86d9df261b2c7ca6"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -36,6 +34,7 @@ jobs:
           PR: ${{ matrix.pr }}
           ARCH: ${{ matrix.arch }}
           CPU: ${{ matrix.cpu }}
+          WORKER_IMAGE: ${{ matrix.image }}
           SHA: ${{ matrix.sha }}
         shell: bash
         run: |
@@ -49,13 +48,13 @@ jobs:
           printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
           cat > "$platform/BUILD" <<BUILD
           platform(
-              name = "ubuntu",
+              name = "gnu",
               constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
               exec_properties = {
                   "Arch": "$ARCH",
                   "OSFamily": "linux",
                   "workload-isolation-type": "oci",
-                  "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+                  "container-image": "$WORKER_IMAGE",
               },
               visibility = ["//visibility:public"],
           )
@@ -73,8 +72,8 @@ jobs:
               'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
               'build --remote_accept_cached' \
               "build --inject_repository=catalog_platform=$platform" \
-              'build --host_platform=@catalog_platform//:ubuntu' \
-              'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
+              'build --host_platform=@catalog_platform//:gnu' \
+              'build --extra_execution_platforms=@catalog_platform//:gnu' \
               "build --platforms=//tools/bazeldefs:linux_$ARCH"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
