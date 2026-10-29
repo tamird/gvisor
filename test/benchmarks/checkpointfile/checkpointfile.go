@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -76,6 +77,46 @@ const (
 	quiesceMaxCPU   = 0.005
 	quiesceTimeout  = 60 * time.Second
 )
+
+// BenchmarkStringSlabKernel restores the same Nginx checkpoint once per policy.
+func BenchmarkStringSlabKernel(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires exactly one iteration with checkpoint-enabled runsc")
+	}
+	ctx := context.Background()
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	stateFile, sizes, names, mounts := checkpointNginx(ctx, b, machine)
+	sum := sha256.Sum256(stateFile)
+	fmt.Printf("string-kernel capture=%x state=%d pages=%d metadata=%d\n", sum, len(stateFile), sizes[checkpointfiles.PagesFileName], sizes[checkpointfiles.PagesMetadataFileName])
+	ctx = restoreContext(b, names, mounts)
+	sys, err := systrap.New(platform.Options{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	var want int
+	for _, mode := range []string{"stock", "bounded"} {
+		b.Setenv("GVISOR_STUDY_STRING_SLAB", mode)
+		fmt.Printf("string-kernel begin=%s state=%x\n", mode, sum)
+		restoreCtx, cleanup := withHostFDs(b, ctx, names)
+		k, err := loadKernel(restoreCtx, stubPlatform{sys}, stateFile, true)
+		if err != nil {
+			cleanup()
+			b.Fatalf("%s: %v", mode, err)
+		}
+		tasks := k.RootPIDNamespace().NumTasks()
+		if tasks < workers+1 || (want != 0 && tasks != want) || sha256.Sum256(stateFile) != sum {
+			cleanup()
+			b.Fatalf("%s: %d tasks, prior %d", mode, tasks, want)
+		}
+		want = tasks
+		fmt.Printf("string-kernel end=%s state=%x tasks=%d\n", mode, sum, tasks)
+		cleanup()
+	}
+}
 
 // BenchmarkCheckpointFile reports various benchmark metrics about a
 // checkpointed kernel.
