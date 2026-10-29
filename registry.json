@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T08:52:37.351418+00:00",
+    "updatedAt": "2026-10-29T13:09:49.634379+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28233,24 +28233,21 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/declared-go-coverage",
-      "head": "08d75cea690ac7199c592d2274a6815fc07bff6c",
+      "head": "5dbef4de9b117461804e0db26baee37769ef4ee7",
       "title": "Build runsc and Sentry coverage binaries with rules_go",
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
-      "status": "Open PR",
+      "status": "open",
       "summary": "Replace the networked SDK bootstrap and private-import patch with rules_go. All eight binaries per CPU built; AMD64 ordinary runsc produced no report while both instrumented releases reported Sentry locations and passed the real KCOV case.",
-      "updatedAt": "2026-10-29T07:00:56.448261+00:00",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-27T16:21:47+00:00",
-        "sourceHead": "b952c8943eaeab391ab3a5b23c49932faebca94a",
-        "disposition": "Reviewed and published as #16507",
-        "nextAction": "Follow maintainer review and public checks on #16507.",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "5dbef4de9b117461804e0db26baee37769ef4ee7",
+        "disposition": "Contributor-approved amendment published",
+        "nextAction": "Follow maintainer review, checks and import of the published coverage amendment.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16507",
-          "https://github.com/tamird/gvisor/compare/419aafc4542bcc84b33737d42ae344c49c43b567...b952c8943eaeab391ab3a5b23c49932faebca94a",
-          "https://app.buildbuddy.io/invocation/74fbdc14-840b-42be-a9e4-ced2114c9ef4",
-          "https://app.buildbuddy.io/invocation/b51badd9-3b9d-419d-98f0-e4f8ac977e99"
+          "https://github.com/google/gvisor/pull/16507"
         ]
       },
       "evidence": [
@@ -28275,17 +28272,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40830394553/job/123303013828"
         }
       ],
-      "number": 16507,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "baseHead": "08d75cea690ac7199c592d2274a6815fc07bff6c",
-        "head": "5dbef4de9b117461804e0db26baee37769ef4ee7",
-        "url": "https://github.com/tamird/gvisor/commit/5dbef4de9b117461804e0db26baee37769ef4ee7",
-        "title": "Share the runsc entry point’s direct imports",
-        "summary": "The two coverage targets omitted coretagprime, which main.go now imports. All four binaries built from main.go now share their dependency list.",
-        "body": "Both coverage builds failed on the published PR on AMD64 and ARM64. All four corrected binaries on each architecture built and ran --version; the single-commit revision has the same tree as the tested source."
-      }
+      "number": 16507
     },
     {
       "id": "branch:reproducible-debian-changelog",
@@ -32375,8 +32362,8 @@
       "title": "Checkpoint open filesystem configuration and mount descriptors",
       "url": "https://github.com/tamird/gvisor/commit/0aa163b78df385b88491955a5627c0d585c63123",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T08:29:16.268400+00:00",
+      "status": "Published as #16665",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "An open filesystem configuration descriptor prevented a checkpoint after fsconfig created its filesystem. Retain the read-only flag that fsmount inherits and register the mount descriptor and reconfiguration state with the serializer.",
       "evidence": [
         {
@@ -32402,17 +32389,24 @@
         {
           "label": "Both descriptor analyzers passed on AMD64 and ARM64; unrelated pipe diagnostics failed the parent",
           "url": "https://app.buildbuddy.io/invocation/c183bf70-e485-418d-bfaa-31faa702ae94"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16665"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "0aa163b78df385b88491955a5627c0d585c63123",
-        "url": "https://github.com/tamird/gvisor/commit/0aa163b78df385b88491955a5627c0d585c63123",
-        "title": "Checkpoint open filesystem configuration and mount descriptors",
-        "summary": "An open filesystem configuration descriptor prevented a checkpoint after fsconfig created its filesystem. Retain the read-only flag that fsmount inherits and register the mount descriptor and reconfiguration state with the serializer.",
-        "body": "Open the independent checkpoint fix. All 41 tests passed in each of the save and save/resume suites without skips."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "0aa163b78df385b88491955a5627c0d585c63123",
+        "disposition": "Published as #16665",
+        "nextAction": "Follow maintainer review, checks and import on #16665.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16665",
+          "https://github.com/tamird/gvisor/commit/0aa163b78df385b88491955a5627c0d585c63123"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:tcp-cwnd-use",
@@ -32423,8 +32417,8 @@
       "title": "Grow the TCP congestion window only when the sender uses it",
       "url": "https://github.com/tamird/gvisor/commit/5a22e6beaa402db7b9e182f9e72b321f46205504",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T07:27:09.106086+00:00",
+      "status": "Published as #16661",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "Stock CUBIC sent 17 packets after dense one-segment writes and 29 after spaced writes. The correction sends 14 in both cases, matching its idle control. In four Linux flows, sparse writes likewise did not grow the window.",
       "evidence": [
         {
@@ -32450,17 +32444,24 @@
         {
           "label": "Window-use change: four corrected traces",
           "url": "https://github.com/tamird/gvisor/actions/runs/40832781696"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16661"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "5a22e6beaa402db7b9e182f9e72b321f46205504",
-        "url": "https://github.com/tamird/gvisor/commit/5a22e6beaa402db7b9e182f9e72b321f46205504",
-        "title": "Grow the TCP congestion window only when the sender uses it",
-        "summary": "Stock CUBIC sent 17 packets after dense one-segment writes and 29 after spaced writes. The correction sends 14 in both cases, matching its idle control. In four Linux flows, sparse writes likewise did not grow the window.",
-        "body": "Independent PR; #15604 has landed. The measurement is burst size; Linux and gVisor used different segment sizes and loss setups. The same patch fixes CUBIC’s growth across a 30-second idle period before and after the first complete congestion-avoidance flight. Both Reno controls preserved their flight sizes."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "5a22e6beaa402db7b9e182f9e72b321f46205504",
+        "disposition": "Published as #16661",
+        "nextAction": "Follow maintainer review, checks and import on #16661.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16661",
+          "https://github.com/tamird/gvisor/commit/5a22e6beaa402db7b9e182f9e72b321f46205504"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:go-branch-native-export",
@@ -32471,7 +32472,7 @@
       "title": "Build the Go branch archive directly with Bazel",
       "url": "https://github.com/tamird/gvisor/commit/2c1a3542a047545bc949168447c710c686ae361d",
       "group": "release",
-      "updatedAt": "2026-10-29T05:28:37.283045+00:00",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "On a native AMD64 Linux runner the exporter built both architecture variants without Docker. The vDSOs, systrap handlers, and two offset files matched their producers in the archive and the Go commit.",
       "evidence": [
         {
@@ -32479,15 +32480,16 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40820977414"
         }
       ],
-      "status": "Contributor review requested",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "2c1a3542a047545bc949168447c710c686ae361d",
-        "url": "https://github.com/tamird/gvisor/commit/2c1a3542a047545bc949168447c710c686ae361d",
-        "title": "Build the Go branch archive directly with Bazel",
-        "summary": "On a native AMD64 Linux runner the exporter built both architecture variants without Docker. The vDSOs, systrap handlers, and two offset files matched their producers in the archive and the Go commit.",
-        "body": "Open once the declared cross-compiler is available. If #15106 changes the archive target first, retarget this call and qualify the new archive."
+      "status": "Contributor approval retained; waiting for prerequisites",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "2c1a3542a047545bc949168447c710c686ae361d",
+        "disposition": "Contributor approval retained; waiting for prerequisites",
+        "nextAction": "Open after the declared compiler lands. If #15106 changes the export target, carry the new target into the direct Bazel invocation.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2c1a3542a047545bc949168447c710c686ae361d"
+        ]
       }
     },
     {
@@ -32499,8 +32501,8 @@
       "title": "Run the issue reviver without the Docker builder",
       "url": "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T05:34:21.458210+00:00",
+      "status": "Published as #16662",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "Build the native launcher without passing it the issue token. The nightly run uses checkout-relative paths so its source links point to the right line. Six named Go test rows passed; a dry run opened one loopback connection and made no writes.",
       "evidence": [
         {
@@ -32510,17 +32512,24 @@
         {
           "label": "Initial verifier rejected XML without named cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/40823214688"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16662"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
-        "url": "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af",
-        "title": "Run the issue reviver without the Docker builder",
-        "summary": "Build the native launcher without passing it the issue token. The nightly run uses checkout-relative paths so its source links point to the right line. Six named Go test rows passed; a dry run opened one loopback connection and made no writes.",
-        "body": "Independent of the cross-compiler changes. The schedule, upstream-only guard and issue permissions are unchanged."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
+        "disposition": "Published as #16662",
+        "nextAction": "Follow maintainer review, checks and import on #16662.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16662",
+          "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:pipe-ring-locks",
@@ -32531,8 +32540,8 @@
       "title": "Check locking on pipe ring buffer operations",
       "url": "https://github.com/tamird/gvisor/commit/6d92728f18ba35b130ca178de202096adf67f544",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T08:52:37.351418+00:00",
+      "status": "Published as #16668",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "Nogo checks the mutex protecting the pipe ring. Splice and tee borrow the readable bytes while both pipe locks are held, so the analyzer can check the source accesses directly. The destination still decides which error to report first.",
       "evidence": [
         {
@@ -32566,6 +32575,10 @@
         {
           "label": "Removing the lock reports exactly one max diagnostic for each architecture",
           "url": "https://app.buildbuddy.io/invocation/236ea858-ec58-4b55-99e9-c3b071580e9b"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16668"
         }
       ],
       "refinement": {
@@ -32576,15 +32589,18 @@
           "head": "6d92728f18ba35b130ca178de202096adf67f544"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6d92728f18ba35b130ca178de202096adf67f544",
-        "url": "https://github.com/tamird/gvisor/commit/6d92728f18ba35b130ca178de202096adf67f544",
-        "title": "Check locking on pipe ring buffer operations",
-        "summary": "Nogo checks the mutex protecting the pipe ring. Splice and tee borrow the readable bytes while both pipe locks are held, so the analyzer can check the source accesses directly. The destination still decides which error to report first.",
-        "body": "Open the pipe lock annotations and the splice adjustment together. All 29 syscall cases passed on native Linux, systrap and save/resume. Removing the capacity lock produced the intended diagnostic on both architectures."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "6d92728f18ba35b130ca178de202096adf67f544",
+        "disposition": "Published as #16668",
+        "nextAction": "Follow maintainer review, checks and import on #16668.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16668",
+          "https://github.com/tamird/gvisor/commit/6d92728f18ba35b130ca178de202096adf67f544"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:bazel-cpplint",
@@ -32596,17 +32612,8 @@
       "url": "https://github.com/tamird/gvisor/commit/46110fd411b52a7b72da0418360a1382ac915f8a",
       "group": "analysis",
       "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
-      "updatedAt": "2026-10-29T07:49:47.210758+00:00",
-      "status": "Contributor review requested",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "46110fd411b52a7b72da0418360a1382ac915f8a",
-        "url": "https://github.com/tamird/gvisor/commit/46110fd411b52a7b72da0418360a1382ac915f8a",
-        "title": "Check tracked C++ sources with package-local Bazel tests",
-        "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
-        "body": "Open independently on upstream master. CI lists the actual untracked sources and unsupported CPPLINT.cfg files. The lint entrypoint disables stamping; local tracked-file selection remains a checkout operation. Both uses of the external cpplint tool share the abbreviated label; the combined source also passes the registered Buildifier."
-      },
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "status": "Agent work",
       "evidence": [
         {
           "label": "All 23 original package results",
@@ -32636,6 +32643,16 @@
         "after": {
           "head": "46110fd411b52a7b72da0418360a1382ac915f8a"
         }
+      },
+      "followup": {
+        "owner": "native_runtime",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "46110fd411b52a7b72da0418360a1382ac915f8a",
+        "disposition": "Agent work",
+        "nextAction": "Replace the 23 package hooks with one repository-wide check and verify it still detects new tracked files. Return the simpler revision for contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/46110fd411b52a7b72da0418360a1382ac915f8a"
+        ]
       }
     },
     {
@@ -32647,9 +32664,9 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299",
       "group": "analysis",
-      "updatedAt": "2026-10-29T07:49:47.210758+00:00",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier.",
-      "status": "Contributor review requested",
+      "status": "Published as #16663",
       "refinement": {
         "before": {
           "head": "7770b6241f051b2784b61174049e73e41b7d1303"
@@ -32666,17 +32683,24 @@
         {
           "label": "Formatter, 23 C++ owners, driver tests and 222 license entries together",
           "url": "https://github.com/tamird/gvisor/actions/runs/40837208140"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16663"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "url": "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "title": "Use the registered Buildifier binary for source lint",
-        "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier.",
-        "body": "Open independently on master. Tracked Starlark files are checked even if they are outside Bazel packages. The malformed untracked file was left alone. Source inputs are selected from the checkout; the formatter executable comes from Bazel."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+        "disposition": "Published as #16663",
+        "nextAction": "Follow maintainer review, checks and import on #16663.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16663",
+          "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:tcp-congestion-control-selection",
@@ -32687,9 +32711,9 @@
       "url": "https://github.com/tamird/gvisor/commit/622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
       "title": "Preserve TCP sender state when selecting congestion control",
       "group": "runtime",
-      "updatedAt": "2026-10-29T07:55:47.892171+00:00",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "Reselecting CUBIC reset gVisor’s window from 7 packets to 10 after loss. Switching after a peer FIN changed the option name but left the old sender active. Linux and corrected gVisor preserve the window and use the selected controller for the next loss.",
-      "status": "Contributor review requested",
+      "status": "Published as #16664",
       "refinement": {
         "before": {
           "base": "ac7b4e0fdc7dc4674453438e5e15fc069895620c",
@@ -32719,17 +32743,24 @@
         {
           "label": "Owning TCP Nogo",
           "url": "https://github.com/tamird/gvisor/actions/runs/40837801283"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16664"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
-        "url": "https://github.com/tamird/gvisor/commit/622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
-        "title": "Preserve TCP sender state when selecting congestion control",
-        "summary": "Reselecting CUBIC reset gVisor’s window from 7 packets to 10 after loss. Switching after a peer FIN changed the option name but left the old sender active. Linux and corrected gVisor preserve the window and use the selected controller for the next loss.",
-        "body": "Independent on current master. Linux and gVisor have different absolute Reno thresholds; each corrected socket used the threshold of its newly selected algorithm. The sparse-window change merges cleanly with this one."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+        "disposition": "Published as #16664",
+        "nextAction": "Follow maintainer review, checks and import on #16664.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16664",
+          "https://github.com/tamird/gvisor/commit/622eb5998d707a85023bb3ca4c8ecb2409b8d6c9"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:package-clang-format",
@@ -32740,8 +32771,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e",
       "head": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
       "group": "analysis",
-      "updatedAt": "2026-10-29T08:01:30.444021+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "status": "Agent work",
       "summary": "Remove the separate platform-specific wheel. Bazel checks only packages with changed inputs, and the fix command still edits only tracked sources. The LLVM formatter produced the same bytes as the wheel across all 485 current files.",
       "evidence": [
         {
@@ -32761,14 +32792,15 @@
           "url": "https://app.buildbuddy.io/invocation/29c50833-f061-4f70-888e-542ad04f2a00"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
-        "url": "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e",
-        "title": "Use the declared LLVM formatter for C and C++ lint",
-        "summary": "Remove the separate platform-specific wheel. Bazel checks only packages with changed inputs, and the fix command still edits only tracked sources. The LLVM formatter produced the same bytes as the wheel across all 485 current files.",
-        "body": "Open after the package-local cpplint and registered Buildifier proposals. A failure reports file, line and column with the fix command. Fix mode leaves untracked files alone."
+      "followup": {
+        "owner": "native_runtime",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+        "disposition": "Agent work",
+        "nextAction": "Revisit only after the repository-wide cpplint revision is ready. The contributor has not been asked to review this version again.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e"
+        ]
       }
     },
     {
@@ -32791,16 +32823,17 @@
           "url": "https://app.buildbuddy.io/invocation/8c30dc22-4d7d-403e-b6f6-58fdd89c698c"
         }
       ],
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T08:29:16.268400+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
-        "url": "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
-        "title": "Run the source spelling check with the declared Python toolchain",
-        "summary": "Bazel runs the pinned codespell wheel instead of downloading it in the lint script and invoking the host Python. All five source checks can run without Docker on a host with Bazel. Buildkite explicitly uses its builder until its agents provide Bazel.",
-        "body": "Open after the other source lint targets and Python wheel license discovery land. The package-specific GPL-2.0-only exception applies to the existing development tool."
+      "status": "Contributor approval retained; waiting for prerequisites",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
+        "disposition": "Contributor approval retained; waiting for prerequisites",
+        "nextAction": "Open after clang-format, clang-tidy and #15114 land. Retain contributor approval for the reviewed change.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
+        ]
       }
     },
     {
@@ -32812,8 +32845,8 @@
       "title": "Run Buildkite source lint with the repository’s pinned Bazel",
       "url": "https://github.com/tamird/gvisor/commit/679a7f69c68079476efbd4f13ae219f1c2309713",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T09:04:15.559663+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "The two source-lint jobs install the same verified Bazel as the default builder and run Make directly on the agent. The post-command hook uses that Bazel to clean and shut down the original server, including after a lint failure.",
       "evidence": [
         {
@@ -32829,14 +32862,15 @@
           "url": "https://app.buildbuddy.io/invocation/83248001-21ce-4610-8164-3c6941450a0e"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "679a7f69c68079476efbd4f13ae219f1c2309713",
-        "url": "https://github.com/tamird/gvisor/commit/679a7f69c68079476efbd4f13ae219f1c2309713",
-        "title": "Run Buildkite source lint with the repository’s pinned Bazel",
-        "summary": "The two source-lint jobs install the same verified Bazel as the default builder and run Make directly on the agent. The post-command hook uses that Bazel to clean and shut down the original server, including after a lint failure.",
-        "body": "Open after the declared codespell change lands. Qualification exercised the actual hooks on disposable Linux runners."
+      "followup": {
+        "owner": "pinring_source_scope",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "679a7f69c68079476efbd4f13ae219f1c2309713",
+        "disposition": "Agent work",
+        "nextAction": "Check the actual Buildkite host environment and replace the custom Bazel downloader with Bazelisk where possible; validate the revised bootstrap before requesting review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/679a7f69c68079476efbd4f13ae219f1c2309713"
+        ]
       }
     },
     {
@@ -32900,8 +32934,8 @@
       "title": "Restore TCP segmentation settings for the new route",
       "url": "https://github.com/tamird/gvisor/commit/5edf5d13c7a6749df466add29d8811260edb4cda",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T09:33:58.724120+00:00",
+      "status": "Published as #16666",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "After checkpoint restore, a connection with queued data could divide by zero on its first send. Rebuild segmentation settings from the new route and retain the negotiated segment size even when the MTU is unchanged.",
       "evidence": [
         {
@@ -32923,6 +32957,10 @@
         {
           "label": "AMD64 and ARM64 Nogo on the integration source",
           "url": "https://app.buildbuddy.io/invocation/ff58f4db-70f6-4c25-9992-8defb69c077a"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16666"
         }
       ],
       "refinement": {
@@ -32933,15 +32971,18 @@
           "head": "5edf5d13c7a6749df466add29d8811260edb4cda"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "5edf5d13c7a6749df466add29d8811260edb4cda",
-        "url": "https://github.com/tamird/gvisor/commit/5edf5d13c7a6749df466add29d8811260edb4cda",
-        "title": "Restore TCP segmentation settings for the new route",
-        "summary": "After checkpoint restore, a connection with queued data could divide by zero on its first send. Rebuild segmentation settings from the new route and retain the negotiated segment size even when the MTU is unchanged.",
-        "body": "Open a standalone PR. The four cases cover unchanged segmentation support, enabling it, disabling it, and reducing the MTU. The first standalone run exposed a misplaced test-helper condition; the final run passed all four with no skips."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "5edf5d13c7a6749df466add29d8811260edb4cda",
+        "disposition": "Published as #16666",
+        "nextAction": "Follow maintainer review, checks and import on #16666.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16666",
+          "https://github.com/tamird/gvisor/commit/5edf5d13c7a6749df466add29d8811260edb4cda"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:tcp-error-locks",
@@ -32952,8 +32993,8 @@
       "title": "Check the locks protecting TCP endpoint errors",
       "url": "https://github.com/tamird/gvisor/commit/2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T09:47:25.116552+00:00",
+      "status": "Published as #16667",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "The connection error is protected by the endpoint mutex. ICMP can update the last socket error while holding only its separate mutex. Annotate both fields so Nogo checks the actual contract.",
       "evidence": [
         {
@@ -32967,17 +33008,24 @@
         {
           "label": "Negative control: Nogo caught both deliberately removed guards",
           "url": "https://app.buildbuddy.io/invocation/9bc78c7f-93bd-4066-b38a-34d562709545"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16667"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
-        "url": "https://github.com/tamird/gvisor/commit/2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
-        "title": "Check the locks protecting TCP endpoint errors",
-        "summary": "The connection error is protected by the endpoint mutex. ICMP can update the last socket error while holding only its separate mutex. Annotate both fields so Nogo checks the actual contract.",
-        "body": "Open a standalone annotation PR. The negative control reports separately on the unguarded hard-error read/clear and the last-error write under the wrong mutex."
-      }
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
+        "disposition": "Published as #16667",
+        "nextAction": "Follow maintainer review, checks and import on #16667.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16667",
+          "https://github.com/tamird/gvisor/commit/2d6624b7225ff19bbada4fe2fa6724fdb9109cbb"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:static-go-test-binaries",
@@ -32988,9 +33036,9 @@
       "title": "Link host-run benchmarks and the container test app statically",
       "url": "https://github.com/tamird/gvisor/commit/b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-29T10:34:21.777422+00:00",
-      "summary": "The current GNU build produces two executables requiring the build environment’s dynamic loader. The two-line change makes both static on AMD64 and allows the existing empty-root container test to run instead of skipping. ARM64 GNU qualification is in progress.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T13:09:49.634379+00:00",
+      "summary": "The benchmark binaries and container test app requested static linking, but the Go rules ignored their C++ feature. With the Go rule’s static setting, the two binaries no longer require a host loader or shared libraries on AMD64 or ARM64. TestRootNotMount now runs on AMD64 instead of skipping.",
       "evidence": [
         {
           "label": "Original GNU ELF imports",
@@ -33003,8 +33051,432 @@
         {
           "label": "TestRootNotMount executed and passed",
           "url": "https://app.buildbuddy.io/invocation/44f1f38c-8507-4b6c-b03d-b940ecda6ea1"
+        },
+        {
+          "label": "ARM64 stock GNU binaries",
+          "url": "https://app.buildbuddy.io/invocation/b268e401-b304-41bb-bb41-f4561e02f5c7"
+        },
+        {
+          "label": "ARM64 corrected GNU binaries",
+          "url": "https://app.buildbuddy.io/invocation/9e9e9e9d-f75a-4621-844b-b444793921df"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
+        "url": "https://github.com/tamird/gvisor/commit/b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
+        "title": "Link host-run benchmarks and the container test app statically",
+        "summary": "The benchmark binaries and container test app requested static linking, but the Go rules ignored their C++ feature. With the Go rule’s static setting, the two binaries no longer require a host loader or shared libraries on AMD64 or ARM64. TestRootNotMount now runs on AMD64 instead of skipping.",
+        "body": "Independent of the LLVM migration. The AMD64 runtime test executed without a skip. ARM64 was cross-built with GNU and verified from both executable files; no ARM64 runtime or Docker benchmark result is claimed."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
+        "observedAt": "2026-10-29T13:09:49.634379+00:00",
+        "disposition": "GNU validation complete; contributor review requested",
+        "nextAction": "Open the independent PR after contributor review.",
+        "evidence": [
+          "https://app.buildbuddy.io/invocation/9e9e9e9d-f75a-4621-844b-b444793921df",
+          "https://github.com/tamird/gvisor/commit/b9193eed0d34d1ad1aa0a5da5603c82871052e2e"
+        ]
+      }
+    },
+    {
+      "id": "pr:16661",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16661,
+      "ref": "review/tcp-cwnd-use",
+      "head": "5a22e6beaa402db7b9e182f9e72b321f46205504",
+      "title": "TCP: grow the congestion window only when it is used",
+      "url": "https://github.com/google/gvisor/pull/16661",
+      "group": "runtime",
+      "summary": "Stock CUBIC sent 17 packets after dense one-segment writes and 29 after spaced writes. The correction sends 14 in both cases, matching its idle control. In four Linux flows, sparse writes likewise did not grow the window.",
+      "evidence": [
+        {
+          "label": "Stock gVisor packet trace",
+          "url": "https://app.buildbuddy.io/invocation/d09d1185-6493-4a01-b2ad-0b44ddd94045"
+        },
+        {
+          "label": "Corrected gVisor packet trace",
+          "url": "https://app.buildbuddy.io/invocation/f4cc23bc-4010-4753-905a-d4230a3e6500"
+        },
+        {
+          "label": "Native Linux socket comparison",
+          "url": "https://app.buildbuddy.io/invocation/43474d02-9e00-4aa2-aa14-162c9005ae13"
+        },
+        {
+          "label": "Original Linux packet capture verified",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40820918000"
+        },
+        {
+          "label": "Unmodified sender: four independent controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40834197857"
+        },
+        {
+          "label": "Window-use change: four corrected traces",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40832781696"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16661"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "5a22e6beaa402db7b9e182f9e72b321f46205504",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16661.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16661",
+          "https://github.com/tamird/gvisor/commit/5a22e6beaa402db7b9e182f9e72b321f46205504"
+        ]
+      }
+    },
+    {
+      "id": "pr:16662",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16662,
+      "ref": "review/issue-reviver-native",
+      "head": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
+      "title": "Run the issue reviver without the Docker builder",
+      "url": "https://github.com/google/gvisor/pull/16662",
+      "group": "bazel",
+      "summary": "Build the native launcher without passing it the issue token. The nightly run uses checkout-relative paths so its source links point to the right line. Six named Go test rows passed; a dry run opened one loopback connection and made no writes.",
+      "evidence": [
+        {
+          "label": "Named tests and isolated replay",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40823691712"
+        },
+        {
+          "label": "Initial verifier rejected XML without named cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40823214688"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16662"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16662.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16662",
+          "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af"
+        ]
+      }
+    },
+    {
+      "id": "pr:16663",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16663,
+      "ref": "review/buildifier-native-diff",
+      "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+      "title": "Use the registered Buildifier binary for source lint",
+      "url": "https://github.com/google/gvisor/pull/16663",
+      "group": "analysis",
+      "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier.",
+      "evidence": [
+        {
+          "label": "All 614 tracked files, seven damaged-file diffs and repairs, malformed-input behavior, and CLI identity",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40833710579"
+        },
+        {
+          "label": "Formatter, 23 C++ owners, driver tests and 222 license entries together",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837208140"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16663"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16663.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16663",
+          "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+        ]
+      }
+    },
+    {
+      "id": "pr:16664",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16664,
+      "ref": "review/tcp-congestion-control-selection",
+      "head": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+      "title": "tcp: preserve sender state when selecting congestion control",
+      "url": "https://github.com/google/gvisor/pull/16664",
+      "group": "runtime",
+      "summary": "Reselecting CUBIC reset gVisor’s window from 7 packets to 10 after loss. Switching after a peer FIN changed the option name but left the old sender active. Linux and corrected gVisor preserve the window and use the selected controller for the next loss.",
+      "evidence": [
+        {
+          "label": "Six established-socket cases on Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40835847230"
+        },
+        {
+          "label": "Linux and intermediate switch after FIN",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837597017"
+        },
+        {
+          "label": "Corrected sender after FIN",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837599668"
+        },
+        {
+          "label": "ACK credit across the switch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40836914536"
+        },
+        {
+          "label": "Owning TCP Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837801283"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16664"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16664.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16664",
+          "https://github.com/tamird/gvisor/commit/622eb5998d707a85023bb3ca4c8ecb2409b8d6c9"
+        ]
+      }
+    },
+    {
+      "id": "pr:16665",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16665,
+      "ref": "research/fsconfigfd-checkpoint",
+      "head": "0aa163b78df385b88491955a5627c0d585c63123",
+      "title": "Checkpoint open filesystem configuration and mount descriptors",
+      "url": "https://github.com/google/gvisor/pull/16665",
+      "group": "runtime",
+      "summary": "An open filesystem configuration descriptor prevented a checkpoint after fsconfig created its filesystem. Retain the read-only flag that fsmount inherits and register the mount descriptor and reconfiguration state with the serializer.",
+      "evidence": [
+        {
+          "label": "Stock save error",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40814414162"
+        },
+        {
+          "label": "Nine successful restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40817154538"
+        },
+        {
+          "label": "Full suite",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40818944764"
+        },
+        {
+          "label": "All 41 save/resume cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40820183334"
+        },
+        {
+          "label": "Four library compiles passed; transitive analyzer was killed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40820699964"
+        },
+        {
+          "label": "Both descriptor analyzers passed on AMD64 and ARM64; unrelated pipe diagnostics failed the parent",
+          "url": "https://app.buildbuddy.io/invocation/c183bf70-e485-418d-bfaa-31faa702ae94"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16665"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "0aa163b78df385b88491955a5627c0d585c63123",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16665.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16665",
+          "https://github.com/tamird/gvisor/commit/0aa163b78df385b88491955a5627c0d585c63123"
+        ]
+      }
+    },
+    {
+      "id": "pr:16666",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16666,
+      "ref": "review/tcp-restore-gso-route",
+      "head": "5edf5d13c7a6749df466add29d8811260edb4cda",
+      "title": "Restore TCP segmentation settings for the new route",
+      "url": "https://github.com/google/gvisor/pull/16666",
+      "group": "runtime",
+      "summary": "After checkpoint restore, a connection with queued data could divide by zero on its first send. Rebuild segmentation settings from the new route and retain the negotiated segment size even when the MTU is unchanged.",
+      "evidence": [
+        {
+          "label": "Stock: the first post-restore send divides by zero",
+          "url": "https://app.buildbuddy.io/invocation/cae84d9e-7c35-45b5-b394-9a17fe574b53"
+        },
+        {
+          "label": "Final standalone source: all four restored route configurations passed",
+          "url": "https://app.buildbuddy.io/invocation/b4aaebad-d661-4d9c-923d-3d764b4fdf5a"
+        },
+        {
+          "label": "Initial extraction: a packet helper checked hardware metadata on software-segmented packets",
+          "url": "https://app.buildbuddy.io/invocation/cd397b16-7c11-43d8-9e37-1757e8f30e51"
+        },
+        {
+          "label": "Internal TCP package on the integration source",
+          "url": "https://app.buildbuddy.io/invocation/867b63d6-c005-466e-896c-f2e34dfb2562"
+        },
+        {
+          "label": "AMD64 and ARM64 Nogo on the integration source",
+          "url": "https://app.buildbuddy.io/invocation/ff58f4db-70f6-4c25-9992-8defb69c077a"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16666"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "5edf5d13c7a6749df466add29d8811260edb4cda",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16666.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16666",
+          "https://github.com/tamird/gvisor/commit/5edf5d13c7a6749df466add29d8811260edb4cda"
+        ]
+      }
+    },
+    {
+      "id": "pr:16667",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16667,
+      "ref": "research/tcp-error-locks",
+      "head": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
+      "title": "Check the locks protecting TCP endpoint errors",
+      "url": "https://github.com/google/gvisor/pull/16667",
+      "group": "runtime",
+      "summary": "The connection error is protected by the endpoint mutex. ICMP can update the last socket error while holding only its separate mutex. Annotate both fields so Nogo checks the actual contract.",
+      "evidence": [
+        {
+          "label": "AMD64: 448 passing TCP cases and all three uncached owners",
+          "url": "https://app.buildbuddy.io/invocation/0b7531a4-8c05-4ca0-af36-329811e2639f"
+        },
+        {
+          "label": "ARM64: 448 passing TCP cases and all three uncached owners",
+          "url": "https://app.buildbuddy.io/invocation/bbf41caf-c4d8-4fb5-87e1-ddeec3cff0ad"
+        },
+        {
+          "label": "Negative control: Nogo caught both deliberately removed guards",
+          "url": "https://app.buildbuddy.io/invocation/9bc78c7f-93bd-4066-b38a-34d562709545"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16667"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16667.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16667",
+          "https://github.com/tamird/gvisor/commit/2d6624b7225ff19bbada4fe2fa6724fdb9109cbb"
+        ]
+      }
+    },
+    {
+      "id": "pr:16668",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16668,
+      "ref": "research/pipe-ring-locks",
+      "head": "6d92728f18ba35b130ca178de202096adf67f544",
+      "title": "Check locking on pipe ring buffer operations",
+      "url": "https://github.com/google/gvisor/pull/16668",
+      "group": "runtime",
+      "summary": "Nogo checks the mutex protecting the pipe ring. Splice and tee borrow the readable bytes while both pipe locks are held, so the analyzer can check the source accesses directly. The destination still decides which error to report first.",
+      "evidence": [
+        {
+          "label": "First revision: 151 save/resume cases passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40823563514"
+        },
+        {
+          "label": "Revised restore callback: save/resume qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40825958373"
+        },
+        {
+          "label": "Rejected nonexistent ARM64 target; no source tests ran",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40828547082"
+        },
+        {
+          "label": "Corrected AMD64 and ARM64 package and analyzer checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40829379319"
+        },
+        {
+          "label": "Unlocked capacity control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40828547565"
+        },
+        {
+          "label": "Both architecture analyzers and all four package cases",
+          "url": "https://app.buildbuddy.io/invocation/77bcfea7-727a-43f4-82b4-cac5bfe066df"
+        },
+        {
+          "label": "All 87 splice and tee cases including save/resume, no skips",
+          "url": "https://app.buildbuddy.io/invocation/d09b96dc-0a44-454d-bead-e6d7fe751d8b"
+        },
+        {
+          "label": "Removing the lock reports exactly one max diagnostic for each architecture",
+          "url": "https://app.buildbuddy.io/invocation/236ea858-ec58-4b55-99e9-c3b071580e9b"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16668"
+        }
+      ],
+      "status": "open",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "sourceHead": "6d92728f18ba35b130ca178de202096adf67f544",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow maintainer review, checks and import on #16668.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16668",
+          "https://github.com/tamird/gvisor/commit/6d92728f18ba35b130ca178de202096adf67f544"
+        ]
+      }
     }
   ],
   "edges": [
@@ -38860,7 +39332,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T10:23:22.052755+00:00",
+      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -41402,6 +41874,19 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40854902152"
             }
           ]
+        },
+        {
+          "text": "On the integrated graph serializer, an Nginx kernel Save averaged 1.578 ms and 1.93 MB allocated across 1,742 iterations. The exact 148,247-byte checkpoint reloaded. Of sampled allocations during Save, 5.62 MB of 17.38 MB went to object-record storage, compared with 1.18 MB to each address index. These are allocation-profile totals, not per-operation counts. The native test passed; its workflow rejected the worker metadata, and the original profiles were recovered by digest without re-execution.",
+          "evidence": [
+            {
+              "label": "Native Nginx benchmark and profiles",
+              "url": "https://app.buildbuddy.io/invocation/aa35225d-d654-4ef8-90b8-32391c5bdd57"
+            },
+            {
+              "label": "Original file verification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40859722594"
+            }
+          ]
         }
       ],
       "nextStep": "Measure how much spare slice capacity contributes to the address index during the existing Nginx kernel checkpoint. Also check that the integrated graph loader exposes a repaired map entry to its parent’s AfterLoad.",
@@ -42325,6 +42810,14 @@
         {
           "label": "Broader rewrite ownership and review disposition",
           "url": "https://github.com/google/gvisor/issues/16216#issuecomment-6383590232"
+        },
+        {
+          "label": "Nginx kernel profiles and benchmark",
+          "url": "https://app.buildbuddy.io/invocation/aa35225d-d654-4ef8-90b8-32391c5bdd57"
+        },
+        {
+          "label": "Reported map entry copied before its restore callback",
+          "url": "https://github.com/google/gvisor/pull/16584#discussion_r4411318009"
         }
       ],
       "comparisons": [
