@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T16:16:33.703333+00:00",
+    "updatedAt": "2026-10-29T16:50:32.090252+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -216,7 +216,7 @@
       "followup": {
         "disposition": "Recovery source checks pass; existing review requirements remain",
         "owner": "work_map_current",
-        "nextAction": "Carry the test change into the next update. The license-policy hold remains; this does not request a new import.",
+        "nextAction": "After the license-policy hold is lifted, carry the tested eff876941 amendment into the next update. No review or import is requested now.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825",
           "https://github.com/google/gvisor/pull/15146#issuecomment-6250305913",
@@ -258,6 +258,10 @@
         {
           "label": "Check the expected error parsing Git refs",
           "url": "https://app.buildbuddy.io/invocation/33e6f531-f93c-4fc8-83ca-ee7f3b6d5106"
+        },
+        {
+          "label": "Retained test amendment for the next update",
+          "url": "https://github.com/tamird/gvisor/commit/eff876941"
         }
       ],
       "refinement": {
@@ -267,16 +271,6 @@
         "after": {
           "head": "eff87694165c245ffac3999d0faf160d6713ba67"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "eff87694165c245ffac3999d0faf160d6713ba67",
-        "baseHead": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
-        "url": "https://github.com/tamird/gvisor/commit/eff87694165c245ffac3999d0faf160d6713ba67",
-        "title": "Check the expected error parsing Git refs",
-        "summary": "Malformed records, repeated refs and peeled refs without a tag now have distinct error expectations. All twelve cases passed.",
-        "body": "Carry the test change into the next update. The license-policy hold remains; this does not request a new import."
       }
     },
     {
@@ -32212,12 +32206,12 @@
       "repo": "google/gvisor",
       "number": 16584,
       "ref": "test/cl1008391846",
-      "head": "8137978fffffa7f5efa74819d9217a2e3442e1c3",
+      "head": "d09828cec993fd489eccabcff27aa68c024f2080",
       "title": "Review the graph decoder",
       "url": "https://github.com/google/gvisor/pull/16584",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T00:45:15.187460+00:00",
+      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
       "summary": "Review Parth’s graph decoder for round trips that lose shared backing storage. A new fixture fails to save overlapping views when one is a pointer to an array.",
       "evidence": [
         {
@@ -32236,11 +32230,11 @@
       "contributorReview": {
         "kind": "review",
         "status": "pending",
-        "head": "8137978fffffa7f5efa74819d9217a2e3442e1c3",
+        "head": "d09828cec993fd489eccabcff27aa68c024f2080",
         "url": "https://github.com/google/gvisor/pull/16584",
         "title": "Send Parth the overlapping array-pointer report",
         "summary": "Authorize an inline report on graph_encode_objects_unsafe.go:390. Both traversal orders fail; using two slices passes.",
-        "body": "@parth-opensrc, this overlap is possible in safe Go. Take two views of a `buf [4]*byte`: `buf[:3:3]` and `buf[1:4:4]`. As named slices, they round-trip in either traversal order. Convert the second to `*[3]*byte` and Save fails in both: slice-first reaches this check; pointer-first reaches the corresponding check in `sliceTarget`. Can the array pointer and slice share their restored backing storage just as the two slices do?\n\nThe [fixture on the integrated rewrite](https://github.com/tamird/gvisor/blob/bd3cab255359dcaa97607d78eac4ba4c59eb7299/pkg/state/tests/graph_test.go#L475) checks both shared slots, writes through one view, and the final pointee reachable only from the other. [Both failures](https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6) are also recorded in the [fork run](https://github.com/tamird/gvisor/actions/runs/40795069761).\n\nPosted by Codex on behalf of @tamird."
+        "body": "@parth-opensrc, this overlap is possible in safe Go. Take two views of a `buf [4]*byte`: `buf[:3:3]` and `buf[1:4:4]`. As named slices, they round-trip in either traversal order. Convert the second to `*[3]*byte` and Save fails in both: slice-first reaches this check; pointer-first reaches the corresponding check in `sliceTarget`. Can the array pointer and slice share their restored backing storage just as the two slices do?\n\nThe [fixture on the integrated rewrite](https://github.com/tamird/gvisor/blob/bd3cab255/pkg/state/tests/graph_test.go#L475) checks both shared slots, writes through one view, and the final pointee reachable only from the other. [Both failures](https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6) are also recorded in the [fork run](https://github.com/tamird/gvisor/actions/runs/40795069761).\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -32292,7 +32286,7 @@
       "title": "Write the Debian package version from stable workspace status",
       "url": "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
       "group": "release",
-      "status": "Contributor review requested",
+      "status": "Included in release review",
       "updatedAt": "2026-10-29T02:59:54.299228+00:00",
       "summary": "A declared Go tool replaces the shell pipeline that creates version.txt. The tagged and ordinary outputs matched the original bytes in both target architectures; the writer ran on empty AMD64 workers.",
       "evidence": [
@@ -32315,17 +32309,13 @@
         {
           "label": "Ordinary output, ARM64 target",
           "url": "https://app.buildbuddy.io/invocation/4522aa74-1939-4b15-a25c-7ae36e312d42"
+        },
+        {
+          "label": "Included in the three-commit release proposal",
+          "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...4472e47b6"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
-        "url": "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc",
-        "title": "Write the Debian package version from stable workspace status",
-        "summary": "A declared Go tool replaces the shell pipeline that creates version.txt. The tagged and ordinary outputs matched the original bytes in both target architectures; the writer ran on empty AMD64 workers.",
-        "body": "The package label and runsc revision stay unchanged. This change only covers the package-version action."
-      }
+      "inactive": true
     },
     {
       "id": "branch:module-map-generator-musl",
@@ -33004,7 +32994,7 @@
       "title": "Build both release architectures with an explicit version",
       "url": "https://github.com/tamird/gvisor/commit/55210b651ecb1c5350d8011c0997669f392f8870",
       "group": "release",
-      "status": "Contributor review requested",
+      "status": "Included in release review",
       "updatedAt": "2026-10-29T09:31:08.734709+00:00",
       "summary": "Build both release architectures from one caller-supplied label without Git or the status script in the Bazel checkout. Both Debian controls reported 20261029.0; eight binaries per architecture matched across the Debian and both tar packages.",
       "evidence": [
@@ -33035,17 +33025,13 @@
         {
           "label": "Original-only verification of all six output digests",
           "url": "https://github.com/tamird/gvisor/actions/runs/40849594911"
+        },
+        {
+          "label": "Included in the three-commit release proposal",
+          "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...4472e47b6"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "55210b651ecb1c5350d8011c0997669f392f8870",
-        "url": "https://github.com/tamird/gvisor/commit/55210b651ecb1c5350d8011c0997669f392f8870",
-        "title": "Build both release architectures with an explicit version",
-        "summary": "Build both release architectures from one caller-supplied label without Git or the status script in the Bazel checkout. Both Debian controls reported 20261029.0; eight binaries per architecture matched across the Debian and both tar packages.",
-        "body": "Release packaging currently asks Git to identify the checkout. A source\nexport falls back to 0.0.0, so two different exports can report the\nsame version. Let the release caller provide one label to both\narchitecture builds. Runsc, its sidecars and the result parser use that\nlabel; the Debian version strips the prefix as before.\n\nThe default checkout still supplies its Git revision or release tag. A\ncustom status command that sets STABLE_VERSION keeps precedence. Builds\nwith no identity no longer accept a checkpoint or sidecar solely because\nthe two missing values are equal. The historical 0.0.0 fallback remains\navailable to ordinary builds; an explicit release cannot use it.\n\nBuilt real AMD64 and ARM64 Debian packages and both release archives\nwith neither the source tree's .git nor its status script available.\nBoth Debian controls reported 20261029.0, and the eight ELF files on\neach architecture matched across all three package formats. On AMD64,\nrunsc restored a checkpoint of its own release; a different revision\nrejected the checkpoint and the mismatched Sentry rejected startup.\n\nThe first workflow is red: its inspection image lacked the zstd CLI,\nand its summary mishandled a Bazel event. A read of all six original\noutput digests verified the packages without repeating a build or\nrestore. This does not change changelog timestamps, release signing, or\npublication."
-      }
+      "inactive": true
     },
     {
       "id": "branch:tcp-restore-gso-route",
@@ -33866,15 +33852,31 @@
       "id": "branch:release-archives-versioned",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/release-archives-versioned",
-      "head": "0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5",
-      "title": "Stage both release architectures with one Bazel target",
-      "url": "https://github.com/tamird/gvisor/commit/0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5",
+      "ref": "review/release-archives-builder",
+      "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0",
+      "title": "Build and sign release artifacts with one version",
+      "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...4472e47b6",
       "group": "release",
-      "status": "Agent work",
+      "status": "Contributor review requested",
       "updatedAt": "2026-10-29T15:32:30.872309+00:00",
-      "summary": "Build all six native packages and archives in one Bazel configuration. Build optional Python artifacts first; require both native architectures before signing. The initial archive build passed. The offline signing fixture needed its Debian extraction path and the generated lock for its Make tool corrected; publication is being checked now.",
+      "summary": "Review three changes together: the package-version reader, the shared identity of the release and checkpoint, and staging and signing both architectures. The links show each commit separately.",
       "evidence": [
+        {
+          "label": "1 · Write the Debian package version",
+          "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...962df4d1a"
+        },
+        {
+          "label": "2 · Share the release and checkpoint identity",
+          "url": "https://github.com/tamird/gvisor/compare/962df4d1a...55210b651"
+        },
+        {
+          "label": "3 · Stage and sign the six native outputs",
+          "url": "https://github.com/tamird/gvisor/compare/55210b651...4472e47b6"
+        },
+        {
+          "label": "Build in the existing builder and sign the independent prebuilt copy",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40911681514"
+        },
         {
           "label": "Proposed release target",
           "url": "https://github.com/tamird/gvisor/commit/e4e5276c25c0b60d11ecdfe03f0d3709624cdd41"
@@ -33903,7 +33905,25 @@
           "label": "Strict-lock offline release and negative inputs",
           "url": "https://github.com/tamird/gvisor/actions/runs/40902546567"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5"
+        },
+        "after": {
+          "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0",
+        "baseHead": "ac7b4e0fdc7dc4674453438e5e15fc069895620c",
+        "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...4472e47b6",
+        "title": "Review the package version, release identity and signing together",
+        "summary": "Review three changes together: the package-version reader, the shared identity of the release and checkpoint, and staging and signing both architectures. The links show each commit separately.",
+        "body": "1. Write the Debian package version using a declared tool.\n2. Use the same explicit version for the release binaries and their checkpoint identity.\n3. Stage the two native architectures and sign prebuilt artifacts without rerunning Bazel. The signer accepts exactly the six canonical native outputs, three per architecture. Python distributions are separate and required only when the tagged release uploads them. Buildkite still routes through its existing builder."
+      }
     },
     {
       "id": "branch:overlay-close-lifetime",
@@ -33989,6 +34009,52 @@
           "url": "https://app.buildbuddy.io/invocation/0a520392-8d77-48f3-8f65-2417af7d8802"
         }
       ]
+    },
+    {
+      "id": "pr:15432",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15432,
+      "ref": "test/cl994869229",
+      "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+      "title": "Review the TCP recovery flight estimate",
+      "url": "https://github.com/google/gvisor/pull/15432",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
+      "summary": "After retransmission the estimate charges a lost original twice; before a probe is acknowledged it can charge one packet too few. The review asks how to distinguish those cases.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+        "url": "https://github.com/google/gvisor/pull/15432",
+        "title": "Post the first-flight packet findings",
+        "summary": "After retransmission the estimate charges a lost original twice; before a probe is acknowledged it can charge one packet too few. The review asks how to distinguish those cases.",
+        "body": "After RACK marks #2 lost, retransmitting it clears `s1.lost`. This\nbranch then counts #2 once, and the `HighRxt` branch below counts it a\nsecond time. In this PR’s tail-loss test, the ACK of #1 opens a\nfive-packet window, but [only #2–#5 are sent](https://app.buildbuddy.io/invocation/e771617b-851e-4019-a76e-f73015f02f74).\n[Omitting the second count](https://app.buildbuddy.io/invocation/e3b6733c-2ae1-4ac3-a4a8-93f4a7b9a126)\nlets #6 go as well, with GSO both on and off.\n\nCan the flight estimate distinguish a **lost original** from an\n**unacknowledged tail probe** whose original might still arrive? The\n[probe case](https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef)\nhas the opposite error: four transmissions are outstanding at a window\nof 11, yet the next write sends eight new packets rather than seven.\n\nPosted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "pr:16620",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16620,
+      "ref": "test/cl1009024537",
+      "head": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
+      "title": "Review LoadValue callback snapshots",
+      "url": "https://github.com/google/gvisor/pull/16620",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
+      "summary": "The graph reader returned 22 to a callback that had received 11; the legacy reader retained 11. A private copy restores the original callback value.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
+        "url": "https://github.com/google/gvisor/pull/16620",
+        "title": "Post the LoadValue callback regression",
+        "summary": "The graph reader returned 22 to a callback that had received 11; the legacy reader retained 11. A private copy restores the original callback value.",
+        "body": "@parth-opensrc, this boxes the caller’s destination by reference. After\n`Load` returns, assigning to the field can change a scalar the callback\nalready received:\n\n```go\nsrc.LoadValue(0, &x.n, func(v any) { x.saved = v }) // uint64(11)\n// After Load returns:\nx.n = 22\n```\n\nThe [matched test](https://github.com/tamird/gvisor/blob/dcaa864e7/pkg/state/graph_loadvalue_snapshot_test.go#L42)\nkept `x.saved` at 11 with the legacy reader but observed 22 with the\ngraph reader. A typed copy inside the callback stayed 11 with both.\n[Original run](https://app.buildbuddy.io/invocation/858adf22-8ee6-4cd3-967c-ba4b5a5d40f9).\n\nCould ordinary `LoadValue` snapshot the value when it calls the\ncallback? [This prototype](https://github.com/tamird/gvisor/commit/5c28e8d33)\n[keeps 11 with both readers](https://app.buildbuddy.io/invocation/6fc0d435-5595-4817-a6c1-52f1f64c8dd4).\nI found no direct in-tree caller; stateify uses the separate\n`LoadValueTo` API.\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -37083,10 +37149,10 @@
       "type": "depends_on",
       "from": "branch:package-version-status",
       "to": "branch:declared-release-version",
-      "reason": "The release build uses the declared package-version reader. Its previously reviewed patch is unchanged on the current base; this branch adds only the release identity change.",
+      "reason": "The package-version reader is patch-identical to the first commit in the release review.",
       "evidence": [
-        "https://github.com/tamird/gvisor/compare/962df4d1a82a86b875d103f342f81fd4f95aefe4...55210b651ecb1c5350d8011c0997669f392f8870",
-        "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc"
+        "https://github.com/tamird/gvisor/compare/ac7b4e0fd...962df4d1a",
+        "https://github.com/tamird/gvisor/commit/dd0c5f16a"
       ]
     },
     {

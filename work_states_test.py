@@ -557,20 +557,22 @@ class WorkStatesTest(unittest.TestCase):
     def test_outgoing_decisions_use_registry_clock_and_do_not_replace_public_review(self):
         pr = original(reviewDecision="CHANGES_REQUESTED")
         node = {"id": "pr:1", "type": "pr", "contributorReview": {
-            "status": "pending", "kind": "review", "head": "c" * 40}}
+            "status": "pending", "kind": "review", "head": pr["head"]}}
         issue = {"id": "issue:2", "type": "issue", "contributorReview": {
             "status": "pending", "kind": "reply", "url": "https://github.com/google/gvisor/issues/2"}}
         registry = {"meta": {"repo": "google/gvisor", "updatedAt": "2026-10-03T00:00:00Z"},
                     "nodes": [node, issue]}
         states = record_states([pr], registry, {}, "2026-10-02T00:00:00Z")
-        self.assertEqual(states["pr:1"]["contributor-review"]["scope"], "c" * 40)
+        self.assertEqual(states["pr:1"]["contributor-review"]["scope"], pr["head"])
         self.assertEqual(states["pr:1"]["contributor-review"]["observedAt"], registry["meta"]["updatedAt"])
         self.assertIn("changes-requested", states["pr:1"])
         self.assertEqual(states["issue:2"]["contributor-review"]["scope"], issue["contributorReview"]["url"])
+        pr["head"] = "d" * 40
+        self.assertNotIn("contributor-review", record_states([pr], registry, {}, registry["meta"]["updatedAt"])["pr:1"])
         del node["contributorReview"]
         self.assertNotIn("contributor-review", record_states([pr], registry, {"workStates": states}, "2026-10-03T00:00:00Z")["pr:1"])
 
-    def test_explicit_pr_amendment_keeps_its_scope_across_public_head_changes(self):
+    def test_amendment_only_needs_review_against_its_published_base(self):
         pr = original(reviewDecision="CHANGES_REQUESTED")
         node = {"id": "pr:1", "type": "pr", "contributorReview": {
             "status": "pending", "kind": "amendment", "head": "c" * 40,
@@ -584,8 +586,11 @@ class WorkStatesTest(unittest.TestCase):
         self.assertIn("changes-requested", states["pr:1"])
         pr["head"] = "d" * 40
         changed = record_states([pr], registry, {"workStates": states}, "2026-10-04T00:00:00Z")
-        self.assertEqual(changed["pr:1"]["contributor-review"], decision)
+        self.assertNotIn("contributor-review", changed["pr:1"])
         self.assertEqual(changed["pr:1"]["changes-requested"]["scope"], pr["head"])
+        pr["head"] = node["contributorReview"]["head"]
+        published = record_states([pr], registry, {"workStates": changed}, "2026-10-04T00:00:00Z")
+        self.assertNotIn("contributor-review", published["pr:1"])
         del node["contributorReview"]
         self.assertNotIn("contributor-review", record_states([pr], registry, {"workStates": changed},
                                                              "2026-10-04T00:00:00Z")["pr:1"])
