@@ -15,6 +15,8 @@
 package tcp
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -53,9 +55,6 @@ type rackControl struct {
 	// receiving an ACK and is reset during updating of reorder window.
 	exitedRecovery bool
 
-	// minRTT is the estimated minimum RTT of the connection.
-	minRTT time.Duration
-
 	// tlpRxtOut indicates whether there is an unacknowledged
 	// TLP retransmission.
 	tlpRxtOut bool
@@ -64,8 +63,46 @@ type rackControl struct {
 	// a TLP retransmission.
 	tlpHighRxt seqnum.Value
 
+	// Research-only observers receive the same actual ACK samples.
+	studyData     rttMinimum          `state:"nosave"`
+	studyPR       rttMinimum          `state:"nosave"`
+	studyPrecise  rttMinimum          `state:"nosave"`
+	studyProbeSeq seqnum.Value        `state:"nosave"`
+	studyProbeEnd seqnum.Value        `state:"nosave"`
+	studyProbeAt  tcpip.MonotonicTime `state:"nosave"`
+
 	// snd is a reference to the sender.
 	snd *sender
+}
+
+// Only the external qualification fixture selects this policy.
+var studyPolicy = os.Getenv("RACK_STUDY_POLICY")
+
+func (rc *rackControl) studyHandshake(h *handshake, selected time.Duration, at tcpip.MonotonicTime) {
+	if rc.snd.ep.ID.LocalPort != 8080 {
+		// Only intervene on the reporter's passive data sender. Keep the
+		// active peer's transport identical across every configuration.
+		rc.snd.minRTT.update(selected, at, false)
+		return
+	}
+	precise := selected
+	if !h.sampleRTTWithTSOnly {
+		if elapsed := at.Sub(h.startTime); elapsed > 0 {
+			precise = elapsed
+		}
+	}
+	rc.studyPR.update(selected, at, false)
+	rc.studyPrecise.update(precise, at, false)
+	switch studyPolicy {
+	case "data":
+		// The data ACKs alone establish the minimum.
+	case "precise":
+		rc.snd.minRTT.update(precise, at, false)
+	default:
+		// This is #16381's handshake policy.
+		rc.snd.minRTT.update(selected, at, false)
+	}
+	fmt.Printf("HS policy=%s selected=%d precise=%d retried=%t ts=%t floor=%d\n", studyPolicy, selected, precise, h.sampleRTTWithTSOnly, h.ep.SendTSOk, rc.snd.minRTT.value())
 }
 
 // init initializes RACK specific fields.
@@ -87,8 +124,8 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 	// delayed inside the stack before being processed (e.g. it sat in the
 	// endpoint's segment queue while the application held the endpoint lock
 	// during a Write that synchronously flushed a window). Using the processing
-	// time would inflate the RTT by that internal delay, corrupting RACK.RTT,
-	// RACK.minRTT and the reorder window, and causing spurious loss detection.
+	// time would inflate RACK.RTT by that internal delay, causing spurious
+	// loss detection.
 	// detectLoss already uses ackSeg.rcvdTime; this keeps update consistent.
 	rtt := ackSeg.rcvdTime.Sub(seg.xmitTime)
 
@@ -100,25 +137,39 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 	// for the connection.
 	// See: https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2, step 2.
 	if seg.xmitCount > 1 {
-		if ackSeg.parsedOptions.TS && ackSeg.parsedOptions.TSEcr != 0 {
+		end := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize()))
+		cumulative := end.LessThanEq(ackSeg.ackNumber)
+		covered := false
+		for _, block := range ackSeg.parsedOptions.SACKBlocks {
+			if ackSeg.ackNumber.LessThan(block.Start) && block.Start.LessThanEq(seg.sequenceNumber) && end.LessThanEq(block.End) {
+				covered = true
+				break
+			}
+		}
+		if !cumulative && !covered {
+			// A partial SACK cannot credit the end of this entry.
+			return
+		}
+		if covered && !cumulative && rc.tlpRxtOut && seg.sequenceNumber == rc.studyProbeSeq && end == rc.studyProbeEnd && seg.xmitTime == rc.studyProbeAt && rc.snd.ep.ID.LocalPort == 8080 {
+			fmt.Printf("PROBE seq=%d end=%d ack=%d measured=%d actual=%d data=%d pr=%d precise=%d accept=%t\n",
+				seg.sequenceNumber, end, ackSeg.ackNumber, rtt, rc.snd.minRTT.value(), rc.studyData.value(), rc.studyPR.value(), rc.studyPrecise.value(), rtt >= rc.snd.minRTT.value())
+		}
+		if cumulative && ackSeg.parsedOptions.TS && ackSeg.parsedOptions.TSEcr != 0 {
 			if ackSeg.parsedOptions.TSEcr < rc.snd.ep.tsVal(seg.xmitTime) {
 				return
 			}
 		}
-		if rtt < rc.minRTT {
+		// ACK accounting updates the minimum once after walking deliveries,
+		// as in tcp_clean_rtx_queue:
+		// https://github.com/torvalds/linux/blob/ab185e0c4/net/ipv4/tcp_input.c
+		// This heuristic uses the previous ACK's minimum; the new minimum is
+		// used for the reordering window before loss detection.
+		if rtt < rc.snd.minRTT.value() {
 			return
 		}
 	}
 
 	rc.RTT = rtt
-
-	// The sender can either track a simple global minimum of all RTT
-	// measurements from the connection, or a windowed min-filtered value
-	// of recent RTT measurements. This implementation keeps track of the
-	// simple global minimum of all RTTs for the connection.
-	if rtt < rc.minRTT || rc.minRTT == 0 {
-		rc.minRTT = rtt
-	}
 
 	// Update rc.xmitTime and rc.endSequence to the transmit time and
 	// ending sequence number of the packet which has been acknowledged
@@ -237,6 +288,9 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		if highestSeqXmit != nil {
 			dataSent = s.maybeSendSegment(highestSeqXmit, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
 			if dataSent {
+				s.rc.studyProbeSeq = highestSeqXmit.sequenceNumber
+				s.rc.studyProbeEnd = highestSeqXmit.sackBlock().End
+				s.rc.studyProbeAt = highestSeqXmit.xmitTime
 				s.rc.tlpRxtOut = true
 				s.rc.tlpHighRxt = s.SndNxt
 			}
@@ -361,7 +415,7 @@ func (rc *rackControl) updateRACKReorderWindow() {
 	snd.rtt.Lock()
 	srtt := snd.rtt.TCPRTTState.SRTT
 	snd.rtt.Unlock()
-	rc.ReoWnd = time.Duration((int64(rc.minRTT) / 4) * int64(rc.ReoWndIncr))
+	rc.ReoWnd = time.Duration((int64(snd.minRTT.value()) / 4) * int64(rc.ReoWndIncr))
 	if srtt < rc.ReoWnd {
 		rc.ReoWnd = srtt
 	}
