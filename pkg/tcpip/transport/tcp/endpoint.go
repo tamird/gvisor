@@ -2057,7 +2057,7 @@ func (e *Endpoint) SetSockOpt(opt tcpip.SettableSocketOption) tcpip.Error {
 				e.ccSetBySockOpt = true
 				if e.cc != *v {
 					e.cc = *v
-					if e.EndpointState() == StateEstablished {
+					if e.EndpointState().connected() {
 						e.snd.cc = e.snd.initCongestionControl(e.cc)
 					}
 				}

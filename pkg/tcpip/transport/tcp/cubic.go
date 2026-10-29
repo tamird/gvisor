@@ -96,8 +96,8 @@ func newCubicCC(s *sender) *cubicState {
 		s: s,
 	}
 	if s.SndCwnd >= s.Ssthresh {
-		// An established sender may select CUBIC after leaving slow start.
-		c.enterCongestionAvoidance()
+		// A live sender may select CUBIC with credit from its old window.
+		c.startEpoch()
 	}
 	return c
 }
@@ -109,11 +109,18 @@ func newCubicCC(s *sender) *cubicState {
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) enterCongestionAvoidance() {
+	c.s.SndCAAckCount = 0
+	c.startEpoch()
+}
+
+// startEpoch initializes the CUBIC curves without changing shared ACK credit.
+//
+// +checklocks:c.s.ep.mu
+func (c *cubicState) startEpoch() {
 	c.cwndEpoch = float64(c.s.SndCwnd)
 	c.K = math.Cbrt(max(c.WMax-c.cwndEpoch, 0) / c.C)
 	c.T = c.s.ep.stack.Clock().NowMonotonic()
 	c.WEst = c.cwndEpoch
-	c.s.SndCAAckCount = 0
 }
 
 // updateHyStart tracks packet round-trip time (rtt) to find a safe threshold
