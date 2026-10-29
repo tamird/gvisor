@@ -36,20 +36,24 @@ def main():
             assert identity(raw)=={k:manifest["events"][k] for k in ("bytes","sha256")}
             ev=[json.loads(v) for v in raw.splitlines()]
             assert [e["started"]["uuid"] for e in ev if e.get("started",{}).get("uuid")]==[CHILD]
-            [fin]=[e["finished"] for e in ev if "finished" in e]
-            row["finished"]={"code":int(fin["exitCode"].get("code",0)),"name":enum(fin["exitCode"]["name"]),"detail":project_detail(fin.get("failureDetail",{}))}
+            fs=[e["finished"] for e in ev if "finished" in e];row["finished_event_count"]=len(fs)
+            if len(fs)==1:
+                fin=fs[0];code=fin.get("exitCode",{});row["finished"]={"code":int(code.get("code",0)),"name":enum(code.get("name")),"detail":project_detail(fin.get("failureDetail",{}))}
             ab=[e["aborted"] for e in ev if "aborted" in e]
             row["aborted"]=[{"reason":enum(a.get("reason")),"clues":clues(a.get("description",""))} for a in ab[:12]]
             row["aborted_count"]=len(ab)
             v=obj("verdict.json")
             row["child_verdict"]=enum(v.get("status"))
-            row["child_verdict_available_at"]=datetime.fromisoformat(v["verdict_available_at"].replace("Z","+00:00")).isoformat()
+            if v.get("verdict_available_at"):
+                row["child_verdict_available_at"]=datetime.fromisoformat(v["verdict_available_at"].replace("Z","+00:00")).isoformat()
             row["logs"]={}
             for n in ("stdout.log","stderr.log"):
                 if p+n not in names:continue
                 b=read(n);text=b.decode(errors="replace");lines=[x for x in text.splitlines() if re.search(r"error:|failed|fatal:|exception|exit code|warn:|warning:",x,re.I)]
                 row["logs"][n]={"identity":identity(b),"clues":clues(text),"diagnostic_lines":[{"line":identity(x.encode()),"clues":clues(x)} for x in lines[-10:]]}
-    except Exception as e:row["error"]=failure(e)
+    except Exception as e:
+        import traceback
+        row["error"]={"type":type(e).__name__,"frames":[x.lineno for x in traceback.extract_tb(e.__traceback__) if Path(x.filename).name in ("read_exit.py","read_fixed.py")]}
     finally:
         key=None;row["read_verified_at"]=datetime.now(timezone.utc).isoformat()
         Path("verdict.json").write_text(json.dumps(row,indent=2)+"\n")
