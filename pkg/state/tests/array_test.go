@@ -15,6 +15,7 @@
 package tests
 
 import (
+	"math"
 	"reflect"
 	"testing"
 )
@@ -133,5 +134,13 @@ func TestSliceContainers(t *testing.T) {
 		slicePtrContainer{v: &emptySlice},
 		slicePtrContainer{v: &fullSlice},
 		slicePtrContainer{v: &unusedCapacitySlice},
+	})
+}
+
+func TestSignedZeroSlices(t *testing.T) {
+	neg := math.Copysign(0, -1)
+	runTestCases(t, false, "short", []any{
+		[]float64{neg, math.Inf(1)}[:1],
+		[]complex128{complex(neg, 0), 2 - 5i}[:1],
 	})
 }
