@@ -59,10 +59,6 @@ def run(stage, expected_count, should_fail):
 def main():
     assert output("git", "rev-parse", "HEAD", "HEAD^").splitlines() == [CONTROL, PRODUCT]
     assert set(output("git", "diff", "--name-only", PRODUCT, CONTROL).splitlines()) == {FILE, str(Path(FILE).with_name("BUILD"))}
-    outpath = output("bazel", "cquery", "--output=files", "@cpplint//:cpplint.py").strip()
-    source = Path(output("bazel", "info", "execution_root").strip()) / outpath
-    verdict["checker_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
-    assert verdict["checker_sha256"] == CHECKER
     subprocess.run(["git", "checkout", "--detach", PRODUCT], check=True)
     untracked = Path("test/util/ignored-untracked.cc")
     assert not untracked.exists()
@@ -79,6 +75,14 @@ def main():
     config.write_text("filter=-build/include_order\n")
     run("local-configuration", 486, False)
     assert not output("git", "status", "--porcelain", "--untracked-files=no")
+    # cquery may finish without creating an execroot symlink forest. Read
+    # the repository it actually fetched, bound to the configured source.
+    path = Path(output("bazel", "cquery", "--output=files", "@cpplint//:cpplint.py").strip())
+    verdict["configured_checker_path"] = str(path)
+    assert len(path.parts) == 3 and path.parts[0] in ("..", "external") and path.name == "cpplint.py"
+    source = Path(output("bazel", "info", "output_base").strip()) / "external" / path.parts[1] / path.name
+    verdict["checker_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
+    assert verdict["checker_sha256"] == CHECKER
     verdict["status"] = "VERIFIED"
 
 
@@ -86,7 +90,10 @@ try:
     main()
 except Exception as exc:
     verdict["exception"] = type(exc).__name__
-    verdict["line"] = exc.__traceback__.tb_next.tb_lineno if exc.__traceback__.tb_next else None
+    tb = exc.__traceback__
+    while tb.tb_next:
+        tb = tb.tb_next
+    verdict["line"] = tb.tb_lineno
 finally:
     save()
 sys.exit(int(verdict["status"] != "VERIFIED"))

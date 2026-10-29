@@ -1,7 +1,7 @@
 name: Check whole-repository cpplint
 on:
   push:
-    branches: [qualification/whole-repository-cpplint]
+    branches: [qualification/whole-repository-cpplint-checked]
 permissions:
   contents: read
 jobs:
