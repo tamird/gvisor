@@ -1,0 +1,62 @@
+name: Publish the current tracker snapshot
+on: workflow_dispatch
+
+concurrency:
+  group: work-map-publication
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  refresh:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - name: Check out the published site
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+      - name: Collect, validate and publish the snapshot
+        id: snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            source=$(git rev-parse HEAD)
+            python3 update-status.py
+            git add -- github-status.json
+            git diff --cached --quiet && exit 0
+            git commit -m 'Refresh public GitHub work status'
+            if git push origin HEAD:gh-pages; then
+              echo 'published=true' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git fetch --no-tags origin gh-pages
+            # A lost push response may still have published the commit.
+            if [[ $(git rev-parse origin/gh-pages) == "$(git rev-parse HEAD)" ]]; then
+              echo 'published=true' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            # Only a changed source permits recollection. Authentication or
+            # transport failures against the same head remain errors.
+            if [[ $(git rev-parse origin/gh-pages) == "$source" ]]; then
+              exit 1
+            fi
+            # Never merge a snapshot collected against an older registry.
+            # The local snapshot is committed, so switching preserves it.
+            git switch --detach origin/gh-pages
+            echo "Publication raced with a site update (attempt $attempt)."
+          done
+          echo 'Site updates superseded all three snapshots; the next scheduled refresh will collect again.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Request the configured Pages build
+        if: steps.snapshot.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST repos/tamird/gvisor/pages/builds --jq '{status, url}'
