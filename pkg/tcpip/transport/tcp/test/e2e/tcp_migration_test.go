@@ -637,9 +637,9 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 	}
 }
 
-// restoreGSORoute restores a connected stack on a new link with the given
+// restoreTCPStack restores a connected stack on a new link with the given
 // route capabilities. The caller owns the restored stack.
-func restoreGSORoute(t *testing.T, c *testcontext.Context, mtu uint32, gso stack.SupportedGSO) (*stack.Stack, *channel.Endpoint) {
+func restoreTCPStack(t *testing.T, c *testcontext.Context, mtu uint32, gso stack.SupportedGSO) (*stack.Stack, *channel.Endpoint) {
 	t.Helper()
 	var saved bytes.Buffer
 	if _, err := state.Save(t.Context(), &saved, c.Stack()); err != nil {
@@ -714,7 +714,7 @@ func TestGSOAfterRestore(t *testing.T) {
 				p.Release()
 				t.Fatal("unexpected data before opening window")
 			}
-			st, link := restoreGSORoute(t, c, tc.mtu, tc.to)
+			st, link := restoreTCPStack(t, c, tc.mtu, tc.to)
 			defer st.Destroy()
 			sendRestoredGSOAck(c, st, link, 0)
 			for off := 0; off < len(data); {
@@ -746,6 +746,83 @@ func TestGSOAfterRestore(t *testing.T) {
 				}
 				off += n
 				sendRestoredGSOAck(c, st, link, off)
+			}
+		})
+	}
+}
+
+func TestRestoreSendTimer(t *testing.T) {
+	sack := []byte{header.TCPOptionSACKPermitted, 2, header.TCPOptionNOP, header.TCPOptionNOP}
+	for _, tc := range []struct {
+		name        string
+		window      seqnum.Size
+		synOptions  []byte
+		write       string      // Each byte is a separate write.
+		wantSeq     seqnum.Size // Offset from the initial send sequence number.
+		wantPayload string      // Empty for an idle connection.
+	}{
+		{"idle", 30000, nil, "", 0, ""},
+		{"retransmit oldest", 30000, nil, "a", 1, "a"},
+		{"probe closed window", 0, nil, "a", 0, "\x00"},
+		{"probe tail", 30000, sack, "ab", 2, "b"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, Clock: clock})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, tc.window, -1, tc.synOptions)
+			c.EP.SocketOptions().SetDelayOption(false)
+			data := []byte(tc.write)
+			for i := range data {
+				n, err := c.EP.Write(bytes.NewReader(data[i:i+1]), tcpip.WriteOptions{})
+				if got, want := n, int64(1); got != want || err != nil {
+					t.Fatalf("write byte %d = %d, %v; want %d, nil", i, got, err, want)
+				}
+				if tc.window != 0 {
+					c.ReceiveAndCheckPacket(data, i, 1)
+				}
+			}
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			deadline := info.RTO
+			if tc.synOptions != nil {
+				// With no elapsed RTT, the first tail probe is due at one second.
+				deadline = time.Second
+			}
+			elapsed := deadline / 2
+			clock.Advance(elapsed)
+			st, link := restoreTCPStack(t, c, 1500, stack.GSONotSupported)
+			defer st.Destroy()
+
+			// The peer sends nothing. The next packet must still arrive
+			// at the original deadline, not one timeout after restore.
+			restored := st.Clock().(*faketime.ManualClock)
+			restored.Advance(deadline - elapsed - time.Nanosecond)
+			if pkt := link.Read(); pkt != nil {
+				pkt.DecRef()
+				t.Fatal("sender transmitted before its original deadline")
+			}
+			restored.Advance(time.Nanosecond)
+			pkt := link.Read()
+			if pkt == nil {
+				if tc.wantPayload != "" {
+					t.Fatalf("no packet at the original deadline; want %q", tc.wantPayload)
+				}
+				return
+			}
+			defer pkt.DecRef()
+			if tc.wantPayload == "" {
+				t.Fatal("idle sender emitted a packet")
+			}
+			if got, want := header.TCP(pkt.TransportHeader().Slice()).SequenceNumber(), uint32(c.IRS.Add(tc.wantSeq)); got != want {
+				t.Errorf("sequence = %d, want %d", got, want)
+			}
+			if got, want := string(pkt.Data().AsRange().ToSlice()), tc.wantPayload; got != want {
+				t.Errorf("payload = %q, want %q", got, want)
 			}
 		})
 	}
