@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T22:47:07.619108+00:00",
+    "updatedAt": "2026-10-29T22:57:17.831574+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32062,15 +32062,27 @@
       "id": "branch:epoll-modify-preserve",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/epoll-modify-in-place",
-      "head": "bbadaaacb49e1f5cb40e44804762efee036928d1",
+      "ref": "research/epoll-modify-stable-backing",
+      "head": "82f0e4f38f65529f18851f196504957874ec56fa",
       "title": "Keep an epoll watch intact when MOD fails",
-      "url": "https://github.com/tamird/gvisor/commit/bbadaaacb",
+      "url": "https://github.com/tamird/gvisor/commit/82f0e4f38",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T21:18:46.688370+00:00",
-      "summary": "Modifying an epoll watch updates its existing waiter. A rejected mask leaves the old subscription active. Rearming the same mask checks readiness without relinking the waiter or reprogramming the host. The watch gains no field. Host and guest comparisons, benchmarks, and analyzer checks are in progress.",
+      "updatedAt": "2026-10-29T22:57:17.831574+00:00",
+      "summary": "Modifying an epoll watch keeps its existing waiter and preserves the old subscription if the new mask fails. Rearming an unchanged mask checks readiness without touching the host. The compatible overlay change preserves polling on stable backing files. The combined source is under qualification.",
       "evidence": [
+        {
+          "label": "Fieldless epoll core and updated PCI fixture",
+          "url": "https://github.com/tamird/gvisor/commit/9a663f2a5"
+        },
+        {
+          "label": "Combined source: stable overlay backing",
+          "url": "https://github.com/tamird/gvisor/commit/82f0e4f38"
+        },
+        {
+          "label": "Combined PCI/analyzer qualification (pending)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40966651406"
+        },
         {
           "label": "Watch update, checkpoint, race and analyzer checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/40952859734"
@@ -32145,7 +32157,8 @@
           "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
         },
         "after": {
-          "head": "bbadaaacb49e1f5cb40e44804762efee036928d1"
+          "base": "3ded0a3d65f69fcabbb1b0361aff10e1b2230679",
+          "head": "82f0e4f38f65529f18851f196504957874ec56fa"
         }
       },
       "settledReviews": [
@@ -34713,6 +34726,42 @@
         {
           "label": "Both owning analyzers",
           "url": "https://app.buildbuddy.io/invocation/7f82e410-88fc-452c-a525-8f8a5d706a9a"
+        }
+      ]
+    },
+    {
+      "id": "pr:16713",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16713,
+      "group": "runtime",
+      "ref": "review/state-legacy-map-entry",
+      "head": "d7b1012300396fa2fc231060839ca6268b0adff1",
+      "title": "Finish loaded fields before copying their values",
+      "url": "https://github.com/google/gvisor/pull/16713",
+      "status": "open",
+      "updatedAt": "2026-10-29T22:57:17.831574+00:00",
+      "summary": "Two distinct map keys could collapse into one zero key during checkpoint restore. Finish each field’s load before copying it into a map, interface or conversion callback.",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d7b1012300396fa2fc231060839ca6268b0adff1",
+          "outcome": "approved",
+          "at": "2026-10-29T22:57:17.831574+00:00"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Stock decoder loses an entry",
+          "url": "https://app.buildbuddy.io/invocation/e92e7824-3881-4e01-b87a-2468a5156f66"
+        },
+        {
+          "label": "Corrected decoder suites",
+          "url": "https://app.buildbuddy.io/invocation/4f0a00b7-d1d4-40b0-9dda-0b8d58a6306b"
+        },
+        {
+          "label": "Eight ordinary-map benchmark pairs: one more allocation and 40 bytes per Load",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40967483993"
         }
       ]
     }
