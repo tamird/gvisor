@@ -1,35 +1,92 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Verify the LLVM source license catalog
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  catalog:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/llvm-source-spdx'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      PRODUCT: bcb5de5b245b8264e4db387120dbc3ac31b4e603
+      BASE: 1db73901187455724b3a91ae610bde66a07e16cf
+      OLD: 8306976dbfd8b5c18c7386a9cd788d33cb99a8b1
+      LLVM: 85ac560262434c9ccfc0c183ec22d4138ed647fb
+      SHA: 271da53a2feb0cb221a9276a14268a3b76ad802c7fc8fb1098291a43b06e4c56
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Bind compiler source and exclude the manual license implementation
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^) == "$PRODUCT" && $(git rev-parse HEAD^^) == "$BASE" ]]
+        git fetch --quiet --no-tags --depth=1 origin "$OLD"
+        git checkout -q --detach "$PRODUCT"
+        git diff --exit-code "$BASE" HEAD -- tools/licensecheck/licensecheck.go tools/licensecheck/licensecheck_test.go
+        git diff --exit-code "$OLD" HEAD -- . ':!tools/licensecheck/licensecheck.go' ':!tools/licensecheck/licensecheck_test.go' ':!tools/licensecheck/dependencies.yaml' ':!governance/licensing.yaml'
+        if git grep -nE 'LicenseRef-|pinnedManualEntries|ManuallyAudited' HEAD -- tools/licensecheck/licensecheck.go tools/licensecheck/dependencies.yaml; then exit 1; fi
+        mkdir -p "$RUNNER_TEMP/llvm-catalog"
+        cp tools/licensecheck/dependencies.yaml "$RUNNER_TEMP/llvm-catalog/original.yaml"
+        git rev-parse HEAD | tee "$RUNNER_TEMP/llvm-catalog/source.txt"
+    - name: Verify the actual redistributed source contains LLVM’s five notices
+      run: |
+        set -euo pipefail
+        arc="$RUNNER_TEMP/llvm.tar.zst"
+        curl --retry 3 -fLsS 'https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-23.1.2-r1/llvm-project-23.1.2.src.tar.zst' -o "$arc"
+        printf '%s  %s\n' "$SHA" "$arc" | sha256sum --check --strict
+        python3 - "$arc" "$RUNNER_TEMP/llvm-catalog/notices.json" <<'PY'
+        import hashlib, json, os, subprocess, sys, tarfile, urllib.request
+        from pathlib import Path
+        paths = {"LICENSE.TXT", "llvm/LICENSE.TXT", "clang/LICENSE.TXT", "llvm/lib/Support/COPYRIGHT.regex", "llvm/lib/Support/BLAKE3/LICENSE"}
+        seen = {}
+        p = subprocess.Popen(["zstd", "-dc", sys.argv[1]], stdout=subprocess.PIPE)
+        with tarfile.open(fileobj=p.stdout, mode="r|") as archive:
+            for entry in archive:
+                parts = entry.name.removeprefix("./").split("/", 1)
+                name = parts[-1] if parts[0].startswith("llvm-project") else entry.name.removeprefix("./")
+                if name not in paths or not entry.isfile():
+                    continue
+                raw = archive.extractfile(entry).read()
+                with urllib.request.urlopen(f"https://raw.githubusercontent.com/llvm/llvm-project/{os.environ['LLVM']}/{name}") as response:
+                    expected = response.read()
+                if raw != expected: raise ValueError(f"{name} differs from upstream")
+                seen[name] = hashlib.sha256(raw).hexdigest()
+        while p.stdout.read(65536):
+            pass
+        p.stdout.close()
+        if p.wait() != 0: raise RuntimeError("zstd did not finish")
+        if set(seen) != paths: raise ValueError(f"missing {paths - set(seen)}")
+        Path(sys.argv[2]).write_text(json.dumps({"archive_sha256": os.environ["SHA"], "upstream": os.environ["LLVM"], "files": seen}, indent=2))
+        print("Verified", len(seen), "upstream notices against the pinned archive")
+        PY
+    - name: Fetch the full catalog twice and verify the result
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        MAKEFLAGS: DOCKER_BUILD=false
+      run: |
+        set -euo pipefail
+        out="$RUNNER_TEMP/llvm-catalog"
+        command -v bazelisk
+        command -v bazel
+        for pass in first second; do
+          bazelisk run //tools/licensecheck/main:licensecheck -- --mode=fetch > "$out/$pass.log" 2>&1 || { tail -45 "$out/$pass.log"; exit 1; }
+          cp tools/licensecheck/dependencies.yaml "$out/$pass.yaml"
+          date --iso-8601=ns > "$out/$pass-end.txt"
+        done
+        bazelisk run //tools/licensecheck/main:licensecheck -- --mode=verify 2>&1 | tee "$out/verify.log"
+        sha256sum "$out"/{original,first,second}.yaml | tee "$out/digests.txt"
+        git diff -- tools/licensecheck/dependencies.yaml > "$out/regeneration.diff"
+        cmp "$out/first.yaml" "$out/second.yaml"
+        if ! cmp "$out/original.yaml" "$out/first.yaml"; then
+          cat "$out/regeneration.diff"
+          exit 1
+        fi
+    - name: Retain the exact catalog, verdict and source notice digests
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: llvm-spdx-catalog
+        path: ${{ runner.temp }}/llvm-catalog
+        if-no-files-found: error
