@@ -36076,7 +36076,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T09:20:29.299794+00:00",
+      "updatedAt": "2026-10-29T10:23:22.052755+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -37773,6 +37773,35 @@
               "url": "https://app.buildbuddy.io/invocation/ce07fa99-a4d8-4b98-b70b-eef578e5c75d"
             }
           ]
+        },
+        {
+          "text": "A selective ACK for the third packet triggered only one of two repairs after gVisor split a lost software-segmented write. Keeping the loss mark on the remaining bytes repaired both without another ACK or clock advance. Open PR #15634 already contains that exact fix and tests the split. A longer three-packet loss also exposed inflated flight accounting: the sender counted the two lost originals and stopped after its second repair. Excluding those originals from the estimate allowed all three repairs. The existing RACK accounting proposal addresses that mechanism; the measurements do not establish how it counts tail probes.",
+          "evidence": [
+            {
+              "label": "Two-packet loss: only the first 496 bytes repaired",
+              "url": "https://app.buildbuddy.io/invocation/bc5e8e61-0b41-4d12-bb57-13ac07fad993"
+            },
+            {
+              "label": "Preserving the loss mark repairs both packets",
+              "url": "https://app.buildbuddy.io/invocation/cd2e21c1-59f4-491b-9982-2f155dd1290c"
+            },
+            {
+              "label": "Open SACK-credit fix already preserves the loss mark",
+              "url": "https://github.com/google/gvisor/pull/15634"
+            },
+            {
+              "label": "Three-packet loss: estimated flight reaches the congestion window",
+              "url": "https://app.buildbuddy.io/invocation/dac0f011-eaa8-46b0-9cf4-ab59f6d541df"
+            },
+            {
+              "label": "Accounting diagnostic delivers all three repairs",
+              "url": "https://app.buildbuddy.io/invocation/4bd94f10-be4b-4cd6-821a-99b1a7a74198"
+            },
+            {
+              "label": "Existing contributor-approved RACK flight estimate",
+              "url": "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5"
+            }
+          ]
         }
       ],
       "nextStep": "Qualify the standalone restored-route fix and the partial-write correction separately. Check partial retransmission accounting; keep the zero-acceptance retry prototype separate until its interaction with the zero-window probe is understood.",
@@ -38795,11 +38824,11 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29",
+      "updatedAt": "2026-10-29T10:23:22.052755+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
-          "text": "With one live byte, growing its backing capacity from 1 B to 64 KiB to 16 MiB grew the encoded output from 42 to 46 to 48 B. The graph writer reserved 1,072 B, 14,336 B and 3,039,224 B respectively for its address index. Inserting an object into an existing bucket at half load also doubled the slot count from 64 to 128 without adding a key.",
+          "text": "For one live byte in Parth’s graph writer, increasing capacity from 1 B to 64 KiB to 16 MiB changed the wire from 42 to 46 to 48 B, but the address-index slot and entry buffers from 1,072 B to 14,336 B to 3,039,224 B. At half load, inserting a different object in the same block kept 32 keys but doubled slots 64→128. These are Save index capacities, not whole-heap or timing results.",
           "evidence": [
             {
               "label": "Stock writer and cases",
@@ -41318,6 +41347,23 @@
             {
               "label": "Seven corrected XML nodes",
               "url": "https://app.buildbuddy.io/invocation/495f0216-8fa0-4c27-9ba3-93fd2814599b"
+            }
+          ]
+        },
+        {
+          "text": "Spare slice capacity did not dominate the index when saving one real Nginx kernel. Three successive Save/Load rounds restored five tasks and wrote 2,036 kernel objects in 148,453 / 148,458 / 148,461-byte frames. Only 15 of 1,051 / 1,038 / 1,048 distinct 512-byte blocks were covered exclusively by spare capacity; these accounted for 15 of 2,748 / 2,744 / 2,761 index entries. The CPUID root had none. These counts do not measure elapsed time or predict safe savings.",
+          "evidence": [
+            {
+              "label": "Original Nginx kernel saves",
+              "url": "https://app.buildbuddy.io/invocation/583a2a4e-22b6-4d06-8a79-e225c72b6b38"
+            },
+            {
+              "label": "Integrated-source counters",
+              "url": "https://github.com/tamird/gvisor/commit/ad1a30c67cce761e7057ae040913e86771c26f1e"
+            },
+            {
+              "label": "Original test log, XML and counts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40854902152"
             }
           ]
         }
