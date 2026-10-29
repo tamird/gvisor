@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T20:43:08.339435+00:00",
-  "registryDate": "2026-10-29T21:52:21.505470+00:00",
+  "registryDate": "2026-10-29T22:10:16.342263+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -239765,6 +239765,24 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T21:52:22.957280+00:00"
+      }
+    },
+    "branch:tcp-restore-send-deadlines": {
+      "contributor-review": {
+        "scope": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
+        "since": "2026-10-29T21:52:21.505470+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T21:52:21.505470+00:00"
+      }
+    },
+    "branch:tcpip-checkpoint-clock": {
+      "contributor-review": {
+        "scope": "a38d73f8a29df5e0c4546026e93a39a108753b54",
+        "since": "2026-10-29T21:52:21.505470+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T21:52:21.505470+00:00"
       }
     }
   },

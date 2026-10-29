@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T21:52:21.505470+00:00",
+    "updatedAt": "2026-10-29T22:10:16.342263+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34512,6 +34512,91 @@
           "head": "51b6df1b578a14e5305eda1fac372ca80e400972"
         }
       }
+    },
+    {
+      "id": "branch:tcp-restore-send-deadlines",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-restore-send-deadlines",
+      "head": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
+      "title": "Restore TCP retransmission and probe deadlines",
+      "url": "https://github.com/tamird/gvisor/commit/12bdd02c2",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T22:10:16.342263+00:00",
+      "summary": "After checkpoint restore, a sender could wait indefinitely for another peer packet. Restart an active send timer on its original deadline once the new route is ready.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
+        "url": "https://github.com/tamird/gvisor/commit/12bdd02c2",
+        "title": "Restore TCP retransmission and probe deadlines",
+        "body": "Review for submission after #16666. Three of four packet cases failed on stock: retransmit the oldest byte, probe the tail, and probe a closed window. All four passed on this commit; the idle sender kept its timer disabled.",
+        "requestedAt": "2026-10-29T22:10:16.342263+00:00",
+        "baseHead": "f8209127c69afca04a531e0feb46ca17183c9df2"
+      },
+      "evidence": [
+        {
+          "label": "Four packet cases on the review head: all passed",
+          "url": "https://app.buildbuddy.io/invocation/b9c61d07-fc6b-46ab-83d6-cd4e08656285"
+        },
+        {
+          "label": "Stock: three failed; idle control passed",
+          "url": "https://app.buildbuddy.io/invocation/26e8f21e-0f95-4a5a-823c-5de5cf6a3239"
+        },
+        {
+          "label": "Matched stock and correction verdicts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40962823463"
+        },
+        {
+          "label": "Earlier f8209127c: 457 clock and transport tests passed",
+          "url": "https://app.buildbuddy.io/invocation/bbdf451d-8d4a-4ee3-84db-8bc4192732bb"
+        },
+        {
+          "label": "Earlier f8209127c: both owning analyzers passed",
+          "url": "https://app.buildbuddy.io/invocation/2021f999-b046-4665-a5a2-f03ae808684a"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "f8209127c69afca04a531e0feb46ca17183c9df2"
+        },
+        "after": {
+          "head": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f"
+        }
+      }
+    },
+    {
+      "id": "branch:tcpip-checkpoint-clock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcpip-checkpoint-clock",
+      "head": "a38d73f8a29df5e0c4546026e93a39a108753b54",
+      "title": "Preserve live monotonic time when saving the TCP/IP clock",
+      "url": "https://github.com/tamird/gvisor/commit/a38d73f8a",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T22:10:16.342263+00:00",
+      "summary": "Taking a checkpoint added the clock’s uptime to its live reading. Save that reading without advancing the clock that is still running.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a38d73f8a29df5e0c4546026e93a39a108753b54",
+        "url": "https://github.com/tamird/gvisor/commit/a38d73f8a",
+        "title": "Preserve live monotonic time when saving the TCP/IP clock",
+        "body": "Review for independent upstream submission. The checkpoint regression checks elapsed time on both the live and restored clock. The full 20-case package suite and both analyzers passed on this commit.",
+        "requestedAt": "2026-10-29T22:10:16.342263+00:00"
+      },
+      "evidence": [
+        {
+          "label": "All 20 TCP/IP package cases",
+          "url": "https://app.buildbuddy.io/invocation/949d4700-1b74-43f4-970a-695558de77bf"
+        },
+        {
+          "label": "Both owning analyzers",
+          "url": "https://app.buildbuddy.io/invocation/7f82e410-88fc-452c-a525-8f8a5d706a9a"
+        }
+      ]
     }
   ],
   "edges": [
@@ -37661,6 +37746,16 @@
         "https://github.com/tamird/gvisor/commit/8facdc001",
         "https://github.com/google/gvisor/commit/61088c907",
         "https://github.com/tamird/gvisor/commit/dbf12f4d3"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-restore-send-deadlines",
+      "to": "pr:16666",
+      "reason": "The restored sender needs the new route and segmentation settings before it can retransmit or send a window probe.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16666",
+        "https://github.com/tamird/gvisor/commit/12bdd02c2"
       ]
     }
   ],
