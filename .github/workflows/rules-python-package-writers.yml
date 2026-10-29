@@ -1,49 +1,10 @@
 name: Qualify rules_python package writers
 on:
   push:
-    branches: [qualification/rules-python-package-writers-native]
+    branches: [qualification/rules-python-catalog-original]
 permissions:
   contents: read
 jobs:
-  packages:
-    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {arch: amd64, mode: normal, runner: ubuntu-24.04}
-          - {arch: arm64, mode: normal, runner: ubuntu-24.04-arm}
-          - {arch: amd64, mode: empty, runner: ubuntu-24.04}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 55
-    env:
-      BASE: 7d85aacf5d7e74968491e73781cff0d588c11e3a
-      MODE: ${{ matrix.mode }}
-      QUALIFICATION_ARCH: ${{ matrix.arch }}
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_EXECUTION: remote-actions
-      QUALIFICATION_LANES: build
-      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
-      QUALIFICATION_CLOCK_SOURCE: calibrated
-      QUALIFICATION_HEADER_BASE: ''
-      QUALIFICATION_COS_SHA256: ''
-      QUALIFICATION_COS_GZIP_BASE64: ''
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 2, persist-credentials: false}
-      - name: Resolve action owners and build the two packages
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: bash test/rbe/python_package_writers/run.sh
-      - name: Keep original native verdict and bounded observations
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: writers-${{ matrix.arch }}-${{ matrix.mode }}
-          path: |
-            ${{ runner.temp }}/qualification.tar.gz
-            ${{ runner.temp }}/python-packaging/
-          if-no-files-found: error
   original-catalog-diagnostic:
     if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04

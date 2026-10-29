@@ -27,6 +27,8 @@ for _ in range(16):
         token = j.get("nextPageToken", j.get("next_page_token",""))
         if not token:
             break
+    finally:
+        c.close()
 else:
     raise ValueError("original log page bound")
 text = re.sub(r"\x1b\[[;\d]*[A-Za-z]", "", "\n".join(parts)).replace("\r","\n")
