@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T19:14:51.921424+00:00",
+    "updatedAt": "2026-10-29T19:31:05.691468+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32052,15 +32052,23 @@
       "ref": "review/epoll-modify-preserve",
       "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
       "title": "Keep an epoll watch intact when MOD fails",
-      "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
+      "url": "https://github.com/tamird/gvisor/commit/710c59cda",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "Rework MOD registration to preserve the existing watch on failure without allocating an extra object on each mask change.",
+      "updatedAt": "2026-10-29T19:31:05.691468+00:00",
+      "summary": "Changing an epoll mask should update the original waiter. Replacing it allocated on MOD; reserving two waiters instead also breaks when a host registration fails after linking one. A one-waiter prototype is under test, including Unix sockets and FUSE.",
       "evidence": [
         {
-          "label": "Revised proposal",
-          "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
+          "label": "Revision returned for further work",
+          "url": "https://github.com/tamird/gvisor/commit/710c59cda"
+        },
+        {
+          "label": "Stock Unix host registration leaves a waiter linked on error",
+          "url": "https://app.buildbuddy.io/invocation/8b1fe2d9-0a82-4fb8-8e62-a252f4fdc832"
+        },
+        {
+          "label": "One-entry implementation under test",
+          "url": "https://github.com/tamird/gvisor/commit/98d75aea0"
         },
         {
           "label": "Missing writer lock: Nogo rejected the write",
@@ -34244,6 +34252,46 @@
           "at": "2026-10-29T18:56:07.113045+00:00"
         }
       ]
+    },
+    {
+      "id": "branch:rules-pkg-python-writers",
+      "type": "branch",
+      "title": "Start the tar, ZIP and Debian writers with their declared Python",
+      "repo": "tamird/rules_pkg",
+      "ref": "review/python-archive-writers",
+      "head": "1702e63c4673bf8c00df82a1613c2359895fbe20",
+      "url": "https://github.com/tamird/rules_pkg/commit/1702e63c4",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "summary": "rules_pkg archive actions invoke Bash via /usr/bin/env even when Bazel has supplied Python. The change runs the same writers on Linux workers without those programs and preserves the existing launcher when the interpreter bootstrap is unavailable.",
+      "updatedAt": "2026-10-29T19:31:05.691468+00:00",
+      "evidence": [
+        {
+          "label": "Stock Linux ZIP archives",
+          "url": "https://app.buildbuddy.io/invocation/c472ef9e-29e7-4f99-af8e-88999d21f50d"
+        },
+        {
+          "label": "Same archives on a worker without a shell",
+          "url": "https://app.buildbuddy.io/invocation/3d5341a5-4cf2-4f3a-b547-b5b4935cee99"
+        },
+        {
+          "label": "Ordinary and zipped writers with manifest-only runfiles",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40938907629"
+        },
+        {
+          "label": "Tar and Debian packaging checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40930166954"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "1702e63c4673bf8c00df82a1613c2359895fbe20",
+        "url": "https://github.com/tamird/rules_pkg/commit/1702e63c4",
+        "title": "Start the tar, ZIP and Debian writers with their declared Python",
+        "summary": "rules_pkg archive actions invoke Bash via /usr/bin/env even when Bazel has supplied Python. The change runs the same writers on Linux workers without those programs and preserves the existing launcher when the interpreter bootstrap is unavailable.",
+        "body": "The ZIP writer produced the same empty and compressed archives, including permissions. The tar, ZIP and Debian example builds ran with /usr/bin/env blocked."
+      }
     }
   ],
   "edges": [
