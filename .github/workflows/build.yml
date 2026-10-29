@@ -20,11 +20,9 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        for source in b85788dac43cf1e00af9edb3bf0b5fd36356173b ca5ef187687dd348e1dd8d9e04e7a57271773023; do
-          [[ "$(git diff --name-only "$source^" "$source" | paste -sd, -)" == "pkg/state/BUILD,pkg/state/map_key_identity_test.go" ]]
-        done
-        [[ "$(git rev-parse b85788dac43cf1e00af9edb3bf0b5fd36356173b^)" == "6fb2e9fe20ab30f5b9cf1c0df8037a92b0317e0f" ]]
-        [[ "$(git rev-parse ca5ef187687dd348e1dd8d9e04e7a57271773023^)" == "6163ec9a6d6d1a343eba0d39bf379d2fced4ffb4" ]]
+        git diff --exit-code 69321b6fa7510a1e8a28a80ff2164bac8f6b3b43 e697e3a6906717066f900d5ec670e223ad039f0c -- pkg/state/decode.go pkg/state/tests/
+        git diff --exit-code e697e3a6906717066f900d5ec670e223ad039f0c 4b2344950a68a76acecf16e078789af5768c2fe4 -- pkg/state/BUILD pkg/state/map_key_identity_test.go pkg/state/tests/
+        git diff --exit-code 4b2344950a68a76acecf16e078789af5768c2fe4 a7203afca1c6e80a349a677c63770882ddc8725c -- pkg/state/decode.go
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py snapshot_report.py map_fix_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
