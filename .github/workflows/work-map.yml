@@ -1,0 +1,39 @@
+name: Qualify work-map decisions and browser refresh
+on: workflow_dispatch
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Check tracker client and collector behavior
+        run: |
+          node --test app_test.mjs
+          python3 -m unittest discover -p '*_test.py'
+      - name: Validate the published pair and collect fresh public facts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node metadata-preflight.mjs .
+          python3 update-status.py
+          node metadata-preflight.mjs .
+      - name: Check current contributor queue
+        run: |
+          python3 - <<'PY'
+          import collections
+          import json
+          import os
+          registry = json.load(open("registry.json"))
+          snapshot = json.load(open("github-status.json"))
+          retained = {n["id"]: n["contributorReview"] for n in registry["nodes"] if "contributorReview" in n}
+          displayed = {key for key, states in snapshot["workStates"].items() if "contributor-review" in states}
+          assert "pr:15145" not in displayed
+          assert {"pr:15432", "pr:16584", "pr:16620"} <= displayed
+          assert set(retained) == displayed, (sorted(set(retained) - displayed), sorted(displayed - set(retained)))
+          counts = collections.Counter(review["kind"] for review in retained.values())
+          print(f'{len(displayed)} pending decisions at {snapshot["checkedAt"]}: {counts}', file=open(os.environ["GITHUB_STEP_SUMMARY"], "a"))
+          PY
