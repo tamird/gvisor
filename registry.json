@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T16:12:19.927326+00:00",
+    "updatedAt": "2026-10-29T16:16:33.703333+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39875,8 +39875,25 @@
       "status": "active",
       "owner": "MAIN (Codex)",
       "updatedAt": "2026-10-29T15:46:52.917812+00:00",
-      "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
+      "summary": "Parth leads the graph codec. The integrated series fixes named-map aliases and partially overlapping slices. Open findings include recursive type descriptors, map values copied before callbacks finish, and a retained LoadValue result that changes after restore when the destination is written. No production caller of that last API was found.",
       "findings": [
+        {
+          "text": "A LoadValue callback retained uint64(11). Assigning 22 to the restored field afterward changed the callback’s retained value to 22 under the graph reader; the legacy reader and a typed copy taken inside the callback both kept 11. Materializing the Go value when the callback runs makes both readers keep 11. This is public API behavior, not a demonstrated kernel checkpoint bug: stateify uses LoadValueTo and no direct in-tree caller was found.",
+          "evidence": [
+            {
+              "label": "Original: graph failed, legacy passed",
+              "url": "https://app.buildbuddy.io/invocation/858adf22-8ee6-4cd3-967c-ba4b5a5d40f9"
+            },
+            {
+              "label": "Same fixture: both readers passed",
+              "url": "https://app.buildbuddy.io/invocation/6fc0d435-5595-4817-a6c1-52f1f64c8dd4"
+            },
+            {
+              "label": "Callback correction",
+              "url": "https://github.com/tamird/gvisor/commit/5c28e8d33"
+            }
+          ]
+        },
         {
           "text": "For one live byte in Parth’s graph writer, increasing capacity from 1 B to 64 KiB to 16 MiB changed the wire from 42 to 46 to 48 B, but the address-index slot and entry buffers from 1,072 B to 14,336 B to 3,039,224 B. At half load, inserting a different object in the same block kept 32 keys but doubled slots 64→128. These are Save index capacities, not whole-heap or timing results.",
           "evidence": [
@@ -39943,7 +39960,7 @@
           ]
         },
         {
-          "text": "The integrated graph encoder rejected two partially overlapping slices of three-byte elements only when it discovered the lower-address window first. The unsigned address difference wrapped before the element-alignment test; reversing order and four-byte controls passed. Comparing the two address residues fixed the round trip: both overlapping positions retain pointer identity and writes are visible through the other restored view. The split #16584 source contains the same expression but was not executed.",
+          "text": "Fixed on the integrated #16620 head; the component PR still contains the original arithmetic. The integrated graph encoder rejected two partially overlapping slices of three-byte elements only when it discovered the lower-address window first. The unsigned address difference wrapped before the element-alignment test; reversing order and four-byte controls passed. Comparing the two address residues fixed the round trip: both overlapping positions retain pointer identity and writes are visible through the other restored view. The split #16584 source contains the same expression but was not executed.",
           "evidence": [
             {
               "label": "Unmodified integrated encoder: order-dependent failure",
@@ -39968,11 +39985,15 @@
             {
               "label": "Inline review with reproducer, addressed to Parth",
               "url": "https://github.com/google/gvisor/pull/16584#discussion_r4407027588"
+            },
+            {
+              "label": "Integrated slice range calculation",
+              "url": "https://github.com/google/gvisor/blob/573f6bb9c/pkg/state/graph_encode_objects_unsafe.go#L452"
             }
           ]
         },
         {
-          "text": "Two fields can share one Go map after a legal conversion to a named map type. Running the identical test on three sources showed that the legacy codec rejects it during Save; the integrated graph rewrite reports a successful Save, then rejects its own stream at Load. Comparing the key and element types on both paths lets the two views share one restored map without conflating an independent third map. All same-type controls passed on each source.",
+          "text": "Fixed on the integrated #16620 head; the component PR still contains the original check. Two fields can share one Go map after a legal conversion to a named map type. Running the identical test on three sources showed that the legacy codec rejects it during Save; the integrated graph rewrite reports a successful Save, then rejects its own stream at Load. Comparing the key and element types on both paths lets the two views share one restored map without conflating an independent third map. All same-type controls passed on each source.",
           "evidence": [
             {
               "label": "Inline review on the graph decoder",
@@ -39997,6 +40018,10 @@
             {
               "label": "Corrected round trip on native AMD64",
               "url": "https://app.buildbuddy.io/invocation/a65f9eed-848b-41d3-9549-1fed01490cfe"
+            },
+            {
+              "label": "Integrated map compatibility check",
+              "url": "https://github.com/google/gvisor/blob/573f6bb9c/pkg/state/graph_decode_values_unsafe.go#L295"
             }
           ]
         },
@@ -42483,7 +42508,7 @@
           ]
         }
       ],
-      "nextStep": "Offer the tested scratch-slot correction at the owning line of #16579; Parth leads the rewrite. Continue measuring on the graph-enabled public Save path before proposing changes.",
+      "nextStep": "Keep the distinction between the individual PR and the integrated head in each review. Offer the verified callback-lifetime example to #16620, and use public Save/Load to measure competing designs.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
