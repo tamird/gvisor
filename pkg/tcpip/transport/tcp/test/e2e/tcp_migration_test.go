@@ -750,3 +750,67 @@ func TestGSOAfterRestore(t *testing.T) {
 		})
 	}
 }
+
+func TestRestoreSendTimer(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		window seqnum.Size
+		write  bool
+	}{
+		{"idle", 30000, false},
+		{"data", 30000, true},
+		{"persist", 0, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, Clock: faketime.NewManualClock()})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			c.CreateConnected(testcontext.TestInitialSequenceNumber, tc.window, -1)
+
+			if tc.write {
+				if n, err := c.EP.Write(bytes.NewReader([]byte{42}), tcpip.WriteOptions{}); n != 1 || err != nil {
+					t.Fatalf("Write: %d, %v", n, err)
+				}
+			}
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			c.Stack().Pause()
+			c.Stack().Resume()
+			p := c.GetPacketNonBlocking()
+			if p != nil {
+				defer p.Release()
+			}
+			if got, want := p != nil, tc.write && tc.window != 0; got != want {
+				t.Fatalf("packet before checkpoint = %t, want %t", got, want)
+			}
+			st, link := restoreGSORoute(t, c, 1500, stack.GSONotSupported)
+			defer st.Destroy()
+			// The peer sends nothing after restore. The sender must act on
+			// its own when the send timer expires.
+			st.Clock().(*faketime.ManualClock).Advance(info.RTO)
+			out := link.Read()
+			if out != nil {
+				defer out.DecRef()
+			}
+			if got, want := out != nil, tc.write; got != want {
+				t.Fatalf("restored %s: packet by RTO = %t, want %t", tc.name, got, want)
+			}
+			if out != nil {
+				wantSeq, wantByte := uint32(c.IRS.Add(1)), byte(42)
+				if tc.window == 0 {
+					wantSeq, wantByte = uint32(c.IRS), 0
+				}
+				if got := header.TCP(out.TransportHeader().Slice()).SequenceNumber(); got != wantSeq {
+					t.Fatalf("sequence=%d, want %d", got, wantSeq)
+				}
+				if got := out.Data().AsRange().ToSlice(); !bytes.Equal(got, []byte{wantByte}) {
+					t.Fatalf("payload=%x, want %02x", got, wantByte)
+				}
+			}
+			t.Logf("restored %s: packet expectation satisfied", tc.name)
+		})
+	}
+}
