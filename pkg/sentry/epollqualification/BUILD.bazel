@@ -1,0 +1,18 @@
+load("//tools:defs.bzl", "go_test")
+
+go_test(
+    name = "epoll_contract_test",
+    size = "small",
+    srcs = [
+        "checkpoint_test.go",
+        "linux_epoll_test.go",
+    ],
+    deps = [
+        "//pkg/abi/linux",
+        "//pkg/sentry/contexttest",
+        "//pkg/sentry/fsimpl/eventfd",
+        "//pkg/sentry/vfs",
+        "//pkg/state",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)

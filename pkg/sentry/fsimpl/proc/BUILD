@@ -135,6 +135,7 @@ go_test(
     name = "proc_test",
     size = "small",
     srcs = [
+        "overlay_poll_test.go",
         "tasks_sys_test.go",
         "tasks_test.go",
     ],
@@ -145,6 +146,7 @@ go_test(
         "//pkg/errors/linuxerr",
         "//pkg/fspath",
         "//pkg/sentry/contexttest",
+        "//pkg/sentry/fsimpl/overlay",
         "//pkg/sentry/fsimpl/testutil",
         "//pkg/sentry/fsimpl/tmpfs",
         "//pkg/sentry/inet",
@@ -155,5 +157,6 @@ go_test(
         "//pkg/tcpip/network/ipv4",
         "//pkg/tcpip/network/ipv6",
         "//pkg/usermem",
+        "//pkg/waiter",
     ],
 )
