@@ -38795,9 +38795,35 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T07:49:47.210758+00:00",
+      "updatedAt": "2026-10-29",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
+        {
+          "text": "With one live byte, growing its backing capacity from 1 B to 64 KiB to 16 MiB grew the encoded output from 42 to 46 to 48 B. The graph writer reserved 1,072 B, 14,336 B and 3,039,224 B respectively for its address index. Inserting an object into an existing bucket at half load also doubled the slot count from 64 to 128 without adding a key.",
+          "evidence": [
+            {
+              "label": "Stock writer and cases",
+              "url": "https://github.com/tamird/gvisor/commit/e58e38291eaa70495db5c8211fde93b90bc4e7df"
+            },
+            {
+              "label": "5 native XML cases",
+              "url": "https://app.buildbuddy.io/invocation/33828552-895e-4968-af9f-580de21ac5d8"
+            }
+          ]
+        },
+        {
+          "text": "Set byte 7 to 0xa7 or 0xc9, shorten an eight-byte slice to length 1, and checkpoint it. Both codecs restore zero at byte 7 after reslicing; only legacy overwrites the caller’s byte during Save. With a second, full-length view visited after the short one, the integrated graph restores the marker and the two views still share storage; legacy clears the marker. The public graph tip’s private writer produced marker-dependent streams only with the full view; its graph Load is not wired up.",
+          "evidence": [
+            {
+              "label": "Legacy round trip and exact public graph writer",
+              "url": "https://app.buildbuddy.io/invocation/0a54b97c-b172-4c2f-9c20-1e3f0d85fbcf"
+            },
+            {
+              "label": "Integrated graph round trip",
+              "url": "https://app.buildbuddy.io/invocation/27f0a767-bd72-44c6-ae3e-9b6701b9b0df"
+            }
+          ]
+        },
         {
           "text": "Both string-storage policies restored five tasks from the same 163,712-byte Nginx state file. The kernel frame contained 1,152 small strings totaling 12,289 bytes; both policies allocated one 16,384-byte slab. The CPUID frame used no slab. The smaller policy saved space on the two-byte fixture, but neither this checkpoint nor the 20,000-node graph saved a slab. No speed or heap gain was measured.",
           "evidence": [
@@ -41296,7 +41322,7 @@
           ]
         }
       ],
-      "nextStep": "Offer Parth the tested decoder finding, then check that the integrated graph loader also exposes the repaired entry to a dependent parent’s AfterLoad.",
+      "nextStep": "Measure how much spare slice capacity contributes to the address index during the existing Nginx kernel checkpoint. Also check that the integrated graph loader exposes a repaired map entry to its parent’s AfterLoad.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
