@@ -151,7 +151,7 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 			ds.stats.init()
 			defer ds.stats.fini()
 		}
-		ds.load(e.data, ti.elem)
+		ds.load(e.data, studyUse(ti.elem, useElement))
 	})
 	ds.stats.bytes = len(data)
 	ds.stats.objects = len(ds.objs)

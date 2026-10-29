@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -146,4 +147,155 @@ func (s *Stats) String() string {
 		fmt.Fprintf(&buf, "% 16s | % 8d | % 16s | [all]", total, count, total/time.Duration(count))
 	}
 	return buf.String()
+}
+
+// Fork-only observation for a fresh-process, two-restore diagnostic. The
+// repeated reader exclusively owns four measurement windows. Accesses count
+// type records, not fields, objects, time, or bytes.
+var typeUse struct {
+	sync.Mutex
+	active atomic.Int32
+	phase  string
+	record map[*typeInfo]*typeUseRecord
+	slots  [4]int
+}
+
+type typeUseRecord struct {
+	stage      int
+	phase      string
+	transitive bool
+	uses       [4]uint16
+}
+
+const (
+	useWireDeclared uint16 = 1 << iota
+	useWireReference
+	useLookup
+	useSlotPointer
+	useSlotValue
+	useElement
+	useKey
+	useArrayFlags
+	usePlainField
+	useDecodeValue
+)
+
+const useConstruction = useArrayFlags | usePlainField
+
+func (*Stats) StartTypeUseStudy(stage int) {
+	typeUse.Lock()
+	defer typeUse.Unlock()
+	if typeUse.active.Load() != 0 || stage < 1 || stage > 4 {
+		panic("overlapping or unexpected type-use measurement")
+	}
+	if stage == 1 {
+		typeUse.record = make(map[*typeInfo]*typeUseRecord)
+		typeUse.slots = [4]int{}
+	}
+	typeUse.phase = "setup"
+	typeUse.active.Store(int32(stage))
+}
+
+func studyPhase(phase string) {
+	if typeUse.active.Load() == 0 {
+		return
+	}
+	typeUse.Lock()
+	typeUse.phase = phase
+	typeUse.Unlock()
+}
+
+func typeUseRecordFor(t *typeInfo) *typeUseRecord {
+	r := typeUse.record[t]
+	if r == nil {
+		r = new(typeUseRecord)
+		typeUse.record[t] = r
+	}
+	return r
+}
+
+func studyUse(t *typeInfo, flags uint16) *typeInfo {
+	if t != nil && typeUse.active.Load() != 0 {
+		typeUse.Lock()
+		if stage := typeUse.active.Load(); stage != 0 {
+			typeUseRecordFor(t).uses[stage-1] |= flags
+		}
+		typeUse.Unlock()
+	}
+	return t
+}
+
+func studyBuilt(newTypes []*typeInfo, root *typeInfo) {
+	if typeUse.active.Load() == 0 {
+		return
+	}
+	typeUse.Lock()
+	defer typeUse.Unlock()
+	stage := int(typeUse.active.Load())
+	if stage == 0 {
+		return
+	}
+	for _, t := range newTypes {
+		r := typeUseRecordFor(t)
+		r.stage, r.phase, r.transitive = stage, typeUse.phase, t != root
+	}
+}
+
+func studyWireSlots(n int) {
+	if typeUse.active.Load() == 0 {
+		return
+	}
+	typeUse.Lock()
+	if stage := typeUse.active.Load(); stage != 0 {
+		typeUse.slots[stage-1] = n
+	}
+	typeUse.Unlock()
+}
+
+func useClass(mask uint16) string {
+	switch {
+	case mask&(useWireDeclared|useWireReference) != 0:
+		return "wire"
+	case mask&^(useConstruction|useSlotPointer) != 0:
+		return "other_reached"
+	case mask&useSlotPointer != 0:
+		return "slot_wrapper"
+	case mask&useConstruction != 0:
+		return "construction_only"
+	default:
+		return "linked_only"
+	}
+}
+
+// FinishTypeUseStudy returns counts only. Each born type appears in one
+// category for its construction phase; flags also retain overlapping uses.
+func (*Stats) FinishTypeUseStudy() map[string]int {
+	typeUse.Lock()
+	defer typeUse.Unlock()
+	stage := int(typeUse.active.Swap(0))
+	if stage < 1 || stage > 4 {
+		panic("no active type-use measurement")
+	}
+	out := map[string]int{"stage": stage, "wire_slots": typeUse.slots[stage-1]}
+	for _, r := range typeUse.record {
+		if mask := r.uses[stage-1]; mask != 0 {
+			out[fmt.Sprintf("reached_mask/%03x", mask)]++
+		}
+		if r.stage == 0 {
+			continue
+		}
+		var mask uint16
+		for _, u := range r.uses[:stage] {
+			mask |= u
+		}
+		from := "root"
+		if r.transitive {
+			from = "nested"
+		}
+		prefix := fmt.Sprintf("born/%d/%s/%s/", r.stage, r.phase, from)
+		out[prefix+"total"]++
+		out[prefix+useClass(mask)]++
+		out[fmt.Sprintf("born_mask/%d/%s/%s/%03x", r.stage, r.phase, from, mask)]++
+	}
+	return out
 }

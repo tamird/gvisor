@@ -153,6 +153,10 @@ func lookupTypeInfo(rt unsafe.Pointer) *typeInfo {
 
 // typeInfoForRtype returns the typeInfo for a runtime type descriptor.
 func typeInfoForRtype(rt unsafe.Pointer) *typeInfo {
+	return studyUse(typeInfoFromRtype(rt), useLookup)
+}
+
+func typeInfoFromRtype(rt unsafe.Pointer) *typeInfo {
 	if ti := lookupTypeInfo(rt); ti != nil {
 		return ti
 	}
@@ -162,9 +166,9 @@ func typeInfoForRtype(rt unsafe.Pointer) *typeInfo {
 // typeInfoOf returns the typeInfo for t.
 func typeInfoOf(t reflect.Type) *typeInfo {
 	if ti := lookupTypeInfo(rtypeOf(t)); ti != nil {
-		return ti
+		return studyUse(ti, useLookup)
 	}
-	return buildTypeInfo(t)
+	return studyUse(buildTypeInfo(t), useLookup)
 }
 
 // newSlots returns n slot cache entries.
@@ -222,6 +226,7 @@ func buildTypeInfo(t reflect.Type) *typeInfo {
 	if typeInfos == nil {
 		typeInfos = make(map[unsafe.Pointer]*typeInfo)
 	}
+	studyBuilt(b.pending, ti)
 	for _, p := range b.pending {
 		typeInfos[p.rtype] = p
 	}
@@ -302,6 +307,7 @@ func (b *typeInfoBuilder) get(t reflect.Type) *typeInfo {
 	case reflect.Array:
 		ti.elem = b.get(t.Elem())
 		ti.length = uintptr(t.Len())
+		studyUse(ti.elem, useArrayFlags)
 		ti.pod = ti.elem.pod
 		ti.inlineStruct = ti.length > 0 && ti.elem.inlineStruct
 		ti.needsExact = ti.elem.needsExact
@@ -376,7 +382,7 @@ func (b *typeInfoBuilder) plainFields(t reflect.Type) bool {
 		default:
 			return false
 		}
-		if !b.get(f.Type).pod {
+		if !studyUse(b.get(f.Type), usePlainField).pod {
 			return false
 		}
 	}
@@ -389,14 +395,15 @@ func (b *typeInfoBuilder) plainFields(t reflect.Type) bool {
 func (st *typeInfo) slotType(slot int, rt unsafe.Pointer, ptr bool) *typeInfo {
 	if uint(slot) < uint(len(st.slots)) {
 		if e := st.slots[slot].Load(); e != nil && e.rtype == rt {
-			return e.ti
+			return studyUse(e.ti, useSlotValue)
 		}
 	}
 	if rt == nil {
 		Failf("nil value saved in slot %d of %v", slot, st.typ)
 	}
-	ti := typeInfoForRtype(rt)
+	ti := typeInfoFromRtype(rt)
 	if ptr {
+		studyUse(ti, useSlotPointer)
 		if ti.kind != reflect.Pointer {
 			Failf("non-pointer %v passed for slot %d of %v", ti.typ, slot, st.typ)
 		}
@@ -405,7 +412,7 @@ func (st *typeInfo) slotType(slot int, rt unsafe.Pointer, ptr bool) *typeInfo {
 	if uint(slot) < uint(len(st.slots)) {
 		st.slots[slot].Store(newSlotEntry(rt, ti))
 	}
-	return ti
+	return studyUse(ti, useSlotValue)
 }
 
 // typeCacheSize is the number of entries of typeCache and itabCache.

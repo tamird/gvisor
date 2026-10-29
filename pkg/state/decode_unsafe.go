@@ -163,10 +163,14 @@ func (ds *decodeState) load(root unsafe.Pointer, ti *typeInfo) {
 	if f := d.uint64(); f != schemaFingerprint() {
 		Failf("the state was saved by a binary with different types (fingerprint %#x, want %#x)", f, schemaFingerprint())
 	}
+	studyPhase("types")
 	ds.readTypes()
+	studyPhase("objects")
 	ds.readObjects(root, ti)
 	ds.readTargets()
+	studyPhase("values")
 	ds.decodeObjects()
+	studyPhase("callbacks")
 	setHints(ti, len(d.b), len(ds.targets))
 	if d.pos != len(d.b) {
 		Failf("%d bytes of trailing data", len(d.b)-d.pos)
@@ -178,6 +182,7 @@ func (ds *decodeState) load(root unsafe.Pointer, ti *typeInfo) {
 func (ds *decodeState) readTypes() {
 	d := &ds.in
 	n := d.count(1)
+	studyWireSlots(n)
 	ds.types = slices.Grow(ds.types[:0], n)[:n]
 	ds.typeNames = slices.Grow(ds.typeNames[:0], n)[:n]
 	elem := func() reflect.Type {
@@ -185,7 +190,7 @@ func (ds *decodeState) readTypes() {
 		if i >= uint64(len(ds.types)) || ds.types[i] == nil {
 			Failf("invalid type reference %d", i)
 		}
-		return ds.types[i].typ
+		return studyUse(ds.types[i], useWireReference).typ
 	}
 	for i := range ds.types {
 		var t reflect.Type
@@ -229,7 +234,7 @@ func (ds *decodeState) readTypes() {
 		default:
 			Failf("invalid type tag %d", tag)
 		}
-		ds.types[i] = typeInfoOf(t)
+		ds.types[i] = studyUse(typeInfoOf(t), useWireDeclared)
 	}
 }
 
@@ -240,7 +245,7 @@ func (ds *decodeState) typeAt(i uint64) *typeInfo {
 	if ds.types[i] == nil {
 		Failf("type name %q is not available", ds.typeNames[i])
 	}
-	return ds.types[i]
+	return studyUse(ds.types[i], useWireReference)
 }
 
 // readObjects reads the object table, and allocates objects.
@@ -267,7 +272,7 @@ func (ds *decodeState) readObjects(root unsafe.Pointer, rootType *typeInfo) {
 				if idx >= uint64(len(ds.types)) {
 					Failf("invalid type index %d", idx)
 				}
-				t := ds.types[idx]
+				t := studyUse(ds.types[idx], useWireReference)
 				if name := ds.typeNames[idx]; name != "" {
 					if name != rootType.name {
 						Failf("root has type %q, want %v", name, rootType.typ)
@@ -462,6 +467,7 @@ type deferredObject struct {
 
 // decodeValue decodes a value of type ti to p.
 func (ds *decodeState) decodeValue(ti *typeInfo, p unsafe.Pointer) {
+	studyUse(ti, useDecodeValue)
 	d := &ds.in
 	switch ti.kind {
 	case reflect.Bool, reflect.Int8, reflect.Uint8:
@@ -534,7 +540,7 @@ func (ds *decodeState) decodeValue(ti *typeInfo, p unsafe.Pointer) {
 		*(*unsafe.Pointer)(p) = t
 		ds.lastRef = obj
 		if obj >= 0 && ds.objs[obj].inexact {
-			ds.noteRef(obj, t, ti.elem)
+			ds.noteRef(obj, t, studyUse(ti.elem, useElement))
 		}
 	case reflect.Slice:
 		ds.decodeSlice(ti, (*sliceHeader)(p))
@@ -624,7 +630,7 @@ func (ds *decodeState) decodeSlice(ti *typeInfo, h *sliceHeader) {
 	if capacity < length || capacity > 1<<40 {
 		Failf("invalid slice capacity %d", capacity)
 	}
-	esz := ti.elem.size
+	esz := studyUse(ti.elem, useElement).size
 	if capacity == 0 || esz == 0 {
 		*h = sliceHeader{data: unsafe.Pointer(&zeroSized), len: int(length), cap: int(capacity)}
 		return
@@ -635,18 +641,18 @@ func (ds *decodeState) decodeSlice(ti *typeInfo, h *sliceHeader) {
 	}
 	o := &ds.objs[obj]
 	if uintptr(t)+uintptr(capacity)*esz > uintptr(o.base)+o.size {
-		Failf("slice of %d %v exceeds object", capacity, ti.elem.typ)
+		Failf("slice of %d %v exceeds object", capacity, studyUse(ti.elem, useElement).typ)
 	}
 	*h = sliceHeader{data: t, len: int(length), cap: int(capacity)}
 	ds.lastRef = obj
 	if o.inexact {
-		ds.noteRef(obj, t, ti.elem)
+		ds.noteRef(obj, t, studyUse(ti.elem, useElement))
 	}
 }
 
 // decodeArray decodes an array value.
 func (ds *decodeState) decodeArray(ti *typeInfo, p unsafe.Pointer) {
-	if ti.elem.pod && ds.keepZero {
+	if studyUse(ti.elem, useElement).pod && ds.keepZero {
 		b := ds.in.next(int(ti.size))
 		if !isZero(b) {
 			copy(unsafe.Slice((*byte)(p), ti.size), b)
@@ -655,7 +661,7 @@ func (ds *decodeState) decodeArray(ti *typeInfo, p unsafe.Pointer) {
 	}
 	keepZero := ds.keepZero
 	ds.keepZero = false
-	ds.decodeElems(ti.elem, p, ti.length)
+	ds.decodeElems(studyUse(ti.elem, useElement), p, ti.length)
 	ds.keepZero = keepZero
 }
 
@@ -715,7 +721,7 @@ func (ds *decodeState) decodeDynamic(ti *typeInfo) unsafe.Pointer {
 		t, obj := ds.target(v)
 		ds.lastRef = obj
 		if obj >= 0 && ds.objs[obj].inexact {
-			ds.noteRef(obj, t, ti.elem)
+			ds.noteRef(obj, t, studyUse(ti.elem, useElement))
 		}
 		return t
 	case reflect.Map:
@@ -766,7 +772,7 @@ func (ds *decodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 	}
 	ds.mapPtr = m
 	mv := reflect.NewAt(ti.typ, unsafe.Pointer(&ds.mapPtr)).Elem()
-	kt, et := ti.key, ti.elem
+	kt, et := studyUse(ti.key, useKey), studyUse(ti.elem, useElement)
 	var (
 		k, e   reflect.Value
 		kp, ep unsafe.Pointer
