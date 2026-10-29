@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-live-slice-aliases'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-interior-slice-comparison'
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     steps:
@@ -69,13 +69,18 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
-        git diff --exit-code 84f545eaa875391da84d3ed484730e91481aa59b acedf983df34a8a45c5f1b540703eec1384ca3f0 -- pkg/state/encode.go pkg/state/encode_unsafe.go pkg/state/state.go
         overall=0
-        for mode in stock; do
+        for mode in stock candidate graph candidateFixture candidateFull; do
           args=()
           owner=//pkg/state/tests:tests_test
-          source=acedf983df34a8a45c5f1b540703eec1384ca3f0
-          filter='^TestSaveSliceAliases$'
+          filter='^TestSliceInteriorField$'
+          case "$mode" in
+            stock) source=827d7806801e781b1d1aa743424f7ae838e8580e ;;
+            candidate) source=e4d33a661127829d2f5ba06fc68541a56f791134 ;;
+            graph) source=965f09103d103ba861b5a3cd46acf1172533f096 ;;
+            candidateFixture) source=da4f35d3f47cd07897c5d0a286204173db53cd8f; filter='^TestSliceBackingStorage$' ;;
+            candidateFull) source=14c965f1d9b37b57a25f2cdaa50e5adef5660670; filter='' ;;
+          esac
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test -z "$(git status --porcelain --untracked-files=no)"
@@ -93,6 +98,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: slice-alias-verdict
+        name: slice-interior-verdicts
         path: ${{ runner.temp }}/focused/*/result.json
         if-no-files-found: error

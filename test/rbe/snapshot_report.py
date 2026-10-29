@@ -42,15 +42,25 @@ try:
     cases = {e.attrib["name"]: next((c.tag for c in e if c.tag in ("skipped","failure","error")), "pass") for e in rows}
     assert len(cases) == len(rows)
     failed = {k for k,v in cases.items() if v in ("error","failure")}
+    r["count"] = len(cases)
     r["failures"] = sorted(failed)
-    r["cases"] = cases
-    r["observations"] = [l.strip() for l in files["test.log"].decode(errors="replace").splitlines() if "want 112233" in l]
-    regressions = {"TestSaveSliceAliases/"+s for s in ("short-first","long-first")}
-    assert cases.get("TestSaveSliceAliases/both-long") == "pass", cases
-    assert regressions<=failed<=regressions|{"TestSaveSliceAliases"}, failed
-    assert (int(code),r["bazel_exit"],t["status"]) == (1,3,"FAILED")
-    for when in ("live while Save is writing", "live after Save", "restored longer view"):
-        assert sum(when+" = 110000, want 112233" in l for l in r["observations"]) == 2, r["observations"]
+    r["skipped"] = [k for k,v in cases.items() if v=="skipped"]
+    r["selected"] = {k:v for k,v in cases.items() if k.startswith(("TestSliceBackingStorage","TestSliceInteriorField"))}
+    r["observations"] = [l.strip() for l in files["test.log"].decode(errors="replace").splitlines() if any(x in l for x in ("hidden Other","restored Other","live Other","live First","restored First","does not alias","array after Save","restored array","panic","encoding error"))][:32]
+    if mode=="candidateFull":
+        assert not failed and all(cases.get("TestSliceBackingStorage/"+s)=="pass" for s in ("short-first","long-first","late-pointer"))
+        assert (int(code),r["bazel_exit"],t["status"])==(0,0,"PASSED")
+    elif mode=="candidateFixture":
+        req={"TestSliceBackingStorage/"+s for s in ("short-first","long-first","late-pointer")}
+        assert req<=failed<=req|{"TestSliceBackingStorage"},failed
+        assert (int(code),r["bazel_exit"],t["status"]) == (1,3,"FAILED")
+    else:
+        req={"TestSliceInteriorField/fieldFirst="+s for s in ("false","true")}
+        assert all(k in cases and cases[k] in ("pass","failure") for k in req), cases
+        if failed:
+            assert failed <= req|{"TestSliceInteriorField"} and r["observations"] and (int(code),r["bazel_exit"],t["status"])==(1,3,"FAILED")
+        else:
+            assert (int(code),r["bazel_exit"],t["status"])==(0,0,"PASSED")
     r["matched"]=True
     r["verdict"]="COMPLETE"
 except Exception as exc:
