@@ -82,3 +82,11 @@ run_binary(
         ":python_runtime",
     ],
 )
+
+filegroup(
+    name = "check",
+    srcs = [
+        ":buildifier",
+        ":cpplint",
+    ],
+)
