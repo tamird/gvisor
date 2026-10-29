@@ -484,7 +484,7 @@ syscall_test(
 
 syscall_test(
     add_overlay = True,
-    save = False,
+    save = True,
     test = "//test/syscalls/linux:mount_fd_test",
 )
 
