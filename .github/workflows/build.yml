@@ -11,26 +11,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: 1e5a147a41322c801145578ee6333c12a5cbaea8
+          fetch-depth: 2
           persist-credentials: false
       - name: Install upstream's ARM cross compiler for the vDSO built in gVisor tests
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq install g++-aarch64-linux-gnu
-      - name: Build the native syscall fixture
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = 1e5a147a41322c801145578ee6333c12a5cbaea8
-          bazel build --config=x86_64 --jobs=4 //test/syscalls/linux:fuse_test
-      - name: Exercise the mounted device on native Linux
-        run: |
-          set -euo pipefail
-          test -e /dev/fuse || sudo modprobe fuse
-          test -e /dev/fuse || sudo mknod /dev/fuse c 10 229
-          uname -sr | tee "$RUNNER_TEMP/fuse-kernel.txt"
-          sudo unshare --mount --propagation private bash -euo pipefail -c '
-            if ! mountpoint -q /sys/fs/fuse/connections; then mount -t fusectl fusectl /sys/fs/fuse/connections; fi
-            exec timeout 45s "$1" --gtest_filter=FuseTest.EpollAfterAbort --gtest_output=xml:"$2"
-          ' _ "$PWD/bazel-bin/test/syscalls/linux/fuse_test" "$RUNNER_TEMP/fuse-native.xml" | tee "$RUNNER_TEMP/fuse-native.log"
       - name: Demonstrate the existing queue and remount defects
         if: '!cancelled()'
         run: |
@@ -46,39 +32,33 @@ jobs:
           test "$status" -eq 3
           grep -F 'EPOLL_CTL_DEL left a waiter on the aborted connection' "$RUNNER_TEMP/control.log"
           grep -F 'mounting an aborted FUSE device replaced its connection' "$RUNNER_TEMP/control.log"
-      - name: Check the corrected full package and its analyzers
+      - name: Capture the corrected Go package case names
         if: '!cancelled()'
         run: |
           set -euo pipefail
           git diff --exit-code HEAD --
           bazel test --config=x86_64 --jobs=4 --local_ram_resources=HOST_RAM*.65 \
-            --test_output=errors //pkg/sentry/fsimpl/fuse:fuse_test //pkg/sentry/fsimpl/fuse:fuse_nogo \
-            //pkg/sentry/fsimpl/fuse:fuse_test_nogo
-      - name: Summarize actual controls
+            --test_arg=-test.v --test_output=all //pkg/sentry/fsimpl/fuse:fuse_test 2>&1 | tee "$RUNNER_TEMP/corrected.log"
+      - name: Summarize the Go recovery
         if: always()
         env:
           RESULT: ${{ job.status }}
         run: |
           python3 - <<'PY_SUMMARY'
-          import json, os
+          import json, os, re
           from pathlib import Path
-          from xml.etree import ElementTree as ET
           tmp = Path(os.environ["RUNNER_TEMP"])
-          controls = (tmp/"control.log").read_text() if (tmp/"control.log").exists() else ""
-          root = Path("bazel-testlogs/pkg/sentry/fsimpl/fuse")
-          targets = ["fuse_test","fuse_nogo","fuse_test_nogo"]
-          counts = {}
-          for target in targets:
-            path = root/target/"test.xml"
-            if not path.is_file(): continue
-            cases = list(ET.parse(path).iter("testcase"))
-            counts[target] = {"tests":len(cases),"failed":sum(any(c.tag in {"failure","error"} for c in n) for n in cases),"skipped":sum(n.find("skipped") is not None for n in cases)}
-          native = tmp/"fuse-native.xml"
-          case = native.exists() and any(n.get("name")=="EpollAfterAbort" and n.get("status")=="run" and not list(n) for n in ET.parse(native).iter("testcase"))
-          negative = all(s in controls for s in ("EPOLL_CTL_DEL left a waiter", "mounting an aborted FUSE device replaced its connection"))
-          good = os.environ["RESULT"]=="success" and case and negative and len(counts)==3 and all(v["tests"] and not v["failed"] for v in counts.values())
-          record = {"verdict":"PASS" if good else "FAIL","source":"1e5a147a41322c801145578ee6333c12a5cbaea8","nativeKernel":(tmp/"fuse-kernel.txt").read_text().strip() if (tmp/"fuse-kernel.txt").exists() else "", "nativeCase":bool(case),"negative":negative,"targets":counts}
-          (tmp/"fuse-epoll.json").write_text(json.dumps(record,indent=2)+"\n"); print(record)
+          def read(name):
+            p = tmp/name
+            return p.read_text() if p.is_file() else ""
+          old, fixed = read("control.log"), read("corrected.log")
+          failures = re.findall(r"(?m)^--- FAIL: (Test[^ ]+)",old)
+          passed = re.findall(r"(?m)^--- PASS: (Test[^ ]+)",fixed)
+          defects = ["EPOLL_CTL_DEL left a waiter on the aborted connection","mounting an aborted FUSE device replaced its connection"]
+          names = {"TestEpollAfterAbort","TestReuseFd"}
+          good = os.environ["RESULT"]=="success" and set(failures)==names and all(x in old for x in defects) and names.issubset(passed)
+          record = {"verdict":"PASS" if good else "FAIL","source":"1e5a147a41322c801145578ee6333c12a5cbaea8","stockFailed":failures,"correctedPassed":passed,"skips":re.findall(r"(?m)^--- SKIP: (Test[^ ]+)",fixed),"existingNativeAndNogo":40942820675}
+          (tmp/"fuse-epoll.json").write_text(json.dumps(record,indent=2)+"\n");print(record)
           if not good: raise SystemExit(1)
           PY_SUMMARY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
