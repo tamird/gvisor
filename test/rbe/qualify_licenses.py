@@ -74,13 +74,19 @@ def phase(name, args, base, sha, rc):
             execution=[{"strategy":"remote" if e["testResult"].get("executionInfo",{}).get("strategy")=="remote" else "unknown","cached":bool(e["testResult"].get("cachedLocally") or e["testResult"].get("executionInfo",{}).get("cachedRemotely")), "owner":OWNER if e["id"]["testResult"]["label"]==OWNER else "unexpected"} for e in attempts]
             records=[r for r in meta["reports"] if r.get("name") in ("test.xml","test.log")]
             xmls=[r for r in records if r["name"]=="test.xml"]
-            nonpass=[]
+            nonpass=[]; case_names=[]
             for xml in xmls:
                 for tc in ET.parse(d/xml["path"]).iter("testcase"):
+                    case_names.append(tc.get("name",""))
                     how=next((x.tag for x in tc if x.tag in ("failure","error","skipped")),None)
                     if how: nonpass.append([how,safe_name(tc.get("name",""))])
+            source_names=set()
+            for path in Path("tools/licensecheck").glob("*_test.go"):
+                source_names.update(re.findall(r"(?m)^func (Test[A-Z0-9_][A-Za-z0-9_]*)\(", path.read_text()))
+            missing=sorted(source_names-{name.split("/",1)[0] for name in case_names})
+            status.update({"source_top_level_count":len(source_names),"missing_cases":missing})
             status.update({"collector_exit":int(v["status"]!="PASS"),"capture_exit":capture_exit,"report_status":v["status"],"case_counts":v["case_counts"],"expected_labels":v["expected_labels"],"missing_count":len(v["missing"]),"missing_labels":sorted({safe_name(str(row.get("label",""))) for row in v["missing"] if isinstance(row,dict)}),"failures":len(v["failures"]),"errors":len(v["errors"]),"nonpassing_cases":nonpass,"execution":execution,"reports":[{"name":r["name"],"sha256":r["sha256"],"bytes":r["bytes"]} for r in records]})
-            if v["status"]=="PASS" and set(v["expected_labels"])=={OWNER} and len(execution)==1 and execution[0]=={"strategy":"remote","cached":False,"owner":OWNER} and len(xmls)==1 and len(records)==2:
+            if v["status"]=="PASS" and set(v["expected_labels"])=={OWNER} and len(execution)==1 and execution[0]=={"strategy":"remote","cached":False,"owner":OWNER} and len(xmls)==1 and len(records)==2 and source_names and not missing:
                 status["status"]="PASS"
             elif n or v["status"]=="FAIL": status["status"]="FAIL"
         else:
@@ -105,8 +111,7 @@ if __name__=="__main__":
     sha,tree=SOURCES[pr]
     assert git("rev-parse","HEAD","HEAD^{tree}","HEAD^").decode().splitlines()==[sha,tree,PARENT]
     assert not git("status","--porcelain","--untracked-files=no")
-    jobs=[("unit",["bazel",f"--bazelrc={rc}","test","--nocache_test_results","--test_sharding_strategy=disabled","--remote_download_regex=.*[/](test[.](log|xml)|test[.]outputs/.*)$",OWNER]),("make",["make","license-check","DOCKER_BUILD=false",f"STARTUP_OPTIONS=--bazelrc={rc}"])]
-    if pr=="16589":jobs.append(("direct",["bazel",f"--bazelrc={rc}","run",MAIN,"--","--mode=verify"]))
+    jobs=[("unit",["bazel",f"--bazelrc={rc}","test","--test_env=GO_TEST_WRAP_TESTV=1","--nocache_test_results","--test_sharding_strategy=disabled","--remote_download_regex=.*[/](test[.](log|xml)|test[.]outputs/.*)$",OWNER])]
     result={"pr":pr,"source":sha,"tree":tree,"parent":PARENT,"phases":[]}
     for name,args in jobs:
         result["phases"].append(phase(name,args,out,sha,rc))

@@ -1,7 +1,7 @@
-name: Qualify the four license rebases
+name: Recover per-case results for the four license suites
 on:
   push:
-    branches: [qualification/license-rebases-selected-bazel]
+    branches: [qualification/license-rebases-unit-xml]
 permissions:
   contents: read
 jobs:
@@ -28,7 +28,7 @@ jobs:
           path: source
           fetch-depth: 2
           persist-credentials: false
-      - name: Run this source's original unit suite and license catalog
+      - name: Run only this source's original unit suite with XML reporting
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
