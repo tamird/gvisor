@@ -474,10 +474,14 @@ func TestRACKOnePacketTailLoss(t *testing.T) {
 // must survive the split. It returns RACK's RTT sample from that ACK.
 func recoverAfterRTOTailLoss(t *testing.T, gso bool) (*context.Context, []byte, time.Duration) {
 	t.Helper()
-	rtts := make(chan time.Duration, 1)
+	type observation struct {
+		rtt  time.Duration
+		cwnd int
+	}
+	rtts := make(chan observation, 1)
 	c := context.NewWithProbe(t, uint32(mtu), func(state *tcp.TCPEndpointState) {
 		select {
-		case rtts <- state.Sender.RACKState.RTT:
+		case rtts <- observation{state.Sender.RACKState.RTT, state.Sender.SndCwnd}:
 		default:
 		}
 	})
@@ -493,23 +497,44 @@ func recoverAfterRTOTailLoss(t *testing.T, gso bool) (*context.Context, []byte, 
 		<-rtts
 	}
 	c.SendAck(seqnum.Value(context.TestInitialSequenceNumber).Add(1), maxPayload)
-	// #2 is fast-retransmitted and counted twice in pipe (RFC 6675 SetPipe
-	// rule (b)), which leaves room for #3-#5.
+	// Read the four repairs common to both flight estimates.
 	for i := 1; i < 5; i++ {
 		c.ReceiveAndCheckPacketWithOptions(data, i*maxPayload, maxPayload, e2e.TSOptionSize)
 	}
-	c.CheckNoPacketTimeout("unexpected packet beyond cwnd", 100*time.Millisecond)
+
 	if got := c.Stack().Stats().TCP.Timeouts.Value(); got != 1 {
 		t.Errorf("got stats.TCP.Timeouts.Value() = %d, want = 1", got)
 	}
 
-	var rtt time.Duration
+	var state observation
 	select {
-	case rtt = <-rtts:
+	case state = <-rtts:
 	case <-time.After(5 * time.Second):
-		t.Fatalf("no probe for the ACK of #1")
+		t.Fatal("no sender observation for the ACK of #1")
 	}
-	return c, data, rtt
+	if got, want := state.cwnd, 5; got != want {
+		t.Fatalf("congestion window = %d, want %d", got, want)
+	}
+	// The ACK of #1 declares the original transmissions lost. Its window
+	// can hold five repairs; #2 through #5 were already received above.
+	count := 4
+	if pkt := c.GetPacketWithTimeout(100 * time.Millisecond); pkt != nil {
+		defer pkt.Release()
+		tcpHeader := header.TCP(header.IPv4(pkt.AsSlice()).Payload())
+		if got, want := tcpHeader.SequenceNumber(), uint32(c.IRS.Add(1+5*maxPayload)); got != want {
+			t.Fatalf("fifth repair starts at %d, want %d", got, want)
+		}
+		if !bytes.Equal(tcpHeader.Payload(), data[5*maxPayload:6*maxPayload]) {
+			t.Fatal("fifth repair payload differs")
+		}
+		count++
+	}
+	t.Logf("FIRST_FLIGHT gso=%t cwnd=%d repairs=%d timeouts=%d", gso, state.cwnd, count, c.Stack().Stats().TCP.Timeouts.Value())
+	if got, want := count, state.cwnd; got != want {
+		t.Fatalf("repairs after the ACK of #1 = %d, want %d", got, want)
+	}
+	c.CheckNoPacketTimeout("unexpected packet beyond cwnd", 25*time.Millisecond)
+	return c, data, state.rtt
 }
 
 // TestRACKRecoveryAfterRTOTailLoss tests that segments RACK marks lost are not
