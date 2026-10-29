@@ -13,7 +13,6 @@ import tempfile
 import time
 import uuid
 
-import qualification_report as report
 
 sources = {"explicit":"8306976dbfd8b5c18c7386a9cd788d33cb99a8b1", "reverted":"54aad070c47278d39f19ec4e450431889b1a63bd"}
 paths = {"shim/BUILD","test/benchmarks/defs.bzl","test/cmd/test_app/BUILD","tools/gvisor2pcap/BUILD","tools/ioctl_sniffer/BUILD","webhook/BUILD"}
@@ -127,6 +126,7 @@ def physical(execution, outputs):
         v["equal_byte_link_actions"]=records
 
 def phase(variant, mode):
+    import qualification_report as report
     source=sources[variant]
     row={"source":source,"setting":variant,"mode":mode,"started":time.time(),"labels":labels,"outputs":{}}
     facts["phases"].append(row);save()

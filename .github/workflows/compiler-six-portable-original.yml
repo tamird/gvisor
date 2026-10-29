@@ -1,0 +1,39 @@
+name: Inspect the original portable Go tools
+on:
+  push:
+    branches: [qualification/compiler-six-portable-tools-original]
+permissions:
+  contents: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {arch: amd64, host: ubuntu-24.04}
+          - {arch: arm64, host: ubuntu-24.04-arm}
+    runs-on: ${{ matrix.host }}
+    timeout-minutes: 30
+    env:
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify original producer and platform
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 82ed4129773ca61c03042f7c1e2ca733606b2ed2
+          case "$ARCH:$(uname -m)" in amd64:x86_64|arm64:aarch64) ;; *) exit 1;; esac
+      - name: Inspect original bytes and run only the selected CLI
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 .github/qualification/compiler-static/original.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: compiler-original-${{ matrix.arch }}
+          path: ${{ runner.temp }}/compiler-static/original.json
+          if-no-files-found: error

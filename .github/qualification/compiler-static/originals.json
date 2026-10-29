@@ -1,0 +1,300 @@
+{
+  "amd64": {
+    "phases": [
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/k8-fastbuild/bin/shim/containerd-shim-runsc-v1/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/k8-fastbuild-ST-15104ffb8548/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/k8-fastbuild/bin/test/cmd/test_app/test_app/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/k8-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/k8-fastbuild/bin/tools/ioctl_sniffer/run_sniffer/run_sniffer",
+          "//webhook:webhook": "bazel-out/k8-fastbuild/bin/webhook/webhook/webhook"
+        },
+        "invocation": "8f8a9efa-cce6-4297-a5a8-c19fa340c75a",
+        "mode": "cgo",
+        "native_exit": 0,
+        "outputs": {
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 15511600,
+            "sha256": "eaea2cf3795b5352a66ade34e7f4ddf0b19018d5f400b1de8e9871300d302f53"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 18622968,
+            "sha256": "00e7b9662aad3232692e68e633a825da59d24b2767968fdba9f3c1bb2fa785d8"
+          }
+        },
+        "setting": "explicit",
+        "source": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
+      },
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/k8-fastbuild/bin/shim/containerd-shim-runsc-v1/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/k8-fastbuild-ST-15104ffb8548/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/k8-fastbuild/bin/test/cmd/test_app/test_app/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/k8-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/k8-fastbuild/bin/tools/ioctl_sniffer/run_sniffer/run_sniffer",
+          "//webhook:webhook": "bazel-out/k8-fastbuild/bin/webhook/webhook/webhook"
+        },
+        "invocation": "720b3c86-f316-44dd-b39c-fb7981f943f4",
+        "mode": "race",
+        "native_exit": 0,
+        "outputs": {
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 21407296,
+            "sha256": "3a2daf091222594eace22a1f082971c807f05be636b90e1fe7e7a3268515c0ce"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 18622968,
+            "sha256": "00e7b9662aad3232692e68e633a825da59d24b2767968fdba9f3c1bb2fa785d8"
+          }
+        },
+        "setting": "explicit",
+        "source": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
+      },
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/k8-fastbuild/bin/shim/containerd-shim-runsc-v1_/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/k8-fastbuild/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/k8-fastbuild/bin/test/cmd/test_app/test_app_/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/k8-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap_/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/k8-fastbuild/bin/tools/ioctl_sniffer/run_sniffer_/run_sniffer",
+          "//webhook:webhook": "bazel-out/k8-fastbuild-ST-2c5af747e1f8/bin/webhook/webhook_/webhook"
+        },
+        "invocation": "85dd3f33-4168-4f54-b911-6789ba8bf19d",
+        "mode": "cgo",
+        "native_exit": 0,
+        "outputs": {
+          "//shim:containerd-shim-runsc-v1": {
+            "bytes": 16415608,
+            "sha256": "0a7ac6d8dddf04228708e96c8a7f12d303defc3e98567049c516344804e6854e"
+          },
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 15430488,
+            "sha256": "80be01667dd184e86998f71e22bed851c5225a49938a52c577cec67fb3ce2a8e"
+          },
+          "//test/cmd/test_app:test_app": {
+            "bytes": 4829248,
+            "sha256": "23546888693d8733e6d3bbcb81534afb8ba9e87a8076ffd7d105add6b807cfa5"
+          },
+          "//tools/gvisor2pcap:gvisor2pcap": {
+            "bytes": 3189792,
+            "sha256": "4c03695b13b46b98232a167631af3caede522aa16f07811c030174b6aaa6c152"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 18622968,
+            "sha256": "00e7b9662aad3232692e68e633a825da59d24b2767968fdba9f3c1bb2fa785d8"
+          },
+          "//tools/ioctl_sniffer:run_sniffer": {
+            "bytes": 37738296,
+            "sha256": "baae0d0efe66defdf458affb6ba8dc4f0f5838fb9ee3e177418105a4216fb66a"
+          },
+          "//webhook:webhook": {
+            "bytes": 44679328,
+            "sha256": "e3eb1aac679b4cdb24f0e71eacd1b1cd3a81ccc622928333f740a6c241bb5a2f"
+          }
+        },
+        "setting": "reverted",
+        "source": "54aad070c47278d39f19ec4e450431889b1a63bd"
+      },
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/k8-fastbuild/bin/shim/containerd-shim-runsc-v1_/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/k8-fastbuild/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/k8-fastbuild/bin/test/cmd/test_app/test_app_/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/k8-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap_/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/k8-fastbuild/bin/tools/ioctl_sniffer/run_sniffer_/run_sniffer",
+          "//webhook:webhook": "bazel-out/k8-fastbuild-ST-c9a3aae83791/bin/webhook/webhook_/webhook"
+        },
+        "invocation": "d55da1d2-0388-4194-bce7-eecd5c2c7caa",
+        "mode": "race",
+        "native_exit": 0,
+        "outputs": {
+          "//shim:containerd-shim-runsc-v1": {
+            "bytes": 22435416,
+            "sha256": "bbfaacc175c37cbd70068cb5404d0dc4601d84481c58e92f5f898e9352b92668"
+          },
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 21312344,
+            "sha256": "a76efa0205a0ddc7ca000d3e052e567cd401a477a9c413005439187e802a8287"
+          },
+          "//test/cmd/test_app:test_app": {
+            "bytes": 6467720,
+            "sha256": "a6735132304c974b45af828b7970bf1e71756171cc878ed9a9ef57e0a593c1f8"
+          },
+          "//tools/gvisor2pcap:gvisor2pcap": {
+            "bytes": 4276456,
+            "sha256": "619706d32756bc206f3aa799ecc57e6e4915082591c6f644785ec0e5fdb7f849"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 18622968,
+            "sha256": "00e7b9662aad3232692e68e633a825da59d24b2767968fdba9f3c1bb2fa785d8"
+          },
+          "//tools/ioctl_sniffer:run_sniffer": {
+            "bytes": 44758872,
+            "sha256": "65d08078ab23770ef83b37b0b03d1856258bfe64e754082f704dc75ed565dcc2"
+          },
+          "//webhook:webhook": {
+            "bytes": 44679328,
+            "sha256": "e3eb1aac679b4cdb24f0e71eacd1b1cd3a81ccc622928333f740a6c241bb5a2f"
+          }
+        },
+        "setting": "reverted",
+        "source": "54aad070c47278d39f19ec4e450431889b1a63bd"
+      }
+    ],
+    "sha256": "2c08874a3cc2b40b749dc3d804e341c0641991a2e5380911c6ecc17d70708533"
+  },
+  "arm64": {
+    "phases": [
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/aarch64-fastbuild/bin/shim/containerd-shim-runsc-v1/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/aarch64-fastbuild-ST-bbef4be798d7/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/aarch64-fastbuild/bin/test/cmd/test_app/test_app/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/aarch64-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/aarch64-fastbuild/bin/tools/ioctl_sniffer/run_sniffer/run_sniffer",
+          "//webhook:webhook": "bazel-out/aarch64-fastbuild/bin/webhook/webhook/webhook"
+        },
+        "invocation": "f06364b7-3ec1-4d91-af13-affcd9e8f5ed",
+        "mode": "cgo",
+        "native_exit": 0,
+        "outputs": {
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 14393648,
+            "sha256": "da6e2731fbe9df11f25d854f7815118d7cf7eba41f11ab4536d1d116082853b7"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 19656576,
+            "sha256": "4a491eb2f71693e94d2c4bbacb0ca5ac57983b76691432ba02c1ef0bb672f2d9"
+          }
+        },
+        "setting": "explicit",
+        "source": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
+      },
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/aarch64-fastbuild/bin/shim/containerd-shim-runsc-v1/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/aarch64-fastbuild-ST-bbef4be798d7/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/aarch64-fastbuild/bin/test/cmd/test_app/test_app/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/aarch64-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/aarch64-fastbuild-ST-c7b6929f6094/bin/tools/ioctl_sniffer/run_sniffer/run_sniffer",
+          "//webhook:webhook": "bazel-out/aarch64-fastbuild/bin/webhook/webhook/webhook"
+        },
+        "invocation": "32c70556-1e2b-45cb-8bed-a8c37cb06fe2",
+        "mode": "race",
+        "native_exit": 0,
+        "outputs": {
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 18716408,
+            "sha256": "71a599b52b3ce399cbb95d6fd5685546f5bee6004275f03d205246660708b58c"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 19656576,
+            "sha256": "4a491eb2f71693e94d2c4bbacb0ca5ac57983b76691432ba02c1ef0bb672f2d9"
+          }
+        },
+        "setting": "explicit",
+        "source": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
+      },
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/aarch64-fastbuild/bin/shim/containerd-shim-runsc-v1_/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/aarch64-fastbuild/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/aarch64-fastbuild/bin/test/cmd/test_app/test_app_/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/aarch64-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap_/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/aarch64-fastbuild/bin/tools/ioctl_sniffer/run_sniffer_/run_sniffer",
+          "//webhook:webhook": "bazel-out/aarch64-fastbuild-ST-2c5af747e1f8/bin/webhook/webhook_/webhook"
+        },
+        "invocation": "0948c1cf-fb85-492a-98dd-3c68a115e441",
+        "mode": "cgo",
+        "native_exit": 0,
+        "outputs": {
+          "//shim:containerd-shim-runsc-v1": {
+            "bytes": 15401952,
+            "sha256": "3f8e6cf40988d3dabceb8986eeb53ea0093ef1f9359e5b600d9f0a52afc5f063"
+          },
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 14310272,
+            "sha256": "18ff3954f65715ff3e680b2f7556c59291789f9040c0da1c217153efb157b9aa"
+          },
+          "//test/cmd/test_app:test_app": {
+            "bytes": 4504168,
+            "sha256": "6f38c8933fcf303eccee8fee75dc1ceb287373f20571aeeb3b4529e0a645a8c9"
+          },
+          "//tools/gvisor2pcap:gvisor2pcap": {
+            "bytes": 3053320,
+            "sha256": "c76767c430f60d2bae0740a98105667894338d87178eaf4ad340d2042470030c"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 19656576,
+            "sha256": "4a491eb2f71693e94d2c4bbacb0ca5ac57983b76691432ba02c1ef0bb672f2d9"
+          },
+          "//tools/ioctl_sniffer:run_sniffer": {
+            "bytes": 37658912,
+            "sha256": "b51d41d8de37e33f466f123b96ff2261bc9885f30f49ecd258fcbe84d95af4a0"
+          },
+          "//webhook:webhook": {
+            "bytes": 41681056,
+            "sha256": "74b49e26266437f2081165260fe239be8a7d3d8124a5f1c043958ecd064ea62e"
+          }
+        },
+        "setting": "reverted",
+        "source": "54aad070c47278d39f19ec4e450431889b1a63bd"
+      },
+      {
+        "configured_executables": {
+          "//shim:containerd-shim-runsc-v1": "bazel-out/aarch64-fastbuild/bin/shim/containerd-shim-runsc-v1_/containerd-shim-runsc-v1",
+          "//test/benchmarks/base:startup_test": "bazel-out/aarch64-fastbuild/bin/test/benchmarks/base/startup_test_/startup_test",
+          "//test/cmd/test_app:test_app": "bazel-out/aarch64-fastbuild/bin/test/cmd/test_app/test_app_/test_app",
+          "//tools/gvisor2pcap:gvisor2pcap": "bazel-out/aarch64-fastbuild/bin/tools/gvisor2pcap/gvisor2pcap_/gvisor2pcap",
+          "//tools/ioctl_sniffer:ioctl_hook_gnu_with_cfg": "<file>",
+          "//tools/ioctl_sniffer:run_sniffer": "bazel-out/aarch64-fastbuild/bin/tools/ioctl_sniffer/run_sniffer_/run_sniffer",
+          "//webhook:webhook": "bazel-out/aarch64-fastbuild-ST-c9a3aae83791/bin/webhook/webhook_/webhook"
+        },
+        "invocation": "6dfbea16-2d53-4d8a-8c57-2ee69795c4bd",
+        "mode": "race",
+        "native_exit": 0,
+        "outputs": {
+          "//shim:containerd-shim-runsc-v1": {
+            "bytes": 19834696,
+            "sha256": "e8fb05b5afb66de86358f30442ae8d52217e0cfdc0efeafd607f879455b435fb"
+          },
+          "//test/benchmarks/base:startup_test": {
+            "bytes": 18619208,
+            "sha256": "c7745b9b0299a548d1a1f538239603b81239031c88b3814cde0b3865521da385"
+          },
+          "//test/cmd/test_app:test_app": {
+            "bytes": 5802584,
+            "sha256": "3be7f4f39822fe95b7633a1d8c4dd0761b2ec0f9b5ec2743625ca8a1ddf24f94"
+          },
+          "//tools/gvisor2pcap:gvisor2pcap": {
+            "bytes": 3948120,
+            "sha256": "48bde70dddd5fd65aa37ac089e32ef98d4a9d991aec3269f27ba51df976a228c"
+          },
+          "//tools/ioctl_sniffer:ioctl_hook_gnu": {
+            "bytes": 19656576,
+            "sha256": "4a491eb2f71693e94d2c4bbacb0ca5ac57983b76691432ba02c1ef0bb672f2d9"
+          },
+          "//tools/ioctl_sniffer:run_sniffer": {
+            "bytes": 42667752,
+            "sha256": "6b80d3171f2115f5c2f57964e5b93d0915766114ac5ae5ba8ead3cb4c3100b6a"
+          },
+          "//webhook:webhook": {
+            "bytes": 41681056,
+            "sha256": "74b49e26266437f2081165260fe239be8a7d3d8124a5f1c043958ecd064ea62e"
+          }
+        },
+        "setting": "reverted",
+        "source": "54aad070c47278d39f19ec4e450431889b1a63bd"
+      }
+    ],
+    "sha256": "61f308b16fd59c0f5cc87f047e8e5a4936c79fc7c3e4168b0f3f7647de0f7872"
+  }
+}
