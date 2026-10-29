@@ -40,12 +40,18 @@ static int ready(int ep, int *mask, int *tag) {
   return n;
 }
 
+// A PID-namespace init accepts external signals only with an installed handler.
+// SIGUSR1 stays blocked and is consumed synchronously by sigwait().
+static void accept_signal(int signo) { (void)signo; }
+
 int main(int argc, char **argv) {
   check(argc == 3, "probe device result-dir");
   sigset_t signals;
   sigemptyset(&signals);
   sigaddset(&signals, SIGUSR1);
   check(sigprocmask(SIG_BLOCK, &signals, NULL) == 0, "sigprocmask");
+  struct sigaction sa = {.sa_handler = accept_signal};
+  check(sigaction(SIGUSR1, &sa, NULL) == 0, "sigaction");
   int fd = open(argv[1], O_RDONLY | O_NONBLOCK);
   struct stat st;
   check(fd >= 0 && fstat(fd, &st) == 0, "open/fstat");
