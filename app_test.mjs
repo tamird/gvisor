@@ -270,6 +270,8 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
   vm.runInContext('appendRangeDiffCommand(parentInput, refinementComparison(nodeInput))', context);
   const [description, input, copy, message] = context.parentInput.children[0].children;
   const expected = `git range-diff --creation-factor=999 ${before}^! ${after}^!`;
+  assert.equal(vm.runInContext('refinementComparison(nodeInput).label', context),
+    'Revised proposal 7e371d8ac → ca492fef9');
   assert.match(description.textContent, /Earlier revision 7e371d8ac → current revision ca492fef9/);
   assert.equal(input.value, expected);
   assert.equal(input.readOnly, true);
@@ -528,6 +530,11 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
   assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), false);
   assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
     `git range-diff --creation-factor=999 ${node.github.head}^! ${head}^!`);
+  // An appended follow-up needs comparison against the whole proposed series.
+  const seriesBase = '1'.repeat(40);
+  node.refinement = { before: { head: node.github.head }, after: { base: seriesBase, head } };
+  assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
+    `git range-diff ${node.github.head}^! ${seriesBase}..${head}`);
   const groups = vm.runInContext('attentionGroups([nodeInput], "tamird", false, new Set(["author-proposal"]))', context);
   assert.equal(groups[0].entries[0].copyURL, `https://tamird.github.io/gvisor/?view=table&reason=author-proposal#${encodeURIComponent(node.id)}`);
   node.github.head = 'd'.repeat(40);

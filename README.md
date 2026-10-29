@@ -574,9 +574,11 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   **Proposed updates** links open the exact public candidate; its return link
   opens the live PR. These use the existing nonblocking `includes` edge type
   with `role: proposed_update`; older clients show them as inclusion links.
-  Both detail views offer **Copy range-diff**, using the published PR head
-  from the GitHub snapshot and the exact proposed head. The command is also
-  selectable for manual copying. It disappears when the heads match or
+  The contributor table shows both commit IDs when a branch proposal is
+  revised, including before it has a PR. First-time proposals show only
+  their title. Both detail views offer **Copy range-diff**, using the
+  published PR head from the GitHub snapshot and the exact proposed head.
+  You can also select and copy the command. It disappears when the heads match or
   either head is unavailable; a snapshot refresh updates the published head.
   Refinements without a PR use the same copy control in their detail view.
   Record `refinement.before` and `refinement.after` with exact `head` values;

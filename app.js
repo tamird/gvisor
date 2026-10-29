@@ -1361,8 +1361,8 @@ function drawTable(nodes) {
     title.append(choose);
     const decision = contributorDecision(node);
     if (decision && states(node)["contributor-review"]) {
-      const revisions = decision.kind === "amendment" ? ` · Amendment ${decision.baseHead.slice(0, 9)} → ${decision.head.slice(0, 9)}` : "";
-      title.append(link((decision.title || "Review proposal ↗") + revisions, decision.url, "decision-source"));
+      const revision = ["amendment", "proposal"].includes(decision.kind) && refinementComparison(node);
+      title.append(link((decision.title || "Review proposal ↗") + (revision ? ` · ${revision.label}` : ""), decision.url, "decision-source"));
     }
     const action = humanAction(node);
     if (action) title.append(link("Open submission context ↗", action.url, "human-action-source"));
@@ -1382,18 +1382,23 @@ function drawTable(nodes) {
 }
 function refinementComparison(node) {
   const decision = contributorDecision(node);
-  if (decision?.kind === "amendment" && node.github?.head === decision.baseHead) return {
-    command: `git range-diff --creation-factor=999 ${decision.baseHead}^! ${decision.head}^!`,
-    description: `Published revision ${decision.baseHead.slice(0, 9)} → proposed revision ${decision.head.slice(0, 9)}`,
-  };
-  const revision = node.refinement;
-  if (!revision || revision.after.head !== node.head ||
+  const amendment = decision?.kind === "amendment";
+  let revision = node.refinement;
+  if (amendment) {
+    if (node.github?.head !== decision.baseHead) return null;
+    if (revision?.before.head !== decision.baseHead || revision?.after.head !== decision.head) {
+      revision = { before: { head: decision.baseHead }, after: { head: decision.head } };
+    }
+  } else if (!revision || revision.after.head !== node.head ||
       node.github && node.github.head !== revision.after.head) return null;
+  const before = revision.before.head.slice(0, 9), after = revision.after.head.slice(0, 9);
   const range = ({ head, base }) => base ? `${base}..${head}` : `${head}^!`;
   const options = !revision.before.base && !revision.after.base ? " --creation-factor=999" : "";
   return {
     command: `git range-diff${options} ${range(revision.before)} ${range(revision.after)}`,
-    description: `Earlier revision ${revision.before.head.slice(0, 9)} → current revision ${revision.after.head.slice(0, 9)}`,
+    label: `${amendment ? "Amendment" : "Revised proposal"} ${before} → ${after}`,
+    description: amendment ? `Published revision ${before} → proposed revision ${after}`
+                           : `Earlier revision ${before} → current revision ${after}`,
   };
 }
 function appendRangeDiffCommand(parent, { command, description }) {
