@@ -290,6 +290,7 @@ type View interface {
 	Flush(ctx context.Context)
 
 	waiter.Waitable
+	UpdateMask(*waiter.Entry, waiter.EventMask) error
 }
 
 // ReaderWriter provides a send and receive view into a queue.

@@ -214,7 +214,7 @@ func (ep *EpollInstance) Readiness(mask waiter.EventMask) waiter.EventMask {
 	for epi := ready.Front(); epi != nil; epi = next {
 		next = epi.Next()
 		wmask := waiter.EventMaskFromLinux(epi.mask)
-		if epi.key.file.Readiness(wmask)&wmask != 0 {
+		if epi.pollFile().Readiness(wmask)&wmask != 0 {
 			return waiter.ReadableEvents
 		}
 		// epi.key.file was readied spuriously; leave it off of ep.ready.
@@ -300,18 +300,14 @@ func (ep *EpollInstance) addInterest(file *FileDescription, num int32, event lin
 	ep.interest[key] = epi
 	wmask := waiter.EventMaskFromLinux(mask)
 	epi.waiter.Init(epi, wmask)
-	target := file
-	if source.Backing != nil {
-		target = source.Backing
-	}
-	if err := target.EventRegister(&epi.waiter); err != nil {
+	if err := epi.pollFile().EventRegister(&epi.waiter); err != nil {
 		// EventRegister can notify the waiter before returning an error.
 		ep.removeLocked(epi)
 		return err
 	}
 
 	// Check if the file is already ready.
-	if m := file.Readiness(wmask) & wmask; m != 0 {
+	if m := epi.pollFile().Readiness(wmask) & wmask; m != 0 {
 		epi.NotifyEvent(m)
 	}
 
@@ -352,6 +348,16 @@ func (ep *EpollInstance) mightPollRecursive(ep2 *EpollInstance, remainingRecursi
 	return false
 }
 
+// pollFile returns the file on which this watch is registered. A forwarding
+// file may select a different backing after registration, for example when
+// overlay copies the file up.
+func (epi *epollInterest) pollFile() *FileDescription {
+	if epi.source.Backing != nil {
+		return epi.source.Backing
+	}
+	return epi.key.file
+}
+
 // ModifyInterest implements the semantics of EPOLL_CTL_MOD.
 //
 // Preconditions: A reference must be held on file.
@@ -379,7 +385,7 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 	epi.userData = event.Data
 
 	// Check if the file is already ready with the new mask.
-	if m := file.Readiness(wmask) & wmask; m != 0 {
+	if m := epi.pollFile().Readiness(wmask) & wmask; m != 0 {
 		epi.NotifyEvent(m)
 	}
 
@@ -508,7 +514,7 @@ func (ep *EpollInstance) ReadEvents(events []linux.EpollEvent, maxEvents int) []
 		// ready list.
 		ready.Remove(epi)
 		wmask := waiter.EventMaskFromLinux(epi.mask)
-		ievents := epi.key.file.Readiness(wmask) & wmask
+		ievents := epi.pollFile().Readiness(wmask) & wmask
 		if ievents == 0 {
 			// Leave epi off the ready list.
 			notReady.PushBack(epi)
