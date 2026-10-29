@@ -15,6 +15,7 @@
 package tcp
 
 import (
+	"fmt"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -487,6 +488,7 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 		}
 
 		// Check the congestion window after entering recovery.
+		fmt.Printf("RACK_BOUND seq=%d bytes=%d pipe=%d cwnd=%d\n", seg.sequenceNumber, seg.payloadSize(), snd.Outstanding, snd.SndCwnd)
 		if snd.Outstanding >= snd.SndCwnd {
 			break
 		}
