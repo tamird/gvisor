@@ -3232,7 +3232,7 @@ signal.pause()
                     owner, = contract["configured_owners"]
                     self.assertEqual((owner["images"], owner["source_commands"]), ([], []))
 
-    def test_source_contract_alias_requires_its_configured_writer(self) -> None:
+    def test_source_contract_alias_requires_its_configured_actual(self) -> None:
         invocation, analysis, path = self.source_contract_fixture()
         self.addCleanup(shutil.rmtree, invocation)
         events = self.events(invocation)
@@ -3258,24 +3258,26 @@ signal.pause()
         manifest = report.manifest_path(invocation / "captured.jsonl")
         with self.assertRaises(FileNotFoundError):
             report.source_image_expectations(verdict, manifest)
-        graph = {"artifacts": [{"id": 1, "pathFragmentId": 1}], "pathFragments": [{"id": 1, "label": path.name}],
-                 "targets": [{"id": 1, "label": contract["owner"]}],
-                 "configuration": [{"id": 1, "checksum": alias["configuration"]}],
-                 "aspectDescriptors": [{"id": 1, "name": report.SOURCE_IMAGE_ASPECT}],
-                 "actions": [{"mnemonic": "FileWrite", "targetId": 1, "configurationId": 1,
-                              "aspectDescriptorIds": [1], "outputIds": [1], "fileContents": path.read_text()}]}
-        writer_path = invocation / "source-image-writers.json"
-        report.write_json(writer_path, graph)
+        different_config = "a" * 64
+        attribute = {"name": "actual", "type": "LABEL", "stringValue": contract["owner"]}
+        edge = {"label": contract["owner"], "configurationChecksum": different_config}
+        alias_rule = {"name": alias["label"], "ruleClass": "alias", "attribute": [attribute], "configuredRuleInput": [edge]}
+        actual_rule = {"name": contract["owner"], "ruleClass": "filegroup"}
+        requested = {"checksum": alias["configuration"]}
+        actual = {"checksum": different_config}
+        graph = {"results": [{"target": {"rule": alias_rule}, "configuration": requested},
+                             {"target": {"rule": actual_rule}, "configuration": actual}]}
+        graph_path = invocation / "source-image-aliases.json"
+        report.write_json(graph_path, graph)
         owner, = report.source_image_expectations(verdict, manifest)["configured_owners"]
-        self.assertEqual((owner["label"], owner["producer"]["label"], owner["images"]),
-                         (alias["label"], contract["owner"], contract["images"]))
-        for node, key in (("configuration", "checksum"), ("targets", "label"), ("pathFragments", "label"),
-                          ("aspectDescriptors", "name"), ("actions", "fileContents")):
-            row, = graph[node]
+        self.assertEqual((owner["label"], owner["producer"]["label"], owner["producer"]["configuration"], owner["images"]),
+                         (alias["label"], contract["owner"], different_config, contract["images"]))
+        for row, key in ((alias_rule, "ruleClass"), (attribute, "stringValue"), (edge, "label"),
+                         (edge, "configurationChecksum"), (requested, "checksum"), (actual, "checksum")):
             original = row[key]
             row[key] = "unrelated"
-            report.write_json(writer_path, graph)
-            with self.subTest(node=node), self.assertRaises(ValueError):
+            report.write_json(graph_path, graph)
+            with self.subTest(key=key), self.assertRaises(ValueError):
                 report.source_image_expectations(verdict, manifest)
             row[key] = original
 

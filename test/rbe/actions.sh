@@ -439,7 +439,7 @@ bazel() {
   local directory raw_events expected_events="" index command_only=false arguments_file=arguments.txt
   local -a capture_prefix=() capture_options=() verdict_options=() command_args=("$@") target_args=() selection_options=()
   local case_checksum=""
-  local -a case_options=() go_case_options=()
+  local -a case_options=() go_case_options=() alias_options=()
   if [[ $qualification_retain_outputs == true ]]; then capture_options=(--retain-outputs); fi
   for argument in "$@"; do
     case "$argument" in
@@ -575,16 +575,9 @@ PREPARATION
       if python3 "$qualification_workspace/test/rbe/qualification_report.py" preflight \
         "${case_options[@]}" \
         --events "$directory/expected.jsonl" --native-exit "$result" --kind "$command_kind" \
-        --output "$directory/selection.json" --output-options "$directory/output-options.txt"; then
+        --output "$directory/selection.json" --output-options "$directory/output-options.txt" \
+        --alias-query "$directory/source-image-alias-query.txt"; then
         result=0
-        # For alias roots only, retain Bazel's configured FileWrite owner. Read
-        # the existing analysis graph; do not build the target a second time.
-        if [[ $qualification_source_images == true ]] && python3 -c \
-          'import json, sys; sys.exit(not json.load(open(sys.argv[1]))["source_image_aliases"])' "$directory/selection.json"; then
-          qualification_bazel aquery --skyframe_state --output=jsonproto --include_file_write_contents \
-            --noinclude_commandline 'outputs(".*[.]source-images[.]json$")' \
-            > "$directory/source-image-writers.json" || capture_status=$?
-        fi
       else
         preflight_status=$?
         if (( result == 0 )); then capture_status=$preflight_status; fi
@@ -618,6 +611,19 @@ PREPARATION
   python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).isoformat())' \
     > "$directory/execution-finished.txt" || capture_status=1
   printf '%s\n' "$result" > "$directory/native-exit.txt" || capture_status=1
+  # Resolve actual labels and configurations for aliases without rerunning any
+  # actions or letting a diagnostic query suppress the native command.
+  if [[ $qualification_source_images == true && -s "$directory/source-image-alias-query.txt" ]]; then
+    for argument in "${command_args[@]}"; do
+      case "$argument" in
+        --target_pattern_file=*) ;;
+        --*) alias_options+=("$argument") ;;
+      esac
+    done
+    qualification_bazel cquery "${alias_options[@]}" --output=jsonproto --transitions=lite \
+      --proto:rule_attributes=actual --proto:rule_inputs_and_outputs \
+      "$(<"$directory/source-image-alias-query.txt")" > "$directory/source-image-aliases.json" || capture_status=$?
+  fi
   git rev-parse HEAD > "$directory/final-head.txt" || capture_status=1
   git status --porcelain --untracked-files=no > "$directory/source-after.txt" || capture_status=1
   if [[ $command_only == true ]]; then

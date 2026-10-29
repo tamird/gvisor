@@ -2821,41 +2821,29 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
             "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 
 
-def source_image_writer(graph: dict[str, object], output: str, contents: bytes) -> Owner:
-    """Identify the configured aspect action that wrote this exact output-group artifact."""
-    def rows(name: str) -> dict[int, dict[str, object]]:
-        items = [mapping(raw) for raw in sequence(graph.get(name))]
-        return {number(item["id"]): item for item in items}
-
-    fragments = rows("pathFragments")
-    artifacts = rows("artifacts")
-    targets = rows("targets")
-    configurations = rows("configuration")
-    aspects = rows("aspectDescriptors")
-    writers = []
-    for raw in sequence(graph.get("actions")):
-        action = mapping(raw)
-        if (action.get("mnemonic") != "FileWrite"
-                or action.get("fileContents") != contents.decode()
-                or not any(string(aspects[number(aspect_id)]["name"]).removeprefix("@@") == SOURCE_IMAGE_ASPECT
-                           for aspect_id in sequence(action.get("aspectDescriptorIds", [])))):
+def configured_alias_actual(graph: dict[str, object], owner: Owner) -> Owner:
+    """Resolve the alias's actual attribute through its configured dependency edge."""
+    rules = {}
+    for raw in sequence(graph.get("results")):
+        target = mapping(raw)
+        rule = mapping(mapping(target["target"]).get("rule", {}))
+        if not rule:
             continue
-        for output_id in sequence(action.get("outputIds")):
-            id = number(artifacts[number(output_id)]["pathFragmentId"])
-            parts = []
-            while id:
-                if len(parts) >= len(fragments):
-                    raise ValueError("Cycle in Bazel output path fragments")
-                fragment = fragments[id]
-                parts.append(string(fragment["label"]))
-                id = number(fragment.get("parentId", 0))
-            if "/".join(reversed(parts)) == output:
-                label = string(targets[number(action["targetId"])]["label"])
-                writers.append(Owner(label.removeprefix("@@") if label.startswith("@@//") else label,
-                                     string(configurations[number(action["configurationId"])]["checksum"])))
-    if len(writers) != 1:
-        raise ValueError(f"Expected one configured aspect writer for {output}, found {len(writers)}")
-    return writers[0]
+        key = Owner(string(rule["name"]), string(mapping(target["configuration"])["checksum"]))
+        if key in rules:
+            raise ValueError(f"Duplicate configured target in alias query: {key}")
+        rules[key] = rule
+    rule = rules.get(owner)
+    if rule is None or rule.get("ruleClass") != "alias":
+        raise ValueError(f"No configured alias for {owner}")
+    actual, = [string(attr["stringValue"]) for raw in sequence(rule["attribute"])
+               if (attr := mapping(raw)).get("name") == "actual" and attr.get("type") == "LABEL"]
+    referent, = [Owner(actual, string(edge["configurationChecksum"]))
+                 for raw in sequence(rule["configuredRuleInput"])
+                 if (edge := mapping(raw)).get("label") == actual]
+    if referent not in rules:
+        raise ValueError(f"Missing configured actual for {owner}: {referent}")
+    return referent
 
 
 def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, object]:
@@ -2892,16 +2880,16 @@ def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, obje
             raise ValueError(f"Wrong or duplicate configured source-image contract: {owner}")
         producer = None
         if contract.get("owner") != owner.label:
-            # Bazel reports the alias in the aspect completion, while the generating
-            # action belongs to its configured referent. Join them through the artifact.
+            # The aspect completes for the requested alias, but its retained
+            # contract names the actual target (possibly after a transition).
             selection = read_json(canonical.parent / "selection.json")
             if asdict(owner) not in sequence(selection.get("source_image_aliases")):
                 raise ValueError(f"Wrong configured source-image contract for {owner}")
-            graph = canonical.parent / "source-image-writers.json"
-            writer = source_image_writer(read_json(graph), name, path.read_bytes())
-            if writer != Owner(string(contract.get("owner")), owner.configuration):
-                raise ValueError(f"Configured source-image writer differs for {owner}: {writer}")
-            producer = {**asdict(writer), "graph": {"path": str(graph), **file_record(graph)}}
+            graph = canonical.parent / "source-image-aliases.json"
+            actual = configured_alias_actual(read_json(graph), owner)
+            if actual.label != string(contract.get("owner")):
+                raise ValueError(f"Configured source-image actual differs for {owner}: {actual}")
+            producer = {**asdict(actual), "graph": {"path": str(graph), **file_record(graph)}}
         used.add((owner, name))
         images = declared_source_images(contract.get("images"))
         commands = [mapping(command) for command in sequence(contract.get("source_commands"))]
@@ -2985,9 +2973,9 @@ def source_image_row(directory: Path, decoder: Path) -> dict[str, object]:
                 evidence = invocation / "source-image-audit.json"
                 result = audit_source_images(execution, decoder, canonical, manifest, expectations)
                 if any("producer" in owner for owner in read_json(expectations)["configured_owners"]):
-                    graph = invocation / "source-image-writers.json"
-                    entry["inputs"]["writers"] = {"path": str(graph.relative_to(directory)), **file_record(graph)}
-                    result.setdefault("input_roles", {})["writers"] = {"path": str(graph), **file_record(graph)}
+                    graph = invocation / "source-image-aliases.json"
+                    entry["inputs"]["aliases"] = {"path": str(graph.relative_to(directory)), **file_record(graph)}
+                    result.setdefault("input_roles", {})["aliases"] = {"path": str(graph), **file_record(graph)}
                 write_json(evidence, result)
                 entry["evidence"] = {"path": str(evidence.relative_to(directory)), **file_record(evidence)}
                 if result.get("audit_status") != "PASS":
@@ -3068,11 +3056,11 @@ def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identi
                          if "producer" in (owner := mapping(raw))]
             required = {"expectations", "execution", "verdict", "manifest"}
             if producers:
-                required.add("writers")
-                writers = mapping(inputs.get("writers"))
+                required.add("aliases")
+                aliases = mapping(inputs.get("aliases"))
                 for producer in producers:
                     graph = mapping(producer.get("graph"))
-                    if any(graph.get(key) != writers.get(key) for key in ("sha256", "bytes")):
+                    if any(graph.get(key) != aliases.get(key) for key in ("sha256", "bytes")):
                         raise ValueError("Configured producer graph differs from its retained input")
             if inputs.keys() != required:
                 raise ValueError("Missing or unexpected source-image audit input")
@@ -3436,6 +3424,7 @@ def main() -> int:
     analyze.add_argument("--native-exit", type=int, required=True)
     analyze.add_argument("--kind", choices=("test", "build"), required=True)
     analyze.add_argument("--output-options", type=Path)
+    analyze.add_argument("--alias-query", type=Path)
     analyze.add_argument("--required-cases", type=Path)
     check = commands.add_parser("verdict")
     for name in ("events", "context", "output"):
@@ -3546,6 +3535,9 @@ def main() -> int:
         write_json(args.output, result)
         if args.output_options is not None and result["status"] == "PASS":
             args.output_options.write_text("".join(option + "\n" for option in result["output_options"]))
+        if args.alias_query is not None and result["status"] == "PASS":
+            aliases = [json.dumps(owner["label"]) for owner in result["source_image_aliases"]]
+            args.alias_query.write_text("deps(set(" + " ".join(aliases) + "), 1)" if aliases else "")
         return int(result["status"] != "PASS")
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
