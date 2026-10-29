@@ -1866,23 +1866,12 @@ func (s *sender) sendSegment(seg *segment) sendResult {
 	now := s.ep.stack.Clock().NowMonotonic()
 	n, err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
 	result := sendAdvance
-	if err != nil {
+	if err != nil && n != 0 {
+		// Only the accepted prefix records this attempt.
 		result = sendAdvanceAndStop
-		switch {
-		case n != 0:
-			// Keep the rejected bytes on the write list. Split before updating
-			// xmitTime and xmitCount so only the prefix records this attempt.
-			s.splitSeg(seg, n)
-			if seg.xmitCount == 0 {
-				seg.Next().flags = 0
-			}
-		case seg.xmitCount == 0 && s.SndUna != s.SndNxt:
-			// A peer ACK or the retransmit timer for earlier data can retry the
-			// wholly rejected write. Leave it on the send queue.
-			return sendDeferred
-		default:
-			// A first write with no data in flight, or an attempted
-			// retransmission, still counts as an attempt for RTO purposes.
+		s.splitSeg(seg, n)
+		if seg.xmitCount == 0 {
+			seg.Next().flags = 0
 		}
 	}
 	if seg.xmitCount > 0 {
