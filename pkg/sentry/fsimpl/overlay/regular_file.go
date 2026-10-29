@@ -57,6 +57,12 @@ type regularFileFD struct {
 	copiedUp    bool
 	cachedFD    *vfs.FileDescription
 	cachedFlags uint32
+
+	// registrations holds the layer file for each registered waiter. Copy-up
+	// may replace cachedFD before the waiter is removed.
+	//
+	// +checklocks:mu
+	registrations map[*waiter.Entry]*vfs.FileDescription
 }
 
 func (fd *regularFileFD) getCurrentFD(ctx context.Context) (*vfs.FileDescription, error) {
@@ -256,14 +262,27 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 		log.Warningf("overlay.regularFileFD.EventRegister: currentFDLocked failed: %v", err)
 		wrappedFD = fd.cachedFD
 	}
-	return wrappedFD.EventRegister(e)
+	if err := wrappedFD.EventRegister(e); err != nil {
+		return err
+	}
+	if fd.registrations == nil {
+		fd.registrations = make(map[*waiter.Entry]*vfs.FileDescription)
+	}
+	wrappedFD.IncRef()
+	fd.registrations[e] = wrappedFD
+	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 	fd.mu.Lock()
-	defer fd.mu.Unlock()
-	fd.cachedFD.EventUnregister(e)
+	wrappedFD := fd.registrations[e]
+	delete(fd.registrations, e)
+	fd.mu.Unlock()
+	if wrappedFD != nil {
+		wrappedFD.EventUnregister(e)
+		wrappedFD.DecRef(context.Background())
+	}
 }
 
 // Epollable implements FileDescriptionImpl.Epollable.
