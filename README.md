@@ -117,7 +117,9 @@ remain errors. Scheduled and manual runs share one concurrency group. During act
 owner monitoring, check snapshot age at the same ten-minute cadence; if stale
 and no refresh is active, dispatch this workflow once. This uses the existing
 collector and does not create a second scheduled monitor. The token never reaches
-the browser. Its commit
+the browser. A visible tab checks the published data every five minutes; a
+hidden tab waits until it is visible again. A failed request leaves the last
+usable data and the current view in place. The workflow's commit
 explicitly requests the existing Pages build because token-authored pushes do
 not trigger Pages builds automatically. Six scheduled builds per hour stay
 below Pages' soft ten-build limit; manual dispatches and source publications

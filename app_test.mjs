@@ -16,6 +16,42 @@ function client() {
   return context;
 }
 
+test('a visible tab refreshes once when due and retains its view if the snapshot is unavailable', async () => {
+  const context = client(), run = source => vm.runInContext(source, context);
+  let now = Date.now(), timer, pending, requests = 0;
+  const elems = new Map();
+  context.document = { visibilityState: 'hidden', getElementById(id) {
+    if (!elems.has(id)) elems.set(id, {});
+    return elems.get(id);
+  } };
+  context.Date = class extends Date { static now() { return now; } };
+  context.clearTimeout = () => { timer = null; };
+  context.setTimeout = (callback, delay) => { timer = { callback, delay }; return 1; };
+  context.AbortSignal = AbortSignal;
+  context.fetch = () => { requests++; return pending; };
+  run('model = {checkedAt: registry.meta.updatedAt}; lastAttempt = Date.now(); selected = "pr:1"; reasonFilters.add("author-proposal"); scheduleRefresh()');
+  assert.equal(timer, null);
+  now += 10 * 60 * 1000;
+  context.document.visibilityState = 'visible';
+  run('scheduleRefresh()');
+  assert.equal(timer.delay, 0);
+  let reject;
+  pending = new Promise((_, fail) => { reject = fail; });
+  const refresh = timer.callback();
+  run('scheduleRefresh(); refresh(true)');
+  assert.equal(requests, 2); // registry and snapshot share one in-flight refresh.
+  reject(new Error('offline'));
+  await refresh;
+  assert.equal(run('selected'), 'pr:1');
+  assert.deepEqual([...run('reasonFilters')], ['author-proposal']);
+  assert.equal(run('model.checkedAt'), context.registryInput.meta.updatedAt);
+  assert.match(elems.get('freshness-text').textContent, /Keeping snapshot/);
+  assert.equal(timer.delay, 5 * 60 * 1000);
+  context.document.visibilityState = 'hidden';
+  run('scheduleRefresh()');
+  assert.equal(timer, null);
+});
+
 test('every open snapshot PR shares its import decision with the periodic planner', () => {
   const context = client();
   const registry = JSON.parse(readFileSync(new URL('./registry.json', import.meta.url)));
