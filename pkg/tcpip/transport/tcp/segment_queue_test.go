@@ -278,3 +278,35 @@ func TestSegmentQueueDroppedPayloadSaveRestore(t *testing.T) {
 		t.Errorf("segment metadata changed after restore (-want +got):\n%s", diff)
 	}
 }
+
+
+// TestReceiveQueueOverBudget measures the queue while the processor is paused.
+// Each arriving packet carries 4 KiB of data and repeats the same sequence.
+func TestReceiveQueueOverBudget(t *testing.T) {
+	const budget = 4096
+	ep := &Endpoint{}
+	ep.ops.SetReceiveBufferSize(budget, false)
+	q := segmentQueue{ep: ep}
+	for i := 1; i <= 257; i++ {
+		s := incomingQueuedSegment(t)
+		if !q.enqueue(s) {
+			s.DecRef()
+			t.Fatalf("receive queue refused packet %d", i)
+		}
+		s.DecRef()
+		if i == 1 || i == 33 || i == 257 {
+			t.Logf("receive queue: packets=%d charged=%d budget=%d", i, ep.receiveMemUsed(), budget)
+		}
+	}
+	count := 0
+	for s := q.dequeue(); s != nil; s = q.dequeue() {
+		count++
+		s.DecRef()
+	}
+	if got, want := count, 257; got != want {
+		t.Errorf("queued packets = %d, want %d", got, want)
+	}
+	if got, want := ep.receiveMemUsed(), 0; got != want {
+		t.Errorf("receive charge after draining = %d, want %d", got, want)
+	}
+}
