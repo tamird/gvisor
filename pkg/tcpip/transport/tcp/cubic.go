@@ -417,3 +417,92 @@ func (e *Endpoint) FirstLossDisableHyStart() {
 	defer e.UnlockUser()
 	e.snd.cc.(*cubicState).firstLossNoHyStart = true
 }
+
+// These observations run under the endpoint lock and never change virtual time.
+const FIFOTraceCanRestore = true
+
+type FIFOGrant struct {
+	Kind                                                       string
+	At, RTO, Resend, Probe, Reorder, FiredFor                  int64
+	Una, Nxt, Last, Boundary, ACK, Head                        uint32
+	ACKPresent                                                 bool
+	SACK                                                       [][2]uint32
+	HeadXmits, Cwnd, Threshold, Flight, Sacked, Dupacks, Count int
+	State                                                      tcpip.CongestionControlState
+	Active, Interrupted, Tracked                               bool
+	Timeouts                                                   uint64
+}
+type fifoTrace struct {
+	base, boundary  uint32
+	tracking, prior bool
+	first           int64
+	events          []FIFOGrant
+}
+
+func (e *Endpoint) EnableFIFOTrace(base uint32, old bool) {
+	e.LockUser()
+	defer e.UnlockUser()
+	e.snd.fifoTrace = &fifoTrace{base: base, prior: old}
+}
+func (s *sender) keepOldEntry() bool { return s.fifoTrace != nil && s.fifoTrace.prior }
+func (e *Endpoint) FIFOTraceFirst() int64 {
+	e.LockUser()
+	defer e.UnlockUser()
+	if e.snd == nil || e.snd.fifoTrace == nil {
+		return 0
+	}
+	return e.snd.fifoTrace.first
+}
+func (e *Endpoint) FIFOTraceEvents() []FIFOGrant {
+	e.LockUser()
+	defer e.UnlockUser()
+	return append([]FIFOGrant(nil), e.snd.fifoTrace.events...)
+}
+func (s *sender) traceDecision(kind string, seg *segment, n int) {
+	f := s.fifoTrace
+	if f == nil {
+		return
+	}
+	if kind == "ack_gate" && !f.tracking {
+		return
+	}
+	now := int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{}))
+	if kind == "rto" && !f.tracking && s.FastRecovery.Active && s.ep.SACKPermitted {
+		f.tracking = true
+		f.boundary = uint32(s.SndNxt) - 1
+		if f.first == 0 {
+			f.first = now
+		}
+	}
+	e := FIFOGrant{Kind: kind, At: now, RTO: int64(s.RTO), Una: uint32(s.SndUna) - f.base, Nxt: uint32(s.SndNxt) - f.base, Last: uint32(s.FastRecovery.Last) - f.base, Active: s.FastRecovery.Active, Tracked: f.tracking, Interrupted: s.sackRecoveryInterrupted, Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Flight: s.Outstanding, Sacked: s.SackedOut, Dupacks: s.DupAckCount, State: s.state, Count: n, Timeouts: s.ep.stats.SendErrors.Timeouts.Value()}
+	if f.tracking {
+		e.Boundary = f.boundary - f.base
+	}
+	target := func(t *timer) int64 {
+		if !t.enabled() {
+			return 0
+		}
+		return int64(t.target.Sub(tcpip.MonotonicTime{}))
+	}
+	e.Resend, e.Probe, e.Reorder = target(&s.resendTimer), target(&s.probeTimer), target(&s.reorderTimer)
+	switch kind {
+	case "rto":
+		e.FiredFor = int64(s.resendTimer.target.Sub(tcpip.MonotonicTime{}))
+	case "pto_expired":
+		e.FiredFor = int64(s.probeTimer.target.Sub(tcpip.MonotonicTime{}))
+	case "rack_timer_opportunity":
+		e.FiredFor = int64(s.reorderTimer.target.Sub(tcpip.MonotonicTime{}))
+	}
+	if h := s.writeList.Front(); h != nil {
+		e.Head = uint32(h.sequenceNumber) - f.base
+		e.HeadXmits = int(h.xmitCount)
+	}
+	if seg != nil {
+		e.ACKPresent = true
+		e.ACK = uint32(seg.ackNumber) - f.base
+		for _, b := range seg.parsedOptions.SACKBlocks {
+			e.SACK = append(e.SACK, [2]uint32{uint32(b.Start) - f.base, uint32(b.End) - f.base})
+		}
+	}
+	f.events = append(f.events, e)
+}

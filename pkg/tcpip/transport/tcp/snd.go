@@ -107,6 +107,7 @@ type lossRecovery interface {
 // +checklocksalias:rc.snd.ep.mu=ep.mu
 // +stateify savable
 type sender struct {
+	fifoTrace *fifoTrace `state:"nosave"`
 	// +checklocks:ep.mu
 	TCPSenderState
 
@@ -546,6 +547,7 @@ func (s *sender) resendSegment() {
 		if s.writeNext == seg {
 			s.updateWriteNext(seg.Next())
 		}
+		s.traceDecision("head_repair", nil, 0)
 		s.ep.stack.Stats().TCP.FastRetransmit.Increment()
 		s.ep.stats.SendErrors.FastRetransmit.Increment()
 
@@ -581,6 +583,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.traceDecision("rto", nil, 0)
 	s.ep.stack.Stats().TCP.Timeouts.Increment()
 	s.ep.stats.SendErrors.Timeouts.Increment()
 
@@ -1701,11 +1704,18 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		if (ack-1).InRange(s.SndUna, s.SndNxt) && s.FastRecovery.Last.LessThan(ack) {
 			s.leaveRecovery()
 		}
-	} else if !s.sackRecoveryInterrupted {
+	} else if !s.sackRecoveryInterrupted || s.keepOldEntry() {
 		// Detect loss by counting the duplicates and enter recovery.
+		s.traceDecision("ack_gate", rcvdSeg, 1)
 		fastRetransmit = s.detectLoss(rcvdSeg)
+		if fastRetransmit {
+			s.traceDecision("dupack_entered", rcvdSeg, s.DupAckCount)
+		}
 	}
 
+	if !s.FastRecovery.Active && s.sackRecoveryInterrupted && !s.keepOldEntry() {
+		s.traceDecision("ack_gate", rcvdSeg, 0)
+	}
 	// See if TLP based recovery was successful.
 	if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
 		s.detectTLPRecovery(ack, rcvdSeg)
@@ -1832,6 +1842,10 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 		// If we are not in fast recovery then update the congestion
 		// window based on the number of acknowledged packets.
+		if f := s.fifoTrace; f != nil && f.tracking && int32(uint32(s.SndUna)-f.boundary) > 0 {
+			s.traceDecision("covered_interrupted_flight", rcvdSeg, 0)
+			f.tracking = false
+		}
 		if !s.FastRecovery.Active {
 			s.cc.Update(originalOutstanding-s.Outstanding, bestRTT, rcvdSeg.rcvdTime)
 			if s.FastRecovery.Last.LessThan(s.SndUna) {
@@ -1880,8 +1894,14 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// After the reorder window is calculated, detect any loss by checking
 		// if the time elapsed after the segments are sent is greater than the
 		// reorder window.
-		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && s.enterRACKRecovery() {
-			fastRetransmit = true
+		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active {
+			s.traceDecision("rack_ack_opportunity", rcvdSeg, numLost)
+			if s.enterRACKRecovery() {
+				fastRetransmit = true
+				s.traceDecision("rack_ack_entered", rcvdSeg, numLost)
+			} else {
+				s.traceDecision("rack_ack_blocked", rcvdSeg, numLost)
+			}
 		}
 
 		if s.FastRecovery.Active {

@@ -209,6 +209,7 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.traceDecision("pto_expired", nil, 0)
 	var dataSent bool
 	if s.writeNext != nil && s.writeNext.xmitCount == 0 && s.Outstanding < s.SndCwnd {
 		dataSent = s.maybeSendSegment(s.writeNext, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
@@ -447,7 +448,18 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	wasActive := rc.snd.FastRecovery.Active
+	if !wasActive {
+		rc.snd.traceDecision("rack_timer_opportunity", nil, numLost)
+	}
 	fastRetransmit := rc.snd.enterRACKRecovery()
+	if !wasActive {
+		if fastRetransmit {
+			rc.snd.traceDecision("rack_timer_entered", nil, numLost)
+		} else {
+			rc.snd.traceDecision("rack_timer_blocked", nil, numLost)
+		}
+	}
 	rc.DoRecovery(nil, fastRetransmit)
 	return nil
 }
@@ -456,7 +468,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 //
 // +checklocks:s.ep.mu
 func (s *sender) enterRACKRecovery() bool {
-	if s.FastRecovery.Active || s.sackRecoveryInterrupted {
+	if s.FastRecovery.Active || (s.sackRecoveryInterrupted && !s.keepOldEntry()) {
 		return false
 	}
 	s.cc.HandleLossDetected()

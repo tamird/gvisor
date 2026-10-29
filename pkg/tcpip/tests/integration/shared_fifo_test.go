@@ -97,6 +97,22 @@ func TestVirtualTCPFirstCommonLoss(t *testing.T) {
 	}
 }
 
+func TestVirtualTCPRecoveryDecision(t *testing.T) {
+	if runtime.GOMAXPROCS(0) != 1 {
+		t.Fatal("requires the original single processor")
+	}
+	modes := []string{"original"}
+	if tcp.FIFOTraceCanRestore {
+		modes = append(modes, "old_entry_gate")
+	}
+	for _, mode := range modes {
+		t.Run(mode, func(t *testing.T) {
+			app := fifoApplicationOrder{FirstWriteOrder: []int{0, 1}, recoveryMode: mode}
+			runSharedFIFOWithApplicationOrder(t, []string{"cubic", "reno"}, []int{0, 1}, 0, &app)
+		})
+	}
+}
+
 type firstLossEvent struct {
 	Row                   [13]int64
 	Offset, End           uint32
@@ -120,7 +136,8 @@ type fifoFirstWrite struct {
 }
 
 type fifoApplicationOrder struct {
-	firstLoss *firstLossObservation
+	recoveryMode string
+	firstLoss    *firstLossObservation
 
 	FirstWriteOrder    []int
 	DemandAtNS         int64
@@ -214,6 +231,10 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		if diagnostic.Scenario == "one_more_frame" {
 			limit += 1472
 		}
+	}
+	tracing := application != nil && application.recoveryMode != ""
+	if tracing {
+		windowEnd = 20 * time.Second
 	}
 	const maxTime = 30 * time.Second
 	clock := &completedClock{ManualClock: faketime.NewManualClock()}
@@ -476,7 +497,7 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		}
 	}
 	defer func() {
-		if diagnostic != nil {
+		if tracing || diagnostic != nil {
 			return
 		}
 		probeMu.Lock()
@@ -626,6 +647,11 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 						AppRemaining: len(flow.data), Cwnd: info.SndCwnd, MSS: info.SndMss, Ssthresh: info.SndSsthresh,
 						RTTNS: int64(info.RTT), RTONS: int64(info.RTO), CCState: info.CcState, Probe: latest[index]})
 				}
+				if tracing {
+					for i := range flows {
+						flows[i].client.(*tcp.Endpoint).EnableFIFOTrace(flows[i].dataSequence, application.recoveryMode == "old_entry_gate")
+					}
+				}
 				if diagnostic != nil && diagnostic.Scenario == "without_hystart" {
 					flows[0].client.(*tcp.Endpoint).FirstLossDisableHyStart()
 				}
@@ -667,6 +693,48 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			}
 			if now() > 10*time.Second {
 				t.Fatalf("no first repair completed in the bounded prefix: %+v", diagnostic)
+			}
+		}
+		if tracing && demandStarted {
+			first := int64(0)
+			for i := range flows {
+				v := flows[i].client.(*tcp.Endpoint).FIFOTraceFirst()
+				if v != 0 && (first == 0 || v < first) {
+					first = v
+				}
+			}
+			if (first != 0 && int64(now()) >= first+int64(2*time.Second)) || now() >= 20*time.Second {
+				type flowEnd struct {
+					Base                uint32
+					Accepted, Delivered int
+					Sender              tcp.FirstLossSender
+					Decisions           []tcp.FIFOGrant
+				}
+				out := struct {
+					Mode       string
+					End, First int64
+					Flows      []flowEnd
+					Packets    int
+				}{Mode: application.recoveryMode, End: int64(now()), First: first, Packets: len(events)}
+				for i := range flows {
+					f := &flows[i]
+					ep := f.client.(*tcp.Endpoint)
+					out.Flows = append(out.Flows, flowEnd{f.dataSequence, f.accepted, f.received.Len(), ep.FirstLossSender(), ep.FIFOTraceEvents()})
+				}
+				for start := 0; start < len(events); start += 64 {
+					e := events[start:min(start+64, len(events))]
+					v, err := json.Marshal(e)
+					if err != nil {
+						t.Fatal(err)
+					}
+					t.Logf("FIFO_WIRE %s %s", out.Mode, v)
+				}
+				v, err := json.Marshal(out)
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Logf("FIFO_DECISIONS %s", v)
+				return
 			}
 		}
 		complete := now() >= windowEnd && len(pending) == 0
