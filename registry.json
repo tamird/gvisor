@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T05:28:37.283045+00:00",
+    "updatedAt": "2026-10-29T05:34:21.458210+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32420,6 +32420,38 @@
         "summary": "On a native AMD64 Linux runner the exporter built both architecture variants without Docker. The vDSOs, systrap handlers, and two offset files matched their producers in the archive and the Go commit.",
         "body": "Open once the declared cross-compiler is available. If #15106 changes the archive target first, retarget this call and qualify the new archive."
       }
+    },
+    {
+      "id": "branch:issue-reviver-native",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/issue-reviver-native",
+      "head": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
+      "title": "Run the issue reviver without the Docker builder",
+      "url": "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T05:34:21.458210+00:00",
+      "summary": "Build the native launcher without passing it the issue token. The nightly run uses checkout-relative paths so its source links point to the right line. Six named Go test rows passed; a dry run opened one loopback connection and made no writes.",
+      "evidence": [
+        {
+          "label": "Named tests and isolated replay",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40823691712"
+        },
+        {
+          "label": "Initial verifier rejected XML without named cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40823214688"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "664c5e58b6f64e14df82020d1e9e29bafa5963af",
+        "url": "https://github.com/tamird/gvisor/commit/664c5e58b6f64e14df82020d1e9e29bafa5963af",
+        "title": "Run the issue reviver without the Docker builder",
+        "summary": "Build the native launcher without passing it the issue token. The nightly run uses checkout-relative paths so its source links point to the right line. Six named Go test rows passed; a dry run opened one loopback connection and made no writes.",
+        "body": "Independent of the cross-compiler changes. The schedule, upstream-only guard and issue permissions are unchanged."
+      }
     }
   ],
   "edges": [
@@ -38064,7 +38096,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T04:48:31.223825+00:00",
+      "updatedAt": "2026-10-29T05:32:37.266666+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -40485,9 +40517,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40819460264"
             }
           ]
+        },
+        {
+          "text": "On the first restore of a 164,150-byte Nginx checkpoint, 1,132 type records were constructed during kernel value decoding. Of these, 541 were used only as pointer wrappers for slot arguments, 500 were used elsewhere in decoding, 34 were consulted only for layout checks during construction, and 57 had no observed lookup. The second restore built no new types. The counts describe this fixture; they do not measure the time saved by deferring any group.",
+          "evidence": [
+            {
+              "label": "Two native restores and four counting windows",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40822993027"
+            },
+            {
+              "label": "Native BuildBuddy run",
+              "url": "https://app.buildbuddy.io/invocation/2ed52b48-0fd8-4561-a8a0-7ada79f91607"
+            },
+            {
+              "label": "Instrumented source",
+              "url": "https://github.com/tamird/gvisor/commit/ad4d6a00034e35fa03a7969885f7c2cdcbc81234"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare fresh process start through a successful first restore and include a startup-only control before suggesting that type metadata be prepared earlier. Parth leads the rewrite.",
+      "nextStep": "Measure the cost of pointer-wrapper construction on ordinary first restore, including a startup-only control if any work moves earlier. Parth leads the graph rewrite.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
@@ -47009,7 +47058,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T05:28:37.283045+00:00",
+      "updatedAt": "2026-10-29T05:34:21.458210+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -47590,7 +47639,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the issue reviver on a native runner. For source lint, preserve all tracked files covered by the existing checks, including inputs absent from Bazel queries.",
+      "nextStep": "Trace the default CI build on native Linux, including compiler, packaging, and execution requirements. For lint, preserve tracked inputs absent from Bazel queries.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
