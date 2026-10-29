@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "request": "d01a578ab4253cdfaed4b72137527973cd8b90cb6532d98134831e23d8538a63",
+  "source": "a74824791a1cee29f81732efb5cbf930b0a2f002",
+  "stock": "bd3cab255359dcaa97607d78eac4ba4c59eb7299",
+  "verified_sources_and_complete_tree": {
+    "bd3cab255359dcaa97607d78eac4ba4c59eb7299": "d033fed8a039a591d44ecba76ab8223062ce067f",
+    "a74824791a1cee29f81732efb5cbf930b0a2f002": "3ef13e810c9e17ed5b2eb27b4e2a8bb8fd8c3969"
+  },
+  "cases": [
+    "TestSliceArrayPointerWindows",
+    "TestSliceArrayPointerWindows/array/left",
+    "TestSliceArrayPointerWindows/array/right",
+    "TestSliceArrayPointerWindows/slice/left",
+    "TestSliceArrayPointerWindows/slice/right",
+    "TestNestedSliceElementViews",
+    "TestNestedSliceElementViews/innerFirst=false",
+    "TestNestedSliceElementViews/innerFirst=true",
+    "TestArrayPointerUnknownElement"
+  ],
+  "host_bootstrap": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
+  "native_action": false
+}
