@@ -1,35 +1,40 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Qualify the supplier native executable
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  supplier:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: source, ref: ea7ed498af5815422760211302edbc14c58ed3f2, persist-credentials: false}
+      - name: Verify the released executable and source bytes on scratch
+        working-directory: source
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/lint_supplier_host"
+          mkdir "$p"
+          printf '%s\n' 'module(name = "lint_supplier_host")' > "$p/MODULE.bazel"
+          cp ../carrier/.github/qualification/lint-native-label/platform.BUILD "$p/BUILD.bazel"
+          export SUPPLIER_RC="$RUNNER_TEMP/supplier.bazelrc"
+          umask 077
+          trap 'rm -f "$SUPPLIER_RC"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' "build --inject_repository=lint_supplier_host=$p"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$SUPPLIER_RC"
+          unset BUILDBUDDY_API_KEY
+          python3 -B ../carrier/.github/qualification/lint-native-label/check.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: supplier-native-verdict
+          path: ${{ runner.temp }}/native-label.json
+          if-no-files-found: error
