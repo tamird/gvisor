@@ -4,10 +4,12 @@ if [[ ${1:-} != --private-mount ]]; then
   exec unshare --mount --propagation private -- "$0" --private-mount "$@"
 fi
 shift
-[[ $# == 3 && $EUID == 0 && $(uname -m) == x86_64 ]]
+[[ $# == 5 && $EUID == 0 && $(uname -m) == x86_64 ]]
 binary=$(realpath "$1")
 archive=$(realpath "$2")
-reader=$(realpath "$3")
+candidate=$(realpath "$3")
+stock_mm=$(realpath "$4")
+candidate_mm=$(realpath "$5")
 release=$(cd release && pwd)
 test -x "$release/runsc"
 export GVISOR_SIDECAR_BINARIES_DIR="$release/gvisor-bin"
@@ -40,27 +42,29 @@ export RESTORE_PHASE_DIR="$dir/checkpoint"
 install -d -m 700 "$RESTORE_PHASE_DIR"
 export GOMAXPROCS=2
 unset XML_OUTPUT_FILE
-sha256sum "$release/runsc" "$binary" "$reader"
+sha256sum "$release/runsc" "$binary" "$candidate" "$stock_mm" "$candidate_mm"
 "$binary" -test.v -test.run='^$' -test.bench='^BenchmarkCaptureRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
 
-d="$dir/profiles"
-mkdir -m 700 "$d"
-for role in validate ordinary cpu1 cpu2 alloc; do
-  opts=()
-  duration=2s
-  case "$role" in
-    validate) duration=1x ;;
-    cpu1|cpu2) opts+=("-test.cpuprofile=$d/$role.pprof") ;;
-    alloc) duration=8x; opts+=("-test.memprofile=$d/alloc.pprof" -test.memprofilerate=1) ;;
-  esac
-  echo "SAVE_BEGIN role=$role duration=$duration"
-  GVISOR_SAVE_PROFILE_ROLE="$role" "$binary" -test.v=false -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^Encode$' -test.benchtime="$duration" -test.count=1 -test.benchmem -checkpoint_dir="$RESTORE_PHASE_DIR" -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json" "${opts[@]}"
-  echo "SAVE_END role=$role exit=0"
+for pair in $(seq 1 8); do
+  arms=(stock fixed)
+  if (( pair % 2 == 0 )); then arms=(fixed stock); fi
+  for arm in "${arms[@]}"; do
+    exe="$binary"; mm="$stock_mm"
+    if [[ $arm == fixed ]]; then exe="$candidate"; mm="$candidate_mm"; fi
+    echo "EXPORT_BEGIN pair=$pair arm=$arm role=kernel"
+    GVISOR_SAVE_PROFILE_ROLE=ordinary "$exe" -test.v=false -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^Encode$' -test.benchtime=1x -test.count=1 -test.benchmem -checkpoint_dir="$RESTORE_PHASE_DIR" -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
+    echo "EXPORT_END pair=$pair arm=$arm role=kernel"
+    echo "EXPORT_BEGIN pair=$pair arm=$arm role=sets"
+    "$mm" -test.v=false -test.run='^$' -test.bench='^BenchmarkExportMemorySegments$' -test.benchtime=256x -test.count=1 -test.benchmem
+    echo "EXPORT_END pair=$pair arm=$arm role=sets"
+  done
 done
-"$reader" "$d/cpu1.pprof" "$d/cpu2.pprof" "$d/alloc.pprof"
-# The profiles contain code/symbol attribution, not the captured checkpoint.
-for f in "$d/"*.pprof; do
-  test -s "$f"; test "$(stat -c %s "$f")" -lt 16000000
-  sha256sum "$f"
-  cp "$f" "$TEST_UNDECLARED_OUTPUTS_DIR/"
+for arm in stock fixed; do
+  exe="$binary"
+  if [[ $arm == fixed ]]; then exe="$candidate"; fi
+  echo "EXPORT_CHECK arm=$arm"
+  GVISOR_SAVE_PROFILE_ROLE=validate "$exe" -test.v=false -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^Encode$' -test.benchtime=1x -test.count=1 -checkpoint_dir="$RESTORE_PHASE_DIR" -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
+  echo "EXPORT_PROFILE arm=$arm"
+  GVISOR_SAVE_PROFILE_ROLE=alloc "$exe" -test.v=false -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^Encode$' -test.benchtime=8x -test.count=1 -test.memprofilerate=1 -test.memprofile="$TEST_UNDECLARED_OUTPUTS_DIR/$arm.pprof" -checkpoint_dir="$RESTORE_PHASE_DIR" -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
+  sha256sum "$TEST_UNDECLARED_OUTPUTS_DIR/$arm.pprof"
 done

@@ -16,6 +16,7 @@ package mm
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"testing"
 
@@ -1079,4 +1080,75 @@ func TestSealedMapping(t *testing.T) {
 	}
 	defer mm2.DecUsers(ctx)
 	wantError(t, linuxerr.EPERM, "child MUnmap(sealed)", mm2.MUnmap(ctx, sealedAddr, pageSize))
+}
+
+// BenchmarkExportMemorySegments measures the two real sets saved by the
+// memory manager. Build and shrink the tree outside the measured interval,
+// and verify every exported range and value after the last iteration.
+func BenchmarkExportMemorySegments(b *testing.B) {
+	fmt.Printf("EXPORT_PROCESS pid=%d\n", os.Getpid())
+	for _, tc := range []struct {
+		name       string
+		seed, keep int
+	}{
+		{"empty", 0, 0}, {"one", 1, 1}, {"sixtyfour", 64, 64},
+		{"large", 4096, 4096}, {"shrink", 4096, 1},
+	} {
+		b.Run("vma/"+tc.name, func(b *testing.B) {
+			var set vmaSet
+			seed := make([]vmaFlatSegment, tc.seed)
+			for i := range seed {
+				seed[i] = vmaFlatSegment{Start: hostarch.Addr(2 * i), End: hostarch.Addr(2*i + 1), Value: vma{off: uint64(i + 1)}}
+			}
+			if err := set.ImportSlice(seed); err != nil {
+				b.Fatal(err)
+			}
+			if tc.seed != tc.keep {
+				set.RemoveRange(hostarch.AddrRange{Start: hostarch.Addr(2 * tc.keep), End: hostarch.Addr(2 * tc.seed)})
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			var got []vmaFlatSegment
+			for i := 0; i < b.N; i++ {
+				got = set.ExportSlice()
+			}
+			b.StopTimer()
+			if (got == nil) != (tc.keep == 0) || len(got) != tc.keep {
+				b.Fatalf("wrong empty/length: nil=%t length=%d want=%d", got == nil, len(got), tc.keep)
+			}
+			for i, value := range got {
+				if value.Start != seed[i].Start || value.End != seed[i].End || value.Value.off != seed[i].Value.off {
+					b.Fatalf("wrong export at %d", i)
+				}
+			}
+		})
+		b.Run("pma/"+tc.name, func(b *testing.B) {
+			var set pmaSet
+			seed := make([]pmaFlatSegment, tc.seed)
+			for i := range seed {
+				seed[i] = pmaFlatSegment{Start: hostarch.Addr(2 * i), End: hostarch.Addr(2*i + 1), Value: pma{off: uint64(i + 1)}}
+			}
+			if err := set.ImportSlice(seed); err != nil {
+				b.Fatal(err)
+			}
+			if tc.seed != tc.keep {
+				set.RemoveRange(hostarch.AddrRange{Start: hostarch.Addr(2 * tc.keep), End: hostarch.Addr(2 * tc.seed)})
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			var got []pmaFlatSegment
+			for i := 0; i < b.N; i++ {
+				got = set.ExportSlice()
+			}
+			b.StopTimer()
+			if (got == nil) != (tc.keep == 0) || len(got) != tc.keep {
+				b.Fatalf("wrong empty/length: nil=%t length=%d want=%d", got == nil, len(got), tc.keep)
+			}
+			for i, value := range got {
+				if value.Start != seed[i].Start || value.End != seed[i].End || value.Value.off != seed[i].Value.off {
+					b.Fatalf("wrong export at %d", i)
+				}
+			}
+		})
+	}
 }

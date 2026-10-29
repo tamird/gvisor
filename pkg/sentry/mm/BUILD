@@ -182,6 +182,7 @@ go_library(
 go_test(
     name = "mm_test",
     size = "small",
+    visibility = ["//test/rbe/restore_phases:__pkg__"],
     srcs = ["mm_test.go"],
     embed = [":mm"],
     deps = [
