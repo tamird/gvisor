@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T20:38:34.195870+00:00",
+    "updatedAt": "2026-10-29T21:10:41.864614+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17828,7 +17828,7 @@
       "url": "https://github.com/tamird/gvisor/commit/4679222fbe470d0f75f1382d71206d8a927b6bbc",
       "group": "runtime",
       "status": "Contributor approved; waiting for licensing prerequisites",
-      "updatedAt": "2026-10-27T01:25:59.823189+00:00",
+      "updatedAt": "2026-10-29T21:10:41.864614+00:00",
       "refinement": {
         "before": {
           "head": "4624725855c2650587f81828d182ed66fdcd5f7e"
@@ -17837,13 +17837,13 @@
           "head": "4679222fbe470d0f75f1382d71206d8a927b6bbc"
         }
       },
-      "summary": "The approved Node 26.12.0 proposal is now 4679222f after removing only the redundant SNI patch and its application. The test is already excluded in the selected Node source, upstream Node #66835 merged, and obsolete gVisor #15960 is closed. Independent source review preserves the selected tests, runtime pins, catalog and policy grants; the prior approved 462472585 commit remains retained. The procfs prerequisite landed in #16057; delivery still waits for the licensing changes, including #16051.",
+      "summary": "The approved Node 26.12.0 proposal adds 552 npm records. Thirty-eight use an explicit automatic notice; eight different entries retain manually audited standard terms. Wait for the checker and classifier prerequisites, including #16051.",
       "followup": {
         "owner": "node_tls_sni",
-        "disposition": "Approved Node activation waits for remaining prerequisite merges",
+        "disposition": "Contributor approved; licensing prerequisites pending",
         "sourceHead": "4679222fbe470d0f75f1382d71206d8a927b6bbc",
-        "observedAt": "2026-10-27T01:25:59.823189+00:00",
-        "nextAction": "After the licensing prerequisites, including #16051 and the classifier changes, land, publish the approved Node upgrade. The procfs and SNI prerequisites are satisfied; #15146 remains on hold.",
+        "observedAt": "2026-10-29T21:10:41.864614+00:00",
+        "nextAction": "After the npm checker, classifier and other recorded prerequisites land, rebase and deliver the approved Node change. The separate combined-notice proposal is not a prerequisite.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4624725855c2650587f81828d182ed66fdcd5f7e",
           "https://github.com/tamird/gvisor/actions/runs/39388037075",
@@ -17911,25 +17911,25 @@
       "title": "Resolve licenses from immutable source notices",
       "url": "https://github.com/tamird/gvisor/commit/b25efb95971f6f26aa1b1fafc75d2078f456d65a",
       "group": "release",
-      "status": "Contributor approved; waiting for prerequisite merge",
-      "updatedAt": "2026-10-20T12:52:06.322141+00:00",
-      "summary": "User approved exact b25efb95971f6f26aa1b1fafc75d2078f456d65a for opening a new google/gvisor PR. Assigned delivery owner: node_tls_sni. Wait for manual-artifact prerequisite24ca to merge, then rebase equivalently and open the already-approved PR. Do not open a stacked PR or repeat contributor review. Qualification and historical failure records remain unchanged.\n\nHistorical proposal and qualification record:\n\nPublic immutable-notice support is published on the manual-artifact prerequisite. Four checker/Nogo owners pass 44 XML records, including all 28 required records, plus canonical lint. Exact source notice identity and artifact retention are covered; this is not an npm cohort audit or policy/catalog adoption. Root requested contributor review once, independently of the earlier 24ca proposal and held #15146.\n\n",
+      "status": "Superseded; no outstanding consumer",
+      "updatedAt": "2026-10-29T21:10:41.864614+00:00",
+      "summary": "The contributor approved this proposal. Automatic pinned notices shipped with the QEMU change. The remaining behavior permits manually audited entries to cite a pinned notice; none of the checked-in catalogs on the tracked gVisor proposals uses that combination.",
       "evidence": [
-        {
-          "label": "Owning checks and lint PASS",
-          "url": "https://app.buildbuddy.io/invocation/3b30f5f9-58ad-4c75-8505-86ff8990d805"
-        }
+        "https://github.com/google/gvisor/commit/61088c907",
+        "https://github.com/tamird/gvisor/commit/b25efb959",
+        "https://github.com/tamird/gvisor/commit/4679222fb"
       ],
       "followup": {
         "owner": "node_tls_sni",
-        "disposition": "Contributor approved; waiting for prerequisite merge",
+        "disposition": "Superseded; no action",
         "sourceHead": "b25efb95971f6f26aa1b1fafc75d2078f456d65a",
-        "observedAt": "2026-10-20T10:38:30.189166+00:00",
-        "nextAction": "Wait for manual-artifact prerequisite24ca to merge, then rebase equivalently and open the already-approved PR. Do not open a stacked PR or repeat contributor review.",
+        "observedAt": "2026-10-29T21:10:41.864614+00:00",
+        "nextAction": "Keep the approved proposal as history. Revisit only if an artifact needs both a manually retained license and a pinned upstream notice.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b25efb95971f6f26aa1b1fafc75d2078f456d65a"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:fix/license-npm-artifacts",
@@ -17941,8 +17941,8 @@
       "url": "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864",
       "group": "release",
       "status": "Contributor approved; waiting for prerequisite merge",
-      "updatedAt": "2026-10-20T12:52:06.322141+00:00",
-      "summary": "User approved exact 8facdc0012a7714662f8c40a9cc5db1030ee2864 for opening a new google/gvisor PR. Assigned delivery owner: node_tls_sni. Wait for immutable-notice prerequisiteb25 to merge, then rebase equivalently and open the already-approved PR. Do not open a stacked PR or repeat contributor review. Qualification and historical failure records remain unchanged.\n\nHistorical proposal and qualification record:\n\nPublic npm artifact support is published on the immutable-notice prerequisite. Four checker/Nogo owners pass 70 XML records, including all 54 required records, plus canonical lint. Explicit source.sha256 declarations opt Node archives into exact lock-cohort enumeration; legacy Node22 without a declaration adds no input. No classifier, catalog or policy changes are included. Root requested contributor review once, with upstream opening after the already requested 24ca/b25 prerequisites; this is not a full Node upgrade review.\n\n",
+      "updatedAt": "2026-10-29T21:10:41.864614+00:00",
+      "summary": "Contributor approved the npm checker. Its archive enumeration, integrity checks and automatic notice handling use the mechanism already in master. The manually audited package path still depends on #16051.",
       "evidence": [
         {
           "label": "Owning checks and lint PASS",
@@ -17951,10 +17951,10 @@
       ],
       "followup": {
         "owner": "node_tls_sni",
-        "disposition": "Contributor approved; waiting for prerequisite merge",
+        "disposition": "Contributor approved; waiting for manual artifact support",
         "sourceHead": "8facdc0012a7714662f8c40a9cc5db1030ee2864",
-        "observedAt": "2026-10-20T10:38:30.189166+00:00",
-        "nextAction": "Wait for immutable-notice prerequisiteb25 to merge, then rebase equivalently and open the already-approved PR. Do not open a stacked PR or repeat contributor review.",
+        "observedAt": "2026-10-29T21:10:41.864614+00:00",
+        "nextAction": "Rebase the approved npm checker after #16051. Avoid reintroducing the superseded notice-only proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864"
         ]
@@ -21873,23 +21873,17 @@
       "title": "Enumerate the declared LLVM source archive",
       "url": "https://github.com/google/gvisor/pull/16249",
       "status": "open",
-      "summary": "The current LLVM source-enumeration PR is open at 0d14cdf1f; its prior Copybara import #16329 is closed. It remains a prerequisite of the standalone LLVM source migration. Older import failures and their now-merged shared recovery are historical evidence, not a current source verdict.\n\nPreserved earlier source-specific record:\n\nThe additive conflict after #15970 landed is resolved and published at 996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8, directly on merged 0912018a096a3cedc6467a311a1cc98f26abf3c6. Both original 2b1f8d5 LLVM-source-audit postimages are preserved exactly, with only the landed codeload regexp and test added. Independent source review confirms the inverse. GitHub observed the new head as MERGEABLE at 21:37:46Z; current checks were pending. The earlier matching import #16329 at 65d5538f and its passing 52165/33891 checks belong to the previous source head. The raw APPROVED rollup is not a newly submitted review of this head. No import was edited or native workload repeated. The 21:47:05Z provider snapshot confirms the delivered head is MERGEABLE and reports effective REVIEW_REQUIRED.\n\nEarlier source-specific evidence:\n\nPublic PR #16249 at 2b1f8d5c9994cca2c039ff3250d44a7b12795ff7 now has a fresh matching import #16329 at 65d5538fb703cf2a74942633665827b52d838408, observed by the existing provider at 2026-10-24T20:37:04.573097+00:00. Current source checks pass; import Buildkite 52165 and internal checks remain pending. Root verified that the landed-base rebase preserves the source patch. Earlier failed import heads and their diagnostics remain historical evidence below; no current import pass or new review approval is inferred.\n\nEarlier source-specific evidence:\n\nThe prior import #16329 at c1de6c77 fails Buildkite 52132 for two shared causes, with concrete upstream owners. C++ lint reports the exact 58 Benchmark umbrella-header findings in 28 files already addressed by #16313. GPU checksum validation and the cgroupv1, cgroupv2 and ARM64 unit jobs all fail the ARM64 driver 620.51.03 download with HTTP 404; upstream #16335 marks that installer unavailable while preserving its checksum. The five latest failed steps exit 2. No LLVM enumeration failure was identified in these logs. The #16335 landing and subsequent source rebase are now recorded above; observe a fresh matching import while preserving the distinct #16313 policy work. Three unit logs were server-truncated but retain their sole-test-failure summaries; full lint and GPU logs were read.\n\nEarlier source-specific record:\n\nThe contributor approved eb6c08906, now delivered independently as #16249 at signed dd471c93 on current upstream8938. Complete range-diff is equal; the original approved ref is preserved. Provider head/body/tracking are verified, mergeability is MERGEABLE and public checks are running. No prerequisite or fresh-runtime claim is added.\n\nEarlier source-specific record:\n\nThe LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
+      "summary": "Contributor approved the LLVM archive enumeration amendment at f8b7988ba. The patch identifies and pins the supplier’s archive without changing artifact license retention. Publication and the existing import conflict remain agent work.",
+      "updatedAt": "2026-10-29T21:10:41.864614+00:00",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8",
-        "observedAt": "2026-10-24T21:37:46.418333+00:00",
-        "disposition": "Additive codeload conflict resolution published; follow the new revision",
-        "nextAction": "Follow the newly published head through current checks, matching Copybara import and actual revision-bound reviews using the existing watcher. Preserve previous-head validation and import history; no automatic reviewer request or merge.",
+        "sourceHead": "f8b7988ba059b9e88edda1264a0ad4907463e48e",
+        "observedAt": "2026-10-29T21:10:41.864614+00:00",
+        "disposition": "Contributor approved; publish amendment",
+        "nextAction": "Verify the PR’s current head and lease, then publish the approved f8b7988ba. Keep the manual-artifact and pinned-notice changes separate.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16249",
-          "https://github.com/google/gvisor/pull/16329",
-          "https://buildkite.com/gvisor/pipeline/builds/52132",
-          "https://github.com/google/gvisor/pull/16313",
-          "https://github.com/google/gvisor/pull/16335",
-          "https://github.com/google/gvisor/pull/16249/commits/2b1f8d5c9994cca2c039ff3250d44a7b12795ff7",
-          "https://github.com/google/gvisor/commit/c341af3e04fb051c7a0b2a394f91789f16d3deab",
-          "https://github.com/google/gvisor/pull/16249/commits/996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8"
+          "https://github.com/tamird/gvisor/commit/f8b7988ba",
+          "https://github.com/google/gvisor/pull/16249"
         ]
       },
       "number": 16249,
@@ -21914,17 +21908,7 @@
           "label": "Published additive resolution on landed codeload base",
           "url": "https://github.com/google/gvisor/pull/16249/commits/996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "f8b7988ba059b9e88edda1264a0ad4907463e48e",
-        "baseHead": "0d14cdf1f03ae940215738839add77dcb4677d79",
-        "url": "https://github.com/tamird/gvisor/commit/f8b7988ba059b9e88edda1264a0ad4907463e48e",
-        "title": "Enumerate the declared LLVM archive alongside QEMU",
-        "summary": "Licensecheck keeps QEMU’s repository mappings and collects LLVM sources from the declared hermetic-llvm extension. An unreadable mapping returns an error.",
-        "body": "The candidate passed 39 named licensecheck records and the 220-entry catalog check. Review the change before updating the upstream PR."
-      }
+      ]
     },
     {
       "id": "branch:nvidia-parser-resources",
@@ -32383,9 +32367,9 @@
       "title": "Format generated Go code in stateify",
       "url": "https://github.com/tamird/gvisor/commit/b33d195de",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T19:10:38.924008+00:00",
-      "summary": "The stateify action now explains which go binary goimports can run, why it needs the package source directory, and why it must not fetch modules, switch toolchains, or consult a go.work file. The generator uses a local bytes.Buffer.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T21:10:41.864614+00:00",
+      "summary": "The contributor asked why a source-directory override, SDK executable and import-resolution environment are needed. The owner is testing whether stateify can generate its imports from declared sources and format without a subprocess.",
       "evidence": [
         {
           "label": "Revised commit",
@@ -32428,15 +32412,19 @@
           "head": "b33d195deb0c528d5b2a843fff8a2e32813ff7b9"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "contributorChangesRequested": {
         "head": "b33d195deb0c528d5b2a843fff8a2e32813ff7b9",
-        "baseHead": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
-        "url": "https://github.com/tamird/gvisor/commit/b33d195de",
-        "title": "Run stateify without a shell",
-        "summary": "The stateify action now explains which go binary goimports can run, why it needs the package source directory, and why it must not fetch modules, switch toolchains, or consult a go.work file. The generator uses a local bytes.Buffer.",
-        "body": "Stateify formats its generated Go directly. The only executable available to goimports on PATH is the go binary from the declared SDK. Both the mixed-source and generated-only alias fixtures compiled; their uncached actions ran on scratch and produced the same bytes as before."
+        "url": "https://github.com/tamird/gvisor/commit/b33d195de"
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Revise generator; agent work",
+        "nextAction": "Test generation from declared imports and aliases. Keep the replacement experimental until the original generated sources, constraints and checkpoint registrations are verified.",
+        "sourceHead": "b33d195deb0c528d5b2a843fff8a2e32813ff7b9",
+        "observedAt": "2026-10-29T21:10:41.864614+00:00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b33d195de"
+        ]
       }
     },
     {
@@ -36082,22 +36070,14 @@
       ]
     },
     {
-      "from": "branch:fix/license-notice-source",
-      "to": "branch:upgrade/nodejs-26.12.0",
-      "type": "depends_on",
-      "reason": "Node26 public license records require this mechanism; full upgrade delivery remains separately prepared."
-    },
-    {
-      "from": "branch:fix/license-notice-source",
-      "to": "branch:fix/license-npm-artifacts",
-      "type": "depends_on",
-      "reason": "This public prerequisite is based on the preceding independently reviewed mechanism."
-    },
-    {
       "from": "branch:fix/license-npm-artifacts",
       "to": "branch:upgrade/nodejs-26.12.0",
       "type": "depends_on",
-      "reason": "Node26 public license records require this mechanism; full upgrade delivery remains separately prepared."
+      "reason": "The npm checker enumerates the pinned Node lockfiles and verifies each source archive’s SHA512 integrity and SHA256 before using its packaged or explicit root notice.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/8facdc001",
+        "https://github.com/tamird/gvisor/commit/4679222fb"
+      ]
     },
     {
       "from": "pr:15146",
@@ -36121,20 +36101,11 @@
       "from": "pr:16051",
       "to": "branch:upgrade/nodejs-26.12.0",
       "type": "depends_on",
-      "reason": "The Node test-dependency catalog needs support for pinned, manually audited license artifacts.",
+      "reason": "Eight of the 552 Node npm entries explicitly retain reviewed standard licenses; none of those entries pins a notice URL. The 38 pinned notices on other entries use the automatic upstream path.",
       "evidence": [
-        "https://github.com/google/gvisor/pull/16051",
-        "https://github.com/tamird/gvisor/commit/24cae478d49a084a93cd26aba9a57d528d67b7cc"
-      ]
-    },
-    {
-      "from": "pr:16051",
-      "to": "branch:fix/license-notice-source",
-      "type": "depends_on",
-      "reason": "Immutable notice discovery uses the manual-artifact support from this PR.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/16051",
-        "https://github.com/tamird/gvisor/commit/24cae478d49a084a93cd26aba9a57d528d67b7cc"
+        "https://github.com/tamird/gvisor/commit/4679222fb",
+        "https://github.com/tamird/gvisor/commit/8facdc001",
+        "https://github.com/google/gvisor/commit/61088c907"
       ]
     },
     {
@@ -36389,8 +36360,11 @@
       "from": "pr:16051",
       "to": "branch:native-go-images",
       "type": "depends_on",
-      "reason": "The complete catalog retains the two approved libcrypt manual artifacts. Upstream delivery requires the existing manual-artifact verification interface; the qualification-only checker composition already verifies them.",
-      "evidence": "https://github.com/google/gvisor/pull/16051"
+      "reason": "AMD64 and ARM64 libcrypt1 add the LicenseRef-libxcrypt-4.4.27 terms; master’s verifier does not recognize the identifier. APT package enumeration and the held classifier change remain separate prerequisites.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/4094323ff",
+        "https://github.com/tamird/gvisor/commit/dbf12f4d3"
+      ]
     },
     {
       "from": "branch:native-go-images",
@@ -36620,15 +36594,21 @@
       "from": "pr:16249",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "The canonical compiler source audit requires enumeration of the public LLVM source repository.",
-      "evidence": "https://github.com/google/gvisor/pull/16249"
+      "reason": "The NVIDIA parser uses the hermetic-llvm source archive; the checker must enumerate that archive rather than dropping it from the catalog. This does not itself require any manual license support.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/f8b7988ba",
+        "https://github.com/tamird/gvisor/commit/8306976db"
+      ]
     },
     {
       "from": "pr:16051",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "The current compiler catalog uses the existing manually audited artifact mechanism; its live PR remains a separate prerequisite.",
-      "evidence": "https://github.com/google/gvisor/pull/16051"
+      "reason": "The new llvm-project source archive has an explicit LicenseRef combining LLVM, Clang and selected support-library notices. The upstream verifier rejects unknown identifiers. This is separate from discovering which archive to audit.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/8306976db",
+        "https://github.com/tamird/gvisor/commit/dbf12f4d3"
+      ]
     },
     {
       "from": "branch:hermetic-llvm-project",
@@ -37567,6 +37547,17 @@
       "reason": "Restores the host wait queue for a previously watched character device.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/64758ff8b"
+      ]
+    },
+    {
+      "from": "pr:16051",
+      "to": "branch:fix/license-npm-artifacts",
+      "type": "depends_on",
+      "reason": "The npm checker validates integrity for explicitly audited packages and retains their reviewed licenses. Automatic notice selection is already in master.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/8facdc001",
+        "https://github.com/google/gvisor/commit/61088c907",
+        "https://github.com/tamird/gvisor/commit/dbf12f4d3"
       ]
     }
   ],
