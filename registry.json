@@ -32829,6 +32829,58 @@
         "summary": "The two source-lint jobs install the same verified Bazel as the default builder and run Make directly on the agent. The post-command hook uses that Bazel to clean and shut down the original server, including after a lint failure.",
         "body": "Open after the declared codespell change lands. Qualification exercised the actual hooks on disposable Linux runners."
       }
+    },
+    {
+      "id": "branch:declared-release-version",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/declared-release-version",
+      "head": "55210b651ecb1c5350d8011c0997669f392f8870",
+      "title": "Build both release architectures with an explicit version",
+      "url": "https://github.com/tamird/gvisor/commit/55210b651ecb1c5350d8011c0997669f392f8870",
+      "group": "release",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T09:31:08.734709+00:00",
+      "summary": "Build both release architectures from one caller-supplied label without Git or the status script in the Bazel checkout. Both Debian controls reported 20261029.0; eight binaries per architecture matched across the Debian and both tar packages.",
+      "evidence": [
+        {
+          "label": "Proposed commit",
+          "url": "https://github.com/tamird/gvisor/commit/55210b651ecb1c5350d8011c0997669f392f8870"
+        },
+        {
+          "label": "Only the release-identity change, after the prerequisite",
+          "url": "https://github.com/tamird/gvisor/compare/962df4d1a82a86b875d103f342f81fd4f95aefe4...55210b651ecb1c5350d8011c0997669f392f8870"
+        },
+        {
+          "label": "Original workflow: controls and restore passed; archive inspection failed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40844444929"
+        },
+        {
+          "label": "Original AMD64 Debian package",
+          "url": "https://app.buildbuddy.io/invocation/0f20d690-5392-40b6-bf01-05e40526400b"
+        },
+        {
+          "label": "Original ARM64 Debian package",
+          "url": "https://app.buildbuddy.io/invocation/bd83c5c3-7e5a-44f7-8857-d33e30b04d5f"
+        },
+        {
+          "label": "Actual matching/mismatched checkpoint and sidecar checks",
+          "url": "https://app.buildbuddy.io/invocation/deb53d6d-e9d1-4b1a-93e4-f519128fa9af"
+        },
+        {
+          "label": "Original-only verification of all six output digests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40849594911"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "55210b651ecb1c5350d8011c0997669f392f8870",
+        "url": "https://github.com/tamird/gvisor/commit/55210b651ecb1c5350d8011c0997669f392f8870",
+        "title": "Build both release architectures with an explicit version",
+        "summary": "Build both release architectures from one caller-supplied label without Git or the status script in the Bazel checkout. Both Debian controls reported 20261029.0; eight binaries per architecture matched across the Debian and both tar packages.",
+        "body": "Release packaging currently asks Git to identify the checkout. A source\nexport falls back to 0.0.0, so two different exports can report the\nsame version. Let the release caller provide one label to both\narchitecture builds. Runsc, its sidecars and the result parser use that\nlabel; the Debian version strips the prefix as before.\n\nThe default checkout still supplies its Git revision or release tag. A\ncustom status command that sets STABLE_VERSION keeps precedence. Builds\nwith no identity no longer accept a checkpoint or sidecar solely because\nthe two missing values are equal. The historical 0.0.0 fallback remains\navailable to ordinary builds; an explicit release cannot use it.\n\nBuilt real AMD64 and ARM64 Debian packages and both release archives\nwith neither the source tree's .git nor its status script available.\nBoth Debian controls reported 20261029.0, and the eight ELF files on\neach architecture matched across all three package formats. On AMD64,\nrunsc restored a checkpoint of its own release; a different revision\nrejected the checkpoint and the mismatched Sentry rejected startup.\n\nThe first workflow is red: its inspection image lacked the zstd CLI,\nand its summary mishandled a Bazel event. A read of all six original\noutput digests verified the packages without repeating a build or\nrestore. This does not change changelog timestamps, release signing, or\npublication."
+      }
     }
   ],
   "edges": [
@@ -35917,6 +35969,16 @@
       "reason": "The source-lint Make target can run directly once the spelling checker no longer needs the builder.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/679a7f69c68079476efbd4f13ae219f1c2309713"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:package-version-status",
+      "to": "branch:declared-release-version",
+      "reason": "The release build uses the declared package-version reader. Its previously reviewed patch is unchanged on the current base; this branch adds only the release identity change.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/962df4d1a82a86b875d103f342f81fd4f95aefe4...55210b651ecb1c5350d8011c0997669f392f8870",
+        "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc"
       ]
     }
   ],
