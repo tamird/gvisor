@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-legacy-map-fix'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-legacy-map-completion'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -13,16 +13,16 @@ jobs:
       with:
         fetch-depth: 12
         persist-credentials: false
-    - name: Round-trip immediate and delayed map keys on both current sources
+    - name: Compare delayed map keys and LoadValue against complete state packages
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        git diff --exit-code 69321b6fa7510a1e8a28a80ff2164bac8f6b3b43 e697e3a6906717066f900d5ec670e223ad039f0c -- pkg/state/decode.go pkg/state/tests/
-        git diff --exit-code e697e3a6906717066f900d5ec670e223ad039f0c 4b2344950a68a76acecf16e078789af5768c2fe4 -- pkg/state/BUILD pkg/state/map_key_identity_test.go pkg/state/tests/
-        git diff --exit-code 4b2344950a68a76acecf16e078789af5768c2fe4 a7203afca1c6e80a349a677c63770882ddc8725c -- pkg/state/decode.go
+        git diff --exit-code d7b1012300396fa2fc231060839ca6268b0adff1 3bc3f660f38055553c1b6fdb1aa5857811d52209 -- pkg/state/decode.go pkg/state/tests/
+        git diff --exit-code 3bc3f660f38055553c1b6fdb1aa5857811d52209 ba9dc228113a52babcfd6cdcfefdb83f7a8fc46c -- pkg/state/BUILD pkg/state/map_key_identity_test.go pkg/state/tests/
+        git diff --exit-code ba9dc228113a52babcfd6cdcfefdb83f7a8fc46c a7203afca1c6e80a349a677c63770882ddc8725c -- pkg/state/decode.go
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py snapshot_report.py map_fix_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -74,8 +74,8 @@ jobs:
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
         overall=0
         for mode in stock fixed; do
-          source=4b2344950a68a76acecf16e078789af5768c2fe4
-          if [[ "$mode" == fixed ]]; then source=e697e3a6906717066f900d5ec670e223ad039f0c; fi
+          source=ba9dc228113a52babcfd6cdcfefdb83f7a8fc46c
+          if [[ "$mode" == fixed ]]; then source=3bc3f660f38055553c1b6fdb1aa5857811d52209; fi
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test -z "$(git status --porcelain --untracked-files=no)"
@@ -83,7 +83,7 @@ jobs:
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
           out="$RUNNER_TEMP/focused/$mode"
           args=()
-          if [[ "$mode" == stock ]]; then args+=('--test-filter=^TestMapKeyIdentity$|^TestMapLoadHookReceivers$'); fi
+          if [[ "$mode" == stock ]]; then args+=('--test-filter=^TestMapKeyIdentity$|^TestMapLoadHookReceivers$|^TestLoadValueFieldCompletion$'); fi
           code=0
           bash test/rbe/qualify.sh --arch=amd64 --test-target=//pkg/state:state_test --test-target=//pkg/state/tests:tests_test "${args[@]}" \
             "--bazel-option=--build_event_json_file=$out/events.jsonl" --bazel-option=--test_sharding_strategy=disabled \
@@ -91,7 +91,7 @@ jobs:
             '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
           python3 -B "$RUNNER_TEMP/checker/map_fix_report.py" suite "$mode" "$source" "$code" "$out" || overall=1
         done
-        python3 -B "$RUNNER_TEMP/checker/map_fix_report.py" bench 4b2344950a68a76acecf16e078789af5768c2fe4 e697e3a6906717066f900d5ec670e223ad039f0c "$RUNNER_TEMP/focused" || overall=1
+        python3 -B "$RUNNER_TEMP/checker/map_fix_report.py" bench ba9dc228113a52babcfd6cdcfefdb83f7a8fc46c 3bc3f660f38055553c1b6fdb1aa5857811d52209 "$RUNNER_TEMP/focused" || overall=1
         exit "$overall"
     - name: Save only the typed results
       if: always()

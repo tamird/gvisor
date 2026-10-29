@@ -45,10 +45,27 @@ def suite():
                 d["count"]=len(names);d["failed"]=[k for k,v in names.items() if v in ("failure","error")];d["skipped"]=[k for k,v in names.items() if v=="skipped"]
                 req=["immediate","after_load"] if root=="TestMapKeyIdentity" else ["struct_keys","struct_values","array_keys","array_values","interface_keys","interface_values","map_passed_to_LoadValue"]
                 d["required"]={v:names[f"{root}/{v}"] for v in req}
+        log=p.read_text()
+        assert "unknown type: <nil>" not in log and "Save: state violated" not in log
+        if root=="TestMapKeyIdentity":
+            fields={k:names["TestLoadValueFieldCompletion/"+k] for k in ("struct","array","interface","reference")}
+            d["field_conversions"]=fields
+            if arm=="stock":
+                assert all(fields[k]=="failure" for k in ("struct","array","interface"))
+                assert fields["reference"] in ("pass","failure")
+                assert "LoadValue copied" in log
+            else:
+                assert set(fields.values())=={"pass"}
         if arm=="fixed":
             assert d["status"]=="PASSED" and not d["failed"] and set(d["required"].values())=={"pass"}
         else:
-            assert d["status"]=="FAILED" and set(d["failed"])=={root}|{root+"/"+v for v,s in d["required"].items() if s in ("failure","error")}
+            failed={root}|{root+"/"+v for v,s in d["required"].items() if s in ("failure","error")}
+            if root=="TestMapKeyIdentity":
+                failed.add("TestLoadValueFieldCompletion")
+                failed.update("TestLoadValueFieldCompletion/"+k for k,v in fields.items() if v=="failure")
+            else:
+                assert "loaded map =" in log
+            assert d["status"]=="FAILED" and set(d["failed"])==failed
             for v,s in d["required"].items():
                 assert s==("pass" if v=="immediate" else "failure")
     assert (r["bazel_exit"],r["command_exit"])==((0,0) if arm=="fixed" else (3,1))
