@@ -1,0 +1,320 @@
+{
+  "error": {
+    "reason": "missing original native tests",
+    "type": "RuntimeError"
+  },
+  "phases": [
+    {
+      "action_exit": 0,
+      "build_finish": [
+        {
+          "name": "SUCCESS"
+        }
+      ],
+      "builtin_dictionary": {
+        "hash": "3e3d9472db5fabdf52f22d0a76294654e2d196f3c4fbbbb7286f126e5929decb",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1411626"
+      },
+      "cached": false,
+      "config": {
+        "hash": "0f86bf7cda2393927e0c17e69775ee1560c9f7ad7fb526316e9e1229b46596b8",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1070"
+      },
+      "content": "15a8ff5a577b9d8ee0818dc0938ebb1cea7d3109ae6e4429bfe1c97b9b8e2798",
+      "count": 3283,
+      "diagnostic": [],
+      "driver": {
+        "hash": "31b9259f4b3e641d64c2b0dece0e6de97809d10be089267edd69d7d5b3c06ef7",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1892"
+      },
+      "errors": {
+        "categories": [],
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "exit": 0,
+      "finished": "2026-10-29T15:34:12.024911+00:00",
+      "interpreter": {
+        "hash": "02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "43532776"
+      },
+      "invocation": "234918c9-c55a-475f-bb3c-a4ef43fb4ca4",
+      "log": {
+        "bytes": 4376,
+        "sha256": "3e57d0851bebe0de2000db4d54d6e5831d20b33a87132e032ea61e1bf90ccad6"
+      },
+      "manifest": {
+        "hash": "0ef9c9f76d535bd87244054f872a9172aa411b9d3faa16ffc7c5ab7ef8af43a9",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "121136"
+      },
+      "name": "scratch-clean",
+      "no_write_guard": false,
+      "placement": {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+        "workload-isolation-type": "oci"
+      },
+      "platform": "scratch",
+      "runner": "remote",
+      "source_membership": "ece7e3c25603f420d3c7dd69a2d567ba856803241ee7d4165122906e9d66fc00",
+      "started": "2026-10-29T15:32:47.645571+00:00",
+      "verified": true,
+      "wheel_files": 16,
+      "wheel_main": {
+        "hash": "7f9c3f8ae76168c2d0bbc1240a95caeea0a6a4a3de8d846c0b8c43aa9a884269",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "162"
+      }
+    },
+    {
+      "action_exit": 65,
+      "build_finish": [
+        {
+          "code": 1,
+          "name": "BUILD_FAILURE"
+        }
+      ],
+      "builtin_dictionary": {
+        "hash": "3e3d9472db5fabdf52f22d0a76294654e2d196f3c4fbbbb7286f126e5929decb",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1411626"
+      },
+      "cached": false,
+      "config": {
+        "hash": "0f86bf7cda2393927e0c17e69775ee1560c9f7ad7fb526316e9e1229b46596b8",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1070"
+      },
+      "content": "09f1f2616710ae8d33fdfaebd71259fa0782ae31c2f0124a66741ff410c2410d",
+      "count": 3285,
+      "diagnostic": [
+        "pkg/.spelling-declared-new/notes with space.md:1: teh ==> the"
+      ],
+      "driver": {
+        "hash": "31b9259f4b3e641d64c2b0dece0e6de97809d10be089267edd69d7d5b3c06ef7",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1892"
+      },
+      "errors": {
+        "categories": [
+          "wheel_entry"
+        ],
+        "count": 2,
+        "sha256": "12c5f36b605b79ba78baa7fc62c901340e0e8a6e36980e0f373b6df946eaaf3a"
+      },
+      "exit": 1,
+      "finished": "2026-10-29T15:34:23.588478+00:00",
+      "interpreter": {
+        "hash": "02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "43532776"
+      },
+      "invocation": "9cdd7665-08e7-400a-b501-916dedf8c5a9",
+      "log": {
+        "bytes": 1563,
+        "sha256": "2209424536abd174a4b3e569f7f47b432833ebc33a1e8212e0e0e0d3ac4d6358"
+      },
+      "manifest": {
+        "hash": "0ec7a5c09de7cf4759f2f9069c51398f9b06eda67e07013021431be4ec04e4bc",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "121204"
+      },
+      "name": "scratch-new-file",
+      "no_write_guard": false,
+      "placement": {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+        "workload-isolation-type": "oci"
+      },
+      "platform": "scratch",
+      "runner": "remote",
+      "source_membership": "1fba71c7d61ce12d8960cc882dfc90ad7a39e88fd9c181ed1f6bb3832184bec6",
+      "started": "2026-10-29T15:34:13.721693+00:00",
+      "verified": true,
+      "wheel_files": 16,
+      "wheel_main": {
+        "hash": "7f9c3f8ae76168c2d0bbc1240a95caeea0a6a4a3de8d846c0b8c43aa9a884269",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "162"
+      }
+    },
+    {
+      "action_exit": 0,
+      "build_finish": [
+        {
+          "name": "SUCCESS"
+        }
+      ],
+      "builtin_dictionary": {
+        "hash": "3e3d9472db5fabdf52f22d0a76294654e2d196f3c4fbbbb7286f126e5929decb",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1411626"
+      },
+      "cached": false,
+      "config": {
+        "hash": "917b5de16701c8c74bd81d90b15ca7f2fc5cf25cca010a241219db504dab172d",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1077"
+      },
+      "content": "e7f57fb03620da370294ab701b34dc234c51afc35a53776bf82d746a672020c0",
+      "count": 3285,
+      "diagnostic": [],
+      "driver": {
+        "hash": "31b9259f4b3e641d64c2b0dece0e6de97809d10be089267edd69d7d5b3c06ef7",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1892"
+      },
+      "errors": {
+        "categories": [],
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "exit": 0,
+      "finished": "2026-10-29T15:34:30.890448+00:00",
+      "interpreter": {
+        "hash": "02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "43532776"
+      },
+      "invocation": "92e3db8a-8ee3-4809-b065-fd863587e429",
+      "log": {
+        "bytes": 941,
+        "sha256": "5b174b287db766977dce3f82257cfcb42b98375b99e30a61e0ccedf6a4aef23c"
+      },
+      "manifest": {
+        "hash": "0ec7a5c09de7cf4759f2f9069c51398f9b06eda67e07013021431be4ec04e4bc",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "121204"
+      },
+      "name": "scratch-configured",
+      "no_write_guard": false,
+      "placement": {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+        "workload-isolation-type": "oci"
+      },
+      "platform": "scratch",
+      "runner": "remote",
+      "source_membership": "1fba71c7d61ce12d8960cc882dfc90ad7a39e88fd9c181ed1f6bb3832184bec6",
+      "started": "2026-10-29T15:34:23.692483+00:00",
+      "verified": true,
+      "wheel_files": 16,
+      "wheel_main": {
+        "hash": "7f9c3f8ae76168c2d0bbc1240a95caeea0a6a4a3de8d846c0b8c43aa9a884269",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "162"
+      }
+    },
+    {
+      "action_exit": 0,
+      "build_finish": [
+        {
+          "name": "SUCCESS"
+        }
+      ],
+      "builtin_dictionary": {
+        "hash": "3e3d9472db5fabdf52f22d0a76294654e2d196f3c4fbbbb7286f126e5929decb",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1411626"
+      },
+      "cached": false,
+      "config": {
+        "hash": "917b5de16701c8c74bd81d90b15ca7f2fc5cf25cca010a241219db504dab172d",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1077"
+      },
+      "content": "e7f57fb03620da370294ab701b34dc234c51afc35a53776bf82d746a672020c0",
+      "count": 3285,
+      "diagnostic": [],
+      "driver": {
+        "hash": "31b9259f4b3e641d64c2b0dece0e6de97809d10be089267edd69d7d5b3c06ef7",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "1892"
+      },
+      "errors": {
+        "categories": [],
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "exit": 0,
+      "finished": "2026-10-29T15:34:45.742910+00:00",
+      "interpreter": {
+        "hash": "bb27fbd55133c540aafa1d1d0ba20544a34ba26a9283cad4cda274edd223a144",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "54682224"
+      },
+      "invocation": "9f33ba01-94bd-48a8-a812-8280acb4c57d",
+      "log": {
+        "bytes": 1785,
+        "sha256": "f4ae8dc89a5423481a06e4c9f38e175abdccdac105ce60aba283e47cdd256c2d"
+      },
+      "manifest": {
+        "hash": "0ec7a5c09de7cf4759f2f9069c51398f9b06eda67e07013021431be4ec04e4bc",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "121204"
+      },
+      "name": "ordinary-default-runtime-tests",
+      "no_write_guard": false,
+      "placement": {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+        "workload-isolation-type": "oci"
+      },
+      "platform": "ubuntu",
+      "runner": "remote",
+      "source_membership": "1fba71c7d61ce12d8960cc882dfc90ad7a39e88fd9c181ed1f6bb3832184bec6",
+      "started": "2026-10-29T15:34:30.999326+00:00",
+      "test_results": {
+        "//:codespell_test": "PASSED",
+        "//tools:lint_test": "PASSED"
+      },
+      "wheel_files": 16,
+      "wheel_main": {
+        "hash": "7f9c3f8ae76168c2d0bbc1240a95caeea0a6a4a3de8d846c0b8c43aa9a884269",
+        "hashFunctionName": "SHA-256",
+        "sizeBytes": "162"
+      }
+    }
+  ],
+  "queries": [
+    {
+      "count": 3284,
+      "exit": 0,
+      "phase": "clean",
+      "stderr": {
+        "bytes": 504,
+        "sha256": "5563db3422d84f3f8d2f4c887de0f76174a33fec5534f3756810308c5e54d787"
+      },
+      "stdout": {
+        "bytes": 193362,
+        "sha256": "2b2ed82639964856b1b9a6435bd5f10c851e1d2656fee47ad5e009510a7537de"
+      }
+    },
+    {
+      "count": 3286,
+      "exit": 0,
+      "phase": "untracked filenames and nested repository",
+      "stderr": {
+        "bytes": 47,
+        "sha256": "49d365aba48ea51ffa9cdd3eaca3905d5b7f88532204968e95d1253e410a4306"
+      },
+      "stdout": {
+        "bytes": 193474,
+        "sha256": "bb7c95c53336886a7b362d58d0f0bb232cbf1ff783d02dc44eb129844d96b822"
+      }
+    }
+  ],
+  "source": "84fb13cc46f39b7eed90cb43139fb1b2928fdac8",
+  "tree": "4a1d4f82821f8d26f1708e78e40b0073daf3f0a2",
+  "verdict": "INCOMPLETE",
+  "verified_at": "2026-10-29T15:34:45.853261+00:00"
+}

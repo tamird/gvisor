@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: source, ref: 84fb13cc46f39b7eed90cb43139fb1b2928fdac8, persist-credentials: false}
       - name: Prepare the previously qualified file-backed Python runtime
-        if: ${{ !cancelled() }}
+        id: runtime
         env:
           ARCHIVE: https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst
         run: |
@@ -29,8 +29,19 @@ jobs:
           readelf -h "$p/bin/python3.11" | grep -F 'Advanced Micro Devices X86-64'
           if readelf -lW "$p/bin/python3.11" | grep -q INTERP; then exit 1; fi
           if readelf -dW "$p/bin/python3.11" | grep -q NEEDED; then exit 1; fi
-      - name: Check declared inputs and actual remote outcomes
-        if: ${{ !cancelled() }}
+      - name: Bind the two original Ubuntu TestRunners
+        id: read
+        env:
+          ORIGINAL_READ_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set +e
+          python3 -B carrier/.github/qualification/spelling-declared/read.py '//:codespell_test'
+          a=$?
+          python3 -B carrier/.github/qualification/spelling-declared/read.py '//tools:lint_test'
+          b=$?
+          exit "$((a | b))"
+      - name: Check only the as-yet unexecuted no-write guard
+        if: ${{ !cancelled() && steps.runtime.outcome == 'success' }}
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -52,4 +63,6 @@ jobs:
           name: declared-spelling
           path: |
             ${{ runner.temp }}/spelling-evidence/result.json
+            ${{ runner.temp }}/codespell_test.json
+            ${{ runner.temp }}/lint_test.json
           if-no-files-found: error

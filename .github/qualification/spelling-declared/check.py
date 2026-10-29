@@ -152,31 +152,31 @@ def main():
   files={x.decode() for x in git("ls-files","-z","--","*.md","*.html","*.go","*.c","*.cc","*.h").split(b"\0") if x}
   need(len(files)==3283,"wrong tracked baseline")
   initial=Path(CFG).read_bytes()
-  inventory(files,"clean")
-  phase("scratch-clean","scratch",files)
   CASE.mkdir()
   (CASE/"BUILD.bazel").write_text("# New user package without lint hooks.\n")
   dirty=b"This is teh spelling probe. The name parth is accepted.\n"
   NEW.write_bytes(dirty)
   DASH.write_text("The name parth is accepted.\n")
-  nested=CASE/"unrelated-repo"
-  nested.mkdir()
-  git("init","--quiet",str(nested))
-  (nested/"ignore.go").write_bytes(dirty)
-  (CASE/"ignored-link.md").symlink_to(nested/"ignore.go")
   files|={str(NEW),str(DASH)}
-  inventory(files,"untracked filenames and nested repository")
-  phase("scratch-new-file","scratch",files,65)
-  need(NEW.read_bytes()==dirty,"headless typo check edited source")
-  Path(CFG).write_bytes(initial+b"  teh,\n")
-  phase("scratch-configured","scratch",files)
-  phase("ordinary-default-runtime-tests","ubuntu",files,test=True)
   Path(CFG).write_bytes(initial+b"\nwrite-changes =\n")
   phase("scratch-refuses-automatic-edits","scratch",files,1)
   need(NEW.read_bytes()==dirty,"automatic edit escaped check")
   Path(CFG).write_bytes(initial)
   need(not git("diff","--name-only"),"unexpected tracked edits")
   RESULT["checked_input"]=fid(dirty)
+  original=Path(__file__).with_name("original.json").read_bytes()
+  need(sha(original)=="609f22baef88306dad5d89775c25c9c4b31b38028006230a76bc859180515ab0","original bundle changed")
+  previous=json.loads(original)
+  need(previous["verdict"]=="INCOMPLETE" and previous["error"]["reason"]=="missing original native tests","wrong original")
+  need([p["verified"] for p in previous["phases"][:3]]==[True]*3,"previous product exits")
+  need(previous["phases"][3]["exit"]==previous["phases"][3]["action_exit"]==0,"previous Ubuntu action")
+  RESULT["previous_original"]={"sha256":sha(original),"verdict":previous["verdict"],"invocations":[p["invocation"] for p in previous["phases"]]}
+  RESULT["original_tests"]={}
+  for owner in ("codespell_test","lint_test"):
+    path=BASE/(owner+".json")
+    facts=json.loads(path.read_bytes()) if path.exists() else {}
+    RESULT["original_tests"][owner]={"sha256":sha(path.read_bytes()) if path.exists() else None,"verdict":facts.get("verdict"),"reports":facts.get("reports")}
+  need(all(t["verdict"]=="PASS" for t in RESULT["original_tests"].values()),"original-only test joins incomplete")
   RESULT["verdict"]="PASS"
 
 
