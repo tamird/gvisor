@@ -60,6 +60,11 @@ exceptions:
       test containers and is not linked into released gVisor binaries.
       Its source archive and GPLv2 license are retained with the build inputs,
       and the test image includes the license text.
+  - dependency: pypi/codespell-2.3.0-py3-none-any.whl
+    license: GPL-2.0-only
+    exception_rationale: >-
+      Codespell runs as a separate source checker. Its code and dictionaries
+      are not linked into or distributed with gVisor release binaries.
   - dependency: qemu_user_prebuilt_linux_amd64_aarch64
     license: GPL-2.0-only
     exception_rationale: >-

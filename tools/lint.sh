@@ -22,10 +22,6 @@
 #   tools/lint.sh                        # run every check
 #   tools/lint.sh goimports clang-format  # run only the named checks
 #   tools/lint.sh --fix                  # rewrite files in place where a check can
-#
-# Environment:
-#   LINT_CACHE_DIR   where to cache downloaded linters
-#                    (default: ~/.cache/gvisor/lint)
 
 set -euo pipefail
 
@@ -33,13 +29,6 @@ declare REPO_DIR
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly REPO_DIR
 cd "${REPO_DIR}"
-
-declare CACHE_DIR="${LINT_CACHE_DIR:-${HOME}/.cache/gvisor/lint}"
-if ! mkdir -p "${CACHE_DIR}" 2>/dev/null; then
-  CACHE_DIR="/tmp/gvisor-lint-cache-$(id -u)"
-  mkdir -p "${CACHE_DIR}"
-fi
-readonly CACHE_DIR
 
 # Every check, in run order, named as tools/lint.sh accepts it.
 declare -ra ALL_CHECKS=(goimports clang-format cpplint buildifier spelling)
@@ -49,56 +38,11 @@ declare -ra FIXABLE_CHECKS=(goimports clang-format buildifier)
 declare -ra OPTIONAL_CHECKS=(actions clang-tidy)
 declare -ra KNOWN_CHECKS=("${ALL_CHECKS[@]}" "${OPTIONAL_CHECKS[@]}")
 
-declare -r CODESPELL_VERSION="2.3.0"
-
-# The codespell wheel is architecture-independent.
-declare -r CODESPELL_URL="https://files.pythonhosted.org/packages/0e/20/b6019add11e84f821184234cea0ad91442373489ef7ccfa3d73a71b908fa/codespell-${CODESPELL_VERSION}-py3-none-any.whl"
-declare -r CODESPELL_SHA256="a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1"
-
 # FIX is set by --fix; checks that can rewrite files consult it.
 declare FIX=0
 
-# fetch <url> <sha256> <output> downloads a file and verifies its checksum,
-# leaving <output> in place only if the checksum matches.
-fetch() {
-  local -r url="$1" want="$2" out="$3"
-  local tmp
-  tmp="$(mktemp "${out}.XXXXXX")"
-  if ! curl --fail --silent --show-error --location --retry 3 \
-      --max-time 300 --output "${tmp}" "${url}"; then
-    rm -f "${tmp}"
-    echo "lint: failed to download ${url}" >&2
-    return 1
-  fi
-  local got
-  got="$(sha256sum "${tmp}" | cut -d' ' -f1)"
-  if [[ "${got}" != "${want}" ]]; then
-    rm -f "${tmp}"
-    echo "lint: checksum mismatch for ${url}" >&2
-    echo "lint:   want ${want}" >&2
-    echo "lint:   got  ${got}" >&2
-    return 1
-  fi
-  mv "${tmp}" "${out}"
-}
-
-install_codespell() {
-  local -r dir="${CACHE_DIR}/codespell-${CODESPELL_VERSION}"
-  if [[ ! -d "${dir}" ]]; then
-    local -r wheel="${CACHE_DIR}/codespell.whl"
-    fetch "${CODESPELL_URL}" "${CODESPELL_SHA256}" "${wheel}"
-    rm -rf "${dir}.tmp"
-    mkdir -p "${dir}.tmp"
-    unzip -q "${wheel}" -d "${dir}.tmp"
-    mv "${dir}.tmp" "${dir}"
-    rm -f "${wheel}"
-  fi
-  echo "${dir}"
-}
-
 # Only tracked files, to skip bazel-* symlinks and other build output.
 go_files() { git ls-files -z -- '*.go' "$@"; }
-doc_files() { git ls-files -z -- '*.md' '*.html'; }
 cc_files() { git ls-files -z -- '*.c' '*.cc' '*.h'; }
 bazel_files() {
   git ls-files -z -- 'BUILD' '*/BUILD' '*.bzl' 'WORKSPACE' 'MODULE.bazel'
@@ -179,13 +123,7 @@ check_actions() {
 }
 
 check_spelling() {
-  local codespell_dir
-  codespell_dir="$(install_codespell)"
-  # Source is included, so identifiers codespell reads as prose (offsetP,
-  # FillIn, ...) need entries in tools/.codespellrc.
-  { doc_files && go_files && cc_files; } |
-    PYTHONPATH="${codespell_dir}" xargs -0 python3 -m codespell_lib \
-      --config "${REPO_DIR}/tools/.codespellrc"
+  bazel build //:codespell
 }
 
 check_cpplint() {
@@ -270,8 +208,6 @@ run_check() {
 }
 
 main() {
-  mkdir -p "${CACHE_DIR}"
-
   local -a args=()
   local arg
   for arg in "$@"; do

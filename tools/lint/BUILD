@@ -6,6 +6,13 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(["requirements.txt"])
+
+exports_files(
+    ["spelling.py"],
+    visibility = ["//visibility:private"],
+)
+
 native_binary(
     name = "cpplint",
     src = "@cpplint",

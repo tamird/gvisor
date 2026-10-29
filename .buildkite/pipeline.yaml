@@ -341,7 +341,8 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":broom: Lint"
-    command: make lint
+    # These agents provide Bazel in the builder.
+    command: make DOCKER_BUILD=true lint
     agents:
       arch: "amd64"
   - <<: *common

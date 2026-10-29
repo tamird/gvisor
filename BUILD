@@ -5,6 +5,7 @@ load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools/lint:spelling.bzl", "spelling")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -12,6 +13,13 @@ load("//website:defs.bzl", "doc")
 package(
     default_applicable_licenses = [":license"],
     licenses = ["notice"],
+)
+
+spelling(name = "codespell")
+
+build_test(
+    name = "codespell_test",
+    targets = [":codespell"],
 )
 
 license(
