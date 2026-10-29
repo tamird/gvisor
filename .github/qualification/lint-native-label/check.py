@@ -27,7 +27,7 @@ def verify():
         frame = scratch / (mode + "-spawns.json")
         cmd = ["bazel", "--bazelrc=" + os.environ["SUPPLIER_RC"], "build",
                "--host_platform=@lint_supplier_host//:scratch", "--extra_execution_platforms=@lint_supplier_host//:scratch",
-               "--platforms=//tools/bazeldefs:linux_amd64", "--noremote_accept_cached", "--action_env=BUILDIFIER_CONFIG=example",
+               "--platforms=//tools/bazeldefs:linux_arm64", "--noremote_accept_cached", "--action_env=BUILDIFIER_CONFIG=example",
                "--execution_log_json_file=" + str(frame), "//:buildifier"]
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         phase.update(finish=now(), bazel_exit=p.returncode)

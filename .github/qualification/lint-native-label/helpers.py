@@ -14,7 +14,7 @@ TREE = "cab5b87ef4b0f432b08b71f5d1d2548e8e5f0440"
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
 PYTHON = "02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394"
 CPP = "f3920e47d89eba739f866405745ce6b88db1395b8dacf83d880bac95043fa8d5"
-BUILDIFIER = "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7"
+BUILDIFIER = "947bf6700d708026b2057b09bea09abbc3cafc15d9ecea35bb3885c4b09ccd04"
 ROOT = Path(os.environ["RUNNER_TEMP"])
 CASE = Path("test/util/.lint_pilot_control")
 BAD_BZL = str(CASE / "bad formatting.bzl")
@@ -81,7 +81,7 @@ def report(phase, tool, spawn, wanted, configs, wanted_exit, log):
            "inputs_match": actual == wanted_hash, "spawn": fs[args[0]]["digest"], "program": fs[native]["digest"],
            "output": [f.get("digest") for f in spawn.get("actualOutputs", []) if f["path"].endswith(".report")]}
     phase["actions"][tool] = row
-    check(row["runner"] == "remote" and not row["cache"] and row["worker_image"] == IMAGE and row["worker_arch"] == "amd64", "wrong physical execution")
+    check(row["runner"] == "remote" and not row["cache"] and row["worker_image"] == IMAGE and row["worker_arch"] == "arm64", "wrong physical execution")
     check(row["inputs_match"] and len(rows) == len(wanted_hash), "incomplete declared source bytes")
     check(row["action_exit"] == wanted_exit, "unexpected native checker exit")
     direct = [a.split("/ROOT.d/",1)[1] for a in args if "/ROOT.d/" in a and not a.startswith("--")]
