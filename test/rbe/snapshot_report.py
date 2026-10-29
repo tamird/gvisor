@@ -45,12 +45,9 @@ try:
     r["failures"] = sorted(failed)
     r["cases"] = cases
     r["observations"] = [l.strip() for l in files["test.log"].decode(errors="replace").splitlines() if "want 112233" in l]
-    regressions = {"TestSaveSliceAliases/"+s for s in ("short-first","long-first")}
-    assert cases.get("TestSaveSliceAliases/both-long") == "pass", cases
-    assert regressions<=failed<=regressions|{"TestSaveSliceAliases"}, failed
-    assert (int(code),r["bazel_exit"],t["status"]) == (1,3,"FAILED")
-    for when in ("live while Save is writing", "live after Save", "restored longer view"):
-        assert sum(when+" = 110000, want 112233" in l for l in r["observations"]) == 2, r["observations"]
+    assert not failed, failed
+    assert (int(code),r["bazel_exit"],t["status"]) == (0,0,"PASSED")
+    assert all(cases.get("TestSaveSliceAliases/"+s) == "pass" for s in ("both-long","long-first","short-first"))
     r["matched"]=True
     r["verdict"]="COMPLETE"
 except Exception as exc:

@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-live-slice-aliases'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-graph-live-slice-aliases'
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     steps:
@@ -13,7 +13,7 @@ jobs:
       with:
         fetch-depth: 12
         persist-credentials: false
-    - name: Compare stock, corrected checkpointing, and the encoder simplification
+    - name: Check the public graph engine on the same live slice cases
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
@@ -69,12 +69,12 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
-        git diff --exit-code 84f545eaa875391da84d3ed484730e91481aa59b acedf983df34a8a45c5f1b540703eec1384ca3f0 -- pkg/state/encode.go pkg/state/encode_unsafe.go pkg/state/state.go
+        git diff --exit-code 754104621d7811f5aa5ba5ac3e178401f229e3f6 e7250696027b47fa77d68254e86d2f69802ba8a3 -- pkg/state/encode.go pkg/state/encode_unsafe.go pkg/state/state.go
         overall=0
-        for mode in stock; do
+        for mode in graph; do
           args=()
           owner=//pkg/state/tests:tests_test
-          source=acedf983df34a8a45c5f1b540703eec1384ca3f0
+          source=e7250696027b47fa77d68254e86d2f69802ba8a3
           filter='^TestSaveSliceAliases$'
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
