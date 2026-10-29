@@ -401,6 +401,7 @@ class ConfiguredTarget:
     tags: list[str]
     configuration: str
     aspects: tuple[str, ...] = ()
+    is_alias: bool = False
 
 
 def configured_targets(
@@ -513,7 +514,7 @@ def configured_targets(
         all_configured.add((label, configurations[0]))
         if tests is not None and ("testSize" in configured) != tests:
             continue
-        targets[label] = ConfiguredTarget(tags, configurations[0])
+        targets[label] = ConfiguredTarget(tags, configurations[0], is_alias=configured.get("targetKind") == "alias rule")
     if abort_diagnostics:
         raise ValueError("; ".join(abort_diagnostics.values()))
     if orphaned := aspects.keys() - all_configured:
@@ -542,7 +543,7 @@ def configured_targets(
     if not succeeded or not targets:
         raise ValueError(f"Expected successful, nonempty target analysis: {events_path}")
     return {label: ConfiguredTarget(target.tags, target.configuration,
-                                    tuple(aspects.get((label, target.configuration), ())))
+                                    tuple(aspects.get((label, target.configuration), ())), target.is_alias)
             for label, target in targets.items()}
 
 
