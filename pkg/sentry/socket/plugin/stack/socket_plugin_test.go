@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"golang.org/x/sys/unix"
-	"gvisor.dev/gvisor/pkg/sentry/socket/plugin"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
@@ -40,9 +39,7 @@ func TestRejectedMaskUpdate(t *testing.T) {
 	// TLDK routes ordinary file descriptors to Linux's epoll_ctl.
 	s := socketOperations{fd: uint32(fds[0])}
 	s.eventInfo.Wq = &waiter.Queue{}
-	n := &Notifier{epFD: int32(epfd), eventMap: make(map[uint32]*plugin.EventInfo)}
-	n.AddFD(s.fd, &s.eventInfo)
-	defer n.RemoveFD(s.fd)
+	n := &Notifier{epFD: int32(epfd)}
 	prev := stack
 	stack = &Stack{notifier: n}
 	defer func() { stack = prev }()
