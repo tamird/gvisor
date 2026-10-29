@@ -58,6 +58,15 @@ alias(
     actual = select({":" + buildtools.create_unique_name(a): "@" + buildtools.create_unique_name(a) + "//file" for a in ASSETS}),
 )
 
+# Qualification-only execution placement: compile the Go programs on an
+# ordinary worker but run all three linters in the same empty image.
+SCRATCH = {
+    "Arch": "amd64",
+    "OSFamily": "linux",
+    "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+    "workload-isolation-type": "oci",
+}
+
 run_binary(
     name = "buildifier",
     srcs = [
@@ -66,6 +75,7 @@ run_binary(
         "@lint_inputs//:buildifier_config",
     ],
     args = BUILDIFIER_FLAGS + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["buildifier"]],
+    exec_properties = SCRATCH,
     mnemonic = "BuildifierCheck",
     stdout = "buildifier.report",
     tool = ":buildifier_binary",
@@ -80,6 +90,7 @@ run_binary(
             "@lint_inputs//:buildifier_config",
         ],
         args = BUILDIFIER_FLAGS + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["buildifier"]],
+        exec_properties = SCRATCH,
         mnemonic = "Buildifier" + mnemonic,
         stdout = "buildifier_" + name + ".report",
         tool = tool,
@@ -87,6 +98,30 @@ run_binary(
     for name, mnemonic, tool in [
         ("gazelle", "Gazelle", "@com_github_bazelbuild_buildtools//buildifier"),
         ("pinned", "Pinned", "@lint_buildtools_851//buildifier"),
+    ]
+]
+
+[
+    run_binary(
+        name = "canonical_" + name,
+        srcs = [
+            "@lint_inputs//:ROOT",
+            "@lint_inputs//:buildifier",
+        ],
+        args = [
+            "--config=off",
+            "--mode=print_if_changed",
+            "--",
+            ROOT + "/" + path,
+        ],
+        exec_properties = SCRATCH,
+        mnemonic = "CanonicalBuildifier",
+        stdout = "canonical_" + name + ".out",
+        tool = ":buildifier_binary",
+    )
+    for name, path in [
+        ("build", "tools/lint/BUILD"),
+        ("module", "MODULE.bazel"),
     ]
 ]
 

@@ -30,6 +30,7 @@ use_repo(
 # Compare the Buildtools already selected by Gazelle with Buildifier 8.5.1.
 lint_go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps", dev_dependency = True)
 use_repo(lint_go_deps, "com_github_bazelbuild_buildtools")
+
 inject_repo(lint_go_deps, "rules_proto")
 
 lint_go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
