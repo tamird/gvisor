@@ -7,6 +7,13 @@ package(
     licenses = ["notice"],
 )
 
+# Direct imports of main.go, shared by its normal, race, and coverage binaries.
+MAIN_DEPS = [
+    "//runsc/cli/maincli",
+    "//runsc/coretagprime",
+    "//runsc/version",
+]
+
 go_binary(
     name = "runsc",
     srcs = ["main.go"],
@@ -18,11 +25,7 @@ go_binary(
     # not on this target directly.
     visibility = ["//:__subpackages__"],
     x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
-    deps = [
-        "//runsc/cli/maincli",
-        "//runsc/coretagprime",
-        "//runsc/version",
-    ],
+    deps = MAIN_DEPS,
 )
 
 go_binary(
@@ -69,11 +72,7 @@ go_binary(
         "//visibility:public",
     ],
     x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
-    deps = [
-        "//runsc/cli/maincli",
-        "//runsc/coretagprime",
-        "//runsc/version",
-    ],
+    deps = MAIN_DEPS,
 )
 
 deps_test(
@@ -167,10 +166,7 @@ go_cov(
     pure = True,
     race = "off",
     visibility = ["//debian:__pkg__"],
-    deps = [
-        "//runsc/cli/maincli",
-        "//runsc/version",
-    ],
+    deps = MAIN_DEPS,
 )
 
 go_cov(
@@ -185,8 +181,5 @@ go_cov(
     race = "on",
     static = True,
     visibility = ["//debian:__pkg__"],
-    deps = [
-        "//runsc/cli/maincli",
-        "//runsc/version",
-    ],
+    deps = MAIN_DEPS,
 )
