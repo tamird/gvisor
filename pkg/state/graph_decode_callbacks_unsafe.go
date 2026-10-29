@@ -349,13 +349,9 @@ func (gd *graphStructDecoder) loadValue(slot int, objPtr any, fn func(any)) {
 	ds.keepZero = false
 	ds.decodeValue(ti, e.data)
 	ds.keepZero = keepZero
-	var cb decodeCallback
-	if ti.kind == reflect.Interface && ds.hooks != hooks {
-		p := e.data
-		cb = decodeCallback{fn: func() { fn(makeAny(ti, p)) }, waiter: -1}
-	} else {
-		cb = decodeCallback{valueFn: fn, value: makeAny(ti, e.data), waiter: -1}
-	}
+	// LoadValue passes an ordinary Go value to user code. Snapshot it when
+	// the callback runs: it may outlive or modify the destination.
+	cb := decodeCallback{fn: func() { fn(reflect.ValueOf(objPtr).Elem().Interface()) }, waiter: -1}
 	if ds.lastRef >= 0 {
 		if ds.lastRef != ds.cur && ds.lastRef != 0 {
 			ds.wait(ds.cur, ds.lastRef, cb)
