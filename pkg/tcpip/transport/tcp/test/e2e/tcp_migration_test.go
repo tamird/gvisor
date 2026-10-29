@@ -750,3 +750,101 @@ func TestGSOAfterRestore(t *testing.T) {
 		})
 	}
 }
+
+func TestRestoreSendTimer(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		window seqnum.Size
+		writes int
+		sack   bool
+	}{
+		{"idle", 30000, 0, false},
+		{"data", 30000, 1, false},
+		{"persist", 0, 1, false},
+		{"tail", 30000, 2, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, Clock: clock})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+
+			var opts []byte
+			if tc.sack {
+				opts = []byte{header.TCPOptionSACKPermitted, 2, header.TCPOptionNOP, header.TCPOptionNOP}
+			}
+			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, tc.window, -1, opts)
+			c.EP.SocketOptions().SetDelayOption(false)
+			for i := range tc.writes {
+				data := []byte{byte(42 + i)}
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); n != len(data) || err != nil {
+					t.Fatalf("Write(%x) = %d, %v", data, n, err)
+				}
+			}
+			c.Stack().Pause()
+			c.Stack().Resume()
+			for i := 0; ; i++ {
+				p := c.GetPacketNonBlocking()
+				if p == nil {
+					want := tc.writes
+					if tc.window == 0 {
+						want = 0
+					}
+					if i != want {
+						t.Fatalf("packets before save = %d, want %d", i, want)
+					}
+					break
+				}
+				p.Release()
+			}
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			deadline := info.RTO
+			if tc.sack {
+				// No RTT has elapsed during the handshake, so the initial
+				// tail-loss probe uses its one-second timeout.
+				deadline = time.Second
+			}
+			elapsed := deadline / 2
+			clock.Advance(elapsed)
+			st, link := restoreGSORoute(t, c, 1500, stack.GSONotSupported)
+			defer st.Destroy()
+			restored := st.Clock().(*faketime.ManualClock)
+			restored.Advance(deadline - elapsed - time.Nanosecond)
+			if p := link.Read(); p != nil {
+				p.DecRef()
+				t.Fatal("restored sender transmitted before the original deadline")
+			}
+			// The peer sends nothing. The restored timer must expire on
+			// its original deadline, rather than after a fresh timeout.
+			restored.Advance(time.Nanosecond)
+			out := link.Read()
+			if out != nil {
+				defer out.DecRef()
+			}
+			if got, want := out != nil, tc.writes != 0; got != want {
+				t.Fatalf("restored %s: packet by deadline = %t, want %t", tc.name, got, want)
+			}
+			if out != nil {
+				// A retransmission sends the oldest byte. A tail-loss probe
+				// sends the newest; a persist probe precedes SND.UNA.
+				wantSeq, wantByte := uint32(c.IRS.Add(1)), byte(42)
+				if tc.sack {
+					wantSeq, wantByte = uint32(c.IRS.Add(2)), 43
+				} else if tc.window == 0 {
+					wantSeq, wantByte = uint32(c.IRS), 0
+				}
+				if got := header.TCP(out.TransportHeader().Slice()).SequenceNumber(); got != wantSeq {
+					t.Fatalf("sequence = %d, want %d", got, wantSeq)
+				}
+				if got := out.Data().AsRange().ToSlice(); !bytes.Equal(got, []byte{wantByte}) {
+					t.Fatalf("payload = %x, want %02x", got, wantByte)
+				}
+			}
+			t.Logf("restored %s: original deadline and packet satisfied", tc.name)
+		})
+	}
+}
