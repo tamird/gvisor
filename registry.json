@@ -17018,7 +17018,7 @@
         "kind": "amendment",
         "head": "a51fb04e5f49a367435fa87e9b7a302c6150f9fb",
         "baseHead": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
-        "url": "https://github.com/tamird/gvisor/commit/a51fb04e5",
+        "url": "https://github.com/tamird/gvisor/commit/a51fb04e5f49a367435fa87e9b7a302c6150f9fb",
         "title": "Reject invalid sudo IDs before setting up the sandbox",
         "summary": "The --dir implementation added on master called a helper the PR removes. Parse the invoking UID and GID once, use them for both mappings and directory ownership, and reject invalid values before creating host directories.",
         "body": "The PR removed a helper that master now calls while creating --dir paths. Validate SUDO_UID and SUDO_GID once, then pass the pair to directory ownership and the user namespace. A regression checks that invalid input creates no host directory. Publication and the reviewer reply are conditional on the exact-source checks passing."
