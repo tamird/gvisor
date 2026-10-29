@@ -50,21 +50,51 @@ def verify(rows, sample):
         end=start+f["Bytes"]
         ack = next((r for r in rx if r[0]>i0 and r[1]>=end),None)
         stop=ack[0] if ack else len(rows)
-        segments=[(i,s,n,c,t) for i,s,n,c,t in tx if i0<i<stop and start<=s<end]
-        gaps=[]
-        cursor=start
-        for i,s,n,c,t in segments:
-            if s!=cursor: gaps.append([cursor-start,s-start])
-            cursor=max(cursor,s+n)
-        first=segments[0] if segments else None
-        last=segments[-1] if segments else None
-        advance=[a-start for i,a,_,_ in rx if last and i0<i<last[0] and a>start]
-        extras=[[s-start,n] for i,s,n,_,_ in tx if last and i0<i<=last[0] and not start<=s<end]
-        result={"offset":start,"bytes":f["Bytes"],"frames":len(segments),
-                "declared_payload_bytes":sum(x[2] for x in segments),"captured_payload_bytes":sum(x[3] for x in segments),
-                "wire_elapsed_ns":first[4]-ts0 if first else None,"gaps_or_overlaps":gaps,"early_acks":advance,"extras":extras,
-                "next_ack":None if not ack else ack[1]-start,
-                "covered":bool(segments and not gaps and not advance and not extras and cursor==end and (slot==5 or (ack and ack[1]==end)))}
+        # Native TCP_INFO and the PacketImpact socket read take an early
+        # snapshot. Count *all* unique wire bytes up to the next ACK, including
+        # bytes beyond that snapshot. For the last wave there is no ACK, so
+        # stop once its originally observed prefix is covered (before teardown).
+        wanted = set(range(start,end))
+        def octets(items):
+            return {v for _,s,n,_,_ in items for v in range(s,s+n)}
+        prior = octets([r for r in tx if repairs[-1] < r[0] <= i0])
+        current = [r for r in tx if i0 < r[0] < stop]
+        if not ack:
+            seen = set(prior)
+            prefix = []
+            for r in current:
+                prefix.append(r)
+                seen.update(range(r[1],r[1]+r[2]))
+                if wanted <= seen:
+                    break
+            current = prefix
+        present = octets(current)
+        # Clip and simplify coverage as half-open normalized ranges; addresses,
+        # activity outside this test connection and payload remain private.
+        def intervals(values):
+            ranges = []
+            for x in sorted(values):
+                if ranges and ranges[-1][1]==x:
+                    ranges[-1][1]=x+1
+                else:
+                    ranges.append([x,x+1])
+            return ranges
+        first = current[0] if current else None
+        prior_part = wanted & prior
+        missing = wanted - (prior | present)
+        first_at = current[0][0] if current else stop
+        advancing = [(i,a) for i,a,_,_ in rx if i0<i<stop and a>start]
+        result={"offset":start,"expected_bytes":f["Bytes"],"frames":len(current),
+                "new_bytes_in_ack_interval":len(present-prior),
+                "declared_payload_bytes":sum(x[2] for x in current),"captured_payload_bytes":sum(x[3] for x in current),
+                "previously_sent_in_this_expected_window":intervals(prior_part),
+                "sent_past_expected_window_before_ack":intervals({x for x in present if x >= end}),
+                "missing_after_full_capture":intervals(missing),
+                "uncovered_anywhere":intervals(wanted - octets(tx)),
+                "repeated_payload_bytes":sum(x[2] for x in current)-len(present-prior),
+                "early_acks":[a-start for i,a in advancing],
+                "wire_elapsed_ns":first[4]-ts0 if first else None,"next_ack":None if not ack else ack[1]-start,
+                "covered":bool(first and not missing and not advancing and (slot==5 or (ack and ack[1]==end)))}
         flights.append(result)
         if ack:
             i0,_,_,ts0=ack
