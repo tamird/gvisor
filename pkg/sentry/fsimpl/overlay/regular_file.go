@@ -268,8 +268,6 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
-	fd.mu.Lock()
-	defer fd.mu.Unlock()
 	fd.cachedFD.EventUnregister(e)
 }
 
