@@ -1,0 +1,43 @@
+name: Retain verified work-map snapshot
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Published snapshot commit
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ inputs.revision }}
+      - name: Verify the exact published snapshot
+        run: |
+          node metadata-preflight.mjs . > snapshot-verdict.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import subprocess
+          path = Path("snapshot-verdict.json")
+          verdict = json.loads(path.read_text())
+          verdict["sourceCommit"] = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          snapshot = json.loads(Path("github-status.json").read_text())
+          decisions = sorted(k for k, v in snapshot["workStates"].items() if "contributor-review" in v)
+          assert {"pr:15432", "pr:16620", "pr:16584", "branch:release-archives-versioned"} <= set(decisions)
+          assert {"pr:15145", "branch:declared-release-version", "branch:package-version-status"}.isdisjoint(decisions)
+          verdict["pendingDecisions"] = decisions
+          path.write_text(json.dumps(verdict, indent=2) + "\n")
+          print(json.dumps(verdict))
+          PY
+      - name: Retain the collector output and its verdict
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-snapshot
+          path: |
+            github-status.json
+            snapshot-verdict.json
+          if-no-files-found: error
