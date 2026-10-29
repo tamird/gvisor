@@ -209,6 +209,7 @@ jobs:
             --bazel-option=--strategy=SourceImageOCI=local)
         fi
         rc=0
+        export QUALIFICATION_REQUIRED_CASES=test/rbe/fsconfigfd-case.json
         bash test/rbe/actions.sh "${options[@]}" || rc=$?
         sha256sum --check "$RUNNER_TEMP/qualification-module-lock.sha256" || { (( rc != 0 )) || rc=1; }
         exit "$rc"
