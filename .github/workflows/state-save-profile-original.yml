@@ -1,7 +1,7 @@
 name: Read the completed Nginx Save profiles
 on:
   push:
-    branches: [qualification/state-save-profile-original]
+    branches: [qualification/state-save-profile-original-events]
 permissions:
   contents: read
   actions: read
@@ -34,9 +34,10 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: original-nginx-save-result
+          name: original-nginx-save-events
           path: |
             ${{ runner.temp }}/phase-results/result.json
             ${{ runner.temp }}/phase-results/native.json
+            ${{ runner.temp }}/phase-results/read-diagnostic.json
           if-no-files-found: error
           retention-days: 30
