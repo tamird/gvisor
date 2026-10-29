@@ -1,7 +1,7 @@
-name: Verify native clock-missing-analyzers
+name: Verify clock analyzers with local Linux analysis and remote tests
 on:
   push:
-    branches: [qualification/clock-missing-analyzers-oct29]
+    branches: [qualification/clock-linux-analyzers-oct29]
 permissions:
   contents: read
 jobs:
@@ -71,6 +71,7 @@ jobs:
               'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
               'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
               'build --remote_accept_cached' \
+              'build --strategy=GoStaticAnalysis=local' 'build --jobs=3' \
               "build --inject_repository=catalog_platform=$platform" \
               'build --host_platform=@catalog_platform//:gnu' \
               'build --extra_execution_platforms=@catalog_platform//:gnu' \

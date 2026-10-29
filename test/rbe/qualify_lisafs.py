@@ -59,6 +59,11 @@ try:
                      "commit_file": "commit", "source_before": "before", "source_after": "after", "final_head": "head",
                      "native_exit": "exit", "capture_exit": "capture", "executed_arguments": "args"})
     log=(d/"command.log").read_text(errors="replace")
+    lines=log.splitlines()
+    for i,line in enumerate(lines):
+        if line.startswith("ERROR:") and "failed:" in line:
+            r["action_failure"]=[l[:1000] for l in lines[i:i+8] if "key=" not in l.lower() and "remote_header" not in l]
+            break
     r["invocations"] = re.findall(r"Invocation ID: ([0-9a-f-]{36})", log)
     assert r["invocations"] == [invocation], r["invocations"]
     r["failure_excerpt"] = [line[:1000] for line in log.splitlines() if line.startswith("ERROR:") or ": error:" in line or "not found" in line.lower() or "No such file" in line or "undefined reference" in line][:24] if code else []
