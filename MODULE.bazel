@@ -891,3 +891,13 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Keep the reporter's program unchanged and use this checkout's TCP stack.
+http_archive(
+    name = "tcp_replay_fixture",
+    build_file_content = """filegroup(name = "sources", srcs = glob(["*.go"]), visibility = ["//visibility:public"])""",
+    dev_dependency = True,
+    sha256 = "34d8341c152b52ec979a960ccdafd1b9890af1e5098d3291f1b528c10b2b45f8",
+    strip_prefix = "netstack-rack-repro-dab0e0ccc24a86d941dbcde304a443b8aa63d13d",
+    urls = ["https://codeload.github.com/adios-404/netstack-rack-repro/tar.gz/dab0e0ccc24a86d941dbcde304a443b8aa63d13d"],
+)
