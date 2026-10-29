@@ -4,10 +4,11 @@ sh_test(
     name = "nginx",
     size = "large",
     srcs = ["nginx.sh"],
-    args = ["$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)", "$(rootpath :nginx.tar)", "$(rootpath :instrumented.bin)"],
+    args = ["$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)", "$(rootpath :nginx.tar)", "$(rootpath :candidate.bin)", "$(rootpath :samples.py)"],
     data = [
         ":nginx.tar",
-        ":instrumented.bin",
+        ":candidate.bin",
+        ":samples.py",
         "//:release",
         "//test/benchmarks/checkpointfile:checkpointfile_test",
     ],
