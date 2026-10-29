@@ -32881,6 +32881,58 @@
         "summary": "Build both release architectures from one caller-supplied label without Git or the status script in the Bazel checkout. Both Debian controls reported 20261029.0; eight binaries per architecture matched across the Debian and both tar packages.",
         "body": "Release packaging currently asks Git to identify the checkout. A source\nexport falls back to 0.0.0, so two different exports can report the\nsame version. Let the release caller provide one label to both\narchitecture builds. Runsc, its sidecars and the result parser use that\nlabel; the Debian version strips the prefix as before.\n\nThe default checkout still supplies its Git revision or release tag. A\ncustom status command that sets STABLE_VERSION keeps precedence. Builds\nwith no identity no longer accept a checkpoint or sidecar solely because\nthe two missing values are equal. The historical 0.0.0 fallback remains\navailable to ordinary builds; an explicit release cannot use it.\n\nBuilt real AMD64 and ARM64 Debian packages and both release archives\nwith neither the source tree's .git nor its status script available.\nBoth Debian controls reported 20261029.0, and the eight ELF files on\neach architecture matched across all three package formats. On AMD64,\nrunsc restored a checkpoint of its own release; a different revision\nrejected the checkpoint and the mismatched Sentry rejected startup.\n\nThe first workflow is red: its inspection image lacked the zstd CLI,\nand its summary mishandled a Bazel event. A read of all six original\noutput digests verified the packages without repeating a build or\nrestore. This does not change changelog timestamps, release signing, or\npublication."
       }
+    },
+    {
+      "id": "branch:tcp-restore-gso-route",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-restore-gso-route",
+      "head": "5edf5d13c7a6749df466add29d8811260edb4cda",
+      "title": "Restore TCP segmentation settings for the new route",
+      "url": "https://github.com/tamird/gvisor/commit/5edf5d13c7a6749df466add29d8811260edb4cda",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T09:33:58.724120+00:00",
+      "summary": "After checkpoint restore, a connection with queued data could divide by zero on its first send. Rebuild segmentation settings from the new route and retain the negotiated segment size even when the MTU is unchanged.",
+      "evidence": [
+        {
+          "label": "Stock: the first post-restore send divides by zero",
+          "url": "https://app.buildbuddy.io/invocation/cae84d9e-7c35-45b5-b394-9a17fe574b53"
+        },
+        {
+          "label": "Final standalone source: all four restored route configurations passed",
+          "url": "https://app.buildbuddy.io/invocation/b4aaebad-d661-4d9c-923d-3d764b4fdf5a"
+        },
+        {
+          "label": "Initial extraction: a packet helper checked hardware metadata on software-segmented packets",
+          "url": "https://app.buildbuddy.io/invocation/cd397b16-7c11-43d8-9e37-1757e8f30e51"
+        },
+        {
+          "label": "Internal TCP package on the integration source",
+          "url": "https://app.buildbuddy.io/invocation/867b63d6-c005-466e-896c-f2e34dfb2562"
+        },
+        {
+          "label": "AMD64 and ARM64 Nogo on the integration source",
+          "url": "https://app.buildbuddy.io/invocation/ff58f4db-70f6-4c25-9992-8defb69c077a"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "473ebcda5d785a9aacae9522473ce6b01708305a"
+        },
+        "after": {
+          "head": "5edf5d13c7a6749df466add29d8811260edb4cda"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "5edf5d13c7a6749df466add29d8811260edb4cda",
+        "url": "https://github.com/tamird/gvisor/commit/5edf5d13c7a6749df466add29d8811260edb4cda",
+        "title": "Restore TCP segmentation settings for the new route",
+        "summary": "After checkpoint restore, a connection with queued data could divide by zero on its first send. Rebuild segmentation settings from the new route and retain the negotiated segment size even when the MTU is unchanged.",
+        "body": "Open a standalone PR. The four cases cover unchanged segmentation support, enabling it, disabling it, and reducing the MTU. The first standalone run exposed a misplaced test-helper condition; the final run passed all four with no skips."
+      }
     }
   ],
   "edges": [
