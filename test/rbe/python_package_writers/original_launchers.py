@@ -87,9 +87,15 @@ for name, action_sha, wrapper_sha, size in writers:
         rec.update(root=root, path=path, launcher=entry)
         for suffix in (".runfiles", ".runfiles_manifest"):
             rec[suffix] = node(root, path + suffix)
-        for candidate in ("external/+http_archive+protoc_check_static_python/bin/python3.11",
-                          path + ".runfiles/+http_archive+protoc_check_static_python/bin/python3.11",
-                          path + ".runfiles/_main/external/+http_archive+protoc_check_static_python/bin/python3.11"):
+        runfiles = rec[".runfiles"]
+        assert runfiles["kind"] == "dir"
+        rec["runfile_roots"] = {
+            one(v, 1).decode(): ("file", "dir", "symlink")[kind - 1]
+            for kind, v in fields(get(runfiles["digest"])) if kind in (1, 2, 3)
+        }
+        for candidate in ("external/+_repo_rules+protoc_check_static_python/bin/python3.11",
+                          path + ".runfiles/+_repo_rules+protoc_check_static_python/bin/python3.11",
+                          path + ".runfiles/_main/external/+_repo_rules+protoc_check_static_python/bin/python3.11"):
             rec.setdefault("static_path_checks", {})[candidate] = node(root, candidate)
     except Exception as exc:
         failures.append(type(exc).__name__ + ": " + str(exc)[:140])
