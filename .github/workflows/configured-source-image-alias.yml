@@ -1,7 +1,7 @@
 name: Verify configured source-image aliases
 on:
   push:
-    branches: [qualification/configured-source-image-alias-proof]
+    branches: [qualification/configured-source-image-alias-replay]
 permissions:
   contents: read
   actions: read
@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        purpose: [original, tests]
+        purpose: [original]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -91,9 +91,15 @@ jobs:
           row="$RUNNER_TEMP/row"; out="$RUNNER_TEMP/result"; inv="$row/invocation-EIdkhP"
           tool="$RUNNER_TEMP/tools/qualification_report.py"
           cp "$row/matrix-audits.json" "$out/original-audit.json"
-          python3 "$tool" source-image-row --directory "$row" --decoder "$RUNNER_TEMP/bb"
-          cp "$inv/source-image-expectations.json" "$out/expectations.json"
           cp "$inv/source-image-writers.json" "$out/writers.json"
+          cp "$inv/selection.json" "$out/selection.json"
+          audit=0
+          python3 "$tool" source-image-row --directory "$row" --decoder "$RUNNER_TEMP/bb" || audit=$?
+          cp "$row/matrix-audits.json" "$out/replayed-audit.json"
+          cat "$out/replayed-audit.json"
+          if [[ -f "$inv/source-image-audit.json" ]]; then cp "$inv/source-image-audit.json" "$out/physical-audit.json"; fi
+          if [[ -f "$inv/source-image-expectations.json" ]]; then cp "$inv/source-image-expectations.json" "$out/expectations.json"; fi
+          (( audit == 0 ))
           python3 "$tool" bundle --directory "$row" --runner-exit 0 --capture-exit 0 --output "$out/reconciled.tar.gz"
           python3 - "$row" "$out" <<'PY'
           import hashlib, json, sys
