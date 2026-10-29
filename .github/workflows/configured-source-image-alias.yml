@@ -1,7 +1,7 @@
 name: Verify configured source-image aliases
 on:
   push:
-    branches: [qualification/source-image-writer-graph]
+    branches: [qualification/source-image-alias-config]
 permissions:
   contents: read
   actions: read
@@ -31,6 +31,7 @@ jobs:
           tar -xzf "$archive" -C "$RUNNER_TEMP/row"
           mkdir "$RUNNER_TEMP/tools"
           cp test/rbe/{qualification_report,unit_matrix}.py "$RUNNER_TEMP/tools/"
+          git fetch --no-tags --depth=1 origin aad282f2d1c64f96710706e8413475003432d684
           git checkout --detach aad282f2d1c64f96710706e8413475003432d684
           curl --fail --silent --show-error --location --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
           printf '%s  %s\n' f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb "$RUNNER_TEMP/bb" | sha256sum -c --strict
