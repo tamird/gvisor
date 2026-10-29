@@ -55,7 +55,8 @@ def verify(temp: Path, out: Path, inv: str, files: list, finish: int) -> None:
     reports = {}
     for name in ("test.log","test.xml","profiles.zip"):
         lookup = "outputs.zip" if name == "profiles.zip" else name
-        [f] = [item for item in files if Path(item["name"]).name == lookup]
+        names = {lookup, "test.outputs__outputs.zip"} if lookup == "outputs.zip" else {lookup}
+        [f] = [item for item in files if Path(item["name"]).name in names]
         reports[name] = verified_file(f,out/name)
     log = (out / "test.log").read_text()
     [capture] = re.findall(r"phase-capture digest=([0-9a-f]{64}) state=(\d+) pages=(\d+) pagemeta=(\d+)",log)
