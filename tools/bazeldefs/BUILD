@@ -13,9 +13,8 @@ package(
 # Shared by ordinary and namespace-dependent remote test actions.
 _RBE_EXEC_PROPERTIES = {
     "OSFamily": "linux",
-    # The AMD64 and ARM64 images contain only /hello. Their empty entrypoint
-    # leaves the executor free to launch Bazel's declared tool directly.
-    "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+    # The original GoImports action runs /bin/sh to invoke the formatter.
+    "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
     "workload-isolation-type": "oci",
 }
 
