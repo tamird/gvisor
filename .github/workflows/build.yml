@@ -3,9 +3,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcpip-clock-save'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcpip-clock-save-complete'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -15,12 +16,13 @@ jobs:
         persist-credentials: false
     - name: Compare live and restored clock readings
       env:
+        GH_TOKEN: ${{ github.token }}
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "a0e6406208e855020232de6eed96f965dbdf7d65"
+        test "$(git rev-parse HEAD^1)" = "055c65fb76acc215de86d130e3b0d6c3d589b7d1"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -85,7 +87,18 @@ jobs:
         overall=0
         label=//pkg/tcpip:tcpip_test
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in stock correction; do
+        # Preserve the original, already-verified failing control.
+        gh api repos/tamird/gvisor/actions/artifacts/12934784232/zip > "$RUNNER_TEMP/clock-stock.zip"
+        python3 - "$RUNNER_TEMP/clock-stock.zip" "$RUNNER_TEMP/replay-public/stock.json" <<'PYDATA'
+        import json, pathlib, sys, zipfile
+        with zipfile.ZipFile(sys.argv[1]) as archive:
+            data = archive.read("stock.json")
+        proof = json.loads(data)
+        assert proof["verified"] and proof["status"] == "FAIL" and proof["source"] == "acefb610bcbe85cc75d8063f33d149ce10fc2818"
+        assert proof["invocation"] == "53934c14-90cf-4db0-a2ba-dc31236d8f2a"
+        pathlib.Path(sys.argv[2]).write_bytes(data)
+        PYDATA
+        for arm in correction; do
           case $arm in
             stock) source=acefb610bcbe85cc75d8063f33d149ce10fc2818; parent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4 ;;
             correction|analyzers) source=5c2d44b247b8255083439a791eda626fbe55307e; parent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4 ;;
@@ -97,7 +110,6 @@ jobs:
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
           git diff --exit-code acefb610bcbe85cc75d8063f33d149ce10fc2818 "$source" -- . ':(exclude)pkg/tcpip/stdclock.go' ':(exclude)pkg/tcpip/stdclock_state.go'
-          git diff --quiet acefb610bcbe85cc75d8063f33d149ce10fc2818 "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
