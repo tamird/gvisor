@@ -22,7 +22,8 @@ jobs:
         test "$(git rev-parse HEAD^2)" = "f76d229c04d56c4a800f0e3561d36e75410f91a1"
         test "$(git rev-parse HEAD^2^)" = "40eb760888e9c00c8aaeeee71e42a4f91800734b"
         mkdir -p "$RUNNER_TEMP/checker"
-        cp test/rbe/{qualification_report,tcp_long_replay}.py "$RUNNER_TEMP/checker/"
+        cp test/rbe/{unit_matrix,qualification_report,tcp_long_replay}.py "$RUNNER_TEMP/checker/"
+        PYTHONPATH="$RUNNER_TEMP/checker" python3 -B -c 'import qualification_report'
         cp .github/qualification/array-check.sh "$RUNNER_TEMP/checker/"
         GNU="gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
         docker pull --platform=linux/amd64 "$GNU"
