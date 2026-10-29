@@ -1,0 +1,38 @@
+name: Read the original sparse-write Linux packets
+on:
+  push:
+    branches: [qualification/tcp-linux-original-43474d02]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify the existing reader and original socket result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = d66cc79f194a3341766fc69c2822f18c09a3f737
+          printf '%s  %s\n' ae07b07c910f765bd338178869726d47d7d4d5933480f5c14ad889d9add73bb2 test/rbe/tcp_linux_original.py | sha256sum --check --strict
+          curl -fsSL --max-time 60 https://raw.githubusercontent.com/tamird/gvisor/06a76f6dfeaba805da47e6bbdde6b6346eb5574b/test/rbe/release_layout_check/original.py -o "$RUNNER_TEMP/original_reader.py"
+          printf '%s  %s\n' e885b4d78cdc1b4b18f98dce2c7e21912ed9cdfc0ad457d0360fedffb623a3ce "$RUNNER_TEMP/original_reader.py" | sha256sum --check --strict
+          gh run download 40817072728 -R tamird/gvisor -n linux-window-usage -D "$RUNNER_TEMP/socket"
+      - name: Fetch only the original declared packet ZIP
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: PYTHONPATH="$RUNNER_TEMP" python3 test/rbe/tcp_linux_original.py transfer
+      - name: Join the normalized packet observations to the original four socket results
+        run: python3 test/rbe/tcp_linux_original.py summarize
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: linux-window-packets
+          path: ${{ runner.temp }}/packet-summary.json
+          if-no-files-found: error
