@@ -1,0 +1,41 @@
+name: Read completed Eifel assertions
+"on":
+  push:
+    branches: [qualification/eifel-original-53e597fd]
+permissions:
+  contents: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify original-only reader and fixture
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/eifel-original"
+          mkdir -p "$root"
+          cp .github/qualification/eifel-review/read_original.py "$root/"
+          cd "$root"
+          sha256sum --check <<'SUMS'
+          9ef9548596bf377e69907d521c0022d03acd8c495d3c006a757db8a7ac93ea8e  read_original.py
+          SUMS
+      - name: Read only the authenticated original archive
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          cd "$RUNNER_TEMP/eifel-original"
+          python3 read_original.py
+      - name: Publish only the bounded evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eifel-original-verdict
+          path: ${{ runner.temp }}/eifel-original/verdict.json
+          if-no-files-found: error
+          retention-days: 14
