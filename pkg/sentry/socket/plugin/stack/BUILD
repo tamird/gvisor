@@ -25,6 +25,7 @@ go_library(
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/hostarch",
+        "//pkg/log",
         "//pkg/marshal",
         "//pkg/marshal/primitive",
         "//pkg/safemem",
@@ -53,8 +54,17 @@ go_test(
     size = "small",
     srcs = [
         "socket_noplugin_test.go",
+        "socket_plugin_test.go",
         "socket_test.go",
     ],
     embed = [":stack"],
-    deps = ["//pkg/waiter"],
+    gotags = select({
+        "//pkg/sentry/socket/plugin/cgo:network_plugins": ["network_plugins"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "//pkg/sentry/socket/plugin",
+        "//pkg/waiter",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
 )
