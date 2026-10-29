@@ -23,12 +23,13 @@ def main():
     for row in captured["reports"]:
         if row["name"] == "test.log":
             log = (out / row["path"]).read_text()
-            for n, seconds, retrans, rtos in re.findall(r"(?m)^\s*trial 1 fetch (\d+) measured\s+([0-9.]+) s\s*\|[^|]*?,\s*(\d+) retransmitted\s*\| RTOs\s+(\d+)", log):
-                metrics.append(dict(fetch=int(n),seconds=float(seconds),retransmitted=int(retrans),rtos=int(rtos)))
+            for reject, probe, resumed in re.findall(r"TCP-PERSIST refused=(true|false) probe=(true|false) resumed=(\d+)", log):
+                metrics.append(dict(refused=reject == "true", probe=probe == "true", resumed=int(resumed)))
     results = [e["testResult"] for line in events.read_text().splitlines() if "testResult" in (e := json.loads(line))]
     invocation = next((e["started"]["uuid"] for line in events.read_text().splitlines() if "started" in (e := json.loads(line))), None)
-    if [m["fetch"] for m in metrics] != [3, 4, 5, 6, 7]:
-        errors.append("missing measured fetches")
+    expected=[(False, True), (True, arm == "correction")]
+    if [(m["refused"],m["probe"]) for m in metrics] != expected or not all(m["resumed"] > 0 for m in metrics):
+        errors.append("observed probes or resumed writes do not match the two packet cases")
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
         errors.append("expected one uncached remote result")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
@@ -36,10 +37,10 @@ def main():
     if errors and verdict["status"] == "PASS":
         verdict["status"] = "INCOMPLETE"
     verdict["errors"].extend(errors)
-    verdict.update(arm=arm, invocation=invocation, fetches=metrics, platform="amd64")
+    verdict.update(arm=arm, invocation=invocation, packet_observations=metrics, platform="amd64")
     # Publish only typed evidence; Bazel's private configuration never enters the artifact.
     reporting.write_json(proof / (arm + ".json"), verdict)
-    print(json.dumps({k:verdict[k] for k in ("arm","invocation","status","errors","failures","missing","case_counts","fetches","execution_to_verdict_seconds")}), flush=True)
+    print(json.dumps({k:verdict[k] for k in ("arm","invocation","status","errors","failures","missing","case_counts","packet_observations","execution_to_verdict_seconds")}), flush=True)
     return int(verdict["status"] != "PASS")
 
 
