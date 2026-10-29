@@ -1203,9 +1203,17 @@ func (f *fileDescription) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(int32(f.inode.hostFD), mask)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (f *fileDescription) Epollable() bool {
-	return f.inode.epollable
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (f *fileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	if f.inode.epollable {
+		return f
+	}
+	return nil
+}
+
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
+func (f *fileDescription) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	return fdnotifier.UpdateMask(int32(f.inode.hostFD), e, mask)
 }
 
 // Ioctl queries the underlying FD for allowed ioctl commands.

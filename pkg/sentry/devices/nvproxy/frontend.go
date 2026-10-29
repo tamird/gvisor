@@ -205,9 +205,9 @@ func (fd *frontendFD) NotifyEvent(mask waiter.EventMask) {
 	fd.appQueue.Notify(mask)
 }
 
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (fd *frontendFD) Epollable() bool {
-	return true
+// EpollMaskUpdater implements vfs.FileDescriptionImpl.EpollMaskUpdater.
+func (fd *frontendFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return &fd.appQueue
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.
