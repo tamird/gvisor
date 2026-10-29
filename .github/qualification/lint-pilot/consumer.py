@@ -3,6 +3,7 @@
 from hashlib import sha256
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 
@@ -70,6 +71,7 @@ def verify():
         "exit": result.returncode, "invocation": invocation, "compiled": compiled,
         "compile_outputs": sorted(files),
         "known_gazelle_failure": external_gazelle,
+        "forbidden_override_tags": sorted(set(re.findall(r'Using the "(go_deps[.][a-z_]+)" tag in a non-root Bazel module is forbidden', log))),
         "diagnostics": [x for x in ("go_deps", "non-root", "root module", "GoStdlib", "GoToolchainBinaryBuild", "GoCompilePkg", "visibility", "not visible", "no such target") if x.lower() in log.lower()],
         "diagnostic_sha256": sha256(log.encode()).hexdigest(),
         "root_repo_mapping_size": len(root_mapping or {}), "gvisor_repo_mapping_size": len(gvisor_mapping or {}),
