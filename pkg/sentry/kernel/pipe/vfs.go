@@ -479,15 +479,17 @@ func spliceOrTee(ctx context.Context, dst, src *VFSPipeFD, count int64, removeFr
 	}
 
 	firstLocked, secondLocked := lockTwoPipes(dst.pipe, src.pipe)
+	srcs, srcErr := src.pipe.readableBlocksLocked(0, count)
 	n, err := dst.pipe.writeLocked(count, func(dsts safemem.BlockSeq) (uint64, error) {
-		n, err := src.pipe.peekLocked(0, int64(dsts.NumBytes()), func(srcs safemem.BlockSeq) (uint64, error) {
-			return safemem.CopySeq(dsts, srcs)
-		})
-		if n > 0 && removeFromSrc {
-			src.pipe.consumeLocked(n)
+		// Report source errors only after writeLocked has checked the destination.
+		if srcErr != nil {
+			return 0, srcErr
 		}
-		return uint64(n), err
+		return safemem.CopySeq(dsts, srcs)
 	})
+	if n > 0 && removeFromSrc {
+		src.pipe.consumeLocked(n)
+	}
 	secondLocked.mu.NestedUnlock(pipeLockPipe)
 	firstLocked.mu.Unlock()
 

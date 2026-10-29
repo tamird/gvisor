@@ -197,18 +197,33 @@ func newPipe(isNamed bool, sizeBytes int64) Pipe {
 //
 // +checklocks:p.mu
 func (p *Pipe) peekLocked(off, count int64, f func(safemem.BlockSeq) (uint64, error)) (int64, error) {
+	srcs, err := p.readableBlocksLocked(off, count)
+	if srcs.IsEmpty() {
+		return 0, err
+	}
+	n, err := f(srcs)
+	return int64(n), err
+}
+
+// readableBlocksLocked returns a view of up to count bytes starting at off.
+// The view is valid only while p.mu is held.
+//
+// Preconditions: as for peekLocked.
+//
+// +checklocks:p.mu
+func (p *Pipe) readableBlocksLocked(off, count int64) (safemem.BlockSeq, error) {
 	// Don't block for a zero-length read even if the pipe is empty.
 	if count == 0 {
-		return 0, nil
+		return safemem.BlockSeq{}, nil
 	}
 
 	// Limit the amount of data read to the amount of data in the pipe.
 	if rem := p.size - off; count > rem {
 		if rem == 0 {
 			if !p.HasWriters() {
-				return 0, io.EOF
+				return safemem.BlockSeq{}, io.EOF
 			}
-			return 0, linuxerr.ErrWouldBlock
+			return safemem.BlockSeq{}, linuxerr.ErrWouldBlock
 		}
 		count = rem
 	}
@@ -218,11 +233,7 @@ func (p *Pipe) peekLocked(off, count int64, f func(safemem.BlockSeq) (uint64, er
 	if max := int64(len(p.buf)); pipeOff >= max {
 		pipeOff -= max
 	}
-	bs := p.bufBlockSeq.DropFirst64(uint64(pipeOff)).TakeFirst64(uint64(count))
-
-	// Perform the read.
-	done, err := f(bs)
-	return int64(done), err
+	return p.bufBlockSeq.DropFirst64(uint64(pipeOff)).TakeFirst64(uint64(count)), nil
 }
 
 // consumeLocked consumes the first n bytes in the pipe, such that they will no
