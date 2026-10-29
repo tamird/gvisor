@@ -35,6 +35,31 @@ taking 3.7.2 is a shared upgrade from 3.2.2. For goimports, capturing
 stdout alone is insufficient: it lists bad files but exits zero, so
 the check must reject a nonempty list.
 
+## Run the supplier’s native formatter
+
+Keep the released Buildifier. The BCR module
+[buildifier_prebuilt](https://bcr.bazel.build/modules/buildifier_prebuilt/8.5.1.4/source.json)
+already selects the native binary for the execution platform, but its
+[public executable](https://github.com/keith/buildifier-prebuilt/blob/2d23069a6/buildifier/buildifier_binary.bzl#L8-L29)
+runs a Bash or Batch wrapper. The only public raw binaries have
+platform-specific repository names. A [nine-line supplier change](https://github.com/tamird/gvisor/blob/ea7ed498a/tools/lint/buildifier_native.patch)
+exposes the selected executable as `@buildifier_prebuilt//buildifier:native`.
+It [checked all 617 files](https://app.buildbuddy.io/invocation/ef888371-b91a-4198-b4e4-5a8c2e638882)
+and [rejected a new malformed file](https://app.buildbuddy.io/invocation/f30c91d9-c3d5-4eb0-b007-130f63230f47)
+on an empty Linux AMD64 worker. Neither action used a shell or compiled
+Go. The interactive CLI keeps its working-directory behavior.
+
+Building Buildifier from Go source would add a second bootstrap: the
+[Go toolchain requires Bash](https://app.buildbuddy.io/invocation/596d4698-e775-4376-9bff-fe246139cb86).
+With Go compilation on Ubuntu and only lint execution on scratch, both
+the Gazelle-selected revision and the exact 8.5.1 release
+[accepted the checkout](https://app.buildbuddy.io/invocation/48d9c263-662d-4bd2-bed6-35448c450a43),
+[rejected a new malformed file](https://app.buildbuddy.io/invocation/aca9afed-9b64-42f6-a502-8239eb90a09d)
+and distinguished [valid](https://app.buildbuddy.io/invocation/945493a0-df07-493d-86ec-f8d92c6590c7)
+from [invalid configuration](https://app.buildbuddy.io/invocation/df00c424-5308-4112-a8b8-5f40d7b8857d).
+That establishes parity for these inputs, not a reason to downgrade the
+formatter. Keep the supplier and the lint inputs dev-only.
+
 ## Declare files once, and keep lint out of downstream builds
 
 A [Bazel glob](https://bazel.build/reference/be/functions#glob) stops at

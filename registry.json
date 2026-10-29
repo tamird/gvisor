@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T16:50:32.090252+00:00",
+    "updatedAt": "2026-10-29T17:08:11.207118+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34055,6 +34055,38 @@
         "summary": "The graph reader returned 22 to a callback that had received 11; the legacy reader retained 11. A private copy restores the original callback value.",
         "body": "@parth-opensrc, this boxes the caller’s destination by reference. After\n`Load` returns, assigning to the field can change a scalar the callback\nalready received:\n\n```go\nsrc.LoadValue(0, &x.n, func(v any) { x.saved = v }) // uint64(11)\n// After Load returns:\nx.n = 22\n```\n\nThe [matched test](https://github.com/tamird/gvisor/blob/dcaa864e7/pkg/state/graph_loadvalue_snapshot_test.go#L42)\nkept `x.saved` at 11 with the legacy reader but observed 22 with the\ngraph reader. A typed copy inside the callback stayed 11 with both.\n[Original run](https://app.buildbuddy.io/invocation/858adf22-8ee6-4cd3-967c-ba4b5a5d40f9).\n\nCould ordinary `LoadValue` snapshot the value when it calls the\ncallback? [This prototype](https://github.com/tamird/gvisor/commit/5c28e8d33)\n[keeps 11 with both readers](https://app.buildbuddy.io/invocation/6fc0d435-5595-4817-a6c1-52f1f64c8dd4).\nI found no direct in-tree caller; stateify uses the separate\n`LoadValueTo` API.\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:overlay-file-cache-guards",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/overlay-file-cache-guards",
+      "head": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+      "title": "Check the mutex protecting the overlay file cache",
+      "url": "https://github.com/tamird/gvisor/commit/3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
+      "summary": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex.",
+      "evidence": [
+        {
+          "label": "Positive checks on AMD64 and ARM64",
+          "url": "https://app.buildbuddy.io/invocation/9616c792-09e0-4237-b2ca-7037c8b7cd57"
+        },
+        {
+          "label": "Removing the EventUnregister lock triggers both architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/62632a89-893e-4e1c-b4ff-762b7bbe330c"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+        "url": "https://github.com/tamird/gvisor/commit/3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+        "title": "Check the mutex protecting the overlay file cache",
+        "summary": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex.",
+        "body": "No lock or runtime path changes. The final-reference exception applies only to dropping the cached file and clearing its pointer."
+      }
     }
   ],
   "edges": [
@@ -37192,7 +37224,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T10:23:22.052755+00:00",
+      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -38920,7 +38952,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the standalone restored-route fix and the partial-write correction separately. Check partial retransmission accounting; keep the zero-acceptance retry prototype separate until its interaction with the zero-window probe is understood.",
+      "nextStep": "Trace the partial ACK and SACK that separate #16081 and #16495 after a second interruption. Separately, distinguish a locally rejected first write from a peer advertising no receive window. The restored-route change is #16666; partial-write accounting is approved after it lands.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -49778,9 +49810,22 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T15:32:30.872309+00:00",
+      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex. Removing the existing EventUnregister lock produces a missing-lock diagnostic on each architecture.",
+          "evidence": [
+            {
+              "label": "Positive checks on AMD64 and ARM64",
+              "url": "https://app.buildbuddy.io/invocation/9616c792-09e0-4237-b2ca-7037c8b7cd57"
+            },
+            {
+              "label": "Removing the EventUnregister lock triggers both architecture analyzers",
+              "url": "https://app.buildbuddy.io/invocation/62632a89-893e-4e1c-b4ff-762b7bbe330c"
+            }
+          ]
+        },
         {
           "text": "Blocking flock and fcntl requests now register directly with the wait queue under the mutex before releasing it. The same function acquires and releases the mutex; checklocks no longer needs either exemption. The existing Go lock suite, both Nogo architectures and eight AMD64 systrap cases passed.",
           "evidence": [
@@ -49842,7 +49887,7 @@
           ]
         }
       ],
-      "nextStep": "Contributor review of the verified overlay close lifetime fix. Verify separately whether a change of cached file can leave a poll registration on the old file.",
+      "nextStep": "The overlay close fix is published in #16677. Review the independent cache guards; investigate poll registration lifetime separately.",
       "evidence": [
         {
           "label": "Verified epoll registration contract",
@@ -50305,10 +50350,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-29T15:26:07.814492+00:00",
+      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
+        {
+          "text": "Five timestamped lossy transfers on one warm connection per build took 4.737–5.964 s stock (21–27 timeouts each); #15432 alone took 0.602–0.614 s (one), #16081 0.530–0.544 s (one), and #16495 0.785–0.815 s (two). This isolates each recovery change on the same master, without establishing which works best on other paths.",
+          "evidence": [
+            {
+              "label": "Four original execution records and one verdict",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40914423017"
+            },
+            {
+              "label": "Review order and packet cases",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "Initial census: 510 open PRs inspected by changed path and title, including exports. The networking/performance labels and TCP, retransmission, SACK, RACK, CUBIC and netstack searches yielded 184 distinct candidate issues; many are not TCP defects.",
           "evidence": [
