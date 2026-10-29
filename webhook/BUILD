@@ -31,6 +31,6 @@ go_binary(
     name = "webhook",
     srcs = ["main.go"],
     pure = "on",
-    static = True,
+    features = ["fully_static_link"],
     deps = ["//webhook/pkg/cli"],
 )

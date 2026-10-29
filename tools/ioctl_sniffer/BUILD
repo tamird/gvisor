@@ -58,7 +58,7 @@ go_binary(
     ],
     # Disable nogo tests because this has C++ dependencies.
     nogo = False,
-    static = True,
+    features = ["fully_static_link"],
     visibility = [
         "//:sandbox",
     ],
