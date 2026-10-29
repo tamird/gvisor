@@ -1,0 +1,97 @@
+name: Measure string slabs in the graph decoder
+on:
+  push:
+    branches: [qualification/state-string-slab-kernel-rbe]
+permissions:
+  contents: read
+jobs:
+  study:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: bd5e5d082f27cd82d0d9b8d78c8c6b80d2818864
+          persist-credentials: false
+      - name: Run the unchanged graph fixture on BuildBuddy
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = bd5e5d082f27cd82d0d9b8d78c8c6b80d2818864
+          out=$RUNNER_TEMP/catalog
+          mkdir -p "$out" "$RUNNER_TEMP/catalog_platform"
+          platform=$RUNNER_TEMP/catalog_platform
+          printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<'BUILD'
+          platform(
+              name = "ubuntu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "oci",
+                  "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          rc=$RUNNER_TEMP/catalog.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+              'build --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build --bes_backend=grpcs://remote.buildbuddy.io' \
+              'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+              'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+              'build --remote_accept_cached' \
+              "build --inject_repository=catalog_platform=$platform" \
+              'build --host_platform=@catalog_platform//:ubuntu' \
+              'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
+              'build --platforms=//tools/bazeldefs:linux_amd64'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          status=0
+          start=$(date -u +%FT%TZ)
+          bazel --bazelrc="$rc" test --test_timeout=240 --test_filter='^TestStringSlabStudy$' --test_env=GO_TEST_WRAP_TESTV=1 --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --remote_download_regex='.*[/]test[.](log|xml)$' --build_event_json_file="$RUNNER_TEMP/events.bep" //pkg/state/tests:tests_test >"$RUNNER_TEMP/build.log" 2>&1 || status=$?
+          python3 - "$out" "$status" "$start" <<'PYTHON'
+          import json, os, pathlib, re, sys, xml.etree.ElementTree as ET
+          from datetime import datetime, timezone
+          out, status, start = pathlib.Path(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
+          temp = pathlib.Path(os.environ["RUNNER_TEMP"])
+          log = (temp / "build.log").read_text(errors="replace")
+          owner = pathlib.Path("bazel-testlogs/pkg/state/tests/tests_test")
+          tests = {}
+          msgs = []
+          if (owner / "test.xml").is_file() and (owner / "test.log").is_file():
+              xml = ET.parse(owner / "test.xml")
+              tests = {c.get("name"): not any(c.find(tag) is not None for tag in ("failure","error","skipped")) for c in xml.iter("testcase")}
+              msgs = [list(q) for q in re.findall(r"string-study mode=(stock|bounded) wire=(\d+) small=(\d+) payload=(\d+) slabs=(\d+) capacity=(\d+) direct=(\d+)", (owner / "test.log").read_text())]
+              for name in ("test.xml", "test.log"):
+                  (out/name).write_bytes((owner/name).read_bytes())
+          events = [json.loads(line) for line in (temp / "events.bep").open()] if (temp / "events.bep").is_file() else []
+          children = [e["started"].get("uuid") for e in events if "started" in e]
+          target = "//pkg/state/tests:tests_test"
+          result = [e["testResult"] for e in events if e.get("id", {}).get("testResult", {}).get("label")==target]
+          errors = [[a.get("failureDetail", {}).get("message","")[:450] for a in [e.get("action",{})]] for e in events if e.get("action",{}).get("failureDetail")][:3]
+          if not result: print("Failure categories:",sorted(set(a for a in ("GoToolchainBinaryBuild","missing input file","undeclared inclusion","no such package","does not exist","error loading","Cannot find","not found","failed to create") if a in log)))
+          data={"source":"bd5e5d082f27cd82d0d9b8d78c8c6b80d2818864","start":start,"collected":datetime.now(timezone.utc).isoformat(),"bazel_exit":status,"invocations":children,"target":target,"tests":tests,"study":msgs,"cached": [r.get("cachedLocally",False) or r.get("executionInfo",{}).get("cachedRemotely",False) for r in result]}
+          (out/"result.json").write_text(json.dumps(data,indent=2)+"\n")
+          print(json.dumps(data))
+          wanted={"TestStringSlabStudy"}|{"TestStringSlabStudy/"+m+s for m in ("stock","bounded") for s in ("","/OneString","/BenchmarkGraph")}
+          assert not status and len(result)==1 and data["cached"]==[False] and tests==dict.fromkeys(wanted,True) and len(msgs)==4
+          assert [q[0] for q in msgs]==["stock","stock","bounded","bounded"]
+          assert all(msgs[i][1:4] == msgs[i+2][1:4] and msgs[i][6]==msgs[i+2][6] for i in (0,1))
+          PYTHON
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: graph-string-study
+          path: ${{ runner.temp }}/catalog/
