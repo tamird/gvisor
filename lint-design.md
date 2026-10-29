@@ -1,22 +1,79 @@
 # How gVisor should run lint
 
-Contributors should have two commands: `bazel build --keep_going //tools/lint:check` to report source problems, and `bazel run //tools/lint:format` to apply the supported formatting fixes. These are proposed interfaces. Neither CI nor the contributor should have to install Python, Git, a formatter or a shell on an action worker. **Delete `tools/lint.sh`** once its callers use those targets. A temporary `make lint` alias can delegate to Bazel; it should own no policy. The read-only command uses build actions so a check need not start a shell-based test wrapper just to convey its exit status.
+**Delete `tools/lint.sh`.** Give contributors and CI one read-only
+command, `bazel build --keep_going //tools/lint:check`. Give contributors
+one opt-in writing command, `bazel run //tools/lint:format`. These are
+proposed interfaces. A temporary `make lint` alias can call Bazel but
+should own no policy.
 
-| Job | What should run |
+| Check | Where it belongs |
 | --- | --- |
-| Buildifier, goimports, clang-format | One independently runnable check per tool, using its pinned executable and declared configuration. The local format command uses the same tools, file selection and options. |
-| cpplint and codespell | Read-only checks, using a declared Python interpreter and packages. Keep package-local `CPPLINT.cfg` behavior and the spelling dictionary. Do not offer automatic spelling edits. |
-| Nogo and clang-tidy | Analyze actual Go and C/C++ targets with their compiler inputs. A repository list of source files cannot supply build tags, generated headers or target flags. |
-| GitHub workflow lint | Keep the [existing actionlint test](https://github.com/google/gvisor/blob/0fa6803f2/BUILD#L138-L163), including its project configuration. |
+| Buildifier, goimports, clang-format | Independent source actions. The format command uses the same files, tools, configs and options as the checks. |
+| cpplint, codespell | Read-only source actions with their declared Python interpreter, package-local lint configs and spelling dictionary. No automatic spelling edits. |
+| Nogo, clang-tidy | On actual Go and C/C++ targets. A list of files cannot supply build tags, generated headers or target flags. |
+| GitHub workflows | Keep the [existing actionlint test](https://github.com/google/gvisor/blob/0fa6803f2/BUILD#L138-L163) and its project configuration. |
 
-**What to reuse.** Bazel handles parallel work, caching and reporting failures. The tools own formatting, diagnostics and fixes; gVisor owns which files and options apply. Do not write a Go binary per tool. [Aspect's formatter test](https://github.com/aspect-build/rules_lint/blob/4cc8fe1da/format/defs.bzl#L143-L207) uses a shell even with explicit sources. Its checkout mode also disables sandboxing and caching. The [buildifier-prebuilt runner](https://github.com/keith/buildifier-prebuilt/blob/2d23069a6/runner.bash.template) walks files using Bash and find. Those are reasonable interfaces for other projects, but neither meets the empty-worker requirement as shipped. Reuse their tool distributions or a suitable upstream rule. First try [bazel_lib 3.7.2’s native run_binary adapter](https://github.com/bazel-contrib/bazel-lib/blob/904332fd1/lib/private/run_binary.bzl#L39-L72). It can capture tool output as a declared file and propagate the exit status without Bash. gVisor already uses 3.2.2 in its production build, so this would be a shared module upgrade, not a dev-only second copy. Qualify it before relying on it. For goimports, exit status alone is insufficient: it can list bad files and exit zero. The nonempty list must fail the check.
+## Reuse the tools and the action that runs them
 
-**What gets checked.** Declare first-party files once, in their relative directory layout, and give each check only its inputs and configs. A [Bazel glob](https://bazel.build/reference/be/functions#glob) stops at a package boundary; traversing build targets also misses files no target consumes. A bad BUILD file in a new package, an unreferenced header, and a standalone Markdown file should all be caught without adding declarations to that package. Exclude nested foreign repositories and generated outputs. A contributor's uncommitted source changes are inputs too. Prefer a supplier for this inventory if it meets those requirements; otherwise share one source inventory across checks. The inventory must invalidate on file addition, removal and config edits. The remote worker never discovers source by scanning a checkout.
+Bazel handles parallelism, caching and failure reporting. Each supplier’s
+binary owns diagnostics and formatting. gVisor owns file selection and
+options. There is no reason to write one Go program per tool or put their
+policies into a single program.
 
-**What downstream users inherit.** Keep lint-only modules, extension usages, repositories and toolchain registrations development-only where appropriate. Keep their Starlark loads in the lint package. A root BUILD that loads a macro which loads the codespell wheel can break `@gvisor//:license` before Bazel even considers which target was requested. Conversely, the LLVM and Go tools used to build gVisor cannot become development-only just because a formatter uses them too. [Bazel's module API](https://bazel.build/rules/lib/globals/module#bazel_dep) distinguishes these cases. Test a small, separate module that depends on gVisor and builds a public target. Check gVisor’s own repository mapping in that build for the absence of its lint-only repos: looking at the consumer’s direct imports alone would not prove it. Running lint successfully with gVisor as the root proves only half of that contract.
+The [Aspect formatter test](https://github.com/aspect-build/rules_lint/blob/4cc8fe1da/format/defs.bzl#L143-L207)
+uses a shell even with declared inputs. Its checkout mode also disables
+sandboxing and caching. The [buildifier-prebuilt test runner](https://github.com/keith/buildifier-prebuilt/blob/2d23069a6/runner.bash.template)
+invokes Bash and find. In [our comparison](https://app.buildbuddy.io/invocation/959cb581-ace8-4cfb-b95e-b88a2d1527f4)
+it passed a malformed file that [Buildifier itself rejected](https://app.buildbuddy.io/invocation/3fde1b55-45f5-465b-9c65-90712fb2e9f7).
 
-**What the consumer test found.** On the [codespell comparison](https://github.com/tamird/gvisor/actions/runs/40905219042), the root lint check passed. With the wheel marked dev-only, both `//:license` under `--ignore_dev_dependency` and an external module’s `@gvisor//:license` failed on the root BUILD’s load of `@lint_deps`. Isolating the load behind a lint target restored the root license check. The [ordinary external Go target on master](https://app.buildbuddy.io/invocation/a7df6eb9-a593-4a9e-93cc-be4780e8739a) and the [isolated proposal](https://app.buildbuddy.io/invocation/b294a411-549f-4a42-98e5-f96236fc99da) both hit a distinct Gazelle `go_deps` error. The [gVisor module](https://github.com/google/gvisor/blob/0fa6803f2/MODULE.bazel#L830-L849) sets Gazelle overrides that [Gazelle rejects for a non-root, non-isolated usage](https://github.com/bazel-contrib/bazel-gazelle/blob/b66b19ce4/internal/bzlmod/go_deps.bzl#L81-L94). Downstream Go compatibility remains a separate open gate; changing only lint dependencies does not fix that baseline. Workflow schema downloads and actionlint archives are candidates for dev-only declarations; shared Go, Python, QEMU and LLVM toolchains need their production consumers checked before changing their scope.
+Use [bazel_lib’s native run_binary](https://github.com/bazel-contrib/bazel-lib/blob/904332fd1/lib/private/run_binary.bzl#L39-L72)
+to call Buildifier directly. On an empty AMD64 worker it [accepted clean
+source](https://app.buildbuddy.io/invocation/90cfd7a5-d611-4dd5-9fd8-9554e0f03e09)
+and [rejected the malformed file](https://app.buildbuddy.io/invocation/f5b006bf-2c5b-4fef-b3b9-f120a2f7d204),
+with no shell. gVisor already uses bazel_lib in its production build;
+taking 3.7.2 is a shared upgrade from 3.2.2. For goimports, capturing
+stdout alone is insufficient: it lists bad files but exits zero, so
+the check must reject a nonempty list.
 
-**Order of work.** Hold [#16663](https://github.com/google/gvisor/pull/16663). Prove one vertical slice: Buildifier and cpplint share their input discovery; each reports a bad file on an empty worker; changing one tool's config reruns the right check; and a downstream production build still works. Then move goimports, clang-format and codespell onto the same interface. Replace the [script's callers](https://github.com/google/gvisor/blob/0fa6803f2/tools/lint.sh) and delete it when check and fix parity is demonstrated. Preserve the independent actionlint and compiler checks. Keep existing Bazelisk bootstrap work separate from these decisions.
+## Declare files once, and keep lint out of downstream builds
 
-The qualification work already gives us useful controls. The [cpplint action](https://app.buildbuddy.io/invocation/a98b6745-cb67-4e80-942a-1b9d286a60d3) checked 485 files on scratch; a [new-package violation](https://app.buildbuddy.io/invocation/5b88fc8b-dd38-400a-a493-4ede1ba9c0d7) failed. [Codespell](https://app.buildbuddy.io/invocation/234918c9-c55a-475f-bb3c-a4ef43fb4ca4) checked 3,283 files there, and a [config-only change](https://app.buildbuddy.io/invocation/92e3db8a-8ee3-4809-b065-fd863587e429) changed its result. An earlier [Buildifier check](https://app.buildbuddy.io/invocation/8c9b0ad3-f334-4735-8717-8ed9c6a5e413) passed a bad file when an environment variable selected example output. Keep those behaviors as acceptance cases regardless of which rules implement them.
+A [Bazel glob](https://bazel.build/reference/be/functions#glob) stops at
+subpackage boundaries; traversing build targets misses unreferenced
+files. Declare first-party inputs once, retain their relative paths, and
+give each check only the files and configs it reads. A new BUILD.bazel,
+an unreferenced header or a Markdown file in a new package must be found
+without adding a lint rule to that package. Exclude nested foreign
+repositories and build outputs. File additions, removals and config
+edits must invalidate the appropriate check. No remote action should
+scan a checkout.
+
+Use [dev-only declarations](https://bazel.build/rules/lib/globals/module#bazel_dep)
+for lint-only modules, extension usages, repo declarations and toolchain
+registrations as applicable. Isolate their Starlark loads in the lint
+package. Do not mark the shared Go, Python, QEMU or LLVM toolchain
+development-only merely because a check also uses it.
+
+The [two-module comparison](https://github.com/tamird/gvisor/actions/runs/40905219042)
+shows why both halves matter. Marking the wheel dev-only broke
+`@gvisor//:license`: the root BUILD still loaded codespell’s requirements.
+Isolating that load fixed the root license target under
+`--ignore_dev_dependency`. An [external Go build on unmodified master](https://app.buildbuddy.io/invocation/a7df6eb9-a593-4a9e-93cc-be4780e8739a)
+and the [isolated proposal](https://app.buildbuddy.io/invocation/b294a411-549f-4a42-98e5-f96236fc99da)
+both still fail in Gazelle. gVisor [declares overrides](https://github.com/google/gvisor/blob/0fa6803f2/MODULE.bazel#L830-L849)
+that [Gazelle rejects in a non-root, non-isolated module](https://github.com/bazel-contrib/bazel-gazelle/blob/b66b19ce4/internal/bzlmod/go_deps.bzl#L81-L94).
+Treat this as a separate production compatibility gate.
+
+## Migration order
+
+1. Hold [#16663](https://github.com/google/gvisor/pull/16663). Prove
+   Buildifier and cpplint share file discovery, fail independently on
+   bad inputs, run without host tools, and do not leak lint-only
+   dependencies into a consuming module’s repository mapping.
+2. Migrate clang-format, goimports and codespell to the same interface.
+   Preserve useful controls: [485 C/C++ files on scratch](https://app.buildbuddy.io/invocation/a98b6745-cb67-4e80-942a-1b9d286a60d3),
+   a [new-package violation](https://app.buildbuddy.io/invocation/5b88fc8b-dd38-400a-a493-4ede1ba9c0d7),
+   [3,283 spelling inputs](https://app.buildbuddy.io/invocation/234918c9-c55a-475f-bb3c-a4ef43fb4ca4)
+   and a [config-only change](https://app.buildbuddy.io/invocation/92e3db8a-8ee3-4809-b065-fd863587e429).
+3. Switch CI and developer callers and delete [the script](https://github.com/google/gvisor/blob/0fa6803f2/tools/lint.sh)
+   once check and fix coverage match. Keep Bazelisk bootstrap separate:
+   it selects Bazel; it does not decide what to lint.

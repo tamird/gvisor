@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T15:54:49.236666+00:00",
+    "updatedAt": "2026-10-29T15:57:38.198175+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50556,7 +50556,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T15:52:12.577490+00:00",
+      "updatedAt": "2026-10-29T15:57:38.198175+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
@@ -50581,9 +50581,26 @@
               "url": "https://app.buildbuddy.io/invocation/a7df6eb9-a593-4a9e-93cc-be4780e8739a"
             }
           ]
+        },
+        {
+          "text": "The released native run_binary adapter invoked Buildifier on an empty AMD64 worker: clean input passed, the malformed file failed with exit 4. On Ubuntu the stock wrapper passed both inputs. The failed parent verifier is not used as passing evidence.",
+          "evidence": [
+            {
+              "label": "Clean native action on scratch",
+              "url": "https://app.buildbuddy.io/invocation/90cfd7a5-d611-4dd5-9fd8-9554e0f03e09"
+            },
+            {
+              "label": "Malformed file rejected by native action",
+              "url": "https://app.buildbuddy.io/invocation/f5b006bf-2c5b-4fef-b3b9-f120a2f7d204"
+            },
+            {
+              "label": "Supplier test accepts same malformed file",
+              "url": "https://app.buildbuddy.io/invocation/959cb581-ace8-4cfb-b95e-b88a2d1527f4"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify the supplier run_binary adapter on scratch and a shared file inventory for Buildifier and cpplint. Reconcile the separate non-root Gazelle override failure before claiming external Go support.",
+      "nextStep": "Build one pilot using the released runner and a shared inventory for Buildifier and cpplint. Qualify the external Go dependency contract separately. Keep the public Buildifier PR unchanged until review.",
       "evidence": [
         {
           "label": "Design and qualification controls",
@@ -50592,6 +50609,14 @@
         {
           "label": "Root, dev-disabled and external module controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/40905219042"
+        },
+        {
+          "label": "Clean native action on scratch",
+          "url": "https://app.buildbuddy.io/invocation/90cfd7a5-d611-4dd5-9fd8-9554e0f03e09"
+        },
+        {
+          "label": "Malformed file rejected by native action",
+          "url": "https://app.buildbuddy.io/invocation/f5b006bf-2c5b-4fef-b3b9-f120a2f7d204"
         }
       ]
     }
