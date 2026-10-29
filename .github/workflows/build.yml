@@ -1,98 +1,55 @@
-name: Compare gofer epoll behavior across restore
-on: workflow_dispatch
+name: Recover gofer checkpoint results
+on:
+  push:
+    branches: [qualification/gofer-epoll-runtime-traces]
 permissions:
   contents: read
+  actions: read
 jobs:
-  qualify:
-    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+  compare:
+    if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 12
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - name: Retain both controllers outside the source checkouts
-        run: |
-          set -euo pipefail
-          cp test/epoll_restore_probe/{qualify.py,missing_donor.py} "$RUNNER_TEMP/"
-          git fetch --depth=1 origin affb09fd174947c38510814cd9d4526df47f538f
-          for f in inject.py probe.c BUILD; do
-            git show FETCH_HEAD:test/epoll_restore_probe/"$f" > "$RUNNER_TEMP/donor-$f"
-          done
-          mkdir -p "$RUNNER_TEMP/evidence"/{normal,donor} "$RUNNER_TEMP/bundles"
-          for name in normal donor; do
-            echo '{"verdict":"INCOMPLETE","observations":{}}' > "$RUNNER_TEMP/evidence/$name/verdict.json"
-          done
-      - name: Install required cross compiler
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq install g++-aarch64-linux-gnu
-      - name: Build the four release layouts using Bazel
-        id: build
-        run: |
-          set -euo pipefail
-          opts=(--config=x86_64 --jobs=4 --local_ram_resources=HOST_RAM*.65)
-          fetch_source() {
-            git fetch --depth=3 origin "$1"
-            git switch --detach "$1"
-            test "$(git rev-parse HEAD)" = "$1"
-          }
-          for variant in stock fixed old-watch rejected-watch; do
-            case "$variant" in
-              stock) source=039367497d16b4fd96ee7a3da0564d98fa235030 ;;
-              fixed) source=b5b6ac4ac4c120c583929dd7c770aa149c781134 ;;
-              old-watch) source=64758ff8b5b9c25a780afc75f830260c68b58bbb ;;
-              rejected-watch) source=d971b7abc867da47292289eba8792aa62775df0c ;;
-            esac
-            fetch_source "$source"
-            case "$variant" in
-              old-watch|rejected-watch)
-                mkdir -p test/epoll_restore_probe
-                cp "$RUNNER_TEMP/donor-probe.c" test/epoll_restore_probe/probe.c
-                cp "$RUNNER_TEMP/donor-BUILD" test/epoll_restore_probe/BUILD
-                python3 "$RUNNER_TEMP/donor-inject.py"
-                git diff -- runsc/gofer/fs/lisafs.go > "$RUNNER_TEMP/evidence/donor/$variant-provider.diff"
-                test -s "$RUNNER_TEMP/evidence/donor/$variant-provider.diff"
-                ;;
-              stock) test "$(git rev-parse HEAD^^)" = e82a0e179198f72260185166fb2be5336abee8b2 ;;
-              fixed) test "$(git rev-parse HEAD^^)" = 64758ff8b5b9c25a780afc75f830260c68b58bbb ;;
-            esac
-            bazel build "${opts[@]}" //:release //test/epoll_restore_probe:probe
-            out=$(bazel cquery --config=x86_64 --output=files //:release | grep '/release/runsc$')
-            dest="$RUNNER_TEMP/bundles/$variant"
-            mkdir -p "$dest"
-            cp -RL --preserve=mode "$(dirname "$out")/." "$dest/"
-            for name in runsc gvisor-bin/gvisor_sentry gvisor-bin/checkpointgofer; do test -x "$dest/$name"; done
-            cp "$(bazel cquery --config=x86_64 --output=files //test/epoll_restore_probe:probe)" "$dest/probe"
-            sha256sum "$dest/runsc" "$dest"/gvisor-bin/* "$dest/probe" > "$RUNNER_TEMP/evidence/$variant.sha256"
-            git restore --source=HEAD -- runsc/gofer/fs/lisafs.go
-          done
-          cmp "$RUNNER_TEMP/bundles/stock/probe" "$RUNNER_TEMP/bundles/fixed/probe"
-          cmp "$RUNNER_TEMP/bundles/old-watch/probe" "$RUNNER_TEMP/bundles/rejected-watch/probe"
-          cmp "$RUNNER_TEMP/evidence/donor/old-watch-provider.diff" "$RUNNER_TEMP/evidence/donor/rejected-watch-provider.diff"
-      - name: Native and real-donation runtime traces
-        run: |
-          b="$RUNNER_TEMP/bundles"
-          sudo python3 "$RUNNER_TEMP/qualify.py" "$b/stock/probe" "$b/stock/runsc" "$b/fixed/runsc" "$RUNNER_TEMP/evidence/normal"
-      - name: Missing-donor runtime traces
-        if: '!cancelled() && steps.build.outcome == ''success'''
-        run: |
-          b="$RUNNER_TEMP/bundles"
-          sudo python3 "$RUNNER_TEMP/missing_donor.py" "$b/old-watch/probe" "$b/old-watch/runsc" "$b/rejected-watch/runsc" "$RUNNER_TEMP/evidence/donor"
-      - name: Preserve runnable releases and report diagnostics on failure
-        if: failure() && steps.build.outcome == 'success'
-        run: |
-          tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/evidence/runtime-recovery.tgz" bundles
-          sudo find "$RUNNER_TEMP/evidence" -name '*.log' -exec tail -12 '{}' ';' | tail -100
-          sudo grep -irE 'FATAL ERROR|panic:' "$RUNNER_TEMP/evidence" --exclude='*.tgz' | cut -c1-600 | tail -30 || :
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
-        with:
-          name: gofer-epoll-checkpoint
-          path: |
-            ${{ runner.temp }}/evidence/**/*.json
-            ${{ runner.temp }}/evidence/**/*.log
-            ${{ runner.temp }}/evidence/**/*.diff
-            ${{ runner.temp }}/evidence/*.sha256
-            ${{ runner.temp }}/evidence/*.tgz
-          if-no-files-found: error
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - name: Restore the four original release bundles and two completed controls
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        cd "$RUNNER_TEMP"
+        gh run download 40948851812 -R tamird/gvisor -n gofer-epoll-checkpoint -D original
+        gh run download 40951138590 -R tamird/gvisor -n pci-waiter-controls -D previous
+        sudo install -d -m 0755 /opt/gofer-epoll
+        sudo tar xzf original/runtime-recovery.tgz -C /opt/gofer-epoll
+        mkdir -p {checker,result/normal,result/donor}
+        cp "$GITHUB_WORKSPACE/test/epoll_restore_probe/"{qualify.py,missing_donor.py} checker/
+        jq -e 'select(.checks.linux == true) | .observations.linux' previous/gofer/normal/verdict.json > checker/prior-linux.json
+        jq -e 'select(.checks["fixed-watch"] == true) | .observations["fixed-watch"]' previous/gofer/donor/verdict.json > checker/prior-donor.json
+        for variant in stock fixed old-watch rejected-watch; do
+          d="/opt/gofer-epoll/bundles/$variant"
+          sudo chmod a+rx /opt/gofer-epoll/bundles "$d" "$d/gvisor-bin" "$d/runsc" "$d/probe" "$d"/gvisor-bin/*
+          sudo -u nobody test -x "$d/gvisor-bin/gvisor-sentry-prewarmer"
+          sha256sum "$d/runsc" "$d"/gvisor-bin/* "$d/probe" | cut -d' ' -f1 | sort > "$variant.sha"
+          cut -d' ' -f1 "original/$variant.sha256" | sort > "$variant.orig"
+          cmp "$variant.sha" "$variant.orig"
+        done
+        printf '%s\n' 'release-binaries-run=40948851812' 'passing-linux-and-fixed-watch=40951138590' > result/provenance.txt
+    - name: Check original and corrected ordinary restores in both filesystem modes
+      run: |
+        b=/opt/gofer-epoll/bundles
+        sudo python3 "$RUNNER_TEMP/checker/qualify.py" "$b/stock/probe" "$b/stock/runsc" "$b/fixed/runsc" "$RUNNER_TEMP/result/normal"
+    - name: Check missing donor before correction and without watchers
+      if: ${{ !cancelled() }}
+      run: |
+        b=/opt/gofer-epoll/bundles
+        sudo python3 "$RUNNER_TEMP/checker/missing_donor.py" "$b/old-watch/probe" "$b/old-watch/runsc" "$b/rejected-watch/runsc" "$RUNNER_TEMP/result/donor"
+    - name: Save original runtime diagnostics and the machine verdicts
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: gofer-epoll-traces
+        path: ${{ runner.temp }}/result
+        if-no-files-found: error

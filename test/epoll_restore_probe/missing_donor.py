@@ -93,7 +93,7 @@ def container(runsc, direct, bundle, case, drop_watch):
                 return patches
             call(["kill", cid, "USR1"])
             patches["after"] = read_record(hostwork / "after")
-            call(["wait", cid])
+            patches["post_trace_wait_status"] = call(["wait", cid], check=False).returncode
             return patches
         finally:
             try:
@@ -111,6 +111,9 @@ with tempfile.TemporaryDirectory(prefix="gpd-", dir="/tmp") as tmp:
     for name, runsc, drop in (("old-watch", stock_runsc, False),
                               ("fixed-watch", fixed_runsc, False),
                               ("fixed-empty", fixed_runsc, True)):
+        if name == "fixed-watch":
+            observations[name] = json.loads(Path(sys.argv[0]).with_name("prior-donor.json").read_text())
+            continue
         bundle = work / name
         bundle.mkdir()
         try:

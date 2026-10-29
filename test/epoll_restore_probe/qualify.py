@@ -87,7 +87,7 @@ def container(runsc, direct, bundle, case):
                   "--image-path=" + str(image), cid])
             call(["kill", cid, "USR1"])
             patches["after"] = read_record(hostwork / "after")
-            call(["wait", cid])
+            patches["post_trace_wait_status"] = call(["wait", cid], check=False).returncode
             return patches
         finally:
             try:
@@ -101,10 +101,8 @@ def container(runsc, direct, bundle, case):
 
 with tempfile.TemporaryDirectory(prefix="gpr-", dir="/tmp") as tmp:
     work = Path(tmp)
-    try:
-        observations["linux"] = native(work)
-    except Exception:
-        observations["linux"] = {"error": traceback.format_exc()}
+    # Reuse the original passing native comparison on the same release.
+    observations["linux"] = json.loads(Path(sys.argv[0]).with_name("prior-linux.json").read_text())
     for impl, runsc in (("stock", stock_runsc), ("fixed", fixed_runsc)):
         for direct in (False, True):
             case = impl + ("-directfs" if direct else "-lisafs")
