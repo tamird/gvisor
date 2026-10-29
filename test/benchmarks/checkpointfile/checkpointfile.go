@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -247,6 +248,8 @@ func TestCheckpointFileRoundTrip(t *testing.T) {
 	plat := stubPlatform{sys}
 	data := stateFile
 	var sizes []int
+	t.Logf("INDEX_INPUT digest=%x bytes=%d", sha256.Sum256(stateFile), len(stateFile))
+	var taskCount int
 	for i := 0; i < 3; i++ {
 		ctx, cleanup := withHostFDs(t, restoreContext(t, names, mounts), names)
 		// Alternate between reading through a bufio.Reader and directly.
@@ -254,16 +257,22 @@ func TestCheckpointFileRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatalf("round %d: %v", i, err)
 		}
+		tasks := len(k.RootPIDNamespace().Tasks())
+		if tasks < workers+1 || (i > 0 && tasks != taskCount) {
+			t.Fatalf("round %d: task count %d, previous %d", i, tasks, taskCount)
+		}
+		taskCount = tasks
 		var buf bytes.Buffer
 		w, err := statefile.NewWriter(&buf, nil, nil)
 		if err != nil {
 			t.Fatalf("statefile.NewWriter: %v", err)
 		}
 		fs := k.FeatureSet()
-		if _, err := state.Save(ctx, w, &fs); err != nil {
+		var fsBytes, kBytes countingWriter
+		if _, err := state.Save(ctx, io.MultiWriter(w, &fsBytes), &fs); err != nil {
 			t.Fatalf("round %d: saving the CPUID feature set: %v", i, err)
 		}
-		if _, err := state.Save(ctx, w, k); err != nil {
+		if _, err := state.Save(ctx, io.MultiWriter(w, &kBytes), k); err != nil {
 			t.Fatalf("round %d: saving the kernel: %v", i, err)
 		}
 		if err := w.Close(); err != nil {
@@ -272,6 +281,7 @@ func TestCheckpointFileRoundTrip(t *testing.T) {
 		cleanup()
 		data = buf.Bytes()
 		sizes = append(sizes, len(data))
+		t.Logf("INDEX_ROUND round=%d tasks=%d cpuid_wire=%d kernel_wire=%d statefile_bytes=%d", i, tasks, fsBytes.n, kBytes.n, len(data))
 	}
 	t.Logf("State file sizes: original %d, re-encoded %v", len(stateFile), sizes)
 }

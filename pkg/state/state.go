@@ -51,6 +51,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"runtime"
 
@@ -95,6 +96,10 @@ func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 	}
 	es := newEncodeState(ctx, ti.elem)
 	defer es.release()
+	if os.Getenv("GVISOR_INDEX_STUDY") == "1" {
+		es.indexStudy = &indexCensus{byBlock: make(map[uintptr]uint8)}
+		defer func() { es.indexStudy = nil }()
+	}
 	es.stats.enabled = collectStats.Load()
 	out := &es.final
 	err := safely(func() {

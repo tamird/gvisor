@@ -17,6 +17,8 @@ package state
 import (
 	"cmp"
 	"context"
+	"encoding/json"
+	"fmt"
 	"reflect"
 	"slices"
 	"sync"
@@ -214,7 +216,8 @@ type traversalKey struct {
 
 // encodeState is the state of Save.
 type encodeState struct {
-	ctx context.Context
+	indexStudy *indexCensus
+	ctx        context.Context
 
 	// out holds the encodings of objects.
 	out encBuf
@@ -708,6 +711,14 @@ func (es *encodeState) newContainer(base unsafe.Pointer, end uintptr, ti *typeIn
 // ptrTarget returns the target for a pointer to a value of type ti at addr.
 func (es *encodeState) ptrTarget(p unsafe.Pointer, ti *typeInfo) int32 {
 	addr := uintptr(p)
+	if es.indexStudy != nil {
+		size := ti.size
+		if size != 0 {
+			es.indexStudy.span(addr, addr+size, idxPointee)
+		} else if addr != dummyAddr {
+			es.indexStudy.span(addr, addr+1, idxZeroAnchor)
+		}
+	}
 	if tid := es.lookup(addr, ti); tid >= 0 {
 		return tid
 	}
@@ -749,6 +760,15 @@ func (es *encodeState) sliceTarget(dataPtr unsafe.Pointer, elem *typeInfo, lengt
 	data := uintptr(dataPtr)
 	esz := elem.size
 	end := data + capacity*esz
+	if c := es.indexStudy; c != nil {
+		c.views++
+		if length < capacity {
+			c.short++
+		}
+		liveEnd := data + length*esz
+		c.span(data, liveEnd, idxSliceLive)
+		c.span(liveEnd, end, idxSliceTail)
+	}
 	tid := es.lookup(data, elem)
 	if tid >= 0 && es.target(tid).obj >= 0 {
 		// Fast path: the slice is within the object of an existing target.
@@ -1357,6 +1377,9 @@ func (es *encodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 		es.writeChunks(w, o, chunks)
 	}
 	es.stats.objects = int(n)
+	if es.indexStudy != nil {
+		es.indexStudy.report(es, ti, n, len(w.b))
+	}
 	setHints(ti, len(w.b), es.targets.n)
 }
 
@@ -1545,4 +1568,91 @@ func (tt *typeTable) index(ti *typeInfo, exact bool) int {
 		return tt.exactIndex(ti)
 	}
 	return tt.shapeIndex(ti)
+}
+
+const (
+	idxSliceLive uint8 = 1 << iota
+	idxSliceTail
+	idxPointee
+	idxZeroAnchor
+	idxFinalChunk
+	idxOtherObject
+)
+
+// indexCensus runs only for the untimed round-trip, never in the capture.
+type indexCensus struct {
+	byBlock      map[uintptr]uint8
+	views, short int
+}
+
+func (c *indexCensus) span(begin, end uintptr, flag uint8) {
+	if begin >= end {
+		return
+	}
+	for key := begin >> blockShift; key <= (end-1)>>blockShift; key++ {
+		c.byBlock[key] |= flag
+	}
+}
+func (c *indexCensus) report(es *encodeState, ti *typeInfo, wireObjects int32, wireBytes int) {
+	var chunks []chunk
+	for i := int32(0); i < int32(es.objs.n); i++ {
+		o := es.obj(i)
+		if o.parent >= 0 || !o.isArray {
+			continue
+		}
+		chunks = es.arrayChunks(i, 0, chunks[:0])
+		for _, ch := range chunks {
+			c.span(o.addr+ch.start*o.ti.size, o.addr+ch.end*o.ti.size, idxFinalChunk)
+		}
+	}
+	row := map[string]int{"keys": 0, "entries": 0, "tail_keys": 0, "live_slice_keys": 0, "live_and_tail_keys": 0,
+		"tail_only_keys": 0, "tail_only_entries": 0, "tail_shared_keys": 0, "non_tail_keys": 0, "unclassified_keys": 0,
+		"slice_views": c.views, "short_views": c.short, "wire_objects": int(wireObjects), "all_objects": es.objs.n,
+		"targets": es.targets.n, "graph_bytes": wireBytes, "slots": len(es.blocks.slots), "entry_cap": cap(es.blockEntries),
+		"slot_storage":  len(es.blocks.slots) * int(unsafe.Sizeof(addrSlot{})),
+		"entry_storage": cap(es.blockEntries) * int(unsafe.Sizeof(blockEntry{}))}
+	for _, slot := range es.blocks.slots {
+		if slot.key == 0 {
+			continue
+		}
+		k := slot.key - 1
+		flags := c.byBlock[k]
+		entries := 0
+		for i := slot.val; i >= 0; i = es.blockEntries[i].next {
+			entries++
+			if !es.obj(es.blockEntries[i].obj).isArray {
+				flags |= idxOtherObject
+			}
+		}
+		row["keys"]++
+		row["entries"] += entries
+		if flags&idxSliceLive != 0 {
+			row["live_slice_keys"]++
+		}
+		if flags&(idxSliceLive|idxSliceTail) == (idxSliceLive | idxSliceTail) {
+			row["live_and_tail_keys"]++
+		}
+		if flags&idxSliceTail != 0 {
+			row["tail_keys"]++
+			if flags == idxSliceTail {
+				row["tail_only_keys"]++
+				row["tail_only_entries"] += entries
+			} else {
+				row["tail_shared_keys"]++
+			}
+		} else {
+			row["non_tail_keys"]++
+		}
+		if flags == 0 {
+			row["unclassified_keys"]++
+		}
+	}
+	if row["keys"] != es.blocks.n || row["entries"] != len(es.blockEntries) {
+		panic("census lost original encoder index records")
+	}
+	data, err := json.Marshal(row)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("INDEX_ROOT root=%s counts=%s\n", ti.typ, data)
 }
