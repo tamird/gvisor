@@ -1,7 +1,7 @@
-name: Qualify rules_python package writers
+name: Qualify the declared Python package writers
 on:
   push:
-    branches: [qualification/rules-python-package-writers-native]
+    branches: [qualification/rules-pkg-python-launchers]
 permissions:
   contents: read
 jobs:
@@ -30,7 +30,7 @@ jobs:
       QUALIFICATION_COS_GZIP_BASE64: ''
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 2, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Resolve action owners and build the two packages
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -44,19 +44,20 @@ jobs:
             ${{ runner.temp }}/qualification.tar.gz
             ${{ runner.temp }}/python-packaging/
           if-no-files-found: error
-  original-catalog-diagnostic:
+  original-launchers:
     if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
-      - name: Read only the original catalog invocation
+      - name: Read two original actions without running them
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/python_package_writers/read_catalog_log.py
+        run: python3 -B test/rbe/python_package_writers/original_launchers.py
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: initial-master-catalog-diagnostic
-          path: ${{ runner.temp }}/original-catalog.json
+          name: original-launchers
+          path: ${{ runner.temp }}/original-launchers.json
+          if-no-files-found: error

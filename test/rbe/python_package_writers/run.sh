@@ -18,19 +18,10 @@ g=json.load(open(sys.argv[1]));d=[d for d in g["dependencies"] if d["key"].split
 assert len(d)==1 and d[0]["key"]=="rules_python@2.4.5",d
 PY
 arch=$QUALIFICATION_ARCH
-config=rbe
-target=x86_64
-[[ $arch == amd64 ]] || { config=rbe-arm64; target=aarch64; }
 extra=()
 if [[ $MODE == normal ]]; then
   extra+=(--host_platform=//"$here":ubuntu_"$arch" --extra_execution_platforms=//"$here":ubuntu_"$arch")
 fi
-roots=(//"$here":payload //"$here":package //"$here":target_writers)
-bazelisk --bazelrc="$rc" aquery "--config=$config" "--config=$target" "${extra[@]}" \
-  --lockfile_mode=update --include_artifacts --output=jsonproto \
-  "outputs('.*[.]build_data[.]txt$', deps(set(${roots[*]})))" > "$out/aquery.json"
-graph_exit=0
-python3 "$here/graph.py" "$out" || graph_exit=$?
 export QUALIFICATION_TARGETS="//${here}:payload //${here}:package"
 args=()
 for opt in "${extra[@]}"; do args+=("--bazel-option=$opt"); done
@@ -39,6 +30,5 @@ BUILDBUDDY_API_KEY=$rbe_key bash test/rbe/actions.sh "${args[@]}" --bazel-option
 native=$?
 set -e
 printf '%s\n' "$native" > "$out/native-exit.txt"
-(( graph_exit == 0 )) || exit "$graph_exit"
-python3 "$here/contents.py" "$out" "$MODE"
+python3 "$here/contents.py" "$out"
 exit "$native"
