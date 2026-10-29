@@ -31876,6 +31876,46 @@
         "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
         "body": "Open after #16403 lands."
       }
+    },
+    {
+      "id": "branch:mount-promise-rack-nits",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/mount-promise-rack-nits",
+      "head": "f4605a0bc66962181c2c8e3146deaa06988fe023",
+      "title": "Return a resolved mount immediately and test the last RACK recovery round",
+      "url": "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T00:27:15.597631+00:00",
+      "summary": "If mount resolution wins after waiter registration, return the resolved path without racing the timeout. At the largest RACK window, check that a duplicate SACK still refreshes persistence and advances the round. Both changes passed all 39 VFS and 43 TCP cases.",
+      "evidence": [
+        {
+          "label": "Two changes on their approved source heads",
+          "url": "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023"
+        },
+        {
+          "label": "Exact-source VFS and TCP qualification: 82 passed, no skips",
+          "url": "https://app.buildbuddy.io/invocation/3e88a9a8-fda0-4ffa-a182-4e13cf47783f"
+        },
+        {
+          "label": "Reply on the original review",
+          "url": "https://github.com/google/gvisor/pull/16594#discussion_r4407457075"
+        },
+        {
+          "label": "Reply on the original review",
+          "url": "https://github.com/google/gvisor/pull/16605#discussion_r4407457965"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "f4605a0bc66962181c2c8e3146deaa06988fe023",
+        "url": "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023",
+        "title": "Return a resolved mount immediately and test the last RACK recovery round",
+        "summary": "If mount resolution wins after waiter registration, return the resolved path without racing the timeout. At the largest RACK window, check that a duplicate SACK still refreshes persistence and advances the round. Both changes passed all 39 VFS and 43 TCP cases.",
+        "body": "Open the rollup after #16594 and #16605 land."
+      }
     }
   ],
   "edges": [
@@ -34847,8 +34887,8 @@
       "evidence": "https://github.com/google/gvisor/pull/16551"
     },
     {
-      "from": "branch:epoll-modify-preserve",
-      "to": "pr:16513",
+      "from": "pr:16513",
+      "to": "branch:epoll-modify-preserve",
       "type": "depends_on",
       "reason": "Uses the failed-registration test fixture from the EPOLL_CTL_ADD change.",
       "evidence": [
@@ -34863,6 +34903,26 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16403",
         "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16594",
+      "to": "branch:mount-promise-rack-nits",
+      "reason": "Preserve the approved parent head and address its review comment in the rollup after it lands.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16594",
+        "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16605",
+      "to": "branch:mount-promise-rack-nits",
+      "reason": "Preserve the approved parent head and address its review comment in the rollup after it lands.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16605",
+        "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023"
       ]
     }
   ],
@@ -46816,8 +46876,8 @@
       "status": "active",
       "group": "tests",
       "owner": "Tamir",
-      "updatedAt": "2026-10-29T00:18:15.244037+00:00",
-      "summary": "The first four suggestions have fixes and replies. Three source PRs have landed; #16496 is the last prerequisite for that rollup. Lucas approved #16594 and #16605 with two more suggestions, which will go into a separate rollup without changing those approved heads.",
+      "updatedAt": "2026-10-29T00:27:15.597631+00:00",
+      "summary": "Four suggestions are ready in the first rollup, which waits on #16496. Two more have tested fixes and replies in a separate rollup; #16594 and #16605 retain their approved heads.",
       "findings": [
         {
           "text": "#16453 (landed): Explain when the state benchmark encounters the array after encoding its elements.",
@@ -46917,25 +46977,33 @@
           ]
         },
         {
-          "text": "#16594 (approved; queued for the next rollup): Return immediately when the mount promise is already resolved after registering. Waiting on an already signaled entry can still select the timeout.",
+          "text": "#16594 (approved; tested fix on the rollup): Return immediately when the mount promise is already resolved after registering. Waiting on an already signaled entry can still select the timeout.",
           "evidence": [
             {
               "label": "Original review suggestion",
               "url": "https://github.com/google/gvisor/pull/16594#discussion_r4407341456"
+            },
+            {
+              "label": "Reply linking the tested fix",
+              "url": "https://github.com/google/gvisor/pull/16594#discussion_r4407457075"
             }
           ]
         },
         {
-          "text": "#16605 (approved; queued for the next rollup): Check that a DSACK advances the round boundary and refreshes persistence even after the window multiplier saturates.",
+          "text": "#16605 (approved; tested fix on the rollup): Check that a DSACK advances the round boundary and refreshes persistence even after the window multiplier saturates.",
           "evidence": [
             {
               "label": "Original review suggestion",
               "url": "https://github.com/google/gvisor/pull/16605#discussion_r4407341155"
+            },
+            {
+              "label": "Reply linking the tested fix",
+              "url": "https://github.com/google/gvisor/pull/16605#discussion_r4407457965"
             }
           ]
         }
       ],
-      "nextStep": "Open the first rollup after #16496 lands. Validate the two new changes against their exact parent sources, then publish them together once #16594 and #16605 land. Reply on both original threads when there is a published fix to review.",
+      "nextStep": "Open the first rollup after #16496 lands. Submit the second once its two parents land and the contributor has reviewed it.",
       "evidence": [
         {
           "label": "Approved cleanup with final comment wording and Linux source link",
@@ -46952,6 +47020,10 @@
         {
           "label": "Focused VFS and TCP qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/40792990873"
+        },
+        {
+          "label": "Exact-source VFS and TCP qualification: 82 passed, no skips",
+          "url": "https://app.buildbuddy.io/invocation/3e88a9a8-fda0-4ffa-a182-4e13cf47783f"
         }
       ]
     },
