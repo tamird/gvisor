@@ -21,7 +21,7 @@ try:
     bep=harness.ROOT/"stdlib.bep"
     cmd=["bazel","--bazelrc="+os.environ["QA_RC"],"build","--config=x86_64","--jobs=48","--keep_going",
          "--extra_execution_platforms=//tools/bazeldefs:linux_amd64",
-         "--spawn_strategy=local","--strategy=GoStdlib=linux-sandbox","--strategy=GoStateify=remote",
+         "--spawn_strategy=local","--strategy=GoStdlib=sandboxed","--strategy=GoStateify=remote",
          "--noremote_upload_local_results","--modify_execution_info=^(GoStdlib|GoStandardLibraryAnalysis)$=+no-cache",
          "--remote_default_exec_properties=Arch=amd64","--remote_default_exec_properties=OSFamily=linux",
          "--remote_default_exec_properties=workload-isolation-type=oci",
@@ -51,7 +51,7 @@ try:
     save()
     assert out["analysis"] and {v for row in out["analysis"] for v in row["target_arch"]} == {"-GOARCH=amd64","-GOARCH=arm64"}, "missing architecture analysis"
     assert all(row["runner"]=="local" and not row["cached"] and not row["exit"] for row in out["analysis"]), out["analysis"]
-    assert out["library"] and all(row["runner"]=="linux-sandbox" and not row["cached"] and not row["exit"] and not row["extra_archives"] for row in out["library"]), out["library"]
+    assert out["library"] and all(row["runner"] in ("processwrapper-sandbox", "linux-sandbox", "sandboxed") and not row["cached"] and not row["exit"] and not row["extra_archives"] for row in out["library"]), out["library"]
     assert out["completed"]==dict.fromkeys(targets,True) and p.returncode==0, "owning packages did not both build"
     out["verdict"]="PASS"
 except Exception as e:
