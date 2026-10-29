@@ -3,6 +3,7 @@
 
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_library", "cc_toolchain")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -64,3 +65,5 @@ cc_library(
     ],
     visibility = ["//:sandbox"],
 )
+
+cpplint_test()
