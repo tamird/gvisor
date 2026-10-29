@@ -187,3 +187,14 @@ if [[ "${BUILDKITE_COMMAND:-}" =~ "pipeline upload" ]]; then
     pipeline_add_env SKIP_GPU_TESTS 1
   fi
 fi
+
+# Keep the same Bazel available to the command and its failure cleanup.
+if [[ "${DOCKER_BUILD:-}" == false ]]; then
+  BUILDKITE_BAZEL_DIRECTORY="$(mktemp -d)"
+  if ! images/default/install-bazel "$BUILDKITE_BAZEL_DIRECTORY"; then
+    rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
+    return 1
+  fi
+  export BUILDKITE_BAZEL_DIRECTORY
+  export PATH="$BUILDKITE_BAZEL_DIRECTORY:$PATH"
+fi

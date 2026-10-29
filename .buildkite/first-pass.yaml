@@ -62,8 +62,9 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":broom: Lint"
-    # These agents provide Bazel in the builder.
-    command: make DOCKER_BUILD=true lint
+    env:
+      DOCKER_BUILD: "false"
+    command: make lint
   - <<: *common
     <<: *source_test
     label: ":soap: Lint (C++)"

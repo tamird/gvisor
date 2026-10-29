@@ -40,10 +40,8 @@ RUN ARCH="$(uname -m | sed s/aarch64/arm/)" && \
     google-cloud-sdk/install.sh --quiet && \
     ln -s /google-cloud-sdk/bin/gcloud /usr/bin/gcloud
 
-# Download the official bazel binary. The APT repository isn't used because there is not packages for arm64.
-COPY bazelversion .
-RUN ARCH="$(uname -m | sed s/aarch64/arm64/)" BAZEL_VERSION="$(cat ./bazelversion)" && \
-    curl -fsSL https://releases.bazel.build/${BAZEL_VERSION}/release/bazel-${BAZEL_VERSION}-linux-${ARCH} -o /usr/local/bin/bazel && \
-    chmod ugo+x /usr/local/bin/bazel
+# The Bazel APT repository does not provide arm64 binaries.
+COPY bazelversion bazel.sha256 install-bazel /tmp/install-bazel/
+RUN /tmp/install-bazel/install-bazel /usr/local/bin && rm -r /tmp/install-bazel
 WORKDIR /workspace
 ENTRYPOINT ["/usr/local/bin/bazel"]
