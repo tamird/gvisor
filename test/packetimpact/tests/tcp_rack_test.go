@@ -98,9 +98,10 @@ func sendAndReceive(t *testing.T, dut testbench.DUT, conn testbench.TCPIPv4, num
 	return lastSent
 }
 
-// TestFlightFence compares the same outstanding tail as one packet or three.
+// TestFlightFence SACKs the last old packet before sending new data. The two
+// receivers differ only in whether that new data reaches the out-of-order queue.
 func TestFlightFence(t *testing.T) {
-	for _, mode := range []string{"one_packet", "three_packets"} {
+	for _, mode := range []string{"sack_old", "sack_old_and_new"} {
 		t.Run(mode, func(t *testing.T) {
 			dut, conn, fd, mss := createSACKConnection(t)
 			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("reno"))
@@ -148,12 +149,8 @@ func TestFlightFence(t *testing.T) {
 			const guard = 3 * time.Second
 			old := 7*mss + 3
 			sendAndReceive(t, dut, conn, 7, fd, mss, false)
-			if mode == "one_packet" {
-				send("original_tail", old-3, 3)
-			} else {
-				for off := old - 3; off < old; off++ {
-					send("original_tail", off, 1)
-				}
+			for off := old - 3; off < old; off++ {
+				send("original_tail", off, 1)
 			}
 			time.Sleep(simulatedRTT)
 			ack(mss, 4*mss, 7*mss)
@@ -167,18 +164,47 @@ func TestFlightFence(t *testing.T) {
 			}
 			ack(2*mss, 4*mss, 7*mss)
 			packet("partial_repair", 2*mss, 0, guard)
-			ack(old-3, -1, -1)
+			ack(old-3, old-1, old)
 			packet("tail_repair", old-3, 0, guard)
 			info := observe("before_queue")
 			if got, want := dut.Send(t, fd, make([]byte, mss), 0), int32(mss); got != want {
 				t.Fatalf("Send(new write) = %d, want %d", got, want)
 			}
-			// Observe which original packets, if any, consume the window while
-			// the application write is accepted and the peer sends no new ACK.
+			// The peer has already buffered the last of the three old packets.
+			// The two earlier packets remain outstanding, leaving room for the
+			// new segment if the sender uses its third congestion-window slot.
 			window := min(80*time.Millisecond, time.Duration(info.RTO)*time.Microsecond/3)
-			frames, sent := conn.ListenForFrame(t, testbench.Layers{nil, nil,
+			_, sent := conn.ListenForFrame(t, testbench.Layers{nil, nil,
 				&testbench.TCP{SeqNum: testbench.Uint32(uint32(seq(old)))},
 				&testbench.Payload{Bytes: make([]byte, mss)},
+			}, window)
+			fmt.Printf("FENCE_WIRE mode=%s phase=admission new_sent=%t window_us=%d\n", mode, sent, window.Microseconds())
+			if !sent {
+				t.Fatal("no new segment before the second timeout; cannot construct the peer SACK")
+			}
+			started := time.Now()
+			before := observe("new_outstanding")
+			packet("second_timeout", old-3, 1, guard)
+			if elapsed := time.Since(started); elapsed < time.Duration(before.RTO)*time.Microsecond/2 {
+				t.Fatalf("not an RTO witness: repair after %v, RTO=%d us", elapsed, before.RTO)
+			}
+			observe("second_timeout")
+			// Deliver the first old byte just retransmitted, keep the middle
+			// old byte missing, and report the buffered final old byte. If the
+			// new segment arrived too, it is contiguous with that final byte.
+			sackEnd := old
+			if mode == "sack_old_and_new" {
+				sackEnd += mss
+			}
+			ack(old-2, old-1, sackEnd)
+			time.Sleep(simulatedRTT)
+			observe("after_partial_ack")
+			// Do not require an immediate repair: whether and when the sender
+			// sends it is one outcome under comparison. A second full timeout
+			// lies outside this bounded observation.
+			frames, found := conn.ListenForFrame(t, testbench.Layers{nil, nil,
+				&testbench.TCP{SeqNum: testbench.Uint32(uint32(seq(old - 2)))},
+				&testbench.Payload{Bytes: make([]byte, 1)},
 			}, window)
 			for _, frame := range frames {
 				if len(frame) != 4 {
@@ -192,35 +218,9 @@ func TestFlightFence(t *testing.T) {
 				if !ok || len(payload.Bytes) == 0 {
 					continue
 				}
-				offset := uint32(*tcp.SeqNum) - uint32(base)
-				if offset <= uint32(old+mss) {
-					fmt.Printf("FENCE_WIRE mode=%s phase=before_ack offset=%d bytes=%d\n", mode, offset, len(payload.Bytes))
-				}
+				fmt.Printf("FENCE_WIRE mode=%s phase=after_partial_ack offset=%d bytes=%d\n", mode, uint32(*tcp.SeqNum)-uint32(base), len(payload.Bytes))
 			}
-			fmt.Printf("FENCE_WIRE mode=%s phase=admission new_sent=%t window_us=%d\n", mode, sent, window.Microseconds())
-			if !sent {
-				// All the old bytes were received on the wire. Acknowledge the
-				// flight and see whether the queued write arrives without another Send.
-				ack(old, -1, -1)
-				packet("queued_after_ack", old, mss, guard)
-				observe("queued_after_ack")
-			} else {
-				// Hold back the entire original tail (one packet or three), and
-				// drop the newly transmitted segment. After the next timeout
-				// deliver the old tail, but still withhold the new segment.
-				started := time.Now()
-				before := observe("new_outstanding")
-				packet("second_timeout", old-3, 0, guard)
-				if elapsed := time.Since(started); elapsed < time.Duration(before.RTO)*time.Microsecond/2 {
-					t.Fatalf("not an RTO witness: repair after %v, RTO=%d us", elapsed, before.RTO)
-				}
-				observe("second_timeout")
-				ack(old, -1, -1)
-				time.Sleep(simulatedRTT)
-				observe("after_ack")
-				packet("new_repair", old, 0, guard)
-			}
-			ack(old+mss, -1, -1)
+			fmt.Printf("FENCE_WIRE mode=%s phase=missing_repair found=%t window_us=%d\n", mode, found, window.Microseconds())
 			fmt.Printf("FENCE_DONE mode=%s\n", mode)
 		})
 	}
