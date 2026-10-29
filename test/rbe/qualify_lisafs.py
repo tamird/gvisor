@@ -6,17 +6,14 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import uuid
 import xml.etree.ElementTree as ET
 
 import qualification_report as report
 
 pr, architecture, source, rc, destination = sys.argv[1:]
-assert pr == "tcp-error-locks"
-case_owners = {
-    "//pkg/tcpip/transport/tcp:tcp_nogo": [],
-    "//pkg/tcpip/transport/tcp:tcp_test": ["TestCubicRecoveryDiscardsACKCredit"],
-    "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": ["TestConnectICMPError"],
-}
+assert pr == 'clock-missing-analyzers'
+case_owners = {'//runsc/boot:boot_nogo': [], '//test/runner:runner_nogo': []}
 owners = list(case_owners)
 required = {(label, case) for label, cases in case_owners.items() for case in cases}
 d = Path(destination)
@@ -37,14 +34,22 @@ try:
     (d/"before").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
     assert not (d/"before").read_bytes()
     (d/"commit").write_bytes(git("cat-file", "commit", source))
+    invocation = str(uuid.uuid5(uuid.NAMESPACE_URL, f"https://github.com/tamird/gvisor/actions/runs/{os.environ['GITHUB_RUN_ID']}/{os.environ['GITHUB_RUN_ATTEMPT']}/{architecture}/{source}"))
+    r.update(started_at=now(), invocations=[invocation])
+    save("result.json",r)
+    print("Testing "+source+" https://app.buildbuddy.io/invocation/"+invocation,flush=True)
     bazel = ["bazel", "--bazelrc=" + rc]
-    args = ["test", "--nocache_test_results", "--test_sharding_strategy=disabled",
+    args = ["test", "--invocation_id="+invocation, "--nocache_test_results", "--test_sharding_strategy=disabled",
             "--test_env=GO_TEST_WRAP_TESTV=1", "--build_event_json_file=" + str(d/"events.raw"),
             "--build_event_json_file_path_conversion=false",
             "--remote_download_regex=.*[/](test[.](log|xml)|test[.]outputs/.*)$", *owners]
     with (d/"command.log").open("wb") as l:
         code = subprocess.run(bazel + args, stdout=l, stderr=subprocess.STDOUT).returncode
     r.update(native_exit=code, execution_finished_at=now())
+    if code:
+        r["status"]="FAIL"
+    save("result.json",r)
+    print(f"Bazel finished at {r['execution_finished_at']} with exit {code}",flush=True)
     (d/"exit").write_text(str(code)+"\n")
     (d/"after").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
     (d/"head").write_bytes(git("rev-parse", "HEAD"))
@@ -55,6 +60,7 @@ try:
                      "native_exit": "exit", "capture_exit": "capture", "executed_arguments": "args"})
     log=(d/"command.log").read_text(errors="replace")
     r["invocations"] = re.findall(r"Invocation ID: ([0-9a-f-]{36})", log)
+    assert r["invocations"] == [invocation], r["invocations"]
     r["failure_excerpt"] = [line[:1000] for line in log.splitlines() if line.startswith("ERROR:") or ": error:" in line or "not found" in line.lower() or "No such file" in line or "undefined reference" in line][:24] if code else []
     r["hints"] = [h for h in ("RESOURCE_EXHAUSTED", "no such target", "Permission denied", "not found", "signal: killed") if h.lower() in log.lower()]
     clean=d/"events.jsonl"

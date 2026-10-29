@@ -1,7 +1,7 @@
-name: Qualify the TCP endpoint error guards
+name: Verify native clock-missing-analyzers
 on:
   push:
-    branches: [qualification/tcp-error-owners-oct29]
+    branches: [qualification/clock-missing-analyzers-oct29]
 permissions:
   contents: read
 jobs:
@@ -9,13 +9,12 @@ jobs:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
     name: "${{ matrix.pr }} (${{ matrix.arch }})"
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 80
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
+          - {"pr": "clock-missing-analyzers", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
