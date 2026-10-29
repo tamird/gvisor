@@ -24,7 +24,7 @@ def main() -> int:
             for line in (out / report["path"]).read_text().splitlines():
                 if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE) [a-zA-Z0-9_.= -]+", line):
                     observations.append(line)
-                elif re.search(r"tcp_rack_test.go:\d+:|Operation not permitted|operation not permitted|failed to bootstrap|unknown failure:", line):
+                elif re.search(r"tcp_rack_test.go:\d+:|Operation not permitted|operation not permitted|failed to bootstrap|failed to disable DAD|read-only file system|No such file or directory|unknown failure:", line):
                     diagnostics.append(line[:650])
     records = [json.loads(line) for line in events.read_text().splitlines()]
     results = [e["testResult"] for e in records if "testResult" in e]

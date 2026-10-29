@@ -5,13 +5,13 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-cross-v2'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-cross-v3'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 4
+        fetch-depth: 5
         persist-credentials: false
     - name: Observe the same two packet inputs on Linux and netstack
       env:
@@ -20,7 +20,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "b59f6644079d3654fa46edbf2d3eab4045bcc95a"
+        test "$(git rev-parse HEAD^1^1)" = "b59f6644079d3654fa46edbf2d3eab4045bcc95a"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_fence_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -48,11 +48,10 @@ jobs:
         umask 077
         trap 'rm -f "$rc"' EXIT
         {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
-            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
             'build --bes_backend=grpcs://remote.buildbuddy.io' \
             'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
-            'build --spawn_strategy=local' 'build --noremote_local_fallback' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
             'build --remote_accept_cached' \
             "build --inject_repository=fifo_platform=$platform" \
             'build --host_platform=@fifo_platform//:ubuntu' \
@@ -62,7 +61,6 @@ jobs:
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } > "$rc"
         unset BUILDBUDDY_API_KEY
-        printf '%s\n' 'build:rbe --spawn_strategy=local' >> "$rc"
         export FIFO_RC=$rc
         mkdir -p "$RUNNER_TEMP/fifo-bin"
         cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
@@ -88,6 +86,30 @@ jobs:
         test -x /sbin/iptables-nft
         test -x /sbin/ip6tables-nft
         test -x /usr/bin/x86_64-linux-gnu-gcc
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"compiler installation"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        export FENCE_HOST_ID=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT FENCE_HOST_PROBE=$RUNNER_TEMP/host-marker
+        printf '%s' "$FENCE_HOST_ID" > "$FENCE_HOST_PROBE"
+        probe_raw=$RUNNER_TEMP/host-probe.jsonl
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"Bazel host compiler/namespace test"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        bazelisk --bazelrc="$rc" test --nocache_test_results --test_output=all --strategy=TestRunner=local \
+          --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --build_event_json_file="$probe_raw" \
+          //test/rbe/fence_host_probe:check
+        python3 - "$probe_raw" "$RUNNER_TEMP/replay-public/preflight.json" <<'PYCHECK'
+        import json, sys
+        from pathlib import Path
+        events = [json.loads(row) for row in Path(sys.argv[1]).read_text().splitlines()]
+        results = [e["testResult"] for e in events if "testResult" in e]
+        assert len(results) == 1, results
+        result = results[0]
+        assert result["status"] == "PASSED" and not result.get("cachedLocally"), result
+        assert result["executionInfo"]["strategy"] in ("local", "standalone"), result["executionInfo"]
+        assert not result["executionInfo"].get("cachedRemotely"), result["executionInfo"]
+        Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
+        print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
+        PYCHECK
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in linux stock pr16081 pr16495; do
@@ -115,10 +137,11 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           uname -r > "$TCP_EVIDENCE/kernel"
           code=0
-          bash test/rbe/qualify.sh --arch=amd64 "--test-target=$label" \
-            "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
-            --bazel-option=--spawn_strategy=local --bazel-option=--jobs=4 --bazel-option=--strategy=TestRunner=local --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
-            --bazel-option=--remote_download_outputs=toplevel test || code=$?
+          bazel test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
+            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated \
+            --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
+            --nocache_test_results --test_output=all "--build_event_json_file=$raw" \
+            --build_event_json_file_path_conversion=false "$label" || code=$?
           printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
