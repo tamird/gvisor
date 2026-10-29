@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T17:59:00.125903+00:00",
+    "updatedAt": "2026-10-29T18:08:56.766082+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16989,14 +16989,14 @@
       "url": "https://github.com/google/gvisor/pull/15983",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
+      "updatedAt": "2026-10-29T18:08:56.766082+00:00",
       "summary": "The requested post-#16046 rebase is published at 9182165b3552 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved unset-only correction is delivered at exact 007c189b39. SUDO_UID/SUDO_GID use LookupEnv: absent variables retain host-ID fallback, while present empty, malformed, negative, oversized and reserved values fail before creating OCI mappings. Before checks reproduce both empty-value failures and eight earlier invalid-ID failures. The corrected five-owner run passes 91 cases, all 14 numeric-ID cases and 26 integration cases, with one existing unsupported user-namespace skip. Public review and CI are pending.",
       "followup": {
         "owner": "root",
-        "disposition": "Proposed amendment",
+        "disposition": "Contributor approved; waiting for exact-source checks",
         "sourceHead": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
-        "observedAt": "2026-10-29T17:59:00.125903+00:00",
-        "nextAction": "After contributor review, publish the amendment and answer the reviewer on #15983.",
+        "observedAt": "2026-10-29T18:08:56.766082+00:00",
+        "nextAction": "The contributor approved a51fb04e5 for publication and a reviewer reply once the exact bwrap checks pass. The published PR is still on b3c7148e6.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15983#issuecomment-6503714466",
           "https://github.com/tamird/gvisor/commit/a51fb04e5",
@@ -17012,17 +17012,7 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/9182165b35529ed529e72aeddf4c32bcc76ad67f"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "a51fb04e5f49a367435fa87e9b7a302c6150f9fb",
-        "baseHead": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
-        "url": "https://github.com/tamird/gvisor/commit/a51fb04e5f49a367435fa87e9b7a302c6150f9fb",
-        "title": "Reject invalid sudo IDs before setting up the sandbox",
-        "summary": "The --dir implementation added on master called a helper the PR removes. Parse the invoking UID and GID once, use them for both mappings and directory ownership, and reject invalid values before creating host directories.",
-        "body": "The PR removed a helper that master now calls while creating --dir paths. Validate SUDO_UID and SUDO_GID once, then pass the pair to directory ownership and the user namespace. A regression checks that invalid input creates no host directory. Publication and the reviewer reply are conditional on the exact-source checks passing."
-      }
+      ]
     },
     {
       "id": "pr:15819",
