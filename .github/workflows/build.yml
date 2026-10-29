@@ -56,7 +56,7 @@ jobs:
           PYTHON
       - name: Publish bounded evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b488e6f43607fa02
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: tail-probe-proof
           path: ${{ runner.temp }}/tailproof/
