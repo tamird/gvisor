@@ -86,7 +86,7 @@ new file mode 100644
 +            executable = runtime.interpreter,
 +            arguments = app.interpreter_args + [app.stage2_bootstrap.path] + arguments,
 +            env = dict(env, RUNFILES_DIR = binary.executable.path + ".runfiles"),
-+            tools = [binary] + tools,
++            tools = [binary, app.stage2_bootstrap, runtime.files] + tools,
 +            **kwargs
 +        )
 +    else:

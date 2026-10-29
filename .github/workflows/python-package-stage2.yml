@@ -49,6 +49,8 @@ jobs:
             export RUNNER_TEMP="$job_root/$QUALIFICATION_ARCH"
             mkdir "$RUNNER_TEMP"
             bash test/rbe/actions.sh \
+              "--bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
+              "--bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
               "--bazel-option=--extra_toolchains=//test/rbe/python_package_writers:python_${entry#*:}" \
               --bazel-option=--lockfile_mode=error --bazel-option=--remote_download_outputs=all \
               '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || status=1
