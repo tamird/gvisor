@@ -1,0 +1,74 @@
+name: Build and export the Go branch on native Linux
+on:
+  push:
+    branches: [qualification/go-branch-native-local]
+permissions:
+  contents: read
+jobs:
+  export:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      PRODUCT: c1d238a274c9cd73e5ed28f2d5d59eb43dd8001a
+      DOCKER_HOST: unix:///no-gvisor-builder.sock
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Prepare the pinned native source and Bazel
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          cp .github/qualification/go-branch-native/check.py "$RUNNER_TEMP/check.py"
+          git checkout --detach "$PRODUCT"
+          test "$(cat .bazelversion)" = 8.8.1
+          mkdir "$RUNNER_TEMP/native-bin"
+          curl --fail --silent --show-error --location --retry 3 https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$RUNNER_TEMP/bazel-8.8.1"
+          echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $RUNNER_TEMP/bazel-8.8.1" | sha256sum --check
+          chmod +x "$RUNNER_TEMP/bazel-8.8.1"
+          curl -fsSL --retry 3 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum --check
+          chmod +x "$RUNNER_TEMP/bb"
+          git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git 4a2b2a00efd0c7aa19e7b58c98d380e58b7db5c2
+          for f in qualification_report unit_matrix; do
+            git show "FETCH_HEAD:test/rbe/$f.py" > "$RUNNER_TEMP/$f.py"
+          done
+          # shellcheck disable=SC2016 # Preserve the wrapper variables until it is invoked.
+          printf '#!/bin/bash\nexec "$RUNNER_TEMP/bazel-8.8.1" --bazelrc="$RUNNER_TEMP/native.bazelrc" "$@"\n' > "$RUNNER_TEMP/native-bin/bazel"
+          chmod +x "$RUNNER_TEMP/native-bin/bazel"
+          echo "$RUNNER_TEMP/native-bin" >> "$GITHUB_PATH"
+          printf 'build --jobs=4\nbuild --spawn_strategy=sandboxed,local\nbuild --remote_executor=\nbuild --modify_execution_info=^(Genrule|ArchGenruleCp|GoPath)$=+no-remote-cache\nbuild --remote_upload_local_results=false\nbuild --build_event_json_file=%s/native.bep\nbuild --execution_log_compact_file=%s/native.binpb\n' "$RUNNER_TEMP" "$RUNNER_TEMP" > "$RUNNER_TEMP/native.bazelrc"
+          git fetch --no-tags --depth=1 https://github.com/google/gvisor.git refs/heads/go:refs/heads/go
+          git rev-parse refs/heads/go > "$RUNNER_TEMP/old-go"
+          git remote remove origin
+      - name: Run the exporter against the native sandbox
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$BUILDBUDDY_API_KEY" ]]; then
+            printf 'build --remote_cache=grpcs://remote.buildbuddy.io\nbuild --remote_cache_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$RUNNER_TEMP/native.bazelrc"
+          fi
+          unset BUILDBUDDY_API_KEY
+          set +e
+          tools/go_branch.sh >"$RUNNER_TEMP/native.log" 2>&1
+          rc=$?
+          set -e
+          echo "$rc" > "$RUNNER_TEMP/script.exit"
+          if [[ $rc != 0 ]]; then grep -E '^(ERROR|FAILED|WARNING):' "$RUNNER_TEMP/native.log" | tail -16 || true; fi
+          exit "$rc"
+      - name: Verify original GoPath output, both ISAs and the local merge
+        if: always()
+        run: python3 "$RUNNER_TEMP/check.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-go-branch-result
+          path: |
+            ${{ runner.temp }}/native-result.json
+            ${{ runner.temp }}/native-actions.json
+          if-no-files-found: error
