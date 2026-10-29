@@ -1,0 +1,77 @@
+name: Qualify Buildkite Bazelisk and source lint
+on:
+  push:
+    branches: [qualification/buildkite-bazelisk-native]
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-24.04, arch: amd64}
+          - {runner: ubuntu-24.04-arm, arch: arm64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      SOURCE: eafcb8392effca7769ef6e220d24feaadb3bdf17
+      ARCH: ${{ matrix.arch }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: source, ref: '${{ env.SOURCE }}', persist-credentials: false}
+      - name: Verify source and prepare the original qualification reader
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "$SOURCE"
+          reader=05cf00d9d26a5beb8a9af8011375644b8b37a086
+          lint=3406af3d2792723e45bb9847fe60af86ee900ce8
+          git -C carrier fetch -q --depth=1 origin "$reader" "$lint"
+          for module in qualification_report unit_matrix; do
+            git -C carrier show "$reader:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
+          done
+          git -C carrier show "$lint:.github/qualification/codespell/check.py" > "$RUNNER_TEMP/lint_donor.py"
+          test "$(git hash-object "$RUNNER_TEMP/lint_donor.py")" = 8c436c65bebab36b561cfc1015f746353e274198
+          mkdir "$RUNNER_TEMP/bin" "$RUNNER_TEMP/codespell"
+          if ! command -v strace; then
+            sudo apt-get update -q && sudo apt-get install -qy strace
+          fi
+      - name: Configure remote Bazel for the native lint worker
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          p="$RUNNER_TEMP/lint_platform"
+          mkdir "$p"
+          echo 'module(name="lint_platform")' > "$p/MODULE.bazel"
+          cpu=x86_64
+          if [[ "$ARCH" == arm64 ]]; then cpu=aarch64; fi
+          cat > "$p/BUILD" <<BUILD
+          platform(name="ubuntu", constraint_values=["@platforms//cpu:${cpu}","@platforms//os:linux"],
+                   exec_properties={"Arch":"${ARCH}","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"}, visibility=["//visibility:public"])
+          BUILD
+          : "${BUILDBUDDY_API_KEY:?BuildBuddy key not supplied}"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=lint_platform=$p" 'build --host_platform=@lint_platform//:ubuntu' 'build --extra_execution_platforms=@lint_platform//:ubuntu' "build --platforms=//tools/bazeldefs:linux_${ARCH}" 'test --cache_test_results=yes' 'test --remote_download_regex=.*[/](test[.](log|xml))$' "test --build_event_json_file=$RUNNER_TEMP/codespell/events.jsonl" 'test --build_event_json_file_path_conversion=false'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/lint.bazelrc"
+          printf '\nimport %s\n' "$RUNNER_TEMP/lint.bazelrc" >> "$HOME/.bazelrc"
+      - name: Run shipped hooks and scoped native commands
+        working-directory: source
+        run: |
+          set -euo pipefail
+          export BAZELISK_HOME="$RUNNER_TEMP/bazelisk"
+          export HOOK="$GITHUB_WORKSPACE/carrier/.github/qualification/buildkite-lint/hooks.sh"
+          PYTHONPATH="$RUNNER_TEMP" python3 "$GITHUB_WORKSPACE/carrier/.github/qualification/buildkite-lint/check.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: buildkite-source-lint-${{ matrix.arch }}
+          path: ${{ runner.temp }}/codespell/result.json
+          if-no-files-found: error
