@@ -1,0 +1,76 @@
+name: Qualify scratch packages on the standalone source
+on:
+  push:
+    branches: [qualification/python-package-source-smoke]
+permissions:
+  contents: read
+jobs:
+  qualify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      QUALIFICATION_COMMIT: 700b0bbea70ff699553d8e40827a2f3dab4afdd2
+      QUALIFICATION_EXECUTION: remote-actions
+      QUALIFICATION_LANES: build
+      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
+      QUALIFICATION_CLOCK_SOURCE: calibrated
+      QUALIFICATION_HEADER_BASE: ''
+      QUALIFICATION_COS_SHA256: ''
+      QUALIFICATION_COS_GZIP_BASE64: ''
+      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //shim:config
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {ref: "700b0bbea70ff699553d8e40827a2f3dab4afdd2", fetch-depth: 1, persist-credentials: false}
+      - name: Fetch the pinned compact execution log decoder
+        run: |
+          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bb"
+      - name: Resolve the declared dependency graph before running the shared harness
+        run: |
+          git fetch --no-tags --depth=1 origin 02a31baeca69185c0b6d90fd8861977ab7a6bbf9
+          git archive FETCH_HEAD test/rbe | tar -xf -
+          cat >> test/rbe/qualification.bazelrc <<'RC'
+          build:rbe --config=buildbuddy_remote_executor
+          build:rbe --spawn_strategy=remote
+          build:rbe --noremote_local_fallback
+          build:rbe-arm64 --config=rbe
+          RC
+          test -z "$(git status --porcelain --untracked-files=no)"
+
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          mkdir -p "$RUNNER_TEMP/evidence"
+          bazelisk mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/evidence/graph.json"
+          bazelisk mod show_extension --lockfile_mode=update @rules_python//python/extensions:python.bzl%python > "$RUNNER_TEMP/evidence/python-extension.txt"
+          cp MODULE.bazel.lock "$RUNNER_TEMP/evidence/MODULE.bazel.lock"
+      - name: Execute original tar and deb actions on both worker architectures
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          export BB_LOG_DECODER="$RUNNER_TEMP/bb" REPORT_DIR="$RUNNER_TEMP/evidence"
+          mkdir -p "$REPORT_DIR"
+          job_root=$RUNNER_TEMP
+          status=0
+          for entry in amd64:x86_64 arm64:aarch64; do
+            export QUALIFICATION_ARCH=${entry%:*}
+            export RUNNER_TEMP="$job_root/$QUALIFICATION_ARCH"
+            mkdir "$RUNNER_TEMP"
+            bash test/rbe/actions.sh \
+              "--bazel-option=--host_platform=//tools/bazeldefs:linux_$QUALIFICATION_ARCH" \
+              "--bazel-option=--extra_execution_platforms=//tools/bazeldefs:linux_$QUALIFICATION_ARCH" \
+              --bazel-option=--config=static-python \
+              "--bazel-option=--remote_default_exec_properties=Arch=$QUALIFICATION_ARCH" \
+              --bazel-option=--remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef \
+              --bazel-option=--lockfile_mode=error --bazel-option=--remote_download_outputs=all \
+              '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || status=1
+            GITHUB_SHA="$QUALIFICATION_COMMIT" python3 test/rbe/python_package_writers/stage2_evidence.py || status=1
+          done
+          exit "$status"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: verified-package-actions
+          path: ${{ runner.temp }}/evidence
+          if-no-files-found: error
