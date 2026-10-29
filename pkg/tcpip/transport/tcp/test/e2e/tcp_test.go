@@ -16,6 +16,7 @@ package tcp_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -47,6 +48,53 @@ import (
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+// TestSlowStartWindowUse sends one flight into an open receive window, then
+// ACKs its segments individually. Small flights cannot grow cwnd. A flight
+// using more than half the window can probe up to twice its size; a full
+// flight continues to earn growth even as its last packets are acknowledged.
+func TestSlowStartWindowUse(t *testing.T) {
+	for _, cc := range []string{"cubic", "reno"} {
+		for _, tc := range []struct{ flight, want int }{
+			{1, tcp.InitialCwnd},
+			{tcp.InitialCwnd / 2, tcp.InitialCwnd},
+			{tcp.InitialCwnd/2 + 1, tcp.InitialCwnd + 2},
+			{tcp.InitialCwnd, 2 * tcp.InitialCwnd},
+		} {
+			t.Run(fmt.Sprintf("%s/flight_%d", cc, tc.flight), func(t *testing.T) {
+				const mss = 32
+				clock := faketime.NewManualClock()
+				c := context.NewWithOpts(t, context.Options{EnableV4: true, Clock: clock, MTU: header.IPv4MinimumSize + header.TCPMinimumSize + mss})
+				defer c.Cleanup()
+				algorithm := tcpip.CongestionControlOption(cc)
+				if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &algorithm); err != nil {
+					t.Fatal(err)
+				}
+				c.CreateConnected(789, 30000, -1)
+				data := make([]byte, tc.flight*mss)
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+					t.Fatalf("Write: got (%d, %v), want (%d, nil)", n, err, len(data))
+				}
+				for i := range tc.flight {
+					c.ReceiveAndCheckPacket(data, i*mss, mss)
+				}
+				for i := range tc.flight {
+					clock.Advance(time.Millisecond)
+					c.SendAck(790, (i+1)*mss)
+					c.Stack().Pause()
+					c.Stack().Resume()
+				}
+				var info tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&info); err != nil {
+					t.Fatal(err)
+				}
+				if got := int(info.SndCwnd); got != tc.want {
+					t.Errorf("after ACKing %d segments cwnd = %d, want %d", tc.flight, got, tc.want)
+				}
+			})
+		}
+	}
+}
 
 func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
 	for _, recovery := range []string{"fast_retransmit", "retransmission_timeout"} {
@@ -10604,4 +10652,161 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+func TestWindowAfterSparseWrites(t *testing.T) {
+	for _, cc := range []string{"reno", "cubic"} {
+		for _, input := range []struct {
+			name    string
+			packets int
+			gap     time.Duration
+		}{
+			{"none", 0, 0},
+			{"dense", 64, 0},
+			{"spaced", 64, 90 * time.Millisecond},
+		} {
+			t.Run(cc+"_"+input.name, func(t *testing.T) {
+				testWindowAfterSparseWrites(t, cc, input.name, input.packets, input.gap)
+			})
+		}
+	}
+}
+
+func testWindowAfterSparseWrites(t *testing.T, cc, profile string, sparsePackets int, gap time.Duration) {
+	t.Helper()
+	const mss, peerWindow, rtt = 32, 30000, 10 * time.Millisecond
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: header.TCPMinimumSize + header.IPv4MinimumSize + mss, Clock: clock})
+	defer c.Cleanup()
+	algorithm := tcpip.CongestionControlOption(cc)
+	if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &algorithm); err != nil {
+		t.Fatal(err)
+	}
+	c.CreateConnected(789, peerWindow, -1)
+	ep := c.EP.(*tcp.Endpoint)
+	fence := func() { c.Stack().Pause(); c.Stack().Resume() }
+	origin := clock.NowMonotonic()
+	var written, wire, acked int
+	data := make([]byte, 32768)
+	for i := range data {
+		data[i] = byte(i % 239)
+	}
+	write := func(n int) {
+		t.Helper()
+		b := data[written : written+n*mss]
+		if got, err := c.EP.Write(bytes.NewReader(b), tcpip.WriteOptions{}); err != nil || got != int64(len(b)) {
+			t.Fatalf("Write %d = %d, %v", len(b), got, err)
+		}
+		written += len(b)
+		fence()
+	}
+	receive := func(n int) {
+		t.Helper()
+		for range n {
+			c.ReceiveAndCheckPacket(data, wire, mss)
+			wire += mss
+		}
+	}
+	ack := func(offset int) { c.SendAck(790, offset); fence(); acked = offset }
+	noPacket := func() {
+		t.Helper()
+		if v := c.GetPacketNonBlocking(); v != nil {
+			v.Release()
+			t.Fatal("unexpected wire packet")
+		}
+	}
+	drained := func() tcp.FirstLossSender {
+		t.Helper()
+		st := ep.FirstLossSender()
+		if written != wire || acked != wire || st.Outstanding != 0 || st.SackedOut != 0 || st.SndUna != st.SndNxt || st.Recovery || st.TimerArmed {
+			t.Fatalf("not drained: app/wire/acked %d/%d/%d, sender %+v", written, wire, acked, st)
+		}
+		noPacket()
+		return st
+	}
+	// Validate one whole initial window, then lose the first data segment
+	// of the next flight. The three dup ACKs and actual head retransmission
+	// select fast recovery. There are no writes waiting behind this flight.
+	write(tcp.InitialCwnd)
+	receive(tcp.InitialCwnd)
+	clock.Advance(rtt)
+	ack(wire)
+	window := drained().Cwnd
+	write(window)
+	head := wire
+	receive(window)
+	clock.Advance(rtt)
+	for range 3 {
+		ack(head)
+	}
+	c.ReceiveAndCheckPacket(data, head, mss)
+	ack(wire)
+	before := drained()
+	if before.Cwnd < before.Threshold || before.Cwnd >= window {
+		t.Fatalf("did not enter congestion avoidance after repair: %+v (prior cwnd %d)", before, window)
+	}
+	retrans := c.Stack().Stats().TCP.Retransmits.Value()
+	timeouts := c.Stack().Stats().TCP.Timeouts.Value()
+	start := clock.NowMonotonic()
+	type sample struct {
+		At, RTO                                        int64
+		Cwnd, Threshold, Flight, Accepted, Wire, Acked int
+	}
+	var samples []sample
+	for range sparsePackets {
+		if limit := time.Duration(ep.FirstLossSender().RTONS); gap+rtt >= limit {
+			t.Fatalf("inter-send interval %v not below RTO %v", gap+rtt, limit)
+		}
+		clock.Advance(gap)
+		write(1)
+		receive(1)
+		noPacket()
+		flight := ep.FirstLossSender()
+		if written != wire || acked+mss != wire || flight.Outstanding != 1 || flight.SndNxt-flight.SndUna != mss || flight.Recovery {
+			t.Fatalf("app/wire/acked %d/%d/%d, flight %+v", written, wire, acked, flight)
+		}
+		clock.Advance(rtt)
+		ack(wire)
+		end := drained()
+		samples = append(samples, sample{int64(clock.NowMonotonic().Sub(start)), end.RTONS, end.Cwnd, end.Threshold, flight.Outstanding, written, wire, acked})
+	}
+	preburst := drained()
+	if preburst.Cwnd*mss >= peerWindow || preburst.Cwnd >= 256 {
+		t.Fatalf("receiver or offer would limit the burst %+v", preburst)
+	}
+	write(256)
+	var burst int
+	for c.ReceiveNonBlockingAndCheckPacket(data, wire, mss) {
+		wire += mss
+		burst++
+	}
+	atBurst := ep.FirstLossSender()
+	if burst != preburst.Cwnd || atBurst.Outstanding != burst || int(atBurst.SndNxt-atBurst.SndUna) != burst*mss {
+		t.Fatalf("first burst = %d wire segments, before/after %+v/%+v", burst, preburst, atBurst)
+	}
+	// A covering ACK of the full burst is the first opportunity for growth
+	// from a genuinely full flight after the trickle.
+	clock.Advance(rtt)
+	ack(wire)
+	after := ep.FirstLossSender()
+	var nextBurst int
+	for c.ReceiveNonBlockingAndCheckPacket(data, wire, mss) {
+		wire += mss
+		nextBurst++
+	}
+	if nextBurst != after.Cwnd || nextBurst != after.Outstanding || c.Stack().Stats().TCP.Retransmits.Value() != retrans || c.Stack().Stats().TCP.Timeouts.Value() != timeouts {
+		t.Fatalf("second burst %d, %+v; additional loss/timeout or sender mismatch", nextBurst, after)
+	}
+	record := struct {
+		CC, Profile                                              string
+		MSS, PeerWindow, PreCwnd, PreThreshold, Burst, NextBurst int
+		RTT, Gap, Start, End                                     int64
+		Retransmits, Timeouts                                    uint64
+		Samples                                                  []sample
+	}{cc, profile, mss, peerWindow, before.Cwnd, before.Threshold, burst, nextBurst, int64(rtt), int64(gap), int64(start.Sub(origin)), int64(clock.NowMonotonic().Sub(origin)), retrans, timeouts, samples}
+	b, err := json.Marshal(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("DEMAND_RESULT %s", b)
 }
