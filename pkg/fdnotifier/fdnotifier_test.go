@@ -66,3 +66,61 @@ func TestRejectedMaskKeepsHostSubscription(t *testing.T) {
 		t.Fatal("no host readiness notification after rejected update")
 	}
 }
+
+func TestOverlappingMaskDoesNotRepeatHostEdge(t *testing.T) {
+	await := func(ch <-chan struct{}) {
+		t.Helper()
+		select {
+		case <-ch:
+		case <-time.After(5 * time.Second):
+			t.Fatal("host notification did not arrive")
+		}
+	}
+
+	// Both watchers consume the eventfd's initial edge. Leave it readable.
+	host, err := unix.Eventfd(1, unix.EFD_NONBLOCK|unix.EFD_CLOEXEC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(host)
+	var q waiter.Queue
+	changing, first := waiter.NewChannelEntry(waiter.EventIn)
+	observer, other := waiter.NewChannelEntry(waiter.EventIn | waiter.EventOut)
+	q.EventRegister(&changing)
+	q.EventRegister(&observer)
+	if err := fdnotifier.AddFD(int32(host), &q); err != nil {
+		t.Fatal(err)
+	}
+	defer fdnotifier.RemoveFD(int32(host))
+	await(first)
+	await(other)
+
+	// A second host FD provides a barrier. Its notification is queued
+	// after any event produced by rearming the first FD.
+	var pipe [2]int
+	if err := unix.Pipe2(pipe[:], unix.O_CLOEXEC); err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(pipe[0])
+	defer unix.Close(pipe[1])
+	var barrier waiter.Queue
+	marker, done := waiter.NewChannelEntry(waiter.EventIn)
+	barrier.EventRegister(&marker)
+	if err := fdnotifier.AddFD(int32(pipe[0]), &barrier); err != nil {
+		t.Fatal(err)
+	}
+	defer fdnotifier.RemoveFD(int32(pipe[0]))
+
+	if err := fdnotifier.UpdateMask(int32(host), &changing, waiter.EventIn|waiter.EventOut); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := unix.Write(pipe[1], []byte{1}); err != nil {
+		t.Fatal(err)
+	}
+	await(done)
+	select {
+	case <-other:
+		t.Fatal("unchanged watcher received the same host edge twice")
+	default:
+	}
+}

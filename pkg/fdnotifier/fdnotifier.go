@@ -34,9 +34,9 @@ type fdInfo struct {
 	// membership and queued event masks.
 	queue *waiter.Queue
 
-	// waiting is protected by the owning notifier's mu. fdInfo does not retain
-	// a pointer to that owner for a checklocks annotation.
-	waiting bool
+	// mask is the interest installed on the host, protected by the owning
+	// notifier's mu. fdInfo does not retain that notifier.
+	mask waiter.EventMask
 }
 
 // notifier holds all the state necessary to issue notifications when IO events
@@ -80,23 +80,26 @@ func newNotifier() (*notifier, error) {
 //
 // +checklocks:n.mu
 func (n *notifier) waitFD(fd int32, fi *fdInfo, mask waiter.EventMask) error {
-	if err := setHostMask(n.epFD, fd, fi.waiting, mask); err != nil {
+	if err := setHostMask(n.epFD, fd, fi.mask, mask); err != nil {
 		return err
 	}
-	fi.waiting = mask != 0
+	fi.mask = mask
 	return nil
 }
 
 // setHostMask programs the host epoll descriptor without modifying fdInfo.
-func setHostMask(epFD int, fd int32, waiting bool, mask waiter.EventMask) error {
+func setHostMask(epFD int, fd int32, oldMask, mask waiter.EventMask) error {
+	if mask == oldMask {
+		// Even an unchanged MOD repolls the host file and can repeat an
+		// edge for another watcher of the same ready file.
+		return nil
+	}
 	if mask == 0 {
-		if waiting {
-			unix.EpollCtl(epFD, unix.EPOLL_CTL_DEL, int(fd), nil)
-		}
+		unix.EpollCtl(epFD, unix.EPOLL_CTL_DEL, int(fd), nil)
 		return nil
 	}
 	op := unix.EPOLL_CTL_ADD
-	if waiting {
+	if oldMask != 0 {
 		op = unix.EPOLL_CTL_MOD
 	}
 	return unix.EpollCtl(epFD, op, int(fd), &unix.EpollEvent{
@@ -156,15 +159,15 @@ func (n *notifier) updateMask(fd int32, e *waiter.Entry, mask waiter.EventMask) 
 	if !ok {
 		return unix.ENOENT
 	}
-	wasWaiting := fi.waiting
+	oldMask := fi.mask
 	var newMask waiter.EventMask
 	if err := fi.queue.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
 		newMask = aggregate
-		return setHostMask(n.epFD, fd, wasWaiting, aggregate)
+		return setHostMask(n.epFD, fd, oldMask, aggregate)
 	}); err != nil {
 		return err
 	}
-	fi.waiting = newMask != 0
+	fi.mask = newMask
 	return nil
 }
 
