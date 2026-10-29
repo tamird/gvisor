@@ -52,5 +52,21 @@ for i,line in enumerate(text.splitlines(),1):
         found.extend(re.findall(pattern,line,re.I))
     if found: rows[i]=sorted(set(found))
 report={"original":ID,"source":"32bf2915538481adcfddd866650318cbfec441c7","bytes":len(text.encode()),"sha256":sha256(text.encode()).hexdigest(),"matches":rows}
+# Project only the missing executable/library and packaging bootstrap subjects,
+# never a command line, argument, URL, or authentication-bearing header.
+missing = []
+for line in text.splitlines():
+    pat = r"(?:^|[ :\x60\x27\x22])([^ :\x60\x27\x22]{1,170})[ :\x60\x27\x22]*(?:command )?not found"
+    for item in re.findall(pat, line, re.I):
+        name = item.rsplit("/", 1)[-1]
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.+-]{0,30}", name) and not re.search(r"(?i)(secret|token|password|auth|key)", name):
+            missing.append(name)
+keywords = ("go", "bash", "sh", "GOROOT", "GOPATH", "GOCACHE", "HOME", "PATH", "env", "stat", "exec", "rules_go", "ruby", "gcc", "clang", "ld", "GLIBC", "glibc", "LIBC", "libc", "version", "library", "executable", "Program", "musl", "loader", "libc.so.6", "libm.so.6", "libstdc++.so.6", "libgcc_s.so.1", "mktemp", "docker", "platform", "container", "error", "not", "found", "No", "file", "or", "directory", "required", "by", "line", "binary_wrapper", "libpthread.so.0")
+details = {}
+for n,line in enumerate(text.splitlines(),1):
+    if 35 <= n <= 43:
+        facts = [m.group(0) for m in re.finditer(r"GLIBC_[.0-9]+|[A-Za-z_][.A-Za-z0-9_+-]*", line) if m.group(0) in keywords or m.group(0).startswith("GLIBC_")]
+        if facts: details[n]=facts
+report.update(missing_names=missing, original_compiler_terms=details)
 (Path(os.environ["RUNNER_TEMP"])/"original-catalog.json").write_text(json.dumps(report,indent=2)+"\n")
 assert rows, "no classified original log facts"

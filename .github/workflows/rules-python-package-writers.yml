@@ -1,7 +1,7 @@
 name: Qualify rules_python package writers
 on:
   push:
-    branches: [qualification/rules-python-catalog-original]
+    branches: [qualification/rules-python-catalog-cause]
 permissions:
   contents: read
 jobs:
