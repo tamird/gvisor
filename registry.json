@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T15:26:07.814492+00:00",
+    "updatedAt": "2026-10-29T15:32:30.872309+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33883,8 +33883,8 @@
       "url": "https://github.com/tamird/gvisor/commit/0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5",
       "group": "release",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T15:25:27.950951+00:00",
-      "summary": "Build all six native packages and archives in one Bazel configuration. Build optional Python artifacts first and verify that both native architectures are complete before signing. The archive build passed; the first signing fixture used the wrong Debian archive path. The corrected offline publication and missing-architecture checks are running.",
+      "updatedAt": "2026-10-29T15:32:30.872309+00:00",
+      "summary": "Build all six native packages and archives in one Bazel configuration. Build optional Python artifacts first; require both native architectures before signing. The initial archive build passed. The offline signing fixture needed its Debian extraction path and the generated lock for its Make tool corrected; publication is being checked now.",
       "evidence": [
         {
           "label": "Proposed release target",
@@ -33905,8 +33905,56 @@
         {
           "label": "Offline publication and missing-input checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/40901180912"
+        },
+        {
+          "label": "Pinned Bazel generated the GNU Make package lock",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40902215432"
+        },
+        {
+          "label": "Strict-lock offline release and negative inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40902546567"
         }
       ]
+    },
+    {
+      "id": "branch:overlay-close-lifetime",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/overlay-close-lifetime",
+      "head": "6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
+      "title": "Keep the lower overlay file alive during close",
+      "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T15:32:30.872309+00:00",
+      "summary": "A chmod on the same open overlay file can copy it up and release the lower file while its close callback is still running. Retain the lower file until its callback returns.",
+      "evidence": [
+        {
+          "label": "Fork patch",
+          "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c"
+        },
+        {
+          "label": "Premature release on stock",
+          "url": "https://app.buildbuddy.io/invocation/ea252399-4455-4618-969b-7029d38cc23a"
+        },
+        {
+          "label": "Corrected VFS test",
+          "url": "https://app.buildbuddy.io/invocation/2f53563a-ca47-4086-b7a3-6de009a1ba58"
+        },
+        {
+          "label": "Owning analyzer",
+          "url": "https://app.buildbuddy.io/invocation/0a520392-8d77-48f3-8f65-2417af7d8802"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
+        "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
+        "title": "Keep the lower overlay file alive during close",
+        "summary": "A chmod on the same open overlay file can copy it up and release the lower file while its close callback is still running. Retain the lower file until its callback returns.",
+        "body": "Overlay drops its file mutex before calling the cached file’s OnClose.\nA chmod on the same open file can copy it up and release the last\nreference to the lower file while its close callback is still running.\nTake a reference under the mutex and hold it until the callback returns.\n\nThe regression blocks the lower callback, changes the file mode, and\nchecks that the lower file is released only after the callback returns\nits error to the caller."
+      }
     }
   ],
   "edges": [
@@ -49592,7 +49640,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
+      "updatedAt": "2026-10-29T15:32:30.872309+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -49637,9 +49685,26 @@
               "url": "https://app.buildbuddy.io/invocation/4a9a3fbd-d196-46dc-a233-15ad67ca6316"
             }
           ]
+        },
+        {
+          "text": "A chmod on the same open overlay file can copy it up and release the lower file while its close callback is still running. Retain the lower file until its callback returns.",
+          "evidence": [
+            {
+              "label": "Fork patch",
+              "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c"
+            },
+            {
+              "label": "Premature release on stock",
+              "url": "https://app.buildbuddy.io/invocation/ea252399-4455-4618-969b-7029d38cc23a"
+            },
+            {
+              "label": "Corrected VFS test",
+              "url": "https://app.buildbuddy.io/invocation/2f53563a-ca47-4086-b7a3-6de009a1ba58"
+            }
+          ]
         }
       ],
-      "nextStep": "Check whether overlay copy-up drops a cached lower file’s final reference inside OnClose, then verify preserving that reference also preserves the lower error. Follow #16621 and #16606 for the file-lock and pipe contracts.",
+      "nextStep": "Contributor review of the verified overlay close lifetime fix. Verify separately whether a change of cached file can leave a poll registration on the old file.",
       "evidence": [
         {
           "label": "Verified epoll registration contract",
