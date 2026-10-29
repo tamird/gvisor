@@ -63,3 +63,16 @@ diff --git a/go/private/rules/binary.bzl b/go/private/rules/binary.bzl
  )
  
  def gc_linkopts(ctx):
+diff --git a/go/private/rules/binary_wrapper.sh b/go/private/rules/binary_wrapper.sh
+--- a/go/private/rules/binary_wrapper.sh
++++ b/go/private/rules/binary_wrapper.sh
+@@ -12,6 +12,9 @@
+ export HOME="${PWD}/_go_tool_binary-fake-home-${1//\\//_}"
+ trap "${GO_BINARY} clean -cache" EXIT
+ 
++# Go creates and removes a unique work directory here; minimal workers may have no /tmp.
++export TMPDIR="${TMPDIR:-$PWD/${1%/*}}"
++
+ # We do not use -a here as the cache drastically reduces the time spent
+ # on the second go build invocation (roughly 50% faster).
+ 
