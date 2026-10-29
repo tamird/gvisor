@@ -21,16 +21,13 @@ import (
 
 // arrayFromSlice constructs a new pointer to the slice data.
 //
-// It would be similar to the following:
-//
-//	x := make([]Foo, l, c)
-//	a := ([l]Foo*)(unsafe.Pointer(x[0]))
-func arrayFromSlice(obj reflect.Value) reflect.Value {
-	arr := reflect.NewAt(
-		reflect.ArrayOf(obj.Cap(), obj.Type().Elem()),
-		unsafe.Pointer(obj.Pointer()))
-	if obj.Len() < obj.Cap() {
-		arr.Elem().Slice(obj.Len(), obj.Cap()).Clear()
-	}
-	return arr
+// The caller chooses the array length: capacity identifies shared storage;
+// length identifies the elements that can be read from this slice.
+func arrayFromSlice(obj reflect.Value, n int) reflect.Value {
+	return reflect.NewAt(reflect.ArrayOf(n, obj.Type().Elem()), obj.UnsafePointer())
+}
+
+func copyBackingView(dst reflect.Value, src reflect.Value, offset uintptr) {
+	ptr := unsafe.Add(dst.Addr().UnsafePointer(), offset)
+	reflect.NewAt(src.Type().Elem(), ptr).Elem().Set(reflect.NewAt(src.Type().Elem(), src.UnsafePointer()).Elem())
 }

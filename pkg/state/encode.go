@@ -47,7 +47,10 @@ type objectEncodeState struct {
 	// refs are the list of reference objects used by other objects
 	// referring to this object. When the object is updated, these
 	// references may be updated directly and automatically.
-	refs []*wire.Ref
+	refs []objectView
+
+	// partial is true if the backing storage was discovered through a short slice.
+	partial bool
 
 	deferredEntry
 }
@@ -155,6 +158,54 @@ func (es *encodeState) nextID() objectID {
 // dummyAddr points to the dummy zero-sized address.
 var dummyAddr = reflect.ValueOf(new(struct{})).Pointer()
 
+type objectView struct {
+	wire *wire.Ref
+	view reflect.Value // Pointer to the object or the elements in a slice's length.
+}
+
+func (v objectView) contains(ptr, size uintptr) bool {
+	start := v.view.Pointer()
+	return start <= ptr && size <= v.view.Type().Elem().Size() && ptr-start <= v.view.Type().Elem().Size()-size
+}
+
+func (es *encodeState) record(o *objectEncodeState, ref *wire.Ref, view reflect.Value) {
+	if o.partial && o.encoded != nil && view.Type().Elem().Size() != 0 {
+		covered := false
+		for _, v := range o.refs {
+			if v.contains(view.Pointer(), view.Type().Elem().Size()) {
+				covered = true
+				break
+			}
+		}
+		if !covered {
+			o.encoded = nil
+			es.deferred.PushBack(o)
+		}
+	}
+	o.refs = append(o.refs, objectView{ref, view})
+}
+
+// backing returns a typed copy of a partially reachable array. If another
+// reference makes the entire array visible, encode the original receiver.
+func (o *objectEncodeState) backing() reflect.Value {
+	if !o.partial {
+		return o.obj
+	}
+	addr, size := o.obj.Addr().Pointer(), o.obj.Type().Size()
+	for _, v := range o.refs {
+		if v.contains(addr, size) {
+			return o.obj
+		}
+	}
+	sh := reflect.New(o.obj.Type()).Elem()
+	for _, v := range o.refs {
+		if v.view.Type().Elem().Size() != 0 {
+			copyBackingView(sh, v.view, v.view.Pointer()-addr)
+		}
+	}
+	return sh
+}
+
 // resolve records the address range occupied by an object.
 func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	addr := obj.Pointer()
@@ -205,7 +256,14 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		return
 	}
 
-	// If not a map, then the object must be a pointer.
+	view := obj
+	partial := false
+	if obj.Kind() == reflect.Slice {
+		partial = obj.Len() != obj.Cap()
+		view = arrayFromSlice(obj, obj.Len())
+		obj = arrayFromSlice(obj, obj.Cap())
+	}
+	// If not a map or converted slice, then the object must be a pointer.
 	if obj.Kind() != reflect.Ptr {
 		Failf("attempt to record non-map and non-pointer object %#v", obj)
 	}
@@ -261,7 +319,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			// just return directly. We don't need to encode the type
 			// information or any dots here.
 			ref.Root = wire.Uint(existing.id)
-			existing.refs = append(existing.refs, ref)
+			es.record(existing, ref, view)
 			return
 		}
 
@@ -271,7 +329,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			ref.Root = wire.Uint(existing.id)
 			ref.Dots = traverse(existing.obj.Type(), typ, seg.Start(), addr)
 			ref.Type = es.findType(existing.obj.Type())
-			existing.refs = append(existing.refs, ref)
+			es.record(existing, ref, view)
 			return
 		}
 
@@ -279,13 +337,14 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		// Remove them and update existing references to use the new one.
 		oes := &objectEncodeState{
 			// Reuse the root ID of the first contained element.
-			id:  existing.id,
+			id: existing.id,
 			obj: obj,
+			partial: partial,
 		}
 		type elementEncodeState struct {
 			addr uintptr
 			typ  reflect.Type
-			refs []*wire.Ref
+			refs []objectView
 		}
 		var (
 			elems []elementEncodeState
@@ -314,7 +373,8 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		wt := es.findType(typ)
 		for _, elem := range elems {
 			dots := traverse(typ, elem.typ, addr, elem.addr)
-			for _, ref := range elem.refs {
+			for _, view := range elem.refs {
+				ref := view.wire
 				ref.Root = wire.Uint(oes.id)
 				ref.Dots = append(ref.Dots, dots...)
 				ref.Type = wt
@@ -330,14 +390,15 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		es.pending[oes.id] = oes
 		es.deferred.PushBack(oes)
 		ref.Root = wire.Uint(oes.id)
-		oes.refs = append(oes.refs, ref)
+		es.record(oes, ref, view)
 		return
 	}
 
 	// No existing object overlaps this one. Register a new object.
 	oes = &objectEncodeState{
-		id:  es.nextID(),
+		id: es.nextID(),
 		obj: obj,
+		partial: partial,
 	}
 	if seg.Ok() {
 		gap = seg.PrevGap()
@@ -352,7 +413,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	es.pending[oes.id] = oes
 	es.deferred.PushBack(oes)
 	ref.Root = wire.Uint(oes.id)
-	oes.refs = append(oes.refs, ref)
+	es.record(oes, ref, view)
 }
 
 // traverse searches for a target object within a root object, where the target
@@ -736,7 +797,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 			return
 		}
 		// Slices need pointer resolution.
-		es.resolve(arrayFromSlice(obj), &s.Ref)
+		es.resolve(obj, &s.Ref)
 	case reflect.Interface:
 		es.encodeInterface(obj, dest)
 	case reflect.Struct:
@@ -777,7 +838,7 @@ func (es *encodeState) Save(obj reflect.Value) {
 			// deferred list yet again. That's expected, and why it
 			// is removed first.
 			es.deferred.Remove(oes)
-			es.encodeObject(oes.obj, oes.how, &oes.encoded)
+			es.encodeObject(oes.backing(), oes.how, &oes.encoded)
 		}
 	}); err != nil {
 		// Include the object in the error message, if available.
