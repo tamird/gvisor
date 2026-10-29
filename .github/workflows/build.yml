@@ -1,9 +1,9 @@
-name: Compare native ZIP actions with manifest and zipped writers
+name: Check rules_python 2.4.5 without the host bootstrap
 on: workflow_dispatch
 permissions: {contents: read}
 jobs:
   qualify:
-    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
@@ -12,18 +12,21 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          repository: tamird/rules_pkg
-          ref: 1702e63c4673bf8c00df82a1613c2359895fbe20
-          fetch-depth: 2
+          repository: bazelbuild/rules_pkg
+          ref: 01446201fd8e758267f4e1abd9727926655110b7
           persist-credentials: false
           path: supplier
-      - name: Compare native Linux ZIP actions and outputs
+      - name: Exercise normal and restricted actions with both bootstrap modes
         env:
           USE_BAZEL_VERSION: 8.8.1
-        run: python3 .github/qualification/supplier-zip/runfiles.py
+        run: |
+          test "$(git -C supplier rev-parse HEAD)" = 01446201fd8e758267f4e1abd9727926655110b7
+          python3 .github/qualification/supplier-zip/version-probe.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: zip-runfiles
-          path: ${{ runner.temp }}/rules-zip-runfiles.json
+          name: bootstrap-verdict
+          path: |
+            ${{ runner.temp }}/bootstrap-evidence/verdict.json
+            ${{ runner.temp }}/bootstrap-evidence/*.log
           if-no-files-found: error
