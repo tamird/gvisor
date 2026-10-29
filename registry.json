@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T23:51:50.493908+00:00",
+    "updatedAt": "2026-10-29T23:58:18.281575+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32304,8 +32304,8 @@
       "url": "https://github.com/tamird/gvisor/commit/32bf2915538481adcfddd866650318cbfec441c7",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "The rules_python build metadata change is published in google/gvisor#16693.",
+      "updatedAt": "2026-10-29T23:58:18.281575+00:00",
+      "summary": "Merged in #16693: Bazel writes the unstamped tar and Debian writer metadata directly.",
       "evidence": [
         {
           "label": "AMD64 packages",
@@ -32326,6 +32326,10 @@
         {
           "label": "Published PR",
           "url": "https://github.com/google/gvisor/pull/16693"
+        },
+        {
+          "label": "Merged metadata fix",
+          "url": "https://github.com/google/gvisor/commit/ba1947269"
         }
       ],
       "settledReviews": [
@@ -34228,10 +34232,10 @@
       "title": "Update rules_python to 2.4.5",
       "url": "https://github.com/google/gvisor/pull/16693",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "head": "32bf2915538481adcfddd866650318cbfec441c7",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "The rules_python build metadata change is published in google/gvisor#16693.",
+      "updatedAt": "2026-10-29T23:58:18.281575+00:00",
+      "summary": "The update merged in #16693. Unstamped Python build metadata is generated without a shell; the package writer executables still need a launcher.",
       "evidence": [
         {
           "label": "AMD64 packages",
@@ -34252,6 +34256,10 @@
         {
           "label": "Published PR",
           "url": "https://github.com/google/gvisor/pull/16693"
+        },
+        {
+          "label": "Merged metadata fix",
+          "url": "https://github.com/google/gvisor/commit/ba1947269"
         }
       ],
       "settledReviews": [
@@ -50111,7 +50119,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T20:38:34.195870+00:00",
+      "updatedAt": "2026-10-29T23:58:18.281575+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -50221,7 +50229,7 @@
           ]
         },
         {
-          "text": "rules_python 2.4.5 removes two shell actions that generated constant build metadata for the tar and Debian writers. The writers produced identical packages on ordinary AMD64 and ARM64 workers. On an empty worker the metadata was generated, then both package launchers failed to execute.",
+          "text": "Merged #16693 removes the two shell actions that generated unstamped build metadata for the tar and Debian writers. Both archives matched on ordinary AMD64 and ARM64 workers. On an empty worker the writers still failed before Python started: the declared static interpreter was present, but each executable began with /usr/bin/env bash.",
           "evidence": [
             {
               "label": "AMD64 packages",
@@ -50238,6 +50246,18 @@
             {
               "label": "All 220 license records verified",
               "url": "https://app.buildbuddy.io/invocation/cd8e4780-ceb1-48a8-9625-1b87ff649f33"
+            },
+            {
+              "label": "Merged rules_python prerequisite",
+              "url": "https://github.com/google/gvisor/commit/ba1947269"
+            },
+            {
+              "label": "Unstamped metadata action in rules_python 2.4.5",
+              "url": "https://github.com/bazel-contrib/rules_python/blob/1a96d8178/python/private/py_executable.bzl#L1632"
+            },
+            {
+              "label": "Real writers: input-tree diagnostics",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40800731837"
             }
           ]
         },
@@ -50654,7 +50674,7 @@
           ]
         },
         {
-          "text": "The original rules_pkg tar and Debian writers ran through native Python launchers on an empty AMD64 worker. Both output files matched the reference byte for byte (10,240 and 572 bytes). A separate check relocated the writer and interpreter using a manifest: it wrote the expected payload when four repositories shared a moved tree. The same launcher started Python with four independent repository directories, but the Python adapter could not locate the application. The original combined run remains failed because its relocation fixture was incorrect.",
+          "text": "An opt-in fork launcher, layered on the open rules_python #4183, ran the unmodified tar and Debian writers on an empty AMD64 worker. The 10,240-byte tar and 572-byte package matched the reference byte for byte. A relocated manifest worked when repositories shared a tree; with separate physical directories the launcher started Python, but the adapter could not locate the application. Upstream closed the launcher suggestion (#3794) as not planned. The static Python proposal already selects 2.4.5; registering its interpreter alone cannot start these writers.",
           "evidence": [
             {
               "label": "Actual tar/deb writer results",
@@ -50671,6 +50691,22 @@
             {
               "label": "Original stateify output reference",
               "url": "https://github.com/tamird/gvisor/actions/runs/40806415150"
+            },
+            {
+              "label": "Proposed static interpreter registration",
+              "url": "https://github.com/tamird/gvisor/commit/4d9e6dbab"
+            },
+            {
+              "label": "Upstream launcher suggestion (closed as not planned)",
+              "url": "https://github.com/bazel-contrib/rules_python/issues/3794"
+            },
+            {
+              "label": "Open upstream bootstrap rework",
+              "url": "https://github.com/bazel-contrib/rules_python/pull/4183"
+            },
+            {
+              "label": "Fork-only native launcher used by the two writers",
+              "url": "https://github.com/tamird/gvisor/blob/c1756b6d4/tools/rules_python_native_launcher.patch"
             }
           ]
         },
@@ -50777,7 +50813,7 @@
           ]
         }
       ],
-      "nextStep": "Investigate a Python launcher for workers without host programs, accounting for virtual-environment setup and interpreter arguments. Qualify the compiler and changelog separately.",
+      "nextStep": "Before proposing the static Python runtime, verify an upstream-supported launcher can start the unmodified writers without /usr/bin/env and can locate application runfiles across independent manifest directories. The unstamped metadata prerequisite has landed. Qualify the compiler and changelog separately.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
@@ -50802,6 +50838,34 @@
         {
           "label": "Replay the original Go compiler action with its declared input tree",
           "url": "https://app.buildbuddy.io/invocation/7fb14aad-09a4-4310-82d0-6e310a5989a7"
+        },
+        {
+          "label": "Merged rules_python prerequisite",
+          "url": "https://github.com/google/gvisor/commit/ba1947269"
+        },
+        {
+          "label": "Unstamped metadata action in rules_python 2.4.5",
+          "url": "https://github.com/bazel-contrib/rules_python/blob/1a96d8178/python/private/py_executable.bzl#L1632"
+        },
+        {
+          "label": "Real writers: input-tree diagnostics",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40800731837"
+        },
+        {
+          "label": "Proposed static interpreter registration",
+          "url": "https://github.com/tamird/gvisor/commit/4d9e6dbab"
+        },
+        {
+          "label": "Upstream launcher suggestion (closed as not planned)",
+          "url": "https://github.com/bazel-contrib/rules_python/issues/3794"
+        },
+        {
+          "label": "Open upstream bootstrap rework",
+          "url": "https://github.com/bazel-contrib/rules_python/pull/4183"
+        },
+        {
+          "label": "Fork-only native launcher used by the two writers",
+          "url": "https://github.com/tamird/gvisor/blob/c1756b6d4/tools/rules_python_native_launcher.patch"
         }
       ],
       "group": "rbe"
