@@ -116,9 +116,11 @@ repository selects Bazel's version
 through the runner's installed Bazelisk. The connection uses the same secret
 in a temporary configuration that is removed after the command.
 
-The `bwrap` lane uses its existing integration test and runs only that test
-process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
-unprivileged Actions user. The lane retains the existing test cases and skips.
+The `bwrap` lane runs only the test process under sudo, matching
+`make bwrap-tests`. Use `--run_under='//test/rbe:local_root --xml-only'`
+for privileged Go tests: the wrapper returns the XML produced by the test
+to the Bazel user. Direct sudo leaves a root-owned XML file that Bazel cannot
+chmod during output validation, even when every test case passes.
 
 The `unit`, `syscalls`, `syscalls-resume` and `syscalls-kvm` phases intersect
 graph-declared architecture variants with their canonical profiles and run one

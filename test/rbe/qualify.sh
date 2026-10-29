@@ -891,7 +891,7 @@ run_lane() (
       if [[ $test_execution == local ]]; then
         targets=("${targets[0]}_$arch")
         # Match make bwrap-tests: only the test process needs root.
-        options+=(--run_under='sudo -n -E' --test_arg=-test.v)
+        options+=(--run_under='//test/rbe:local_root --xml-only' --test_arg=-test.v)
       fi
       ;;
     do|docker|root|portforward|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images|cos-metadata)

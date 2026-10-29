@@ -15,6 +15,27 @@
 
 # Root test fixture for disposable Actions VMs.
 set -euo pipefail
+
+# A privileged test may write its own XML. Bazel must be able to chmod that
+# output; tests without an XML writer leave its creation to Bazel.
+restore_xml_owner() {
+  local owner=$1
+  shift
+  if [[ -e ${XML_OUTPUT_FILE:?} || -L $XML_OUTPUT_FILE ]]; then
+    "$@" chown -h -- "$owner" "$XML_OUTPUT_FILE"
+  fi
+}
+
+if [[ ${1:-} == --xml-only ]]; then
+  shift
+  status=0
+  sudo -n -E -- "$@" || status=$?
+  cleanup=0
+  restore_xml_owner "$EUID:$(id -g)" sudo -n || cleanup=$?
+  if (( status != 0 )); then exit "$status"; fi
+  exit "$cleanup"
+fi
+
 initial_cgroup=false
 if [[ ${1:-} == --initial-cgroup-namespace ]]; then
   initial_cgroup=true
@@ -100,16 +121,12 @@ cleanup() {
   local status=$?
   trap - EXIT
   local outputs=("$out" "$test_tmp")
-  # Go tests write XML as root; Bazel must own it to normalize output permissions.
-  # Other tests leave XML generation to Bazel after this fixture exits.
-  if [[ -e ${XML_OUTPUT_FILE:?} || -L $XML_OUTPUT_FILE ]]; then
-    outputs+=("$XML_OUTPUT_FILE")
-  fi
   if [[ -n ${TEST_PREMATURE_EXIT_FILE:-} && ( -e $TEST_PREMATURE_EXIT_FILE || -L $TEST_PREMATURE_EXIT_FILE ) ]]; then
     outputs+=("$TEST_PREMATURE_EXIT_FILE")
   fi
   # Do not follow output symlinks or change ownership elsewhere in the cache.
   local cleanup_status=0
+  restore_xml_owner "$output_uid:$output_gid" || cleanup_status=1
   if [[ -n $original_cgroup_options ]]; then
     restore_cgroup_state || cleanup_status=1
   fi
