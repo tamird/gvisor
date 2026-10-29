@@ -97,10 +97,7 @@ type epollInterest struct {
 	// key is the file to which this epollInterest applies. key is immutable.
 	key epollInterestKey
 
-	// source owns the waiter throughout its registration.
-	source EpollSource
-
-	// waiter is registered with source. Its mask is updated under epoll.interestMu.
+	// waiter is registered with key.file. Its mask is updated under epoll.interestMu.
 	waiter waiter.Entry
 
 	// mask is the event mask associated with this registration, including
@@ -146,7 +143,7 @@ func (ep *EpollInstance) Release(ctx context.Context) {
 	defer ep.interestMu.Unlock()
 	for key, epi := range ep.interest {
 		file := key.file
-		epi.source.EventUnregister(&epi.waiter)
+		file.EventUnregister(&epi.waiter)
 		epi.mask = 0
 		file.epollMu.Lock()
 		delete(file.epolls, epi)
@@ -242,8 +239,7 @@ func (ep *EpollInstance) Seek(ctx context.Context, offset int64, whence int32) (
 //
 // Preconditions: A reference must be held on file.
 func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event linux.EpollEvent) error {
-	source := file.EpollSource()
-	if source == nil {
+	if file.EpollSource() == nil {
 		return linuxerr.EPERM
 	}
 	// Check for cyclic polling if necessary.
@@ -274,7 +270,6 @@ func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event lin
 	mask := event.Events | linux.EPOLLERR | linux.EPOLLHUP
 	epi := &epollInterest{
 		epoll:    ep,
-		source:   source,
 		key:      key,
 		mask:     mask,
 		userData: event.Data,
@@ -349,7 +344,7 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 	mask := event.Events | linux.EPOLLERR | linux.EPOLLHUP
 	wmask := waiter.EventMaskFromLinux(mask)
 	if epi.waiter.Mask() != wmask {
-		if err := epi.source.UpdateMask(&epi.waiter, wmask); err != nil {
+		if err := file.EpollSource().UpdateMask(&epi.waiter, wmask); err != nil {
 			return err
 		}
 	}
@@ -381,7 +376,7 @@ func (ep *EpollInstance) DeleteInterest(file *FileDescription, num int32) error 
 	}
 
 	// Unregister from the file so that epi will no longer be readied.
-	epi.source.EventUnregister(&epi.waiter)
+	file.EventUnregister(&epi.waiter)
 
 	// Forget about epi.
 	ep.removeLocked(epi)

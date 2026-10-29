@@ -211,7 +211,7 @@ func (fd *FileDescription) DecRef(ctx context.Context) {
 			// Check that epi has not been concurrently unregistered by
 			// EpollInstance.DeleteInterest() or EpollInstance.Release().
 			if ep.interest[epi.key] == epi {
-				epi.source.EventUnregister(&epi.waiter)
+				fd.EventUnregister(&epi.waiter)
 				ep.removeLocked(epi)
 			}
 			ep.interestMu.Unlock()
@@ -405,8 +405,9 @@ type FileDescriptionImpl interface {
 	// waiter.Waitable methods may be used to poll for I/O events.
 	waiter.Waitable
 
-	// EpollSource identifies the queue or device that owns a new epoll
-	// registration. A nil source means the file does not support epoll.
+	// EpollSource returns nil if this file does not support epoll. Once
+	// EventRegister succeeds, EpollSource must remain available to update
+	// the registered waiter until EventUnregister.
 	EpollSource() EpollSource
 
 	// PRead reads from the file into dst, starting at the given offset, and
@@ -685,15 +686,13 @@ func (fd *FileDescription) EventUnregister(e *waiter.Entry) {
 	fd.impl.EventUnregister(e)
 }
 
-// EpollSource owns an entry for the lifetime of an epoll registration.
-// UpdateMask changes the physical interest without removing the entry. On
-// error both its mask and the underlying subscription must remain intact.
+// EpollSource updates an existing waiter's mask without removing it. On error
+// both its mask and the underlying subscription must remain intact.
 type EpollSource interface {
 	UpdateMask(*waiter.Entry, waiter.EventMask) error
-	EventUnregister(*waiter.Entry)
 }
 
-// EpollSource returns the source used for one EPOLL_CTL_ADD.
+// EpollSource returns the file's epoll mask updater, or nil if unsupported.
 func (fd *FileDescription) EpollSource() EpollSource {
 	return fd.impl.EpollSource()
 }
