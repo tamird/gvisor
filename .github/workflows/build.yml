@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 85
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 16
       - name: Build proxy and run matched transfers
         run: bash test/benchmarks/tcp/current-shared-driver.sh
       - name: Reconcile expected trials, receiver intervals and socket samples
