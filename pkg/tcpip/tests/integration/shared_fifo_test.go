@@ -113,6 +113,52 @@ func TestVirtualTCPRecoveryDecision(t *testing.T) {
 	}
 }
 
+// TestVirtualTCPFirstRTOEvidence reuses three real CUBIC service slots.
+// Both arms suppress the same three CUBIC frames. The replacement bytes are
+// original Reno packets from this run, never synthetic ACKs or sender sends.
+func TestVirtualTCPFirstRTOEvidence(t *testing.T) {
+	if runtime.GOMAXPROCS(0) != 1 {
+		t.Fatal("requires the original single processor")
+	}
+	for _, mode := range []string{"duplicate", "new_sack"} {
+		t.Run(mode, func(t *testing.T) {
+			app := fifoApplicationOrder{FirstWriteOrder: []int{0, 1}, recoveryMode: mode, substitute: &slotEvidence{}}
+			runSharedFIFOWithApplicationOrder(t, []string{"cubic", "reno"}, []int{0, 1}, 0, &app)
+		})
+	}
+}
+
+const slotHead uint32 = 447300
+const slotMSS = 1420
+const slotBytes = 1472
+
+// End both treatments at the exact already-measured corrected baseline horizon.
+const slotEnd = 3773123200 * time.Nanosecond
+
+type slotRecord struct {
+	Index, DonorIndex               int
+	DonorOffset, CUBICOffset        uint32
+	Capture, Start, Finish, Arrival int64
+	BeforeBytes, Capacity           int
+	Receiver                        int
+	Sender                          tcp.FirstLossSender
+	TS, Echo                        uint32
+	Digest                          string
+}
+
+type slotACK struct {
+	Flow                  int
+	Capture, Arrival      int64
+	ACK, Window, TS, Echo uint32
+	SACK                  [][2]uint32
+	Before, After         tcp.FirstLossSender
+}
+
+type slotEvidence struct {
+	Slots []slotRecord
+	ACKs  []slotACK
+}
+
 type firstLossEvent struct {
 	Row                   [13]int64
 	Offset, End           uint32
@@ -137,6 +183,7 @@ type fifoFirstWrite struct {
 
 type fifoApplicationOrder struct {
 	recoveryMode string
+	substitute   *slotEvidence
 	firstLoss    *firstLossObservation
 
 	FirstWriteOrder    []int
@@ -355,6 +402,22 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 	// bytes of an in-service packet until its end; propagation occupies no queue.
 	var events [][13]int64
 	var nextTX [2]time.Duration
+	var intervention *slotEvidence
+	if application != nil {
+		intervention = application.substitute
+	}
+	type originalPacket struct {
+		packet   *stack.PacketBuffer
+		index    int
+		ts, echo uint32
+		digest   string
+	}
+	retained := make(map[uint32]originalPacket)
+	defer func() {
+		for _, p := range retained {
+			p.packet.DecRef()
+		}
+	}()
 	type queuedPacket struct {
 		end   time.Duration
 		bytes int
@@ -418,6 +481,19 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 						queued = queued[1:]
 					}
 					before := queuedBytes
+					if intervention != nil && side == 0 && index == 1 && len(payload) == slotMSS && retx == 0 {
+						offset := segment.SequenceNumber() - flow.dataSequence
+						if offset >= slotHead-3*slotMSS && offset < slotHead+4*slotMSS && offset != slotHead && (offset-(slotHead-3*slotMSS))%slotMSS == 0 {
+							if _, ok := retained[offset]; ok || packet.Size() != slotBytes {
+								t.Fatalf("invalid donor offset %d", offset)
+							}
+							opts := header.ParseTCPOptions(segment.Options())
+							if !opts.TS {
+								t.Fatal("expected negotiated timestamps")
+							}
+							retained[offset] = originalPacket{stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: packet.ToBuffer()}), len(events), opts.TSVal, opts.TSEcr, fmt.Sprintf("%x", sha256.Sum256(view.AsSlice()))}
+						}
+					}
 					if side == 0 && queuedBytes+packet.Size() > limit {
 						row[11] = 1
 					} else {
@@ -429,9 +505,35 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 							queued = append(queued, queuedPacket{end, packet.Size()})
 							queuedBytes += packet.Size()
 						}
-						pending = append(pending, delivery{at: end + delay, from: side, flow: index,
-							packet: stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: packet.ToBuffer()}),
-							row:    packetObservation{From: side, Acknowledgment: segment.AckNumber(), Flags: uint8(segment.Flags())}})
+						onWire, deliveredFlow, flags, ack := packet, index, segment.Flags(), segment.AckNumber()
+						if intervention != nil && side == 0 && index == 0 && len(payload) == slotMSS && now() > 1455616000*time.Nanosecond && len(intervention.Slots) < 3 {
+							n := len(intervention.Slots)
+							offset := slotHead + uint32(n+1)*slotMSS
+							if application.recoveryMode == "duplicate" {
+								offset = slotHead - uint32(3-n)*slotMSS
+							}
+							donor, ok := retained[offset]
+							if !ok || packet.Size() != slotBytes || donor.packet.Size() != slotBytes || retx != 0 {
+								t.Fatal("missing original equal-size packet or unexpected service slot")
+							}
+							reno := &flows[1]
+							sender := reno.client.(*tcp.Endpoint).FirstLossSender()
+							if sender.SndUna-reno.dataSequence != slotHead || sender.SackedOut != 1 || !sender.Recovery || !sender.TimerArmed || sender.TimerTargetNS != 1772693134 || reno.received.Len() != int(slotHead) {
+								t.Fatalf("unexpected pre-intervention Reno state: %+v delivered=%d", sender, reno.received.Len())
+							}
+							intervention.Slots = append(intervention.Slots, slotRecord{len(events), donor.index, offset, segment.SequenceNumber() - flow.dataSequence, int64(now()), int64(start), int64(end), int64(end + delay), before, limit, reno.received.Len(), sender, donor.ts, donor.echo, donor.digest})
+							onWire, deliveredFlow = donor.packet, 1
+							v := onWire.ToView()
+							h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+							if h.SourcePort() != 40001 || h.DestinationPort() != 8081 || !bytes.Equal(h.Payload(), reno.data[offset:offset+slotMSS]) || fmt.Sprintf("%x", sha256.Sum256(v.AsSlice())) != donor.digest {
+								t.Fatal("retained packet identity mismatch")
+							}
+							flags, ack = h.Flags(), h.AckNumber()
+							v.Release()
+						}
+						pending = append(pending, delivery{at: end + delay, from: side, flow: deliveredFlow,
+							packet: stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: onWire.ToBuffer()}),
+							row:    packetObservation{From: side, CapturedAtNS: int64(now()), Acknowledgment: ack, Flags: uint8(flags)}})
 					}
 					if diagnostic != nil && now() >= fifoDemandAt {
 						observe := func() *firstLossEvent {
@@ -703,23 +805,52 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 					first = v
 				}
 			}
-			if (first != 0 && int64(now()) >= first+int64(2*time.Second)) || now() >= 20*time.Second {
+			done := (first != 0 && int64(now()) >= first+int64(2*time.Second)) || now() >= 20*time.Second
+			if intervention != nil {
+				done = now() == slotEnd
+			}
+			if done {
 				type flowEnd struct {
 					Base                uint32
 					Accepted, Delivered int
+					ACK                 uint32
+					PayloadSHA          string
 					Sender              tcp.FirstLossSender
 					Decisions           []tcp.FIFOGrant
 				}
 				out := struct {
-					Mode       string
-					End, First int64
-					Flows      []flowEnd
-					Packets    int
-				}{Mode: application.recoveryMode, End: int64(now()), First: first, Packets: len(events)}
+					Mode         string
+					End, First   int64
+					Flows        []flowEnd
+					Packets      int
+					Intervention *slotEvidence
+				}{Mode: application.recoveryMode, End: int64(now()), First: first, Packets: len(events), Intervention: intervention}
 				for i := range flows {
 					f := &flows[i]
 					ep := f.client.(*tcp.Endpoint)
-					out.Flows = append(out.Flows, flowEnd{f.dataSequence, f.accepted, f.received.Len(), ep.FirstLossSender(), ep.FIFOTraceEvents()})
+					received := f.received.Bytes()
+					if !bytes.Equal(received, f.data[:len(received)]) || f.accepted <= len(received) {
+						t.Fatal("wrong received stream or demand ended")
+					}
+					out.Flows = append(out.Flows, flowEnd{f.dataSequence, f.accepted, len(received), f.acknowledged, fmt.Sprintf("%x", sha256.Sum256(received)), ep.FirstLossSender(), ep.FIFOTraceEvents()})
+				}
+				if intervention != nil && (len(intervention.Slots) != 3 || len(intervention.ACKs) == 0) {
+					t.Fatal("missing intervention evidence")
+				}
+				if intervention != nil {
+					for start := 0; start < len(intervention.ACKs); start += 16 {
+						v, err := json.Marshal(intervention.ACKs[start:min(start+16, len(intervention.ACKs))])
+						if err != nil {
+							t.Fatal(err)
+						}
+						t.Logf("FIFO_ACKS %s %s", out.Mode, v)
+					}
+					intervention.ACKs = nil
+					for _, s := range stacks {
+						if s.Stats().TCP.ChecksumErrors.Value() != 0 || s.Stats().TCP.SegmentSendErrors.Value() != 0 {
+							t.Fatal("link integrity error")
+						}
+					}
 				}
 				for start := 0; start < len(events); start += 64 {
 					e := events[start:min(start+64, len(events))]
@@ -749,6 +880,9 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			t.Fatal("shared FIFO did not reach finite transfer completion")
 		}
 		next := min(now()+quantum, nextSample)
+		if intervention != nil {
+			next = min(next, slotEnd)
+		}
 		if !demandStarted {
 			next = min(next, fifoDemandAt)
 		}
@@ -768,6 +902,19 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		if selected != -1 {
 			packet := pending[selected]
 			pending = append(pending[:selected], pending[selected+1:]...)
+			var observation *slotACK
+			if intervention != nil && packet.from == 1 && now() >= 1400*time.Millisecond && now() <= 2100*time.Millisecond {
+				v := packet.packet.ToView()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				f := &flows[packet.flow]
+				opts := header.ParseTCPOptions(h.Options())
+				a := slotACK{Flow: packet.flow, Capture: packet.row.CapturedAtNS, Arrival: int64(now()), ACK: h.AckNumber() - f.dataSequence, Window: uint32(h.WindowSize()), TS: opts.TSVal, Echo: opts.TSEcr, Before: f.client.(*tcp.Endpoint).FirstLossSender()}
+				for _, b := range opts.SACKBlocks {
+					a.SACK = append(a.SACK, [2]uint32{uint32(b.Start) - f.dataSequence, uint32(b.End) - f.dataSequence})
+				}
+				v.Release()
+				observation = &a
+			}
 			links[1-packet.from].InjectInbound(ipv4.ProtocolNumber, packet.packet)
 			if packet.from == 1 && header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagAck) {
 				flow := &flows[packet.flow]
@@ -775,6 +922,10 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			}
 			packet.packet.DecRef()
 			fence()
+			if observation != nil {
+				observation.After = flows[packet.flow].client.(*tcp.Endpoint).FirstLossSender()
+				intervention.ACKs = append(intervention.ACKs, *observation)
+			}
 		}
 	}
 	for index := range flows {
