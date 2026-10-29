@@ -43,7 +43,8 @@ def check(result):
         props = {p["name"]: p["value"] for p in row["platform"]["properties"]}
         rec = result["workers"][name] = {"action": row["digest"], "platform": props, "runner": row["runner"], "cache_hit": row.get("cacheHit", False), "exit": row.get("exitCode", 0), "argv": row["commandArgs"][:2]}
         assert rec["runner"] == "remote" and not rec["cache_hit"] and props["Arch"] == result["arch"] and "hello-world@sha256:" in props["container-image"], rec
-        assert "python" in rec["argv"][0] and any("stage2_bootstrap" in s for s in row["commandArgs"]), row["commandArgs"]
+        assert "rules_python" in rec["argv"][0] and "writer_python_" not in rec["argv"][0], rec["argv"]
+        assert any("stage2_bootstrap" in s for s in row["commandArgs"]), row["commandArgs"]
         exe = (execroot / rec["argv"][0]).read_bytes()
         assert exe[:5] == b"\x7fELF\x02" and int.from_bytes(exe[18:20], "little") == {"amd64": 62, "arm64": 183}[result["arch"]]
         off = struct.unpack_from("<Q", exe, 32)[0]
