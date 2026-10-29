@@ -1,7 +1,7 @@
 name: Verify configured source-image aliases
 on:
   push:
-    branches: [qualification/configured-source-image-alias-replay]
+    branches: [qualification/source-image-writer-graph]
 permissions:
   contents: read
   actions: read
@@ -58,9 +58,14 @@ jobs:
           if [[ "$PURPOSE" == original ]]; then
             inv="$RUNNER_TEMP/row/invocation-EIdkhP"
             mapfile -t args < "$inv/arguments.txt"
-            bazelisk --bazelrc="$rc" "${args[@]}" --nobuild
-            bazelisk --bazelrc="$rc" aquery --skyframe_state --output=jsonproto --include_file_write_contents \
-              --noinclude_commandline 'outputs(".*[.]source-images[.]json$")' > "$inv/source-image-writers.json"
+            opts=()
+            for arg in "${args[@]:1}"; do [[ $arg == --* ]] && opts+=("$arg"); done
+            root=//test/rbe/go_stdlib_workdir:archives
+            expr='outputs(".*archives_with_cfg[.]source-images[.]json$", deps(//test/rbe/go_stdlib_workdir:archives))'
+            bazelisk --bazelrc="$rc" aquery "${opts[@]}" --include_aspects --output=jsonproto --include_file_write_contents \
+              --noinclude_commandline "$expr" > "$inv/source-image-writers.json"
+            bazelisk --bazelrc="$rc" cquery "${opts[@]}" --output=jsonproto --transitions=lite --proto:rule_inputs_and_outputs \
+              "deps($root, 1)" > "$RUNNER_TEMP/result/alias-deps.json" || :
             python3 "$RUNNER_TEMP/tools/qualification_report.py" preflight --events "$inv/expected.jsonl" --native-exit 0 --kind build --output "$inv/selection.json"
           else
             platform="$RUNNER_TEMP/audit_platform"
