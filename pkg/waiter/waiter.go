@@ -226,6 +226,8 @@ type Queue struct {
 }
 
 // UpdateMask changes the events requested by an entry registered on q.
+//
+// +checklocksexclude:q.mu
 func (q *Queue) UpdateMask(e *Entry, mask EventMask) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()

@@ -67,10 +67,9 @@ type EpollInstance struct {
 	// It is rebuilt on restore by epollInterest.afterLoad.
 	ready epollInterestList `state:"nosave"`
 
-	// readySeq is used to detect calls to epollInterest.NotifyEvent() while
-	// Readiness() or ReadEvents() are running with readyMu unlocked. readySeq
-	// is protected by both interestMu and readyMu; reading requires either
-	// mutex to be locked, but mutation requires both mutexes to be locked.
+	// Readiness and ReadEvents advance readySeq while holding interestMu.
+	// NotifyEvent copies that sequence under readyMu so readers can detect
+	// notifications received while they had dropped readyMu to poll files.
 	// +checklocks:readyMu
 	readySeq uint32
 }
