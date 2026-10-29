@@ -144,7 +144,7 @@ func (fd *queueFD) EventUnregister(e *waiter.Entry) {
 	fd.queue.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (fd *queueFD) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (fd *queueFD) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: fd.queue}
 }

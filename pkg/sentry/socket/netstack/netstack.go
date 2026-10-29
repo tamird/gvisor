@@ -522,9 +522,9 @@ func (s *sock) Release(ctx context.Context) {
 	s.namespace.DecRef(ctx)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (s *sock) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (s *sock) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: s.Queue}
 }
 
 // Read implements vfs.FileDescriptionImpl.

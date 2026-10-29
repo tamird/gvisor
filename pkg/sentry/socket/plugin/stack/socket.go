@@ -290,9 +290,18 @@ func (s *socketOperations) Readiness(mask waiter.EventMask) waiter.EventMask {
 	}
 }
 
-// Epollable implements socket.Socket.Epollable.
-func (s *socketOperations) Epollable() bool {
-	return true
+// EpollSource implements socket.Socket.Epollable.
+func (s *socketOperations) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: s}
+}
+
+// UpdateMask implements vfs.EpollMaskOwner.UpdateMask.
+func (s *socketOperations) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	if err := s.eventInfo.Wq.UpdateMask(e, mask); err != nil {
+		return err
+	}
+	stack.notifier.UpdateFD(s.fd)
+	return nil
 }
 
 // Refers to implementation in epsocket

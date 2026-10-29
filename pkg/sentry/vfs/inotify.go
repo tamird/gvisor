@@ -191,9 +191,9 @@ func (i *Inotify) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return mask & ready
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (i *Inotify) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (i *Inotify) EpollSource() EpollSource {
+	return EpollSource{Owner: &i.queue}
 }
 
 // PRead implements FileDescriptionImpl.PRead.

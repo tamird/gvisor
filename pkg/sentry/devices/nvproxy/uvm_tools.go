@@ -123,9 +123,14 @@ func (fd *uvmToolsFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
 }
 
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (fd *uvmToolsFD) Epollable() bool {
-	return true
+// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
+func (fd *uvmToolsFD) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: fd}
+}
+
+// UpdateMask implements vfs.EpollMaskOwner.UpdateMask.
+func (fd *uvmToolsFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	return fdnotifier.UpdateMask(fd.hostFD, &fd.queue, e, mask)
 }
 
 // IsNvidiaDeviceFD implements NvidiaDeviceFD.IsNvidiaDeviceFD.

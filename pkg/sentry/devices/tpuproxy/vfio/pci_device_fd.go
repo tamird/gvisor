@@ -109,9 +109,17 @@ func (fd *pciDeviceFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
 }
 
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (fd *pciDeviceFD) Epollable() bool {
-	return true
+// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
+func (fd *pciDeviceFD) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: fd}
+}
+
+// UpdateMask implements vfs.EpollMaskOwner.UpdateMask.
+func (fd *pciDeviceFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	if fd.isRestored() {
+		return nil
+	}
+	return fdnotifier.UpdateMask(fd.hostFD, &fd.queue, e, mask)
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.

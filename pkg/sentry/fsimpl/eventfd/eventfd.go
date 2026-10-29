@@ -359,7 +359,17 @@ func (efd *EventFileDescription) EventUnregister(entry *waiter.Entry) {
 	}
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (efd *EventFileDescription) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (efd *EventFileDescription) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: efd}
+}
+
+// UpdateMask implements vfs.EpollMaskOwner.UpdateMask.
+func (efd *EventFileDescription) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	efd.mu.Lock()
+	defer efd.mu.Unlock()
+	if efd.hostfd >= 0 {
+		return fdnotifier.UpdateMask(int32(efd.hostfd), &efd.queue, e, mask)
+	}
+	return efd.queue.UpdateMask(e, mask)
 }

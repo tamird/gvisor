@@ -180,6 +180,8 @@ type RecvOutput struct {
 // implementations that expose functionality like sendmsg, recvmsg, connect,
 // etc. to Unix socket implementations.
 type Endpoint interface {
+	// UpdateMask changes the events requested by an already registered entry.
+	UpdateMask(*waiter.Entry, waiter.EventMask) error
 	Credentialer
 	PeerCredentialer
 	waiter.Waitable
@@ -776,6 +778,9 @@ type Sender interface {
 	// have changed.
 	EventUpdate() error
 
+	// UpdateMask changes an existing waiter and reports errors from the host.
+	UpdateMask(*waiter.Queue, *waiter.Entry, waiter.EventMask) error
+
 	// SendQueuedSize returns the total amount of data currently queued for
 	// sending. SendQueuedSize should return -1 if the operation isn't
 	// supported.
@@ -880,6 +885,11 @@ func (*queueSender) EventUpdate() error {
 	return nil
 }
 
+// UpdateMask implements Sender.UpdateMask.
+func (*queueSender) UpdateMask(q *waiter.Queue, entry *waiter.Entry, mask waiter.EventMask) error {
+	return q.UpdateMask(entry, mask)
+}
+
 // SendQueuedSize implements Sender.SendQueuedSize.
 func (e *queueSender) SendQueuedSize() int64 {
 	return e.writeQueue.QueuedSize()
@@ -964,10 +974,22 @@ func (e *baseEndpoint) EventRegister(we *waiter.Entry) error {
 	e.Unlock()
 	if c != nil {
 		if err := c.EventUpdate(); err != nil {
+			e.WaitQueue.EventUnregister(we)
 			return err
 		}
 	}
 	return nil
+}
+
+// UpdateMask implements Endpoint.UpdateMask.
+func (e *baseEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
+	e.Lock()
+	peer := e.peer
+	e.Unlock()
+	if peer != nil {
+		return peer.UpdateMask(e.WaitQueue, entry, mask)
+	}
+	return e.WaitQueue.UpdateMask(entry, mask)
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.

@@ -364,9 +364,9 @@ func (s *Socket) Write(ctx context.Context, src usermem.IOSequence, opts vfs.Wri
 
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (s *Socket) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (s *Socket) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: s.ep}
 }
 
 // SetSockOpt implements the linux syscall setsockopt(2) for sockets backed by

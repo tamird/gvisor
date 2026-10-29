@@ -150,9 +150,9 @@ func (sfd *SignalFileDescription) NotifyEvent(mask waiter.EventMask) {
 	sfd.queue.Notify(waiter.EventIn) // Always notify data available.
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (sfd *SignalFileDescription) Epollable() bool {
-	return true
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (sfd *SignalFileDescription) EpollSource() vfs.EpollSource {
+	return vfs.EpollSource{Owner: &sfd.queue}
 }
 
 // Release implements vfs.FileDescriptionImpl.Release.

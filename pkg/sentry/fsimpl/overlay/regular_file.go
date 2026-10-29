@@ -266,19 +266,21 @@ func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 	fd.cachedFD.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (fd *regularFileFD) Epollable() bool {
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (fd *regularFileFD) EpollSource() vfs.EpollSource {
 	fd.mu.Lock()
 	defer fd.mu.Unlock()
-	wrappedFD, err := fd.currentFDLocked(context.Background())
+	wrapped, err := fd.currentFDLocked(context.Background())
 	if err != nil {
-		// TODO(b/171089913): Just use fd.cachedFD since EventRegister can't
-		// return an error. This is obviously wrong, but at least consistent
-		// with VFS1.
-		log.Warningf("overlay.regularFileFD.Epollable: currentFDLocked failed: %v", err)
-		wrappedFD = fd.cachedFD
+		log.Warningf("overlay.regularFileFD.EpollSource: currentFDLocked failed: %v", err)
+		wrapped = fd.cachedFD
 	}
-	return wrappedFD.Epollable()
+	source := wrapped.EpollSource()
+	if source.Owner != nil && source.Backing == nil {
+		wrapped.IncRef()
+		source.Backing = wrapped
+	}
+	return source
 }
 
 // PRead implements vfs.FileDescriptionImpl.PRead.

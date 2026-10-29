@@ -704,6 +704,25 @@ func (e *connectionedEndpoint) EventRegister(we *waiter.Entry) error {
 	return nil
 }
 
+// UpdateMask implements Endpoint.UpdateMask.
+func (e *connectionedEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
+	e.Lock()
+	bound, peer := e.boundSocketFD, e.peer
+	e.Unlock()
+	if bound != nil && peer == nil {
+		return fdnotifier.UpdateMask(bound.NotificationFD(), e.WaitQueue, entry, mask)
+	}
+	if err := e.baseEndpoint.UpdateMask(entry, mask); err != nil {
+		return err
+	}
+	if bound != nil {
+		// The connected peer owns the interest; refresh the bound socket just
+		// as for registration of an additional waiter.
+		fdnotifier.UpdateFD(bound.NotificationFD())
+	}
+	return nil
+}
+
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (e *connectionedEndpoint) EventUnregister(we *waiter.Entry) {
 	e.baseEndpoint.EventUnregister(we)

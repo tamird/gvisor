@@ -89,9 +89,9 @@ func (FileDescriptionDefaultImpl) EventRegister(e *waiter.Entry) error {
 func (FileDescriptionDefaultImpl) EventUnregister(e *waiter.Entry) {
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (FileDescriptionDefaultImpl) Epollable() bool {
-	return false
+// EpollSource implements FileDescriptionImpl.EpollSource.
+func (FileDescriptionDefaultImpl) EpollSource() EpollSource {
+	return EpollSource{}
 }
 
 // PRead implements FileDescriptionImpl.PRead analogously to
@@ -279,6 +279,11 @@ func (p *DynamicBytesPoller) Notify() {
 // underlying queue.
 func (p *DynamicBytesPoller) EventRegister(e *waiter.Entry) {
 	p.queue.EventRegister(e)
+}
+
+// UpdateMask changes an entry already registered on the underlying queue.
+func (p *DynamicBytesPoller) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	return p.queue.UpdateMask(e, mask)
 }
 
 // EventUnregister passes through a waiter unregistration to the

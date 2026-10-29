@@ -419,6 +419,13 @@ func (q *Queue) EventRegister(e *waiter.Entry) error {
 	return nil
 }
 
+// UpdateMask changes an entry already registered on the queue.
+func (q *Queue) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.queue.UpdateMask(e, mask)
+}
+
 // EventUnregister implements Waitable.EventUnregister.
 func (q *Queue) EventUnregister(e *waiter.Entry) {
 	q.mu.Lock()

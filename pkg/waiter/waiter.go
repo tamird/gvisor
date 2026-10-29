@@ -108,7 +108,8 @@ type Waitable interface {
 
 	// EventRegister registers the given waiter entry to receive
 	// notifications when an event occurs that makes the object ready for
-	// at least one of the events in mask.
+	// at least one of the requested events. On error, the entry must not
+	// remain registered.
 	EventRegister(e *Entry) error
 
 	// EventUnregister unregisters a waiter entry previously registered with
@@ -233,6 +234,32 @@ type Queue struct {
 	// +checklocks:mu
 	list waiterList
 	mu   sync.RWMutex `state:"nosave"`
+}
+
+// UpdateMask changes the events requested by an entry registered on q.
+func (q *Queue) UpdateMask(e *Entry, mask EventMask) error {
+	e.SetQueuedMask(q, mask)
+	return nil
+}
+
+// UpdateHostMask changes the entry mask only if program accepts the new union
+// of all registered masks. program must not reenter q.
+//
+// +checklocksexclude:q.mu
+func (q *Queue) UpdateHostMask(e *Entry, mask EventMask, program func(EventMask) error) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	aggregate := mask
+	for other := q.list.Front(); other != nil; other = other.Next() {
+		if other != e {
+			aggregate |= other.mask
+		}
+	}
+	if err := program(aggregate); err != nil {
+		return err
+	}
+	e.mask = mask
+	return nil
 }
 
 // EventRegister adds a waiter to the wait queue.

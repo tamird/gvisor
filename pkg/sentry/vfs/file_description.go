@@ -207,14 +207,19 @@ func (fd *FileDescription) DecRef(ctx context.Context) {
 		fd.epollMu.Unlock()
 		for epi := range epolls {
 			ep := epi.epoll
+			var backing *FileDescription
 			ep.interestMu.Lock()
 			// Check that epi has not been concurrently unregistered by
 			// EpollInstance.DeleteInterest() or EpollInstance.Release().
-			if _, ok := ep.interest[epi.key]; ok {
-				fd.EventUnregister(&epi.waiter)
+			if ep.interest[epi.key] == epi {
+				epi.source.Owner.EventUnregister(&epi.waiter)
+				backing = epi.source.Backing
 				ep.removeLocked(epi)
 			}
 			ep.interestMu.Unlock()
+			if backing != nil {
+				backing.DecRef(ctx)
+			}
 		}
 
 		// If BSD locks were used, release any lock that it may have acquired.
@@ -405,8 +410,9 @@ type FileDescriptionImpl interface {
 	// waiter.Waitable methods may be used to poll for I/O events.
 	waiter.Waitable
 
-	// Epollable indicates whether this file can be used with epoll_ctl(2).
-	Epollable() bool
+	// EpollSource identifies the queue or device that owns a new epoll
+	// registration. A zero source means the file does not support epoll.
+	EpollSource() EpollSource
 
 	// PRead reads from the file into dst, starting at the given offset, and
 	// returns the number of bytes read. PRead is permitted to return partial
@@ -684,9 +690,26 @@ func (fd *FileDescription) EventUnregister(e *waiter.Entry) {
 	fd.impl.EventUnregister(e)
 }
 
-// Epollable returns whether this file can be used with epoll_ctl(2).
-func (fd *FileDescription) Epollable() bool {
-	return fd.impl.Epollable()
+// EpollMaskOwner manages an entry already registered with a waitable.
+// UpdateMask must preserve the old mask if the new one cannot be installed.
+type EpollMaskOwner interface {
+	UpdateMask(*waiter.Entry, waiter.EventMask) error
+	EventUnregister(*waiter.Entry)
+}
+
+// EpollSource binds an epoll watch to the waitable chosen at ADD. A
+// forwarding file may supply a referenced Backing instead of registering
+// on the forwarding file itself.
+//
+// +stateify savable
+type EpollSource struct {
+	Owner   EpollMaskOwner
+	Backing *FileDescription
+}
+
+// EpollSource returns the source used for one EPOLL_CTL_ADD.
+func (fd *FileDescription) EpollSource() EpollSource {
+	return fd.impl.EpollSource()
 }
 
 // PRead reads from the file represented by fd into dst, starting at the given

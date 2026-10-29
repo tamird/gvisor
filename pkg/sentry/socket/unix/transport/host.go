@@ -260,6 +260,16 @@ func (c *HostSender) GetLocalAddress() (Address, tcpip.Error) {
 	return Address{Addr: c.addr}, nil
 }
 
+// UpdateMask implements Sender.UpdateMask.
+func (c *HostSender) UpdateMask(q *waiter.Queue, entry *waiter.Entry, mask waiter.EventMask) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.fd >= 0 {
+		return fdnotifier.UpdateMask(int32(c.fd), q, entry, mask)
+	}
+	return q.UpdateMask(entry, mask)
+}
+
 // EventUpdate implements Sender.EventUpdate.
 func (c *HostSender) EventUpdate() error {
 	c.mu.RLock()
