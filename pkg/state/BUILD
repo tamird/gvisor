@@ -111,6 +111,7 @@ go_test(
         "graph_buf_test.go",
         "graph_decode_callbacks_test.go",
         "graph_print_test.go",
+        "graph_scratch_lifetime_test.go",
         "graph_typeinfo_test.go",
         "types_test.go",
     ],
