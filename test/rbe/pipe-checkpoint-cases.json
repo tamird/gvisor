@@ -1,0 +1,7 @@
+{
+  "//test/syscalls:pipe_test_runsc_systrap_directfs_save_resume": [
+    "Pipes/PipeTest/WritePage/pipe",
+    "Pipes/PipeTest/WriterSideClosesReadDataFirst/pipe",
+    "Pipes/PipeTest/SizeChangeFull/pipe"
+  ]
+}
