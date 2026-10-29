@@ -1133,3 +1133,39 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestSackedOutAcrossRecovery counts packets beyond one hole before and
+// after a cumulative ACK fills it, with and without RACK loss detection.
+func TestSackedOutAcrossRecovery(t *testing.T) {
+	for _, rack := range []bool{false, true} {
+		t.Run(fmt.Sprintf("RACK=%t", rack), func(t *testing.T) {
+			states := make(chan tcp.TCPSenderState, 16)
+			c := context.NewWithProbe(t, mtu, func(s tcp.TCPEndpointState) {
+				states <- s.Sender
+			})
+			defer c.Cleanup()
+			const packets = 8
+			e2e.SendAndReceiveWithSACK(t, c, maxPayload, packets, rack)
+			seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+			ack := func(cumulative int, blocks []header.SACKBlock, want int) {
+				t.Helper()
+				c.SendAckWithSACK(seq, cumulative*maxPayload, blocks)
+				select {
+				case state := <-states:
+					t.Logf("cumulative=%d SACK=%v sacked=%d recovery=%t", cumulative, blocks, state.SackedOut, state.FastRecovery.Active)
+					if state.SackedOut != want {
+						t.Errorf("SackedOut=%d, want %d after ACK of %d packets, SACK %v", state.SackedOut, want, cumulative, blocks)
+					}
+				case <-time.After(3 * time.Second):
+					t.Fatalf("timeout waiting for ACK of %d packets, SACK %v", cumulative, blocks)
+				}
+			}
+			ack(1, nil, 0)
+			start := c.IRS.Add(1 + 2*maxPayload)
+			for n := 1; n <= 3; n++ {
+				ack(1, []header.SACKBlock{{Start: start, End: start.Add(seqnum.Size(n * maxPayload))}}, n)
+			}
+			ack(packets, nil, 0)
+		})
+	}
+}
