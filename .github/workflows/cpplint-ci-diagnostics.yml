@@ -1,0 +1,34 @@
+name: Check cpplint input diagnostics
+on:
+  push:
+    branches: [qualification/bazel-cpplint-ci-diagnostics]
+permissions: {contents: read}
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: source
+          ref: 869a7b324568a5743e32724096ed06207dcd0b93
+          persist-credentials: false
+      - name: Check the canonical command on each dirty checkout
+        working-directory: source
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin" "$RUNNER_TEMP/lint-cache"
+          tool=$(command -v bazel)
+          printf '#!/bin/sh\nprintf "%%s\\n" "$1" >> "$CPPLINT_CALLS"\n[ "$1" = query ] || exit 92\nexec "%s" "$@"\n' "$tool" > "$RUNNER_TEMP/bin/bazel"
+          chmod +x "$RUNNER_TEMP/bin/bazel"
+          export PATH="$RUNNER_TEMP/bin:$PATH" LINT_CACHE_DIR="$RUNNER_TEMP/lint-cache"
+          python3 ../carrier/.github/qualification/lint-source/diagnostics.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: cpplint-ci-diagnostics
+          path: ${{ runner.temp }}/cpplint-diagnostics.json
+          if-no-files-found: error
