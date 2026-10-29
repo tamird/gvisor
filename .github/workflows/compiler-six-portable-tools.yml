@@ -1,0 +1,95 @@
+name: Compare portable Go links
+on:
+  push:
+    branches: [qualification/compiler-six-portable-tools-native]
+permissions:
+  contents: read
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {arch: amd64, host: ubuntu-24.04}
+          - {arch: arm64, host: ubuntu-24.04-arm}
+    runs-on: ${{ matrix.host }}
+    timeout-minutes: 100
+    env:
+      ARCH: ${{ matrix.arch }}
+      USE_BAZEL_VERSION: 8.8.1
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          path: qualifier
+          persist-credentials: false
+          fetch-depth: 2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          path: source
+          ref: 54aad070c47278d39f19ec4e450431889b1a63bd
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Pin the collector, decoder, Linux platform, and source pair
+        run: |
+          set -eu
+          test "$(git -C qualifier rev-parse HEAD^)" = 54aad070c47278d39f19ec4e450431889b1a63bd
+          test "$(git -C source rev-parse HEAD^)" = 8306976dbfd8b5c18c7386a9cd788d33cb99a8b1
+          mkdir -p "$RUNNER_TEMP/reporter" "$RUNNER_TEMP/compiler-static" "$RUNNER_TEMP/qual_exec" "$RUNNER_TEMP/bazel-wrapper"
+          for name in qualification_report unit_matrix; do
+            curl --retry 2 -fsSL "https://raw.githubusercontent.com/tamird/gvisor/05cf00d9d26a5beb8a9af8011375644b8b37a086/test/rbe/$name.py" -o "$RUNNER_TEMP/reporter/$name.py"
+          done
+          cd "$RUNNER_TEMP/reporter"
+          sha256sum --check --strict <<'SHA'
+          42b014da7fb7fd8f5fb885bcc28e183573912be1e146bb78714ec40b8d412dc6  qualification_report.py
+          0ddcc589b2ba3e6027b08b88055c5dea533c2e0d376ceb7bac4c6a4768696f03  unit_matrix.py
+          SHA
+          case "$ARCH:$(uname -m)" in
+            amd64:x86_64) cpu=x86_64; constraint=x86_64; sum=f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb ;;
+            arm64:aarch64) cpu=arm64; constraint=aarch64; sum=1f4c3ede4b5e147ab698f6e6c6f4fdd48c48f3d2e3c75fe5bc8dd744ddcdbc4c ;;
+            *) exit 1;;
+          esac
+          curl --retry 2 -fsSL --max-time 120 "https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-$cpu" -o "$RUNNER_TEMP/bb"
+          printf '%s  %s\n' "$sum" "$RUNNER_TEMP/bb" | sha256sum --check --strict
+          chmod +x "$RUNNER_TEMP/bb"
+          cd "$RUNNER_TEMP/qual_exec"
+          touch REPO.bazel
+          cat > BUILD.bazel <<EOF
+          platform(name="host", constraint_values=["@platforms//os:linux","@platforms//cpu:$constraint"],
+              exec_properties={"Arch":"$ARCH","OSFamily":"linux","workload-isolation-type":"oci","EstimatedMemory":"8GB",
+                "container-image":"docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"},
+              visibility=["//visibility:public"])
+          EOF
+          cat > "$RUNNER_TEMP/bazel-wrapper/bazel" <<'SH'
+          #!/bin/sh
+          exec bazelisk --bazelrc="$RUNNER_TEMP/static.bazelrc" "$@"
+          SH
+          chmod +x "$RUNNER_TEMP/bazel-wrapper/bazel"
+          echo "$RUNNER_TEMP/bazel-wrapper" >> "$GITHUB_PATH"
+      - name: Build real labels and inspect their configured outputs
+        timeout-minutes: 94
+        working-directory: source
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test -n "$BUILDBUDDY_API_KEY"
+          trap 'rm -f "$RUNNER_TEMP/static.bazelrc"' EXIT
+          cat > "$RUNNER_TEMP/static.bazelrc" <<EOF
+          startup --host_jvm_args=-Xmx5g
+          common --inject_repository=qual_exec=$RUNNER_TEMP/qual_exec
+          build --platforms=//tools/bazeldefs:linux_$ARCH --host_platform=@qual_exec//:host --extra_execution_platforms=@qual_exec//:host
+          build --jobs=36 --local_resources=memory=3072 --remote_timeout=15m --spawn_strategy=remote --noremote_local_fallback
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY --bes_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+          EOF
+          unset BUILDBUDDY_API_KEY
+          test "$(bazelisk --version)" = 'bazel 8.8.1'
+          PYTHONPATH="$RUNNER_TEMP/reporter" python3 ../qualifier/.github/qualification/compiler-static/check.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: compiler-static-${{ matrix.arch }}
+          path: ${{ runner.temp }}/compiler-static/result.json
+          if-no-files-found: error
