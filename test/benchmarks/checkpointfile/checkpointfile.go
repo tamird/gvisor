@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -32,6 +33,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -106,6 +108,10 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		defer machine.CleanUp()
 		stateFile, sizes, names, mounts = checkpointNginx(ctx, b, machine)
 	}
+	if role := os.Getenv("GVISOR_SAVE_PROFILE_ROLE"); role != "" {
+		fmt.Printf("SAVE_PROCESS role=%s pid=%d input=%x input_bytes=%d\n", role, os.Getpid(), sha256.Sum256(stateFile), len(stateFile))
+	}
+	validate := os.Getenv("GVISOR_SAVE_PROFILE_ROLE") == "validate"
 	ctx = restoreContext(b, names, mounts)
 	// Tasks create their platform contexts when they are loaded.
 	sys, err := systrap.New(platform.Options{})
@@ -166,16 +172,27 @@ func BenchmarkCheckpointFile(b *testing.B) {
 					b.Fatal(err)
 				}
 				w := &countingWriter{}
+				var frozen bytes.Buffer
+				var sink io.Writer = w
+				if validate {
+					sink = io.MultiWriter(w, &frozen)
+				}
 				b.StartTimer()
 				cpu += cpuTime(b, func() error {
 					if !mode.statefile {
-						_, err := state.Save(ctx, w, k)
+						_, err := state.Save(ctx, sink, k)
 						return err
 					}
 					return saveKernel(ctx, w, k)
 				})
 				b.StopTimer()
 				encodedBytes = w.n
+				if validate {
+					if mode.statefile || int64(frozen.Len()) != w.n {
+						b.Fatal("invalid raw Save validation")
+					}
+					checkSavedKernel(b, ctx, names, k, plat, frozen.Bytes())
+				}
 				cleanup()
 				b.StartTimer()
 			}
@@ -613,4 +630,38 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
+}
+
+// checkSavedKernel verifies the exact bytes just counted by the Encode
+// validation arm. The timing and profiling arms use the ordinary countingWriter.
+func checkSavedKernel(b *testing.B, ctx context.Context, names []string, want *kernel.Kernel, plat platform.Platform, raw []byte) {
+	checkCtx, cleanup := withHostFDs(b, ctx, names)
+	defer cleanup()
+	dst := &kernel.Kernel{Platform: plat}
+	dst.SetMemoryFile(pgalloc.MemoryFileFromContext(checkCtx))
+	reader := bytes.NewReader(raw)
+	if _, err := state.Load(checkCtx, reader, dst); err != nil {
+		b.Fatalf("load saved kernel: %v", err)
+	}
+	identity := func(k *kernel.Kernel) []string {
+		ns := k.RootPIDNamespace()
+		var ids []string
+		for _, task := range ns.Tasks() {
+			ids = append(ids, fmt.Sprintf("%d:%s", ns.IDOfTask(task), task.Name()))
+		}
+		slices.Sort(ids)
+		return ids
+	}
+	a, z := identity(want), identity(dst)
+	if reader.Len() != 0 || len(z) < workers+1 || !slices.Equal(a, z) {
+		b.Fatalf("round trip left %d bytes; tasks %v, want %v", reader.Len(), z, a)
+	}
+	wf, gf := want.FeatureSet(), dst.FeatureSet()
+	for feature := 0; feature < 32; feature++ {
+		f := cpuid.Feature(feature)
+		if wf.HasFeature(f) != gf.HasFeature(f) {
+			b.Fatalf("round trip changed feature %d", feature)
+		}
+	}
+	b.Logf("SAVE_VALIDATED pid=%d wire=%d sha=%x tasks=%d features=32 remaining=%d", os.Getpid(), len(raw), sha256.Sum256(raw), len(z), reader.Len())
 }

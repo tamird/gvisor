@@ -7,7 +7,7 @@ shift
 [[ $# == 3 && $EUID == 0 && $(uname -m) == x86_64 ]]
 binary=$(realpath "$1")
 archive=$(realpath "$2")
-instrumented=$(realpath "$3")
+reader=$(realpath "$3")
 release=$(cd release && pwd)
 test -x "$release/runsc"
 export GVISOR_SIDECAR_BINARIES_DIR="$release/gvisor-bin"
@@ -39,13 +39,28 @@ export RUNTIME=runsc
 export RESTORE_PHASE_DIR="$dir/checkpoint"
 install -d -m 700 "$RESTORE_PHASE_DIR"
 export GOMAXPROCS=2
-sha256sum "$release/runsc" "$binary" "$instrumented"
+unset XML_OUTPUT_FILE
+sha256sum "$release/runsc" "$binary" "$reader"
 "$binary" -test.v -test.run='^$' -test.bench='^BenchmarkCaptureRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
-index=0
-for mode in control trace trace control trace control control trace control trace trace control; do
-  (( index+=1 ))
-  exe="$binary"
-  if [[ $mode == trace ]]; then exe="$instrumented"; fi
-  echo "phase-child index=$index mode=$mode"
-  "$exe" -test.v -test.run='^$' -test.bench='^BenchmarkRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
+
+d="$dir/profiles"
+mkdir -m 700 "$d"
+for role in validate ordinary cpu1 cpu2 alloc; do
+  opts=()
+  duration=2s
+  case "$role" in
+    validate) duration=1x ;;
+    cpu1|cpu2) opts+=("-test.cpuprofile=$d/$role.pprof") ;;
+    alloc) duration=8x; opts+=("-test.memprofile=$d/alloc.pprof" -test.memprofilerate=1) ;;
+  esac
+  echo "SAVE_BEGIN role=$role duration=$duration"
+  GVISOR_SAVE_PROFILE_ROLE="$role" "$binary" -test.v=false -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^Encode$' -test.benchtime="$duration" -test.count=1 -test.benchmem -checkpoint_dir="$RESTORE_PHASE_DIR" -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json" "${opts[@]}"
+  echo "SAVE_END role=$role exit=0"
+done
+"$reader" "$d/cpu1.pprof" "$d/cpu2.pprof" "$d/alloc.pprof"
+# The profiles contain code/symbol attribution, not the captured checkpoint.
+for f in "$d/"*.pprof; do
+  test -s "$f"; test "$(stat -c %s "$f")" -lt 16000000
+  sha256sum "$f"
+  cp "$f" "$TEST_UNDECLARED_OUTPUTS_DIR/"
 done
