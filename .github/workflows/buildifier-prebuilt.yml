@@ -1,7 +1,7 @@
 name: Check the declared Buildifier and tracked input boundary
 on:
   push:
-    branches: [qualification/bazel-buildifier-prebuilt-observed]
+    branches: [qualification/buildifier-native-diff]
 permissions:
   contents: read
 jobs:
@@ -10,12 +10,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      SOURCE: 1f6f8dd9f3f2fad74a597cd034ba30523cf7193c
+      SOURCE: d203ad64f60b785e04f2adb777dd78624e5c4958
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: source, ref: '${{ env.SOURCE }}', persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: before, ref: 1f6f8dd9f3f2fad74a597cd034ba30523cf7193c, persist-credentials: false}
       - name: Run the canonical lint driver
         working-directory: source
         env:

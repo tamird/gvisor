@@ -10,8 +10,8 @@ import subprocess
 import traceback
 
 work = Path(os.environ["RUNNER_TEMP"])
-source = "1f6f8dd9f3f2fad74a597cd034ba30523cf7193c"
-tree = "e2b9c0ba1a447ab20560e9eb8740fe7d62aad5a6"
+source = "d203ad64f60b785e04f2adb777dd78624e5c4958"
+tree = "75019ab966c0e29d8172d088b03c441478ae4269"
 binary = "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7"
 missing = (
     "MODULE.bazel", "governance/tools/maintainers/repositories.bzl",
@@ -39,6 +39,18 @@ def run(name, args):
 def main():
     assert output("git", "rev-parse", "HEAD").strip() == source
     assert output("git", "rev-parse", "HEAD^{tree}").strip() == tree
+    # Check the original source rather than simulating its failing installer.
+    source_directory = Path.cwd()
+    try:
+        os.chdir(source_directory.parent / "before")
+        assert output("git", "rev-parse", "HEAD").strip() == "1f6f8dd9f3f2fad74a597cd034ba30523cf7193c"
+        ex, text = run("previous_lint_test", ["bazel", "test", "--test_output=errors", "//tools:lint_test"])
+        assert ex != 0 and "KeyError: 'BUILDIFIER'" in text
+    finally:
+        os.chdir(source_directory)
+    ex, text = run("corrected_lint_test", ["bazel", "test", "--test_output=all", "//tools:lint_test"])
+    assert ex == 0 and "Ran 4 tests" in text and "OK" in text
+
     files = output("git", "ls-files", "-z", "--", "BUILD", "*/BUILD", "*.bzl", "WORKSPACE", "MODULE.bazel").split("\0")[:-1]
     assert len(files) == len(set(files)) == 614 and set(missing) <= set(files)
     record["tracked"] = {"number": len(files), "sha256": sha256(("\0".join(files) + "\0").encode()).hexdigest()}
@@ -64,9 +76,10 @@ def main():
         if digest != binary:
             continue
         args = ast.literal_eval(m[2])
-        assert args[1:3] == ["--mode=check", "--lint=warn"]
+        assert args[1:3] == ["--mode=diff", "--lint=warn"]
         assert args[3] == "--warnings=-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto"
-        actual.extend(args[4:])
+        assert args[4] == "--diff_command=diff -u"
+        actual.extend(args[5:])
         digests.add(digest)
     record["physical_cli"] = {"files": len(actual), "sha256": sha256(("\0".join(actual) + "\0").encode()).hexdigest(),
                               "executables": sorted(digests)}
@@ -78,7 +91,8 @@ def main():
         for name, original in contents.items():
             Path(name).write_bytes(original + b"\n\n")
         exit_code, text = run("seven_bad", ["tools/lint.sh", "buildifier"])
-        record["diffs"] = [p for p in missing if ("--- " + p + "\n") in text and ("+++ " + p + " (formatted)\n") in text]
+        record["diffs"] = [p for p in missing if re.search("^--- " + re.escape(p) + r"(?:\t|$)", text, re.M)]
+        assert text.count("+++ ") >= len(missing) and "Run `make lint-fix`" in text
         assert exit_code and len(record["diffs"]) == 7
         assert run("fix", ["tools/lint.sh", "--fix", "buildifier"])[0] == 0
         assert all(Path(name).read_bytes() == original for name, original in contents.items())
