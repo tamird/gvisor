@@ -380,6 +380,7 @@ func (rc *rackControl) exitRecovery() {
 func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 	var timeout time.Duration
 	numLost := 0
+	flightChanged := false
 	clockResolution := rc.snd.ep.stack.ClockResolution()
 	for seg := rc.snd.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
 		if rc.snd.ep.scoreboard.IsSACKED(seg.sackBlock()) {
@@ -399,6 +400,10 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			// zero during recovery.
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
+				if seg.rackInFlight != 0 {
+					seg.rackInFlight = 0
+					flightChanged = true
+				}
 				seg.lost = true
 				numLost++
 			} else {
@@ -419,6 +424,11 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 
 	if timeout != 0 && !rc.snd.reorderTimer.enabled() {
 		rc.snd.reorderTimer.enable(timeout)
+	}
+	if flightChanged {
+		// Both the ACK handler and the reordering timer may send repairs
+		// immediately. Give them the estimate after these loss decisions.
+		rc.snd.SetPipe()
 	}
 	return numLost
 }

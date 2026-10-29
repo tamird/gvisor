@@ -88,6 +88,10 @@ type segment struct {
 	// to "free" reserved bytes could leak memory in the receiver.
 	dataMemSize int
 
+	// rackInFlight is the number of copies of this range transmitted since it
+	// was last declared lost. A tail probe can leave two copies on the wire.
+	rackInFlight uint32
+
 	// lost indicates if the segment is marked as lost by RACK.
 	lost bool
 }
@@ -163,6 +167,7 @@ func (s *segment) clone() *segment {
 	t.xmitCount = s.xmitCount
 	t.acked = s.acked
 	t.lost = s.lost
+	t.rackInFlight = s.rackInFlight
 	t.ep = s.ep
 	t.qFlags = s.qFlags
 	t.dataMemSize = s.dataMemSize

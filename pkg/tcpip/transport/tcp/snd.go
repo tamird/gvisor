@@ -717,6 +717,7 @@ func (s *sender) resetSACK() {
 	s.SackedOut = 0
 	for seg := s.writeList.Front(); seg != nil; seg = seg.Next() {
 		seg.acked = false
+		seg.rackInFlight = 0
 	}
 }
 
@@ -1276,6 +1277,14 @@ func (s *sender) SetPipe() {
 				break
 			}
 			if s.ep.scoreboard.IsSACKED(sb) {
+				continue
+			}
+
+			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+				// RACK tracks actual losses and retransmissions of this
+				// range. HighRxt and thresholds of higher SACKed bytes
+				// estimate these only for sequence-based recovery.
+				pipe += int(s1.rackInFlight)
 				continue
 			}
 
@@ -1944,9 +1953,13 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	}
 	seg.xmitTime = s.ep.stack.Clock().NowMonotonic()
 	seg.xmitCount++
-	seg.lost = false
-
 	err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
+	if err == nil {
+		seg.lost = false
+		if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+			seg.rackInFlight++
+		}
+	}
 
 	// Every time a packet containing data is sent (including a
 	// retransmission), if SACK is enabled and we are retransmitting data
