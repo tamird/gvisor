@@ -297,6 +297,12 @@ def _nogo_aspect_impl(target, ctx):
         env = go_ctx.env,
         mnemonic = "GoStaticAnalysis",
         progress_message = "Analyzing %s" % target.label,
+        # This is a property of the analyzer action, not the package's Go
+        # compilation. bits is the small analyzer witness for this private run.
+        exec_group = "abi_nogo" if importpath in (
+            "gvisor.dev/gvisor/pkg/abi/linux",
+            "gvisor.dev/gvisor/pkg/bits",
+        ) else None,
         # See above.
         execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
@@ -334,6 +340,9 @@ def _nogo_aspect_impl(target, ctx):
 nogo_aspect = go_rule(
     aspect,
     implementation = _nogo_aspect_impl,
+    exec_groups = {
+        "abi_nogo": exec_group(exec_compatible_with = ["//tools/bazeldefs:abi_nogo_memory"]),
+    },
     attr_aspects = [
         "deps",
         "library",

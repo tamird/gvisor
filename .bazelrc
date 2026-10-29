@@ -103,7 +103,7 @@ test:rbe-hybrid-tests --local_test_jobs=2
 build:rbe --config=rbe-common
 # Architecture-specific generators may need the other native CPU even when
 # the requested build or test lane selects only one target architecture.
-build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64,//tools/bazeldefs:rbe_linux_amd64_abi_nogo
 build:rbe --host_platform=//tools/bazeldefs:rbe_linux_amd64
 
 # Bind unused cgroup-v1 controllers in disposable AMD64 test VMs.
@@ -135,4 +135,4 @@ common --incompatible_enable_proto_toolchain_resolution=true
 # Target-owned execution constraints select the worker without a host-platform
 # override; test.* properties continue to select isolated runtime fixtures.
 build:rbe-matrix --config=rbe-common
-build:rbe-matrix --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+build:rbe-matrix --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64,//tools/bazeldefs:rbe_linux_amd64_abi_nogo

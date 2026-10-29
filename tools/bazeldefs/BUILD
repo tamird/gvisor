@@ -18,18 +18,36 @@ _RBE_EXEC_PROPERTIES = {
     "workload-isolation-type": "oci",
 }
 
+# Both executors use the same GNU image. Only the ABI analyzer's group
+# and its small qualification witness select the larger reservation.
+_GNU_AMD64 = {
+    "Arch": "amd64",
+    "OSFamily": "linux",
+    "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+    "workload-isolation-type": "firecracker",
+}
+
 # These also serve as host platforms. Preserve the Go cgo constraints while
 # adding worker routing for compilation and host-configured test actions.
 platform(
     name = "rbe_linux_amd64",
     constraint_values = ["@llvm//constraints/libc:musl"],
-    exec_properties = {
-        "Arch": "amd64",
-        "OSFamily": "linux",
-        "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
-        "workload-isolation-type": "firecracker",
-    },
+    exec_properties = _GNU_AMD64,
     parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
+)
+
+constraint_setting(name = "nogo_memory_tier")
+
+constraint_value(
+    name = "abi_nogo_memory",
+    constraint_setting = ":nogo_memory_tier",
+)
+
+platform(
+    name = "rbe_linux_amd64_abi_nogo",
+    constraint_values = [":abi_nogo_memory"],
+    exec_properties = dict(_GNU_AMD64, EstimatedMemory = "16GB"),
+    parents = [":rbe_linux_amd64"],
 )
 
 # Only TestRunner actions need the privileged cgroup setup; compilation inherits
