@@ -15,9 +15,11 @@
 package transport
 
 import (
+	"errors"
 	"testing"
 
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/syserr"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
@@ -133,4 +135,114 @@ func TestSeveredRecvSend(t *testing.T) {
 	if _, _, serr := ep.Send(nil, [][]byte{{1}}, ControlMessages{}, Address{}); serr != syserr.ErrClosedForSend {
 		t.Errorf("Send on severed endpoint returned %v, want %v", serr, syserr.ErrClosedForSend)
 	}
+}
+
+// A failed host poll must not leave the entry on the Unix endpoint's queue.
+func TestFailedHostWaiterRegistration(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_STREAM, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[1])
+	endpoint := baseEndpoint{WaitQueue: &waiter.Queue{}}
+	peer, sysErr := NewSCMSender(fds[0], endpoint.WaitQueue, "")
+	if sysErr != nil {
+		unix.Close(fds[0])
+		t.Fatal(sysErr)
+	}
+	if err := peer.Init(); err != nil {
+		unix.Close(fds[0])
+		t.Fatal(err)
+	}
+	defer peer.Release(context.Background()) // sender
+	defer peer.Release(context.Background()) // receiver
+	endpoint.peer = peer
+
+	replaceWithUnpollableFile(t, fds[0])
+	entry, ch := waiter.NewChannelEntry(waiter.EventIn)
+	if got, want := endpoint.EventRegister(&entry), error(unix.EPERM); !errors.Is(got, want) {
+		t.Fatalf("EventRegister: got %v, want %v", got, want)
+	}
+	endpoint.WaitQueue.Notify(waiter.EventIn)
+	select {
+	case <-ch:
+		t.Fatal("failed registration received a notification")
+	default:
+	}
+}
+
+func replaceWithUnpollableFile(t *testing.T, fd int) {
+	t.Helper()
+	null, err := unix.Open("/dev/null", unix.O_RDONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(null)
+	if err := unix.Dup3(null, fd, unix.O_CLOEXEC); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// testListener is a real host listener used as a BoundSocketFD without a gofer.
+type testListener int32
+
+func (fd testListener) NotificationFD() int32 { return int32(fd) }
+func (fd testListener) Close(context.Context) { unix.Close(int(fd)) }
+func (fd testListener) Listen(_ context.Context, backlog int32) error {
+	return unix.Listen(int(fd), int(backlog))
+}
+func (fd testListener) Accept(context.Context) (int, error) {
+	next, _, err := unix.Accept4(int(fd), unix.SOCK_NONBLOCK|unix.SOCK_CLOEXEC)
+	return next, err
+}
+
+func newTestListener(t *testing.T) testListener {
+	t.Helper()
+	fd, err := unix.Socket(unix.AF_UNIX, unix.SOCK_STREAM|unix.SOCK_NONBLOCK|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Bind(fd, &unix.SockaddrUnix{}); err != nil {
+		unix.Close(fd)
+		t.Fatal(err)
+	}
+	if err := unix.Listen(fd, 1); err != nil {
+		unix.Close(fd)
+		t.Fatal(err)
+	}
+	return testListener(fd)
+}
+
+func TestUnpollableBoundListener(t *testing.T) {
+	ctx := context.Background()
+	t.Run("register after bind", func(t *testing.T) {
+		ep := &connectionedEndpoint{baseEndpoint: baseEndpoint{WaitQueue: &waiter.Queue{}}}
+		fd := newTestListener(t)
+		if err := ep.SetBoundSocketFD(ctx, fd); err != nil {
+			t.Fatal(err)
+		}
+		defer ep.ResetBoundSocketFD(ctx)
+		replaceWithUnpollableFile(t, int(fd))
+		entry, _ := waiter.NewChannelEntry(waiter.EventIn)
+		if got, want := ep.EventRegister(&entry), error(unix.EPERM); !errors.Is(got, want) {
+			t.Fatalf("EventRegister: got %v, want %v", got, want)
+		}
+		if !ep.WaitQueue.IsEmpty() {
+			t.Fatal("failed registration left the entry on the queue")
+		}
+	})
+	t.Run("bind after register", func(t *testing.T) {
+		ep := &connectionedEndpoint{baseEndpoint: baseEndpoint{WaitQueue: &waiter.Queue{}}}
+		entry, _ := waiter.NewChannelEntry(waiter.EventIn)
+		if err := ep.EventRegister(&entry); err != nil {
+			t.Fatal(err)
+		}
+		defer ep.EventUnregister(&entry)
+		fd := newTestListener(t)
+		replaceWithUnpollableFile(t, int(fd))
+		if got, want := ep.SetBoundSocketFD(ctx, fd), error(unix.EPERM); !errors.Is(got, want) {
+			ep.ResetBoundSocketFD(ctx)
+			t.Fatalf("SetBoundSocketFD: got %v, want %v", got, want)
+		}
+	})
 }
