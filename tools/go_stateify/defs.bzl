@@ -13,8 +13,11 @@ def _go_stateify_impl(ctx):
     ctx.actions.symlink(output = go_tool, target_file = go.go, is_executable = True)
 
     # Run the stateify command.
-    srcdir = paths.join(ctx.label.workspace_root, ctx.label.package) or "."
-    args = ["-go=%s" % go_tool.path, "-srcdir=%s" % srcdir, "-output=%s" % output.path]
+    args = ["-go=%s" % go_tool.path, "-output=%s" % output.path]
+    if any([src.is_source for src in ctx.files.srcs]):
+        # Without source files, imports must be resolved alongside generated inputs.
+        srcdir = paths.join(ctx.label.workspace_root, ctx.label.package) or "."
+        args.append("-srcdir=%s" % srcdir)
     args.append("-fullpkg=%s" % ctx.attr.package)
     if ctx.attr._statepkg:
         args.append("-statepkg=%s" % ctx.attr._statepkg)
