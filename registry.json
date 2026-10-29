@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T03:50:12.442027+00:00",
+    "updatedAt": "2026-10-29T04:13:36.052936+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35283,6 +35283,14 @@
             {
               "label": "Backlogged Reno control",
               "url": "https://app.buildbuddy.io/invocation/e41b0a11-25bd-4c0a-a576-46f2b09c157b"
+            },
+            {
+              "label": "Commented candidate, same tested behavior",
+              "url": "https://github.com/tamird/gvisor/commit/138b7ce9c181b78110cfe8ede4f7a601e15f0809"
+            },
+            {
+              "label": "Native Linux packet comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40816460493"
             }
           ]
         },
@@ -36855,7 +36863,7 @@
           ]
         }
       ],
-      "nextStep": "Compare the paced-write and slow-start traces with native Linux. Then decide which congestion-window and epoch changes should be proposed, and measure their effect on throughput separately.",
+      "nextStep": "Compare the application-limited wire cases on native Linux before preparing the congestion-window change for review. The first Linux run timed out while compiling protobuf and never ran a packet test; the next uses ordinary compiler workers and only places the actual test on Firecracker.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -37854,6 +37862,19 @@
       "updatedAt": "2026-10-29T03:50:12.442027+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
+        {
+          "text": "Both string-storage policies restored five tasks from the same 163,712-byte Nginx state file. The kernel frame contained 1,152 small strings totaling 12,289 bytes; both policies allocated one 16,384-byte slab. The CPUID frame used no slab. The smaller policy saved space on the two-byte fixture, but neither this checkpoint nor the 20,000-node graph saved a slab. No speed or heap gain was measured.",
+          "evidence": [
+            {
+              "label": "Nginx checkpoint and native execution log",
+              "url": "https://app.buildbuddy.io/invocation/3db3bdaf-a724-48e1-8c00-c18093c10df8"
+            },
+            {
+              "label": "Nginx qualifier",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40814578227"
+            }
+          ]
+        },
         {
           "text": "Both restore strategies passed the graph identity checks. For a 22-byte checkpoint with one 2-byte string, bounding the decoder slab reduced backing capacity from 16,384 to 2 bytes. On the seeded 20,000-node graph both strategies reserved exactly 1,490,944 bytes in 91 slabs for the same 145,654 small strings. This measures buffer capacity; it does not establish a heap or speed improvement.",
           "evidence": [
@@ -40248,7 +40269,7 @@
           ]
         }
       ],
-      "nextStep": "Measure the same two strategies on a real Nginx kernel checkpoint. Keep the two-byte result separate from the unchanged large graph and measure retained heap or timing before recommending a decoder change.",
+      "nextStep": "Use representative restore profiles to identify a measured cost in the graph rewrite. No string slab change is recommended from these results.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
@@ -46774,6 +46795,23 @@
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
+          "text": "Building //:release directly on the hosted Ubuntu runner failed because an AMD64 build tried to compile the ARM64 systrap stub. Selecting only the target architecture for normal Go builds fixed the failure: the same runner completed 3,994 Bazel actions without the Docker builder and uploaded the same eight paths as upstream. Both systrap sources remained in the configured //:gopath graph. The twelve generated files in upstream\u2019s Go branch provide an exact-source comparison for the exported ZIP.",
+          "evidence": [
+            {
+              "label": "Control: ARM64 compiler missing",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40814078431"
+            },
+            {
+              "label": "Direct Bazel release and three graph checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40815384363"
+            },
+            {
+              "label": "Upstream Go export of the control source",
+              "url": "https://github.com/google/gvisor/commit/ad743720ec132b777196c52cc086dcfa249e7150"
+            }
+          ]
+        },
+        {
           "text": "A single build produced both architectures\u2019 Debian, bzip2 and zstd packages: six outputs, totaling 399,083,591 bytes. Each digest was traced to an uncached packaging action and staging action on the empty worker. The Actions wrapper failed afterward on a cquery option. The public //:release binary directory is a separate target: its GitHub upload must be checked separately. Reconciliation on the original artifacts resolved the cquery alias and passed the source-image audit. The GitHub workflow then reproduced another dependency: an AMD64 release invoked /usr/bin/aarch64-linux-gnu-gcc to build the ARM64 systrap stub and failed because the runner has no cross compiler.",
           "evidence": [
             {
@@ -47325,7 +47363,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the actual //:release binary directory on empty workers. Check the architecture split that makes an AMD64 release build the ARM64 stub; preserve both architectures in the Go source ZIP. Stateify, the package version writer and the LLVM module-map tool await contributor review.",
+      "nextStep": "Verify all twelve architecture-specific files in the actual Go ZIP. Separately, check both public release directories, executable modes and sidecar startup on empty workers. Stateify, package versioning and the LLVM module map await contributor review.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
