@@ -109,4 +109,5 @@ go_test(
         "types_test.go",
     ],
     embed = [":state"],
+    deps = ["//pkg/state/wire"],
 )
