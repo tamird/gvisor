@@ -19,9 +19,15 @@ import (
 	"time"
 )
 
-// beforeSave is invoked by stateify.
-func (s *stdClock) beforeSave() {
-	s.monotonicOffset = s.NowMonotonic()
+// saveMonotonicOffset returns the reading to resume from without changing
+// the base time or offset still used by the running clock.
+func (s *stdClock) saveMonotonicOffset() MonotonicTime {
+	return s.NowMonotonic()
+}
+
+// loadMonotonicOffset is invoked by stateify.
+func (s *stdClock) loadMonotonicOffset(_ context.Context, offset MonotonicTime) {
+	s.monotonicOffset = offset
 }
 
 // afterLoad is invoked by stateify.
