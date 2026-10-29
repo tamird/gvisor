@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T19:31:05.691468+00:00",
+    "updatedAt": "2026-10-29T20:08:11.241282+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32055,9 +32055,17 @@
       "url": "https://github.com/tamird/gvisor/commit/710c59cda",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T19:31:05.691468+00:00",
-      "summary": "Changing an epoll mask should update the original waiter. Replacing it allocated on MOD; reserving two waiters instead also breaks when a host registration fails after linking one. A one-waiter prototype is under test, including Unix sockets and FUSE.",
+      "updatedAt": "2026-10-29T20:08:11.241282+00:00",
+      "summary": "A second waiter is no longer proposed. The prototype changes the mask on the installed waiter. Host and plugin registration failures, overlay copy-up and checkpoint/restore are being checked before review.",
       "evidence": [
+        {
+          "label": "Single-entry prototype and restore checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40944208728"
+        },
+        {
+          "label": "Socket plugin mask failure comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40944327957"
+        },
         {
           "label": "Revision returned for further work",
           "url": "https://github.com/tamird/gvisor/commit/710c59cda"
@@ -34292,6 +34300,61 @@
         "summary": "rules_pkg archive actions invoke Bash via /usr/bin/env even when Bazel has supplied Python. The change runs the same writers on Linux workers without those programs and preserves the existing launcher when the interpreter bootstrap is unavailable.",
         "body": "The ZIP writer produced the same empty and compressed archives, including permissions. The tar, ZIP and Debian example builds ran with /usr/bin/env blocked."
       }
+    },
+    {
+      "id": "branch:fuse-aborted-watch-registration",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fuse-aborted-watch-registration",
+      "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
+      "title": "Keep FUSE device watches attached after connection abort",
+      "url": "https://github.com/tamird/gvisor/commit/1e5a147a4",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T20:08:11.241282+00:00",
+      "summary": "After an attached FUSE connection aborts, Linux delivers EPOLLERR on fresh or updated watches. gVisor rejected the new registration, and deleting an old watch left it on the aborted queue.",
+      "evidence": [
+        {
+          "label": "Linux and stock gVisor: ADD and both kinds of MOD",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40940772889/job/123683261101"
+        },
+        {
+          "label": "Stock failed two regressions; all 21 corrected FUSE tests passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40944314132/job/123695521646"
+        },
+        {
+          "label": "Native remount and ADD; both Nogo targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40942820675/job/123690359028"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
+        "url": "https://github.com/tamird/gvisor/commit/1e5a147a4",
+        "title": "Keep FUSE device watches attached after connection abort",
+        "summary": "After an attached FUSE connection aborts, Linux delivers EPOLLERR on fresh or updated watches. gVisor rejected the new registration, and deleting an old watch left it on the aborted queue.",
+        "body": "May I open this standalone fix? The native Linux fixture uses a mounted FUSE filesystem; the gVisor regressions exercise the actual FUSE connection component."
+      }
+    },
+    {
+      "id": "branch:gofer-character-device-restore",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/gofer-character-device-restore",
+      "head": "64758ff8b5b9c25a780afc75f830260c68b58bbb",
+      "title": "Restore polling on gofer character devices",
+      "url": "https://github.com/tamird/gvisor/commit/64758ff8b",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T20:08:11.241282+00:00",
+      "summary": "Open includes character devices in the host notifier, while restore only includes pipes and sockets. Test one watched host character device before and after checkpoint in both gofer modes.",
+      "evidence": [
+        {
+          "label": "Unmodified restore path",
+          "url": "https://github.com/google/gvisor/blob/e82a0e179/pkg/sentry/fsimpl/gofer/save_restore.go#L503"
+        }
+      ]
     }
   ],
   "edges": [
@@ -37421,6 +37484,24 @@
       "from": "branch:hermetic-compiler-review",
       "to": "branch:release-archives-versioned",
       "reason": "Both architectures’ release binaries need declared C and C++ toolchains on native workers."
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:fuse-aborted-watch-registration",
+      "to": "branch:epoll-modify-preserve",
+      "reason": "Keeps the originally attached FUSE queue available across abort and remount.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/1e5a147a4"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:gofer-character-device-restore",
+      "to": "branch:epoll-modify-preserve",
+      "reason": "Restores the host wait queue for a previously watched character device.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/64758ff8b"
+      ]
     }
   ],
   "investigations": [

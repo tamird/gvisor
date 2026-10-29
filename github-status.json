@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T19:17:57.344003+00:00",
-  "registryDate": "2026-10-29T19:31:05.691468+00:00",
+  "registryDate": "2026-10-29T20:08:11.241282+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -239162,6 +239162,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T19:31:05.691468+00:00"
+      }
+    },
+    "branch:fuse-aborted-watch-registration": {
+      "contributor-review": {
+        "scope": "1e5a147a41322c801145578ee6333c12a5cbaea8",
+        "since": "2026-10-29T20:08:11.241282+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T20:08:11.241282+00:00"
       }
     }
   },
