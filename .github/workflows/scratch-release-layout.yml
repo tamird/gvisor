@@ -1,0 +1,130 @@
+name: Build and start the staged release
+on:
+  push:
+    branches: [qualification/scratch-release-layout]
+permissions:
+  contents: read
+jobs:
+  layout:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cpu: amd64
+            runner: ubuntu-24.04
+          - cpu: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 130
+    env:
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_ARCH: ${{ matrix.cpu }}
+      QUALIFICATION_LANES: build
+      QUALIFICATION_TARGETS: //:release
+      QUALIFICATION_EXECUTION: remote-actions
+      QUALIFICATION_HEADER_BASE: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Prepare the original lock and compact-log decoder
+        run: |
+          test "$(git rev-parse HEAD^)" = b1cb68d647deac35165b79f0ec5c230c12e4e562
+          mkdir "$RUNNER_TEMP/out"
+          cp test/rbe/scratch-release.lock MODULE.bazel.lock
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          bazelisk mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/modules.json"
+          case $(uname -m) in
+            x86_64) cpu=x86_64; sum=f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb ;;
+            aarch64) cpu=arm64; sum=1f4c3ede4b5e147ab698f6e6c6f4fdd48c48f3d2e3c75fe5bc8dd744ddcdbc4c ;;
+            *) exit 1;;
+          esac
+          curl -fsSL --max-time 120 "https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-$cpu" -o "$RUNNER_TEMP/bb"
+          printf '%s  %s\n' "$sum" "$RUNNER_TEMP/bb" | sha256sum --check --strict
+          chmod +x "$RUNNER_TEMP/bb"
+      - name: Build the actual release through the existing qualification harness
+        id: build_result
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          bash test/rbe/actions.sh --bazel-option=--remote_download_outputs=toplevel \
+            '--bazel-option=--modify_execution_info=^CopyFile$=+no-remote-cache'
+      - name: Inspect every configured file and copy
+        run: |
+          inv=("$RUNNER_TEMP/qualification"/invocation-*)
+          (( ${#inv[@]} == 1 ))
+          python3 test/rbe/release_layout_check/read.py "${inv[0]}" "$RUNNER_TEMP/bb" "$RUNNER_TEMP/out/layout.json"
+      - name: Start the staged release natively
+        if: '!cancelled() && steps.build_result.outcome == ''success'''
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          inv=("$RUNNER_TEMP/qualification"/invocation-*)
+          [[ ${#inv[@]} == 1 && $(cat "${inv[0]}/native-exit.txt") == 0 ]]
+          if [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
+            sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          rc="$RUNNER_TEMP/launch.bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          cp test/rbe/qualification.bazelrc "$rc"
+          {
+            printf '%s\n' 'common --lockfile_mode=error' 'startup --host_jvm_args=-Xmx8g' \
+            'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build:buildbuddy_remote_executor --local_resources=memory=4096' \
+            'build:buildbuddy_remote_executor --experimental_remote_merkle_tree_cache'
+            printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } >> "$rc"
+          unset BUILDBUDDY_API_KEY GVISOR_SIDECAR_BINARIES_DIR
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          options=()
+          while IFS= read -r option; do
+            case "$option" in --*) options+=("$option");; esac
+          done < "${inv[0]}/arguments.txt"
+          result=0
+          bazelisk --bazelrc="$rc" run "${options[@]}" --build_event_json_file="$RUNNER_TEMP/launch.bep" //:release -- \
+            --alsologtostderr --debug --rootless --TESTONLY-unsafe-nonroot=true --platform=systrap --network=none \
+            --root="$RUNNER_TEMP/runsc-root" 'do' /bin/echo "release-layout-started-$QUALIFICATION_ARCH" > "$RUNNER_TEMP/startup.log" 2>&1 || result=$?
+          python3 - "$result" <<'PY'
+          import hashlib, json, os, platform, sys
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          logs = (root / "startup.log").read_text(errors="replace").splitlines()
+          events = [json.loads(line) for line in (root / "launch.bep").read_text().splitlines()]
+          started = [line[line.index("Starting sandbox: "):][:3000] for line in logs if "Starting sandbox: " in line]
+          boot = [line[line.index("Sandbox started, PID: "):] for line in logs if "Sandbox started, PID: " in line]
+          prewarmers = [Path(line.split("Starting sandbox: ", 1)[1].split()[0]) for line in started]
+          expected = Path("bazel-bin/release/gvisor-bin/gvisor-sentry-prewarmer")
+          launched = [{"path": str(p), "same_file": p.samefile(expected)} for p in prewarmers if p.is_file()]
+          proc = int(sys.argv[1])
+          marker = "release-layout-started-" + os.environ["QUALIFICATION_ARCH"]
+          digests = {}
+          if (root / "out/layout.json").is_file():
+              for name, row in json.loads((root / "out/layout.json").read_text())["files"].items():
+                  with (Path("bazel-bin/release") / name).open("rb") as f:
+                      digests[name] = hashlib.file_digest(f, "sha256").hexdigest() == row["sha256"]
+          if proc:
+              print("\n".join(logs[-24:]), file=sys.stderr)
+          outcome = {"exit": proc, "host": platform.machine(), "child": next((e["started"]["uuid"] for e in events if "started" in e), None),
+                     "boot_command": started, "prewarmers": launched, "started": boot, "guest_markers": logs.count(marker), "matches_layout": digests}
+          (root / "out/runtime.json").write_text(json.dumps(outcome, indent=2) + "\n")
+          assert not proc and len(launched) == 1 and launched[0]["same_file"] and boot and logs.count(marker) == 1, outcome
+          assert len(digests) == 8 and all(digests.values()), digests
+          PY
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-layout-${{ matrix.cpu }}
+          path: |
+            ${{ runner.temp }}/out/*.json
+            ${{ runner.temp }}/qualification.tar.gz
+          if-no-files-found: error
