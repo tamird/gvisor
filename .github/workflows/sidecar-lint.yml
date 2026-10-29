@@ -1,7 +1,7 @@
-name: Read original sidecar prerequisite diagnostics
+name: Read the original sidecar test and compiler diagnostics
 "on":
   push:
-    branches: [qualification/sidecar-prerequisite-f1383722]
+    branches: [qualification/sidecar-matrix-read-83a9be05]
 permissions:
   contents: read
 jobs:
@@ -20,17 +20,17 @@ jobs:
           umask 077
           root="$RUNNER_TEMP/sidecar-lint"
           mkdir -p "$root"
-          cp .github/qualification/sidecar-review/lint.py "$root/"
+          cp .github/qualification/sidecar-review/read-matrix.py "$root/"
           cd "$root"
           sha256sum --check <<'SUMS'
-          d8838ec12a6e77fd67718d62ec6326d460c8ca2e48ba76998bfd8bac0030f196  lint.py
+          2b2449d3cd05a3e8733110852c6f4d1348d98fad37aea6578e729628908c854e  read-matrix.py
           SUMS
       - name: Read only the authenticated original archive
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           cd "$RUNNER_TEMP/sidecar-lint"
-          python3 lint.py
+          python3 read-matrix.py
       - name: Publish only the bounded evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
