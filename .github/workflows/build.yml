@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-negative-zero'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-optimizer-negative-zero'
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     steps:
@@ -13,7 +13,7 @@ jobs:
       with:
         fetch-depth: 12
         persist-credentials: false
-    - name: Compare stock, corrected checkpointing, and the encoder simplification
+    - name: Compare the optimizer on the same six signed-zero wire cases
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
@@ -69,20 +69,18 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
-        git diff --exit-code e5b636af9ddeb2e0f2c7c4aea52b2f6ba500d8a8 e3e01f2725b209a444a872a487cb602a780214d9 -- pkg/state/encode.go
-        git diff --exit-code e3e01f2725b209a444a872a487cb602a780214d9 40eb760888e9c00c8aaeeee71e42a4f91800734b -- pkg/state/tests/float_test.go
-        git diff --exit-code 40eb760888e9c00c8aaeeee71e42a4f91800734b 7a8b00fe17548fe71b580ba80af697a2fbd24963 -- pkg/state/tests/float_test.go
+        git diff --exit-code 9bc4d2d673303710367f1ee2345205a74371b859 5feda466eaf91dde1906aa7c28c43fab7da1b769 -- pkg/state/encode.go
+        git diff --exit-code 5feda466eaf91dde1906aa7c28c43fab7da1b769 b1640949d58e0b93f582b52827fa1056d7b3f871 -- pkg/state/types_test.go
         overall=0
-        for mode in stock fixed basepkg optimized wire; do
+        for mode in original corrected fixtures; do
           args=()
-          owner=//pkg/state/tests:tests_test
-          case "$mode" in
-            stock) source=e3e01f2725b209a444a872a487cb602a780214d9; filter='^TestSignedZero$' ;;
-            fixed) source=40eb760888e9c00c8aaeeee71e42a4f91800734b; filter='' ;;
-            basepkg) source=40eb760888e9c00c8aaeeee71e42a4f91800734b; filter=''; owner=//pkg/state:state_test ;;
-            optimized) source=7a8b00fe17548fe71b580ba80af697a2fbd24963; filter='^TestSignedZero$' ;;
-            wire) source=7a8b00fe17548fe71b580ba80af697a2fbd24963; owner=//pkg/state:state_test; filter='^TestZero(WireRepresentations|ArrayStructHook)$' ;;
-          esac
+          owner=//pkg/state:state_test
+          source=b1640949d58e0b93f582b52827fa1056d7b3f871; filter=''
+          if [[ "$mode" = original ]]; then
+            source=5feda466eaf91dde1906aa7c28c43fab7da1b769; filter='^TestZeroWireRepresentations$'
+          elif [[ "$mode" = fixtures ]]; then
+            owner=//pkg/state/tests:tests_test
+          fi
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test -z "$(git status --porcelain --untracked-files=no)"
@@ -100,6 +98,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: negative-zero-verdicts
+        name: optimizer-zero-verdicts
         path: ${{ runner.temp }}/focused/*/result.json
         if-no-files-found: error

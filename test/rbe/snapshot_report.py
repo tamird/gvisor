@@ -41,27 +41,24 @@ try:
     rows = ET.fromstring(files["test.xml"]).findall(".//testcase")
     cases = {e.attrib["name"]: next((c.tag for c in e if c.tag in ("skipped","failure","error")), "pass") for e in rows}
     assert len(cases) == len(rows)
-    signed = {f"TestSignedZero/{i}" for i in range(4)}
     failed = {k for k,v in cases.items() if v in ("error","failure")}
-    r["count"] = len(cases)
-    r["failures"] = sorted(failed)
-    r["skipped"] = [k for k,v in cases.items() if v == "skipped"]
+    r["count"],r["failures"],r["skipped"] = len(cases),sorted(failed),[k for k,v in cases.items() if v == "skipped"]
     r["witnesses"] = {k:v for k,v in cases.items() if k.startswith(("TestSignedZero","TestZeroWireRepresentations","TestZeroArrayStructHook"))}
-    if mode=="stock":
-        assert signed <= failed and failed <= signed|{"TestSignedZero"}, (failed,signed)
+    negative = {"TestZeroWireRepresentations/negative_"+k for k in ("float32","float64","complex64","complex128","float_array","complex_array")}
+    if mode == "original":
+        assert negative<=failed<=negative|{"TestZeroWireRepresentations"}, (negative,failed)
         assert (int(code),r["bazel_exit"],t["status"]) == (1,3,"FAILED")
     else:
         assert (int(code),r["bazel_exit"],t["status"]) == (0,0,"PASSED")
         assert not failed
-        if mode.removesuffix("suite") in ("fixed","optimized"):
-            assert all(cases.get(k) == "pass" for k in signed)
-        elif mode=="basepkg":
-            assert cases.get("TestAddrMap") == "pass"
-        else:
-            assert mode=="wire"
+        if mode == "corrected":
+            assert all(cases.get(k) == "pass" for k in negative)
             for k in ("float32","float64","complex64","complex128","float_array"):
-                assert cases.get("TestZeroWireRepresentations/"+k) == "pass"
-            assert cases.get("TestZeroArrayStructHook")=="pass"
+                assert cases.get("TestZeroWireRepresentations/"+k)=="pass"
+            assert cases.get("TestZeroArrayStructHook") == "pass"
+        else:
+            assert mode=="fixtures"
+            assert all(cases.get(f"TestSignedZero/{i}")=="pass" for i in range(4))
     r["matched"]=True
     r["verdict"]="COMPLETE"
 except Exception as exc:
