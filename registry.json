@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T13:32:41.794929+00:00",
+    "updatedAt": "2026-10-29T13:46:36.662116+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24733,21 +24733,28 @@
       "id": "branch:tcp-rack-pipe-accounting",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "fix/tcp-rack-pipe-accounting-readable",
-      "head": "83ab4392c284f6804ef13dc0efe5291d688bdca5",
+      "ref": "research/rack-probe-flight",
+      "head": "7859018167653b4fb3f762878cba599c4d1ec5c7",
       "title": "Account for RACK loss when estimating flight",
-      "url": "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5",
+      "url": "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T10:34:21.777422+00:00",
-      "summary": "In two matched packet traces, this proposal repairs three lost segments without waiting, but also sends three new segments when a tail probe leaves room for two. The #15634 parent repairs only two lost segments and respects the probe window. Hold this revision; require both cases to pass before requesting review of a replacement.",
+      "updatedAt": "2026-10-29T13:42:17.573597+00:00",
+      "summary": "On the same wire histories the corrected estimator repairs all three lost 496-byte segments, caps new data at two when three of five slots are occupied, and admits seven before the probe ACK. The predecessor repaired all three but sent an extra packet. The #15634 parent repaired only two. Both native architectures ran complete TCP/RACK suites and Nogo: 71 passed, one pre-existing skip each.",
       "followup": {
         "owner": "root",
-        "sourceHead": "83ab4392c284f6804ef13dc0efe5291d688bdca5",
-        "observedAt": "2026-10-25T13:28:53.298229+00:00",
-        "disposition": "Contributor-approved topic refreshed on current prerequisite; waiting for #15634 landing",
-        "nextAction": "Keep #15634 unchanged. Correct the accounting proposal so a speculative tail probe consumes one window slot until it is delivered or declared lost, and qualify both wire histories. The older review is for the earlier source only.",
+        "sourceHead": "7859018167653b4fb3f762878cba599c4d1ec5c7",
+        "observedAt": "2026-10-29T13:42:17.573597+00:00",
+        "disposition": "Both native architecture suites passed; compare the open author’s implementation",
+        "nextAction": "Compare the wire behavior of open #15432 with this change; coordinate the overlapping loss-accounting work before requesting upstream publication.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7",
+          "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...7859018167653b4fb3f762878cba599c4d1ec5c7",
+          "https://github.com/tamird/gvisor/compare/83ab4392c284f6804ef13dc0efe5291d688bdca5...7859018167653b4fb3f762878cba599c4d1ec5c7",
+          "https://github.com/tamird/gvisor/commit/9073385cd68f98e340665aad5619aace4e3b638d",
+          "https://app.buildbuddy.io/invocation/94718b62-6d95-4b23-bc00-0448c81c588d",
+          "https://app.buildbuddy.io/invocation/d14d7308-6063-40b3-98b7-7e2debe10633",
+          "https://github.com/google/gvisor/pull/15432",
           "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5",
           "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...83ab4392c284f6804ef13dc0efe5291d688bdca5",
           "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
@@ -24755,15 +24762,43 @@
           "https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f",
           "https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540"
         ],
-        "condition": "Requires a correction and refreshed contributor review as well as #15634 landing."
+        "condition": "Qualified 7859018167 is directly atop 83ab4392c2 and #15634 b909bc689. Older contributor approval does not cover this correction; #15432 is an alternative to 83ab, not a prerequisite."
       },
       "evidence": [
         {
-          "label": "Current equivalent fork proposal",
+          "label": "Corrected, signed fork head",
+          "url": "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7"
+        },
+        {
+          "label": "Full proposal on unchanged #15634",
+          "url": "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...7859018167653b4fb3f762878cba599c4d1ec5c7"
+        },
+        {
+          "label": "New speculative-copy accounting only",
+          "url": "https://github.com/tamird/gvisor/compare/83ab4392c284f6804ef13dc0efe5291d688bdca5...7859018167653b4fb3f762878cba599c4d1ec5c7"
+        },
+        {
+          "label": "Paired packet fixture",
+          "url": "https://github.com/tamird/gvisor/commit/9073385cd68f98e340665aad5619aace4e3b638d"
+        },
+        {
+          "label": "Unfiltered AMD64 TCP/RACK/Nogo",
+          "url": "https://app.buildbuddy.io/invocation/94718b62-6d95-4b23-bc00-0448c81c588d"
+        },
+        {
+          "label": "Unfiltered ARM64 TCP/RACK/Nogo",
+          "url": "https://app.buildbuddy.io/invocation/d14d7308-6063-40b3-98b7-7e2debe10633"
+        },
+        {
+          "label": "Overlapping open RACK recovery proposal (head 00aaa82b9e)",
+          "url": "https://github.com/google/gvisor/pull/15432"
+        },
+        {
+          "label": "Predecessor: single-copy estimate",
           "url": "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5"
         },
         {
-          "label": "Four-file change on current #15634",
+          "label": "Predecessor: four-file change on #15634",
           "url": "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...83ab4392c284f6804ef13dc0efe5291d688bdca5"
         },
         {
@@ -49641,9 +49676,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-29T13:32:41.794929+00:00",
+      "updatedAt": "2026-10-29T13:46:36.662116+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Monitor replies and revised heads on #16659 and #16660. Test receive pressure and corked shutdown separately from loss recovery. Include new issues and external PRs in the TCP review pass.",
+      "nextStep": "Review new heads and replies on the two SACK/probe PRs and the receive-pressure proposal. Compare corked shutdown on Linux and gVisor. Continue looking for related issues and PRs outside this list.",
       "findings": [
         {
           "text": "Initial census: 510 open PRs inspected by changed path and title, including exports. The networking/performance labels and TCP, retransmission, SACK, RACK, CUBIC and netstack searches yielded 184 distinct candidate issues; many are not TCP defects.",
@@ -49804,6 +49839,40 @@
               "url": "https://github.com/google/gvisor/pull/15019#issuecomment-6362902795"
             }
           ]
+        },
+        {
+          "text": "With dequeue paused on #15325, 257 repeated 4 KiB packets charged 165,492 bytes to an endpoint with a 4,096-byte receive budget. The charge returned to zero when drained. This exposed the cost of retaining each rejected packet header; it does not negate the reported improvements in small-segment throughput.",
+          "evidence": [
+            {
+              "label": "Exact-source queue measurement",
+              "url": "https://app.buildbuddy.io/invocation/6677d109-c3a7-4693-b395-38036ea6102a"
+            },
+            {
+              "label": "Reproducer on the author’s head",
+              "url": "https://github.com/tamird/gvisor/commit/1343dc381c63c720ab2d12f24371d04a959acfbe"
+            }
+          ]
+        },
+        {
+          "text": "With TCP_CORK enabled, stock gVisor waited exactly 200 ms after both close and SHUT_WR before sending a 14-byte tail and FIN. Linux delivered all 14 bytes and EOF promptly; explicitly uncorking first also flushed immediately on stock. A proposed send-path change releases the queued tail in both cases.",
+          "evidence": [
+            {
+              "label": "Independent corked-close issue",
+              "url": "https://github.com/google/gvisor/issues/16437"
+            },
+            {
+              "label": "Stock trace",
+              "url": "https://app.buildbuddy.io/invocation/0cd69d79-fdee-44fc-99ea-0bb3cd55fcf8"
+            },
+            {
+              "label": "Linux TCP sockets",
+              "url": "https://app.buildbuddy.io/invocation/ea18ab19-9ebf-4670-ab86-db9177aba7ba"
+            },
+            {
+              "label": "Corrected gVisor trace",
+              "url": "https://app.buildbuddy.io/invocation/11f13935-3275-49b4-9600-f8c19332135a"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -49814,8 +49883,32 @@
         {
           "label": "Separate Tailscale reordering investigation",
           "url": "https://github.com/tailscale/tailscale/issues/21651"
+        },
+        {
+          "label": "Inline review: partial SACK advances RACK too far",
+          "url": "https://github.com/google/gvisor/pull/16659#discussion_r4412923887"
+        },
+        {
+          "label": "Inline reviews: unsent writes and invalid ACKs",
+          "url": "https://github.com/google/gvisor/pull/16660#pullrequestreview-5698493694"
+        },
+        {
+          "label": "Inline review: bounding receive pressure",
+          "url": "https://github.com/google/gvisor/pull/15325#discussion_r4413148598"
         }
-      ]
+      ],
+      "reviewWatch": {
+        "repo": "google/gvisor",
+        "numbers": [
+          15325,
+          16659,
+          16660
+        ],
+        "owner": "Netstack",
+        "reviewers": [
+          "tamird"
+        ]
+      }
     }
   ]
 }

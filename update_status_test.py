@@ -428,6 +428,20 @@ class CollectorHistoryTest(unittest.TestCase):
             self.assertEqual(updater.review_watch_report([changed], current)[0]["status"], "merged")
             self.assertEqual(updater.review_watch_report([changed], {"prs": [changed]}), [])
 
+    def test_investigation_tracks_external_review_without_a_delivery_row(self) -> None:
+        self.registry["investigations"] = [{"reviewWatch": {
+            "repo": "google/gvisor", "numbers": [500], "owner": "Netstack", "reviewers": ["tamird"],
+        }}]
+        self.raw[500] = raw_pr(500, author="outside-author")
+        current = self.collect()
+        self.assertNotIn(500, [pr["number"] for pr in current["prs"]])
+        pr, = current["reviewPRs"]
+        self.assertEqual(pr["number"], 500)
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            self.assertEqual([(event["number"], event["owner"]) for event in
+                              updater.review_watch_report([pr], self.previous)], [(500, "Netstack")])
+            self.assertEqual(updater.review_watch_report([pr], current), [])
+
     def test_retention_reopening_closure_and_active_imports(self) -> None:
         current = self.collect()
         self.assertEqual(next(pr for pr in current["prs"] if pr["number"] == 4)["mergeCommit"], "e" * 40)

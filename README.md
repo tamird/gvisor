@@ -78,6 +78,10 @@ remains the same research record in the Investigations view, can be an edge
 endpoint, and links there until it has a published branch or PR. Do not invent
 a branch link before publication. Move relationships to the published node
 when that identity is established, retaining findings in the investigation.
+An investigation can subscribe to third-party PRs by setting `reviewWatch`
+with a repository (`repo`), PR `numbers`, an `owner`, and `reviewers`. A new
+head or substantive reply then appears in the refresh workflow's review
+report without putting the other author's PR in the contributor delivery queue.
 
 ### GitHub attribute snapshot
 

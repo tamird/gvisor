@@ -257,11 +257,32 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     return sorted(records, key=lambda item: (not item["awaitingAuthor"], item.get("updatedAt") or "", item["url"]))
 
 
-def review_watch_report(prs: list[dict], previous: dict) -> list[dict]:
-    """Route explicit review subscriptions using the existing snapshot cursor."""
+def review_watches() -> dict:
     watches = {(node["repo"], node["number"]): node["reviewWatch"]
                for node in REGISTRY["nodes"] if node.get("reviewWatch")}
-    prior = {(pr.get("repo", REPO), pr["number"]): pr for pr in previous.get("prs", [])}
+    for investigation in REGISTRY.get("investigations", []):
+        if watch := investigation.get("reviewWatch"):
+            watches.update(((watch["repo"], number), watch) for number in watch["numbers"])
+    return watches
+
+
+def external_review_prs(prs: list[dict]) -> list[dict]:
+    """Observe reviews without treating other authors' PRs as our deliveries."""
+    pending = review_watches().keys() - {(pr.get("repo", REPO), pr["number"]) for pr in prs}
+    records = []
+    for repo in sorted({repo for repo, _ in pending}):
+        numbers = sorted(number for watched_repo, number in pending if watched_repo == repo)
+        for raw in fetch_numbers(numbers, timeline=False, repo=repo).values():
+            pr = normalize(raw)
+            records.append({key: pr[key] for key in ("repo", "number", "url", "head", "status", "feedback")})
+    return records
+
+
+def review_watch_report(prs: list[dict], previous: dict) -> list[dict]:
+    """Route explicit review subscriptions using the existing snapshot cursor."""
+    watches = review_watches()
+    prior = {(pr.get("repo", REPO), pr["number"]): pr
+             for collection in ("prs", "reviewPRs") for pr in previous.get(collection, [])}
     events = []
     for pr in prs:
         key = pr.get("repo", REPO), pr["number"]
@@ -925,6 +946,7 @@ def main() -> None:
         prior_prs.update({(repo, number): value for number, value in prior.items()})
         inventories[repo] = inventory
     issues = collect_issues(previous)
+    review_prs = external_review_prs(prs)
     observe_release_versions(prs)
     # Use only the budget left by all repositories and issues. Otherwise
     # UNKNOWNs in the first repository can crowd out required observations.
@@ -945,7 +967,7 @@ def main() -> None:
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
-                "reviewerHandoff": reviewer_handoff(prs, previous),
+                "reviewPRs": review_prs, "reviewerHandoff": reviewer_handoff(prs, previous),
                 "mergeabilityHandoff": mergeability_handoff(report, previous),
                 "checkFailures": report["checkFailures"],
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
@@ -981,7 +1003,7 @@ def main() -> None:
             print(json.dumps({kind: [observation]}))
         if not observations:
             print(json.dumps({kind: []}))
-    for event in review_watch_report(prs, previous):
+    for event in review_watch_report(prs + review_prs, previous):
         print(json.dumps({"reviewSubscriptions": [event]}))
     for source in prs:
         for pr in (source, *source["imports"]):
