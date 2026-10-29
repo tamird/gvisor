@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T01:38:37.117895+00:00",
+    "updatedAt": "2026-10-29T02:10:06.282084+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35138,7 +35138,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-28T21:17:19Z",
+      "updatedAt": "2026-10-29T02:10:06.282084+00:00",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
         {
@@ -36652,9 +36652,22 @@
               "url": "https://datatracker.ietf.org/doc/html/rfc6675#section-5.1"
             }
           ]
+        },
+        {
+          "text": "In a paired Reno/CUBIC run, the first loss occurred at 664.2976 ms on both source revisions: a 1,472-byte frame added to 123,648 queued bytes exceeded the 125,000-byte FIFO. Adding room for one frame admitted those same bytes and moved the loss to a later segment. Disabling HyStart left the first loss, repair and covering ACK unchanged. Three packets had been selectively acknowledged before fast recovery repaired the hole; no timeout occurred before the cumulative ACK. The traces on either side of the SACK fix matched through that ACK. This rules out the first loss as the point where the later timeout counts diverge in this scenario.",
+          "evidence": [
+            {
+              "label": "Original sender and matched controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40804362064"
+            },
+            {
+              "label": "Corrected sender and matched controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40804361330"
+            }
+          ]
         }
       ],
-      "nextStep": "Separate slow-start exit, forward-path queuing and retransmission timing at the first common loss. Use matched packet evidence before attributing the result to a particular HyStart rule or changing the default controller.",
+      "nextStep": "Trace forward from the first repaired hole and identify the earliest differing retransmission decision. Measure which receiver, timer, or sender state explains the later timeout gap.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -46547,7 +46560,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
+      "updatedAt": "2026-10-29T02:10:06.282084+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -47003,9 +47016,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40794307277"
             }
           ]
+        },
+        {
+          "text": "Three Go standard-library builds ran on the empty AMD64 worker: AMD64 target and execution configurations each produced 368 archives; the ARM64 cross-build produced 366. The three failed original actions had the same compiler arguments, output paths, 5,950 inputs and worker properties. The corrected actions passed TMPDIR=. to Go; all three corresponding package lists also built. A separate integrated run built the three sidecars, vDSO and systrap stub. Its two failed targets exposed different shell dependencies: a goimports launcher used for stateify output, and the gawk module\u2019s config-header copy. All seven owners were accounted for; the row\u2019s verified failure was available 0.31 seconds after execution ended.",
+          "evidence": [
+            {
+              "label": "Matched standard-library outputs",
+              "url": "https://app.buildbuddy.io/invocation/01c5e6b6-6b2a-4361-978a-f3769bb1d9fa"
+            },
+            {
+              "label": "Integrated seven-target run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40803862244"
+            }
+          ]
         }
       ],
-      "nextStep": "Combine the direct Python writers and the already qualified native build rules; isolate the Go standard library\u2019s temporary-directory requirement before rerunning the full release.",
+      "nextStep": "Remove the generated goimports shell and the Bash dependency from the package-version path. Verify these directly, then retry the release. A separate experiment tests a common POSIX Python launcher.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
