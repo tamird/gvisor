@@ -31828,6 +31828,54 @@
         "summary": "Use checklocks to enforce ownership of the waiter pointer and ready list. Race and restore tests pass; the analyzer rejects an unguarded write. Open after #16513.",
         "body": "Field and helper guards replace lock requirements in prose; queueing and waiter identity checks use one critical section."
       }
+    },
+    {
+      "id": "branch:tcp-dsack-above-gap",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-dsack-above-gap",
+      "head": "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+      "title": "Report duplicate queued TCP data above a receive gap",
+      "url": "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T00:18:15.244037+00:00",
+      "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
+      "evidence": [
+        {
+          "label": "Fork proposal",
+          "url": "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
+        },
+        {
+          "label": "Linux and original receiver packet traces",
+          "url": "https://app.buildbuddy.io/invocation/953a668c-cd3a-43b1-b030-0670bbef843f"
+        },
+        {
+          "label": "Corrected packet TestResult; Bazel later ran out of memory",
+          "url": "https://app.buildbuddy.io/invocation/393c3838-8252-4bbc-9e96-0ce69db5ee3a"
+        },
+        {
+          "label": "Original Bazel exit diagnostic",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40791466944"
+        },
+        {
+          "label": "SACK suite, 32 cases",
+          "url": "https://app.buildbuddy.io/invocation/ba20ea95-859a-4b84-b779-b2d288c72c22"
+        },
+        {
+          "label": "Two architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/6defa75d-a500-458a-9698-d1a8039afa7d"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+        "url": "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+        "title": "Report duplicate queued TCP data above a receive gap",
+        "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
+        "body": "Open after #16403 lands."
+      }
     }
   ],
   "edges": [
@@ -34805,6 +34853,16 @@
       "reason": "Uses the failed-registration test fixture from the EPOLL_CTL_ADD change.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16513"
+      ]
+    },
+    {
+      "from": "pr:16403",
+      "to": "branch:tcp-dsack-above-gap",
+      "type": "depends_on",
+      "reason": "The above-gap change uses the D-SACK sender introduced by #16403.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16403",
+        "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
       ]
     }
   ],
@@ -46758,7 +46816,7 @@
       "status": "active",
       "group": "tests",
       "owner": "Tamir",
-      "updatedAt": "2026-10-29T00:07:29.776965+00:00",
+      "updatedAt": "2026-10-29T00:18:15.244037+00:00",
       "summary": "The first four suggestions have fixes and replies. Three source PRs have landed; #16496 is the last prerequisite for that rollup. Lucas approved #16594 and #16605 with two more suggestions, which will go into a separate rollup without changing those approved heads.",
       "findings": [
         {
@@ -46886,6 +46944,14 @@
         {
           "label": "Previously tested four edits (before the comment-only refinement)",
           "url": "https://github.com/tamird/gvisor/commit/9efe885040aba535e4840ebe8efdeb84ae8ed067"
+        },
+        {
+          "label": "Two follow-ups on their combined parent sources",
+          "url": "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023"
+        },
+        {
+          "label": "Focused VFS and TCP qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40792990873"
         }
       ]
     },
@@ -46988,8 +47054,8 @@
       "status": "active",
       "owner": "pinring_source_scope",
       "group": "runtime",
-      "updatedAt": "2026-10-28T22:35:12Z",
-      "summary": "Compare TCP duplicate-SACK reports when a retransmission overlaps data already queued above the cumulative ACK. This is separate from #16403, which handles duplicates below that ACK.",
+      "updatedAt": "2026-10-29T00:18:15.244037+00:00",
+      "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
       "findings": [
         {
           "text": "At cumulative ACK 0, both Linux and gVisor first reported bytes [8,16). On a repeated [8,16), Linux sent two identical blocks; on a contained [10,14), Linux sent [10,14) followed by [8,16). The gVisor source under review for #16403 reported only [8,16) in both cases. Both peers subsequently acknowledged 16 bytes and FIN and delivered the correct stream. These traces measure protocol behavior, not throughput.",
@@ -47007,9 +47073,34 @@
               "url": "https://app.buildbuddy.io/invocation/9338d47b-f11d-4b67-be9f-3d35e36b8360"
             }
           ]
+        },
+        {
+          "text": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
+          "evidence": [
+            {
+              "label": "Linux and original receiver packet traces",
+              "url": "https://app.buildbuddy.io/invocation/953a668c-cd3a-43b1-b030-0670bbef843f"
+            },
+            {
+              "label": "Corrected packet TestResult; Bazel later ran out of memory",
+              "url": "https://app.buildbuddy.io/invocation/393c3838-8252-4bbc-9e96-0ce69db5ee3a"
+            },
+            {
+              "label": "Original Bazel exit diagnostic",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40791466944"
+            },
+            {
+              "label": "SACK suite, 32 cases",
+              "url": "https://app.buildbuddy.io/invocation/ba20ea95-859a-4b84-b779-b2d288c72c22"
+            },
+            {
+              "label": "Two architecture analyzers",
+              "url": "https://app.buildbuddy.io/invocation/6defa75d-a500-458a-9698-d1a8039afa7d"
+            }
+          ]
         }
       ],
-      "nextStep": "Fix duplicate reporting for queued data and repeat both packet sequences. Keep the usual in-order receive path out of the overlap search.",
+      "nextStep": "Contributor review of the tested fork fix. Open separately after #16403 lands.",
       "evidence": [
         {
           "label": "Related below-ACK change (#16403)",
