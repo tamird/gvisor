@@ -3,6 +3,7 @@ from hashlib import sha256
 from http.client import HTTPSConnection
 import json
 import os
+import re
 from pathlib import Path
 import sys
 from urllib.parse import urlsplit
@@ -58,6 +59,19 @@ def files(row):
 
 def replay(row, summary):
     content = files(row)
+    # Retain typed diagnostic structure even if adjudication rejects a leaf.
+    summary["xml_diagnostics"] = {}
+    for c in ElementTree.fromstring(content["test.xml"]).iter("testcase"):
+        f = c.find("failure")
+        if f is None or "/" not in c.attrib["name"]:
+            continue
+        text = "".join(f.itertext())
+        fragments = re.findall(r"[.]go:\d+: ([^\n\r]+)", text)
+        summary["xml_diagnostics"][c.attrib["name"]] = [
+            {"family": next((name for name in ("packet starts at", "Bad sequence number", "Bad payload length")
+                             if line.startswith(name)), "other"),
+             "ends_xml_replacement": line.endswith("\ufffd")}
+            for line in fragments]
     native = row["lane"]
     args = dict(suite=row["suite"], stock=row["stock"], wrapper=row["wrapper"],
                 lanes=[{"lanes": ["test"], "native_exit": native}],
