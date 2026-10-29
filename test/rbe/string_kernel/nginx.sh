@@ -10,7 +10,7 @@ archive=$(realpath "$2")
 release=$(cd release && pwd)
 test -x "$release/runsc"
 export GVISOR_SIDECAR_BINARIES_DIR="$release/gvisor-bin"
-test -x "$GVISOR_SIDECAR_BINARIES_DIR/gvisor-sentry"
+test -x "$GVISOR_SIDECAR_BINARIES_DIR/gvisor_sentry"
 dir=$(mktemp -d /tmp/gvisor-docker-XXXXXX)
 export DOCKER_HOST="unix://$dir/docker.sock"
 python3 - "$dir" "$release/runsc" <<'PY'
