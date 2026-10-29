@@ -63,7 +63,7 @@ def verify(temp: Path, out: Path, inv: str, files: list, finish: int) -> None:
     assert all(int(n)>0 for n in capture[1:])
     children = {}
     for role in ROLES:
-        [duration, chunk] = [tuple(m) for m in re.findall(r"^SAVE_BEGIN role="+role+r" duration=(\S+)\n(.*?)^SAVE_END role="+role+r" exit=0$",log,re.M|re.S)]
+        [(duration, chunk)] = [tuple(m) for m in re.findall(r"^SAVE_BEGIN role="+role+r" duration=(\S+)\n(.*?)^SAVE_END role="+role+r" exit=0$",log,re.M|re.S)]
         assert duration == {"validate":"1x","alloc":"8x"}.get(role,"2s")
         stamps = re.findall(r"SAVE_PROCESS role="+role+r" pid=(\d+) input=([0-9a-f]{64}) input_bytes=(\d+)",chunk)
         assert stamps and len(set(stamps))==1 and stamps[0][1:]==(capture[0],capture[1])
