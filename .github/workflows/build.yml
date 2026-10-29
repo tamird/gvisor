@@ -1,35 +1,74 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Qualify bwrap UID/GID setup
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  bwrap:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/bwrap-owner-exact'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      SOURCE: a51fb04e5f49a367435fa87e9b7a302c6150f9fb
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Run the complete package, analyzer and privileged runtime suites
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        out=$RUNNER_TEMP/bwrap-result
+        checker=$RUNNER_TEMP/bwrap-checker
+        mkdir -p "$out" "$checker" "$RUNNER_TEMP/gnu"
+        cp .github/qualification/bwrap/*.py "$checker"
+        git checkout --quiet --detach "$SOURCE"
+        [[ $(git rev-parse HEAD) == "$SOURCE" ]]
+        git cat-file -p HEAD > "$out/commit.txt"
+        git status --porcelain --untracked-files=no > "$out/source-before.txt"
+        test ! -s "$out/source-before.txt"
+        printf 'module(name="bwrap_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+        printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+        rc=$RUNNER_TEMP/bwrap.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=local' "build --inject_repository=bwrap_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@bwrap_gnu//:gnu' 'build --extra_execution_platforms=@bwrap_gnu//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        sudo -n true
+        command -v bazelisk
+        labels=(//runsc/cmd/alias/bwrap:bwrap_test //runsc/cmd/alias/bwrap:bwrap_nogo //runsc/cmd/alias/bwrap:bwrap_integration_test)
+        printf '%s\n' "${labels[@]}" > "$out/targets.txt"
+        args=(test --config=x86_64 -c opt --jobs=100 --nocache_test_results --keep_going --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v '--run_under=/usr/bin/sudo -n -E' --test_output=errors --build_event_json_file_path_conversion=false "--build_event_json_file=$RUNNER_TEMP/raw.jsonl" "${labels[@]}")
+        printf '%s\n' "${args[@]}" > "$out/arguments.txt"
+        code=0; capture=0; verify=0
+        bazelisk --bazelrc="$rc" "${args[@]}" || code=$?
+        finished=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        printf '%s\n' "$code" > "$out/native-exit.txt"
+        git rev-parse HEAD > "$out/final-head.txt"
+        git status --porcelain --untracked-files=no > "$out/source-after.txt"
+        python3 -B "$checker/qualification_report.py" capture --events "$RUNNER_TEMP/raw.jsonl" --output "$out/events.jsonl" --output-root "$PWD/bazel-out" --report-dir "$out/reports" --expected-kind test || capture=$?
+        printf '%s\n' "$capture" > "$out/capture-exit.txt"
+        python3 - "$out" "$SOURCE" "$finished" <<'PY'
+        import json, sys
+        from pathlib import Path
+        d=Path(sys.argv[1])
+        ctx=dict(expected_source=sys.argv[2],command_kind="test",execution_finished_at=sys.argv[3],commit_file="commit.txt",source_before="source-before.txt",source_after="source-after.txt",final_head="final-head.txt",executed_arguments="arguments.txt",native_exit="native-exit.txt",capture_exit="capture-exit.txt")
+        (d/"context.json").write_text(json.dumps(ctx))
+        PY
+        python3 -B "$checker/qualification_report.py" verdict --context "$out/context.json" --events "$out/events.jsonl" --manifest "$out/events.jsonl.manifest.json" --expected-targets "$out/targets.txt" --output "$out/verdict.json" || verify=$?
+        if ((code)); then exit "$code"; fi
+        if ((capture)); then exit "$capture"; fi
+        exit "$verify"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: bwrap-owner-verdict
+        path: ${{ runner.temp }}/bwrap-result
+        if-no-files-found: error
