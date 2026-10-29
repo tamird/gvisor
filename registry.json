@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T20:08:11.241282+00:00",
+    "updatedAt": "2026-10-29T20:38:34.195870+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34270,9 +34270,9 @@
       "head": "1702e63c4673bf8c00df82a1613c2359895fbe20",
       "url": "https://github.com/tamird/rules_pkg/commit/1702e63c4",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "summary": "rules_pkg archive actions invoke Bash via /usr/bin/env even when Bazel has supplied Python. The change runs the same writers on Linux workers without those programs and preserves the existing launcher when the interpreter bootstrap is unavailable.",
-      "updatedAt": "2026-10-29T19:31:05.691468+00:00",
+      "status": "Withdrawn",
+      "summary": "The archive-specific workaround was not submitted. With rules_python 2.4.5, a plain Python action and the unchanged ZIP writer have identical host bootstrap requirements. The existing rules_pkg CI already runs the ZIP tests; its examples need no new Python dependency.",
+      "updatedAt": "2026-10-29T20:38:34.195870+00:00",
       "evidence": [
         {
           "label": "Stock Linux ZIP archives",
@@ -34289,16 +34289,32 @@
         {
           "label": "Tar and Debian packaging checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/40930166954"
+        },
+        {
+          "label": "rules_python 2.4.5: plain Python and unmodified rules_pkg controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40950484790"
+        },
+        {
+          "label": "Existing rules_pkg test matrix",
+          "url": "https://github.com/bazelbuild/rules_pkg/blob/01446201f/.bazelci/tests.yml#L22-L40"
+        },
+        {
+          "label": "Upstream discussion of native bootstrap requirements",
+          "url": "https://github.com/bazel-contrib/rules_python/issues/3794#issuecomment-4585546768"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "1702e63c4673bf8c00df82a1613c2359895fbe20",
-        "url": "https://github.com/tamird/rules_pkg/commit/1702e63c4",
-        "title": "Start the tar, ZIP and Debian writers with their declared Python",
-        "summary": "rules_pkg archive actions invoke Bash via /usr/bin/env even when Bazel has supplied Python. The change runs the same writers on Linux workers without those programs and preserves the existing launcher when the interpreter bootstrap is unavailable.",
-        "body": "The ZIP writer produced the same empty and compressed archives, including permissions. The tar, ZIP and Debian example builds ran with /usr/bin/env blocked."
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1702e63c4673bf8c00df82a1613c2359895fbe20",
+        "observedAt": "2026-10-29T20:38:34.195870+00:00",
+        "disposition": "Withdrawn",
+        "nextAction": "Assess the general Python launcher in the scratch-build investigation. No contributor action is pending.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/40950484790",
+          "https://github.com/bazelbuild/rules_pkg/blob/01446201f/.bazelci/tests.yml#L22-L40",
+          "https://github.com/bazel-contrib/rules_python/issues/3794#issuecomment-4585546768"
+        ]
       }
     },
     {
@@ -34310,8 +34326,8 @@
       "title": "Keep FUSE device watches attached after connection abort",
       "url": "https://github.com/tamird/gvisor/commit/1e5a147a4",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T20:08:11.241282+00:00",
+      "status": "Published",
+      "updatedAt": "2026-10-29T20:38:34.195870+00:00",
       "summary": "After an attached FUSE connection aborts, Linux delivers EPOLLERR on fresh or updated watches. gVisor rejected the new registration, and deleting an old watch left it on the aborted queue.",
       "evidence": [
         {
@@ -34327,14 +34343,24 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40942820675/job/123690359028"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
-        "url": "https://github.com/tamird/gvisor/commit/1e5a147a4",
-        "title": "Keep FUSE device watches attached after connection abort",
-        "summary": "After an attached FUSE connection aborts, Linux delivers EPOLLERR on fresh or updated watches. gVisor rejected the new registration, and deleting an old watch left it on the aborted queue.",
-        "body": "May I open this standalone fix? The native Linux fixture uses a mounted FUSE filesystem; the gVisor regressions exercise the actual FUSE connection component."
+      "inactive": true,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
+          "outcome": "approved",
+          "at": "2026-10-29T20:38:34.195870+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1e5a147a41322c801145578ee6333c12a5cbaea8",
+        "observedAt": "2026-10-29T20:38:34.195870+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow review on #16697.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16697"
+        ]
       }
     },
     {
@@ -34353,6 +34379,46 @@
         {
           "label": "Unmodified restore path",
           "url": "https://github.com/google/gvisor/blob/e82a0e179/pkg/sentry/fsimpl/gofer/save_restore.go#L503"
+        }
+      ]
+    },
+    {
+      "id": "pr:16697",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16697,
+      "ref": "fuse-aborted-watch-registration",
+      "title": "Keep FUSE device watches attached after connection abort",
+      "url": "https://github.com/google/gvisor/pull/16697",
+      "group": "runtime",
+      "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
+      "status": "open",
+      "updatedAt": "2026-10-29T20:38:34.195870+00:00",
+      "summary": "After an attached FUSE connection aborts, Linux delivers EPOLLERR on fresh or updated watches. gVisor rejected the new registration, and deleting an old watch left it on the aborted queue.",
+      "evidence": [
+        {
+          "label": "Linux and stock gVisor: ADD and both kinds of MOD",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40940772889/job/123683261101"
+        },
+        {
+          "label": "Stock failed two regressions; all 21 corrected FUSE tests passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40944314132/job/123695521646"
+        },
+        {
+          "label": "Native remount and ADD; both Nogo targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40942820675/job/123690359028"
+        },
+        {
+          "label": "Published PR",
+          "url": "https://github.com/google/gvisor/pull/16697"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
+          "outcome": "approved",
+          "at": "2026-10-29T20:38:34.195870+00:00"
         }
       ]
     }
@@ -37487,7 +37553,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:fuse-aborted-watch-registration",
+      "from": "pr:16697",
       "to": "branch:epoll-modify-preserve",
       "reason": "Keeps the originally attached FUSE queue available across abort and remount.",
       "evidence": [
@@ -49497,9 +49563,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
+      "updatedAt": "2026-10-29T20:38:34.195870+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Unmodified rules_pkg and a plain py_binary both pass with rules_python 2.4.5 on Linux. Both launch through /usr/bin/env: script mode selects Bash, and the default selects host python3. Blocking that one path prevented either tool from starting while /bin/true still ran. The archive-specific workaround was withdrawn.",
+          "evidence": [
+            {
+              "label": "rules_python 2.4.5: plain Python and unmodified rules_pkg controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40950484790"
+            },
+            {
+              "label": "Existing rules_pkg test matrix",
+              "url": "https://github.com/bazelbuild/rules_pkg/blob/01446201f/.bazelci/tests.yml#L22-L40"
+            },
+            {
+              "label": "Upstream discussion of native bootstrap requirements",
+              "url": "https://github.com/bazel-contrib/rules_python/issues/3794#issuecomment-4585546768"
+            }
+          ]
+        },
         {
           "text": "The tar and Debian writers executed without a shell on AMD64 and ARM64 scratch workers. Both reproduced the normal-worker 10,240-byte tar and 572-byte Debian archive byte for byte. Verdicts followed execution by 1.35 s and 1.32 s; no manual reconstruction. The fixture covers the writers, not the entire release graph.",
           "evidence": [
@@ -50146,7 +50229,7 @@
           ]
         }
       ],
-      "nextStep": "Prepare the reusable writer change in rules_pkg and exercise the ordinary Python runtime. The compiler and changelog still need their own scratch qualification.",
+      "nextStep": "Investigate a Python launcher for workers without host programs, accounting for virtual-environment setup and interpreter arguments. Qualify the compiler and changelog separately.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
