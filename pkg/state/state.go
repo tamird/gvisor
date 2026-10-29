@@ -126,6 +126,7 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 	defer ds.release()
 	ds.stats.enabled = collectStats.Load()
 	start := gohacks.Nanotime()
+	ds.stats.restoreMark = phaseMark()
 	length, object, err := ReadHeader(&wire.Reader{Reader: r})
 	if err != nil {
 		return ds.stats, err
@@ -141,9 +142,11 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 		return ds.stats, err
 	}
 	ds.in = decBuf{b: data}
+	ds.stats.endRestorePhase(0)
 	err = safely(func() {
 		e := efaceOf(&rootPtr)
 		ti := typeInfoForRtype(e.typ)
+		ds.stats.endRestorePhase(1)
 		if ti.kind != reflect.Pointer || e.data == nil {
 			Failf("Load requires a non-nil pointer, got %T", rootPtr)
 		}

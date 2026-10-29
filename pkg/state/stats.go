@@ -42,6 +42,10 @@ type statEntry struct {
 //
 // Per-type timing is only collected if enabled by CollectStats.
 type Stats struct {
+	// Diagnostic only. This code is absent from the independently built control.
+	restorePhases [8][4]int64
+	restoreShape  [3]int
+	restoreMark   [4]int64
 	// enabled is true if per-type timing is collected.
 	enabled bool
 
@@ -146,4 +150,23 @@ func (s *Stats) String() string {
 		fmt.Fprintf(&buf, "% 16s | % 8d | % 16s | [all]", total, count, total/time.Duration(count))
 	}
 	return buf.String()
+}
+
+// RestorePhaseSample returns the phase samples only after state.Load returns.
+func (s *Stats) RestorePhaseSample() ([8][4]int64, [3]int) {
+	return s.restorePhases, s.restoreShape
+}
+
+var restoreMissCalls, restoreBuiltTypes, restoreMissTime atomic.Int64
+
+func phaseMark() [4]int64 {
+	return [4]int64{gohacks.Nanotime(), restoreMissCalls.Load(), restoreBuiltTypes.Load(), restoreMissTime.Load()}
+}
+
+func (s *Stats) endRestorePhase(i int) {
+	mark := phaseMark()
+	for n, v := range mark {
+		s.restorePhases[i][n] = v - s.restoreMark[n]
+	}
+	s.restoreMark = mark
 }

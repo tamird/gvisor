@@ -15,6 +15,7 @@
 package state
 
 import (
+	"gvisor.dev/gvisor/pkg/gohacks"
 	"hash/fnv"
 	"reflect"
 	"sync"
@@ -214,6 +215,7 @@ type typeInfoBuilder struct {
 }
 
 func buildTypeInfo(t reflect.Type) *typeInfo {
+	start := gohacks.Nanotime()
 	typeInfosMu.Lock()
 	defer typeInfosMu.Unlock()
 	var pending [8]*typeInfo
@@ -225,6 +227,9 @@ func buildTypeInfo(t reflect.Type) *typeInfo {
 	for _, p := range b.pending {
 		typeInfos[p.rtype] = p
 	}
+	restoreMissCalls.Add(1)
+	restoreBuiltTypes.Add(int64(len(b.pending)))
+	restoreMissTime.Add(gohacks.Nanotime() - start)
 	return ti
 }
 

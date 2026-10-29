@@ -163,15 +163,22 @@ func (ds *decodeState) load(root unsafe.Pointer, ti *typeInfo) {
 	if f := d.uint64(); f != schemaFingerprint() {
 		Failf("the state was saved by a binary with different types (fingerprint %#x, want %#x)", f, schemaFingerprint())
 	}
+	ds.stats.endRestorePhase(2)
 	ds.readTypes()
+	ds.stats.endRestorePhase(3)
 	ds.readObjects(root, ti)
+	ds.stats.endRestorePhase(4)
 	ds.readTargets()
+	ds.stats.endRestorePhase(5)
 	ds.decodeObjects()
 	setHints(ti, len(d.b), len(ds.targets))
 	if d.pos != len(d.b) {
 		Failf("%d bytes of trailing data", len(d.b)-d.pos)
 	}
+	ds.stats.endRestorePhase(6)
 	ds.runCallbacks()
+	ds.stats.endRestorePhase(7)
+	ds.stats.restoreShape = [3]int{len(ds.types), len(ds.objs), len(ds.targets)}
 }
 
 // readTypes reads the type table.
