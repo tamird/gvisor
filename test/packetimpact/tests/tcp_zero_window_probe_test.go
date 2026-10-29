@@ -109,3 +109,61 @@ func TestZeroWindowProbe(t *testing.T) {
 		t.Fatalf("expected a packet with ack number: %d: %s", p, err)
 	}
 }
+
+// TestPersistWithWrites measures the first probe while the application keeps
+// supplying data. The peer sends no packets between closing its window and
+// receiving the probe.
+func TestPersistWithWrites(t *testing.T) {
+	for _, extra := range []bool{false, true} {
+		name := "single"
+		if extra {
+			name = "repeated"
+		}
+		t.Run(name, func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+			defer dut.Close(t, listener)
+			conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+			defer conn.Close(t)
+			conn.Connect(t)
+			fd, _ := dut.Accept(t, listener)
+			defer dut.Close(t, fd)
+			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+			data := []byte("x")
+			dut.Send(t, fd, data, 0)
+			if _, err := conn.ExpectData(t, &testbench.TCP{}, &testbench.Payload{Bytes: data}, time.Second); err != nil {
+				t.Fatalf("initial byte: %v", err)
+			}
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), WindowSize: testbench.Uint16(0)})
+			start := time.Now()
+			info := dut.GetSockOptTCPInfo(t, fd)
+			for info.Unacked != 0 && time.Since(start) < time.Second {
+				info = dut.GetSockOptTCPInfo(t, fd)
+			}
+			if info.Unacked != 0 || info.RTO == 0 {
+				t.Fatalf("unacked=%d rto=%d after closing the window", info.Unacked, info.RTO)
+			}
+			rto := time.Duration(info.RTO) * time.Microsecond
+			start = time.Now()
+			dut.Send(t, fd, data, 0)
+			writes := 1
+			probe := testbench.TCP{SeqNum: testbench.Uint32(uint32(*conn.RemoteSeqNum(t) - 1)), Flags: testbench.TCPFlags(header.TCPFlagAck)}
+			for {
+				if _, err := conn.ExpectData(t, &probe, nil, rto/5); err == nil {
+					break
+				}
+				if time.Since(start) >= 5*rto {
+					t.Fatalf("no probe after %s with %d local writes; RTO=%s", time.Since(start), writes, rto)
+				}
+				if extra {
+					dut.Send(t, fd, data, 0)
+					writes++
+				}
+			}
+			if extra && writes < 2 {
+				t.Fatalf("probe preceded second write")
+			}
+			t.Logf("TCP-NATIVE-PERSIST extra=%t writes=%d rto_us=%d first_us=%d", extra, writes, info.RTO, time.Since(start).Microseconds())
+		})
+	}
+}
