@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+    "updatedAt": "2026-10-29T19:10:38.924008+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17013,6 +17013,14 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/9182165b35529ed529e72aeddf4c32bcc76ad67f"
         }
+      ],
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "a51fb04e5f49a367435fa87e9b7a302c6150f9fb",
+          "outcome": "approved",
+          "at": "2026-10-29T18:08:56.766082+00:00"
+        }
       ]
     },
     {
@@ -32338,18 +32346,22 @@
       "id": "branch:format-stateify-output",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/format-stateify-output",
-      "head": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
+      "ref": "review/stateify-comment-ownership",
+      "head": "b33d195deb0c528d5b2a843fff8a2e32813ff7b9",
       "title": "Format generated Go code in stateify",
-      "url": "https://github.com/tamird/gvisor/commit/5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
+      "url": "https://github.com/tamird/gvisor/commit/b33d195de",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "Restore the useful action and generator comments, explain the three Go environment settings, and allocate outputFile as a local value.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T19:10:38.924008+00:00",
+      "summary": "The stateify action now explains which go binary goimports can run, why it needs the package source directory, and why it must not fetch modules, switch toolchains, or consult a go.work file. The generator uses a local bytes.Buffer.",
       "evidence": [
         {
-          "label": "Proposed commit",
-          "url": "https://github.com/tamird/gvisor/commit/5e1349553e10e80a5c717ca9c82d6d47ab1f283b"
+          "label": "Revised commit",
+          "url": "https://github.com/tamird/gvisor/commit/b33d195de"
+        },
+        {
+          "label": "Both generated outputs on scratch and both compiled libraries",
+          "url": "https://app.buildbuddy.io/invocation/6107d45d-df13-4cc9-a5ed-5e7856a1bc12"
         },
         {
           "label": "Six packages generated and compiled",
@@ -32376,9 +32388,23 @@
           "at": "2026-10-29T18:56:07.113045+00:00"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
-        "url": "https://github.com/tamird/gvisor/commit/5e1349553"
+      "refinement": {
+        "before": {
+          "head": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b"
+        },
+        "after": {
+          "head": "b33d195deb0c528d5b2a843fff8a2e32813ff7b9"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b33d195deb0c528d5b2a843fff8a2e32813ff7b9",
+        "baseHead": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
+        "url": "https://github.com/tamird/gvisor/commit/b33d195de",
+        "title": "Run stateify without a shell",
+        "summary": "The stateify action now explains which go binary goimports can run, why it needs the package source directory, and why it must not fetch modules, switch toolchains, or consult a go.work file. The generator uses a local bytes.Buffer.",
+        "body": "Stateify formats its generated Go directly. The only executable available to goimports on PATH is the go binary from the declared SDK. Both the mixed-source and generated-only alias fixtures compiled; their uncached actions ran on scratch and produced the same bytes as before."
       }
     },
     {
