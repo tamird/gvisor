@@ -8,7 +8,7 @@ change for Google-internal and bazel-compatible rules.
 load("//tools:arch.bzl", "arch_genrule", "arch_transition_impl")
 load("//tools/bazeldefs:cc.bzl", _cc_binary = "cc_binary", _cc_flags_supplier = "cc_flags_supplier", _cc_grpc_library = "cc_grpc_library", _cc_library = "cc_library", _cc_linker = "cc_linker", _cc_nm = "cc_nm", _cc_objcopy = "cc_objcopy", _cc_objdump = "cc_objdump", _cc_proto_library = "cc_proto_library", _cc_test = "cc_test", _gbenchmark = "gbenchmark", _gbenchmark_internal = "gbenchmark_internal", _grpcpp = "grpcpp", _gtest = "gtest", _select_gtest = "select_gtest")
 load("//tools/bazeldefs:defs.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _bpf_program = "bpf_program", _build_test = "build_test", _bzl_library = "bzl_library", _coreutil = "coreutil", _default_net_util = "default_net_util", _expand_template = "expand_template", _more_shards = "more_shards", _most_shards = "most_shards", _native_test = "native_test", _proto_library = "proto_library", _py_test = "py_test", _runtime_native_test = "runtime_native_test", _runtime_test_timeout = "runtime_test_timeout", _select_arch = "select_arch", _select_system = "select_system", _sh_test = "sh_test", _short_path = "short_path", _string_flag = "string_flag", _string_list_flag = "string_list_flag", _version = "version", _write_source_files = "write_source_files")
-load("//tools/bazeldefs:go.bzl", _cov_available = "cov_available", _gazelle = "gazelle", _go_binary = "go_binary", _go_binary_nogo_dep = "go_binary_nogo_dep", _go_cov = "go_cov", _go_grpc_and_proto_libraries = "go_grpc_and_proto_libraries", _go_imports = "go_imports", _go_library = "go_library", _go_path = "go_path", _go_proto_library = "go_proto_library", _go_reset_target = "go_reset_target", _go_test = "go_test", _gotsan_flag_values = "gotsan_flag_values", _gotsan_values = "gotsan_values", _select_goarch = "select_goarch", _select_goos = "select_goos")
+load("//tools/bazeldefs:go.bzl", _cov_available = "cov_available", _gazelle = "gazelle", _go_binary = "go_binary", _go_binary_nogo_dep = "go_binary_nogo_dep", _go_cov = "go_cov", _go_grpc_and_proto_libraries = "go_grpc_and_proto_libraries", _go_library = "go_library", _go_path = "go_path", _go_proto_library = "go_proto_library", _go_reset_target = "go_reset_target", _go_test = "go_test", _gotsan_flag_values = "gotsan_flag_values", _gotsan_values = "gotsan_values", _select_goarch = "select_goarch", _select_goos = "select_goos")
 load("//tools/bazeldefs:pkg.bzl", _pkg_deb = "pkg_deb", _pkg_tar = "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", _default_platform = "default_platform", _namespace_test_exec_properties = "namespace_test_exec_properties", _platform_capabilities = "platform_capabilities", _platforms = "platforms", _save_restore_platforms = "save_restore_platforms", _syscall_test_exec_properties = "syscall_test_exec_properties")
 load("//tools/bazeldefs:tags.bzl", _go_suffixes = "go_suffixes", _local_test_tags = "local_test_tags")
@@ -67,7 +67,6 @@ select_goarch = _select_goarch
 go_proto_library = _go_proto_library
 gotsan_values = _gotsan_values
 gotsan_flag_values = _gotsan_flag_values
-go_imports = _go_imports
 
 # BPF rules.
 bpf_program = _bpf_program
@@ -191,15 +190,10 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
         state_sets = calculate_sets(srcs)
         for (suffix, src_subset) in state_sets.items():
             go_stateify(
-                name = name + suffix + "_state_autogen_with_imports",
+                name = name + suffix + "_state_autogen",
                 srcs = src_subset,
                 imports = imports,
                 package = full_pkg,
-                out = name + suffix + "_state_autogen_with_imports.go",
-            )
-            go_imports(
-                name = name + suffix + "_state_autogen",
-                src = name + suffix + "_state_autogen_with_imports.go",
                 out = name + suffix + "_state_autogen.go",
             )
         all_srcs = all_srcs + [
