@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T22:22:18.730344+00:00",
+    "updatedAt": "2026-10-29T22:24:19.679728+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4305,22 +4305,27 @@
       "id": "branch:hermetic-compiler-review",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "hermetic-compiler-reconciled-review",
+      "ref": "review/llvm-spdx-toolchain",
       "title": "Use declared LLVM C and C++ toolchains",
-      "url": "https://github.com/tamird/gvisor/commit/8306976db",
+      "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2",
       "group": "bazel",
-      "status": "Agent work",
-      "summary": "The current compiler branch uses a private LicenseRef for LLVM and parser notices. Those notices have standard SPDX identifiers. The release repository has no root license file; the checker must still enumerate and verify the actual source notices. The compiler’s prior conditional approval is retained for the original proposal; there is no contributor decision on this head.",
-      "updatedAt": "2026-10-29T22:14:49.149556+00:00",
-      "head": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
-      "followup": {
-        "owner": "release_owner",
-        "disposition": "Agent rework",
-        "sourceHead": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
-        "observedAt": "2026-10-29T22:14:49.149556+00:00",
-        "nextAction": "Run the canonical SPDX-ID and source-notice checks on a compiler candidate without the manual-LicenseRef change (#16051). Retain the separate archive-discovery requirement (#16249) and the other delivery prerequisites. Qualification is pending."
-      },
+      "status": "Contributor review requested",
+      "summary": "The compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051.",
+      "updatedAt": "2026-10-29T22:24:19.679728+00:00",
+      "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
       "evidence": [
+        {
+          "label": "Canonical 206-record catalog, two fetches and five upstream notices",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40964802913"
+        },
+        {
+          "label": "Previously approved compiler source",
+          "url": "https://github.com/tamird/gvisor/commit/8306976db"
+        },
+        {
+          "label": "Earlier source-specific build and runtime qualifications",
+          "url": "https://github.com/tamird/gvisor/blob/172298946/registry.json#L4305"
+        },
         {
           "label": "Current catalog entry and source proof",
           "url": "https://github.com/tamird/gvisor/blob/8306976db/tools/licensecheck/dependencies.yaml#L1146"
@@ -4329,7 +4334,25 @@
           "label": "Standalone source migration, independent of compiler selection",
           "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
+        },
+        "after": {
+          "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
+        "baseHead": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1",
+        "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2",
+        "title": "Review the LLVM SPDX license policy",
+        "body": "Please review only the switch to standard SPDX identifiers before submission. Both canonical fetches reproduced the submitted catalog without unrelated changes; Verify accepted all 206 records, and the SHA-256 of each of the five pinned notices was checked. Prior conditional approval of the compiler code is retained.",
+        "requestedAt": "2026-10-29T22:24:19.679728+00:00"
+      }
     },
     {
       "id": "pr:15216",
@@ -32376,10 +32399,14 @@
       "title": "Format stateify output in the generator",
       "url": "https://github.com/tamird/gvisor/commit/cd92efa5f",
       "group": "bazel",
-      "status": "Contributor approved; ready for upstream submission",
-      "updatedAt": "2026-10-29T22:22:18.730344+00:00",
+      "status": "Published as #16710",
+      "updatedAt": "2026-10-29T22:24:19.679728+00:00",
       "summary": "Stateify formats the generated Go file in the generator. Giving the formatter the output file’s path preserves how it resolves imports without inventing aliases.",
       "evidence": [
+        {
+          "label": "Reviewed proposal opened upstream as #16710",
+          "url": "https://github.com/google/gvisor/pull/16710"
+        },
         {
           "label": "Seven identical production outputs and scratch qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/40964412836"
@@ -32418,10 +32445,15 @@
       "followup": {
         "owner": "lint_owner",
         "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "observedAt": "2026-10-29T22:22:18.730344+00:00",
-        "disposition": "Approved for submission",
-        "nextAction": "Open the approved standalone upstream PR."
-      }
+        "observedAt": "2026-10-29T22:24:19.679728+00:00",
+        "disposition": "Approved and delivered as #16710",
+        "nextAction": "Follow review, checks and import on #16710.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16710",
+          "https://github.com/tamird/gvisor/commit/cd92efa5f"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:go-architecture-sources",
@@ -34587,6 +34619,42 @@
           "url": "https://app.buildbuddy.io/invocation/7f82e410-88fc-452c-a525-8f8a5d706a9a"
         }
       ]
+    },
+    {
+      "id": "pr:16710",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16710,
+      "group": "bazel",
+      "ref": "review/stateify-output-path",
+      "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+      "title": "Format stateify output in the generator",
+      "url": "https://github.com/google/gvisor/pull/16710",
+      "status": "open",
+      "summary": "Stateify formats the generated Go file in the generator. Giving the formatter the output file’s path preserves how it resolves imports without inventing aliases.",
+      "updatedAt": "2026-10-29T22:24:19.679728+00:00",
+      "evidence": [
+        {
+          "label": "Seven identical production outputs and scratch qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40964412836"
+        },
+        {
+          "label": "Twelve uncached generators, four positive libraries and stock alias limitation",
+          "url": "https://app.buildbuddy.io/invocation/569dd90b-73e7-46c6-bd44-ed5252282846"
+        },
+        {
+          "label": "Previous generator proposal",
+          "url": "https://github.com/tamird/gvisor/commit/250f1a644"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "250f1a64449754e811e33111090736ad6db8d727"
+        },
+        "after": {
+          "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f"
+        }
+      }
     }
   ],
   "edges": [
