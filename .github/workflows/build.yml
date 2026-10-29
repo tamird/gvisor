@@ -1,4 +1,4 @@
-name: Qualify the rules_pkg ZIP writer
+name: Qualify stateify import resolution
 on: workflow_dispatch
 permissions:
   contents: read
@@ -11,12 +11,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: source, ref: 700b0bbea70ff699553d8e40827a2f3dab4afdd2, fetch-depth: 2, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: bazelbuild/rules_pkg, ref: "01446201fd8e758267f4e1abd9727926655110b7", path: original, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: tamird/rules_pkg, ref: "1702e63c4673bf8c00df82a1613c2359895fbe20", path: candidate, persist-credentials: false}
-      - name: Compare existing and corrected ZIP writers
+        with: {path: source, ref: b33d195deb0c528d5b2a843fff8a2e32813ff7b9, fetch-depth: 2, persist-credentials: false}
+      - name: Compile both alias fixtures and verify their scratch outputs
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -31,10 +27,10 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$QA_RC"
           unset BUILDBUDDY_API_KEY
-          python3 -B ../carrier/.github/qualification/lint-runtime/zip.py
+          python3 -B ../carrier/.github/qualification/lint-runtime/stateify.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: rules-pkg-zip
-          path: ${{ runner.temp }}/rules-pkg-zip.json
+          name: stateify-comments
+          path: ${{ runner.temp }}/stateify-comments.json
           if-no-files-found: error
