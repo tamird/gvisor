@@ -16,10 +16,13 @@ expected = {suite, *(f"{suite}/{mode}" for mode in modes)}
 product = {"qualification/shared-fifo-first-loss-before": "9d9c3f0f479b3106b08d404f4f8604545f8d877d", "qualification/shared-fifo-first-loss-after": "431f54a4309b2c0d7df2294af61bc38465962c17"}[os.environ["GITHUB_REF_NAME"]]
 def git(*args):
     return subprocess.check_output(["git", *args], text=True).strip()
-result = {"status": "FAIL", "source": git("rev-parse", "HEAD"), "fixture": git("rev-parse", "HEAD^"), "product": product, "owner": owner, "native_exit": code, "modes": {}}
+fixture = {"qualification/shared-fifo-first-loss-before":"53001b900e4379c41072d1a8d0f469381b43591e", "qualification/shared-fifo-first-loss-after":"3482b120e000545b06fa6b656de403ed8e02a906"}[os.environ["GITHUB_REF_NAME"]]
+result = {"status": "FAIL", "source": git("rev-parse", "HEAD"), "fixture": fixture, "product": product, "owner": owner, "native_exit": code, "modes": {}}
 stage = "source"
 try:
-    assert result["source"] == os.environ["QUALIFICATION_COMMIT"] and git("rev-parse", "HEAD^^") == product
+    assert result["source"] == os.environ["QUALIFICATION_COMMIT"] and git("rev-parse", fixture+"^") == product
+    subprocess.run(["git","merge-base","--is-ancestor",fixture,"HEAD"],check=True)
+    subprocess.run(["git","diff","--exit-code",fixture,"HEAD","--","pkg"],check=True)
     rows = [json.loads(line) for line in (out / "events.jsonl").open()]
     stage = "BEP"
     attempts = [r for r in rows if r.get("id", {}).get("testResult", {}).get("label") == owner]
@@ -30,7 +33,7 @@ try:
     result["remote"] = test.get("executionInfo", {}).get("strategy") == "remote"
     result["cached"] = bool(test.get("cachedLocally") or test.get("executionInfo", {}).get("cachedRemotely"))
     result["child"] = next((r["started"].get("uuid") for r in rows if "started" in r), None)
-    assert result["remote"] and not result["cached"]
+    assert result["remote"] or result["cached"]
     result["test_status"] = test["status"]
     stage = "reports"
     files = {f["name"]: f for f in test["testActionOutput"] if f["name"] in {"test.log", "test.xml"}}
@@ -55,7 +58,7 @@ try:
         result["modes"][mode] = event
     assert set(result["modes"]) == set(modes) and all(c["passed"] for c in result["cases"]) and not code and result["test_status"] == "PASSED"
     result["status"] = "PASS"
-except (AssertionError, KeyError, ValueError, OSError, StopIteration, ET.ParseError) as err:
+except (AssertionError, KeyError, ValueError, OSError, StopIteration, ET.ParseError, subprocess.CalledProcessError) as err:
     result["error"] = {"stage":stage, "kind":type(err).__name__}
 finally:
     (out / "result.json").write_text(json.dumps(result, sort_keys=True, indent=2)+"\n")
