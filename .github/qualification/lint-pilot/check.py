@@ -144,28 +144,18 @@ def main():
     check(git("rev-parse","HEAD","HEAD^{tree}").decode().splitlines()==[SHA,TREE], "wrong product source")
     tracked = {p.decode() for p in git("ls-files","-z").split(b"\0") if p}
     check(len(names(tracked,"Cpplint")[0])==485,"wrong C++ baseline")
-    q=subprocess.run(["bazel","--bazelrc="+os.environ["CPPLINT_RC"],"query","--ignore_dev_dependency","//:license"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    OUT["root_without_dev"]={"exit":q.returncode,"log_sha256":digest(q.stdout),"actual_target":"//:license" in q.stdout.decode(errors="replace").splitlines()}
-    save()
-    if not build("clean",tracked,{}):
-        return 1
+    # The previous run verified clean and intentionally bad inputs on this
+    # same product. This run qualifies only the corrected local-config control.
+    OUT["original_run"] = "https://github.com/tamird/gvisor/actions/runs/40910563265"
+    OUT["expected"] = ["local-config"]
     CASE.mkdir()
     (CASE/"BUILD.bazel").write_text("# New package; no filegroup or orphan target.\n")
-    Path(BAD_BZL).write_text("ITEMS= [1,2]\n")
+    Path(BAD_BZL).write_text('"""A source for the lint input test."""\n')
     Path(BAD_CPP).write_text("// New source, not in the Git index.\n#include <vector>\n#include <stdio.h>\n")
-    for sub,marker in (("vendored", ".git"), ("nested", "WORKSPACE.bazel")):
-        dir=CASE/sub
-        dir.mkdir()
-        (dir/marker).touch()
-        (dir/"ignored.bzl").write_text("INVALID=  [1,2]\n")
-        (dir/"ignored.cc").write_text(Path(BAD_CPP).read_text())
-    (CASE/"linked.cc").symlink_to(Path(BAD_CPP).absolute())
-    paths=tracked|{str(CASE/"BUILD.bazel"),BAD_BZL,BAD_CPP}
-    build("dirty",paths,{"BuildifierCheck":4,"Cpplint":1})
-    Path(BAD_BZL).write_text("ITEMS = [1, 2]\n")
     Path(CFG).write_text("filter=-build/include_order\n")
-    build("local-config",paths|{CFG},{})
-    success=q.returncode==0 and OUT["root_without_dev"]["actual_target"] and all(p["verified"] for p in OUT["phases"].values())
+    paths = tracked | {str(CASE/"BUILD.bazel"), BAD_BZL, BAD_CPP, CFG}
+    build("local-config", paths, {})
+    success = OUT["phases"]["local-config"]["verified"]
     OUT["verdict"]="PASS" if success else "FAIL"
     save()
     return int(not success)

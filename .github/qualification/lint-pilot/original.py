@@ -8,12 +8,9 @@ from pathlib import Path
 import re
 
 KEY = os.environ.pop("ORIGINAL_KEY")
-ORIGINALS = {"repository":"8efc5b8a-7534-4aa3-81de-d8b8ccd8bbf5", "supplier":"30a0c288-d397-4549-8699-7462bad30276"}
-MARKERS = ("dict value is temporarily immutable due to active for-loop iteration", "trying to mutate a frozen", "during iteration",
-    "no such package", "Traceback", "no such target", "TestRunner", "test-setup.sh", "generate-xml", "/usr/bin/env", "/bin/bash",
-    "no such file or directory", "failed to start", "executable file not found", "cannot execute", "cannot run executable",
-    "failed to execute", "Permission denied", "unknown interpreter", "exec format", "not found", "could not execute",
-    "digest mismatch", "checksum", "Timed out", "unsupported format character", "no such attribute", "cycle in dependency graph")
+ORIGINALS = {"local-config":"84ebe6ec-79aa-46dd-b59e-f170530ab102"}
+MARKERS = ("bad formatting.bzl", "module-docstring", "# reformat",
+           "docstring", "CPPLINT.cfg", "BuildifierCheck")
 
 
 def post(endpoint, payload):
@@ -31,7 +28,7 @@ def post(endpoint, payload):
 
 
 def facts(text):
-    return {"bytes":len(text.encode()),"sha256":sha256(text.encode()).hexdigest(),
+    return {"fixture_messages": [line[line.index("test/util/.lint_pilot_control/"):][:260] for line in text.splitlines() if "test/util/.lint_pilot_control/" in line and ("# reformat" in line or "module-docstring" in line) and "https:" not in line and len(line) < 1024][:8], "bytes":len(text.encode()),"sha256":sha256(text.encode()).hexdigest(),
             "markers":[m for m in MARKERS if m.lower() in text.lower()],
             "source_lines":sorted(set(re.findall(r"(?:tools/lint_sources[.]bzl|tools/lint/defs[.]bzl|tools/lint/BUILD|MODULE[.]bazel):[0-9]+(?::[0-9]+)?",text)))}
 

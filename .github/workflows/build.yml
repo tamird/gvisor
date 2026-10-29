@@ -44,7 +44,7 @@ jobs:
           } > "$CPPLINT_RC"
           unset BUILDBUDDY_API_KEY
           python3 ../carrier/.github/qualification/lint-pilot/check.py
-      - name: Read the original package-setup and supplier test failures
+      - name: Read the original local-config failure
         if: ${{ !cancelled() }}
         env:
           ORIGINAL_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
