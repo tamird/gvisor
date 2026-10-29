@@ -12,53 +12,53 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/rules_pkg
-          ref: c4cda85160250ea814c5a5f8e6fce1fc997273ed
+          ref: e78092b97dd8a06bd8311a5fb03cbe5f32f16a42
           fetch-depth: 2
           persist-credentials: false
-      - name: Build the example tar and Debian package in three environments
+      - name: Run both manifest-only writers and the supplier's Linux example
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           export USE_BAZEL_VERSION=8.8.1
           export REPORT="$RUNNER_TEMP/report"
           mkdir -p "$REPORT"
           for ref in old new; do
-            if [[ $ref == old ]]; then git checkout 01446201f; else git checkout c4cda8516; fi
+            if [[ $ref == old ]]; then git checkout 01446201f; else git checkout e78092b97; fi
             cd examples/naming_package_files
             cp MODULE.bazel "$REPORT/module"
+            cp BUILD "$REPORT/BUILD"
+            sed -i '/bazel_dep(name = "rules_python"/d' MODULE.bazel
             echo 'bazel_dep(name = "rules_python", version = "2.4.5")' >> MODULE.bazel
-            for mode in normal manifest noenv; do
-              opts=()
-              case "$mode" in
-                manifest) opts+=(--enable_runfiles=no);;
-                noenv) opts+=(--sandbox_block_path=/usr/bin/env);;
-              esac
-              set +e
-              bazelisk build --lockfile_mode=update --spawn_strategy=sandboxed --@rules_python//python/config_settings:bootstrap_impl=script "${opts[@]}" //:a_deb_package > "$REPORT/$ref-$mode.log" 2>&1
-              status=$?
-              set -e
-              echo "$status" > "$REPORT/$ref-$mode.status"
-              if [[ $status == 0 ]]; then
-                dpkg-deb --field bazel-bin/foo-tools_*-*.deb Package | grep -Fx foo-tools
-                dpkg-deb --fsys-tarfile bazel-bin/foo-tools_*-*.deb | tar tf - | grep -E '/?BUILD$'
-                sha256sum bazel-bin/foo-tools_*-*.deb > "$REPORT/$ref-$mode.sha"
-              else
-                grep -m2 -E 'ERROR|not found|No such file' "$REPORT/$ref-$mode.log" || true
-              fi
-            done
+            echo '# New archive bytes require both writer actions to execute.' >> BUILD
+            bazelisk build --lockfile_mode=update --spawn_strategy=sandboxed --enable_runfiles=no --@rules_python//python/config_settings:bootstrap_impl=script --execution_log_json_file="$REPORT/$ref-spawns" //:a_deb_package
+            dpkg-deb --field bazel-bin/foo-tools_*-*.deb Package | grep -Fx foo-tools
+            dpkg-deb --fsys-tarfile bazel-bin/foo-tools_*-*.deb | tar tf - | grep -E '/?BUILD$'
+            sha256sum bazel-bin/foo-tools_*-*.deb > "$REPORT/$ref.sha"
             mv "$REPORT/module" MODULE.bazel
+            mv "$REPORT/BUILD" BUILD
             cd ../..
           done
+          cd examples/naming_package_files
+          bazelisk mod graph --depth=1 --output=json > "$REPORT/example-graph.json"
+          bazelisk build --spawn_strategy=sandboxed --@rules_python//python/config_settings:bootstrap_impl=script --sandbox_block_path=/usr/bin/env --execution_log_json_file="$REPORT/minimum-spawns" //...
           python3 - <<'PY'
-          from pathlib import Path
           import json, os
+          from pathlib import Path
           folder = Path(os.environ["REPORT"])
-          result = {f"{ref}-{mode}": int((folder / f"{ref}-{mode}.status").read_text())
-                    for ref in ("old", "new") for mode in ("normal", "manifest", "noenv")}
-          print(result)
-          (folder / "verdict.json").write_text(json.dumps(result))
-          assert result["old-normal"] == result["new-normal"] == 0, result
-          assert bool(result["old-manifest"]) == bool(result["new-manifest"]), result
-          assert result["old-noenv"] != 0 and result["new-noenv"] == 0, result
+          decoder = json.JSONDecoder()
+          verdict = {}
+          for name in ("old", "new", "minimum"):
+              source = (folder / f"{name}-spawns").read_text().lstrip()
+              records = []
+              while source:
+                  record, end = decoder.raw_decode(source)
+                  if record.get("mnemonic") in ("PackageTar", "MakeDeb"):
+                      records.append((record["mnemonic"], record.get("runner"), record.get("cacheHit", False), record.get("exitCode", 0), record["commandArgs"][0]))
+                  source = source[end:].lstrip()
+              assert {r[0] for r in records} == {"PackageTar", "MakeDeb"}, records
+              assert all(r[1] == "linux-sandbox" and not r[2] and r[3] == 0 for r in records), records
+              verdict[name] = records
+          assert (folder / "new.sha").read_text() == (folder / "old.sha").read_text()
+          (folder / "verdict.json").write_text(json.dumps(verdict, indent=2))
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
