@@ -392,7 +392,6 @@ func (s *sender) updateMaxPayloadSize(mtu, count int) {
 		m = 1
 	}
 
-	oldMSS := s.MaxPayloadSize
 	s.MaxPayloadSize = m
 	if s.gso {
 		s.ep.gso.MSS = uint16(m)
@@ -429,11 +428,6 @@ func (s *sender) updateMaxPayloadSize(mtu, count int) {
 			nextSeg = seg
 		}
 
-		if s.ep.SACKPermitted && s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
-			// Update sackedOut for new maximum payload size.
-			s.SackedOut -= s.pCount(seg, oldMSS)
-			s.SackedOut += s.pCount(seg, s.MaxPayloadSize)
-		}
 	}
 
 	// Since we likely reduced the number of outstanding packets, we may be
@@ -1168,7 +1162,6 @@ func (s *sender) enterRecovery() {
 	// We inflate the cwnd by 3 to account for the 3 packets which triggered
 	// the 3 duplicate ACKs and are now not in flight.
 	s.SndCwnd = s.Ssthresh + 3
-	s.SackedOut = 0
 	s.DupAckCount = 0
 	s.FastRecovery.First = s.SndUna
 	s.FastRecovery.Last = s.SndNxt - 1
@@ -1213,6 +1206,38 @@ func (s *sender) leaveRecovery() {
 // sequence number assigned to it.
 func (s *sender) isAssignedSequenceNumber(seg *segment) bool {
 	return seg.flags != 0
+}
+
+// sackedPackets counts transmitted packets fully covered by the scoreboard.
+// A positive limit lets RACK stop as soon as it reaches its threshold.
+//
+// +checklocks:s.ep.mu
+func (s *sender) sackedPackets(limit int) int {
+	sb := s.ep.scoreboard
+	if sb.Empty() {
+		return 0
+	}
+	mss := seqnum.Size(s.MaxPayloadSize)
+	count := 0
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(sb.MaxSACKED()); seg = seg.Next() {
+		block := seg.sackBlock()
+		if sb.IsSACKED(block) {
+			count += s.pCount(seg, s.MaxPayloadSize)
+		} else if block.End.Sub(block.Start) > mss {
+			// GSO groups packets that can be SACKed independently.
+			for start := block.Start; start.LessThan(block.End); {
+				end := start.Add(min(mss, block.End.Sub(start)))
+				if sb.IsSACKED(header.SACKBlock{Start: start, End: end}) {
+					count++
+				}
+				start = end
+			}
+		}
+		if limit > 0 && count >= limit {
+			return count
+		}
+	}
+	return count
 }
 
 // SetPipe implements the SetPipe() function described in RFC6675. Netstack
@@ -1410,7 +1435,6 @@ func (s *sender) walkSACK(rcvdSeg *segment) bool {
 				s.rc.update(seg, rcvdSeg)
 				s.rc.detectReorder(seg)
 				seg.acked = true
-				s.SackedOut += s.pCount(seg, s.MaxPayloadSize)
 			}
 			seg = seg.Next()
 		}
@@ -1731,8 +1755,6 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// already been accounted for in SetPipe().
 			if !s.ep.SACKPermitted || !s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
 				s.Outstanding -= s.pCount(seg, s.MaxPayloadSize)
-			} else {
-				s.SackedOut -= s.pCount(seg, s.MaxPayloadSize)
 			}
 			seg.DecRef()
 			ackLeft -= datalen

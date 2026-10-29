@@ -349,7 +349,7 @@ func (rc *rackControl) updateRACKReorderWindow() {
 			return
 		}
 
-		if snd.SackedOut >= nDupAckThreshold {
+		if snd.sackedPackets(nDupAckThreshold) >= nDupAckThreshold {
 			rc.ReoWnd = 0
 			return
 		}
