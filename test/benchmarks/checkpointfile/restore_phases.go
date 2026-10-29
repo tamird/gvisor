@@ -114,6 +114,27 @@ func BenchmarkRestorePhases(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
+		// Only the diagnostic binary implements the optional methods.
+		study, tracing := any(new(state.Stats)).(interface {
+			StartTypeUseStudy(int)
+			FinishTypeUseStudy() map[string]int
+		})
+		endStudy := func(stage int) {
+			if tracing {
+				counts := study.FinishTypeUseStudy()
+				if counts["stage"] != stage {
+					b.Fatal("wrong completed diagnostic window")
+				}
+				record, err := json.Marshal(counts)
+				if err != nil {
+					b.Fatal(err)
+				}
+				fmt.Printf("type-use pass=%d stage=%d counts=%s\n", pass, stage, record)
+			}
+		}
+		if tracing {
+			study.StartTypeUseStudy(2*pass - 1)
+		}
 		var fs cpuid.FeatureSet
 		start := time.Now()
 		cpuidStats, err := state.Load(restoreCtx, r, &fs)
@@ -121,14 +142,19 @@ func BenchmarkRestorePhases(b *testing.B) {
 			b.Fatal(err)
 		}
 		cpuidNS := time.Since(start).Nanoseconds()
+		endStudy(2*pass - 1)
 		k := &kernel.Kernel{Platform: stubPlatform{sys}}
 		k.SetMemoryFile(pgalloc.MemoryFileFromContext(restoreCtx))
 		start = time.Now()
+		if tracing {
+			study.StartTypeUseStudy(2 * pass)
+		}
 		kernelStats, err := state.Load(restoreCtx, r, k)
 		if err != nil {
 			b.Fatal(err)
 		}
 		kernelNS := time.Since(start).Nanoseconds()
+		endStudy(2 * pass)
 		if err := r.Verify(); err != nil {
 			b.Fatal(err)
 		}

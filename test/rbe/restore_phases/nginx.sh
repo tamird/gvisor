@@ -42,7 +42,7 @@ export GOMAXPROCS=2
 sha256sum "$release/runsc" "$binary" "$instrumented"
 "$binary" -test.v -test.run='^$' -test.bench='^BenchmarkCaptureRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
 index=0
-for mode in control trace trace control trace control control trace control trace trace control; do
+for mode in control trace; do
   (( index+=1 ))
   exe="$binary"
   if [[ $mode == trace ]]; then exe="$instrumented"; fi
