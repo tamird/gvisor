@@ -40,7 +40,7 @@ def main():
     frame["invocation"] = invocation
     trace = result / "private.exec.json"
     events = result / "private.bep.json"
-    rc = subprocess.run(["bazel", "--bazelrc=" + os.environ["QA_RC"], "test", "--config=x86_64", "--compilation_mode=opt", "--jobs=28", "--keep_going", "--nocache_test_results", "--flaky_test_attempts=1", "--strategy=TestRunner=remote", "--remote_default_exec_properties=container-image=" + image, "--test_output=errors", "--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=1", "--test_filter=^" + name + "$", "--remote_download_regex=.*/test[.](xml|log)$", "--build_event_json_file=" + str(events), "--execution_log_json_file=" + str(trace), "--invocation_id=" + invocation, label]).returncode
+    rc = subprocess.run(["bazel", "--bazelrc=" + os.environ["QA_RC"], "test", "--config=x86_64", "--compilation_mode=opt", "--jobs=28", "--keep_going", "--nocache_test_results", "--flaky_test_attempts=1", "--strategy=TestRunner=remote", "--remote_default_exec_properties=OSFamily=linux", "--remote_default_exec_properties=Arch=amd64", "--remote_default_exec_properties=EstimatedMemory=2GB", "--remote_default_exec_properties=workload-isolation-type=firecracker", "--remote_default_exec_properties=container-image=" + image, "--test_output=errors", "--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=1", "--test_filter=^" + name + "$", "--remote_download_regex=.*/test[.](xml|log)$", "--build_event_json_file=" + str(events), "--execution_log_json_file=" + str(trace), "--invocation_id=" + invocation, label]).returncode
     frame.update(native_exit=rc, execution_finished=now())
     with events.open() as f:
         ev = [json.loads(line) for line in f if '"testResult"' in line]
