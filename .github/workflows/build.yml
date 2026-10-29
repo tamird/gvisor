@@ -159,6 +159,14 @@ jobs:
         ref: ${{ github.sha }}
         persist-credentials: false
 
+    - name: Select the workspace status fixture
+      if: startsWith(github.ref, 'refs/heads/qualification/package-version-')
+      run: |
+        if [[ "$GITHUB_REF_NAME" == qualification/package-version-tagged ]]; then
+          git tag release-20261019.2 HEAD
+        fi
+        tools/workspace_status.sh
+
     - name: Download the pinned compact-log decoder
       if: contains(matrix.required_audits, 'source-images')
       shell: bash
@@ -197,6 +205,9 @@ jobs:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         options=()
+        if [[ "$QUALIFICATION_TARGETS" == //tools/bazeldefs:version ]]; then
+          options+=('--bazel-option=--modify_execution_info=^PackageVersion$=+no-remote-cache')
+        fi
         if [[ $QUALIFICATION_LANES == build && $QUALIFICATION_TARGETS == //test/docker:gpu_sglang_source_amd64 ]]; then
           # Preserve the existing native source-action route and disk guard.
           docker_root=$(docker info --format '{{.DockerRootDir}}')
@@ -213,6 +224,26 @@ jobs:
         sha256sum --check "$RUNNER_TEMP/qualification-module-lock.sha256" || { (( rc != 0 )) || rc=1; }
         exit "$rc"
 
+    - name: Verify the public package version from stable workspace status
+      if: success() && startsWith(github.ref, 'refs/heads/qualification/package-version-')
+      run: |
+        python3 - <<'PY'
+        import hashlib, json, os, re, subprocess
+        from pathlib import Path
+        status = subprocess.check_output(["tools/workspace_status.sh"], text=True).strip()
+        key, raw = status.split(" ", 1)
+        assert key == "STABLE_VERSION", status
+        tagged = os.environ["GITHUB_REF_NAME"] == "qualification/package-version-tagged"
+        expected_raw = "release-20261019.2" if tagged else os.environ["GITHUB_SHA"][:12]
+        assert raw == expected_raw, (raw, expected_raw)
+        output = Path("bazel-bin/tools/bazeldefs/version.txt").read_bytes()
+        assert output == (re.sub("^[^0-9]*", "", raw) + "\n").encode(), (output, raw)
+        proof = {"source": os.environ["GITHUB_SHA"], "status": status, "output": output.decode(),
+                 "bytes": len(output), "sha256": hashlib.sha256(output).hexdigest()}
+        (Path(os.environ["RUNNER_TEMP"]) / "version-result.json").write_text(json.dumps(proof) + "\n")
+        print(proof)
+        PY
+
     - name: Retain this row's unchanged verdict and evidence
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -221,6 +252,7 @@ jobs:
         path: |
           ${{ runner.temp }}/qualification.tar.gz
           ${{ runner.temp }}/qualification/verdict.json
+          ${{ runner.temp }}/version-result.json
         if-no-files-found: error
 
   qualification-result:
