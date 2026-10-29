@@ -219,20 +219,15 @@ config_setting(
 run_binary(
     name = "version",
     outs = ["version.txt"],
-    args = [
-        "-v",
-        "out=$@",
-        # Debian versions start with a digit; release tags can have a prefix.
-        """BEGIN { ARGV[ARGC++] = ENVIRON["BAZEL_STABLE_STATUS_FILE"] }
-           sub(/^STABLE_VERSION [^[:digit:]]*/, "") { print > out; exit }""",
-    ],
+    mnemonic = "PackageVersion",
+    args = ["$@"],
     stamp = 1,
     tags = [
         "manual",
         "nobuilder",
         "notap",
     ],
-    tool = "@gawk//:gawk",
+    tool = "//tools/package_version",
     visibility = ["//:sandbox"],
 )
 
