@@ -444,7 +444,15 @@ func (ds *decodeState) decodeObject(obj int32) {
 // which tells the exact type of inexact objects.
 func (ds *decodeState) noteRef(obj int32, t unsafe.Pointer, ti *typeInfo) {
 	o := &ds.objs[obj]
-	if !o.inexact || o.exact != nil || ti.size != o.ti.size || ti.kind != o.ti.kind {
+	if !o.inexact || o.exact != nil {
+		return
+	}
+	// A reference to an array window can describe the type of the
+	// backing object's elements even when it does not name one directly.
+	for o.kind == objKindArray && ti.kind == reflect.Array && (ti.size != o.ti.size || ti.kind != o.ti.kind) {
+		ti = ti.elem
+	}
+	if ti.size != o.ti.size || ti.kind != o.ti.kind {
 		return
 	}
 	off := uintptr(t) - uintptr(o.base)

@@ -707,6 +707,11 @@ func (es *encodeState) newContainer(base unsafe.Pointer, end uintptr, ti *typeIn
 
 // ptrTarget returns the target for a pointer to a value of type ti at addr.
 func (es *encodeState) ptrTarget(p unsafe.Pointer, ti *typeInfo) int32 {
+	// A pointer to an array may have been converted from a slice window.
+	// Its elements can partially overlap other views of the same array.
+	if ti.kind == reflect.Array && ti.size != 0 {
+		return es.sliceTarget(p, ti.elem, ti.length, ti.length)
+	}
 	addr := uintptr(p)
 	if tid := es.lookup(addr, ti); tid >= 0 {
 		return tid
