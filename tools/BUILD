@@ -111,10 +111,12 @@ exports_files([
     "benchmark-umbrella-exports.patch",
     "gazelle-module-metadata.patch",
     "go-packages-provenance.patch",
+    "llvm-libunwind-system-libraries.patch",
     "llvm-linux-header-default.patch",
     "rules_go_benchmark_xml.patch",
     "rules_go_bootstrap_shell.patch",
     "rules_go_package_provenance.patch",
+    "rules_go_temp_env.patch",
     "with_cfg-test-frontend.patch",
 ])
 

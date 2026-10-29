@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
 load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag")
@@ -215,16 +216,23 @@ config_setting(
     ],
 )
 
-genrule(
+run_binary(
     name = "version",
     outs = ["version.txt"],
-    cmd = "cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
+    args = [
+        "-v",
+        "out=$@",
+        # Debian versions start with a digit; release tags can have a prefix.
+        """BEGIN { ARGV[ARGC++] = ENVIRON["BAZEL_STABLE_STATUS_FILE"] }
+           sub(/^STABLE_VERSION [^[:digit:]]*/, "") { print > out; exit }""",
+    ],
     stamp = 1,
     tags = [
         "manual",
         "nobuilder",
         "notap",
     ],
+    tool = "@gawk//:gawk",
     visibility = ["//:sandbox"],
 )
 

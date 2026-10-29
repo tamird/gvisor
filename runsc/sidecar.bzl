@@ -77,7 +77,6 @@ def freestanding_sidecar(name, src, out):
         ],
         linkstatic = True,
         stamp = 0,
-        tcmalloc = False,
         visibility = ["//visibility:private"],
     )
     _sidecar_executable(
