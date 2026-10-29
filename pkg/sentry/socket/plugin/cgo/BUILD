@@ -8,6 +8,7 @@ package(
 config_setting(
     name = "network_plugins",
     values = {"define": "network_plugins=true"},
+    visibility = ["//pkg/sentry/socket/plugin/stack:__pkg__"],
 )
 
 go_library(

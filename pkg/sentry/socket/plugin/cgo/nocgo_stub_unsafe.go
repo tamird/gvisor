@@ -33,7 +33,7 @@ func EpollCreate() int {
 }
 
 // EpollCtl is a non-cgo stub function.
-func EpollCtl(epfd int32, op int, handle, events uint32) {
+func EpollCtl(epfd int32, op int, handle, events uint32) error {
 	panic("unimplemented")
 }
 
