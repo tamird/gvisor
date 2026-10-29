@@ -1,0 +1,95 @@
+name: Measure the materialized ARM64 release files
+on:
+  push:
+    branches: [qualification/scratch-release-layout-arm-mode]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  materialize:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    # The execution platform for this aarch64 build uses AMD64 coreutils.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Restore the measured source and its exact configured module lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^^)" = 4a2b2a00efd0c7aa19e7b58c98d380e58b7db5c2
+          cp test/rbe/release_layout_check/arm-original.json "$RUNNER_TEMP/expected.json"
+          git checkout --detach 4a2b2a00efd0c7aa19e7b58c98d380e58b7db5c2
+          gh run download 40816183575 -R tamird/gvisor -n release-layout-arm64 -D "$RUNNER_TEMP/original"
+          archive="$RUNNER_TEMP/original/qualification.tar.gz"
+          printf '%s  %s\n' 2f271465f503de4a9d93926110c4cea28856402d40b1ae083b2016f00bd933a2 "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$RUNNER_TEMP/original" MODULE.bazel.lock
+          cp "$RUNNER_TEMP/original/MODULE.bazel.lock" MODULE.bazel.lock
+      - name: Materialize the configured ARM64 layout, requiring cached product actions
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          umask 077
+          rc="$RUNNER_TEMP/materialize.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cp test/rbe/qualification.bazelrc "$rc"
+          {
+            printf '%s\n' 'common --lockfile_mode=error' 'startup --host_jvm_args=-Xmx8g' \
+              'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
+              'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
+              'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          result=0
+          bazelisk --bazelrc="$rc" build --config=rbe --config=aarch64 \
+            --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated \
+            --define=gvisor_test_clock_source=calibrated \
+            --remote_accept_cached --experimental_remote_require_cached --noremote_local_fallback \
+            '--modify_execution_info=^GoToolchainBinaryBuild$=-no-remote-cache' \
+            --strategy=CopyFile=local --noremote_upload_local_results --remote_download_outputs=toplevel \
+            --jobs=16 --build_event_json_file="$RUNNER_TEMP/build.bep" //:release > "$RUNNER_TEMP/build.log" 2>&1 || result=$?
+          printf '%d\n' "$result" > "$RUNNER_TEMP/exit"
+      - name: Record observed modes and all eight complete hashes
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, platform, stat, struct, subprocess
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          manifest = json.loads((root/'expected.json').read_text())
+          events = [json.loads(s) for s in (root/'build.bep').read_text().splitlines()]
+          result = int((root/'exit').read_text())
+          logs = (root/'build.log').read_text().splitlines()
+          failures = [v[:500] for v in logs if 'must be cached' in v or 'failed:' in v and 'ERROR' in v]
+          receipt = {'source':source, 'original_child':manifest['child'], 'child':next((e['started']['uuid'] for e in events if 'started' in e),None),
+                     'host':platform.machine(), 'builder_exit':result, 'first_failure':failures[:3], 'files':{}}
+          try:
+              assert source == '4a2b2a00efd0c7aa19e7b58c98d380e58b7db5c2' and len(manifest['files']) == 8 and result == 0, failures[:3]
+              for name, expected in manifest['files'].items():
+                  path = Path('bazel-bin/release') / name
+                  st = path.lstat()
+                  with path.open('rb') as f:
+                      elfhdr = f.read(20)
+                      f.seek(0)
+                      digest = hashlib.file_digest(f,'sha256').hexdigest()
+                  mode = stat.S_IMODE(st.st_mode)
+                  receipt['files'][name] = {'sha256':digest, 'bytes':st.st_size,'mode':oct(mode)}
+                  assert stat.S_ISREG(st.st_mode) and elfhdr[:6] == b'\x7fELF\x02\x01' and struct.unpack_from('<H',elfhdr,18)[0] == 183
+                  assert (digest,st.st_size,mode) == (expected['sha256'],expected['bytes'],0o555), name
+          finally:
+              (root/'materialization.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          PY
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: arm-release-materialization
+          path: ${{ runner.temp }}/materialization.json
+          if-no-files-found: error
