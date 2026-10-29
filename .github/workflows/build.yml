@@ -1,35 +1,106 @@
-name: CI
-
-"on":
+name: Verify the one-waiter epoll implementation
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/epoll-in-place-contract]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/epoll-in-place-contract'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      NEW: 0dad36edccfd1ca5ce82e498d6c5fd2bca9ffa66
+      PRODUCT: 99c1818ce361c01628eefbcb8780bb3049594a7a
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Bind product and existing test-only fixture
+      shell: bash
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^) == "$NEW" ]]
+        [[ $(git rev-parse HEAD^^) == "$PRODUCT" ]]
+        mkdir -p "$RUNNER_TEMP/checker" "$RUNNER_TEMP/focused"
+        cp test/rbe/epoll_bound_report.py "$RUNNER_TEMP/checker/"
+    - name: Exercise the exact VFS, host and checkpoint contracts
+      if: ${{ !cancelled() }}
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        plat=$RUNNER_TEMP/poll-gnu-platform
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        cat >"$plat/BUILD" <<BUILD
+        platform(
+            name = "gnu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "container-image":"docker://$GNU"},
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        rc=$RUNNER_TEMP/poll-gnu.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$rc"
+        unset BUILDBUDDY_API_KEY
+        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c '
+          set -euo pipefail
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
+          work=$1; new=$2
+          for lane in main race analyzers arm; do
+            rev=$new
+            git checkout --quiet --detach "$rev"
+            [[ $(git rev-parse HEAD) == "$rev" && -z $(git status --porcelain --untracked-files=no) ]]
+            out="$work/focused/$lane"; mkdir -p "$out"
+            vfs=//pkg/sentry/vfs:vfs_test; contract=//pkg/sentry/epollqualification:epoll_contract_test; notifier=//pkg/fdnotifier:fdnotifier_test; pci=//pkg/sentry/devices/tpuproxy/vfio:vfio_test
+            arch=x86_64; args=()
+            case "$lane" in
+              main) targets=("$vfs" "$contract" "$notifier" "$pci"); args+=(--test_arg=-test.v) ;;
+              race) targets=("$vfs" "$contract"); args+=(--config=race --test_arg=-test.v) ;;
+              analyzers|arm)
+                targets=(//pkg/waiter:waiter_nogo //pkg/fdnotifier:fdnotifier_nogo //pkg/sentry/socket/unix/transport:transport_nogo //pkg/sentry/vfs:vfs_nogo //pkg/sentry/fsimpl/gofer:gofer_nogo //pkg/sentry/socket/hostinet:hostinet_nogo //pkg/sentry/fsimpl/eventfd:eventfd_nogo //pkg/sentry/socket/netstack:netstack_nogo //pkg/sentry/devices/tpuproxy/vfio:vfio_nogo)
+                [[ $lane != arm ]] || arch=aarch64 ;;
+            esac
+            code=0
+            bazel --bazelrc="$work/poll-gnu.bazelrc" test --keep_going --config="$arch" -c opt --test_timeout=300 --test_output=all --jobs=80 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --test_sharding_strategy=disabled --build_event_json_file="$out/events.jsonl" "${args[@]}" "${targets[@]}" >"$out/bazel.log" 2>&1 || code=$?
+            for t in "${targets[@]}"; do python3 -B "$work/checker/epoll_bound_report.py" "$out" "$t" "$rev" "$lane" "$code"; done
+            echo "$lane: Bazel $code"
+          done
+        ' _ "$RUNNER_TEMP" "$NEW"
+    - name: Verify each original result and publish the signed-off scope
+      if: always()
+      shell: bash
+      run: |
+        python3 - "$RUNNER_TEMP/focused" <<'PYTHON'
+        import json, pathlib, sys
+        p=pathlib.Path(sys.argv[1]); rows=[json.loads(f.read_text()) for f in p.glob("*/*.json") if f.name not in ("events.jsonl",)]
+        normal={"vfs_test","epoll_contract_test","fdnotifier_test","vfio_test"}
+        analyzers={"waiter_nogo","fdnotifier_nogo","transport_nogo","vfs_nogo","gofer_nogo","hostinet_nogo","eventfd_nogo","netstack_nogo","vfio_nogo"}
+        expected={"main":normal,"race":{"vfs_test","epoll_contract_test"},"analyzers":analyzers,"arm":analyzers}
+        assert {(r["lane"],r["target"].split(":")[-1]) for r in rows} == {(lane, label) for lane, labels in expected.items() for label in labels}
+        assert len(rows)==24
+        for r in rows:
+            assert r["qualified"], r
+            print(r["lane"],r["target"],r["invocation"],len(r["cases"]),r["observations"],r.get("execution_finished"),r["verified_at"])
+        PYTHON
+    - name: Preserve each original verdict
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: epoll-in-place-verdict
+        path: |
+          ${{ runner.temp }}/focused/*/*.json
+          ${{ runner.temp }}/focused/*/*.test.log
+          ${{ runner.temp }}/focused/*/*.test.xml
+        if-no-files-found: error
