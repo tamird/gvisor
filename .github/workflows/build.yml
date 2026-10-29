@@ -10,6 +10,7 @@ jobs:
     timeout-minutes: 40
     env:
       QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_PRODUCT: 949510d08e9ce3e8cccb3fd7fc1d7f3348a057cd
       QUALIFICATION_TARGETS: //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
       QUALIFICATION_TEST_FILTER: ^TestTailProbeLastPacket$
       QUALIFICATION_LANES: test
@@ -25,7 +26,7 @@ jobs:
       with:
         ref: ${{ github.sha }}
         persist-credentials: false
-        fetch-depth: 10
+        fetch-depth: 8
     - name: Run the three TCP tail probe cases on BuildBuddy
       timeout-minutes: 30
       shell: bash
@@ -42,7 +43,7 @@ jobs:
         \ \\\n    'build --extra_execution_platforms=@fifo_platform//:ubuntu' \\\n    'build --platforms=//tools/bazeldefs:linux_amd64'\n  printf 'build --remote_header=x-buildbuddy-api-key=%s\\n' \"$BUILDBUDDY_API_KEY\"\
         \n  printf 'build --bes_header=x-buildbuddy-api-key=%s\\n' \"$BUILDBUDDY_API_KEY\"\n} > \"$rc\"\nunset BUILDBUDDY_API_KEY\nprintf '%s\\n' 'build:rbe --spawn_strategy=remote' >> \"$rc\"\nexport FIFO_RC=$rc\n\
         mkdir -p \"$RUNNER_TEMP/fifo-bin\"\ncat > \"$RUNNER_TEMP/fifo-bin/bazel\" <<'SH'\n#!/bin/sh\nexec bazelisk --bazelrc=\"$FIFO_RC\" \"$@\"\nSH\nchmod +x \"$RUNNER_TEMP/fifo-bin/bazel\"\nexport PATH=\"\
-        $RUNNER_TEMP/fifo-bin:$PATH\"\nstatus=0\nbash test/rbe/qualify.sh --arch=amd64 \"--test-target=$QUALIFICATION_TARGETS\" \\\n  \"--test-filter=$QUALIFICATION_TEST_FILTER\" \"--bazel-option=--build_event_json_file=$RUNNER_TEMP/fifo/events.jsonl\"\
+        $RUNNER_TEMP/fifo-bin:$PATH\"\nstatus=0\nQUALIFICATION_LANE_RESULTS=\"$RUNNER_TEMP/fifo/lanes.jsonl\" bash test/rbe/qualify.sh --arch=amd64 \"--test-target=$QUALIFICATION_TARGETS\" \\\n  \"--test-filter=$QUALIFICATION_TEST_FILTER\" \"--bazel-option=--build_event_json_file=$RUNNER_TEMP/fifo/events.jsonl\"\
         \ \\\n  \"--bazel-option=--test_sharding_strategy=disabled\" \"--bazel-option=--cache_test_results=no\" \"--bazel-option=--remote_download_outputs=toplevel\" test || status=$?\npython3 -B test/rbe/first_loss_result.py\
         \ \"$RUNNER_TEMP/fifo\" \"$status\"\n"
     - name: Retain the original named cases and report digests
