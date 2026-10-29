@@ -546,6 +546,13 @@ func TestRACKPipeCopyAccounting(t *testing.T) {
 	if s.prr.pipe != 450 {
 		t.Fatalf("byte flight with 25 bytes SACKed inside a split packet = %d, want 450", s.prr.pipe)
 	}
+	// This one-byte selective delivery under proportional reduction grants
+	// less than one MSS on entry; it is not rounded to a forced full repair.
+	s.Ssthresh = 1
+	s.updatePRR(1, false, true)
+	if s.prr.remaining != 1 {
+		t.Fatalf("first small PRR grant = %d, want 1", s.prr.remaining)
+	}
 	s.ep.scoreboard.Insert(middle.sackBlock())
 	pipe(4) // Delivery cancels both copies of just this middle SMSS.
 	clock.Advance(time.Millisecond)

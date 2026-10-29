@@ -422,6 +422,8 @@ func (e *Endpoint) FirstLossDisableHyStart() {
 const FIFOTraceCanRestore = true
 
 type FIFOGrant struct {
+	ScanCalls, ScanACKs, ScanMaxRanges, ScanTotalRanges int
+
 	PRRPipe, PRRRemaining, PRRSent, PRRDelivered, PRRRecoverFS int64
 
 	Kind                                                       string
@@ -435,6 +437,10 @@ type FIFOGrant struct {
 	Timeouts                                                   uint64
 }
 type fifoTrace struct {
+	scanning              bool
+	scanCalls, scanRanges int
+	scanHist              [10]struct{ acks, maxRanges, totalRanges int }
+
 	base, boundary  uint32
 	tracking, prior bool
 	first           int64
@@ -458,7 +464,14 @@ func (e *Endpoint) FIFOTraceFirst() int64 {
 func (e *Endpoint) FIFOTraceEvents() []FIFOGrant {
 	e.LockUser()
 	defer e.UnlockUser()
-	return append([]FIFOGrant(nil), e.snd.fifoTrace.events...)
+	f := e.snd.fifoTrace
+	events := append([]FIFOGrant(nil), f.events...)
+	for n, v := range f.scanHist {
+		if v.acks > 0 {
+			events = append(events, FIFOGrant{Kind: "setpipe_work", ScanCalls: n, ScanACKs: v.acks, ScanMaxRanges: v.maxRanges, ScanTotalRanges: v.totalRanges})
+		}
+	}
+	return events
 }
 func (s *sender) traceDecision(kind string, seg *segment, n int) {
 	f := s.fifoTrace

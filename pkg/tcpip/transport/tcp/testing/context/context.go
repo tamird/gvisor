@@ -131,6 +131,9 @@ type Options struct {
 	// GSO specifies the segmentation offload supported by the primary NIC.
 	GSO stack.SupportedGSO
 
+	// LinkWriteError may reject an outbound packet before the test channel.
+	LinkWriteError func(stack.PacketBufferList) tcpip.Error
+
 	// Clock that is used by Stack.
 	Clock tcpip.Clock
 
@@ -140,6 +143,18 @@ type Options struct {
 	// EnableExperimentIPOption indicates whether the NIC is responsible for
 	// passing the experiment IP option.
 	EnableExperimentIPOption bool
+}
+
+type writeFaultLink struct {
+	*channel.Endpoint
+	fail func(stack.PacketBufferList) tcpip.Error
+}
+
+func (e *writeFaultLink) WritePackets(p stack.PacketBufferList) (int, tcpip.Error) {
+	if err := e.fail(p); err != nil {
+		return 0, err
+	}
+	return e.Endpoint.WritePackets(p)
 }
 
 // Context provides an initialized Network stack and a link layer endpoint
@@ -257,6 +272,9 @@ func NewWithOpts(t *testing.T, opts Options) *Context {
 		wep = sniffer.New(ep)
 	}
 	nicOpts := stack.NICOptions{Name: "nic1", EnableExperimentIPOption: opts.EnableExperimentIPOption}
+	if opts.LinkWriteError != nil {
+		wep = &writeFaultLink{ep, opts.LinkWriteError}
+	}
 	if err := s.CreateNICWithOptions(1, wep, nicOpts); err != nil {
 		t.Fatalf("CreateNICWithOptions(_, _, %+v) failed: %v", opts, err)
 	}

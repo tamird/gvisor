@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -1481,6 +1483,67 @@ func TestRACKPRRFlight(t *testing.T) {
 			t.Logf("RACK_ACK cc=%s repeats=0 new=%d", cc, extra)
 		})
 	}
+}
+
+// TestRACKPartialSoftwareGSOWrite exposes the error/progress contract at the
+// real TCP-to-network boundary on this execution platform.
+func TestRACKPartialSoftwareGSOWrite(t *testing.T) {
+	var seq []uint32
+	var sizes []int
+	var batch []bool
+	failSecond := func(pkts stack.PacketBufferList) tcpip.Error {
+		for _, p := range pkts.AsSlice() {
+			if p.Data().Size() == 0 {
+				continue
+			}
+			seq = append(seq, header.TCP(p.TransportHeader().Slice()).SequenceNumber())
+			sizes = append(sizes, p.Data().Size())
+			var pcs [64]uintptr
+			n := runtime.Callers(1, pcs[:])
+			frames := runtime.CallersFrames(pcs[:n])
+			inBatch := false
+			for {
+				f, more := frames.Next()
+				if strings.HasSuffix(f.Function, "/tcp.sendTCPBatch") {
+					inBatch = true
+					break
+				}
+				if !more {
+					break
+				}
+			}
+			batch = append(batch, inBatch)
+			if len(seq) == 2 {
+				return &tcpip.ErrNoBufferSpace{}
+			}
+		}
+		return nil
+	}
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, GSO: stack.GVisorGSOSupported, Clock: faketime.NewManualClock(), LinkWriteError: failSecond})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKPermittedOption(c)
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatal(err)
+	}
+	mss := int(info.SndMss)
+	data := bytes.Repeat([]byte{0x5a}, 3*mss)
+	before := c.Stack().Stats().TCP.SegmentSendErrors.Value()
+	if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(n) != len(data) {
+		t.Fatalf("socket write: (%d, %v)", n, err)
+	}
+	c.Stack().Pause()
+	c.Stack().Resume()
+	c.ReceiveAndCheckPacket(data, 0, mss)
+	if len(seq) != 2 || seq[1]-seq[0] != uint32(mss) || !batch[0] || !batch[1] || sizes[0] != mss || sizes[1] != mss || c.Stack().Stats().TCP.SegmentSendErrors.Value() != before+1 {
+		t.Fatalf("software GSO writes: seq=%v size=%v inBatch=%v sendErrors=%d", seq, sizes, batch, c.Stack().Stats().TCP.SegmentSendErrors.Value()-before)
+	}
+	if pkt := c.GetPacketNonBlocking(); pkt != nil {
+		pkt.Release()
+		t.Fatal("a segment following the rejected write reached the channel")
+	}
+	t.Logf("RACK_GSO accepted=%d rejected=%d unsent=%d batch=2 errors=1", mss, mss, mss)
 }
 
 func TestMain(m *testing.M) {

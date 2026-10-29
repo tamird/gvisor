@@ -535,8 +535,15 @@ func (s *sender) updateRTO(rtt time.Duration) {
 func (s *sender) resendSegment() {
 	// Resend the segment.
 	if seg := s.writeList.Front(); seg != nil {
-		if seg.payloadSize() > s.MaxPayloadSize {
-			s.splitSeg(seg, s.MaxPayloadSize)
+		limit := s.MaxPayloadSize
+		if s.prr.recoverFS != 0 {
+			limit = int(min(int64(limit), s.prr.remaining))
+			if limit <= 0 {
+				return
+			}
+		}
+		if seg.payloadSize() > limit {
+			s.splitSeg(seg, limit)
 		}
 
 		// See: RFC 6675 section 5 Step 4.3
@@ -888,8 +895,7 @@ func (s *sender) NextSeg(nextSegHint *segment) (nextSeg, hint *segment, rescueRt
 // +checklocks:s.ep.mu
 func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (sent bool) {
 	if s.prr.recoverFS != 0 && seg.payloadSize() != 0 {
-		// Keep a full-sized repair intact until there is enough credit.
-		if s.prr.remaining < int64(min(s.MaxPayloadSize, seg.payloadSize())) {
+		if s.prr.remaining <= 0 {
 			return false
 		}
 		limit = int(min(int64(limit), s.prr.remaining))
@@ -1290,8 +1296,8 @@ func (s *sender) updatePRR(delivered int64, safe, enter bool) {
 		}
 		budget = min(target-p.pipe, budget)
 	}
-	if enter && p.sent == 0 {
-		budget = max(mss, budget)
+	if enter && p.sent == 0 && budget <= 0 {
+		budget = mss
 	}
 	p.remaining = max(0, budget)
 	s.SndCwnd = s.Outstanding + int((p.remaining+mss-1)/mss)
@@ -1327,6 +1333,10 @@ func (s *sender) SetPipe() {
 		return
 	}
 	pipe := 0
+	f := s.fifoTrace
+	if f != nil && f.scanning {
+		f.scanCalls++
+	}
 	s.prr.pipe = 0
 	smss := seqnum.Size(s.ep.scoreboard.SMSS())
 	for s1 := s.writeList.Front(); s1 != nil && s1.payloadSize() != 0 && s.isAssignedSequenceNumber(s1); s1 = s1.Next() {
@@ -1339,6 +1349,9 @@ func (s *sender) SetPipe() {
 				endSeq = segEnd
 			}
 			sb := header.SACKBlock{Start: startSeq, End: endSeq}
+			if f != nil && f.scanning {
+				f.scanRanges++
+			}
 			// SetPipe():
 			//
 			// After initializing pipe to zero, the following steps are
@@ -1715,6 +1728,16 @@ func (s *sender) isValidSACKBlock(sb header.SACKBlock, ack seqnum.Value) bool {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
+	if f := s.fifoTrace; f != nil {
+		f.scanning, f.scanCalls, f.scanRanges = true, 0, 0
+		defer func() {
+			f.scanning = false
+			h := &f.scanHist[min(f.scanCalls, len(f.scanHist)-1)]
+			h.acks++
+			h.maxRanges = max(h.maxRanges, f.scanRanges)
+			h.totalRanges += f.scanRanges
+		}()
+	}
 	priorUna := s.SndUna
 	var priorSACK seqnum.Size
 	if s.ep.SACKPermitted && s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
