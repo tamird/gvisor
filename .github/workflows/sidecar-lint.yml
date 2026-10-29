@@ -1,7 +1,7 @@
 name: Read original sidecar prerequisite diagnostics
 "on":
   push:
-    branches: [qualification/sidecar-lint-91556820]
+    branches: [qualification/sidecar-prerequisite-f1383722]
 permissions:
   contents: read
 jobs:
@@ -23,7 +23,7 @@ jobs:
           cp .github/qualification/sidecar-review/lint.py "$root/"
           cd "$root"
           sha256sum --check <<'SUMS'
-          33df66bf0b093f86c2e6795c1886f1b41d3ff6fb2573dbd704687d17a5c52eb8  lint.py
+          d8838ec12a6e77fd67718d62ec6326d460c8ca2e48ba76998bfd8bac0030f196  lint.py
           SUMS
       - name: Read only the authenticated original archive
         env:

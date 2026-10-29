@@ -18,23 +18,26 @@ def call(key,method,args,n):
 def cas(key,pair):
  h,n=pair; assert re.fullmatch('[0-9a-f]{64}',h) and 0<n<128<<20;b=call(key,'GetFile',{'uri':f'bytestream://remote.buildbuddy.io/blobs/{h}/{n}'},n);assert sha(b)==h and len(b)==n;return b
 def lint(k,out):
- h='c2d6249359cd41223683a96d990be9eba09b0686dedf2e62d5cad3201780cc45';n=163081;b=cas(k,(h,n));out['bundle']=[h,n]
+ h='e9bc748dafbf9d7eb776d6fca3f83b44beb3b258b5f6461698bb919ff43b2a87';n=163075;b=cas(k,(h,n));out['bundle']=[h,n]
  with tarfile.open(fileobj=io.BytesIO(b)) as t:
   members=t.getmembers();assert len(members)<4096
-  for name in ('stdout.log','stderr.log','native-exit','arguments.txt'):
-   [m]=[m for m in members if m.isfile() and (m.name=='invocation-00-buildifier/'+name or m.name.endswith('/invocation-00-buildifier/'+name))];assert m.size<4<<20
-   raw=t.extractfile(m).read();out.setdefault('members',{})[name]={'sha256':sha(raw),'bytes':len(raw)}
-   if name=='native-exit':out['exit']=int(raw);continue
+  for m in members:
+   if not m.isfile():continue
+   stage,_,name=m.name.rpartition('/');stage=stage.split('/')[-1];key=stage+'/'+name
+   if not re.fullmatch('invocation-[0-9]{2}[-a-z0-9_]+',stage) or name not in ('stdout.log','stderr.log','native-exit','arguments.txt'):continue
+   assert m.size<8<<20
+   raw=t.extractfile(m).read();out.setdefault('members',{})[key]={'sha256':sha(raw),'bytes':len(raw)}
+   if name=='native-exit':out.setdefault('exit',{})[stage]=int(raw);continue
    if name=='arguments.txt':continue
-   text=raw.decode(errors='replace'); assert k not in text;out[name]={'diagnostics':[]};clean=re.sub(r'\x1b\[[;\d]*[A-Za-z]','',text)
+   text=raw.decode(errors='replace'); assert k not in text;out[key]={'diagnostics':[]};clean=re.sub(r'\x1b\[[;\d]*[A-Za-z]','',text)
    for line in clean.splitlines():
-    if not re.search(r'error|warning|failed|reformat|timed out|permission denied|not found|invalid|mismatch|must be updated|expected|no such|returned|Traceback|^--- |^\+\+\+ |^buildifier|requires',line,re.I):continue
+    if not re.search(r'error|warning|failed|reformat|timed out|permission denied|not found|invalid|mismatch|must be updated|expected|no such|returned|Traceback|^--- |^\+\+\+ |^buildifier|requires|unused|uninitialized|reassigned|unused-variable|is already defined',line,re.I):continue
     # Bound each diagnostic to human-readable prose/known paths. No command lines, digests, raw logs, or URLs leave the job.
     if len(line)>1200 or re.search(r'(?i)credential|password|secret|api.key|authorization|--remote.header|BEGIN [A-Z ]+ KEY',line):continue
     line=re.sub(r'https?://\S+','[url]',line);line=re.sub(r'[A-Za-z0-9_+/=-]{36,}','[id]',line);line=re.sub(r'/[^ :]+/(?:external|execroot)/','[execroot]/',line)
     line=''.join(v for v in line if v=='\t' or ord(v)>=32 and ord(v)<127)[:300];assert k not in line
-    if line not in out[name]['diagnostics']:out[name]['diagnostics'].append(line)
-    if len(out[name]['diagnostics'])>=18:break
+    if line not in out[key]['diagnostics']:out[key]['diagnostics'].append(line)
+    if len(out[key]['diagnostics'])>=18:break
   out['read']='complete'
 
 def main():
