@@ -39,13 +39,3 @@ filegroup(
         "@rules_pkg//pkg/private/tar:build_tar",
     ],
 )
-
-exports_files(["python.BUILD"])
-
-[toolchain(
-    name = "python_" + arch,
-    exec_compatible_with = ["@platforms//cpu:" + arch, "@platforms//os:linux"],
-    target_compatible_with = ["@platforms//cpu:" + arch, "@platforms//os:linux"],
-    toolchain = "@writer_python_" + arch + "//:runtime",
-    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
-) for arch in ["x86_64", "aarch64"]]

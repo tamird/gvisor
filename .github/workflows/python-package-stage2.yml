@@ -1,7 +1,7 @@
 name: Qualify Python package writers on scratch
 on:
   push:
-    branches: [qualification/python-package-static-stage2]
+    branches: [qualification/python-package-supplier-runtime]
 permissions:
   contents: read
 jobs:
@@ -51,7 +51,8 @@ jobs:
             bash test/rbe/actions.sh \
               "--bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
               "--bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
-              "--bazel-option=--extra_toolchains=//test/rbe/python_package_writers:python_${entry#*:}" \
+              --bazel-option=--@rules_python//python/config_settings:python_version=3.11.18 \
+              --bazel-option=--@rules_python//python/config_settings:py_linux_libc=musl \
               --bazel-option=--lockfile_mode=error --bazel-option=--remote_download_outputs=all \
               '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || status=1
             python3 test/rbe/python_package_writers/stage2_evidence.py || status=1
