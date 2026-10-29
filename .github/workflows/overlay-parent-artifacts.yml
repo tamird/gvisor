@@ -1,0 +1,46 @@
+name: Recover original overlay test result
+on:
+  push:
+    branches: [qualification/overlay-parent-artifacts]
+permissions: {}
+jobs:
+  recover:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Recover the original reports without repeating the tests
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, urllib.request as url, urllib.error as err
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          inv = "4984b007-60ad-4878-ba05-7c70c7b9b572"
+          want = {"test.log":("7dbb7f313b32b2e19f2274c0aec0bfc1fcb4d9a218a76c19ae5a2d1fc24f7733",1737), "test.xml":("76937a4fda5adb69c4a9eaead609d1d0782f16860a707fb1dd8cfd08ffa073c0",932)}
+          data = {}
+          headers = {"x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"], "Content-type":"application/json"}
+          for name, (digest,size) in want.items():
+              uri = "bytestream://remote.buildbuddy.io/blobs/%s/%d" % (digest,size)
+              req = url.Request("https://app.buildbuddy.io/api/v1/GetFile", headers=headers,data=json.dumps({"uri":uri}).encode())
+              try:
+                  content = url.urlopen(req,timeout=20).read(size+1)
+              except err.HTTPError as e:
+                  from urllib.parse import urlencode
+                  req = url.Request("https://app.buildbuddy.io/file/download?"+urlencode({"bytestream_url":uri,"invocation_id":inv}),headers=headers)
+                  content = url.urlopen(req,timeout=20).read(size+1)
+              assert len(content)==size and hashlib.sha256(content).hexdigest()==digest
+              assert os.environ["BUILDBUDDY_API_KEY"].encode() not in content
+              data[name]=content
+          rows = [(e.attrib["name"],[(c.tag,c.attrib,c.text) for c in e if c.tag in {"failure","error"}]) for e in ET.fromstring(data["test.xml"]).findall(".//testcase")]
+          lines = [line for line in data["test.log"].decode().splitlines() if any(k in line.lower() for k in ("fail", "error", "leak", "panic", ".go:", "stack", "refcount", "missing", " /", "maximum"))]
+          p=Path(os.environ["RUNNER_TEMP"])/"overlay-parent.json"
+          p.write_text(json.dumps({"invocation":inv,"verified":want,"cases":rows,"diagnostics":lines},indent=2))
+          print(p.read_text())
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: verified-overlay-parent
+          path: ${{ runner.temp }}/overlay-parent.json
+          if-no-files-found: error
