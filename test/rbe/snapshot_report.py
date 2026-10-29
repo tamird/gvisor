@@ -42,24 +42,25 @@ try:
     cases = {e.attrib["name"]: next((c.tag for c in e if c.tag in ("skipped","failure","error")), "pass") for e in rows}
     assert len(cases) == len(rows)
     r["cases"] = cases
-    suite = "TestMapKeyIdentity"
-    required = {suite, suite+"/immediate", suite+"/after_load"}
-    r["missing"] = sorted(required - set(cases))
-    r["unexpected"] = sorted(set(cases) - required)
-    pattern = rb'control=(immediate|after_load) hooks=\[0 1 1\] entries=(\d+) left="([^"]*)" right="([^"]*)" zero="([^"]*)"'
-    records = re.findall(pattern,files["test.log"])
-    r["observations"] = {name.decode(): [int(count), left.decode(),right.decode(),zero.decode()] for name,count,left,right,zero in records}
-    good = [2,"left","right",""]
-    imm = r["observations"].get("immediate")
-    late = r["observations"].get("after_load")
-    loss = (late is not None and late[:3]==[1,"",""] and late[3] in ("left","right"))
-    failure = cases[suite+"/after_load"]=="failure"
-    expected_env = ("FAILED",3,1) if failure else ("PASSED",0,0)
-    r["matched"] = (not r["missing"] and not r["unexpected"] and len(records)==2 and
-        cases[suite+"/immediate"]=="pass" and imm==good and
-        (loss if failure else late==good) and cases[suite]==("failure" if failure else "pass") and
-        (t["status"],r["bazel_exit"],int(code))==expected_env)
-    r["verdict"] = "COMPLETE"
+    suite = "TestGraphDeferredMapKeys"
+    assert suite in cases
+    failed={k for k,v in cases.items() if v in ("error","failure")}
+    r["count"]=len(cases)
+    r["skipped"]=[k for k,v in cases.items() if v=="skipped"]
+    if mode=="stock":
+        assert set(cases)==failed=={suite}
+        m=re.search(rb"loaded maps = (.*), want (.*)",files["test.log"])
+        assert m,(files["test.log"][:600],)
+        got,want=(k.decode() for k in m.groups())
+        r["got"],r["want"]=got,want
+        assert re.fullmatch(r"\[map\[\{0\}:(?:left|right)\] map\[\{0\}:other\]\]",got)
+        assert "{1}:left {2}:right" in want and "{3}:other" in want
+        assert (int(code),r["bazel_exit"],t["status"])==(1,3,"FAILED")
+    else:
+        assert not failed and cases[suite]=="pass" and cases.get("TestGraphCallbackOrder")=="pass"
+        assert (int(code),r["bazel_exit"],t["status"])==(0,0,"PASSED")
+    r["matched"]=True
+    r["verdict"]="PASS"
 except Exception as exc:
     r.update(error=type(exc).__name__, line=exc.__traceback__.tb_lineno)
 finally:

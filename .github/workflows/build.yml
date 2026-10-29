@@ -1,19 +1,19 @@
-name: Check restored map-key identity on current legacy and graph sources
+name: Check map key insertion on the proposed graph callback scheduler
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-map-key-identity'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-scheduler-map-keys'
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 4
+        fetch-depth: 12
         persist-credentials: false
-    - name: Round-trip immediate and delayed map keys on both current sources
+    - name: Compare two restored maps with deferred keys on the scheduler PR
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
@@ -74,13 +74,16 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
+        git diff --exit-code 624e3ad69a0818bf93db749b3f044dfb35549cec 5a06c2c31357944b9fcbccdf2038199606a9707c -- pkg/state/graph_decode_callbacks_test.go
+        git diff --exit-code 3e480a67211e74488f6e863cb8cef1f37945f884 5a06c2c31357944b9fcbccdf2038199606a9707c -- pkg/state/graph_decode_values_unsafe.go
         overall=0
-        for mode in legacy graph; do
+        for mode in stock fixed; do
           args=()
-          source=b85788dac43cf1e00af9edb3bf0b5fd36356173b
-          if [[ "$mode" = graph ]]; then source=ca5ef187687dd348e1dd8d9e04e7a57271773023; fi
+          source=5a06c2c31357944b9fcbccdf2038199606a9707c
+          if [[ "$mode" = fixed ]]; then source=624e3ad69a0818bf93db749b3f044dfb35549cec; fi
           owner=//pkg/state:state_test
-          filter='^TestMapKeyIdentity$'
+          filter='^TestGraphDeferredMapKeys$'
+          if [[ "$mode" = fixed ]]; then filter=''; fi
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test -z "$(git status --porcelain --untracked-files=no)"
@@ -98,6 +101,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: map-key-identity
+        name: scheduler-map-keys
         path: ${{ runner.temp }}/focused/*/result.json
         if-no-files-found: error
