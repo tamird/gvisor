@@ -26,7 +26,10 @@ def observe(suite, stock, wrapper, lanes, test_status, xml, log, aborted):
             continue
         failure = case.find("failure")
         message = " ".join(failure.attrib.values()) + " " + "".join(failure.itertext())
-        lines = re.findall(r"[\w./-]+[.]go:\d+: ([^\n\r<>\x0e\x0f]+)", message)
+        # Go's verbose test stream brackets messages with control bytes. XML 1.0
+        # cannot represent these; encoding/xml writes a replacement character.
+        lines = [line.strip() for line in re.findall(
+            r"[\w./-]+[.]go:\d+: ([^\n\r<>\x0e\x0f\ufffd]+)", message)]
         if not lines or any(line.strip() not in log for line in lines):
             raise ValueError(f"unmatched original log/XML diagnostic in {name}")
         if old:

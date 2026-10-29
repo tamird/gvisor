@@ -1,10 +1,11 @@
 """Check original single-test qualification outcomes without confusing the two exits."""
 import json
 from pathlib import Path
-import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import Element
 
 
-def check_test(wrapper_exit, lanes, test_status, cases, expected, failed, aborted):
+def check_test(wrapper_exit: int, lanes: list[dict], test_status: str, cases: list[Element],
+               expected: set[str], failed: set[str], aborted: list[str]) -> int:
     """Return the recorded Bazel exit only after the exact XML outcome agrees."""
     if len(lanes) != 1 or lanes[0].get("lanes") != ["test"]:
         raise ValueError("missing or ambiguous test lane")
@@ -23,5 +24,5 @@ def check_test(wrapper_exit, lanes, test_status, cases, expected, failed, aborte
     return native
 
 
-def read_lanes(out):
+def read_lanes(out: Path) -> list[dict]:
     return [json.loads(line) for line in (Path(out) / "lanes.jsonl").read_text().splitlines()]
