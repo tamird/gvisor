@@ -395,12 +395,15 @@ func (st *typeInfo) slotType(slot int, rt unsafe.Pointer, ptr bool) *typeInfo {
 	if rt == nil {
 		Failf("nil value saved in slot %d of %v", slot, st.typ)
 	}
-	ti := typeInfoForRtype(rt)
+	var ti *typeInfo
 	if ptr {
-		if ti.kind != reflect.Pointer {
-			Failf("non-pointer %v passed for slot %d of %v", ti.typ, slot, st.typ)
+		t := typeOfRtype(rt)
+		if t.Kind() != reflect.Pointer {
+			Failf("non-pointer %v passed for slot %d of %v", t, slot, st.typ)
 		}
-		ti = ti.elem
+		ti = typeInfoOf(t.Elem())
+	} else {
+		ti = typeInfoForRtype(rt)
 	}
 	if uint(slot) < uint(len(st.slots)) {
 		st.slots[slot].Store(newSlotEntry(rt, ti))
