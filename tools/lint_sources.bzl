@@ -55,10 +55,10 @@ def _lint_sources(ctx):
     ctx.file(".bazelignore", "ROOT.d\n")
     ctx.file("ROOT", "")
     build = ['exports_files(["ROOT"])']
-    for name in groups:
-        groups[name] = sorted(groups[name])
+    groups = {name: sorted(paths) for name, paths in groups.items()}
+    for name, paths in groups.items():
         files = []
-        for path in groups[name]:
+        for path in paths:
             dst = "ROOT.d/" + path
             ctx.symlink(root.get_child(path), dst)
             files.append(dst)
