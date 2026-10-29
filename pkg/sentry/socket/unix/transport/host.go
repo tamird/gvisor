@@ -265,7 +265,7 @@ func (c *HostSender) UpdateMask(q *waiter.Queue, entry *waiter.Entry, mask waite
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.fd >= 0 {
-		return fdnotifier.UpdateMask(int32(c.fd), q, entry, mask)
+		return fdnotifier.UpdateMask(int32(c.fd), entry, mask)
 	}
 	return q.UpdateMask(entry, mask)
 }

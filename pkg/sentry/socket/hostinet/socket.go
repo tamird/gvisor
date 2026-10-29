@@ -396,7 +396,7 @@ func (s *Socket) ensurePersistentMask(mask waiter.EventMask) error {
 			s.queue.EventUnregister(&s.persistentEntry)
 			return err
 		}
-	} else if err := fdnotifier.UpdateMask(int32(s.fd), &s.queue, &s.persistentEntry, newMask); err != nil {
+	} else if err := fdnotifier.UpdateMask(int32(s.fd), &s.persistentEntry, newMask); err != nil {
 		return err
 	}
 	s.persistentEventMask.Store(uint64(newMask))

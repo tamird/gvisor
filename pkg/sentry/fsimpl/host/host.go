@@ -1213,7 +1213,7 @@ func (f *fileDescription) EpollSource() vfs.EpollSource {
 
 // UpdateMask implements vfs.EpollSource.UpdateMask.
 func (f *fileDescription) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
-	return fdnotifier.UpdateMask(int32(f.inode.hostFD), &f.inode.queue, e, mask)
+	return fdnotifier.UpdateMask(int32(f.inode.hostFD), e, mask)
 }
 
 // Ioctl queries the underlying FD for allowed ioctl commands.

@@ -213,7 +213,7 @@ func (fd *specialFileFD) EpollSource() vfs.EpollSource {
 
 // UpdateMask implements vfs.EpollSource.UpdateMask.
 func (fd *specialFileFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
-	return fdnotifier.UpdateMask(fd.handle.fd, &fd.queue, e, mask)
+	return fdnotifier.UpdateMask(fd.handle.fd, e, mask)
 }
 
 func (fd *specialFileFD) Allocate(ctx context.Context, mode, offset, length uint64) error {

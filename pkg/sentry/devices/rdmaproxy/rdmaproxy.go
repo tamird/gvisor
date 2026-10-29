@@ -387,7 +387,7 @@ func (fd *eventFD) EpollSource() vfs.EpollSource {
 
 // UpdateMask implements vfs.EpollSource.UpdateMask.
 func (fd *eventFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
-	return fdnotifier.UpdateMask(fd.hostFD, &fd.queue, e, mask)
+	return fdnotifier.UpdateMask(fd.hostFD, e, mask)
 }
 
 // newEventFD wraps a host event FD in a sentry FileDescription named name and

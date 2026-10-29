@@ -291,7 +291,7 @@ func (s *socketOperations) Readiness(mask waiter.EventMask) waiter.EventMask {
 	}
 }
 
-// EpollSource implements socket.Socket.Epollable.
+// EpollSource implements socket.Socket.EpollSource.
 func (s *socketOperations) EpollSource() vfs.EpollSource {
 	return s
 }

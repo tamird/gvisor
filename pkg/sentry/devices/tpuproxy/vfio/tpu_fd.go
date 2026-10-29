@@ -131,7 +131,7 @@ func (fd *tpuFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	if fd.isRestored() {
 		return nil
 	}
-	return fdnotifier.UpdateMask(fd.hostFD, &fd.queue, e, mask)
+	return fdnotifier.UpdateMask(fd.hostFD, e, mask)
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.

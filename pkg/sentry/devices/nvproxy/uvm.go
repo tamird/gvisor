@@ -123,7 +123,7 @@ func (fd *uvmFD) EpollSource() vfs.EpollSource {
 
 // UpdateMask implements vfs.EpollSource.UpdateMask.
 func (fd *uvmFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
-	return fdnotifier.UpdateMask(fd.hostFD, &fd.queue, e, mask)
+	return fdnotifier.UpdateMask(fd.hostFD, e, mask)
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.

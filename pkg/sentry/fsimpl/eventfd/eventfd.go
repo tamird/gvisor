@@ -369,7 +369,7 @@ func (efd *EventFileDescription) UpdateMask(e *waiter.Entry, mask waiter.EventMa
 	efd.mu.Lock()
 	defer efd.mu.Unlock()
 	if efd.hostfd >= 0 {
-		return fdnotifier.UpdateMask(int32(efd.hostfd), &efd.queue, e, mask)
+		return fdnotifier.UpdateMask(int32(efd.hostfd), e, mask)
 	}
 	return efd.queue.UpdateMask(e, mask)
 }

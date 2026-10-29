@@ -1011,7 +1011,7 @@ func (e *baseEndpoint) updateMaskLocked(entry *waiter.Entry, mask waiter.EventMa
 		return e.peer.UpdateMask(e.WaitQueue, entry, mask)
 	}
 	if bound != nil {
-		return fdnotifier.UpdateMask(bound.NotificationFD(), e.WaitQueue, entry, mask)
+		return fdnotifier.UpdateMask(bound.NotificationFD(), entry, mask)
 	}
 	return e.WaitQueue.UpdateMask(entry, mask)
 }

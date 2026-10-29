@@ -51,7 +51,7 @@ func TestRejectedMaskKeepsHostSubscription(t *testing.T) {
 
 	// Linux rejects EPOLLEXCLUSIVE in EPOLL_CTL_MOD without disturbing the
 	// earlier subscription. The software mask must also remain readable.
-	if got, want := fdnotifier.UpdateMask(fd, &q, &entry, waiter.EventOut|unix.EPOLLEXCLUSIVE), error(unix.EINVAL); !errors.Is(got, want) {
+	if got, want := fdnotifier.UpdateMask(fd, &entry, waiter.EventOut|unix.EPOLLEXCLUSIVE), error(unix.EINVAL); !errors.Is(got, want) {
 		t.Fatalf("UpdateMask: got %v, want %v", got, want)
 	}
 	if got, want := entry.Mask(), waiter.EventIn; got != want {
