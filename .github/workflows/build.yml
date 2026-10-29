@@ -176,6 +176,20 @@ jobs:
         chmod +x "$decoder"
         printf 'QUALIFICATION_DECODER=%s\n' "$decoder" >> "$GITHUB_ENV"
 
+    - name: Resolve and freeze the qualification module lock
+      shell: bash
+      run: |
+        cp test/rbe/scratch-release.lock MODULE.bazel.lock
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        bazelisk mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/release-modules.json"
+        python3 - "$RUNNER_TEMP/release-modules.json" <<'PYGRAPH'
+        import json, sys
+        modules = [module["key"] for module in json.load(open(sys.argv[1]))["dependencies"]]
+        assert [key for key in modules if key.startswith("rules_python@")] == ["rules_python@2.4.5"]
+        PYGRAPH
+        sha256sum MODULE.bazel.lock > "$RUNNER_TEMP/qualification-module-lock.sha256"
+
     - name: Coordinate qualification on Actions
       timeout-minutes: ${{ matrix.step_minutes }}
       shell: bash
@@ -194,7 +208,10 @@ jobs:
           options+=(--bazel-option=--spawn_strategy=remote,local
             --bazel-option=--strategy=SourceImageOCI=local)
         fi
-        bash test/rbe/actions.sh "${options[@]}"
+        rc=0
+        bash test/rbe/actions.sh "${options[@]}" || rc=$?
+        sha256sum --check "$RUNNER_TEMP/qualification-module-lock.sha256" || { (( rc != 0 )) || rc=1; }
+        exit "$rc"
 
     - name: Retain this row's unchanged verdict and evidence
       if: always()
