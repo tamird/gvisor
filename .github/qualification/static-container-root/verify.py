@@ -45,8 +45,11 @@ def phase(name):
             "diagnostics":diagnostics(name)},rows
 
 def main():
-    ledger={"source":"b9193eed0d34d1ad1aa0a5da5603c82871052e2e","target":"linux_amd64","flags":"--config=x86_64 --@io_bazel_rules_go//go/config:pure=false","verdict":"INCOMPLETE"}
+    original=sys.argv[2:]==["original"]
+    source="f8cc8437f954cb8813509846c52fe2292f0c0123" if original else "b9193eed0d34d1ad1aa0a5da5603c82871052e2e"
+    ledger={"source":source,"target":"linux_amd64","flags":"--config=x86_64 --@io_bazel_rules_go//go/config:pure=false","verdict":"INCOMPLETE"}
     try:
+        assert subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip()==source
         build,raw=phase("build"); ledger["build"]=build
         test,testrows=phase("test"); ledger["test"]=test
         def configured():
@@ -71,6 +74,10 @@ def main():
                 rec.update(path=suffix,machine=("x86-64" if "X86-64" in hdr else None),interp=bool(re.search(r"^\s*INTERP\s",ph,re.M)),needed=re.findall(r"\(NEEDED\).*?\[([^]]+)\]",dy))
                 yield c["label"],rec
         build["outputs"]=dict(configured())
+        if original:
+            assert build["exit"]==0 and set(build["outputs"])==set(inputs) and all(x["machine"]=="x86-64" for x in build["outputs"].values()),"missing actual GNU outputs"
+            ledger["verdict"]="PASS"
+            return
         record={}
         test["TestRootNotMount"]=record
         for r in testrows:

@@ -6,7 +6,10 @@ out=$tmp/static-consumer
 rc=$tmp/consumer.bazelrc
 export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$workspace"
 cd "$workspace"
-test "$(git rev-parse HEAD)" = b9193eed0d34d1ad1aa0a5da5603c82871052e2e
+readonly mode=${3:-fixed}
+source=b9193eed0d34d1ad1aa0a5da5603c82871052e2e
+if [[ $mode = original ]]; then source=f8cc8437f954cb8813509846c52fe2292f0c0123; fi
+test "$(git rev-parse HEAD)" = "$source"
 base=(bazel --bazelrc="$rc")
 flags=(--config=x86_64 --@io_bazel_rules_go//go/config:pure=false --jobs=36 --remote_timeout=15m --remote_download_outputs=toplevel)
 status=0
@@ -24,6 +27,10 @@ if [[ $status == 0 ]]; then
   done
   set -e
   }
+fi
+if [[ $mode = original ]]; then
+  chmod -R a+rX "$out"
+  exit 0
 fi
   status=0
   "${base[@]}" test "${flags[@]}" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_regex='.*[/]test[.](log|xml)$' --test_timeout=300 --test_sharding_strategy=disabled --test_filter='^TestRootNotMount$' --test_arg=-test.v --build_event_json_file="$out/test.bep" //runsc/container:container_test >"$out/test.log.native" 2>&1 || status=$?
