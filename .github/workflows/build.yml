@@ -1,35 +1,79 @@
-name: CI
-
-"on":
+name: Replay the archive writer on the retained release layouts
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/staged-release-layout]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  replay:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PRODUCT: a5627c7311e6acaed4179f3ebd6a0694661336d9
+      CONTROL: c5ec52f3721be40a16c730f6fa3147cbd90cdc22
+      PREVIOUS: 40971730771
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Recover and confirm the two original build receipts
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^) == "$PRODUCT" ]]
+        git checkout --quiet --detach "$PRODUCT"
+        gh api "repos/tamird/gvisor/actions/runs/$PREVIOUS/artifacts" --jq '.artifacts[]|select(.name=="staged-layout-verdicts" and (.expired|not))' > "$RUNNER_TEMP/metadata.json"
+        id=$(jq -er '.id' "$RUNNER_TEMP/metadata.json")
+        gh api "repos/tamird/gvisor/actions/artifacts/$id/zip" > "$RUNNER_TEMP/original.zip"
+        [[ $(jq -er '.digest' "$RUNNER_TEMP/metadata.json") == "sha256:$(sha256sum "$RUNNER_TEMP/original.zip"|cut -d' ' -f1)" ]]
+        mkdir "$RUNNER_TEMP/receipt"; unzip -q "$RUNNER_TEMP/original.zip" -d "$RUNNER_TEMP/receipt"
+        for rev in "$CONTROL" "$PRODUCT"; do
+          jq -e --arg s "$rev" '.source==$s and .status=="PASS" and (.errors|length)==0 and (.missing|length)==0 and (.failures|length)==0 and .native_exit==0 and .bep_finish.overallSuccess and (.expected_labels|length)==8' "$RUNNER_TEMP/receipt/$rev/verdict.json" > /dev/null
+        done
+    - name: Resolve the only difference with the real package writer
+      run: |
+        set -euo pipefail
+        bazelisk build @rules_pkg//pkg/private/tar:build_tar
+        writer=$(bazelisk cquery --output=files @rules_pkg//pkg/private/tar:build_tar | awk '/\/build_tar$/ {print; exit}')
+        test -x "$writer"
+        python3 - "$PWD/$writer" "$RUNNER_TEMP" <<'PY'
+        import hashlib, json, os, pathlib, subprocess, sys, tarfile
+        writer, root = sys.argv[1], pathlib.Path(sys.argv[2])
+        data = root/"receipt"
+        revs = [os.environ["CONTROL"], os.environ["PRODUCT"]]
+        writer_input = root/"writer-input"
+        writer_input.mkdir()
+        names = sorted(p.name for p in (data/revs[0]/"manifests").glob("*.manifest"))
+        assert len(names)==8
+        assert (data/revs[0]/"members.txt").read_bytes()==(data/revs[1]/"members.txt").read_bytes()
+        records=[]
+        for name in names:
+            products=[]
+            for rev in revs:
+                original=data/rev/"manifests"/name
+                rows=json.loads(original.read_text())
+                for row in rows:
+                    src=pathlib.Path(row["src"])
+                    assert not src.is_absolute() and ".." not in src.parts and row["type"]=="file"
+                    p=writer_input/src;p.parent.mkdir(parents=True,exist_ok=True)
+                    p.write_text(str(src));p.chmod(0o644)
+                output=root/f"{rev}-{name}.tar"
+                subprocess.run([writer,"--manifest",str(original),"--output",str(output),"--directory","/","--mode","0755","--mtime","portable","--create_parents"],cwd=writer_input,check=True)
+                with tarfile.open(output) as t:
+                    entries=[m for m in t if m.name.removeprefix("./")=="containerd-shim-runsc-v1"]
+                    assert len(entries)==1 and entries[0].mode==0o755
+                products.append(hashlib.file_digest(output.open("rb"),"sha256").hexdigest())
+            assert products[0]==products[1],(name,products)
+            records.append({"target":name.removesuffix(".manifest"),"installed_shim_mode":"0755","tar_sha256":products[1]})
+        (data/"replay.json").write_text(json.dumps({"sources":revs,"status":"PASS","expected":len(names),"executed":records,"failures":[],"skips":[],"missing":[],"original_artifact":json.loads((root/"metadata.json").read_text())["id"]},indent=2)+"\n")
+        PY
+        bazelisk run --run_in_cwd @buildifier_prebuilt//:buildifier -- -mode=check debian/BUILD tools/release.bzl tools/stagedcheck/BUILD
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: staged-release-replay
+        path: ${{ runner.temp }}/receipt
