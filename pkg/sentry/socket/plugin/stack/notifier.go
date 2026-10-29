@@ -92,20 +92,40 @@ func (n *Notifier) RemoveFD(fd uint32) {
 	delete(n.eventMap, fd)
 }
 
-// UpdateFD updates fd's event registration in the plugin stack's epoll
-// instance.
-//
-// Callers must not hold the registered queue's mutex. checklocks cannot
-// express the queue selected by eventMap[fd] in an entry contract.
+// register adds e only if the plugin accepts the resulting subscription.
 //
 // +checklocksexclude:n.mu
-func (n *Notifier) UpdateFD(fd uint32) {
+// +checklocksexclude:s.eventInfo.Wq.mu
+func (n *Notifier) register(s *socketOperations, e *waiter.Entry) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-
-	if eventInfo, ok := n.eventMap[fd]; ok {
-		n.waitFD(fd, eventInfo)
+	q := s.eventInfo.Wq
+	q.EventRegister(e)
+	if err := n.program(s.fd, &s.eventInfo, q.Events()); err != nil {
+		q.EventUnregister(e)
+		return err
 	}
+	return nil
+}
+
+// +checklocksexclude:n.mu
+// +checklocksexclude:s.eventInfo.Wq.mu
+func (n *Notifier) unregister(s *socketOperations, e *waiter.Entry) error {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	q := s.eventInfo.Wq
+	q.EventUnregister(e)
+	return n.program(s.fd, &s.eventInfo, q.Events())
+}
+
+// +checklocksexclude:n.mu
+// +checklocksexclude:s.eventInfo.Wq.mu
+func (n *Notifier) updateMask(s *socketOperations, e *waiter.Entry, mask waiter.EventMask) error {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	return s.eventInfo.Wq.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
+		return n.program(s.fd, &s.eventInfo, aggregate)
+	})
 }
 
 // waitAndNotify loops waiting for io event notifications from the epoll
@@ -159,30 +179,24 @@ func (n *Notifier) waitAndNotify(ioInit chan int32) error {
 	}
 }
 
-// waitFD updates fd's registration to match its queue's current interest.
-//
-// Preconditions: eventInfo == n.eventMap[fd].
+// program installs the aggregate mask and records it only on success.
 //
 // +checklocks:n.mu
-// +checklocksexclude:eventInfo.Wq.mu
-func (n *Notifier) waitFD(fd uint32, eventInfo *plugin.EventInfo) {
-	mask := eventInfo.Wq.Events()
-
-	eventInfo.Mask = mask
-	if !eventInfo.Waiting && mask == 0 {
-		return
+func (n *Notifier) program(fd uint32, info *plugin.EventInfo, mask waiter.EventMask) error {
+	if info.Mask == mask {
+		return nil
 	}
-
+	op := syscall.EPOLL_CTL_MOD
 	switch {
-	case !eventInfo.Waiting && mask != 0:
-		cgo.EpollCtl(n.epFD, syscall.EPOLL_CTL_ADD, fd, uint32(mask))
-		eventInfo.Waiting = true
-	case eventInfo.Waiting && mask == 0:
-		cgo.EpollCtl(n.epFD, syscall.EPOLL_CTL_DEL, fd, uint32(mask))
-		eventInfo.Ready.Store(0)
-		eventInfo.Waiting = false
-	case eventInfo.Waiting && mask != 0:
-		cgo.EpollCtl(n.epFD, syscall.EPOLL_CTL_MOD, fd, uint32(mask))
-		atomicbitops.AndUint64(&eventInfo.Ready, uint64(mask))
+	case info.Mask == 0:
+		op = syscall.EPOLL_CTL_ADD
+	case mask == 0:
+		op = syscall.EPOLL_CTL_DEL
 	}
+	if err := cgo.EpollCtl(n.epFD, op, fd, uint32(mask)); err != nil {
+		return err
+	}
+	info.Mask = mask
+	atomicbitops.AndUint64(&info.Ready, uint64(mask))
+	return nil
 }
