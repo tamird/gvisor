@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T15:12:15.868499+00:00",
+    "updatedAt": "2026-10-29T15:26:07.814492+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33348,19 +33348,35 @@
         {
           "label": "Qualified intermediate source",
           "url": "https://github.com/tamird/gvisor/commit/4089e4d00cf2cf178639b7ff6d83e0613e7814a0"
+        },
+        {
+          "label": "Fork amendment",
+          "url": "https://github.com/tamird/gvisor/commit/6946292a2275252009256d882c44900419ff0934"
+        },
+        {
+          "label": "Original accepts malformed file",
+          "url": "https://app.buildbuddy.io/invocation/8c9b0ad3-f334-4735-8717-8ed9c6a5e413"
+        },
+        {
+          "label": "Clean and deliberate failure, AMD64/ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40900431019"
+        },
+        {
+          "label": "Hostile parent config ignored during fix",
+          "url": "https://app.buildbuddy.io/invocation/62200a1b-dc1c-4b09-973f-be9b28cf9962"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
+      "updatedAt": "2026-10-29T15:25:27.950951+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T15:12:15.868499+00:00",
+        "observedAt": "2026-10-29T15:25:27.950951+00:00",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "disposition": "Agent work",
-        "nextAction": "Cover new BUILD.bazel packages and make Buildifier ignore ambient configuration; retain the two verified scratch architectures.",
+        "disposition": "Qualified fork amendment",
+        "nextAction": "Contributor review of the shell-free amendment; publish on #16663 after approval.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16663",
-          "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+          "https://github.com/tamird/gvisor/commit/6946292a2275252009256d882c44900419ff0934",
+          "https://github.com/tamird/gvisor/actions/runs/40900431019"
         ]
       },
       "refinement": {
@@ -33368,8 +33384,18 @@
           "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
         },
         "after": {
-          "head": "4089e4d00cf2cf178639b7ff6d83e0613e7814a0"
+          "head": "6946292a2275252009256d882c44900419ff0934"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "6946292a2275252009256d882c44900419ff0934",
+        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+        "url": "https://github.com/tamird/gvisor/commit/6946292a2275252009256d882c44900419ff0934",
+        "title": "Check Buildifier formatting with one declared Bazel action",
+        "summary": "Check first-party packages without Bash or Git. Include nested BUILD.bazel files and the optional root formatter config; exclude foreign repositories.",
+        "body": "The former checker accepted an invalid file with BUILDIFIER_CONFIG=example. The new action rejects it and fixes only the workspace files with the declared root config. AMD64 and ARM64 checked the repository."
       }
     },
     {
@@ -33852,13 +33878,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/release-archives-versioned",
-      "head": "e4e5276c25c0b60d11ecdfe03f0d3709624cdd41",
+      "head": "0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5",
       "title": "Stage both release architectures with one Bazel target",
-      "url": "https://github.com/tamird/gvisor/commit/e4e5276c25c0b60d11ecdfe03f0d3709624cdd41",
+      "url": "https://github.com/tamird/gvisor/commit/0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5",
       "group": "release",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
-      "summary": "Build the Debian packages and both compressed archives in a single Bazel invocation and publish from architecture-named directories. The build passed; signing, archive contents and the Make handoff are being qualified.",
+      "updatedAt": "2026-10-29T15:25:27.950951+00:00",
+      "summary": "Build all six native packages and archives in one Bazel configuration. Build optional Python artifacts first and verify that both native architectures are complete before signing. The archive build passed; the first signing fixture used the wrong Debian archive path. The corrected offline publication and missing-architecture checks are running.",
       "evidence": [
         {
           "label": "Proposed release target",
@@ -33871,6 +33897,14 @@
         {
           "label": "Signing and published-layout check",
           "url": "https://github.com/tamird/gvisor/actions/runs/40897823760"
+        },
+        {
+          "label": "Source and complete-input preflight",
+          "url": "https://github.com/tamird/gvisor/commit/0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5"
+        },
+        {
+          "label": "Offline publication and missing-input checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40901180912"
         }
       ]
     }
@@ -50068,9 +50102,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
+      "updatedAt": "2026-10-29T15:26:07.814492+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Determine what distinguishes the five timed-out tail probes from the other 35. Track changes to the receive-pressure, SACK, and probe PRs and keep the reviewer guide current.",
+      "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
         {
           "text": "Initial census: 510 open PRs inspected by changed path and title, including exports. The networking/performance labels and TCP, retransmission, SACK, RACK, CUBIC and netstack searches yielded 184 distinct candidate issues; many are not TCP defects.",
@@ -50280,6 +50314,23 @@
             {
               "label": "40 completed transfers",
               "url": "https://app.buildbuddy.io/invocation/70defa53-242e-4674-a2db-f6a2b3ec4297"
+            }
+          ]
+        },
+        {
+          "text": "Eight matched pairs produced byte-identical ACKs whether the original tail or its probe reached the receiving stack, with and without timestamps. At 20 ms, a recent 10 ms minimum permitted repairs; a minimum refreshed to 30 ms did not in the next 10 ms. The SACK proves which bytes arrived, not which transmission delivered them. Relaxing the RACK threshold would also accept cases where the probe was lost. Both earlier holes really were losses.",
+          "evidence": [
+            {
+              "label": "Matched original/probe receipts",
+              "url": "https://app.buildbuddy.io/invocation/c4acb4d1-8a72-49fb-bb14-0aec5482304c"
+            },
+            {
+              "label": "Native one-job verification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40900024545"
+            },
+            {
+              "label": "RFC 8985 §6.2",
+              "url": "https://datatracker.ietf.org/doc/html/rfc8985#section-6.2"
             }
           ]
         }
