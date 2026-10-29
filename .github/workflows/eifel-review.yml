@@ -2,7 +2,7 @@ name: Eifel timestamp feedback comparison
 
 "on":
   push:
-    branches: [qualification/eifel-review-rbe]
+    branches: [qualification/eifel-reviewed-ack-fixture]
 
 permissions:
   contents: read
@@ -33,11 +33,11 @@ jobs:
           sha256sum --check <<'SUMS'
           0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
           209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
-          a27a579af1dc1177c38f2a071a8cb25b32d34773b7c6a84a8dd010d05324d7f4  task/request.json
-          0d5093bf5ace6df077d62f094ccef7e34d5ba045cdd5606c9008be61cbee5ae1  task/plan.json
-          b668793f1ae72105f6b32bcc259c6a889e4ec5d33068c7375beeff76a1ebde54  task/entry.json
-          0cfa984eb3a4cfc5ddc03f482303d8445b72b3e3741d3f430a35dc52c61cf2dd  task/submit.py
-          721656c98c582099477070f3f1871156ed7609d80ae3f7da5b18a8739ac6c94b  task/receipt.py
+          72006238b8c0040f01276f81af1c758019fcbaa841327c938ce070343130e406  task/request.json
+          6c559920b26145c01f79503186989c0caf8dbfbcb79c9f1a30d0b489370c6612  task/plan.json
+          49513b035df1725d3ed44397f14bae732a2885a4ea30f01a7f22482ce01db03b  task/entry.json
+          b9c01b215cbb3c120ec53943e50ec20de5172d77fc0c19a5d9ad59c1372b611e  task/submit.py
+          ad4fb7bb036c025020ed5a9b8fdc3ff285ad0f7cf86403c4914a2564ee578541  task/receipt.py
           SUMS
           python3 - <<'PYTHON'
           import json

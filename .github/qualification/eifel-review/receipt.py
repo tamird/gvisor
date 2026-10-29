@@ -12,12 +12,12 @@ import tarfile
 from uuid import UUID
 import xml.etree.ElementTree as ET
 
-SOURCE="0758e73f2109efdf99a9bd93cf97a8735622206b"
-STOCK="499d0dcec661f36b7a7eb9dce92dd23135be91ca"
-REQUEST="a27a579af1dc1177c38f2a071a8cb25b32d34773b7c6a84a8dd010d05324d7f4"
+SOURCE="450dd7775cfa6114cf02a6b754a258235f447f52"
+STOCK="00130fec350fa5a2ec715eb5a0ae272cb10cf601"
+REQUEST="72006238b8c0040f01276f81af1c758019fcbaa841327c938ce070343130e406"
 OWNER="//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test"
 NOGO=("//pkg/tcpip/transport/tcp:tcp_nogo",OWNER+"_nogo")
-PHASES={"prior-head-controls":(STOCK,(OWNER,)),"corrected-sack":(SOURCE,(OWNER,)),"corrected-nogo":(SOURCE,NOGO)}
+PHASES={"prior-head-controls":(STOCK,(OWNER,)),"corrected-sack":(SOURCE,(OWNER,))}
 CASE="TestDetectSpuriousRecoveryWithRTO"
 NAMES={CASE,*(CASE+"/"+x for x in ("timestamps","no_timestamps","missing_timestamp","zero_echo"))}
 DIAGNOSTICS=("SpuriousRecovery counter = 1, want 0","SpuriousRTORecovery counter = 1, want 0")
@@ -104,6 +104,13 @@ def report(task):
                 owner["selected"]={n.get("name"):status(n) for n in nodes if n.get("name") in NAMES}
                 owner["zero_echo_counter_failures"]=[key.split(" ",1)[0] for key in DIAGNOSTICS if key.encode() in primary["test.log"] and any(n.get("name")==CASE+"/zero_echo" and key in "".join(n.itertext()) for n in nodes)]
                 owner["target_cpus"]=[cpu for cpu in ("amd64","arm64") if re.search(cpu.encode()+rb"\s*\.\.\.\s*PASS",primary["test.log"],re.I)] if label!=OWNER else []
+                owner["selected_failures"]={}
+                for node in nodes:
+                    name=node.get("name")
+                    if name not in NAMES or name==CASE or status(node)!="FAILED":continue
+                    text="".join(node.itertext())
+                    needles=("SpuriousRecovery = true, want false","SpuriousRecovery counter = 1, want 0","SpuriousRTORecovery counter = 1, want 0","RetransmitTS was not recorded","timed out waiting for the ACK probe")
+                    owner["selected_failures"][name]={"observations":[x for x in needles if x in text and x.encode() in primary["test.log"]],"source_lines":sorted({int(x) for x in re.findall(r"tcp_sack_test[.]go:(\d+):",text)})[:16]}
                 physical=stored.get("owners",{}).get(label,{})
                 owner["workers"]=[{"sha256":digest(v["digest"]["hash"]),"reports":[n for n in ("test.log","test.xml") if n in v["reports"]],"exit":number(v["exit"],255)} for v in physical.get("workers",[])][:3]
                 if physical.get("diagnostic"):owner["callback_lines"]=[int(x) for x in re.findall(r'image_workload[.]py", line ([0-9]+)',physical["diagnostic"])][:8]
@@ -113,9 +120,8 @@ def report(task):
                   and original.get("counts")=={"FAILED":2,"PASSED":3,"SKIPPED":0}
                   and len(original.get("zero_echo_counter_failures",[]))==2)
         corrected=(fixed.get("selected")=={n:"PASSED" for n in NAMES} and fixed.get("counts",{}).get("FAILED")==0 and fixed.get("counts",{}).get("SKIPPED")==0)
-        ana=all(out["phases"]["corrected-nogo"]["owners"].get(label,{}).get("target_cpus")==["amd64","arm64"] for label in NOGO)
-        out.update(control_observed=negative,corrected_observed=corrected,analyzers_observed=ana,
-                   result="CONFIRMED_DIFFERENTIAL" if negative and corrected and ana and all_verified else "INCOMPLETE")
+        out.update(control_observed=negative,corrected_observed=corrected,
+                   result="CONFIRMED_DIFFERENTIAL" if negative and corrected and all_verified else "INCOMPLETE")
     return out
 
 class Quiet:

@@ -1,12 +1,14 @@
 {
-  "request_sha256": "a27a579af1dc1177c38f2a071a8cb25b32d34773b7c6a84a8dd010d05324d7f4",
-  "source": "0758e73f2109efdf99a9bd93cf97a8735622206b",
-  "stock": "499d0dcec661f36b7a7eb9dce92dd23135be91ca",
-  "guard": "direct siblings on 9e3e72d7316c7530a4455f1d4ebb41f60ca064e3; exact shared test blob; one remote Go package, its two analyzers; remote work not executed during preflight",
+  "request_sha256": "72006238b8c0040f01276f81af1c758019fcbaa841327c938ce070343130e406",
+  "source": "450dd7775cfa6114cf02a6b754a258235f447f52",
+  "stock": "00130fec350fa5a2ec715eb5a0ae272cb10cf601",
+  "parent": "9e3e72d7316c7530a4455f1d4ebb41f60ca064e3",
+  "initial_original": "53e597fd-ea98-4647-b438-91a93cfba481",
+  "selection": "two filtered tcp_sack_test runs; exact same fixture; unchanged SACK cases and analyzers not re-executed",
   "files": {
     "image_bootstrap.py": "ef7522933375e41e0faf9894394554d129cdee62fc0a33d70b3f85697a81e3dc",
     "image_execution.py": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
     "image_qualification.py": "3225c70bf3985c792040dfd3817dfe4e1d6a40157a5d2fff8754e991887df0d4",
-    "image_workload.py": "95eac5084c98a1ec1815409d05e71a98b086895d523a58203951ab0959f67188"
+    "image_workload.py": "60f66ff47901ab6cf9c415b10a1627b407112cacd69c148df1043defe2c34758"
   }
 }

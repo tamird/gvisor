@@ -12,11 +12,11 @@ sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
 import qualification_report as report
 
 base = Path(__file__).parent
-SOURCE = "0758e73f2109efdf99a9bd93cf97a8735622206b"
+SOURCE = "450dd7775cfa6114cf02a6b754a258235f447f52"
 HOST = "cb548161f537465fda2576793e6d6cea59a32260"
-OWNERS = ['//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test', '//pkg/tcpip/transport/tcp:tcp_nogo', '//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test_nogo']
-STOCK = "499d0dcec661f36b7a7eb9dce92dd23135be91ca"
-REQUEST = "a27a579af1dc1177c38f2a071a8cb25b32d34773b7c6a84a8dd010d05324d7f4"
+OWNERS = ['//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test']
+STOCK = "00130fec350fa5a2ec715eb5a0ae272cb10cf601"
+REQUEST = "72006238b8c0040f01276f81af1c758019fcbaa841327c938ce070343130e406"
 
 
 class MemoryKey:
