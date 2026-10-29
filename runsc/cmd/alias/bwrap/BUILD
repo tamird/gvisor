@@ -1,4 +1,5 @@
-load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
+load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools/bazeldefs:platforms.bzl", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -37,6 +38,7 @@ go_test(
         "@com_github_google_go_cmp//cmp:go_default_library",
         "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
         "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
     ],
 )
 
@@ -47,7 +49,6 @@ go_test(
         "//:release",
     ],
     embed = [":bwrap"],
-    # The runtime creates nested namespaces and configures cgroups.
     exec_properties = namespace_test_exec_properties(),
     tags = [
         "manual",
@@ -56,5 +57,6 @@ go_test(
         "//pkg/test/testutil",
         "//runsc/specutils",
         "@com_github_google_go_cmp//cmp:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
     ],
 )
