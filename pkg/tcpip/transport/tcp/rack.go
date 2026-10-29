@@ -209,6 +209,7 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.traceDecision("pto_expired", nil, 0)
 	var dataSent bool
 	if s.writeNext != nil && s.writeNext.xmitCount == 0 && s.Outstanding < s.SndCwnd {
 		dataSent = s.maybeSendSegment(s.writeNext, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
@@ -449,8 +450,10 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 
 	fastRetransmit := false
 	if !rc.snd.FastRecovery.Active {
+		rc.snd.traceDecision("rack_timer_opportunity", nil, numLost)
 		rc.snd.cc.HandleLossDetected()
 		rc.snd.enterRecovery()
+		rc.snd.traceDecision("rack_timer_entered", nil, numLost)
 		fastRetransmit = true
 	}
 
