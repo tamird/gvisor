@@ -621,7 +621,7 @@ PREPARATION
       esac
     done
     qualification_bazel cquery "${alias_options[@]}" --output=jsonproto --transitions=lite \
-      --proto:rule_attributes=actual --proto:rule_inputs_and_outputs \
+      --proto:output_rule_attrs=actual --proto:rule_inputs_and_outputs \
       "$(<"$directory/source-image-alias-query.txt")" > "$directory/source-image-aliases.json" || capture_status=$?
   fi
   git rev-parse HEAD > "$directory/final-head.txt" || capture_status=1
