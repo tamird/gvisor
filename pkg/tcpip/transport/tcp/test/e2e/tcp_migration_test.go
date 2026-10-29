@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -633,5 +634,110 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 	}
 	if got := restoredStack2.CheckLocalAddress(preservedNICID, header.IPv6ProtocolNumber, preservedIPv6Addr.Address); got != preservedNICID {
 		t.Fatalf("restoredStack2.CheckLocalAddress(IPv6) = %d, want %d", got, preservedNICID)
+	}
+}
+
+// restoreGSORoute restores a connected stack on a new link with the given
+// route capabilities. The caller owns the restored stack.
+func restoreGSORoute(t *testing.T, c *testcontext.Context, mtu uint32, gso stack.SupportedGSO) (*stack.Stack, *channel.Endpoint) {
+	t.Helper()
+	var saved bytes.Buffer
+	if _, err := state.Save(t.Context(), &saved, c.Stack()); err != nil {
+		t.Fatal(err)
+	}
+	st := stack.New(stack.Options{
+		TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+		NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
+	})
+	st.SetAllowLiveTCPMigration(true)
+	if _, err := state.Load(t.Context(), bytes.NewReader(saved.Bytes()), st); err != nil {
+		t.Fatal(err)
+	}
+	link := channel.New(100, mtu, "")
+	link.SupportedGSOKind = gso
+	if err := st.CreateNIC(1, link); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.AddProtocolAddress(1, tcpip.ProtocolAddress{Protocol: ipv4.ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix}, stack.AddressProperties{}); err != nil {
+		t.Fatal(err)
+	}
+	st.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+	st.Restore()
+	return st, link
+}
+
+func sendRestoredGSOAck(c *testcontext.Context, st *stack.Stack, link *channel.Endpoint, offset int) {
+	p := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: c.BuildSegment(nil, &testcontext.Headers{
+		SrcPort: testcontext.TestPort, DstPort: c.Port,
+		SeqNum: seqnum.Value(testcontext.TestInitialSequenceNumber + 1),
+		AckNum: c.IRS.Add(1 + seqnum.Size(offset)), Flags: header.TCPFlagAck, RcvWnd: 30000,
+	})})
+	link.InjectInbound(ipv4.ProtocolNumber, p)
+	p.DecRef()
+	st.Pause()
+	st.Resume()
+}
+
+// TestGSOAfterRestore queues data behind a closed receive window. Its first
+// transmission uses the new route, without any route failure or retransmission.
+func TestGSOAfterRestore(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		from, to stack.SupportedGSO
+		mtu      uint32
+	}{
+		{"same", stack.GVisorGSOSupported, stack.GVisorGSOSupported, 1500},
+		{"enable", stack.GSONotSupported, stack.GVisorGSOSupported, 1500},
+		{"disable", stack.GVisorGSOSupported, stack.GSONotSupported, 1500},
+		{"smaller", stack.GVisorGSOSupported, stack.GVisorGSOSupported, 440},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, GSO: tc.from, Clock: faketime.NewManualClock()})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			c.CreateConnected(testcontext.TestInitialSequenceNumber, 0, -1)
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			data := make([]byte, 3*int(info.SndMss))
+			for i := range data {
+				data[i] = byte(i*17 + i/257)
+			}
+			if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(n) != len(data) {
+				t.Fatalf("write=%d,%v", n, err)
+			}
+			c.Stack().Pause()
+			c.Stack().Resume()
+			if p := c.GetPacketNonBlocking(); p != nil {
+				p.Release()
+				t.Fatal("unexpected data before opening window")
+			}
+			st, link := restoreGSORoute(t, c, tc.mtu, tc.to)
+			defer st.Destroy()
+			ack := func(n int) { sendRestoredGSOAck(c, st, link, n) }
+			ack(0)
+			frames := 0
+			for off := 0; off < len(data); {
+				p := link.Read()
+				if p == nil {
+					t.Fatalf("no resumed data at +%d", off)
+				}
+				th := header.TCP(p.TransportHeader().Slice())
+				v := p.Data().AsRange().ToView()
+				n := len(v.AsSlice())
+				ok := th.SequenceNumber() == uint32(c.IRS)+1+uint32(off) && n > 0 && n <= int(info.SndMss) && p.Size() <= int(tc.mtu) && off+n <= len(data) && bytes.Equal(v.AsSlice(), data[off:off+n]) && (tc.to != stack.GSONotSupported || p.GSOOptions.Type == stack.GSONone)
+				v.Release()
+				p.DecRef()
+				if !ok {
+					t.Fatalf("invalid resumed range at +%d len=%d", off, n)
+				}
+				frames++
+				off += n
+				ack(off)
+			}
+			t.Logf("GSO_RESTORE mode=%s bytes=%d frames=%d", tc.name, len(data), frames)
+		})
 	}
 }
