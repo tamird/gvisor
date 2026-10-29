@@ -396,3 +396,24 @@ func (c *cubicState) HandleWindowRestart() {
 func (c *cubicState) reduceSlowStartThreshold() {
 	c.s.Ssthresh = max(int(float64(c.s.SndCwnd)*c.Beta), 2)
 }
+
+// FirstLossSender is a read-only qualification view of a locked sender.
+type FirstLossSender struct {
+	Cwnd, Threshold, Outstanding, SackedOut int
+	SndUna, SndNxt                          uint32
+	Recovery, TimerArmed                    bool
+	RTONS                                   int64
+}
+
+// FirstLossSender returns a synchronized snapshot at a packet boundary.
+func (e *Endpoint) FirstLossSender() FirstLossSender {
+	e.LockUser()
+	defer e.UnlockUser()
+	s := e.snd
+	if s == nil {
+		return FirstLossSender{}
+	}
+	return FirstLossSender{Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Outstanding: s.Outstanding, SackedOut: s.SackedOut,
+		SndUna: uint32(s.SndUna), SndNxt: uint32(s.SndNxt), Recovery: s.FastRecovery.Active,
+		TimerArmed: s.resendTimer.enabled(), RTONS: int64(s.RTO)}
+}
