@@ -1,7 +1,7 @@
 name: Qualify the clock rebase with the gVisor GNU worker
 on:
   push:
-    branches: [qualification/clock-rebase-gnu-oct29]
+    branches: [qualification/clock-gnu-preflight-oct29]
 permissions:
   contents: read
 jobs:
@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"}
-          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://gcr.io/gvisor-presubmit/default_aarch64@sha256:76cdcaa38feb618b971c97ca2570a7b2cfa4f85b8d9d8a4c86d9df261b2c7ca6"}
+          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
+          - {"pr": "15647", "sha": "a1e81990e7b88a144b9650063e790d7c6f00003d", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -35,6 +35,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
           CPU: ${{ matrix.cpu }}
           WORKER_IMAGE: ${{ matrix.image }}
+          ISOLATION: ${{ matrix.isolation }}
           SHA: ${{ matrix.sha }}
         shell: bash
         run: |
@@ -53,7 +54,7 @@ jobs:
               exec_properties = {
                   "Arch": "$ARCH",
                   "OSFamily": "linux",
-                  "workload-isolation-type": "oci",
+                  "workload-isolation-type": "$ISOLATION",
                   "container-image": "$WORKER_IMAGE",
               },
               visibility = ["//visibility:public"],

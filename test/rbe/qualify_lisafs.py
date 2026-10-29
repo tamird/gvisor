@@ -50,6 +50,24 @@ try:
     assert not (d/"before").read_bytes()
     (d/"commit").write_bytes(git("cat-file", "commit", source))
     bazel = ["bazel", "--bazelrc=" + rc]
+    # Exercise the same stock actions that failed in the earlier worker environments.
+    preflight_targets = [
+        "//pkg/sentry/platform/systrap/sysmsg:sysmsg_lib",
+        "@@protobuf+//bazel/private/oss/toolchains/prebuilt:authenticity_validation",
+    ]
+    run = subprocess.run(bazel + ["build", *preflight_targets], stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, text=True)
+    r["preflight"] = {
+        "targets": preflight_targets, "exit": run.returncode,
+        "invocations": re.findall(r"Invocation ID: ([0-9a-f-]{36})", run.stdout),
+        "errors": [line[:900] for line in run.stdout.splitlines() if line.startswith("ERROR:")
+                   or "not found" in line.lower() or "no such file" in line.lower()
+                   or "error while loading" in line.lower()][:18],
+    }
+    if run.returncode:
+        r.update(native_exit=run.returncode, execution_finished_at=now(),
+                 failure_excerpt=r["preflight"]["errors"])
+        raise RuntimeError("Worker preflight failed; no tests executed")
     args = ["test", "--nocache_test_results", "--test_sharding_strategy=disabled",
             "--test_env=GO_TEST_WRAP_TESTV=1", "--build_event_json_file=" + str(d/"events.raw"),
             "--build_event_json_file_path_conversion=false",
