@@ -44,10 +44,10 @@ already selects the native binary for the execution platform, but its
 runs a Bash or Batch wrapper. The only public raw binaries have
 platform-specific repository names. A [nine-line supplier change](https://github.com/tamird/gvisor/blob/ea7ed498a/tools/lint/buildifier_native.patch)
 exposes the selected executable as `@buildifier_prebuilt//buildifier:native`.
-It [checked all 617 files](https://app.buildbuddy.io/invocation/ef888371-b91a-4198-b4e4-5a8c2e638882)
-and [rejected a new malformed file](https://app.buildbuddy.io/invocation/f30c91d9-c3d5-4eb0-b007-130f63230f47)
-on an empty Linux AMD64 worker. Neither action used a shell or compiled
-Go. The interactive CLI keeps its working-directory behavior.
+The released tool checked 617 files and rejected a new malformed file
+on shell-free [Linux AMD64](https://github.com/tamird/gvisor/actions/runs/40917863627)
+and [Linux ARM64](https://github.com/tamird/gvisor/actions/runs/40919147278)
+workers. The interactive CLI keeps its working-directory behavior.
 
 Building Buildifier from Go source would add a second bootstrap: the
 [Go toolchain requires Bash](https://app.buildbuddy.io/invocation/596d4698-e775-4376-9bff-fe246139cb86).

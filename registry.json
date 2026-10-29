@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T17:08:11.207118+00:00",
+    "updatedAt": "2026-10-29T17:24:29.864587+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37224,9 +37224,22 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
+      "updatedAt": "2026-10-29T17:24:29.864587+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "A fork prototype for retrying locally rejected writes suppressed the first window probe when the peer subsequently advertised zero. A peer that closed its window without the prior refusal did receive the probe. Clearing the local retry when the persist timer takes over restored the probe in both cases. All four connections sent the original 536 bytes when the peer reopened the window. This result is about the prototype, not stock gVisor or a public PR.",
+          "evidence": [
+            {
+              "label": "Original prototype and plain closed-window control",
+              "url": "https://app.buildbuddy.io/invocation/f62bea96-954e-4afd-9a6e-6a2d4cc03e93"
+            },
+            {
+              "label": "Same inputs after the correction",
+              "url": "https://app.buildbuddy.io/invocation/6bae7505-e3f7-41e9-bb47-49accea086a6"
+            }
+          ]
+        },
         {
           "text": "The current-master control failed the small-flight slow-start cases: a ten-segment window grew to 11 after one outstanding segment and to 15 after five. The corrected sender passed those cases and the 10→20→40 continuously backlogged rounds. Its CUBIC first burst was 14 and its Reno first burst 12 with or without the spaced writes. A Linux comparison remains outstanding.",
           "evidence": [
@@ -38952,7 +38965,7 @@
           ]
         }
       ],
-      "nextStep": "Trace the partial ACK and SACK that separate #16081 and #16495 after a second interruption. Separately, distinguish a locally rejected first write from a peer advertising no receive window. The restored-route change is #16666; partial-write accounting is approved after it lands.",
+      "nextStep": "Compare #16081 and #16495 after a second timeout. For a locally refused first write, distinguish retrying unsent data, probing the peer’s window and retransmitting data already in flight. Qualify those transitions before proposing the change upstream.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -49168,9 +49181,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
+      "updatedAt": "2026-10-29T17:24:29.864587+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The tar and Debian writers executed without a shell on AMD64 and ARM64 scratch workers. Both reproduced the normal-worker 10,240-byte tar and 572-byte Debian archive byte for byte. Verdicts followed execution by 1.35 s and 1.32 s; no manual reconstruction. The fixture covers the writers, not the entire release graph.",
+          "evidence": [
+            {
+              "label": "AMD64 executions",
+              "url": "https://app.buildbuddy.io/invocation/05638a84-a61a-40aa-b366-19e24e6ceb57"
+            },
+            {
+              "label": "ARM64 executions",
+              "url": "https://app.buildbuddy.io/invocation/62f5bc71-9fb6-44ee-a2f5-203eb52b99ea"
+            },
+            {
+              "label": "Source, hashes and execution timestamps",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40920211042"
+            }
+          ]
+        },
         {
           "text": "Building //:release directly on the hosted Ubuntu runner failed because an AMD64 build tried to compile the ARM64 systrap stub. Selecting only the target architecture for normal Go builds fixed the failure: the same runner completed 3,994 Bazel actions without the Docker builder and uploaded the same eight paths as upstream. Both systrap sources remained in the configured //:gopath graph. The twelve generated files in upstream’s Go branch provide an exact-source comparison for the exported ZIP.",
           "evidence": [
@@ -50722,10 +50752,27 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T15:57:38.198175+00:00",
+      "updatedAt": "2026-10-29T17:24:29.864587+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
+        {
+          "text": "The existing Buildifier toolchain can supply its native executable to build actions. A nine-line supplier rule change keeps the interactive CLI intact. The selected 8.5.1 binary checked 617 files and rejected a malformed 618th on empty AMD64 and ARM64 workers. The supplier’s 10.1.0 binary and both existing CLI tests passed on ARM64.",
+          "evidence": [
+            {
+              "label": "Exact supplier patch",
+              "url": "https://github.com/tamird/gvisor/blob/7ac25b79c/.github/qualification/lint-native-label/upstream.patch"
+            },
+            {
+              "label": "AMD64 controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40917863627"
+            },
+            {
+              "label": "ARM64 controls, binary identity and supplier checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40919147278"
+            }
+          ]
+        },
         {
           "text": "Pinned upstream wrappers rely on Bash; upstream tool distributions remain useful. Declaring a development-only wheel is insufficient if a load from the root BUILD still reaches it.",
           "evidence": [
