@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T17:24:29.864587+00:00",
+    "updatedAt": "2026-10-29T17:29:11.211836+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34063,10 +34063,10 @@
       "ref": "review/overlay-file-cache-guards",
       "head": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
       "title": "Check the mutex protecting the overlay file cache",
-      "url": "https://github.com/tamird/gvisor/commit/3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+      "url": "https://github.com/tamird/gvisor/commit/3fb1f05b5",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
+      "status": "Published",
+      "updatedAt": "2026-10-29T17:29:11.211836+00:00",
       "summary": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex.",
       "evidence": [
         {
@@ -34078,15 +34078,52 @@
           "url": "https://app.buildbuddy.io/invocation/62632a89-893e-4e1c-b4ff-762b7bbe330c"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
-        "url": "https://github.com/tamird/gvisor/commit/3fb1f05b54b6c3cb7811c183b87d53650f21039c",
-        "title": "Check the mutex protecting the overlay file cache",
-        "summary": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex.",
-        "body": "No lock or runtime path changes. The final-reference exception applies only to dropping the cached file and clearing its pointer."
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+        "observedAt": "2026-10-29T17:29:11.211836+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow maintainer review on #16682.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16682"
+        ]
       }
+    },
+    {
+      "id": "pr:16682",
+      "type": "pr",
+      "number": 16682,
+      "group": "analysis",
+      "updatedAt": "2026-10-29T17:29:11.211836+00:00",
+      "summary": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+        "observedAt": "2026-10-29T17:29:11.211836+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow maintainer review on #16682.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16682"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Positive checks on AMD64 and ARM64",
+          "url": "https://app.buildbuddy.io/invocation/9616c792-09e0-4237-b2ca-7037c8b7cd57"
+        },
+        {
+          "label": "Removing the EventUnregister lock triggers both architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/62632a89-893e-4e1c-b4ff-762b7bbe330c"
+        }
+      ],
+      "repo": "google/gvisor",
+      "ref": "review/overlay-file-cache-guards",
+      "head": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+      "title": "overlay: check the file cache mutex",
+      "status": "open",
+      "reviewDecision": null,
+      "url": "https://github.com/google/gvisor/pull/16682"
     }
   ],
   "edges": [
@@ -49840,7 +49877,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
+      "updatedAt": "2026-10-29T17:29:11.211836+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -49917,7 +49954,7 @@
           ]
         }
       ],
-      "nextStep": "The overlay close fix is published in #16677. Review the independent cache guards; investigate poll registration lifetime separately.",
+      "nextStep": "Follow the overlay close fix (#16677) and cache mutex annotations (#16682) through review. Investigate poll registration lifetime separately.",
       "evidence": [
         {
           "label": "Verified epoll registration contract",
