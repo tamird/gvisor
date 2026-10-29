@@ -41,11 +41,4 @@ install -d -m 700 "$RESTORE_PHASE_DIR"
 export GOMAXPROCS=2
 sha256sum "$release/runsc" "$binary" "$instrumented"
 "$binary" -test.v -test.run='^$' -test.bench='^BenchmarkCaptureRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
-index=0
-for mode in control trace trace control trace control control trace control trace trace control; do
-  (( index+=1 ))
-  exe="$binary"
-  if [[ $mode == trace ]]; then exe="$instrumented"; fi
-  echo "phase-child index=$index mode=$mode"
-  "$exe" -test.v -test.run='^$' -test.bench='^BenchmarkRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
-done
+GVISOR_INDEX_STUDY=1 "$instrumented" -test.v -test.run='^TestCheckpointFileRoundTrip$' -test.count=1 -checkpoint_dir="$RESTORE_PHASE_DIR" -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
