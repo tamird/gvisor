@@ -108,10 +108,10 @@ def main():
         for flag in ("--stamp", "--nostamp"):
             graph = json.loads(command("bazel", "aquery", flag, "--output=jsonproto",
                                        "mnemonic('PyWriteBuildData', deps(@cpplint//:cpplint))"))
-            rows = graph.get("actions", [])
+            actions = graph.get("actions", [])
             names = {p["label"] for p in graph.get("pathFragments", [])}
             result["build_data"][flag] = {
-                "actions": len(rows),
+                "actions": len(actions),
                 "stable_status_input": "stable-status.txt" in names,
                 "volatile_status_input": "volatile-status.txt" in names,
             }
@@ -129,6 +129,15 @@ def main():
             assert configured == 0
         finally:
             config.unlink()
+    settle(result)
+
+
+def settle(result):
+    mode = result["mode"]
+    rows = result["tests"]
+    owners = result["sources"]["by_package"]
+    exit_code = result["lint"]["exit"]
+    assert set(rows) == set(owners) and len(rows) == 23
     extra = []
     for label, row in rows.items():
         control = mode == "bad" and label == BAD
@@ -146,15 +155,16 @@ def main():
     if mode == "good":
         assert result["build_data"]["--stamp"]["actions"] >= 1
         assert result["build_data"]["--stamp"]["stable_status_input"]
-        assert not result["build_data"]["--nostamp"]["actions"]
+        assert not result["build_data"]["--nostamp"]["stable_status_input"]
     result["status"] = "SOURCE_DIAGNOSTICS" if extra else ("PASS" if mode == "good" else "EXPECTED_REJECTION")
 
 
-try:
-    main()
-except Exception as exc:
-    result["exception"] = type(exc).__name__
-    result["line"] = exc.__traceback__.tb_next.tb_lineno if exc.__traceback__.tb_next else exc.__traceback__.tb_lineno
-finally:
-    save()
-sys.exit(int(result["status"] not in ("PASS", "EXPECTED_REJECTION")))
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        result["exception"] = type(exc).__name__
+        result["line"] = exc.__traceback__.tb_next.tb_lineno if exc.__traceback__.tb_next else exc.__traceback__.tb_lineno
+    finally:
+        save()
+    sys.exit(int(result["status"] not in ("PASS", "EXPECTED_REJECTION")))

@@ -1,0 +1,37 @@
+name: Replay retained native cpplint XML
+on:
+  push:
+    branches: [qualification/bazel-cpplint-original]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - name: Recover the two original summaries and fixed reader
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download 40828107600 --repo tamird/gvisor -n cpplint-good -D "$RUNNER_TEMP/good"
+          gh run download 40828107600 --repo tamird/gvisor -n cpplint-bad -D "$RUNNER_TEMP/bad"
+          for module in qualification_report unit_matrix; do
+            gh api "repos/tamird/gvisor/contents/test/rbe/$module.py?ref=05cf00d9d26a5beb8a9af8011375644b8b37a086" -H 'Accept: application/vnd.github.raw+json' > "$RUNNER_TEMP/$module.py"
+          done
+          gh api 'repos/tamird/gvisor/contents/.github/qualification/sidecar-review/original-files.py?ref=ce8309a67079b0450f5083b8b32ffbadf84768a3' -H 'Accept: application/vnd.github.raw+json' > "$RUNNER_TEMP/get-original.py"
+      - name: Check the original XML/log bytes and replay the corrected assertions
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          MODE: good
+        run: PYTHONPATH="$RUNNER_TEMP" ORIGINAL_READER="$RUNNER_TEMP/get-original.py" python3 .github/qualification/lint-source/original.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: cpplint-replay
+          path: ${{ runner.temp }}/replay.json
+          if-no-files-found: error
