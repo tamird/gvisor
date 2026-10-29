@@ -1,5 +1,6 @@
 """Stateify is a tool for generating state wrappers for Go types."""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//tools/bazeldefs:go.bzl", "go_context", "go_rule")
 
 def _go_stateify_impl(ctx):
@@ -13,6 +14,10 @@ def _go_stateify_impl(ctx):
 
     # Run the stateify command.
     args = ["-go=%s" % go_tool.path, "-output=%s" % output.path]
+    if any([src.is_source for src in ctx.files.srcs]):
+        # Without source files, imports must be resolved alongside generated inputs.
+        srcdir = paths.join(ctx.label.workspace_root, ctx.label.package) or "."
+        args.append("-srcdir=%s" % srcdir)
     args.append("-fullpkg=%s" % ctx.attr.package)
     if ctx.attr._statepkg:
         args.append("-statepkg=%s" % ctx.attr._statepkg)

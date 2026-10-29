@@ -35,6 +35,7 @@ import (
 
 var (
 	goTool       = flag.String("go", "", "Go executable for resolving generated imports")
+	srcDir       = flag.String("srcdir", "", "source directory for resolving sibling imports")
 	fullPkg      = flag.String("fullpkg", "", "fully qualified output package")
 	extraImports = flag.String("imports", "", "extra imports for the output file")
 	output       = flag.String("output", "", "output file")
@@ -532,7 +533,11 @@ func writeSource(src []byte) error {
 	}
 	// Use the package directory so goimports sees the same source files as
 	// the generator when resolving names used only in state tags.
-	name := filepath.Join(filepath.Dir(flag.Arg(0)), "state_autogen.go")
+	dir := *srcDir
+	if dir == "" {
+		dir = filepath.Dir(flag.Arg(0))
+	}
+	name := filepath.Join(dir, "state_autogen.go")
 	src, err := imports.Process(name, src, nil)
 	if err != nil {
 		return err
