@@ -440,14 +440,17 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 
 // TestApplicationLimitedLinuxWindow measures the native sender using actual
 // data/ACK sequence numbers and TCP_INFO. Time is wall time on this DUT.
-func TestApplicationLimitedLinuxWindow(t *testing.T) {
+func TestPostLossIdleLinuxWindow(t *testing.T) {
 	for _, algorithm := range []string{"cubic", "reno"} {
 		for _, schedule := range []struct {
 			name string
 			gap  time.Duration
-		}{{"dense", 0}, {"spaced", 40 * time.Millisecond}} {
+		}{{"immediate", 0}, {"idle", 30 * time.Second}} {
 			t.Run(algorithm+"_"+schedule.name, func(t *testing.T) {
 				dut, conn, fd, mss := createSACKConnection(t)
+				if !dut.Uname.IsLinux() {
+					t.Fatal("native Linux DUT required")
+				}
 				dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte(algorithm))
 				if got := string(bytes.TrimRight(dut.GetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, 16), "\x00")); got != algorithm {
 					t.Fatalf("TCP_CONGESTION = %q, want %q", got, algorithm)
@@ -483,6 +486,7 @@ func TestApplicationLimitedLinuxWindow(t *testing.T) {
 						t.Fatal(err)
 					}
 				}
+				initialWindow := info().SndCwnd
 				head := *conn.RemoteSeqNum(t)
 				send(head)
 				head = head.Add(seqnum.Size(mss))
@@ -512,68 +516,108 @@ func TestApplicationLimitedLinuxWindow(t *testing.T) {
 				if base.SndCwnd < base.SndSsthresh || int(base.SndCwnd)*mss >= window {
 					t.Fatalf("not unconstrained congestion avoidance: cwnd=%d threshold=%d mss=%d", base.SndCwnd, base.SndSsthresh, mss)
 				}
-				type sample struct {
-					AtNS                             int64
-					Cwnd, Unacked, NotSent, RTT, RTO uint32
+				// Prime CUBIC with a whole CA window before the idle timer starts.
+				// TCP_INFO does not expose CUBIC's epoch; prove the full flight.
+				dut.SetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_SNDBUF, 256<<10)
+				type flight struct {
+					Start                                      uint32
+					Bytes, Frames, Captured                    int
+					Cwnd, Threshold, Unacked, Unsent, RTT, RTO uint32
 				}
-				samples := []sample{}
-				start := time.Now()
-				for range 32 {
-					time.Sleep(schedule.gap)
-					send(cursor)
-					flight := info()
-					if flight.Unacked != 1 || flight.NotSentBytes != 0 || flight.TotalRetrans != base.TotalRetrans {
-						t.Fatalf("trickle unacked=%d unsent=%d total retrans=%d", flight.Unacked, flight.NotSentBytes, flight.TotalRetrans)
-					}
-					cursor = cursor.Add(seqnum.Size(mss))
-					time.Sleep(10 * time.Millisecond)
-					ack(cursor, nil)
-					st := drain()
-					if st.TotalRetrans != base.TotalRetrans || st.Retransmits != 0 {
-						t.Fatalf("trickle retransmits=%d RTOs=%d", st.TotalRetrans, st.Retransmits)
-					}
-					samples = append(samples, sample{time.Since(start).Nanoseconds(), st.SndCwnd, flight.Unacked, flight.NotSentBytes, st.RTT, st.RTO})
+				if base.SndCwnd >= initialWindow || base.TotalRetrans != loss.TotalRetrans || base.NotSentBytes != 0 || base.RTO == 0 {
+					t.Fatalf("base is not a clean below-initial CA window: %+v initial=%d", base, initialWindow)
 				}
+				data := make([]byte, 192*mss)
+				for i := range data {
+					data[i] = byte(i%239 + 1)
+				}
+				write := func(b []byte) {
+					t.Helper()
+					if n := dut.Send(t, fd, b, 0); int(n) != len(b) {
+						t.Fatalf("send %d bytes: got %d", len(b), n)
+					}
+				}
+				observation := func(sn seqnum.Value, offset, offered int) flight {
+					t.Helper()
+					start := time.Now()
+					st := info()
+					for st.Unacked == 0 || st.Unacked != st.SndCwnd || int(st.NotSentBytes)+int(st.Unacked)*mss != offered-offset {
+						if time.Since(start) > 100*time.Millisecond {
+							t.Fatalf("flight did not fill cwnd: %+v", st)
+						}
+						time.Sleep(time.Millisecond)
+						st = info()
+					}
+					want := int(st.Unacked) * mss
+					if st.CaState != linux.TCP_CA_Open || st.TotalRetrans != base.TotalRetrans || st.Retransmits != 0 || st.Sacked != 0 || st.Lost != 0 ||
+						st.SndCwnd < st.SndSsthresh || want >= window || want+offset > offered || st.NotSentBytes != uint32(offered-offset-want) {
+						t.Fatalf("bad full CA flight: offset=%d offered=%d info=%+v", offset, offered, st)
+					}
+					wire, frames := 0, 0
+					for wire < want {
+						seq := sn.Add(seqnum.Size(wire))
+						ls, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seq))}, nil, time.Second)
+						if err != nil {
+							t.Fatalf("offset %d seq %d: %v", offset+wire, seq, err)
+						}
+						chunk, ok := ls[len(ls)-1].(*testbench.Payload)
+						if !ok || len(chunk.Bytes) == 0 || wire+len(chunk.Bytes) > want || !bytes.Equal(chunk.Bytes, data[offset+wire:offset+wire+len(chunk.Bytes)]) {
+							t.Fatalf("unexpected wire data at offset %d", offset+wire)
+						}
+						wire += len(chunk.Bytes)
+						frames++
+					}
+					return flight{uint32(sn), want, frames, wire, st.SndCwnd, st.SndSsthresh, st.Unacked, st.NotSentBytes, st.RTT, st.RTO}
+				}
+				primeBytes := int(base.SndCwnd) * mss
+				write(data[:primeBytes])
+				prime := observation(cursor, 0, primeBytes)
+				cursor = cursor.Add(seqnum.Size(primeBytes))
+				time.Sleep(10 * time.Millisecond)
+				ack(cursor, nil)
 				pre := drain()
-				target := int(pre.SndCwnd) * mss
-				if target >= window || target <= 0 {
-					t.Fatalf("receiver limits burst: %d/%d", target, window)
+				if pre.NotSentBytes != 0 || pre.SndCwnd >= initialWindow || pre.SndCwnd < pre.SndSsthresh || pre.TotalRetrans != base.TotalRetrans || pre.Retransmits != 0 {
+					t.Fatalf("primed window is not below IW in CA: %+v IW=%d", pre, initialWindow)
 				}
-				offer := make([]byte, target+4*mss)
-				if n := dut.Send(t, fd, offer, 0); int(n) != len(offer) {
-					t.Fatalf("burst Send=%d want %d", n, len(offer))
+				then := time.Now()
+				time.Sleep(schedule.gap)
+				beforeSend := info()
+				if beforeSend.Unacked != 0 || beforeSend.NotSentBytes != 0 || beforeSend.TotalRetrans != base.TotalRetrans || beforeSend.Retransmits != 0 ||
+					(schedule.gap > 0 && schedule.gap <= time.Duration(pre.RTO)*time.Microsecond) {
+					t.Fatalf("idle connection changed state: %+v", beforeSend)
 				}
-				wire, frames := 0, 0
-				for wire < target {
-					sn := cursor.Add(seqnum.Size(wire))
-					ls, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(sn))}, nil, time.Second)
-					if err != nil {
-						t.Fatalf("burst after %d bytes: %v", wire, err)
+				elapsed := time.Since(then)
+				// Queue enough bytes at once to remain sender-window-limited
+				// across five whole windows; the receiver advertises 60000.
+				write(data)
+				var flights []flight
+				offset := 0
+				for n := range 5 {
+					f := observation(cursor.Add(seqnum.Size(offset)), offset, len(data))
+					if f.Unsent < 4*uint32(mss) {
+						t.Fatal("the application did not keep the socket backlogged")
 					}
-					data, ok := ls[len(ls)-1].(*testbench.Payload)
-					if !ok || len(data.Bytes) == 0 || len(data.Bytes) > len(offer)-wire || !bytes.Equal(offer[wire:wire+len(data.Bytes)], data.Bytes) {
-						t.Fatal("invalid burst payload")
+					flights = append(flights, f)
+					offset += f.Bytes
+					if n < 4 {
+						time.Sleep(10 * time.Millisecond)
+						ack(cursor.Add(seqnum.Size(offset)), nil)
 					}
-					wire += len(data.Bytes)
-					frames++
-				}
-				full := info()
-				if wire != target || full.Unacked != pre.SndCwnd || full.TotalRetrans != base.TotalRetrans || full.NotSentBytes != 4*uint32(mss) {
-					t.Fatalf("burst bytes=%d expected=%d unacked=%d unsent=%d retransmits=%d", wire, target, full.Unacked, full.NotSentBytes, full.TotalRetrans)
 				}
 				out := struct {
-					Algorithm, Profile                                                  string
-					MSS, Window, BurstBytes, Frames                                     int
-					InitialCwnd, PostLossCwnd, Threshold, BeforeBurstCwnd, TotalRetrans uint32
-					RepairSeq, BurstSeq                                                 uint32
-					GapNS                                                               int64
-					Samples                                                             []sample
-				}{algorithm, schedule.name, mss, window, wire, frames, initial.SndCwnd, base.SndCwnd, base.SndSsthresh, pre.SndCwnd, full.TotalRetrans, uint32(head), uint32(cursor), int64(schedule.gap), samples}
+					Algorithm, Profile, Kernel                                                                            string
+					MSS, Window                                                                                           int
+					InitialCwnd, PostLossCwnd, PreCwnd, BeforeSendCwnd, TotalRetrans, BaseThreshold, PreThreshold, PreRTO uint32
+					RepairSeq                                                                                             uint32
+					IdleNS, ActualIdleNS                                                                                  int64
+					Prime                                                                                                 flight
+					Flights                                                                                               []flight
+				}{algorithm, schedule.name, dut.Uname.KernelRelease, mss, window, initialWindow, base.SndCwnd, pre.SndCwnd, beforeSend.SndCwnd, base.TotalRetrans, base.SndSsthresh, pre.SndSsthresh, pre.RTO, uint32(head), int64(schedule.gap), elapsed.Nanoseconds(), prime, flights}
 				b, err := json.Marshal(out)
 				if err != nil {
 					t.Fatal(err)
 				}
-				t.Logf("LINUX_DEMAND_RESULT %s", b)
+				t.Logf("LINUX_IDLE_RESULT %s", b)
 			})
 		}
 	}
