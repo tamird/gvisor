@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-28T21:55:52Z",
+    "updatedAt": "2026-10-29T00:49:10.516985+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -15948,9 +15948,9 @@
       "title": "Add the direct KCOV size header",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15933",
-      "status": "Approved amendment published to #15933",
-      "summary": "The contributor approved exact 126f2b7478. That amendment is now the verified public head of #15933, published with an exact old-head lease. The six-line combined header/dependency correction keeps the reviewed executable code and existing validation scope. PR title, body, base and attribution remain unchanged; no public comment was posted.\n\nAdds cstddef to the KCOV syscall test. The contributor-review request has been sent for this exact header-only amendment. The original public PR head remains unchanged. Parents and commit messages are unchanged; the six owning include/dependency additions across these three proposals reuse the qualified combined source-check result at 82345e7b2 (11 tests and 4,539 clang-tidy aspects). No new standalone runtime execution is claimed.",
-      "updatedAt": "2026-10-19T10:23:46.331366+00:00",
+      "status": "Delivered in #15933",
+      "summary": "The header correction is included in merged #15933.",
+      "updatedAt": "2026-10-29T00:45:15.187460+00:00",
       "refinement": {
         "before": {
           "head": "7d1038826ea571268880ba14ea9a40aa4ab484e7"
@@ -15961,10 +15961,10 @@
       },
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Contributor-approved amendment delivered",
+        "disposition": "Merged upstream",
         "sourceHead": "126f2b7478b1e8313a23f3df0e5a4c29d43d02ec",
-        "observedAt": "2026-10-19T10:18:55.650128+00:00",
-        "nextAction": "Follow current-head CI and maintainer feedback on #15933; no merge or auto-merge is authorized.",
+        "observedAt": "2026-10-29T00:45:15.187460+00:00",
+        "nextAction": "No outstanding action.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/126f2b7478b1e8313a23f3df0e5a4c29d43d02ec",
           "https://github.com/google/gvisor/pull/15933",
@@ -15975,6 +15975,10 @@
         {
           "label": "Approved amendment on the public PR",
           "url": "https://github.com/google/gvisor/pull/15933"
+        },
+        {
+          "label": "Upstream merge",
+          "url": "https://github.com/google/gvisor/commit/583c997579a19c9f5c08d09094ed688d050d4968"
         }
       ],
       "inactive": true
@@ -15988,9 +15992,9 @@
       "title": "Add the direct netfilter message header",
       "group": "runtime",
       "url": "https://github.com/google/gvisor/pull/15955",
-      "status": "Approved amendment published to #15955",
-      "summary": "The contributor approved exact db16a02a3d. That amendment is now the verified public head of #15955, published with an exact old-head lease. The six-line combined header/dependency correction keeps the reviewed executable code and existing validation scope. PR title, body, base and attribution remain unchanged; no public comment was posted.\n\nAdds linux/netfilter/nfnetlink.h to the nftables compatibility syscall test. The contributor-review request has been sent for this exact header-only amendment. The original public PR head remains unchanged. Parents and commit messages are unchanged; the six owning include/dependency additions across these three proposals reuse the qualified combined source-check result at 82345e7b2 (11 tests and 4,539 clang-tidy aspects). No new standalone runtime execution is claimed.",
-      "updatedAt": "2026-10-19T10:23:46.331366+00:00",
+      "status": "Delivered in #15955",
+      "summary": "The header correction is included in merged #15955.",
+      "updatedAt": "2026-10-29T00:45:15.187460+00:00",
       "refinement": {
         "before": {
           "head": "9d31765c32321651fe1f27632754fe7fa9e7c603"
@@ -16001,10 +16005,10 @@
       },
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Contributor-approved amendment delivered",
+        "disposition": "Merged upstream",
         "sourceHead": "db16a02a3dc2ef2dfb0e26b570197af082b5c66b",
-        "observedAt": "2026-10-19T10:18:55.650128+00:00",
-        "nextAction": "Follow current-head CI and maintainer feedback on #15955; no merge or auto-merge is authorized.",
+        "observedAt": "2026-10-29T00:45:15.187460+00:00",
+        "nextAction": "No outstanding action.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/db16a02a3dc2ef2dfb0e26b570197af082b5c66b",
           "https://github.com/google/gvisor/pull/15955",
@@ -16015,6 +16019,10 @@
         {
           "label": "Approved amendment on the public PR",
           "url": "https://github.com/google/gvisor/pull/15955"
+        },
+        {
+          "label": "Upstream merge",
+          "url": "https://github.com/google/gvisor/commit/1ecb21920b222bd8210b3c43d7404651f23e9142"
         }
       ],
       "inactive": true
@@ -31938,6 +31946,43 @@
         "disposition": "Contributor approved; waiting for prerequisites",
         "nextAction": "Open the reviewed commit after #16594 and #16605 lands."
       }
+    },
+    {
+      "id": "pr:16584",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16584,
+      "ref": "test/cl1008391846",
+      "head": "8137978fffffa7f5efa74819d9217a2e3442e1c3",
+      "title": "Review the graph decoder",
+      "url": "https://github.com/google/gvisor/pull/16584",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-29T00:45:15.187460+00:00",
+      "summary": "Review Parth\u2019s graph decoder for round trips that lose shared backing storage. A new fixture fails to save overlapping views when one is a pointer to an array.",
+      "evidence": [
+        {
+          "label": "Overlapping slice and array-pointer fixture",
+          "url": "https://github.com/tamird/gvisor/blob/bd3cab255359dcaa97607d78eac4ba4c59eb7299/pkg/state/tests/graph_test.go#L475"
+        },
+        {
+          "label": "Control and both failing traversal orders",
+          "url": "https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6"
+        },
+        {
+          "label": "First overlap review",
+          "url": "https://github.com/google/gvisor/pull/16584#discussion_r4407027588"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "8137978fffffa7f5efa74819d9217a2e3442e1c3",
+        "url": "https://github.com/google/gvisor/pull/16584",
+        "title": "Send Parth the overlapping array-pointer report",
+        "summary": "Authorize an inline report on graph_encode_objects_unsafe.go:390. Both traversal orders fail; using two slices passes.",
+        "body": "@parth-opensrc, this overlap is possible in safe Go. Take two views of a `buf [4]*byte`: `buf[:3:3]` and `buf[1:4:4]`. As named slices, they round-trip in either traversal order. Convert the second to `*[3]*byte` and Save fails in both: slice-first reaches this check; pointer-first reaches the corresponding check in `sliceTarget`. Can the array pointer and slice share their restored backing storage just as the two slices do?\n\nThe [fixture on the integrated rewrite](https://github.com/tamird/gvisor/blob/bd3cab255359dcaa97607d78eac4ba4c59eb7299/pkg/state/tests/graph_test.go#L475) checks both shared slots, writes through one view, and the final pointee reachable only from the other. [Both failures](https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6) are also recorded in the [fork run](https://github.com/tamird/gvisor/actions/runs/40795069761).\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -37466,9 +37511,22 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-28T23:12:29Z",
+      "updatedAt": "2026-10-29T00:45:15.187460+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
+        {
+          "text": "Two overlapping named slices of pointers round-trip in both traversal orders. Converting one to a pointer to a three-element array in safe Go makes Save reject both orders on the integrated rewrite. The control and both failures use the same backing array.",
+          "evidence": [
+            {
+              "label": "Overlapping slice and array-pointer fixture",
+              "url": "https://github.com/tamird/gvisor/blob/bd3cab255359dcaa97607d78eac4ba4c59eb7299/pkg/state/tests/graph_test.go#L475"
+            },
+            {
+              "label": "Control and both failing traversal orders",
+              "url": "https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6"
+            }
+          ]
+        },
         {
           "text": "The integrated graph encoder rejected two partially overlapping slices of three-byte elements only when it discovered the lower-address window first. The unsigned address difference wrapped before the element-alignment test; reversing order and four-byte controls passed. Comparing the two address residues fixed the round trip: both overlapping positions retain pointer identity and writes are visible through the other restored view. The split #16584 source contains the same expression but was not executed.",
           "evidence": [
@@ -39828,7 +39886,7 @@
           ]
         }
       ],
-      "nextStep": "Recheck the shared-map round trip when the graph codec changes. Keep the interface-setter prototype closed unless a successor preserves both destinations' hooks and fixes the measured GraphLoad regression.",
+      "nextStep": "Report the mixed slice/array-pointer failure on #16584 with Parth tagged once authorized; recheck the earlier map and offset findings on a source change.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
@@ -46350,9 +46408,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
+      "updatedAt": "2026-10-29T00:49:10.516985+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The AMD64 compiler-rt builtins target now builds on the pinned scratch worker. Explicitly selecting musl for execution platforms changed the 7,368-byte helper linked to the host ELF loader into a 44,296-byte generator. Its CppModuleMap action executed remotely without a cache hit on the same image. Execution finished at 00:43:42.675 UTC and the passing verdict appeared at 00:43:42.983; review of the single bundle confirmed the physical execution. This did not change target-platform libc or qualify the full release.",
+          "evidence": [
+            {
+              "label": "Corrected compiler-rt build",
+              "url": "https://app.buildbuddy.io/invocation/1b1d83f5-0b7d-48e9-bb0f-f0c76452f456"
+            },
+            {
+              "label": "Generator could not start on the same scratch image",
+              "url": "https://app.buildbuddy.io/invocation/3631ddbc-bf53-4f00-8f6b-e428da1f3254"
+            },
+            {
+              "label": "Bundled result and execution log",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40795616134"
+            }
+          ]
+        },
         {
           "text": "Giving compiler-rt a writable temporary directory eliminated the Clang temporary-file diagnostics in the isolated AMD64 build. It still failed: the only failed action was the supplier\u2019s CppModuleMap helper. The OCI executor could not start the staged native module-map-generator; the executable\u2019s exact missing dependency remains to be identified. The 233 remote processes are not a successful full target.",
           "evidence": [
@@ -46736,7 +46811,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the released rules_python fix with the tar and Debian packaging tools. Resolve the native module-map generator\u2019s dependency on the host ELF loader, then rerun the release once its known blockers are fixed.",
+      "nextStep": "Qualify the released rules_python fix with real tar and Debian packaging tools; compare a declared shell executor for bootstrapping Go with the Python control. Combine the fixed actions in a release build on the scratch image.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
