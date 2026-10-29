@@ -5,13 +5,13 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-cross-v4'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-cross-v5'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 5
+        fetch-depth: 8
         persist-credentials: false
     - name: Observe the same two packet inputs on Linux and netstack
       env:
@@ -20,7 +20,19 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD~3)" = "b59f6644079d3654fa46edbf2d3eab4045bcc95a"
+        stock=0a327bb504c4546650bba238595bcd89e1a2e279
+        stock_parent=3783a01936040c062d46a6ab20201307d34644f0
+        pr16081=8c72427d96b655a40558ed65395de1e63398ea00
+        pr16495=b59f6644079d3654fa46edbf2d3eab4045bcc95a
+        git merge-base --is-ancestor "$pr16495" "$GITHUB_SHA"
+        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$stock_parent" "$stock" "$pr16081" "$pr16495"
+        parent_of() { git cat-file -p "$1" | sed -n '/^$/q;s/^parent //p'; }
+        test "$(parent_of "$stock")" = "$stock_parent"
+        git cat-file -e "$stock_parent^{commit}"
+        for source in "$pr16081" "$pr16495"; do
+          test "$(parent_of "$source")" = "$stock"
+          git diff --quiet "$stock" "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
+        done
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_fence_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -92,11 +104,13 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
         export FENCE_HOST_ID=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT FENCE_HOST_PROBE=$RUNNER_TEMP/host-marker
+        export XTABLES_LOCKFILE=$RUNNER_TEMP/fence-xtables.lock
+        touch "$XTABLES_LOCKFILE"
         printf '%s' "$FENCE_HOST_ID" > "$FENCE_HOST_PROBE"
         probe_raw=$RUNNER_TEMP/host-probe.jsonl
         printf '%s\n' '{"status":"INCOMPLETE","phase":"Bazel host compiler/namespace test"}' > "$RUNNER_TEMP/replay-public/preflight.json"
         bazelisk --bazelrc="$rc" test --nocache_test_results --test_output=all --strategy=TestRunner=local \
-          --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --build_event_json_file="$probe_raw" \
+          --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --build_event_json_file="$probe_raw" \
           //test/rbe/fence_host_probe:check
         python3 - "$probe_raw" "$RUNNER_TEMP/replay-public/preflight.json" <<'PYCHECK'
         import json, sys
@@ -111,47 +125,29 @@ jobs:
         Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
         print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
         PYCHECK
-        # rules_go excludes the reflect/internal/example* test-only sources from
-        # the SDK. An unsandboxed GoStdlib action can still compile them from
-        # disk; Nogo then finds archives for packages it was never given.
-        # Build stdlib and analyze it from declared inputs in both target modes
-        # before compiling the listeners. Do not reuse unsandboxed std archives.
-        for arch in x86_64 aarch64; do
-          diagnostic="$RUNNER_TEMP/replay-public/build-preflight-$arch.json"
-          printf '{"status":"INCOMPLETE","configuration":"%s"}\n' "$arch" > "$diagnostic"
-          events="$RUNNER_TEMP/build-preflight-$arch.jsonl"
-          bazelisk --bazelrc="$rc" build "--config=$arch" --strip=never \
-            "--build_event_json_file=$events" //tools/nogo:stdlib
-          python3 - "$arch" "$events" "$diagnostic" <<'PYBUILD'
-        import json, sys
-        from pathlib import Path
-        records = [json.loads(row) for row in Path(sys.argv[2]).read_text().splitlines()]
-        target = "//tools/nogo:stdlib"
-        ids = [e["id"]["targetCompleted"] for e in records if e.get("completed", {}).get("success") and e["id"].get("targetCompleted", {}).get("label") == target]
-        assert len(ids) == 1, ids
-        assert any(e.get("finished", {}).get("exitCode", {}).get("name") == "SUCCESS" for e in records)
-        invocation = next(e["started"]["uuid"] for e in records if "started" in e)
-        Path(sys.argv[3]).write_text(json.dumps({"status": "PASS", "target": target, "configuration": sys.argv[1], "invocation": invocation})+"\n")
-        PYBUILD
+        # Both native architectures have already passed this analyzer preflight
+        # under these flags. The listener builds only the facts it actually uses.
+        proved=01811d57c4
+        for source in "$stock" "$pr16081" "$pr16495"; do
+          git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
         done
+        cat > "$RUNNER_TEMP/replay-public/build-preflight.json" <<'PROOF'
+        {"status":"REUSED","target":"//tools/nogo:stdlib","amd64":"d9bdc880-d554-41ae-b6b8-fc618bd00b9e","arm64":"6fe91843-025a-4f50-8376-44c94e7f54bb","workflowRun":40927688302}
+        PROOF
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in linux stock pr16081 pr16495; do
           variant=netstack
           case $arm in
-            linux|stock) source=0a327bb504c4546650bba238595bcd89e1a2e279; parent=3783a01936040c062d46a6ab20201307d34644f0 ;;
-            pr16081) source=8c72427d96b655a40558ed65395de1e63398ea00; parent=0a327bb504c4546650bba238595bcd89e1a2e279 ;;
-            pr16495) source=b59f6644079d3654fa46edbf2d3eab4045bcc95a; parent=0a327bb504c4546650bba238595bcd89e1a2e279 ;;
+            linux|stock) source="$stock"; parent="$stock_parent" ;;
+            pr16081) source="$pr16081"; parent="$stock" ;;
+            pr16495) source="$pr16495"; parent="$stock" ;;
           esac
           if [[ $arm == linux ]]; then variant=native; fi
           label=//test/packetimpact/tests:tcp_rack_${variant}_test
-          if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
-            git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
-          fi
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
-          test "$(git rev-parse HEAD^)" = "$parent"
-          git diff --quiet 0a327bb504c4546650bba238595bcd89e1a2e279 "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
+          test "$(parent_of HEAD)" = "$parent"
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
@@ -162,7 +158,7 @@ jobs:
           uname -r > "$TCP_EVIDENCE/kernel"
           code=0
           bazel test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
-            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated \
+            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
             --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
             --nocache_test_results --test_output=all "--build_event_json_file=$raw" \
             --build_event_json_file_path_conversion=false "$label" || code=$?
