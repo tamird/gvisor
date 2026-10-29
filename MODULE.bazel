@@ -12,18 +12,10 @@ bazel_dep(name = "bazel_lib", version = "3.7.2")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4", dev_dependency = True)
 bazel_dep(name = "cpplint", version = "2.0.2", dev_dependency = True)
 
-# Use the supplier's executable files; its POSIX run/test launchers need Bash.
-buildtools = use_extension("@buildifier_prebuilt//:defs.bzl", "buildifier_prebuilt_deps_extension", dev_dependency = True)
-use_repo(
-    buildtools,
-    "buildifier_darwin_amd64",
-    "buildifier_darwin_arm64",
-    "buildifier_linux_amd64",
-    "buildifier_linux_arm64",
-    "buildifier_linux_riscv64",
-    "buildifier_linux_s390x",
-    "buildifier_windows_amd64",
-    "buildifier_windows_arm64",
+single_version_override(
+    module_name = "buildifier_prebuilt",
+    patch_strip = 1,
+    patches = ["//tools/lint:buildifier_native.patch"],
 )
 
 lint_sources = use_repo_rule("//tools:lint_sources.bzl", "lint_sources")
