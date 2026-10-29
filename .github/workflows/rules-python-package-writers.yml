@@ -1,23 +1,80 @@
-name: Qualify rules_python package writers
+name: Verify the rules_python master license catalog
 on:
   push:
-    branches: [qualification/rules-python-catalog-cause]
+    branches: [qualification/rules-python-master-catalog-ubuntu]
 permissions:
   contents: read
 jobs:
-  original-catalog-diagnostic:
+  catalog:
     if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false}
-      - name: Read only the original catalog invocation
+        with:
+          ref: 32bf2915538481adcfddd866650318cbfec441c7
+          persist-credentials: false
+      - name: Run the actual master catalog on the ordinary Ubuntu execution platform
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/python_package_writers/read_catalog_log.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 32bf2915538481adcfddd866650318cbfec441c7
+          out=$RUNNER_TEMP/catalog
+          mkdir -p "$out" "$RUNNER_TEMP/catalog_platform"
+          platform=$RUNNER_TEMP/catalog_platform
+          printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<'BUILD'
+          platform(
+              name = "ubuntu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "oci",
+                  "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          rc=$RUNNER_TEMP/catalog.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+              'build --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build --bes_backend=grpcs://remote.buildbuddy.io' \
+              'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+              'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+              'build --noremote_accept_cached' \
+              "build --inject_repository=catalog_platform=$platform" \
+              'build --host_platform=@catalog_platform//:ubuntu' \
+              'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
+              'build --platforms=//tools/bazeldefs:linux_amd64'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          status=0
+          make license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$rc" > "$RUNNER_TEMP/catalog.log" 2>&1 || status=$?
+          python3 - "$RUNNER_TEMP/catalog.log" "$out" "$status" <<'PY'
+          from pathlib import Path
+          import json,re,sys
+          text = Path(sys.argv[1]).read_text()
+          rows = re.findall(r'^all \d+ dependencies have up-to-date license entries that conform to [A-Za-z0-9._/+-]+$',text,re.M)
+          ids = list(dict.fromkeys(re.findall(r'https://app.buildbuddy.io/invocation/[a-f0-9-]{36}',text)))
+          errors = re.findall(r'^(?:missing entry for [A-Za-z0-9._/+-]+|stale entry for [A-Za-z0-9._/+-]+[^\n]{0,55}|[^\n]{0,25}not found: @[A-Za-z0-9_.+/-]+)',text,re.M)
+          markers = sorted(set(w for w in ('GoToolchainBinaryBuild','unknown repository','is not visible','does not exist','No such file or directory','not found','unrecognized option','error loading','package_metadata','toml.bzl','duplicate entry','no alias','no matching execution platform','inconsistent','label syntax','no such target') if w in text))
+          out=Path(sys.argv[2]);r={'source':'32bf2915538481adcfddd866650318cbfec441c7','exit':int(sys.argv[3]),'invocations':ids,'verified':rows,'errors':errors,'hints':markers}
+          (out/'result.json').write_text(json.dumps(r,indent=2)+'\n')
+          print(r)
+          assert r['exit']==0 and len(rows)==1,r
+          PY
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: initial-master-catalog-diagnostic
-          path: ${{ runner.temp }}/original-catalog.json
+          name: canonical-master-catalog
+          path: ${{ runner.temp }}/catalog/result.json
