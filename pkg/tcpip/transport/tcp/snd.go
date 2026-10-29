@@ -1258,7 +1258,8 @@ func (s *sender) SetPipe() {
 			// NOTE: here we mark the whole segment as lost. We do not try
 			// and test every byte in our write buffer as we maintain our
 			// pipe in terms of outstanding packets and not bytes.
-			if !s.ep.scoreboard.IsRangeLost(sb) {
+			fmt.Printf("RACK_PIPE start=%d end=%d loss=%t sack_lost=%t high_rxt=%d tx=%d\n", sb.Start, sb.End, s1.lost, s.ep.scoreboard.IsRangeLost(sb), s.FastRecovery.HighRxt, s1.xmitCount)
+			if !s1.lost && !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
 			// SetPipe():

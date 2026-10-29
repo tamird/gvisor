@@ -1135,8 +1135,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// TestRACKRepairsLostBatch sends two segments in one GSO write. A selective
-// ACK for a later write should repair both segments without another peer ACK.
+// TestRACKRepairsLostBatch sends three segments in one GSO write. A selective
+// ACK for a later write should repair the lost segments without another peer ACK.
 func TestRACKRepairsLostBatch(t *testing.T) {
 	clock := faketime.NewManualClock()
 	c := context.NewWithOpts(t, context.Options{
@@ -1156,7 +1156,7 @@ func TestRACKRepairsLostBatch(t *testing.T) {
 	if mss <= 0 {
 		t.Fatalf("sender MSS = %d, want a positive size", mss)
 	}
-	lostEnd := 2 * mss
+	lostEnd := 3 * mss
 	data := make([]byte, lostEnd+mss)
 	for i := range data {
 		data[i] = byte(i)
