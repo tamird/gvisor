@@ -1,68 +1,28 @@
-name: Qualify the stamped native release
+name: Read original stamped Make assembly
 on: workflow_dispatch
 permissions:
   contents: read
 jobs:
-  release:
-    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/stamped-make-assembly'
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/stamped-make-original'
     runs-on: ubuntu-24.04
-    timeout-minutes: 115
-    env:
-      PRODUCT: 0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5
-      IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
           persist-credentials: false
-      - name: Check product source and install native publisher tools
-        shell: bash
+      - name: Prepare archive readers
         run: |
-          set -euo pipefail
-          [[ $(git rev-parse HEAD^) == "$PRODUCT" ]]
-          git diff --exit-code "$PRODUCT" HEAD -- . ':!test/rbe/version_label' ':!.github/workflows/build.yml'
-          d=$RUNNER_TEMP/version-proof
-          mkdir -p "$d/platform" "$d/result"
-          docker pull --platform=linux/amd64 "$IMAGE"
-          docker run --detach --name stamped-make --entrypoint /bin/bash --user=root \
-            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$d:$d" -w "$GITHUB_WORKSPACE" \
-            "$IMAGE" -c 'exec sleep infinity'
-          docker exec stamped-make /bin/bash -euc '
-            export DEBIAN_FRONTEND=noninteractive
-            apt_opts=(-o Dir::Etc::sourcelist=/etc/apt/sources.list -o Dir::Etc::sourceparts=- -o Acquire::Retries=3)
-            apt-get "${apt_opts[@]}" update
-            apt-get "${apt_opts[@]}" install --no-install-recommends -y dpkg-sig apt-utils zstd qemu-user
-            for t in dpkg-sig apt-ftparchive zstd qemu-aarch64; do command -v "$t"; done'
-      - name: Move bazel-bin to fastbuild and invoke production make release
-        shell: bash
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get install -y --no-install-recommends zstd qemu-user
+      - name: Inspect only the original package bytes
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -euo pipefail
-          d=$RUNNER_TEMP/version-proof
-          printf 'module(name="version_platform")\n' > "$d/platform/MODULE.bazel"
-          cat > "$d/platform/BUILD" <<BUILD
-          platform(
-              name = "gnu",
-              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "EstimatedMemory":"6GB", "container-image":"docker://$IMAGE"},
-              visibility = ["//visibility:public"],
-          )
-          BUILD
-          rc=$d/version.bazelrc
-          umask 077
-          trap 'rm -f "$rc"' EXIT
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --jobs=64' "build --inject_repository=version_platform=$d/platform" 'build --host_platform=@version_platform//:gnu' 'build --extra_execution_platforms=@version_platform//:gnu' 'build --remote_download_outputs=toplevel'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$rc"
-          unset BUILDBUDDY_API_KEY
-          docker exec stamped-make /bin/bash test/rbe/version_label/assembly.sh "$d"
-      - name: Return bounded release evidence
+        run: python3 test/rbe/version_label/original.py
+      - name: Return checksum-bound reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: stamped-make-assembly
-          path: ${{ runner.temp }}/version-proof/result/
+          name: stamped-make-original
+          path: ${{ runner.temp }}/make-read/receipt/
           if-no-files-found: error
