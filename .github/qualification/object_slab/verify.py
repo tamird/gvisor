@@ -36,14 +36,16 @@ CONTROL = "0fda83d08a79c46be4968ec19f9e0b127fb5434b"
 OWNER = "//test/rbe/restore_phases:nginx"
 
 
-def main(temp: Path) -> None:
-    from qualification_report import benchmark_rows
-
+def native(temp: Path) -> None:
     out = temp / "phase-results"
     events = [json.loads(line) for line in (temp / "kernel.bep").open()]
     inv, = [e["started"]["uuid"] for e in events if "started" in e]
     tr, = [e["testResult"] for e in events if e["id"].get("testResult", {}).get("label") == OWNER]
     assert (out/"bazel-exit").read_text().strip() == "0" and tr["status"] == "PASSED" and not tr.get("cachedLocally")
+    verify(temp,out,inv,tr["testActionOutput"],next(e["finished"] for e in events if "finished" in e))
+
+
+def verify(temp: Path, out: Path, inv: str, files: list, finish) -> None:
     workers = [json.loads(line) for line in (out/"worker.jsonl").open()]
     qualified = []
     for worker in workers:
@@ -57,8 +59,17 @@ def main(temp: Path) -> None:
     reports = {}
     for name in ("test.log","test.xml","profiles.zip"):
         lookup = "outputs.zip" if name == "profiles.zip" else name
-        f, = [item for item in tr["testActionOutput"] if Path(item["name"]).name == lookup]
+        f, = [item for item in files if Path(item["name"]).name in ({lookup, "test.outputs__outputs.zip"} if lookup == "outputs.zip" else {lookup})]
         reports[name] = verified_file(f, out/name)
+    result=measurements(temp,out)
+    result.update(source=SOURCE, control=CONTROL, invocation=inv, owner=OWNER, finish=finish, reports=reports,
+                  worker_rows=len(workers), qualified_workers=len(qualified), verified=datetime.now(timezone.utc).isoformat())
+    (out/"result.json").write_text(json.dumps(result,indent=2)+"\n")
+    print(f"Verified {len(result['rows'])} Save measurements and both kernel reloads in {inv}.")
+
+
+def measurements(temp: Path, out: Path) -> dict:
+    from qualification_report import benchmark_rows
     log = (out/"test.log").read_text()
     capture, = re.findall(r"phase-capture digest=([0-9a-f]{64}) state=(\d+) pages=(\d+) pagemeta=(\d+)",log)
     assert all(int(n)>0 for n in capture[1:])
@@ -108,13 +119,8 @@ def main(temp: Path) -> None:
             assert profile_row["iterations"]==8 and re.fullmatch(r"BenchmarkCheckpointFile/Encode(?:-\d+)?",profile_row["name"])
             profiles[arm]=dict(digest=checksum,pid=int(profile_pid),row=profile_row)
     assert checks["stock"]["tasks"]==checks["fixed"]["tasks"]
-    result=dict(source=SOURCE,control=CONTROL,invocation=inv,owner=OWNER,reports=reports,worker_rows=len(workers),
-                qualified_workers=len(qualified),finish=next(e["finished"] for e in events if "finished" in e),
-                capture=capture,seed=seed,rows=rows,reloads=checks,profiles=profiles,
-                verified=datetime.now(timezone.utc).isoformat())
-    (out/"result.json").write_text(json.dumps(result,indent=2)+"\n")
-    print(f"Verified {len(rows)} separate Save measurements and both semantic kernel reloads in {inv}.")
+    return dict(capture=capture,seed=seed,rows=rows,reloads=checks,profiles=profiles)
 
 
 if __name__=="__main__":
-    main(Path(sys.argv[1]))
+    native(Path(sys.argv[1]))
