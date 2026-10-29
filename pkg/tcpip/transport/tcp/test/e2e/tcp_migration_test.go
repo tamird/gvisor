@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 	"unsafe"
@@ -738,6 +739,137 @@ func TestGSOAfterRestore(t *testing.T) {
 				ack(off)
 			}
 			t.Logf("GSO_RESTORE mode=%s bytes=%d frames=%d", tc.name, len(data), frames)
+		})
+	}
+}
+
+func TestPartialGSOProgress(t *testing.T) {
+	for _, mode := range []string{"ack", "timeout", "restore"} {
+		t.Run(mode, func(t *testing.T) {
+			var reject atomic.Bool
+			var first uint32
+			snapshot := make(chan tcp.TCPSenderState, 1)
+			var probing atomic.Bool
+			clock := faketime.NewManualClock()
+			c := testcontext.NewWithOpts(t, testcontext.Options{
+				EnableV4: true, MTU: 1500, GSO: stack.GVisorGSOSupported, Clock: clock,
+				LinkWriteError: func(ps stack.PacketBufferList) tcpip.Error {
+					for _, p := range ps.AsSlice() {
+						if reject.Load() && p.Data().Size() != 0 && header.TCP(p.TransportHeader().Slice()).SequenceNumber() != first {
+							return &tcpip.ErrNoBufferSpace{}
+						}
+					}
+					return nil
+				},
+				Probe: func(e *tcp.TCPEndpointState) {
+					if probing.Swap(false) {
+						snapshot <- e.Sender
+					}
+				},
+			})
+			defer c.Cleanup()
+			// Keep the timeout control independent of tail-loss probing.
+			loss := tcpip.TCPRecovery(0)
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &loss); err != nil {
+				t.Fatal(err)
+			}
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			c.CreateConnected(testcontext.TestInitialSequenceNumber, 30000, -1)
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			mss := int(info.SndMss)
+			first = uint32(c.IRS + 1)
+			data := make([]byte, 3*mss)
+			for i := range data {
+				data[i] = byte(i/mss*63 + i%101)
+			}
+			reject.Store(true)
+			if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(n) != len(data) {
+				t.Fatalf("socket write = %d, %v", n, err)
+			}
+			c.ReceiveAndCheckPacket(data, 0, mss)
+			c.Stack().Pause()
+			c.Stack().Resume()
+			if got := c.Stack().Stats().TCP.SegmentSendErrors.Value(); got != 1 {
+				t.Fatalf("after initial write: %d route errors; want 1", got)
+			}
+			if p := c.GetPacketNonBlocking(); p != nil {
+				p.Release()
+				t.Fatal("received rejected suffix")
+			}
+			// A nonadvancing ACK exposes the sender's existing flight before the
+			// covering ACK can retire or send anything.
+			peer := seqnum.Value(testcontext.TestInitialSequenceNumber + 1)
+			probing.Store(true)
+			c.SendAck(peer, 0)
+			select {
+			case s := <-snapshot:
+				got := uint32(s.SndNxt) - first
+				t.Logf("GSO_PREFIX mss=%d nxt=%d outstanding=%d", mss, got, s.Outstanding)
+				if got != uint32(mss) || s.Outstanding != 1 {
+					t.Errorf("sender counts rejected bytes: SndNxt=%d Outstanding=%d want %d,1", got, s.Outstanding, mss)
+				}
+			case <-time.After(3 * time.Second):
+				t.Fatal("no sender observation after duplicate ACK")
+			}
+			c.Stack().Pause()
+			c.Stack().Resume()
+			if mode == "restore" {
+				restored, link := restoreGSORoute(t, c, 1500, stack.GVisorGSOSupported)
+				defer restored.Destroy()
+				timeoutsBefore := restored.Stats().TCP.Timeouts.Value()
+				sendRestoredGSOAck(c, restored, link, mss)
+				for off := mss; off < len(data); off += mss {
+					p := link.Read()
+					if p == nil {
+						t.Fatalf("restored sender did not transmit unsent bytes at +%d after the prefix ACK", off)
+					}
+					th := header.TCP(p.TransportHeader().Slice())
+					v := p.Data().AsRange().ToView()
+					good := th.SequenceNumber() == first+uint32(off) && bytes.Equal(v.AsSlice(), data[off:off+mss])
+					v.Release()
+					p.DecRef()
+					if !good {
+						t.Fatalf("restored sender returned wrong range at +%d", off)
+					}
+				}
+				sendRestoredGSOAck(c, restored, link, len(data))
+				timeouts := restored.Stats().TCP.Timeouts.Value() - timeoutsBefore
+				if timeouts != 0 {
+					t.Fatalf("unexpected restored timeout: %d", timeouts)
+				}
+				t.Logf("GSO_SUFFIX mode=%s mss=%d accepted=%d retries=%d", mode, mss, 2*mss, timeouts)
+				return
+			}
+			reject.Store(false)
+			retries := uint64(0)
+			if mode == "timeout" {
+				if err := c.EP.GetSockOpt(&info); err != nil {
+					t.Fatal(err)
+				}
+				clock.Advance(info.RTO)
+				c.ReceiveAndCheckPacket(data, 0, mss)
+				retries = c.Stack().Stats().TCP.Timeouts.Value()
+				if retries != 1 {
+					t.Fatalf("expected one actual RTO; got %d", retries)
+				}
+			}
+			c.SendAck(peer, mss)
+			c.Stack().Pause()
+			c.Stack().Resume()
+			for off := mss; off < len(data); off += mss {
+				c.ReceiveAndCheckPacket(data, off, mss)
+			}
+			c.SendAck(peer, len(data))
+			c.Stack().Pause()
+			c.Stack().Resume()
+			if got := c.Stack().Stats().TCP.Timeouts.Value(); got != retries {
+				t.Fatalf("unexpected further timeout: %d", got)
+			}
+			t.Logf("GSO_SUFFIX mode=%s mss=%d accepted=%d retries=%d", mode, mss, 2*mss, retries)
 		})
 	}
 }
