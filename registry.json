@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T23:24:21.085456+00:00",
+    "updatedAt": "2026-10-29T23:29:40.685248+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10170,14 +10170,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-29T23:24:21.085456+00:00",
+      "updatedAt": "2026-10-29T23:29:40.685248+00:00",
       "summary": "The primitive-array implementation is approved. Open it after the independent signed-zero correction lands; the array changes do not need another contributor review.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
         "observedAt": "2026-10-29T23:24:21.085456+00:00",
         "disposition": "Approved for automatic opening after prerequisites",
-        "nextAction": "Wait for the signed-zero correction, then carry forward the approved array implementation and its qualified source.",
+        "nextAction": "Once #16718 lands, carry forward the approved primitive-array implementation and its qualified source.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
           "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
@@ -34774,15 +34774,15 @@
       ]
     },
     {
-      "id": "branch:state-preserve-negative-zero",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16718",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/state-preserve-negative-zero",
       "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
       "title": "Preserve negative zero across checkpoints",
-      "url": "https://github.com/tamird/gvisor/commit/40eb76088",
+      "url": "https://github.com/google/gvisor/pull/16718",
       "group": "runtime",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "Saving a negative zero could omit it and restore a positive zero. Preserve the sign bit of floats and complex components, including primitive arrays, without changing how positive zeros are encoded.",
       "evidence": [
         {
@@ -34794,15 +34794,16 @@
           "url": "https://app.buildbuddy.io/invocation/71552189-dfb1-44a7-8f20-fb6ddd954b41"
         }
       ],
-      "updatedAt": "2026-10-29T23:24:21.085456+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
-        "url": "https://github.com/tamird/gvisor/commit/40eb76088",
-        "title": "Preserve negative zero across checkpoints",
-        "body": "Review the separate signed-zero correction for submission. Primitive-array storage was already reviewed."
-      }
+      "updatedAt": "2026-10-29T23:29:40.685248+00:00",
+      "number": 16718,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
+          "outcome": "approved",
+          "at": "2026-10-29T23:29:40.685248+00:00"
+        }
+      ]
     },
     {
       "id": "branch:declared-staged-release-check",
@@ -37983,10 +37984,10 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:state-preserve-negative-zero",
+      "from": "pr:16718",
       "to": "branch:state-primitive-array-storage",
       "reason": "The primitive-array encoding requires the signed-zero correction.",
-      "evidence": "https://github.com/tamird/gvisor/commit/40eb76088"
+      "evidence": "https://github.com/google/gvisor/pull/16718"
     },
     {
       "type": "depends_on",
