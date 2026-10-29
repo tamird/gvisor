@@ -122,8 +122,8 @@ func (tfd *TimerFileDescription) EventUnregister(e *waiter.Entry) {
 	tfd.events.EventUnregister(e)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (tfd *TimerFileDescription) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (tfd *TimerFileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &tfd.events
 }
 

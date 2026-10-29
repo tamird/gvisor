@@ -244,8 +244,8 @@ func (fd *PollableDynamicBytesFD) Init(m *vfs.Mount, d *Dentry, data vfs.Dynamic
 	return nil
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (fd *PollableDynamicBytesFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *PollableDynamicBytesFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return fd.poller
 }
 

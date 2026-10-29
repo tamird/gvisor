@@ -359,12 +359,12 @@ func (efd *EventFileDescription) EventUnregister(entry *waiter.Entry) {
 	}
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (efd *EventFileDescription) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (efd *EventFileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return efd
 }
 
-// UpdateMask implements vfs.EpollSource.UpdateMask.
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
 func (efd *EventFileDescription) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	efd.mu.Lock()
 	defer efd.mu.Unlock()

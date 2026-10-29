@@ -223,8 +223,8 @@ func (ep *EpollInstance) EventUnregister(e *waiter.Entry) {
 	ep.q.EventUnregister(e)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (ep *EpollInstance) EpollSource() EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (ep *EpollInstance) EpollMaskUpdater() EpollMaskUpdater {
 	return &ep.q
 }
 
@@ -238,7 +238,7 @@ func (ep *EpollInstance) Seek(ctx context.Context, offset int64, whence int32) (
 //
 // Preconditions: A reference must be held on file.
 func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event linux.EpollEvent) error {
-	if file.EpollSource() == nil {
+	if file.EpollMaskUpdater() == nil {
 		return linuxerr.EPERM
 	}
 	// Check for cyclic polling if necessary.
@@ -343,7 +343,7 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 	mask := event.Events | linux.EPOLLERR | linux.EPOLLHUP
 	wmask := waiter.EventMaskFromLinux(mask)
 	if epi.waiter.Mask() != wmask {
-		if err := file.EpollSource().UpdateMask(&epi.waiter, wmask); err != nil {
+		if err := file.EpollMaskUpdater().UpdateMask(&epi.waiter, wmask); err != nil {
 			return err
 		}
 	}

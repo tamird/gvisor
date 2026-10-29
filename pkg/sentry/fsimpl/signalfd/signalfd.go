@@ -150,8 +150,8 @@ func (sfd *SignalFileDescription) NotifyEvent(mask waiter.EventMask) {
 	sfd.queue.Notify(waiter.EventIn) // Always notify data available.
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (sfd *SignalFileDescription) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (sfd *SignalFileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &sfd.queue
 }
 

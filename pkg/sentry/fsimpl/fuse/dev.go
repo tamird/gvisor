@@ -181,8 +181,8 @@ func (fd *DeviceFD) EventUnregister(e *waiter.Entry) {
 	fd.conn.waitQueue.EventUnregister(e)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (fd *DeviceFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *DeviceFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	fd.mu.Lock()
 	defer fd.mu.Unlock()
 	if fd.conn == nil {

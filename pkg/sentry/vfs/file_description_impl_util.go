@@ -89,8 +89,8 @@ func (FileDescriptionDefaultImpl) EventRegister(e *waiter.Entry) error {
 func (FileDescriptionDefaultImpl) EventUnregister(e *waiter.Entry) {
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (FileDescriptionDefaultImpl) EpollSource() EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (FileDescriptionDefaultImpl) EpollMaskUpdater() EpollMaskUpdater {
 	return nil
 }
 

@@ -144,7 +144,7 @@ func (fd *queueFD) EventUnregister(e *waiter.Entry) {
 	fd.queue.EventUnregister(e)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (fd *queueFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *queueFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return fd.queue
 }

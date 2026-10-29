@@ -203,15 +203,15 @@ func (fd *specialFileFD) EventUnregister(e *waiter.Entry) {
 	fd.fileDescription.EventUnregister(e)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (fd *specialFileFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *specialFileFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	if fd.haveQueue {
 		return fd
 	}
-	return fd.fileDescription.EpollSource()
+	return fd.fileDescription.EpollMaskUpdater()
 }
 
-// UpdateMask implements vfs.EpollSource.UpdateMask.
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
 func (fd *specialFileFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	return fdnotifier.UpdateMask(fd.handle.fd, e, mask)
 }

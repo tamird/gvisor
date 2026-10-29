@@ -109,12 +109,12 @@ func (fd *pciDeviceFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
 }
 
-// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
-func (fd *pciDeviceFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements vfs.FileDescriptionImpl.EpollMaskUpdater.
+func (fd *pciDeviceFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return fd
 }
 
-// UpdateMask implements vfs.EpollSource.UpdateMask.
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
 func (fd *pciDeviceFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	if fd.isRestored() {
 		return nil

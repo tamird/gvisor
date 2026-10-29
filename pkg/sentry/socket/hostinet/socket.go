@@ -198,8 +198,8 @@ func (s *Socket) Release(ctx context.Context) {
 	_ = unix.Close(s.fd)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (s *Socket) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (s *Socket) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return s
 }
 
@@ -370,7 +370,7 @@ func (s *Socket) EventRegister(e *waiter.Entry) error {
 	return nil
 }
 
-// UpdateMask implements vfs.EpollSource.UpdateMask.
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
 func (s *Socket) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	if err := s.ensurePersistentMask(mask); err != nil {
 		return err

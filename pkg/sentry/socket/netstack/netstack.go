@@ -522,8 +522,8 @@ func (s *sock) Release(ctx context.Context) {
 	s.namespace.DecRef(ctx)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (s *sock) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (s *sock) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return s.Queue
 }
 

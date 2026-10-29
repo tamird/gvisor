@@ -192,8 +192,8 @@ func (fd *tunFD) EventUnregister(e *waiter.Entry) {
 	fd.device.EventUnregister(e)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (fd *tunFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *tunFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &fd.device
 }
 

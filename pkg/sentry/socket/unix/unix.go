@@ -364,8 +364,8 @@ func (s *Socket) Write(ctx context.Context, src usermem.IOSequence, opts vfs.Wri
 
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (s *Socket) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (s *Socket) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return s.ep
 }
 

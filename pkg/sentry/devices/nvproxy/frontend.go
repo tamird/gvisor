@@ -205,8 +205,8 @@ func (fd *frontendFD) NotifyEvent(mask waiter.EventMask) {
 	fd.appQueue.Notify(mask)
 }
 
-// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
-func (fd *frontendFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements vfs.FileDescriptionImpl.EpollMaskUpdater.
+func (fd *frontendFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &fd.appQueue
 }
 

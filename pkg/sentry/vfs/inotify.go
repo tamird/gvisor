@@ -191,8 +191,8 @@ func (i *Inotify) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return mask & ready
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (i *Inotify) EpollSource() EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (i *Inotify) EpollMaskUpdater() EpollMaskUpdater {
 	return &i.queue
 }
 

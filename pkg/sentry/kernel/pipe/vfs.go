@@ -241,8 +241,8 @@ func (fd *VFSPipeFD) EventUnregister(e *waiter.Entry) {
 	fd.pipe.EventUnregister(e)
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (fd *VFSPipeFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *VFSPipeFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &fd.pipe.queue
 }
 

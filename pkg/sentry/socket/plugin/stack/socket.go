@@ -291,12 +291,12 @@ func (s *socketOperations) Readiness(mask waiter.EventMask) waiter.EventMask {
 	}
 }
 
-// EpollSource implements socket.Socket.EpollSource.
-func (s *socketOperations) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements socket.Socket.EpollMaskUpdater.
+func (s *socketOperations) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return s
 }
 
-// UpdateMask implements vfs.EpollSource.UpdateMask.
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
 func (s *socketOperations) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	return stack.notifier.updateMask(s, e, mask)
 }

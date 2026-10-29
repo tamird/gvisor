@@ -118,8 +118,8 @@ func (rfd *replicaFileDescription) Readiness(mask waiter.EventMask) waiter.Event
 	return rfd.inode.t.ld.replicaReadiness()
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (rfd *replicaFileDescription) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (rfd *replicaFileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &rfd.inode.t.ld.replicaWaiter
 }
 

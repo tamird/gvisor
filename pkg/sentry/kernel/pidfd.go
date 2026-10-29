@@ -81,8 +81,8 @@ func (f *pidFD) EventUnregister(e *waiter.Entry) {
 	f.pid.notifier.EventUnregister(e)
 }
 
-// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
-func (f *pidFD) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements vfs.FileDescriptionImpl.EpollMaskUpdater.
+func (f *pidFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &f.pid.notifier
 }
 

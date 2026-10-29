@@ -34,7 +34,7 @@ type falliblePollFD struct {
 	last      *waiter.Entry
 }
 
-func (fd *falliblePollFD) EpollSource() EpollSource { return fd }
+func (fd *falliblePollFD) EpollMaskUpdater() EpollMaskUpdater { return fd }
 
 func (fd *falliblePollFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
 	if fd.err != nil {

@@ -128,8 +128,8 @@ func (mfd *masterFileDescription) Readiness(mask waiter.EventMask) waiter.EventM
 	return mfd.t.ld.masterReadiness()
 }
 
-// EpollSource implements FileDescriptionImpl.EpollSource.
-func (mfd *masterFileDescription) EpollSource() vfs.EpollSource {
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (mfd *masterFileDescription) EpollMaskUpdater() vfs.EpollMaskUpdater {
 	return &mfd.t.ld.masterWaiter
 }
 
