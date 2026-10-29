@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T23:29:40.685248+00:00",
+    "updatedAt": "2026-10-29T23:37:44.208153+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38003,11 +38003,29 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T22:47:07.619108+00:00",
+      "updatedAt": "2026-10-29T23:37:44.208153+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
-          "text": "In progress: Linux and gVisor senders share a 20 Mbit/s bottleneck using Reno or CUBIC, rotating sender roles and comparing disabled, historical empty and explicitly enabled probes. The 12 trials run on the same production source; each sender pair has one trial per observation mode. No fairness result is claimed yet.",
+          "text": "At 20 Mbit/s, 100 ms and a 100-packet queue, Linux took the larger share with both assignments of the two senders. With no TCP probe installed, gVisor received 27–30% of common-interval bytes under Reno and 21–31% under CUBIC. One host, one trial per controller/assignment; sampled senders were backlogged, and the 250 ms snapshots do not distinguish which ACK or loss caused the gap.",
+          "evidence": [
+            {
+              "label": "Twelve current-source Linux/gVisor shared-flow trials",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40969183478"
+            }
+          ]
+        },
+        {
+          "text": "Four shorter trials compare packet headers on both sides of the bottleneck with a matched uninstrumented control. This is investigation work, with no recommendation to change the default controller.",
+          "evidence": [
+            {
+              "label": "Packet and window capture on the shaped path (running)",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40974359618"
+            }
+          ]
+        },
+        {
+          "text": "The initial common-source trial stopped at setup because two helper binaries were not in the resolved runfiles; it produced no throughput measurement.",
           "evidence": [
             {
               "label": "Shared-bottleneck trials (results pending)",
@@ -38024,7 +38042,7 @@
           ]
         },
         {
-          "text": "Older tcp_proxy runs without a trace file still assembled TCP endpoint state on every incoming segment and passed it to an empty callback. Those runs measured throughput with that instrumentation; they do not establish uninstrumented throughput. How much it changes the senders’ relative shares is not yet measured.",
+          "text": "Older tcp_proxy runs without a trace file still assembled TCP endpoint state on every incoming segment and passed it to an empty callback. Those runs measured throughput with that instrumentation; they do not establish uninstrumented throughput.",
           "evidence": [
             {
               "label": "Per-segment state collection when a probe is installed",
@@ -39777,7 +39795,15 @@
       "nextStep": "Compare #16081 and #16495 after a second timeout. For a locally refused first write, distinguish retrying unsent data, probing the peer’s window and retransmitting data already in flight. Qualify those transitions before proposing the change upstream.",
       "evidence": [
         {
-          "label": "Shared-bottleneck trials (results pending)",
+          "label": "Twelve current-source Linux/gVisor shared-flow trials",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40969183478"
+        },
+        {
+          "label": "Packet and window capture on the shaped path (running)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40974359618"
+        },
+        {
+          "label": "First trial exposed unresolved helper path; excluded from results",
           "url": "https://github.com/tamird/gvisor/actions/runs/40967570301"
         },
         {
