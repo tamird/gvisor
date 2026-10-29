@@ -1,35 +1,105 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Check overlay copy-up during close
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/overlay-cached-close'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Exercise overlay close and copy-up on the paired sources
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = "f63a56991733d4e8994321e8fcea49baffeb4859"
+        test "$(git rev-parse HEAD~2)" = "d0e85aaa5aee729356183f206aae627dfae0f4a1"
+        test "$(git rev-parse HEAD~3)" = "03e72471a6e61beecec932f838a991a1585eae50"
+        test "$(git diff --name-only d0e85aaa5aee729356183f206aae627dfae0f4a1 f63a56991733d4e8994321e8fcea49baffeb4859)" = "pkg/sentry/fsimpl/overlay/regular_file.go"
+        test "$(git rev-parse d0e85aaa5aee729356183f206aae627dfae0f4a1:pkg/sentry/fsimpl/overlay/regular_file_test.go)" = "$(git rev-parse f63a56991733d4e8994321e8fcea49baffeb4859:pkg/sentry/fsimpl/overlay/regular_file_test.go)"
+        mkdir -p "$RUNNER_TEMP/checker"
+        for file in qualify.sh unit_matrix.py overlay_report.py overlay_preflight.py; do
+          cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
+        done
+        python3 -B "$RUNNER_TEMP/checker/overlay_preflight.py"
+        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/focused"
+        platform=$RUNNER_TEMP/focused_platform
+        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/focused.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=focused_platform=$platform" \
+            'build --host_platform=@focused_platform//:ubuntu' \
+            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/focused-bin"
+        cat > "$RUNNER_TEMP/focused-bin/bazel" <<'SH'
+        #!/bin/sh
+        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/focused-bin/bazel"
+        export PATH="$RUNNER_TEMP/focused-bin:$PATH"
+        overall=0
+        for mode in stock fixed analyzer; do
+          args=()
+          source=f63a56991733d4e8994321e8fcea49baffeb4859
+          owner=//pkg/sentry/fsimpl/overlay:overlay_test
+          filter='^TestOnCloseDuringCopyUp$'
+          if [[ "$mode" == stock ]]; then source=d0e85aaa5aee729356183f206aae627dfae0f4a1; fi
+          if [[ "$mode" == analyzer ]]; then owner=//pkg/sentry/fsimpl/overlay:overlay_nogo; filter=; fi
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          mkdir -p test/rbe "$RUNNER_TEMP/focused/$mode"
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          out="$RUNNER_TEMP/focused/$mode"
+          code=0
+          if [[ -n "$filter" ]]; then args+=("--test-filter=$filter"); fi
+          bash test/rbe/qualify.sh --arch=amd64 "--test-target=$owner" "${args[@]}"             "--bazel-option=--build_event_json_file=$out/events.jsonl"             --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no             --bazel-option=--remote_download_outputs=toplevel test || code=$?
+          test -z "$(git status --porcelain --untracked-files=no)"
+          python3 -B "$RUNNER_TEMP/checker/overlay_report.py" "$out" "$mode" "$source" "$owner" "$code" || overall=1
+        done
+        exit "$overall"
+    - name: Save only the typed results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: overlay-cached-close
+        path: ${{ runner.temp }}/focused/*/result.json
+        if-no-files-found: error
