@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-restore-send-deadline-v2'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-restore-send-review'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -20,7 +20,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "e585c8e981a15ce57d1bf0580ac88eb224680656"
+        test "$(git rev-parse HEAD^1)" = "4ee30fe39409d91e02eacd6e221bd1ddf119c72d"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -87,8 +87,8 @@ jobs:
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in stock correction; do
           case $arm in
-            stock) source=474beb15fb459105c5727937647947c298477fcb; parent=5edf5d13c7a6749df466add29d8811260edb4cda ;;
-            correction|analyzers) source=f8209127c69afca04a531e0feb46ca17183c9df2; parent=5edf5d13c7a6749df466add29d8811260edb4cda ;;
+            stock) source=a83ab9b89bfb015e6251a85b6ff97ab8c81c0fea; parent=5edf5d13c7a6749df466add29d8811260edb4cda ;;
+            correction|analyzers) source=12bdd02c2061dea8d6a252db59bd5d4b11e99e5f; parent=5edf5d13c7a6749df466add29d8811260edb4cda ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -96,8 +96,8 @@ jobs:
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
-          git diff --exit-code 474beb15fb459105c5727937647947c298477fcb "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/endpoint_state.go' ':(exclude)pkg/tcpip/transport/tcp/snd.go' ':(exclude)pkg/tcpip/transport/tcp/timer.go'
-          git diff --quiet 474beb15fb459105c5727937647947c298477fcb "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
+          git diff --exit-code a83ab9b89bfb015e6251a85b6ff97ab8c81c0fea "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/endpoint_state.go' ':(exclude)pkg/tcpip/transport/tcp/snd.go' ':(exclude)pkg/tcpip/transport/tcp/timer.go'
+          git diff --quiet a83ab9b89bfb015e6251a85b6ff97ab8c81c0fea "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
@@ -143,6 +143,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-restore-send-deadline-verdict
+        name: tcp-restore-review-verdict
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error

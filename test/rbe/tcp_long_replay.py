@@ -26,18 +26,18 @@ if verdict["errors"] or verdict["missing"] or verdict["skips"] or set(labels) !=
 if len(results) != len(labels) or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out / "runner_exit").read_text())
-cases = ["idle", "data", "persist", "tail"]
-missing = [f"restored {name}: packet by deadline = false, want true" for name in cases[1:]]
-success = [f"restored {name}: original deadline and packet satisfied" for name in cases]
-observations = [s.strip() for s in logs.splitlines() if "original deadline and packet satisfied" in s or "packet by deadline" in s]
+prefix = "TestRestoreSendTimer/"
+cases = ["idle","retransmit_oldest","probe_closed_window","probe_tail"]
+passed = [f"--- PASS: {prefix}{case} " for case in cases]
+failed = [f"--- FAIL: {prefix}{case} " for case in cases]
+observations = [s.strip() for s in logs.splitlines() if prefix in s and "--- " in s or "no packet at the original deadline" in s]
 if arm == "stock":
-    if (verdict["status"] != "FAIL" or verdict["native_exit"] != 3 or runner_exit == 0
-        or not all(x in logs for x in [success[0], *missing])
-        or any(x in logs for x in success[1:])
-        or any(c.split("/")[-1] not in ("data","persist","tail","TestRestoreSendTimer") for f in verdict["failures"] for c in f.get("cases", []))):
-        why.append("expected idle pass and absent retransmission and persist packets only")
-elif not (verdict["status"] == "PASS" and runner_exit == 0 and all(x in logs for x in success)):
-    why.append("restored timer packet controls did not all pass")
+    if (verdict["status"] != "FAIL" or runner_exit == 0 or verdict["native_exit"] != 3
+        or passed[0] not in logs or not all(f in logs for f in failed[1:])
+        or logs.count("no packet at the original deadline; want") != 3):
+        why.append("expected the idle control and three missing packets at the deadline")
+elif not (verdict["status"] == "PASS" and runner_exit == 0 and all(p in logs for p in passed)):
+    why.append("expected all named deadline and sequence checks to execute and pass")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
