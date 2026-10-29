@@ -21,16 +21,10 @@ import (
 
 // arrayFromSlice constructs a new pointer to the slice data.
 //
-// It would be similar to the following:
-//
-//	x := make([]Foo, l, c)
-//	a := ([l]Foo*)(unsafe.Pointer(x[0]))
+// Its address and type include the full capacity, so references into the same
+// backing array can be resolved even beyond this view's length.
 func arrayFromSlice(obj reflect.Value) reflect.Value {
-	arr := reflect.NewAt(
+	return reflect.NewAt(
 		reflect.ArrayOf(obj.Cap(), obj.Type().Elem()),
 		unsafe.Pointer(obj.Pointer()))
-	if obj.Len() < obj.Cap() {
-		arr.Elem().Slice(obj.Len(), obj.Cap()).Clear()
-	}
-	return arr
 }

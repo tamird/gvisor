@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
@@ -82,6 +83,10 @@ type encodeState struct {
 	// Note that this does not track zero-sized objects, those are tracked
 	// by zeroValues below.
 	values addrSet
+
+	// visible holds the byte ranges exposed by references to a partial slice
+	// backing array. Objects absent from the map are saved in full.
+	visible map[*objectEncodeState][]addrRange
 
 	// zeroValues tracks zero-sized objects.
 	zeroValues map[reflect.Type]*objectEncodeState
@@ -155,6 +160,34 @@ func (es *encodeState) nextID() objectID {
 // dummyAddr points to the dummy zero-sized address.
 var dummyAddr = reflect.ValueOf(new(struct{})).Pointer()
 
+// cover marks a newly discovered reference into a slice backing array. If
+// the array has already been encoded, revisit it before writing the checkpoint.
+func (es *encodeState) cover(o *objectEncodeState, r addrRange) {
+	spans, ok := es.visible[o]
+	if !ok || r.Length() == 0 {
+		return
+	}
+	i := sort.Search(len(spans), func(i int) bool { return spans[i].End >= r.Start })
+	if i < len(spans) && spans[i].IsSupersetOf(r) {
+		return
+	}
+	j := i
+	for j < len(spans) && spans[j].Start <= r.End {
+		r.Start = min(r.Start, spans[j].Start)
+		r.End = max(r.End, spans[j].End)
+		j++
+	}
+	if r.Length() == o.obj.Type().Size() {
+		delete(es.visible, o)
+	} else {
+		es.visible[o] = slices.Replace(spans, i, j, r)
+	}
+	if o.encoded != nil {
+		o.encoded = nil
+		es.deferred.PushBack(o)
+	}
+}
+
 // resolve records the address range occupied by an object.
 func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	addr := obj.Pointer()
@@ -205,7 +238,15 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		return
 	}
 
-	// If not a map, then the object must be a pointer.
+	// Resolve a slice using its capacity, but only save elements within its
+	// length or reachable through another reference.
+	var exposed uintptr
+	isSlice := obj.Kind() == reflect.Slice
+	if isSlice {
+		exposed = uintptr(obj.Len()) * obj.Type().Elem().Size()
+		obj = arrayFromSlice(obj)
+	}
+
 	if obj.Kind() != reflect.Ptr {
 		Failf("attempt to record non-map and non-pointer object %#v", obj)
 	}
@@ -246,6 +287,20 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 
 	end := addr + size
 	r := addrRange{addr, end}
+	live := r
+	if isSlice && typ.Size() != 0 {
+		live.End = addr + exposed
+	}
+	newObject := func(id objectID) *objectEncodeState {
+		o := &objectEncodeState{id: id, obj: obj}
+		if live != r {
+			if es.visible == nil {
+				es.visible = make(map[*objectEncodeState][]addrRange)
+			}
+			es.visible[o] = []addrRange{live}
+		}
+		return o
+	}
 	seg := es.values.LowerBoundSegment(addr)
 	var (
 		oes *objectEncodeState
@@ -257,6 +312,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		existing := seg.Value()
 
 		if seg.Range() == r && typ == existing.obj.Type() {
+			es.cover(existing, live)
 			// This exact object is already registered. Avoid the traversal and
 			// just return directly. We don't need to encode the type
 			// information or any dots here.
@@ -266,6 +322,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		}
 
 		if seg.Range().IsSupersetOf(r) && (seg.Range() != r || isSameSizeParent(existing.obj, typ)) {
+			es.cover(existing, live)
 			// This object is contained within a previously-registered object.
 			// Perform traversal from the container to the new object.
 			ref.Root = wire.Uint(existing.id)
@@ -277,11 +334,8 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 
 		// This object contains one or more previously-registered objects.
 		// Remove them and update existing references to use the new one.
-		oes := &objectEncodeState{
-			// Reuse the root ID of the first contained element.
-			id:  existing.id,
-			obj: obj,
-		}
+		// Reuse the root ID of the first contained element.
+		oes := newObject(existing.id)
 		type elementEncodeState struct {
 			addr uintptr
 			typ  reflect.Type
@@ -302,6 +356,14 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 				typ:  existing.obj.Type(),
 				refs: existing.refs,
 			})
+			if spans, ok := es.visible[existing]; ok {
+				for _, span := range spans {
+					es.cover(oes, span)
+				}
+				delete(es.visible, existing)
+			} else {
+				es.cover(oes, seg.Range())
+			}
 			delete(es.pending, existing.id)
 			es.deferred.Remove(existing)
 			gap = es.values.Remove(seg)
@@ -335,10 +397,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	}
 
 	// No existing object overlaps this one. Register a new object.
-	oes = &objectEncodeState{
-		id:  es.nextID(),
-		obj: obj,
-	}
+	oes = newObject(es.nextID())
 	if seg.Ok() {
 		gap = seg.PrevGap()
 	} else {
@@ -548,16 +607,34 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 }
 
 // encodeArray encodes an array.
-func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
+func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object, spans []addrRange) {
 	l := obj.Len()
 	a := &wire.Array{
 		Contents: make([]wire.Object, l),
 	}
 	*dest = a
+	var zero reflect.Value
+	var addr, size uintptr
+	if spans != nil {
+		addr, size = obj.UnsafeAddr(), obj.Type().Elem().Size()
+	}
 	for i := 0; i < l; i++ {
+		elem := obj.Index(i)
+		if spans != nil {
+			for len(spans) != 0 && spans[0].End <= addr {
+				spans = spans[1:]
+			}
+			if len(spans) == 0 || spans[0].Start >= addr+size {
+				if !zero.IsValid() {
+					zero = reflect.New(elem.Type()).Elem()
+				}
+				elem = zero
+			}
+			addr += size
+		}
 		// We need to encode the full value because arrays are encoded
 		// using the type information from only the first element.
-		es.encodeObject(obj.Index(i), encodeAsValue, &a.Contents[i])
+		es.encodeObject(elem, encodeAsValue, &a.Contents[i])
 	}
 }
 
@@ -721,7 +798,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		s := wire.String(obj.String())
 		*dest = &s // Needs alloc.
 	case reflect.Array:
-		es.encodeArray(obj, dest)
+		es.encodeArray(obj, dest, nil)
 	case reflect.Slice:
 		s := &wire.Slice{
 			Capacity: wire.Uint(obj.Cap()),
@@ -736,7 +813,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 			return
 		}
 		// Slices need pointer resolution.
-		es.resolve(arrayFromSlice(obj), &s.Ref)
+		es.resolve(obj, &s.Ref)
 	case reflect.Interface:
 		es.encodeInterface(obj, dest)
 	case reflect.Struct:
@@ -777,7 +854,11 @@ func (es *encodeState) Save(obj reflect.Value) {
 			// deferred list yet again. That's expected, and why it
 			// is removed first.
 			es.deferred.Remove(oes)
-			es.encodeObject(oes.obj, oes.how, &oes.encoded)
+			if spans := es.visible[oes]; spans != nil {
+				es.encodeArray(oes.obj, &oes.encoded, spans)
+			} else {
+				es.encodeObject(oes.obj, oes.how, &oes.encoded)
+			}
 		}
 	}); err != nil {
 		// Include the object in the error message, if available.

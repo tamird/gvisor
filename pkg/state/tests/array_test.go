@@ -15,8 +15,11 @@
 package tests
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 var allArrayPrimitives = []any{
@@ -134,4 +137,55 @@ func TestSliceContainers(t *testing.T) {
 		slicePtrContainer{v: &fullSlice},
 		slicePtrContainer{v: &unusedCapacitySlice},
 	})
+}
+
+// TestSliceBackingStorage checks that Save preserves its input and that only
+// reachable elements in an array are visible after Load.
+func TestSliceBackingStorage(t *testing.T) {
+	for _, name := range []string{"short-first", "long-first", "late-pointer"} {
+		t.Run(name, func(t *testing.T) {
+			want := [3]byte{0x11, 0x22, 0x33}
+			backing := want
+			short := backing[:1]
+			input := [2]any{short, backing[:]}
+			shortIndex := 0
+			switch name {
+			case "long-first":
+				input[0], input[1] = input[1], input[0]
+				shortIndex = 1
+			case "late-pointer":
+				// The second pointer is reached after the encoder first visits
+				// the backing array. The middle byte remains unreachable.
+				p := &backing[2]
+				input[1] = &p
+			}
+			var buf bytes.Buffer
+			if _, err := state.Save(t.Context(), &buf, &input); err != nil {
+				t.Fatal(err)
+			}
+			if got := backing; got != want {
+				t.Errorf("array after Save = %x, want %x", got, want)
+			}
+			var output [2]any
+			if _, err := state.Load(t.Context(), &buf, &output); err != nil {
+				t.Fatal(err)
+			}
+			s := output[shortIndex].([]byte)
+			if got, want := [2]int{len(s), cap(s)}, [2]int{1, 3}; got != want {
+				t.Fatalf("short slice dimensions = %v, want %v", got, want)
+			}
+			all := s[:cap(s)]
+			if name == "late-pointer" {
+				want[1] = 0
+				if p := *output[1].(**byte); p != &all[2] {
+					t.Error("restored pointer does not refer to the shared slice")
+				}
+			} else if full := output[1-shortIndex].([]byte); len(full) != len(all) || &full[0] != &all[0] {
+				t.Error("restored longer slice does not cover the shared array")
+			}
+			if got := [3]byte(all); got != want {
+				t.Errorf("restored array = %x, want %x", got, want)
+			}
+		})
+	}
 }
