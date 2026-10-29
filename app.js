@@ -45,7 +45,7 @@ function citationURL(value) {
   if (!href) return "#";
   const url = new URL(href), parts = url.pathname.split("/");
   if (url.origin === "https://github.com" && ["blob", "tree", "commit", "compare"].includes(parts[3]) && parts[4]) {
-    parts[4] = parts[4].replace(/(^|\.{2,3})([0-9a-f]{9})[0-9a-f]{31}(?=\.{2,3}|$)/g, "$1$2");
+    parts[4] = parts[4].replace(/(^|\.{2,3})([0-9a-f]{9})[0-9a-f]{1,31}(?=\.{2,3}|$)/g, "$1$2");
     url.pathname = parts.join("/");
   }
   return url.href;

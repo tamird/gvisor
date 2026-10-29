@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T15:52:12.577490+00:00",
+    "updatedAt": "2026-10-29T15:54:49.236666+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26274,17 +26274,17 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "licensecheck-go-digest-notices",
-      "head": "ea27b4806607c7640e2c1f43a5996f80374a78af",
+      "head": "17c6a2d9e5b3a4015f506a694a07f3ba3ab48999",
       "title": "Record the go-digest documentation license",
-      "url": "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af",
+      "url": "https://github.com/tamird/gvisor/commit/17c6a2d9e",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "updatedAt": "2026-10-29T15:54:49.236666+00:00",
       "summary": "The standalone fork records Apache-2.0 source and CC-BY-SA-4.0 documentation for go-digest v1.0.0, including the narrowly scoped documentation exception. It follows #15146 and precedes the LLVM source audit. The combined canonical Fetch/Verify passed 201 records. This policy/catalog change remains separately visible; that passing audit is not contributor approval or upstream delivery.",
       "followup": {
         "owner": "root",
-        "sourceHead": "ea27b4806607c7640e2c1f43a5996f80374a78af",
-        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "sourceHead": "17c6a2d9e5b3a4015f506a694a07f3ba3ab48999",
+        "observedAt": "2026-10-29T15:54:49.236666+00:00",
         "disposition": "Agent work; no contributor decision pending",
         "nextAction": "Review and deliver this independent notice/catalog change through the existing license workstream; retain its exact scope and do not infer approval from validation.",
         "evidence": [
@@ -26304,7 +26304,15 @@
           "label": "Combined canonical Fetch/Verify",
           "url": "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "ea27b4806607c7640e2c1f43a5996f80374a78af"
+        },
+        "after": {
+          "head": "17c6a2d9e5b3a4015f506a694a07f3ba3ab48999"
+        }
+      }
     },
     {
       "id": "branch:hermetic-llvm-root-backends",
