@@ -1,0 +1,95 @@
+name: Qualify rules_python package writers
+on:
+  push:
+    branches: [qualification/rules-python-package-writers]
+permissions:
+  contents: read
+jobs:
+  packages:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {arch: amd64, mode: normal, runner: ubuntu-24.04}
+          - {arch: arm64, mode: normal, runner: ubuntu-24.04-arm}
+          - {arch: amd64, mode: empty, runner: ubuntu-24.04}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 55
+    env:
+      BASE: 7d85aacf5d7e74968491e73781cff0d588c11e3a
+      MODE: ${{ matrix.mode }}
+      QUALIFICATION_ARCH: ${{ matrix.arch }}
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: remote-actions
+      QUALIFICATION_LANES: build
+      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
+      QUALIFICATION_CLOCK_SOURCE: calibrated
+      QUALIFICATION_HEADER_BASE: ''
+      QUALIFICATION_COS_SHA256: ''
+      QUALIFICATION_COS_GZIP_BASE64: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Resolve action owners and build the two packages
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: bash test/rbe/python_package_writers/run.sh
+      - name: Keep original native verdict and bounded observations
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: writers-${{ matrix.arch }}-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/qualification.tar.gz
+            ${{ runner.temp }}/python-packaging/
+          if-no-files-found: error
+  master-catalog:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 32bf2915538481adcfddd866650318cbfec441c7
+          persist-credentials: false
+      - name: Verify the complete catalog on the actual proposed gVisor source
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 32bf2915538481adcfddd866650318cbfec441c7
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(<images/default/bazelversion)
+          out=$RUNNER_TEMP/catalog
+          mkdir "$out"
+          rc=$(mktemp "$RUNNER_TEMP/catalog-rc.XXXXXX")
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+              'build --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build --bes_backend=grpcs://remote.buildbuddy.io' \
+              'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+              'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+              'build --remote_default_exec_properties=OSFamily=linux' \
+              'build --remote_default_exec_properties=Arch=amd64' \
+              'build --remote_default_exec_properties=workload-isolation-type=oci' \
+              'build --remote_default_exec_properties=container-image=docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          bazelisk --bazelrc="$rc" mod graph --depth=1 --output=json > "$out/graph.json"
+          bazelisk --bazelrc="$rc" mod show_repo rules_python@2.4.5 > "$out/rules_python.txt"
+          if ! make license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$rc" >"$RUNNER_TEMP/catalog.log" 2>&1; then
+            grep -Eo 'https://app.buildbuddy.io/invocation/[a-f0-9-]{36}|missing dependency: [a-zA-Z0-9_.+-]+|ERROR: [a-zA-Z0-9 _.:/+-]{1,120}' "$RUNNER_TEMP/catalog.log" | tail -10 || true
+            exit 1
+          fi
+          grep -E '^all [0-9]+ dependencies have up-to-date license entries' "$RUNNER_TEMP/catalog.log" > "$out/verified.txt"
+          test -s "$out/verified.txt"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: master-catalog
+          path: ${{ runner.temp }}/catalog/
