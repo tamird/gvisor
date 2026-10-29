@@ -15,12 +15,15 @@
 package vfs
 
 import (
+	"bytes"
 	"testing"
+	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/sentry/contexttest"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
+	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
@@ -188,4 +191,82 @@ func TestEpollFailedModify(t *testing.T) {
 			read(in)
 		})
 	}
+}
+
+func TestEpollRestoreOneShot(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		consume bool
+	}{
+		{"armed", false},
+		{"disarmed", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := contexttest.Context(t)
+			inner, file := newEpollTestFD(t, &falliblePollFD{})
+			fs := inner.vfsfd.VirtualDentry().Mount().Filesystem().VirtualFilesystem()
+			outerFD, err := fs.NewEpollInstanceFD(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer outerFD.DecRef(ctx)
+			outer := outerFD.Impl().(*EpollInstance)
+			if err := inner.AddInterest(file, 3, linux.EpollEvent{Events: linux.EPOLLIN}); err != nil {
+				t.Fatal(err)
+			}
+			watch := linux.EpollEvent{Events: linux.EPOLLIN | linux.EPOLLONESHOT, Data: [2]int32{17}}
+			if err := outer.AddInterest(&inner.vfsfd, 4, watch); err != nil {
+				t.Fatal(err)
+			}
+			if tc.consume {
+				got := outer.ReadEvents(nil, 1)
+				if len(got) != 1 || got[0] != (linux.EpollEvent{Events: linux.EPOLLIN, Data: watch.Data}) {
+					t.Fatalf("consuming one-shot: %v", got)
+				}
+			}
+			// Only the two real epoll descriptors remain in the checkpoint.
+			if err := inner.DeleteInterest(file, 3); err != nil {
+				t.Fatal(err)
+			}
+			snapshot := [2]*FileDescription{outerFD, &inner.vfsfd}
+			var buf bytes.Buffer
+			if _, err := state.Save(ctx, &buf, &snapshot); err != nil {
+				t.Fatal(err)
+			}
+			var restored [2]*FileDescription
+			if _, err := state.Load(ctx, &buf, &restored); err != nil {
+				t.Fatal(err)
+			}
+			defer restored[0].VirtualDentry().Mount().Filesystem().VirtualFilesystem().Release(ctx)
+			defer restored[1].DecRef(ctx)
+			defer restored[0].DecRef(ctx)
+			outer = restored[0].Impl().(*EpollInstance)
+			// The ready list is not saved; its entries come from afterLoad.
+			// Reading the outer epoll would discard the recheck in both cases.
+			outer.readyMu.Lock()
+			queued := !outer.ready.Empty()
+			outer.readyMu.Unlock()
+			if want := !tc.consume; queued != want {
+				t.Errorf("after restore: recheck queued = %t, want %t", queued, want)
+			}
+		})
+	}
+}
+
+
+func TestEpollWatchSize(t *testing.T) {
+	fd := &falliblePollFD{}
+	ep, file := newEpollTestFD(t, fd)
+	event := linux.EpollEvent{Events: linux.EPOLLIN}
+	result := testing.Benchmark(func(b *testing.B) {
+		for b.Loop() {
+			if err := ep.AddInterest(file, 3, event); err != nil {
+				b.Fatal(err)
+			}
+			if err := ep.DeleteInterest(file, 3); err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+	t.Logf("watch struct=%d bytes; ADD+DEL=%d bytes, %d allocations", unsafe.Sizeof(epollInterest{}), result.AllocedBytesPerOp(), result.AllocsPerOp())
 }
