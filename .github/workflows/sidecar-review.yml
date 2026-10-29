@@ -1,0 +1,67 @@
+name: Check freestanding runsc sidecars
+
+"on":
+  push:
+    branches: [qualification/sidecar-review-checked]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/sidecar-review"
+          mkdir -p "$root/task"
+          cp .github/qualification/sidecar-review/{request.json,plan.json,submit.py} "$root/task/"
+          cp .github/qualification/sidecar-review/receipt.py "$root/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          b3eae403118b40d13233ca004eec2b1dd27389a3d51c87500aed8b2f32aac05f  receipt.py
+          f0e2e9cc20268d03ddd629a98a8f0e02400be292b5559465d0b29803e31e1cdf  task/plan.json
+          487b092eb1d4ab814f317f63cd2faee1e4af479bb7d3f39b409214de56796469  task/request.json
+          3e69f1b17b565b0f65f0fe308b30eceb4b6f78ae966ec129112e96c2baca10ac  task/submit.py
+          SUMS
+      - name: Check the product commit and its parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = acaabb255714faecbd1df7d960b68b07495f72f6
+          test "$(git rev-parse HEAD^^)" = 50188341ca87809d0d81fafac8cd10d7df64d11a
+          test "$(git rev-parse 'HEAD^^{tree}')" = 5e90190fce1e631477d5a6b4e43bd773a372ce15
+          test "$(git rev-parse HEAD^:runsc/sidecar.bzl)" = "$(git rev-parse HEAD:runsc/sidecar.bzl)"
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          runpy.run_path(str(Path(os.environ["RUNNER_TEMP"]) / "sidecar-review" / "receipt.py"))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sidecar-review-receipt
+          path: ${{ runner.temp }}/sidecar-review/verdict.json
+          if-no-files-found: error
+          retention-days: 14
