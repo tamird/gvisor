@@ -301,6 +301,11 @@ func newEncodeState(ctx context.Context, root *typeInfo) *encodeState {
 		spliceAt:     noSplice,
 		out:          encBuf{b: make([]byte, 0, max(bytes, 4<<10))},
 	}
+	// For a previously large graph, avoid repeatedly copying the first
+	// object chunk as it fills. With no large-root hint it grows normally.
+	if targets >= 1<<chunkedShift {
+		es.objs.chunks = [][]encObject{make([]encObject, 0, 1<<chunkedShift)}
+	}
 	es.byAddr.init(targets)
 	es.blocks.init(targets)
 	return es
