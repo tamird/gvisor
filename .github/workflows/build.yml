@@ -1,35 +1,53 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Check downstream Bazel lint dependency visibility
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/lint-consumer-dev-dependencies'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Admit the exact upstream and fork source snapshots
+      id: sources
+      shell: bash
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD) = "$GITHUB_SHA" ]]
+        [[ $(git rev-parse HEAD^1) = 0fa6803f2a5991dc066a29fc50414b4a3b519590 ]]
+        [[ $(git rev-parse HEAD^2) = b4720d1975646e4d202ba3f59b7b835cedcdee3b ]]
+        [[ $(git rev-parse HEAD^3) = 6946292a2275252009256d882c44900419ff0934 ]]
+        [[ $(git rev-parse HEAD^4) = 84fb13cc46f39b7eed90cb43139fb1b2928fdac8 ]]
+        cp .github/qualification/lint-consumer/audit.py "$RUNNER_TEMP/audit.py"
+        mkdir -p "$RUNNER_TEMP/dev-dependency-audit"
+    - name: Check a true external consumer and the matched root controls
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        area=$RUNNER_TEMP/dev-dependency-audit
+        rc=$area/rbe.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --remote_default_exec_properties=OSFamily=linux' 'build --remote_default_exec_properties=Arch=amd64' 'build --remote_default_exec_properties=workload-isolation-type=oci' 'build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$rc"
+        unset BUILDBUDDY_API_KEY
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        python3 -B "$RUNNER_TEMP/audit.py"
+    - name: Retain source-identified outcomes only
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: downstream-lint-visibility
+        path: ${{ runner.temp }}/dev-dependency-audit/public/result.json
+        if-no-files-found: error
