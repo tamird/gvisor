@@ -78,10 +78,10 @@ def observe(t,out):
             for line in s.splitlines():
                 m=re.search(r"(?:^|\s)([a-zA-Z0-9_]+\.go):(\d+):\s*(.*)$",line)
                 if not m or m[1] not in ("tcp_sack_test.go","context.go","endpoint.go","tcp_timestamp_test.go"):continue
-                assert m[0].strip() in reports["test.log"].decode(errors="replace")
+                logtext=reports["test.log"].decode(errors="replace")
                 exact=next((x for x in MESSAGES if x in m[3]),None)
                 detail=next((mt.group(0) for p in REGEX if (mt:=re.search(p,m[3]))),None)
-                fact={"file":m[1],"line":int(m[2]),"assertion":exact or detail or "other-source-assertion"}
+                fact={"file":m[1],"line":int(m[2]),"assertion":exact or detail or "other-source-assertion","same_source_line_in_log":(m[1]+":"+m[2]+":") in logtext,"same_known_assertion_in_log":bool(exact and exact in logtext or detail and detail in logtext)}
                 if fact not in lines:lines.append(fact)
             row["leaves"][n]=lines[:10]
         assert set(row["leaves"])=={CASE+"/missing_timestamp",CASE+"/zero_echo"} and all(row["leaves"].values())

@@ -1,7 +1,7 @@
 name: Read completed Eifel assertions
 "on":
   push:
-    branches: [qualification/eifel-original-53e597fd]
+    branches: [qualification/eifel-original-53e597fd-xml]
 permissions:
   contents: read
 jobs:
@@ -23,7 +23,7 @@ jobs:
           cp .github/qualification/eifel-review/read_original.py "$root/"
           cd "$root"
           sha256sum --check <<'SUMS'
-          9ef9548596bf377e69907d521c0022d03acd8c495d3c006a757db8a7ac93ea8e  read_original.py
+          a8c86dffda21f8034623f095710b08a47f5f35b9f737bb078d93e5b304a8a789  read_original.py
           SUMS
       - name: Read only the authenticated original archive
         env:
