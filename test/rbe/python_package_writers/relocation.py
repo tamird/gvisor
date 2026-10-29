@@ -38,24 +38,39 @@ with tempfile.TemporaryDirectory(dir=output.parent) as work:
     command = [str(binary), "--output", str(product), "--tar", str(seed), "--mtime", "portable"]
     # Each key denotes a whole repository; the manifest never names the
     # interpreter, the generated Python adapter, or any individual source file.
-    def launch(where):
-        manifest.write_text("".join(f"{p.name} {where / p.name}\n" for p in repo_dirs))
+    def launch(prefixes):
+        manifest.write_text("".join(f"{name} {where}\n" for name, where in prefixes))
         return subprocess.run(command, env=env, cwd=root, capture_output=True)
 
-    missing = launch(root / "missing")
+    missing = launch([(p.name, root / "missing" / p.name) for p in repo_dirs])
     if missing.returncode == 0 or product.exists():
         raise AssertionError("Writer ran with all manifest prefixes missing")
-    restored = launch(runfiles)
+    restored = launch([(p.name, p) for p in repo_dirs])
     if restored.returncode:
         raise RuntimeError(f"Relocated writer failed: {restored.stderr!r}")
     assert notice(product) == notice(seed)
+    archive_sha = digest(product)
+    payload_sha = hashlib.sha256(notice(product)).hexdigest()
+    # Pure manifests need not share any runfiles tree. Record what the existing
+    # Python adapter actually supports when each repository lives on its own.
+    product.unlink()
+    independent = []
+    for index, repo in enumerate(repo_dirs):
+        location = root / f"repo-{index}"
+        repo.rename(location)
+        independent.append((repo.name, location))
+    split = launch(independent)
+    if not split.returncode:
+        assert digest(product) == archive_sha and notice(product) == notice(seed)
     result = {
         "writer": digest(writer),
         "interpreter": digest(Path(sys.executable)),
         "manifest_prefixes": [p.name for p in repo_dirs],
         "missing_prefix_exit": missing.returncode,
         "relocated_exit": restored.returncode,
-        "relocated_archive": digest(product),
-        "payload": hashlib.sha256(notice(product)).hexdigest(),
+        "relocated_archive": archive_sha,
+        "payload": payload_sha,
+        "independent_roots_exit": split.returncode,
+        "independent_roots_mentions_runfiles": b"runfiles" in split.stderr.lower(),
     }
 output.write_text(json.dumps(result, sort_keys=True) + "\n")
