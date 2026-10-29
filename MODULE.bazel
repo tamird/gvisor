@@ -906,3 +906,10 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Fork-only: reserve more memory for the Protobuf target whose cc1plus was killed.
+single_version_override(
+    module_name = "protobuf",
+    patches = ["//test/rbe/array_pair_resources:protobuf-memory.patch"],
+    patch_strip = 1,
+)

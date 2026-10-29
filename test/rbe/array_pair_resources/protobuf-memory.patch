@@ -1,0 +1,9 @@
+diff --git a/src/google/protobuf/BUILD.bazel b/src/google/protobuf/BUILD.bazel
+--- a/src/google/protobuf/BUILD.bazel
++++ b/src/google/protobuf/BUILD.bazel
+@@ -808,4 +808,5 @@
+ cc_library(
+     name = "protobuf",
++    exec_properties = {"EstimatedMemory": "4GB"},
+     srcs = [
+         "any.cc",
