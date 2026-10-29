@@ -14,12 +14,13 @@ import tempfile
 
 def check(result):
     folder = Path(os.environ["RUNNER_TEMP"])
-    expected = {
-        "PackageTar": ("payload.tar", "3a57a5fe4121f867ccd0c26c89c511dd0f5851712ae6723babed02f950193898"),
-        "ShimConfig": ("config.tar", None),
-        "MakeDeb": ("gvisor-writer-input_1_all.deb", None),
-        "Changelog": ("changelog", None),
-    }
+    expected = {"PackageVersion": ("version.txt", "package_version"), "Changelog": ("changelog", "changelog_tool")}
+    label = os.environ["RELEASE_LABEL"]
+    version, date = {
+        "release-20261029.0": ("20261029.0", "Thu, 29 Oct 2026 00:00:00 +0000"),
+        "git-9c271665f": ("9c271665f", "Thu, 01 Jan 1970 00:00:00 +0000"),
+    }[label]
+    result["label"] = label
     result["expected"] = expected
     with tarfile.open(folder / "qualification.tar.gz") as archive:
         def read(suffix):
@@ -51,49 +52,32 @@ def check(result):
         props = {p["name"]: p["value"] for p in row["platform"]["properties"]}
         rec = result["workers"][name] = {"action": row["digest"], "platform": props, "runner": row["runner"], "cache_hit": row.get("cacheHit", False), "exit": row.get("exitCode", 0), "argv": row["commandArgs"][:2]}
         assert rec["runner"] == "remote" and not rec["cache_hit"] and props["Arch"] == result["arch"], rec
+        assert props["container-image"] == "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef", rec
+        assert rec["argv"][0].endswith("/" + expected[name][1]), rec
+        assert len(row["commandArgs"]) == (2 if name == "PackageVersion" else 3), rec
         if name == "Changelog":
-            assert "hello-world@sha256:" in props["container-image"], rec
-            assert rec["argv"][0].endswith("/changelog_tool"), rec
-        else:
-            assert "ubuntu@sha256:" in props["container-image"], rec
-            assert "3_11" in rec["argv"][0] and "musl" not in rec["argv"][0], rec
-            assert any("stage2_bootstrap" in arg for arg in row["commandArgs"]), rec
+            result["version_consumed"] = rec["argv"][1]
         exe = (execroot / rec["argv"][0]).read_bytes()
         assert exe[:5] == b"\x7fELF\x02" and int.from_bytes(exe[18:20], "little") == {"amd64": 62, "arm64": 183}[result["arch"]]
         off = struct.unpack_from("<Q", exe, 32)[0]
         size, count = struct.unpack_from("<HH", exe, 54)
         has_loader = any(struct.unpack_from("<I", exe, off + i * size)[0] == 3 for i in range(count))
-        assert has_loader == (name != "Changelog"), rec
+        assert not has_loader, rec
         rec["tool_sha256"] = hashlib.sha256(exe).hexdigest()
         rec["dynamic_loader"] = has_loader
         assert not rec["exit"], rec
-        filename, sha = expected[name]
+        filename, _ = expected[name]
         package, = (o for o in row["actualOutputs"] if o["path"].endswith("/" + filename))
         content = (execroot / package["path"]).read_bytes()
         rec["output"] = {"sha256": hashlib.sha256(content).hexdigest(), "size": len(content)}
         assert rec["output"]["sha256"] == package["digest"]["hash"], rec
-        if name == "ShimConfig":
-            with tarfile.open(fileobj=io.BytesIO(content)) as config:
-                member, = (m for m in config if m.isfile())
-                assert member.name.removeprefix("./").lstrip("/") == "etc/containerd/runsc.toml" and member.mode == 0o644
-                assert config.extractfile(member).read() == Path("shim/runsc.toml").read_bytes()
-        elif name == "Changelog":
-            version = (execroot / row["commandArgs"][1]).read_text().rstrip("\n")
-            date = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-            if version[:8].isdigit() and version[8:9] == ".":
-                date = datetime.datetime.strptime(version[:8], "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
-            assert content == (f"runsc ({version}) unstable; urgency=medium\n\n  * See https://gvisor.dev/docs/ for release details.\n\n -- The gVisor Authors <gvisor-dev@googlegroups.com>  {date:%a, %d %b %Y %H:%M:%S %z}\n").encode(), rec
-            rec["package_version"] = version
-        elif name == "PackageTar":
-            with tarfile.open(fileobj=io.BytesIO(content)) as payload:
-                member, = (m for m in payload if m.isfile())
-                assert payload.extractfile(member).read() == Path("test/rbe/python_package_writers/notice.txt").read_bytes()
+        assert row["commandArgs"][-1] == package["path"], rec
+        if name == "PackageVersion":
+            assert content == (version + "\n").encode(), rec
+            result["version_produced"] = package["path"]
         else:
-            with tempfile.TemporaryDirectory() as tmp:
-                deb = Path(tmp) / "package.deb"
-                deb.write_bytes(content)
-                fields = subprocess.check_output(["dpkg-deb", "-f", str(deb)], text=True)
-                assert "Package: gvisor-writer-input" in fields and "Version: 1" in fields, fields
+            assert content == (f"runsc ({version}) unstable; urgency=medium\n\n  * See https://gvisor.dev/docs/ for release details.\n\n -- The gVisor Authors <gvisor-dev@googlegroups.com>  {date}\n").encode(), rec
+    assert result["version_produced"] == result["version_consumed"], result
     assert result["exit"] == 0 and result["workers"].keys() == expected.keys(), result
 
 
@@ -107,5 +91,5 @@ except Exception as err:
 finally:
     result["missing"] = sorted(set(result.get("expected", {})) - set(result["workers"]))
     result["verified"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    path = Path(os.environ["REPORT_DIR"]) / (result["arch"] + ".json")
+    path = Path(os.environ["REPORT_DIR"]) / ("worker-" + result["arch"] + "-" + os.environ["RELEASE_LABEL"] + ".json")
     path.write_text(json.dumps(result, indent=2) + "\n")

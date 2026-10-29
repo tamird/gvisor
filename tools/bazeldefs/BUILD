@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
 load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag")
@@ -213,16 +214,19 @@ config_setting(
     ],
 )
 
-genrule(
+run_binary(
     name = "version",
+    exec_properties = {"container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"},
     outs = ["version.txt"],
-    cmd = "cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
+    mnemonic = "PackageVersion",
+    args = ["$@"],
     stamp = 1,
     tags = [
         "manual",
         "nobuilder",
         "notap",
     ],
+    tool = "//tools/package_version",
     visibility = ["//:sandbox"],
 )
 
