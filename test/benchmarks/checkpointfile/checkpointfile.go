@@ -665,3 +665,74 @@ func checkSavedKernel(b *testing.B, ctx context.Context, names []string, want *k
 	}
 	b.Logf("SAVE_VALIDATED pid=%d wire=%d sha=%x tasks=%d features=32 remaining=%d", os.Getpid(), len(raw), sha256.Sum256(raw), len(z), reader.Len())
 }
+
+// BenchmarkObjectSlabSmall saves one aliased integer in a fresh process. The
+// history role loads a many-target graph of the same type before saving it;
+// unlike saving the seed here, that supplies a root hint without populating
+// the encoder pool. The seed role writes that input once, outside the study.
+func BenchmarkObjectSlabSmall(b *testing.B) {
+	if b.N != 1 {
+		b.Fatal("requires one operation per new process")
+	}
+	b.StopTimer()
+	ctx := context.Background()
+	role := os.Getenv("SLAB_SMALL_ROLE")
+	path := os.Getenv("SLAB_SMALL_SEED")
+	const n = 1536
+	if role == "seed" {
+		graph := make([]*uint64, n)
+		for i := range graph {
+			value := uint64(i + 1)
+			graph[i] = &value
+		}
+		var out bytes.Buffer
+		if _, err := state.Save(ctx, &out, &graph); err != nil {
+			b.Fatal(err)
+		}
+		if err := os.WriteFile(path, out.Bytes(), 0600); err != nil {
+			b.Fatal(err)
+		}
+		fmt.Printf("SLAB_SEED wire=%d elements=%d sha=%x\n", out.Len(), n, sha256.Sum256(out.Bytes()))
+		return
+	}
+	if role == "history" {
+		input, err := os.ReadFile(path)
+		if err != nil {
+			b.Fatal(err)
+		}
+		var graph []*uint64
+		r := bytes.NewReader(input)
+		if _, err := state.Load(ctx, r, &graph); err != nil {
+			b.Fatal(err)
+		}
+		if r.Len() != 0 || len(graph) != n {
+			b.Fatalf("invalid seed: remaining %d, length %d", r.Len(), len(graph))
+		}
+		for i, value := range graph {
+			if value == nil || *value != uint64(i+1) {
+				b.Fatalf("bad seed element %d", i)
+			}
+		}
+	} else if role != "first" {
+		b.Fatalf("invalid small graph role %q", role)
+	}
+	value := uint64(0x51ab)
+	graph := []*uint64{&value, &value}
+	var out bytes.Buffer
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.StartTimer()
+	if _, err := state.Save(ctx, &out, &graph); err != nil {
+		b.Fatal(err)
+	}
+	b.StopTimer()
+	var restored []*uint64
+	r := bytes.NewReader(out.Bytes())
+	if _, err := state.Load(ctx, r, &restored); err != nil {
+		b.Fatal(err)
+	}
+	if r.Len() != 0 || len(restored) != 2 || restored[0] == nil || restored[0] != restored[1] || *restored[0] != value {
+		b.Fatal("small graph did not preserve its value and alias")
+	}
+	fmt.Printf("SLAB_SMALL role=%s pid=%d sha=%x wire=%d\n", role, os.Getpid(), sha256.Sum256(out.Bytes()), out.Len())
+}

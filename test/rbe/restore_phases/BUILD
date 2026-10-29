@@ -8,11 +8,11 @@ sh_test(
     args = [
         "$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)",
         "$(rootpath :nginx.tar)",
-        "$(rootpath :profile_summary)",
+        "$(rootpath :candidate.bin)",
     ],
     data = [
         ":nginx.tar",
-        ":profile_summary",
+        ":candidate.bin",
         "//:release",
         "//test/benchmarks/checkpointfile:checkpointfile_test",
     ],
