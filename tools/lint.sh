@@ -154,9 +154,6 @@ install_clang_tidy() {
 go_files() { git ls-files -z -- '*.go' "$@"; }
 doc_files() { git ls-files -z -- '*.md' '*.html'; }
 cc_files() { git ls-files -z -- '*.c' '*.cc' '*.h'; }
-bazel_files() {
-  git ls-files -z -- 'BUILD' '*/BUILD' '*.bzl' 'WORKSPACE' 'MODULE.bazel'
-}
 
 declare -a FAILED=()
 declare -a PASSED=()
@@ -252,16 +249,12 @@ check_clang_tidy() {
     --jobs="$(nproc 2> /dev/null || echo 1)"
 }
 
-# Native rule loads (native-sh-test, native-sh-binary, native-proto) are
-# excluded because rules_shell / proto_library.bzl loads are not used here.
 check_buildifier() {
   if [[ "${FIX}" -eq 0 ]]; then
     bazel build //tools/lint:buildifier
-    return
+  else
+    bazel run //tools/lint:format
   fi
-  local -ra buildifier=(bazel run --run_in_cwd @buildifier_prebuilt//:buildifier --)
-  local -r warnings="-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto"
-  bazel_files | xargs -0 "${buildifier[@]}" --mode=fix --lint=fix --warnings="${warnings}"
 }
 
 check_actions() {
