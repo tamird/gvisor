@@ -23,7 +23,6 @@ _RBE_EXEC_PROPERTIES = {
 # adding worker routing for compilation and host-configured test actions.
 platform(
     name = "rbe_linux_amd64",
-    constraint_values = ["@llvm//constraints/libc:musl"],
     exec_properties = dict(
         _RBE_EXEC_PROPERTIES,
         Arch = "amd64",
@@ -41,7 +40,6 @@ platform(
 
 platform(
     name = "rbe_linux_arm64",
-    constraint_values = ["@llvm//constraints/libc:musl"],
     exec_properties = dict(
         _RBE_EXEC_PROPERTIES,
         Arch = "arm64",

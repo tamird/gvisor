@@ -1,0 +1,60 @@
+name: Check the Linux module map bootstrap
+on:
+  push:
+    branches: [qualification/module-map-generator-scratch]
+permissions:
+  contents: read
+jobs:
+  builtins:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {arch: amd64, cpu: x86_64, remote: rbe}
+          - {arch: arm64, cpu: aarch64, remote: rbe-arm64}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      QUALIFICATION_ARCH: ${{ matrix.arch }}
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: remote-actions
+      QUALIFICATION_LANES: build
+      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
+      QUALIFICATION_CLOCK_SOURCE: calibrated
+      QUALIFICATION_TARGETS: '@@llvm++llvm+llvm-project//compiler-rt:builtins @@llvm++llvm_toolchain_minimal+llvm-toolchain-minimal-linux-${{ matrix.arch }}//:module_map'
+      QUALIFICATION_HEADER_BASE: ''
+      QUALIFICATION_COS_SHA256: ''
+      QUALIFICATION_COS_GZIP_BASE64: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Resolve the patched dependency and actual configured roots
+        run: |
+          set -euo pipefail
+          echo '190cdedaa260507e18f7a1ee9275b5f2e6dd374387d21f093405da66457a9f1d  tools/llvm-module-map-generator-musl.patch' | sha256sum -c -
+          cp test/rbe/scratch-release.lock MODULE.bazel.lock
+          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          printf '%s\n' 'build:buildbuddy_remote_executor --define=modulemap_graph=true' > "$RUNNER_TEMP/preflight.bazelrc"
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" cquery --config=${{ matrix.remote }} --config=${{ matrix.cpu }} --lockfile_mode=update "set($QUALIFICATION_TARGETS)"
+          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bb"
+      - name: Build compiler-rt and its real module map on the empty Linux executor
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          bash test/rbe/actions.sh \
+            --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_${{ matrix.arch }} \
+            --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_${{ matrix.arch }} \
+            --bazel-option=--remote_download_outputs=all \
+            '--bazel-option=--modify_execution_info=^(CppModuleMap|CppLink)$=+no-remote-cache'
+      - name: Join the tool, module map and compiler-rt archive to the actual workers
+        if: always()
+        run: python3 test/rbe/module_map_evidence.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: module-map-${{ matrix.arch }}
+          path: ${{ runner.temp }}/module-map.json
+          if-no-files-found: error
