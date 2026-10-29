@@ -1,0 +1,37 @@
+name: Read the original TCP congestion-control selection tests
+on:
+  push:
+    branches: [qualification/tcp-congestion-selection-originals]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify fixed original sources and result artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = 24363fd87fee7553ba000b1cb68b7416b3e1dbe8
+          printf '%s  %s\n' 372d6ef323a7161130f40f2833a1f52f700e47c2f5d7aee6fe981c59f92e4669 test/rbe/congestion_option_original.py | sha256sum --check --strict
+          curl -fsSL --max-time 60 https://raw.githubusercontent.com/tamird/gvisor/06a76f6dfeaba805da47e6bbdde6b6346eb5574b/test/rbe/release_layout_check/original.py -o "$RUNNER_TEMP/original_reader.py"
+          printf '%s  %s\n' e885b4d78cdc1b4b18f98dce2c7e21912ed9cdfc0ad457d0360fedffb623a3ce "$RUNNER_TEMP/original_reader.py" | sha256sum --check --strict
+          gh run download 40833771286 -R tamird/gvisor -n tcp-congestion-selection -D "$RUNNER_TEMP/stock"
+          gh run download 40833785775 -R tamird/gvisor -n tcp-congestion-selection -D "$RUNNER_TEMP/fixed"
+      - name: Read original exit status and reports, exercise parser controls
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: PYTHONPATH="$RUNNER_TEMP" python3 test/rbe/congestion_option_original.py
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcp-congestion-selection-original
+          path: ${{ runner.temp }}/congestion-selection.json
+          if-no-files-found: error
