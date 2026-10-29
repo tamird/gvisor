@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T13:29:38.654210+00:00",
+    "updatedAt": "2026-10-29T13:32:41.794929+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33550,26 +33550,17 @@
           "url": "https://github.com/tamird/gvisor/compare/073cc1427aa2125c7f0bd98e3255197e2a16c42e...ecae1badc0b76b54f83b691f59f913ff77041e04"
         }
       ],
-      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T13:32:41.794929+00:00",
+      "status": "Contributor approval retained; waiting for prerequisites",
       "followup": {
         "owner": "root",
         "sourceHead": "ecae1badc0b76b54f83b691f59f913ff77041e04",
-        "observedAt": "2026-10-29T13:22:09.757150+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Submit after contributor review and #16666.",
+        "observedAt": "2026-10-29T13:32:41.794929+00:00",
+        "disposition": "Contributor approval retained; waiting for prerequisites",
+        "nextAction": "Open after #16666 lands. Keep the verified partial write counts and retry behavior while rebasing.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ecae1badc0b76b54f83b691f59f913ff77041e04"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "ecae1badc0b76b54f83b691f59f913ff77041e04",
-        "url": "https://github.com/tamird/gvisor/commit/ecae1badc0b76b54f83b691f59f913ff77041e04",
-        "title": "Account for the bytes a TCP software GSO send actually emitted",
-        "summary": "When a link accepts only the first wire packet of an aggregate, TCP accounts for all three as sent. The correction advances send state only over accepted bytes and keeps the remaining packets available for retry.",
-        "body": "Five packet cases distinguish an ACK, timeout, checkpoint and a link that accepts nothing. All 42 TCP cases and both Nogo targets passed on the same production code. The final revision changes assertion messages only."
       }
     }
   ],
@@ -49650,9 +49641,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-29T13:29:38.654210+00:00",
+      "updatedAt": "2026-10-29T13:32:41.794929+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Return the reproduced findings to the two PR authors; test receive pressure and corked shutdown independently of recovery. Recheck external PR heads, linked reports, and new issues at each TCP review pass.",
+      "nextStep": "Monitor replies and revised heads on #16659 and #16660. Test receive pressure and corked shutdown separately from loss recovery. Include new issues and external PRs in the TCP review pass.",
       "findings": [
         {
           "text": "Initial census: 510 open PRs inspected by changed path and title, including exports. The networking/performance labels and TCP, retransmission, SACK, RACK, CUBIC and netstack searches yielded 184 distinct candidate issues; many are not TCP defects.",
@@ -49760,6 +49751,10 @@
             {
               "label": "Exact PR head, same two packets",
               "url": "https://app.buildbuddy.io/invocation/0573285e-2d37-4da4-b544-582e3be50230"
+            },
+            {
+              "label": "Posted inline review",
+              "url": "https://github.com/google/gvisor/pull/16659#discussion_r4412923887"
             }
           ]
         },
@@ -49773,6 +49768,10 @@
             {
               "label": "Packet traces and controls",
               "url": "https://app.buildbuddy.io/invocation/5f626fb7-5e25-4f65-914b-77f423c1f08d"
+            },
+            {
+              "label": "Posted inline review",
+              "url": "https://github.com/google/gvisor/pull/16660#pullrequestreview-5698493694"
             }
           ]
         },
