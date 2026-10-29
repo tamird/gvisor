@@ -27184,23 +27184,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/proc-immutable-pid-dirs-synthetic",
-      "head": "9e15e32f54af24eaf3b465b364148b93fe581e45",
+      "head": "542182833d848ed8eee0289ef59275cad83079d1",
       "title": "Reject writes to immutable proc task directories",
       "url": "https://github.com/google/gvisor/pull/16473",
       "group": "runtime",
       "status": "open",
       "summary": "Linux rejects writable opens on existing task directories with EISDIR. Both gVisor configurations returned EPERM on the old code. The amendment also preserves the credential check on internal mountpoints. All seven fresh test and analyzer owners passed; 69 cases, none skipped or missing. The four review threads have individual replies.",
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-10-29T09:20:29.299794+00:00",
       "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "9e15e32f54af24eaf3b465b364148b93fe581e45",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow checks, maintainer review and import on #16473.",
+        "owner": "root",
+        "sourceHead": "542182833d848ed8eee0289ef59275cad83079d1",
+        "observedAt": "2026-10-29T09:20:29.299794+00:00",
+        "disposition": "Published the exact formatter output; upstream lint passed",
+        "nextAction": "Await the reviewer’s response on the published procfs amendment. The wrap changed no tokens.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16473",
-          "https://github.com/tamird/gvisor/commit/9e15e32f54af24eaf3b465b364148b93fe581e45",
-          "https://github.com/tamird/gvisor/commit/eb15b3a9701bde116974715d17f34c6cc19251fc"
+          "https://github.com/google/gvisor/actions/runs/40702036225/job/122864112872",
+          "https://github.com/google/gvisor/actions/runs/40848020007/job/123360215216"
         ]
       },
       "evidence": [
@@ -27279,15 +27278,23 @@
         {
           "label": "Prerequisite proc lookup ordering",
           "url": "https://github.com/google/gvisor/pull/16057"
+        },
+        {
+          "label": "Formatter output on the previous PR head",
+          "url": "https://github.com/google/gvisor/actions/runs/40702036225/job/122864112872"
+        },
+        {
+          "label": "All five lint checks passed on the formatted head",
+          "url": "https://github.com/google/gvisor/actions/runs/40848020007/job/123360215216"
         }
       ],
       "number": 16473,
       "refinement": {
         "before": {
-          "head": "28c2e12d21ae08f0cb4c230eb8d8b16d322bc166"
+          "head": "9e15e32f54af24eaf3b465b364148b93fe581e45"
         },
         "after": {
-          "head": "9e15e32f54af24eaf3b465b364148b93fe581e45",
+          "head": "542182833d848ed8eee0289ef59275cad83079d1",
           "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       }
@@ -35919,7 +35926,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T08:52:37.351418+00:00",
+      "updatedAt": "2026-10-29T09:20:29.299794+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -37595,9 +37602,30 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40843613102"
             }
           ]
+        },
+        {
+          "text": "A real link accepted 536 of a 1,608-byte software-segmented write. The stock sender advanced by all 1,608 bytes and accounted for three packets in flight; tracking the accepted prefix delivered the remaining 1,072 bytes. A separate control reproduced a division by zero after restoring a connection that had sent no data: the new route had a zero segment size. Restoring the negotiated size worked with the original MTU, a smaller MTU, and changes in segmentation support.",
+          "evidence": [
+            {
+              "label": "Stock socket: SND.NXT and outstanding include the rejected suffix",
+              "url": "https://app.buildbuddy.io/invocation/ce9d7cc9-afaf-4dae-86be-593352cfea8a"
+            },
+            {
+              "label": "Stock restore: a zero segment size on a connection that had not yet sent data",
+              "url": "https://app.buildbuddy.io/invocation/cae84d9e-7c35-45b5-b394-9a17fe574b53"
+            },
+            {
+              "label": "Restored routes with segmentation enabled, disabled, or a reduced MTU",
+              "url": "https://app.buildbuddy.io/invocation/694192fa-aa5c-452d-acfe-08e9d42bcabd"
+            },
+            {
+              "label": "Accounting for the accepted prefix after restore",
+              "url": "https://app.buildbuddy.io/invocation/ce07fa99-a4d8-4b98-b70b-eef578e5c75d"
+            }
+          ]
         }
       ],
-      "nextStep": "Determine how TCP should account for a software-segmented send when the link accepts only the first segment. Reproduce through a real socket before changing recovery accounting.",
+      "nextStep": "Qualify the standalone restored-route fix and the partial-write correction separately. Check partial retransmission accounting; keep the zero-acceptance retry prototype separate until its interaction with the zero-window probe is understood.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -37974,6 +38002,22 @@
         {
           "label": "Original Linux packet capture verified",
           "url": "https://github.com/tamird/gvisor/actions/runs/40820918000"
+        },
+        {
+          "label": "Stock socket: SND.NXT and outstanding include the rejected suffix",
+          "url": "https://app.buildbuddy.io/invocation/ce9d7cc9-afaf-4dae-86be-593352cfea8a"
+        },
+        {
+          "label": "Stock restore: a zero segment size on a connection that had not yet sent data",
+          "url": "https://app.buildbuddy.io/invocation/cae84d9e-7c35-45b5-b394-9a17fe574b53"
+        },
+        {
+          "label": "Restored routes with segmentation enabled, disabled, or a reduced MTU",
+          "url": "https://app.buildbuddy.io/invocation/694192fa-aa5c-452d-acfe-08e9d42bcabd"
+        },
+        {
+          "label": "Accounting for the accepted prefix after restore",
+          "url": "https://app.buildbuddy.io/invocation/ce07fa99-a4d8-4b98-b70b-eef578e5c75d"
         }
       ],
       "comparisons": [
@@ -48716,7 +48760,7 @@
       "status": "active",
       "owner": "root",
       "group": "bazel",
-      "updatedAt": "2026-10-29T03:50:12.442027+00:00",
+      "updatedAt": "2026-10-29T09:20:29.299794+00:00",
       "summary": "Upstream reverted the six build declarations from #16234. The rollback gives no reason. Its affected tools include the shim, test helper, webhook and benchmarks.",
       "findings": [
         {
@@ -48737,11 +48781,15 @@
           ]
         }
       ],
-      "nextStep": "Check whether the compiler migration actually needs a replacement and isolate any failing configuration before proposing one.",
+      "nextStep": "Compare the six actual binaries for interpreter and shared-library requirements, including a real empty-root execution. The upstream rollback did not state an internal cause.",
       "evidence": [
         {
           "label": "Upstream revert",
           "url": "https://github.com/google/gvisor/commit/f4c82a02fc3e8452463d5b58f013ba2140003f17"
+        },
+        {
+          "label": "Paired six-tool cgo and race runs on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40848396398"
         }
       ]
     }
