@@ -1,7 +1,7 @@
 name: Qualify the clock rebase with the gVisor GNU worker
 on:
   push:
-    branches: [qualification/clock-native-arm-cross-tools-oct29]
+    branches: [qualification/clock-native-arm-sysroot-oct29]
 permissions:
   contents: read
 jobs:
@@ -29,9 +29,12 @@ jobs:
       - name: Provide the GNU tools used by the two legacy cross-architecture genrules
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends gcc-x86-64-linux-gnu binutils-x86-64-linux-gnu
+          sudo apt-get install -y --no-install-recommends crossbuild-essential-amd64 libc6-dev-amd64-cross
           /usr/bin/x86_64-linux-gnu-gcc -dumpmachine | grep -Fx x86_64-linux-gnu
           /usr/bin/aarch64-linux-gnu-gcc -dumpmachine | grep -Fx aarch64-linux-gnu
+          for cc in /usr/bin/x86_64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc; do
+            printf '#include <signal.h>\n#include <stdint.h>\n' | "$cc" -x c -fsyntax-only -
+          done
       - name: Exercise changed packages and original regression cases
         working-directory: source
         env:
