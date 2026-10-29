@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T06:44:03.442743+00:00",
+    "updatedAt": "2026-10-29T07:00:56.448261+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28200,13 +28200,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/declared-go-coverage",
-      "head": "b952c8943eaeab391ab3a5b23c49932faebca94a",
+      "head": "08d75cea690ac7199c592d2274a6815fc07bff6c",
       "title": "Build runsc and Sentry coverage binaries with rules_go",
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "Open PR",
       "summary": "Replace the networked SDK bootstrap and private-import patch with rules_go. All eight binaries per CPU built; AMD64 ordinary runsc produced no report while both instrumented releases reported Sentry locations and passed the real KCOV case.",
-      "updatedAt": "2026-10-27T16:21:47+00:00",
+      "updatedAt": "2026-10-29T07:00:56.448261+00:00",
       "followup": {
         "owner": "root",
         "observedAt": "2026-10-27T16:21:47+00:00",
@@ -28232,9 +28232,27 @@
         {
           "label": "Ordinary, KCOV and race+KCOV runtime checks",
           "url": "https://app.buildbuddy.io/invocation/b51badd9-3b9d-419d-98f0-e4f8ac977e99"
+        },
+        {
+          "label": "Before and after on native AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40830394553/job/123303014062"
+        },
+        {
+          "label": "Before and after on native ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40830394553/job/123303013828"
         }
       ],
-      "number": 16507
+      "number": 16507,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "08d75cea690ac7199c592d2274a6815fc07bff6c",
+        "head": "5dbef4de9b117461804e0db26baee37769ef4ee7",
+        "url": "https://github.com/tamird/gvisor/commit/5dbef4de9b117461804e0db26baee37769ef4ee7",
+        "title": "Share the runsc entry point\u2019s direct imports",
+        "summary": "The two coverage targets omitted coretagprime, which main.go now imports. All four binaries built from main.go now share their dependency list.",
+        "body": "Both coverage builds failed on the published PR on AMD64 and ARM64. All four corrected binaries on each architecture built and ran --version; the single-commit revision has the same tree as the tested source."
+      }
     },
     {
       "id": "branch:reproducible-debian-changelog",
@@ -35589,7 +35607,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T05:12:30.144224+00:00",
+      "updatedAt": "2026-10-29T07:00:56.448261+00:00",
       "summary": "The reporter\u2019s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -37184,9 +37202,26 @@
               "url": "https://www.rfc-editor.org/rfc/rfc9438.html#section-5.8"
             }
           ]
+        },
+        {
+          "text": "After recovery below the initial window, stock gVisor CUBIC sent [7, 8, 8, 9, 9] segments across five backlogged flights without a gap, versus [7, 10, 15, 23, 34] after 30 seconds idle. Reno sent [7, 8, 9, 10, 11] in both cases. On Linux 6.18.57, after a full congestion-avoidance flight, the idle interval did not change either reported congestion window or five-flight byte total. In both algorithms one new segment left one ACK earlier. No measured flight experienced a retransmission or timeout. These measurements do not identify the cause of the historic customer outage.",
+          "evidence": [
+            {
+              "label": "Stock gVisor, both algorithms",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40830751248"
+            },
+            {
+              "label": "Four Linux socket cases",
+              "url": "https://app.buildbuddy.io/invocation/b4ea3241-2fee-4cdf-93f9-a039f905ab38"
+            },
+            {
+              "label": "Complete original Linux packet capture reconciliation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40832451672"
+            }
+          ]
         }
       ],
-      "nextStep": "The sender correction is ready for contributor review. If #15634, #14101 or #15432 lands first, repeat combined SACK recovery coverage because those changes affect the flight count used by the correction.",
+      "nextStep": "Run the same primed and unprimed cases against the pending window-use fix. Keep the idle-only experiment separate from contributor review unless it fixes a remaining defect. Recheck combined SACK recovery if a flight-count prerequisite changes.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -38190,7 +38225,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T06:23:20.009851+00:00",
+      "updatedAt": "2026-10-29T07:00:56.448261+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -40650,9 +40685,22 @@
               "url": "https://app.buildbuddy.io/invocation/3dcc6f85-13cc-4867-8d9b-fd6efa6bd5b2"
             }
           ]
+        },
+        {
+          "text": "A capped callback-buffer reservation saved a median 310,688 bytes and 11 allocations across eight cold Nginx restores; warm allocation counts and bytes were unchanged. In 16 paired timings, the first kernel load was 0.354 ms faster by median difference, but startup through the verified restore was 0.308 ms slower and only 7 of 16 pairs were faster. The reservation is not proposed. Of the 1,725 enqueued kernel callbacks, 1,016 are dependency edges, 531 are AfterLoad hooks, and 178 are LoadValue callbacks; immediately executed callbacks are excluded.",
+          "evidence": [
+            {
+              "label": "Native comparison and verified outputs",
+              "url": "https://app.buildbuddy.io/invocation/3d1922d4-c4a7-4c83-a4fe-4e4c57da64ab"
+            },
+            {
+              "label": "Unprofiled callback census",
+              "url": "https://app.buildbuddy.io/invocation/5c5ce0f9-0126-4d25-8ac0-327317406dc8"
+            }
+          ]
         }
       ],
-      "nextStep": "Count callback kinds and buffer growth on the ordinary pool lifecycle. Test a reservation change only if that measurement justifies it. Parth leads the graph rewrite.",
+      "nextStep": "Evaluate compact dependency edges within the existing FIFO, preserving ordering during hooks and clearing pooled pointers. Compare full restore startup alongside callback-heavy controls. Parth leads the graph rewrite.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
