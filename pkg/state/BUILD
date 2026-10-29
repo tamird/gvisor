@@ -106,6 +106,7 @@ go_test(
     srcs = [
         "graph_addrmap_test.go",
         "graph_buf_test.go",
+        "graph_map_word_test.go",
         "types_test.go",
     ],
     embed = [":state"],
