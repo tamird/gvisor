@@ -10605,3 +10605,76 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestCorkFlushBeforeFIN exercises a real write-side close while data is
+// waiting in the corked queue. There can be no later write to coalesce.
+func TestCorkFlushBeforeFIN(t *testing.T) {
+	for _, how := range []string{"close", "shutdown", "uncork_then_close"} {
+		t.Run(how, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: clock})
+			defer c.Cleanup()
+			c.CreateConnected(context.TestInitialSequenceNumber, 30000, -1)
+			c.EP.SocketOptions().SetCorkOption(true)
+			data := []byte("corked payload")
+			if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); n != int64(len(data)) || err != nil {
+				t.Fatalf("write = %d, %v; want %d, nil", n, err, len(data))
+			}
+			if b := c.GetPacketNonBlocking(); b != nil {
+				b.Release()
+				t.Fatal("partial write reached the peer while corked")
+			}
+			switch how {
+			case "close":
+				c.EP.Close()
+			case "shutdown":
+				if err := c.EP.Shutdown(tcpip.ShutdownWrite); err != nil {
+					t.Fatalf("shutdown write: %s", err)
+				}
+			case "uncork_then_close":
+				c.EP.SocketOptions().SetCorkOption(false)
+				c.EP.Close()
+			}
+			start := clock.NowMonotonic()
+			var received int
+			var fin bool
+			dataAt, finAt := -time.Nanosecond, -time.Nanosecond
+			for _, advance := range []time.Duration{0, tcp.MinRTO - time.Millisecond, time.Millisecond} {
+				clock.Advance(advance)
+				for b := c.GetPacketNonBlocking(); b != nil; b = c.GetPacketNonBlocking() {
+					h := header.TCP(header.IPv4(b.AsSlice()).Payload())
+					gotSeq, flags := h.SequenceNumber(), h.Flags()
+					pl := append([]byte(nil), h.Payload()...)
+					b.Release()
+					if got, want := gotSeq, uint32(c.IRS.Add(1+seqnum.Size(received))); got != want {
+						t.Fatalf("segment sequence = %d, want %d", got, want)
+					}
+					if fin || received+len(pl) > len(data) || !bytes.Equal(pl, data[received:received+len(pl)]) || flags&header.TCPFlagRst != 0 {
+						t.Fatalf("unexpected packet at byte %d: flags=%v, payload=%q", received, flags, pl)
+					}
+					if len(pl) > 0 && dataAt < 0 {
+						dataAt = clock.NowMonotonic().Sub(start)
+					}
+					received += len(pl)
+					if flags&header.TCPFlagFin != 0 {
+						if got, want := received, len(data); got != want {
+							t.Fatalf("FIN after %d data bytes, want %d", got, want)
+						}
+						fin = true
+						finAt = clock.NowMonotonic().Sub(start)
+					}
+				}
+				if fin {
+					break
+				}
+			}
+			t.Logf("CORK mode=%s data_ns=%d fin_ns=%d bytes=%d", how, dataAt.Nanoseconds(), finAt.Nanoseconds(), received)
+			if got, want := dataAt, time.Duration(0); got != want {
+				t.Errorf("data arrived after %v, want %v", got, want)
+			}
+			if got, want := finAt, time.Duration(0); got != want {
+				t.Errorf("FIN arrived after %v, want %v", got, want)
+			}
+		})
+	}
+}
