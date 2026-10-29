@@ -4,13 +4,65 @@ name: CI
   push:
     branches:
       - "*"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: One selection or the complete supported public CPU matrix
+        type: choice
+        options: [single, public-cpu]
+        default: single
+      lanes:
+        description: Space-separated qualification lanes
+        type: string
+        default: smoke
+        required: true
+      architecture:
+        description: Target architecture selection
+        type: choice
+        options: [amd64, arm64, all]
+        default: amd64
+      execution:
+        description: Run tests on BuildBuddy or this Actions runner
+        type: choice
+        options: [remote, local]
+        default: remote
+      clock_source:
+        description: Explicit runtime clock source for qualification
+        type: choice
+        options: [calibrated, reference]
+        default: calibrated
+      local_test_requirements:
+        description: Comma-separated requirements missing from remote workers for hybrid lanes
+        type: string
+        default: namespace
+      syscall_bucket:
+        description: Optional increasing comma-separated hash15 buckets (0..14) for local or guest syscall lanes
+        type: string
+      targets:
+        description: Optional build/test/syscall owner labels, or continuous benchmark labels
+        type: string
+      test_filter:
+        description: Optional Bazel test filter for the test, container-v1 or docker lane
+        type: string
+      header_base:
+        description: Full comparison commit SHA for license-headers
+        type: string
+      cos_catalog_gzip_base64:
+        description: Gzip/base64-encoded complete gcloud COS image catalog
+        type: string
+      cos_catalog_sha256:
+        description: SHA256 of the uncompressed COS catalog
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Explicit target lists can exceed GitHub's concurrency-key length limit.
+  # Keep those runs independent; different selections must not cancel each other.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.profile }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ (contains(fromJSON('["build","test","benchmarks","pgo"]'), inputs.lanes) || inputs.targets != '') && github.run_id || '' }}-${{ inputs.clock_source }}
   cancel-in-progress: true
 
 jobs:
   build:
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (!startsWith(github.ref, 'refs/heads/qualification/') && github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,3 +85,176 @@ jobs:
       with:
           name: runsc
           path: bin/
+
+  qualification-plan:
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      plan: ${{ steps.plan.outputs.plan }}
+    env:
+      QUALIFICATION_PROFILE: ${{ inputs.profile || 'single' }}
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_LANES: ${{ inputs.lanes || 'smoke' }}
+      QUALIFICATION_ARCH: ${{ inputs.architecture || 'amd64' }}
+      QUALIFICATION_EXECUTION: ${{ inputs.execution || 'remote' }}
+      QUALIFICATION_CLOCK_SOURCE: ${{ inputs.clock_source || 'calibrated' }}
+      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ inputs.local_test_requirements }}
+      QUALIFICATION_TARGETS: ${{ inputs.targets }}
+      QUALIFICATION_TEST_FILTER: ${{ inputs.test_filter }}
+      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
+      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
+      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
+      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
+    steps:
+    - name: Checkout the triggering commit
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+    - name: Resolve the source-owned qualification plan
+      id: plan
+      shell: bash
+      run: |
+        plan=$(bash test/rbe/qualify.sh --dispatch-plan)
+        printf 'plan=%s\n' "$plan" >> "$GITHUB_OUTPUT"
+
+  remote-qualification:
+    needs: qualification-plan
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.qualification-plan.outputs.plan).rows }}
+    name: Qualification ${{ matrix.id }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.job_minutes }}
+    permissions:
+      contents: read
+    env:
+      QUALIFICATION_PLAN_JSON: ${{ needs.qualification-plan.outputs.plan }}
+      QUALIFICATION_ROW_ID: ${{ matrix.id }}
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: ${{ matrix.coordinator }}
+      QUALIFICATION_CLOCK_SOURCE: ${{ fromJSON(needs.qualification-plan.outputs.plan).side_inputs.clock_source }}
+      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ matrix.local_test_requirements }}
+      QUALIFICATION_LANES: ${{ join(matrix.lanes, ' ') }}
+      QUALIFICATION_ARCH: ${{ matrix.architecture }}
+      QUALIFICATION_SYSCALL_BUCKET: ${{ matrix.syscall_bucket }}
+      QUALIFICATION_TARGETS: ${{ join(matrix.targets, ' ') }}
+      QUALIFICATION_TEST_FILTER: ${{ matrix.test_filter }}
+      QUALIFICATION_HEADER_BASE: ${{ fromJSON(needs.qualification-plan.outputs.plan).side_inputs.header_base }}
+      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
+      QUALIFICATION_COS_SHA256: ${{ fromJSON(needs.qualification-plan.outputs.plan).side_inputs.cos_catalog_sha256 }}
+    steps:
+    - name: Check the Remote Bazel credential
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: ': "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"'
+
+    - name: Checkout the triggering commit
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+        fetch-depth: 10
+
+    - name: Download the pinned compact-log decoder
+      if: contains(matrix.required_audits, 'source-images')
+      shell: bash
+      run: |
+        decoder=$RUNNER_TEMP/bb
+        case $(uname -m) in
+          x86_64) cpu=x86_64; digest=f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb ;;
+          aarch64) cpu=arm64; digest=1f4c3ede4b5e147ab698f6e6c6f4fdd48c48f3d2e3c75fe5bc8dd744ddcdbc4c ;;
+          *) printf 'Unsupported decoder host: %s\n' "$(uname -m)" >&2; exit 1 ;;
+        esac
+        curl --fail --silent --show-error --location --max-time 120 \
+          "https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-$cpu" \
+          --output "$decoder"
+        printf '%s  %s\n' "$digest" "$decoder" | sha256sum --check --strict
+        chmod +x "$decoder"
+        printf 'QUALIFICATION_DECODER=%s\n' "$decoder" >> "$GITHUB_ENV"
+
+    - name: Run the selected FIFO owner on the ordinary remote AMD64 platform
+      timeout-minutes: 30
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        test "$QUALIFICATION_COMMIT" = "$(git rev-parse HEAD)"
+        test "$QUALIFICATION_TARGETS" = "//pkg/tcpip/transport/tcp/test/e2e:tcp_test"
+        case "$QUALIFICATION_TEST_FILTER" in "^TestGSOAfterRestore$"|"^TestGSOAfterRestore$/^same$"|"^TestPartialGSOProgress$/^restore$"|"^TestEmptyGSOWriteRetry$/^restore$") ;; *) exit 2 ;; esac
+        test "$QUALIFICATION_LANES" = "test"
+        test "$QUALIFICATION_ARCH" = "amd64"
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        status=0
+        bash test/rbe/qualify.sh --arch=amd64 "--test-target=$QUALIFICATION_TARGETS" \
+          "--test-filter=$QUALIFICATION_TEST_FILTER" "--bazel-option=--build_event_json_file=$RUNNER_TEMP/fifo/events.jsonl" \
+          "--bazel-option=--test_sharding_strategy=disabled" "--bazel-option=--cache_test_results=no" "--bazel-option=--remote_download_outputs=toplevel" test || status=$?
+        python3 -B test/rbe/first_loss_result.py "$RUNNER_TEMP/fifo" "$status"
+    - name: Retain the measured event and original report digests
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: partial-gso-evidence
+        path: |
+          ${{ runner.temp }}/fifo/result.json
+        if-no-files-found: error
+
+  qualification-result:
+    needs: [qualification-plan, remote-qualification]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check the single selected qualification row
+        env:
+          PLAN: ${{ needs.qualification-plan.result }}
+          ROW: ${{ needs.remote-qualification.result }}
+        run: test "$PLAN" = success && test "$ROW" = success
