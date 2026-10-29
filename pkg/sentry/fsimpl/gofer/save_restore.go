@@ -498,6 +498,9 @@ func (fd *specialFileFD) completeRestore(ctx context.Context) error {
 	fd.handle = h
 	fd.mmapFile.SetFD(int(h.fd))
 
+	if h.fd < 0 && !fd.queue.IsEmpty() {
+		return fmt.Errorf("cannot restore waiters for %q: gofer did not donate a host file descriptor", genericDebugPathname(d.inode.fs, d))
+	}
 	if err := fd.initWaitQueue(d.inode.fileType()); err != nil {
 		return fmt.Errorf("restoring wait queue for %q: %w", genericDebugPathname(d.inode.fs, d), err)
 	}
