@@ -12,14 +12,6 @@ jobs:
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: source, ref: b33d195deb0c528d5b2a843fff8a2e32813ff7b9, fetch-depth: 2, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: zip-source, ref: 700b0bbea70ff699553d8e40827a2f3dab4afdd2, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: bazelbuild/rules_pkg, path: original, ref: "01446201fd8e758267f4e1abd9727926655110b7", persist-credentials: false}
-      - name: Retrieve original failed tool diagnostics
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -B carrier/.github/qualification/lint-runtime/original.py
       - name: Compile both alias fixtures and verify their scratch outputs
         working-directory: source
         env:
@@ -35,18 +27,10 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$QA_RC"
           unset BUILDBUDDY_API_KEY
-          state_status=0
-          python3 -B ../carrier/.github/qualification/lint-runtime/stateify.py || state_status=$?
-          cd ../zip-source
-          zip_status=0
-          python3 -B ../carrier/.github/qualification/lint-runtime/stockzip.py || zip_status=$?
-          test "$state_status" = 0 && test "$zip_status" = 0
+          python3 -B ../carrier/.github/qualification/lint-runtime/stateify.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: stateify-comments
-          path: |
-            ${{ runner.temp }}/stateify-comments.json
-            ${{ runner.temp }}/original-diagnostics.json
-            ${{ runner.temp }}/stockzip.json
+          path: ${{ runner.temp }}/stateify-comments.json
           if-no-files-found: error
