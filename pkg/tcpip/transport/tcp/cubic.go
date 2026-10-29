@@ -66,6 +66,9 @@ type cubicState struct {
 	// RTO.
 	numCongestionEvents int
 
+	startupNoACKTrain  bool
+	startupTrain       StartupDetection `state:"nosave"`
+	startupDelay       StartupDetection `state:"nosave"`
 	firstLossNoHyStart bool
 	firstLossExit      int
 	firstLossExitNS    int64
@@ -150,9 +153,14 @@ func (c *cubicState) updateHyStart(rtt time.Duration, ackTime tcpip.MonotonicTim
 		c.LastRTT < effectivelyInfinity {
 		c.LastAck = now
 		if thresh := c.LastRTT / 2; now.Sub(c.RoundStart) > thresh {
-			c.s.Ssthresh = c.s.SndCwnd
-			c.firstLossExit |= 1
-			c.firstLossExitNS = int64(now.Sub(tcpip.MonotonicTime{}))
+			if c.startupTrain.At == 0 {
+				c.startupTrain = c.observedStartup(now, rtt)
+			}
+			if !c.startupNoACKTrain {
+				c.s.Ssthresh = c.s.SndCwnd
+				c.firstLossExit |= 1
+				c.firstLossExitNS = int64(now.Sub(tcpip.MonotonicTime{}))
+			}
 		}
 	}
 
@@ -167,6 +175,9 @@ func (c *cubicState) updateHyStart(rtt time.Duration, ackTime tcpip.MonotonicTim
 			min(maxRTTThresh, c.LastRTT/minRTTDivisor),
 		)
 		if c.CurrRTT >= (c.LastRTT + thresh) {
+			if c.startupDelay.At == 0 {
+				c.startupDelay = c.observedStartup(now, rtt)
+			}
 			// Triggered HyStart safe exit threshold
 			c.s.Ssthresh = c.s.SndCwnd
 			c.firstLossExit |= 2
@@ -416,4 +427,27 @@ func (e *Endpoint) FirstLossDisableHyStart() {
 	e.LockUser()
 	defer e.UnlockUser()
 	e.snd.cc.(*cubicState).firstLossNoHyStart = true
+}
+
+type StartupDetection struct {
+	At, RTT, PriorRoundMin, CurrentRoundMin, RoundStart int64
+	Cwnd                                                int
+	Flight                                              uint32
+}
+
+func (c *cubicState) observedStartup(when tcpip.MonotonicTime, rtt time.Duration) StartupDetection {
+	return StartupDetection{At: int64(when.Sub(tcpip.MonotonicTime{})), RTT: int64(rtt), PriorRoundMin: int64(c.LastRTT), CurrentRoundMin: int64(c.CurrRTT), RoundStart: int64(c.RoundStart.Sub(tcpip.MonotonicTime{})), Cwnd: c.s.SndCwnd, Flight: uint32(c.s.SndNxt - c.s.SndUna)}
+}
+func (e *Endpoint) StartupDisableACKTrain() {
+	e.LockUser()
+	defer e.UnlockUser()
+	e.snd.cc.(*cubicState).startupNoACKTrain = true
+}
+func (e *Endpoint) StartupDetections() (StartupDetection, StartupDetection) {
+	e.LockUser()
+	defer e.UnlockUser()
+	if c, ok := e.snd.cc.(*cubicState); ok {
+		return c.startupTrain, c.startupDelay
+	}
+	return StartupDetection{}, StartupDetection{}
 }

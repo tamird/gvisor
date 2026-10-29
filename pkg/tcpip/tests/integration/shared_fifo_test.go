@@ -97,6 +97,30 @@ func TestVirtualTCPFirstCommonLoss(t *testing.T) {
 	}
 }
 
+// TestVirtualTCPHyStartPacedPath compares startup on one serialized path.
+func TestVirtualTCPHyStartPacedPath(t *testing.T) {
+	if runtime.GOMAXPROCS(0) != 1 {
+		t.Fatal("requires original deterministic scheduler")
+	}
+	for _, mode := range []string{"cubic", "cubic_without_ack_train", "reno"} {
+		t.Run(mode, func(t *testing.T) {
+			algorithm := "cubic"
+			if mode == "reno" {
+				algorithm = "reno"
+			}
+			app := fifoApplicationOrder{FirstWriteOrder: []int{0}, startup: mode}
+			runSharedFIFOWithApplicationOrder(t, []string{algorithm}, []int{0}, 0, &app)
+		})
+	}
+}
+
+type startupPoint struct {
+	At                         int64
+	Cwnd, Threshold            int
+	MSS, Flight                uint32
+	Queue, Delivered, Accepted int
+	SRTT                       int64
+}
 type firstLossEvent struct {
 	Row                   [13]int64
 	Offset, End           uint32
@@ -120,6 +144,7 @@ type fifoFirstWrite struct {
 }
 
 type fifoApplicationOrder struct {
+	startup   string
 	firstLoss *firstLossObservation
 
 	FirstWriteOrder    []int
@@ -201,11 +226,22 @@ func runSharedFIFO(t *testing.T, algorithms []string, order []int, stagger time.
 func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order []int, stagger time.Duration, application *fifoApplicationOrder) {
 	t.Helper()
 	const quantum = time.Millisecond
-	const rate = int64(1250000)
-	const delay = 50 * time.Millisecond
-	const capacity = 125000
+	rate := int64(1250000)
+	delay := 50 * time.Millisecond
+	capacity := 125000
+	startup := application != nil && application.startup != ""
+	if startup {
+		rate = 2500000
+		delay = 75 * time.Millisecond
+		capacity = 1500000
+	}
+	const startupEnd = fifoDemandAt + 3600*time.Millisecond
+	var startupPoints []startupPoint
 	const windowStart = 2 * time.Second
 	windowEnd := 6 * time.Second
+	if startup {
+		windowEnd = 20 * time.Second
+	}
 	var diagnostic *firstLossObservation
 	limit := capacity
 	if application != nil && application.firstLoss != nil {
@@ -476,7 +512,7 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		}
 	}
 	defer func() {
-		if diagnostic != nil {
+		if startup || diagnostic != nil {
 			return
 		}
 		probeMu.Lock()
@@ -536,6 +572,9 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 	}
 	demandStarted := application == nil
 	nextSample := time.Duration(0)
+	if startup {
+		nextSample = fifoDemandAt
+	}
 	for {
 		// Park the processors while applying each round of application demand.
 		// Both nonblocking endpoint calls complete before the common fence.
@@ -626,6 +665,9 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 						AppRemaining: len(flow.data), Cwnd: info.SndCwnd, MSS: info.SndMss, Ssthresh: info.SndSsthresh,
 						RTTNS: int64(info.RTT), RTONS: int64(info.RTO), CCState: info.CcState, Probe: latest[index]})
 				}
+				if startup && application.startup == "cubic_without_ack_train" {
+					flows[0].client.(*tcp.Endpoint).StartupDisableACKTrain()
+				}
 				if diagnostic != nil && diagnostic.Scenario == "without_hystart" {
 					flows[0].client.(*tcp.Endpoint).FirstLossDisableHyStart()
 				}
@@ -639,7 +681,24 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		fence()
 		if now() == nextSample {
 			sample()
-			nextSample += 100 * time.Millisecond
+			if startup {
+				f := &flows[0]
+				state := f.client.(*tcp.Endpoint).FirstLossSender()
+				snapshot := samples[len(samples)-1]
+				if f.accepted >= len(f.data) || f.accepted <= f.received.Len() {
+					t.Fatal("application-limited flow")
+				}
+				qbytes := 0
+				for _, frame := range queued {
+					if frame.end > now() {
+						qbytes += frame.bytes
+					}
+				}
+				startupPoints = append(startupPoints, startupPoint{int64(now()), state.Cwnd, state.Threshold, snapshot.MSS, state.SndNxt - state.SndUna, qbytes, f.received.Len(), f.accepted, snapshot.RTTNS})
+				nextSample += 25 * time.Millisecond
+			} else {
+				nextSample += 100 * time.Millisecond
+			}
 		}
 		if diagnostic != nil {
 			if r := diagnostic.CoveringACK; r != nil && int64(now()) >= r.Row[10] && flows[int(r.Row[3])].acknowledged >= diagnostic.Dropped.End {
@@ -668,6 +727,44 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			if now() > 10*time.Second {
 				t.Fatalf("no first repair completed in the bounded prefix: %+v", diagnostic)
 			}
+		}
+		if startup && now() == startupEnd {
+			f := &flows[0]
+			ep := f.client.(*tcp.Endpoint)
+			train, delayReason := ep.StartupDetections()
+			report := struct {
+				Mode                   string
+				Gate, End, Delay, Rate int64
+				Capacity               int
+				Base                   uint32
+				Packets                int
+				Timeouts, Retransmits  uint64
+				Sender                 tcp.FirstLossSender
+				Train, DelayReason     tcp.StartupDetection
+				Points                 []startupPoint
+			}{
+				application.startup, int64(fifoDemandAt), int64(now()), int64(delay), rate, limit, f.dataSequence, len(events), stacks[0].Stats().TCP.Timeouts.Value(), stacks[0].Stats().TCP.Retransmits.Value(), ep.FirstLossSender(), train, delayReason, startupPoints}
+			for i := 0; i < len(events); i += 64 {
+				b, err := json.Marshal(events[i:min(i+64, len(events))])
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Logf("STARTUP_WIRE %s %s", report.Mode, b)
+			}
+			b, err := json.Marshal(report)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Logf("STARTUP_PATH %s", b)
+			for _, row := range events {
+				if row[11] != 0 || row[12] != 0 {
+					t.Fatal("not a loss-free path")
+				}
+			}
+			if report.Timeouts != 0 || report.Retransmits != 0 {
+				t.Fatal("unexpected timeout or retransmission")
+			}
+			return
 		}
 		complete := now() >= windowEnd && len(pending) == 0
 		for index := range flows {
