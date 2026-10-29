@@ -1,0 +1,25 @@
+name: Check deployed work-map assets
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  client:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Check client behavior and the exact data pair
+        run: |
+          node --test app_test.mjs
+          python3 -B -m unittest work_states_test update_status_test
+          node metadata-preflight.mjs .
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script":
+                      scripts.append(dict(attrs).get("src"))
+          scripts = []
+          Scripts().feed(Path("index.html").read_text())
+          assert "app.js?v=20261029-reviewed-heads" in scripts, scripts
+          PY
