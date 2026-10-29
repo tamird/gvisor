@@ -1,0 +1,68 @@
+From 851ceca3cc1194d962fd256d76b8a527d3a9ad7a Mon Sep 17 00:00:00 2001
+From: Tamir Duberstein <tamird@gmail.com>
+Date: Thu, 29 Oct 2026 13:12:01 -0400
+Subject: [PATCH] Expose the native Buildifier executable for build actions
+
+The public Buildifier target runs a script so that bazel run starts in
+the caller's workspace. A build action needs Buildifier to run in the
+action's working directory, even on a worker with no shell. Selecting
+the download directly would require the caller to repeat the project's
+platform mapping.
+
+Expose the executable from the resolved toolchain as
+//buildifier:native. The existing CLI keeps its workspace behavior.
+---
+ README.md                        | 4 ++++
+ buildifier/BUILD                 | 8 ++++++++
+ buildifier/buildifier_binary.bzl | 1 +
+ 3 files changed, 13 insertions(+)
+
+diff --git a/README.md b/README.md
+index 6ae36e5..56596f1 100644
+--- a/README.md
++++ b/README.md
+@@ -38,6 +38,10 @@ bazel run -- @buildifier_prebuilt//:buildozer ARGS
+ bazel run -- @buildifier_prebuilt//:buildifier ARGS
+ ```
+ 
++For a Bazel build action, use `@buildifier_prebuilt//buildifier:native`
++as the executable tool. It provides the binary for the execution
++platform without starting a shell or changing the working directory.
++
+ ## Installation
+ 
+ Check [the releases](releases) page for the latest snippet.
+diff --git a/buildifier/BUILD b/buildifier/BUILD
+index 69ffb5b..9b52784 100644
+--- a/buildifier/BUILD
++++ b/buildifier/BUILD
+@@ -20,6 +20,14 @@ buildifier_binary(
+     visibility = ["//visibility:public"],
+ )
+ 
++# Native executable for build actions; the interactive CLI changes directory.
++filegroup(
++    name = "native",
++    srcs = [":buildifier"],
++    output_group = "native_binary",
++    visibility = ["//visibility:public"],
++)
++
+ filegroup(
+     name = "all_files",
+     srcs = glob(["*"]),
+diff --git a/buildifier/buildifier_binary.bzl b/buildifier/buildifier_binary.bzl
+index 753dc93..1569e48 100644
+--- a/buildifier/buildifier_binary.bzl
++++ b/buildifier/buildifier_binary.bzl
+@@ -27,6 +27,7 @@ def _buildifier_binary(ctx):
+             runfiles = ctx.runfiles(files = [buildifier]),
+             executable = script,
+         ),
++        OutputGroupInfo(native_binary = depset([buildifier])),
+     ]
+ 
+ buildifier_binary = rule(
+-- 
+2.56.0.1198.gdf368765c8.frankengit
+

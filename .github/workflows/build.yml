@@ -33,9 +33,22 @@ jobs:
           } > "$SUPPLIER_RC"
           unset BUILDBUDDY_API_KEY
           python3 -B ../carrier/.github/qualification/lint-native-label/check.py
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: ${{ !cancelled() }}
+        with:
+          repository: keith/buildifier-prebuilt
+          ref: c08c9afd96151d3794590beb986d037d10b847a3
+          path: supplier
+          persist-credentials: false
+      - name: Verify the exact supplier tree and its existing CLI tests
+        if: ${{ !cancelled() }}
+        working-directory: supplier
+        run: python3 -B ../carrier/.github/qualification/lint-native-label/upstream.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: supplier-native-verdict
-          path: ${{ runner.temp }}/native-label.json
+          path: |
+            ${{ runner.temp }}/native-label.json
+            ${{ runner.temp }}/upstream-label.json
           if-no-files-found: error
