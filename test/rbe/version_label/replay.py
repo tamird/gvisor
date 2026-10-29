@@ -17,7 +17,8 @@ OWNER = "//debian:release-artifacts"
 OUT = Path(os.environ["RUNNER_TEMP"])/"make-read"/"receipt"
 OUT.mkdir(parents=True)
 record = {"original_build":IID, "original_actions":40904608668, "source":SOURCE}
-declared = json.loads(Path(__file__).with_name("release-output-digests.json").read_bytes())
+cid = json.loads(Path(__file__).with_name("release-output-digests.json").read_bytes())
+declared = {key: [size, digest] for key, (digest, size) in cid.items()}
 
 
 def run():
@@ -61,8 +62,8 @@ def run():
             raise ValueError("expected missing named set failure in original reader")
         row=event_row(p)
         assert row["invocation"]==IID and row["exit"]==0 and row["targets"]==[OWNER]
-        assert row["outputs"]==declared, "six original output identities"
         record["release"]=row
+        assert row["outputs"]==declared, "six original output identities"
         # Exercise independence of recorded shell status from an incomplete
         # event stream. This is a deliberately truncated copy of the original.
         write([e for e in events if e["id"].get("namedSet",{}).get("id")!="0"])
