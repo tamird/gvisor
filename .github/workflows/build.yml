@@ -1,4 +1,4 @@
-name: Qualify stateify import resolution
+name: Qualify stateify without Go or a shell
 on: workflow_dispatch
 permissions:
   contents: read
@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: source, ref: b33d195deb0c528d5b2a843fff8a2e32813ff7b9, fetch-depth: 2, persist-credentials: false}
+        with: {path: source, ref: eaf429600f44b9cb375fb8fed2000739faf87c99, fetch-depth: 2, persist-credentials: false}
       - name: Compile both alias fixtures and verify their scratch outputs
         working-directory: source
         env:
