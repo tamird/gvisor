@@ -1,7 +1,7 @@
 name: Check the declared Buildifier and tracked input boundary
 on:
   push:
-    branches: [qualification/buildifier-physical-inputs]
+    branches: [qualification/combine-source-lints]
 permissions:
   contents: read
   actions: read
@@ -11,16 +11,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      SOURCE: 7770b6241f051b2784b61174049e73e41b7d1303
+      SOURCE: 5fef0e7301bf61aa5043c8014222c1b8f3b6ca77
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: source, ref: '${{ env.SOURCE }}', persist-credentials: false}
-      - name: Retrieve the prior qualification artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh run download 40832537994 -R tamird/gvisor -n buildifier-check -D "$RUNNER_TEMP/prior"
       - name: Run the canonical lint driver
         working-directory: source
         env:

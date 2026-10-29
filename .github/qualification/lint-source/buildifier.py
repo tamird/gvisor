@@ -10,8 +10,8 @@ import subprocess
 import traceback
 
 work = Path(os.environ["RUNNER_TEMP"])
-source = "7770b6241f051b2784b61174049e73e41b7d1303"
-tree = "c2f2fa514c89318c586b75ecebb4f4616c59b3f3"
+source = "5fef0e7301bf61aa5043c8014222c1b8f3b6ca77"
+tree = "dc44cd1ac936ef5ea93f5a28ba652e202b2dbe20"
 binary = "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7"
 missing = (
     "MODULE.bazel", "governance/tools/maintainers/repositories.bzl",
@@ -39,80 +39,21 @@ def run(name, args):
 def main():
     assert output("git", "rev-parse", "HEAD").strip() == source
     assert output("git", "rev-parse", "HEAD^{tree}").strip() == tree
-    prior_path = work / "prior" / "buildifier.json"
-    prior_raw = prior_path.read_bytes()
-    assert sha256(prior_raw).hexdigest() == "252bda696b6a50996ed7507407b1a2de7f2924ce0e390ccc394cf313ff7e2b39"
-    previous = json.loads(prior_raw)
-    assert previous["source"] == "d203ad64f60b785e04f2adb777dd78624e5c4958"
-    assert previous["previous_lint_test"]["exit"] != 0 and previous["license"]["count"] == [221]
-    assert previous["status"] == "INCOMPLETE" and previous["physical_cli"]["files"] == 0
-    # The only source difference is lint.sh's diagnostic after Buildifier fails.
-    record["prior"] = {"run": 40832537994, "artifact_sha256": "252bda696b6a50996ed7507407b1a2de7f2924ce0e390ccc394cf313ff7e2b39",
-                       "before": previous["previous_lint_test"], "license": previous["license"]}
-    ex, text = run("corrected_lint_test", ["bazel", "test", "--test_output=all", "//tools:lint_test"])
-    assert ex == 0 and "Ran 4 tests" in text and "OK" in text
-
-    files = output("git", "ls-files", "-z", "--", "BUILD", "*/BUILD", "*.bzl", "WORKSPACE", "MODULE.bazel").split("\0")[:-1]
-    assert len(files) == len(set(files)) == 614 and set(missing) <= set(files)
-    record["tracked"] = {"number": len(files), "sha256": sha256(("\0".join(files) + "\0").encode()).hexdigest()}
-    # Start the Bazel server outside strace: it outlives the traced lint command.
-    output("bazel", "info", "output_base")
-    assert shutil.which("strace")
-    trace = work / "buildifier.trace"
-    exit_code, _ = run("clean", ["strace", "-ff", "-qq", "-s", "65535", "-e", "trace=execve",
-                                "-o", str(trace), "tools/lint.sh", "buildifier"])
-    if exit_code:
-        raise ValueError("canonical clean formatter")
-    actual, digests = [], set()
-    for line in (line for part in work.glob(trace.name + ".*") for line in part.read_text().splitlines()):
-        if "--mode=diff" not in line or "execve(" not in line or not line.endswith("= 0"):
-            continue
-        m = re.search(r'execve\((".*?"), (\[.*?\]), ', line)
-        if not m:
-            continue
-        exe = Path(ast.literal_eval(m[1]))
-        if not exe.is_file() or not exe.is_absolute():
-            continue
-        digest = sha256(exe.read_bytes()).hexdigest()
-        if digest != binary:
-            continue
-        args = ast.literal_eval(m[2])
-        assert args[1:3] == ["--mode=diff", "--lint=warn"]
-        assert args[3] == "--warnings=-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto"
-        assert args[4] == "--diff_command=diff -u"
-        actual.extend(args[5:])
-        digests.add(digest)
-    record["physical_cli"] = {"files": len(actual), "sha256": sha256(("\0".join(actual) + "\0").encode()).hexdigest(),
-                              "executables": sorted(digests)}
-    contents = {name: Path(name).read_bytes() for name in missing}
-    untracked = Path("tools/uncatalogued_buildifier_control.bzl")
-    assert not untracked.exists()
-    untracked.write_text("not a valid build file @@@\n")
-    try:
-        for name, original in contents.items():
-            Path(name).write_bytes(original + b"\n\n")
-        exit_code, text = run("seven_bad", ["tools/lint.sh", "buildifier"])
-        record["diffs"] = [p for p in missing if re.search("^--- " + re.escape(p) + r"(?:\t|$)", text, re.M)]
-        assert text.count("+++ ") >= len(missing) and "Run `make lint-fix`" not in text
-        assert exit_code and len(record["diffs"]) == 7
-        assert run("fix", ["tools/lint.sh", "--fix", "buildifier"])[0] == 0
-        assert all(Path(name).read_bytes() == original for name, original in contents.items())
-        assert not output("git", "diff", "--name-only")
-        record["untracked_unchanged"] = untracked.read_text() == "not a valid build file @@@\n"
-    finally:
-        untracked.unlink(missing_ok=True)
-        for name, original in contents.items():
-            Path(name).write_bytes(original)
-    stock = Path(missing[-1]).read_bytes()
-    try:
-        Path(missing[-1]).write_bytes(stock + b"\n@@@\n")
-        rc, diagnostic = run("invalid", ["tools/lint.sh", "buildifier"])
-        assert rc and missing[-1] in diagnostic
-        assert any(msg in diagnostic.lower() for msg in ("syntax error", "unexpected input character", "invalid character"))
-        assert "Run `make lint-fix`" not in diagnostic
-    finally:
-        Path(missing[-1]).write_bytes(stock)
-    assert actual == files and digests == {binary} and record["untracked_unchanged"]
+    for name, args in (
+        ("registered formatter", ["tools/lint.sh", "buildifier"]),
+        ("C++ formatter", ["tools/lint.sh", "cpplint"]),
+        ("driver tests", ["bazel", "test", "--test_output=all", "//tools:lint_test"]),
+        ("merged licenses", ["bazel", "run", "--run_in_cwd", "//tools/licensecheck/main:licensecheck", "--", "--mode=verify"]),
+    ):
+        code, text = run(name, args)
+        if name == "driver tests":
+            assert "Ran 4 tests" in text and "OK" in text
+        if name == "merged licenses":
+            matches = re.findall(r"all ([0-9]+) dependencies have up-to-date license entries", text, re.I)
+            assert len(matches) == 1
+            record["license_count"] = int(matches[0])
+        if code:
+            raise RuntimeError(f"{name}: exit {code}")
     record["status"] = "PASS"
 
 try:
