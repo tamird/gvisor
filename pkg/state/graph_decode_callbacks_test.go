@@ -73,10 +73,11 @@ var registerCycleTestTypes = sync.OnceFunc(func() {
 	Register((*cycleStemNode)(nil))
 	Register((*cycleCollectionNode)(nil))
 	Register((*cbOrderNode)(nil))
+	Register((*deferredMapKey)(nil))
 	fingerprint.Store(0)
 })
 
-func roundTripGraphErr[T any](t *testing.T, root T) error {
+func roundTripGraph[T any](t *testing.T, root T) (T, error) {
 	t.Helper()
 	registerCycleTestTypes()
 	var buf bytes.Buffer
@@ -96,7 +97,7 @@ func roundTripGraphErr[T any](t *testing.T, root T) error {
 	}
 	var loadedRoot T
 	_, err = loadGraph(t.Context(), &buf, &loadedRoot, hdr.Length, 0)
-	return err
+	return loadedRoot, err
 }
 
 func TestGraphDependencyCycle(t *testing.T) {
@@ -105,7 +106,7 @@ func TestGraphDependencyCycle(t *testing.T) {
 		b := &cycleTestNode{waitFor: a}
 		a.waitFor = b
 
-		err := roundTripGraphErr(t, a)
+		_, err := roundTripGraph(t, a)
 		const want = `incomplete graph: dependency cycle: {"state.cycleTestNode" => "state.cycleTestNode" => "state.cycleTestNode"}`
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Fatalf("loadGraph = %v, want substring %s", err, want)
@@ -118,7 +119,7 @@ func TestGraphDependencyCycle(t *testing.T) {
 		a.waitFor = b
 		stem := &cycleStemNode{waitFor: a}
 
-		err := roundTripGraphErr(t, stem)
+		_, err := roundTripGraph(t, stem)
 		const want = `incomplete graph: dependency cycle: {"state.cycleTestNode" => "state.cycleTestNode" => "state.cycleTestNode"}`
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Fatalf("loadGraph = %v, want substring %s", err, want)
@@ -132,7 +133,7 @@ func TestGraphDependencyCycle(t *testing.T) {
 		n := &cycleCollectionNode{}
 		n.s = []*cycleCollectionNode{n}
 
-		err := roundTripGraphErr(t, n)
+		_, err := roundTripGraph(t, n)
 		if err == nil || !strings.Contains(err.Error(), "incomplete graph: dependency cycle:") || !strings.Contains(err.Error(), `"[1]*state.cycleCollectionNode"`) {
 			t.Fatalf("loadGraph = %v, want dependency cycle naming [1]*state.cycleCollectionNode", err)
 		}
@@ -142,7 +143,7 @@ func TestGraphDependencyCycle(t *testing.T) {
 		n := &cycleCollectionNode{}
 		n.m = map[int]*cycleCollectionNode{0: n}
 
-		err := roundTripGraphErr(t, n)
+		_, err := roundTripGraph(t, n)
 		if err == nil || !strings.Contains(err.Error(), "incomplete graph: dependency cycle:") || !strings.Contains(err.Error(), `"map[int]*state.cycleCollectionNode"`) {
 			t.Fatalf("loadGraph = %v, want dependency cycle naming map[int]*state.cycleCollectionNode", err)
 		}
@@ -406,5 +407,31 @@ func TestGraphDecodeValueIntegerOverflow(t *testing.T) {
 		} else if got := rv.Elem().Interface(); got != tc.want {
 			t.Errorf("loadGraph(%T) = %v, want %v", tc.want, got, tc.want)
 		}
+	}
+}
+
+// deferredMapKey sets its saved field only when its load hook runs.
+type deferredMapKey struct{ id uint8 }
+
+func (*deferredMapKey) StateTypeName() string { return "state.deferredMapKey" }
+func (*deferredMapKey) StateFields() []string { return []string{"id"} }
+func (k *deferredMapKey) StateSave(s Sink)    { s.graph.save(0, &k.id) }
+func (k *deferredMapKey) StateLoad(_ context.Context, s Source) {
+	var id uint8
+	s.graph.load(0, &id)
+	s.graph.afterLoad(func() { k.id = id })
+}
+
+func TestGraphDeferredMapKeys(t *testing.T) {
+	want := [2]map[deferredMapKey]string{
+		{{1}: "left", {2}: "right"},
+		{{3}: "other"},
+	}
+	got, err := roundTripGraph(t, want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("loaded maps = %v, want %v", got, want)
 	}
 }

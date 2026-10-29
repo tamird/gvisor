@@ -538,8 +538,16 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 		if ds.lastRef >= 0 {
 			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
 		}
-		mv.SetMapIndex(k, e)
 		fresh = ds.hooks != hooks
+		if !fresh || ds.noCallbacks {
+			mv.SetMapIndex(k, e)
+			continue
+		}
+		// SetMapIndex copies both operands. Publish the entry after its
+		// callbacks have updated their storage. mv itself is backed by
+		// ds.mapPtr, which will be reused for the next map.
+		dst, key, value := reflect.ValueOf(mv.Interface()), k, e
+		ds.addCallback(ds.cur, decodeCallback{fn: func() { dst.SetMapIndex(key, value) }, waiter: -1})
 	}
 	ds.lastRef = -1
 }
