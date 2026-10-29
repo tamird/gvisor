@@ -98,7 +98,9 @@ def funcnames(path):
         for i in range(nsection):
             name, _, _, _, off, size = section(i)
             nameoff = names_off+name
-            if raw[nameoff:raw.index(b"\0", nameoff)] == b".gopclntab":
+            end = raw.find(b"\0",nameoff)
+            assert end >= nameoff, "ELF section name delimiter"
+            if raw[nameoff:end] == b".gopclntab":
                 break
         else:
             return {"format": "section not found"}
@@ -114,7 +116,9 @@ def funcnames(path):
             n = struct.unpack_from("<i", raw, off+pcln+rel+4)[0]
             assert 0 <= n < size - funcs
             start=off+funcs+n
-            name=raw[start:raw.index(b"\0",start)].decode()
+            end=raw.find(b"\0",start,off+size)
+            assert end >= start, "Go function name delimiter"
+            name=raw[start:end].decode()
             short = name.removesuffix(".abi0")
             if short in {"runtime/cgo.set_crosscall2","runtime.racefuncenter","runtime.racefuncexit",
                          "runtime.raceReadObjectPC","runtime.RaceRead","net._Cfunc_getaddrinfo","runtime.racefini"}:
@@ -166,7 +170,10 @@ def one(iid, arm, mode, original, label):
     if label == hook:
         return result
     result["go_info"] = go_info(p)
-    result["pclntab"] = funcnames(p)
+    try:
+        result["pclntab"] = funcnames(p)
+    except (ValueError, AssertionError, IndexError, OverflowError, struct.error) as exc:
+        result["pclntab"]={"format":"unavailable","diagnostic":f"{type(exc).__name__}: {exc}"[:250]}
     if arm == "explicit" and not known:
         owner = label+"_"+"/"+name
         try:
@@ -203,7 +210,7 @@ def main():
                         assert empty.get("exit")==0 and empty["pcap_header"],"static empty-root launch"
                     else:
                         assert empty.get("exec_errno")==2,"missing dynamic interpreter"
-            except (KeyError, ValueError, OSError, http.client.HTTPException, AssertionError, RuntimeError) as exc:
+            except Exception as exc:
                 entry["errors"][label]=f"{type(exc).__name__}: {exc}"[:500]
                 ok=False
             report.write_text(json.dumps(ledger,sort_keys=True,indent=2)+"\n")

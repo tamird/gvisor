@@ -1,7 +1,7 @@
 name: Inspect the original portable Go tools
 on:
   push:
-    branches: [qualification/compiler-six-portable-tools-original]
+    branches: [qualification/compiler-six-portable-tools-original-v2]
 permissions:
   contents: read
 jobs:
@@ -25,7 +25,7 @@ jobs:
       - name: Verify original producer and platform
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = 82ed4129773ca61c03042f7c1e2ca733606b2ed2
+          test "$(git rev-parse HEAD^)" = aa708bdf2c610a968be0149d910ead88458cf1bb
           case "$ARCH:$(uname -m)" in amd64:x86_64|arm64:aarch64) ;; *) exit 1;; esac
       - name: Inspect original bytes and run only the selected CLI
         env:
