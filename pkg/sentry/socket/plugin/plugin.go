@@ -66,7 +66,7 @@ type EventInfo struct {
 	// The pointer is immutable; the queue synchronizes its own entries.
 	Wq *waiter.Queue
 
-	// Mask is the subscription accepted by the plugin, or zero if unregistered.
+	// Mask represents events this socket registered.
 	Mask waiter.EventMask
 
 	// Ready caches reported events. The notifier updates it concurrently with
@@ -74,6 +74,10 @@ type EventInfo struct {
 	//
 	// +checkatomic
 	Ready atomicbitops.Uint64
+
+	// Waiting is the notifier's record of whether this socket is registered
+	// with the plugin stack's epoll instance.
+	Waiting bool
 }
 
 // PluginNotifier represents a set of operations to handle

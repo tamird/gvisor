@@ -75,20 +75,16 @@ func EpollCreate() int {
 }
 
 // EpollCtl works as a CGO wrapper for plugin_epoll_ctl.
-func EpollCtl(epfd int32, op int, handle, events uint32) error {
+func EpollCtl(epfd int32, op int, handle, events uint32) {
 	epollEvent := syscall.EpollEvent{
 		Events: events,
 		Fd:     int32(handle),
 	}
-	rc, err := C.plugin_epoll_ctl(
+	C.plugin_epoll_ctl(
 		C.int(epfd),
 		C.int(op),
 		C.int(handle),
 		(*C.struct_epoll_event)(unsafe.Pointer(&epollEvent)))
-	if rc < 0 {
-		return err
-	}
-	return nil
 }
 
 // EpollWait works as a CGO wrapper for plugin_epoll_wait.

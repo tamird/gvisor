@@ -54,16 +54,26 @@ go_test(
     size = "small",
     srcs = [
         "socket_noplugin_test.go",
+        "socket_test.go",
+    ],
+    embed = [":stack"],
+    deps = ["//pkg/waiter"],
+)
+
+go_test(
+    name = "stack_plugin_test",
+    size = "small",
+    srcs = [
         "socket_plugin_test.go",
         "socket_test.go",
     ],
     embed = [":stack"],
-    gotags = select({
-        "//pkg/sentry/socket/plugin/cgo:network_plugins": ["network_plugins"],
-        "//conditions:default": [],
+    gotags = ["network_plugins"],
+    target_compatible_with = select({
+        "//pkg/sentry/socket/plugin/cgo:network_plugins": [],
+        "//conditions:default": ["@platforms//:incompatible"],
     }),
     deps = [
-        "//pkg/sentry/socket/plugin",
         "//pkg/waiter",
         "@org_golang_x_sys//unix:go_default_library",
     ],
