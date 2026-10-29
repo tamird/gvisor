@@ -10609,20 +10609,19 @@ func TestMain(m *testing.M) {
 func TestCongestionWindowAfterIdle(t *testing.T) {
 	for _, cc := range []string{"cubic", "reno"} {
 		t.Run(cc, func(t *testing.T) {
-			baseline := windowAfterIdle(t, cc, 0)
-			idle := windowAfterIdle(t, cc, 30*time.Second)
-			t.Logf("IDLE_RESULT %s baseline=%v idle=%v", cc, baseline, idle)
-			if got, want := idle[0], baseline[0]; got != want {
-				t.Errorf("first flight after idle = %d, want %d", got, want)
-			}
-			if cc == "reno" && idle != baseline {
-				t.Errorf("Reno windows %v after idle, want %v", idle, baseline)
+			for _, prime := range []bool{false, true} {
+				baseline := windowAfterIdle(t, cc, 0, prime)
+				idle := windowAfterIdle(t, cc, 30*time.Second, prime)
+				t.Logf("IDLE_RESULT %s prime=%t baseline=%v idle=%v", cc, prime, baseline, idle)
+				if got, want := idle, baseline; got != want {
+					t.Errorf("after idle got %v, want %v (prime=%t)", got, want, prime)
+				}
 			}
 		})
 	}
 }
 
-func windowAfterIdle(t *testing.T, cc string, idle time.Duration) [5]int {
+func windowAfterIdle(t *testing.T, cc string, idle time.Duration, prime bool) [5]int {
 	const mss, rtt = 32, 10 * time.Millisecond
 	clock := faketime.NewManualClock()
 	c := context.NewWithOpts(t, context.Options{
@@ -10688,6 +10687,18 @@ func windowAfterIdle(t *testing.T, cc string, idle time.Duration) [5]int {
 	c.ReceiveAndCheckPacket(data, mss, mss)
 	ack(first)
 	expectSilence()
+	if prime {
+		// Complete one backlogged congestion-avoidance flight before idling.
+		end := first + int(info().SndCwnd)*mss
+		write(data[first:end])
+		for off := first; off < end; off += mss {
+			c.ReceiveAndCheckPacket(data, off, mss)
+		}
+		clock.Advance(rtt)
+		ack(end)
+		expectSilence()
+		first = end
+	}
 	before := info()
 	if before.SndCwnd >= tcp.InitialCwnd || before.SndCwnd < before.SndSsthresh || before.RTO <= 0 || (idle > 0 && idle <= before.RTO) {
 		t.Fatalf("need congestion avoidance below the initial window and idle above RTO; got %+v, idle %v", before, idle)
