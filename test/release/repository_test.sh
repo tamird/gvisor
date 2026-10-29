@@ -16,13 +16,15 @@
 
 set -euo pipefail
 manifest=$1
-shift
+makefile=$2
+shift 2
 # Firecracker applies the requested disk capacity to its root filesystem;
 # TEST_TMPDIR is in the action workspace, which has fixed writable slack.
 work=$(mktemp -d /tmp/gvisor-release.XXXXXX)
 trap 'rm -rf "$work"' EXIT
 df -B1 "$work" "$TEST_TMPDIR"
 mounts=(--volume="$work:/work"
+  --volume="$(realpath "$makefile"):/workspace/Makefile:ro"
   --volume="$(realpath "$TEST_UNDECLARED_OUTPUTS_DIR"):/reports")
 while IFS= read -r artifact; do
   case "$artifact" in

@@ -29,6 +29,10 @@ declare -a binaries
 declare -a pkgs
 
 for arg in "$@"; do
+  if [[ ! -f "${arg}" ]]; then
+    echo "Missing release artifact: ${arg}" >&2
+    exit 1
+  fi
   if [[ "${arg}" == *.deb ]] || [[ "${arg}" == *.changes ]]; then
     pkgs+=("${arg}")
   else

@@ -37,14 +37,33 @@ for arch in x86_64 aarch64; do
     aarch64) cpu=arm64; machine=183 ;;
   esac
   test "$(dpkg-deb -f "$input/runsc.deb" Architecture)" = "$cpu"
-  dpkg-deb --fsys-tarfile "$input/runsc.deb" | tar -xOf - ./usr/bin/runsc > "/work/$cpu-runsc"
-  test "$(od -An -tu2 -j18 -N2 "/work/$cpu-runsc" | tr -d ' ')" = "$machine"
-  tar -xjOf "$input/gvisor.tar.bz2" runsc | cmp - "/work/$cpu-runsc"
-  tar --zstd -xOf "$input/gvisor.tar.zstd" runsc | cmp - "/work/$cpu-runsc"
-  sha256sum "/work/$cpu-runsc" >> /reports/package-binaries.sha256
+  dpkg-deb -x "$input/runsc.deb" "/work/$cpu"
+  binary="/work/$cpu/usr/bin/runsc"
+  test "$(od -An -tu2 -j18 -N2 "$binary" | tr -d ' ')" = "$machine"
+  tar -xjOf "$input/gvisor.tar.bz2" runsc | cmp - "$binary"
+  tar --zstd -xOf "$input/gvisor.tar.zstd" runsc | cmp - "$binary"
+  sha256sum "$binary" >> /reports/package-binaries.sha256
 done
-NIGHTLY=false tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
-NIGHTLY=true tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
+export DOCKER_BUILD=false
+make_release() {
+  make release RELEASE_KEY=/work/repo.key RELEASE_ROOT="$1" RELEASE_ARTIFACTS="$2" \
+    PYTHON_RELEASE_DEST=/input/artifacts/python RELEASE_NIGHTLY="$3"
+}
+mkdir -p /work/partial/aarch64
+ln -s /input/artifacts/x86_64 /work/partial/x86_64
+for missing in runsc.deb gvisor.tar.zstd; do
+  if [[ $missing == gvisor.tar.zstd ]]; then
+    ln -s /input/artifacts/aarch64/{runsc.deb,gvisor.tar.bz2} /work/partial/aarch64/
+  fi
+  if make_release /work/rejected /work/partial false > /work/rejected.log 2>&1; then
+    echo "Published without $missing" >&2
+    exit 1
+  fi
+  grep -F "Missing release artifact: /work/partial/aarch64/$missing" /work/rejected.log
+  test -z "$(ls -A /work/rejected)"
+done
+make_release /work/repo /input/artifacts false
+make_release /work/repo /input/artifacts true
 
 # Exercise the same generator with declared tag inventories. Neither Git nor
 # the uploader is present in this container.

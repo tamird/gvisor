@@ -960,22 +960,47 @@ syzkaller-smoke-test: $(SYZKALLER_TARBALL)
 ##
 RELEASE_ROOT      := repo
 RELEASE_KEY       := repo.key
-RELEASE_ARTIFACTS := artifacts
+ifeq ($(origin RELEASE_ARTIFACTS),undefined)
+ifeq ($(origin RELEASE_VERSION),undefined)
+release: build-release-artifacts
+else
+release: release-artifacts
+endif
+build-release-artifacts:
+	$(BAZEL) build $(BAZEL_OPTIONS) //debian:release-artifacts
+.PHONY: build-release-artifacts
+RELEASE_ARTIFACTS := bazel-bin/debian/release-artifacts
+PYTHON_RELEASE_DEST ?= artifacts/python
+endif
+PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
 RELEASE_NIGHTLY   := false
 RELEASE_COMMIT    :=
 RELEASE_NAME      :=
 RELEASE_NOTES     :=
+GPG_TEST_OPTIONS  := $(shell if gpg --pinentry-mode loopback --version >/dev/null 2>&1; then echo --pinentry-mode loopback; fi)
+
 $(RELEASE_KEY):
 	@echo "WARNING: Generating a key for testing ($@); don't use this."
-	@tools/make_test_key.sh "$@"
+	@T=$$(mktemp --tmpdir keyring.XXXXXX); \
+	C=$$(mktemp --tmpdir config.XXXXXX); \
+	echo Key-Type: DSA >> $$C && \
+	echo Key-Length: 1024 >> $$C && \
+	echo Name-Real: Test >> $$C && \
+	echo Name-Email: test@example.com >> $$C && \
+	echo Expire-Date: 0 >> $$C && \
+	echo %commit >> $$C && \
+	gpg --batch $(GPG_TEST_OPTIONS) --passphrase '' --no-default-keyring --secret-keyring $$T --no-tty --gen-key $$C && \
+	gpg --batch $(GPG_TEST_OPTIONS) --export-secret-keys --no-default-keyring --secret-keyring $$T > $@; \
+	rc=$$?; rm -f $$T $$C; exit $$rc
 
-$(RELEASE_ARTIFACTS)/%:
-	@mkdir -p $@
-	@$(call copy,//debian:debian,$@)
-	@$(call copy,//debian:gvisor-release-tar-bz2,$@)
-	@$(call copy,//debian:gvisor-release-tar-zstd,$@)
+# Use one caller-supplied identity for both sets of release binaries and packages.
+release-artifacts: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
+release-artifacts: ## Build the release archives for both architectures with RELEASE_VERSION.
+	@case "$$GVISOR_RELEASE_LABEL" in ''|0.0.0|VERSION_MISSING|*[!A-Za-z0-9._+-]*) echo "invalid RELEASE_VERSION" >&2; exit 1;; esac; \
+	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac; \
+	$(BAZEL) build $(BAZEL_OPTIONS) --config=release_version --embed_label="$$GVISOR_RELEASE_LABEL" //debian:release-artifacts
+.PHONY: release-artifacts
 
-PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
 artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions into $(PYTHON_RELEASE_DEST).
 	@mkdir -p "$(PYTHON_RELEASE_DEST)"
 	@set -e; \
@@ -983,9 +1008,14 @@ artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions
 	$(call build_paths,//sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/",--//sandboxexec/sandbox/python:release_version="$$python_release_version")
 .PHONY: artifacts-python
 
-release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
+# Name the required files explicitly: a missing architecture or archive must
+# fail before signing or uploading any of the other artifacts.
+release_native_inputs = $(foreach arch,x86_64 aarch64, \
+	$(addprefix $(RELEASE_ARTIFACTS)/$(arch)/,runsc.deb gvisor.tar.bz2 gvisor.tar.zstd))
+release: $(RELEASE_KEY)
 	@mkdir -p $(RELEASE_ROOT)
-	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh $(RELEASE_KEY) $(RELEASE_ROOT) $$(find $(RELEASE_ARTIFACTS) -type f)
+	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" \
+		$(release_native_inputs) $(wildcard $(PYTHON_RELEASE_DEST)/*.whl $(PYTHON_RELEASE_DEST)/*.tar.gz)
 .PHONY: release
 
 release-tarball: DESTINATION ?= .

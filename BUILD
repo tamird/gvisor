@@ -27,6 +27,7 @@ exports_files([
     "SECURITY.md",
     "GOVERNANCE.md",
     "MAINTAINERS.md",
+    "Makefile",
     "ADOPTERS.md",
 ])
 

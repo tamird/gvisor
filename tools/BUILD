@@ -115,8 +115,10 @@ exports_files([
 
 exports_files(
     ["images.mk"],
-    visibility = ["//test/docker:__pkg__"],
+    visibility = ["//test/docker:__pkg__", "//test/release:__pkg__"],
 )
+
+exports_files(["bazel.mk"], visibility = ["//test/release:__pkg__"])
 
 exports_files([
     "make_apt.sh",
