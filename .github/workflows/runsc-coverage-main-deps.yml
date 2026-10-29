@@ -1,0 +1,89 @@
+name: Check runsc entry point dependencies
+on:
+  push:
+    branches: [qualification/runsc-coverage-main-deps]
+permissions:
+  contents: read
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            machine: x86_64
+            arch: x86_64
+            sha: 5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160
+          - runner: ubuntu-24.04-arm
+            machine: aarch64
+            arch: arm64
+            sha: 41ad5f9e833fcaee7398111343570cb155ca14985abb084b1f0ad2d29eaaec6d
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 70
+    env:
+      OLD: 08d75cea690ac7199c592d2274a6815fc07bff6c
+      NEW: b3542d21ec28355dbea6285fe85269aafedd7125
+      DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Select the published PR head and pinned Linux Bazel
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$NEW"
+          test "$(git rev-parse HEAD^^)" = "$OLD"
+          test "$(git diff --name-only "$OLD" "$NEW")" = runsc/BUILD
+          test "$(uname -m)" = "${{ matrix.machine }}"
+          cp .github/qualification/runsc-coverage/check.py "$RUNNER_TEMP/check.py"
+          git checkout --detach "$OLD"
+          test "$(cat .bazelversion)" = 8.8.1
+          mkdir -p "$RUNNER_TEMP/receipts" "$RUNNER_TEMP/coverage-bin"
+          curl -fsSL --retry 3 "https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-${{ matrix.arch }}" -o "$RUNNER_TEMP/coverage-bin/bazel"
+          echo "${{ matrix.sha }}  $RUNNER_TEMP/coverage-bin/bazel" | sha256sum -c
+          chmod +x "$RUNNER_TEMP/coverage-bin/bazel"
+          echo "$RUNNER_TEMP/coverage-bin" >> "$GITHUB_PATH"
+          printf '#!/bin/sh\nexec python3 "%s/check.py" "$@"\n' "$RUNNER_TEMP" > "$RUNNER_TEMP/identify"
+          chmod +x "$RUNNER_TEMP/identify"
+      - name: Check both original strict-dependency failures at the exact PR head
+        run: |
+          set -euo pipefail
+          passed=0
+          for target in runsc_coverage runsc_race_coverage; do
+            status=0
+            bazel build --jobs=4 --spawn_strategy=sandboxed,local --remote_executor= --remote_cache= \
+              --build_event_json_file="$RUNNER_TEMP/$target.bep" "//runsc:$target" > "$RUNNER_TEMP/$target.log" 2>&1 || status=$?
+            python3 "$RUNNER_TEMP/check.py" check "$target" "$status" || passed=1
+          done
+          exit "$passed"
+      - name: Build the four corrected binaries
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          git checkout --detach "$NEW"
+          test "$(git rev-parse HEAD)" = "$NEW"
+          status=0
+          bazel build --keep_going --jobs=4 --spawn_strategy=sandboxed,local --remote_executor= --remote_cache= \
+            --build_event_json_file="$RUNNER_TEMP/fixed.bep" //runsc:{runsc,runsc-race,runsc_coverage,runsc_race_coverage} > "$RUNNER_TEMP/fixed.log" 2>&1 || status=$?
+          python3 "$RUNNER_TEMP/check.py" check fixed "$status"
+      - name: Resolve and execute the actual four public-label binaries
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$NEW"
+          python3 -c 'import json,os,pathlib; assert json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"receipts/fixed.json").read_text())["verified"]'
+          passed=0
+          for OWNER in runsc runsc-race runsc_coverage runsc_race_coverage; do
+            export OWNER
+            bazel run --jobs=4 --spawn_strategy=sandboxed,local --remote_executor= --remote_cache= \
+              --run_under="$RUNNER_TEMP/identify" "//runsc:$OWNER" -- --version > "$RUNNER_TEMP/$OWNER-version.log" 2>&1 || passed=1
+          done
+          exit "$passed"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: runsc-coverage-${{ matrix.machine }}
+          path: ${{ runner.temp }}/receipts/*.json
+          if-no-files-found: error
