@@ -13,6 +13,12 @@ vm.runInContext(source.slice(0, -'start();\n'.length), context, { filename: 'app
 context.candidateRegistry = JSON.parse(bytes['registry.json']);
 context.candidateSnapshot = JSON.parse(bytes['github-status.json']);
 vm.runInContext('validateRegistry(candidateRegistry); validateSnapshot(candidateSnapshot, candidateRegistry);', context);
+for (const node of context.candidateRegistry.nodes) {
+  context.node = node;
+  if (node.contributorReview?.status === 'pending' && vm.runInContext('alreadyReviewed(node, node.contributorReview)', context)) {
+    throw new Error(`Already reviewed: ${node.id} at ${node.contributorReview.head || node.contributorReview.url}`);
+  }
+}
 console.log(JSON.stringify({
   status: 'PASS', validator: 'Unmodified app.js validateRegistry and validateSnapshot',
   registryDate: context.candidateRegistry.meta.updatedAt, snapshotAt: context.candidateSnapshot.checkedAt,

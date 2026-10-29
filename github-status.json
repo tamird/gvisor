@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T18:55:47.167376+00:00",
-  "registryDate": "2026-10-29T18:28:16.486458+00:00",
+  "registryDate": "2026-10-29T18:56:07.113045+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -237100,13 +237100,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T18:55:08.647601+00:00"
-      },
-      "contributor-review": {
-        "scope": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
-        "since": "2026-10-29T16:50:32.090252+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
       }
     },
     "pr:15435": {
@@ -238315,7 +238308,7 @@
         "since": "2026-10-29T01:35:12.698800+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
+        "observedAt": "2026-10-29T18:56:07.113045+00:00"
       }
     },
     "pr:16052": {
@@ -238602,7 +238595,7 @@
         "since": "2026-10-29T01:35:12.698800+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
+        "observedAt": "2026-10-29T18:56:07.113045+00:00"
       }
     },
     "pr:16250": {
@@ -239468,13 +239461,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T18:55:08.647601+00:00"
-      },
-      "contributor-review": {
-        "scope": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
-        "since": "2026-10-29T16:50:32.090252+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
       }
     },
     "pr:16621": {
@@ -239819,48 +239805,21 @@
       }
     },
     "branch:epoll-modify-preserve": {
-      "contributor-review": {
+      "changes-requested": {
         "scope": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
-        "since": "2026-10-29T00:45:15.187460+00:00",
+        "since": "2026-10-29T18:56:07.113045+00:00",
         "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
-      }
-    },
-    "branch:module-map-generator-musl": {
-      "contributor-review": {
-        "scope": "317378dd0778ebc15d190e4ebb018b5903b1039e",
-        "since": "2026-10-29T02:59:54.299228+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
+        "qualifier": "Contributor",
+        "observedAt": "2026-10-29T18:56:07.113045+00:00"
       }
     },
     "branch:format-stateify-output": {
-      "contributor-review": {
+      "changes-requested": {
         "scope": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
-        "since": "2026-10-29T03:19:38.015225+00:00",
+        "since": "2026-10-29T18:56:07.113045+00:00",
         "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
-      }
-    },
-    "branch:go-architecture-sources": {
-      "contributor-review": {
-        "scope": "08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
-        "since": "2026-10-29T04:48:31.223825+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
-      }
-    },
-    "branch:ci-bazel-release": {
-      "contributor-review": {
-        "scope": "a5afdee618840c9211d989c775afda8280be484b",
-        "since": "2026-10-29T04:48:31.223825+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
+        "qualifier": "Contributor",
+        "observedAt": "2026-10-29T18:56:07.113045+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -239869,7 +239828,7 @@
         "since": "2026-10-29T16:50:32.090252+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-29T18:28:16.486458+00:00"
+        "observedAt": "2026-10-29T18:56:07.113045+00:00"
       }
     }
   },

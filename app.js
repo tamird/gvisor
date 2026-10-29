@@ -916,9 +916,19 @@ function contributorChanges(node) {
   const decision = node.contributorChangesRequested;
   return node.type === "branch" && decision?.head === node.head ? decision : null;
 }
+// Code approval is for a commit. Reviews and replies can contain different
+// messages about the same commit, so their text is part of the decision too.
+function alreadyReviewed(node, decision) {
+  return node.settledReviews?.some(item => item.kind === decision.kind && item.head === decision.head
+    && (!["review", "reply"].includes(item.kind) || item.body === decision.body));
+}
+function commitLinkMatches(repo, head, url) {
+  const prefix = `https://github.com/${repo}/commit/`;
+  return typeof head === "string" && (url === prefix + head || url === prefix + head.slice(0, 9));
+}
 function contributorDecision(node) {
   const decision = node.contributorReview;
-  return decision?.status === "pending" && (node.type === "branch" && decision.head === node.head
+  return decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
     || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
     || node.type === "pr" && decision.kind === "review" && !providerClosed(node)) ? decision : null;
@@ -1750,13 +1760,13 @@ function validateRegistry(candidate) {
     const decision = node.contributorReview;
     if (decision !== undefined) {
       const proposal = node.type === "branch" && proposalRepo && /^[a-f0-9]{40}$/.test(decision?.head)
-        && (decision.url === `https://github.com/${proposalRepo}/commit/${decision.head}`
+        && (commitLinkMatches(proposalRepo, decision.head, decision.url)
           || /^[a-f0-9]{40}$/.test(decision.baseHead)
             && decision.url === `https://github.com/${proposalRepo}/compare/${decision.baseHead.slice(0, 9)}...${decision.head.slice(0, 9)}`);
       const amendment = node.type === "pr" && decision?.kind === "amendment"
         && /^[a-f0-9]{40}$/.test(decision.head) && /^[a-f0-9]{40}$/.test(decision.baseHead)
         && decision.head !== decision.baseHead
-        && decision.url === `https://github.com/${candidate.meta.owner}/${node.repo.split("/")[1]}/commit/${decision.head}`
+        && commitLinkMatches(`${candidate.meta.owner}/${node.repo.split("/")[1]}`, decision.head, decision.url)
         && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
       const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision?.kind)
         && (node.type === "issue" && decision.head === undefined || /^[a-f0-9]{40}$/.test(decision.head))
@@ -1771,7 +1781,7 @@ function validateRegistry(candidate) {
     }
     const changes = node.contributorChangesRequested;
     if (changes !== undefined && (!changes || node.type !== "branch" || decision !== undefined ||
-        !/^[a-f0-9]{40}$/.test(changes.head) || !proposalRepo || changes.url !== `https://github.com/${proposalRepo}/commit/${changes.head}`))
+        !/^[a-f0-9]{40}$/.test(changes.head) || !proposalRepo || !commitLinkMatches(proposalRepo, changes.head, changes.url)))
       throw new Error("Invalid contributor changes request");
     const patch = node.approvedPatch;
     if (patch !== undefined && (!patch || node.type !== "pr" || node.repo !== "google/gvisor"

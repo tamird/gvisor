@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T18:28:16.486458+00:00",
+    "updatedAt": "2026-10-29T18:56:07.113045+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1357,23 +1357,22 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": null,
-      "updatedAt": "2026-10-29T14:31:28.555886+00:00",
-      "summary": "The rebased socket fixture enables host Unix sockets in both upstream inode-number modes. All four package owners ran remotely; both socket cases pass. No maintainer approval is recorded.",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Published the fixture fix. Only an absent TEST_TMPDIR falls back to os.TempDir; an explicitly empty value fails.",
       "followup": {
-        "disposition": "Qualified fork amendment",
+        "disposition": "Contributor-approved amendment published",
         "owner": "root",
-        "nextAction": "Review the qualified temp-directory amendment; publish to the existing PR only after contributor review.",
-        "sourceHead": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
+        "nextAction": "Published the fixture fix. Only an absent TEST_TMPDIR falls back to os.TempDir; an explicitly empty value fails.",
+        "sourceHead": "412f99aaeae95242664e2612c1ed8d41fdf68319",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/40837380180",
-          "https://app.buildbuddy.io/invocation/44e4fb11-e6bb-42cc-adfe-b4bd0395d8c8"
+          "https://github.com/tamird/gvisor/commit/412f99aae"
         ],
-        "observedAt": "2026-10-29T14:17:15.982925+00:00"
+        "observedAt": "2026-10-29T18:56:07.113045+00:00"
       },
-      "head": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
+      "head": "412f99aaeae95242664e2612c1ed8d41fdf68319",
       "evidence": [
         {
           "label": "Exact-source qualification",
@@ -1398,6 +1397,10 @@
         {
           "label": "Set, absent, and explicitly empty TEST_TMPDIR",
           "url": "https://github.com/tamird/gvisor/actions/runs/40889960330"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/412f99aae"
         }
       ],
       "refinement": {
@@ -1408,16 +1411,14 @@
           "head": "412f99aaeae95242664e2612c1ed8d41fdf68319"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "412f99aaeae95242664e2612c1ed8d41fdf68319",
-        "baseHead": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
-        "url": "https://github.com/tamird/gvisor/commit/412f99aaeae95242664e2612c1ed8d41fdf68319",
-        "title": "Use the default LisaFS fixture path only when TEST_TMPDIR is absent",
-        "summary": "An absent directory uses os.TempDir; an explicitly empty path now fails instead of silently using /tmp.",
-        "body": "Both UDS inode modes pass with Bazel’s directory and with the variable absent. Both reject an explicit empty path before starting UDS. The helper analyzer passed."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "412f99aaeae95242664e2612c1ed8d41fdf68319",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "pr:14360",
@@ -19405,43 +19406,21 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nogo-export-data",
-      "head": "63e9f5dadc33c98738456ec5ff3385639256ede3",
+      "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
       "title": "Generate Nogo export data from source",
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-29T14:33:32.823729+00:00",
-      "summary": "The approved two-file amendment is published in #16098 at 63e9f5dad, replacing 53b1c2e9c. No contributor decision remains pending. Nogo treated the s2a v2 package’s alias as a replacement for the independently imported v1 package. Both target architectures then rejected the token manager’s type switch because its two Identity types collapsed into one. The amendment gives primary imports precedence, matching rules_go; it changes only the two Starlark files that assemble this mapping.\n\nThe uncorrected integrated source fails before either owning test can execute: tokenmanager.go reports a duplicate Identity case for both AMD64 and ARM64. The corrected integrated source passes all six affected Nogo owners, the existing checker tests, the negative analyzer sanity test and buildifier: nine uncached remote attempts and 27 positive XML records.\n\nThe exact public amendment 63e9f5dad passes the two real owning Nogo wrappers with the public branch’s normal GNU configuration and source-declared Go 1.27.3. Both remote uncached wrappers report AMD64 and ARM64 PASS; the formatter also passes. Authentication finished 5.83 seconds after native execution. Its existing source-export encoding and fact enumeration are preserved.\n\nThe integrated before failure remains FAIL. Current public checks and maintainer review are tracked separately; the amendment adds no broad presubmit replay or new performance measurement.\n\nHistorical published revisions and source-specific evidence (including the earlier performance measurements):\n\nPublic PR #16098 is now at 3b7396026aa9671591f7dba451809c443c0c4844 on landed #16335 base c341af3e04fb, observed by the existing provider at 2026-10-24T20:16:08.845882+00:00. Root preserved the contributor-approved dependency/export postimage while resolving the landed-base conflict. The provider reports MERGEABLE; this is not fresh maintainer approval or current-head CI credit. No contributor decision remains pending.\n\nEarlier source-specific evidence:\n\nThe contributor-approved source-only dependency amendment 2854c847877a87952a06113f2a92735e52038756 is delivered on the existing nogo-export-data branch, verified by the provider at 15:02:35Z. The amended description is published. No new public comment or reviewer request was sent. Current-head checks and maintainer review remain separate from the retained source-specific qualification. The earlier source-order amendment fd6ad08032 and its nine-owner/32-case qualification remain historical evidence for that source.\n\nThe focused source-only dependency comparison is complete at 8f5a7b90. All eight ordinary builds pass across four exact sources and both target CPUs. Current d15d and the full conditional #16098 composition retain embedded source but fail Nogo because its embedded-only import is unresolved; the then-pending #16335 control drops that source and fails on the missing EmbeddedValue/NestedValue declarations. A private correction passes both uncached wrappers and four actual remote analyzer actions across AMD64/ARM64, with dependency-export joins and no analyzer action for the raw source carriers. The whole native result remains FAIL because all three controls fail; comparison and retained projection pass. Automatic authentication took 9.679865 seconds. This covers valid direct and nested/mixed rules_go source carriers, not arbitrary custom providers or full upstream CI. The clean amendment 2854c847877a87952a06113f2a92735e52038756 was prepared on nogo-source-embed-deps-review and was published as the public PR head before the current landed-base rebase. Its delta from the previous public fd6ad08032 is confined to tools/nogo/defs.bzl, and all 21 nonqualification inputs match the qualified fixed arm. The contributor approved this exact amendment and publication is verified; no contributor decision remains pending. The one-file conditional conflict with #16335 was subsequently resolved in the current published head.\n\nThe shared three-source contrast is complete at ce548b75, with overall native, comparison and projection FAIL preserved. Public d15d reproduces the missing protoreflect archive for validate_go and Docker runtime on both analyzer CPUs before any wrapper executes. Full #16098 passes both uncached analyzer wrappers, each reporting amd64 and arm64 PASS. The minimal compiler-dependency extraction reaches actual typechecking on both CPUs but both wrappers fail only the generated unsafe-import policy. The full and minimal treatments each have four successful remote, uncached typechecking actions with the generated files and protoreflect/protoimpl imports; this is not a passing minimal repair or a whole-import result. The complete native result was authenticated 17.110956 seconds after the last inner phase. Original formatter-only failure 0ba556 remains separate; no workload was repeated for retained analysis.\n\nPrior source and validation record:\n\nThe qualified amendment fd6ad08032 was approved and delivered with the updated description. Earlier public head 5841fe0ef3 remains historical source provenance.\n\nPrior source and validation record:\n\nThe public 5841fe0e head conflicts with landed #15648 source helpers/order. Independent source review accepts the narrowed composition fd6ad080: canonical GoInfo source membership, test embed prepend order and source-only dependency guards are preserved; protobuf export implementation is unchanged. The focused qualification has completed native and projection PASS with nine uncached owners, 32 XML records, both-CPU analyzer evidence, exact compiler/analyzer source-order checks and generated protobuf exports. Independent retained-result review passed against the original bundle; four native-zero phases and all source/report/action joins are authenticated. The formatter request was corrected before launch to the current declared goimports route. That source-order composition was subsequently approved and delivered as fd6ad08032. Its accepted result adds no new performance claim.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 5841fe0ef3c0 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as ready PR #16098 at signed 9709cd33f8. The requested errors.Join cleanup and measured performance context are complete. The final commit changes only the message from the measured source. Six complete serial warm-file-cache action passes include the full standard library and newly analyzed generated/runtime packages: the two measured baseline samples took 83.507 and 85.435 seconds, versus 84.840 and 84.955 seconds for the candidate. This is descriptive analyzer/export pipeline context, not whole-build latency, statistical significance or a memory-regression claim. Accepted normal/race results, focused Join validation and original failed attempts retain their exact source identities. Current-head CI and maintainer review remain.\n\nReview command: git range-diff fd6ad08032cefdd0f256317993ff51b216453b89^! 2854c847877a87952a06113f2a92735e52038756^!",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Published the focused test amendment. The cases now distinguish a missing export file, malformed export bytes, and a compiler archive.",
       "followup": {
         "owner": "root",
-        "disposition": "Approved primary-import amendment published",
-        "sourceHead": "63e9f5dadc33c98738456ec5ff3385639256ede3",
-        "observedAt": "2026-10-26T10:23:56.436935+00:00",
-        "nextAction": "The direct and stdlib cases still pass. Review the test-only amendment before updating the open PR.",
+        "disposition": "Contributor-approved amendment published",
+        "sourceHead": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
+        "observedAt": "2026-10-29T18:56:07.113045+00:00",
+        "nextAction": "Published the focused test amendment. The cases now distinguish a missing export file, malformed export bytes, and a compiler archive.",
         "evidence": [
-          "https://app.buildbuddy.io/invocation/4ef5584e-903b-49a8-b745-baf7eaaf8413",
-          "https://app.buildbuddy.io/invocation/b00de266-e783-4486-808a-6881f8ae57d8",
-          "https://app.buildbuddy.io/invocation/9cd1b5b4-b9c3-478b-b204-4e297e1ca9e7",
-          "https://github.com/tamird/gvisor/commit/63e9f5dadc33c98738456ec5ff3385639256ede3",
-          "https://github.com/tamird/gvisor/compare/53b1c2e9c206a9e70bfbb1f13209b010f89538ff..63e9f5dadc33c98738456ec5ff3385639256ede3",
-          "https://github.com/bazel-contrib/rules_go/blob/v0.63.0/go/tools/builders/importcfg.go",
-          "https://github.com/google/gvisor/pull/16098",
-          "https://github.com/tamird/gvisor/commit/9709cd33f8079332a3ca4ea989ef815520b50c48",
-          "https://app.buildbuddy.io/invocation/dd47001c-c459-4fce-a643-f35e90a5d597",
-          "https://github.com/tamird/gvisor/commit/711b1c711195a92db38b4b23029042af3e3dcfd9",
-          "https://github.com/tamird/gvisor/commit/802a775bf922f09dbe03927233c81f92aeb7a1a0",
-          "https://app.buildbuddy.io/invocation/316ef638-9097-432b-bb44-3b9d3afc45b5",
-          "https://app.buildbuddy.io/invocation/0317e7cc-e806-4979-8459-df82dc2cafd8",
-          "https://github.com/tamird/gvisor/commit/5841fe0ef3c0344a39f78130fcbda1502e7195d6",
-          "https://github.com/tamird/gvisor/commit/fd6ad08032cefdd0f256317993ff51b216453b89",
-          "https://app.buildbuddy.io/invocation/728d17f2-f810-428b-8d23-d5e2d5821e46",
-          "https://app.buildbuddy.io/invocation/ce548b75-0833-4a03-8797-5f1d718d9fb9",
-          "https://github.com/google/gvisor/pull/16335/commits/131c3169b9128ef02f0807cccbb3030b000bf90a",
-          "https://app.buildbuddy.io/invocation/8f5a7b90-8312-4dae-ae70-a368849ad7ad",
-          "https://github.com/tamird/gvisor/commit/2854c847877a87952a06113f2a92735e52038756",
-          "https://github.com/tamird/gvisor/compare/fd6ad08032cefdd0f256317993ff51b216453b89...2854c847877a87952a06113f2a92735e52038756",
-          "https://github.com/google/gvisor/pull/16098/commits/3b7396026aa9671591f7dba451809c443c0c4844",
-          "https://github.com/google/gvisor/commit/c341af3e04fb051c7a0b2a394f91789f16d3deab"
+          "https://github.com/tamird/gvisor/commit/ae9cacf5c"
         ]
       },
       "evidence": [
@@ -19528,6 +19507,10 @@
         {
           "label": "Check the expected error for invalid export inputs",
           "url": "https://app.buildbuddy.io/invocation/07635ed8-45c2-4bb3-9d5c-99b5bb260a45"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/ae9cacf5c"
         }
       ],
       "refinement": {
@@ -19539,16 +19522,14 @@
         }
       },
       "number": 16098,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
-        "baseHead": "63e9f5dadc33c98738456ec5ff3385639256ede3",
-        "url": "https://github.com/tamird/gvisor/commit/ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
-        "title": "Check the expected error for invalid export inputs",
-        "summary": "A missing file, malformed raw export and compiler archive must fail for different reasons. The five cases passed.",
-        "body": "The direct and stdlib cases still pass. Review the test-only amendment before updating the open PR."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "pr:16096",
@@ -28837,13 +28818,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "50188341ca87809d0d81fafac8cd10d7df64d11a",
+      "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "Open",
-      "updatedAt": "2026-10-29T01:38:37.117895+00:00",
-      "summary": "Build the FD parker, proc unmounter, and sentry prewarmer with ordinary C compiler and linker actions. This removes three shell genrules while preserving their public target names and embedded filenames. Six ELF outputs and 12 fresh remote compile/link actions were verified across AMD64 and ARM64. All 13 native AMD64 test cases passed; ARM64 execution was not tested. The existing GNU toolchain still invokes /usr/bin compiler drivers. Only the ARM64 prewarmer and proc unmounter are byte-identical to the old build; the other four binaries differ. This proposal has no prerequisite on the separate LLVM comparison. The existing Go-source export PR #15106 adds exports_files in the same BUILD files; preserve those declarations when rebasing, with no delivery dependency.",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Published the freestanding sidecar changes and answered all three linker and allocator review threads.",
       "evidence": [
         {
           "label": "Six original test XMLs and stdout logs match the remote worker records",
@@ -28864,19 +28845,13 @@
         {
           "label": "Both-architecture compile/link evidence and 13 AMD64 cases",
           "url": "https://app.buildbuddy.io/invocation/ac6247f5-395b-4fe3-a118-c434304de1ac"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/e482579e1"
         }
       ],
       "number": 16522,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
-        "baseHead": "50188341ca87809d0d81fafac8cd10d7df64d11a",
-        "url": "https://github.com/tamird/gvisor/commit/e482579e11a4e098f069bdeb4c66677b36bc93ff",
-        "title": "Keep hosted runtimes out of the runsc sidecars",
-        "summary": "Disable runtime features and tcmalloc for the three freestanding sidecars, preserve the executable paths, and check that the prewarmer is a regular file. The GNU and supplier-patched Clang runtime suites passed 13 cases each; stock Clang still adds two libraries.",
-        "body": "Publish the amendment and answer all three of Lucas’s comments. The internal toolchain is not available for a direct check."
-      },
       "refinement": {
         "before": {
           "head": "50188341ca87809d0d81fafac8cd10d7df64d11a"
@@ -28885,7 +28860,15 @@
           "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
           "base": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -30385,7 +30368,7 @@
       "number": 16589,
       "group": "release",
       "ref": "review/licensecheck-builder-bazel",
-      "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+      "head": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
       "title": "Run license queries in the selected Bazel environment",
       "url": "https://github.com/google/gvisor/pull/16589",
       "evidence": [
@@ -30436,11 +30419,15 @@
         {
           "label": "Original direct invocation failure",
           "url": "https://app.buildbuddy.io/invocation/a0821749-32c3-49d8-b354-e40729ad4166"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/fb7bb85ae"
         }
       ],
-      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
       "status": "open",
-      "summary": "The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel. The strict comparison of unparsed bazel mod show_repo output failed: the Docker run printed 5,868 extra bytes across 163 repositories. Both verifiers accepted the identical catalog; raw-output equivalence is not established.",
+      "summary": "Published the change to run all three module queries through the selected Bazel command.",
       "refinement": {
         "before": {
           "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe"
@@ -30451,26 +30438,22 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow checks, maintainer review and import on #16589.",
+        "sourceHead": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
+        "observedAt": "2026-10-29T18:56:07.113045+00:00",
+        "disposition": "Contributor-approved amendment published",
+        "nextAction": "Published the change to run all three module queries through the selected Bazel command.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16589",
-          "https://github.com/tamird/gvisor/commit/ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
-          "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
+          "https://github.com/tamird/gvisor/commit/fb7bb85ae"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
-        "baseHead": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
-        "url": "https://github.com/tamird/gvisor/commit/fb7bb85aefa9f128224ff9f536f95b856f99f621",
-        "title": "Use the selected Bazel for all three module queries",
-        "summary": "The license command runs graph, dump_repo_mapping and show_repo in one Bazel environment, including the root repository’s empty name.",
-        "body": "The candidate passed 38 named licensecheck records and the 220-entry catalog check. Review the change before updating the upstream PR."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "pr:16594",
@@ -31215,13 +31198,13 @@
       "repo": "google/gvisor",
       "number": 16601,
       "ref": "review/eifel-ack-timestamps",
-      "head": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
+      "head": "450dd7775cfa6114cf02a6b754a258235f447f52",
       "title": "Require a TCP timestamp echo for Eifel detection",
       "url": "https://github.com/google/gvisor/pull/16601",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
-      "summary": "After an RTO, the stock sender counted a timestamp-free ACK as evidence of spurious recovery. Both counters increased to one even though the post-ACK flag was clear. The fix requires negotiated timestamps and a timestamp option on this ACK. With the same partial ACK, both counters stayed zero without timestamps and reached one with a valid echo. The complete TCP SACK wire suite passed 31 cases each on native AMD64 and ARM64. This tests recovery detection, not throughput.",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Published the TCP amendment: Eifel detection now requires a nonzero echoed timestamp.",
       "evidence": [
         {
           "label": "Published upstream PR #16601",
@@ -31270,36 +31253,21 @@
         {
           "label": "Corrected sender: all four ACK cases pass",
           "url": "https://app.buildbuddy.io/invocation/88347058-c72a-4db0-b413-96881acd6efc"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/450dd7775"
         }
       ],
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
-        "observedAt": "2026-10-28T15:48:09.605364+00:00",
-        "disposition": "Approved timestamp fix published as #16601",
-        "nextAction": "Follow upstream checks and maintainer review on #16601. No contributor decision remains.",
+        "sourceHead": "450dd7775cfa6114cf02a6b754a258235f447f52",
+        "observedAt": "2026-10-29T18:56:07.113045+00:00",
+        "disposition": "Contributor-approved amendment published",
+        "nextAction": "Published the TCP amendment: Eifel detection now requires a nonzero echoed timestamp.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16601",
-          "https://github.com/tamird/gvisor/commit/978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
-          "https://github.com/tamird/gvisor/compare/509ad5337346f8cbdba515cefadd542de28d6156...978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
-          "https://github.com/tamird/gvisor/commit/3fb5b0d352641c19d98719abc70dcd7fb291ef96",
-          "https://www.rfc-editor.org/rfc/rfc3522.html#section-3.2",
-          "https://app.buildbuddy.io/invocation/3cc4f0dc-a289-4641-81b4-b8eb67b4d1e1",
-          "https://app.buildbuddy.io/invocation/f25416df-8db5-4c72-b3d1-add8f6b14dbd",
-          "https://app.buildbuddy.io/invocation/980dc920-88a5-4eb9-92c3-2055232218ba",
-          "https://app.buildbuddy.io/invocation/4a520250-7bf1-4288-b410-e1a1064e8e85",
-          "https://app.buildbuddy.io/invocation/63be4163-22da-46bb-b7d5-800730876d82"
+          "https://github.com/tamird/gvisor/commit/450dd7775"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "450dd7775cfa6114cf02a6b754a258235f447f52",
-        "baseHead": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
-        "url": "https://github.com/tamird/gvisor/commit/450dd7775cfa6114cf02a6b754a258235f447f52",
-        "title": "Require a nonzero echo to detect spurious TCP recovery",
-        "summary": "An ACK with a zero timestamp echo advanced SndUna but wrongly incremented both spurious-recovery counters. All four ACK variants pass after the correction.",
-        "body": "Publish the reviewed amendment and reply on both of Lucas Manning’s original threads."
       },
       "refinement": {
         "before": {
@@ -31308,7 +31276,15 @@
         "after": {
           "head": "450dd7775cfa6114cf02a6b754a258235f447f52"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "450dd7775cfa6114cf02a6b754a258235f447f52",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "pr:16604",
@@ -32054,9 +32030,9 @@
       "title": "Keep an epoll watch intact when MOD fails",
       "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-28T23:57:16Z",
-      "summary": "The replacement waiter, interest map, ready list, sequence number and locked helper now have checked guards. Removing the writer lock triggers checklocks. Final production sources passed race (47 records), both architecture analyzers, the Linux/checkpoint/allocation cases, and the matched armed and disarmed restore comparison. #16513 has merged; the revision awaits contributor review.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Rework MOD registration to preserve the existing watch on failure without allocating an extra object on each mask change.",
       "evidence": [
         {
           "label": "Revised proposal",
@@ -32107,14 +32083,17 @@
           "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
+          "outcome": "changes-requested",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
-        "url": "https://github.com/tamird/gvisor/commit/710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
-        "title": "Keep an epoll watch intact when MOD fails",
-        "summary": "Use checklocks to enforce ownership of the waiter pointer and ready list. Race and restore tests pass; the analyzer rejects an unguarded write. #16513 has merged.",
-        "body": "Field and helper guards replace lock requirements in prose; queueing and waiter identity checks use one critical section."
+        "url": "https://github.com/tamird/gvisor/commit/710c59cda"
       }
     },
     {
@@ -32242,9 +32221,9 @@
       "title": "Update rules_python to 2.4.5",
       "url": "https://github.com/tamird/gvisor/commit/32bf2915538481adcfddd866650318cbfec441c7",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T01:16:05.610781+00:00",
-      "summary": "Bazel writes unstamped Python tool metadata without a shell. Both architectures built the same tarball and Debian package. The empty worker progressed to their launchers, which still depend on a missing executable.",
+      "status": "Delivered",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "The rules_python build metadata change is published in google/gvisor#16693.",
       "evidence": [
         {
           "label": "AMD64 packages",
@@ -32261,17 +32240,20 @@
         {
           "label": "All 220 license records verified",
           "url": "https://app.buildbuddy.io/invocation/cd8e4780-ceb1-48a8-9625-1b87ff649f33"
+        },
+        {
+          "label": "Published PR",
+          "url": "https://github.com/google/gvisor/pull/16693"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "32bf2915538481adcfddd866650318cbfec441c7",
-        "url": "https://github.com/tamird/gvisor/commit/32bf2915538481adcfddd866650318cbfec441c7",
-        "title": "Update rules_python to 2.4.5",
-        "summary": "Bazel writes unstamped Python tool metadata without a shell. Both architectures built the same tarball and Debian package. The empty worker progressed to their launchers, which still depend on a missing executable.",
-        "body": "One module version and its license record change. The archive writers ran on both architectures; this does not yet make the complete package build shell-free."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "32bf2915538481adcfddd866650318cbfec441c7",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "branch:package-version-status",
@@ -32322,9 +32304,9 @@
       "title": "Link the Linux module map generator with musl",
       "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T02:59:54.299228+00:00",
-      "summary": "The Linux worker could not start the helper because it needed the host glibc loader. With the patch on the release used by gVisor, empty AMD64 and ARM64 workers generated the maps used in real compiler-rt builds.",
+      "status": "Delivered",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "The module map generator change is published in hermeticbuild/hermetic-llvm#899.",
       "evidence": [
         {
           "label": "Proposed commit",
@@ -32337,17 +32319,20 @@
         {
           "label": "Empty ARM64 worker and compiler-rt archive",
           "url": "https://app.buildbuddy.io/invocation/d2a6d142-2596-42cf-9dd8-421151106437"
+        },
+        {
+          "label": "Published PR",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
-        "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e",
-        "title": "Link the Linux module map generator with musl",
-        "summary": "The Linux worker could not start the helper because it needed the host glibc loader. With the patch on the release used by gVisor, empty AMD64 and ARM64 workers generated the maps used in real compiler-rt builds.",
-        "body": "The supplier-main proposal changes one BUILD file. The identical hunk was qualified on v0.8.24. Darwin and Windows selection were inspected but not executed."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "branch:format-stateify-output",
@@ -32358,9 +32343,9 @@
       "title": "Format generated Go code in stateify",
       "url": "https://github.com/tamird/gvisor/commit/5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T03:19:38.015225+00:00",
-      "summary": "Stateify formats its generated file directly with goimports. The action declares its Go SDK and no longer needs a shell or an intermediate file. Six packages generated and compiled on an empty worker, including aliases in source and generated siblings.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Restore the useful action and generator comments, explain the three Go environment settings, and allocate outputFile as a local value.",
       "evidence": [
         {
           "label": "Proposed commit",
@@ -32383,14 +32368,17 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40808769990"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
+          "outcome": "changes-requested",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
-        "url": "https://github.com/tamird/gvisor/commit/5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
-        "title": "Format generated Go code in stateify",
-        "summary": "Stateify formats its generated file directly with goimports. The action declares its Go SDK and no longer needs a shell or an intermediate file. Six packages generated and compiled on an empty worker, including aliases in source and generated siblings.",
-        "body": "The six final packages compiled with the proposed directory selection. Seven reference outputs matched byte for byte in the earlier integration; that comparison was not repeated on the final source."
+        "url": "https://github.com/tamird/gvisor/commit/5e1349553"
       }
     },
     {
@@ -32402,9 +32390,9 @@
       "title": "Build generated Go inputs only for the requested architecture",
       "url": "https://github.com/tamird/gvisor/commit/08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T04:48:31.223825+00:00",
-      "summary": "The release graph selects only the requested architecture; the Go source export still contains both. All twelve generated files match the published Go branch, including on top of #16518.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Approved for submission after #16518 lands. The release selects one architecture; the Go source archive still includes both.",
       "evidence": [
         {
           "label": "Go archive: all twelve files match",
@@ -32415,15 +32403,14 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40818636787"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
-        "url": "https://github.com/tamird/gvisor/commit/08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
-        "title": "Build generated Go inputs only for the requested architecture",
-        "summary": "The release graph selects only the requested architecture; the Go source export still contains both. All twelve generated files match the published Go branch, including on top of #16518.",
-        "body": "Submit after #16518 lands. The Go archive comparison used its established builder."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "branch:ci-bazel-release",
@@ -32434,9 +32421,9 @@
       "title": "Build the GitHub release without the Docker builder",
       "url": "https://github.com/tamird/gvisor/commit/a5afdee618840c9211d989c775afda8280be484b",
       "group": "release",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T04:48:31.223825+00:00",
-      "summary": "Build //:release directly on the native Ubuntu runner. Its GitHub artifact contains the same eight paths as the published release.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Approved for submission after the generated Go source selection lands.",
       "evidence": [
         {
           "label": "Direct Ubuntu build and release artifact",
@@ -32447,15 +32434,14 @@
           "url": "https://github.com/google/gvisor/actions/runs/40803813239"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a5afdee618840c9211d989c775afda8280be484b",
-        "url": "https://github.com/tamird/gvisor/commit/a5afdee618840c9211d989c775afda8280be484b",
-        "title": "Build the GitHub release without the Docker builder",
-        "summary": "Build //:release directly on the native Ubuntu runner. Its GitHub artifact contains the same eight paths as the published release.",
-        "body": "Submit after the generated-source selection lands. This removes Docker from the release job; the cross-architecture Go export still uses it."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a5afdee618840c9211d989c775afda8280be484b",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     },
     {
       "id": "branch:fsconfigfd-checkpoint",
@@ -34017,17 +34003,23 @@
       "url": "https://github.com/google/gvisor/pull/15432",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
-      "summary": "After retransmission the estimate charges a lost original twice; before a probe is acknowledged it can charge one packet too few. The review asks how to distinguish those cases.",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
-        "url": "https://github.com/google/gvisor/pull/15432",
-        "title": "Post the first-flight packet findings",
-        "summary": "After retransmission the estimate charges a lost original twice; before a probe is acknowledged it can charge one packet too few. The review asks how to distinguish those cases.",
-        "body": "After RACK marks #2 lost, retransmitting it clears `s1.lost`. This\nbranch then counts #2 once, and the `HighRxt` branch below counts it a\nsecond time. In this PR’s tail-loss test, the ACK of #1 opens a\nfive-packet window, but [only #2–#5 are sent](https://app.buildbuddy.io/invocation/e771617b-851e-4019-a76e-f73015f02f74).\n[Omitting the second count](https://app.buildbuddy.io/invocation/e3b6733c-2ae1-4ac3-a4a8-93f4a7b9a126)\nlets #6 go as well, with GSO both on and off.\n\nCan the flight estimate distinguish a **lost original** from an\n**unacknowledged tail probe** whose original might still arrive? The\n[probe case](https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef)\nhas the opposite error: four transmissions are outstanding at a window\nof 11, yet the next write sends eight new packets rather than seven.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Posted the two first-flight counting cases inline on the reviewed PR head.",
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00",
+          "body": "After RACK marks #2 lost, retransmitting it clears `s1.lost`. This\nbranch then counts #2 once, and the `HighRxt` branch below counts it a\nsecond time. In this PR’s tail-loss test, the ACK of #1 opens a\nfive-packet window, but [only #2–#5 are sent](https://app.buildbuddy.io/invocation/e771617b-851e-4019-a76e-f73015f02f74).\n[Omitting the second count](https://app.buildbuddy.io/invocation/e3b6733c-2ae1-4ac3-a4a8-93f4a7b9a126)\nlets #6 go as well, with GSO both on and off.\n\nCan the flight estimate distinguish a **lost original** from an\n**unacknowledged tail probe** whose original might still arrive? The\n[probe case](https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef)\nhas the opposite error: four transmissions are outstanding at a window\nof 11, yet the next write sends eight new packets rather than seven.\n\nPosted by Codex on behalf of @tamird."
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/15432#discussion_r4416541513"
+        }
+      ]
     },
     {
       "id": "pr:16620",
@@ -34040,17 +34032,23 @@
       "url": "https://github.com/google/gvisor/pull/16620",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T16:41:32.410566+00:00",
-      "summary": "The graph reader returned 22 to a callback that had received 11; the legacy reader retained 11. A private copy restores the original callback value.",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
-        "url": "https://github.com/google/gvisor/pull/16620",
-        "title": "Post the LoadValue callback regression",
-        "summary": "The graph reader returned 22 to a callback that had received 11; the legacy reader retained 11. A private copy restores the original callback value.",
-        "body": "@parth-opensrc, this boxes the caller’s destination by reference. After\n`Load` returns, assigning to the field can change a scalar the callback\nalready received:\n\n```go\nsrc.LoadValue(0, &x.n, func(v any) { x.saved = v }) // uint64(11)\n// After Load returns:\nx.n = 22\n```\n\nThe [matched test](https://github.com/tamird/gvisor/blob/dcaa864e7/pkg/state/graph_loadvalue_snapshot_test.go#L42)\nkept `x.saved` at 11 with the legacy reader but observed 22 with the\ngraph reader. A typed copy inside the callback stayed 11 with both.\n[Original run](https://app.buildbuddy.io/invocation/858adf22-8ee6-4cd3-967c-ba4b5a5d40f9).\n\nCould ordinary `LoadValue` snapshot the value when it calls the\ncallback? [This prototype](https://github.com/tamird/gvisor/commit/5c28e8d33)\n[keeps 11 with both readers](https://app.buildbuddy.io/invocation/6fc0d435-5595-4817-a6c1-52f1f64c8dd4).\nI found no direct in-tree caller; stateify uses the separate\n`LoadValueTo` API.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "Posted the LoadValue callback aliasing regression inline on the reviewed PR head.",
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00",
+          "body": "@parth-opensrc, this boxes the caller’s destination by reference. After\n`Load` returns, assigning to the field can change a scalar the callback\nalready received:\n\n```go\nsrc.LoadValue(0, &x.n, func(v any) { x.saved = v }) // uint64(11)\n// After Load returns:\nx.n = 22\n```\n\nThe [matched test](https://github.com/tamird/gvisor/blob/dcaa864e7/pkg/state/graph_loadvalue_snapshot_test.go#L42)\nkept `x.saved` at 11 with the legacy reader but observed 22 with the\ngraph reader. A typed copy inside the callback stayed 11 with both.\n[Original run](https://app.buildbuddy.io/invocation/858adf22-8ee6-4cd3-967c-ba4b5a5d40f9).\n\nCould ordinary `LoadValue` snapshot the value when it calls the\ncallback? [This prototype](https://github.com/tamird/gvisor/commit/5c28e8d33)\n[keeps 11 with both readers](https://app.buildbuddy.io/invocation/6fc0d435-5595-4817-a6c1-52f1f64c8dd4).\nI found no direct in-tree caller; stateify uses the separate\n`LoadValueTo` API.\n\nPosted by Codex on behalf of @tamird."
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/16620#discussion_r4416549128"
+        }
+      ]
     },
     {
       "id": "branch:overlay-file-cache-guards",
@@ -34120,6 +34118,90 @@
       "status": "open",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16682"
+    },
+    {
+      "id": "pr:16693",
+      "type": "pr",
+      "number": 16693,
+      "repo": "google/gvisor",
+      "ref": "review/rules-python-unstamped-build-data",
+      "title": "Update rules_python to 2.4.5",
+      "url": "https://github.com/google/gvisor/pull/16693",
+      "group": "bazel",
+      "status": "open",
+      "head": "32bf2915538481adcfddd866650318cbfec441c7",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "The rules_python build metadata change is published in google/gvisor#16693.",
+      "evidence": [
+        {
+          "label": "AMD64 packages",
+          "url": "https://app.buildbuddy.io/invocation/355ec63b-43e7-4e0d-9287-2c1c3abb8a92"
+        },
+        {
+          "label": "ARM64 packages",
+          "url": "https://app.buildbuddy.io/invocation/4bac2f98-cd71-4579-a69b-da90024c8296"
+        },
+        {
+          "label": "Empty worker reached the package launchers",
+          "url": "https://app.buildbuddy.io/invocation/84c54fbf-af66-46ea-89b6-c040d7479dea"
+        },
+        {
+          "label": "All 220 license records verified",
+          "url": "https://app.buildbuddy.io/invocation/cd8e4780-ceb1-48a8-9625-1b87ff649f33"
+        },
+        {
+          "label": "Published PR",
+          "url": "https://github.com/google/gvisor/pull/16693"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "32bf2915538481adcfddd866650318cbfec441c7",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:hermeticbuild/hermetic-llvm:899",
+      "type": "pr",
+      "number": 899,
+      "repo": "hermeticbuild/hermetic-llvm",
+      "ref": "fix/module-map-generator-musl",
+      "title": "Link the Linux module map generator with musl",
+      "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899",
+      "group": "bazel",
+      "status": "open",
+      "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
+      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "summary": "The module map generator change is published in hermeticbuild/hermetic-llvm#899.",
+      "evidence": [
+        {
+          "label": "Proposed commit",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e"
+        },
+        {
+          "label": "Empty AMD64 worker and original map comparison",
+          "url": "https://app.buildbuddy.io/invocation/dc95c65b-2755-432d-ba72-e81936f11684"
+        },
+        {
+          "label": "Empty ARM64 worker and compiler-rt archive",
+          "url": "https://app.buildbuddy.io/invocation/d2a6d142-2596-42cf-9dd8-421151106437"
+        },
+        {
+          "label": "Published PR",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ]
     }
   ],
   "edges": [

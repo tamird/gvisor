@@ -554,6 +554,19 @@ class WorkStatesTest(unittest.TestCase):
         node["status"] = "contributor review requested"
         self.assertNotIn("contributor-review", record_states([pr], registry, previous, "2026-10-02T00:00:00Z")["pr:1"])
 
+    def test_settled_amendment_is_not_a_new_contributor_decision(self):
+        pr = original()
+        candidate = "c" * 40
+        node = {"id": "pr:1", "type": "pr",
+                "contributorReview": {"kind": "amendment", "head": candidate,
+                                      "baseHead": pr["head"], "status": "pending"},
+                "settledReviews": [{"kind": "amendment", "head": candidate, "outcome": "approved"}]}
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": [node]}
+        now = "2026-10-02T00:00:00Z"
+        self.assertNotIn("contributor-review", record_states([pr], registry, {}, now)["pr:1"])
+        node["contributorReview"]["head"] = "d" * 40
+        self.assertIn("contributor-review", record_states([pr], registry, {}, now)["pr:1"])
+
     def test_outgoing_decisions_use_registry_clock_and_do_not_replace_public_review(self):
         pr = original(reviewDecision="CHANGES_REQUESTED")
         node = {"id": "pr:1", "type": "pr", "contributorReview": {

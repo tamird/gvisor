@@ -490,6 +490,23 @@ test('outgoing reviews return to the agent when the public head changes', () => 
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
 });
 
+test('settled decisions are not requested again, but new code or a distinct comment can be', () => {
+  const context = client(), node = attentionNode();
+  context.nodeInput = node;
+  const current = () => vm.runInContext('contributorDecision(nodeInput)', context);
+  const head = 'c'.repeat(40);
+  node.contributorReview = { status: 'pending', kind: 'amendment', head };
+  node.settledReviews = [{ kind: 'amendment', head, outcome: 'approved' }];
+  assert.equal(current(), null);
+  node.contributorReview.head = 'd'.repeat(40);
+  assert.equal(current().head, 'd'.repeat(40));
+  node.contributorReview = { status: 'pending', kind: 'review', head, body: 'First finding' };
+  node.settledReviews.push({ kind: 'review', head, body: 'First finding', outcome: 'approved' });
+  assert.equal(current(), null);
+  node.contributorReview.body = 'Second finding';
+  assert.equal(current().body, 'Second finding');
+});
+
 test('PR amendments keep the proposed commit and published base distinct', () => {
   const context = client(), node = attentionNode(), head = 'c'.repeat(40);
   node.repo = 'google/gvisor';

@@ -490,7 +490,12 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
                              or (node.get("repo"), node.get("ref")) in promoted):
             continue
         pr = published.get(node["id"])
-        if decision and decision["status"] == "pending":
+        settled = decision and any(
+            item["kind"] == decision.get("kind") and item.get("head") == decision.get("head")
+            and (item["kind"] not in {"reply", "review"} or item.get("body") == decision.get("body"))
+            for item in node.get("settledReviews", [])
+        )
+        if decision and decision["status"] == "pending" and not settled:
             base = decision.get("baseHead", decision.get("head"))
             source_changed = (pr and decision.get("kind") in {"amendment", "review"}
                               and (pr["status"] in {"closed", "merged"} or pr.get("head") and pr["head"] != base))

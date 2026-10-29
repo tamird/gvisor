@@ -65,6 +65,14 @@ issue retains its last observation with an explicit unavailable note while
 other records refresh; a partial inventory is rejected. Reconcile the affected
 identity before assigning it a new provider state.
 
+A contributor decision is tied to the proposed commit, or to the exact draft
+and PR head for a comment. When recording a decision, move its kind and head
+into the node’s `settledReviews` with the outcome and time (and the body for a
+comment). Remove the pending request immediately, including when publication
+has to wait. Keep these records when promoting a branch to a PR. The metadata
+preflight rejects a pending request for work that has already been reviewed.
+A changed proposal gets its own head and range-diff.
+
 Repository policies in `meta.repositories` select the existing Copybara workflow
 for gVisor and ordinary direct PR review for BuildBuddy. Every live PR carries
 its source repository; non-primary PR IDs include that repository, preserving
