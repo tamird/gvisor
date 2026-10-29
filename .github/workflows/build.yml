@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-negative-zero'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-live-slice-aliases'
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     steps:
@@ -69,20 +69,13 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
-        git diff --exit-code e5b636af9ddeb2e0f2c7c4aea52b2f6ba500d8a8 e3e01f2725b209a444a872a487cb602a780214d9 -- pkg/state/encode.go
-        git diff --exit-code e3e01f2725b209a444a872a487cb602a780214d9 40eb760888e9c00c8aaeeee71e42a4f91800734b -- pkg/state/tests/float_test.go
-        git diff --exit-code 40eb760888e9c00c8aaeeee71e42a4f91800734b 7a8b00fe17548fe71b580ba80af697a2fbd24963 -- pkg/state/tests/float_test.go
+        git diff --exit-code 84f545eaa875391da84d3ed484730e91481aa59b acedf983df34a8a45c5f1b540703eec1384ca3f0 -- pkg/state/encode.go pkg/state/encode_unsafe.go pkg/state/state.go
         overall=0
-        for mode in stock fixed basepkg optimized wire; do
+        for mode in stock; do
           args=()
           owner=//pkg/state/tests:tests_test
-          case "$mode" in
-            stock) source=e3e01f2725b209a444a872a487cb602a780214d9; filter='^TestSignedZero$' ;;
-            fixed) source=40eb760888e9c00c8aaeeee71e42a4f91800734b; filter='' ;;
-            basepkg) source=40eb760888e9c00c8aaeeee71e42a4f91800734b; filter=''; owner=//pkg/state:state_test ;;
-            optimized) source=7a8b00fe17548fe71b580ba80af697a2fbd24963; filter='^TestSignedZero$' ;;
-            wire) source=7a8b00fe17548fe71b580ba80af697a2fbd24963; owner=//pkg/state:state_test; filter='^TestZero(WireRepresentations|ArrayStructHook)$' ;;
-          esac
+          source=acedf983df34a8a45c5f1b540703eec1384ca3f0
+          filter='^TestSaveSliceAliases$'
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test -z "$(git status --porcelain --untracked-files=no)"
@@ -100,6 +93,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: negative-zero-verdicts
+        name: slice-alias-verdict
         path: ${{ runner.temp }}/focused/*/result.json
         if-no-files-found: error
