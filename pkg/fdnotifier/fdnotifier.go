@@ -147,6 +147,22 @@ func (n *notifier) updateFD(fd int32) error {
 	return nil
 }
 
+// updateMask changes the entry's mask in the queue registered for fd.
+// As with updateFD, callers must not hold that queue's mutex.
+//
+// +checklocksexclude:n.mu
+func (n *notifier) updateMask(fd int32, e *waiter.Entry, mask waiter.EventMask) error {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	fi, ok := n.fdMap[fd]
+	if !ok {
+		return unix.ENOENT
+	}
+	return fi.queue.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
+		return n.waitFD(fd, fi, aggregate)
+	})
+}
+
 // RemoveFD removes an FD from the list of FDs observed by n.
 //
 // +checklocksexclude:n.mu
@@ -248,6 +264,12 @@ func AddFD(fd int32, queue *waiter.Queue) error {
 // UpdateFD updates the set of events the fd needs to be notified on.
 func UpdateFD(fd int32) error {
 	return shared.notifier.updateFD(fd)
+}
+
+// UpdateMask changes a registered entry's mask in the queue passed to AddFD.
+// If the host rejects the new mask, the entry retains its original mask.
+func UpdateMask(fd int32, e *waiter.Entry, mask waiter.EventMask) error {
+	return shared.notifier.updateMask(fd, e, mask)
 }
 
 // RemoveFD removes an FD from the list of observed FDs.
