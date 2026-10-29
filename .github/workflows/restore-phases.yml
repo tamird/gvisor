@@ -1,0 +1,103 @@
+name: Profile the cold Nginx kernel restore
+on:
+  push:
+    branches: [qualification/state-nginx-cold-profile-ci]
+permissions:
+  contents: read
+jobs:
+  nginx:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    env:
+      SOURCE: 525b78b5a9855eb93b42a8798d0e2f92b34fd3d2
+      BUILD_IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      NGINX_IMAGE: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 5
+          persist-credentials: false
+      - name: Stage the repository's pinned Nginx benchmark input
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD^)" == "$SOURCE" && "$(git rev-parse HEAD^^)" == e9848685c80db1e15a18e657e77d1a18f3200120 && "$(git rev-parse HEAD~3)" == 8c93a8892c82c359fde47860db9af205c4d2015d ]]
+          git diff --exit-code HEAD~3 "$SOURCE" -- pkg/state
+          cp .github/qualification/restore_phases/*.py "$RUNNER_TEMP/"
+          git checkout --detach "$SOURCE"
+          docker pull --platform=linux/amd64 "$NGINX_IMAGE"
+          [[ $(docker image inspect --format '{{.Id}}' "$NGINX_IMAGE") == sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5 ]]
+          docker tag "$NGINX_IMAGE" gvisor.dev/images/benchmarks/nginx:latest
+          docker save -o test/rbe/restore_phases/nginx.tar gvisor.dev/images/benchmarks/nginx:latest
+          docker pull --platform=linux/amd64 "$BUILD_IMAGE"
+      - name: Profile a shared Nginx capture in fresh native processes
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=$RUNNER_TEMP/phase-results
+          mkdir -p "$out" "$RUNNER_TEMP/study_platform"
+          printf 'module(name="study_platform")\n' >"$RUNNER_TEMP/study_platform/MODULE.bazel"
+          cat >"$RUNNER_TEMP/study_platform/BUILD" <<BUILD
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "EstimatedMemory":"6GB", "container-image":"docker://$BUILD_IMAGE"},
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc=$RUNNER_TEMP/study.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=study_platform=$RUNNER_TEMP/study_platform" 'build --host_platform=@study_platform//:gnu' 'build --extra_execution_platforms=@study_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$BUILD_IMAGE" -c '
+            set -euo pipefail
+            export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
+            temp=$1
+            out=$temp/phase-results
+            for attempt in 1 2; do
+              status=0
+              bazel --bazelrc="$temp/study.bazelrc" test --config=x86_64 -c opt --test_timeout=900 --jobs=80 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --build_event_json_file="$temp/kernel.bep" //test/rbe/restore_phases:nginx >"$temp/kernel-build.log" 2>&1 || status=$?
+              if [[ "$attempt" == 1 && "$status" != 0 ]] && grep -Eq "fetch_repo: .*dial tcp .*:443: i/o timeout" "$temp/kernel-build.log" && ! grep -q "\"testResult\":{" "$temp/kernel.bep"; then
+                python3 -c "import json,sys; print(json.dumps([e[\"started\"][\"uuid\"] for e in map(json.loads,open(sys.argv[1])) if \"started\" in e]))" "$temp/kernel.bep" > "$out/pretest-fetch-timeout.json"
+                continue
+              fi
+              break
+            done
+            printf "%s\n" "$status" >"$out/bazel-exit"
+            for name in test.xml test.log; do
+              path=bazel-testlogs/test/rbe/restore_phases/nginx/$name
+              if [[ -f $path ]]; then cp -L "$path" "$out/$name"; fi
+            done
+            python3 - "$temp/kernel-build.log" "$out/build-diagnostic.json" <<PY
+          import json, pathlib, sys
+          lines = pathlib.Path(sys.argv[1]).read_text(errors="replace").splitlines()
+          markers = ("error:", "error ", "fatal ", "killed", "not found", "no such file", "denied", "undefined reference", "unsupported", "statically linked applications")
+          blocked = ("secret", "api-key", "password", "authorization", "token=", "remote_header", "bes_header")
+          diagnostic = [s[:550] for s in lines if any(m in s.lower() for m in markers) and not any(x in s.lower() for x in blocked)]
+          pathlib.Path(sys.argv[2]).write_text(json.dumps(list(dict.fromkeys(diagnostic))[:24]))
+          PY
+            chmod -R a+rX "$out" "$temp/kernel.bep" "$temp/kernel-build.log"
+          ' _ "$RUNNER_TEMP"
+          python3 "$RUNNER_TEMP/verify.py" "$RUNNER_TEMP"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: nginx-cold-restore-profile
+          path: |
+            ${{ runner.temp }}/phase-results/result.json
+            ${{ runner.temp }}/phase-results/test.log
+            ${{ runner.temp }}/phase-results/test.xml
+            ${{ runner.temp }}/phase-results/bazel-exit
+            ${{ runner.temp }}/phase-results/native-event.json
+            ${{ runner.temp }}/phase-results/build-diagnostic.json
+            ${{ runner.temp }}/phase-results/pretest-fetch-timeout.json
+          if-no-files-found: error
