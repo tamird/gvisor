@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T15:32:30.872309+00:00",
+    "updatedAt": "2026-10-29T15:46:52.917812+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32722,8 +32722,8 @@
       "url": "https://github.com/tamird/gvisor/commit/b4720d1975646e4d202ba3f59b7b835cedcdee3b",
       "group": "analysis",
       "summary": "One declared action checks the repository, including new packages and dotfiles, with the selected Python and cpplint. The action ran from scratch; the optional bazel test wrapper uses Bash.",
-      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "status": "Agent work",
       "evidence": [
         {
           "label": "All 485 tracked files",
@@ -32761,20 +32761,12 @@
       "followup": {
         "owner": "root",
         "sourceHead": "b4720d1975646e4d202ba3f59b7b835cedcdee3b",
-        "observedAt": "2026-10-29T14:17:15.982925+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the single repository check. Use bazel build //:cpplint on scratch; bazel test uses the standard Bash test wrapper.",
+        "observedAt": "2026-10-29T15:46:52.917812+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Use the checked inputs and package configurations in the shared lint design. Do not submit the standalone package hooks or fork-specific driver.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/3166a17cb14171cd23b30d826eb5d5b299385ac8"
+          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b4720d1975646e4d202ba3f59b7b835cedcdee3b",
-        "url": "https://github.com/tamird/gvisor/commit/b4720d1975646e4d202ba3f59b7b835cedcdee3b",
-        "title": "Run cpplint once over the repository’s tracked C++ sources",
-        "summary": "One declared action checks the repository, including new packages and dotfiles, with the selected Python and cpplint. The action ran from scratch; the optional bazel test wrapper uses Bash."
       }
     },
     {
@@ -32893,7 +32885,7 @@
       "url": "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e",
       "head": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
       "group": "analysis",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
       "status": "Agent work",
       "summary": "Remove the separate platform-specific wheel. Bazel checks only packages with changed inputs, and the fix command still edits only tracked sources. The LLVM formatter produced the same bytes as the wheel across all 485 current files.",
       "evidence": [
@@ -32915,13 +32907,13 @@
         }
       ],
       "followup": {
-        "owner": "native_runtime",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "owner": "root",
         "sourceHead": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+        "observedAt": "2026-10-29T15:46:52.917812+00:00",
         "disposition": "Agent work",
-        "nextAction": "Revisit only after the repository-wide cpplint revision is ready. The contributor has not been asked to review this version again.",
+        "nextAction": "Carry the verified LLVM formatter and fixtures into the shared lint targets. Rework the package-level checks before submission.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e"
+          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
         ]
       }
     },
@@ -32946,15 +32938,15 @@
         }
       ],
       "status": "Contributor approval retained; waiting for prerequisites",
-      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T14:17:15.982925+00:00",
         "sourceHead": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
+        "observedAt": "2026-10-29T15:46:52.917812+00:00",
         "disposition": "Contributor approved the existing revision; newer lint guidance applies",
-        "nextAction": "Reconcile the remaining shell-driven file selection with the shared declared input list before opening after the prerequisites. Preserve the existing approval for the unchanged portion.",
+        "nextAction": "Keep approval of the original tool pin. Isolate wheel imports from public BUILD files and validate the scratch action and external consumer; do not publish the shell call path.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
+          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
         ]
       }
     },
@@ -32968,7 +32960,7 @@
       "url": "https://github.com/tamird/gvisor/commit/eafcb8392effca7769ef6e220d24feaadb3bdf17",
       "group": "analysis",
       "status": "Contributor approval retained; waiting for prerequisites",
-      "updatedAt": "2026-10-29T13:29:38.654210+00:00",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
       "summary": "Reuse Bazelisk on PATH or install its pinned Go module. Bazelisk selects the project’s .bazelversion for lint and for shutdown.",
       "evidence": [
         {
@@ -32979,11 +32971,11 @@
       "followup": {
         "owner": "root",
         "sourceHead": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
-        "observedAt": "2026-10-29T13:29:38.654210+00:00",
+        "observedAt": "2026-10-29T15:46:52.917812+00:00",
         "disposition": "Contributor approval retained; waiting for prerequisites",
-        "nextAction": "Open the verified Bazelisk revision once the declared codespell prerequisite lands.",
+        "nextAction": "Keep the approved Bazelisk bootstrap; direct source lint CI to the shared target once it qualifies.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/eafcb8392effca7769ef6e220d24feaadb3bdf17"
+          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
         ]
       },
       "refinement": {
@@ -33367,16 +33359,15 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T15:25:27.950951+00:00",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T15:25:27.950951+00:00",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "disposition": "Qualified fork amendment",
-        "nextAction": "Contributor review of the shell-free amendment; publish on #16663 after approval.",
+        "observedAt": "2026-10-29T15:46:52.917812+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Hold the amendment. Prove a shared scratch-safe source inventory, upstream tool selection and a downstream module build before asking for review again.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/6946292a2275252009256d882c44900419ff0934",
-          "https://github.com/tamird/gvisor/actions/runs/40900431019"
+          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
         ]
       },
       "refinement": {
@@ -33386,16 +33377,6 @@
         "after": {
           "head": "6946292a2275252009256d882c44900419ff0934"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "6946292a2275252009256d882c44900419ff0934",
-        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "url": "https://github.com/tamird/gvisor/commit/6946292a2275252009256d882c44900419ff0934",
-        "title": "Check Buildifier formatting with one declared Bazel action",
-        "summary": "Check first-party packages without Bash or Git. Include nested BUILD.bazel files and the optional root formatter config; exclude foreign repositories.",
-        "body": "The former checker accepted an invalid file with BUILDIFIER_CONFIG=example. The new action rejects it and fixes only the workspace files with the declared root config. AMD64 and ARM64 checked the repository."
       }
     },
     {
@@ -33921,12 +33902,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/overlay-close-lifetime",
-      "head": "6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
+      "head": "4ce9994cdab4bb668a9b9059a608d165260086f7",
       "title": "Keep the lower overlay file alive during close",
-      "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
+      "url": "https://github.com/tamird/gvisor/commit/4ce9994cd",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T15:32:30.872309+00:00",
+      "status": "Published",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
       "summary": "A chmod on the same open overlay file can copy it up and release the lower file while its close callback is still running. Retain the lower file until its callback returns.",
       "evidence": [
         {
@@ -33946,15 +33927,60 @@
           "url": "https://app.buildbuddy.io/invocation/0a520392-8d77-48f3-8f65-2417af7d8802"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
-        "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c",
-        "title": "Keep the lower overlay file alive during close",
-        "summary": "A chmod on the same open overlay file can copy it up and release the lower file while its close callback is still running. Retain the lower file until its callback returns.",
-        "body": "Overlay drops its file mutex before calling the cached file’s OnClose.\nA chmod on the same open file can copy it up and release the last\nreference to the lower file while its close callback is still running.\nTake a reference under the mutex and hold it until the callback returns.\n\nThe regression blocks the lower callback, changes the file mode, and\nchecks that the lower file is released only after the callback returns\nits error to the caller."
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "4ce9994cdab4bb668a9b9059a608d165260086f7",
+        "observedAt": "2026-10-29T15:46:52.917812+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow the standalone change on #16677.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16677"
+        ]
       }
+    },
+    {
+      "id": "pr:16677",
+      "type": "pr",
+      "number": 16677,
+      "repo": "google/gvisor",
+      "ref": "review/overlay-close-lifetime",
+      "head": "4ce9994cdab4bb668a9b9059a608d165260086f7",
+      "title": "overlay: keep the lower file alive during close",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "reviewDecision": null,
+      "url": "https://github.com/google/gvisor/pull/16677",
+      "summary": "A chmod on the same open overlay file can copy it up and release the lower file while its close callback is still running. Retain the lower file until its callback returns.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "4ce9994cdab4bb668a9b9059a608d165260086f7",
+        "observedAt": "2026-10-29T15:46:52.917812+00:00",
+        "disposition": "Published",
+        "nextAction": "Follow the standalone change on #16677.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16677"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Fork patch",
+          "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c"
+        },
+        {
+          "label": "Premature release on stock",
+          "url": "https://app.buildbuddy.io/invocation/ea252399-4455-4618-969b-7029d38cc23a"
+        },
+        {
+          "label": "Corrected VFS test",
+          "url": "https://app.buildbuddy.io/invocation/2f53563a-ca47-4086-b7a3-6de009a1ba58"
+        },
+        {
+          "label": "Owning analyzer",
+          "url": "https://app.buildbuddy.io/invocation/0a520392-8d77-48f3-8f65-2417af7d8802"
+        }
+      ]
     }
   ],
   "edges": [
@@ -39840,7 +39866,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T14:42:54.454457+00:00",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -42438,6 +42464,15 @@
               "url": "https://github.com/tamird/gvisor/commit/38c09b1e2b90077cf32009b08d62fdff62656ecd"
             }
           ]
+        },
+        {
+          "text": "A nil value of type Loop []Loop overflows the graph encoder stack even though the value contains no elements. Legacy Save/Load round-trips it. The inline review asks whether to support a recursive descriptor or reject it before writing.",
+          "evidence": [
+            {
+              "label": "Inline review and correction",
+              "url": "https://github.com/google/gvisor/pull/16580#discussion_r4414484358"
+            }
+          ]
         }
       ],
       "nextStep": "Offer the tested scratch-slot correction at the owning line of #16579; Parth leads the rewrite. Continue measuring on the graph-enabled public Save path before proposing changes.",
@@ -43397,6 +43432,10 @@
         {
           "label": "Proposed one-line correction",
           "url": "https://github.com/tamird/gvisor/commit/38c09b1e2b90077cf32009b08d62fdff62656ecd"
+        },
+        {
+          "label": "Parth tagged: unregistered recursive slice overflows the encoder stack",
+          "url": "https://github.com/google/gvisor/pull/16580#discussion_r4414484358"
         }
       ],
       "comparisons": [
@@ -50501,6 +50540,33 @@
         {
           "label": "State design",
           "url": "https://github.com/google/gvisor/issues/16216"
+        }
+      ]
+    },
+    {
+      "id": "investigation:repository-lint",
+      "title": "Repository lint on scratch workers and in downstream Bazel modules",
+      "status": "active",
+      "owner": "root",
+      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "group": "analysis",
+      "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
+      "findings": [
+        {
+          "text": "Pinned upstream wrappers rely on Bash; upstream tool distributions remain useful. Declaring a development-only wheel is insufficient if a load from the root BUILD still reaches it.",
+          "evidence": [
+            {
+              "label": "Rule comparison, design and scope",
+              "url": "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Qualify the supplier rule, an unowned file in a new package and a separate consumer that builds a public gVisor target with lint-only repositories absent.",
+      "evidence": [
+        {
+          "label": "Design and qualification controls",
+          "url": "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
         }
       ]
     }
