@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T22:32:40.423771+00:00",
+    "updatedAt": "2026-10-29T22:42:22.871924+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34511,7 +34511,7 @@
       "url": "https://github.com/google/gvisor/pull/16706",
       "status": "open",
       "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
-      "updatedAt": "2026-10-29T21:52:21.505470+00:00",
+      "updatedAt": "2026-10-29T22:42:22.871924+00:00",
       "evidence": [
         {
           "label": "Stock: no probe at the original deadline",
@@ -34528,6 +34528,14 @@
         {
           "label": "Original bundled verdicts",
           "url": "https://github.com/tamird/gvisor/actions/runs/40958196273"
+        },
+        {
+          "label": "Linux 7.0: first probe at 201.65 ms after one write or 205.93 ms after five; RTO 201 ms in both cases",
+          "url": "https://app.buildbuddy.io/invocation/27e9b526-a707-4d50-a83f-cd9431628d5a"
+        },
+        {
+          "label": "Bundled native packet observations and race verdict",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40965097392"
         }
       ],
       "refinement": {
@@ -34550,7 +34558,7 @@
       "url": "https://github.com/tamird/gvisor/commit/12bdd02c2",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T22:10:16.342263+00:00",
+      "updatedAt": "2026-10-29T22:42:22.871924+00:00",
       "summary": "After checkpoint restore, a sender could wait indefinitely for another peer packet. Restart an active send timer on its original deadline once the new route is ready.",
       "contributorReview": {
         "status": "pending",
@@ -34582,6 +34590,14 @@
         {
           "label": "Earlier f8209127c: both owning analyzers passed",
           "url": "https://app.buildbuddy.io/invocation/2021f999-b046-4665-a5a2-f03ae808684a"
+        },
+        {
+          "label": "Exact review head with the race detector: all four timer cases and their parent passed",
+          "url": "https://app.buildbuddy.io/invocation/0ee6147f-3306-4dad-8b03-cd901a11790c"
+        },
+        {
+          "label": "Bundled native packet observations and race verdict",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40965097392"
         }
       ],
       "refinement": {
