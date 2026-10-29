@@ -1,0 +1,44 @@
+name: Read original D-SACK command exit
+"on":
+  push:
+    branches: [qualification/dsack-original-native-exit-489df4e7]
+permissions:
+  contents: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify original-only reader and fixture
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/dsack-original"
+          mkdir -p "$root"
+          cp .github/qualification/dsack/{read_exit.py,read_fixed.py,wire.py,plan.json} "$root/"
+          cd "$root"
+          sha256sum --check <<'SUMS'
+          eaa313c4063715c776e1887d46cd2ab51c1ef489e30a127a650c1e97db01a153  read_exit.py
+          dc169e58a159fa45d482671c12310c1facf53a3f5d0770ee361eb7f840b817c2  read_fixed.py
+          3b39e3f25b35967e409d0de1729f29288b32e83352ec84bf114ae3864818893b  wire.py
+          455a1d90cf541ec0b052cf85dc28bcd37cfd1485fa981787d0ba93e2f986c9c7  plan.json
+          SUMS
+      - name: Read only the authenticated original archive
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          cd "$RUNNER_TEMP/dsack-original"
+          python3 read_exit.py
+      - name: Publish only the bounded evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dsack-original-exit
+          path: ${{ runner.temp }}/dsack-original/verdict.json
+          if-no-files-found: error
+          retention-days: 14
