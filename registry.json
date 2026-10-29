@@ -32708,7 +32708,7 @@
         "status": "pending",
         "kind": "proposal",
         "head": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
-        "url": "https://github.com/tamird/gvisor/compare/4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e...e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+        "url": "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e",
         "title": "Use the declared LLVM formatter for C and C++ lint",
         "summary": "Remove the separate platform-specific wheel. Bazel checks only packages with changed inputs, and the fix command still edits only tracked sources. The LLVM formatter produced the same bytes as the wheel across all 485 current files.",
         "body": "Open after the package-local cpplint and registered Buildifier proposals. A failure reports file, line and column with the fix command. Fix mode leaves untracked files alone."
