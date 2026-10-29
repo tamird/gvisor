@@ -1,0 +1,65 @@
+diff --git a/go/private/rules/binary.bzl b/go/private/rules/binary.bzl
+--- a/go/private/rules/binary.bzl
++++ b/go/private/rules/binary.bzl
+@@ -15,6 +15,7 @@
+ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+ load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
++load("@rules_shell//shell/toolchains:sh_exec_toolchain.bzl", "SH_EXEC_TOOLCHAIN_TYPE")
+ load(
+     "//go/private:common.bzl",
+     "GO_TOOLCHAIN",
+@@ -589,7 +590,20 @@
+         setting = ctx.attr._use_sh_toolchain_for_bootstrap_process_wrapper[BuildSettingInfo].value
+         sh_toolchain = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"]
+         binary_wrapper = ctx.file._binary_wrapper
+-        if setting and sh_toolchain:
++        arguments = [args]
++        tools = [sdk.go]
++        toolchain = None
++        shell_exec = ctx.toolchains[SH_EXEC_TOOLCHAIN_TYPE]
++        if setting and shell_exec and type(shell_exec.sh_exec_toolchain.interpreter) != "string":
++            # Run the script as an input to the declared shell. A shebang
++            # cannot carry the interpreter or its runfiles to a remote worker.
++            wrapper = ctx.actions.args()
++            wrapper.add(binary_wrapper)
++            arguments = [wrapper, args]
++            tools.append(binary_wrapper)
++            binary_wrapper = shell_exec.sh_exec_toolchain.interpreter
++            toolchain = SH_EXEC_TOOLCHAIN_TYPE
++        elif setting and sh_toolchain:
+             binary_wrapper = ctx.actions.declare_file(name + "_binary_wrapper.sh")
+             ctx.actions.expand_template(
+                 template = ctx.file._binary_wrapper,
+@@ -602,8 +616,8 @@
+ 
+         ctx.actions.run(
+             executable = binary_wrapper,
+-            arguments = [args],
+-            tools = [sdk.go],
++            arguments = arguments,
++            tools = tools,
+             env = {
+                 "GOMAXPROCS": "1",
+                 "GOTOOLCHAIN": "local",
+@@ -617,7 +631,7 @@
+                 ctx.files.srcs,
+                 transitive = [sdk.headers, sdk.srcs, sdk.libs, sdk.tools],
+             ),
+-            toolchain = None,
++            toolchain = toolchain,
+             outputs = [out, ctx.outputs.out_pack],
+             execution_requirements = SUPPORTS_PATH_MAPPING_REQUIREMENT,
+             mnemonic = "GoToolchainBinaryBuild",
+@@ -665,7 +679,10 @@
+ only as of Go 1.25. Combining both builds into a single action drastically
+ reduces the overall build time due to Go's own caching mechanism.
+ """,
+-    toolchains = [config_common.toolchain_type("@bazel_tools//tools/sh:toolchain_type", mandatory = False)],
++    toolchains = [
++        config_common.toolchain_type("@bazel_tools//tools/sh:toolchain_type", mandatory = False),
++        config_common.toolchain_type(SH_EXEC_TOOLCHAIN_TYPE, mandatory = False),
++    ],
+ )
+ 
+ def gc_linkopts(ctx):

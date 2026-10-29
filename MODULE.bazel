@@ -72,6 +72,7 @@ single_version_override(
         "//tools:rules_go_export.patch",
         "//tools:rules_go_benchmark_xml.patch",
         "//tools:rules_go_package_provenance.patch",
+        "//tools:rules_go_bootstrap_shell.patch",
     ],
     version = "0.63.0",
 )
@@ -2846,3 +2847,14 @@ http_archive(
     urls = ["https://github.com/NVIDIA/open-gpu-kernel-modules/archive/61dcc93722ecb418bb5f2e00923f05b4b8051dd1.tar.gz"],
 )
 # END generated NVIDIA driver sources
+
+# Exercise rules_shell#64's actual declared-executable API before its release.
+archive_override(
+    module_name = "rules_shell",
+    integrity = "sha256-AHBCSc0o+MbsCSaLoOgM+ouU7VcFldsTSdJT3q9+otU=",
+    strip_prefix = "rules_shell-aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+    urls = ["https://github.com/bazel-contrib/rules_shell/archive/aa4ad1622a8f755f38cae724ef3abc63aed171c3.tar.gz"],
+)
+
+bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
+bootstrap_busybox(name = "bootstrap_busybox")

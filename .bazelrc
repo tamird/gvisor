@@ -77,6 +77,8 @@ build:rbe-common --noremote_local_fallback
 build:rbe-common --noremote_accept_cached
 build:rbe-common --extra_toolchains=//test/rbe/protoc_check:static_python
 build:rbe-common --modify_execution_info=^GoToolchainBinaryBuild$=+no-remote-cache
+build:rbe-common --@io_bazel_rules_go//go/config:experimental_use_sh_toolchain
+build:rbe-common --extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash
 build:rbe-common --compilation_mode=opt
 build:rbe-common --remote_cache_compression
 test:rbe-common --strategy=TestRunner=remote
