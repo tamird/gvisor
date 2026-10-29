@@ -135,3 +135,55 @@ func TestGraphMapPublishesDirectInterface(t *testing.T) {
 		})
 	}
 }
+
+func TestGraphMapHookEntryStorage(t *testing.T) {
+	for _, callbacks := range []bool{true, false} {
+		name := "restore"
+		if !callbacks {
+			name = "inspect_without_callbacks"
+		}
+		t.Run(name, func(t *testing.T) {
+			o := &mapWordObservation{token: 73}
+			ctx := context.WithValue(context.Background(), mapWordKey{}, o)
+			src := mapWord{p: &o.token}
+			values := map[uint8]any{3: src, 7: src, 11: uint8(21)}
+			keys := map[any]uint8{src: 42}
+			vt, kt := typeInfoOf(reflect.TypeOf(values)), typeInfoOf(reflect.TypeOf(keys))
+			es := newGraphEncodeState(ctx, vt)
+			defer es.release()
+			es.encodeMap(vt, reflect.ValueOf(values).UnsafePointer())
+			es.encodeMap(kt, reflect.ValueOf(keys).UnsafePointer())
+
+			ds := newGraphDecodeState(ctx)
+			defer ds.release()
+			ds.noCallbacks = !callbacks
+			ds.types = append(ds.types, es.types.types...)
+			ds.in = decBuf{b: es.out.b}
+			for range 2 {
+				ds.ods = append(ds.ods, graphObjectDecodeState{cbHead: -1, cbTail: -1, waitHead: -1, waitTail: -1})
+			}
+			gotValues, gotKeys := make(map[uint8]any), make(map[any]uint8)
+			ds.decodeMap(vt, reflect.ValueOf(gotValues).UnsafePointer(), len(values))
+			ds.cur = 1
+			ds.decodeMap(kt, reflect.ValueOf(gotKeys).UnsafePointer(), len(keys))
+			if ds.in.pos != len(ds.in.b) || gotValues[11] != uint8(21) {
+				t.Fatalf("consumed %d/%d bytes; plain value = %v, want 21", ds.in.pos, len(ds.in.b), gotValues[11])
+			}
+			if callbacks {
+				for i := range ds.ods {
+					for c := ds.ods[i].cbHead; c >= 0; c = ds.cbs[c].next {
+						ds.runCallback(&ds.cbs[c])
+					}
+				}
+			}
+			want := mapWord{}
+			wantCalls := 0
+			if callbacks {
+				want, wantCalls = src, 3
+			}
+			if len(gotValues) != 3 || gotValues[3] != want || gotValues[7] != want || len(gotKeys) != 1 || gotKeys[want] != 42 || o.calls != wantCalls {
+				t.Fatalf("restored values %v, keys %v, hooks %d; want both entries, key %v and %d hooks", gotValues, gotKeys, o.calls, want, wantCalls)
+			}
+		})
+	}
+}
