@@ -32,22 +32,26 @@ cc_library(
     includes = ["include"],
 )
 
+# The static Go binary transitions this dependency to the same musl toolchain.
 # The existing plugin supports Linux AMD64; DPDK also runs helper executables
 # during its build, so its execution platform must match that architecture.
 make(
     name = "libpluginstack",
     args = [
+        "RTE_TARGET=x86_64-native-linuxapp-clang",
         "DPDK_MACHINE=ivb",
         "EXTRA_CFLAGS='-g -O3 -fPIC -fno-omit-frame-pointer -DLOOK_ASIDE_BACKEND -Wno-error'",
     ],
     build_data = [
+        "@llvm//tools:ld.lld",
+        "@llvm//tools:llvm-objdump",
         "@plugin_dpdk//:Makefile",
         "@plugin_dpdk//:sources",
     ],
     env = {
+        "DPDK_LD": "$(execpath @llvm//tools:ld.lld)",
         "DPDK_MAKEFILE": "$(execpath @plugin_dpdk//:Makefile)",
-        "OBJDUMP": "$(PLUGIN_OBJDUMP)",
-        "RTE_TARGET": "x86_64-native-linuxapp-$(C_COMPILER)",
+        "OBJDUMP": "$(execpath @llvm//tools:llvm-objdump)",
     },
     exec_compatible_with = [
         "@platforms//cpu:x86_64",
@@ -60,13 +64,13 @@ make(
     resource_size = "small",
     target_compatible_with = select({
         ":plugin_tldk_condition": [
+            "@llvm//constraints/libc:musl",
             "@platforms//cpu:x86_64",
             "@platforms//os:linux",
         ],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     targets = ["install-plugin"],
-    toolchains = ["@//external/tools/plugin-stack:toolchain"],
     visibility = ["//visibility:public"],
     deps = [
         ":bsd_queue",

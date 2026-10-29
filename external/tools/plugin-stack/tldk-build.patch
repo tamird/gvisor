@@ -5,7 +5,7 @@
 diff --git a/Makefile b/Makefile
 --- a/Makefile
 +++ b/Makefile
-@@ -13,6 +13,15 @@
+@@ -13,6 +13,10 @@
  
  TLDK_ROOT := $(CURDIR)
  export TLDK_ROOT
@@ -13,15 +13,10 @@ diff --git a/Makefile b/Makefile
 +# Preserve the selected Bazel toolchain flags before DPDK constructs CFLAGS.
 +export BAZEL_CFLAGS := $(CFLAGS)
 +export BAZEL_LDFLAGS := $(LDFLAGS)
-+export BAZEL_LD := $(LD)
-+
-+# foreign_cc exports the execution root; relative tools must keep that base
-+# when recursive Make invocations change directories.
-+export OBJDUMP := $(if $(filter /%,$(OBJDUMP)),$(OBJDUMP),$(EXT_BUILD_ROOT)/$(OBJDUMP))
  
  LOCAL_RTE_SDK=$(TLDK_ROOT)/dpdk/_build/dpdk
  
-@@ -41,7 +50,7 @@
+@@ -41,7 +45,7 @@
  
  .PHONY: clean
  clean:
@@ -30,7 +25,7 @@ diff --git a/Makefile b/Makefile
  	@rm -rf $(RTE_TARGET)
  	@rm -rf libtldk.so libtldk.a
  
-@@ -56,7 +65,7 @@
+@@ -56,7 +60,7 @@
  		S=$(CURDIR)/$(@) \
  		RTE_TARGET=$(RTE_TARGET) \
  		EXTRA_CFLAGS="$(EXTRA_CFLAGS)" \
@@ -39,7 +34,7 @@ diff --git a/Makefile b/Makefile
  
  test: libtldk.a libtldk.so
  
-@@ -74,10 +83,10 @@
+@@ -74,10 +78,10 @@
  		echo $$fn ;				\
  		mkdir $$fn"_obj" ;			\
  		cd $$fn"_obj" ;				\
@@ -52,7 +47,7 @@ diff --git a/Makefile b/Makefile
  endef
  
  ifeq ($(SHARED_HUGE),y)
-@@ -93,5 +102,10 @@
+@@ -93,5 +97,10 @@
  
  $(RTE_SDK)/mk/rte.vars.mk:
  ifeq ($(RTE_SDK),$(LOCAL_RTE_SDK))
