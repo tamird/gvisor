@@ -11,6 +11,11 @@ bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
+single_version_override(
+    module_name = "rules_pkg",
+    patch_strip = 1,
+    patches = ["//tools:rules_pkg_python_writer.patch"],
+)
 bazel_dep(name = "pigz", version = "2.8.bcr.2")
 bazel_dep(name = "rules_oci", version = "2.3.3")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
@@ -106,6 +111,23 @@ single_version_override(
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "writer_python_x86_64",
+    build_file = "//test/rbe/python_package_writers:python.BUILD",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+http_archive(
+    name = "writer_python_aarch64",
+    build_file = "//test/rbe/python_package_writers:python.BUILD",
+    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 

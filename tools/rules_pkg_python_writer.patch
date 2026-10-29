@@ -1,0 +1,89 @@
+# Package writers should start with their configured Python interpreter.
+# The generated py_binary shell bootstrap requires an undeclared Bash even
+# when its interpreter and runfiles are already inputs to the action.
+--- a/pkg/private/tar/tar.bzl
++++ b/pkg/private/tar/tar.bzl
+@@ -13,6 +13,7 @@
+ # limitations under the License.
+ """Rules for making .tar files."""
+ 
++load("//pkg/private:python_action.bzl", "run_writer")
+ load("//pkg:providers.bzl", "PackageVariablesInfo")
+ load(
+     "//pkg/private:pkg_files.bzl",
+@@ -184,12 +185,13 @@
+         transitive = mapping_context.file_deps,
+     )
+ 
+-    ctx.actions.run(
++    run_writer(
++        ctx,
++        writer = ctx.attr._build_tar,
+         mnemonic = "PackageTar",
+         progress_message = "Writing: %s" % output_file.path,
+         inputs = inputs,
+         tools = [ctx.executable.compressor] if ctx.executable.compressor else [],
+-        executable = ctx.executable._build_tar,
+         arguments = [args],
+         outputs = [output_file],
+         env = {
+--- a/pkg/private/deb/deb.bzl
++++ b/pkg/private/deb/deb.bzl
+@@ -13,6 +13,7 @@
+ # limitations under the License.
+ """Rule for creating Debian packages."""
+ 
++load("//pkg/private:python_action.bzl", "run_writer")
+ load("//pkg:providers.bzl", "PackageVariablesInfo")
+ load("//pkg/private:util.bzl", "setup_output_files")
+ 
+@@ -148,9 +149,10 @@
+     args += ["--replaces=" + d for d in ctx.attr.replaces]
+     args += ["--provides=" + d for d in ctx.attr.provides]
+ 
+-    ctx.actions.run(
++    run_writer(
++        ctx,
++        writer = ctx.attr._make_deb,
+         mnemonic = "MakeDeb",
+-        executable = ctx.executable._make_deb,
+         arguments = args,
+         inputs = files,
+         outputs = [output_file, changes_file],
+--- /dev/null
++++ b/pkg/private/python_action.bzl
+@@ -0,0 +1,34 @@
++# Copyright 2015 The Bazel Authors. All rights reserved.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#    http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++"""Run a package writer with its configured interpreter and runfiles."""
++
++load("@rules_python//python:py_executable_info.bzl", "PyExecutableInfo")
++load("@rules_python//python:py_runtime_info.bzl", "PyRuntimeInfo")
++
++def run_writer(ctx, writer, arguments, env, tools = [], **kwargs):
++    binary = writer[DefaultInfo].files_to_run
++    app = writer[PyExecutableInfo]
++    runtime = writer[PyRuntimeInfo]
++    if runtime.interpreter and app.stage2_bootstrap:
++        # Bazel supplies the binary's complete runfiles. Enter its Python
++        # bootstrap directly instead of starting a shell on the worker.
++        ctx.actions.run(
++            executable = runtime.interpreter,
++            arguments = app.interpreter_args + [app.stage2_bootstrap.path] + arguments,
++            env = dict(env, RUNFILES_DIR = binary.executable.path + ".runfiles"),
++            tools = [binary] + tools,
++            **kwargs
++        )
++    else:
++        ctx.actions.run(executable = binary, arguments = arguments, env = env, tools = tools, **kwargs)
