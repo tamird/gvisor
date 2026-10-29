@@ -1,5 +1,6 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -54,3 +55,5 @@ sh_binary(
     ],
     visibility = ["//:sandbox"],
 )
+
+cpplint_test()

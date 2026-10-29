@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "bpf_program")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -44,3 +45,5 @@ bpf_program(
     bpf_object = "tunnel_host_ebpf.o",
     visibility = ["//:sandbox"],
 )
+
+cpplint_test()

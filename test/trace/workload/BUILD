@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -27,3 +28,5 @@ cc_binary(
         "@com_google_absl//absl/time",
     ],
 )
+
+cpplint_test()
