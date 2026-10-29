@@ -15,12 +15,6 @@ jobs:
       with:
         fetch-depth: 2
         persist-credentials: false
-    - name: Read the original invocation's two test attempts
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        mkdir -p "$RUNNER_TEMP/bwrap-result"
-        python3 .github/qualification/bwrap/original_events.py server "$RUNNER_TEMP/bwrap-result/bes-original.json"
     - name: Verify native runtime reports in their owning test actions
       shell: bash
       env:
@@ -31,6 +25,7 @@ jobs:
         checker=$RUNNER_TEMP/bwrap-checker
         mkdir -p "$out" "$checker" "$RUNNER_TEMP/gnu"
         cp .github/qualification/bwrap/*.py "$checker"
+        install -m 0755 .github/qualification/bwrap/privileged-test.sh "$checker/privileged-test"
         git fetch --no-tags --depth=1 origin "$SOURCE"
         git checkout --quiet --detach "$SOURCE"
         [[ $(git rev-parse HEAD) == "$SOURCE" ]]
@@ -55,7 +50,7 @@ jobs:
         command -v bazelisk
         labels=(//runsc/cmd/alias/bwrap:bwrap_test //runsc/cmd/alias/bwrap:bwrap_integration_test)
         printf '%s\n' "${labels[@]}" > "$out/targets.txt"
-        args=(test --config=x86_64 -c opt --jobs=4 --noexperimental_split_xml_generation '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache,^TestRunner$=+no-remote-cache' --nocache_test_results --keep_going --remote_download_outputs=all '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v '--run_under=/usr/bin/sudo -n -E' --test_output=errors --build_event_json_file_path_conversion=false "--build_event_json_file=$RUNNER_TEMP/raw.jsonl" "${labels[@]}")
+        args=(test --config=x86_64 -c opt --jobs=4 --noexperimental_split_xml_generation '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache,^TestRunner$=+no-remote-cache' --nocache_test_results --keep_going --remote_download_outputs=all '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v "--test_env=BWRAP_XML_PROOF=$out" "--run_under=$checker/privileged-test" --test_output=errors --build_event_json_file_path_conversion=false "--build_event_json_file=$RUNNER_TEMP/raw.jsonl" "${labels[@]}")
         printf '%s\n' "${args[@]}" > "$out/arguments.txt"
         code=0; capture=0; verify=0
         bazelisk --bazelrc="$rc" "${args[@]}" || code=$?
