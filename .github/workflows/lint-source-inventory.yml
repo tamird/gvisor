@@ -1,0 +1,28 @@
+name: Lint source inventory
+"on":
+  push:
+    branches: [qualification/lint-source-inventory]
+permissions:
+  contents: read
+jobs:
+  inventory:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Query the unchanged upstream source
+      shell: bash
+      run: |
+        set -euo pipefail
+        cp .github/qualification/lint-source/inventory.py "$RUNNER_TEMP/inventory.py"
+        git checkout --detach f4c82a02fc3e8452463d5b58f013ba2140003f17
+        python3 "$RUNNER_TEMP/inventory.py" "$RUNNER_TEMP/inventory.json"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: lint-source-inventory
+        path: ${{ runner.temp }}/inventory.json
+        if-no-files-found: error
