@@ -15,8 +15,13 @@
 package state
 
 import (
+	"bytes"
+	"context"
 	"math/rand"
+	"reflect"
+	"runtime"
 	"testing"
+	"unsafe"
 )
 
 func TestAddrMap(t *testing.T) {
@@ -81,4 +86,81 @@ func TestAddrMap(t *testing.T) {
 	if got, ok := m.get(0); !ok || got != 7 {
 		t.Fatalf("get(0) = %d, %t, want 7, true", got, ok)
 	}
+}
+
+// TestGraphAddressIndexStudy measures the stock encoder's address-index shape.
+// It records metadata capacity, not whole-process memory or elapsed time.
+func TestGraphAddressIndexStudy(t *testing.T) {
+	ctx := context.Background()
+	ti := typeInfoOf(reflect.TypeFor[[]byte]())
+	var wireSizes []int
+	for _, tc := range []struct {
+		name     string
+		capacity int
+	}{{"one_byte", 1}, {"64_KiB", 64 << 10}, {"16_MiB", 16 << 20}} {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := make([]byte, 1, tc.capacity)
+			payload[0] = 0xa9
+			s := newGraphEncodeState(ctx, ti)
+			// Keep this diagnostic state out of the shared pool.
+			s.save(unsafe.Pointer(&payload), ti, &s.final)
+			var encoded bytes.Buffer
+			if _, err := saveGraph(ctx, &encoded, &payload); err != nil {
+				t.Fatal(err)
+			}
+			if len(s.final.b) == 0 || !bytes.HasSuffix(encoded.Bytes(), s.final.b) {
+				t.Fatal("instrumented state disagrees with the unchanged graph writer")
+			}
+			tid := s.lookup(uintptr(unsafe.Pointer(&payload[0])), ti.elem)
+			if tid < 0 {
+				t.Fatal("slice target missing")
+			}
+			obj, off := s.root(s.target(tid).obj)
+			o := s.obj(obj)
+			if !o.isArray || off != 0 || o.n != uintptr(tc.capacity) {
+				t.Fatalf("slice target is not the original capacity: array=%t offset=%d capacity=%d", o.isArray, off, o.n)
+			}
+			var live uintptr
+			for _, ch := range s.chunkList(o) {
+				live += ch.end - ch.start
+			}
+			if live != 1 {
+				t.Fatalf("encoded %d live elements, want one", live)
+			}
+			wireSizes = append(wireSizes, encoded.Len())
+			t.Logf("INDEX slice_cap=%d live=%d wire=%d keys=%d slots=%d entries=%d entry_cap=%d slot_bytes=%d entry_bytes=%d",
+				tc.capacity, live, encoded.Len(), s.blocks.n, len(s.blocks.slots), len(s.blockEntries), cap(s.blockEntries),
+				uintptr(len(s.blocks.slots))*unsafe.Sizeof(addrSlot{}), uintptr(cap(s.blockEntries))*unsafe.Sizeof(blockEntry{}))
+			runtime.KeepAlive(payload)
+		})
+	}
+	if len(wireSizes) == 3 && (wireSizes[2] < wireSizes[0] || wireSizes[2]-wireSizes[0] >= 32) {
+		t.Fatalf("large capacity unexpectedly changed stream size: %v", wireSizes)
+	}
+	t.Run("shared_block", func(t *testing.T) {
+		const block = 1 << blockShift
+		data := make([]byte, 34*block)
+		base := uintptr(unsafe.Pointer(&data[0]))
+		start := int((-base) & (block - 1))
+		var s graphEncodeState
+		elem := ti.elem
+		add := func(offset int) int32 {
+			p := unsafe.Pointer(&data[start+offset])
+			obj := s.newObject(p, uintptr(p)+1, elem, 1, false)
+			s.index(obj)
+			return obj
+		}
+		for i := range 32 {
+			add(i * block)
+		}
+		keys, slots := s.blocks.n, len(s.blocks.slots)
+		last := add(31*block + 1)
+		target := base + uintptr(start+31*block+1)
+		got := s.query(target, target+1)
+		if len(got) != 1 || got[0] != last || s.blocks.n != keys {
+			t.Fatalf("lookup %v, want [%d]; key count %d→%d", got, last, keys, s.blocks.n)
+		}
+		t.Logf("INDEX shared keys=%d→%d slots=%d→%d entries=%d", keys, s.blocks.n, slots, len(s.blocks.slots), len(s.blockEntries))
+		runtime.KeepAlive(data)
+	})
 }
