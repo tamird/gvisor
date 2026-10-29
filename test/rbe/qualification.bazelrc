@@ -25,3 +25,6 @@ build:buildbuddy_remote_executor --experimental_remote_downloader=grpcs://remote
 build:buildbuddy_remote_executor --experimental_remote_downloader_local_fallback
 build:buildbuddy_remote_executor --remote_download_outputs=minimal
 build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$
+
+# Reexecute just the two selected seccomp writers on the scratch worker.
+build:buildbuddy_remote_executor --modify_execution_info=^PrecompileSeccomp$=+no-remote-cache
