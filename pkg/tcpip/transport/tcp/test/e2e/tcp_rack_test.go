@@ -522,6 +522,77 @@ func TestRACKOnePacketTailLoss(t *testing.T) {
 	}
 }
 
+// A single software-GSO write sends three packets. Without further ACKs,
+// the tail loss probe should retransmit only the last packet.
+func TestGSOTailLossProbe(t *testing.T) {
+	for _, name := range []string{"full", "short"} {
+		t.Run(name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true, MTU: mtu, GSO: stack.GVisorGSOSupported, Clock: clock,
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{SACKPermitted: true})
+			c.EP.SocketOptions().SetDelayOption(false)
+
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			mss := int(info.SndMss)
+			if mss < 2 {
+				t.Fatalf("send MSS = %d, need at least 2 bytes", mss)
+			}
+			last := mss
+			if name == "short" {
+				last = mss / 2
+			}
+			data := make([]byte, 3*mss+last)
+			for i := range data {
+				data[i] = byte(i / mss)
+			}
+			write := func(b []byte) {
+				t.Helper()
+				if n, err := c.EP.Write(bytes.NewReader(b), tcpip.WriteOptions{}); err != nil || n != int64(len(b)) {
+					t.Fatalf("Write(%d bytes) = %d, %v", len(b), n, err)
+				}
+			}
+
+			// Establish an RTT sample so the probe fires before the RTO.
+			write(data[:mss])
+			c.ReceiveAndCheckPacket(data, 0, mss)
+			clock.Advance(30 * time.Millisecond)
+			c.SendAck(seqnum.Value(context.TestInitialSequenceNumber).Add(1), mss)
+			if err := testutil.Poll(func() error {
+				if err := c.EP.GetSockOpt(&info); err != nil {
+					t.Fatal(err)
+				}
+				if info.RTT == 0 {
+					return fmt.Errorf("priming ACK has not produced an RTT sample")
+				}
+				return nil
+			}, time.Second); err != nil {
+				t.Fatal(err)
+			}
+
+			write(data[mss:])
+			for off := mss; off < len(data); off += mss {
+				c.ReceiveAndCheckPacket(data, off, min(mss, len(data)-off))
+			}
+			pto := 2 * info.RTT
+			if pto >= info.RTO {
+				t.Fatalf("probe timeout %v is not before RTO %v", pto, info.RTO)
+			}
+			clock.Advance(pto)
+			c.ReceiveAndCheckPacket(data, 3*mss, last)
+			if n := c.Stack().Stats().TCP.Timeouts.Value(); n != 0 {
+				t.Errorf("timeouts = %d, want 0", n)
+			}
+		})
+	}
+}
+
 // TestRACKDetectDSACK tests that RACK detects DSACK with duplicate segments.
 // See: https://tools.ietf.org/html/rfc2883#section-4.1.1.
 func TestRACKDetectDSACK(t *testing.T) {

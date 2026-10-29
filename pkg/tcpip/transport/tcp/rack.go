@@ -235,7 +235,14 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		}
 
 		if highestSeqXmit != nil {
-			dataSent = s.maybeSendSegment(highestSeqXmit, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
+			// A GSO entry can contain several segments. Probe the one with
+			// the highest sequence number (RFC 8985, section 7.3).
+			smss := int(s.ep.scoreboard.SMSS())
+			if packets := s.pCount(highestSeqXmit, smss); packets > 1 {
+				s.splitSeg(highestSeqXmit, (packets-1)*smss)
+				highestSeqXmit = highestSeqXmit.Next()
+			}
+			dataSent = s.maybeSendSegment(highestSeqXmit, smss, s.SndUna.Add(s.SndWnd))
 			if dataSent {
 				s.rc.tlpRxtOut = true
 				s.rc.tlpHighRxt = s.SndNxt
