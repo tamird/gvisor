@@ -24751,15 +24751,15 @@
       "title": "Account for RACK loss when estimating flight",
       "url": "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5",
       "group": "runtime",
-      "status": "Contributor approved; waiting for #15634",
-      "updatedAt": "2026-10-25T13:28:53.298229+00:00",
-      "summary": "The contributor approved 3327ae6769dfd2426f27bb69730051eb96333773. Its equivalent refresh 83ab4392c284f6804ef13dc0efe5291d688bdca5 is now fork-published directly on the current #15634 head, b909bc6898663235442ae8be2ff97607115d39d8. All four complete topic changes are preserved, and the test/helper postimages are identical. The parent contributes RACK comment corrections and the landed Karn RTT change; independent source peers accepted their composition. #15634 remains open and is the sole upstream prerequisite. No renewed contributor question.\n\nAfter a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged.\n\nHistorical readable-source qualification passed nine native-zero phases, six uncached attempts and 50 positive XML records: normal/race RACK and classic-SACK suites plus both analyzer owners, with no failures or skips. Those TestRunner executions were hosted-local on Linux; the receipt was verified 5.774948 seconds after native completion. The product/source join was independently checked against exact qualifier 30fa. This mechanical refresh adds source-equivalence evidence, not a new runtime or compiler-location result. The earlier baseline/candidate comparison retains its expected baseline failures and aggregate native FAIL. No throughput improvement is claimed.\n\nPrevious approved source: 3327ae6769dfd2426f27bb69730051eb96333773.\n\ngit range-diff 3327ae6769dfd2426f27bb69730051eb96333773^! 83ab4392c284f6804ef13dc0efe5291d688bdca5^!",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T10:34:21.777422+00:00",
+      "summary": "In two matched packet traces, this proposal repairs three lost segments without waiting, but also sends three new segments when a tail probe leaves room for two. The #15634 parent repairs only two lost segments and respects the probe window. Hold this revision; require both cases to pass before requesting review of a replacement.",
       "followup": {
         "owner": "root",
         "sourceHead": "83ab4392c284f6804ef13dc0efe5291d688bdca5",
         "observedAt": "2026-10-25T13:28:53.298229+00:00",
         "disposition": "Contributor-approved topic refreshed on current prerequisite; waiting for #15634 landing",
-        "nextAction": "Root owns upstream delivery after #15634 actually lands. Preserve the existing contributor approval, exact prior 3327 source and historical qualification; no repeated question.",
+        "nextAction": "Keep #15634 unchanged. Correct the accounting proposal so a speculative tail probe consumes one window slot until it is delivered or declared lost, and qualify both wire histories. The older review is for the earlier source only.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5",
           "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...83ab4392c284f6804ef13dc0efe5291d688bdca5",
@@ -24767,7 +24767,8 @@
           "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773",
           "https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f",
           "https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540"
-        ]
+        ],
+        "condition": "Requires a correction and refreshed contributor review as well as #15634 landing."
       },
       "evidence": [
         {
@@ -24801,6 +24802,14 @@
         {
           "label": "Required SACK-accounting prerequisite",
           "url": "https://github.com/google/gvisor/pull/15634"
+        },
+        {
+          "label": "Parent: two of three repairs, two new packets with room for two",
+          "url": "https://app.buildbuddy.io/invocation/76c04e8b-e7f4-4b3d-8b94-a34014faf416"
+        },
+        {
+          "label": "Proposal: three of three repairs, three new packets with room for two",
+          "url": "https://app.buildbuddy.io/invocation/12d34854-bf4f-4fa4-a2b6-eaf0a7fa4a01"
         }
       ]
     },
@@ -32969,6 +32978,33 @@
         "summary": "The connection error is protected by the endpoint mutex. ICMP can update the last socket error while holding only its separate mutex. Annotate both fields so Nogo checks the actual contract.",
         "body": "Open a standalone annotation PR. The negative control reports separately on the unguarded hard-error read/clear and the last-error write under the wrong mutex."
       }
+    },
+    {
+      "id": "branch:static-go-test-binaries",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/static-benchmark-and-test-app",
+      "head": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
+      "title": "Link host-run benchmarks and the container test app statically",
+      "url": "https://github.com/tamird/gvisor/commit/b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T10:34:21.777422+00:00",
+      "summary": "The current GNU build produces two executables requiring the build environment’s dynamic loader. The two-line change makes both static on AMD64 and allows the existing empty-root container test to run instead of skipping. ARM64 GNU qualification is in progress.",
+      "evidence": [
+        {
+          "label": "Original GNU ELF imports",
+          "url": "https://app.buildbuddy.io/invocation/45c7ca93-0f44-4845-a115-44800e8f932d"
+        },
+        {
+          "label": "Corrected GNU ELF files",
+          "url": "https://app.buildbuddy.io/invocation/381849e9-7341-4585-abe3-d5cc37180e44"
+        },
+        {
+          "label": "TestRootNotMount executed and passed",
+          "url": "https://app.buildbuddy.io/invocation/44f1f38c-8507-4b6c-b03d-b940ecda6ea1"
+        }
+      ]
     }
   ],
   "edges": [
