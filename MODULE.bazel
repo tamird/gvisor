@@ -56,6 +56,13 @@ single_version_override(
     patches = ["//tools:with_cfg-test-frontend.patch"],
 )
 
+# Qualification backport of rules_pkg 1bf40ca861 to unmodified 1.0.1.
+single_version_override(
+    module_name = "rules_pkg",
+    patch_strip = 1,
+    patches = ["//tools:rules_pkg_python_launchers.patch"],
+)
+
 # Keep generated-source checks in the same test environment frontends.
 single_version_override(
     module_name = "bazel_lib",

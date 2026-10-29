@@ -50,10 +50,6 @@ var (
 	packageName = flag.String("package", "", "output package name")
 )
 
-// loadProgramsFn loads seccomp programs to be precompiled.
-// It may be nil when it is stubbed out in fastbuild mode.
-var loadProgramsFn = example.PrecompiledPrograms // PROGRAMS_FUNC_THIS_IS_A_LOAD_BEARING_COMMENT
-
 func main() {
 	flag.Parse()
 

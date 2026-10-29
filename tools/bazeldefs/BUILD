@@ -126,7 +126,7 @@ bzl_library(
 bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
-    visibility = ["//visibility:private"],
+    visibility = ["//tools:__pkg__"],
     deps = [
         ":cgroup_test_bzl",
         ":test_architectures_bzl",

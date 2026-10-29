@@ -4,15 +4,24 @@
 #   timekeeping parameters managed by the sandbox kernel.
 
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker", "go_test")
+load("//tools:defs.bzl", "cc_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-genrule(
-    name = "vdso",
+filegroup(
+    name = "linker_script",
+    srcs = select_arch(
+        amd64 = ["vdso_amd64.lds"],
+        arm64 = ["vdso_arm64.lds"],
+        no_match_error = "unsupported architecture",
+    ),
+)
+
+cc_binary(
+    name = "vdso.so",
     srcs = [
         "barrier.h",
         "compiler.h",
@@ -20,50 +29,45 @@ genrule(
         "seqlock.h",
         "syscalls.h",
         "vdso.cc",
-        "vdso_amd64.lds",
-        "vdso_arm64.lds",
-        "vdso_time.h",
         "vdso_time.cc",
+        "vdso_time.h",
     ],
-    outs = [
-        "vdso.so",
+    additional_linker_inputs = [":linker_script"],
+    copts = [
+        "-O2",
+        "-std=c++11",
+        "-fPIC",
+        "-fno-sanitize=all",
+        # Some toolchains enable stack protector by default. Disable it, the
+        # VDSO has no hooks to handle failures.
+        "-fno-stack-protector",
     ],
-    cmd = "$(CC) $(CC_FLAGS) " +
-          "--ld-path=$(execpath {}) ".format(cc_linker) +
-          "-I. " +
-          "-O2 " +
-          "-std=c++11 " +
-          "-fPIC " +
-          "-fno-sanitize=all " +
-          # Some toolchains enable stack protector by default. Disable it, the
-          # VDSO has no hooks to handle failures.
-          "-fno-stack-protector " +
-          "-shared " +
-          "-nostdlib " +
-          "-Wl,-soname=linux-vdso.so.1 " +
-          "-Wl,--hash-style=sysv " +
-          "-Wl,--no-undefined " +
-          "-Wl,-Bsymbolic " +
-          "-Wl,-z,max-page-size=4096 " +
-          "-Wl,-z,common-page-size=4096 " +
-          select_arch(
-              amd64 = "-Wl,-T$(location vdso_amd64.lds) ",
-              arm64 = "-Wl,-T$(location vdso_arm64.lds) ",
-              no_match_error = "unsupported architecture",
-          ) +
-          "-o $(location vdso.so) " +
-          "$(location vdso.cc) " +
-          "$(location vdso_time.cc)",
-    features = ["-pie"],
-    toolchains = [":no_pie_cc_flags"],
-    tools = [cc_linker],
+    features = [
+        "-coverage",
+        "-default_link_flags",
+        "-pie",
+    ],
+    link_extra_lib = None,
+    linkopts = [
+        "-nostdlib",
+        "-Wl,-soname=linux-vdso.so.1",
+        "-Wl,--hash-style=sysv",
+        "-Wl,--no-undefined",
+        "-Wl,-Bsymbolic",
+        "-Wl,-z,max-page-size=4096",
+        "-Wl,-z,common-page-size=4096",
+        "-Wl,-T,$(location :linker_script)",
+    ],
+    linkshared = True,
+    linkstatic = True,
+    stamp = 0,
     visibility = ["//:sandbox"],
 )
 
-cc_flags_supplier(
-    name = "no_pie_cc_flags",
-    features = ["-pie"],
-    language = "c++",
+alias(
+    name = "vdso",
+    actual = ":vdso.so",
+    visibility = ["//:sandbox"],
 )
 
 go_test(
