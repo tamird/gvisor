@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T14:33:32.823729+00:00",
+    "updatedAt": "2026-10-29T14:37:19.126780+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33322,12 +33322,20 @@
           "url": "https://github.com/tamird/gvisor/commit/caf3c35407f6dd2015ac8b6405ce15ff83013cae"
         },
         {
-          "label": "Both Buildifier binaries in scratch",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40891942301"
+          "label": "First scratch check caught formatting in sources.bzl",
+          "url": "https://app.buildbuddy.io/invocation/2f6c6a37-ed3c-4ec7-862b-1e8aaea64696"
+        },
+        {
+          "label": "Corrected fork amendment",
+          "url": "https://github.com/tamird/gvisor/commit/4aa1057417d93e929c9955c7878bb3a509d6e267"
+        },
+        {
+          "label": "One corrected Linux qualification job",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40893220463"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T14:31:28.555886+00:00",
+      "updatedAt": "2026-10-29T14:37:19.126780+00:00",
       "followup": {
         "owner": "root",
         "observedAt": "2026-10-29T14:17:15.982925+00:00",
@@ -33344,7 +33352,7 @@
           "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
         },
         "after": {
-          "head": "caf3c35407f6dd2015ac8b6405ce15ff83013cae"
+          "head": "4aa1057417d93e929c9955c7878bb3a509d6e267"
         }
       }
     },
@@ -33723,22 +33731,17 @@
       "title": "Flush corked TCP data before a queued FIN",
       "url": "https://github.com/tamird/gvisor/commit/abf07439013a8d09fba58d8325ff2e00340e8b7f",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T14:13:23.833788+00:00",
-      "summary": "On stock, closing a corked socket or shutting down its write side held a 14-byte write and FIN for 200 ms. Explicit uncork sent both immediately. With the change all three cases send at virtual time zero. Native Linux independently delivered the complete write and EOF promptly.",
+      "status": "Published",
+      "updatedAt": "2026-10-29T14:36:47.754397+00:00",
+      "summary": "Published as #16671 from the reviewed commit. See the PR for current review and CI.",
       "followup": {
         "owner": "root",
+        "observedAt": "2026-10-29T14:36:47.754397+00:00",
         "sourceHead": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
-        "observedAt": "2026-10-29T14:13:23.833788+00:00",
-        "disposition": "Ready for contributor decision",
-        "nextAction": "Review the standalone fork commit and wrapped PR description. No prerequisite beyond its master parent; references issue #16437. Do not open without contributor approval.",
+        "disposition": "Published",
+        "nextAction": "Follow the published TCP fix on #16671.",
         "evidence": [
-          "https://github.com/google/gvisor/issues/16437",
-          "https://app.buildbuddy.io/invocation/0cd69d79-fdee-44fc-99ea-0bb3cd55fcf8",
-          "https://app.buildbuddy.io/invocation/11f13935-3275-49b4-9600-f8c19332135a",
-          "https://app.buildbuddy.io/invocation/ea18ab19-9ebf-4670-ab86-db9177aba7ba",
-          "https://app.buildbuddy.io/invocation/f9f8e527-9b69-4199-96f4-4c0bd840440f",
-          "https://github.com/google/gvisor/issues/16670"
+          "https://github.com/google/gvisor/pull/16671"
         ]
       },
       "evidence": [
@@ -33765,16 +33768,68 @@
         {
           "label": "Living TCP review index",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Published PR",
+          "url": "https://github.com/google/gvisor/pull/16671"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
-        "url": "https://github.com/tamird/gvisor/commit/abf07439013a8d09fba58d8325ff2e00340e8b7f",
-        "title": "Flush corked TCP data before a queued FIN",
-        "summary": "On stock, closing a corked socket or shutting down its write side held a 14-byte write and FIN for 200 ms. Explicit uncork sent both immediately. With the change all three cases send at virtual time zero. Native Linux independently delivered the complete write and EOF promptly."
-      }
+      "inactive": true
+    },
+    {
+      "id": "pr:16671",
+      "type": "pr",
+      "number": 16671,
+      "repo": "google/gvisor",
+      "ref": "fix/tcp-cork-flush-before-fin",
+      "head": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
+      "title": "Flush corked TCP data when a FIN is queued",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-29T14:36:47.754397+00:00",
+      "reviewDecision": null,
+      "url": "https://github.com/google/gvisor/pull/16671",
+      "summary": "Close and SHUT_WR flush a corked short write before FIN instead of waiting 200 ms.",
+      "followup": {
+        "owner": "root",
+        "observedAt": "2026-10-29T14:36:47.754397+00:00",
+        "sourceHead": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
+        "disposition": "Published",
+        "nextAction": "Follow the published TCP fix on #16671.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16671"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Reported cork timeout on close or SHUT_WR",
+          "url": "https://github.com/google/gvisor/issues/16437"
+        },
+        {
+          "label": "Close and write shutdown each waited 200 ms; explicit uncork did not",
+          "url": "https://app.buildbuddy.io/invocation/0cd69d79-fdee-44fc-99ea-0bb3cd55fcf8"
+        },
+        {
+          "label": "Same traces, all three at virtual time zero",
+          "url": "https://app.buildbuddy.io/invocation/11f13935-3275-49b4-9600-f8c19332135a"
+        },
+        {
+          "label": "Linux loopback: 14 bytes and EOF after close/SHUT_WR/explicit uncork",
+          "url": "https://app.buildbuddy.io/invocation/ea18ab19-9ebf-4670-ab86-db9177aba7ba"
+        },
+        {
+          "label": "Uncached final contributor branch and standalone wire regression",
+          "url": "https://app.buildbuddy.io/invocation/f9f8e527-9b69-4199-96f4-4c0bd840440f"
+        },
+        {
+          "label": "Living TCP review index",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Published PR",
+          "url": "https://github.com/google/gvisor/pull/16671"
+        }
+      ]
     }
   ],
   "edges": [
