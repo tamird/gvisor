@@ -494,3 +494,65 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 		t.Errorf("SackedOut after split = %d, want %d", got, want)
 	}
 }
+
+// TestRACKPipeCopyAccounting checks the accounting before any new send can
+// consume a window. The two outstanding copies represent a retransmission of
+// an original that had not yet been declared lost.
+func TestRACKPipeCopyAccounting(t *testing.T) {
+	clock := faketime.NewManualClock()
+	ctx := newRACKTestContext(clock, 0)
+	defer ctx.cleanup()
+	s := &ctx.snd
+	s.ep.mu.Lock()
+	defer s.ep.mu.Unlock()
+	const mss = 100
+	const start seqnum.Value = 0xffffff70 // Include an actual sequence wrap.
+	s.ep.scoreboard = NewSACKScoreboard(mss, start)
+	s.ep.SACKPermitted = true
+	s.ep.tcpRecovery = tcpip.TCPRACKLossDetection
+	s.MaxPayloadSize = mss
+	s.FastRecovery.Active = true
+	s.SndUna, s.SndNxt = start, start.Add(250)
+	seg := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(250)), 0)
+	seg.flags = header.TCPFlagAck
+	seg.sequenceNumber = start
+	seg.xmitCount, seg.rackInFlight = 2, 2
+	seg.xmitTime = clock.NowMonotonic()
+	s.writeList.PushBack(seg)
+	defer func() {
+		for x := s.writeList.Front(); x != nil; x = s.writeList.Front() {
+			s.writeList.Remove(x)
+			x.DecRef()
+		}
+	}()
+	pipe := func(want int) {
+		t.Helper()
+		s.SetPipe()
+		if s.Outstanding != want {
+			t.Fatalf("flight = %d, want %d", s.Outstanding, want)
+		}
+	}
+	pipe(6) // Two copies of three on-wire packets (including the short tail).
+	s.splitSeg(seg, mss)
+	middle := seg.Next()
+	s.splitSeg(middle, mss)
+	tail := middle.Next()
+	if tail == nil || tail.payloadSize() != 50 {
+		t.Fatalf("missing split GSO tail")
+	}
+	pipe(6)
+	s.ep.scoreboard.Insert(middle.sackBlock())
+	pipe(4) // Delivery cancels both copies of just this middle SMSS.
+	clock.Advance(time.Millisecond)
+	s.rc.XmitTime, s.rc.EndSequence = clock.NowMonotonic(), s.SndNxt
+	// The tail's current copy is newer than the delivered reference.
+	tail.xmitTime = clock.NowMonotonic().Add(time.Millisecond)
+	if n := s.rc.detectLoss(clock.NowMonotonic()); n != 1 || !seg.lost || seg.rackInFlight != 0 {
+		t.Fatalf("lost retransmission: marked=%d lost=%t copies=%d", n, seg.lost, seg.rackInFlight)
+	}
+	pipe(2)
+	s.rc.detectLoss(clock.NowMonotonic())
+	pipe(2) // Repeated detection does not subtract another packet.
+	s.ep.scoreboard.Insert(tail.sackBlock())
+	pipe(0)
+}
