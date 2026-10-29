@@ -9,6 +9,7 @@ from pathlib import Path
 import struct
 import subprocess
 import tarfile
+import tempfile
 
 
 def check(result):
@@ -16,7 +17,8 @@ def check(result):
     expected = {
         "PackageTar": ("payload.tar", "3a57a5fe4121f867ccd0c26c89c511dd0f5851712ae6723babed02f950193898"),
         "ShimConfig": ("config.tar", None),
-        "MakeDeb": ("gvisor-writer-input_1_all.deb", "486d93a4ea624b12536af762811caeac49ab801c05169c7dc744d737673ab015"),
+        "MakeDeb": ("gvisor-writer-input_1_all.deb", None),
+        "Changelog": ("changelog", None),
     }
     result["expected"] = expected
     with tarfile.open(folder / "qualification.tar.gz") as archive:
@@ -39,6 +41,8 @@ def check(result):
         row, pos = json.JSONDecoder().raw_decode(printed)
         printed = printed[pos:]
         name = row.get("mnemonic")
+        if any(o["path"].endswith("/bin/debian/changelog") for o in row.get("actualOutputs", [])):
+            name = "Changelog"
         if name == "PackageTar" and any(o["path"].endswith("/config.tar") for o in row.get("actualOutputs", [])):
             name = "ShimConfig"
         if name not in expected:
@@ -46,15 +50,22 @@ def check(result):
         assert name not in result["workers"], name
         props = {p["name"]: p["value"] for p in row["platform"]["properties"]}
         rec = result["workers"][name] = {"action": row["digest"], "platform": props, "runner": row["runner"], "cache_hit": row.get("cacheHit", False), "exit": row.get("exitCode", 0), "argv": row["commandArgs"][:2]}
-        assert rec["runner"] == "remote" and not rec["cache_hit"] and props["Arch"] == result["arch"] and "hello-world@sha256:" in props["container-image"], rec
-        assert "rules_python" in rec["argv"][0] and "writer_python_" not in rec["argv"][0], rec["argv"]
-        assert any("stage2_bootstrap" in s for s in row["commandArgs"]), row["commandArgs"]
+        assert rec["runner"] == "remote" and not rec["cache_hit"] and props["Arch"] == result["arch"], rec
+        if name == "Changelog":
+            assert "hello-world@sha256:" in props["container-image"], rec
+            assert rec["argv"][0].endswith("/changelog_tool"), rec
+        else:
+            assert "ubuntu@sha256:" in props["container-image"], rec
+            assert "3_11" in rec["argv"][0] and "musl" not in rec["argv"][0], rec
+            assert any("stage2_bootstrap" in arg for arg in row["commandArgs"]), rec
         exe = (execroot / rec["argv"][0]).read_bytes()
         assert exe[:5] == b"\x7fELF\x02" and int.from_bytes(exe[18:20], "little") == {"amd64": 62, "arm64": 183}[result["arch"]]
         off = struct.unpack_from("<Q", exe, 32)[0]
         size, count = struct.unpack_from("<HH", exe, 54)
-        assert all(struct.unpack_from("<I", exe, off + i * size)[0] != 3 for i in range(count))
-        rec["interpreter"] = hashlib.sha256(exe).hexdigest()
+        has_loader = any(struct.unpack_from("<I", exe, off + i * size)[0] == 3 for i in range(count))
+        assert has_loader == (name != "Changelog"), rec
+        rec["tool_sha256"] = hashlib.sha256(exe).hexdigest()
+        rec["dynamic_loader"] = has_loader
         assert not rec["exit"], rec
         filename, sha = expected[name]
         package, = (o for o in row["actualOutputs"] if o["path"].endswith("/" + filename))
@@ -66,8 +77,23 @@ def check(result):
                 member, = (m for m in config if m.isfile())
                 assert member.name.removeprefix("./").lstrip("/") == "etc/containerd/runsc.toml" and member.mode == 0o644
                 assert config.extractfile(member).read() == Path("shim/runsc.toml").read_bytes()
+        elif name == "Changelog":
+            version = (execroot / row["commandArgs"][1]).read_text().rstrip("\n")
+            date = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+            if version[:8].isdigit() and version[8:9] == ".":
+                date = datetime.datetime.strptime(version[:8], "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+            assert content == (f"runsc ({version}) unstable; urgency=medium\n\n  * See https://gvisor.dev/docs/ for release details.\n\n -- The gVisor Authors <gvisor-dev@googlegroups.com>  {date:%a, %d %b %Y %H:%M:%S %z}\n").encode(), rec
+            rec["package_version"] = version
+        elif name == "PackageTar":
+            with tarfile.open(fileobj=io.BytesIO(content)) as payload:
+                member, = (m for m in payload if m.isfile())
+                assert payload.extractfile(member).read() == Path("test/rbe/python_package_writers/notice.txt").read_bytes()
         else:
-            assert rec["output"]["sha256"] == sha, rec
+            with tempfile.TemporaryDirectory() as tmp:
+                deb = Path(tmp) / "package.deb"
+                deb.write_bytes(content)
+                fields = subprocess.check_output(["dpkg-deb", "-f", str(deb)], text=True)
+                assert "Package: gvisor-writer-input" in fields and "Version: 1" in fields, fields
     assert result["exit"] == 0 and result["workers"].keys() == expected.keys(), result
 
 

@@ -1,7 +1,7 @@
-name: Qualify Python package writers on scratch
+name: Qualify supplier package writers and scratch changelog
 on:
   push:
-    branches: [qualification/python-package-supplier-runtime]
+    branches: [qualification/package-supplier-and-changelog]
 permissions:
   contents: read
 jobs:
@@ -18,7 +18,7 @@ jobs:
       QUALIFICATION_HEADER_BASE: ''
       QUALIFICATION_COS_SHA256: ''
       QUALIFICATION_COS_GZIP_BASE64: ''
-      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //shim:config
+      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //shim:config //debian:changelog
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
@@ -37,7 +37,16 @@ jobs:
           bazelisk mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/evidence/graph.json"
           bazelisk mod show_extension --lockfile_mode=update @rules_python//python/extensions:python.bzl%python > "$RUNNER_TEMP/evidence/python-extension.txt"
           cp MODULE.bazel.lock "$RUNNER_TEMP/evidence/MODULE.bazel.lock"
+      - name: Check the supplier minimum Python with the existing tar and deb tests
+        run: |
+          git clone --depth=1 --branch review/run-package-writers-with-python https://github.com/tamird/rules_pkg "$RUNNER_TEMP/supplier"
+          cd "$RUNNER_TEMP/supplier"
+          test "$(git rev-parse HEAD)" = c4cda85160250ea814c5a5f8e6fce1fc997273ed
+          export USE_BAZEL_VERSION=8.8.1
+          bazelisk mod graph --depth=1 --output=json > "$RUNNER_TEMP/evidence/supplier-graph.json"
+          bazelisk test --test_output=errors //tests/tar:pkg_tar_test //tests/deb:pkg_deb_test
       - name: Execute original tar and deb actions on both worker architectures
+        if: ${{ !cancelled() }}
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -50,12 +59,10 @@ jobs:
             export RUNNER_TEMP="$job_root/$QUALIFICATION_ARCH"
             mkdir "$RUNNER_TEMP"
             bash test/rbe/actions.sh \
-              "--bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
-              "--bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_$QUALIFICATION_ARCH" \
-              --bazel-option=--@rules_python//python/config_settings:python_version=3.11.18 \
-              --bazel-option=--@rules_python//python/config_settings:py_linux_libc=musl \
+              "--bazel-option=--host_platform=//test/rbe/python_package_writers:ubuntu_$QUALIFICATION_ARCH" \
+              "--bazel-option=--extra_execution_platforms=//test/rbe/python_package_writers:ubuntu_$QUALIFICATION_ARCH" \
               --bazel-option=--lockfile_mode=error --bazel-option=--remote_download_outputs=all \
-              '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || status=1
+              '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|RunBinary|Changelog)$=+no-remote-cache' || status=1
             python3 test/rbe/python_package_writers/stage2_evidence.py || status=1
           done
           exit "$status"
