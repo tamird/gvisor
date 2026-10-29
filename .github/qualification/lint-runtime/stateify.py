@@ -41,6 +41,7 @@ def qualify():
     bep = harness.ROOT / "stateify.bep"
     command = ["bazel", "--bazelrc=" + os.environ["QA_RC"], "build", "--config=x86_64", "--jobs=48", "--keep_going",
                "--extra_execution_platforms=//tools/bazeldefs:linux_amd64",
+               "--spawn_strategy=local", "--strategy=GoStateify=remote",
                "--remote_default_exec_properties=Arch=amd64", "--remote_default_exec_properties=OSFamily=linux",
                "--remote_default_exec_properties=workload-isolation-type=oci",
                "--remote_default_exec_properties=container-image=" + harness.GNU_IMAGE,
