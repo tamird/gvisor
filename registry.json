@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T01:16:05.610781+00:00",
+    "updatedAt": "2026-10-29T01:38:37.117895+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -523,13 +523,13 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
       "summary": "The requested post-#16046 rebase is published at 636cec92b308 on master 077ee528716d, which contains 82aa7f55a. The rebase incorporates the existing pkg/zip proxy into the wheel audit and removes the duplicate standard-library import. Remote checker and analyzer validation passed: 37 positive cases, no failures or skips, both analyzer architectures and formatting. The existing maintainer exception hold remains.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 7856cf4d0b68 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe requested follow-up on the October 3 internal exception hold is posted and verified. The maintainer\u2019s response is pending.\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:24:40 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
       "followup": {
         "owner": "root",
-        "disposition": "ZIP integration validated and published; existing maintainer hold remains",
-        "sourceHead": "636cec92b308662bb2da1b2c325f999c82e9e65a",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
+        "disposition": "Wheel audit rebased over QEMU repository discovery; the existing maintainer hold remains.",
+        "sourceHead": "e9289d0a24c17e33d9dccf880ddef2f7e7bf886c",
+        "observedAt": "2026-10-29T01:35:12.698800+00:00",
         "nextAction": "Await maintainer confirmation that the existing internal license-exception hold is cleared. The mechanical rebase does not clear that hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15114#issuecomment-6269971682",
@@ -540,8 +540,16 @@
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "UNKNOWN"
       },
-      "head": "636cec92b308662bb2da1b2c325f999c82e9e65a",
+      "head": "e9289d0a24c17e33d9dccf880ddef2f7e7bf886c",
       "evidence": [
+        {
+          "label": "58 passing named test records; none skipped or missing",
+          "url": "https://app.buildbuddy.io/invocation/9fd7d22f-a6a8-4b8a-a613-fe40bea1df5e"
+        },
+        {
+          "label": "Catalog authorization and 220-entry checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40799858245"
+        },
         {
           "label": "Verified review response",
           "url": "https://github.com/google/gvisor/pull/15114#issuecomment-6269971682"
@@ -18268,8 +18276,16 @@
           "https://github.com/google/gvisor/pull/16051/commits/36d42cd42ed7535e9106267046beb65b38880612"
         ]
       },
-      "updatedAt": "2026-10-24T21:48:49.659913+00:00",
+      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
       "evidence": [
+        {
+          "label": "46 passing named test records; none skipped or missing",
+          "url": "https://app.buildbuddy.io/invocation/ad3b0168-0414-4337-9193-8bda9c1aeb8c"
+        },
+        {
+          "label": "Catalog authorization and 220-entry checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40799858245"
+        },
         {
           "label": "Verified authorized delivery",
           "url": "https://github.com/google/gvisor/pull/16051"
@@ -18310,6 +18326,24 @@
             "jobURL": "https://github.com/google/gvisor/actions/runs/39424045404/job/118631958637"
           }
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "dbf12f4d327472f76a83423c08ee14bbe7ec7058",
+        "baseHead": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a",
+        "url": "https://github.com/tamird/gvisor/commit/dbf12f4d327472f76a83423c08ee14bbe7ec7058",
+        "title": "Keep source verification mandatory for manual license records",
+        "summary": "A manual audit and a pinned license-source URL now produce an error instead of allowing the manual audit to bypass refetching.",
+        "body": "The candidate passed 46 named licensecheck records and the 220-entry catalog check. Review the change before updating the upstream PR."
+      },
+      "refinement": {
+        "before": {
+          "head": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a"
+        },
+        "after": {
+          "head": "dbf12f4d327472f76a83423c08ee14bbe7ec7058"
+        }
       }
     },
     {
@@ -21762,7 +21796,7 @@
       "url": "https://github.com/google/gvisor/pull/16249",
       "status": "open",
       "summary": "The current LLVM source-enumeration PR is open at 0d14cdf1f; its prior Copybara import #16329 is closed. It remains a prerequisite of the standalone LLVM source migration. Older import failures and their now-merged shared recovery are historical evidence, not a current source verdict.\n\nPreserved earlier source-specific record:\n\nThe additive conflict after #15970 landed is resolved and published at 996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8, directly on merged 0912018a096a3cedc6467a311a1cc98f26abf3c6. Both original 2b1f8d5 LLVM-source-audit postimages are preserved exactly, with only the landed codeload regexp and test added. Independent source review confirms the inverse. GitHub observed the new head as MERGEABLE at 21:37:46Z; current checks were pending. The earlier matching import #16329 at 65d5538f and its passing 52165/33891 checks belong to the previous source head. The raw APPROVED rollup is not a newly submitted review of this head. No import was edited or native workload repeated. The 21:47:05Z provider snapshot confirms the delivered head is MERGEABLE and reports effective REVIEW_REQUIRED.\n\nEarlier source-specific evidence:\n\nPublic PR #16249 at 2b1f8d5c9994cca2c039ff3250d44a7b12795ff7 now has a fresh matching import #16329 at 65d5538fb703cf2a74942633665827b52d838408, observed by the existing provider at 2026-10-24T20:37:04.573097+00:00. Current source checks pass; import Buildkite 52165 and internal checks remain pending. Root verified that the landed-base rebase preserves the source patch. Earlier failed import heads and their diagnostics remain historical evidence below; no current import pass or new review approval is inferred.\n\nEarlier source-specific evidence:\n\nThe prior import #16329 at c1de6c77 fails Buildkite 52132 for two shared causes, with concrete upstream owners. C++ lint reports the exact 58 Benchmark umbrella-header findings in 28 files already addressed by #16313. GPU checksum validation and the cgroupv1, cgroupv2 and ARM64 unit jobs all fail the ARM64 driver 620.51.03 download with HTTP 404; upstream #16335 marks that installer unavailable while preserving its checksum. The five latest failed steps exit 2. No LLVM enumeration failure was identified in these logs. The #16335 landing and subsequent source rebase are now recorded above; observe a fresh matching import while preserving the distinct #16313 policy work. Three unit logs were server-truncated but retain their sole-test-failure summaries; full lint and GPU logs were read.\n\nEarlier source-specific record:\n\nThe contributor approved eb6c08906, now delivered independently as #16249 at signed dd471c93 on current upstream8938. Complete range-diff is equal; the original approved ref is preserved. Provider head/body/tracking are verified, mergeability is MERGEABLE and public checks are running. No prerequisite or fresh-runtime claim is added.\n\nEarlier source-specific record:\n\nThe LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-26T16:10:37.833015+00:00",
+      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8",
@@ -21783,19 +21817,36 @@
       "number": 16249,
       "refinement": {
         "before": {
-          "head": "eb6c08906b44606535842f03a5554638ca42f325"
+          "head": "0d14cdf1f03ae940215738839add77dcb4677d79"
         },
         "after": {
-          "head": "dd471c93ed0f5b29e9b5e93430e27f0fac3ceaeb",
-          "base": "8938ebcf1c12a6266bdf5a650088e1360777aa94"
+          "head": "f8b7988ba059b9e88edda1264a0ad4907463e48e"
         }
       },
       "evidence": [
         {
+          "label": "39 passing named test records; none skipped or missing",
+          "url": "https://app.buildbuddy.io/invocation/0a0814ab-1b5f-4de5-b2fa-83958d36f2c2"
+        },
+        {
+          "label": "Catalog authorization and 220-entry checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40799858245"
+        },
+        {
           "label": "Published additive resolution on landed codeload base",
           "url": "https://github.com/google/gvisor/pull/16249/commits/996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "f8b7988ba059b9e88edda1264a0ad4907463e48e",
+        "baseHead": "0d14cdf1f03ae940215738839add77dcb4677d79",
+        "url": "https://github.com/tamird/gvisor/commit/f8b7988ba059b9e88edda1264a0ad4907463e48e",
+        "title": "Enumerate the declared LLVM archive alongside QEMU",
+        "summary": "Licensecheck keeps QEMU\u2019s repository mappings and collects LLVM sources from the declared hermetic-llvm extension. An unreadable mapping returns an error.",
+        "body": "The candidate passed 39 named licensecheck records and the 220-entry catalog check. Review the change before updating the upstream PR."
+      }
     },
     {
       "id": "branch:nvidia-parser-resources",
@@ -28636,9 +28687,21 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "Open",
-      "updatedAt": "2026-10-27T20:03:08.106083+00:00",
+      "updatedAt": "2026-10-29T01:38:37.117895+00:00",
       "summary": "Build the FD parker, proc unmounter, and sentry prewarmer with ordinary C compiler and linker actions. This removes three shell genrules while preserving their public target names and embedded filenames. Six ELF outputs and 12 fresh remote compile/link actions were verified across AMD64 and ARM64. All 13 native AMD64 test cases passed; ARM64 execution was not tested. The existing GNU toolchain still invokes /usr/bin compiler drivers. Only the ARM64 prewarmer and proc unmounter are byte-identical to the old build; the other four binaries differ. This proposal has no prerequisite on the separate LLVM comparison. The existing Go-source export PR #15106 adds exports_files in the same BUILD files; preserve those declarations when rebasing, with no delivery dependency.",
       "evidence": [
+        {
+          "label": "Six original test XMLs and stdout logs match the remote worker records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40801674309"
+        },
+        {
+          "label": "Verified original GNU and Clang runtime reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40801052115"
+        },
+        {
+          "label": "Stock Clang\u2019s remaining library dependencies",
+          "url": "https://app.buildbuddy.io/invocation/bcabcf8c-a7a2-4653-bff0-28436aa62251"
+        },
         {
           "label": "Exact reviewed one-commit proposal",
           "url": "https://github.com/tamird/gvisor/compare/0424a4b4fa3105cbe3271c301e8bf6cb8adf0277...50188341ca87809d0d81fafac8cd10d7df64d11a"
@@ -28648,7 +28711,26 @@
           "url": "https://app.buildbuddy.io/invocation/ac6247f5-395b-4fe3-a118-c434304de1ac"
         }
       ],
-      "number": 16522
+      "number": 16522,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+        "baseHead": "50188341ca87809d0d81fafac8cd10d7df64d11a",
+        "url": "https://github.com/tamird/gvisor/commit/e482579e11a4e098f069bdeb4c66677b36bc93ff",
+        "title": "Keep hosted runtimes out of the runsc sidecars",
+        "summary": "Disable runtime features and tcmalloc for the three freestanding sidecars, preserve the executable paths, and check that the prewarmer is a regular file. The GNU and supplier-patched Clang runtime suites passed 13 cases each; stock Clang still adds two libraries.",
+        "body": "Publish the amendment and answer all three of Lucas\u2019s comments. The internal toolchain is not available for a direct check."
+      },
+      "refinement": {
+        "before": {
+          "head": "50188341ca87809d0d81fafac8cd10d7df64d11a"
+        },
+        "after": {
+          "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+          "base": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
+        }
+      }
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -30153,6 +30235,14 @@
       "url": "https://github.com/google/gvisor/pull/16589",
       "evidence": [
         {
+          "label": "38 passing named test records; none skipped or missing",
+          "url": "https://app.buildbuddy.io/invocation/830fa798-f3cd-41e6-8714-fdf751b5d4be"
+        },
+        {
+          "label": "Catalog authorization and 220-entry checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40799858245"
+        },
+        {
           "label": "Upstream pull request",
           "url": "https://github.com/google/gvisor/pull/16589"
         },
@@ -30193,16 +30283,15 @@
           "url": "https://app.buildbuddy.io/invocation/a0821749-32c3-49d8-b354-e40729ad4166"
         }
       ],
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
       "status": "open",
       "summary": "The native checker regenerates and verifies the same 201-entry catalog as CI. The generic make mod target and nested Make fallback are removed; make license-check remains because two Buildkite jobs use it to enter the builder that supplies Bazel. The strict comparison of unparsed bazel mod show_repo output failed: the Docker run printed 5,868 extra bytes across 163 repositories. Both verifiers accepted the identical catalog; raw-output equivalence is not established.",
       "refinement": {
         "before": {
-          "head": "526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
+          "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe"
         },
         "after": {
-          "head": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
-          "base": "509ad5337346f8cbdba515cefadd542de28d6156"
+          "head": "fb7bb85aefa9f128224ff9f536f95b856f99f621"
         }
       },
       "followup": {
@@ -30216,6 +30305,16 @@
           "https://github.com/tamird/gvisor/commit/ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
           "https://github.com/tamird/gvisor/commit/526d8c1e33bd8826deb3eb13d3782c7a5941e3e4"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
+        "baseHead": "ec6a9c761ceb53ba74ee2b5b746aadcfec915dbe",
+        "url": "https://github.com/tamird/gvisor/commit/fb7bb85aefa9f128224ff9f536f95b856f99f621",
+        "title": "Use the selected Bazel for all three module queries",
+        "summary": "The license command runs graph, dump_repo_mapping and show_repo in one Bazel environment, including the root repository\u2019s empty name.",
+        "body": "The candidate passed 38 named licensecheck records and the 220-entry catalog check. Review the change before updating the upstream PR."
       }
     },
     {
@@ -46448,9 +46547,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T01:16:05.610781+00:00",
+      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The combined empty-worker release reached //test/release:artifacts and failed: source genrules invoked /bin/bash, the Go standard-library build required /tmp, and PackageTar used a Bash launcher. Its single-target verdict was available 0.253 s after the Bazel command returned. Separately invoking the declared Python directly for PackageTar and MakeDeb produced byte-identical tar and .deb artifacts on empty AMD64 and ordinary AMD64/ARM64 workers. The full release has not passed.",
+          "evidence": [
+            {
+              "label": "Combined release on scratch: target failed; complete verifier receipt",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40800254679"
+            },
+            {
+              "label": "Combined release build diagnostics",
+              "url": "https://app.buildbuddy.io/invocation/29633f63-c83e-48af-9d40-c61b16580873"
+            },
+            {
+              "label": "PackageTar and MakeDeb on ordinary and empty workers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40800445174"
+            }
+          ]
+        },
         {
           "text": "The Go bootstrap ran on the empty AMD64 worker with a declared ash executable, the original Go SDK and a writable temporary directory. The two outputs matched the independently built Python control byte-for-byte. Without the temporary directory, the Go tool failed before compilation. The supplier change depends on rules_shell exposing the shell executable as an action input.",
           "evidence": [
@@ -46889,7 +47005,7 @@
           ]
         }
       ],
-      "nextStep": "Identify which interpreter or executable prevents the package launchers from starting on the empty worker. Qualify real package contents there, and combine the validated Go and LLVM actions in a release build.",
+      "nextStep": "Combine the direct Python writers and the already qualified native build rules; isolate the Go standard library\u2019s temporary-directory requirement before rerunning the full release.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
