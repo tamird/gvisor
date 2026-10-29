@@ -1,35 +1,84 @@
-name: CI
-
-"on":
+name: Measure array storage on one Nginx checkpoint
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-array-checkpoint-compile-platform]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  pair:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    env:
+      BASE: 40eb760888e9c00c8aaeeee71e42a4f91800734b
+      AFTER: f76d229c04d56c4a800f0e3561d36e75410f91a1
+      CONTROL: e45a78ce3de4eb7371a78d57b24e5a47bc1ae5e6
+      TREATMENT: a41b675a1e4daab600a0ce4264eddea8f081afa2
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      NGINX_IMAGE: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 6
+        persist-credentials: false
+    - name: Verify both source arms and stage the pinned Nginx fixture
+      shell: bash
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^1) == "$CONTROL" && $(git rev-parse HEAD^2) == "$TREATMENT" ]]
+        [[ $(git rev-parse "$CONTROL^") == "$BASE" && $(git rev-parse "$TREATMENT^") == "$AFTER" && $(git rev-parse "$AFTER^") == "$BASE" ]]
+        bench=test/benchmarks/checkpointfile/checkpointfile.go
+        [[ $(git diff --name-only "$CONTROL^" "$CONTROL") == "$bench" && $(git diff --name-only "$TREATMENT^" "$TREATMENT") == "$bench" ]]
+        git diff --exit-code "$CONTROL" "$TREATMENT" -- "$bench"
+        mkdir -p "$RUNNER_TEMP/checker" "$RUNNER_TEMP/paired-public"
+        cp test/rbe/array_pair/checker/*.py "$RUNNER_TEMP/checker/"
+        (cd "$RUNNER_TEMP/checker"; python3 -B -c 'import qualification_report, unit_matrix')
+        cp test/rbe/array_pair/coordinator.sh "$RUNNER_TEMP/"
+        docker pull --platform=linux/amd64 "$NGINX_IMAGE"
+        [[ $(docker image inspect --format '{{.Id}}' "$NGINX_IMAGE") == sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5 ]]
+        docker tag "$NGINX_IMAGE" gvisor.dev/images/benchmarks/nginx:latest
+        docker save -o "$RUNNER_TEMP/nginx.tar" gvisor.dev/images/benchmarks/nginx:latest
+    - name: Build the two binaries and compare them on the same remote worker
+      if: ${{ !cancelled() }}
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        plat=$RUNNER_TEMP/poll-gnu-platform
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        cat >"$plat/BUILD" <<BUILD
+        platform(
+            name = "gnu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "container-image":"docker://$GNU"},
+            visibility = ["//visibility:public"],
+        )
+        platform(
+            name = "compile",
+            parents = [":gnu"],
+            exec_properties = {"EstimatedMemory": "4GB"},
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        rc=$RUNNER_TEMP/poll-gnu.bazelrc
+        umask 077
+        trap 'rm -f "$rc" "$RUNNER_TEMP/poll-compile.bazelrc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$rc"
+        sed 's,@poll_gnu_platform//:gnu,@poll_gnu_platform//:compile,g' "$rc" >"$RUNNER_TEMP/poll-compile.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" "$RUNNER_TEMP/coordinator.sh" "$RUNNER_TEMP" "$CONTROL" "$TREATMENT" "$GITHUB_SHA"
+
+    - name: Preserve the original verdict and measured samples
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: nginx-array-paired
+        path: ${{ runner.temp }}/paired-public
+        if-no-files-found: warn
