@@ -26,15 +26,15 @@ if verdict["errors"] or verdict["missing"] or verdict["skips"] or set(labels) !=
 if len(results) != len(labels) or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out / "runner_exit").read_text())
-cases = ["idle", "data", "persist"]
-missing = [f"restored {name}: packet by RTO = false, want true" for name in cases[1:]]
-success = [f"restored {name}: packet expectation satisfied" for name in cases]
-observations = [s.strip() for s in logs.splitlines() if "packet expectation satisfied" in s or "packet by RTO" in s]
+cases = ["idle", "data", "persist", "tail"]
+missing = [f"restored {name}: packet by deadline = false, want true" for name in cases[1:]]
+success = [f"restored {name}: original deadline and packet satisfied" for name in cases]
+observations = [s.strip() for s in logs.splitlines() if "original deadline and packet satisfied" in s or "packet by deadline" in s]
 if arm == "stock":
     if (verdict["status"] != "FAIL" or verdict["native_exit"] != 3 or runner_exit == 0
         or not all(x in logs for x in [success[0], *missing])
         or any(x in logs for x in success[1:])
-        or any(c.split("/")[-1] not in ("data","persist","TestRestoreSendTimer") for f in verdict["failures"] for c in f.get("cases", []))):
+        or any(c.split("/")[-1] not in ("data","persist","tail","TestRestoreSendTimer") for f in verdict["failures"] for c in f.get("cases", []))):
         why.append("expected idle pass and absent retransmission and persist packets only")
 elif not (verdict["status"] == "PASS" and runner_exit == 0 and all(x in logs for x in success)):
     why.append("restored timer packet controls did not all pass")
