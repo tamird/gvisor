@@ -89,6 +89,10 @@ and package versions without running the Git workspace status command:
 make release-artifacts RELEASE_VERSION=release-20261029.0
 ```
 
+The packages appear under `bazel-bin/debian/release-artifacts/{x86_64,aarch64}/`.
+Use `make release RELEASE_VERSION=...` to build and sign both architectures
+in one invocation.
+
 Ordinary builds still use the Git revision or tag. A custom workspace status
 command that supplies `STABLE_VERSION` takes precedence over `--embed_label`.
 The historical `0.0.0` fallback in a checkout without Git does not distinguish

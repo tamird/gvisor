@@ -23,14 +23,16 @@ fi
 
 set -xeo pipefail
 declare -r private_key="$1"
-shift
-declare -r root="$1"
-shift
+declare -r root="$2"
+shift 2
 declare -a binaries
 declare -a pkgs
 
-# Collect binaries & packages.
 for arg in "$@"; do
+  if [[ ! -f "${arg}" ]]; then
+    echo "Missing release artifact: ${arg}" >&2
+    exit 1
+  fi
   if [[ "${arg}" == *.deb ]] || [[ "${arg}" == *.changes ]]; then
     pkgs+=("${arg}")
   else
@@ -52,21 +54,18 @@ install_raw() {
   local -r dest="$1"
   local -r include_python="${2:-true}"
   for binary in "${binaries[@]}"; do
-    local arch file_info name
-    # Copy the raw file & generate a sha512sum, sorted by architecture.
-    # For tarballs, determine arch from the `runsc` within the tarball.
+    local arch dir name
     case "${binary}" in
-      *.tar.bz2)
-        arch=$(tar -xjOf "${binary}" runsc | file - | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
-        ;;
-      *.tar.zstd)
-        arch=$(tar --zstd -xOf "${binary}" runsc | file - | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
-        ;;
       *.whl|*.tar.gz)
         arch="python"
         ;;
       *)
-        arch=$(file "${binary}" | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
+        dir=${binary%/*}
+        case "${dir##*/}" in
+          x86_64|amd64) arch=x86_64 ;;
+          aarch64|arm64) arch=aarch64 ;;
+          *) echo "unknown architecture directory for ${binary}" >&2; return 1 ;;
+        esac
         ;;
     esac
     if [[ "${arch}" == "python" ]] && [[ "${include_python}" != "true" ]]; then
