@@ -80,31 +80,29 @@ func newNotifier() (*notifier, error) {
 //
 // +checklocks:n.mu
 func (n *notifier) waitFD(fd int32, fi *fdInfo, mask waiter.EventMask) error {
-	if !fi.waiting && mask == 0 {
+	if err := setHostMask(n.epFD, fd, fi.waiting, mask); err != nil {
+		return err
+	}
+	fi.waiting = mask != 0
+	return nil
+}
+
+// setHostMask programs the host epoll descriptor without modifying fdInfo.
+func setHostMask(epFD int, fd int32, waiting bool, mask waiter.EventMask) error {
+	if mask == 0 {
+		if waiting {
+			unix.EpollCtl(epFD, unix.EPOLL_CTL_DEL, int(fd), nil)
+		}
 		return nil
 	}
-
-	e := unix.EpollEvent{
+	op := unix.EPOLL_CTL_ADD
+	if waiting {
+		op = unix.EPOLL_CTL_MOD
+	}
+	return unix.EpollCtl(epFD, op, int(fd), &unix.EpollEvent{
 		Events: mask.ToLinux() | unix.EPOLLET,
 		Fd:     fd,
-	}
-
-	switch {
-	case !fi.waiting && mask != 0:
-		if err := unix.EpollCtl(n.epFD, unix.EPOLL_CTL_ADD, int(fd), &e); err != nil {
-			return err
-		}
-		fi.waiting = true
-	case fi.waiting && mask == 0:
-		unix.EpollCtl(n.epFD, unix.EPOLL_CTL_DEL, int(fd), nil)
-		fi.waiting = false
-	case fi.waiting && mask != 0:
-		if err := unix.EpollCtl(n.epFD, unix.EPOLL_CTL_MOD, int(fd), &e); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	})
 }
 
 // addFD adds an FD to the list of FDs observed by n.
@@ -158,9 +156,16 @@ func (n *notifier) updateMask(fd int32, e *waiter.Entry, mask waiter.EventMask) 
 	if !ok {
 		return unix.ENOENT
 	}
-	return fi.queue.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
-		return n.waitFD(fd, fi, aggregate)
-	})
+	wasWaiting := fi.waiting
+	var newMask waiter.EventMask
+	if err := fi.queue.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
+		newMask = aggregate
+		return setHostMask(n.epFD, fd, wasWaiting, aggregate)
+	}); err != nil {
+		return err
+	}
+	fi.waiting = newMask != 0
+	return nil
 }
 
 // RemoveFD removes an FD from the list of FDs observed by n.
