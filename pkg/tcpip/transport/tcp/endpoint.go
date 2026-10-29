@@ -1385,7 +1385,6 @@ func (e *Endpoint) SetOwner(owner tcpip.PacketOwner) {
 	e.owner = owner
 }
 
-// +checklocks:e.mu
 func (e *Endpoint) hardErrorLocked() tcpip.Error {
 	err := e.hardError
 	e.hardError = nil
@@ -1427,9 +1426,7 @@ func (e *Endpoint) LastErrorLocked() tcpip.Error {
 // +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) UpdateLastError(err tcpip.Error) {
 	e.LockUser()
-	e.lastErrorMu.Lock()
 	e.lastError = err
-	e.lastErrorMu.Unlock()
 	e.UnlockUser()
 }
 
