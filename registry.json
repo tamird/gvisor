@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T02:10:06.282084+00:00",
+    "updatedAt": "2026-10-29T02:27:48.744434+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35138,7 +35138,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T02:10:06.282084+00:00",
+      "updatedAt": "2026-10-29T02:27:48.744434+00:00",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
         {
@@ -36665,9 +36665,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40804361330"
             }
           ]
+        },
+        {
+          "text": "The two senders matched through 2,256 packet events and the same Reno timeout at 1.772693134 s. After a partial ACK, both declared 75 segments lost. Stock Reno re-entered SACK recovery for the same flight, cut its threshold from 38 to 2 packets, sent one repair, and timed out on the next packet. The corrected sender sent both repairs and took no second timeout. Restoring just the old recovery-entry conditions reproduced all 4,186 stock packet events, including five timeouts versus one. This identifies the effect of #16495 in this scenario; it does not establish a CUBIC default.",
+          "evidence": [
+            {
+              "label": "Stock sender",
+              "url": "https://app.buildbuddy.io/invocation/3eeca493-95a8-42c9-9ea1-0a7e8c97097d"
+            },
+            {
+              "label": "Fixed sender and gate-only counterfactual",
+              "url": "https://app.buildbuddy.io/invocation/d5afa0a8-6cef-41c0-86c0-881dd1aa8952"
+            }
+          ]
         }
       ],
-      "nextStep": "Trace forward from the first repaired hole and identify the earliest differing retransmission decision. Measure which receiver, timer, or sender state explains the later timeout gap.",
+      "nextStep": "Measure whether ACK-train HyStart underfills a loss-free high-BDP path. Compare CUBIC, the same CUBIC with only ACK-train exit disabled, and Reno; record queue occupancy and RTT as well as delivered bytes.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -46560,7 +46573,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T02:10:06.282084+00:00",
+      "updatedAt": "2026-10-29T02:27:48.744434+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -47029,9 +47042,30 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40803862244"
             }
           ]
+        },
+        {
+          "text": "The original rules_pkg tar and Debian writers ran through native Python launchers on an empty AMD64 worker. Both output files matched the reference byte for byte (10,240 and 572 bytes). A separate check relocated the writer and interpreter using a manifest: it wrote the expected payload when four repositories shared a moved tree. The same launcher started Python with four independent repository directories, but the Python adapter could not locate the application. The original combined run remains failed because its relocation fixture was incorrect.",
+          "evidence": [
+            {
+              "label": "Actual tar/deb writer results",
+              "url": "https://app.buildbuddy.io/invocation/813b647f-0118-4b22-9e90-4fadd8dae6c3"
+            },
+            {
+              "label": "Relocated writer with positive and negative controls",
+              "url": "https://app.buildbuddy.io/invocation/b7e66415-96eb-4da6-92a0-d2d0aebc22b2"
+            },
+            {
+              "label": "Stateify candidate on the empty worker",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40806044335"
+            },
+            {
+              "label": "Original stateify output reference",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40806415150"
+            }
+          ]
         }
       ],
-      "nextStep": "Remove the generated goimports shell and the Bash dependency from the package-version path. Verify these directly, then retry the release. A separate experiment tests a common POSIX Python launcher.",
+      "nextStep": "Compare the shell-free state generator with the original formatter. Remove the package-version tool\u2019s shell dependency, and build the supplier\u2019s LLVM module-map tool so it can start on the empty worker. Retain the independently located Python runfiles limitation.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
