@@ -134,3 +134,24 @@ func TestSeveredRecvSend(t *testing.T) {
 		t.Errorf("Send on severed endpoint returned %v, want %v", serr, syserr.ErrClosedForSend)
 	}
 }
+
+func TestSCMSenderRejectsInvalidHostSubscription(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_STREAM, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[0])
+	defer unix.Close(fds[1])
+
+	// Linux rejects EPOLLEXCLUSIVE combined with EPOLLONESHOT.
+	var q waiter.Queue
+	entry, _ := waiter.NewChannelEntry(unix.EPOLLEXCLUSIVE | unix.EPOLLONESHOT)
+	q.EventRegister(&entry)
+	defer q.EventUnregister(&entry)
+	if _, err := NewSCMSender(fds[0], &q, ""); err != syserr.ErrInvalidArgument {
+		t.Fatalf("NewSCMSender: got %v, want EINVAL", err)
+	}
+	if _, err := unix.Write(fds[0], []byte("x")); err != nil {
+		t.Fatalf("write on caller-owned socket after failed registration: %v", err)
+	}
+}
