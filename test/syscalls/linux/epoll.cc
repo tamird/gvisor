@@ -24,10 +24,13 @@
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <string>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -36,6 +39,8 @@
 #include "test/util/epoll_util.h"
 #include "test/util/eventfd_util.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/fs_util.h"
+#include "test/util/mount_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
 #include "test/util/signal_util.h"
@@ -59,6 +64,72 @@ constexpr uint64_t kMagicConstant = 0x0102030405060708;
 int test_epoll_pwait2(int fd, struct epoll_event* events, int maxevents,
                       const struct timespec* timeout, const sigset_t* sigset) {
   return syscall(SYS_epoll_pwait2, fd, events, maxevents, timeout, sigset);
+}
+
+TEST(EpollTest, OverlayCheckpointWaiter) {
+  ASSERT_TRUE(IsRunningOnGvisor());
+  ASSERT_TRUE(IsRunningWithSaveRestore());
+  DisableSave setup;  // Place the checkpoint exactly after copy-up.
+  auto root = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto tmp = ASSERT_NO_ERRNO_AND_VALUE(
+      Mount("tmpfs", root.path(), "tmpfs", 0, "", 0));
+  auto upper = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto merged = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto work = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  const std::string opts = "lowerdir=/proc/sys/kernel,upperdir=" + upper.path() +
+                           ",workdir=" + work.path();
+  auto m = ASSERT_NO_ERRNO_AND_VALUE(
+      Mount("overlay", merged.path(), "overlay", 0, opts, 0));
+  const std::string hostname = merged.path() + "/hostname";
+  ASSERT_THAT(sethostname("before", 6), SyscallSucceeds());
+  auto fd = ASSERT_NO_ERRNO_AND_VALUE(Open(hostname, O_RDONLY));
+  auto ep = ASSERT_NO_ERRNO_AND_VALUE(NewEpollFD());
+  ASSERT_NO_ERRNO(RegisterEpollFD(ep.get(), fd.get(), EPOLLPRI | EPOLLET,
+                                  kMagicConstant));
+  sigset_t sigio, old;
+  sigemptyset(&sigio);
+  sigaddset(&sigio, SIGIO);
+  ASSERT_EQ(pthread_sigmask(SIG_BLOCK, &sigio, &old), 0);
+  Cleanup restore_mask([&] { EXPECT_EQ(pthread_sigmask(SIG_SETMASK, &old, nullptr), 0); });
+  struct f_owner_ex owner = {F_OWNER_TID, static_cast<pid_t>(syscall(SYS_gettid))};
+  ASSERT_THAT(fcntl(ep.get(), F_SETOWN_EX, &owner), SyscallSucceeds());
+  ASSERT_THAT(fcntl(ep.get(), F_SETFL, O_ASYNC), SyscallSucceeds());
+  const timespec zero = {};
+  ASSERT_THAT(sethostname("copied", 6), SyscallSucceeds());
+  ASSERT_THAT(sigtimedwait(&sigio, nullptr, &zero), SyscallSucceedsWithValue(SIGIO));
+  epoll_event event;
+  ASSERT_THAT(epoll_wait(ep.get(), &event, 1, 0), SyscallSucceedsWithValue(1));
+  EXPECT_EQ(event.events, EPOLLPRI);
+  EXPECT_EQ(event.data.u64, kMagicConstant);
+  ASSERT_THAT(fchmod(fd.get(), 0600), SyscallSucceeds());
+  const std::string copied = ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname));
+  ASSERT_EQ(copied, "copied\n");
+  auto ep2 = ASSERT_NO_ERRNO_AND_VALUE(NewEpollFD());
+  ASSERT_THAT(epoll_ctl(ep2.get(), EPOLL_CTL_ADD, fd.get(), &event),
+              SyscallFailsWithErrno(EPERM));  // Now wraps the upper regular file.
+
+  setup.reset();
+  MaybeSave();
+  DisableSave restored;
+  // Restoring epoll may itself notify, before readiness is checked again.
+  ASSERT_THAT(epoll_wait(ep.get(), &event, 1, 0), SyscallSucceedsWithValue(0));
+  while (sigtimedwait(&sigio, nullptr, &zero) == SIGIO) {}
+  ASSERT_EQ(errno, EAGAIN);
+  ASSERT_THAT(sethostname("restored", 8), SyscallSucceeds());
+  ASSERT_THAT(sigtimedwait(&sigio, nullptr, &zero), SyscallSucceedsWithValue(SIGIO));
+  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname)), copied);
+  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/sys/kernel/hostname")),
+            "restored\n");
+  // Drain the notification before deleting; an already-ready entry coalesces
+  // later wakes, which would otherwise make the missing-unregister control pass.
+  ASSERT_THAT(epoll_wait(ep.get(), &event, 1, 0), SyscallSucceedsWithValue(0));
+  ASSERT_THAT(epoll_ctl(ep.get(), EPOLL_CTL_DEL, fd.get(), nullptr),
+              SyscallSucceeds());
+  ASSERT_THAT(sethostname("detached", 8), SyscallSucceeds());
+  ASSERT_THAT(sigtimedwait(&sigio, nullptr, &zero), SyscallFailsWithErrno(EAGAIN));
+  ASSERT_THAT(epoll_wait(ep.get(), &event, 1, 0), SyscallSucceedsWithValue(0));
+  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname)), copied);
+  fprintf(stderr, "OVERLAY_ROUNDTRIP: copied upper value; lower signaled restored watch; no signal after DEL\n");
 }
 
 TEST(EpollTest, AllWritable) {

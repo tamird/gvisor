@@ -798,6 +798,8 @@ cc_binary(
         "//test/util:epoll_util",
         "//test/util:eventfd_util",
         "//test/util:file_descriptor",
+        "//test/util:fs_util",
+        "//test/util:mount_util",
         "//test/util:posix_error",
         "//test/util:save_util",
         "//test/util:signal_util",
