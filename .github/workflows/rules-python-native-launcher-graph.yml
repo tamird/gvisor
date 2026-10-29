@@ -1,7 +1,7 @@
 name: Check native Python launcher resolution
 on:
   push:
-    branches: [qualification/rules-python-native-launcher-4183-graph]
+    branches: ['qualification/rules-python-native-launcher-4183-graph*']
 permissions:
   contents: read
 jobs:
