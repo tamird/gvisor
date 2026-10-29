@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-persist-deadline'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-persist-first-probe-final'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,14 +13,14 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Measure the effect of a second write on the first probe
+    - name: Check the first probe deadline, reopened bytes and analyzers
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "2e6be31ca50798303de14b235a1432095b9d932b"
+        test "$(git rev-parse HEAD^1)" = "dd79c13a4452dc71ce99b8c5900ae870be3c144d"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -85,10 +85,10 @@ jobs:
         overall=0
         label=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in stock correction; do
+        for arm in stock correction analyzers; do
           case $arm in
-            stock) source=21d4bc9828185c921ae355cc725765607ba7e045; parent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4 ;;
-            correction) source=6e83e25594f96341d6115cb8cfc269168df7adfb; parent=21d4bc9828185c921ae355cc725765607ba7e045 ;;
+            stock) source=098fc0c6cccb9b9825aa4b2893bef19bea95864c; parent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4 ;;
+            correction|analyzers) source=51b6df1b578a14e5305eda1fac372ca80e400972; parent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4 ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -96,7 +96,8 @@ jobs:
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
-          git diff --quiet 21d4bc9828185c921ae355cc725765607ba7e045 "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
+          git diff --exit-code 098fc0c6cccb9b9825aa4b2893bef19bea95864c "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/snd.go'
+          git diff --quiet 098fc0c6cccb9b9825aa4b2893bef19bea95864c "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
@@ -105,14 +106,22 @@ jobs:
           git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
-          bash test/rbe/qualify.sh --arch=amd64 "--test-target=$label" \
+          labels=("$label")
+          opts=(--bazel-option=--test_arg=-test.v --bazel-option=--test_filter=^TestZeroWindowSend$)
+          if [[ $arm == analyzers ]]; then
+            labels=(//pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo)
+            opts=()
+          fi
+          selection=()
+          for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
+          bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
             "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
-            --bazel-option=--test_arg=-test.v --bazel-option=--test_filter=TestZeroWindowProbeDeadline --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
             --bazel-option=--remote_download_outputs=toplevel test || code=$?
           printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
-          python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
+          python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "${labels[*]}" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
           # If the common target cannot compile, repeating three builds cannot add measurements.
           if [[ $arm == stock && ! -s "$raw" ]]; then break; fi
           if [[ $arm == stock && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
@@ -121,10 +130,10 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["stock","correction"]
+        arms = ["stock","correction","analyzers"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
-        result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["status"] == "PASS" for v in verdicts.values()) else "FAIL"}
+        result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
         (root / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
         print(result)
         sys.exit(result["status"] != "PASS")
@@ -134,6 +143,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-persist-deadline-verdict
+        name: tcp-persist-first-probe-verdict
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
