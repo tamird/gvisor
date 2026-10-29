@@ -92,6 +92,7 @@ single_version_override(
     patches = [
         "//tools:llvm-linux-header-default.patch",
         "//tools:llvm-libunwind-system-libraries.patch",
+        "//tools:llvm-module-map-generator-musl.patch",
     ],
 )
 
