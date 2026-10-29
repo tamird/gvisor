@@ -62,7 +62,7 @@ type regularFileFD struct {
 	// may replace cachedFD before the waiter is removed.
 	//
 	// +checklocks:mu
-	registrations map[*waiter.Entry]*vfs.FileDescription
+	registrations map[*waiter.Entry]*vfs.FileDescription `state:"nosave"`
 }
 
 func (fd *regularFileFD) getCurrentFD(ctx context.Context) (*vfs.FileDescription, error) {
