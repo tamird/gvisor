@@ -1,7 +1,7 @@
 name: Measure string slabs in the graph decoder
 on:
   push:
-    branches: [qualification/state-string-slab-kernel-rbe]
+    branches: [qualification/state-string-slab-original-gnu]
 permissions:
   contents: read
 jobs:
