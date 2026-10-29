@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 4
+        fetch-depth: 12
         persist-credentials: false
     - name: Round-trip immediate and delayed map keys on both current sources
       env:
