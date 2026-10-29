@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T00:49:10.516985+00:00",
+    "updatedAt": "2026-10-29T01:16:05.610781+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31983,6 +31983,46 @@
         "summary": "Authorize an inline report on graph_encode_objects_unsafe.go:390. Both traversal orders fail; using two slices passes.",
         "body": "@parth-opensrc, this overlap is possible in safe Go. Take two views of a `buf [4]*byte`: `buf[:3:3]` and `buf[1:4:4]`. As named slices, they round-trip in either traversal order. Convert the second to `*[3]*byte` and Save fails in both: slice-first reaches this check; pointer-first reaches the corresponding check in `sliceTarget`. Can the array pointer and slice share their restored backing storage just as the two slices do?\n\nThe [fixture on the integrated rewrite](https://github.com/tamird/gvisor/blob/bd3cab255359dcaa97607d78eac4ba4c59eb7299/pkg/state/tests/graph_test.go#L475) checks both shared slots, writes through one view, and the final pointee reachable only from the other. [Both failures](https://app.buildbuddy.io/invocation/0bffd576-7769-49b2-a0ce-e66cb7a4f0d6) are also recorded in the [fork run](https://github.com/tamird/gvisor/actions/runs/40795069761).\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:rules-python-unstamped-build-data",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rules-python-unstamped-build-data",
+      "head": "32bf2915538481adcfddd866650318cbfec441c7",
+      "title": "Update rules_python to 2.4.5",
+      "url": "https://github.com/tamird/gvisor/commit/32bf2915538481adcfddd866650318cbfec441c7",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T01:16:05.610781+00:00",
+      "summary": "Bazel writes unstamped Python tool metadata without a shell. Both architectures built the same tarball and Debian package. The empty worker progressed to their launchers, which still depend on a missing executable.",
+      "evidence": [
+        {
+          "label": "AMD64 packages",
+          "url": "https://app.buildbuddy.io/invocation/355ec63b-43e7-4e0d-9287-2c1c3abb8a92"
+        },
+        {
+          "label": "ARM64 packages",
+          "url": "https://app.buildbuddy.io/invocation/4bac2f98-cd71-4579-a69b-da90024c8296"
+        },
+        {
+          "label": "Empty worker reached the package launchers",
+          "url": "https://app.buildbuddy.io/invocation/84c54fbf-af66-46ea-89b6-c040d7479dea"
+        },
+        {
+          "label": "All 220 license records verified",
+          "url": "https://app.buildbuddy.io/invocation/cd8e4780-ceb1-48a8-9625-1b87ff649f33"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "32bf2915538481adcfddd866650318cbfec441c7",
+        "url": "https://github.com/tamird/gvisor/commit/32bf2915538481adcfddd866650318cbfec441c7",
+        "title": "Update rules_python to 2.4.5",
+        "summary": "Bazel writes unstamped Python tool metadata without a shell. Both architectures built the same tarball and Debian package. The empty worker progressed to their launchers, which still depend on a missing executable.",
+        "body": "One module version and its license record change. The archive writers ran on both architectures; this does not yet make the complete package build shell-free."
+      }
     }
   ],
   "edges": [
@@ -46408,9 +46448,47 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T00:49:10.516985+00:00",
+      "updatedAt": "2026-10-29T01:16:05.610781+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The Go bootstrap ran on the empty AMD64 worker with a declared ash executable, the original Go SDK and a writable temporary directory. The two outputs matched the independently built Python control byte-for-byte. Without the temporary directory, the Go tool failed before compilation. The supplier change depends on rules_shell exposing the shell executable as an action input.",
+          "evidence": [
+            {
+              "label": "Successful Go bootstrap",
+              "url": "https://app.buildbuddy.io/invocation/79b5496b-8073-4cb5-a1f6-c323ca736704"
+            },
+            {
+              "label": "Matched control: missing /tmp",
+              "url": "https://app.buildbuddy.io/invocation/405f2c0f-9de4-4fae-bec8-d5de85ac5d17"
+            },
+            {
+              "label": "Shell toolchain prerequisite",
+              "url": "https://github.com/bazel-contrib/rules_shell/pull/64"
+            }
+          ]
+        },
+        {
+          "text": "rules_python 2.4.5 removes two shell actions that generated constant build metadata for the tar and Debian writers. The writers produced identical packages on ordinary AMD64 and ARM64 workers. On an empty worker the metadata was generated, then both package launchers failed to execute.",
+          "evidence": [
+            {
+              "label": "AMD64 packages",
+              "url": "https://app.buildbuddy.io/invocation/355ec63b-43e7-4e0d-9287-2c1c3abb8a92"
+            },
+            {
+              "label": "ARM64 packages",
+              "url": "https://app.buildbuddy.io/invocation/4bac2f98-cd71-4579-a69b-da90024c8296"
+            },
+            {
+              "label": "Empty worker reached the package launchers",
+              "url": "https://app.buildbuddy.io/invocation/84c54fbf-af66-46ea-89b6-c040d7479dea"
+            },
+            {
+              "label": "All 220 license records verified",
+              "url": "https://app.buildbuddy.io/invocation/cd8e4780-ceb1-48a8-9625-1b87ff649f33"
+            }
+          ]
+        },
         {
           "text": "The AMD64 compiler-rt builtins target now builds on the pinned scratch worker. Explicitly selecting musl for execution platforms changed the 7,368-byte helper linked to the host ELF loader into a 44,296-byte generator. Its CppModuleMap action executed remotely without a cache hit on the same image. Execution finished at 00:43:42.675 UTC and the passing verdict appeared at 00:43:42.983; review of the single bundle confirmed the physical execution. This did not change target-platform libc or qualify the full release.",
           "evidence": [
@@ -46811,7 +46889,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the released rules_python fix with real tar and Debian packaging tools; compare a declared shell executor for bootstrapping Go with the Python control. Combine the fixed actions in a release build on the scratch image.",
+      "nextStep": "Identify which interpreter or executable prevents the package launchers from starting on the empty worker. Qualify real package contents there, and combine the validated Go and LLVM actions in a release build.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
