@@ -141,17 +141,21 @@ type Pipe struct {
 	// avoids needing to heap-allocate a new safemem.Block slice when buf is
 	// resized. bufBlockSeq is a safemem.BlockSeq representing bufBlocks.
 	//
-	// These fields are protected by mu.
-	buf         []byte
-	bufBlocks   [2]safemem.Block `state:"nosave"`
+	// +checklocks:mu
+	buf []byte
+	// +checklocks:mu
+	bufBlocks [2]safemem.Block `state:"nosave"`
+	// +checklocks:mu
 	bufBlockSeq safemem.BlockSeq `state:"nosave"`
-	off         int64
-	size        int64
+	// +checklocks:mu
+	off int64
+	// +checklocks:mu
+	size int64
 
 	// max is the maximum size of the pipe in bytes. When this max has been
 	// reached, writers will get EWOULDBLOCK.
 	//
-	// This is protected by mu.
+	// +checklocks:mu
 	max int64
 
 	// hadWriter indicates if this pipe ever had a writer. Note that this
@@ -159,7 +163,7 @@ type Pipe struct {
 	// that there has been a writer at some point since the pipe was
 	// created.
 	//
-	// This is protected by mu.
+	// +checklocks:mu
 	hadWriter bool
 }
 
@@ -167,20 +171,15 @@ type Pipe struct {
 //
 // N.B. The size will be bounded.
 func NewPipe(isNamed bool, sizeBytes int64) *Pipe {
-	var p Pipe
-	initPipe(&p, isNamed, sizeBytes)
+	p := newPipe(isNamed, sizeBytes)
 	return &p
 }
 
-func initPipe(pipe *Pipe, isNamed bool, sizeBytes int64) {
-	if sizeBytes < MinimumPipeSize {
-		sizeBytes = MinimumPipeSize
+func newPipe(isNamed bool, sizeBytes int64) Pipe {
+	return Pipe{
+		isNamed: isNamed,
+		max:     min(max(sizeBytes, MinimumPipeSize), MaximumPipeSize),
 	}
-	if sizeBytes > MaximumPipeSize {
-		sizeBytes = MaximumPipeSize
-	}
-	pipe.isNamed = isNamed
-	pipe.max = sizeBytes
 }
 
 // peekLocked passes the first count bytes in the pipe, starting at offset off,
@@ -196,6 +195,8 @@ func initPipe(pipe *Pipe, isNamed bool, sizeBytes int64) {
 //   - p.mu must be locked.
 //   - This pipe must have readers.
 //   - off <= p.size.
+//
+// +checklocks:p.mu
 func (p *Pipe) peekLocked(off, count int64, f func(safemem.BlockSeq) (uint64, error)) (int64, error) {
 	// Don't block for a zero-length read even if the pipe is empty.
 	if count == 0 {
@@ -231,6 +232,8 @@ func (p *Pipe) peekLocked(off, count int64, f func(safemem.BlockSeq) (uint64, er
 // Preconditions:
 //   - p.mu must be locked.
 //   - The pipe must contain at least n bytes.
+//
+// +checklocks:p.mu
 func (p *Pipe) consumeLocked(n int64) {
 	p.off += n
 	if max := int64(len(p.buf)); p.off >= max {
@@ -253,6 +256,8 @@ func (p *Pipe) consumeLocked(n int64) {
 //
 // Preconditions:
 //   - p.mu must be locked.
+//
+// +checklocks:p.mu
 func (p *Pipe) writeLocked(count int64, f func(safemem.BlockSeq) (uint64, error)) (int64, error) {
 	// Can't write to a pipe with no readers.
 	if !p.HasReaders() {
@@ -295,9 +300,7 @@ func (p *Pipe) writeLocked(count int64, f func(safemem.BlockSeq) (uint64, error)
 			p.bufBlockSeq.DropFirst64(uint64(p.off)).TakeFirst64(uint64(p.size)))
 		// Switch to the new buffer.
 		p.buf = newBuf
-		p.bufBlocks[0] = safemem.BlockFromSafeSlice(newBuf)
-		p.bufBlocks[1] = p.bufBlocks[0]
-		p.bufBlockSeq = safemem.BlockSeqFromSlice(p.bufBlocks[:])
+		p.rebuildBufferViews()
 		p.off = 0
 	}
 
@@ -322,6 +325,16 @@ func (p *Pipe) writeLocked(count int64, f func(safemem.BlockSeq) (uint64, error)
 	}
 
 	return done, nil
+}
+
+// rebuildBufferViews reconnects the safemem views to the current buffer
+// after growth or checkpoint restore.
+//
+// +checklocks:p.mu
+func (p *Pipe) rebuildBufferViews() {
+	p.bufBlocks[0] = safemem.BlockFromSafeSlice(p.buf)
+	p.bufBlocks[1] = p.bufBlocks[0]
+	p.bufBlockSeq = safemem.BlockSeqFromSlice(p.bufBlocks[:])
 }
 
 // rOpen signals a new reader of the pipe.
@@ -372,6 +385,8 @@ func (p *Pipe) HasWriters() bool {
 // rReadinessLocked calculates the read readiness.
 //
 // Precondition: mu must be held.
+//
+// +checklocks:p.mu
 func (p *Pipe) rReadinessLocked() waiter.EventMask {
 	ready := waiter.EventMask(0)
 	if p.HasReaders() && p.size != 0 {
@@ -398,6 +413,8 @@ func (p *Pipe) rReadiness() waiter.EventMask {
 // wReadinessLocked calculates the write readiness.
 //
 // Precondition: mu must be held.
+//
+// +checklocks:p.mu
 func (p *Pipe) wReadinessLocked() waiter.EventMask {
 	ready := waiter.EventMask(0)
 	if p.HasWriters() && p.size < p.max {
@@ -443,6 +460,7 @@ func (p *Pipe) queued() int64 {
 	return p.queuedLocked()
 }
 
+// +checklocks:p.mu
 func (p *Pipe) queuedLocked() int64 {
 	return p.size
 }

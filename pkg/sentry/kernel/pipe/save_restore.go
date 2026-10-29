@@ -14,15 +14,10 @@
 
 package pipe
 
-import (
-	"context"
-
-	"gvisor.dev/gvisor/pkg/safemem"
-)
+import "context"
 
 // afterLoad is called by stateify.
 func (p *Pipe) afterLoad(context.Context) {
-	p.bufBlocks[0] = safemem.BlockFromSafeSlice(p.buf)
-	p.bufBlocks[1] = p.bufBlocks[0]
-	p.bufBlockSeq = safemem.BlockSeqFromSlice(p.bufBlocks[:])
+	// Restore owns the pipe exclusively until the callback returns.
+	p.rebuildBufferViews() // +checklocksignore
 }
