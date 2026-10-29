@@ -14,7 +14,12 @@
 
 package tests
 
-import "context"
+import (
+	"context"
+	"maps"
+
+	"gvisor.dev/gvisor/pkg/state"
+)
 
 // +stateify savable
 type mapContainer struct {
@@ -29,13 +34,33 @@ type mapPtrContainer struct {
 // +stateify savable
 type registeredMapStruct struct{}
 
-// +stateify savable
+// +stateify type
 type mapLoadHook struct {
 	value int
 }
 
 type mapLoadHookContextKey struct{}
 
-func (v *mapLoadHook) afterLoad(ctx context.Context) {
-	ctx.Value(mapLoadHookContextKey{}).(func(*mapLoadHook))(v)
+func (v *mapLoadHook) StateSave(_ context.Context, sink state.Sink) {
+	sink.Save(0, &v.value)
+}
+
+func (v *mapLoadHook) StateLoad(ctx context.Context, src state.Source) {
+	var value int
+	src.Load(0, &value)
+	src.AfterLoad(func() {
+		v.value = value
+		ctx.Value(mapLoadHookContextKey{}).(func(*mapLoadHook))(v)
+	})
+}
+
+// +stateify savable
+type mapLoadSnapshot struct {
+	entries map[mapLoadHook]int `state:".(map[mapLoadHook]int)"`
+}
+
+func (s *mapLoadSnapshot) saveEntries() map[mapLoadHook]int { return s.entries }
+
+func (s *mapLoadSnapshot) loadEntries(_ context.Context, entries map[mapLoadHook]int) {
+	s.entries = maps.Clone(entries)
 }

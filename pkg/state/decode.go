@@ -26,7 +26,7 @@ import (
 
 // internalCallback is a interface called on object completion.
 //
-// There are two implementations: objectDecodeState & userCallback.
+// Callbacks may finish the current object or notify an object waiting on it.
 type internalCallback interface {
 	// source returns the dependent object. May be nil.
 	source() *objectDecodeState
@@ -47,6 +47,9 @@ func (userCallback) source() *objectDecodeState {
 func (uc userCallback) callbackRun(*decodeState) {
 	uc()
 }
+
+// dependentCallback runs the conversion supplied by a dependent's LoadValue.
+type dependentCallback struct{ userCallback }
 
 // objectDecodeState represents an object that may be in the process of being
 // decoded. Specifically, it represents either a decoded object, or an an
@@ -99,6 +102,12 @@ func (ods *objectDecodeState) addCallback(ic internalCallback) {
 		ods.callbacks = ods.callbacksInline[:0]
 	}
 	ods.callbacks = append(ods.callbacks, ic)
+}
+
+// pendingWork counts callbacks and dependencies discovered during decoding.
+// Neither can finish until the entire object graph has been read.
+func (ods *objectDecodeState) pendingWork() int {
+	return len(ods.callbacks) + ods.blockedBy
 }
 
 // source implements internalCallback.source.
@@ -177,9 +186,21 @@ func (ds *decodeState) checkComplete(ods *objectDecodeState) bool {
 		defer ds.stats.done()
 	}
 
-	// Fire all callbacks.
+	// Finish the object before a dependent's LoadValue can observe it.
+	var hasDependents bool
 	for _, ic := range ods.callbacks {
-		ic.callbackRun(ds)
+		if fn, ok := ic.(userCallback); ok {
+			fn()
+		} else {
+			hasDependents = true
+		}
+	}
+	if hasDependents {
+		for _, ic := range ods.callbacks {
+			if _, ok := ic.(userCallback); !ok {
+				ic.callbackRun(ds)
+			}
+		}
 	}
 
 	// Mark completed.
@@ -217,7 +238,7 @@ func (ds *decodeState) wait(waiter *objectDecodeState, id objectID, callback fun
 	other := ds.lookup(id)
 	if callback != nil {
 		// Add the additional user callback.
-		other.addCallback(userCallback(callback))
+		other.addCallback(dependentCallback{callback})
 	}
 
 	// Mark waiter as unblocked.
@@ -399,33 +420,41 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 		obj.Set(reflect.MakeMap(obj.Type()))
 	}
 	keyType, valueType := obj.Type().Key(), obj.Type().Elem()
-	// Struct loaders and array element loaders can retain their addresses in
-	// delayed callbacks. Other kinds are copied into the map; interface values
-	// get independent dynamic storage in decodeInterface.
+	// Struct and array loaders may retain their destinations until AfterLoad.
 	reuseKey := keyType.Kind() != reflect.Struct && keyType.Kind() != reflect.Array
 	reuseValue := valueType.Kind() != reflect.Struct && valueType.Kind() != reflect.Array
 	var kv, vv reflect.Value
 	for i := 0; i < len(encoded.Keys); i++ {
-		if i == 0 || !reuseKey {
+		if !kv.IsValid() || !reuseKey {
 			kv = reflect.New(keyType).Elem()
 		} else {
 			// Nil wire values leave the destination unchanged.
 			kv.SetZero()
 		}
-		if i == 0 || !reuseValue {
+		if !vv.IsValid() || !reuseValue {
 			vv = reflect.New(valueType).Elem()
 		} else {
 			vv.SetZero()
 		}
 
-		// Decode the objects.
+		pending := ods.pendingWork()
 		ds.decodeObject(ods, kv, encoded.Keys[i])
 		ds.decodeObject(ods, vv, encoded.Values[i])
+		deferInsert := ods.pendingWork() != pending
 		ds.waitObject(ods, encoded.Keys[i], nil)
 		ds.waitObject(ods, encoded.Values[i], nil)
 
-		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+		if !deferInsert {
+			obj.SetMapIndex(kv, vv)
+			continue
+		}
+		// A map copies its key and value. Keep both slots until this
+		// entry's loaders have finished, then copy their final contents.
+		key, value := kv, vv
+		ods.addCallback(userCallback(func() {
+			obj.SetMapIndex(key, value)
+		}))
+		kv, vv = reflect.Value{}, reflect.Value{}
 	}
 }
 
@@ -472,20 +501,15 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 		return
 	}
 
-	// We now need to resolve the actual type.
-	typ := ds.findType(encoded.Type)
-
-	// We need to imbue type information here, then we can proceed to
-	// decode normally. In order to avoid issues with setting value-types,
-	// we create a new non-interface version of this object. We will then
-	// set the interface object to be equal to whatever we decode.
-	origObj := obj
-	obj = reflect.New(typ).Elem()
-	defer origObj.Set(obj)
-
-	// With the object now having sufficient type information to actually
-	// have Set called on it, we can proceed to decode the value.
-	ds.decodeObject(ods, obj, encoded.Value)
+	// Decoding a struct or array may schedule a callback that changes the
+	// dynamic value. Boxing it in an interface copies it.
+	value := reflect.New(ds.findType(encoded.Type)).Elem()
+	pending := ods.pendingWork()
+	ds.decodeObject(ods, value, encoded.Value)
+	obj.Set(value)
+	if ods.pendingWork() != pending {
+		ods.addCallback(userCallback(func() { obj.Set(value) }))
+	}
 }
 
 // isFloatEq determines if x and y represent the same value.
