@@ -123,9 +123,17 @@ func (n *Notifier) unregister(s *socketOperations, e *waiter.Entry) error {
 func (n *Notifier) updateMask(s *socketOperations, e *waiter.Entry, mask waiter.EventMask) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	return s.eventInfo.Wq.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
-		return n.program(s.fd, &s.eventInfo, aggregate)
-	})
+	info := &s.eventInfo
+	old := info.Mask
+	var accepted waiter.EventMask
+	if err := info.Wq.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
+		accepted = aggregate
+		return programPluginFD(n.epFD, s.fd, old, aggregate)
+	}); err != nil {
+		return err
+	}
+	n.storeMask(info, accepted)
+	return nil
 }
 
 // waitAndNotify loops waiting for io event notifications from the epoll
@@ -183,20 +191,33 @@ func (n *Notifier) waitAndNotify(ioInit chan int32) error {
 //
 // +checklocks:n.mu
 func (n *Notifier) program(fd uint32, info *plugin.EventInfo, mask waiter.EventMask) error {
-	if info.Mask == mask {
+	if err := programPluginFD(n.epFD, fd, info.Mask, mask); err != nil {
+		return err
+	}
+	n.storeMask(info, mask)
+	return nil
+}
+
+// storeMask records the accepted mask while the socket's notifier is locked.
+//
+// +checklocks:n.mu
+func (n *Notifier) storeMask(info *plugin.EventInfo, mask waiter.EventMask) {
+	if info.Mask != mask {
+		info.Mask = mask
+		atomicbitops.AndUint64(&info.Ready, uint64(mask))
+	}
+}
+
+func programPluginFD(epfd int32, fd uint32, old, mask waiter.EventMask) error {
+	if old == mask {
 		return nil
 	}
 	op := syscall.EPOLL_CTL_MOD
 	switch {
-	case info.Mask == 0:
+	case old == 0:
 		op = syscall.EPOLL_CTL_ADD
 	case mask == 0:
 		op = syscall.EPOLL_CTL_DEL
 	}
-	if err := cgo.EpollCtl(n.epFD, op, fd, uint32(mask)); err != nil {
-		return err
-	}
-	info.Mask = mask
-	atomicbitops.AndUint64(&info.Ready, uint64(mask))
-	return nil
+	return cgo.EpollCtl(epfd, op, fd, uint32(mask))
 }
