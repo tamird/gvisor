@@ -192,9 +192,9 @@ func (fd *tunFD) EventUnregister(e *waiter.Entry) {
 	fd.device.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (fd *tunFD) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (fd *tunFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return &fd.device
 }
 
 // IsNetTunSupported returns whether /dev/net/tun device is supported for s.

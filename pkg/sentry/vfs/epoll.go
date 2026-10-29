@@ -67,10 +67,10 @@ type EpollInstance struct {
 	// It is rebuilt on restore by epollInterest.afterLoad.
 	ready epollInterestList `state:"nosave"`
 
-	// readySeq is used to detect calls to epollInterest.NotifyEvent() while
-	// Readiness() or ReadEvents() are running with readyMu unlocked. readySeq
-	// is protected by both interestMu and readyMu; reading requires either
-	// mutex to be locked, but mutation requires both mutexes to be locked.
+	// Readiness and ReadEvents advance readySeq while holding interestMu.
+	// NotifyEvent copies that sequence under readyMu so readers can detect
+	// notifications received while they had dropped readyMu to poll files.
+	// +checklocks:readyMu
 	readySeq uint32
 }
 
@@ -96,8 +96,7 @@ type epollInterest struct {
 	// key is the file to which this epollInterest applies. key is immutable.
 	key epollInterestKey
 
-	// waiter is registered with key.file. entry is protected by
-	// epoll.interestMu.
+	// waiter is registered with key.file. Its mask is updated under epoll.interestMu.
 	waiter waiter.Entry
 
 	// mask is the event mask associated with this registration, including
@@ -224,9 +223,9 @@ func (ep *EpollInstance) EventUnregister(e *waiter.Entry) {
 	ep.q.EventUnregister(e)
 }
 
-// Epollable implements FileDescriptionImpl.Epollable.
-func (ep *EpollInstance) Epollable() bool {
-	return true
+// EpollMaskUpdater implements FileDescriptionImpl.EpollMaskUpdater.
+func (ep *EpollInstance) EpollMaskUpdater() EpollMaskUpdater {
+	return &ep.q
 }
 
 // Seek implements FileDescriptionImpl.Seek.
@@ -239,10 +238,9 @@ func (ep *EpollInstance) Seek(ctx context.Context, offset int64, whence int32) (
 //
 // Preconditions: A reference must be held on file.
 func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event linux.EpollEvent) error {
-	if !file.Epollable() {
+	if file.EpollMaskUpdater() == nil {
 		return linuxerr.EPERM
 	}
-
 	// Check for cyclic polling if necessary.
 	subep, _ := file.impl.(*EpollInstance)
 	if subep != nil {
@@ -342,18 +340,21 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 		return linuxerr.ENOENT
 	}
 
-	// Update epi for the next call to ep.ReadEvents().
+	updater := file.EpollMaskUpdater()
+	if updater == nil {
+		// A checkpoint may contain a watch that this file no longer admits.
+		// Keep the entry installed so DEL and close can still remove it.
+		return linuxerr.EPERM
+	}
 	mask := event.Events | linux.EPOLLERR | linux.EPOLLHUP
+	wmask := waiter.EventMaskFromLinux(mask)
+	if epi.waiter.Mask() != wmask {
+		if err := updater.UpdateMask(&epi.waiter, wmask); err != nil {
+			return err
+		}
+	}
 	epi.mask = mask
 	epi.userData = event.Data
-
-	// Re-register with the new mask.
-	file.EventUnregister(&epi.waiter)
-	wmask := waiter.EventMaskFromLinux(mask)
-	epi.waiter.Init(epi, wmask)
-	if err := file.EventRegister(&epi.waiter); err != nil {
-		return err
-	}
 
 	// Check if the file is already ready with the new mask.
 	if m := file.Readiness(wmask) & wmask; m != 0 {

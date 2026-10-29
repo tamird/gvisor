@@ -40,7 +40,7 @@ func TestPCIDevicePoll(t *testing.T) {
 	}
 
 	fd := pciDeviceFD{hostFD: int32(hostFD)}
-	if fd.Epollable() {
+	if fd.EpollMaskUpdater() != nil {
 		t.Error("PCI device admits an epoll watch")
 	}
 	mask := waiter.AllEvents

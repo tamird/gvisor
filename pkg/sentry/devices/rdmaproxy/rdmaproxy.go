@@ -285,7 +285,7 @@ func (fd *uverbsFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
 }
 
-// uverbsFD deliberately does not implement Epollable: the host uverbs cdev
+// uverbsFD deliberately does not support epoll: the host uverbs cdev
 // has no poll file operation (drivers/infiniband/core/uverbs_main.c
 // uverbs_fops), so EPOLL_CTL_ADD on it fails with EPERM on Linux; the vfs
 // default reproduces that. Only the event FDs (async events, completion
@@ -380,9 +380,14 @@ func (fd *eventFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return fdnotifier.NonBlockingPoll(fd.hostFD, mask)
 }
 
-// Epollable implements vfs.FileDescriptionImpl.Epollable.
-func (fd *eventFD) Epollable() bool {
-	return true
+// EpollMaskUpdater implements vfs.FileDescriptionImpl.EpollMaskUpdater.
+func (fd *eventFD) EpollMaskUpdater() vfs.EpollMaskUpdater {
+	return fd
+}
+
+// UpdateMask implements vfs.EpollMaskUpdater.UpdateMask.
+func (fd *eventFD) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	return fdnotifier.UpdateMask(fd.hostFD, e, mask)
 }
 
 // newEventFD wraps a host event FD in a sentry FileDescription named name and
