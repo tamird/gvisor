@@ -1,35 +1,52 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Compare ownership of production Go dependencies
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/go-deps-root-ownership'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Admit the exact upstream and fork source snapshots
+      id: sources
+      shell: bash
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD) = "$GITHUB_SHA" ]]
+        [[ $(git rev-parse HEAD^1) = e275071db84cbcdad75df9fed1361a5a0e719c85 ]]
+        [[ $(git rev-parse HEAD^2) = f0bddd5261d0b345baad4987b202f310d0aafbd0 ]]
+        [[ $(git rev-parse HEAD^1^) = 0fa6803f2a5991dc066a29fc50414b4a3b519590 ]]
+        cp .github/qualification/lint-consumer/{audit,go_deps}.py "$RUNNER_TEMP/"
+        mkdir -p "$RUNNER_TEMP/dev-dependency-audit"
+    - name: Observe Gazelle sources from each root
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        area=$RUNNER_TEMP/dev-dependency-audit
+        rc=$area/rbe.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --remote_default_exec_properties=OSFamily=linux' 'build --remote_default_exec_properties=Arch=amd64' 'build --remote_default_exec_properties=workload-isolation-type=oci' 'build --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$rc"
+        unset BUILDBUDDY_API_KEY
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        python3 -B "$RUNNER_TEMP/go_deps.py"
+    - name: Retain source-identified outcomes only
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: external-go-deps
+        path: ${{ runner.temp }}/dev-dependency-audit/public/result.json
+        if-no-files-found: error
