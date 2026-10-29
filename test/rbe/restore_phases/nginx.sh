@@ -4,10 +4,9 @@ if [[ ${1:-} != --private-mount ]]; then
   exec unshare --mount --propagation private -- "$0" --private-mount "$@"
 fi
 shift
-[[ $# == 3 && $EUID == 0 && $(uname -m) == x86_64 ]]
+[[ $# == 2 && $EUID == 0 && $(uname -m) == x86_64 ]]
 binary=$(realpath "$1")
 archive=$(realpath "$2")
-instrumented=$(realpath "$3")
 release=$(cd release && pwd)
 test -x "$release/runsc"
 export GVISOR_SIDECAR_BINARIES_DIR="$release/gvisor-bin"
@@ -39,13 +38,10 @@ export RUNTIME=runsc
 export RESTORE_PHASE_DIR="$dir/checkpoint"
 install -d -m 700 "$RESTORE_PHASE_DIR"
 export GOMAXPROCS=2
-sha256sum "$release/runsc" "$binary" "$instrumented"
+sha256sum "$release/runsc" "$binary"
 "$binary" -test.v -test.run='^$' -test.bench='^BenchmarkCaptureRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
-index=0
-for mode in control trace trace control trace control control trace control trace trace control; do
-  (( index+=1 ))
-  exe="$binary"
-  if [[ $mode == trace ]]; then exe="$instrumented"; fi
-  echo "phase-child index=$index mode=$mode"
-  "$exe" -test.v -test.run='^$' -test.bench='^BenchmarkRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
+export GO_TEST_WRAP=0 RESTORE_CALLBACK_SHAPE=1
+for i in 1 2 3 4; do
+  echo "shape-child index=$i"
+  "$binary" -test.v -test.run='^$' -test.bench='^BenchmarkRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
 done

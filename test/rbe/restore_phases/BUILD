@@ -4,10 +4,12 @@ sh_test(
     name = "nginx",
     size = "large",
     srcs = ["nginx.sh"],
-    args = ["$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)", "$(rootpath :nginx.tar)", "$(rootpath :instrumented.bin)"],
+    args = [
+        "$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)",
+        "$(rootpath :nginx.tar)",
+    ],
     data = [
         ":nginx.tar",
-        ":instrumented.bin",
         "//:release",
         "//test/benchmarks/checkpointfile:checkpointfile_test",
     ],
@@ -23,5 +25,8 @@ sh_test(
         "test.workload-isolation-type": "firecracker",
         "test.recycle-runner": "false",
     },
-    tags = ["manual", "no-local"],
+    tags = [
+        "manual",
+        "no-local",
+    ],
 )

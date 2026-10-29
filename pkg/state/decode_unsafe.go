@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"slices"
 	"sync"
@@ -76,11 +77,13 @@ type decodeState struct {
 
 	types []*typeInfo
 	// typeNames are the names of named types, which may not be registered.
-	typeNames []string
-	objs      []decObject
-	ods       []objectDecodeState
-	cbs       []callback
-	targets   []unsafe.Pointer
+	typeNames               []string
+	objs                    []decObject
+	ods                     []objectDecodeState
+	cbs                     []callback
+	initialCallbackCapacity int
+	callbackGrowth          []int
+	targets                 []unsafe.Pointer
 	// targetObjs are the objects of targets, or -1.
 	targetObjs []int32
 
@@ -133,6 +136,27 @@ func newDecodeState(ctx context.Context) *decodeState {
 // release returns ds to decodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *decodeState) release() {
+	if os.Getenv("RESTORE_CALLBACK_SHAPE") == "1" {
+		var wait, typed, fn, valueTyped, valueFn, other int
+		for _, cb := range ds.cbs {
+			switch {
+			case cb.waiter >= 0:
+				wait++
+			case cb.afterLoader != nil:
+				typed++
+			case cb.fn != nil:
+				fn++
+			case cb.valueLoader != nil:
+				valueTyped++
+			case cb.valueFn != nil:
+				valueFn++
+			default:
+				other++
+			}
+		}
+		fmt.Printf("callback-shape objects=%d initial=%d count=%d final=%d sizeof=%d growth=%v wait=%d typed_after=%d fn=%d typed_value=%d value_fn=%d other=%d\n",
+			len(ds.objs), ds.initialCallbackCapacity, len(ds.cbs), cap(ds.cbs), unsafe.Sizeof(callback{}), ds.callbackGrowth, wait, typed, fn, valueTyped, valueFn, other)
+	}
 	if cap(ds.objs) > maxPooledBytes/64 {
 		return
 	}
@@ -250,6 +274,7 @@ func (ds *decodeState) readObjects(root unsafe.Pointer, rootType *typeInfo) {
 	if n == 0 {
 		Failf("no objects")
 	}
+	ds.initialCallbackCapacity = cap(ds.cbs)
 	ds.objs = slices.Grow(ds.objs[:0], n)[:n]
 	ds.ods = slices.Grow(ds.ods[:0], n)[:n]
 	for i := range ds.objs {
@@ -852,7 +877,11 @@ func (ds *decodeState) addCallback(obj int32, cb callback) {
 		ds.hooks++
 	}
 	cb.next = -1
+	oldCap := cap(ds.cbs)
 	ds.cbs = append(ds.cbs, cb)
+	if cap(ds.cbs) != oldCap {
+		ds.callbackGrowth = append(ds.callbackGrowth, cap(ds.cbs))
+	}
 	i := int32(len(ds.cbs) - 1)
 	o := &ds.ods[obj]
 	if o.cbTail < 0 {
