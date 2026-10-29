@@ -32,7 +32,7 @@ def main() -> int:
     errors = []
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") not in ("local","standalone") for r in results):
         errors.append("expected one uncached test on the hosted Linux machine")
-    if sorted(x for x in observations if x.startswith("FENCE_DONE")) != ["FENCE_DONE mode=cross_sack","FENCE_DONE mode=old_fence"]:
+    if sorted(x for x in observations if x.startswith("FENCE_DONE")) != ["FENCE_DONE mode=one_packet","FENCE_DONE mode=three_packets"]:
         errors.append("not both prescribed wire histories completed")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
         errors.append("qualifier failed")

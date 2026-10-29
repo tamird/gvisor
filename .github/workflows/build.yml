@@ -1,11 +1,11 @@
-name: Compare the interrupted TCP flight boundary on the wire
+name: Measure TCP sends with one or three outstanding tail packets
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-cross-v5'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-shape-run'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -20,15 +20,16 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        stock=0a327bb504c4546650bba238595bcd89e1a2e279
-        stock_parent=3783a01936040c062d46a6ab20201307d34644f0
-        pr16081=8c72427d96b655a40558ed65395de1e63398ea00
-        pr16495=b59f6644079d3654fa46edbf2d3eab4045bcc95a
-        git merge-base --is-ancestor "$pr16495" "$GITHUB_SHA"
+        stock=a98398bb3ed5648925eb5b400213a3e54a97161a
+        stock_parent=0a327bb504c4546650bba238595bcd89e1a2e279
+        pr16081=895184783f626c7104d8c88c35005b13d816e719
+        pr16495=b7a3d48ba09440ff69c1b60cb7c887d5ee471fa4
+        git merge-base --is-ancestor 55d8b9320b4c8a8095b6d54a6bafeba6ce5b9722 "$GITHUB_SHA"
         git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$stock_parent" "$stock" "$pr16081" "$pr16495"
         parent_of() { git cat-file -p "$1" | sed -n '/^$/q;s/^parent //p'; }
         test "$(parent_of "$stock")" = "$stock_parent"
         git cat-file -e "$stock_parent^{commit}"
+        git diff --quiet "$stock_parent" "$stock" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go'
         for source in "$pr16081" "$pr16495"; do
           test "$(parent_of "$source")" = "$stock"
           git diff --quiet "$stock" "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
@@ -127,7 +128,8 @@ jobs:
         PYCHECK
         # Both native architectures have already passed this analyzer preflight
         # under these flags. The listener builds only the facts it actually uses.
-        proved=01811d57c4
+        proved=01811d57c4a1a18ef002fe92956669b43799f466
+        git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$proved"
         for source in "$stock" "$pr16081" "$pr16495"; do
           git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
         done
