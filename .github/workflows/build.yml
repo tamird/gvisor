@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-primitive-arrays-graph16'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-primitive-signed-zero'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,133 +13,44 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Check primitive array storage on the merged graph source
+    - name: Qualify arrays on the signed-zero prerequisite
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "09a3ca25b2e495158eb09a57b86252e341ae7bd0"
-        test "$(git rev-parse HEAD^2)" = "b75e2f5bd5c6935b45882328a6810268022eef16"
+        test "$(git rev-parse HEAD^2)" = "f76d229c04d56c4a800f0e3561d36e75410f91a1"
+        test "$(git rev-parse HEAD^2^)" = "40eb760888e9c00c8aaeeee71e42a4f91800734b"
         mkdir -p "$RUNNER_TEMP/checker"
-        for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
-          cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
-        done
-        python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
-        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
-        platform=$RUNNER_TEMP/fifo_platform
-        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
-        cat > "$platform/BUILD" <<'BUILD'
+        cp test/rbe/{qualification_report,tcp_long_replay}.py "$RUNNER_TEMP/checker/"
+        cp .github/qualification/array-check.sh "$RUNNER_TEMP/checker/"
+        GNU="gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
+        docker pull --platform=linux/amd64 "$GNU"
+        plat=$RUNNER_TEMP/poll-gnu-platform
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        cat >"$plat/BUILD" <<BUILD
         platform(
-            name = "ubuntu",
+            name = "gnu",
             constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-            exec_properties = {
-                "Arch": "amd64",
-                "OSFamily": "linux",
-                "workload-isolation-type": "oci",
-                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
-            },
+            exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "container-image":"docker://$GNU"},
             visibility = ["//visibility:public"],
         )
         BUILD
-        export USE_BAZEL_VERSION
-        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-        rc=$RUNNER_TEMP/fifo.bazelrc
+        rc=$RUNNER_TEMP/poll-gnu.bazelrc
         umask 077
         trap 'rm -f "$rc"' EXIT
         {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
-            'build --remote_cache=grpcs://remote.buildbuddy.io' \
-            'build --bes_backend=grpcs://remote.buildbuddy.io' \
-            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
-            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
-            'build --remote_accept_cached' \
-            "build --inject_repository=fifo_platform=$platform" \
-            'build --host_platform=@fifo_platform//:ubuntu' \
-            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
-            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
           printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$rc"
+        } >"$rc"
         unset BUILDBUDDY_API_KEY
-        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
-        export FIFO_RC=$rc
-        mkdir -p "$RUNNER_TEMP/fifo-bin"
-        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
-        #!/bin/sh
-        case "$1" in
-          test)
-            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
-            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
-            status=0
-            bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
-            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
-            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
-            exit "$status"
-            ;;
-        esac
-        exec bazelisk --bazelrc="$FIFO_RC" "$@"
-        SH
-        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
-        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
-        overall=0
-        mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in normal race amd64-check arm64-check; do
-          source=b75e2f5bd5c6935b45882328a6810268022eef16; parent=3dd75fc57e6b26ab5b4d8378a7c66959c7f3b9f6
-          if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
-            git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
-          fi
-          git checkout --quiet --detach "$source"
-          test "$(git rev-parse HEAD)" = "$source"
-          test "$(git rev-parse HEAD^)" = "$parent"
-          export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
-          mkdir -p "$TCP_EVIDENCE" test/rbe
-          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
-          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
-          test ! -s "$TCP_EVIDENCE/source_before"
-          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
-          raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
-          code=0
-          opts=()
-          arch=amd64
-          case $arm in
-            normal|race)
-              labels=(//pkg/state:state_test //pkg/state/tests:tests_test //pkg/state/wire:wire_test)
-              if [[ $arm == race ]]; then opts+=(--bazel-option=--config=race); fi ;;
-            *-check)
-              arch=${arm%-check}
-              labels=(//pkg/state:state_nogo //pkg/state:state_test_nogo //pkg/state/pretty:pretty_nogo //pkg/state/wire:wire_nogo //pkg/state/wire:wire_test_nogo //pkg/state/tests:tests_nogo //pkg/state/tests:tests_test_nogo)
-              opts+=("--bazel-option=--platforms=//tools/bazeldefs:linux_$arch") ;;
-          esac
-          selection=()
-          for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
-          bash test/rbe/qualify.sh --arch="$arch" "${selection[@]}" "${opts[@]}" \
-            "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
-            --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
-            --bazel-option=--remote_download_outputs=toplevel test || code=$?
-          printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
-          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
-          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
-          python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "${labels[*]}" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
-        done
-        python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
-        import json, sys
-        from pathlib import Path
-        root = Path(sys.argv[1])
-        arms = ["normal","race","amd64-check","arm64-check"]
-        verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
-        missing = [a for a in arms if a not in verdicts]
-        result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
-        (root / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
-        print(result)
-        sys.exit(result["status"] != "PASS")
-        PYRESULT
-        exit "$overall"
+        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" "$RUNNER_TEMP/checker/array-check.sh" "$RUNNER_TEMP" f76d229c04d56c4a800f0e3561d36e75410f91a1
     - name: Save only the typed results
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: array-verdicts
+        name: combined-array-verdicts
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
