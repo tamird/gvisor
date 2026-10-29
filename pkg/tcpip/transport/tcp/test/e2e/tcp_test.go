@@ -10609,13 +10609,19 @@ func TestMain(m *testing.M) {
 func TestCongestionWindowAfterIdle(t *testing.T) {
 	for _, cc := range []string{"cubic", "reno"} {
 		t.Run(cc, func(t *testing.T) {
-			for _, prime := range []bool{false, true} {
-				baseline := windowAfterIdle(t, cc, 0, prime)
-				idle := windowAfterIdle(t, cc, 30*time.Second, prime)
-				t.Logf("IDLE_RESULT %s prime=%t baseline=%v idle=%v", cc, prime, baseline, idle)
-				if got, want := idle, baseline; got != want {
-					t.Errorf("after idle got %v, want %v (prime=%t)", got, want, prime)
-				}
+			for _, tc := range []struct {
+				name  string
+				prime bool
+			}{{"after-loss", false}, {"after-first-flight", true}} {
+				t.Run(tc.name, func(t *testing.T) {
+					prime := tc.prime
+					baseline := windowAfterIdle(t, cc, 0, prime)
+					idle := windowAfterIdle(t, cc, 30*time.Second, prime)
+					t.Logf("IDLE_RESULT %s prime=%t baseline=%v idle=%v", cc, prime, baseline, idle)
+					if got, want := idle, baseline; got != want {
+						t.Errorf("after idle got %v, want %v (prime=%t)", got, want, prime)
+					}
+				})
 			}
 		})
 	}
