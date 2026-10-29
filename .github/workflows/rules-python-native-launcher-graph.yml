@@ -1,0 +1,32 @@
+name: Check native Python launcher resolution
+on:
+  push:
+    branches: [qualification/rules-python-native-launcher-4183-graph]
+permissions:
+  contents: read
+jobs:
+  graph:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - name: Resolve the dependency lock and both execution-configured writers
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/preflight.bazelrc"
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config=rbe --config=x86_64 --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=native --output=jsonproto \
+            'outputs(".*/(build_tar|make_deb)$", deps(set(//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated)))' > "$RUNNER_TEMP/writers.json"
+          python3 test/rbe/python_package_writers/launcher_graph.py "$RUNNER_TEMP/writers.json" "$RUNNER_TEMP/native-graph.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: launcher-resolution
+          path: |
+            MODULE.bazel.lock
+            ${{ runner.temp }}/native-graph.json
+            ${{ runner.temp }}/writers.json
+          if-no-files-found: error

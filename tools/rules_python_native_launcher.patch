@@ -1,0 +1,92 @@
+diff --git a/MODULE.bazel b/MODULE.bazel
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -8,6 +8,7 @@
+ bazel_dep(name = "bazel_skylib", version = "1.8.2")
+ bazel_dep(name = "package_metadata", version = "0.0.7")
+ bazel_dep(name = "platforms", version = "0.0.11")
++bazel_dep(name = "hermetic_launcher", version = "0.0.17")
+ bazel_dep(name = "rules_cc", version = "0.2.17")
+ bazel_dep(name = "toml.bzl", version = "0.4.1")
+ 
+diff --git a/python/private/flags.bzl b/python/private/flags.bzl
+--- a/python/private/flags.bzl
++++ b/python/private/flags.bzl
+@@ -145,6 +145,7 @@
+ BootstrapImplFlag = enum(
+     SYSTEM_PYTHON = "system_python",
+     SCRIPT = "script",
++    NATIVE = "native",
+     get_value = _bootstrap_impl_flag_get_value,
+ )
+ 
+diff --git a/python/private/py_executable.bzl b/python/private/py_executable.bzl
+--- a/python/private/py_executable.bzl
++++ b/python/private/py_executable.bzl
+@@ -18,6 +18,7 @@
+ load("@bazel_skylib//lib:shell.bzl", "shell")
+ load("@bazel_skylib//lib:structs.bzl", "structs")
+ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
++load("@hermetic_launcher//launcher:lib.bzl", "launcher")
+ load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+ load("@rules_python_internal//:rules_python_config.bzl", rp_config = "config")
+ load(":application.bzl", "APPLICATION_ATTRS", "create_application", "create_application_archive", "create_application_launcher", "is_default_bootstrap")
+@@ -313,6 +314,18 @@
+     # Fall back to CLI setting.
+     return not read_possibly_native_flag(ctx, "default_to_explicit_init_py")
+ 
++def _can_use_native_launcher(ctx, runtime, venv, executable):
++    # The released finalizer has four 256-byte slots in use here. The
++    # application's own spec and arguments are never embedded in the stub.
++    return (
++        runtime.interpreter != None and runtime.supports_build_time_venv and
++        not venv.recreate_venv_at_runtime and
++        ctx.toolchains[launcher.finalizer_toolchain_type] != None and
++        ctx.toolchains[launcher.template_toolchain_type] != None and
++        len(launcher.to_rlocation_path(runtime.interpreter)) <= 256 and
++        len(launcher.to_rlocation_path(executable) + ".bootstrap.py") <= 256
++    )
++
+ def _create_executable(
+         ctx,
+         *,
+@@ -356,7 +369,7 @@
+             imports = imports,
+             runtime_details = runtime_details,
+             add_runfiles_root_to_sys_path = (
+-                "1" if BootstrapImplFlag.get_value(ctx) == BootstrapImplFlag.SYSTEM_PYTHON else "0"
++                "1" if BootstrapImplFlag.get_value(ctx) != BootstrapImplFlag.SCRIPT else "0"
+             ),
+             extra_deps = extra_deps,
+         )
+@@ -490,6 +503,21 @@
+             runtime_details = runtime_details,
+             venv = venv,
+         )
++    elif (
++        bootstrap_output and not is_windows and application and
++        BootstrapImplFlag.get_value(ctx) == BootstrapImplFlag.NATIVE and
++        is_default_bootstrap(ctx, runtime_details.effective_runtime.bootstrap_template) and
++        _can_use_native_launcher(ctx, runtime_details.effective_runtime, venv, executable)
++    ):
++        # Feed the existing Python application adapter to the declared interpreter.
++        # It owns interpreter flags, the venv, and the generated stage-two entry.
++        adapter = ctx.actions.declare_file(executable.basename + ".bootstrap.py", sibling = executable)
++        create_application_launcher(ctx, application = application, output = adapter, shell_entry = False)
++        args, transformed = launcher.args_from_entrypoint(runtime_details.effective_runtime.interpreter)
++        args.extend(["-I", "-S"])
++        launcher.append_runfile(file = adapter, embedded_args = args, transformed_args = transformed)
++        launcher.compile_stub(ctx = ctx, embedded_args = args, transformed_args = transformed, output_file = executable)
++        extra_runfiles = extra_runfiles.merge(ctx.runfiles([adapter]))
+     elif bootstrap_output:
+         _create_stage1_bootstrap(
+             ctx,
+@@ -2253,6 +2281,8 @@
+             ruleb.ToolchainType(TOOLCHAIN_TYPE),
+             ruleb.ToolchainType(EXEC_TOOLS_TOOLCHAIN_TYPE, mandatory = False),
+             ruleb.ToolchainType(CC_TOOLCHAIN_TYPE, mandatory = False),
++            ruleb.ToolchainType(launcher.finalizer_toolchain_type, mandatory = False),
++            ruleb.ToolchainType(launcher.template_toolchain_type, mandatory = False),
+         ] + ([ruleb.ToolchainType(LAUNCHER_MAKER_TOOLCHAIN_TYPE)] if rp_config.bazel_9_or_later else []),
+         cfg = dict(
+             implementation = _transition_executable_impl,

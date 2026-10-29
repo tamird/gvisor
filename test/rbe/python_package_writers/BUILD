@@ -1,4 +1,5 @@
 load("@rules_pkg//pkg:pkg.bzl", "pkg_deb", "pkg_tar")
+load(":relocation.bzl", "relocated_writer")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -38,4 +39,12 @@ filegroup(
         "@rules_pkg//pkg/private/deb:make_deb",
         "@rules_pkg//pkg/private/tar:build_tar",
     ],
+)
+
+# Run the original writer again through a moved, manifest-only entry point.
+relocated_writer(
+    name = "relocated",
+    seed = "seed.tar.gz",
+    script = "relocation.py",
+    writer = "@rules_pkg//pkg/private/tar:build_tar",
 )
