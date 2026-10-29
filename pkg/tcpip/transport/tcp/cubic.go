@@ -75,7 +75,7 @@ type cubicState struct {
 // +checklocks:s.ep.mu
 func newCubicCC(s *sender) *cubicState {
 	now := s.ep.stack.Clock().NowMonotonic()
-	return &cubicState{
+	c := &cubicState{
 		TCPCubicState: TCPCubicState{
 			T:    now,
 			Beta: 0.7,
@@ -95,6 +95,11 @@ func newCubicCC(s *sender) *cubicState {
 		},
 		s: s,
 	}
+	if s.SndCwnd >= s.Ssthresh {
+		// An established sender may select CUBIC after leaving slow start.
+		c.enterCongestionAvoidance()
+	}
+	return c
 }
 
 // enterCongestionAvoidance starts an epoch at the sender's current window.
