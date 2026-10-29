@@ -1,0 +1,34 @@
+name: Compare Python libc and build toolchains
+on:
+  push:
+    branches: [qualification/package-toolchain-effects]
+permissions: {contents: read}
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 1, persist-credentials: false}
+      - name: Compare configured compiler and package actions without executing them
+        run: |
+          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          mkdir "$RUNNER_TEMP/comparison"
+          export REPORT="$RUNNER_TEMP/comparison"
+          query='mnemonic("GoCompilePkg|CppCompile|PackageTar", //pkg/atomicbitops:atomicbitops union //test/syscalls/linux:base_poll_test union //shim:config)'
+          for arch in x86_64 aarch64; do
+            for mode in default musl static; do
+              opts=()
+              if [[ $mode != default ]]; then opts+=(--@rules_python//python/config_settings:py_linux_libc=musl); fi
+              if [[ $mode == static ]]; then opts+=(--@rules_python//python/config_settings:python_version=3.11.18); fi
+              bazelisk aquery --config="$arch" --lockfile_mode=update "${opts[@]}" --nobuild_runfile_links --noinclude_artifacts --output=jsonproto "$query" > "$REPORT/$arch-$mode.json"
+            done
+          done
+          python3 test/rbe/python_package_writers/toolchain_evidence.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: package-toolchain-selection
+          path: ${{ runner.temp }}/comparison
+          if-no-files-found: error
