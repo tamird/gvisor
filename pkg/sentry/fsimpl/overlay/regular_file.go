@@ -62,7 +62,7 @@ type regularFileFD struct {
 	// may replace cachedFD before the waiter is removed.
 	//
 	// +checklocks:mu
-	registrations map[*waiter.Entry]*vfs.FileDescription `state:"nosave"`
+	registrations map[*waiter.Entry]*vfs.FileDescription
 }
 
 func (fd *regularFileFD) getCurrentFD(ctx context.Context) (*vfs.FileDescription, error) {
@@ -275,8 +275,8 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
-	fd.mu.Lock()
 	wrappedFD := fd.registrations[e]
+	fd.mu.Lock()
 	delete(fd.registrations, e)
 	fd.mu.Unlock()
 	if wrappedFD != nil {
