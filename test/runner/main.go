@@ -1258,7 +1258,7 @@ func main() {
 	}
 
 	// Get all test cases in each binary.
-	testCases, err := gtest.ParseTestCases(testBin, true, "--gtest_filter=FsConfigTest.FsConfigReconfigureSucceeds")
+	testCases, err := gtest.ParseTestCases(testBin, true)
 	if err != nil {
 		fatalf("ParseTestCases(%q) failed: %v", testBin, err)
 	}

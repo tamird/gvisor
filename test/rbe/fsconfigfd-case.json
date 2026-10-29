@@ -1,5 +1,6 @@
 {
   "//test/syscalls:mount_fd_test_runsc_systrap_directfs_save": [
-    "FsConfigTest/FsConfigReconfigureSucceeds"
+    "FsConfigTest/FsConfigReconfigureSucceeds",
+    "FsMountTest/FsMountSuccess"
   ]
 }
