@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T07:51:58.874846+00:00",
+    "updatedAt": "2026-10-29T08:01:30.444021+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32620,6 +32620,99 @@
         "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository\u2019s tracked inputs. The builder image no longer downloads Buildifier.",
         "body": "Open independently on master. Tracked Starlark files are checked even if they are outside Bazel packages. The malformed untracked file was left alone. Source inputs are selected from the checkout; the formatter executable comes from Bazel."
       }
+    },
+    {
+      "id": "branch:tcp-congestion-control-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-congestion-control-selection",
+      "head": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+      "url": "https://github.com/tamird/gvisor/commit/622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+      "title": "Preserve TCP sender state when selecting congestion control",
+      "group": "runtime",
+      "updatedAt": "2026-10-29T07:55:47.892171+00:00",
+      "summary": "Reselecting CUBIC reset gVisor\u2019s window from 7 packets to 10 after loss. Switching after a peer FIN changed the option name but left the old sender active. Linux and corrected gVisor preserve the window and use the selected controller for the next loss.",
+      "status": "Contributor review requested",
+      "refinement": {
+        "before": {
+          "base": "ac7b4e0fdc7dc4674453438e5e15fc069895620c",
+          "head": "35792c6a401e1c57fcba5a2d38f0b6fb599399e3"
+        },
+        "after": {
+          "head": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Six established-socket cases on Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40835847230"
+        },
+        {
+          "label": "Linux and intermediate switch after FIN",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837597017"
+        },
+        {
+          "label": "Corrected sender after FIN",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837599668"
+        },
+        {
+          "label": "ACK credit across the switch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40836914536"
+        },
+        {
+          "label": "Owning TCP Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837801283"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+        "url": "https://github.com/tamird/gvisor/commit/622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+        "title": "Preserve TCP sender state when selecting congestion control",
+        "summary": "Reselecting CUBIC reset gVisor\u2019s window from 7 packets to 10 after loss. Switching after a peer FIN changed the option name but left the old sender active. Linux and corrected gVisor preserve the window and use the selected controller for the next loss.",
+        "body": "Independent on current master. Linux and gVisor have different absolute Reno thresholds; each corrected socket used the threshold of its newly selected algorithm. The sparse-window change merges cleanly with this one."
+      }
+    },
+    {
+      "id": "branch:package-clang-format",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/package-clang-format",
+      "title": "Use the declared LLVM formatter for C and C++ lint",
+      "url": "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+      "head": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+      "group": "analysis",
+      "updatedAt": "2026-10-29T08:01:30.444021+00:00",
+      "status": "Contributor review requested",
+      "summary": "Remove the separate platform-specific wheel. Bazel checks only packages with changed inputs, and the fix command still edits only tracked sources. The LLVM formatter produced the same bytes as the wheel across all 485 current files.",
+      "evidence": [
+        {
+          "label": "85 new or modified files compared directly; prior parity covers 400 unchanged files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40838384247"
+        },
+        {
+          "label": "All 23 owners executed remotely",
+          "url": "https://app.buildbuddy.io/invocation/5120a5db-5ed1-4076-adc1-37eedd886b93"
+        },
+        {
+          "label": "All 23 unchanged owners reused cached results",
+          "url": "https://app.buildbuddy.io/invocation/888a607b-79fb-46e3-b091-db9194822ffe"
+        },
+        {
+          "label": "One damaged file reran and failed only its owner",
+          "url": "https://app.buildbuddy.io/invocation/29c50833-f061-4f70-888e-542ad04f2a00"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+        "url": "https://github.com/tamird/gvisor/compare/4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e...e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+        "title": "Use the declared LLVM formatter for C and C++ lint",
+        "summary": "Remove the separate platform-specific wheel. Bazel checks only packages with changed inputs, and the fix command still edits only tracked sources. The LLVM formatter produced the same bytes as the wheel across all 485 current files.",
+        "body": "Open after the package-local cpplint and registered Buildifier proposals. A failure reports file, line and column with the fix command. Fix mode leaves untracked files alone."
+      }
     }
   ],
   "edges": [
@@ -35655,6 +35748,24 @@
       "evidence": [
         "https://github.com/tamird/gvisor/actions/runs/40820977414"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:bazel-cpplint",
+      "to": "branch:package-clang-format",
+      "reason": "Add formatting tests to the package targets that own each C and C++ source.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e...e2b20441891e30cb1ef6a4b8b674dcae6010284e"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:buildifier-native-diff",
+      "to": "branch:package-clang-format",
+      "reason": "The lint driver uses the registered Buildifier; the installer regression moves to the remaining downloader.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e...e2b20441891e30cb1ef6a4b8b674dcae6010284e"
+      ]
     }
   ],
   "investigations": [
@@ -35663,7 +35774,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T07:27:09.106086+00:00",
+      "updatedAt": "2026-10-29T07:55:47.892171+00:00",
       "summary": "The reporter\u2019s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -37288,9 +37399,30 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40832781696"
             }
           ]
+        },
+        {
+          "text": "Reselecting CUBIC reset gVisor\u2019s window from 7 packets to 10 after loss. Switching after a peer FIN changed the option name but left the old sender active. Linux and corrected gVisor preserve the window and use the selected controller for the next loss. A switch to Reno with 21 credits and a 10-packet window now grows to 11, keeping the new ACK as one credit.",
+          "evidence": [
+            {
+              "label": "Six established-socket cases on Linux and gVisor",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40835847230"
+            },
+            {
+              "label": "Linux and intermediate switch after FIN",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40837597017"
+            },
+            {
+              "label": "Corrected sender after FIN",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40837599668"
+            },
+            {
+              "label": "ACK credit across the switch",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40836914536"
+            }
+          ]
         }
       ],
-      "nextStep": "Investigate established-socket congestion-control selection after real loss, including what credit survives a change of algorithm. If #15634, #14101 or #15432 lands first, repeat combined SACK recovery coverage because those changes affect the flight count used by the correction.",
+      "nextStep": "Use the retained two-flow bottleneck trace to distinguish queue loss and SACK/retransmission decisions. If #15634, #14101 or #15432 lands first, repeat combined SACK recovery coverage because those changes affect the flight count used by the correction.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -48349,7 +48481,7 @@
       "status": "active",
       "owner": "pinring_source_scope",
       "group": "runtime",
-      "updatedAt": "2026-10-29T00:18:15.244037+00:00",
+      "updatedAt": "2026-10-29T07:55:47.892171+00:00",
       "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
       "findings": [
         {
@@ -48395,7 +48527,7 @@
           ]
         }
       ],
-      "nextStep": "Contributor review of the tested fork fix. Open separately after #16403 lands.",
+      "nextStep": "Contributor review is complete. Open the approved PR after #16403 lands.",
       "evidence": [
         {
           "label": "Related below-ACK change (#16403)",

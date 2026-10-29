@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T02:45:30.281737+00:00",
-  "registryDate": "2026-10-29T07:51:58.874846+00:00",
+  "registryDate": "2026-10-29T08:01:30.444021+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -232010,6 +232010,24 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T07:49:47.210758+00:00"
+      }
+    },
+    "branch:tcp-congestion-control-selection": {
+      "contributor-review": {
+        "scope": "622eb5998d707a85023bb3ca4c8ecb2409b8d6c9",
+        "since": "2026-10-29T07:55:47.892171+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T07:55:47.892171+00:00"
+      }
+    },
+    "branch:package-clang-format": {
+      "contributor-review": {
+        "scope": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+        "since": "2026-10-29T07:55:47.892171+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T07:55:47.892171+00:00"
       }
     }
   },
