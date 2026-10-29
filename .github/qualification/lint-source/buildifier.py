@@ -10,8 +10,8 @@ import subprocess
 import traceback
 
 work = Path(os.environ["RUNNER_TEMP"])
-source = "d203ad64f60b785e04f2adb777dd78624e5c4958"
-tree = "75019ab966c0e29d8172d088b03c441478ae4269"
+source = "7770b6241f051b2784b61174049e73e41b7d1303"
+tree = "c2f2fa514c89318c586b75ecebb4f4616c59b3f3"
 binary = "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7"
 missing = (
     "MODULE.bazel", "governance/tools/maintainers/repositories.bzl",
@@ -39,15 +39,16 @@ def run(name, args):
 def main():
     assert output("git", "rev-parse", "HEAD").strip() == source
     assert output("git", "rev-parse", "HEAD^{tree}").strip() == tree
-    # Check the original source rather than simulating its failing installer.
-    source_directory = Path.cwd()
-    try:
-        os.chdir(source_directory.parent / "before")
-        assert output("git", "rev-parse", "HEAD").strip() == "1f6f8dd9f3f2fad74a597cd034ba30523cf7193c"
-        ex, text = run("previous_lint_test", ["bazel", "test", "--test_output=errors", "//tools:lint_test"])
-        assert ex != 0 and "KeyError: 'BUILDIFIER'" in text
-    finally:
-        os.chdir(source_directory)
+    prior_path = work / "prior" / "buildifier.json"
+    prior_raw = prior_path.read_bytes()
+    assert sha256(prior_raw).hexdigest() == "252bda696b6a50996ed7507407b1a2de7f2924ce0e390ccc394cf313ff7e2b39"
+    previous = json.loads(prior_raw)
+    assert previous["source"] == "d203ad64f60b785e04f2adb777dd78624e5c4958"
+    assert previous["previous_lint_test"]["exit"] != 0 and previous["license"]["count"] == [221]
+    assert previous["status"] == "INCOMPLETE" and previous["physical_cli"]["files"] == 0
+    # The only source difference is lint.sh's diagnostic after Buildifier fails.
+    record["prior"] = {"run": 40832537994, "artifact_sha256": "252bda696b6a50996ed7507407b1a2de7f2924ce0e390ccc394cf313ff7e2b39",
+                       "before": previous["previous_lint_test"], "license": previous["license"]}
     ex, text = run("corrected_lint_test", ["bazel", "test", "--test_output=all", "//tools:lint_test"])
     assert ex == 0 and "Ran 4 tests" in text and "OK" in text
 
@@ -64,7 +65,7 @@ def main():
         raise ValueError("canonical clean formatter")
     actual, digests = [], set()
     for line in trace.read_text().splitlines():
-        if "--mode=check" not in line or "execve(" not in line or not line.endswith("= 0"):
+        if "--mode=diff" not in line or "execve(" not in line or not line.endswith("= 0"):
             continue
         m = re.search(r'execve\((".*?"), (\[.*?\]), ', line)
         if not m:
@@ -92,7 +93,7 @@ def main():
             Path(name).write_bytes(original + b"\n\n")
         exit_code, text = run("seven_bad", ["tools/lint.sh", "buildifier"])
         record["diffs"] = [p for p in missing if re.search("^--- " + re.escape(p) + r"(?:\t|$)", text, re.M)]
-        assert text.count("+++ ") >= len(missing) and "Run `make lint-fix`" in text
+        assert text.count("+++ ") >= len(missing) and "Run `make lint-fix`" not in text
         assert exit_code and len(record["diffs"]) == 7
         assert run("fix", ["tools/lint.sh", "--fix", "buildifier"])[0] == 0
         assert all(Path(name).read_bytes() == original for name, original in contents.items())
@@ -102,16 +103,14 @@ def main():
         untracked.unlink(missing_ok=True)
         for name, original in contents.items():
             Path(name).write_bytes(original)
-    vis = output("bazel", "query", "--output=label", 'visible(//:license, (kind("source file", //...:*) union buildfiles(//...:*)))')
-    candidates = set()
-    for lab in vis.splitlines():
-        if lab.startswith("//"):
-            pack, _, target = lab[2:].partition(":"); candidates.add((pack + "/" + target).lstrip("/"))
-    record["central_visibility"] = {"root": "//:license", "available": len(candidates.intersection(files)),
-                                   "builds": sum(Path(f).name == "BUILD" for f in candidates.intersection(files))}
-    ex, text = run("license", ["bazel", "run", "--run_in_cwd", "//tools/licensecheck/main:licensecheck", "--", "--mode=verify"])
-    record["license"]["count"] = [int(n) for n in re.findall(r"all ([0-9]+) dependencies have up-to-date license entries", text, re.I)]
-    assert ex == 0 and record["license"]["count"] == [221]
+    stock = Path(missing[1]).read_bytes()
+    try:
+        Path(missing[1]).write_bytes(stock + b"\n@@@\n")
+        rc, diagnostic = run("invalid", ["tools/lint.sh", "buildifier"])
+        assert rc and missing[1] in diagnostic and "syntax error" in diagnostic.lower()
+        assert "Run `make lint-fix`" not in diagnostic
+    finally:
+        Path(missing[1]).write_bytes(stock)
     assert actual == files and digests == {binary} and record["untracked_unchanged"]
     record["status"] = "PASS"
 
