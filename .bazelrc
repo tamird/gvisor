@@ -101,6 +101,9 @@ test:rbe-hybrid-tests --strategy=TestRunner=remote,local
 test:rbe-hybrid-tests --local_test_jobs=2
 
 build:rbe --config=rbe-common
+# Reuse compiled dependencies; execute the four selected package checks.
+build:rbe --remote_accept_cached
+test:rbe --nocache_test_results
 # Architecture-specific generators may need the other native CPU even when
 # the requested build or test lane selects only one target architecture.
 build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64,//tools/bazeldefs:rbe_linux_amd64_abi_nogo
