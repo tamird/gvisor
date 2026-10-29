@@ -1,7 +1,7 @@
 name: Exercise native package tool launchers
 on:
   push:
-    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated]
+    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated, qualification/rules-python-native-launcher-4183-relocated-argv]
 permissions:
   actions: read
   contents: read
@@ -17,7 +17,7 @@ jobs:
       QUALIFICATION_LANES: build
       QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
       QUALIFICATION_CLOCK_SOURCE: calibrated
-      QUALIFICATION_TARGETS: ${{ github.ref_name == 'qualification/rules-python-native-launcher-4183-relocated' && '//test/rbe/python_package_writers:relocated' || '//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated' }}
+      QUALIFICATION_TARGETS: ${{ startsWith(github.ref_name, 'qualification/rules-python-native-launcher-4183-relocated') && '//test/rbe/python_package_writers:relocated' || '//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated' }}
       QUALIFICATION_HEADER_BASE: ''
       QUALIFICATION_COS_SHA256: ''
       QUALIFICATION_COS_GZIP_BASE64: ''

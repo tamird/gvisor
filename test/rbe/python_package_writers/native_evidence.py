@@ -85,7 +85,7 @@ def inspect(result):
             assert (expected, size) == (sha, len(content))
         else:
             result["manifest"] = json.loads(content)
-    relocated_only = os.environ["GITHUB_REF_NAME"] == "qualification/rules-python-native-launcher-4183-relocated"
+    relocated_only = os.environ["GITHUB_REF_NAME"].startswith("qualification/rules-python-native-launcher-4183-relocated")
     expected = {"RelocatedPythonWriter"} if relocated_only else set(ROOTS)
     assert result["native_exit"] == 0 and set(records) == expected and not any(r["exit"] for r in records.values())
     manifest = result["manifest"]

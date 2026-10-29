@@ -58,7 +58,11 @@ with tempfile.TemporaryDirectory(dir=output.parent) as work:
     manifest = root / "names.runfiles_manifest"
     env = {"RUNFILES_MANIFEST_FILE": str(manifest), "PATH": "/no-host-tools"}
     product = root / "output.tar"
-    command = [str(binary), "--output", str(product), "--tar", str(seed), "--mtime", "portable"]
+    # rules_pkg's real tar.bzl always supplies directory (default /), along
+    # with mode, owner and mtime. Preserve the seed's existing share/ prefix.
+    command = [str(binary), f"--output={product}", "--directory=/", "--mode=0555",
+               "--owner=0.0", "--owner_name=.", "--mtime=portable", "--create_parents",
+               f"--tar={seed}"]
     # Each key denotes a whole repository; the manifest never names the
     # interpreter, the generated Python adapter, or any individual source file.
     def launch(prefixes):
