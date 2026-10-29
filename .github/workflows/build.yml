@@ -1,11 +1,11 @@
-name: Check map key insertion on the proposed graph callback scheduler
+name: Preserve the sign of zero through state checkpoints
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-scheduler-map-keys'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-negative-zero'
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     steps:
@@ -13,18 +13,13 @@ jobs:
       with:
         fetch-depth: 12
         persist-credentials: false
-    - name: Compare two restored maps with deferred keys on the scheduler PR
+    - name: Compare stock, corrected checkpointing, and the encoder simplification
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        for source in b85788dac43cf1e00af9edb3bf0b5fd36356173b ca5ef187687dd348e1dd8d9e04e7a57271773023; do
-          [[ "$(git diff --name-only "$source^" "$source" | paste -sd, -)" == "pkg/state/BUILD,pkg/state/map_key_identity_test.go" ]]
-        done
-        [[ "$(git rev-parse b85788dac43cf1e00af9edb3bf0b5fd36356173b^)" == "6fb2e9fe20ab30f5b9cf1c0df8037a92b0317e0f" ]]
-        [[ "$(git rev-parse ca5ef187687dd348e1dd8d9e04e7a57271773023^)" == "6163ec9a6d6d1a343eba0d39bf379d2fced4ffb4" ]]
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py snapshot_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -74,16 +69,20 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
-        git diff --exit-code 624e3ad69a0818bf93db749b3f044dfb35549cec 5a06c2c31357944b9fcbccdf2038199606a9707c -- pkg/state/graph_decode_callbacks_test.go
-        git diff --exit-code 3e480a67211e74488f6e863cb8cef1f37945f884 5a06c2c31357944b9fcbccdf2038199606a9707c -- pkg/state/graph_decode_values_unsafe.go
+        git diff --exit-code e5b636af9ddeb2e0f2c7c4aea52b2f6ba500d8a8 e3e01f2725b209a444a872a487cb602a780214d9 -- pkg/state/encode.go
+        git diff --exit-code e3e01f2725b209a444a872a487cb602a780214d9 40eb760888e9c00c8aaeeee71e42a4f91800734b -- pkg/state/tests/float_test.go
+        git diff --exit-code 40eb760888e9c00c8aaeeee71e42a4f91800734b 7a8b00fe17548fe71b580ba80af697a2fbd24963 -- pkg/state/tests/float_test.go
         overall=0
-        for mode in stock fixed; do
+        for mode in stock fixed basepkg optimized wire; do
           args=()
-          source=5a06c2c31357944b9fcbccdf2038199606a9707c
-          if [[ "$mode" = fixed ]]; then source=624e3ad69a0818bf93db749b3f044dfb35549cec; fi
-          owner=//pkg/state:state_test
-          filter='^TestGraphDeferredMapKeys$'
-          if [[ "$mode" = fixed ]]; then filter=''; fi
+          owner=//pkg/state/tests:tests_test
+          case "$mode" in
+            stock) source=e3e01f2725b209a444a872a487cb602a780214d9; filter='^TestSignedZero$' ;;
+            fixed) source=40eb760888e9c00c8aaeeee71e42a4f91800734b; filter='' ;;
+            basepkg) source=40eb760888e9c00c8aaeeee71e42a4f91800734b; filter=''; owner=//pkg/state:state_test ;;
+            optimized) source=7a8b00fe17548fe71b580ba80af697a2fbd24963; filter='^TestSignedZero$' ;;
+            wire) source=7a8b00fe17548fe71b580ba80af697a2fbd24963; owner=//pkg/state:state_test; filter='^TestZero(WireRepresentations|ArrayStructHook)$' ;;
+          esac
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test -z "$(git status --porcelain --untracked-files=no)"
@@ -101,6 +100,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: scheduler-map-keys
+        name: negative-zero-verdicts
         path: ${{ runner.temp }}/focused/*/result.json
         if-no-files-found: error
