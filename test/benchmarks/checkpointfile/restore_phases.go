@@ -23,6 +23,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"testing"
 	"time"
@@ -108,6 +109,7 @@ func BenchmarkRestorePhases(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
+	measureAlloc := os.Getenv("CALLBACK_STUDY_HEAP") == "1"
 	for pass := 1; pass <= 2; pass++ {
 		restoreCtx, cleanup := withHostFDs(b, ctx, names)
 		r, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(data)), nil)
@@ -123,12 +125,19 @@ func BenchmarkRestorePhases(b *testing.B) {
 		cpuidNS := time.Since(start).Nanoseconds()
 		k := &kernel.Kernel{Platform: stubPlatform{sys}}
 		k.SetMemoryFile(pgalloc.MemoryFileFromContext(restoreCtx))
+		var heapDone func(int)
+		if measureAlloc {
+			heapDone = callbackHeapBracket()
+		}
 		start = time.Now()
 		kernelStats, err := state.Load(restoreCtx, r, k)
 		if err != nil {
 			b.Fatal(err)
 		}
 		kernelNS := time.Since(start).Nanoseconds()
+		if heapDone != nil {
+			heapDone(pass)
+		}
 		if err := r.Verify(); err != nil {
 			b.Fatal(err)
 		}
@@ -174,4 +183,15 @@ func BenchmarkRestorePhases(b *testing.B) {
 		}
 		cleanup()
 	}
+}
+
+// callbackHeapBracket records process-wide allocation counters without forcing GC.
+func callbackHeapBracket() func(int) {
+	var before, after runtime.MemStats
+	done := func(pass int) {
+		runtime.ReadMemStats(&after)
+		fmt.Printf("callback-heap pass=%d bytes=%d mallocs=%d\n", pass, after.TotalAlloc-before.TotalAlloc, after.Mallocs-before.Mallocs)
+	}
+	runtime.ReadMemStats(&before)
+	return done
 }
