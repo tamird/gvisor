@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -283,5 +284,104 @@ func TestWrongDestinationShape(t *testing.T) {
 				t.Fatalf("Load error = %v, want ErrState with object context and %q", err, test.wantErr)
 			}
 		})
+	}
+}
+
+// Zero elision is a wire-format choice, not just a round-trip optimization.
+// In full-value contexts, zero values still establish the element's wire type.
+func TestZeroWireRepresentations(t *testing.T) {
+	type sample struct {
+		name  string
+		value any
+		full  wire.Object
+	}
+	check := func(test sample, defaultWire wire.Object) {
+		t.Run(test.name, func(t *testing.T) {
+			for _, how := range []encodeStrategy{encodeDefault, encodeAsValue} {
+				var es encodeState
+				var encoded wire.Object
+				es.encodeObject(reflect.ValueOf(test.value).Elem(), how, &encoded)
+				want := test.full
+				if how == encodeDefault {
+					want = defaultWire
+				}
+				var gotBytes, wantBytes bytes.Buffer
+				wire.Save(&wire.Writer{Writer: &gotBytes}, encoded)
+				wire.Save(&wire.Writer{Writer: &wantBytes}, want)
+				if got, want := gotBytes.Bytes(), wantBytes.Bytes(); !bytes.Equal(got, want) {
+					t.Errorf("strategy %v wire = %x, want %x", how, got, want)
+				}
+			}
+		})
+	}
+	for _, test := range []sample{
+		{"bool", new(bool), wire.Bool(false)},
+		{"int", new(int64), wire.Int(0)},
+		{"uint", new(uint64), wire.Uint(0)},
+		{"float32", new(float32), wire.Float32(0)},
+		{"float64", new(float64), wire.Float64(0)},
+		{"complex64", new(complex64), new(wire.Complex64)},
+		{"complex128", new(complex128), new(wire.Complex128)},
+		{"string", new(string), new(wire.String(""))},
+		{"pointer", new(*int), &wire.Ref{}},
+		{"slice", new([]int), &wire.Slice{}},
+		{"map", new(map[int]int), &wire.Ref{}},
+		{"interface", new(any), &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}},
+		{"array", new([2]int), &wire.ObjectArray{Contents: []wire.Object{wire.Int(0), wire.Int(0)}}},
+		{"float_array", new([2]float64), &wire.ObjectArray{Contents: []wire.Object{wire.Float64(0), wire.Float64(0)}}},
+		{"nested_array", new([1][1]int), &wire.ObjectArray{Contents: []wire.Object{&wire.ObjectArray{Contents: []wire.Object{wire.Int(0)}}}}},
+	} {
+		check(test, wire.Nil{})
+	}
+	negativeZero := math.Copysign(0, -1)
+	for _, test := range []sample{
+		{"negative_float32", new(float32(negativeZero)), wire.Float32(negativeZero)},
+		{"negative_float64", &negativeZero, wire.Float64(negativeZero)},
+		{"negative_complex64", new(complex64(complex(negativeZero, negativeZero))), new(wire.Complex64(complex(negativeZero, negativeZero)))},
+		{"negative_complex128", new(complex(negativeZero, negativeZero)), new(wire.Complex128(complex(negativeZero, negativeZero)))},
+		{"negative_float_array", new([2]float64{negativeZero, 0}), &wire.ObjectArray{Contents: []wire.Object{wire.Float64(negativeZero), wire.Float64(0)}}},
+		{"negative_complex_array", new([2]complex128{complex(negativeZero, 0), 0}), &wire.ObjectArray{Contents: []wire.Object{new(wire.Complex128(complex(negativeZero, 0))), new(wire.Complex128)}}},
+	} {
+		check(test, test.full)
+	}
+}
+
+type zeroArrayHook struct{}
+
+func (*zeroArrayHook) StateTypeName() string             { return "state.zeroArrayHook" }
+func (*zeroArrayHook) StateFields() []string             { return []string{"value"} }
+func (*zeroArrayHook) StateSave(s Sink)                  { s.SaveValue(0, int64(7)) }
+func (*zeroArrayHook) StateLoad(context.Context, Source) {}
+
+func TestZeroArrayStructHook(t *testing.T) {
+	Register((*zeroArrayHook)(nil))
+	var root [2][1]zeroArrayHook
+	var saved bytes.Buffer
+	if _, err := Save(t.Context(), &saved, &root); err != nil {
+		t.Fatal(err)
+	}
+	reader := wire.Reader{Reader: &saved}
+	if _, _, err := ReadHeader(&reader); err != nil {
+		t.Fatal(err)
+	}
+	if got := wire.Load(&reader); reflect.TypeOf(got) != reflect.TypeFor[*wire.Type]() {
+		t.Fatalf("first wire object = %T, want *wire.Type", got)
+	}
+	if got, want := wire.Load(&reader), wire.Uint(1); got != want {
+		t.Fatalf("root ID = %v, want %v", got, want)
+	}
+	array := wire.Load(&reader).(wire.Array)
+	if got, want := array.Len(), 2; got != want {
+		t.Fatalf("outer array length = %d, want %d", got, want)
+	}
+	for i := 0; i < array.Len(); i++ {
+		inner := array.Element(i).(wire.Array)
+		if got, want := inner.Len(), 1; got != want {
+			t.Fatalf("inner array %d length = %d, want %d", i, got, want)
+		}
+		encoded := inner.Element(0).(*wire.Struct)
+		if got, want := *encoded.Field(0), wire.Int(7); got != want {
+			t.Errorf("element %d hook value = %v, want %v", i, got, want)
+		}
 	}
 }
