@@ -2,6 +2,7 @@
 # for syscall tests with container=True.
 
 load("//tools:defs.bzl", "cc_binary")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -21,3 +22,5 @@ cc_binary(
         "//test/util:socket_util",
     ],
 )
+
+cpplint_test()

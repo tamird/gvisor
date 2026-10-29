@@ -1,5 +1,6 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -77,3 +78,5 @@ pkg_tar(
     package_dir = "images",
     strip_prefix = ".",
 )
+
+cpplint_test()

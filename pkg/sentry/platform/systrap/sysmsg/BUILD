@@ -1,5 +1,6 @@
 load("//tools:arch.bzl", "arch_genrule", "select_arch")
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_library")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 load("build.bzl", "cc_pie_obj")
 
 package(
@@ -139,3 +140,5 @@ go_library(
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
+
+cpplint_test()
