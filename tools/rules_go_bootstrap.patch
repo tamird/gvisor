@@ -1,0 +1,130 @@
+diff --git a/go/private/rules/binary.bzl b/go/private/rules/binary.bzl
+--- a/go/private/rules/binary.bzl
++++ b/go/private/rules/binary.bzl
+@@ -586,23 +586,38 @@
+         args.add(out)
+         args.add_all(ctx.files.srcs)
+ 
+-        setting = ctx.attr._use_sh_toolchain_for_bootstrap_process_wrapper[BuildSettingInfo].value
+-        sh_toolchain = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"]
+-        binary_wrapper = ctx.file._binary_wrapper
+-        if setting and sh_toolchain:
+-            binary_wrapper = ctx.actions.declare_file(name + "_binary_wrapper.sh")
+-            ctx.actions.expand_template(
+-                template = ctx.file._binary_wrapper,
+-                output = binary_wrapper,
+-                is_executable = True,
+-                substitutions = {
+-                    "#!/usr/bin/env bash": "#!{}".format(sh_toolchain.path),
+-                },
+-            )
++        tool_inputs = [sdk.headers, sdk.srcs, sdk.libs, sdk.tools]
++        bootstrap_inputs = list(ctx.files.srcs)
++        arguments = [args]
++        if sdk.goos == "linux":
++            runtime = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
++            binary_wrapper = runtime.interpreter
++            if not binary_wrapper:
++                fail("The empty worker needs a Python executable from declared files.")
++            script = ctx.actions.args()
++            script.add("-I")
++            script.add(ctx.file._bootstrap_python)
++            arguments = [script, args]
++            bootstrap_inputs.append(ctx.file._bootstrap_python)
++            tool_inputs.append(runtime.files)
++        else:
++            setting = ctx.attr._use_sh_toolchain_for_bootstrap_process_wrapper[BuildSettingInfo].value
++            sh_toolchain = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"]
++            binary_wrapper = ctx.file._binary_wrapper
++            if setting and sh_toolchain:
++                binary_wrapper = ctx.actions.declare_file(name + "_binary_wrapper.sh")
++                ctx.actions.expand_template(
++                    template = ctx.file._binary_wrapper,
++                    output = binary_wrapper,
++                    is_executable = True,
++                    substitutions = {
++                        "#!/usr/bin/env bash": "#!{}".format(sh_toolchain.path),
++                    },
++                )
+ 
+         ctx.actions.run(
+             executable = binary_wrapper,
+-            arguments = [args],
++            arguments = arguments,
+             tools = [sdk.go],
+             env = {
+                 "GOMAXPROCS": "1",
+@@ -614,8 +629,8 @@
+                 "LD_FLAGS": ctx.attr.ldflags,
+             },
+             inputs = depset(
+-                ctx.files.srcs,
+-                transitive = [sdk.headers, sdk.srcs, sdk.libs, sdk.tools],
++                bootstrap_inputs,
++                transitive = tool_inputs,
+             ),
+             toolchain = None,
+             outputs = [out, ctx.outputs.out_pack],
+@@ -644,6 +659,10 @@
+             doc = "Raw value to pass to go build via -ldflags without tokenization",
+         ),
+         "out_pack": attr.output(),
++        "_bootstrap_python": attr.label(
++            allow_single_file = True,
++            default = "//go/private/rules:bootstrap.py",
++        ),
+         "_binary_wrapper": attr.label(
+             allow_single_file = True,
+             default = "//go/private/rules:binary_wrapper.sh",
+@@ -665,7 +684,10 @@
+ only as of Go 1.25. Combining both builds into a single action drastically
+ reduces the overall build time due to Go's own caching mechanism.
+ """,
+-    toolchains = [config_common.toolchain_type("@bazel_tools//tools/sh:toolchain_type", mandatory = False)],
++    toolchains = [
++        config_common.toolchain_type("@bazel_tools//tools/python:toolchain_type", mandatory = False),
++        config_common.toolchain_type("@bazel_tools//tools/sh:toolchain_type", mandatory = False),
++    ],
+ )
+ 
+ def gc_linkopts(ctx):
+diff --git a/go/private/rules/BUILD.bazel b/go/private/rules/BUILD.bazel
+--- a/go/private/rules/BUILD.bazel
++++ b/go/private/rules/BUILD.bazel
+@@ -9,6 +9,7 @@
+ exports_files([
+     "library.bzl",
+     "binary_wrapper.sh",
++    "bootstrap.py",
+ ])
+ 
+ [
+diff --git a/go/private/rules/bootstrap.py b/go/private/rules/bootstrap.py
+new file mode 100644
+--- /dev/null
++++ b/go/private/rules/bootstrap.py
+@@ -0,0 +1,24 @@
++"""Compile the Go SDK bootstrap helpers with a private cache."""
++
++import os
++import subprocess
++import sys
++import tempfile
++
++
++def main():
++    pack, builder, *sources = sys.argv[1:]
++    with tempfile.TemporaryDirectory(dir=os.getcwd()) as cache:
++        env = os.environ | {
++            "HOME": cache,
++            "TMPDIR": cache,
++            "PATH": "/nonexistent",
++            "CGO_ENABLED": "0",
++        }
++        args = [env["GO_BINARY"], "build", "-trimpath", '-ldflags=-buildid="" ' + env["LD_FLAGS"], "-o"]
++        subprocess.run([*args, pack, "cmd/pack"], env=env, check=True)
++        subprocess.run([*args, builder, *sources], env=env, check=True)
++
++
++if __name__ == "__main__":
++    main()
