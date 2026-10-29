@@ -1,0 +1,121 @@
+name: Verify configured source-image aliases
+on:
+  push:
+    branches: [qualification/configured-alias-original-verdict]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        purpose: [reporter-tests, original]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Retrieve the exact previous native receipt
+        if: matrix.purpose == 'original'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/old" "$RUNNER_TEMP/row" "$RUNNER_TEMP/result"
+          gh run download 40803049279 -R tamird/gvisor -n qualification-row-amd64-remote-build-attempt-1 --dir "$RUNNER_TEMP/old"
+          archive=$(find "$RUNNER_TEMP/old" -type f -name qualification.tar.gz)
+          printf '%s  %s\n' 95057fd5f821717ea83cfe67a020be5dedf230609502a7dc35c5219f0a3b460f "$archive" | sha256sum -c --strict
+          tar -xzf "$archive" -C "$RUNNER_TEMP/row"
+          gh run download 40806492634 -R tamird/gvisor -n source-image-alias-original --dir "$RUNNER_TEMP/graph"
+          printf '%s  %s\n' d254d0e97604b568c2f5b208d7cc25f074c04d2ae5c17b14f81512fbf17ee3c1 "$RUNNER_TEMP/graph/alias-deps.json" | sha256sum -c --strict
+          mkdir "$RUNNER_TEMP/tools"
+          cp test/rbe/{qualification_report,unit_matrix}.py "$RUNNER_TEMP/tools/"
+          git fetch --no-tags --depth=1 origin aad282f2d1c64f96710706e8413475003432d684
+          git checkout --detach aad282f2d1c64f96710706e8413475003432d684
+          curl --fail --silent --show-error --location --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          printf '%s  %s\n' f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb "$RUNNER_TEMP/bb" | sha256sum -c --strict
+          chmod +x "$RUNNER_TEMP/bb"
+      - name: Analyze original or execute native reporter suites
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          PURPOSE: ${{ matrix.purpose }}
+        run: |
+          set -eu
+          umask 077
+          rc="$RUNNER_TEMP/audit.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+              'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --noremote_accept_cached' \
+              'build:buildbuddy_remote_executor --remote_download_outputs=minimal'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          if [[ "$PURPOSE" == original ]]; then
+            inv="$RUNNER_TEMP/row/invocation-EIdkhP"
+            cp "$RUNNER_TEMP/graph/alias-deps.json" "$inv/source-image-aliases.json"
+            python3 "$RUNNER_TEMP/tools/qualification_report.py" preflight --events "$inv/expected.jsonl" --native-exit 0 --kind build --output "$inv/selection.json"
+          else
+            platform="$RUNNER_TEMP/audit_platform"
+            mkdir -p "$platform" "$RUNNER_TEMP/result"
+            touch "$platform/MODULE.bazel"
+            cat > "$platform/BUILD.bazel" <<'BUILD'
+          platform(
+              name = "linux",
+              constraint_values = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+              exec_properties = {
+                  "OSFamily": "linux", "Arch": "amd64", "workload-isolation-type": "firecracker",
+                  "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+            bazelisk --bazelrc="$rc" test --inject_repository="audit_platform=$platform" \
+              --host_platform=@audit_platform//:linux --extra_execution_platforms=@audit_platform//:linux \
+              --platforms=//tools/bazeldefs:linux_amd64 --nocache_test_results --strategy=TestRunner=remote \
+              --remote_download_regex='.*[/]test[.](log|xml)$' --test_output=errors \
+              //test/rbe:qualification_report_test //test/rbe:unit_matrix_test
+            cp bazel-testlogs/test/rbe/qualification_report_test/test.log "$RUNNER_TEMP/result/reporter.log"
+            cp bazel-testlogs/test/rbe/unit_matrix_test/test.log "$RUNNER_TEMP/result/planner.log"
+          fi
+      - name: Replay the row and compose its receipt
+        if: matrix.purpose == 'original'
+        run: |
+          row="$RUNNER_TEMP/row"; out="$RUNNER_TEMP/result"; inv="$row/invocation-EIdkhP"
+          tool="$RUNNER_TEMP/tools/qualification_report.py"
+          cp "$row/matrix-audits.json" "$out/original-audit.json"
+          cp "$inv/source-image-aliases.json" "$out/alias-deps.json"
+          cp "$inv/selection.json" "$out/selection.json"
+          audit=0
+          python3 "$tool" source-image-row --directory "$row" --decoder "$RUNNER_TEMP/bb" || audit=$?
+          cp "$row/matrix-audits.json" "$out/replayed-audit.json"
+          cat "$out/replayed-audit.json"
+          if [[ -f "$inv/source-image-audit.json" ]]; then cp "$inv/source-image-audit.json" "$out/physical-audit.json"; fi
+          if [[ -f "$inv/source-image-expectations.json" ]]; then cp "$inv/source-image-expectations.json" "$out/expectations.json"; fi
+          (( audit == 0 ))
+          python3 "$tool" bundle --directory "$row" --runner-exit 0 --capture-exit 0 --output "$out/reconciled.tar.gz"
+          python3 - "$row" "$out" <<'PY'
+          import hashlib, json, sys
+          from pathlib import Path
+          row,out=map(Path,sys.argv[1:]); data=json.loads((row/'matrix-plan.json').read_text()); meta=json.loads((row/'matrix-row.json').read_text())
+          archive=out/'reconciled.tar.gz'; identity=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          result={k:data[k] for k in ('schema_version','source','run_id','run_attempt')}
+          result.update(plan_sha256=identity(row/'matrix-plan.json'),matrix_result='success',transfer_result='success',rows=[{'id':meta['row']['id'],'artifact':{'path':archive.name,'sha256':identity(archive),'bytes':archive.stat().st_size}}])
+          (out/'results.json').write_text(json.dumps(result))
+          PY
+          python3 "$tool" compose --plan "$row/matrix-plan.json" --results "$out/results.json" \
+            --directory "$out/composed" --output "$out/composed.json"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: source-image-alias-${{ matrix.purpose }}
+          path: |
+            ${{ runner.temp }}/result/*.json
+            ${{ runner.temp }}/result/*.log
