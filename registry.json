@@ -30958,7 +30958,7 @@
       "url": "https://github.com/google/gvisor/pull/16601",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-28T15:48:09.605364+00:00",
+      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
       "summary": "After an RTO, the stock sender counted a timestamp-free ACK as evidence of spurious recovery. Both counters increased to one even though the post-ACK flag was clear. The fix requires negotiated timestamps and a timestamp option on this ACK. With the same partial ACK, both counters stayed zero without timestamps and reached one with a valid echo. The complete TCP SACK wire suite passed 31 cases each on native AMD64 and ARM64. This tests recovery detection, not throughput.",
       "evidence": [
         {
@@ -31000,6 +31000,14 @@
         {
           "label": "Original comparison FAIL: stock counters differed, but the verifier also expected the post-ACK flag to differ",
           "url": "https://app.buildbuddy.io/invocation/63be4163-22da-46bb-b7d5-800730876d82"
+        },
+        {
+          "label": "Prior sender: zero echo miscounts both recoveries",
+          "url": "https://app.buildbuddy.io/invocation/0f75db78-7487-4e84-92c6-083d49ed8e59"
+        },
+        {
+          "label": "Corrected sender: all four ACK cases pass",
+          "url": "https://app.buildbuddy.io/invocation/88347058-c72a-4db0-b413-96881acd6efc"
         }
       ],
       "followup": {
@@ -31020,6 +31028,24 @@
           "https://app.buildbuddy.io/invocation/4a520250-7bf1-4288-b410-e1a1064e8e85",
           "https://app.buildbuddy.io/invocation/63be4163-22da-46bb-b7d5-800730876d82"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "450dd7775cfa6114cf02a6b754a258235f447f52",
+        "baseHead": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853",
+        "url": "https://github.com/tamird/gvisor/commit/450dd7775cfa6114cf02a6b754a258235f447f52",
+        "title": "Require a nonzero echo to detect spurious TCP recovery",
+        "summary": "An ACK with a zero timestamp echo advanced SndUna but wrongly incremented both spurious-recovery counters. All four ACK variants pass after the correction.",
+        "body": "Publish the reviewed amendment and reply on both of Lucas Manning\u2019s original threads."
+      },
+      "refinement": {
+        "before": {
+          "head": "978bcdf025e2226dff0c3cbfb4554c2f0b9ea853"
+        },
+        "after": {
+          "head": "450dd7775cfa6114cf02a6b754a258235f447f52"
+        }
       }
     },
     {
@@ -31838,8 +31864,8 @@
       "title": "Report duplicate queued TCP data above a receive gap",
       "url": "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T00:18:15.244037+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
       "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
       "evidence": [
         {
@@ -31867,14 +31893,12 @@
           "url": "https://app.buildbuddy.io/invocation/6defa75d-a500-458a-9698-d1a8039afa7d"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
-        "url": "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
-        "title": "Report duplicate queued TCP data above a receive gap",
-        "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
-        "body": "Open after #16403 lands."
+      "followup": {
+        "owner": "root",
+        "sourceHead": "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+        "observedAt": "2026-10-29T00:37:26.613452+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "Open the reviewed commit after #16403 lands."
       }
     },
     {
@@ -31886,8 +31910,8 @@
       "title": "Return a resolved mount immediately and test the last RACK recovery round",
       "url": "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T00:27:15.597631+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
       "summary": "If mount resolution wins after waiter registration, return the resolved path without racing the timeout. At the largest RACK window, check that a duplicate SACK still refreshes persistence and advances the round. Both changes passed all 39 VFS and 43 TCP cases.",
       "evidence": [
         {
@@ -31907,14 +31931,12 @@
           "url": "https://github.com/google/gvisor/pull/16605#discussion_r4407457965"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "f4605a0bc66962181c2c8e3146deaa06988fe023",
-        "url": "https://github.com/tamird/gvisor/commit/f4605a0bc66962181c2c8e3146deaa06988fe023",
-        "title": "Return a resolved mount immediately and test the last RACK recovery round",
-        "summary": "If mount resolution wins after waiter registration, return the resolved path without racing the timeout. At the largest RACK window, check that a duplicate SACK still refreshes persistence and advances the round. Both changes passed all 39 VFS and 43 TCP cases.",
-        "body": "Open the rollup after #16594 and #16605 land."
+      "followup": {
+        "owner": "root",
+        "sourceHead": "f4605a0bc66962181c2c8e3146deaa06988fe023",
+        "observedAt": "2026-10-29T00:37:26.613452+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "Open the reviewed commit after #16594 and #16605 lands."
       }
     }
   ],
@@ -46328,7 +46350,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-28T23:57:16Z",
+      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -46682,9 +46704,39 @@
               "url": "https://github.com/tamird/gvisor/commit/744d7e646fcc0a3caaf61ab139e7ab6178cbebd9"
             }
           ]
+        },
+        {
+          "text": "The scratch image contains only /hello. Its Go SDK bootstrap could not start rules_go\u2019s shell wrapper. On the same uncached Linux/AMD64 worker, a declared interpreter and SDK produced the 7,803,235-byte Go builder and 3,245,933-byte pack tool. The successful verdict was available 0.907 seconds after execution finished. This is a fork experiment; it does not qualify the full release or ARM64.",
+          "evidence": [
+            {
+              "label": "Stock shell-wrapper control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40794059875"
+            },
+            {
+              "label": "Go SDK bootstrap with declared interpreter",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40794211142"
+            }
+          ]
+        },
+        {
+          "text": "Two separate PyWriteBuildData failures in the release used no status inputs: rules_pkg\u2019s make_deb and build_tar run in exec configuration without stamping. rules_python 2.4.5 includes the upstream change that writes these files without a shell. The selected hermetic-LLVM module-map generator is present, but the kernel cannot start its ELF interpreter from the empty image.",
+          "evidence": [
+            {
+              "label": "Six-archive release failures",
+              "url": "https://app.buildbuddy.io/invocation/7ba3fa37-8c32-4a2a-826c-8cb96e3ec646"
+            },
+            {
+              "label": "Released Python build-data correction",
+              "url": "https://github.com/bazel-contrib/rules_python/commit/ff35ee4a2073848cd2fe5b5b88a495a844b3c6e1"
+            },
+            {
+              "label": "The actual module-map binary and loader",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40794307277"
+            }
+          ]
         }
       ],
-      "nextStep": "Reconcile the six-archive release build on the verified shell-free worker; identify and fix the first undeclared tool or missing declared input. For rules_pkg, retain the direct declared-interpreter alternative to expensive ZIP launchers.",
+      "nextStep": "Qualify the released rules_python fix with the tar and Debian packaging tools. Resolve the native module-map generator\u2019s dependency on the host ELF loader, then rerun the release once its known blockers are fixed.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
@@ -46876,7 +46928,7 @@
       "status": "active",
       "group": "tests",
       "owner": "Tamir",
-      "updatedAt": "2026-10-29T00:27:15.597631+00:00",
+      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
       "summary": "Four suggestions are ready in the first rollup, which waits on #16496. Two more have tested fixes and replies in a separate rollup; #16594 and #16605 retain their approved heads.",
       "findings": [
         {
@@ -47003,7 +47055,7 @@
           ]
         }
       ],
-      "nextStep": "Open the first rollup after #16496 lands. Submit the second once its two parents land and the contributor has reviewed it.",
+      "nextStep": "Open the first reviewed rollup after #16496 lands. Open the second reviewed rollup after #16594 and #16605 land.",
       "evidence": [
         {
           "label": "Approved cleanup with final comment wording and Linux source link",
