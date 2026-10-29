@@ -42,8 +42,12 @@
 ##
 ##   To opt out of these wrappers, set DOCKER_BUILD=false.
 DOCKER_BUILD := true
+bazel_free_goals := help
+ifneq ($(origin RELEASE_ARTIFACTS),undefined)
+bazel_free_goals += release
+endif
 ifneq ($(MAKECMDGOALS),)
-ifeq ($(filter-out help,$(MAKECMDGOALS)),)
+ifeq ($(filter-out $(bazel_free_goals),$(MAKECMDGOALS)),)
 DOCKER_BUILD := false
 endif
 endif
