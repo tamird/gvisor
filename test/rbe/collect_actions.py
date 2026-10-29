@@ -32,7 +32,7 @@ import qualification_report as report
 
 def collect_actions(run: int, source: str, architecture: str, prefix: Path,
                     poll_interval: int = 10, run_attempt: int | None = None,
-                    watch_seconds: int = 10000) -> dict[str, object]:
+                    watch_seconds: int = 10000, row_id: str | None = None) -> dict[str, object]:
     """Reuse gh watch/download and the canonical authenticated bundle receipt."""
     def output(suffix: str) -> Path:
         return Path(str(prefix) + suffix)
@@ -86,7 +86,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
         path = f"repos/tamird/gvisor/actions/runs/{run}"
         metadata = api(path)
         observe(metadata)
-        if metadata.get("status") != "completed":
+        if row_id is None and metadata.get("status") != "completed":
             deadline = time.monotonic() + watch_seconds
             with output("-watch.log").open("w") as log:
                 # A disconnected watch does not stop the workflow. Reattach
@@ -108,16 +108,18 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
                     observe(metadata)
                     if metadata.get("status") == "completed":
                         break
-        if metadata.get("status") != "completed":
+        if row_id is None and metadata.get("status") != "completed":
             raise ValueError("Workflow is still live; retain its handle rather than restarting")
-        workflow["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        if metadata.get("status") == "completed":
+            workflow["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         artifacts = api(path + "/artifacts")
         report.write_json(output("-artifacts.json"), artifacts)
-        artifact_name = f"qualification-{architecture}-attempt-{bound_attempt}"
+        label = architecture if row_id is None else "row-" + row_id
+        artifact_name = f"qualification-{label}-attempt-{bound_attempt}"
         accepted_names = [artifact_name]
         # Old workflows did not distinguish attempts. Their artifact is safe
         # only on the first attempt, before any earlier producer can exist.
-        if bound_attempt == 1:
+        if row_id is None and bound_attempt == 1:
             accepted_names.append("qualification-" + architecture)
         rows = [report.mapping(item) for item in report.sequence(artifacts["artifacts"])
                 if report.mapping(item).get("name") in accepted_names
@@ -139,12 +141,22 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
             )
         result = report.receipt(output("-actions.zip"), report.string(artifact["digest"]),
                                 source, None, deadline=time.monotonic() + 180)
+        if row_id is not None:
+            metadata = report.mapping(result.get("matrix_row"))
+            row = report.mapping(metadata.get("row"))
+            if (metadata.get("source") != source or metadata.get("run_id") != str(run)
+                    or metadata.get("run_attempt") != bound_attempt
+                    or row.get("id") != row_id or row.get("architecture") != architecture):
+                raise ValueError("Published row does not match the requested source, run, attempt, ID and architecture")
         result["producer_status"] = result["status"]
         result["collection_status"] = "COMPLETE"
     except (OSError, subprocess.SubprocessError, ValueError, KeyError, EOFError,
             zipfile.BadZipFile, tarfile.TarError) as error:
         result = {"schema_version": 1, "status": "INCOMPLETE",
                   "collection_status": "INCOMPLETE", "collection_error": str(error)}
+    if row_id is not None:
+        result["scope"] = "row"
+        result["requested_row"] = row_id
     if workflow.get("status") == "completed":
         conclusion = workflow.get("conclusion")
         if conclusion in ("failure", "cancelled", "timed_out", "action_required", "startup_failure", "stale"):
@@ -152,6 +164,9 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
         elif conclusion != "success" and result["status"] != "FAIL":
             result["status"] = "INCOMPLETE"
     elif result["status"] != "FAIL":
+        result["status"] = "INCOMPLETE"
+    if row_id is not None and result["status"] == "PASS":
+        # Only the composed artifact can establish that every planned row ran.
         result["status"] = "INCOMPLETE"
     result.update({"workflow": workflow, "submitted_source": source, "requested_run": run,
                    "requested_run_attempt": run_attempt, "bound_run_attempt": bound_attempt,
@@ -171,6 +186,8 @@ def main() -> int:
     parser.add_argument("--source", required=True)
     parser.add_argument("--architecture", choices=("amd64", "arm64", "all"), required=True)
     parser.add_argument("--prefix", type=Path, required=True)
+    parser.add_argument("--row", help="Read this planned row once, without waiting for the workflow. "
+                        "Its producer_status applies to the row only.")
     parser.add_argument("--run-attempt", type=int,
                         help="Required workflow attempt; otherwise bind the first observed attempt")
     parser.add_argument("--poll-interval", type=int, default=10,
@@ -179,9 +196,11 @@ def main() -> int:
                         help="Positive total watch budget in seconds, shared across reattachments")
     args = parser.parse_args()
     result = collect_actions(args.run, args.source, args.architecture, args.prefix,
-                             args.poll_interval, args.run_attempt, args.watch_seconds)
-    print(f"{result['status']}: {args.prefix}-receipt.json", flush=True)
-    return int(result["status"] != "PASS")
+                             args.poll_interval, args.run_attempt, args.watch_seconds, args.row)
+    status = (result.get("producer_status", "INCOMPLETE")
+              if args.row is not None else result["status"])
+    print(f"{'Row ' + args.row + ': ' if args.row is not None else ''}{status}: {args.prefix}-receipt.json", flush=True)
+    return int(status != "PASS" or result["status"] == "FAIL")
 
 
 if __name__ == "__main__":

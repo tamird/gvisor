@@ -94,10 +94,10 @@ jobs:
       run: |
         plan=$(bash test/rbe/qualify.sh --dispatch-plan)
         printf 'plan=%s\n' "$plan" >> "$GITHUB_OUTPUT"
-        in_place=$(jq -r '.profile == "single" and (.rows | length == 1) and .rows[0].runner == "ubuntu-24.04"' <<<"$plan")
+        in_place=$(jq -r '.profile == "single" and (.rows | length <= 2) and all(.rows[]; .runner == "ubuntu-24.04")' <<<"$plan")
         printf 'in_place=%s\n' "$in_place" >> "$GITHUB_OUTPUT"
 
-    - name: Run the single selected row
+    - name: Run the selected checks
       id: row
       if: steps.plan.outputs.in_place == 'true'
       timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[0].job_minutes }}
@@ -108,12 +108,23 @@ jobs:
         cos: ${{ inputs.cos_catalog_gzip_base64 }}
         key: ${{ secrets.BUILDBUDDY_API_KEY }}
 
+    - name: Run the remaining Nogo checks
+      id: nogo
+      if: always() && steps.plan.outputs.in_place == 'true' && fromJSON(steps.plan.outputs.plan).rows[1].id != ''
+      timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[1].job_minutes }}
+      uses: ./.github/actions/qualification-row
+      with:
+        plan: ${{ steps.plan.outputs.plan }}
+        row: ${{ toJSON(fromJSON(steps.plan.outputs.plan).rows[1]) }}
+        cos: ${{ inputs.cos_catalog_gzip_base64 }}
+        key: ${{ secrets.BUILDBUDDY_API_KEY }}
+
     - name: Verify the original row bytes
       if: always() && steps.plan.outputs.in_place == 'true'
       uses: ./.github/actions/qualification-result
       with:
         plan: ${{ steps.plan.outputs.plan }}
-        outcome: ${{ steps.row.outcome }}
+        outcome: ${{ steps.nogo.outcome == 'failure' && 'failure' || steps.row.outcome }}
         label: ${{ inputs.architecture }}
 
   remote-qualification:

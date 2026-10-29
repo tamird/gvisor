@@ -3951,6 +3951,37 @@ signal.pause()
                 self.assertEqual(value["watch_exits"], [1, 1])
                 shutil.rmtree(invocation)
 
+    def test_actions_reads_a_published_row_before_the_workflow_finishes(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        for fixture in ("pass", "fail", "zero"):
+            with self.subTest(fixture=fixture):
+                invocation = self.fixture(fixture)
+                source = report.read_json(invocation / "context.json")["expected_source"]
+                pending = {**retained, "head_sha": source, "status": "in_progress", "conclusion": None}
+                row = "amd64-remote-test"
+                identity = {"source": source, "run_id": str(pending["id"]), "run_attempt": pending["run_attempt"],
+                            "row": {"id": row, "architecture": "amd64"}}
+                report.write_json(self.evidence / "matrix-row.json", identity)
+                artifact, producer = self.artifact(invocation)
+                published = {"id": 1, "name": f"qualification-row-{row}-attempt-{pending['run_attempt']}",
+                             "expired": False, "digest": "sha256:" + report.file_record(artifact)["sha256"]}
+                def download(command: list[str], *, stdout: BinaryIO, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                    self.assertEqual(command[:2], ["gh", "api"])
+                    stdout.write(artifact.read_bytes())
+                    return subprocess.CompletedProcess(command, 0)
+                for selected, valid in ((row, True), ("other", False)):
+                    name = f"qualification-row-{selected}-attempt-{pending['run_attempt']}"
+                    responses = [json.dumps(value).encode() for value in (pending, {"artifacts": [{**published, "name": name}]})]
+                    with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                          mock.patch.object(collect_actions.subprocess, "run", side_effect=download)):
+                        result = collect_actions.collect_actions(pending["id"], source, "amd64", self.root / "actions",
+                                                                 row_id=selected)
+                    self.assertEqual(result["collection_status"], "COMPLETE" if valid else "INCOMPLETE")
+                    self.assertEqual(result.get("producer_status"), producer["status"] if valid else None)
+                    self.assertEqual(result["status"], "FAIL" if fixture == "fail" and valid else "INCOMPLETE")
+                    self.assertEqual(result["watch_exits"], [])
+                shutil.rmtree(invocation)
+
     def test_actions_collection_retains_live_run_after_watch_failures(self) -> None:
         retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
         pending = {**retained, "status": "in_progress", "conclusion": None}

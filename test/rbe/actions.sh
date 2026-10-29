@@ -132,7 +132,7 @@ cleanup() {
     # command failure if reporting or final cleanup also fails.
     timeout --signal=TERM --kill-after=5s 600s python3 "$qualification_workspace/test/rbe/qualification_report.py" bundle \
       --directory "$qualification_artifacts" --runner-exit "$status" --capture-exit "$capture_status" \
-      --output "${BUILDBUDDY_ARTIFACTS_DIRECTORY:-$RUNNER_TEMP}/qualification.tar.gz" || bundle_status=$?
+      --output "${BUILDBUDDY_ARTIFACTS_DIRECTORY:-$qualification_result_root}/qualification.tar.gz" || bundle_status=$?
     if [[ -n ${BUILDBUDDY_ARTIFACTS_DIRECTORY:-} ]]; then
       # A slow log download must not delay reporting the completed test results.
       gzip -c -- "$qualification_artifacts/verdict.json" > "$BUILDBUDDY_ARTIFACTS_DIRECTORY/verdict.json.gz" || bundle_status=$?
@@ -142,7 +142,7 @@ cleanup() {
     # A failing test's evidence may be published if both actual uploads pass.
     timeout --signal=TERM --kill-after=5s 600s \
       python3 "$qualification_workspace/test/rbe/credential_artifacts.py" verify \
-      "$qualification_credentials" "$RUNNER_TEMP/qualification.tar.gz" \
+      "$qualification_credentials" "$qualification_result_root/qualification.tar.gz" \
       "$qualification_artifacts/verdict.json" || publication_status=$?
     rm -rf -- "$qualification_credentials" || publication_status=1
     if (( publication_status == 0 )); then
@@ -162,8 +162,9 @@ trap cleanup EXIT
 # bundle. Bazel downloads the selected reports directly from its remote cache.
 RUNNER_TEMP=${RUNNER_TEMP:-$(mktemp -d)}
 export RUNNER_TEMP
-mkdir -p "$RUNNER_TEMP/qualification"
-qualification_artifacts=$RUNNER_TEMP/qualification
+qualification_result_root=${QUALIFICATION_RESULT_ROOT:-$RUNNER_TEMP}
+qualification_artifacts=$qualification_result_root/qualification
+mkdir -p "$qualification_artifacts"
 qualification_private=$(mktemp -d "$RUNNER_TEMP/qualification-private.XXXXXX")
 # BuildBuddy reuses the last startup options for its final workspace-lock check.
 # Its coordinator must still be able to read this file after our cleanup.
@@ -383,7 +384,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       sysctl kernel.unprivileged_userns_clone kernel.apparmor_restrict_unprivileged_userns || true
       systemctl --version
       docker version || true
-    } | tee "$RUNNER_TEMP/qualification/host.txt"
+    } | tee "$qualification_artifacts/host.txt"
     if [[ $QUALIFICATION_EXECUTION == local ]]; then
       # The unchanged release smoke deliberately exercises unprivileged setup.
       [[ $(id -u) != 0 ]]
@@ -406,7 +407,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # The maintained rtnetlink syscall owners invoke ip and OpenBSD nc.
         sudo -n apt-get update
         sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y iproute2 netcat-openbsd
-        dpkg-query -W iproute2 netcat-openbsd | tee "$RUNNER_TEMP/qualification/network-tools.txt"
+        dpkg-query -W iproute2 netcat-openbsd | tee "$qualification_artifacts/network-tools.txt"
         command -v ip nc
       fi
       if [[ ${lanes[*]} == syscalls && $QUALIFICATION_ARCH == amd64 ]]; then

@@ -139,6 +139,16 @@ failure or unexpected native result fails the workflow. The combined
 receipt retains FAIL when a complete multi-row result merely confirms the
 native job's failure.
 
+For mixed investigations in one runner, publish the short reproduction or
+benchmark as its own planned row before starting slower checks. The
+`qualification-row` action uploads the original bundle at the end of each row;
+use a distinct row ID and output directory for each. The final result must still
+require every row, including a failed or missing one. To read a published row
+while the workflow is running, use the collector's `--row ROW_ID` option with
+the same run, attempt, architecture and full workflow SHA. It makes one read
+without waiting. Its `producer_status` is the result of that row; only the
+final combined receipt qualifies the run.
+
 Start new qualification refs from `qualification/final-public-ci`. For
 existing refs using this harness, carry the workflow, both
 `.github/actions/qualification-*` actions and the corresponding reporter

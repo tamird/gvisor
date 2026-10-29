@@ -39,6 +39,7 @@ runs:
       env:
         QUALIFICATION_PLAN_JSON: ${{ inputs.plan }}
         QUALIFICATION_ROW_ID: ${{ fromJSON(inputs.row).id }}
+        QUALIFICATION_RESULT_ROOT: ${{ runner.temp }}/qualification-rows/${{ fromJSON(inputs.row).id }}
         QUALIFICATION_COMMIT: ${{ github.sha }}
         QUALIFICATION_EXECUTION: ${{ fromJSON(inputs.row).coordinator }}
         QUALIFICATION_CLOCK_SOURCE: ${{ fromJSON(inputs.plan).side_inputs.clock_source }}
@@ -75,6 +76,6 @@ runs:
       with:
         name: qualification-row-${{ fromJSON(inputs.row).id }}-attempt-${{ github.run_attempt }}
         path: |
-          ${{ runner.temp }}/qualification.tar.gz
-          ${{ runner.temp }}/qualification/verdict.json
+          ${{ runner.temp }}/qualification-rows/${{ fromJSON(inputs.row).id }}/qualification.tar.gz
+          ${{ runner.temp }}/qualification-rows/${{ fromJSON(inputs.row).id }}/qualification/verdict.json
         if-no-files-found: error

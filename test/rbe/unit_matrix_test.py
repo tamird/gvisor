@@ -65,6 +65,11 @@ class DispatchPlanTest(unittest.TestCase):
     def plan(self, **changes):
         return unit_matrix.dispatch_plan(**(self.inputs | changes))
 
+    def test_selected_checks_publish_before_nogo_on_the_same_machine(self) -> None:
+        plan = self.plan(profile="single", lanes=["nogo", "smoke", "workflows"])
+        self.assertEqual([(row["lanes"], row["runner"]) for row in plan["rows"]],
+                         [(["smoke", "workflows"], "ubuntu-24.04"), (["nogo"], "ubuntu-24.04")])
+
     def test_full_routes_preserve_native_hosts_and_canonical_pgo_selection(self):
         plan = self.plan()
         rows = {row["id"]: row for row in plan["rows"]}

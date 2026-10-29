@@ -193,8 +193,13 @@ def dispatch_plan(*, profile: str, source: str, run_id: str, run_attempt: int,
             raise ValueError("The public CPU profile cannot narrow targets, cases or syscall buckets")
         rows = public_dispatch_rows(pgo_manifest)
     elif profile == "single":
-        rows = [dispatch_row(lanes, architecture, execution, requirements=requirements,
-                             targets=targets, test_filter=test_filter, syscall_bucket=syscall_bucket)]
+        groups = [lanes]
+        before_nogo = [lane for lane in lanes if lane != "nogo"]
+        if execution == "remote" and "nogo" in lanes and before_nogo and not targets:
+            groups = [before_nogo, ["nogo"]]
+        rows = [dispatch_row(group, architecture, execution, requirements=requirements,
+                             targets=targets, test_filter=test_filter, syscall_bucket=syscall_bucket)
+                for group in groups]
     else:
         raise ValueError(f"Unknown dispatch profile: {profile}")
     selected = {lane for row in rows for lane in row.lanes}
