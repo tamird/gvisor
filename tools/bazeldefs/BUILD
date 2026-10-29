@@ -23,10 +23,12 @@ _RBE_EXEC_PROPERTIES = {
 platform(
     name = "rbe_linux_amd64",
     constraint_values = ["@llvm//constraints/libc:musl"],
-    exec_properties = dict(
-        _RBE_EXEC_PROPERTIES,
-        Arch = "amd64",
-    ),
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+        "workload-isolation-type": "firecracker",
+    },
     parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
 )
 
