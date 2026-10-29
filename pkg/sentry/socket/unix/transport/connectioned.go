@@ -672,8 +672,11 @@ func (e *connectionedEndpoint) SetBoundSocketFD(ctx context.Context, bsFD BoundS
 		bsFD.Close(ctx)
 		return syserr.ErrAlreadyBound.ToError()
 	}
+	if err := fdnotifier.AddFD(bsFD.NotificationFD(), e.WaitQueue); err != nil {
+		bsFD.Close(ctx)
+		return err
+	}
 	e.boundSocketFD = bsFD
-	fdnotifier.AddFD(bsFD.NotificationFD(), e.WaitQueue)
 	return nil
 }
 
@@ -691,44 +694,23 @@ func (e *connectionedEndpoint) ResetBoundSocketFD(ctx context.Context) {
 
 // EventRegister implements waiter.Waitable.EventRegister.
 func (e *connectionedEndpoint) EventRegister(we *waiter.Entry) error {
-	if err := e.baseEndpoint.EventRegister(we); err != nil {
-		return err
-	}
-
 	e.Lock()
-	bsFD := e.boundSocketFD
-	e.Unlock()
-	if bsFD != nil {
-		fdnotifier.UpdateFD(bsFD.NotificationFD())
-	}
-	return nil
+	defer e.Unlock()
+	return e.eventRegisterLocked(we, e.boundSocketFD)
 }
 
 // UpdateMask implements Endpoint.UpdateMask.
 func (e *connectionedEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
 	e.Lock()
 	defer e.Unlock()
-	// A bound socket can subsequently connect to a peer. Readiness then
-	// comes from that peer, not from the socket used to listen for connects.
-	if e.peer != nil {
-		return e.peer.UpdateMask(e.WaitQueue, entry, mask)
-	}
-	if e.boundSocketFD != nil {
-		return fdnotifier.UpdateMask(e.boundSocketFD.NotificationFD(), e.WaitQueue, entry, mask)
-	}
-	return e.WaitQueue.UpdateMask(entry, mask)
+	return e.updateMaskLocked(entry, mask, e.boundSocketFD)
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (e *connectionedEndpoint) EventUnregister(we *waiter.Entry) {
-	e.baseEndpoint.EventUnregister(we)
-
 	e.Lock()
-	bsFD := e.boundSocketFD
-	e.Unlock()
-	if bsFD != nil {
-		fdnotifier.UpdateFD(bsFD.NotificationFD())
-	}
+	defer e.Unlock()
+	e.eventUnregisterLocked(we, e.boundSocketFD)
 }
 
 func (e *connectionedEndpoint) GetAcceptConn() bool {

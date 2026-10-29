@@ -41,6 +41,7 @@ package transport
 import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/fdnotifier"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/syserr"
@@ -968,15 +969,31 @@ type baseEndpoint struct {
 
 // EventRegister implements waiter.Waitable.EventRegister.
 func (e *baseEndpoint) EventRegister(we *waiter.Entry) error {
-	e.WaitQueue.EventRegister(we)
 	e.Lock()
-	c := e.peer
-	e.Unlock()
-	if c != nil {
-		if err := c.EventUpdate(); err != nil {
-			e.WaitQueue.EventUnregister(we)
-			return err
-		}
+	defer e.Unlock()
+	return e.eventRegisterLocked(we, nil)
+}
+
+// +checklocks:e.endpointMutex
+func (e *baseEndpoint) eventRegisterLocked(we *waiter.Entry, bound BoundSocketFD) error {
+	e.WaitQueue.EventRegister(we)
+	if err := e.updateEventsLocked(bound); err != nil {
+		e.WaitQueue.EventUnregister(we)
+		return err
+	}
+	return nil
+}
+
+// A socket that bound a host path can subsequently connect to a peer. Its
+// readiness then comes from that peer, not from the socket used for accept.
+//
+// +checklocks:e.endpointMutex
+func (e *baseEndpoint) updateEventsLocked(bound BoundSocketFD) error {
+	if e.peer != nil {
+		return e.peer.EventUpdate()
+	}
+	if bound != nil {
+		return fdnotifier.UpdateFD(bound.NotificationFD())
 	}
 	return nil
 }
@@ -985,20 +1002,32 @@ func (e *baseEndpoint) EventRegister(we *waiter.Entry) error {
 func (e *baseEndpoint) UpdateMask(entry *waiter.Entry, mask waiter.EventMask) error {
 	e.Lock()
 	defer e.Unlock()
+	return e.updateMaskLocked(entry, mask, nil)
+}
+
+// +checklocks:e.endpointMutex
+func (e *baseEndpoint) updateMaskLocked(entry *waiter.Entry, mask waiter.EventMask, bound BoundSocketFD) error {
 	if e.peer != nil {
 		return e.peer.UpdateMask(e.WaitQueue, entry, mask)
+	}
+	if bound != nil {
+		return fdnotifier.UpdateMask(bound.NotificationFD(), e.WaitQueue, entry, mask)
 	}
 	return e.WaitQueue.UpdateMask(entry, mask)
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (e *baseEndpoint) EventUnregister(we *waiter.Entry) {
-	e.WaitQueue.EventUnregister(we)
 	e.Lock()
-	c := e.peer
-	e.Unlock()
-	if c != nil {
-		c.EventUpdate()
+	defer e.Unlock()
+	e.eventUnregisterLocked(we, nil)
+}
+
+// +checklocks:e.endpointMutex
+func (e *baseEndpoint) eventUnregisterLocked(we *waiter.Entry, bound BoundSocketFD) {
+	e.WaitQueue.EventUnregister(we)
+	if err := e.updateEventsLocked(bound); err != nil {
+		log.Warningf("Updating Unix socket notifications after waiter removal: %v", err)
 	}
 }
 
