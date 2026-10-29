@@ -10623,7 +10623,6 @@ func TestCongestionWindowAfterIdle(t *testing.T) {
 }
 
 func windowAfterIdle(t *testing.T, cc string, idle time.Duration) [5]int {
-	t.Helper()
 	const mss, rtt = 32, 10 * time.Millisecond
 	clock := faketime.NewManualClock()
 	c := context.NewWithOpts(t, context.Options{
@@ -10666,18 +10665,27 @@ func windowAfterIdle(t *testing.T, cc string, idle time.Duration) [5]int {
 		}
 	}
 
-	// Drop the first segment of a full initial window. Three duplicate
-	// ACKs must trigger an actual retransmission on the wire.
-	first := tcp.InitialCwnd * mss
-	write(data[:first])
-	for off := 0; off < first; off += mss {
+	// Establish an RTT and acknowledge data past the initial recovery
+	// marker. Without that ACK, the first data sequence is ineligible for
+	// NewReno fast recovery.
+	write(data[:mss])
+	c.ReceiveAndCheckPacket(data, 0, mss)
+	clock.Advance(rtt)
+	ack(mss)
+	expectSilence()
+
+	// Drop the first segment of the next ten and acknowledge the gap.
+	first := (1 + tcp.InitialCwnd) * mss
+	write(data[mss:first])
+	for off := mss; off < first; off += mss {
 		c.ReceiveAndCheckPacket(data, off, mss)
 	}
 	clock.Advance(rtt)
 	for range 3 {
-		ack(0)
+		ack(mss)
 	}
-	c.ReceiveAndCheckPacket(data, 0, mss)
+	t.Logf("after duplicate ACKs: %+v; retransmissions=%d", info(), c.Stack().Stats().TCP.Retransmits.Value())
+	c.ReceiveAndCheckPacket(data, mss, mss)
 	ack(first)
 	expectSilence()
 	before := info()
