@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T17:29:11.211836+00:00",
+    "updatedAt": "2026-10-29T17:59:00.125903+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16984,22 +16984,23 @@
       "repo": "google/gvisor",
       "number": 15983,
       "ref": "bwrap-sudo-id-bounds",
-      "head": "9182165b35529ed529e72aeddf4c32bcc76ad67f",
+      "head": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
       "title": "Reject invalid sudo IDs before creating user mappings",
       "url": "https://github.com/google/gvisor/pull/15983",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
       "summary": "The requested post-#16046 rebase is published at 9182165b3552 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved unset-only correction is delivered at exact 007c189b39. SUDO_UID/SUDO_GID use LookupEnv: absent variables retain host-ID fallback, while present empty, malformed, negative, oversized and reserved values fail before creating OCI mappings. Before checks reproduce both empty-value failures and eight earlier invalid-ID failures. The corrected five-owner run passes 91 cases, all 14 numeric-ID cases and 26 integration cases, with one existing unsupported user-namespace skip. Public review and CI are pending.",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "9182165b35529ed529e72aeddf4c32bcc76ad67f",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Approved bwrap correction delivered; follow public review and CI",
-        "nextAction": "Use the existing PR/provider sweep for feedback, checks and matching imports. Contributor approval and publication are complete.",
+        "owner": "root",
+        "disposition": "Proposed amendment",
+        "sourceHead": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
+        "observedAt": "2026-10-29T17:59:00.125903+00:00",
+        "nextAction": "After contributor review, publish the amendment and answer the reviewer on #15983.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15983",
-          "https://github.com/tamird/gvisor/commit/9182165b35529ed529e72aeddf4c32bcc76ad67f"
+          "https://github.com/google/gvisor/pull/15983#issuecomment-6503714466",
+          "https://github.com/tamird/gvisor/commit/a51fb04e5",
+          "https://github.com/tamird/gvisor/actions/runs/40924910515"
         ]
       },
       "evidence": [
@@ -17011,7 +17012,17 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/9182165b35529ed529e72aeddf4c32bcc76ad67f"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "a51fb04e5f49a367435fa87e9b7a302c6150f9fb",
+        "baseHead": "b3c7148e6ffc62b47f36d12a47f9f3844d7d794b",
+        "url": "https://github.com/tamird/gvisor/commit/a51fb04e5",
+        "title": "Reject invalid sudo IDs before setting up the sandbox",
+        "summary": "The --dir implementation added on master called a helper the PR removes. Parse the invoking UID and GID once, use them for both mappings and directory ownership, and reject invalid values before creating host directories.",
+        "body": "The PR removed a helper that master now calls while creating --dir paths. Validate SUDO_UID and SUDO_GID once, then pass the pair to directory ownership and the user namespace. A regression checks that invalid input creates no host directory. Publication and the reviewer reply are conditional on the exact-source checks passing."
+      }
     },
     {
       "id": "pr:15819",
@@ -40022,7 +40033,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
       "summary": "Parth leads the graph codec. The integrated series fixes named-map aliases and partially overlapping slices. Open findings include recursive type descriptors, map values copied before callbacks finish, and a retained LoadValue result that changes after restore when the destination is written. No production caller of that last API was found.",
       "findings": [
         {
@@ -42654,9 +42665,26 @@
               "url": "https://github.com/google/gvisor/pull/16580#discussion_r4414484358"
             }
           ]
+        },
+        {
+          "text": "The updated graph series passed both named-map views and all four overlapping-slice cases, including the three-byte element case in both traversal orders. A map containing a direct struct still lost the pointer restored by its hook. A parent explicitly waiting for that map saw nil after the hook ran; the pointer-valued map and direct interface slot controls passed.",
+          "evidence": [
+            {
+              "label": "12 native cases, including the waiting parent",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40925370296/job/123629332762"
+            },
+            {
+              "label": "Graph and scheduling stages",
+              "url": "https://app.buildbuddy.io/invocation/5842912b-fa4e-443e-b9d9-ea7b5317fba3"
+            },
+            {
+              "label": "Current decoder PR",
+              "url": "https://github.com/google/gvisor/pull/16584"
+            }
+          ]
         }
       ],
-      "nextStep": "Keep the distinction between the individual PR and the integrated head in each review. Offer the verified callback-lifetime example to #16620, and use public Save/Load to measure competing designs.",
+      "nextStep": "Follow the existing callback report as Parth updates map reconstruction. Retest the direct map value and the parent callback; both must observe the restored pointer.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
@@ -49218,7 +49246,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T17:24:29.864587+00:00",
+      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -49840,9 +49868,34 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40897823760"
             }
           ]
+        },
+        {
+          "text": "The real Debian, release tar and shim configuration packages ran their final writer actions uncached on scratch for both AMD64 and ARM64. The verifier compared the runsc and shim bytes across package formats, the ELF architecture, and the installed shim configuration. Compilation and changelog generation still used Ubuntu workers. The verdicts were ready 37 and 36 seconds after execution. The supplier Python toolchain also ran all six writer actions without an ELF loader; its tar and deb fixtures matched the Ubuntu controls. On the standalone toolchain commit, all six uncached writer actions ran too; the verdict followed the final action by 0.86 seconds without manual reconciliation.",
+          "evidence": [
+            {
+              "label": "AMD64 production packages",
+              "url": "https://app.buildbuddy.io/invocation/e42e7f72-c2c6-4f09-a027-e00cde947158"
+            },
+            {
+              "label": "ARM64 production packages",
+              "url": "https://app.buildbuddy.io/invocation/fc91f071-d906-4c32-a889-c6b3dcedad69"
+            },
+            {
+              "label": "Package and binary comparisons",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40921594674"
+            },
+            {
+              "label": "Supplier interpreter on both architectures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40924853212"
+            },
+            {
+              "label": "Standalone toolchain and archive controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40926137963"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the same Buildkite selections using the declared architecture toolchains. Qualify native source lint against the full tracked inventory and the original checker.",
+      "nextStep": "Prepare the reusable writer change in rules_pkg and exercise the ordinary Python runtime. The compiler and changelog still need their own scratch qualification.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
@@ -50789,7 +50842,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T17:24:29.864587+00:00",
+      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
@@ -50861,9 +50914,22 @@
               "url": "https://github.com/google/gvisor/commit/dba564686"
             }
           ]
+        },
+        {
+          "text": "One repository check ran independent Buildifier and cpplint actions on scratch. They checked 617 BUILD/Starlark files and 485 C++ files. Adding an invalid source in a new package increased both inventories and failed only cpplint. A consumer resolved neither lint module. Its pkg/gvisordetect build failed on Gazelle’s go_deps.gazelle_override on both the candidate and stock.",
+          "evidence": [
+            {
+              "label": "Native scratch check and new-package control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40921492711"
+            },
+            {
+              "label": "Same downstream failure on stock",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40922618369"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify the shared inventory and direct Buildifier/cpplint actions together on scratch, including a file in a new package and package-local configuration. Leave #16663 unchanged pending that result.",
+      "nextStep": "Keep #16663 at its published head until the supplier label, declared Python, developer fix command and license audit are ready. The downstream Gazelle error is a separate problem.",
       "evidence": [
         {
           "label": "Design and qualification controls",
