@@ -1,0 +1,74 @@
+name: Check the graph decoder's direct map value
+on:
+  push:
+    branches: [qualification/state-direct-map-word-trial]
+permissions:
+  contents: read
+jobs:
+  graph:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    timeout-minutes: 35
+    runs-on: ubuntu-24.04
+    env:
+      SOURCE: b3509aa986616aaabd86f26d5c0ba8c5c07ebcff
+      PARENT: d09828cec993fd489eccabcff27aa68c024f2080
+      IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the one original-state-package test
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          test "$(git rev-parse HEAD~2)" = "$PARENT"
+          [[ "$(git diff --name-only "$PARENT" "$SOURCE")" == "$(printf '%s\n' pkg/state/BUILD pkg/state/graph_map_word_test.go)" ]]
+          out=$RUNNER_TEMP/graph-map-word
+          mkdir "$out" "$RUNNER_TEMP/study_platform"
+          cp .github/qualification/graph-map-word/read.py "$RUNNER_TEMP/read-map-word.py"
+          git checkout --detach "$SOURCE"
+          printf '%s\n' 'module(name = "study_platform")' > "$RUNNER_TEMP/study_platform/MODULE.bazel"
+          cat > "$RUNNER_TEMP/study_platform/BUILD" <<BUILD
+          platform(name="gnu", constraint_values=["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties={"Arch":"amd64","OSFamily":"linux","container-image":"docker://$IMAGE","workload-isolation-type":"firecracker","EstimatedMemory":"6GB"},
+              visibility=["//visibility:public"])
+          BUILD
+          rc=$RUNNER_TEMP/map-word.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=study_platform=$RUNNER_TEMP/study_platform" 'build --host_platform=@study_platform//:gnu' 'build --extra_execution_platforms=@study_platform//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$IMAGE" -c '
+            set -euo pipefail
+            temp=$1
+            out=$temp/graph-map-word
+            code=0
+            bazel --bazelrc="$temp/map-word.bazelrc" test --config=x86_64 -c opt --jobs=60 --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --test_timeout=240 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --test_env=GO_TEST_WRAP_TESTV=1 --test_filter="^TestGraphMapPublishesDirectInterface$" --build_event_json_file="$out/test.bep" --execution_log_json_file="$out/spawns.json" //pkg/state:state_test || code=$?
+            printf "%s\n" "$code" > "$out/native-exit"
+            for f in test.log test.xml; do
+              if test -f "bazel-testlogs/pkg/state/state_test/$f"; then cp "bazel-testlogs/pkg/state/state_test/$f" "$out/"; fi
+            done
+          ' bash "$RUNNER_TEMP"
+          jq -c 'select(.mnemonic == "TestRunner" and .targetLabel == "//pkg/state:state_test") | {targetLabel,mnemonic,runner,cacheHit,exitCode,platform}' "$out/spawns.json" > "$out/worker.jsonl"
+          python3 "$RUNNER_TEMP/read-map-word.py" "$out"
+          exit "$(cat "$out/native-exit")"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: graph-map-word
+          path: |
+            ${{ runner.temp }}/graph-map-word/native-exit
+            ${{ runner.temp }}/graph-map-word/test.log
+            ${{ runner.temp }}/graph-map-word/test.xml
+            ${{ runner.temp }}/graph-map-word/worker.jsonl
+            ${{ runner.temp }}/graph-map-word/summary.json
+          if-no-files-found: error
