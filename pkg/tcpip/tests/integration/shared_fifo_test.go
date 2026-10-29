@@ -113,6 +113,19 @@ func TestVirtualTCPRecoveryDecision(t *testing.T) {
 	}
 }
 
+// TestVirtualTCPRACKFlight uses the original natural transfer, with its same
+// bottleneck, demand and initial sequence numbers. Stop at the retained
+// reference horizon even if the first timeout moves or never fires.
+func TestVirtualTCPRACKFlight(t *testing.T) {
+	if runtime.GOMAXPROCS(0) != 1 {
+		t.Fatal("requires the original single processor")
+	}
+	app := fifoApplicationOrder{FirstWriteOrder: []int{0, 1}, recoveryMode: "rack_flight"}
+	runSharedFIFOWithApplicationOrder(t, []string{"cubic", "reno"}, []int{0, 1}, 0, &app)
+}
+
+const rackFlightEnd = 3773123200 * time.Nanosecond
+
 type firstLossEvent struct {
 	Row                   [13]int64
 	Offset, End           uint32
@@ -703,7 +716,11 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 					first = v
 				}
 			}
-			if (first != 0 && int64(now()) >= first+int64(2*time.Second)) || now() >= 20*time.Second {
+			done := (first != 0 && int64(now()) >= first+int64(2*time.Second)) || now() >= 20*time.Second
+			if application.recoveryMode == "rack_flight" {
+				done = now() == rackFlightEnd
+			}
+			if done {
 				type flowEnd struct {
 					Base                uint32
 					Accepted, Delivered int
@@ -719,6 +736,9 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 				for i := range flows {
 					f := &flows[i]
 					ep := f.client.(*tcp.Endpoint)
+					if !bytes.Equal(f.received.Bytes(), f.data[:f.received.Len()]) || f.accepted <= f.received.Len() {
+						t.Fatal("wrong payload or sender ran out of demand")
+					}
 					out.Flows = append(out.Flows, flowEnd{f.dataSequence, f.accepted, f.received.Len(), ep.FirstLossSender(), ep.FIFOTraceEvents()})
 				}
 				for start := 0; start < len(events); start += 64 {
@@ -749,6 +769,9 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			t.Fatal("shared FIFO did not reach finite transfer completion")
 		}
 		next := min(now()+quantum, nextSample)
+		if tracing && application.recoveryMode == "rack_flight" {
+			next = min(next, rackFlightEnd)
+		}
 		if !demandStarted {
 			next = min(next, fifoDemandAt)
 		}

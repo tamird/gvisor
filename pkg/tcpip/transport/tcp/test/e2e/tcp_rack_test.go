@@ -1393,6 +1393,96 @@ func TestRACKWithWindowFull(t *testing.T) {
 	c.CheckNoPacket("unexpected packet received after userTimeout has expired")
 }
 
+// A single later SACK is enough for RACK to time-mark the whole earlier
+// flight. There are no intervening ACKs to grant an artificial send budget.
+func TestRACKLossFlight(t *testing.T) {
+	for _, cc := range []string{"reno", "cubic"} {
+		t.Run(cc, func(t *testing.T) {
+			const rtt = 10 * time.Millisecond
+			clock := faketime.NewManualClock()
+			clock.Advance(time.Second)
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: clock})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			recovery := tcpip.TCPRACKLossDetection | tcpip.TCPRACKNoDupTh
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &recovery); err != nil {
+				t.Fatal(err)
+			}
+			peer := e2e.CreateConnectedWithSACKPermittedOption(c)
+			alg := tcpip.CongestionControlOption(cc)
+			if err := c.EP.SetSockOpt(&alg); err != nil {
+				t.Fatal(err)
+			}
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var i tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&i); err != nil {
+					t.Fatal(err)
+				}
+				return i
+			}
+			mss := int(info().SndMss)
+			const packets = 9
+			data := make([]byte, packets*mss)
+			for i := range data {
+				data[i] = byte(i/mss + 1)
+			}
+			if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(n) != len(data) {
+				t.Fatalf("Write = (%d,%v) want (%d,nil)", n, err, len(data))
+			}
+			for i := 0; i < packets; i++ {
+				c.ReceiveAndCheckPacket(data, i*mss, mss)
+			}
+			sack := header.SACKBlock{Start: peer.AckNum.Add(seqnum.Size((packets - 1) * mss)), End: peer.AckNum.Add(seqnum.Size(packets * mss))}
+			ack := func(covered int) {
+				c.SendAckWithSACK(peer.NextSeqNum, covered, []header.SACKBlock{sack})
+				c.Stack().Pause()
+				c.Stack().Resume()
+			}
+			clock.Advance(rtt)
+			ack(0)
+			clock.Advance(rtt)
+			c.Stack().Pause()
+			c.Stack().Resume()
+			state := info()
+			if state.CcState != tcpip.SACKRecovery || c.Stack().Stats().TCP.Timeouts.Value() != 0 {
+				t.Fatalf("unexpected recovery: %+v", state)
+			}
+			count := 0
+			for count < packets-1 && c.ReceiveNonBlockingAndCheckPacket(data, count*mss, mss) {
+				count++
+			}
+			want := min(packets-1, int(state.SndCwnd))
+			t.Logf("RACK_FLIGHT cc=%s first=%d cap=%d cwnd=%d ssthresh=%d rto=%d", cc, count, want, state.SndCwnd, state.SndSsthresh, c.Stack().Stats().TCP.Timeouts.Value())
+			if count != want {
+				t.Errorf("repaired %d known-lost segments after the tail SACK, want %d", count, want)
+			}
+			if count == 0 {
+				t.Fatal("no actual head repair")
+			}
+			// Repeating the same SACK cannot erase still-outstanding repairs.
+			ack(0)
+			if pkt := c.GetPacketNonBlocking(); pkt != nil {
+				pkt.Release()
+				t.Fatal("duplicate SACK triggered an extra transmission")
+			}
+			ack(mss)
+			extra := 0
+			for count+extra < packets-1 && c.ReceiveNonBlockingAndCheckPacket(data, (count+extra)*mss, mss) {
+				extra++
+			}
+			if count == want && extra != min(1, packets-1-count) {
+				t.Errorf("after ACKing one repair sent %d, want %d", extra, min(1, packets-1-count))
+			}
+			if pkt := c.GetPacketNonBlocking(); pkt != nil {
+				pkt.Release()
+				t.Fatal("unexpected extra repair")
+			}
+			t.Logf("RACK_ACK cc=%s repeats=0 new=%d", cc, extra)
+		})
+	}
+}
+
 func TestMain(m *testing.M) {
 	refs.SetLeakMode(refs.LeaksPanic)
 	code := m.Run()
