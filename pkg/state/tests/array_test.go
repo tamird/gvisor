@@ -15,8 +15,12 @@
 package tests
 
 import (
+	"bytes"
+	"fmt"
 	"reflect"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 var allArrayPrimitives = []any{
@@ -134,4 +138,54 @@ func TestSliceContainers(t *testing.T) {
 		slicePtrContainer{v: &fullSlice},
 		slicePtrContainer{v: &unusedCapacitySlice},
 	})
+}
+
+func TestSliceInteriorField(t *testing.T) {
+	state.EnableGraphEngine(true)
+	t.Cleanup(func(){state.EnableGraphEngine(false)})
+	for _, fieldFirst := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fieldFirst=%v", fieldFirst), func(t *testing.T) {
+			secret := "hidden-slice-referent:5eb351"
+			cells := [1]system{{v1: int64(17), v2: &secret}}
+			const want = int64(17)
+			shortIndex := 0
+			input := [2]any{cells[:0], &cells[0].v1}
+			if fieldFirst {
+				input[0], input[1] = input[1], input[0]
+				shortIndex = 1
+			}
+			var b bytes.Buffer
+			if _, err := state.Save(t.Context(), &b, &input); err != nil {
+				t.Fatal(err)
+			}
+			if got := cells[0].v1; got != want {
+				t.Errorf("Save changed live First to %v", got)
+			}
+			if got := cells[0].v2; got != &secret {
+				t.Errorf("Save changed live Other to %v", got)
+			}
+			if bytes.Contains(b.Bytes(), []byte(secret)) {
+				t.Error("wire contains hidden Other marker")
+			}
+			var out [2]any
+			if _, err := state.Load(t.Context(), &b, &out); err != nil {
+				t.Fatal(err)
+			}
+			short := out[shortIndex].([]system)
+			if got, want := [2]int{len(short), cap(short)}, [2]int{0, 1}; got != want {
+				t.Fatalf("restored slice dimensions %v, want %v", got, want)
+			}
+			cell := &short[:1][0]
+			ref := out[1-shortIndex].(*any)
+			if ref != &cell.v1 {
+				t.Error("restored First pointer does not alias the original field")
+			}
+			if got := *ref; got != want {
+				t.Errorf("restored First = %v, want %v", got, want)
+			}
+			if cell.v2 != nil {
+				t.Errorf("restored Other is nonnil: %T", cell.v2)
+			}
+		})
+	}
 }
