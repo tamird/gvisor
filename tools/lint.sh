@@ -50,7 +50,6 @@ declare -ra OPTIONAL_CHECKS=(actions clang-tidy)
 declare -ra KNOWN_CHECKS=("${ALL_CHECKS[@]}" "${OPTIONAL_CHECKS[@]}")
 
 declare -r CODESPELL_VERSION="2.3.0"
-declare -r CLANG_FORMAT_VERSION="23.1.1"
 declare -r CLANG_TIDY_VERSION="22.1.8"
 
 # The codespell wheel is architecture-independent.
@@ -59,14 +58,10 @@ declare -r CODESPELL_SHA256="a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648
 
 case "$(uname -m)" in
   x86_64|amd64)
-    declare -r CLANG_FORMAT_URL="https://files.pythonhosted.org/packages/42/ef/3f8e215916e79ecd435b5bc20810443f80fce3fb8bbfe6d2783ceb775c1b/clang_format-${CLANG_FORMAT_VERSION}-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
-    declare -r CLANG_FORMAT_SHA256="64900462c1203cee2fec364536c2dda708baf0619e15b52ceda926648cc82f56"
     declare -r CLANG_TIDY_URL="https://files.pythonhosted.org/packages/82/19/0f2668f8f5e2452b096a2b898f2b6bcecbceb6dd0c7f75d1755ce1f18d8b/clang_tidy-${CLANG_TIDY_VERSION}-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
     declare -r CLANG_TIDY_SHA256="1a3de07ba82d4403d8b692ae63a5520d4db5c606014c92c24bbcef9259057bf1"
     ;;
   aarch64|arm64)
-    declare -r CLANG_FORMAT_URL="https://files.pythonhosted.org/packages/0e/b6/1a162e427d912b88653a66e99a22414d798eb885b761ffddb74dbc13963f/clang_format-${CLANG_FORMAT_VERSION}-py2.py3-none-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl"
-    declare -r CLANG_FORMAT_SHA256="09af54d2ef51680b34e36ed71b9f510bd399fb7b10b29a2a40843cd0e0344228"
     declare -r CLANG_TIDY_URL="https://files.pythonhosted.org/packages/ac/b7/61ed8c319f2d9ddb9762a550a6fee434bdef7bdc46d5a4b50929f1c90ec0/clang_tidy-${CLANG_TIDY_VERSION}-py2.py3-none-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl"
     declare -r CLANG_TIDY_SHA256="1eaddaa7415e8c5e39aeefbfd15174f1ab2a671c86f7ebb200eb523cf9465559"
     ;;
@@ -115,22 +110,6 @@ install_codespell() {
     rm -f "${wheel}"
   fi
   echo "${dir}"
-}
-
-install_clang_format() {
-  local -r bin="${CACHE_DIR}/clang-format-${CLANG_FORMAT_VERSION}"
-  if [[ ! -x "${bin}" ]]; then
-    local -r wheel="${CACHE_DIR}/clang-format.whl"
-    local -r dir="${CACHE_DIR}/clang-format.d"
-    fetch "${CLANG_FORMAT_URL}" "${CLANG_FORMAT_SHA256}" "${wheel}"
-    rm -rf "${dir}"
-    mkdir -p "${dir}"
-    unzip -q "${wheel}" -d "${dir}"
-    mv "${dir}/clang_format/data/bin/clang-format" "${bin}"
-    chmod +x "${bin}"
-    rm -rf "${dir}" "${wheel}"
-  fi
-  echo "${bin}"
 }
 
 install_clang_tidy() {
@@ -192,41 +171,19 @@ check_goimports() {
   fi
 }
 
-# The style lives in //.clang-format; clang-format finds it by walking up
-# from each file, so no style is passed here.
 check_clang_format() {
-  # Without the config, clang-format silently falls back to LLVM style.
   if [[ ! -f "${REPO_DIR}/.clang-format" ]]; then
     echo "lint: .clang-format is missing from the repository root" >&2
     return 1
   fi
-  local clang_format
-  clang_format="$(install_clang_format)"
-  # clang-format is single-threaded and each file is independent.
-  local -r jobs="$(nproc 2>/dev/null || echo 1)"
   if [[ "${FIX}" -eq 1 ]]; then
-    cc_files | xargs -0 -P "${jobs}" -n 32 "${clang_format}" -i
-    return 0
+    cc_files | xargs -0 bazel run --run_in_cwd //tools/lint:clang-format -- -i
+    return
   fi
-  # --dry-run reports one diagnostic per hunk; collapse it to a file list.
-  local warnings status=0
-  warnings="$(cc_files |
-    xargs -0 -P "${jobs}" -n 32 "${clang_format}" --dry-run -Werror 2>&1)" ||
-    status=$?
-  if [[ "${status}" -ne 0 ]]; then
-    printf '%s\n' "${warnings}" >&2
-    # -Werror reports these as "error:" rather than "warning:".
-    local file
-    while IFS= read -r file; do
-      [[ -f "${file}" ]] || continue
-      diff -u --label "${file}" --label "${file} (formatted)" \
-        "${file}" <("${clang_format}" "${file}") || true
-    done < <(printf '%s\n' "${warnings}" |
-      sed -n 's/^\(.*\):[0-9]\+:[0-9]\+: \(warning\|error\): .*/\1/p' | sort -u)
-    echo
-    echo "Run \`make lint-fix\` to reformat these files." >&2
-    return 1
-  fi
+  local configs
+  configs="$(git ls-files --cached --others -- '*/.clang-format' \
+    '_clang-format' '*/_clang-format' '.clang-format-ignore' '*/.clang-format-ignore')"
+  check_cc_tests clang-format clang_format_test "${configs}" --dry-run --Werror
 }
 
 check_clang_tidy() {
@@ -283,25 +240,31 @@ check_spelling() {
 }
 
 check_cpplint() {
-  local inputs tracked declared missing configs target
-  inputs="$(bazel query 'labels(data, filter(":cpplint_test$", //...:all))')"
+  local configs
+  configs="$(git ls-files --cached --others -- 'CPPLINT.cfg' '*/CPPLINT.cfg')"
+  check_cc_tests cpplint cpplint_test "${configs}"
+}
+
+# Bazel can cache one test per package when its inputs match the tracked files.
+# A local glob can also match untracked files; run the tool directly on the
+# tracked paths when this or a checkout-specific config changes their meaning.
+check_cc_tests() {
+  local -r tool="$1" suffix="$2" configs="$3"
+  shift 3
+  local inputs tracked declared missing target
+  inputs="$(bazel query "filter('[.](c|cc|h)$', labels(data, filter(':${suffix}$', //...:all)))")"
   tracked="$(cc_files | tr '\0' '\n' | LC_ALL=C sort)"
   declared="$(sed -e 's|^//||' -e 's|^:||' -e 's|:|/|' <<< "${inputs}" | LC_ALL=C sort)"
 
-  # A new C/C++ package needs a test; do not silently disable caching.
   if [[ "${tracked}" != "${declared}" ]]; then
     missing="$(LC_ALL=C comm -23 <(printf '%s\n' "${tracked}") <(printf '%s\n' "${declared}"))"
     if [[ -n "${missing}" ]]; then
-      printf 'lint: add cpplint_test() to the BUILD package owning these tracked files:\n%s\n' "${missing}" >&2
+      printf 'lint: add cc_lint_tests() to the BUILD package owning these tracked files:\n%s\n' "${missing}" >&2
       return 1
     fi
   fi
-
-  # A local glob may include untracked sources, and an untracked CPPLINT.cfg
-  # can change checks beneath it. Preserve the checkout's tracked-file scope.
-  configs="$(git ls-files --cached --others -- 'CPPLINT.cfg' '*/CPPLINT.cfg')"
   if [[ "${tracked}" != "${declared}" || -n "${configs}" ]]; then
-    if [[ "${CI:-}" == true ]]; then
+    if [[ "${CI:-}" == true && "${tool}" == cpplint ]]; then
       if [[ "${tracked}" != "${declared}" ]]; then
         echo 'lint: untracked C/C++ files matched by CI lint tests:' >&2
         LC_ALL=C comm -13 <(printf '%s\n' "${tracked}") <(printf '%s\n' "${declared}") >&2
@@ -311,16 +274,19 @@ check_cpplint() {
       fi
       return 1
     fi
-    cc_files | xargs -0 bazel run --nostamp --run_in_cwd //tools/lint:cpplint --
+    cc_files | xargs -0 bazel run --nostamp --run_in_cwd "//tools/lint:${tool}" -- "$@"
     return
   fi
-
   local -a targets=()
   while IFS= read -r target; do
     targets+=("${target}")
-  done < <(sed 's/:[^:]*$/:cpplint_test/' <<< "${inputs}" | LC_ALL=C sort -u)
-  # Stamping the checker would invalidate every package on a new commit.
-  bazel test --nostamp --test_output=errors "${targets[@]}"
+  done < <(sed "s/:[^:]*$/:${suffix}/" <<< "${inputs}" | LC_ALL=C sort -u)
+  bazel test --nostamp --test_output=errors "${targets[@]}" || {
+    if [[ "${tool}" == clang-format ]]; then
+      echo 'Run `make lint-fix` to reformat these files.' >&2
+    fi
+    return 1
+  }
 }
 
 

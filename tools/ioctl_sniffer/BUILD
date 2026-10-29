@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "cc_binary", "go_binary", "proto_library")
-load("//tools/lint:cpplint.bzl", "cpplint_test")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -58,4 +58,4 @@ go_binary(
     ],
 )
 
-cpplint_test()
+cc_lint_tests()

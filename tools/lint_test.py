@@ -47,20 +47,16 @@ class LintTest(unittest.TestCase):
             re.MULTILINE,
         )
     )
-    self.tool(self.bin / "git", "printf 'tracked source\\0'")
+    self.tool(self.bin / "git", 'if [ "$2" = -z ]; then printf "tracked.c\\0"; fi')
     self.tool(self.bin / "curl", "echo unexpected-download >&2; exit 42")
-    for name in ("goimports", "clang-format"):
-      self.tool(self.formatter(name), "exit 0")
+    self.bazel_ok()
 
   def tool(self, path: pathlib.Path, body: str) -> None:
     path.write_text("#!/bin/sh\n" + body + "\n")
     path.chmod(0o755)
 
-  def formatter(self, name: str) -> pathlib.Path:
-    if name in ("goimports", "buildifier"):
-      return self.bin / "bazel"
-    version = self.versions[name.upper().replace("-", "_")]
-    return self.cache / f"{name}-{version}"
+  def bazel_ok(self) -> None:
+    self.tool(self.bin / "bazel", 'if [ "$1" = query ]; then echo //:tracked.c; fi')
 
   def lint(self, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -93,13 +89,14 @@ class LintTest(unittest.TestCase):
     ):
       name = args[-1]
       with self.subTest(args=args):
-        self.tool(self.formatter(name), "exit 7")
+        self.tool(self.bin / "bazel", "exit 7")
         self.assert_failed(self.lint(*args), name)
-        self.tool(self.formatter(name), "exit 0")
+        self.bazel_ok()
 
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
-        self.formatter("clang-format"), "echo formatter-crashed >&2; exit 7"
+        self.bin / "bazel",
+        'case "$*" in *buildifier*) exit 0;; esac; echo formatter-crashed >&2; exit 7',
     )
     result = self.lint("clang-format", "buildifier")
     self.assert_failed(result, "clang-format")
@@ -107,17 +104,14 @@ class LintTest(unittest.TestCase):
     self.assertIn("PASS  buildifier", result.stderr)
 
   def test_installer_failure(self) -> None:
-    # Both failures occur in an installer command substitution. A stale cache
-    # entry must not be made executable by commands following the failure.
-    self.formatter("clang-format").chmod(0o644)
-    result = self.lint("clang-format")
-    self.assert_failed(result, "clang-format")
+    # Codespell still downloads its wheel; never use an incomplete cache.
+    result = self.lint("spelling")
+    self.assert_failed(result, "spelling")
     self.assertIn("unexpected-download", result.stderr)
-    self.assertEqual(self.formatter("clang-format").stat().st_mode & 0o111, 0)
-    # mktemp adds another substitution, whose status local must not mask.
+    self.assertFalse((self.cache / f"codespell-{self.versions['CODESPELL']}").exists())
     self.tool(self.bin / "mktemp", "echo temporary-file-failed >&2; exit 7")
-    result = self.lint("clang-format", "goimports")
-    self.assert_failed(result, "clang-format")
+    result = self.lint("spelling", "goimports")
+    self.assert_failed(result, "spelling")
     self.assertIn("temporary-file-failed", result.stderr)
     self.assertNotIn("unexpected-download", result.stderr)
     self.assertIn("PASS  goimports", result.stderr)

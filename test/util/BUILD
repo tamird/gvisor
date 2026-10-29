@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "cc_library", "cc_test", "coreutil", "default_net_util", "gbenchmark", "gbenchmark_internal", "select_gtest", "select_system")
-load("//tools/lint:cpplint.bzl", "cpplint_test")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -469,4 +469,4 @@ cc_library(
     ],
 )
 
-cpplint_test()
+cc_lint_tests()

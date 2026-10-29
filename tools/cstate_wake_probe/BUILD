@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "cc_binary")
-load("//tools/lint:cpplint.bzl", "cpplint_test")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -11,4 +11,4 @@ cc_binary(
     srcs = ["cstate_wake_probe.c"],
 )
 
-cpplint_test()
+cc_lint_tests()

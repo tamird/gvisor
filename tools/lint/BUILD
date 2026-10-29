@@ -1,5 +1,5 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
-load(":cpplint.bzl", "CPPLINT_FLAGS")
+load(":cc.bzl", "CPPLINT_FLAGS")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -10,4 +10,10 @@ native_binary(
     name = "cpplint",
     src = "@cpplint",
     args = CPPLINT_FLAGS,
+)
+
+native_binary(
+    name = "clang-format",
+    src = "@llvm//tools:clang-format",
+    out = "bin/clang-format",
 )

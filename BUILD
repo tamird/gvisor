@@ -325,5 +325,5 @@ exports_files([
 
 exports_files(
     [".clang-format"],
-    visibility = ["//tools:__pkg__"],
+    visibility = ["//:__subpackages__"],
 )

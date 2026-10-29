@@ -1,6 +1,6 @@
 load("//tools:arch.bzl", "arch_genrule", "select_arch")
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_library")
-load("//tools/lint:cpplint.bzl", "cpplint_test")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 load("build.bzl", "cc_pie_obj")
 
 package(
@@ -141,4 +141,4 @@ go_library(
     ],
 )
 
-cpplint_test()
+cc_lint_tests()
