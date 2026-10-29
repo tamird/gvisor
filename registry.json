@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T06:00:50.396298+00:00",
+    "updatedAt": "2026-10-29T06:26:17.580095+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32467,8 +32467,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9a3f436dc88cbf6c8c77febd88bc7a5da6cd7499",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T05:53:56.471294+00:00",
-      "summary": "Check access to pipe storage, offsets and capacity against the pipe mutex. The first save/resume run passed 151 cases, with four skips. The revision uses the same checked helper under the mutex during growth and restore.",
+      "updatedAt": "2026-10-29T06:23:20.009851+00:00",
+      "summary": "The mutex protects pipe storage, offsets and capacity, including reconstruction of the ring on restore. All 151 executed cases passed on the revised source; four skipped. The bundled verdict was available 14.54 seconds after the last shard.",
       "evidence": [
         {
           "label": "First revision: 151 save/resume cases passed",
@@ -32477,15 +32477,63 @@
         {
           "label": "Revised restore callback: save/resume qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/40825958373"
+        },
+        {
+          "label": "Rejected nonexistent ARM64 target; no source tests ran",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40828547082"
+        },
+        {
+          "label": "Corrected AMD64 and ARM64 package and analyzer checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40829379319"
+        },
+        {
+          "label": "Unlocked capacity control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40828547565"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "9a3f436dc88cbf6c8c77febd88bc7a5da6cd7499",
-        "observedAt": "2026-10-29T05:53:56.471294+00:00",
+        "observedAt": "2026-10-29T06:23:20.009851+00:00",
         "disposition": "Agent verification",
-        "nextAction": "Verify normal and checkpoint tests and the lock checker, including a control that reads the size without the mutex."
+        "nextAction": "Verify the pipe unit test and both architecture analyzers, and check that removing the capacity lock produces the expected finding."
       }
+    },
+    {
+      "id": "branch:bazel-cpplint",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/bazel-cpplint-bcr-nostamp",
+      "head": "d463cc2d90dfa1cb04956016051ba868af187fd4",
+      "title": "Check tracked C++ sources with package-local Bazel tests",
+      "url": "https://github.com/tamird/gvisor/commit/d463cc2d90dfa1cb04956016051ba868af187fd4",
+      "group": "analysis",
+      "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
+      "updatedAt": "2026-10-29T06:26:17.580095+00:00",
+      "status": "Contributor review requested",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d463cc2d90dfa1cb04956016051ba868af187fd4",
+        "url": "https://github.com/tamird/gvisor/commit/d463cc2d90dfa1cb04956016051ba868af187fd4",
+        "title": "Check tracked C++ sources with package-local Bazel tests",
+        "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
+        "body": "Open independently on upstream master. The lint command disables stamping; untracked-file selection remains a checkout operation. The corrected verifier reconciled the original package results without rerunning tests."
+      },
+      "evidence": [
+        {
+          "label": "All 23 original package results",
+          "url": "https://app.buildbuddy.io/invocation/4044b955-3c81-47e0-8548-a631eb597ad6"
+        },
+        {
+          "label": "One changed package and 22 cache hits",
+          "url": "https://app.buildbuddy.io/invocation/da9caaf4-38b2-4a9c-940d-5ffcf9e6063b"
+        },
+        {
+          "label": "Replay of the 46 original results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40829033959"
+        }
+      ]
     }
   ],
   "edges": [
@@ -38130,7 +38178,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T06:00:50.396298+00:00",
+      "updatedAt": "2026-10-29T06:23:20.009851+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -40581,9 +40629,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40824781005"
             }
           ]
+        },
+        {
+          "text": "208 fresh children completed 416 restores of the same Nginx checkpoint. Of 388 CPU samples, 113 fell under the cold kernel state.Load and 43 under the warm load. The allocation profile attributed 474,736 bytes and 13 allocations per restore to growth of the decoder\u2019s callback list. The profiling bracket forces garbage collection, which can evict the decoder\u2019s reusable storage; this does not establish the allocation cost of an ordinary warm restore.",
+          "evidence": [
+            {
+              "label": "Cold, warm and blank profile measurements",
+              "url": "https://app.buildbuddy.io/invocation/3dcc6f85-13cc-4867-8d9b-fd6efa6bd5b2"
+            }
+          ]
         }
       ],
-      "nextStep": "Profile cold kernel state.Load on the real checkpoint before choosing another optimization. Measure allocations separately and keep warm, launch-only, and cold costs distinct. Parth leads the graph rewrite.",
+      "nextStep": "Count callback kinds and buffer growth on the ordinary pool lifecycle. Test a reservation change only if that measurement justifies it. Parth leads the graph rewrite.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
