@@ -17,6 +17,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"go/ast"
@@ -28,14 +29,16 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/tools/imports"
 	"gvisor.dev/gvisor/tools/constraintutil"
 )
 
 var (
-	fullPkg  = flag.String("fullpkg", "", "fully qualified output package")
-	imports  = flag.String("imports", "", "extra imports for the output file")
-	output   = flag.String("output", "", "output file")
-	statePkg = flag.String("statepkg", "", "state import package; defaults to empty")
+	goTool       = flag.String("go", "", "Go executable for resolving generated imports")
+	fullPkg      = flag.String("fullpkg", "", "fully qualified output package")
+	extraImports = flag.String("imports", "", "extra imports for the output file")
+	output       = flag.String("output", "", "output file")
+	statePkg     = flag.String("statepkg", "", "state import package; defaults to empty")
 )
 
 // resolveTypeName returns a qualified type name.
@@ -186,20 +189,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Open the output file.
-	var (
-		outputFile *os.File
-		err        error
-	)
-	if *output == "" || *output == "-" {
-		outputFile = os.Stdout
-	} else {
-		outputFile, err = os.OpenFile(*output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error opening output %q: %v", *output, err)
-		}
-		defer outputFile.Close()
-	}
+	outputFile := new(bytes.Buffer)
 
 	// Set the statePrefix for below, depending on the import.
 	statePrefix := ""
@@ -239,8 +229,8 @@ func main() {
 		if *statePkg != "" {
 			fmt.Fprintf(outputFile, "	\"%s\"\n", *statePkg)
 		}
-		if *imports != "" {
-			for _, i := range strings.Split(*imports, ",") {
+		if *extraImports != "" {
+			for _, i := range strings.Split(*extraImports, ",") {
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
 			}
 		}
@@ -521,4 +511,35 @@ func main() {
 		}
 		fmt.Fprintf(outputFile, "}\n")
 	}
+
+	if err := writeSource(outputFile.Bytes()); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+// writeSource fixes the generated imports and writes the formatted Go file.
+func writeSource(src []byte) error {
+	if *goTool != "" {
+		// goimports looks up go on PATH; os/exec rejects relative entries.
+		goPath, err := filepath.Abs(*goTool)
+		if err != nil {
+			return err
+		}
+		if err := os.Setenv("PATH", filepath.Dir(goPath)); err != nil {
+			return err
+		}
+	}
+	// Use the package directory so goimports sees the same source files as
+	// the generator when resolving names used only in state tags.
+	name := filepath.Join(filepath.Dir(flag.Arg(0)), "state_autogen.go")
+	src, err := imports.Process(name, src, nil)
+	if err != nil {
+		return err
+	}
+	if *output == "" || *output == "-" {
+		_, err := os.Stdout.Write(src)
+		return err
+	}
+	return os.WriteFile(*output, src, 0644)
 }
