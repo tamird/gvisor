@@ -26,18 +26,18 @@ if verdict["errors"] or verdict["missing"] or verdict["skips"] or set(labels) !=
 if len(results) != len(labels) or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out / "runner_exit").read_text())
-note = "no zero-window probe at the original deadline"
-observations = [s.strip() for s in logs.splitlines() if note in s or ("--- PASS" in s and "TestZeroWindowSend" in s)]
+note = "live clock advanced 1h"
+observations = [s.strip() for s in logs.splitlines() if note in s or ("--- PASS" in s and "TestSaveStdClock" in s)]
 if arm == "stock":
     if (verdict["status"] != "FAIL" or verdict["native_exit"] != 3 or not runner_exit or
         verdict["case_counts"].get("failed", 0) != 1 or verdict["case_counts"].get("passed", 0) != 0 or
-        note not in logs or "--- FAIL: TestZeroWindowSend" not in logs or
-        any(not case.endswith("TestZeroWindowSend") for row in verdict["failures"] for case in row.get("cases", []))):
-        why.append("stock did not fail precisely at the old probe deadline")
+        note not in logs or "restored clock advanced" in logs or "--- FAIL: TestSaveStdClock" not in logs or
+        any(not case.endswith("TestSaveStdClock") for row in verdict["failures"] for case in row.get("cases", []))):
+        why.append("stock did not advance just the live clock by an hour")
 elif verdict["status"] != "PASS" or runner_exit != 0 or any(r["status"] != "PASSED" for r in results):
     why.append("candidate target failed")
-elif arm == "correction" and (verdict["case_counts"].get("passed") != 1 or "--- PASS: TestZeroWindowSend" not in logs):
-    why.append("the original probe and reopened byte stream were not checked")
+elif arm == "correction" and (verdict["case_counts"].get("passed") != 1 or "--- PASS: TestSaveStdClock" not in logs):
+    why.append("live and restored clock bounds not both checked")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
