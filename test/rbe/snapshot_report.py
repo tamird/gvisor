@@ -60,7 +60,7 @@ try:
         assert not failed and cases[suite]=="pass" and cases.get("TestGraphCallbackOrder")=="pass"
         assert (int(code),r["bazel_exit"],t["status"])==(0,0,"PASSED")
     r["matched"]=True
-    r["verdict"]="PASS"
+    r["verdict"]="COMPLETE"
 except Exception as exc:
     r.update(error=type(exc).__name__, line=exc.__traceback__.tb_lineno)
 finally:
