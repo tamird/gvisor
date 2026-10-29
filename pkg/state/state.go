@@ -116,6 +116,8 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 		deferred: make(map[objectID]wire.Object),
 	}
 
+	ds.hooks = ds.firstHook[:0]
+
 	// Attempt our decode.
 	err := safely(func() {
 		ds.Load(reflect.ValueOf(rootPtr).Elem())

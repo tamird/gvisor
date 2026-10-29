@@ -159,6 +159,7 @@ type decodeState struct {
 
 	// hooks contains the AfterLoad callbacks of active StateLoad calls. Each
 	// call transfers its callbacks to the object after loading its fields.
+	firstHook [1]userCallback
 	hooks []userCallback
 
 	// stats tracks time data.
