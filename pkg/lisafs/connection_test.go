@@ -59,6 +59,7 @@ var _ lisafs.ConnectionImpl = (*testConnImpl)(nil)
 //
 // +checklocksread:c.server.renameMu
 // +checklocksexclude:c.fdsMu
+// +checklocksexclude:mountNode.controlFDsMu
 func (s *testConnImpl) Mount(c *lisafs.Connection, mountNode *lisafs.Node) (*lisafs.ControlFD, lisafs.Statx, int, error) {
 	dummyRoot := &testControlFD{}
 	mountNode.IncRef() // Ref is transferred to ControlFD.
@@ -377,13 +378,15 @@ func (fd *unlinkRaceFD) allocateChild(name string) *unlinkRaceFD {
 	parentNode := fd.Node()
 	var childNode *lisafs.Node
 	parentNode.WithChildrenMu(func() {
-		childNode = parentNode.LookupChildLocked(name)
+		// WithChildrenMu holds childrenMu throughout this callback; checklocks
+		// cannot propagate that lock state through the callback.
+		childNode = parentNode.LookupChildLocked(name) // +checklocksignore
 		if childNode != nil {
 			childNode.IncRef()
 			return
 		}
 		childNode = &lisafs.Node{}
-		childNode.InitLocked(name, parentNode)
+		childNode.InitLocked(name, parentNode) // +checklocksignore
 	})
 	childFD := &unlinkRaceFD{onWalk: fd.onWalk, onUnlink: fd.onUnlink}
 	childFD.Init(fd.Conn(), childNode, linux.ModeDirectory, childFD) // +checklocksignore
