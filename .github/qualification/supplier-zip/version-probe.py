@@ -42,37 +42,65 @@ def execution_records(path):
         yield record
         raw = raw.lstrip()[end:]
 
+# Replay the emitted commands without Bazel in a private mount namespace. Only
+# /usr/bin/env is inaccessible; the workspace, runfiles, and toolchain remain.
+replay = evidence / "replay.py"
+replay.write_text("""import errno, json, os, subprocess, sys
+from pathlib import Path
+actionfile, response, uid, gid = sys.argv[1:]
+os.setgroups([])
+os.setgid(int(gid))
+os.setuid(int(uid))
+assert subprocess.run(["/bin/true"]).returncode == 0
+def launch(args, env):
+    try:
+        p = subprocess.run(args, env=env, capture_output=True)
+        return {"exit": p.returncode, "error": p.stderr.decode(errors="replace")[:300]}
+    except OSError as e:
+        return {"errno": e.errno, "error": str(e)}
+actions=json.loads(Path(actionfile).read_text())
+ret={"envControl":launch(["/usr/bin/env","true"], os.environ), "actions":{}}
+for a in actions:
+    env={pair["name"]:pair["value"] for pair in a.get("environmentVariables",[])}
+    ret["actions"][a["mnemonic"]]=launch(a["commandArgs"],env)
+Path(response).write_text(json.dumps(ret))
+""")
+mask = evidence / "no-env"
+mask.touch(mode=0)
+
 for mode, flags in settings.items():
-    for limit in ("normal", "blocked"):
-        name = f"{mode}-{limit}"
-        # Each case has unique inputs, preventing an earlier action-cache hit.
-        (consumer / "payload.txt").write_text(name)
-        (consumer / "plain.py").write_text(f'import sys\nwith open(sys.argv[1], "w") as out:\n    out.write({name!r})\n')
-        events = evidence / f"{name}.json"
-        cmd = ["bazel", "build", "--jobs=4", "--keep_going", "--spawn_strategy=local",
-               "--strategy=PackageZip=linux-sandbox", "--strategy=PlainPython=linux-sandbox",
-               f"--execution_log_json_file={events}", *flags]
-        if limit == "blocked":
-            cmd.append("--sandbox_block_path=/usr/bin/env")
-        p = subprocess.run([*cmd, "//:result", "//:archive"], cwd=consumer, text=True,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        (evidence / f"{name}.log").write_text(p.stdout)
-        actions = []
-        if events.exists():
-            for a in execution_records(events):
-                if a.get("mnemonic") in ("PackageZip","PlainPython"):
-                    exe = a["commandArgs"][0]
-                    rootp = subprocess.check_output(["bazel","info","execution_root"], cwd=consumer, text=True).strip()
-                    prog = Path(rootp) / exe
-                    head = prog.read_bytes()[:200].splitlines()[0].decode("utf-8", "replace") if prog.is_file() else None
-                    actions.append({"mnemonic": a["mnemonic"], "executable":exe,"firstLine":head,
-                                    "runner":a.get("runner"), "exit": a.get("exitCode",0)})
-        negative = limit == "blocked"
-        diagnostics = [line.strip() for line in p.stdout.splitlines() if any(x in line.lower() for x in ("execvp","execve","permission denied","interpreter","no such file","exec format","failed to execute"))]
-        good = (p.returncode != 0) == negative and len(actions) == 2 and {a["mnemonic"] for a in actions} == {"PackageZip","PlainPython"} and all(a["runner"]=="linux-sandbox" and (a["exit"] != 0) == negative and (a["firstLine"] or "").startswith("#!/usr/bin/env") for a in actions) and (not negative or bool(diagnostics))
-        report["cases"][name] = {"returncode":p.returncode,"actions":actions,"diagnostics":diagnostics[-10:],"pass":good}
-        print(name, report["cases"][name], flush=True)
-        out.write_text(json.dumps(report,indent=2))
+    (consumer / "payload.txt").write_text(mode)
+    (consumer / "plain.py").write_text(f'import sys\nwith open(sys.argv[1], "w") as out:\n    out.write({mode!r})\n')
+    events = evidence / f"{mode}.spawns"
+    p = subprocess.run(["bazel", "build", "--jobs=4", "--keep_going", "--spawn_strategy=local",
+                        f"--execution_log_json_file={events}", *flags, "//:result", "//:archive"],
+                       cwd=consumer, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (evidence / f"{mode}.log").write_text(p.stdout)
+    rootp = Path(subprocess.check_output(["bazel","info","execution_root"], cwd=consumer,text=True).strip())
+    records = [a for a in execution_records(events) if a.get("mnemonic") in ("PackageZip","PlainPython")] if events.exists() else []
+    actions = []
+    for a in records:
+        prog = rootp / a["commandArgs"][0]
+        head = prog.open("rb").readline(180).decode(errors="replace").strip() if prog.is_file() else None
+        actions.append({"mnemonic":a["mnemonic"],"firstLine":head,"exit":a.get("exitCode",0)})
+    good = p.returncode == 0 and {a["mnemonic"] for a in actions} == {"PackageZip","PlainPython"} and all(a["exit"] == 0 and (a["firstLine"] or "").startswith("#!/usr/bin/env") for a in actions)
+    report["cases"][f"{mode}-normal"] = {"pass":good,"exit":p.returncode,"actions":actions}
+    source, result = evidence / f"{mode}.actions", evidence / f"{mode}.restricted.json"
+    source.write_text(json.dumps(records))
+    result.touch()
+    ns = subprocess.run(["sudo","unshare","--mount","--propagation","private","/bin/bash","-ec",
+                         'mount --bind "$1" /usr/bin/env; shift; exec /usr/bin/python3 "$@"',
+                         "replay",str(mask),str(replay),str(source),str(result),str(os.getuid()),str(os.getgid())],
+                        cwd=rootp,capture_output=True,text=True)
+    observed = json.loads(result.read_text() or "{}")
+    # EACCES from execve means the kernel found the launcher but could not
+    # execute its shebang interpreter. The /bin/true control runs normally.
+    good = (ns.returncode == 0 and observed.get("envControl",{}).get("errno")==13 and
+            set(observed.get("actions",{}))=={"PackageZip","PlainPython"} and
+            all(a.get("errno")==13 for a in observed["actions"].values()))
+    report["cases"][f"{mode}-blocked"]={"pass":good,"observed":observed,"harness":ns.stderr[:300]}
+    out.write_text(json.dumps(report,indent=2)+"\n")
+    print(mode, json.dumps(report["cases"]), flush=True)
 report["verdict"] = "PASS" if set(report["cases"]) == set(required) and all(c["pass"] for c in report["cases"].values()) else "FAIL"
 out.write_text(json.dumps(report,indent=2)+"\n")
 raise SystemExit(report["verdict"] != "PASS")
