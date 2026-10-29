@@ -71,6 +71,25 @@ run_binary(
     tool = ":buildifier_binary",
 )
 
+[
+    run_binary(
+        name = "buildifier_" + name,
+        srcs = [
+            "@lint_inputs//:ROOT",
+            "@lint_inputs//:buildifier",
+            "@lint_inputs//:buildifier_config",
+        ],
+        args = BUILDIFIER_FLAGS + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["buildifier"]],
+        mnemonic = "Buildifier" + mnemonic,
+        stdout = "buildifier_" + name + ".report",
+        tool = tool,
+    )
+    for name, mnemonic, tool in [
+        ("gazelle", "Gazelle", "@com_github_bazelbuild_buildtools//buildifier"),
+        ("pinned", "Pinned", "@lint_buildtools_851//buildifier"),
+    ]
+]
+
 python_inputs(
     name = "python_inputs",
     tool = "@cpplint",

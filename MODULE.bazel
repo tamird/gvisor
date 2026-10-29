@@ -26,6 +26,21 @@ use_repo(
     "buildifier_windows_arm64",
 )
 
+# Compare the Buildtools already selected by Gazelle with Buildifier 8.5.1.
+lint_go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps", dev_dependency = True)
+use_repo(lint_go_deps, "com_github_bazelbuild_buildtools")
+
+lint_go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
+
+lint_go_repository(
+    name = "lint_buildtools_851",
+    build_file_generation = "off",
+    dev_dependency = True,
+    importpath = "github.com/bazelbuild/buildtools",
+    sum = "h1:EXAnYUhGsKLMIkLIqkvdXA/P+SfnU57ampI+5FBBn8U=",
+    version = "v0.0.0-20260128144711-f6a198225003",
+)
+
 lint_sources = use_repo_rule("//tools:lint_sources.bzl", "lint_sources")
 
 lint_sources(
