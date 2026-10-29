@@ -1,173 +1,21 @@
-name: CI
+name: Resolve the release fixture tool closure
 
-"on":
-  workflow_dispatch:
-    inputs:
-      profile:
-        description: One selection or the complete supported public CPU matrix
-        type: choice
-        options: [single, public-cpu]
-        default: single
-      lanes:
-        description: Space-separated qualification lanes
-        type: string
-        default: smoke
-        required: true
-      architecture:
-        description: Target architecture selection
-        type: choice
-        options: [amd64, arm64, all]
-        default: amd64
-      execution:
-        description: Run tests on BuildBuddy or this Actions runner
-        type: choice
-        options: [remote, local]
-        default: remote
-      clock_source:
-        description: Explicit runtime clock source for qualification
-        type: choice
-        options: [calibrated, reference]
-        default: calibrated
-      local_test_requirements:
-        description: Comma-separated requirements missing from remote workers for hybrid lanes
-        type: string
-        default: namespace
-      syscall_bucket:
-        description: Optional increasing comma-separated hash15 buckets (0..14) for local or guest syscall lanes
-        type: string
-      targets:
-        description: Optional build/test/syscall owner labels, or continuous benchmark labels
-        type: string
-      test_filter:
-        description: Optional Bazel test filter for the test, container-v1 or docker lane
-        type: string
-      header_base:
-        description: Full comparison commit SHA for license-headers
-        type: string
-      cos_catalog_gzip_base64:
-        description: Gzip/base64-encoded complete gcloud COS image catalog
-        type: string
-      cos_catalog_sha256:
-        description: SHA256 of the uncompressed COS catalog
-        type: string
+on: workflow_dispatch
 
-concurrency:
-  # Explicit target lists can exceed GitHub's concurrency-key length limit.
-  # Keep those runs independent; different selections must not cancel each other.
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.profile }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ (contains(fromJSON('["build","test","benchmarks","pgo"]'), inputs.lanes) || inputs.targets != '') && github.run_id || '' }}-${{ inputs.clock_source }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  qualification-plan:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation')))
-    # All remote rows use this coordinator; run a sole matching row here.
-    name: ${{ inputs.profile == 'single' && inputs.execution == 'remote' && format('Qualification {0} remote {1}', inputs.architecture, inputs.lanes) || 'Plan qualification' }}
+  resolve:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    outputs:
-      plan: ${{ steps.plan.outputs.plan }}
-      in_place: ${{ steps.plan.outputs.in_place }}
-    env:
-      QUALIFICATION_PROFILE: ${{ inputs.profile || 'single' }}
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_LANES: ${{ inputs.lanes || 'smoke' }}
-      QUALIFICATION_ARCH: ${{ inputs.architecture || 'amd64' }}
-      QUALIFICATION_EXECUTION: ${{ inputs.execution || 'remote' }}
-      QUALIFICATION_CLOCK_SOURCE: ${{ inputs.clock_source || 'calibrated' }}
-      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ inputs.local_test_requirements }}
-      QUALIFICATION_TARGETS: ${{ inputs.targets }}
-      QUALIFICATION_TEST_FILTER: ${{ inputs.test_filter }}
-      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
-      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
-      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
-      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
+    timeout-minutes: 15
     steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Resolve the declared GNU Make package with the repository Bazel version
+      run: bazelisk query --lockfile_mode=update @release_tools//:flat
+    - name: Retain Bazel's generated lock
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Resolve the source-owned qualification plan
-      id: plan
-      shell: bash
-      run: |
-        plan=$(bash test/rbe/qualify.sh --dispatch-plan)
-        printf 'plan=%s\n' "$plan" >> "$GITHUB_OUTPUT"
-        in_place=$(jq -r '.profile == "single" and (.rows | length == 1) and .rows[0].runner == "ubuntu-24.04"' <<<"$plan")
-        printf 'in_place=%s\n' "$in_place" >> "$GITHUB_OUTPUT"
-
-    - name: Run the single selected row
-      id: row
-      if: steps.plan.outputs.in_place == 'true'
-      timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[0].job_minutes }}
-      uses: ./.github/actions/qualification-row
-      with:
-        plan: ${{ steps.plan.outputs.plan }}
-        row: ${{ toJSON(fromJSON(steps.plan.outputs.plan).rows[0]) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Verify the original row bytes
-      if: always() && steps.plan.outputs.in_place == 'true'
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ steps.plan.outputs.plan }}
-        outcome: ${{ steps.row.outcome }}
-        label: ${{ inputs.architecture }}
-
-  remote-qualification:
-    needs: qualification-plan
-    if: needs.qualification-plan.outputs.in_place != 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON(needs.qualification-plan.outputs.plan).rows }}
-    name: Qualification ${{ matrix.id }}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.job_minutes }}
-    permissions:
-      contents: read
-    steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Run this planned row on its selected coordinator
-      id: row
-      timeout-minutes: ${{ matrix.job_minutes }}
-      uses: ./.github/actions/qualification-row
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        row: ${{ toJSON(matrix) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Verify a lone row on its native runner
-      if: always() && inputs.profile == 'single'
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        outcome: ${{ steps.row.outcome }}
-        label: ${{ inputs.architecture }}
-
-  qualification-result:
-    needs: [qualification-plan, remote-qualification]
-    if: always() && inputs.profile == 'public-cpu' && needs.qualification-plan.result == 'success'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Verify every planned public CPU row
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        outcome: ${{ needs.remote-qualification.result }}
-        label: all
+        name: release-tools-lock
+        path: MODULE.bazel.lock
+        if-no-files-found: error
