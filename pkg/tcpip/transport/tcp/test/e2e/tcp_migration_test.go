@@ -931,3 +931,72 @@ func TestPartialGSOProgress(t *testing.T) {
 		})
 	}
 }
+
+func TestRefusedFINBehindData(t *testing.T) {
+	var refuse, observe atomic.Bool
+	samples := make(chan tcp.TCPSenderState, 1)
+	c := testcontext.NewWithOpts(t, testcontext.Options{
+		EnableV4: true, MTU: 1500, GSO: stack.GVisorGSOSupported, Clock: faketime.NewManualClock(),
+		LinkWriteError: func(ps stack.PacketBufferList) tcpip.Error {
+			for _, p := range ps.AsSlice() {
+				if refuse.Load() && header.TCP(p.TransportHeader().Slice()).Flags().Contains(header.TCPFlagFin) {
+					return &tcpip.ErrNoBufferSpace{}
+				}
+			}
+			return nil
+		},
+		Probe: func(s *tcp.TCPEndpointState) {
+			if observe.Swap(false) {
+				samples <- s.Sender
+			}
+		},
+	})
+	defer c.Cleanup()
+	c.CreateConnected(testcontext.TestInitialSequenceNumber, 30000, -1)
+	first := c.IRS.Add(1)
+	data := []byte{0xab}
+	if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); n != 1 || err != nil {
+		t.Fatalf("write = %d, %v; want 1, nil", n, err)
+	}
+	c.ReceiveAndCheckPacket(data, 0, 1)
+	refuse.Store(true)
+	if err := c.EP.Shutdown(tcpip.ShutdownWrite); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.Stack().Stats().TCP.SegmentSendErrors.Value(); got != 1 {
+		t.Fatalf("refused FIN: route errors = %d, want 1", got)
+	}
+	if p := c.GetPacketNonBlocking(); p != nil {
+		p.Release()
+		t.Fatal("refused FIN reached the link")
+	}
+
+	ack := func(n, next, outstanding int, state tcp.EndpointState) {
+		t.Helper()
+		observe.Store(true)
+		c.SendAck(seqnum.Value(testcontext.TestInitialSequenceNumber+1), n)
+		select {
+		case s := <-samples:
+			if s.SndUna != first.Add(seqnum.Size(n)) || s.SndNxt != first.Add(seqnum.Size(next)) || s.Outstanding != outstanding {
+				t.Fatalf("ACK +%d: una/nxt/outstanding = %d/%d/%d, want %d/%d/%d", n, s.SndUna-first, s.SndNxt-first, s.Outstanding, n, next, outstanding)
+			}
+		case <-time.After(3 * time.Second):
+			t.Fatal("no sender observation after ACK")
+		}
+		if got := tcp.EndpointState(c.EP.State()); got != state {
+			t.Fatalf("ACK +%d: endpoint state = %v, want %v", n, got, state)
+		}
+	}
+	refuse.Store(false)
+	ack(1, 2, 1, tcp.StateFinWait1)
+	p := c.GetPacket()
+	defer p.Release()
+	checker.IPv4(t, p, checker.PayloadLen(header.TCPMinimumSize), checker.TCP(
+		checker.TCPFlags(header.TCPFlagFin|header.TCPFlagAck),
+		checker.TCPSeqNum(uint32(first)+1),
+	))
+	ack(2, 2, 0, tcp.StateFinWait2)
+	if got := c.Stack().Stats().TCP.Timeouts.Value(); got != 0 {
+		t.Fatalf("timeouts = %d, want 0", got)
+	}
+}
