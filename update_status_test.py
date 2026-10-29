@@ -449,7 +449,7 @@ class CollectorHistoryTest(unittest.TestCase):
             self.assertEqual(updater.review_watch_report([changed], {"prs": [changed]}), [])
 
     def test_investigation_tracks_external_review_without_a_delivery_row(self) -> None:
-        self.registry["investigations"] = [{"reviewWatch": {
+        self.registry["investigations"] = [{"id": "investigation:external-reviews", "reviewWatch": {
             "repo": "google/gvisor", "numbers": [500], "owner": "Netstack", "reviewers": ["tamird"],
         }}]
         self.raw[500] = raw_pr(500, author="outside-author")
