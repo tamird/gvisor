@@ -280,11 +280,14 @@ func (fd *recycledInoControlFD) Walk(name string) (*lisafs.ControlFD, lisafs.Sta
 	}
 	st := fd.connImpl.getTargetStat()
 	var childNode *lisafs.Node
-	fd.Node().WithChildrenMu(func() {
-		childNode = fd.Node().LookupChildLocked(name)
+	parentNode := fd.Node()
+	parentNode.WithChildrenMu(func() {
+		// WithChildrenMu holds childrenMu throughout this callback; checklocks
+		// cannot propagate that lock state through the callback.
+		childNode = parentNode.LookupChildLocked(name) // +checklocksignore
 		if childNode == nil {
 			childNode = &lisafs.Node{}
-			childNode.InitLocked(name, fd.Node())
+			childNode.InitLocked(name, parentNode) // +checklocksignore
 		} else {
 			childNode.IncRef()
 		}
