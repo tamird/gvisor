@@ -3,7 +3,7 @@ name: CI
 "on":
   push:
     branches:
-      - "*"
+      - "research/native-release-architecture"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,6 +18,26 @@ jobs:
     - name: Checkout
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+    - name: Verify architecture selection
+      run: |
+        set -euo pipefail
+        sources() {
+          bazel cquery "filter('sighandler_go_arch$', deps($1))" --output=files "$2"
+        }
+        sources //:release --platforms=//tools/bazeldefs:linux_amd64 > "$RUNNER_TEMP/amd64-files"
+        sources //:release --platforms=//tools/bazeldefs:linux_arm64 > "$RUNNER_TEMP/arm64-files"
+        sources //:gopath --platforms=//tools/bazeldefs:linux_amd64 > "$RUNNER_TEMP/export-files"
+        for key in amd64 arm64 export; do
+          printf '%s\n' "$key"
+          cat "$RUNNER_TEMP/$key-files"
+        done
+        grep -q 'sighandler_amd64.go$' "$RUNNER_TEMP/amd64-files"
+        ! grep -q 'sighandler_arm64.go$' "$RUNNER_TEMP/amd64-files" || exit 1
+        grep -q 'sighandler_arm64.go$' "$RUNNER_TEMP/arm64-files"
+        ! grep -q 'sighandler_amd64.go$' "$RUNNER_TEMP/arm64-files" || exit 1
+        grep -q 'sighandler_amd64.go$' "$RUNNER_TEMP/export-files"
+        grep -q 'sighandler_arm64.go$' "$RUNNER_TEMP/export-files"
+        bazel cquery //:gopath --output=files
     - name: Build release
       run: bazel build //:release
 
