@@ -23,13 +23,12 @@ def main():
     for row in captured["reports"]:
         if row["name"] == "test.log":
             log = (out / row["path"]).read_text()
-            for extra, first, later in re.findall(r"TCP-PERSIST extra=(true|false) first=(true|false) later=(true|false)", log):
-                metrics.append(dict(extra=extra == "true", first=first == "true", later=later == "true"))
+            for extra, writes, rto, first in re.findall(r"TCP-NATIVE-PERSIST extra=(true|false) writes=(\d+) rto_us=(\d+) first_us=(\d+)", log):
+                metrics.append(dict(extra=extra=="true", writes=int(writes), rto_us=int(rto), first_us=int(first)))
     results = [e["testResult"] for line in events.read_text().splitlines() if "testResult" in (e := json.loads(line))]
     invocation = next((e["started"]["uuid"] for line in events.read_text().splitlines() if "started" in (e := json.loads(line))), None)
-    expected = [(False, True, False), (True, arm=="correction", arm=="stock")]
-    if [(m["extra"],m["first"],m["later"]) for m in metrics] != expected:
-        errors.append("first and half-RTO-later observations differ from the expected pair")
+    if ([m["extra"] for m in metrics] != [False, True] or metrics[0]["writes"] != 1 or metrics[1]["writes"] < 2):
+        errors.append("missing verified single/repeated write probes")
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
         errors.append("expected one uncached remote result")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
