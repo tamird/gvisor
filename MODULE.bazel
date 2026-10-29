@@ -11,6 +11,7 @@ bazel_dep(name = "bazel_lib", version = "3.7.2")
 
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4", dev_dependency = True)
 bazel_dep(name = "cpplint", version = "2.0.2", dev_dependency = True)
+bazel_dep(name = "rules_proto", version = "7.1.0", dev_dependency = True)
 
 # Use the supplier's executable files; its POSIX run/test launchers need Bash.
 buildtools = use_extension("@buildifier_prebuilt//:defs.bzl", "buildifier_prebuilt_deps_extension", dev_dependency = True)
@@ -29,6 +30,7 @@ use_repo(
 # Compare the Buildtools already selected by Gazelle with Buildifier 8.5.1.
 lint_go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps", dev_dependency = True)
 use_repo(lint_go_deps, "com_github_bazelbuild_buildtools")
+inject_repo(lint_go_deps, "rules_proto")
 
 lint_go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
 
