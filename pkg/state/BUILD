@@ -39,6 +39,7 @@ go_test(
     srcs = [
         "addrmap_test.go",
         "typeinfo_test.go",
+        "hidden_tail_study_test.go",
         "types_test.go",
     ],
     embed = [":state"],
