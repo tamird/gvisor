@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T02:27:48.744434+00:00",
+    "updatedAt": "2026-10-29T02:50:43.309284+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35138,7 +35138,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T02:27:48.744434+00:00",
+      "updatedAt": "2026-10-29T02:50:43.309284+00:00",
       "summary": "The sustained two-sender FIFO experiment confirms the earlier first-write sensitivity over longer virtual-time windows. With CUBIC writing first, Reno delivered 82,360 bytes on the control versus 8,686,004 with #16495 during seconds 5\u201320; during seconds 15\u201320 it delivered 25,560 versus 2,714,048 bytes. Both connection setup orders reproduced this result, and lifetime retransmission timeouts fell from 36 to one. Reno/Reno also improved for the weaker peer with either write order. CUBIC/CUBIC and Reno-writes-first traces were unchanged between sources; both finite payloads completed in every source/schedule.\n\nBoth arms include the same #15634 SACK-accounting prerequisite: control 9d9c3f0f479b and candidate 431f54a4309b, which additionally contains #16495. Eight named schedules passed twice per source (36 XML records including suite rows), with no failed or skipped records. Independent verification joined the original bundle and comparison data. These are deterministic shared-FIFO observations, not independent live-network samples, pristine-master throughput, general CUBIC superiority or a fairness guarantee. No default-controller or new contributor decision follows.\n\nEarlier finite-window comparison:\n\nWith the same #15634 SACK-accounting correction in both arms, the published #16495 recovery fix increased Reno delivery from 25,560 to 2,170,992 bytes when CUBIC wrote first on the shared FIFO. Forward service utilization rose from 67.37% to 97.63%. Reno/Reno rose from 52.34% to 94.93% in both write orders. Reverse mixed and CUBIC/CUBIC observations were unchanged. These are deterministic two-sender results in the same 2\u20136 second virtual interval, not Internet-wide throughput or pristine-master measurements.\n\nThe earlier experiment without the shared accounting correction failed on both sources, in all eight schedules and both repeats. That failure is preserved separately below.",
       "findings": [
         {
@@ -36678,9 +36678,22 @@
               "url": "https://app.buildbuddy.io/invocation/d5afa0a8-6cef-41c0-86c0-881dd1aa8952"
             }
           ]
+        },
+        {
+          "text": "On a 20 Mbit/s link with 150 ms RTT and a deep loss-free queue, Reno, CUBIC, and CUBIC with only ACK-train detection disabled delivered all 5,021 frames at identical times and lengths (7,124,996 bytes). The link stayed busy from 753 ms. HyStart exited at 829 ms; disabling its ACK-train detector increased the peak queue from 191,360 to 236,992 bytes and the final smoothed RTT from 175.887 to 213.595 ms. On this path the early exit reduced queueing without reducing delivery.",
+          "evidence": [
+            {
+              "label": "Three senders, identical packet delivery",
+              "url": "https://app.buildbuddy.io/invocation/5003ec11-24b8-4227-900b-c0fa36d7e19b"
+            },
+            {
+              "label": "Original per-packet traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40806463180/artifacts/12868681632"
+            }
+          ]
         }
       ],
-      "nextStep": "Measure whether ACK-train HyStart underfills a loss-free high-BDP path. Compare CUBIC, the same CUBIC with only ACK-train exit disabled, and Reno; record queue occupancy and RTT as well as delivered bytes.",
+      "nextStep": "Test whether ACKs for isolated application writes inflate CUBIC\u2019s window during congestion avoidance, using the first subsequent backlogged flight as a wire-observable consequence. Keep receive-window and retransmission controls.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -46573,7 +46586,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T02:27:48.744434+00:00",
+      "updatedAt": "2026-10-29T02:50:43.309284+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -47063,9 +47076,34 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40806415150"
             }
           ]
+        },
+        {
+          "text": "Seven stateify output files from an empty AMD64 worker matched the original formatter byte for byte. Review exposed a valid Go alias the prototype could omit, so it is not ready for upstream. Both real seccomp generators now build on empty AMD64 and run under QEMU on empty ARM64; an obsolete example import was the sole correction. Linux LLVM module-map generation also ran on both empty worker architectures: the AMD64 map matched all 624,041 reference bytes, and 171 AMD64 and 157 ARM64 compiler-rt compile records consumed the verified maps. These checks do not establish a complete release build.",
+          "evidence": [
+            {
+              "label": "Stateify reference on the original formatter",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40806415150"
+            },
+            {
+              "label": "Seven generated sources on scratch",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40806044335"
+            },
+            {
+              "label": "Seccomp compilation and QEMU generation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40807547418"
+            },
+            {
+              "label": "Native compiler-rt archives on both architectures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40808042591"
+            },
+            {
+              "label": "Original Go alias evidence reconciled without rebuilding",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40806994692"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the shell-free state generator with the original formatter. Remove the package-version tool\u2019s shell dependency, and build the supplier\u2019s LLVM module-map tool so it can start on the empty worker. Retain the independently located Python runfiles limitation.",
+      "nextStep": "Qualify stateify using goimports and the selected Go SDK against real output and aliased imports. Verify the package-version action on tagged and development builds, then join the verified fixes for the release. Independently located Python repositories still lack adapter support.",
       "evidence": [
         {
           "label": "Published rules_go upgrade #16593",
