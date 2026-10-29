@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-cross-v3'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-cross-v4'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -20,7 +20,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1^1)" = "b59f6644079d3654fa46edbf2d3eab4045bcc95a"
+        test "$(git rev-parse HEAD~3)" = "b59f6644079d3654fa46edbf2d3eab4045bcc95a"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_fence_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -52,6 +52,7 @@ jobs:
             'build --bes_backend=grpcs://remote.buildbuddy.io' \
             'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
             'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
             'build --remote_accept_cached' \
             "build --inject_repository=fifo_platform=$platform" \
             'build --host_platform=@fifo_platform//:ubuntu' \
@@ -110,6 +111,29 @@ jobs:
         Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
         print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
         PYCHECK
+        # rules_go excludes the reflect/internal/example* test-only sources from
+        # the SDK. An unsandboxed GoStdlib action can still compile them from
+        # disk; Nogo then finds archives for packages it was never given.
+        # Build stdlib and analyze it from declared inputs in both target modes
+        # before compiling the listeners. Do not reuse unsandboxed std archives.
+        for arch in x86_64 aarch64; do
+          diagnostic="$RUNNER_TEMP/replay-public/build-preflight-$arch.json"
+          printf '{"status":"INCOMPLETE","configuration":"%s"}\n' "$arch" > "$diagnostic"
+          events="$RUNNER_TEMP/build-preflight-$arch.jsonl"
+          bazelisk --bazelrc="$rc" build "--config=$arch" --strip=never \
+            "--build_event_json_file=$events" //tools/nogo:stdlib
+          python3 - "$arch" "$events" "$diagnostic" <<'PYBUILD'
+        import json, sys
+        from pathlib import Path
+        records = [json.loads(row) for row in Path(sys.argv[2]).read_text().splitlines()]
+        target = "//tools/nogo:stdlib"
+        ids = [e["id"]["targetCompleted"] for e in records if e.get("completed", {}).get("success") and e["id"].get("targetCompleted", {}).get("label") == target]
+        assert len(ids) == 1, ids
+        assert any(e.get("finished", {}).get("exitCode", {}).get("name") == "SUCCESS" for e in records)
+        invocation = next(e["started"]["uuid"] for e in records if "started" in e)
+        Path(sys.argv[3]).write_text(json.dumps({"status": "PASS", "target": target, "configuration": sys.argv[1], "invocation": invocation})+"\n")
+        PYBUILD
+        done
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in linux stock pr16081 pr16495; do
