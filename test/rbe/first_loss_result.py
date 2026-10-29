@@ -141,7 +141,7 @@ try:
     assert len(tests)==1 and tests[0]["runner"]=="remote" and not tests[0]["cached"] and tests[0]["exit"]==0
     assert tests[0]["isolation"]=="firecracker" and tests[0]["ipv6"]=="true" and tests[0]["xml"]==[result["reports"]["test.xml"]["sha256"]]
     assert tests[0]["image"].endswith("cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a")
-    assert all(row["isolation"]=="oci" and row["memory"]=="8GB" for row in compilers)
+    assert all(row["isolation"]=="firecracker" and row["memory"]=="8GB" for row in compilers)
     result["status"] = "PASS"
 except (AssertionError, KeyError, ValueError, OSError, StopIteration, ET.ParseError, subprocess.CalledProcessError) as err:
     result["error"] = {"stage":stage, "kind":type(err).__name__}
