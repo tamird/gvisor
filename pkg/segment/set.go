@@ -2076,7 +2076,10 @@ type FlatSegment struct {
 // ExportSlice returns a copy of all segments in the given set, in ascending
 // key order.
 func (s *Set) ExportSlice() []FlatSegment {
-	var fs []FlatSegment
+	if s.IsEmpty() {
+		return nil
+	}
+	fs := make([]FlatSegment, 0, s.countSegments())
 	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
 		fs = append(fs, FlatSegment{
 			Start: seg.Start(),
@@ -2140,12 +2143,17 @@ func (s *Set) segmentTestCheck(expectedSegments int, segFunc func(int, Range, Va
 	return nil
 }
 
-// countSegments counts the number of segments in the set.
-//
-// Similar to Check, this should only be used for testing.
-func (s *Set) countSegments() (segments int) {
-	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
-		segments++
+// countSegments counts the entries in each node without walking each segment.
+func (s *Set) countSegments() int {
+	return s.root.countSegments()
+}
+
+func (n *node) countSegments() int {
+	total := n.nrSegments
+	if n.hasChildren {
+		for _, child := range n.children[:n.nrSegments+1] {
+			total += child.countSegments()
+		}
 	}
-	return segments
+	return total
 }
