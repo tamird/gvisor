@@ -46758,8 +46758,8 @@
       "status": "active",
       "group": "tests",
       "owner": "Tamir",
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
-      "summary": "All four suggestions from Lucas Manning have individual replies in their original threads. The contributor approved the fork cleanup; its last refinement changes only comments. #16453 and #16493 have landed. #16496 and #16505 still have open Copybara imports.",
+      "updatedAt": "2026-10-29T00:07:29.776965+00:00",
+      "summary": "The first four suggestions have fixes and replies. Three source PRs have landed; #16496 is the last prerequisite for that rollup. Lucas approved #16594 and #16605 with two more suggestions, which will go into a separate rollup without changing those approved heads.",
       "findings": [
         {
           "text": "#16453 (landed): Explain when the state benchmark encounters the array after encoding its elements.",
@@ -46825,7 +46825,7 @@
           ]
         },
         {
-          "text": "#16505 (importing): Point readers to the Linux eventpoll_release_file lock order alongside the gVisor epoll cleanup.",
+          "text": "#16505 (landed): Point readers to the Linux eventpoll_release_file lock order alongside the gVisor epoll cleanup.",
           "evidence": [
             {
               "label": "Lucas Manning\u2019s approval on #16505",
@@ -46836,7 +46836,7 @@
               "url": "https://github.com/google/gvisor/pull/16505#discussion_r4395670148"
             },
             {
-              "label": "Open Copybara import #16544",
+              "label": "Merged Copybara import #16544",
               "url": "https://github.com/google/gvisor/pull/16544"
             },
             {
@@ -46857,9 +46857,27 @@
               "url": "https://github.com/tamird/gvisor/commit/35532f26ad7a54dcbcf6484d7adf451978976726"
             }
           ]
+        },
+        {
+          "text": "#16594 (approved; queued for the next rollup): Return immediately when the mount promise is already resolved after registering. Waiting on an already signaled entry can still select the timeout.",
+          "evidence": [
+            {
+              "label": "Original review suggestion",
+              "url": "https://github.com/google/gvisor/pull/16594#discussion_r4407341456"
+            }
+          ]
+        },
+        {
+          "text": "#16605 (approved; queued for the next rollup): Check that a DSACK advances the round boundary and refreshes persistence even after the window multiplier saturates.",
+          "evidence": [
+            {
+              "label": "Original review suggestion",
+              "url": "https://github.com/google/gvisor/pull/16605#discussion_r4407341155"
+            }
+          ]
         }
       ],
-      "nextStep": "Submit the approved cleanup PR once the two remaining source changes land upstream. Continue the daily sweep for the weekly batch; suggestions can be queued while an import is open. The four original threads remain open, with no source amendment or maintainer reply requested for these nits.",
+      "nextStep": "Open the first rollup after #16496 lands. Validate the two new changes against their exact parent sources, then publish them together once #16594 and #16605 land. Reply on both original threads when there is a published fix to review.",
       "evidence": [
         {
           "label": "Approved cleanup with final comment wording and Linux source link",
