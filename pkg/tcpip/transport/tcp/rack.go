@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 )
 
@@ -63,6 +64,13 @@ type rackControl struct {
 	// tlpHighRxt the value of sender.sndNxt at the time of sending
 	// a TLP retransmission.
 	tlpHighRxt seqnum.Value
+
+	// A retransmitted tail probe can leave both transmissions in flight
+	// (RFC 8985, sections 7.3 and 9.3). The write list tracks the newer
+	// one. Track the older copy independently of the TLP episode, which
+	// ends on entry to recovery even if neither copy has been delivered.
+	priorTail     header.SACKBlock
+	priorTailTime tcpip.MonotonicTime
 
 	// snd is a reference to the sender.
 	snd *sender
@@ -218,7 +226,7 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		}
 	}
 
-	if !dataSent && !s.rc.tlpRxtOut {
+	if !dataSent && !s.rc.tlpRxtOut && !s.rc.hasPriorTail() {
 		var highestSeqXmit *segment
 		for highestSeqXmit = s.writeList.Front(); highestSeqXmit != nil; highestSeqXmit = highestSeqXmit.Next() {
 			if highestSeqXmit.xmitCount == 0 {
@@ -235,7 +243,7 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		}
 
 		if highestSeqXmit != nil {
-			dataSent = s.maybeSendSegment(highestSeqXmit, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
+			dataSent = s.sendSegmentWithinWindow(highestSeqXmit, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd), true /* tailProbe */)
 			if dataSent {
 				s.rc.tlpRxtOut = true
 				s.rc.tlpHighRxt = s.SndNxt
@@ -371,6 +379,53 @@ func (rc *rackControl) exitRecovery() {
 	rc.exitedRecovery = true
 }
 
+func (rc *rackControl) hasPriorTail() bool {
+	return rc.priorTail.Start != rc.priorTail.End
+}
+
+// +checklocks:rc.snd.ep.mu
+func (rc *rackControl) retirePriorTail() {
+	rc.priorTail = header.SACKBlock{}
+	rc.snd.Outstanding--
+}
+
+// ackPriorTail retires the extra copy before accounting newly delivered data;
+// acknowledging one byte range must not earn congestion credit twice.
+//
+// +checklocks:rc.snd.ep.mu
+func (rc *rackControl) ackPriorTail(ack seqnum.Value) {
+	if !rc.hasPriorTail() {
+		return
+	}
+	if (ack-1).InRange(rc.snd.SndUna, rc.snd.SndNxt) && rc.priorTail.Start.LessThan(ack) {
+		if rc.priorTail.End.LessThanEq(ack) {
+			rc.retirePriorTail()
+			return
+		}
+		rc.priorTail.Start = ack
+	}
+	if rc.snd.ep.scoreboard.IsSACKED(rc.priorTail) {
+		rc.retirePriorTail()
+	}
+}
+
+// lossDeadline checks a transmission against the latest one known delivered.
+// A positive wait includes the timestamp clock's uncertainty boundary.
+func (rc *rackControl) lossDeadline(xmitTime tcpip.MonotonicTime, endSeq seqnum.Value, now tcpip.MonotonicTime, resolution time.Duration) (lost bool, wait time.Duration) {
+	if !(xmitTime.Before(rc.XmitTime) || (xmitTime == rc.XmitTime && endSeq.LessThan(rc.EndSequence))) {
+		return false, 0
+	}
+	// Timestamp quantization can make two events less than one clock tick
+	// apart appear a full tick apart. Keep that uncertainty separate from
+	// the reordering window, which may be zero during recovery. Recheck
+	// beyond the uncertainty boundary so expiry does not rearm at equality.
+	remaining := xmitTime.Sub(now) + rc.RTT + rc.ReoWnd + resolution
+	if remaining < 0 || (remaining == 0 && resolution == 0) {
+		return true, 0
+	}
+	return false, remaining + resolution
+}
+
 // detectLoss marks the segment as lost if the reordering window has elapsed
 // and the ACK is not received. It will also arm the reorder timer.
 // See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.2 Step 5.
@@ -391,28 +446,20 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 		}
 
 		endSeq := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize()))
-		if seg.xmitTime.Before(rc.XmitTime) || (seg.xmitTime == rc.XmitTime && endSeq.LessThan(rc.EndSequence)) {
-			// Timestamp quantization can make two events less than one clock tick
-			// apart appear a full tick apart. Keep that uncertainty separate from
-			// the network reordering window, which RACK may intentionally reduce to
-			// zero during recovery.
-			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
-			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
-				seg.lost = true
-				numLost++
-			} else {
-				// Arm the timer through the uncertainty boundary, so that a timer
-				// target re-evaluation is strictly negative and loss is declared on
-				// the first expiry. Arming only to timeRemaining would make the
-				// expiry a no-op at equality that re-arms a second timer.
-				timeWait := timeRemaining
-				if clockResolution > 0 {
-					timeWait += clockResolution
-				}
-				if timeWait > timeout {
-					timeout = timeWait
-				}
-			}
+		if lost, wait := rc.lossDeadline(seg.xmitTime, endSeq, rcvTime, clockResolution); lost {
+			seg.lost = true
+			numLost++
+		} else {
+			timeout = max(timeout, wait)
+		}
+	}
+	if rc.hasPriorTail() {
+		if lost, wait := rc.lossDeadline(rc.priorTailTime, rc.priorTail.End, rcvTime, clockResolution); lost {
+			// The newer copy is still tracked by the write list. Losing the
+			// older copy frees its slot; it does not request a third copy.
+			rc.retirePriorTail()
+		} else {
+			timeout = max(timeout, wait)
 		}
 	}
 
@@ -442,8 +489,12 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	// retransmits and recovery on a path with little or no real loss
 	// (gvisor#9707/#9778). detectLoss arms the timer from rcvdTime-derived
 	// values, so evaluating it at the timer target keeps the two consistent.
+	hadPriorTail := rc.hasPriorTail()
 	numLost := rc.detectLoss(rc.snd.reorderTimer.target)
 	if numLost == 0 {
+		if hadPriorTail && !rc.hasPriorTail() {
+			rc.snd.sendData()
+		}
 		return nil
 	}
 

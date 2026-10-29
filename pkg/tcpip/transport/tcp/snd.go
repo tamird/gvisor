@@ -650,6 +650,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// We'll keep on transmitting (or retransmitting) as we get acks for
 	// the data we transmit.
 	s.Outstanding = 0
+	s.rc.priorTail = header.SACKBlock{}
 
 	// Expunge all SACK information as per https://tools.ietf.org/html/rfc6675#section-5.1
 	//
@@ -862,6 +863,11 @@ func (s *sender) NextSeg(nextSegHint *segment) (nextSeg, hint *segment, rescueRt
 // end.
 // +checklocks:s.ep.mu
 func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (sent bool) {
+	return s.sendSegmentWithinWindow(seg, limit, end, false /* tailProbe */)
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) sendSegmentWithinWindow(seg *segment, limit int, end seqnum.Value, tailProbe bool) bool {
 	// We abuse the flags field to determine if we have already
 	// assigned a sequence number to this segment.
 	newData := !s.isAssignedSequenceNumber(seg)
@@ -1025,7 +1031,14 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		panic("attempted to send segment not in write list")
 	}
 
-	s.sendSegment(seg)
+	priorTime, priorLost := seg.xmitTime, seg.lost
+	if err := s.sendSegment(seg); tailProbe && err == nil && !priorLost {
+		// The write list now timestamps the probe. Its previous transmission
+		// can still occupy a separate slot until delivered or declared lost.
+		s.rc.priorTail = seg.sackBlock()
+		s.rc.priorTailTime = priorTime
+		s.Outstanding++
+	}
 
 	// Update sndNxt if we actually sent new data (as opposed to
 	// retransmitting some previously sent data).
@@ -1286,6 +1299,9 @@ func (s *sender) SetPipe() {
 				pipe++
 			}
 		}
+	}
+	if s.rc.hasPriorTail() {
+		pipe++
 	}
 	s.Outstanding = pipe
 }
@@ -1679,6 +1695,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		//		unacknowledged and also never retransmitted sequence below
 		//		RACK.fack, then the corresponding packet has been
 		//		reordered and RACK.reord is set to TRUE.
+		s.rc.ackPriorTail(rcvdSeg.ackNumber)
 		hasDSACK = s.walkSACK(rcvdSeg)
 		s.SetPipe()
 	}

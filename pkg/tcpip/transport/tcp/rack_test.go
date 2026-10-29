@@ -494,3 +494,51 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 		t.Errorf("SackedOut after split = %d, want %d", got, want)
 	}
 }
+
+// A tail probe updates the queued segment's transmit time. A delivery between
+// the two sends can therefore establish loss of the original but not the probe.
+func TestRACKPriorTailLoss(t *testing.T) {
+	ctx := newRACKTestContext(faketime.NewManualClock(), 0)
+	defer ctx.cleanup()
+	s := &ctx.snd
+	s.ep.mu.Lock()
+	defer s.ep.mu.Unlock()
+	s.Outstanding = 2
+	t0 := tcpip.MonotonicTime{}
+	tail := ctx.addSegment(10, t0.Add(30*time.Millisecond))
+	tail.xmitCount = 2
+	s.rc.priorTail = tail.sackBlock()
+	s.rc.priorTailTime = t0
+	s.rc.XmitTime = t0.Add(10 * time.Millisecond)
+	s.rc.RTT = 20 * time.Millisecond
+
+	if lost := s.rc.detectLoss(t0.Add(40 * time.Millisecond)); lost != 0 || tail.lost {
+		t.Fatalf("newer probe declared lost: losses=%d, marked=%t", lost, tail.lost)
+	}
+	if s.rc.hasPriorTail() || s.Outstanding != 1 {
+		t.Fatalf("older copy still counted: range=%v, outstanding=%d, want one probe", s.rc.priorTail, s.Outstanding)
+	}
+}
+
+// A SACK can cover the tail together with a partial cumulative ACK. Repeated
+// ACKs for the same range must not retire a second unit of flight.
+func TestRACKPriorTailDelivery(t *testing.T) {
+	ctx := newRACKTestContext(faketime.NewManualClock(), 0)
+	defer ctx.cleanup()
+	s := &ctx.snd
+	s.ep.mu.Lock()
+	defer s.ep.mu.Unlock()
+	s.SndUna, s.SndNxt, s.Outstanding = 5, 20, 3
+	s.rc.priorTail = header.SACKBlock{Start: 10, End: 14}
+	s.ep.scoreboard.Insert(header.SACKBlock{Start: 12, End: 14})
+	s.rc.ackPriorTail(5)
+	s.rc.ackPriorTail(11)
+	if got, want := s.rc.priorTail, (header.SACKBlock{Start: 11, End: 14}); got != want || s.Outstanding != 3 {
+		t.Fatalf("partially covered range=%v, flight=%d, want %v, 3", got, s.Outstanding, want)
+	}
+	s.rc.ackPriorTail(12)
+	s.rc.ackPriorTail(12)
+	if s.rc.hasPriorTail() || s.Outstanding != 2 {
+		t.Fatalf("delivered range=%v, flight=%d, want no range and 2", s.rc.priorTail, s.Outstanding)
+	}
+}
