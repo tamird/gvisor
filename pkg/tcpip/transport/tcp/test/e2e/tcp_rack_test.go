@@ -982,6 +982,195 @@ func TestRACKWithDuplicateACK(t *testing.T) {
 	}
 }
 
+// TestRACKPipeAfterTimeout checks that time-lost originals do not consume the
+// recovery window, while retransmissions still in flight consume it once.
+func TestRACKPipeAfterTimeout(t *testing.T) {
+	const (
+		rtt             = 100 * time.Millisecond
+		recoveryWindow  = 5
+		originalPackets = 12
+		tailPacket      = originalPackets - 1
+		totalPackets    = originalPackets + 2
+	)
+	for _, gso := range []stack.SupportedGSO{stack.GSONotSupported, stack.GVisorGSOSupported} {
+		t.Run(fmt.Sprintf("gso_%d", gso), func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			clock.Advance(time.Second)
+			states := make(chan *tcp.TCPEndpointState, 16)
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true, MTU: uint32(mtu), Clock: clock,
+				ClockResolution: time.Millisecond, GSO: gso,
+				Probe: func(state *tcp.TCPEndpointState) { states <- state },
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+			peer := e2e.CreateConnectedWithSACKAndTS(c)
+			peer.Flags = header.TCPFlagAck
+			cc := tcpip.CongestionControlOption("reno")
+			if err := c.EP.SetSockOpt(&cc); err != nil {
+				t.Fatalf("SetSockOpt(CongestionControlOption): %s", err)
+			}
+			data := make([]byte, totalPackets*maxPayload)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			write := func(data []byte) {
+				t.Helper()
+				n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{})
+				if err != nil {
+					t.Fatalf("Write: %s", err)
+				}
+				if got, want := n, int64(len(data)); got != want {
+					t.Fatalf("Write = %d, want %d", got, want)
+				}
+			}
+			// Check each MSS-sized wire packet, including software GSO output.
+			// Its actual timestamp lets ACKs identify the retransmission.
+			readPacket := func(number int) uint32 {
+				t.Helper()
+				packet := c.GetPacket()
+				defer packet.Release()
+				h := header.TCP(header.IPv4(packet.AsSlice()).Payload())
+				offset := number * maxPayload
+				if got, want := h.SequenceNumber(), uint32(c.IRS.Add(seqnum.Size(1+offset))); got != want {
+					t.Fatalf("packet %d sequence = %d, want %d", number, got, want)
+				}
+				if got, want := h.Payload(), data[offset:offset+maxPayload]; !bytes.Equal(got, want) {
+					t.Fatalf("packet %d payload = %v, want %v", number, got, want)
+				}
+				if options := h.ParsedOptions(); options.TS {
+					return options.TSVal
+				}
+				t.Fatal("missing negotiated timestamp")
+				return 0
+			}
+			ack := func(packetsReceived int, echo uint32, sackTail bool) *tcp.TCPEndpointState {
+				t.Helper()
+				options := make([]byte, maxTCPOptionSize)
+				options[0], options[1] = header.TCPOptionNOP, header.TCPOptionNOP
+				n := 2 + header.EncodeTSOption(1, echo, options[2:])
+				if sackTail {
+					start := c.IRS.Add(1 + tailPacket*maxPayload)
+					n += header.EncodeSACKBlocks([]header.SACKBlock{{Start: start, End: start.Add(maxPayload)}}, options[n:])
+				}
+				for n%4 != 0 {
+					options[n] = header.TCPOptionNOP
+					n++
+				}
+				peer.AckNum = c.IRS.Add(seqnum.Size(1 + packetsReceived*maxPayload))
+				peer.SendPacket(nil, options[:n])
+				c.Stack().Pause()
+				c.Stack().Resume()
+				return <-states
+			}
+
+			// Prime RACK's RTT and advance past the initial recovery boundary.
+			// Write packet 0 separately so its ACK retires a whole segment in
+			// both GSO modes. The other originals are lost except tail packet 11.
+			write(data[:maxPayload])
+			write(data[maxPayload : originalPackets*maxPayload])
+			var echo uint32
+			for packet := 0; packet < 10; packet++ {
+				echo = readPacket(packet)
+			}
+			clock.Advance(rtt)
+			primed := ack(1, echo, false)
+			if got, want := primed.Sender.RACKState.RTT, rtt; got != want {
+				t.Fatalf("primed RACK RTT = %s, want %s", got, want)
+			}
+			readPacket(10)
+			readPacket(tailPacket)
+
+			// Leave the tail probe unanswered and reach a real RTO. New data
+			// is not queued yet, so TLP must probe an existing transmission.
+			stats := c.EP.Stats().(*tcp.Stats)
+			info := tcpip.TCPInfoOption{}
+			if err := c.EP.GetSockOpt(&info); err != nil || info.RTO <= 0 || info.RTO > 10*time.Second {
+				t.Fatalf("TCPInfo RTO = %s, %v", info.RTO, err)
+			}
+			for elapsed := time.Duration(0); stats.SendErrors.Timeouts.Value() == 0 && elapsed < info.RTO+time.Second; elapsed += time.Millisecond {
+				clock.Advance(time.Millisecond)
+				c.Stack().Pause()
+				c.Stack().Resume()
+				if stats.SendErrors.Timeouts.Value() == 0 {
+					if packet := c.GetPacketNonBlocking(); packet != nil {
+						h := header.TCP(header.IPv4(packet.AsSlice()).Payload())
+						sequence := h.SequenceNumber()
+						packet.Release()
+						// GSO's final queued segment can span both wire packets.
+						if first, last := uint32(c.IRS.Add(1+(tailPacket-1)*maxPayload)), uint32(c.IRS.Add(1+tailPacket*maxPayload)); sequence != first && sequence != last {
+							t.Fatalf("pre-RTO probe sequence = %d, want %d or %d", sequence, first, last)
+						}
+					}
+				}
+			}
+			if got, want := stats.SendErrors.Timeouts.Value(), uint64(1); got != want {
+				t.Fatalf("Timeouts = %d, want %d", got, want)
+			}
+
+			// ACK the RTO retransmission of packet 1, SACK the tail, and keep
+			// new packets 12 and 13 pending. Recovery should send packets 2..6.
+			echo = readPacket(1)
+			write(data[originalPackets*maxPayload:])
+			clock.Advance(rtt)
+			recovered := ack(2, echo, true)
+			if got, want := recovered.Sender.FastRecovery.Active, true; got != want {
+				t.Fatalf("post-RTO recovery active = %t, want %t", got, want)
+			}
+			if got, want := recovered.Sender.SndCwnd, recoveryWindow; got != want {
+				t.Fatalf("post-RTO cwnd = %d, want %d", got, want)
+			}
+			if got, want := recovered.Sender.Outstanding, recoveryWindow; got != want {
+				t.Fatalf("post-RTO pipe = %d, want %d", got, want)
+			}
+			for packet := 2; packet < 2+recoveryWindow; packet++ {
+				echo = readPacket(packet)
+			}
+
+			// A same-time duplicate ACK must count those retransmissions once
+			// and leave the recovery window full, without sending another packet.
+			inFlight := ack(2, echo, true)
+			if got, want := inFlight.Sender.Outstanding, recoveryWindow; got != want {
+				t.Fatalf("pipe with retransmissions in flight = %d, want %d", got, want)
+			}
+			if packet := c.GetPacketNonBlocking(); packet != nil {
+				packet.Release()
+				t.Fatal("sent beyond recovery window")
+			}
+
+			// ACK the first recovery flight. Retransmit the remaining holes
+			// (7..10), skip SACKed packet 11, then fill the window with packet 12.
+			clock.Advance(rtt)
+			ack(2+recoveryWindow, echo, true)
+			for _, packet := range []int{7, 8, 9, 10, 12} {
+				echo = readPacket(packet)
+			}
+			// ACK that flight to release the final queued packet, then finish.
+			clock.Advance(rtt)
+			ack(totalPackets-1, echo, false)
+			echo = readPacket(totalPackets - 1)
+			clock.Advance(rtt)
+			complete := ack(totalPackets, echo, false)
+			if got, want := complete.Sender.SndUna, complete.Sender.SndNxt; got != want {
+				t.Fatalf("SndUna = %d, want SndNxt %d", got, want)
+			}
+			if got, want := complete.Sender.Outstanding, 0; got != want {
+				t.Fatalf("complete pipe = %d, want %d", got, want)
+			}
+			if got, want := complete.Sender.SackedOut, 0; got != want {
+				t.Fatalf("complete SackedOut = %d, want %d", got, want)
+			}
+			if got, want := complete.Sender.FastRecovery.Active, false; got != want {
+				t.Fatalf("complete recovery active = %t, want %t", got, want)
+			}
+			if got, want := stats.SendErrors.Timeouts.Value(), uint64(1); got != want {
+				t.Fatalf("Timeouts after ACK-driven recovery = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
 // TestRACKUpdateSackedOut checks selective ACK credit across cumulative ACKs,
 // recovery, retransmission timeout, and GSO queue fragmentation.
 func TestRACKUpdateSackedOut(t *testing.T) {
@@ -1260,7 +1449,9 @@ func TestRACKWithWindowFull(t *testing.T) {
 	end := start.Add(seqnum.Size(maxPayload))
 	dsackStart := c.IRS.Add(seqnum.Size(1 + (numPkts-1)*maxPayload))
 	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, 2*maxPayload, []header.SACKBlock{{dsackStart, dsackEnd}, {start, end}})
+	// Limit recovery to one packet at a time. Otherwise packets sent under
+	// the old open window can still be queued when the zero-window ACK arrives.
+	c.SendAckWithSACKAndWindow(seq, 2*maxPayload, []header.SACKBlock{{dsackStart, dsackEnd}, {start, end}}, maxPayload)
 
 	var info tcpip.TCPInfoOption
 	if err := c.EP.GetSockOpt(&info); err != nil {
@@ -1273,20 +1464,13 @@ func TestRACKWithWindowFull(t *testing.T) {
 	c.ReceiveAndCheckPacketWithOptions(data, 2*maxPayload, maxPayload, e2e.TSOptionSize)
 
 	// Send ACK for #2 packet.
-	c.SendAck(seq, 3*maxPayload)
+	c.SendAckWithSACKAndWindow(seq, 3*maxPayload, nil, maxPayload)
 
 	// Expect retransmission of #3 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, 3*maxPayload, maxPayload, e2e.TSOptionSize)
 
 	// Send ACK with zero window size.
-	c.SendPacket(nil, &context.Headers{
-		SrcPort: context.TestPort,
-		DstPort: c.Port,
-		Flags:   header.TCPFlagAck,
-		SeqNum:  seq,
-		AckNum:  c.IRS.Add(1 + 4*maxPayload),
-		RcvWnd:  0,
-	})
+	c.SendAckWithSACKAndWindow(seq, 4*maxPayload, nil, 0)
 
 	// No packet should be received as the receive window size is zero.
 	c.CheckNoPacket("unexpected packet received after userTimeout has expired")
@@ -1300,4 +1484,210 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+func TestRACKRepairsLostBatch(t *testing.T) {
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true,
+		MTU:      1500,
+		GSO:      stack.GVisorGSOSupported,
+		Clock:    clock,
+	})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatal(err)
+	}
+	mss := int(info.SndMss)
+	if mss <= 0 {
+		t.Fatalf("sender MSS = %d, want a positive size", mss)
+	}
+	lostEnd := 3 * mss
+	data := make([]byte, lostEnd+mss)
+	for i := range data {
+		data[i] = byte(i)
+	}
+	write := func(start, end int) {
+		t.Helper()
+		n, err := c.EP.Write(bytes.NewReader(data[start:end]), tcpip.WriteOptions{})
+		if want := int64(end - start); n != want || err != nil {
+			t.Fatalf("write [%d,%d) = %d, %v; want %d, nil", start, end, n, err, want)
+		}
+		for off := start; off < end; off += mss {
+			c.ReceiveAndCheckPacketWithOptions(data, off, mss, e2e.TSOptionSize)
+		}
+	}
+	write(0, lostEnd)
+	clock.Advance(30 * time.Millisecond)
+	write(lostEnd, len(data))
+	clock.Advance(10 * time.Millisecond)
+	start := c.IRS.Add(1 + seqnum.Size(lostEnd))
+	c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber+1), 0,
+		[]header.SACKBlock{{Start: start, End: start.Add(seqnum.Size(mss))}})
+
+	// The peer sends nothing else and the retransmission timer cannot fire.
+	for off := 0; off < lostEnd; off += mss {
+		c.ReceiveAndCheckPacketWithOptions(data, off, mss, e2e.TSOptionSize)
+		t.Logf("FLIGHT repaired bytes [%d,%d)", off, off+mss)
+	}
+}
+
+// TestRACKCountsTailProbe checks that a probe can still be in flight
+// alongside the original even after RACK detects an unrelated loss.
+func TestRACKCountsTailProbe(t *testing.T) {
+	testRACKTailProbe(t, true)
+}
+
+// TestRACKCountsTailProbeBeforeACK fills the remaining window before any ACK
+// of the probe can change the sender's estimate.
+func TestRACKCountsTailProbeBeforeACK(t *testing.T) {
+	testRACKTailProbe(t, false)
+}
+
+func testRACKTailProbe(t *testing.T, sackP2 bool) {
+	clock := faketime.NewManualClock()
+	clock.Advance(time.Second)
+	states := make(chan *tcp.TCPEndpointState, 32)
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true, MTU: uint32(mtu), Clock: clock,
+		Probe: func(s *tcp.TCPEndpointState) { states <- s },
+	})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	peer := e2e.CreateConnectedWithSACKAndTS(c)
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatal(err)
+	}
+	mss := int(info.SndMss)
+	if mss <= 0 {
+		t.Fatalf("test connection has MSS %d", mss)
+	}
+	data := make([]byte, 20*mss)
+	for i := range data {
+		data[i] = byte(53*(i/mss) + i%mss)
+	}
+	packet := func(i int, p *buffer.View) uint32 {
+		t.Helper()
+		defer p.Release()
+		h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+		start := i * mss
+		if got, want := h.SequenceNumber(), uint32(c.IRS.Add(seqnum.Size(1+start))); got != want {
+			t.Fatalf("packet %d sequence = %d, want %d", i, got, want)
+		}
+		if !bytes.Equal(h.Payload(), data[start:start+mss]) {
+			t.Fatalf("wrong payload for packet %d", i)
+		}
+		return h.ParsedOptions().TSVal
+	}
+	write := func(i, count int) {
+		t.Helper()
+		n, err := c.EP.Write(bytes.NewReader(data[i*mss:(i+count)*mss]), tcpip.WriteOptions{})
+		if want := int64(count * mss); n != want || err != nil {
+			t.Fatalf("write at packet %d = %d, %v; want %d, nil", i, n, err, want)
+		}
+	}
+	ack := func(echo uint32, sackP2 bool) *tcp.TCPEndpointState {
+		t.Helper()
+		for len(states) != 0 {
+			<-states
+		}
+		options := make([]byte, maxTCPOptionSize)
+		options[0], options[1] = header.TCPOptionNOP, header.TCPOptionNOP
+		n := 2 + header.EncodeTSOption(1, echo, options[2:])
+		if sackP2 {
+			start := c.IRS.Add(seqnum.Size(1 + 2*mss))
+			n += header.EncodeSACKBlocks([]header.SACKBlock{{Start: start, End: start.Add(seqnum.Size(mss))}}, options[n:])
+		}
+		for n%4 != 0 {
+			options[n] = header.TCPOptionNOP
+			n++
+		}
+		peer.AckNum = c.IRS.Add(seqnum.Size(1 + mss))
+		peer.SendPacket(nil, options[:n])
+		c.Stack().Pause()
+		c.Stack().Resume()
+		select {
+		case s := <-states:
+			return s
+		case <-time.After(3 * time.Second):
+			t.Fatal("no sender snapshot after peer ACK")
+			return nil
+		}
+	}
+	// Prime the RTT so the loss probe fires before the retransmission timer.
+	write(0, 1)
+	ts0 := packet(0, c.GetPacket())
+	clock.Advance(30 * time.Millisecond)
+	ack(ts0, false)
+	write(1, 1)
+	packet(1, c.GetPacket())
+	clock.Advance(20 * time.Millisecond)
+	write(2, 1)
+	ts2 := packet(2, c.GetPacket())
+	clock.Advance(time.Millisecond)
+	write(3, 1)
+	packet(3, c.GetPacket())
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatal(err)
+	}
+	var p *buffer.View
+	for elapsed := time.Duration(0); elapsed < info.RTO && p == nil; elapsed += time.Millisecond {
+		clock.Advance(time.Millisecond)
+		p = c.GetPacketNonBlocking()
+	}
+	if p == nil {
+		t.Fatal("no tail probe")
+	}
+	packet(3, p)
+	if got := c.Stack().Stats().TCP.Timeouts.Value(); got != 0 {
+		t.Fatalf("expected tail probe; got %d RTOs", got)
+	}
+	drainNew := func() int {
+		t.Helper()
+		c.Stack().Pause()
+		c.Stack().Resume()
+		n := 0
+		for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+			packet(4+n, p)
+			n++
+		}
+		return n
+	}
+	if !sackP2 {
+		// P1 and P2 are outstanding, and P3 has been sent twice. Capture
+		// everything the application can put on the wire before the next ACK.
+		room := int(info.SndCwnd) - 4
+		if room < 0 || room+1 > 16 {
+			t.Fatalf("unexpected pre-ACK window %d", info.SndCwnd)
+		}
+		write(4, room+1)
+		n := drainNew()
+		t.Logf("FLIGHT before ACK: P1 P2 and two P3 copies, cwnd=%d new packets=%d want=%d", info.SndCwnd, n, room)
+		if n != room {
+			t.Errorf("sent %d new packets with room for %d", n, room)
+		}
+		return
+	}
+	// Acknowledge only P2. This makes P1 eligible for repair, while both
+	// sends of the later P3 can still be in the network.
+	s := ack(ts2, true)
+	packet(1, c.GetPacket())
+	t.Logf("FLIGHT observed P3 twice; SACKed only P2; repaired P1. Outstanding=%d cwnd=%d", s.Sender.Outstanding, s.Sender.SndCwnd)
+	room := s.Sender.SndCwnd - 3
+	if room < 0 || room+1 > 16 {
+		t.Fatalf("unexpected recovery window %d", s.Sender.SndCwnd)
+	}
+	write(4, room+1)
+	n := drainNew()
+	t.Logf("FLIGHT new packets=%d; max with both P3 copies=%d", n, room)
+	if got := s.Sender.Outstanding; got != 3 {
+		t.Errorf("outstanding = %d, want 3 (P1 repair and two P3 copies)", got)
+	}
+	if n != room {
+		t.Errorf("sent %d new packets with room for %d", n, room)
+	}
 }
