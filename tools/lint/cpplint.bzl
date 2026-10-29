@@ -20,7 +20,7 @@ def cpplint_test():
     """Checks C/C++ files in the calling package, including nested nonpackages."""
     srcs = native.glob(["**/*.c", "**/*.cc", "**/*.h"], allow_empty = True)
     if not srcs:
-        fail("cpplint_test has no C/C++ sources in " + native.package_name())
+        return
     py_test(
         name = "cpplint_test",
         srcs = [_CPPLINT],
