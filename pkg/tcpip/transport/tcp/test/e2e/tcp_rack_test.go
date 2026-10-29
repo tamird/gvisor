@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1132,4 +1133,163 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+func TestRFC8985LostRepair(t *testing.T) {
+	for _, name := range []string{"repeat_tail", "sack_repair", "timestamp_peer"} {
+		t.Run(name, func(t *testing.T) {
+			println("RR begin", name)
+			var observe atomic.Bool
+			samples := make(chan tcp.TCPSenderState, 1)
+			clock := faketime.NewManualClock()
+			start := clock.NowMonotonic()
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true, MTU: 1500, Clock: clock,
+				Probe: func(s *tcp.TCPEndpointState) {
+					if observe.Swap(false) {
+						samples <- s.Sender
+					}
+				},
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+			algo := tcpip.CongestionControlOption("reno")
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &algo); err != nil {
+				t.Fatal(err)
+			}
+			timestamps := name == "timestamp_peer"
+			raw := c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{SACKPermitted: true, TS: timestamps})
+			if !raw.SACKPermitted {
+				t.Fatal("SACK did not negotiate")
+			}
+			synTS, echo := raw.RecentTS, raw.RecentTS
+			var selected tcpip.CongestionControlOption
+			if err := c.EP.GetSockOpt(&selected); err != nil || selected != algo {
+				t.Fatalf("selected %q, %v; want Reno", selected, err)
+			}
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			mss := int(info.SndMss)
+			if mss < 1 || info.RTO <= 102*time.Millisecond {
+				t.Fatalf("MSS %d, initial RTO %v", mss, info.RTO)
+			}
+			println("RR initial", mss, info.SndCwnd, info.SndSsthresh, int64(info.RTO))
+			data := make([]byte, 3*mss)
+			for i := range data {
+				data[i] = byte(i/mss*73 + i%61)
+			}
+			first := c.IRS.Add(1)
+			peer := seqnum.Value(context.TestInitialSequenceNumber + 1)
+			read := func(v *buffer.View, off int, phase string) uint32 {
+				t.Helper()
+				defer v.Release()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				o := h.ParsedOptions()
+				if h.SequenceNumber() != uint32(first)+uint32(off) || h.AckNumber() != uint32(peer) || h.DestinationPort() != context.TestPort || h.Flags()&^header.TCPFlagPsh != header.TCPFlagAck || !bytes.Equal(h.Payload(), data[off:off+mss]) || o.TS != timestamps {
+					t.Fatalf("%s: unexpected frame at +%d, want +%d, len %d", phase, h.SequenceNumber()-uint32(first), off, len(h.Payload()))
+				}
+				println("RR wire", phase, off, mss, int64(clock.NowMonotonic().Sub(start)), o.TS, o.TSVal-synTS)
+				return o.TSVal
+			}
+			for i := 0; i < 3; i++ {
+				if i != 0 {
+					clock.Advance(30 * time.Millisecond)
+				}
+				n, err := c.EP.Write(bytes.NewReader(data[i*mss:(i+1)*mss]), tcpip.WriteOptions{})
+				if n != int64(mss) || err != nil {
+					t.Fatalf("write %d: %d, %v", i+1, n, err)
+				}
+				read(c.GetPacket(), i*mss, "original")
+			}
+			ack := func(phase string, cum, lo, hi int) tcp.TCPSenderState {
+				t.Helper()
+				var opts [40]byte
+				n := 0
+				if timestamps {
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeTSOption(raw.TSVal+uint32(clock.NowMonotonic().Sub(start).Milliseconds()), echo, opts[n:])
+				}
+				if hi > lo {
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeSACKBlocks([]header.SACKBlock{{Start: first.Add(seqnum.Size(lo)), End: first.Add(seqnum.Size(hi))}}, opts[n:])
+				}
+				println("RR ack", phase, cum, lo, hi, int64(clock.NowMonotonic().Sub(start)), timestamps, echo-synTS, echo != 0)
+				observe.Store(true)
+				c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: peer, AckNum: first.Add(seqnum.Size(cum)), RcvWnd: 30000, TCPOpts: opts[:n]})
+				select {
+				case s := <-samples:
+					c.Stack().Pause()
+					c.Stack().Resume()
+					println("RR state", phase, uint32(s.SndUna-first), uint32(s.SndNxt-first), s.SndCwnd, s.Ssthresh, s.Outstanding, s.SackedOut, s.FastRecovery.Active, uint32(s.RACKState.EndSequence-first), int64(s.RACKState.RTT), int64(s.RACKState.ReoWnd), int64(s.RACKState.XmitTime.Sub(tcpip.MonotonicTime{})))
+					return s
+				case <-time.After(3 * time.Second):
+					t.Fatalf("%s: no sender probe", phase)
+					return tcp.TCPSenderState{}
+				}
+			}
+			clock.Advance(10 * time.Millisecond)
+			s := ack("originals", 0, 2*mss, 3*mss)
+			if !s.FastRecovery.Active || s.SndUna != first || s.RACKState.EndSequence != first.Add(seqnum.Size(3*mss)) {
+				t.Fatal("no RACK evidence for loss of the two originals")
+			}
+			for i := 0; i < 2; i++ {
+				read(c.GetPacket(), i*mss, "repair")
+			}
+			clock.Advance(12 * time.Millisecond)
+			lo := 2 * mss
+			if name != "repeat_tail" {
+				lo = mss
+			}
+			s = ack("repairs", 0, lo, 3*mss)
+			wantEnd := 3 * mss
+			if name == "sack_repair" {
+				wantEnd = 2 * mss
+			}
+			if !s.FastRecovery.Active || s.SndUna != first || (!timestamps && uint32(s.RACKState.EndSequence-first) != uint32(wantEnd)) {
+				t.Fatalf("repairs ACK has no expected RACK evidence: %+v", s.RACKState)
+			}
+			// Permit a reordering-timer callback, well before the data RTO.
+			clock.Advance(20 * time.Millisecond)
+			c.Stack().Pause()
+			c.Stack().Resume()
+			seen := 0
+			for v := c.GetPacketNonBlocking(); v != nil; v = c.GetPacketNonBlocking() {
+				echo = read(v, 0, "again")
+				seen++
+			}
+			stats := c.Stack().Stats().TCP
+			println("RR counters", seen, stats.Retransmits.Value(), stats.Timeouts.Value(), stats.SACKRecovery.Value(), stats.TLPRecovery.Value())
+			if stats.Timeouts.Value() != 0 || stats.TLPRecovery.Value() != 0 {
+				t.Fatal("non-RACK recovery")
+			}
+			if name != "repeat_tail" {
+				if timestamps && seen == 0 {
+					if err := c.EP.GetSockOpt(&info); err != nil {
+						t.Fatal(err)
+					}
+					println("RR fallback", int64(info.RTO))
+					clock.Advance(info.RTO + time.Millisecond)
+					if got := stats.Timeouts.Value(); got != 1 {
+						t.Fatalf("no fast repair: RTO count %d, want 1", got)
+					}
+					echo = read(c.GetPacket(), 0, "after_timeout")
+					seen++
+				}
+				if seen != 1 {
+					t.Fatalf("P1 repairs after SACK of R2 = %d, want 1 before RTO", seen)
+				}
+				if done := ack("complete", 3*mss, 0, 0); done.SndUna != first.Add(seqnum.Size(3*mss)) || done.FastRecovery.Active {
+					t.Fatal("final ACK did not drain recovery")
+				}
+			} else if seen != 0 {
+				t.Fatalf("P1 repairs after repeating P3's SACK = %d, want 0", seen)
+			}
+			println("RR end", name)
+		})
+	}
 }

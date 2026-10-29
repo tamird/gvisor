@@ -208,6 +208,7 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 	if s.probeTimer.isUninitialized() || !s.probeTimer.checkExpiration() {
 		return nil
 	}
+	println("RR pto", int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{})))
 
 	var dataSent bool
 	if s.writeNext != nil && s.writeNext.xmitCount == 0 && s.Outstanding < s.SndCwnd {
@@ -398,6 +399,9 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			// zero during recovery.
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
+				if !seg.lost {
+					println("RR mark", uint32(seg.sequenceNumber-rc.snd.SndUna), seg.xmitCount, rc.snd.Outstanding, rc.snd.SndCwnd, int64(rcvTime.Sub(tcpip.MonotonicTime{})))
+				}
 				seg.lost = true
 				numLost++
 			} else {
@@ -442,6 +446,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	// retransmits and recovery on a path with little or no real loss
 	// (gvisor#9707/#9778). detectLoss arms the timer from rcvdTime-derived
 	// values, so evaluating it at the timer target keeps the two consistent.
+	println("RR reorder_timer", int64(rc.snd.reorderTimer.target.Sub(tcpip.MonotonicTime{})))
 	numLost := rc.detectLoss(rc.snd.reorderTimer.target)
 	if numLost == 0 {
 		return nil
@@ -486,6 +491,7 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 			continue
 		}
 
+		println("RR eligible", uint32(seg.sequenceNumber-snd.SndUna), seg.xmitCount, snd.Outstanding, snd.SndCwnd)
 		// Check the congestion window after entering recovery.
 		if snd.Outstanding >= snd.SndCwnd {
 			break

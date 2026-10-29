@@ -1258,6 +1258,7 @@ func (s *sender) SetPipe() {
 			// NOTE: here we mark the whole segment as lost. We do not try
 			// and test every byte in our write buffer as we maintain our
 			// pipe in terms of outstanding packets and not bytes.
+			before := pipe
 			if !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
@@ -1266,6 +1267,7 @@ func (s *sender) SetPipe() {
 			if s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt) {
 				pipe++
 			}
+			println("RR pipe", uint32(startSeq-s.SndUna), s1.xmitCount, s1.lost, pipe-before, pipe, s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt))
 		}
 	}
 	s.Outstanding = pipe
