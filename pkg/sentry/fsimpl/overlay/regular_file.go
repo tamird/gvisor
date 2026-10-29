@@ -266,6 +266,30 @@ func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 	fd.cachedFD.EventUnregister(e)
 }
 
+// EpollSource implements vfs.FileDescriptionImpl.EpollSource.
+func (fd *regularFileFD) EpollSource() vfs.EpollSource {
+	if backing := fd.stableEpollFD(); backing != nil {
+		return backing.EpollSource()
+	}
+	return nil
+}
+
+// stableEpollFD borrows the file that will own an epoll waiter until removal.
+// A lower file in a writable overlay can be replaced while a watch is live.
+func (fd *regularFileFD) stableEpollFD() *vfs.FileDescription {
+	fd.mu.Lock()
+	defer fd.mu.Unlock()
+	if !fd.copiedUp && fd.filesystem().opts.UpperRoot.Ok() {
+		if !fd.dentry().isCopiedUp() {
+			return nil
+		}
+		if _, err := fd.currentFDLocked(context.Background()); err != nil {
+			return nil
+		}
+	}
+	return fd.cachedFD
+}
+
 // PRead implements vfs.FileDescriptionImpl.PRead.
 func (fd *regularFileFD) PRead(ctx context.Context, dst usermem.IOSequence, offset int64, opts vfs.ReadOptions) (int64, error) {
 	wrappedFD, err := fd.getCurrentFD(ctx)
