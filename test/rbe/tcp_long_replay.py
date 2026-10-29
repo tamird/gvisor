@@ -26,9 +26,11 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
-    why.append("package did not pass or no cases were executed")
-observations = []
+cases={v.split("/")[-1] for failure in verdict["failures"] for v in failure.get("cases",())}
+expected={"TestSignedZeroSlices","short0","short1"}
+observations=[line.strip()[:350] for line in logs.splitlines() if "Graphs are not isomorphic:" in line]
+if verdict["status"]!="FAIL" or runner_exit==0 or cases!=expected or len(observations)!=2:
+    why.append("expected two failed signed-zero comparisons on stock and no unrelated failures")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)

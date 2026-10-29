@@ -1,11 +1,11 @@
-name: Verify primitive array storage with the graph decoder
+name: Check whether master preserves signed zero in shortened slices
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-primitive-arrays-graph16'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-signed-zero-stock'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,15 +13,15 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Check primitive array storage on the merged graph source
+    - name: Run the two signed-zero controls on an unchanged stock encoder
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "09a3ca25b2e495158eb09a57b86252e341ae7bd0"
-        test "$(git rev-parse HEAD^2)" = "b75e2f5bd5c6935b45882328a6810268022eef16"
+        test "$(git rev-parse HEAD^1)" = "c7a943410c75ece092842545d1b69166d60bcd47"
+        test "$(git rev-parse HEAD^2)" = "b08c2d695bf7a0e6d08bab0f4bb3e46e596c9b48"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -85,8 +85,8 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in normal race amd64-check arm64-check; do
-          source=b75e2f5bd5c6935b45882328a6810268022eef16; parent=3dd75fc57e6b26ab5b4d8378a7c66959c7f3b9f6
+        for arm in stock; do
+          source=b08c2d695bf7a0e6d08bab0f4bb3e46e596c9b48; parent=3dd75fc57e6b26ab5b4d8378a7c66959c7f3b9f6
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           fi
@@ -103,15 +103,8 @@ jobs:
           code=0
           opts=()
           arch=amd64
-          case $arm in
-            normal|race)
-              labels=(//pkg/state:state_test //pkg/state/tests:tests_test //pkg/state/wire:wire_test)
-              if [[ $arm == race ]]; then opts+=(--bazel-option=--config=race); fi ;;
-            *-check)
-              arch=${arm%-check}
-              labels=(//pkg/state:state_nogo //pkg/state:state_test_nogo //pkg/state/pretty:pretty_nogo //pkg/state/wire:wire_nogo //pkg/state/wire:wire_test_nogo //pkg/state/tests:tests_nogo //pkg/state/tests:tests_test_nogo)
-              opts+=("--bazel-option=--platforms=//tools/bazeldefs:linux_$arch") ;;
-          esac
+          labels=(//pkg/state/tests:tests_test)
+          opts=(--bazel-option=--test_arg=-test.v --bazel-option=--test_filter=^TestSignedZeroSlices$ --bazel-option=--test_output=errors)
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch="$arch" "${selection[@]}" "${opts[@]}" \
@@ -127,7 +120,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["normal","race","amd64-check","arm64-check"]
+        arms = ["stock"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -140,6 +133,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: array-verdicts
+        name: signed-zero-controls
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
