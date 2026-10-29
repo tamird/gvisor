@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T16:41:32.410566+00:00",
+    "updatedAt": "2026-10-29T16:46:55.208538+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -216,7 +216,7 @@
       "followup": {
         "disposition": "Recovery source checks pass; existing review requirements remain",
         "owner": "work_map_current",
-        "nextAction": "Carry the test change into the next update. The license-policy hold remains; this does not request a new import.",
+        "nextAction": "After the license-policy hold is lifted, carry the tested eff876941 amendment into the next update. No review or import is requested now.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825",
           "https://github.com/google/gvisor/pull/15146#issuecomment-6250305913",
@@ -258,6 +258,10 @@
         {
           "label": "Check the expected error parsing Git refs",
           "url": "https://app.buildbuddy.io/invocation/33e6f531-f93c-4fc8-83ca-ee7f3b6d5106"
+        },
+        {
+          "label": "Retained test amendment for the next update",
+          "url": "https://github.com/tamird/gvisor/commit/eff876941"
         }
       ],
       "refinement": {
@@ -267,16 +271,6 @@
         "after": {
           "head": "eff87694165c245ffac3999d0faf160d6713ba67"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "eff87694165c245ffac3999d0faf160d6713ba67",
-        "baseHead": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
-        "url": "https://github.com/tamird/gvisor/commit/eff87694165c245ffac3999d0faf160d6713ba67",
-        "title": "Check the expected error parsing Git refs",
-        "summary": "Malformed records, repeated refs and peeled refs without a tag now have distinct error expectations. All twelve cases passed.",
-        "body": "Carry the test change into the next update. The license-policy hold remains; this does not request a new import."
       }
     },
     {

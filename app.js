@@ -1350,8 +1350,10 @@ function drawTable(nodes) {
     const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
     title.append(choose);
     const decision = contributorDecision(node);
-    if (decision && states(node)["contributor-review"])
-      title.append(link(decision.title || "Review proposal ↗", decision.url, "decision-source"));
+    if (decision && states(node)["contributor-review"]) {
+      const revisions = decision.kind === "amendment" ? ` · Amendment ${decision.baseHead.slice(0, 9)} → ${decision.head.slice(0, 9)}` : "";
+      title.append(link((decision.title || "Review proposal ↗") + revisions, decision.url, "decision-source"));
+    }
     const action = humanAction(node);
     if (action) title.append(link("Open submission context ↗", action.url, "human-action-source"));
     const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
