@@ -30,7 +30,7 @@ jobs:
       - name: Resolve the declared dependency graph before running the shared harness
         run: |
           git fetch --no-tags --depth=1 origin 02a31baeca69185c0b6d90fd8861977ab7a6bbf9
-          git archive FETCH_HEAD test/rbe | tar -xf -
+          git archive FETCH_HEAD test/rbe test/benchmarks/lifecycle.json | tar -xf -
           cat >> test/rbe/qualification.bazelrc <<'RC'
           build:rbe --config=buildbuddy_remote_executor
           build:rbe --spawn_strategy=remote
@@ -62,6 +62,8 @@ jobs:
               "--bazel-option=--extra_execution_platforms=//tools/bazeldefs:linux_$QUALIFICATION_ARCH" \
               --bazel-option=--config=static-python \
               "--bazel-option=--remote_default_exec_properties=Arch=$QUALIFICATION_ARCH" \
+              --bazel-option=--remote_default_exec_properties=OSFamily=linux \
+              --bazel-option=--remote_default_exec_properties=workload-isolation-type=oci \
               --bazel-option=--remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef \
               --bazel-option=--lockfile_mode=error --bazel-option=--remote_download_outputs=all \
               '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || status=1
