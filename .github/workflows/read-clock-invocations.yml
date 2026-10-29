@@ -1,0 +1,45 @@
+name: Locate original clock invocations
+on:
+  push:
+    branches: [qualification/clock-original-receipts-oct29]
+permissions: {}
+jobs:
+  lookup:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Read receipts for the one candidate
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import datetime, http.client, json, os, re
+          source = "a1e81990e7b88a144b9650063e790d7c6f00003d"
+          conn = http.client.HTTPSConnection("app.buildbuddy.io", timeout=25)
+          headers = {"content-type":"application/json", "x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]}
+          request = {"selector":{"commit_sha":source},"include_metadata":True}
+          answer=[]
+          for page in range(8):
+              conn.request("POST","/api/v1/GetInvocation",json.dumps(request),headers)
+              result = conn.getresponse()
+              if result.status != 200:
+                  raise RuntimeError(f"GetInvocation HTTP {result.status}")
+              raw=result.read(4_000_001)
+              assert len(raw)<=4_000_000
+              data=json.loads(raw)
+              for row in data.get("invocation", []):
+                  def value(camel,snake,default=None):
+                      return row.get(camel,row.get(snake,default))
+                  ident=row["id"]["invocationId"] if "invocationId" in row["id"] else row["id"]["invocation_id"]
+                  assert re.fullmatch("[a-f0-9-]{36}",ident)
+                  commit=value("commitSha","commit_sha")
+                  assert commit==source
+                  answer.append(dict(id=ident,command=row.get("command"),patterns=row.get("pattern"),status=value("invocationStatus","invocation_status"),exit=value("bazelExitCode","bazel_exit_code"),start=value("createdAtUsec","created_at_usec"),end=value("updatedAtUsec","updated_at_usec"),metadata={m["key"]:m.get("value") for m in row.get("buildMetadata",row.get("build_metadata",[])) if m["key"] in {"CI_RUN_ID","GITHUB_RUN_ID","ROLE"}}))
+              token=data.get("nextPageToken",data.get("next_page_token"))
+              if not token: break
+              request["page_token"]=token
+          else: raise RuntimeError("results truncated at eight pages")
+          answer.sort(key=lambda x:int(x["start"]))
+          print(json.dumps({"source":source, "count":len(answer), "invocations":answer},indent=2))
+          PYTHON
