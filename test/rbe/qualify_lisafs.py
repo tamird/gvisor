@@ -12,11 +12,7 @@ import qualification_report as report
 
 pr, architecture, source, rc, destination = sys.argv[1:]
 assert pr == "tcp-error-locks"
-case_owners = {
-    "//pkg/tcpip/transport/tcp:tcp_nogo": [],
-    "//pkg/tcpip/transport/tcp:tcp_test": ["TestCubicRecoveryDiscardsACKCredit"],
-    "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": ["TestConnectICMPError"],
-}
+case_owners = {"//pkg/tcpip/transport/tcp:tcp_nogo": []}
 owners = list(case_owners)
 required = {(label, case) for label, cases in case_owners.items() for case in cases}
 d = Path(destination)
@@ -32,7 +28,8 @@ r = {"pr": pr, "architecture": architecture, "source": source, "expected": owner
 try:
     r["worker_image"] = os.environ["WORKER_IMAGE"]
     assert git("rev-parse", "HEAD").decode().strip() == source
-    assert git("rev-parse", "HEAD^").decode().strip() == "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
+    assert git("rev-parse", "HEAD^").decode().strip() == '2d6624b7225ff19bbada4fe2fa6724fdb9109cbb'
+    assert git("diff", "--name-only", "HEAD^", "HEAD").decode().splitlines() == ["pkg/tcpip/transport/tcp/endpoint.go"]
     r["tree"] = git("rev-parse", "HEAD^{tree}").decode().strip()
     (d/"before").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
     assert not (d/"before").read_bytes()
@@ -55,8 +52,6 @@ try:
                      "native_exit": "exit", "capture_exit": "capture", "executed_arguments": "args"})
     log=(d/"command.log").read_text(errors="replace")
     r["invocations"] = re.findall(r"Invocation ID: ([0-9a-f-]{36})", log)
-    r["failure_excerpt"] = [line[:1000] for line in log.splitlines() if line.startswith("ERROR:") or ": error:" in line or "not found" in line.lower() or "No such file" in line or "undefined reference" in line][:24] if code else []
-    r["hints"] = [h for h in ("RESOURCE_EXHAUSTED", "no such target", "Permission denied", "not found", "signal: killed") if h.lower() in log.lower()]
     clean=d/"events.jsonl"
     outroot=Path(subprocess.check_output(bazel+["info","output_base"],stderr=subprocess.DEVNULL,text=True).strip())
     m=report.capture(d/"events.raw",clean,outroot,d/"reports")
@@ -71,17 +66,32 @@ try:
         meta=row.get("executionInfo",{})
         r["executions"].append({"owner":event["id"]["testResult"]["label"],"remote":meta.get("strategy")=="remote",
                                 "cached":bool(row.get("cachedLocally") or meta.get("cachedRemotely"))})
-    records=[]
+    r["reports"] = []
+    r["diagnostics"] = []
     for f in m["reports"]:
-        if f["name"]!="test.xml": continue
-        for case in ET.parse(d/f["path"]).iter("testcase"):
-            records.append({"name":case.get("name"),"owner":f["identity"]["label"],
-                            "result":next((c.tag for c in case if c.tag in ("skipped","failure","error")),"pass")})
-    r["cases"]=records
-    found={(row["owner"],row["name"]) for row in records if row["result"]=="pass"}
-    r["missing_required"]=sorted(required-found)
-    ran={e["owner"] for e in r["executions"] if e["remote"] and not e["cached"]}
-    r["status"]="PASS" if v["status"]=="PASS" and ran==set(owners) and not r["missing_required"] and not code else "FAIL"
+        if f["name"] not in ("test.log", "test.xml"):
+            continue
+        import hashlib
+        body = (d/f["path"]).read_bytes()
+        r["reports"].append({"name": f["name"], "owner": f["identity"]["label"],
+                             "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()})
+        if f["name"] == "test.xml":
+            r["cases"] = [
+                {"name": case.attrib["name"], "result": next((x.tag for x in case if x.tag in ("failure","skipped","error")),"pass")}
+                for case in ET.fromstring(body).iter("testcase")]
+            continue
+        for line in body.decode().splitlines():
+            diagnostic = re.search(r"checklocks: pkg/tcpip/transport/tcp/endpoint[.]go:[0-9]+:[0-9]+: invalid field access, .{1,340} [(]GOO?ARCH=(amd64|arm64), GOOS=linux[)]$",line)
+            if diagnostic:
+                r["diagnostics"].append(diagnostic[0])
+    expected = {"hardError": "mu", "lastError": "lastErrorMu"}
+    r["missing_fields"] = [
+        [arch, field] for arch in ("amd64","arm64") for field, guard in expected.items()
+        if not any("invalid field access, " + guard + " " in line and "accessing " + field + " " in line and "ARCH=" + arch + "," in line
+                   for line in r["diagnostics"])]
+    r["control_observed"] = bool(code == 3 and v["status"] == "FAIL" and not r["missing_fields"] and len(r["executions"]) == 1
+                                 and all(w["remote"] and not w["cached"] for w in r["executions"]))
+    r["status"] = v["status"]
 except Exception as exc:
     r["collector_error"]=f"{type(exc).__name__}: {str(exc)[:200]}"
     if r.get("native_exit",0): r["status"]="FAIL"

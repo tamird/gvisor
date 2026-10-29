@@ -1,7 +1,7 @@
-name: Qualify the TCP endpoint error guards
+name: Observe the negative TCP endpoint error guards
 on:
   push:
-    branches: [qualification/tcp-error-owners-oct29]
+    branches: [qualification/tcp-error-locks-negative-oct29]
 permissions:
   contents: read
 jobs:
@@ -14,8 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
-          - {"pr": "tcp-error-locks", "sha": "2d6624b7225ff19bbada4fe2fa6724fdb9109cbb", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
+          - {"pr": "tcp-error-locks", "sha": "9bc43d7137052d81101b40df39680ecf9fff3d92", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -27,7 +26,7 @@ jobs:
           path: source
           fetch-depth: 2
           persist-credentials: false
-      - name: Exercise changed packages and original regression cases
+      - name: Exercise the deliberately invalid TCP Nogo owner
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -84,6 +83,6 @@ jobs:
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: conflict-verdict-${{ matrix.pr }}-${{ matrix.arch }}
+          name: tcp-error-locks-negative
           path: ${{ runner.temp }}/catalog/result.json
           if-no-files-found: error
