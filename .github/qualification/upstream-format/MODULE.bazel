@@ -1,0 +1,4 @@
+module(name = "upstream_format_probe")
+
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
+bazel_dep(name = "platforms", version = "1.0.0")
