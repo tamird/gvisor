@@ -27,6 +27,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/test/e2e"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/testing/context"
@@ -1132,4 +1133,105 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+// TestTailProbeLastPacket asks which of three outstanding packets the sender
+// repeats when the ACK clock stops. All three came from one application write.
+func TestTailProbeLastPacket(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		gso   stack.SupportedGSO
+		short bool
+	}{
+		{"ordinary", stack.GSONotSupported, false},
+		{"software", stack.GVisorGSOSupported, false},
+		{"softwareShortTail", stack.GVisorGSOSupported, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			clock.Advance(time.Second)
+			states := make(chan *tcp.TCPEndpointState, 16)
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true, MTU: uint32(mtu), GSO: tc.gso, Clock: clock,
+				Probe: func(s *tcp.TCPEndpointState) { states <- s },
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			peer := e2e.CreateConnectedWithSACKAndTS(c)
+			c.EP.SocketOptions().SetDelayOption(false)
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			mss := int(info.SndMss)
+			if mss < 2 {
+				t.Fatalf("invalid negotiated MSS: %d", mss)
+			}
+			tail := mss
+			if tc.short {
+				tail = mss / 2
+			}
+			write := func(data []byte) {
+				t.Helper()
+				n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{})
+				if got, want := n, int64(len(data)); got != want || err != nil {
+					t.Fatalf("Write = %d, %v; want %d, nil", got, err, want)
+				}
+			}
+			first := c.IRS.Add(1)
+			read := func(p *buffer.View, seq seqnum.Value, data []byte) uint32 {
+				t.Helper()
+				defer p.Release()
+				h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+				if got, want := h.SequenceNumber(), uint32(seq); got != want {
+					t.Fatalf("packet starts at %d, want %d (offsets %d, %d)", got, want, got-uint32(first), want-uint32(first))
+				}
+				if !bytes.Equal(h.Payload(), data) {
+					t.Fatalf("payload at %d: %x, want %x", seq, h.Payload(), data)
+				}
+				return h.ParsedOptions().TSVal
+			}
+			// Establish an RTT sample so that the probe timer fires before RTO.
+			prime := make([]byte, mss)
+			write(prime)
+			echo := read(c.GetPacket(), first, prime)
+			clock.Advance(30 * time.Millisecond)
+			var opts [12]byte
+			opts[0], opts[1] = header.TCPOptionNOP, header.TCPOptionNOP
+			header.EncodeTSOption(1, echo, opts[2:])
+			peer.AckNum = first.Add(seqnum.Size(mss))
+			peer.SendPacket(nil, opts[:])
+			for {
+				select {
+				case s := <-states:
+					if s.Sender.SndUna == peer.AckNum {
+						goto primed
+					}
+				case <-time.After(3 * time.Second):
+					t.Fatal("sender did not process the priming ACK")
+				}
+			}
+		primed:
+			data := make([]byte, 2*mss+tail)
+			for i := range data {
+				data[i] = byte(i/mss + 1)
+			}
+			write(data)
+			for off := 0; off < len(data); off += mss {
+				read(c.GetPacket(), peer.AckNum.Add(seqnum.Size(off)), data[off:min(off+mss, len(data))])
+			}
+			for ms := 0; ms < 190; ms++ {
+				clock.Advance(time.Millisecond)
+				if p := c.GetPacketNonBlocking(); p != nil {
+					if got, want := c.Stack().Stats().TCP.Timeouts.Value(), uint64(0); got != want {
+						p.Release()
+						t.Fatalf("RTOs = %d, want %d", got, want)
+					}
+					read(p, peer.AckNum.Add(seqnum.Size(2*mss)), data[2*mss:])
+					return
+				}
+			}
+			t.Fatal("sender did not transmit a tail probe before the retransmission timeout")
+		})
+	}
 }

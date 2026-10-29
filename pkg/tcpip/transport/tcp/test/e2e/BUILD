@@ -145,6 +145,7 @@ go_test(
         "//pkg/tcpip/faketime",
         "//pkg/tcpip/header",
         "//pkg/tcpip/seqnum",
+        "//pkg/tcpip/stack",
         "//pkg/tcpip/transport/tcp",
         "//pkg/tcpip/transport/tcp/testing/context",
         "//pkg/test/testutil",
