@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T14:25:26.280531+00:00",
+    "updatedAt": "2026-10-29T14:33:32.823729+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -211,12 +211,12 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-29T14:25:26.280531+00:00",
+      "updatedAt": "2026-10-29T14:33:32.823729+00:00",
       "summary": "The requested post-#16046 rebase is published at 812b2c65b599 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe recovery head 7d8fc5b2668c passes all current source checks, including Gazelle and Go export, in the October 21 03:24 UTC snapshot. Existing maintainer review and policy requirements remain separate.\n\nRoot published the independently reviewed patch-equivalent recovery at 7d8fc5b2668c on c45 containing merged a9e9. Original patch, author and message are preserved; no comment or review waiver. Fresh-head checks remain separately observed.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nAt current head 4c675e4a3aac, public Go generation and its local branch push completed, then temporary-clone cleanup failed with “Directory not empty”; status publication also returned HTTP 403. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at 4c675e4a3aac on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:23:09 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
       "followup": {
         "disposition": "Recovery source checks pass; existing review requirements remain",
         "owner": "work_map_current",
-        "nextAction": "Follow existing maintainer review and any matching import. The current recovery head passes all source checks, including Gazelle and Go export; no repeated rebase or cleanup repair is indicated. Preserve the explicit license-exception confirmation and CHANGES_REQUESTED hold. Check the test-only fork amendment on its own source before publishing; the live head and its existing review state are unchanged.",
+        "nextAction": "Carry the test change into the next update. The license-policy hold remains; this does not request a new import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825",
           "https://github.com/google/gvisor/pull/15146#issuecomment-6250305913",
@@ -250,6 +250,14 @@
         {
           "label": "Check the cause of each Git-ref parsing error",
           "url": "https://github.com/tamird/gvisor/commit/eff87694165c245ffac3999d0faf160d6713ba67"
+        },
+        {
+          "label": "Two focused test owners in one Linux job",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40891566627"
+        },
+        {
+          "label": "Check the expected error parsing Git refs",
+          "url": "https://app.buildbuddy.io/invocation/33e6f531-f93c-4fc8-83ca-ee7f3b6d5106"
         }
       ],
       "refinement": {
@@ -259,6 +267,16 @@
         "after": {
           "head": "eff87694165c245ffac3999d0faf160d6713ba67"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "eff87694165c245ffac3999d0faf160d6713ba67",
+        "baseHead": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
+        "url": "https://github.com/tamird/gvisor/commit/eff87694165c245ffac3999d0faf160d6713ba67",
+        "title": "Check the expected error parsing Git refs",
+        "summary": "Malformed records, repeated refs and peeled refs without a tag now have distinct error expectations. All twelve cases passed.",
+        "body": "Carry the test change into the next update. The license-policy hold remains; this does not request a new import."
       }
     },
     {
@@ -1345,12 +1363,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": null,
-      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
+      "updatedAt": "2026-10-29T14:31:28.555886+00:00",
       "summary": "The rebased socket fixture enables host Unix sockets in both upstream inode-number modes. All four package owners ran remotely; both socket cases pass. No maintainer approval is recorded.",
       "followup": {
-        "disposition": "Checking a fork amendment",
+        "disposition": "Qualified fork amendment",
         "owner": "root",
-        "nextAction": "Verify the existing UDS fixture and its analyzer on the proposed head; review the two-line change before publishing.",
+        "nextAction": "Review the qualified temp-directory amendment; publish to the existing PR only after contributor review.",
         "sourceHead": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
@@ -1382,6 +1400,10 @@
         {
           "label": "Temp-directory amendment",
           "url": "https://github.com/tamird/gvisor/commit/412f99aaeae95242664e2612c1ed8d41fdf68319"
+        },
+        {
+          "label": "Set, absent, and explicitly empty TEST_TMPDIR",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40889960330"
         }
       ],
       "refinement": {
@@ -1391,6 +1413,16 @@
         "after": {
           "head": "412f99aaeae95242664e2612c1ed8d41fdf68319"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "412f99aaeae95242664e2612c1ed8d41fdf68319",
+        "baseHead": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
+        "url": "https://github.com/tamird/gvisor/commit/412f99aaeae95242664e2612c1ed8d41fdf68319",
+        "title": "Use the default LisaFS fixture path only when TEST_TMPDIR is absent",
+        "summary": "An absent directory uses os.TempDir; an explicitly empty path now fails instead of silently using /tmp.",
+        "body": "Both UDS inode modes pass with Bazel’s directory and with the variable absent. Both reject an explicit empty path before starting UDS. The helper analyzer passed."
       }
     },
     {
@@ -19383,14 +19415,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-29T14:25:26.280531+00:00",
+      "updatedAt": "2026-10-29T14:33:32.823729+00:00",
       "summary": "The approved two-file amendment is published in #16098 at 63e9f5dad, replacing 53b1c2e9c. No contributor decision remains pending. Nogo treated the s2a v2 package’s alias as a replacement for the independently imported v1 package. Both target architectures then rejected the token manager’s type switch because its two Identity types collapsed into one. The amendment gives primary imports precedence, matching rules_go; it changes only the two Starlark files that assemble this mapping.\n\nThe uncorrected integrated source fails before either owning test can execute: tokenmanager.go reports a duplicate Identity case for both AMD64 and ARM64. The corrected integrated source passes all six affected Nogo owners, the existing checker tests, the negative analyzer sanity test and buildifier: nine uncached remote attempts and 27 positive XML records.\n\nThe exact public amendment 63e9f5dad passes the two real owning Nogo wrappers with the public branch’s normal GNU configuration and source-declared Go 1.27.3. Both remote uncached wrappers report AMD64 and ARM64 PASS; the formatter also passes. Authentication finished 5.83 seconds after native execution. Its existing source-export encoding and fact enumeration are preserved.\n\nThe integrated before failure remains FAIL. Current public checks and maintainer review are tracked separately; the amendment adds no broad presubmit replay or new performance measurement.\n\nHistorical published revisions and source-specific evidence (including the earlier performance measurements):\n\nPublic PR #16098 is now at 3b7396026aa9671591f7dba451809c443c0c4844 on landed #16335 base c341af3e04fb, observed by the existing provider at 2026-10-24T20:16:08.845882+00:00. Root preserved the contributor-approved dependency/export postimage while resolving the landed-base conflict. The provider reports MERGEABLE; this is not fresh maintainer approval or current-head CI credit. No contributor decision remains pending.\n\nEarlier source-specific evidence:\n\nThe contributor-approved source-only dependency amendment 2854c847877a87952a06113f2a92735e52038756 is delivered on the existing nogo-export-data branch, verified by the provider at 15:02:35Z. The amended description is published. No new public comment or reviewer request was sent. Current-head checks and maintainer review remain separate from the retained source-specific qualification. The earlier source-order amendment fd6ad08032 and its nine-owner/32-case qualification remain historical evidence for that source.\n\nThe focused source-only dependency comparison is complete at 8f5a7b90. All eight ordinary builds pass across four exact sources and both target CPUs. Current d15d and the full conditional #16098 composition retain embedded source but fail Nogo because its embedded-only import is unresolved; the then-pending #16335 control drops that source and fails on the missing EmbeddedValue/NestedValue declarations. A private correction passes both uncached wrappers and four actual remote analyzer actions across AMD64/ARM64, with dependency-export joins and no analyzer action for the raw source carriers. The whole native result remains FAIL because all three controls fail; comparison and retained projection pass. Automatic authentication took 9.679865 seconds. This covers valid direct and nested/mixed rules_go source carriers, not arbitrary custom providers or full upstream CI. The clean amendment 2854c847877a87952a06113f2a92735e52038756 was prepared on nogo-source-embed-deps-review and was published as the public PR head before the current landed-base rebase. Its delta from the previous public fd6ad08032 is confined to tools/nogo/defs.bzl, and all 21 nonqualification inputs match the qualified fixed arm. The contributor approved this exact amendment and publication is verified; no contributor decision remains pending. The one-file conditional conflict with #16335 was subsequently resolved in the current published head.\n\nThe shared three-source contrast is complete at ce548b75, with overall native, comparison and projection FAIL preserved. Public d15d reproduces the missing protoreflect archive for validate_go and Docker runtime on both analyzer CPUs before any wrapper executes. Full #16098 passes both uncached analyzer wrappers, each reporting amd64 and arm64 PASS. The minimal compiler-dependency extraction reaches actual typechecking on both CPUs but both wrappers fail only the generated unsafe-import policy. The full and minimal treatments each have four successful remote, uncached typechecking actions with the generated files and protoreflect/protoimpl imports; this is not a passing minimal repair or a whole-import result. The complete native result was authenticated 17.110956 seconds after the last inner phase. Original formatter-only failure 0ba556 remains separate; no workload was repeated for retained analysis.\n\nPrior source and validation record:\n\nThe qualified amendment fd6ad08032 was approved and delivered with the updated description. Earlier public head 5841fe0ef3 remains historical source provenance.\n\nPrior source and validation record:\n\nThe public 5841fe0e head conflicts with landed #15648 source helpers/order. Independent source review accepts the narrowed composition fd6ad080: canonical GoInfo source membership, test embed prepend order and source-only dependency guards are preserved; protobuf export implementation is unchanged. The focused qualification has completed native and projection PASS with nine uncached owners, 32 XML records, both-CPU analyzer evidence, exact compiler/analyzer source-order checks and generated protobuf exports. Independent retained-result review passed against the original bundle; four native-zero phases and all source/report/action joins are authenticated. The formatter request was corrected before launch to the current declared goimports route. That source-order composition was subsequently approved and delivered as fd6ad08032. Its accepted result adds no new performance claim.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 5841fe0ef3c0 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as ready PR #16098 at signed 9709cd33f8. The requested errors.Join cleanup and measured performance context are complete. The final commit changes only the message from the measured source. Six complete serial warm-file-cache action passes include the full standard library and newly analyzed generated/runtime packages: the two measured baseline samples took 83.507 and 85.435 seconds, versus 84.840 and 84.955 seconds for the candidate. This is descriptive analyzer/export pipeline context, not whole-build latency, statistical significance or a memory-regression claim. Accepted normal/race results, focused Join validation and original failed attempts retain their exact source identities. Current-head CI and maintainer review remain.\n\nReview command: git range-diff fd6ad08032cefdd0f256317993ff51b216453b89^! 2854c847877a87952a06113f2a92735e52038756^!",
       "followup": {
         "owner": "root",
         "disposition": "Approved primary-import amendment published",
         "sourceHead": "63e9f5dadc33c98738456ec5ff3385639256ede3",
         "observedAt": "2026-10-26T10:23:56.436935+00:00",
-        "nextAction": "Follow the current public checks and maintainer review on #16098. The approved 63e9f5dad amendment is delivered; keep the integrated negative control and exact-public qualification separate. Check the test-only fork amendment on its own source before publishing; the live head and its existing review state are unchanged.",
+        "nextAction": "The direct and stdlib cases still pass. Review the test-only amendment before updating the open PR.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/4ef5584e-903b-49a8-b745-baf7eaaf8413",
           "https://app.buildbuddy.io/invocation/b00de266-e783-4486-808a-6881f8ae57d8",
@@ -19493,6 +19525,14 @@
         {
           "label": "Check the cause of each export-reader error",
           "url": "https://github.com/tamird/gvisor/commit/ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970"
+        },
+        {
+          "label": "Two focused test owners in one Linux job",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40891566627"
+        },
+        {
+          "label": "Check the expected error for invalid export inputs",
+          "url": "https://app.buildbuddy.io/invocation/07635ed8-45c2-4bb3-9d5c-99b5bb260a45"
         }
       ],
       "refinement": {
@@ -19503,7 +19543,17 @@
           "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970"
         }
       },
-      "number": 16098
+      "number": 16098,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
+        "baseHead": "63e9f5dadc33c98738456ec5ff3385639256ede3",
+        "url": "https://github.com/tamird/gvisor/commit/ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
+        "title": "Check the expected error for invalid export inputs",
+        "summary": "A missing file, malformed raw export and compiler archive must fail for different reasons. The five cases passed.",
+        "body": "The direct and stdlib cases still pass. Review the test-only amendment before updating the open PR."
+      }
     },
     {
       "id": "pr:16096",
@@ -33266,20 +33316,36 @@
         {
           "label": "Upstream PR",
           "url": "https://github.com/google/gvisor/pull/16663"
+        },
+        {
+          "label": "Declared repo-wide Buildifier action",
+          "url": "https://github.com/tamird/gvisor/commit/caf3c35407f6dd2015ac8b6405ce15ff83013cae"
+        },
+        {
+          "label": "Both Buildifier binaries in scratch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40891942301"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
+      "updatedAt": "2026-10-29T14:31:28.555886+00:00",
       "followup": {
         "owner": "root",
         "observedAt": "2026-10-29T14:17:15.982925+00:00",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "disposition": "Preparing an amendment",
-        "nextAction": "Keep the registered Buildifier binary and replace shell-driven file selection/diff with a declared repository check. The PR is not approved.",
+        "disposition": "Verifying replacement for the shell lint path",
+        "nextAction": "Verify the 617 source inputs, bad-file diagnostics, and explicit fix mode in the single Linux job; then review the fork amendment for publication to this PR.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+        },
+        "after": {
+          "head": "caf3c35407f6dd2015ac8b6405ce15ff83013cae"
+        }
       }
     },
     {
