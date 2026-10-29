@@ -13,13 +13,14 @@ jobs:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 4, persist-credentials: false}
+      with: {fetch-depth: 8, persist-credentials: false}
     - name: Preserve the original reporter and enable the AArch64 filter
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
-        [[ $(git rev-parse HEAD^^2) == "$SOURCE" ]]
+        [[ $(git rev-parse 60f94419afbf505effb2f88dd823d385992d76c6^2) == "$SOURCE" ]]
+        git merge-base --is-ancestor "$SOURCE" HEAD
         mkdir -p "$RUNNER_TEMP/array-tools" "$RUNNER_TEMP/public" "$RUNNER_TEMP/private" "$RUNNER_TEMP/cache" "$RUNNER_TEMP/poll-gnu-platform"
         cp test/rbe/{qualification_report,unit_matrix}.py .github/qualification/remaining-array.sh "$RUNNER_TEMP/array-tools/"
         (cd "$RUNNER_TEMP/array-tools"; python3 -B -c 'import qualification_report, unit_matrix')
