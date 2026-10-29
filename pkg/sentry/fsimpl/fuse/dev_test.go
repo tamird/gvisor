@@ -341,3 +341,23 @@ func fuseServerRun(t *testing.T, s *testutil.System, k *kernel.Kernel, fd *vfs.F
 		}
 	}
 }
+
+func TestEpollModifyAfterControlledAbort(t *testing.T) {
+ s:=setup(t)
+ defer s.Destroy()
+ conn,file,err:=newTestConnection(s,maxActiveRequestsDefault)
+ if err!=nil {t.Fatal(err)}
+ defer file.DecRef(s.Ctx)
+ epfd,err:=s.VFS.NewEpollInstanceFD(s.Ctx)
+ if err!=nil {t.Fatal(err)}
+ defer epfd.DecRef(s.Ctx)
+ ep:=epfd.Impl().(*vfs.EpollInstance)
+ event:=linux.EpollEvent{Events:linux.EPOLLOUT|linux.EPOLLONESHOT,Data:[2]int32{1}}
+ if err:=ep.AddInterest(file,3,event);err!=nil {t.Fatal(err)}
+ if got:=ep.ReadEvents(nil,1);len(got)!=1 || got[0].Events!=linux.EPOLLOUT || got[0].Data!=event.Data {t.Fatalf("connected event: %v",got)}
+ conn.Abort(s.Ctx)
+ event.Data=[2]int32{2}
+ if err:=ep.ModifyInterest(file,3,event);err!=nil {t.Fatalf("same-mask MOD on aborted DeviceFD: %v",err)}
+ if got:=ep.ReadEvents(nil,1);len(got)!=1 || got[0].Events!=linux.EPOLLERR || got[0].Data!=event.Data {t.Fatalf("aborted event: %v",got)}
+ if got:=ep.ReadEvents(nil,1);len(got)!=0 {t.Fatalf("rearmed one-shot redelivered: %v",got)}
+}
