@@ -15,7 +15,7 @@ base=d8ff478596acc888f2b90baa7769d78debe1f512
 git diff --exit-code "$base" HEAD -- pkg runsc tools .bazelrc MODULE.bazel
 printf '%s\n' "$base" > "$out/production.txt"
 sudo -n apt-get update -qq
-sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends iproute2 iperf3 ethtool bc kmod jq iputils-ping
+sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod jq iputils-ping
 sudo -n modprobe sch_netem
 uname -a > "$out/worker.txt"
 phase=build
@@ -62,29 +62,24 @@ for side in ("primary", "secondary"):
     j=json.loads((d/"receiver.json").read_text())
     assert not j.get("error") and j["end"]["sum_received"]["bytes"]>0, side
 SHORT
+for dev in client.1 client2.1 server.1; do
+  test -s "$staged/results/$dev.pcap"
+  grep -q "0 packets dropped by kernel" "$staged/results/$dev-capture.txt"
+  tshark -n -r "$staged/results/$dev.pcap" -c 5 -T fields -e tcp.seq_raw | grep -q "[[:digit:]]"
+done
 phase=trials
 printf 'mode\tcase\tprimary\tcc\tsecondary\n' > "$out/cases.tsv"
 # Each controller and role occurs once per observation mode. Rotate the modes
 # to avoid conflating their effect with the machine warming up over the run.
-cases=(reno-netstack cubic-linux cubic-netstack reno-linux)
-modes=(plain historical measured)
 status=0
-for round in 0 1 2; do
-  for pos in 0 1 2 3; do
-    name=${cases[$(( (pos+round) % 4 ))]}
-    cc=${name%-*}; primary=${name#*-}
-    idx=0
-    for i in 0 1 2 3; do if [[ ${cases[i]} == "$name" ]]; then idx=$i; fi; done
-    mode=${modes[$(( (idx+round) % 3 ))]}
-    flag=--client; other=linux
-    if [[ $primary == linux ]]; then flag=--linux-client; other=netstack; fi
-    dir="$out/$mode/$name"
-    printf '%s\t%s\t%s\t%s\t%s\n' "$mode" "$name" "$primary" "$cc" "$other" >> "$out/cases.tsv"
-    if ! run_pair "$dir" 120 180 "$mode" "$flag" "$cc" "$other" --helpers "$helpers"; then
-      tail -10 "$dir/stdout" "$dir/stderr"
-      status=1
-    fi
-  done
+for arm in plain:reno measured:cubic measured:reno plain:cubic; do
+  mode=${arm%:*}; cc=${arm#*:}; name="$cc-netstack"
+  dir="$out/$mode/$name"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$mode" "$name" netstack "$cc" linux >> "$out/cases.tsv"
+  if ! run_pair "$dir" 45 110 "$mode" --client "$cc" linux --helpers "$helpers"; then
+    tail -10 "$dir/stdout" "$dir/stderr"
+    status=1
+  fi
 done
 date -u +%FT%TZ > "$out/trials-finished.txt"
 exit "$status"

@@ -38,17 +38,24 @@ func observeNetstack() tcp.TCPProbeFunc {
 	}
 	var mu sync.Mutex
 	last := make(map[uint16]time.Time)
+	type phase struct {
+		window int
+		recovery bool
+	}
+	previous := make(map[uint16]phase)
 	return func(s *tcp.TCPEndpointState) {
 		if s.ID.RemotePort != 44000 && s.ID.RemotePort != 44001 {
 			return
 		}
 		now := time.Now()
 		mu.Lock()
-		if now.Sub(last[s.ID.LocalPort]) < 250*time.Millisecond {
+		current := phase{int(s.Sender.SndCwnd), s.Sender.FastRecovery.Active}
+		if now.Sub(last[s.ID.LocalPort]) < 10*time.Millisecond && current == previous[s.ID.LocalPort] {
 			mu.Unlock()
 			return
 		}
 		last[s.ID.LocalPort] = now
+		previous[s.ID.LocalPort] = current
 		mu.Unlock()
 		x := s.Sender
 		emit(map[string]any{"stack": "netstack", "port": s.ID.LocalPort, "peer": s.ID.RemotePort, "cwnd": x.SndCwnd, "mss": x.MaxPayloadSize, "wnd": x.SndWnd, "out": x.Outstanding, "sacked": x.SackedOut, "seq_flight": uint32(x.SndNxt - x.SndUna), "una": uint32(x.SndUna), "queued": s.SndBufState.SndBufUsed, "bufsize": s.SndBufState.SndBufSize, "recovery": x.FastRecovery.Active, "rtt_us": x.RTTState.SRTT.Microseconds()})
@@ -71,7 +78,7 @@ func observeNative(c *net.TCPConn) {
 		log.Fatal(err)
 	}
 	go func() {
-		tick := time.NewTicker(250 * time.Millisecond)
+		tick := time.NewTicker(10 * time.Millisecond)
 		defer tick.Stop()
 		for range tick.C {
 			var info *unix.TCPInfo

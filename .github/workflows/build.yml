@@ -1,7 +1,7 @@
-name: Current shared TCP senders
+name: Observe ACK and recovery on the shared WAN
 on:
   push:
-    branches: [qualification/tcp-current-shared-path]
+    branches: [qualification/tcp-shared-flight-traces]
 permissions:
   contents: read
 jobs:
@@ -21,6 +21,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: current-shared-tcp
+          name: tcp-shared-flight-traces
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error

@@ -489,6 +489,14 @@ ip link add server.0 type veth peer name server.1
 # Add network emulation devices.
 ip link add wan.0 type veth peer name wan.1
 probe_pid=
+capture_pids=()
+stop_capture() {
+  local status=0 p
+  for p in "\${capture_pids[@]}"; do kill -INT "\$p" || status=1; done
+  for p in "\${capture_pids[@]}"; do wait "\$p" || status=1; done
+  capture_pids=()
+  return "\$status"
+}
 flow_pids=()
 flow_names=(primary secondary)
 bridge_devices=(server.1 wan.0 wan.1)
@@ -521,6 +529,7 @@ cleanup() {
   trap - EXIT
   set +e
   if ! stop_probe; then cleanup_status=1; fi
+  if ! stop_capture; then cleanup_status=1; fi
   for pid in "\${flow_pids[@]}"; do
     if kill -0 "\$pid" 2>/dev/null; then
       if ! kill -TERM "\$pid"; then cleanup_status=1; fi
@@ -927,6 +936,17 @@ run_flow() {
 }
 
 if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  for dev in client.1 client2.1 server.1; do
+    tcpdump -Z root -nn -U -B 8192 -s 128 -i "\$dev" -w "\$TCP_BENCHMARK_OUTPUT_DIR/\$dev.pcap" 'tcp and (port 44000 or port 44001)' > /dev/null 2> "\$TCP_BENCHMARK_OUTPUT_DIR/\$dev-capture.txt" &
+    capture_pids+=(\$!)
+  done
+  for dev in client.1 client2.1 server.1; do
+    for i in {1..100}; do
+      if grep -q 'listening on' "\$TCP_BENCHMARK_OUTPUT_DIR/\$dev-capture.txt"; then break; fi
+      sleep 0.02
+    done
+    grep -q 'listening on' "\$TCP_BENCHMARK_OUTPUT_DIR/\$dev-capture.txt"
+  done
   record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-before.txt"
 fi
 result=0

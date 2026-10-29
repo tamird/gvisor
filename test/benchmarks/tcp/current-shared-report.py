@@ -4,6 +4,8 @@ import json
 import os
 from pathlib import Path
 from statistics import median
+import subprocess
+from flight_capture import capture
 from datetime import datetime, timezone
 
 def read_json(p):
@@ -56,7 +58,7 @@ def trial(root, mode, case):
         assert "error" not in j and j["start"]["test_start"]["num_streams"] == 1
         end = j["end"]["sum_received"]
         assert not end["sender"] and end["bytes"] == j["end"]["streams"][0]["receiver"]["bytes"]
-        dur = end["seconds"]; assert 115 <= dur <= 135, dur
+        dur = end["seconds"]; assert 42 <= dur <= 60, dur
         intervals = [i["sum"] for i in j["intervals"]]
         assert intervals and all(not i["omitted"] and not i["sender"] and i["end"] >= i["start"] and i["bytes"] >= 0 for i in intervals)
         residual = end["bytes"]-sum(i["bytes"] for i in intervals)
@@ -67,7 +69,7 @@ def trial(root, mode, case):
         sides.append((p,stack,lo,hi,dur,intervals,residual))
     A=max(s[3] for s in sides)+1
     B=min(s[2]+s[4] for s in sides)-1
-    assert B-A>100
+    assert B-A>35
     rates={}
     sockets={}
     for p,stack,lo,hi,dur,intervals,residual in sides:
@@ -107,21 +109,24 @@ def trial(root, mode, case):
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
 public=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
 public.mkdir(exist_ok=True)
-expected=[(m,n) for m in ("plain","historical","measured") for n in ("reno-netstack","cubic-linux","cubic-netstack","reno-linux")]
+expected=[(m,n) for m in ("plain","measured") for n in ("reno-netstack","cubic-netstack")]
 verdict={"upstream":"d8ff478596acc888f2b90baa7769d78debe1f512","harness":os.environ["GITHUB_SHA"],"expected":len(expected),"passed":{},"failures":{},"missing":[],"skips":[]}
 for mode,case in expected:
     key=f"{mode}/{case}"
     if not (root/mode/case/"exit.txt").exists():
         verdict["missing"].append(key); continue
     try:
-        verdict["passed"][key]=trial(root,mode,case)
-    except (AssertionError,KeyError,ValueError,IndexError,OSError) as exc:
+        bounds=trial(root,mode,case)
+        bounds["wire"]=capture(root/mode/case/"results",public,f"{mode}-{case}")
+        verdict["passed"][key]=bounds
+    except (AssertionError,KeyError,ValueError,IndexError,OSError,subprocess.SubprocessError) as exc:
         verdict["failures"][key]={"reason":f"{type(exc).__name__}: {exc}","diagnostics":diagnostics(root/mode/case)}
 verdict["preflight"]={k:diagnostics(root/"preflight"/k) for k in ("default","staged")}
 verdict["execution_finished"]=(root/"trials-finished.txt").read_text().strip() if (root/"trials-finished.txt").exists() else None
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
 verdict["verified"]=datetime.now(timezone.utc).isoformat()
 verdict["status"]="pass" if not verdict["failures"] and not verdict["missing"] and verdict["driver"] and verdict["driver"]["status"]==0 else "incomplete"
+(public/"worker.txt").write_text((root/"worker.txt").read_text())
 (public/"verdict.json").write_text(json.dumps(verdict,indent=2)+"\n")
 print(json.dumps({k:v if k!="passed" else list(v) for k,v in verdict.items()},indent=2))
 raise SystemExit(int(verdict["status"]!="pass"))
