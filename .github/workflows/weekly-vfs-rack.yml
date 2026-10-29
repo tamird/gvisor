@@ -1,0 +1,64 @@
+name: Verify approved VFS and TCP owners
+
+"on":
+  push:
+    branches: [qualification/weekly-vfs-rack-owner-run]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify the frozen request and original collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/weekly-vfs-rack"
+          mkdir -p "$root/task"
+          cp .github/qualification/weekly-vfs-rack/{request.json,plan.json,submit.py,receipt.py} "$root/task/"
+          cd "$root"
+          src=https://raw.githubusercontent.com/tamird/gvisor/c90f4b72db82f87d279d9aa02c9009f96981d9f3/test/rbe
+          for module in qualification_report.py unit_matrix.py; do
+            curl --fail --silent --show-error --proto '=https' --max-time 45 "$src/$module" -o "$module"
+          done
+          sha256sum --check <<'SUMS'
+          0afa620e3bf96f21b6bf806edd7cebc18fa53cb9b039ea141a63c9f4f82bee31  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          0872b8a54d5ba44917f468a0dc56f9debcf75230b8f4af0e6ecf7d03035f1011  task/request.json
+          a40221457dc91cf26ce93e6e7ee4c50075a77eacc363a29a3a7088d113c59f8c  task/plan.json
+          1abb49e920b787417a05ac17fa820d601f28b2b94e74601e54cb6306c8d799bd  task/submit.py
+          0e7377656e4c72ee32d1bbead099229fcfcca3dc4da44e6596757f7884b09955  task/receipt.py
+          SUMS
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          job = Path("task")
+          (job/"request.sh").write_text(json.loads((job/"request.json").read_bytes())["steps"][0]["run"])
+          PYTHON
+      - name: Submit once and collect the original result
+        shell: python
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          import os, runpy
+          from pathlib import Path
+          key = os.environ.pop("BUILDBUDDY_API_KEY")
+          entry = Path(os.environ["RUNNER_TEMP"]) / "weekly-vfs-rack/task/receipt.py"
+          runpy.run_path(str(entry))["collect"](key)
+      - name: Publish only the bounded verdict
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: weekly-vfs-rack-receipt
+          path: ${{ runner.temp }}/weekly-vfs-rack/verdict.json
+          if-no-files-found: error
+          retention-days: 14
