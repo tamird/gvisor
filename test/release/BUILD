@@ -1,6 +1,5 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("//test/docker:defs.bzl", "docker_daemon_config")
-load("//tools:arch.bzl", "arch_genrule")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":defs.bzl", "python_release_artifacts", "release_artifacts", "repository_test")
@@ -55,36 +54,9 @@ filegroup(
     tags = ["manual"],
 )
 
-# Match the public release test's two architecture builds and three packages.
-# Both target architectures are built using the coordinator's AMD64 tools.
-arch_genrule(
-    name = "debian_packages",
-    src = "//debian",
-    tags = ["manual"],
-    template = "artifacts/%s/runsc.deb",
-)
-
-arch_genrule(
-    name = "bzip2_archives",
-    src = "//debian:gvisor-release-tar-bz2",
-    tags = ["manual"],
-    template = "artifacts/%s/gvisor.tar.bz2",
-)
-
-arch_genrule(
-    name = "zstd_archives",
-    src = "//debian:gvisor-release-tar-zstd",
-    tags = ["manual"],
-    template = "artifacts/%s/gvisor.tar.zstd",
-)
-
 release_artifacts(
     name = "artifacts",
-    srcs = [
-        ":bzip2_archives",
-        ":debian_packages",
-        ":zstd_archives",
-    ],
+    srcs = ["//debian:release-artifacts"],
     tags = ["manual"],
 )
 

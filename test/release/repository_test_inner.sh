@@ -28,8 +28,21 @@ test ! -e .git
 test ! -e tools/make_python_release.sh
 
 tools/make_test_key.sh /work/repo.key
-artifacts=(/input/artifacts/{amd64,arm64,python}/*)
+artifacts=(/input/artifacts/{x86_64,aarch64,python}/*)
 test "${#artifacts[@]}" -eq 8
+for arch in x86_64 aarch64; do
+  input=/input/artifacts/$arch
+  case "$arch" in
+    x86_64) cpu=amd64; machine=62 ;;
+    aarch64) cpu=arm64; machine=183 ;;
+  esac
+  test "$(dpkg-deb -f "$input/runsc.deb" Architecture)" = "$cpu"
+  dpkg-deb --fsys-tarfile "$input/runsc.deb" | tar -xOf - ./usr/bin/runsc > "/work/$cpu-runsc"
+  test "$(od -An -tu2 -j18 -N2 "/work/$cpu-runsc" | tr -d ' ')" = "$machine"
+  tar -xjOf "$input/gvisor.tar.bz2" runsc | cmp - "/work/$cpu-runsc"
+  tar --zstd -xOf "$input/gvisor.tar.zstd" runsc | cmp - "/work/$cpu-runsc"
+  sha256sum "/work/$cpu-runsc" >> /reports/package-binaries.sha256
+done
 NIGHTLY=false tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
 NIGHTLY=true tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
 
@@ -95,7 +108,11 @@ for channel in master nightly release 20261018 20261017; do
   done < "$reports/index-sha256.txt"
 
   for arch in amd64 arm64; do
-    package=/input/artifacts/$arch/runsc.deb
+    case "$arch" in
+      amd64) raw_arch=x86_64 ;;
+      arm64) raw_arch=aarch64 ;;
+    esac
+    package=/input/artifacts/$raw_arch/runsc.deb
     version=$(dpkg --field "$package" Version)
     signed=/work/repo/pool/$version/binary-$arch/runsc.deb
     GNUPGHOME="$verify_home" dpkg-sig --verify "$signed" | tee "$reports/$arch-signature.txt"
@@ -111,16 +128,12 @@ for channel in master nightly release 20261018 20261017; do
     test "$(stat -c%s "$signed")" = "$size"
     printf '%s  %s\n' "$digest" "$signed" | sha256sum --check --strict
     cp "$packages" "$reports/$arch-Packages"
-    case "$arch" in
-      amd64) raw_arch=x86_64 ;;
-      arm64) raw_arch=aarch64 ;;
-    esac
     for raw_root in "${raw_roots[@]}"; do
       (
         cd "$raw_root/$raw_arch"
         sha512sum --check gvisor.tar.bz2.sha512 gvisor.tar.zstd.sha512
-        cmp gvisor.tar.bz2 "/input/artifacts/$arch/gvisor.tar.bz2"
-        cmp gvisor.tar.zstd "/input/artifacts/$arch/gvisor.tar.zstd"
+        cmp gvisor.tar.bz2 "/input/artifacts/$raw_arch/gvisor.tar.bz2"
+        cmp gvisor.tar.zstd "/input/artifacts/$raw_arch/gvisor.tar.zstd"
       )
     done
   done

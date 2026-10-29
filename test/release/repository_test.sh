@@ -26,8 +26,8 @@ mounts=(--volume="$work:/work"
   --volume="$(realpath "$TEST_UNDECLARED_OUTPUTS_DIR"):/reports")
 while IFS= read -r artifact; do
   case "$artifact" in
-    test/release/artifacts/amd64/*|test/release/artifacts/arm64/*)
-      destination=${artifact#test/release/}
+    debian/release-artifacts/x86_64/*|debian/release-artifacts/aarch64/*)
+      destination=artifacts/${artifact#debian/release-artifacts/}
       ;;
     sandboxexec/sandbox/python/dist)
       destination=artifacts/python

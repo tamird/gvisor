@@ -47,21 +47,18 @@ install_raw() {
   local -r include_python="${2:-true}"
   local binary
   for binary in "${binaries[@]}"; do
-    local arch name
-    # Copy the raw file & generate a sha512sum, sorted by architecture.
-    # For tarballs, determine arch from the `runsc` within the tarball.
+    local arch dir name
     case "${binary}" in
-      *.tar.bz2)
-        arch=$(tar -xjOf "${binary}" runsc | file - | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
-        ;;
-      *.tar.zstd)
-        arch=$(tar --zstd -xOf "${binary}" runsc | file - | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
-        ;;
       *.whl|*.tar.gz)
         arch="python"
         ;;
       *)
-        arch=$(file "${binary}" | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
+        dir=${binary%/*}
+        case "${dir##*/}" in
+          x86_64|amd64) arch=x86_64 ;;
+          aarch64|arm64) arch=aarch64 ;;
+          *) echo "unknown architecture directory for ${binary}" >&2; return 1 ;;
+        esac
         ;;
     esac
     if [[ "${arch}" == "python" ]] && [[ "${include_python}" != "true" ]]; then

@@ -22,33 +22,126 @@ if [[ "$#" -le 2 ]]; then
 fi
 
 set -xeo pipefail
-source tools/release_repository.sh
-declare -r release_key="$1" release_root="$2"
+declare -r private_key="$1"
+declare -r root="$2"
 shift 2
+declare -a binaries
+declare -a pkgs
 
-if [[ "${NIGHTLY:-false}" == true ]]; then
-  make_release_repository "$release_key" "$release_root" nightly "" "" "$@"
-  exit
-fi
-
-tags="$(git tag --points-at HEAD 2>/dev/null || true)"
-if [[ -z "$tags" ]]; then
-  make_release_repository "$release_key" "$release_root" master "" "" "$@"
-  exit
-fi
-
-tags="$(release_tags "$tags")"
-if [[ -z "$tags" ]]; then
-  exit
-fi
-# A failed lookup must stop the release, rather than promoting an older tag.
-published="$(git ls-remote --tags --refs https://github.com/google/gvisor.git 'refs/tags/release-*')"
-published="$(printf '%s\n' "$published" | cut -f2 | sed 's|^refs/tags/||')"
-make_release_repository "$release_key" "$release_root" release "$tags" "$published" "$@"
-
-# Do not upload Python artifacts until all repository generation and signing
-# have succeeded. Publication remains the responsibility of this wrapper.
-for tag in $tags; do
-  name=$(echo "$tag" | cut -d'-' -f2)
-  tools/make_python_release.sh upload-wheel "$release_root/release/$name/python"
+for arg in "$@"; do
+  if [[ "${arg}" == *.deb ]] || [[ "${arg}" == *.changes ]]; then
+    pkgs+=("${arg}")
+  else
+    binaries+=("${arg}")
+  fi
 done
+
+export DEBIAN_FRONTEND=noninteractive
+# install_raw installs raw artifacts.
+#
+# Usage: install_raw <dest> [include-python]
+#
+# Wheels and sdists carry their version in their filename, so unlike the
+# architecture-specific tarballs they never overwrite the previous build's
+# files. Pass "false" for <include-python> to keep them out of directories that
+# are meant to be a fixed-size pointer to the most recent build; otherwise
+# those directories grow without bound.
+install_raw() {
+  local -r dest="$1"
+  local -r include_python="${2:-true}"
+  for binary in "${binaries[@]}"; do
+    local arch dir name
+    case "${binary}" in
+      *.whl|*.tar.gz)
+        arch="python"
+        ;;
+      *)
+        dir=${binary%/*}
+        case "${dir##*/}" in
+          x86_64|amd64) arch=x86_64 ;;
+          aarch64|arm64) arch=aarch64 ;;
+          *) echo "unknown architecture directory for ${binary}" >&2; return 1 ;;
+        esac
+        ;;
+    esac
+    if [[ "${arch}" == "python" ]] && [[ "${include_python}" != "true" ]]; then
+      continue
+    fi
+    name=$(basename "${binary}")
+    mkdir -p "${root}/${dest}/${arch}"
+    cp -f "${binary}" "${root}/${dest}/${arch}"
+    (cd "${root}/${dest}/${arch}" && sha512sum "${name}" >"${name}.sha512")
+  done
+}
+
+# install_apt installs an apt repository.
+install_apt() {
+  tools/make_apt.sh "${private_key}" "$1" "${root}" "${pkgs[@]}"
+}
+
+
+
+# If nightly, install only nightly artifacts.
+if [[ "${NIGHTLY:-false}" == "true" ]]; then
+  # Install the nightly release.
+  # https://gvisor.dev/docs/user_guide/install/#nightly
+  stamp="$(date -Idate)"
+  # Nightly builds are never published to PyPI, so skip the wheels entirely.
+  install_raw "nightly/latest" false
+  install_raw "nightly/${stamp}" false
+  install_apt "nightly"
+else
+  # Is it a tagged release? Build that.
+  tags="$(git tag --points-at HEAD 2>/dev/null || true)"
+  if ! [[ -z "${tags}" ]]; then
+    # Note that a given commit can match any number of tags. We have to iterate
+    # through all possible tags and produce associated artifacts.
+    for tag in ${tags}; do
+      # LINT.IfChange
+      if [[ "$tag" == "buildkite-test-branch" ]]; then
+        continue
+      fi
+      # LINT.ThenChange(../.buildkite/hooks/pre-command)
+      # A staging tag names a release that is still being built.
+      if [[ "$tag" == release-*-staging ]]; then
+        continue
+      fi
+      name=$(echo "${tag}" | cut -d'-' -f2)
+      base=$(echo "${name}" | cut -d'.' -f1)
+      # Install the "specific" release. This is the latest release with the
+      # given date.
+      # https://gvisor.dev/docs/user_guide/install/#specific-release
+      install_raw "release/${base}"
+      # Install the "point release".
+      # https://gvisor.dev/docs/user_guide/install/#point-release
+      install_raw "release/${name}"
+      tools/make_python_release.sh upload-wheel "${root}/release/${name}/python"
+      install_apt "${base}"
+
+      # Install the latest release, unless a newer one exists: a point release
+      # for an older date must not move users backwards. The tag itself is not
+      # pushed until after the upload, so it is added to the list here.
+      # https://gvisor.dev/docs/user_guide/install/#latest-release
+      # A separate assignment, so that a failed lookup stops the release.
+      published="$(git ls-remote --tags --refs \
+        https://github.com/google/gvisor.git 'refs/tags/release-*')"
+      newest="$( (echo "${published}" | cut -f2 | sed 's|^refs/tags/||' |
+        awk '!/-staging$/'; echo "${tag}") | sort -V | tail -n 1)"
+      if [[ "${newest}" != "${tag}" ]]; then
+        echo "Not updating the latest release: ${newest} is newer than ${tag}."
+        continue
+      fi
+      # Unlike the versioned directories above, this one is overwritten by every
+      # release, so it must not accumulate version-named wheels. PyPI is the
+      # canonical source for the latest Python package.
+      install_raw "release/latest" false
+      install_apt "release"
+    done
+  else
+    # Otherwise, assume it is a raw master commit.
+    # https://gvisor.dev/docs/user_guide/install/#head
+    # HEAD builds are never published to PyPI, so skip the wheels entirely.
+    install_raw "master/latest" false
+    install_apt "master"
+  fi
+fi
