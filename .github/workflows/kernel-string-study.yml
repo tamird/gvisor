@@ -1,7 +1,7 @@
 name: Measure string storage in one Nginx kernel checkpoint
 on:
   push:
-    branches: [qualification/state-string-slab-kernel-repo-retry]
+    branches: [qualification/state-string-slab-kernel-highmem]
 permissions:
   contents: read
 jobs:
@@ -42,7 +42,7 @@ jobs:
           platform(
               name = "gnu",
               constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "container-image":"docker://$BUILD_IMAGE"},
+              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "EstimatedMemory":"6GB", "container-image":"docker://$BUILD_IMAGE"},
               visibility = ["//visibility:public"],
           )
           BUILD
@@ -74,6 +74,14 @@ jobs:
               path=bazel-testlogs/test/rbe/string_kernel/nginx/$name
               if [[ -f $path ]]; then cp -L "$path" "$out/$name"; fi
             done
+            python3 - "$temp/kernel-build.log" "$out/build-diagnostic.json" <<PY
+          import json, pathlib, sys
+          lines = pathlib.Path(sys.argv[1]).read_text(errors="replace").splitlines()
+          markers = ("error:", "error ", "fatal ", "killed", "not found", "no such file", "denied", "undefined reference", "unsupported", "statically linked applications")
+          blocked = ("secret", "api-key", "password", "authorization", "token=", "remote_header", "bes_header")
+          diagnostic = [s[:550] for s in lines if any(m in s.lower() for m in markers) and not any(x in s.lower() for x in blocked)]
+          pathlib.Path(sys.argv[2]).write_text(json.dumps(list(dict.fromkeys(diagnostic))[:24]))
+          PY
             chmod -R a+rX "$out" "$temp/kernel.bep" "$temp/kernel-build.log"
           ' _ "$RUNNER_TEMP"
           python3 test/rbe/string_kernel/report.py "$RUNNER_TEMP"
