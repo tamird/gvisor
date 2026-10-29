@@ -51,9 +51,14 @@ type callback struct {
 	// valueLoader is called with slot and value.
 	valueLoader ValueLoader
 	slot        int
-	// waiter is an object that waits for the object, or -1.
-	waiter int32
-	// next is the next callback of the same object, or -1.
+}
+
+// completionLink is an entry in an object's completion FIFO.
+type completionLink struct {
+	// target is a waiter object ID, or the bitwise complement of an
+	// index into cbs for a user callback.
+	target int32
+	// next is the next link of this object, or -1.
 	next int32
 }
 
@@ -80,6 +85,7 @@ type decodeState struct {
 	objs      []decObject
 	ods       []objectDecodeState
 	cbs       []callback
+	links     []completionLink
 	targets   []unsafe.Pointer
 	// targetObjs are the objects of targets, or -1.
 	targetObjs []int32
@@ -147,6 +153,7 @@ func (ds *decodeState) release() {
 		objs:       ds.objs[:0],
 		ods:        ds.ods[:0],
 		cbs:        ds.cbs[:0],
+		links:      ds.links[:0],
 		targets:    ds.targets[:0],
 		targetObjs: ds.targetObjs[:0],
 		leaves:     ds.leaves[:0],
@@ -671,7 +678,7 @@ func (ds *decodeState) decodeElems(elem *typeInfo, p unsafe.Pointer, n uintptr) 
 		ds.lastRef = -1
 		ds.decodeValue(elem, add(p, i*esz))
 		if ds.lastRef >= 0 {
-			ds.wait(ds.cur, ds.lastRef, callback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, callback{})
 		}
 	}
 	ds.lastRef = -1
@@ -793,12 +800,12 @@ func (ds *decodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 		ds.lastRef = -1
 		ds.decodeValue(kt, kp)
 		if ds.lastRef >= 0 {
-			ds.wait(ds.cur, ds.lastRef, callback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, callback{})
 		}
 		ds.lastRef = -1
 		ds.decodeValue(et, ep)
 		if ds.lastRef >= 0 {
-			ds.wait(ds.cur, ds.lastRef, callback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, callback{})
 		}
 		mv.SetMapIndex(k, e)
 		fresh = ds.hooks != hooks
@@ -834,7 +841,7 @@ func (ds *decodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	ds.keepZero = false
 	ds.decodeValue(ti, p)
 	ds.keepZero = keepZero
-	cb := callback{valueLoader: l, slot: slot, value: makeAny(ti, p), waiter: -1}
+	cb := callback{valueLoader: l, slot: slot, value: makeAny(ti, p)}
 	if ds.lastRef >= 0 && ds.lastRef != ds.cur && ds.lastRef != 0 {
 		delete(ds.valueScratch, ti)
 		ds.wait(ds.cur, ds.lastRef, cb)
@@ -846,21 +853,25 @@ func (ds *decodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	ds.runCallback(&cb)
 }
 
-// addCallback adds a callback to obj.
-func (ds *decodeState) addCallback(obj int32, cb callback) {
-	if cb.waiter < 0 {
-		ds.hooks++
-	}
-	cb.next = -1
-	ds.cbs = append(ds.cbs, cb)
-	i := int32(len(ds.cbs) - 1)
+// addLink appends an entry to the object's completion FIFO.
+func (ds *decodeState) addLink(obj, target int32) {
+	i := int32(len(ds.links))
+	ds.links = append(ds.links, completionLink{target: target, next: -1})
 	o := &ds.ods[obj]
 	if o.cbTail < 0 {
 		o.cbHead = i
 	} else {
-		ds.cbs[o.cbTail].next = i
+		ds.links[o.cbTail].next = i
 	}
 	o.cbTail = i
+}
+
+// addCallback schedules user code when obj completes.
+func (ds *decodeState) addCallback(obj int32, cb callback) {
+	ds.hooks++
+	i := int32(len(ds.cbs))
+	ds.cbs = append(ds.cbs, cb)
+	ds.addLink(obj, ^i)
 }
 
 // runCallback runs cb if it is a user callback.
@@ -899,7 +910,7 @@ func (ds *decodeState) wait(waiter, obj int32, cb callback) {
 	if cb.user() {
 		ds.addCallback(obj, cb)
 	}
-	ds.addCallback(obj, callback{waiter: waiter})
+	ds.addLink(obj, waiter)
 }
 
 // runCallbacks runs the callbacks of objects as they become complete.
@@ -923,19 +934,19 @@ func (ds *decodeState) runCallbacks() {
 			if ds.stats.enabled && o.cbHead >= 0 && ds.objs[cur].ti != nil {
 				ds.stats.start(ds.objs[cur].ti)
 			}
-			for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
-				cb := &ds.cbs[c]
-				if cb.waiter >= 0 {
-					w := &ds.ods[cb.waiter]
+			for c := o.cbHead; c >= 0; c = ds.links[c].next {
+				target := ds.links[c].target
+				if target >= 0 {
+					w := &ds.ods[target]
 					w.blockedBy--
 					if w.blockedBy == 0 {
-						leaves = append(leaves, cb.waiter)
+						leaves = append(leaves, target)
 					} else if w.blockedBy < 0 {
-						Failf("object %d has negative blockedBy: %d", cb.waiter, w.blockedBy)
+						Failf("object %d has negative blockedBy: %d", target, w.blockedBy)
 					}
 					continue
 				}
-				ds.runCallback(cb)
+				ds.runCallback(&ds.cbs[^target])
 			}
 			if ds.stats.enabled && o.cbHead >= 0 && ds.objs[cur].ti != nil {
 				ds.stats.done()
@@ -991,8 +1002,8 @@ func (ds *decodeState) findCycle() []int32 {
 		if first < 0 {
 			first = int32(i)
 		}
-		for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
-			if w := ds.cbs[c].waiter; w >= 0 {
+		for c := o.cbHead; c >= 0; c = ds.links[c].next {
+			if w := ds.links[c].target; w >= 0 {
 				blockers[w] = int32(i)
 			}
 		}

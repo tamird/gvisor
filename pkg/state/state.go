@@ -300,7 +300,7 @@ func (s Source) LoadWait(slot int, objPtr any) {
 	ds.lastRef = -1
 	ds.decodeValue(ti, e.data)
 	if ds.lastRef >= 0 {
-		ds.wait(ds.cur, ds.lastRef, callback{waiter: -1})
+		ds.wait(ds.cur, ds.lastRef, callback{})
 	}
 }
 
@@ -316,7 +316,7 @@ func (s Source) LoadValue(slot int, objPtr any, fn func(any)) {
 	ds.keepZero = false
 	ds.decodeValue(ti, e.data)
 	ds.keepZero = keepZero
-	cb := callback{valueFn: fn, value: makeAny(ti, e.data), waiter: -1}
+	cb := callback{valueFn: fn, value: makeAny(ti, e.data)}
 	if ds.lastRef >= 0 {
 		ds.wait(ds.cur, ds.lastRef, cb)
 	} else {
@@ -358,7 +358,7 @@ func (s Source) AfterLoadTo(l AfterLoader) {
 	if ds.noCallbacks {
 		return
 	}
-	ds.addCallback(ds.cur, callback{afterLoader: l, waiter: -1})
+	ds.addCallback(ds.cur, callback{afterLoader: l})
 }
 
 // AfterLoad schedules a function execution when all objects have been
@@ -370,7 +370,7 @@ func (s Source) AfterLoad(fn func()) {
 	if ds.noCallbacks {
 		return
 	}
-	ds.addCallback(ds.cur, callback{fn: fn, waiter: -1})
+	ds.addCallback(ds.cur, callback{fn: fn})
 }
 
 // Context returns the context object provided at load time.
