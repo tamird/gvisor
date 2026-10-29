@@ -1,0 +1,42 @@
+name: Verify the completed Nginx restore reports
+on:
+  push:
+    branches: [qualification/state-nginx-restore-phases-receipt]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Restore the exact original workflow artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/tamird/gvisor/actions/artifacts/12873014115/zip >"$RUNNER_TEMP/native.zip"
+          echo "373d95dc600abe2f41fae50ca8dc8d245d275002b1a564d152561e75e309cd75  $RUNNER_TEMP/native.zip" | sha256sum -c -
+          mkdir "$RUNNER_TEMP/phase-results"
+          unzip -q "$RUNNER_TEMP/native.zip" -d "$RUNNER_TEMP/phase-results"
+      - name: Read the single original Action
+        env:
+          ORIGINAL_RECEIPT_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 .github/qualification/restore_phases/original_action.py "$RUNNER_TEMP"
+      - name: Check original success, mismatched content and missing files
+        run: |
+          set -euo pipefail
+          python3 .github/qualification/restore_phases/check_reports.py "$RUNNER_TEMP"
+          python3 .github/qualification/restore_phases/verify.py "$RUNNER_TEMP" --original
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: resolved-restore-report
+          path: |
+            ${{ runner.temp }}/phase-results/original-action.json
+            ${{ runner.temp }}/phase-results/report-controls.json
+            ${{ runner.temp }}/phase-results/result.json

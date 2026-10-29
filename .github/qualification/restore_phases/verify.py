@@ -6,26 +6,51 @@ import json
 from pathlib import Path
 import re
 from statistics import median
+from urllib.parse import urlsplit
 import sys
 
 
-def main(temp: Path) -> None:
+def verified_file(artifact: dict, path: Path) -> dict:
+    """Check all independently supplied SHA-256/size values against the file."""
+    data = path.read_bytes()
+    digest, length = hashlib.sha256(data).hexdigest(), len(data)
+    hashes = [artifact["digest"]] if artifact.get("digest") else []
+    sizes = [int(artifact["length"])] if "length" in artifact else []
+    uri = urlsplit(artifact.get("uri", ""))
+    if uri.scheme == "bytestream":
+        assert uri.hostname == "remote.buildbuddy.io" and not (uri.username or uri.password or uri.query or uri.fragment)
+        match = re.search(r"/blobs/([0-9a-f]{64})/(\d+)$", uri.path)
+        assert match, "unrecognized content-addressed report URI"
+        hashes.append(match[1])
+        sizes.append(int(match[2]))
+    assert hashes and all(h == digest for h in hashes), f"{path.name}: missing or conflicting digest"
+    assert sizes and all(n == length for n in sizes), f"{path.name}: missing or conflicting size"
+    return {"digest": digest, "length": length}
+
+
+def main(temp: Path, *, recovered: bool = False) -> None:
     out = temp / "phase-results"
-    events = [json.loads(line) for line in (temp / "kernel.bep").open()]
-    owners = [e["testResult"] for e in events if e.get("id", {}).get("testResult", {}).get("label")
-              == "//test/rbe/restore_phases:nginx"]
-    starts = [e["started"]["uuid"] for e in events if "started" in e]
+    if recovered:
+        native = json.loads((out/"native-event.json").read_text())
+        starts = [native["child"]]
+        assert set(native["outputs"]) == {"test.log","test.xml"}
+        action = json.loads((out/"original-action.json").read_text())
+        assert action["child"] == native["child"] and action["target"] == "//test/rbe/restore_phases:nginx"
+        tr = {**native, "testActionOutput":action["files"]}
+    else:
+        events = [json.loads(line) for line in (temp / "kernel.bep").open()]
+        owners = [e["testResult"] for e in events if e.get("id", {}).get("testResult", {}).get("label") == "//test/rbe/restore_phases:nginx"]
+        starts = [e["started"]["uuid"] for e in events if "started" in e]
+        assert len(owners) == 1 and len(starts) == 1, len(owners)
+        tr = owners[0]
     print("Bazel children:", starts, flush=True)
-    assert len(owners) == 1 and len(starts) == 1, len(owners)
-    tr = owners[0]
-    output = {f["name"]: f for f in tr["testActionOutput"] if f["name"] in ("test.log", "test.xml")}
-    facts = {"child":starts[0],"status":tr.get("status"),"testAttemptStartMillisEpoch":tr.get("testAttemptStartMillisEpoch"),"testAttemptDurationMillis":tr.get("testAttemptDurationMillis"),
-             "outputs":{name:{key:value for key,value in a.items() if key in ("name","digest","length")} for name,a in output.items()}}
-    (out/"native-event.json").write_text(json.dumps(facts)+"\n")
-    assert len(output) == 2
-    for name, artifact in output.items():
-        data = (out / name).read_bytes()
-        assert hashlib.sha256(data).hexdigest() == artifact["digest"] and len(data) == int(artifact["length"])
+    original = [f for f in tr["testActionOutput"] if f["name"] in ("test.log","test.xml")]
+    assert len(original) == 2 and {f["name"] for f in original} == {"test.log","test.xml"}
+    if not recovered:
+        facts = {"child":starts[0],"status":tr.get("status"),"testAttemptStartMillisEpoch":tr.get("testAttemptStartMillisEpoch"),"testAttemptDurationMillis":tr.get("testAttemptDurationMillis"),
+                 "outputs":{a["name"]:{k:v for k,v in a.items() if k in ("name","digest","length","uri")} for a in original}}
+        (out/"native-event.json").write_text(json.dumps(facts)+"\n")
+    output = {a["name"]:verified_file(a,out/a["name"]) for a in original}
     log = (out / "test.log").read_text()
     assert (out / "bazel-exit").read_text().strip() == "0" and tr["status"] == "PASSED" and not tr.get("cachedLocally")
     assert not tr.get("executionInfo", {}).get("cachedRemotely", False)
@@ -75,7 +100,7 @@ def main(temp: Path) -> None:
     medians = {mode: {root: [median(c["restores"][i][root+"_ns"] for c in children) for i in [0,1]]
                         for root in frames} for mode,children in arms.items()}
     result = {"source": source, "control": "e9848685c80db1e15a18e657e77d1a18f3200120", "base": "8c93a8892c82c359fde47860db9af205c4d2015d",
-              "child": starts[0], "status": tr["status"], "uncached": True,
+              "child": starts[0], "status": tr["status"], "cache_scope": ("cache disabled by Bazel flags; original exported event did not preserve cache metadata" if recovered else "uncached original TestResult"),
               "started_ms": tr.get("testAttemptStartMillisEpoch"), "duration_ms": tr.get("testAttemptDurationMillis"),
               "reports": {k:(v["digest"],v["length"]) for k,v in output.items()}, "capture": captures[0],
               "frames": frames, "tasks": taskset, "features": features, "arms": arms, "medians_ns": medians,
@@ -86,4 +111,4 @@ def main(temp: Path) -> None:
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]))
+    main(Path(sys.argv[1]), recovered="--original" in sys.argv[2:])
