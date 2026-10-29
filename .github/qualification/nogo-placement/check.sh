@@ -3,6 +3,10 @@ set -euo pipefail
 tmp=$1
 out=$tmp/placement
 bzl=(bazel --bazelrc="$tmp/placement.bazelrc")
+# Use the same lock seed and registry resolution as the original qualification.
+cp test/rbe/scratch-release.lock MODULE.bazel.lock
+"${bzl[@]}" mod graph --lockfile_mode=update --depth=1 --output=json >"$out/modules.json"
+sha256sum MODULE.bazel.lock >"$out/lock.sha256"
 opts=(--config=rbe --config=x86_64 --remote_accept_cached --jobs=32)
 lib='//pkg/sentry/fsimpl/fsconfigfd:fsconfigfd_nogo //pkg/sentry/fsimpl/mountfd:mountfd_nogo //pkg/sentry/kernel/pipe:pipe_nogo //pkg/bits:bits_nogo'
 pattern='.*(pkg/abi/linux/linux|pkg/bits/bits|pkg/sentry/fsimpl/fsconfigfd/fsconfigfd|pkg/sentry/fsimpl/mountfd/mountfd|pkg/sentry/kernel/pipe/pipe)[.]findings$'
