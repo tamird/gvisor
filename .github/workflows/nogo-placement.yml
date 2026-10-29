@@ -1,0 +1,46 @@
+name: Verify Linux ABI analyzer placement
+on:
+  push:
+    branches: [qualification/mount-nogo-placement-proof]
+permissions:
+  contents: read
+jobs:
+  placement:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify configured ABI actions and execute only the small bits analyzer
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 39c8b4bc1b56dc3228ab55a957425735767f932c
+          mkdir -p "$RUNNER_TEMP/placement"
+          rc=$RUNNER_TEMP/placement.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'import %workspace%/test/rbe/qualification.bazelrc' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a .github/qualification/nogo-placement/check.sh "$RUNNER_TEMP"
+          out=$RUNNER_TEMP/placement
+          jq -c 'select(.mnemonic == "GoStaticAnalysis" and .targetLabel == "//pkg/bits:bits") | {commandArgs, platform, runner, cacheHit, exitCode, targetLabel, actualOutputs}' "$out/probe.spawns" > "$out/bits.jsonl"
+          python3 .github/qualification/nogo-placement/verify.py physical "$out"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: placement-proof
+          path: |
+            ${{ runner.temp }}/placement/configured-proof.json
+            ${{ runner.temp }}/placement/physical-proof.json
+          if-no-files-found: warn
