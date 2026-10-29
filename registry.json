@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T05:53:56.471294+00:00",
+    "updatedAt": "2026-10-29T06:00:50.396298+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32325,7 +32325,7 @@
       "url": "https://github.com/tamird/gvisor/commit/0aa163b78df385b88491955a5627c0d585c63123",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T05:28:37.283045+00:00",
+      "updatedAt": "2026-10-29T06:00:50.396298+00:00",
       "summary": "Checkpointing after fsconfig consumed the filesystem creation options failed. With the fix, the full save and save/resume suites both ran all 41 mount descriptor cases without skips.",
       "evidence": [
         {
@@ -32343,14 +32343,18 @@
         {
           "label": "All 41 save/resume cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/40820183334"
+        },
+        {
+          "label": "Four library compiles passed; transitive analyzer was killed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40820699964"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "0aa163b78df385b88491955a5627c0d585c63123",
-        "observedAt": "2026-10-29T05:28:37.283045+00:00",
+        "observedAt": "2026-10-29T06:00:50.396298+00:00",
         "disposition": "Agent verification",
-        "nextAction": "Verify both package analyzer targets on AMD64 and ARM64, then request contributor review."
+        "nextAction": "Both packages compiled for AMD64 and ARM64. A transitive Linux ABI analyzer was killed before any analyzer target reported; qualify those targets with a suitable worker before requesting contributor review."
       }
     },
     {
@@ -38126,7 +38130,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T05:32:37.266666+00:00",
+      "updatedAt": "2026-10-29T06:00:50.396298+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -40564,9 +40568,22 @@
               "url": "https://github.com/tamird/gvisor/commit/ad4d6a00034e35fa03a7969885f7c2cdcbc81234"
             }
           ]
+        },
+        {
+          "text": "Avoiding the intermediate pointer-type record did not produce a useful improvement on a pristine 164,393-byte Nginx checkpoint. Across 16 alternating pairs, the median candidate-minus-control change was +5.322 ms from launch through first successful restore (candidate faster in 5/16), -0.093 ms for the first CPUID and kernel loads (9/16), and -0.006 ms for the second loads (8/16). All 64 restores completed with matching tasks and features. The original reporter confused the Bazel launcher PID with its child; recovery verified the original outputs without rerunning. No product change is proposed.",
+          "evidence": [
+            {
+              "label": "All 16 original pairs and source identity",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40825981798"
+            },
+            {
+              "label": "Original run with failed launcher-PID assertion",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40824781005"
+            }
+          ]
         }
       ],
-      "nextStep": "Measure the cost of pointer-wrapper construction on ordinary first restore, including a startup-only control if any work moves earlier. Parth leads the graph rewrite.",
+      "nextStep": "Profile cold kernel state.Load on the real checkpoint before choosing another optimization. Measure allocations separately and keep warm, launch-only, and cold costs distinct. Parth leads the graph rewrite.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
