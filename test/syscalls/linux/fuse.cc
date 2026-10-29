@@ -19,6 +19,7 @@
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
+#include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -136,6 +137,64 @@ void RunFuseServer(
     SCOPED_TRACE(absl::StrFormat("FUSE opcode %u", in.opcode));
     if (!respond(fd.get(), in)) break;
   }
+}
+
+TEST(FuseTest, EpollDeviceAcrossAbort) {
+  const FileDescriptor fd = ASSERT_NO_ERRNO_AND_VALUE(Open("/dev/fuse", O_RDWR));
+  auto mount_point = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto mount = ASSERT_NO_ERRNO_AND_VALUE(Mount(
+      "fuse", mount_point.path(), "fuse", MS_NODEV | MS_NOSUID,
+      absl::StrFormat("fd=%d,user_id=%d,group_id=%d,rootmode=40000",
+                      fd.get(), getuid(), getgid()), MNT_DETACH));
+  FuseInit(fd.get());
+  ASSERT_FALSE(::testing::Test::HasFatalFailure());
+  const auto mounts = ASSERT_NO_ERRNO_AND_VALUE(ProcSelfMountInfoEntries());
+  const auto it = std::find_if(mounts.begin(), mounts.end(),
+      [&](const auto& entry) { return entry.mount_point == mount_point.path(); });
+  ASSERT_NE(it, mounts.end());
+  ASSERT_EQ(it->major, 0);
+  const FileDescriptor abort_fd = ASSERT_NO_ERRNO_AND_VALUE(
+      Open(absl::StrFormat("/sys/fs/fuse/connections/%d/abort", it->minor), O_WRONLY));
+
+  FileDescriptor same(epoll_create1(EPOLL_CLOEXEC));
+  FileDescriptor changed(epoll_create1(EPOLL_CLOEXEC));
+  FileDescriptor fresh(epoll_create1(EPOLL_CLOEXEC));
+  ASSERT_GE(same.get(), 0);
+  ASSERT_GE(changed.get(), 0);
+  ASSERT_GE(fresh.get(), 0);
+  auto ctl = [&](int ep, int op, uint32_t mask, uint64_t tag) {
+    epoll_event interest = {.events = mask | EPOLLONESHOT, .data = {.u64 = tag}};
+    return epoll_ctl(ep, op, fd.get(), &interest);
+  };
+  auto event = [](int ep, uint32_t mask, uint64_t tag) {
+    epoll_event ev = {};
+    ASSERT_THAT(epoll_wait(ep, &ev, 1, 0), SyscallSucceedsWithValue(1));
+    const uint32_t actual_mask = ev.events;
+    const uint64_t actual_tag = ev.data.u64;
+    printf("tag=%llu events=%#x\n", static_cast<unsigned long long>(actual_tag), actual_mask);
+    EXPECT_EQ(actual_mask, mask);
+    EXPECT_EQ(actual_tag, tag);
+    EXPECT_THAT(epoll_wait(ep, &ev, 1, 0), SyscallSucceedsWithValue(0));
+  };
+  for (int ep : {same.get(), changed.get()}) {
+    ASSERT_THAT(ctl(ep, EPOLL_CTL_ADD, EPOLLOUT, 1), SyscallSucceeds());
+    event(ep, EPOLLOUT, 1);
+  }
+  ASSERT_THAT(write(abort_fd.get(), "1", 1), SyscallSucceedsWithValue(1));
+  pollfd pfd = {.fd=fd.get(), .events=POLLIN|POLLOUT};
+  ASSERT_THAT(poll(&pfd, 1, 0), SyscallSucceedsWithValue(1));
+  printf("poll after abort=%#x\n", pfd.revents);
+  EXPECT_EQ(pfd.revents, POLLERR);
+  epoll_event pending = {};
+  for (int ep : {same.get(), changed.get()}) {
+    EXPECT_THAT(epoll_wait(ep, &pending, 1, 0), SyscallSucceedsWithValue(0));
+  }
+  ASSERT_THAT(ctl(same.get(), EPOLL_CTL_MOD, EPOLLOUT, 2), SyscallSucceeds());
+  event(same.get(), EPOLLERR, 2);
+  ASSERT_THAT(ctl(changed.get(), EPOLL_CTL_MOD, EPOLLIN, 3), SyscallSucceeds());
+  event(changed.get(), EPOLLERR, 3);
+  ASSERT_THAT(ctl(fresh.get(), EPOLL_CTL_ADD, EPOLLIN, 4), SyscallSucceeds());
+  event(fresh.get(), EPOLLERR, 4);
 }
 
 TEST(FuseTest, RejectBadInit) {

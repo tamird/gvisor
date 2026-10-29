@@ -24,7 +24,9 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
+	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/usermem"
+	"gvisor.dev/gvisor/pkg/waiter"
 )
 
 // interruptibleTaskContext wraps a context.Context to simulate a kernel.Task
@@ -267,5 +269,62 @@ func TestConnectionCallInterruptedByPause(t *testing.T) {
 	hdrOut.MarshalUnsafe(writeBuf)
 	if _, err := conn.write(s.Ctx, usermem.BytesIOSequence(writeBuf)); !linuxerr.Equals(linuxerr.ENOENT, err) {
 		t.Errorf("conn.write() for abandoned request = %v, want ENOENT", err)
+	}
+}
+
+func TestEpollDeviceAcrossAbort(t *testing.T) {
+	s := setup(t)
+	t.Cleanup(s.Destroy)
+	conn, file, err := newTestConnection(s, maxActiveRequestsDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { file.DecRef(s.Ctx) })
+	newEP := func() *vfs.EpollInstance {
+		ep, err := s.VFS.NewEpollInstanceFD(s.Ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { ep.DecRef(s.Ctx) })
+		return ep.Impl().(*vfs.EpollInstance)
+	}
+	same, changed, fresh := newEP(), newEP(), newEP()
+	event := func(mask uint32, tag int32) linux.EpollEvent {
+		return linux.EpollEvent{Events: mask | linux.EPOLLONESHOT, Data: [2]int32{tag}}
+	}
+	for _, ep := range []*vfs.EpollInstance{same, changed} {
+		if err := ep.AddInterest(file, 3, event(linux.EPOLLOUT, 1)); err != nil {
+			t.Fatal(err)
+		}
+		if got := ep.ReadEvents(nil, 1); len(got) != 1 || got[0].Events != linux.EPOLLOUT || got[0].Data[0] != 1 {
+			t.Fatalf("connected: %v", got)
+		}
+	}
+	conn.Abort(s.Ctx)
+	if got := file.Readiness(waiter.AllEvents); got != waiter.EventErr {
+		t.Fatalf("aborted readiness: %#x", got)
+	}
+	for _, ep := range []*vfs.EpollInstance{same, changed} {
+		if got := ep.ReadEvents(nil, 1); len(got) != 0 {
+			t.Fatalf("disarmed delivered %v", got)
+		}
+	}
+	for _, c := range []struct {
+		name string
+		ep   *vfs.EpollInstance
+		mask uint32
+		tag  int32
+		add  bool
+	}{
+		{"same", same, linux.EPOLLOUT, 2, false}, {"changed", changed, linux.EPOLLIN, 3, false}, {"fresh", fresh, linux.EPOLLIN, 4, true},
+	} {
+		var err error
+		if c.add {
+			err = c.ep.AddInterest(file, 3, event(c.mask, c.tag))
+		} else {
+			err = c.ep.ModifyInterest(file, 3, event(c.mask, c.tag))
+		}
+		got := c.ep.ReadEvents(nil, 1)
+		t.Logf("after abort %s: ctl=%v; first=%+v; second=%+v", c.name, err, got, c.ep.ReadEvents(nil, 1))
 	}
 }
