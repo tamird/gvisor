@@ -1,7 +1,24 @@
 diff --git a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl b/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
 --- a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
 +++ b/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
-@@ -18 +18,8 @@
+@@ -1,69 +1,61 @@
+ "Validate that the protoc binary is authentic and not spoofed by a malicious actor."
+ 
+ load("//bazel/common:proto_common.bzl", "proto_common")
+ load("//bazel/private:toolchain_helpers.bzl", "toolchains")
+ load(":tool_integrity.bzl", "RELEASE_VERSION")
+ 
+ def _protoc_authenticity_impl(ctx):
+     # When this flag is disabled, then users have no way to replace the protoc binary with their own toolchain registration.
+     # Therefore there's no validation to perform.
+     if not proto_common.INCOMPATIBLE_ENABLE_PROTO_TOOLCHAIN_RESOLUTION:
+         return [OutputGroupInfo(_validation = depset())]
+     toolchain = ctx.toolchains[toolchains.PROTO_TOOLCHAIN]
+     if not toolchain:
+         fail("Protocol compiler toolchain could not be resolved.")
+     proto_lang_toolchain_info = toolchain.proto
+     validation_output = ctx.actions.declare_file("validation_output.txt")
+ 
 -    ctx.actions.run_shell(
 +    runtime = ctx.attr._python[platform_common.ToolchainInfo].py3_runtime
 +    args = ctx.actions.args()
@@ -11,11 +28,12 @@ diff --git a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl b/baz
 +    args.add(RELEASE_VERSION.removeprefix("v"))
 +    args.add("error" if ctx.attr.fail_on_mismatch else "info")
 +    ctx.actions.run(
-@@ -19,0 +27,3 @@
+         mnemonic = "ProtocAuthenticityCheck",
 +        executable = runtime.interpreter or runtime.interpreter_path,
 +        arguments = [args],
 +        inputs = depset([ctx.file._check], transitive = [ctx.attr._python[DefaultInfo].files]),
-@@ -22,27 +32 @@
+         outputs = [validation_output],
+         tools = [proto_lang_toolchain_info.proto_compiler],
 -        command = """\
 -        {protoc} --version > {validation_output}
 -        grep -q -e "-dev$" {validation_output} && {{
@@ -44,7 +62,13 @@ diff --git a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl b/baz
 -            severity = "ERROR" if ctx.attr.fail_on_mismatch else "INFO",
 -        ),
 +        toolchain = toolchains.PROTO_TOOLCHAIN,
-@@ -55,0 +40,8 @@
+     )
+     return [OutputGroupInfo(_validation = depset([validation_output]))]
+ 
+ protoc_authenticity = rule(
+     implementation = _protoc_authenticity_impl,
+     fragments = ["proto"],
+     attrs = {
 +        "_check": attr.label(
 +            allow_single_file = True,
 +            default = ":check_protoc_version.py",
@@ -53,6 +77,20 @@ diff --git a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl b/baz
 +            cfg = "exec",
 +            default = "@rules_python//python:current_py_toolchain",
 +        ),
+         "fail_on_mismatch": attr.bool(
+             default = True,
+             doc = "If true, the build will fail when the protoc binary does not match the expected version.",
+         ),
+     } | toolchains.if_legacy_toolchain({
+         "_proto_compiler": attr.label(
+             cfg = "exec",
+             executable = True,
+             allow_files = True,
+             default = "//src/google/protobuf/compiler:protoc_minimal",
+         ),
+     }),
+     toolchains = toolchains.use_toolchain(toolchains.PROTO_TOOLCHAIN),
+ )
 diff --git a/bazel/private/oss/toolchains/prebuilt/check_protoc_version.py b/bazel/private/oss/toolchains/prebuilt/check_protoc_version.py
 new file mode 100644
 --- /dev/null
