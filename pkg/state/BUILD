@@ -111,6 +111,7 @@ go_test(
         "graph_buf_test.go",
         "graph_decode_callbacks_test.go",
         "graph_typeinfo_test.go",
+        "map_key_identity_test.go",
         "types_test.go",
     ],
     embed = [":state"],
