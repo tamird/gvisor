@@ -44,13 +44,24 @@ for name, sha in (("stock", "01446201fd8e758267f4e1abd9727926655110b7"),
             subprocess.run(["bazel", "clean"], cwd=consumer, check=True)
             subprocess.run(["bazel", "build", "--enable_runfiles=no", f"--build_python_zip={zipped}",
                             "--@rules_python//python/config_settings:bootstrap_impl=script",
-                            "--strategy=PackageZip=linux-sandbox", f"--execution_log_json_file={log}",
+                            "--strategy=PackageZip=sandboxed", f"--execution_log_json_file={log}",
                             "//:empty", "//:normal"], cwd=consumer, check=True)
             actions = [x for x in objects(log) if x["mnemonic"] == "PackageZip"]
-            assert len(actions) == 2 and all(x.get("runner") == "linux-sandbox" and
+            assert len(actions) == 2 and all(x.get("runner") in ("linux-sandbox", "processwrapper-sandbox") and
                                             not x.get("cacheHit") for x in actions), [(x.get("runner"),x.get("cacheHit")) for x in actions]
             stage2 = [any("stage2_bootstrap" in arg for arg in x["commandArgs"]) for x in actions]
             assert stage2 == ([name == "candidate"] * 2), (tag,stage2)
+            root = Path(subprocess.check_output(["bazel","info","execution_root"], cwd=consumer, text=True).strip())
+            launchers = []
+            for x in actions:
+                if name == "stock":
+                    writer = x["commandArgs"][0]
+                else:
+                    runfiles = dict((v["name"],v["value"]) for v in x["environmentVariables"])["RUNFILES_DIR"]
+                    writer = runfiles.removesuffix(".runfiles")
+                launcher = root / writer
+                assert launcher.is_file(), launcher
+                launchers.append([writer,zipfile.is_zipfile(launcher)])
             data = []
             for f in ("empty", "normal"):
                 contents = (consumer / f"bazel-bin/{f}.zip").read_bytes()
@@ -61,7 +72,7 @@ for name, sha in (("stock", "01446201fd8e758267f4e1abd9727926655110b7"),
                     else:
                         assert z.read("demo/payload.txt") == (consumer / "payload.txt").read_bytes()
                     data.append([f,hashlib.sha256(contents).hexdigest(),members])
-            report["records"].append({"source":sha,"case":tag,"stage2":stage2,"files":data})
+            report["records"].append({"source":sha,"case":tag,"stage2":stage2,"launchers":launchers,"files":data})
         except Exception as e:
             report["errors"].append({"case":tag,"error":repr(e)})
             print(f"ERROR for {tag}: {e}", flush=True)
