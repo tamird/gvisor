@@ -13,10 +13,30 @@ def read_table(p):
     with p.open() as f:
         return list(csv.DictReader(f, delimiter="\t"))
 
+def diagnostics(d):
+    # The benchmark has no credentials; still retain only bounded, named
+    # process output, not the environment, Bazel argv or arbitrary logs.
+    import re
+    result={}
+    for file in ("exit.txt", "stdout", "stderr", "results/topology-cleanup-exit.txt", "results/ping-preflight.txt", "results/primary/flow-exit.txt", "results/secondary/flow-exit.txt", "results/primary/iperf-exit.txt", "results/secondary/iperf-exit.txt", "results/primary/receiver-stderr.txt", "results/secondary/receiver-stderr.txt", "results/primary/stderr.txt", "results/secondary/stderr.txt"):
+        p=d/file
+        if not p.exists(): continue
+        lines=p.read_text(errors="replace").splitlines()
+        keep=[l[-350:] for l in lines if l and not re.search(r"token|authorization|api[_-]?key|bearer|password|remote[_-]?header|WANSAMPLE",l,re.I)]
+        result[file]=keep[-12:]
+    for side in ("primary","secondary"):
+        p=d/"results"/side/"receiver.json"
+        if p.exists():
+            try:
+                j=read_json(p)
+                result[f"{side}/receiver_summary"]={"error":j.get("error"),"received":j.get("end",{}).get("sum_received")}
+            except ValueError: pass
+    return result
+
 def trial(root, mode, case):
     d = root / mode / case
     cc, primary = case.split("-")
-    assert (d/"exit.txt").read_text().strip() == "0"
+    assert (code := (d/"exit.txt").read_text().strip()) == "0", f"benchmark exit={code}"
     results = d/"results"
     assert (results/"topology-cleanup-exit.txt").read_text().strip() == "0"
     assert (results/"qdisc-after.txt").read_text().count("qdisc netem ") == 2
@@ -96,7 +116,8 @@ for mode,case in expected:
     try:
         verdict["passed"][key]=trial(root,mode,case)
     except (AssertionError,KeyError,ValueError,IndexError,OSError) as exc:
-        verdict["failures"][key]=f"{type(exc).__name__}: {exc}"
+        verdict["failures"][key]={"reason":f"{type(exc).__name__}: {exc}","diagnostics":diagnostics(root/mode/case)}
+verdict["preflight"]={k:diagnostics(root/"preflight"/k) for k in ("default","staged")}
 verdict["execution_finished"]=(root/"trials-finished.txt").read_text().strip() if (root/"trials-finished.txt").exists() else None
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
 verdict["verified"]=datetime.now(timezone.utc).isoformat()
