@@ -1,6 +1,7 @@
 # Package writers should start with their configured Python interpreter.
 # The generated py_binary shell bootstrap requires an undeclared Bash even
 # when its interpreter and runfiles are already inputs to the action.
+diff --git a/pkg/private/tar/tar.bzl b/pkg/private/tar/tar.bzl
 --- a/pkg/private/tar/tar.bzl
 +++ b/pkg/private/tar/tar.bzl
 @@ -13,6 +13,7 @@
@@ -27,6 +28,7 @@
          arguments = [args],
          outputs = [output_file],
          env = {
+diff --git a/pkg/private/deb/deb.bzl b/pkg/private/deb/deb.bzl
 --- a/pkg/private/deb/deb.bzl
 +++ b/pkg/private/deb/deb.bzl
 @@ -13,6 +13,7 @@
@@ -50,6 +52,8 @@
          arguments = args,
          inputs = files,
          outputs = [output_file, changes_file],
+diff --git a/pkg/private/python_action.bzl b/pkg/private/python_action.bzl
+new file mode 100644
 --- /dev/null
 +++ b/pkg/private/python_action.bzl
 @@ -0,0 +1,34 @@
