@@ -2,6 +2,7 @@ load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
+load("//tools:cpplint.bzl", "cpplint")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
@@ -17,6 +18,13 @@ package(
 license(
     name = "license",
     package_name = "gvisor",
+)
+
+cpplint(name = "cpplint")
+
+build_test(
+    name = "cpplint_test",
+    targets = [":cpplint"],
 )
 
 exports_files([

@@ -78,6 +78,8 @@ exports_files([
     "llvm-linux-header-default.patch",
 ])
 
+exports_files(["cpplint.py"], visibility = ["//:__pkg__"])
+
 py_test(
     name = "lint_test",
     srcs = ["lint_test.py"],
