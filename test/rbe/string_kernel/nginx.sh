@@ -15,7 +15,7 @@ export DOCKER_HOST="unix://$dir/docker.sock"
 python3 - "$dir" "$release/runsc" <<'PY'
 import json, pathlib, sys
 d, binary = sys.argv[1:]
-opts = {"hosts":["unix://"+d+"/docker.sock"],"data-root":d+"/data","exec-root":d+"/exec","pidfile":d+"/docker.pid","storage-driver":"overlay2","exec-opts":["native.cgroupdriver=cgroupfs"],"default-runtime":"runsc","experimental":True,"runtimes":{"runsc":{"path":binary,"runtimeArgs":["--platform=systrap","--debug=false"]}}}
+opts = {"hosts":["unix://"+d+"/docker.sock"],"data-root":d+"/data","exec-root":d+"/exec","pidfile":d+"/docker.pid","storage-driver":"overlay2","exec-opts":["native.cgroupdriver=cgroupfs"],"default-runtime":"runsc","experimental":True,"runtimes":{"runsc":{"path":binary,"runtimeArgs":["--shared-root="+d,"--platform=systrap","--debug=false"]}}}
 pathlib.Path(d,"daemon.json").write_text(json.dumps(opts))
 PY
 dockerd --config-file "$dir/daemon.json" > "$dir/dockerd.log" 2>&1 &
