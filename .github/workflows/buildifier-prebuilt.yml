@@ -1,7 +1,7 @@
 name: Check the declared Buildifier and tracked input boundary
 on:
   push:
-    branches: [qualification/bazel-buildifier-prebuilt-check]
+    branches: [qualification/bazel-buildifier-prebuilt-observed]
 permissions:
   contents: read
 jobs:
@@ -35,7 +35,7 @@ jobs:
           trap 'rm -f "$rc"' EXIT
           {
             printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=lint_platform=$p" 'build --host_platform=@lint_platform//:ubuntu' 'build --extra_execution_platforms=@lint_platform//:ubuntu' 'build --platforms=//tools/bazeldefs:linux_amd64'
-              printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY

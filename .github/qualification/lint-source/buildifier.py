@@ -26,7 +26,9 @@ def output(*argv):
     return subprocess.check_output(argv, text=True, stderr=subprocess.PIPE)
 
 def run(name, args):
-    p = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    record["stage"] = name
+    save()
+    p = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=540)
     text = p.stdout.decode(errors="replace")
     record[name] = {"exit": p.returncode, "sha256": sha256(p.stdout).hexdigest(), "bytes": len(p.stdout),
                     "invocations": sorted(set(re.findall(r"app\.buildbuddy\.io/invocation/([0-9a-f-]{36})", text))),
@@ -40,6 +42,8 @@ def main():
     files = output("git", "ls-files", "-z", "--", "BUILD", "*/BUILD", "*.bzl", "WORKSPACE", "MODULE.bazel").split("\0")[:-1]
     assert len(files) == len(set(files)) == 614 and set(missing) <= set(files)
     record["tracked"] = {"number": len(files), "sha256": sha256(("\0".join(files) + "\0").encode()).hexdigest()}
+    # Start the Bazel server outside strace: it outlives the traced lint command.
+    output("bazel", "info", "output_base")
     assert shutil.which("strace")
     trace = work / "buildifier.trace"
     exit_code, _ = run("clean", ["strace", "-f", "-qq", "-s", "65535", "-e", "trace=execve",
@@ -92,7 +96,7 @@ def main():
     record["central_visibility"] = {"root": "//:license", "available": len(candidates.intersection(files)),
                                    "builds": sum(Path(f).name == "BUILD" for f in candidates.intersection(files))}
     ex, text = run("license", ["bazel", "run", "--run_in_cwd", "//tools/licensecheck/main:licensecheck", "--", "--mode=verify"])
-    record["license"]["count"] = [int(n) for n in re.findall(r"verified ([0-9]+) dependencies", text, re.I)]
+    record["license"]["count"] = [int(n) for n in re.findall(r"all ([0-9]+) dependencies have up-to-date license entries", text, re.I)]
     assert ex == 0 and record["license"]["count"] == [221]
     assert actual == files and digests == {binary} and record["untracked_unchanged"]
     record["status"] = "PASS"
