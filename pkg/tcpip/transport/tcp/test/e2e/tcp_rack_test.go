@@ -1188,3 +1188,107 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestProbeAckAndWriteDeadline checks the first data packet after a lost
+// new-data probe, without allowing a lost packet to advance the ACK frontier.
+func TestProbeAckAndWriteDeadline(t *testing.T) {
+	for _, arm := range []string{"quiet", "blocked_writes", "duplicate_ack", "future_ack"} {
+		t.Run(arm, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: uint32(mtu), Clock: clock})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			peer := c.CreateConnectedWithOptions(header.TCPSynOptions{SACKPermitted: true, TS: true}, 0)
+			data := make([]byte, maxPayload*64)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			write := func(start, bytes int) {
+				t.Helper()
+				n, err := c.EP.Write(bytes.NewReader(data[start:start+bytes]), tcpip.WriteOptions{})
+				if n != int64(bytes) || err != nil {
+					t.Fatalf("write = %d, %v; want %d,nil", n, err, bytes)
+				}
+			}
+			packet := func(v *buffer.View) (int, uint32) {
+				t.Helper()
+				defer v.Release()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				start := int(c.IRS.Add(1).Size(seqnum.Value(h.SequenceNumber())))
+				if len(h.Payload()) == 0 {
+					return -1, 0
+				}
+				if start < 0 || start+maxPayload > len(data) || !bytes.Equal(h.Payload(), data[start:start+maxPayload]) {
+					t.Fatalf("unexpected packet at relative byte %d, payload length %d", start, len(h.Payload()))
+				}
+				return start, h.ParsedOptions().TSVal
+			}
+			write(0, maxPayload)
+			start, echo := packet(c.GetPacket())
+			if start != 0 {
+				t.Fatal("absent original priming range")
+			}
+			clock.Advance(30 * time.Millisecond)
+			frontier := c.IRS.Add(1 + maxPayload)
+			peer.AckNum, peer.RecentTS = frontier, echo
+			peer.SendPacketWithTS(nil, peer.TSVal+1)
+			c.Stack().Pause()
+			c.Stack().Resume()
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatal(err)
+			}
+			cwnd := int(info.SndCwnd)
+			write(maxPayload, (cwnd+5)*maxPayload)
+			for i := 1; i <= cwnd; i++ {
+				if start, _ := packet(c.GetPacket()); start != i*maxPayload {
+					t.Fatalf("original starts at %d; want %d", start, i*maxPayload)
+				}
+			}
+			probed := (cwnd + 1) * maxPayload
+			var probe *buffer.View
+			for elapsed := time.Duration(0); elapsed < info.RTO && probe == nil; elapsed += time.Millisecond {
+				clock.Advance(time.Millisecond)
+				probe = c.GetPacketNonBlocking()
+			}
+			if probe == nil {
+				t.Fatal("no probe")
+			}
+			start, _ = packet(probe)
+			if start != probed || c.Stack().Stats().TCP.Timeouts.Value() != 0 {
+				t.Fatalf("first probe starts at %d; want new data at %d before RTO", start, probed)
+			}
+			if arm == "future_ack" || arm == "duplicate_ack" {
+				peer.AckNum = frontier
+				if arm == "future_ack" {
+					peer.AckNum = c.IRS.Add(seqnum.Size(1 + probed + maxPayload + 1))
+				}
+				peer.SendPacketWithTS(nil, peer.TSVal+1)
+				c.Stack().Pause()
+				c.Stack().Resume()
+			}
+			when := clock.NowMonotonic()
+			first, elapsed := -1, time.Duration(0)
+			for elapsed < info.RTO*2 && first < 0 {
+				if arm == "blocked_writes" && elapsed%(10*time.Millisecond) == 0 && elapsed < info.RTO {
+					write(0, maxPayload)
+				}
+				clock.Advance(time.Millisecond)
+				elapsed = clock.NowMonotonic().Sub(when)
+				for v := c.GetPacketNonBlocking(); v != nil; v = c.GetPacketNonBlocking() {
+					if offset, _ := packet(v); offset >= 0 && first < 0 {
+						first = offset
+					}
+				}
+			}
+			timeouts := c.Stack().Stats().TCP.Timeouts.Value()
+			t.Logf("FLIGHT cwnd=%d probe=%d frontier=%d first_after=%d elapsed_ns=%d rto_ns=%d timeouts=%d", cwnd, probed, maxPayload, first, elapsed.Nanoseconds(), info.RTO.Nanoseconds(), timeouts)
+			if first != maxPayload || timeouts != 1 {
+				t.Errorf("after unacknowledged probe got data at %d, timeouts %d; want %d, 1", first, timeouts, maxPayload)
+			}
+			if (arm == "quiet" || arm == "blocked_writes") && elapsed > info.RTO+time.Millisecond {
+				t.Errorf("old-flight RTO fired at %v after probe, want no later than %v", elapsed, info.RTO+time.Millisecond)
+			}
+		})
+	}
+}
