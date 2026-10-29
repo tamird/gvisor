@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T23:12:26.596881+00:00",
+    "updatedAt": "2026-10-29T23:24:21.085456+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10170,14 +10170,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
-      "summary": "The contributor approved the primitive-array stage 689706c88 after independent source review. Open it after the wire loader #16380 lands, carrying the same approved implementation onto that landed base. The benchmark fixture is not an implementation prerequisite despite its presence in this retained fork ancestry. Its exact pkg/state tree passed nine selected remote owners, 10,928 positive XML records, no skips, failures or missing records.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
+      "updatedAt": "2026-10-29T23:24:21.085456+00:00",
+      "summary": "The primitive-array implementation is approved. Open it after the independent signed-zero correction lands; the array changes do not need another contributor review.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
-        "observedAt": "2026-10-26T22:23:56.114433+00:00",
+        "observedAt": "2026-10-29T23:24:21.085456+00:00",
         "disposition": "Approved for automatic opening after prerequisites",
-        "nextAction": "Open the approved primitive-array PR when #16380 lands, reparenting away incidental benchmark ancestry; no further contributor decision is required.",
+        "nextAction": "Wait for the signed-zero correction, then carry forward the approved array implementation and its qualified source.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
           "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
@@ -34772,6 +34772,64 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40967483993"
         }
       ]
+    },
+    {
+      "id": "branch:state-preserve-negative-zero",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/state-preserve-negative-zero",
+      "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
+      "title": "Preserve negative zero across checkpoints",
+      "url": "https://github.com/tamird/gvisor/commit/40eb76088",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "Saving a negative zero could omit it and restore a positive zero. Preserve the sign bit of floats and complex components, including primitive arrays, without changing how positive zeros are encoded.",
+      "evidence": [
+        {
+          "label": "Stock loses the sign in all four regression cases",
+          "url": "https://app.buildbuddy.io/invocation/ea98a6e9-7d3e-4d77-857a-4f34bc285dde"
+        },
+        {
+          "label": "Corrected full state suite",
+          "url": "https://app.buildbuddy.io/invocation/71552189-dfb1-44a7-8f20-fb6ddd954b41"
+        }
+      ],
+      "updatedAt": "2026-10-29T23:24:21.085456+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
+        "url": "https://github.com/tamird/gvisor/commit/40eb76088",
+        "title": "Preserve negative zero across checkpoints",
+        "body": "Review the separate signed-zero correction for submission. Primitive-array storage was already reviewed."
+      }
+    },
+    {
+      "id": "branch:declared-staged-release-check",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/declared-staged-release-check",
+      "head": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
+      "title": "Check release staging without building runsc",
+      "url": "https://github.com/tamird/gvisor/commit/a5627c731",
+      "group": "release",
+      "status": "Agent work",
+      "summary": "Use the staged release outputs directly. The native check and eight archive layouts have passed; the before/after archive payload comparison is still being verified.",
+      "evidence": [
+        {
+          "label": "Native checker and configured graph",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40970081968/artifacts/12940116829"
+        },
+        {
+          "label": "All eight archive layouts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40972519821/artifacts/12940767559"
+        },
+        {
+          "label": "Before and after archive payloads",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40970081968"
+        }
+      ],
+      "updatedAt": "2026-10-29T23:24:21.085456+00:00"
     }
   ],
   "edges": [
@@ -37922,6 +37980,20 @@
         "https://github.com/google/gvisor/pull/16666",
         "https://github.com/tamird/gvisor/commit/12bdd02c2"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:state-preserve-negative-zero",
+      "to": "branch:state-primitive-array-storage",
+      "reason": "The primitive-array encoding requires the signed-zero correction.",
+      "evidence": "https://github.com/tamird/gvisor/commit/40eb76088"
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:buildkite-source-lint-native",
+      "to": "branch:declared-staged-release-check",
+      "reason": "The staged Buildkite validation uses the approved Bazelisk setup.",
+      "evidence": "https://github.com/tamird/gvisor/commit/a5627c731"
     }
   ],
   "investigations": [
