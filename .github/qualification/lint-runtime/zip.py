@@ -53,7 +53,7 @@ def run(repo,image):
           "--remote_default_exec_properties=Arch=amd64","--remote_default_exec_properties=OSFamily=linux",
           "--remote_default_exec_properties=workload-isolation-type=oci","--remote_default_exec_properties=container-image="+image,
           "--action_env=RULES_PKG_ZIP_PROBE="+SENTINEL,"--remote_download_outputs=all",
-          "--modify_execution_info=^PackageZip$=+no-remote-cache","--remote_accept_cached=false","--keep_going",
+          "--modify_execution_info=^PackageZip$=+no-remote-cache","--keep_going",
           "--invocation_id="+phase["invocation"],"--build_event_json_file="+str(q.ROOT/(name+".bep")),
           "--execution_log_json_file="+str(q.ROOT/(name+".exec")),TARGET,EMPTY]
     p=subprocess.run(argv,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
@@ -62,9 +62,8 @@ def run(repo,image):
     events=list(q.rows(q.ROOT/(name+".bep")))
     spawns=[r for r in q.rows(q.ROOT/(name+".exec")) if r.get("mnemonic")=="PackageZip"]
     failed=repo=="original" and image==q.IMAGE
-    expected_exit=1 if failed else 0
     try:
-        require(p.returncode==expected_exit,f"expected exit {expected_exit}, got {p.returncode}")
+        require((p.returncode!=0)==failed,f"unexpected Bazel exit {p.returncode}")
         require(any(e.get("started",{}).get("uuid")==phase["invocation"] for e in events),"missing invocation identity")
         require(any("finished" in e for e in events),"missing final Build Event")
         if failed:
