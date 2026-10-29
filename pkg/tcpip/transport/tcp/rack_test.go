@@ -541,6 +541,11 @@ func TestRACKPipeCopyAccounting(t *testing.T) {
 		t.Fatalf("missing split GSO tail")
 	}
 	pipe(6)
+	s.ep.scoreboard.Insert(header.SACKBlock{Start: start.Add(125), End: start.Add(150)})
+	pipe(6)
+	if s.prr.pipe != 450 {
+		t.Fatalf("byte flight with 25 bytes SACKed inside a split packet = %d, want 450", s.prr.pipe)
+	}
 	s.ep.scoreboard.Insert(middle.sackBlock())
 	pipe(4) // Delivery cancels both copies of just this middle SMSS.
 	clock.Advance(time.Millisecond)
@@ -555,4 +560,37 @@ func TestRACKPipeCopyAccounting(t *testing.T) {
 	pipe(2) // Repeated detection does not subtract another packet.
 	s.ep.scoreboard.Insert(tail.sackBlock())
 	pipe(0)
+}
+
+func TestPRRDeliveryBudget(t *testing.T) {
+	ctx := newRACKTestContext(faketime.NewManualClock(), 0)
+	defer ctx.cleanup()
+	s := &ctx.snd
+	s.ep.mu.Lock()
+	defer s.ep.mu.Unlock()
+	s.MaxPayloadSize = 100
+	s.Ssthresh = 6
+	s.prr = prrState{recoverFS: 1000, pipe: 800, delivered: 200, sent: 100}
+	s.updatePRR(100, false, false)
+	if got := s.prr.remaining; got != 80 {
+		t.Fatalf("proportional allowance = %d, want 80", got)
+	}
+	s.updatePRR(0, false, false)
+	if got := s.prr.remaining; got != 80 {
+		t.Fatalf("repeated ACK allowance = %d, want 80", got)
+	}
+	s.updatePRR(200, false, false)
+	if got := s.prr.remaining; got != 200 {
+		t.Fatalf("cumulative proportional allowance = %d, want 200", got)
+	}
+	s.prr.pipe, s.prr.sent = 250, 500
+	s.updatePRR(100, true, false)
+	if got := s.prr.remaining; got != 200 {
+		t.Fatalf("safe ACK allowance = %d, want 200", got)
+	}
+	s.prr.pipe, s.prr.sent = 560, 700
+	s.updatePRR(100, true, false)
+	if got := s.prr.remaining; got != 40 {
+		t.Fatalf("target flight cap = %d, want 40", got)
+	}
 }

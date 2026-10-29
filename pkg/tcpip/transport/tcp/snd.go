@@ -17,6 +17,7 @@ package tcp
 import (
 	"fmt"
 	"math"
+	"math/bits"
 	"slices"
 	"time"
 
@@ -125,6 +126,9 @@ type sender struct {
 
 	// lr is the loss recovery algorithm used by the sender.
 	lr lossRecovery
+
+	// prr tracks the current SACK/RACK congestion response, in bytes.
+	prr prrState
 
 	// firstRetransmittedSegXmitTime is the original transmit time of
 	// the first segment that was retransmitted due to RTO expiration.
@@ -883,6 +887,13 @@ func (s *sender) NextSeg(nextSegHint *segment) (nextSeg, hint *segment, rescueRt
 // end.
 // +checklocks:s.ep.mu
 func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (sent bool) {
+	if s.prr.recoverFS != 0 && seg.payloadSize() != 0 {
+		// Keep a full-sized repair intact until there is enough credit.
+		if s.prr.remaining < int64(min(s.MaxPayloadSize, seg.payloadSize())) {
+			return false
+		}
+		limit = int(min(int64(limit), s.prr.remaining))
+	}
 	// We abuse the flags field to determine if we have already
 	// assigned a sequence number to this segment.
 	newData := !s.isAssignedSequenceNumber(seg)
@@ -1046,7 +1057,9 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		panic("attempted to send segment not in write list")
 	}
 
-	s.sendSegment(seg)
+	if err := s.sendSegment(seg); err != nil && s.prr.recoverFS != 0 {
+		return false
+	}
 
 	// Update sndNxt if we actually sent new data (as opposed to
 	// retransmitting some previously sent data).
@@ -1229,6 +1242,7 @@ func (s *sender) enterRecovery() {
 
 // +checklocks:s.ep.mu
 func (s *sender) leaveRecovery() {
+	s.prr = prrState{}
 	s.FastRecovery.Active = false
 	s.FastRecovery.MaxCwnd = 0
 	s.DupAckCount = 0
@@ -1236,6 +1250,60 @@ func (s *sender) leaveRecovery() {
 	// Deflate cwnd. It had been artificially inflated when new dups arrived.
 	s.SndCwnd = s.Ssthresh
 	s.cc.PostRecovery()
+}
+
+// +stateify savable
+type prrState struct {
+	recoverFS, delivered, sent, remaining, pipe int64
+}
+
+// updatePRR computes RFC 9937's delivery budget. The pipe estimate is in
+// bytes even though the sender advertises its congestion window in segments.
+// A reordering timer can initiate recovery without a new ACK: permit the
+// first retransmit once, but do not treat the timer as delivered data.
+//
+// +checklocks:s.ep.mu
+func (s *sender) updatePRR(delivered int64, safe, enter bool) {
+	p := &s.prr
+	mss := int64(s.MaxPayloadSize)
+	if enter {
+		s.SetPipe()
+		p.recoverFS = max(1, int64(s.SndUna.Size(s.SndNxt))-int64(s.ep.scoreboard.Sacked())+delivered)
+	}
+	if p.recoverFS == 0 || (delivered <= 0 && !enter) {
+		return
+	}
+	p.delivered += max(0, delivered)
+	target := int64(s.Ssthresh) * mss
+	var budget int64
+	if p.pipe > target {
+		hi, lo := bits.Mul64(uint64(p.delivered), uint64(target))
+		n, rem := bits.Div64(hi, lo, uint64(p.recoverFS))
+		budget = int64(n) - p.sent
+		if rem != 0 {
+			budget++
+		}
+	} else {
+		budget = max(p.delivered-p.sent, delivered)
+		if safe {
+			budget += mss
+		}
+		budget = min(target-p.pipe, budget)
+	}
+	if enter && p.sent == 0 {
+		budget = max(mss, budget)
+	}
+	p.remaining = max(0, budget)
+	s.SndCwnd = s.Outstanding + int((p.remaining+mss-1)/mss)
+	if s.fifoTrace != nil {
+		kind := "prr_delivery"
+		if enter {
+			kind = "prr_entry"
+		} else if safe {
+			kind = "prr_safe_ack"
+		}
+		s.traceDecision(kind, nil, int(delivered))
+	}
 }
 
 // isAssignedSequenceNumber relies on the fact that we only set flags once a
@@ -1259,6 +1327,7 @@ func (s *sender) SetPipe() {
 		return
 	}
 	pipe := 0
+	s.prr.pipe = 0
 	smss := seqnum.Size(s.ep.scoreboard.SMSS())
 	for s1 := s.writeList.Front(); s1 != nil && s1.payloadSize() != 0 && s.isAssignedSequenceNumber(s1); s1 = s1.Next() {
 		// With GSO each segment can be much larger than SMSS. So check the segment
@@ -1278,15 +1347,15 @@ func (s *sender) SetPipe() {
 			if !s1.sequenceNumber.LessThan(s.SndNxt) {
 				break
 			}
-			if s.ep.scoreboard.IsSACKED(sb) {
+			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+				// RACK counts outstanding copies of this exact range.
+				if unsacked := sb.Start.Size(sb.End) - s.ep.scoreboard.sackedIn(sb); unsacked != 0 {
+					pipe += int(s1.rackInFlight)
+					s.prr.pipe += int64(s1.rackInFlight) * int64(unsacked)
+				}
 				continue
 			}
-
-			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
-				// RACK tracks actual losses and retransmissions of this
-				// range. HighRxt and thresholds of higher SACKed bytes
-				// estimate these only for sequence-based recovery.
-				pipe += int(s1.rackInFlight)
+			if s.ep.scoreboard.IsSACKED(sb) {
 				continue
 			}
 
@@ -1646,6 +1715,11 @@ func (s *sender) isValidSACKBlock(sb header.SACKBlock, ack seqnum.Value) bool {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
+	priorUna := s.SndUna
+	var priorSACK seqnum.Size
+	if s.ep.SACKPermitted && s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+		priorSACK = s.ep.scoreboard.Sacked()
+	}
 	bestRTT := unknownRTT
 
 	// Check if we can extract an RTT measurement from this ack. Measure against
@@ -1905,7 +1979,8 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// After the reorder window is calculated, detect any loss by checking
 		// if the time elapsed after the segments are sent is greater than the
 		// reorder window.
-		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active {
+		numLost, newlyLost := s.rc.detectLossChanges(rcvdSeg.rcvdTime)
+		if numLost > 0 && !s.FastRecovery.Active {
 			s.traceDecision("rack_ack_opportunity", rcvdSeg, numLost)
 			if s.enterRACKRecovery() {
 				fastRetransmit = true
@@ -1916,6 +1991,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		}
 
 		if s.FastRecovery.Active {
+			advanced := int64(priorUna.Size(s.SndUna))
+			delivered := advanced + int64(s.ep.scoreboard.Sacked()) - int64(priorSACK)
+			s.updatePRR(delivered, advanced > 0 && newlyLost == 0, fastRetransmit)
 			s.rc.DoRecovery(nil, fastRetransmit)
 		}
 	}
@@ -1960,6 +2038,10 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 		seg.lost = false
 		if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
 			seg.rackInFlight++
+			if s.prr.recoverFS != 0 {
+				s.prr.sent += int64(seg.payloadSize())
+				s.prr.remaining = max(0, s.prr.remaining-int64(seg.payloadSize()))
+			}
 		}
 	}
 

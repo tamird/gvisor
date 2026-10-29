@@ -1395,7 +1395,7 @@ func TestRACKWithWindowFull(t *testing.T) {
 
 // A single later SACK is enough for RACK to time-mark the whole earlier
 // flight. There are no intervening ACKs to grant an artificial send budget.
-func TestRACKLossFlight(t *testing.T) {
+func TestRACKPRRFlight(t *testing.T) {
 	for _, cc := range []string{"reno", "cubic"} {
 		t.Run(cc, func(t *testing.T) {
 			const rtt = 10 * time.Millisecond
@@ -1452,7 +1452,7 @@ func TestRACKLossFlight(t *testing.T) {
 			for count < packets-1 && c.ReceiveNonBlockingAndCheckPacket(data, count*mss, mss) {
 				count++
 			}
-			want := min(packets-1, int(state.SndCwnd))
+			want := 1
 			t.Logf("RACK_FLIGHT cc=%s first=%d cap=%d cwnd=%d ssthresh=%d rto=%d", cc, count, want, state.SndCwnd, state.SndSsthresh, c.Stack().Stats().TCP.Timeouts.Value())
 			if count != want {
 				t.Errorf("repaired %d known-lost segments after the tail SACK, want %d", count, want)
@@ -1471,8 +1471,8 @@ func TestRACKLossFlight(t *testing.T) {
 			for count+extra < packets-1 && c.ReceiveNonBlockingAndCheckPacket(data, (count+extra)*mss, mss) {
 				extra++
 			}
-			if count == want && extra != min(1, packets-1-count) {
-				t.Errorf("after ACKing one repair sent %d, want %d", extra, min(1, packets-1-count))
+			if count == want && extra != 2 {
+				t.Errorf("after ACKing one repair sent %d, want %d", extra, 2)
 			}
 			if pkt := c.GetPacketNonBlocking(); pkt != nil {
 				pkt.Release()

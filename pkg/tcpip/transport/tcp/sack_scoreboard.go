@@ -173,6 +173,36 @@ func (s *SACKScoreboard) sackedBlock(r header.SACKBlock) (header.SACKBlock, bool
 	return block, found
 }
 
+// sackedIn returns the number of bytes of b covered by retained SACK ranges.
+func (s *SACKScoreboard) sackedIn(b header.SACKBlock) seqnum.Size {
+	if s.Empty() {
+		return 0
+	}
+	var total seqnum.Size
+	s.ranges.DescendLessOrEqual(b, func(r header.SACKBlock) bool {
+		if r.Start != b.Start && b.Start.LessThan(r.End) {
+			end := r.End
+			if b.End.LessThan(end) {
+				end = b.End
+			}
+			total += b.Start.Size(end)
+		}
+		return false
+	})
+	s.ranges.AscendGreaterOrEqual(b, func(r header.SACKBlock) bool {
+		if !r.Start.LessThan(b.End) {
+			return false
+		}
+		end := r.End
+		if b.End.LessThan(end) {
+			end = b.End
+		}
+		total += r.Start.Size(end)
+		return true
+	})
+	return total
+}
+
 // String returns human-readable state of the scoreboard structure.
 func (s *SACKScoreboard) String() string {
 	var str strings.Builder

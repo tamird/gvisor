@@ -422,6 +422,8 @@ func (e *Endpoint) FirstLossDisableHyStart() {
 const FIFOTraceCanRestore = true
 
 type FIFOGrant struct {
+	PRRPipe, PRRRemaining, PRRSent, PRRDelivered, PRRRecoverFS int64
+
 	Kind                                                       string
 	At, RTO, Resend, Probe, Reorder, FiredFor                  int64
 	Una, Nxt, Last, Boundary, ACK, Head                        uint32
@@ -475,6 +477,7 @@ func (s *sender) traceDecision(kind string, seg *segment, n int) {
 		}
 	}
 	e := FIFOGrant{Kind: kind, At: now, RTO: int64(s.RTO), Una: uint32(s.SndUna) - f.base, Nxt: uint32(s.SndNxt) - f.base, Last: uint32(s.FastRecovery.Last) - f.base, Active: s.FastRecovery.Active, Tracked: f.tracking, Interrupted: s.sackRecoveryInterrupted, Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Flight: s.Outstanding, Sacked: s.SackedOut, Dupacks: s.DupAckCount, State: s.state, Count: n, Timeouts: s.ep.stats.SendErrors.Timeouts.Value()}
+	e.PRRPipe, e.PRRRemaining, e.PRRSent, e.PRRDelivered, e.PRRRecoverFS = s.prr.pipe, s.prr.remaining, s.prr.sent, s.prr.delivered, s.prr.recoverFS
 	if f.tracking {
 		e.Boundary = f.boundary - f.base
 	}

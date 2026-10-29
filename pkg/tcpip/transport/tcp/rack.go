@@ -378,9 +378,14 @@ func (rc *rackControl) exitRecovery() {
 //
 // +checklocks:rc.snd.ep.mu
 func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
+	total, _ := rc.detectLossChanges(rcvTime)
+	return total
+}
+
+// +checklocks:rc.snd.ep.mu
+func (rc *rackControl) detectLossChanges(rcvTime tcpip.MonotonicTime) (total, newlyLost int) {
 	var timeout time.Duration
 	numLost := 0
-	flightChanged := false
 	clockResolution := rc.snd.ep.stack.ClockResolution()
 	for seg := rc.snd.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
 		if rc.snd.ep.scoreboard.IsSACKED(seg.sackBlock()) {
@@ -402,7 +407,7 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
 				if seg.rackInFlight != 0 {
 					seg.rackInFlight = 0
-					flightChanged = true
+					newlyLost++
 				}
 				seg.lost = true
 				numLost++
@@ -425,12 +430,12 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 	if timeout != 0 && !rc.snd.reorderTimer.enabled() {
 		rc.snd.reorderTimer.enable(timeout)
 	}
-	if flightChanged {
+	if newlyLost != 0 {
 		// Both the ACK handler and the reordering timer may send repairs
 		// immediately. Give them the estimate after these loss decisions.
 		rc.snd.SetPipe()
 	}
-	return numLost
+	return numLost, newlyLost
 }
 
 // reorderTimerExpired will retransmit the segments which have not been acked
@@ -470,6 +475,10 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 			rc.snd.traceDecision("rack_timer_blocked", nil, numLost)
 		}
 	}
+	if !rc.snd.FastRecovery.Active {
+		return nil
+	}
+	rc.snd.updatePRR(0, false, fastRetransmit)
 	rc.DoRecovery(nil, fastRetransmit)
 	return nil
 }
