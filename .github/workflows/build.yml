@@ -29,7 +29,8 @@ jobs:
           sudo apt-get -qq install --no-install-recommends qemu-user-static binfmt-support
           sudo update-binfmts --enable qemu-aarch64
         fi
-        grep -q 'flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
+        cat /proc/sys/fs/binfmt_misc/qemu-aarch64 > "$RUNNER_TEMP/array-tools/filter-interpreter.txt"
+        grep -q 'flags:.*F' "$RUNNER_TEMP/array-tools/filter-interpreter.txt"
         docker pull --platform=linux/amd64 "$GNU"
         plat="$RUNNER_TEMP/poll-gnu-platform"
         printf 'module(name="poll_gnu_platform")\n' > "$plat/MODULE.bazel"

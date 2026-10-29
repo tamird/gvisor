@@ -18,7 +18,7 @@ case "$lane" in
  arm)
    arch=aarch64
    targets=(//pkg/state:state_nogo //pkg/state:state_test_nogo //pkg/state/pretty:pretty_nogo //pkg/state/wire:wire_nogo //pkg/state/wire:wire_test_nogo //pkg/state/tests:tests_nogo //pkg/state/tests:tests_test_nogo)
-   cat /proc/sys/fs/binfmt_misc/qemu-aarch64 >"$d/filter-interpreter.txt";;
+   cp "$work/array-tools/filter-interpreter.txt" "$d/filter-interpreter.txt";;
 esac
 printf '%s\n' "${targets[@]}" >"$d/targets.txt"
 cmd=(test "--config=$arch" -c opt --jobs=12 --keep_going --test_timeout=1200 --nocache_test_results --strategy=TestRunner=standalone '--modify_execution_info=^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled "--build_event_json_file=$work/private/$lane.bep" --build_event_json_file_path_conversion=false "${args[@]}" "${targets[@]}")
