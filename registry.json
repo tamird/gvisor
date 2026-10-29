@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T14:37:19.126780+00:00",
+    "updatedAt": "2026-10-29T14:44:50.506287+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33332,16 +33332,24 @@
         {
           "label": "One corrected Linux qualification job",
           "url": "https://github.com/tamird/gvisor/actions/runs/40893220463"
+        },
+        {
+          "label": "AMD64 scratch: 617 sources checked by the Buildifier action",
+          "url": "https://app.buildbuddy.io/invocation/83229eab-d7c2-4655-a93d-55b620dee3e0"
+        },
+        {
+          "label": "ARM64 stopped during Bazel analysis before the lint action",
+          "url": "https://app.buildbuddy.io/invocation/ebe9628b-afe6-471a-beb0-ad3913859100"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T14:37:19.126780+00:00",
+      "updatedAt": "2026-10-29T14:44:50.506287+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T14:17:15.982925+00:00",
+        "observedAt": "2026-10-29T14:44:50.506287+00:00",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
         "disposition": "Verifying replacement for the shell lint path",
-        "nextAction": "Verify the 617 source inputs, bad-file diagnostics, and explicit fix mode in the single Linux job; then review the fork amendment for publication to this PR.",
+        "nextAction": "Distinguish an unset workspace path from an invalid explicit value in fix mode and qualify the revised source. AMD64 executed the 617-source check in scratch; ARM64 stopped before executing it.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299"
@@ -39691,7 +39699,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T14:25:26.280531+00:00",
+      "updatedAt": "2026-10-29T14:42:54.454457+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -42259,9 +42267,39 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40891058121"
             }
           ]
+        },
+        {
+          "text": "Counting the existing tree nodes before exporting segments saved 106,800 B and 92 allocations per Nginx kernel Save (paired medians), but Save was faster in only two of eight pairs. Median wall time rose 0.564 ms. VMA, PMA and MappingSet export explain 828 of 834 fewer objects sampled across the two profiles. Both 150,180-byte checkpoints decoded correctly. Do not propose this as a speedup.",
+          "evidence": [
+            {
+              "label": "Paired kernel Save, direct exports and both real reloads",
+              "url": "https://app.buildbuddy.io/invocation/704469c5-e7d0-475f-839a-20d30bb5aa3d"
+            },
+            {
+              "label": "Verified remote original",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40892310000"
+            }
+          ]
+        },
+        {
+          "text": "When a StateSave hook aliased a previously reused scratch value, a slot beyond the length of the encoder’s free list kept the original payload alive through a GC. Clearing the popped slot reclaimed the original while the same encoder was still pooled. Plain reuse and fresh alias controls passed. This is temporary retention on #16620’s opt-in graph path; the standalone/default legacy Save is not affected.",
+          "evidence": [
+            {
+              "label": "Original: only reused, aliased scratch retained the payload",
+              "url": "https://app.buildbuddy.io/invocation/e0b0a61c-06b0-4ece-928f-b1137845cab4"
+            },
+            {
+              "label": "Four graph Save/Load cases after clearing the popped slot",
+              "url": "https://app.buildbuddy.io/invocation/4157738e-3b6e-450b-b1dc-cd02875339ff"
+            },
+            {
+              "label": "Proposed one-line correction",
+              "url": "https://github.com/tamird/gvisor/commit/38c09b1e2b90077cf32009b08d62fdff62656ecd"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the allocation saved by counting VMA/PMA entries before exporting a slice with the cost of the extra tree walk. Also check whether an aliased scratch copy retains a pointer past Save. Parth remains the primary author of the graph serializer.",
+      "nextStep": "Offer the tested scratch-slot correction at the owning line of #16579; Parth leads the rewrite. Continue measuring on the graph-enabled public Save path before proposing changes.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
@@ -43198,6 +43236,26 @@
         {
           "label": "Verification from original artifacts",
           "url": "https://github.com/tamird/gvisor/actions/runs/40891058121"
+        },
+        {
+          "label": "Paired kernel Save, direct exports and both real reloads",
+          "url": "https://app.buildbuddy.io/invocation/704469c5-e7d0-475f-839a-20d30bb5aa3d"
+        },
+        {
+          "label": "Verified remote original",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40892310000"
+        },
+        {
+          "label": "Original: only reused, aliased scratch retained the payload",
+          "url": "https://app.buildbuddy.io/invocation/e0b0a61c-06b0-4ece-928f-b1137845cab4"
+        },
+        {
+          "label": "Four graph Save/Load cases after clearing the popped slot",
+          "url": "https://app.buildbuddy.io/invocation/4157738e-3b6e-450b-b1dc-cd02875339ff"
+        },
+        {
+          "label": "Proposed one-line correction",
+          "url": "https://github.com/tamird/gvisor/commit/38c09b1e2b90077cf32009b08d62fdff62656ecd"
         }
       ],
       "comparisons": [
