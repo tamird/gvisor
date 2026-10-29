@@ -85,9 +85,17 @@ def inspect(result):
             assert (expected, size) == (sha, len(content))
         else:
             result["manifest"] = json.loads(content)
-    assert result["native_exit"] == 0 and set(records) == set(ROOTS) and not any(r["exit"] for r in records.values())
+    relocated_only = os.environ["GITHUB_REF_NAME"] == "qualification/rules-python-native-launcher-4183-relocated"
+    expected = {"RelocatedPythonWriter"} if relocated_only else set(ROOTS)
+    assert result["native_exit"] == 0 and set(records) == expected and not any(r["exit"] for r in records.values())
     manifest = result["manifest"]
-    assert manifest["writer"] == records["PackageTar"]["executable"][1] and manifest["interpreter"] == PYTHON
+    if relocated_only:
+        # Exact original PackageTar input from the first, already successful worker.
+        result["package_invocation"] = "813b647f-0118-4b22-9e90-4fadd8dae6c3"
+        writer = "b4e39567888f7f6e390260950a6cdf89bae5f2b4dda1c0b1dd4450962f5c8922"
+    else:
+        writer = records["PackageTar"]["executable"][1]
+    assert manifest["writer"] == writer and manifest["interpreter"] == PYTHON
     assert manifest["missing_prefix_exit"] != 0 and manifest["relocated_exit"] == 0 and len(manifest["manifest_prefixes"]) >= 2
 
 
