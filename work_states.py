@@ -473,10 +473,9 @@ def pr_states(pr: dict, patch: dict | None = None, landing: dict | None = None) 
 
 def derive_states(prs: list[dict], registry: dict) -> StateMap:
     nodes = {node["id"]: node for node in registry["nodes"]}
-    states = {pr_identity(pr, registry["meta"]["repo"]):
-              pr_states(pr, nodes.get(pr_identity(pr, registry["meta"]["repo"]), {}).get("approvedPatch"),
-                        nodes.get(pr_identity(pr, registry["meta"]["repo"]), {}).get("landedPatch"))
-              for pr in prs}
+    published = {pr_identity(pr, registry["meta"]["repo"]): pr for pr in prs}
+    states = {identity: pr_states(pr, nodes.get(identity, {}).get("approvedPatch"), nodes.get(identity, {}).get("landedPatch"))
+              for identity, pr in published.items()}
     promoted = {(pr["headRepo"], pr["ref"]) for pr in prs
                 if pr.get("headRepo") and pr["status"] in {"open", "draft", "merged"}}
     closed = {pr_identity(pr, registry["meta"]["repo"]) for pr in prs if pr["status"] in {"closed", "merged"}}
@@ -490,8 +489,13 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         if not attached and (node["type"] != "branch" or node["id"] in closed
                              or (node.get("repo"), node.get("ref")) in promoted):
             continue
+        pr = published.get(node["id"])
         if decision and decision["status"] == "pending":
-            states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision.get("head", decision.get("url"))}
+            base = decision.get("baseHead", decision.get("head"))
+            source_changed = (pr and decision.get("kind") in {"amendment", "review"}
+                              and (pr["status"] in {"closed", "merged"} or pr.get("head") and pr["head"] != base))
+            if not source_changed:
+                states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision.get("head", decision.get("url"))}
         changes = node.get("contributorChangesRequested")
         if changes and node.get("head") == changes["head"]:
             states.setdefault(node["id"], {})["changes-requested"] = {

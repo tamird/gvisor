@@ -21,6 +21,11 @@ facts and unresolved causes in every relationship.
 - `nodes` have a stable `id`, a `type` (`pr`, `branch`, or `issue`), a title,
   HTTPS source URL, workstream `group`, and status. PR and GitHub issue records
   also carry `repo` and `number`; branch and PR records carry `ref`.
+- Add a `contributorReview` to the target PR, branch, or issue when asking
+  for a decision, including outgoing reviews on someone else's PR. Record the
+  exact proposed text or commit. Remove the request when answered; keep any
+  checks or publication left to the agent in the work item. After a PR head
+  changes, verify the draft against the new source before asking for review.
 - `edges` point **from prerequisite to dependent**. `depends_on` is an explicit
   dependency; `blocked_by` records an external blocker. `includes` relationships
   only identify work included in an integration branch, not a required PR stack.
@@ -112,7 +117,9 @@ remain errors. Scheduled and manual runs share one concurrency group. During act
 owner monitoring, check snapshot age at the same ten-minute cadence; if stale
 and no refresh is active, dispatch this workflow once. This uses the existing
 collector and does not create a second scheduled monitor. The token never reaches
-the browser. Its commit
+the browser. A visible tab checks the published data every five minutes; a
+hidden tab waits until it is visible again. A failed request leaves the last
+usable data and the current view in place. The workflow's commit
 explicitly requests the existing Pages build because token-authored pushes do
 not trigger Pages builds automatically. Six scheduled builds per hour stay
 below Pages' soft ten-build limit; manual dispatches and source publications

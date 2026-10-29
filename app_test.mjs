@@ -16,6 +16,56 @@ function client() {
   return context;
 }
 
+test('a visible tab refreshes once when due and retains its view if the snapshot is unavailable', async () => {
+  const context = client(), run = source => vm.runInContext(source, context);
+  let now = Date.now(), timer, pending, requests = 0;
+  const elems = new Map();
+  context.document = { visibilityState: 'hidden', getElementById(id) {
+    if (!elems.has(id)) elems.set(id, { querySelectorAll: () => [], scrollTo() {} });
+    return elems.get(id);
+  } };
+  context.Date = class extends Date { static now() { return now; } };
+  context.clearTimeout = () => { timer = null; };
+  context.setTimeout = (callback, delay) => { timer = { callback, delay }; return 1; };
+  context.AbortSignal = AbortSignal;
+  context.fetch = () => { requests++; return pending; };
+  run('model = {checkedAt: registry.meta.updatedAt}; lastAttempt = Date.now(); selected = "pr:1"; reasonFilters.add("author-proposal"); scheduleRefresh()');
+  assert.equal(timer, null);
+  now += 10 * 60 * 1000;
+  context.document.visibilityState = 'visible';
+  run('scheduleRefresh()');
+  assert.equal(timer.delay, 0);
+  let reject;
+  pending = new Promise((_, fail) => { reject = fail; });
+  const refresh = timer.callback();
+  run('scheduleRefresh(); refresh(true)');
+  assert.equal(requests, 2); // registry and snapshot share one in-flight refresh.
+  reject(new Error('offline'));
+  await refresh;
+  assert.equal(run('selected'), 'pr:1');
+  assert.deepEqual([...run('reasonFilters')], ['author-proposal']);
+  assert.equal(run('model.checkedAt'), context.registryInput.meta.updatedAt);
+  assert.match(elems.get('freshness-text').textContent, /Keeping snapshot/);
+  assert.equal(timer.delay, 5 * 60 * 1000);
+  // The next scheduled refresh succeeds. Keep the URL selection, but render
+  // the table from the current registry even if the old snapshot had a decision.
+  const registry = { ...context.registryInput, nodes: [{ id: 'pr:1', type: 'pr',
+    number: 1, repo: 'google/gvisor', title: 'Selected PR', url: 'https://github.com/google/gvisor/pull/1' }],
+    edges: [], groups: [] };
+  const snapshot = { ...context.snapshotInput, workStates: { 'pr:1': {
+    'contributor-review': { scope: null, since: null, basis: 'unknown', qualifier: null } } } };
+  context.fetch = async file => ({ ok: true, json: async () => file === 'registry.json' ? registry : snapshot });
+  run('view = "table"; updateRegistryControls = () => {}; render = () => { globalThis.rendered = [view, selected, model.nodes[0].workStates["contributor-review"]]; }');
+  now += timer.delay;
+  await timer.callback();
+  assert.deepEqual([...context.rendered], ['table', 'pr:1', undefined]);
+  assert.deepEqual([...run('reasonFilters')], ['author-proposal']);
+  assert.equal(timer.delay, 5 * 60 * 1000);
+  context.document.visibilityState = 'hidden';
+  run('scheduleRefresh()');
+  assert.equal(timer, null);
+});
+
 test('every open snapshot PR shares its import decision with the periodic planner', () => {
   const context = client();
   const registry = JSON.parse(readFileSync(new URL('./registry.json', import.meta.url)));
@@ -391,6 +441,12 @@ test('contributor decisions bind the registered branch repository and exact prop
       assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision/);
     }
     node.contributorReview.url = correct;
+    node.contributorReview.baseHead = 'a'.repeat(40);
+    node.contributorReview.url = `https://github.com/${repo}/compare/aaaaaaaaa...${head.slice(0, 9)}`;
+    vm.runInContext('validateRegistry(registryInput)', context);
+    node.contributorReview.url = `https://github.com/${repo}/compare/aaaaaaaaa...fffffffff`;
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision/);
+    node.contributorReview.url = correct;
     node.contributorChangesRequested = { head, url: correct };
     delete node.contributorReview;
     vm.runInContext('validateRegistry(registryInput)', context);
@@ -402,7 +458,7 @@ test('contributor decisions bind the registered branch repository and exact prop
   }
 });
 
-test('outgoing review decisions remain visible on external PRs and across public head changes', () => {
+test('outgoing reviews return to the agent when the public head changes', () => {
   const context = client(), node = attentionNode();
   node.github.headOwner = 'EtiennePerot';
   node.github.checkedAt = context.snapshotInput.checkedAt;
@@ -418,7 +474,17 @@ test('outgoing review decisions remain visible on external PRs and across public
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
   assert.equal(reasonsFor(node).find(reason => reason.id === 'author-proposal').owner, 'user');
   node.github.revisionChanged = true; node.github.head = 'd'.repeat(40);
-  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"].scope', context), record.scope);
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'], undefined);
+  assert.ok(idsFor(node).includes('agent-refresh'));
+  assert.ok(!idsFor(node).includes('author-proposal'));
+  node.contributorReview.head = node.github.head;
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'].scope, node.github.head);
+  node.github.status = 'merged';
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'], undefined);
+  assert.ok(!idsFor(node).includes('agent-refresh'));
   delete node.contributorReview;
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
 });
@@ -468,7 +534,7 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
     node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
     assert.equal(node.workStates['contributor-review'], undefined);
     assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
-    assert.equal(vm.runInContext('contributorAmendmentNeedsRefresh(nodeInput)', context), false);
+    assert.equal(vm.runInContext('contributorDecisionNeedsRefresh(nodeInput)', context), false);
     assert.ok(!idsFor(node).includes('author-proposal'));
     assert.ok(!idsFor(node).includes('agent-refresh'));
     assert.equal(vm.runInContext('historical(nodeInput)', context), status !== 'open');

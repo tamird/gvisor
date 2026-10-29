@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
 const UI_KEY = "gvisor-work-map-view-v1";
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const VIEWS = ["dag", "table", "investigations"];
 const SORT_KEYS = ["number", "title", "impact", "direct", "age", "review", "checks", "group"];
 const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
@@ -19,7 +20,7 @@ const READABLE_SCALE = .9;
 let registry, model, selected = null, focus = null, view = "dag";
 let sortKey = "impact", sortDirection = -1;
 let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600, positions: new Map() };
-let refreshing = false, lastAttempt = 0, moved = false;
+let refreshing = false, lastAttempt = 0, refreshTimer, moved = false;
 let liveSnapshot = null, conflictRequest = false, lastConflictAttempt = 0;
 const conflictResults = new Map();
 let lastNavigationURL = null, searchEditing = false, initializing = true;
@@ -450,8 +451,10 @@ function attentionReasons(node, owner) {
   };
   if (states(node)["contributor-review"])
     add("author-proposal", contributorDecision(node)?.summary || "A contributor decision is pending; this does not change the published head's review status.");
-  if (contributorAmendmentNeedsRefresh(node))
-    add("agent-refresh", `The amendment was prepared against ${node.contributorReview.baseHead.slice(0, 9)}, but the published head is ${node.github.head.slice(0, 9)}. Reconcile the proposal before requesting a contributor decision.`);
+  if (contributorDecisionNeedsRefresh(node)) {
+    const decision = contributorDecision(node), base = decision.baseHead || decision.head;
+    add("agent-refresh", `The ${decision.kind === "review" ? "review" : "amendment"} was prepared against ${base.slice(0, 9)}, but the published head is ${node.github.head.slice(0, 9)}. Check the new source before requesting a contributor decision.`);
+  }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   if (node.type === "branch" && node.status === "Agent work" && node.repo?.split("/")[0] === owner
@@ -917,15 +920,16 @@ function contributorDecision(node) {
   const decision = node.contributorReview;
   return decision?.status === "pending" && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
-    || ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision.kind)) ? decision : null;
+    || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
+    || node.type === "pr" && decision.kind === "review" && !providerClosed(node)) ? decision : null;
 }
 function contributorDecisionHeadChanged(node) {
   const decision = contributorDecision(node);
   const head = decision?.kind === "amendment" ? decision.baseHead : decision?.head;
   return Boolean(node.github?.head && head && head !== node.github.head);
 }
-function contributorAmendmentNeedsRefresh(node) {
-  return contributorDecision(node)?.kind === "amendment" && contributorDecisionHeadChanged(node);
+function contributorDecisionNeedsRefresh(node) {
+  return ["amendment", "review"].includes(contributorDecision(node)?.kind) && contributorDecisionHeadChanged(node);
 }
 function humanAction(node) {
   const action = node.humanAction;
@@ -1346,8 +1350,10 @@ function drawTable(nodes) {
     const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
     title.append(choose);
     const decision = contributorDecision(node);
-    if (decision && states(node)["contributor-review"])
-      title.append(link(decision.title || "Review proposal ↗", decision.url, "decision-source"));
+    if (decision && states(node)["contributor-review"]) {
+      const revisions = decision.kind === "amendment" ? ` · Amendment ${decision.baseHead.slice(0, 9)} → ${decision.head.slice(0, 9)}` : "";
+      title.append(link((decision.title || "Review proposal ↗") + revisions, decision.url, "decision-source"));
+    }
     const action = humanAction(node);
     if (action) title.append(link("Open submission context ↗", action.url, "human-action-source"));
     const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
@@ -1419,9 +1425,9 @@ function drawDetails() {
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
   const decision = contributorDecision(node);
-  if (decision && (states(node)["contributor-review"] || contributorAmendmentNeedsRefresh(node))) {
+  if (decision && (states(node)["contributor-review"] || contributorDecisionNeedsRefresh(node))) {
     const section = element("section", "detail-section contributor-decision");
-    section.append(element("h3", "", contributorAmendmentNeedsRefresh(node) ? "Proposal needs reconciliation" : decision.title || "Contributor decision requested"));
+    section.append(element("h3", "", contributorDecisionNeedsRefresh(node) ? "Check the new PR head" : decision.title || "Contributor decision requested"));
     if (decision.summary) section.append(element("p", "", decision.summary));
     if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
     if (contributorDecisionHeadChanged(node))
@@ -1620,7 +1626,7 @@ function stateRecords(snapshot, node) {
     for (const key of Object.keys(records)) delete records[key];
     records.imported = { scope: node.github.head, since: landed.verifiedAt, basis: "observed", qualifier: "Landed; source PR still open" };
   }
-  if (decision && !contributorAmendmentNeedsRefresh(node)) {
+  if (decision && !contributorDecisionNeedsRefresh(node)) {
     const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];
     const previous = history?.["contributor-review"] || (node.type === "branch" ? history?.review : null);
     // Registry publication is the first observation of a new decision; an older
@@ -1744,7 +1750,9 @@ function validateRegistry(candidate) {
     const decision = node.contributorReview;
     if (decision !== undefined) {
       const proposal = node.type === "branch" && proposalRepo && /^[a-f0-9]{40}$/.test(decision?.head)
-        && decision.url === `https://github.com/${proposalRepo}/commit/${decision.head}`;
+        && (decision.url === `https://github.com/${proposalRepo}/commit/${decision.head}`
+          || /^[a-f0-9]{40}$/.test(decision.baseHead)
+            && decision.url === `https://github.com/${proposalRepo}/compare/${decision.baseHead.slice(0, 9)}...${decision.head.slice(0, 9)}`);
       const amendment = node.type === "pr" && decision?.kind === "amendment"
         && /^[a-f0-9]{40}$/.test(decision.head) && /^[a-f0-9]{40}$/.test(decision.baseHead)
         && decision.head !== decision.baseHead
@@ -1949,6 +1957,13 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     }
   }
 }
+function scheduleRefresh() {
+  clearTimeout(refreshTimer);
+  if (!refreshing && document.visibilityState === "visible") {
+    const delay = Math.max(0, lastAttempt + REFRESH_INTERVAL_MS - Date.now());
+    refreshTimer = setTimeout(() => refresh(true), delay);
+  }
+}
 async function refresh(force = false) {
   if (refreshing || (force && Date.now() - lastAttempt < 10000)) return;
   let cached;
@@ -1976,7 +1991,11 @@ async function refresh(force = false) {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot)); } catch { /* Storage is optional. */ }
   } catch (error) {
     setFreshness(`Snapshot unavailable · ${error.message}. ${model.checkedAt ? `Keeping snapshot from ${date(model.checkedAt)}.` : "Keeping the registry; no GitHub snapshot is available."}`, true);
-  } finally { refreshing = false; $("refresh").disabled = false; }
+  } finally {
+    refreshing = false;
+    $("refresh").disabled = false;
+    scheduleRefresh();
+  }
 }
 
 function setView(next) {
@@ -2029,6 +2048,7 @@ function initialize() {
     const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number", "age"].includes(next) ? -1 : 1; sortKey = next; render();
   }));
   $("refresh").addEventListener("click", () => refresh(true));
+  document.addEventListener("visibilitychange", scheduleRefresh);
   $("handoff-copy-all").addEventListener("click", event => copyHandoff(attentionText(visibleTableGroups, model.checkedAt), "Visible items", event.currentTarget));
   $("group-by-attention").addEventListener("change", () => { tableGrouping = $("group-by-attention").checked; if (selected?.startsWith("attention-")) selected = null; render(true, "push"); });
   $("zoom-in").addEventListener("click", () => zoom(1.2)); $("zoom-out").addEventListener("click", () => zoom(1 / 1.2));
