@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-29T02:45:30.281737+00:00",
-  "registryDate": "2026-10-29T04:41:08.508435+00:00",
+  "registryDate": "2026-10-29T04:48:31.223825+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -231940,6 +231940,24 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-29T04:13:36.052936+00:00"
+      }
+    },
+    "branch:go-architecture-sources": {
+      "contributor-review": {
+        "scope": "08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
+        "since": "2026-10-29T04:48:31.223825+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T04:48:31.223825+00:00"
+      }
+    },
+    "branch:ci-bazel-release": {
+      "contributor-review": {
+        "scope": "a5afdee618840c9211d989c775afda8280be484b",
+        "since": "2026-10-29T04:48:31.223825+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-29T04:48:31.223825+00:00"
       }
     }
   },
