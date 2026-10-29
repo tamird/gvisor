@@ -181,19 +181,8 @@ func (fd *tpuFD) getPciDeviceFd(t *kernel.Task, arg hostarch.Addr) (uintptr, err
 	if err != nil {
 		return 0, err
 	}
-	pciDevFD := &pciDeviceFD{
-		hostFD:        int32(hostFD),
-		deviceAddress: pciAddress,
-		containerName: fd.containerName,
-		tpuproxy:      fd.device.tpuproxy,
-	}
-	// Initialize a mapping that is backed by a host FD.
-	pciDevFD.memmapFile.SetFD(int(hostFD))
-	// TODO: Letting pciDevFD.memmapFile's memory type default to
-	// MemoryTypeWriteBack is consistent with legacy behavior, but not clearly
-	// correct; drivers/vfio/pci/vfio_pci_core.c:vfio_pci_core_mmap() uses
-	// pgprot_noncached(), which would correspond to our MemoryTypeUncached.
-	if err := fdnotifier.AddFD(int32(hostFD), &fd.queue); err != nil {
+	pciDevFD, err := fd.newPCIDeviceFD(int32(hostFD), pciAddress)
+	if err != nil {
 		unix.Close(int(hostFD))
 		return 0, err
 	}

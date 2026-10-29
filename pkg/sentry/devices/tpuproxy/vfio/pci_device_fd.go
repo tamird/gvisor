@@ -62,6 +62,25 @@ type pciDeviceFD struct {
 	tpuproxy   *tpuproxy
 }
 
+func (group *tpuFD) newPCIDeviceFD(hostFD int32, address string) (*pciDeviceFD, error) {
+	fd := &pciDeviceFD{
+		hostFD:        hostFD,
+		deviceAddress: address,
+		containerName: group.containerName,
+		tpuproxy:      group.device.tpuproxy,
+	}
+	// Initialize a mapping that is backed by a host FD.
+	fd.memmapFile.SetFD(int(hostFD))
+	// TODO: Letting fd.memmapFile's memory type default to MemoryTypeWriteBack
+	// is consistent with legacy behavior, but not clearly correct;
+	// drivers/vfio/pci/vfio_pci_core.c:vfio_pci_core_mmap() uses
+	// pgprot_noncached(), which would correspond to our MemoryTypeUncached.
+	if err := fdnotifier.AddFD(hostFD, &fd.queue); err != nil {
+		return nil, err
+	}
+	return fd, nil
+}
+
 func (fd *pciDeviceFD) isRestored() bool {
 	return fd.hostFD == -1
 }
@@ -79,10 +98,11 @@ func (fd *pciDeviceFD) Release(context.Context) {
 
 // EventRegister implements waiter.Waitable.EventRegister.
 func (fd *pciDeviceFD) EventRegister(e *waiter.Entry) error {
+	// The queue survives checkpoint even though the host PCI device does not.
+	fd.queue.EventRegister(e)
 	if fd.isRestored() {
 		return nil
 	}
-	fd.queue.EventRegister(e)
 	if err := fdnotifier.UpdateFD(fd.hostFD); err != nil {
 		fd.queue.EventUnregister(e)
 		return err
@@ -92,10 +112,10 @@ func (fd *pciDeviceFD) EventRegister(e *waiter.Entry) error {
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *pciDeviceFD) EventUnregister(e *waiter.Entry) {
+	fd.queue.EventUnregister(e)
 	if fd.isRestored() {
 		return
 	}
-	fd.queue.EventUnregister(e)
 	if err := fdnotifier.UpdateFD(fd.hostFD); err != nil {
 		panic(fmt.Sprint("UpdateFD:", err))
 	}
