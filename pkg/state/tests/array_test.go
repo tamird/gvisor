@@ -15,8 +15,13 @@
 package tests
 
 import (
+	"bytes"
+ "context"
+ "fmt"
 	"reflect"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 var allArrayPrimitives = []any{
@@ -134,4 +139,157 @@ func TestSliceContainers(t *testing.T) {
 		slicePtrContainer{v: &fullSlice},
 		slicePtrContainer{v: &unusedCapacitySlice},
 	})
+}
+
+// TestSliceBackingStorage checks that Save preserves its input and that only
+// reachable elements in an array are visible after Load.
+func TestSliceBackingStorage(t *testing.T) {
+	for _, name := range []string{"short-first", "long-first", "late-pointer"} {
+		t.Run(name, func(t *testing.T) {
+			want := [3]byte{0x11, 0x22, 0x33}
+			backing := want
+			short := backing[:1]
+			input := [2]any{short, backing[:]}
+			shortIndex := 0
+			switch name {
+			case "long-first":
+				input[0], input[1] = input[1], input[0]
+				shortIndex = 1
+			case "late-pointer":
+				// The second pointer is reached after the encoder first visits
+				// the backing array. The middle byte remains unreachable.
+				p := &backing[2]
+				input[1] = &p
+			}
+			var buf bytes.Buffer
+			if _, err := state.Save(t.Context(), &buf, &input); err != nil {
+				t.Fatal(err)
+			}
+			if got := backing; got != want {
+				t.Errorf("array after Save = %x, want %x", got, want)
+			}
+			var output [2]any
+			if _, err := state.Load(t.Context(), &buf, &output); err != nil {
+				t.Fatal(err)
+			}
+			s := output[shortIndex].([]byte)
+			if got, want := [2]int{len(s), cap(s)}, [2]int{1, 3}; got != want {
+				t.Fatalf("short slice dimensions = %v, want %v", got, want)
+			}
+			all := s[:cap(s)]
+			if name == "late-pointer" {
+				want[1] = 0
+				if p := *output[1].(**byte); p != &all[2] {
+					t.Error("restored pointer does not refer to the shared slice")
+				}
+			} else if full := output[1-shortIndex].([]byte); len(full) != len(all) || &full[0] != &all[0] {
+				t.Error("restored longer slice does not cover the shared array")
+			}
+			if got := [3]byte(all); got != want {
+				t.Errorf("restored array = %x, want %x", got, want)
+			}
+		})
+	}
+}
+
+func TestSliceInteriorField(t *testing.T) {
+	for _, fieldFirst := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fieldFirst=%v", fieldFirst), func(t *testing.T) {
+			secret := "hidden-slice-referent:5eb351"
+			cells := [1]system{{v1: int64(17), v2: &secret}}
+			const want = int64(17)
+			shortIndex := 0
+			input := [2]any{cells[:0], &cells[0].v1}
+			if fieldFirst {
+				input[0], input[1] = input[1], input[0]
+				shortIndex = 1
+			}
+			var b bytes.Buffer
+			if _, err := state.Save(t.Context(), &b, &input); err != nil {
+				t.Fatal(err)
+			}
+			if got := cells[0].v1; got != want {
+				t.Errorf("Save changed live First to %v", got)
+			}
+			if got := cells[0].v2; got != &secret {
+				t.Errorf("Save changed live Other to %v", got)
+			}
+			if bytes.Contains(b.Bytes(), []byte(secret)) {
+				t.Error("wire contains hidden Other marker")
+			}
+			var out [2]any
+			if _, err := state.Load(t.Context(), &b, &out); err != nil {
+				t.Fatal(err)
+			}
+			short := out[shortIndex].([]system)
+			if got, want := [2]int{len(short), cap(short)}, [2]int{0, 1}; got != want {
+				t.Fatalf("restored slice dimensions %v, want %v", got, want)
+			}
+			cell := &short[:1][0]
+			ref := out[1-shortIndex].(*any)
+			if ref != &cell.v1 {
+				t.Error("restored First pointer does not alias the original field")
+			}
+			if got := *ref; got != want {
+				t.Errorf("restored First = %v, want %v", got, want)
+			}
+			if cell.v2 != nil {
+				t.Errorf("restored Other is nonnil: %T", cell.v2)
+			}
+		})
+	}
+}
+
+type aliasSelf struct {
+	X int
+	Self *aliasSelf
+}
+
+func (*aliasSelf) StateTypeName() string { return "tests.aliasSelfFixture" }
+func (*aliasSelf) StateFields() []string { return []string{"X", "Self"} }
+func (a *aliasSelf) StateSave(s state.Sink) {
+	s.Save(0, &a.X)
+	s.SaveValue(1, a)
+}
+func (a *aliasSelf) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &a.X)
+	s.Load(1, &a.Self)
+}
+func init() { state.Register((*aliasSelf)(nil)) }
+
+func TestSliceSelfReceiver(t *testing.T) {
+	cells := [2]aliasSelf{{X: 7}, {X: 17}}
+	input := [2]any{cells[:1], &cells[1].X}
+	var b bytes.Buffer
+	if _, err := state.Save(t.Context(), &b, &input); err != nil { t.Fatal(err) }
+	if got, want := cells[1].X, 17; got != want { t.Errorf("live X = %d, want %d", got,want) }
+	var out [2]any
+	if _, err := state.Load(t.Context(), &b, &out); err != nil { t.Fatal(err) }
+	all := out[0].([]aliasSelf)[:2]
+	if got, want := out[1].(*int), &all[1].X; got != want { t.Error("restored interior pointer does not alias X") }
+	for i, want := range []int{7,17} {
+		cell := &all[i]
+		if got:=cell.X; got != want { t.Errorf("restored cell %d X = %d, want %d", i,got,want) }
+		if cell.Self != cell { t.Errorf("restored self of element %d refers to a different receiver",i) }
+	}
+}
+func TestSliceNestedWidths(t *testing.T) {
+	for _, innerFirst := range []bool{false,true} {
+		t.Run(fmt.Sprintf("innerFirst=%v",innerFirst), func(t *testing.T) {
+			want := [2][2]byte{{0x11,0x22},{0x33,0x44}}
+			cells := want
+			input := [2]any{cells[:1], cells[1][:1]}
+			outer:=0
+			if innerFirst { input[0],input[1]=input[1],input[0]; outer=1 }
+			var b bytes.Buffer
+			if _,err:=state.Save(t.Context(),&b,&input); err!=nil {t.Fatal(err)}
+			if got:=cells;got!=want {t.Errorf("live cells = %x, want %x",got,want)}
+			var out [2]any
+			if _,err:=state.Load(t.Context(),&b,&out);err!=nil{t.Fatal(err)}
+			x:=out[outer].([][2]byte)[:2]; y:=out[1-outer].([]byte)
+			if &x[1][0]!=&y[0]{t.Error("restored nested view has different storage")}
+			want[1][1]=0
+			if got:=[2][2]byte(x);got!=want{t.Errorf("restored cells = %x, want %x",got,want)}
+		})
+	}
 }
