@@ -36,11 +36,22 @@ def fq(label):
 
 if sys.argv[1] == "configured":
     assert not json.loads((out / "probe-deps.json").read_bytes()).get("actions")
-    platform = json.loads((out / "platform.json").read_bytes())
+    [configured_platform] = json.loads((out / "platform.json").read_bytes())["results"]
+    rule = configured_platform["target"]["rule"]
+    assert fq(rule["name"]) == high and rule["ruleClass"] == "platform", rule["name"]
+    [prop_attr] = [a for a in rule["attribute"] if a["name"] == "exec_properties"]
+    platform = {p["key"]: p["value"] for p in prop_attr["stringDictValue"]}
     assert platform == expected, platform
     rows = []
     raw = json.loads((out / "configured.json").read_bytes())
     labels = {str(x["id"]): fq(x["label"]) for x in raw["targets"]}
+    save("selected-actions", {
+        "platform_properties": platform,
+        "actions": [{"target": labels[str(a["targetId"])],
+                     "platform": a.get("executionPlatform"),
+                     "mnemonic": a.get("mnemonic")}
+                    for a in raw.get("actions", [])],
+    })
     aspects = {str(x["id"]): x["name"] for x in raw["aspectDescriptors"]}
     for a in raw["actions"]:
         label = labels[str(a["targetId"])]

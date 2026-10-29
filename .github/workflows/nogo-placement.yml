@@ -1,7 +1,7 @@
 name: Verify Linux ABI analyzer placement
 on:
   push:
-    branches: [qualification/mount-nogo-placement-lock]
+    branches: [qualification/mount-nogo-placement-configured]
 permissions:
   contents: read
 jobs:
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Verify configured ABI actions and execute only the small bits analyzer
         shell: bash
@@ -21,7 +21,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD~2)" = 39c8b4bc1b56dc3228ab55a957425735767f932c
+          test "$(git rev-parse HEAD~3)" = 39c8b4bc1b56dc3228ab55a957425735767f932c
           mkdir -p "$RUNNER_TEMP/placement"
           rc=$RUNNER_TEMP/placement.bazelrc
           umask 077
@@ -43,4 +43,5 @@ jobs:
           path: |
             ${{ runner.temp }}/placement/configured-proof.json
             ${{ runner.temp }}/placement/physical-proof.json
+            ${{ runner.temp }}/placement/selected-actions.json
           if-no-files-found: warn
