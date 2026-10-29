@@ -89,6 +89,12 @@ single_version_override(
     patches = ["//tools:benchmark-umbrella-exports.patch"],
 )
 
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//tools:protobuf_authenticity.patch"],
+)
+
 # Gazelle owns the version and checksum selection consumed by Go analysis.
 single_version_override(
     module_name = "gazelle",
@@ -101,6 +107,22 @@ single_version_override(
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+# Qualification-only: explicitly selectable execution runtime and incompatible protoc.
+http_archive(
+    name = "protoc_check_static_python",
+    build_file = "//test/rbe/protoc_check:python.BUILD",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+http_archive(
+    name = "protoc_check_incompatible",
+    build_file_content = "exports_files([\"bin/protoc\"])\n",
+    sha256 = "121f6c7afe1d4d0e3ea6aab9432038599250134cbf4474cb1167d2c7decd4278",
+    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-linux-x86_64.zip"],
+)
 
 http_archive(
     name = "llvm-raw",

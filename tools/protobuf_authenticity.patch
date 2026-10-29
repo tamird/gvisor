@@ -1,0 +1,102 @@
+--- a/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
++++ b/bazel/private/oss/toolchains/prebuilt/protoc_authenticity.bzl
+@@ -18 +18,8 @@
+-    ctx.actions.run_shell(
++    runtime = ctx.attr._python[platform_common.ToolchainInfo].py3_runtime
++    args = ctx.actions.args()
++    args.add(ctx.file._check)
++    args.add(proto_lang_toolchain_info.proto_compiler.executable)
++    args.add(validation_output)
++    args.add(RELEASE_VERSION.removeprefix("v"))
++    args.add("error" if ctx.attr.fail_on_mismatch else "info")
++    ctx.actions.run(
+@@ -19,0 +27,3 @@
++        executable = runtime.interpreter or runtime.interpreter_path,
++        arguments = [args],
++        inputs = depset([ctx.file._check], transitive = [ctx.attr._python[DefaultInfo].files]),
+@@ -22,27 +32 @@
+-        command = """\
+-        {protoc} --version > {validation_output}
+-        grep -q -e "-dev$" {validation_output} && {{
+-          echo 'WARNING: Detected a development version of protoc.
+-          Development versions are not validated for authenticity.
+-          To ensure a secure build, please use a released version of protoc.'
+-          exit 0
+-        }}
+-        grep -q "^libprotoc {RELEASE_VERSION}" {validation_output} || {{
+-          echo '{severity}: protoc version does not match protobuf Bazel module; we do not support this.
+-          It is considered undefined behavior that is expected to break in the future even if it appears to work today.'
+-          echo '{suppression_note}'
+-          echo 'Expected: libprotoc {RELEASE_VERSION}'
+-          echo -n 'Actual:   '
+-          cat {validation_output}
+-          exit {mismatch_exit_code}
+-        }} >&2
+-        """.format(
+-            protoc = proto_lang_toolchain_info.proto_compiler.executable.path,
+-            validation_output = validation_output.path,
+-            RELEASE_VERSION = RELEASE_VERSION.removeprefix("v"),
+-            suppression_note = (
+-                "To suppress this error, run Bazel with --@com_google_protobuf//bazel/toolchains:allow_nonstandard_protoc" if ctx.attr.fail_on_mismatch else ""
+-            ),
+-            mismatch_exit_code = 1 if ctx.attr.fail_on_mismatch else 0,
+-            severity = "ERROR" if ctx.attr.fail_on_mismatch else "INFO",
+-        ),
++        toolchain = toolchains.PROTO_TOOLCHAIN,
+@@ -55,0 +40,8 @@
++        "_check": attr.label(
++            allow_single_file = True,
++            default = ":check_protoc_version.py",
++        ),
++        "_python": attr.label(
++            cfg = "exec",
++            default = "@rules_python//python:current_py_toolchain",
++        ),
+--- /dev/null
++++ b/bazel/private/oss/toolchains/prebuilt/check_protoc_version.py
+@@ -0,0 +1,45 @@
++# Protocol Buffers - Google's data interchange format
++# Copyright 2026 Google LLC.  All rights reserved.
++#
++# Use of this source code is governed by a BSD-style
++# license that can be found in the LICENSE file or at
++# https://developers.google.com/open-source/licenses/bsd
++
++"""Check the version reported by the selected protoc toolchain."""
++
++from pathlib import Path
++import subprocess
++import sys
++
++
++def main():
++    compiler, output, expected, severity = sys.argv[1:]
++    result = subprocess.run([compiler, "--version"], stdout=subprocess.PIPE)
++    Path(output).write_bytes(result.stdout)
++    if result.returncode:
++        return 1
++
++    versions = result.stdout.splitlines()
++    if any(line.endswith(b"-dev") for line in versions):
++        print("WARNING: Detected a development version of protoc. "
++              "Development versions are not validated for authenticity. "
++              "To ensure a secure build, please use a released version of protoc.")
++        return 0
++    if any(line.startswith(("libprotoc " + expected).encode()) for line in versions):
++        return 0
++
++    print(f"{severity.upper()}: protoc version does not match protobuf Bazel module; "
++          "we do not support this. It is considered undefined behavior that is "
++          "expected to break in the future even if it appears to work today.",
++          file=sys.stderr)
++    if severity == "error":
++        print("To suppress this error, run Bazel with "
++              "--@com_google_protobuf//bazel/toolchains:allow_nonstandard_protoc",
++              file=sys.stderr)
++    print(f"Expected: libprotoc {expected}", file=sys.stderr)
++    print("Actual:   " + result.stdout.decode(errors="replace").rstrip(), file=sys.stderr)
++    return int(severity == "error")
++
++
++if __name__ == "__main__":
++    sys.exit(main())
