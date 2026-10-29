@@ -11,7 +11,8 @@ import xml.etree.ElementTree as ET
 out, code = Path(sys.argv[1]), int(sys.argv[2])
 wire_owner = "//pkg/tcpip/transport/tcp/test/e2e:tcp_test"
 owner = os.environ["QUALIFICATION_TARGETS"]
-assert owner in (wire_owner, "//pkg/tcpip/transport/tcp:tcp_test", "//pkg/tcpip/transport/tcp:tcp_nogo")
+backlog_owner = "//pkg/tcpip/transport/tcp/test/e2e:tcp_noracedetector_test"
+assert owner in (wire_owner, backlog_owner, "//pkg/tcpip/transport/tcp:tcp_test", "//pkg/tcpip/transport/tcp:tcp_nogo")
 suite = "TestWindowAfterSparseWrites"
 modes = tuple(f"{cc}_{p}" for cc in ("cubic", "reno") for p in ("none", "dense", "spaced"))
 expected = {suite, *(f"{suite}/{mode}" for mode in modes)}
@@ -26,7 +27,7 @@ def git(*args):
 result = {"status": "FAIL", "source": git("rev-parse", "HEAD"), "fixture": fixture, "product": product, "owner": owner, "native_exit": code, "modes": {}}
 stage = "source"
 try:
-    assert result["source"] == fixture and git("rev-parse", "HEAD^") == product
+    assert result["source"] == fixture and git("merge-base", product, "HEAD") == product
     assert set(git("diff","--name-only",product,fixture,"--","pkg").splitlines()) == {"pkg/tcpip/transport/tcp/cubic.go","pkg/tcpip/transport/tcp/test/e2e/tcp_test.go"}
     rows = [json.loads(line) for line in (out / "events.jsonl").open()]
     stage = "BEP"
@@ -56,7 +57,10 @@ try:
     result["cases"] = [{"name": c.attrib["name"], "passed": all(c.find(t) is None for t in ("skipped", "error", "failure"))} for c in cases]
     if owner != wire_owner:
         names = {c["name"] for c in result["cases"] if c["passed"]}
-        assert (owner.endswith(":tcp_nogo") or "TestCubicApplicationLimitedTime" in names) and names
+        if owner == backlog_owner:
+            assert names == {"TestFastRecovery", "TestExponentialIncreaseDuringSlowStart", "TestCongestionAvoidance", "TestRetransmit"} and len(cases) == len(names)
+        else:
+            assert (owner.endswith(":tcp_nogo") or "TestCubicApplicationLimitedTime" in names) and names
         assert not any(c.find("failure") is not None or c.find("error") is not None for c in cases)
         assert code == 0 and result["test_status"] == "PASSED"
     else:

@@ -187,7 +187,7 @@ jobs:
         test "$QUALIFICATION_COMMIT" = "$(git rev-parse HEAD)"
         case "$QUALIFICATION_TARGETS" in
           //pkg/tcpip/transport/tcp/test/e2e:tcp_test) test "$QUALIFICATION_TEST_FILTER" = '^(TestWindowAfterSparseWrites|TestSlowStartWindowUse|TestCubicWindowGrowthAfterPacketLoss)$' ;;
-          //pkg/tcpip/transport/tcp:tcp_test|//pkg/tcpip/transport/tcp:tcp_nogo) test -z "$QUALIFICATION_TEST_FILTER" ;;
+          //pkg/tcpip/transport/tcp:tcp_test|//pkg/tcpip/transport/tcp:tcp_nogo|//pkg/tcpip/transport/tcp/test/e2e:tcp_noracedetector_test) test -z "$QUALIFICATION_TEST_FILTER" ;;
           *) exit 2 ;;
         esac
         test "$QUALIFICATION_LANES" = "test"
