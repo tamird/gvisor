@@ -59,8 +59,8 @@ func GetPluginStack() PluginStack {
 
 // EventInfo holds a socket's notification queue and readiness cache.
 //
-// Mask is protected by the owning notifier's mutex. EventInfo
-// does not retain that notifier, so checklocks cannot express these guards.
+// Mask is protected by the owning notifier's mutex. EventInfo does not retain
+// that notifier, so checklocks cannot express this guard.
 type EventInfo struct {
 	// Wq is the socket's event queue, initialized before registration.
 	// The pointer is immutable; the queue synchronizes its own entries.
