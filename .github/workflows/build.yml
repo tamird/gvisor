@@ -25,6 +25,7 @@ jobs:
         checker=$RUNNER_TEMP/bwrap-checker
         mkdir -p "$out" "$checker" "$RUNNER_TEMP/gnu"
         cp .github/qualification/bwrap/*.py "$checker"
+        git fetch --no-tags --depth=1 origin "$SOURCE"
         git checkout --quiet --detach "$SOURCE"
         [[ $(git rev-parse HEAD) == "$SOURCE" ]]
         git cat-file -p HEAD > "$out/commit.txt"
