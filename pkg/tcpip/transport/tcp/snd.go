@@ -80,13 +80,11 @@ type congestionControl interface {
 	// earn congestion window growth. Time-based controllers pause their epoch.
 	SetApplicationLimited(bool)
 
-	// Update is invoked when processing inbound acks. It's passed the
-	// number of packet's that were acked by the most recent cumulative
-	// acknowledgement.  rtt is the round-trip time, or is set to unknownRTT
-	// (above) to indicate the time is unknown. ackTime is the time the
-	// processed ACK arrived at the stack (its ingress timestamp), used for
-	// arrival-anchored timing such as CUBIC HyStart's ACK-train detection so
-	// that an ACK delayed inside the stack does not distort it.
+	// Update processes a cumulative ACK. packetsAcked counts packets eligible
+	// for congestion window growth; it is zero when the flight was too small
+	// to earn growth. rtt is the RTT sample, or unknownRTT if unavailable.
+	// ackTime is the ACK's ingress timestamp, so time spent in the stack
+	// does not distort measurements such as CUBIC HyStart's ACK train.
 	Update(packetsAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime)
 
 	// PostRecovery is invoked when the sender is exiting a fast retransmit/
