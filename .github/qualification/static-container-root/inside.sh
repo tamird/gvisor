@@ -8,12 +8,15 @@ export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$w
 cd "$workspace"
 readonly mode=${3:-fixed}
 source=b9193eed0d34d1ad1aa0a5da5603c82871052e2e
-if [[ $mode = original ]]; then source=f8cc8437f954cb8813509846c52fe2292f0c0123; fi
+if [[ $mode = original || $mode = arm-original ]]; then source=f8cc8437f954cb8813509846c52fe2292f0c0123; fi
 test "$(git rev-parse HEAD)" = "$source"
 base=(bazel --bazelrc="$rc")
-flags=(--config=x86_64 --@io_bazel_rules_go//go/config:pure=false --jobs=36 --remote_timeout=15m --remote_download_outputs=toplevel)
+conf=x86_64
+execflags=()
+if [[ $mode == arm-* ]]; then conf=aarch64; execflags=(--execution_log_compact_file="$out/build.binpb" --modify_execution_info=GoLink=+no-remote-cache); fi
+flags=(--config="$conf" --@io_bazel_rules_go//go/config:pure=false --jobs=36 --remote_timeout=15m --remote_download_outputs=toplevel)
 status=0
-"${base[@]}" build "${flags[@]}" --build_event_json_file="$out/build.bep" //test/cmd/test_app:test_app //test/benchmarks/base:startup_test >"$out/build.log" 2>&1 || status=$?
+"${base[@]}" build "${flags[@]}" "${execflags[@]}" --build_event_json_file="$out/build.bep" //test/cmd/test_app:test_app //test/benchmarks/base:startup_test >"$out/build.log" 2>&1 || status=$?
 echo "$status" > "$out/build.exit"
 if [[ $status == 0 ]]; then
   mkdir -p "$out/materialized"
@@ -21,14 +24,14 @@ if [[ $status == 0 ]]; then
   set +e
   for pair in test/cmd/test_app:test_app test/benchmarks/base:startup_test; do
     label="//${pair}"
-    path=$("${base[@]}" cquery --config=x86_64 --@io_bazel_rules_go//go/config:pure=false --output=starlark --starlark:expr='providers(target)["DefaultInfo"].files_to_run.executable.path' "$label" 2>>"$out/build.log")
+    path=$("${base[@]}" cquery --config="$conf" --@io_bazel_rules_go//go/config:pure=false --output=starlark --starlark:expr='providers(target)["DefaultInfo"].files_to_run.executable.path' "$label" 2>>"$out/build.log")
     er=$("${base[@]}" info execution_root 2>>"$out/build.log")
     cp -L -- "$er/$path" "$out/materialized/${pair#*:}"
   done
   set -e
   }
 fi
-if [[ $mode = original ]]; then
+if [[ $mode = original || $mode == arm-* ]]; then
   chmod -R a+rX "$out"
   exit 0
 fi

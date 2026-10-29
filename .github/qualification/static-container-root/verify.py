@@ -44,10 +44,44 @@ def phase(name):
             "finished":next((r["finished"].get("exitCode") for r in rows if "finished" in r),None),
             "diagnostics":diagnostics(name)},rows
 
+def arm_links(out,outputs):
+    import os
+    wanted={row["sha256"] for row in outputs.values()}
+    paths={}
+    spawns=[]
+    bb=Path(os.environ["RUNNER_TEMP"])/"bb"
+    with subprocess.Popen([bb,"print","--raw=true","--sort=false","--compact_execution_log="+str(out/"build.binpb")],stdout=subprocess.PIPE) as decoder:
+        record=[]
+        for line in decoder.stdout:
+            record.append(line)
+            if line.rstrip(b"\r\n")!=b"}":continue
+            row=json.loads(b"".join(record))
+            record=[]
+            f=row.get("file")
+            if f and f.get("digest",{}).get("hash") in wanted:paths[row["id"]]=f
+            s=row.get("spawn")
+            if s and s["mnemonic"]=="GoLink":spawns.append(s)
+        assert not record and decoder.wait()==0,"compact execution log"
+    links={}
+    for label,output in outputs.items():
+        found=[]
+        for s in spawns:
+            for o in s.get("outputs",[]):
+                f=paths.get(o.get("outputId"))
+                if not f or f["digest"]["hash"]!=output["sha256"] or int(f["digest"]["sizeBytes"])!=output["bytes"]:continue
+                props={p["name"]:p["value"] for p in s.get("platform",{}).get("properties",[]) if p["name"] in ("Arch","OSFamily","container-image","workload-isolation-type")}
+                argv=s.get("args",[])
+                found.append({"label":s["targetLabel"],"path":f["path"],"action":s.get("digest"),"runner":s.get("runner"),"cache_hit":s.get("cacheHit",False),"exit":s.get("exitCode",0),"properties":props,"aarch64_driver":any("aarch64-linux-gnu" in a for a in argv),"sha256":f["digest"]["hash"]})
+        links[label]=found
+        assert any(r["label"]==label and r["runner"]=="remote" and not r["cache_hit"] and r["exit"]==0 and r["properties"].get("Arch")=="amd64" and r["properties"].get("container-image","").endswith("cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a") for r in found),("missing physical GNU GoLink",label)
+    return links
+
 def main():
-    original=sys.argv[2:]==["original"]
+    mode=sys.argv[2] if len(sys.argv)>2 else "fixed"
+    arm=mode.startswith("arm-")
+    original=mode in ("original","arm-original")
     source="f8cc8437f954cb8813509846c52fe2292f0c0123" if original else "b9193eed0d34d1ad1aa0a5da5603c82871052e2e"
-    ledger={"source":source,"target":"linux_amd64","flags":"--config=x86_64 --@io_bazel_rules_go//go/config:pure=false","verdict":"INCOMPLETE"}
+    ledger={"source":source,"target":"linux_arm64" if arm else "linux_amd64","flags":"--config="+("aarch64" if arm else "x86_64")+" --@io_bazel_rules_go//go/config:pure=false","verdict":"INCOMPLETE"}
     try:
         assert subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip()==source
         build,raw=phase("build"); ledger["build"]=build
@@ -71,9 +105,16 @@ def main():
                 hdr=subprocess.check_output(["readelf","-hW",p],text=True)
                 ph=subprocess.check_output(["readelf","-lW",p],text=True)
                 dy=subprocess.check_output(["readelf","-dW",p],text=True)
-                rec.update(path=suffix,machine=("x86-64" if "X86-64" in hdr else None),interp=bool(re.search(r"^\s*INTERP\s",ph,re.M)),needed=re.findall(r"\(NEEDED\).*?\[([^]]+)\]",dy))
+                rec.update(path=suffix,machine=("AArch64" if "AArch64" in hdr else "x86-64" if "X86-64" in hdr else None),interpreter=next(iter(re.findall(r"Requesting program interpreter: ([^\]]+)",ph)),None),interp=bool(re.search(r"^\s*INTERP\s",ph,re.M)),needed=re.findall(r"\(NEEDED\).*?\[([^]]+)\]",dy))
                 yield c["label"],rec
         build["outputs"]=dict(configured())
+        if arm:
+            assert build["exit"]==0 and set(build["outputs"])==set(inputs) and all(x["machine"]=="AArch64" for x in build["outputs"].values()), "missing ARM64 executables"
+            if not original:
+                assert all(not x["interp"] and not x["needed"] for x in build["outputs"].values()), "explicit ARM64 outputs require a loader or DSO"
+            build["physical_links"]=arm_links(out,build["outputs"])
+            ledger["verdict"]="PASS"
+            return
         if original:
             assert build["exit"]==0 and set(build["outputs"])==set(inputs) and all(x["machine"]=="x86-64" for x in build["outputs"].values()),"missing actual GNU outputs"
             ledger["verdict"]="PASS"
