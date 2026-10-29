@@ -1,0 +1,145 @@
+name: Compare compact completion links on one Nginx restore
+on:
+  push:
+    branches: [qualification/state-callback-links-pair-ci]
+permissions:
+  contents: read
+jobs:
+  nginx:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    env:
+      SOURCE: 67edf06d5c1ccd0746bf96866a15fef2edea5614
+      CONTROL: 0f8c6a39e32b3185585ac13649b701a182ef7cde
+      SHAPE: ba990b7a45175b4f9a12b440c4ce3ede5e0ab9ba
+      BUILD_IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      NGINX_IMAGE: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 6
+          persist-credentials: false
+      - name: Stage the repository's pinned Nginx benchmark input
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD^)" == "$SOURCE" && "$(git rev-parse HEAD^^)" == "$CONTROL" && "$(git rev-parse HEAD~3)" == 72eba22dbb387754f8e83102b4a891e9c5a605f3 && "$(git rev-parse HEAD~4)" == e9848685c80db1e15a18e657e77d1a18f3200120 && "$(git rev-parse HEAD~5)" == 8c93a8892c82c359fde47860db9af205c4d2015d ]]
+          git diff --exit-code HEAD~5 HEAD~3 -- pkg/state
+          [[ "$(git diff --name-only HEAD~3 "$CONTROL")" == "$(printf '%s\n' pkg/state/BUILD pkg/state/callback_order_test.go pkg/state/tests/load_test.go)" ]]
+          [[ "$(git diff --name-only "$CONTROL" "$SOURCE")" == "$(printf '%s\n' pkg/state/decode_unsafe.go pkg/state/state.go)" ]]
+          git fetch --no-tags --depth=1 origin "$SHAPE"
+          [[ "$(git rev-parse FETCH_HEAD)" == "$SHAPE" ]]
+          cp .github/qualification/restore_phases/*.py "$RUNNER_TEMP/"
+          git checkout --detach "$SOURCE"
+          docker pull --platform=linux/amd64 "$NGINX_IMAGE"
+          [[ $(docker image inspect --format '{{.Id}}' "$NGINX_IMAGE") == sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5 ]]
+          docker tag "$NGINX_IMAGE" gvisor.dev/images/benchmarks/nginx:latest
+          docker save -o test/rbe/restore_phases/nginx.tar gvisor.dev/images/benchmarks/nginx:latest
+          docker pull --platform=linux/amd64 "$BUILD_IMAGE"
+      - name: Measure both binaries on one Nginx capture
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=$RUNNER_TEMP/phase-results
+          mkdir -p "$out" "$RUNNER_TEMP/study_platform"
+          printf 'module(name="study_platform")\n' >"$RUNNER_TEMP/study_platform/MODULE.bazel"
+          cat >"$RUNNER_TEMP/study_platform/BUILD" <<BUILD
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "EstimatedMemory":"6GB", "container-image":"docker://$BUILD_IMAGE"},
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc=$RUNNER_TEMP/study.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=study_platform=$RUNNER_TEMP/study_platform" 'build --host_platform=@study_platform//:gnu' 'build --extra_execution_platforms=@study_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          docker run --rm --env SOURCE --env CONTROL --env SHAPE --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$BUILD_IMAGE" -c '
+            set -euo pipefail
+            export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
+            temp=$1
+            out=$temp/phase-results
+            for fa in stock compact; do
+              if [[ "$fa" == stock ]]; then ref=$CONTROL; else ref=$SOURCE; fi
+              git checkout --detach "$ref"
+              [[ "$(git rev-parse HEAD)" == "$ref" ]]
+              sub=$out/functional/$fa
+              mkdir -p "$sub"
+              code=0
+              bazel --bazelrc="$temp/study.bazelrc" test --config=x86_64 -c opt --jobs=80 --test_timeout=600 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.bench=^BenchmarkRestoreHookDense$ --test_arg=-test.benchtime=32x --build_event_json_file="$temp/func-$fa.bep" //pkg/state:state_test //pkg/state/tests:tests_test > "$temp/func-$fa.log" 2>&1 || code=$?
+              printf "%s\n" "$code" > "$sub/exit"
+              for name in test.xml test.log; do
+                file=bazel-testlogs/pkg/state/state_test/$name
+                if [[ -f "$file" ]]; then cp -L "$file" "$sub/internal-$name"; fi
+                file=bazel-testlogs/pkg/state/tests/tests_test/$name
+                if [[ -f "$file" ]]; then cp -L "$file" "$sub/public-$name"; fi
+              done
+            done
+            for mode in shape candidate; do
+              if [[ "$mode" == shape ]]; then ref=$SHAPE; else ref=$SOURCE; fi
+              git checkout --detach "$ref"
+              [[ "$(git rev-parse HEAD)" == "$ref" ]]
+              code=0
+              bazel --bazelrc="$temp/study.bazelrc" build --config=x86_64 -c opt --jobs=80 --remote_download_outputs=toplevel --build_event_json_file="$temp/$mode.bep" //test/benchmarks/checkpointfile:checkpointfile_test >"$temp/$mode-build.log" 2>&1 || code=$?
+              python3 "$temp/identify.py" "$temp" "$mode" "$ref" "$code"
+              [[ $code == 0 ]]
+            done
+            git checkout --detach "$CONTROL"
+            install -m 755 "$temp/shape.bin" test/rbe/restore_phases/shape.bin
+            install -m 755 "$temp/candidate.bin" test/rbe/restore_phases/candidate.bin
+            for attempt in 1 2; do
+              status=0
+              bazel --bazelrc="$temp/study.bazelrc" test --config=x86_64 -c opt --test_timeout=900 --jobs=80 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --build_event_json_file="$temp/kernel.bep" //test/rbe/restore_phases:nginx >"$temp/kernel-build.log" 2>&1 || status=$?
+              if [[ "$attempt" == 1 && "$status" != 0 ]] && grep -Eq "fetch_repo: .*dial tcp .*:443: i/o timeout" "$temp/kernel-build.log" && ! grep -q "\"testResult\":{" "$temp/kernel.bep"; then
+                python3 -c "import json,sys; print(json.dumps([e[\"started\"][\"uuid\"] for e in map(json.loads,open(sys.argv[1])) if \"started\" in e]))" "$temp/kernel.bep" > "$out/pretest-fetch-timeout.json"
+                continue
+              fi
+              break
+            done
+            printf "%s\n" "$status" >"$out/bazel-exit"
+            for name in test.xml test.log; do
+              path=bazel-testlogs/test/rbe/restore_phases/nginx/$name
+              if [[ -f $path ]]; then cp -L "$path" "$out/$name"; fi
+            done
+            python3 - "$temp/kernel-build.log" "$out/build-diagnostic.json" <<PY
+          import json, pathlib, sys
+          lines = pathlib.Path(sys.argv[1]).read_text(errors="replace").splitlines()
+          markers = ("error:", "error ", "fatal ", "killed", "not found", "no such file", "denied", "undefined reference", "unsupported", "statically linked applications")
+          blocked = ("secret", "api-key", "password", "authorization", "token=", "remote_header", "bes_header")
+          diagnostic = [s[:550] for s in lines if any(m in s.lower() for m in markers) and not any(x in s.lower() for x in blocked)]
+          pathlib.Path(sys.argv[2]).write_text(json.dumps(list(dict.fromkeys(diagnostic))[:24]))
+          PY
+            chmod -R a+rX "$out" "$temp/kernel.bep" "$temp/kernel-build.log" "$temp/func-stock.bep" "$temp/func-compact.bep"
+          ' _ "$RUNNER_TEMP"
+          first=0
+          python3 "$RUNNER_TEMP/verify.py" "$RUNNER_TEMP" || first=$?
+          second=0
+          python3 "$RUNNER_TEMP/functional.py" "$RUNNER_TEMP" || second=$?
+          [[ $first == 0 && $second == 0 ]]
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: nginx-compact-callback-links
+          path: |
+            ${{ runner.temp }}/phase-results/result.json
+            ${{ runner.temp }}/phase-results/functional.json
+            ${{ runner.temp }}/phase-results/functional
+            ${{ runner.temp }}/phase-results/build-shape.json
+            ${{ runner.temp }}/phase-results/build-candidate.json
+            ${{ runner.temp }}/phase-results/test.log
+            ${{ runner.temp }}/phase-results/test.xml
+            ${{ runner.temp }}/phase-results/bazel-exit
+            ${{ runner.temp }}/phase-results/native-event.json
+            ${{ runner.temp }}/phase-results/build-diagnostic.json
+            ${{ runner.temp }}/phase-results/pretest-fetch-timeout.json
+          if-no-files-found: error
