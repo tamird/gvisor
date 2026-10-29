@@ -1,7 +1,7 @@
-name: Recover per-case results for the four license suites
+name: Qualify LisaFS inode modes and host sockets
 on:
   push:
-    branches: [qualification/license-rebases-unit-xml]
+    branches: [qualification/lisafs-inode-modes]
 permissions:
   contents: read
 jobs:
@@ -13,10 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {pr: "15114", sha: e9289d0a24c17e33d9dccf880ddef2f7e7bf886c}
-          - {pr: "16051", sha: dbf12f4d327472f76a83423c08ee14bbe7ec7058}
-          - {pr: "16249", sha: f8b7988ba059b9e88edda1264a0ad4907463e48e}
-          - {pr: "16589", sha: fb7bb85aefa9f128224ff9f536f95b856f99f621}
+          - pr: "14361"
+            sha: 75ffc8b5c76b03639ea7502f305d5708663a29ea
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -28,7 +26,7 @@ jobs:
           path: source
           fetch-depth: 2
           persist-credentials: false
-      - name: Run only this source's original unit suite with XML reporting
+      - name: Run the owning LisaFS suites with XML reporting
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -68,7 +66,7 @@ jobs:
               'build --bes_backend=grpcs://remote.buildbuddy.io' \
               'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
               'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
-              'build --noremote_accept_cached' \
+              'build --remote_accept_cached' \
               "build --inject_repository=catalog_platform=$platform" \
               'build --host_platform=@catalog_platform//:ubuntu' \
               'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
@@ -77,10 +75,10 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
-          python3 -B ../carrier/test/rbe/qualify_licenses.py "$PR" "$rc" "$RUNNER_TEMP/catalog"
+          python3 -B ../carrier/test/rbe/qualify_lisafs.py "$SHA" "$rc" "$RUNNER_TEMP/catalog"
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: license-rebase-${{ matrix.pr }}
+          name: lisafs-verdict
           path: ${{ runner.temp }}/catalog/result.json
           if-no-files-found: error
