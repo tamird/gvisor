@@ -107,7 +107,7 @@ func congestionControlAfterLoss(t *testing.T, algorithm, change, afterFIN string
 		if _, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(fin.Add(1)))}, time.Second); err != nil {
 			t.Fatalf("FIN acknowledgment: %v", err)
 		}
-		if got := info().State; got != linux.TCP_CLOSE_WAIT {
+		if got := info().State; got != uint8(linux.TCP_CLOSE_WAIT) {
 			t.Fatalf("TCP_INFO state after peer FIN = %d, want CLOSE_WAIT", got)
 		}
 		set(afterFIN)
@@ -144,7 +144,7 @@ func congestionControlAfterLoss(t *testing.T, algorithm, change, afterFIN string
 	}
 	if afterFIN != "" {
 		t.Logf("CLOSE_SELECT from=%s to=%s state=%d initial=%d mss=%d window=%d threshold=%d", algorithm, afterFIN, before.State, initial.SndCwnd, mss, before.SndCwnd, before.SndSsthresh)
-		if before.State != linux.TCP_CLOSE_WAIT {
+		if before.State != uint8(linux.TCP_CLOSE_WAIT) {
 			t.Fatalf("TCP_INFO state after loss = %d, want CLOSE_WAIT", before.State)
 		}
 		return before.SndSsthresh
