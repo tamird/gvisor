@@ -1,4 +1,4 @@
-name: Preserve the sign of zero through state checkpoints
+name: Compare which parts of a slice checkpoint can observe
 on:
   workflow_dispatch:
 permissions:
@@ -7,13 +7,13 @@ jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-interior-slice-comparison'
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 75
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 12
+        fetch-depth: 25
         persist-credentials: false
-    - name: Compare stock, corrected checkpointing, and the encoder simplification
+    - name: Check live storage, wire privacy, restored aliases, and saver receiver identity
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
@@ -70,15 +70,15 @@ jobs:
         chmod +x "$RUNNER_TEMP/focused-bin/bazel"
         export PATH="$RUNNER_TEMP/focused-bin:$PATH"
         overall=0
-        for mode in stock candidate graph candidateFixture candidateFull; do
+        for mode in shadowStock candidate shadowCandidate shadowGraph candidateFull; do
           args=()
           owner=//pkg/state/tests:tests_test
           filter='^TestSliceInteriorField$'
           case "$mode" in
-            stock) source=827d7806801e781b1d1aa743424f7ae838e8580e ;;
+            shadowStock) source=7a49a7cb74a0fd1f07aaa555d8ce752ae86b3c51; filter='^TestSlice(BackingStorage|InteriorField|NestedWidths|SelfReceiver)$' ;;
+            shadowCandidate) source=957f654d679edaa6edd12f87eb864bd243a53a66; filter='^TestSlice(BackingStorage|InteriorField|NestedWidths|SelfReceiver)$' ;;
+            shadowGraph) source=ff9305d27685866a9134182136740e6f3dc69b72; filter='^TestSlice(BackingStorage|InteriorField|NestedWidths|SelfReceiver)$' ;;
             candidate) source=e4d33a661127829d2f5ba06fc68541a56f791134 ;;
-            graph) source=965f09103d103ba861b5a3cd46acf1172533f096 ;;
-            candidateFixture) source=da4f35d3f47cd07897c5d0a286204173db53cd8f; filter='^TestSliceBackingStorage$' ;;
             candidateFull) source=14c965f1d9b37b57a25f2cdaa50e5adef5660670; filter='' ;;
           esac
           git checkout --quiet --detach "$source"
