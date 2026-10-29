@@ -672,8 +672,11 @@ func (e *connectionedEndpoint) SetBoundSocketFD(ctx context.Context, bsFD BoundS
 		bsFD.Close(ctx)
 		return syserr.ErrAlreadyBound.ToError()
 	}
+	if err := fdnotifier.AddFD(bsFD.NotificationFD(), e.WaitQueue); err != nil {
+		bsFD.Close(ctx)
+		return err
+	}
 	e.boundSocketFD = bsFD
-	fdnotifier.AddFD(bsFD.NotificationFD(), e.WaitQueue)
 	return nil
 }
 
@@ -691,29 +694,16 @@ func (e *connectionedEndpoint) ResetBoundSocketFD(ctx context.Context) {
 
 // EventRegister implements waiter.Waitable.EventRegister.
 func (e *connectionedEndpoint) EventRegister(we *waiter.Entry) error {
-	if err := e.baseEndpoint.EventRegister(we); err != nil {
-		return err
-	}
-
 	e.Lock()
-	bsFD := e.boundSocketFD
-	e.Unlock()
-	if bsFD != nil {
-		fdnotifier.UpdateFD(bsFD.NotificationFD())
-	}
-	return nil
+	defer e.Unlock()
+	return e.eventRegisterLocked(we, e.boundSocketFD)
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (e *connectionedEndpoint) EventUnregister(we *waiter.Entry) {
-	e.baseEndpoint.EventUnregister(we)
-
 	e.Lock()
-	bsFD := e.boundSocketFD
-	e.Unlock()
-	if bsFD != nil {
-		fdnotifier.UpdateFD(bsFD.NotificationFD())
-	}
+	defer e.Unlock()
+	e.eventUnregisterLocked(we, e.boundSocketFD)
 }
 
 func (e *connectionedEndpoint) GetAcceptConn() bool {
