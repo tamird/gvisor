@@ -843,7 +843,7 @@ func (e *Endpoint) sendSynTCP(r *stack.Route, tf tcpFields, opts header.TCPSynOp
 		Mark:               e.ops.GetMark(),
 	})
 	defer p.DecRef()
-	if err := e.sendTCP(r, tf, p, stack.GSO{}); err != nil {
+	if _, err := e.sendTCP(r, tf, p, stack.GSO{}); err != nil {
 		e.stats.SendErrors.SynSendToNetworkFailed.Increment()
 	}
 	putOptions(tf.opts)
@@ -851,14 +851,16 @@ func (e *Endpoint) sendSynTCP(r *stack.Route, tf tcpFields, opts header.TCPSynOp
 }
 
 // This method takes ownership of pkt.
-func (e *Endpoint) sendTCP(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO) tcpip.Error {
+func (e *Endpoint) sendTCP(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO) (int, tcpip.Error) {
 	tf.txHash = e.txHash
-	if err := sendTCP(r, tf, pkt, gso, e.owner); err != nil {
+	n, err := sendTCP(r, tf, pkt, gso, e.owner)
+	if err != nil {
 		e.stats.SendErrors.SegmentSendToNetworkFailed.Increment()
-		return err
 	}
-	e.stats.SegmentsSent.Increment()
-	return nil
+	if n != 0 || err == nil {
+		e.stats.SegmentsSent.Increment()
+	}
+	return n, err
 }
 
 func buildTCPHdr(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO) {
@@ -890,7 +892,7 @@ func buildTCPHdr(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stac
 	}
 }
 
-func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO, owner tcpip.PacketOwner) tcpip.Error {
+func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO, owner tcpip.PacketOwner) (int, tcpip.Error) {
 	optLen := len(tf.opts)
 	if tf.rcvWnd > math.MaxUint16 {
 		tf.rcvWnd = math.MaxUint16
@@ -900,6 +902,7 @@ func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso sta
 	n := (pkt.Data().Size() + mss - 1) / mss
 
 	size := pkt.Data().Size()
+	accepted := 0
 	hdrSize := header.TCPMinimumSize + int(r.MaxHeaderLength()) + optLen
 	for i := 0; i < n; i++ {
 		packetSize := mss
@@ -941,20 +944,21 @@ func sendTCPBatch(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso sta
 			if shouldSplitPacket {
 				pkt.DecRef()
 			}
-			return err
+			return accepted, err
 		}
+		accepted += packetSize
 		r.Stats().TCP.SegmentsSent.Increment()
 		if shouldSplitPacket {
 			pkt.DecRef()
 		}
 	}
-	return nil
+	return accepted, nil
 }
 
 // sendTCP sends a TCP segment with the provided options via the provided
 // network endpoint and under the provided identity. This method takes
-// ownership of pkt.
-func sendTCP(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO, owner tcpip.PacketOwner) tcpip.Error {
+// ownership of pkt. It returns the payload prefix accepted by the route.
+func sendTCP(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GSO, owner tcpip.PacketOwner) (int, tcpip.Error) {
 	if tf.rcvWnd > math.MaxUint16 {
 		tf.rcvWnd = math.MaxUint16
 	}
@@ -963,6 +967,7 @@ func sendTCP(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GS
 		return sendTCPBatch(r, tf, pkt, gso, owner)
 	}
 
+	payloadSize := pkt.Data().Size()
 	pkt.GSOOptions = gso
 	pkt.Hash = tf.txHash
 	pkt.Owner = owner
@@ -976,13 +981,13 @@ func sendTCP(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stack.GS
 		ExperimentOptionValue: tf.expOptVal,
 	}, pkt); err != nil {
 		r.Stats().TCP.SegmentSendErrors.Increment()
-		return err
+		return 0, err
 	}
 	r.Stats().TCP.SegmentsSent.Increment()
 	if (tf.flags & header.TCPFlagRst) != 0 {
 		r.Stats().TCP.ResetsSent.Increment()
 	}
-	return nil
+	return payloadSize, nil
 }
 
 // makeOptions makes an options slice.
@@ -1034,14 +1039,15 @@ func (e *Endpoint) sendEmptyRaw(flags header.TCPFlags, seq, ack seqnum.Value, rc
 		Mark: e.ops.GetMark(),
 	})
 	defer pkt.DecRef()
-	return e.sendRaw(pkt, flags, seq, ack, rcvWnd)
+	_, err := e.sendRaw(pkt, flags, seq, ack, rcvWnd)
+	return err
 }
 
 // sendRaw sends a TCP segment to the endpoint's peer. This method takes
 // ownership of pkt. pkt must not have any headers set.
 //
 // +checklocks:e.mu
-func (e *Endpoint) sendRaw(pkt *stack.PacketBuffer, flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size) tcpip.Error {
+func (e *Endpoint) sendRaw(pkt *stack.PacketBuffer, flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size) (int, tcpip.Error) {
 	var sackBlocks []header.SACKBlock
 	if e.EndpointState() == StateEstablished && e.rcv.pendingRcvdSegments.Len() > 0 && (flags&header.TCPFlagAck != 0) {
 		sackBlocks = e.sack.Blocks[:e.sack.NumBlocks]
