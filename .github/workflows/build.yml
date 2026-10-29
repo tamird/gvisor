@@ -1,35 +1,63 @@
-name: CI
-
-"on":
+name: Measure ACKs that trigger probe recovery
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/rack-15785-counters]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 6
+      - name: Execute all four matched treatments
+        run: |
+          set -uo pipefail
+          mkdir -p "$RUNNER_TEMP/tailproof"
+          status=0
+          while read -r arm src; do
+            git checkout --detach "$src" || exit 1
+            start=$(date -u +%FT%TZ)
+            ec=0
+            bazel run --jobs=5 //pkg/tcpip/transport/tcp/test/benchmarks:netstack_bench_test -- -test.run='^$' -test.bench='^BenchmarkBulkBatchedLocalhost$/^batchWindow=100µs$/^cc=cubic$/^rack=true$' -test.v -test.benchtime=8x > "$RUNNER_TEMP/$arm.log" 2>&1 || ec=$?
+            end=$(date -u +%FT%TZ)
+            grep 'TAILPROOF iterations=8' "$RUNNER_TEMP/$arm.log" | sed -nE 's/.*TAILPROOF (.*)/\1/p' > "$RUNNER_TEMP/tailproof/$arm.counts"
+            if [[ $ec != 0 || $(wc -l < "$RUNNER_TEMP/tailproof/$arm.counts") != 8 ]]; then
+              tail -40 "$RUNNER_TEMP/$arm.log"; status=1
+            fi
+            echo "$arm $src $ec $start $end" >> "$RUNNER_TEMP/tailproof/arms.txt"
+          done <<'ARMS'
+          current-plain 7d1a6cb68ce6b4d0b77f1ca26934547cac7dc135
+          current-inflated 2f5dc8d1adc2fb9a695a88283ee3bd8d4e7425a4
+          wait-plain cecefb504a0397a63c629ef94b689555010a87d6
+          wait-inflated dfa738ee0d582a0907f82f2e4d8dd886bfb68f1e
+          ARMS
+          exit "$status"
+      - name: Reconcile four sources and every measured transfer
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          from datetime import datetime, timezone
+          import os,json
+          out=Path(os.environ["RUNNER_TEMP"])/"tailproof"
+          expected={'current-plain': '7d1a6cb68ce6b4d0b77f1ca26934547cac7dc135', 'current-inflated': '2f5dc8d1adc2fb9a695a88283ee3bd8d4e7425a4', 'wait-plain': 'cecefb504a0397a63c629ef94b689555010a87d6', 'wait-inflated': 'dfa738ee0d582a0907f82f2e4d8dd886bfb68f1e'}
+          actual={}
+          for line in (out/"arms.txt").read_text().splitlines():
+              name,src,ec,start,end=line.split()
+              counts=[dict((k,int(v)) for k,v in (r.split("=") for r in l.split())) for l in (out/(name+".counts")).read_text().splitlines()]
+              actual[name]=dict(source=src,exit=int(ec),start=start,end=end,counts=counts,valid=src==expected[name] and int(ec)==0 and len(counts)==8 and all(c["iterations"]==8 and c["equal"]+c["later"]<=c["recovery"] for c in counts))
+          verdict=dict(expected=expected,actual=actual,missing=sorted(expected.keys()-actual.keys()),finished=max((v["end"] for v in actual.values()),default=None),verified=datetime.now(timezone.utc).isoformat())
+          verdict["status"]="pass" if not verdict["missing"] and all(v["valid"] for v in actual.values()) else "incomplete"
+          (out/"verdict.json").write_text(json.dumps(verdict,indent=2))
+          print(json.dumps(verdict));raise SystemExit(verdict["status"]!="pass")
+          PYTHON
+      - name: Publish bounded evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b488e6f43607fa02
+        with:
+          name: tail-probe-proof
+          path: ${{ runner.temp }}/tailproof/
+          if-no-files-found: error
