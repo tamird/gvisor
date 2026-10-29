@@ -15,11 +15,14 @@
 package tcp
 
 import (
+	"sync/atomic"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 )
+
+var QualificationEqualTail, QualificationLaterTail atomic.Uint64
 
 const (
 	// wcDelayedACKTimeout is the recommended maximum delayed ACK timer
@@ -194,8 +197,6 @@ func (s *sender) schedulePTO() {
 		pto = s.rtt.TCPRTTState.SRTT * 2
 		if s.Outstanding == 1 {
 			pto += wcDelayedACKTimeout
-		} else {
-			pto += tcpTimeoutMin
 		}
 	}
 	s.rtt.Unlock()
@@ -294,7 +295,7 @@ func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
 			// Step 2. Either the original packet or the retransmission (in the
 			// form of a probe) was lost. Invoke a congestion control response
 			// equivalent to fast recovery.
-			s.cc.HandleLossDetected()
+			if ack == s.rc.tlpHighRxt { QualificationEqualTail.Add(1) } else { QualificationLaterTail.Add(1) }; s.cc.HandleLossDetected()
 			s.enterRecovery()
 			s.leaveRecovery()
 		}
