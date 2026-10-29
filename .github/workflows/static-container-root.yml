@@ -1,0 +1,59 @@
+name: Verify GNU-linked host benchmarks and the container fixture
+on:
+  push:
+    branches: [qualification/static-container-test-root]
+permissions:
+  contents: read
+jobs:
+  test:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    env:
+      BUILD_IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Bind the unmodified test and the two settings to the candidate
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = b9193eed0d34d1ad1aa0a5da5603c82871052e2e
+          test "$(git rev-parse HEAD^^)" = f8cc8437f954cb8813509846c52fe2292f0c0123
+          cp .github/qualification/static-container-root/{inside.sh,verify.py} "$RUNNER_TEMP"
+          git checkout --detach HEAD^
+          test "$(git diff --name-only HEAD^ HEAD | paste -sd , -)" = test/benchmarks/defs.bzl,test/cmd/test_app/BUILD
+          docker pull --platform=linux/amd64 "$BUILD_IMAGE"
+      - name: Build the two executables and run TestRootNotMount
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/static-consumer" "$RUNNER_TEMP/gnu-static-platform"
+          printf 'module(name="gnu_static_platform")\n' > "$RUNNER_TEMP/gnu-static-platform/MODULE.bazel"
+          cat > "$RUNNER_TEMP/gnu-static-platform/BUILD" <<BUILD
+          platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","EstimatedMemory":"8GB","container-image":"docker://$BUILD_IMAGE"},visibility=["//visibility:public"])
+          BUILD
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/consumer.bazelrc"' EXIT
+          cat > "$RUNNER_TEMP/consumer.bazelrc" <<EOF
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback
+          test --strategy=TestRunner=remote
+          build --inject_repository=gnu_static_platform=$RUNNER_TEMP/gnu-static-platform --host_platform=@gnu_static_platform//:gnu --extra_execution_platforms=@gnu_static_platform//:gnu
+          build --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY --bes_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+          EOF
+          unset BUILDBUDDY_API_KEY
+          docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$BUILD_IMAGE" "$RUNNER_TEMP/inside.sh" "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
+      - name: Verify the actual named test and output files
+        if: always()
+        run: python3 "$RUNNER_TEMP/verify.py" "$RUNNER_TEMP/static-consumer"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: static-container-root
+          path: |
+            ${{ runner.temp }}/static-consumer/result.json
+            ${{ runner.temp }}/static-consumer/test.xml
+          if-no-files-found: error
