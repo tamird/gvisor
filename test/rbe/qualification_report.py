@@ -2059,6 +2059,8 @@ def preflight(events: Path, native_exit: int, kind: str, case_manifest: Path | N
     return {"schema_version": 1, "status": "INCOMPLETE" if errors else "PASS",
             "kind": kind, "native_exit": native_exit, "errors": errors,
             "output_options": output_options,
+            "source_image_aliases": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())
+                                     if target.is_alias and SOURCE_IMAGE_ASPECT in target.aspects],
             "expected": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())]}
 
 
@@ -2819,6 +2821,31 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
             "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 
 
+def configured_alias_actual(graph: dict[str, object], owner: Owner) -> Owner:
+    """Resolve the alias's actual attribute through its configured dependency edge."""
+    rules = {}
+    for raw in sequence(graph.get("results")):
+        target = mapping(raw)
+        rule = mapping(mapping(target["target"]).get("rule", {}))
+        if not rule:
+            continue
+        key = Owner(string(rule["name"]), string(mapping(target["configuration"])["checksum"]))
+        if key in rules:
+            raise ValueError(f"Duplicate configured target in alias query: {key}")
+        rules[key] = rule
+    rule = rules.get(owner)
+    if rule is None or rule.get("ruleClass") != "alias":
+        raise ValueError(f"No configured alias for {owner}")
+    actual, = [string(attr["stringValue"]) for raw in sequence(rule["attribute"])
+               if (attr := mapping(raw)).get("name") == "actual" and attr.get("type") == "LABEL"]
+    referent, = [Owner(actual, string(edge["configurationChecksum"]))
+                 for raw in sequence(rule["configuredRuleInput"])
+                 if (edge := mapping(raw)).get("label") == actual]
+    if referent not in rules:
+        raise ValueError(f"Missing configured actual for {owner}: {referent}")
+    return referent
+
+
 def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, object]:
     """Read complete configured contracts, including empty and dynamic-builder roots."""
     verdict = read_json(canonical)
@@ -2849,8 +2876,20 @@ def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, obje
         if not name.endswith(".source-images.json"):
             continue
         contract = read_json(path)
-        if contract.get("schema_version") != 1 or contract.get("owner") != owner.label or owner in configured:
+        if contract.get("schema_version") != 1 or owner in configured:
             raise ValueError(f"Wrong or duplicate configured source-image contract: {owner}")
+        producer = None
+        if contract.get("owner") != owner.label:
+            # The aspect completes for the requested alias, but its retained
+            # contract names the actual target (possibly after a transition).
+            selection = read_json(canonical.parent / "selection.json")
+            if asdict(owner) not in sequence(selection.get("source_image_aliases")):
+                raise ValueError(f"Wrong configured source-image contract for {owner}")
+            graph = canonical.parent / "source-image-aliases.json"
+            actual = configured_alias_actual(read_json(graph), owner)
+            if actual.label != string(contract.get("owner")):
+                raise ValueError(f"Configured source-image actual differs for {owner}: {actual}")
+            producer = {**asdict(actual), "graph": {"path": str(graph), **file_record(graph)}}
         used.add((owner, name))
         images = declared_source_images(contract.get("images"))
         commands = [mapping(command) for command in sequence(contract.get("source_commands"))]
@@ -2894,6 +2933,8 @@ def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, obje
         owners[owner.label] = sorted(set(owners.get(owner.label, [])) | set(names))
         configured[owner] = {**asdict(owner), "images": images, "source_commands": commands, "pins": pins, "indexes": indexes,
                              "contract": {"path": str(path), **file_record(path)}}
+        if producer is not None:
+            configured[owner]["producer"] = producer
     if not expected or configured.keys() != expected or used != retained.keys():
         raise ValueError("Source-image contracts differ from complete configured owners or pin outputs")
     return {"owners": owners, "configured_owners": [configured[owner] for owner in sorted(configured)]}
@@ -2931,6 +2972,10 @@ def source_image_row(directory: Path, decoder: Path) -> dict[str, object]:
                                                       ("verdict", canonical), ("manifest", manifest))}
                 evidence = invocation / "source-image-audit.json"
                 result = audit_source_images(execution, decoder, canonical, manifest, expectations)
+                if any("producer" in owner for owner in read_json(expectations)["configured_owners"]):
+                    graph = invocation / "source-image-aliases.json"
+                    entry["inputs"]["aliases"] = {"path": str(graph.relative_to(directory)), **file_record(graph)}
+                    result.setdefault("input_roles", {})["aliases"] = {"path": str(graph), **file_record(graph)}
                 write_json(evidence, result)
                 entry["evidence"] = {"path": str(evidence.relative_to(directory)), **file_record(evidence)}
                 if result.get("audit_status") != "PASS":
@@ -3006,8 +3051,19 @@ def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identi
         for entry in entries:
             phase = phases[string(entry["path"])]
             inputs = mapping(entry.get("inputs"))
-            if inputs.keys() != {"expectations", "execution", "verdict", "manifest"}:
-                raise ValueError("Audit requires expectations, execution, verdict and manifest identities")
+            expectations = audit_member(members, inputs.get("expectations"))
+            producers = [mapping(owner["producer"]) for raw in sequence(expectations.get("configured_owners", []))
+                         if "producer" in (owner := mapping(raw))]
+            required = {"expectations", "execution", "verdict", "manifest"}
+            if producers:
+                required.add("aliases")
+                aliases = mapping(inputs.get("aliases"))
+                for producer in producers:
+                    graph = mapping(producer.get("graph"))
+                    if any(graph.get(key) != aliases.get(key) for key in ("sha256", "bytes")):
+                        raise ValueError("Configured producer graph differs from its retained input")
+            if inputs.keys() != required:
+                raise ValueError("Missing or unexpected source-image audit input")
             canonical = mapping(inputs["verdict"])
             if canonical.get("path") != entry["path"] or any(canonical.get(key) != phase.get(key) for key in ("sha256", "bytes")):
                 raise ValueError("Audit canonical verdict differs from its authenticated invocation")
@@ -3023,7 +3079,6 @@ def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identi
                 if (not relative or actual[-len(relative):] != relative
                         or any(retained.get(key) != descriptor.get(key) for key in ("sha256", "bytes"))):
                     raise ValueError(f"Audit does not bind its declared {name} input role/path")
-            expectations = audit_member(members, inputs["expectations"])
             outputs = [mapping(raw) for raw in sequence(mapping(phase["verdict"]).get("build_outputs", []))
                        if mapping(raw).get("group") == "source_image_contracts"]
             referenced = set()
@@ -3369,6 +3424,7 @@ def main() -> int:
     analyze.add_argument("--native-exit", type=int, required=True)
     analyze.add_argument("--kind", choices=("test", "build"), required=True)
     analyze.add_argument("--output-options", type=Path)
+    analyze.add_argument("--alias-query", type=Path)
     analyze.add_argument("--required-cases", type=Path)
     check = commands.add_parser("verdict")
     for name in ("events", "context", "output"):
@@ -3479,6 +3535,9 @@ def main() -> int:
         write_json(args.output, result)
         if args.output_options is not None and result["status"] == "PASS":
             args.output_options.write_text("".join(option + "\n" for option in result["output_options"]))
+        if args.alias_query is not None and result["status"] == "PASS":
+            aliases = [json.dumps(owner["label"]) for owner in result["source_image_aliases"]]
+            args.alias_query.write_text("deps(set(" + " ".join(aliases) + "), 1)" if aliases else "")
         return int(result["status"] != "PASS")
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,

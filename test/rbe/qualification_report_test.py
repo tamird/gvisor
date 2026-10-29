@@ -3232,6 +3232,55 @@ signal.pause()
                     owner, = contract["configured_owners"]
                     self.assertEqual((owner["images"], owner["source_commands"]), ([], []))
 
+    def test_source_contract_alias_requires_its_configured_actual(self) -> None:
+        invocation, analysis, path = self.source_contract_fixture()
+        self.addCleanup(shutil.rmtree, invocation)
+        events = self.events(invocation)
+        target = next(event for event in events if event.get("configured", {}).get("targetKind") != "alias rule"
+                      and "configured" in event and "aspect" not in event["id"]["targetConfigured"])
+        target["configured"]["targetKind"] = "alias rule"
+        contract = report.read_json(path)
+        contract["owner"] = "//other/package:implementation"
+        contract["images"] = [{"name": "mandatory", "architecture": "amd64", "archive": "image.tar"}]
+        report.write_json(path, contract)
+        digest = report.file_record(path)
+        file_set = next(event for event in events if event["id"].get("namedSet", {}).get("id") == "source-contract")
+        file_set["namedSetOfFiles"]["files"][0].update(digest=digest["sha256"], length=str(digest["bytes"]))
+        self.write_events(invocation, events)
+        analysis = self.analysis(invocation)
+        selection = report.preflight(analysis, 0, "build")
+        report.write_json(invocation / "selection.json", selection)
+        alias, = selection["source_image_aliases"]
+        report.capture(invocation / "events.jsonl", invocation / "captured.jsonl", invocation,
+                       invocation / "reports", expected_analysis=(analysis,))
+        self.assertEqual(self.verdict(invocation, analysis=analysis)["status"], "PASS")
+        verdict = invocation / "verdict.json"
+        manifest = report.manifest_path(invocation / "captured.jsonl")
+        with self.assertRaises(FileNotFoundError):
+            report.source_image_expectations(verdict, manifest)
+        different_config = "a" * 64
+        attribute = {"name": "actual", "type": "LABEL", "stringValue": contract["owner"]}
+        edge = {"label": contract["owner"], "configurationChecksum": different_config}
+        alias_rule = {"name": alias["label"], "ruleClass": "alias", "attribute": [attribute], "configuredRuleInput": [edge]}
+        actual_rule = {"name": contract["owner"], "ruleClass": "filegroup"}
+        requested = {"checksum": alias["configuration"]}
+        actual = {"checksum": different_config}
+        graph = {"results": [{"target": {"rule": alias_rule}, "configuration": requested},
+                             {"target": {"rule": actual_rule}, "configuration": actual}]}
+        graph_path = invocation / "source-image-aliases.json"
+        report.write_json(graph_path, graph)
+        owner, = report.source_image_expectations(verdict, manifest)["configured_owners"]
+        self.assertEqual((owner["label"], owner["producer"]["label"], owner["producer"]["configuration"], owner["images"]),
+                         (alias["label"], contract["owner"], different_config, contract["images"]))
+        for row, key in ((alias_rule, "ruleClass"), (attribute, "stringValue"), (edge, "label"),
+                         (edge, "configurationChecksum"), (requested, "checksum"), (actual, "checksum")):
+            original = row[key]
+            row[key] = "unrelated"
+            report.write_json(graph_path, graph)
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                report.source_image_expectations(verdict, manifest)
+            row[key] = original
+
     def test_source_contract_missing_or_wrong_aspect_cannot_pass(self) -> None:
         for damage in ("missing", "wrong-aspect", "changed-bytes"):
             with self.subTest(damage=damage):
