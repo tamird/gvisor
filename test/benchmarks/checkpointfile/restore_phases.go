@@ -23,6 +23,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"runtime/pprof"
 	"sort"
 	"testing"
 	"time"
@@ -123,12 +125,49 @@ func BenchmarkRestorePhases(b *testing.B) {
 		cpuidNS := time.Since(start).Nanoseconds()
 		k := &kernel.Kernel{Platform: stubPlatform{sys}}
 		k.SetMemoryFile(pgalloc.MemoryFileFromContext(restoreCtx))
+		scope := "cold-kernel"
+		if pass == 2 {
+			scope = "warm-kernel"
+		}
+		mode := os.Getenv("RESTORE_PROFILE_MODE")
+		snap := func(point string) {
+			b.Helper()
+			if mode != "alloc" && mode != "blank" {
+				return
+			}
+			if runtime.MemProfileRate != 1 {
+				b.Fatalf("MemProfileRate=%d, want 1", runtime.MemProfileRate)
+			}
+			// The memory profile can lag by two garbage collection cycles.
+			runtime.GC()
+			runtime.GC()
+			f, err := os.Create(os.Getenv("RESTORE_PROFILE_PREFIX") + "-" + scope + "-" + point)
+			if err != nil {
+				b.Fatal(err)
+			}
+			if err := pprof.Lookup("allocs").WriteTo(f, 0); err != nil {
+				b.Fatal(err)
+			}
+			if err := f.Close(); err != nil {
+				b.Fatal(err)
+			}
+		}
+		snap("before")
+		if mode == "blank" {
+			snap("after")
+		}
+		var kernelStats state.Stats
 		start = time.Now()
-		kernelStats, err := state.Load(restoreCtx, r, k)
+		pprof.Do(context.Background(), pprof.Labels("restore-scope", scope), func(context.Context) {
+			kernelStats, err = state.Load(restoreCtx, r, k)
+		})
 		if err != nil {
 			b.Fatal(err)
 		}
 		kernelNS := time.Since(start).Nanoseconds()
+		if mode == "alloc" {
+			snap("after")
+		}
 		if err := r.Verify(); err != nil {
 			b.Fatal(err)
 		}

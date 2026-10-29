@@ -1,13 +1,18 @@
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//tools:defs.bzl", "go_binary")
 
 sh_test(
     name = "nginx",
     size = "large",
     srcs = ["nginx.sh"],
-    args = ["$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)", "$(rootpath :nginx.tar)", "$(rootpath :instrumented.bin)"],
+    args = [
+        "$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)",
+        "$(rootpath :nginx.tar)",
+        "$(rootpath :profile_summary)",
+    ],
     data = [
         ":nginx.tar",
-        ":instrumented.bin",
+        ":profile_summary",
         "//:release",
         "//test/benchmarks/checkpointfile:checkpointfile_test",
     ],
@@ -23,5 +28,15 @@ sh_test(
         "test.workload-isolation-type": "firecracker",
         "test.recycle-runner": "false",
     },
-    tags = ["manual", "no-local"],
+    tags = [
+        "manual",
+        "no-local",
+    ],
+)
+
+go_binary(
+    name = "profile_summary",
+    srcs = ["profile_summary.go"],
+    nogo = False,
+    deps = ["@com_github_google_pprof//profile:go_default_library"],
 )

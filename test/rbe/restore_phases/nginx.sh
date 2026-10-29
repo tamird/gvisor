@@ -7,7 +7,7 @@ shift
 [[ $# == 3 && $EUID == 0 && $(uname -m) == x86_64 ]]
 binary=$(realpath "$1")
 archive=$(realpath "$2")
-instrumented=$(realpath "$3")
+summary=$(realpath "$3")
 release=$(cd release && pwd)
 test -x "$release/runsc"
 export GVISOR_SIDECAR_BINARIES_DIR="$release/gvisor-bin"
@@ -39,13 +39,21 @@ export RUNTIME=runsc
 export RESTORE_PHASE_DIR="$dir/checkpoint"
 install -d -m 700 "$RESTORE_PHASE_DIR"
 export GOMAXPROCS=2
-sha256sum "$release/runsc" "$binary" "$instrumented"
+sha256sum "$release/runsc" "$binary" "$summary"
 "$binary" -test.v -test.run='^$' -test.bench='^BenchmarkCaptureRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
-index=0
-for mode in control trace trace control trace control control trace control trace trace control; do
-  (( index+=1 ))
-  exe="$binary"
-  if [[ $mode == trace ]]; then exe="$instrumented"; fi
-  echo "phase-child index=$index mode=$mode"
-  "$exe" -test.v -test.run='^$' -test.bench='^BenchmarkRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json"
+# Raw profiles and the checkpoint stay in the action's private workspace.
+export GO_TEST_WRAP=0
+profiles="$dir/profiles"
+mkdir -p "$profiles"
+args=(-test.v -test.run='^$' -test.bench='^BenchmarkRestorePhases$' -test.benchtime=1x -test.count=1 -test-checkpoint=true -runtime=runsc -config_path="$dir/daemon.json")
+for ((i=1; i<=192; i++)); do
+  printf 'profile-child mode=cpu index=%d\n' "$i"
+  RESTORE_PROFILE_MODE=cpu "$binary" -test.cpuprofile="$profiles/cpu-$i" "${args[@]}"
 done
+for ((i=1; i<=8; i++)); do
+  for mode in alloc blank; do
+    printf 'profile-child mode=%s index=%d\n' "$mode" "$i"
+    RESTORE_PROFILE_MODE="$mode" RESTORE_PROFILE_PREFIX="$profiles/$mode-$i" "$binary" -test.memprofilerate=1 "${args[@]}"
+  done
+done
+"$summary" "$profiles"
