@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T22:18:49.987876+00:00",
+    "updatedAt": "2026-10-29T22:22:18.730344+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32376,8 +32376,8 @@
       "title": "Format stateify output in the generator",
       "url": "https://github.com/tamird/gvisor/commit/cd92efa5f",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T22:18:49.987876+00:00",
+      "status": "Contributor approved; ready for upstream submission",
+      "updatedAt": "2026-10-29T22:22:18.730344+00:00",
       "summary": "Stateify formats the generated Go file in the generator. Giving the formatter the output file’s path preserves how it resolves imports without inventing aliases.",
       "evidence": [
         {
@@ -32399,6 +32399,12 @@
           "head": "5e1349553e10e80a5c717ca9c82d6d47ab1f283b",
           "outcome": "changes-requested",
           "at": "2026-10-29T18:56:07.113045+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+          "outcome": "approved",
+          "at": "2026-10-29T22:22:18.730344+00:00"
         }
       ],
       "refinement": {
@@ -32409,15 +32415,12 @@
           "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "baseHead": "250f1a64449754e811e33111090736ad6db8d727",
-        "url": "https://github.com/tamird/gvisor/commit/cd92efa5f",
-        "title": "Format stateify output in the generator",
-        "summary": "Stateify formats the generated Go file in the generator. Giving the formatter the output file’s path preserves how it resolves imports without inventing aliases.",
-        "body": "Review for upstream submission. All seven production outputs, including BPF and eBPF, matched the original bytes. Twelve stateify actions ran uncached on scratch, and four fixture libraries compiled. The mixed checked-in fixture with an arbitrary explicit alias still fails exactly as on stock; the change does not introduce support for that case."
+      "followup": {
+        "owner": "lint_owner",
+        "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+        "observedAt": "2026-10-29T22:22:18.730344+00:00",
+        "disposition": "Approved for submission",
+        "nextAction": "Open the approved standalone upstream PR."
       }
     },
     {
