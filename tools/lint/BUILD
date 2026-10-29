@@ -1,7 +1,7 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("@buildifier_prebuilt//:rules.bzl", "buildifier_binary")
 load("@lint_inputs//:inputs.bzl", "INPUTS")
+load("//tools:defs.bzl", "go_binary")
 load(":defs.bzl", "python_inputs")
 
 package(
@@ -12,22 +12,32 @@ package(
 
 exports_files(["buildifier_native.patch"])
 
-# Interactive CLI for fixing explicitly named files, using the upstream wrapper.
-# Only the native checks below are intended to execute in a scratch worker.
-buildifier_binary(name = "buildifier_cli")
-
 # run_binary splits expanded args like a shell; quote each path separately.
 # ROOT.d holds only the exact source/config groups requested by this action.
 ROOT = "$(execpath @lint_inputs//:ROOT).d"
 
+BUILDIFIER_TOOL = "@buildifier_prebuilt//buildifier:native"
+
+# Native rule loads are excluded because gVisor doesn't use the suggested
+# rules_shell and proto_library.bzl loads.
 BUILDIFIER_FLAGS = [
-    "--config=" + (ROOT + "/.buildifier.json" if INPUTS["buildifier_config"] else "off"),
     "--format=",
-    "--mode=check",
-    "--lint=warn",
     "--warnings=-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto",
-    "--",
 ]
+
+go_binary(
+    name = "format",
+    srcs = ["workspace_command.go"],
+    args = ["$(rlocationpath %s)" % BUILDIFIER_TOOL] + BUILDIFIER_FLAGS + [
+        "--config=" + (".buildifier.json" if INPUTS["buildifier_config"] else "off"),
+        "--mode=fix",
+        "--lint=fix",
+        "--",
+    ] + [shell.quote(p.replace("$", "$$")) for p in INPUTS["buildifier"]],
+    data = [BUILDIFIER_TOOL],
+    pure = True,
+    deps = ["@io_bazel_rules_go//go/runfiles"],
+)
 
 run_binary(
     name = "buildifier",
@@ -36,10 +46,15 @@ run_binary(
         "@lint_inputs//:buildifier",
         "@lint_inputs//:buildifier_config",
     ],
-    args = BUILDIFIER_FLAGS + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["buildifier"]],
+    args = BUILDIFIER_FLAGS + [
+        "--config=" + (ROOT + "/.buildifier.json" if INPUTS["buildifier_config"] else "off"),
+        "--mode=check",
+        "--lint=warn",
+        "--",
+    ] + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["buildifier"]],
     mnemonic = "BuildifierCheck",
     stdout = "buildifier.report",
-    tool = "@buildifier_prebuilt//buildifier:native",
+    tool = BUILDIFIER_TOOL,
 )
 
 python_inputs(
