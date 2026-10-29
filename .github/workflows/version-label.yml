@@ -1,0 +1,61 @@
+name: Build and restore the two-architecture release with a declared version
+on:
+  push:
+    branches: [qualification/version-label-proof]
+permissions:
+  contents: read
+jobs:
+  release:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
+    env:
+      PRODUCT: 55210b651ecb1c5350d8011c0997669f392f8870
+      IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify source and the two release invocation sites
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ $(git rev-parse HEAD^) == "$PRODUCT" ]]
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!test/rbe/version_label' ':!.github/workflows/version-label.yml'
+          [[ $(cat images/default/bazelversion) == 8.8.1 ]]
+          docker pull --platform=linux/amd64 "$IMAGE"
+      - name: Run the declared label and the ordinary checkout through the real release and restore
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          d=$RUNNER_TEMP/version-proof
+          mkdir -p "$d/platform" "$d/result"
+          printf 'module(name="version_platform")\n' > "$d/platform/MODULE.bazel"
+          cat > "$d/platform/BUILD" <<BUILD
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "EstimatedMemory":"6GB", "container-image":"docker://$IMAGE"},
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc=$d/version.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' 'build --jobs=64' "build --inject_repository=version_platform=$d/platform" 'build --host_platform=@version_platform//:gnu' 'build --extra_execution_platforms=@version_platform//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          status=0
+          docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$d:$d" -w "$GITHUB_WORKSPACE" "$IMAGE" -c 'test/rbe/version_label/inner.sh "$1"; status=$?; python3 test/rbe/version_label/summary.py "$1" || status=1; chmod -R a+rX "$1/result"; exit "$status"' _ "$d" || status=$?
+          exit "$status"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: declared-release-version
+          path: ${{ runner.temp }}/version-proof/result/
