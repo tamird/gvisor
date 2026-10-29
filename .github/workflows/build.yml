@@ -1,4 +1,4 @@
-name: Read original stamped Make assembly
+name: Replay original stamped release events
 on: workflow_dispatch
 permissions:
   contents: read
@@ -11,18 +11,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Prepare archive readers
-        run: |
-          sudo apt-get -o Acquire::Retries=3 update -qq
-          sudo apt-get install -y --no-install-recommends zstd qemu-user
-      - name: Inspect only the original package bytes
+          fetch-depth: 3
+      - name: Replay the original event stream
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/version_label/original.py
+        run: python3 test/rbe/version_label/replay.py
       - name: Return checksum-bound reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: stamped-make-original
+          name: stamped-make-events
           path: ${{ runner.temp }}/make-read/receipt/
           if-no-files-found: error
