@@ -11,7 +11,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          fetch-depth: 3
+          fetch-depth: 1
+      - name: Fetch the original reporter revision
+        run: git fetch --depth=1 --no-tags origin 14f280cd18a9aa968e2fee3b041d8621d95ff87f
       - name: Replay the original event stream
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
