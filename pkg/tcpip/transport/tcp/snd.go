@@ -129,6 +129,11 @@ type sender struct {
 	// the first segment that was retransmitted due to RTO expiration.
 	firstRetransmittedSegXmitTime tcpip.MonotonicTime
 
+	// localWriteRetries is nonzero while nothing has reached the route and
+	// there can be no peer ACK to wake a locally rejected write.
+	localWriteRetries uint32
+	localWriteSince   tcpip.MonotonicTime
+
 	// zeroWindowProbing is set if the sender is currently probing
 	// for zero receive window.
 	zeroWindowProbing bool `state:"nosave"`
@@ -528,13 +533,16 @@ func (s *sender) resendSegment() {
 			s.splitSeg(seg, s.MaxPayloadSize)
 		}
 
+		if n, err := s.sendSegment(seg); n == 0 && err != nil {
+			return
+		}
+
 		// See: RFC 6675 section 5 Step 4.3
 		//
 		// To prevent retransmission, set both the HighRXT and RescueRXT
 		// to the highest sequence number in the retransmitted segment.
 		s.FastRecovery.HighRxt = seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize())) - 1
 		s.FastRecovery.RescueRxt = seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize())) - 1
-		s.sendSegment(seg)
 		// An RTO can rewind writeNext to this segment. It has now been
 		// retransmitted, so sendData must not immediately send it again.
 		if s.writeNext == seg {
@@ -558,6 +566,19 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// Check if the timer actually expired or if it's a spurious wake due
 	// to a previously orphaned runtime timer.
 	if s.resendTimer.isUninitialized() || !s.resendTimer.checkExpiration() {
+		return nil
+	}
+
+	if s.localWriteRetries != 0 {
+		if s.writeNext == nil {
+			return nil
+		}
+		if s.localWriteRetries > s.maxRetries || s.ep.userTimeout != 0 && s.ep.stack.Clock().NowMonotonic().Sub(s.localWriteSince) >= s.ep.userTimeout {
+			s.ep.stack.Stats().TCP.EstablishedTimedout.Increment()
+			return &tcpip.ErrTimeout{}
+		}
+		s.localWriteRetries++
+		s.sendData()
 		return nil
 	}
 
@@ -850,7 +871,7 @@ func (s *sender) NextSeg(nextSegHint *segment) (nextSeg, hint *segment, rescueRt
 // lower of the specified limit value or the receivers window size specified by
 // end.
 // +checklocks:s.ep.mu
-func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (sent bool) {
+func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (bool, tcpip.Error) {
 	// We abuse the flags field to determine if we have already
 	// assigned a sequence number to this segment.
 	newData := !s.isAssignedSequenceNumber(seg)
@@ -903,7 +924,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 						// Preserve the exception for a short segment that fills
 						// the available window, and Nagle's precedence over CORK.
 						if nagle {
-							return false
+							return false, nil
 						}
 						if !s.startCork {
 							s.startCork = true
@@ -912,7 +933,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 							// the segments are drained.
 							s.corkTimer.enable(MinRTO)
 						}
-						return false
+						return false, nil
 					}
 				}
 			}
@@ -923,16 +944,11 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		seg.sequenceNumber = s.SndNxt
 	}
 
-	var segEnd seqnum.Value
 	if seg.payloadSize() == 0 {
 		if s.writeList.Back() != seg {
 			panic("FIN segments must be the final segment in the write list.")
 		}
 		seg.flags = header.TCPFlagAck | header.TCPFlagFin
-		segEnd = seg.sequenceNumber.Add(1)
-		// FIN is now being transmitted; mark it so the receiver can tell
-		// a data-only ACK apart from one that acknowledges our FIN.
-		s.finSent = true
 	} else {
 		// We're sending a non-FIN segment.
 		if seg.flags&header.TCPFlagFin != 0 {
@@ -940,12 +956,12 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		}
 
 		if !seg.sequenceNumber.LessThan(end) {
-			return false
+			return false, nil
 		}
 
 		available := int(seg.sequenceNumber.Size(end))
 		if available == 0 {
-			return false
+			return false, nil
 		}
 
 		// If the whole segment or at least 1MSS sized segment cannot
@@ -973,7 +989,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 				// OK to send, at least 1 MSS sized segment fits
 				// in the receiver's advertised window.
 			default:
-				return false
+				return false, nil
 			}
 		}
 
@@ -1004,7 +1020,6 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 			}
 		}
 
-		segEnd = seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize()))
 	}
 
 	// TODO(b/379932042): Below is the only place we update SND.NXT besides
@@ -1014,7 +1029,17 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		panic("attempted to send segment not in write list")
 	}
 
-	s.sendSegment(seg)
+	n, err := s.sendSegment(seg)
+	if err != nil && n == 0 {
+		if newData {
+			seg.flags = 0
+		}
+		return false, err
+	}
+	if seg.flags.Contains(header.TCPFlagFin) {
+		s.finSent = true
+	}
+	segEnd := seg.sequenceNumber.Add(seg.logicalLen())
 
 	// Update sndNxt if we actually sent new data (as opposed to
 	// retransmitting some previously sent data).
@@ -1025,7 +1050,7 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 		}
 	}
 
-	return true
+	return true, err
 }
 
 // zeroProbeJunk is data sent during zero window probes. Its value is
@@ -1141,12 +1166,16 @@ func (s *sender) sendData() {
 			s.updateWriteNext(seg.Next())
 			continue
 		}
-		if sent := s.maybeSendSegment(seg, limit, end); !sent {
+		sent, err := s.maybeSendSegment(seg, limit, end)
+		if !sent {
 			break
 		}
 		dataSent = true
 		s.Outstanding += s.pCount(seg, s.MaxPayloadSize)
 		s.updateWriteNext(seg.Next())
+		if err != nil {
+			break
+		}
 	}
 
 	s.postXmit(dataSent, true /* shouldScheduleProbe */)
@@ -1830,7 +1859,34 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 // sendSegment sends the specified segment.
 // +checklocks:s.ep.mu
-func (s *sender) sendSegment(seg *segment) tcpip.Error {
+func (s *sender) sendSegment(seg *segment) (int, tcpip.Error) {
+	now := s.ep.stack.Clock().NowMonotonic()
+	n, err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
+	if n == 0 && err != nil {
+		if s.SndUna == s.SndNxt {
+			if s.localWriteRetries == 0 {
+				s.localWriteSince = now
+				s.localWriteRetries = 1
+			}
+			s.armLocalWriteRetry()
+		} else if !s.resendTimer.enabled() {
+			s.resendTimer.enable(s.RTO)
+		}
+		return 0, err
+	}
+	if err != nil {
+		// splitSeg clones transmission history; the suffix keeps its previous
+		// status, and only the accepted prefix records this transmission.
+		s.splitSeg(seg, n)
+		if seg.xmitCount == 0 {
+			seg.Next().flags = 0
+		}
+	}
+	if s.localWriteRetries != 0 {
+		s.localWriteRetries = 0
+		s.resendTimer.disable()
+	}
+
 	if seg.xmitCount > 0 {
 		// Karn's algorithm excludes ambiguous RTT samples after a
 		// retransmission, including a tail loss probe (RFC 6298, section 3).
@@ -1842,49 +1898,49 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 			s.ep.stack.Stats().TCP.SlowStartRetransmits.Increment()
 		}
 	}
-	seg.xmitTime = s.ep.stack.Clock().NowMonotonic()
+	seg.xmitTime = now
 	seg.xmitCount++
 	seg.lost = false
 
-	err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
+	return n, err
+}
 
-	// Every time a packet containing data is sent (including a
-	// retransmission), if SACK is enabled and we are retransmitting data
-	// then use the conservative timer described in RFC6675 Section 6.0,
-	// otherwise follow the standard time described in RFC6298 Section 5.1.
-	if err != nil && seg.payloadSize() != 0 {
-		if s.FastRecovery.Active && seg.xmitCount > 1 && s.ep.SACKPermitted {
-			s.resendTimer.enable(s.RTO)
-		} else {
-			if !s.resendTimer.enabled() {
-				s.resendTimer.enable(s.RTO)
-			}
-		}
+// armLocalWriteRetry wakes a wholly unsent write without recording a network
+// loss or allowing an unrelated incoming ACK to postpone the retry.
+// +checklocks:s.ep.mu
+func (s *sender) armLocalWriteRetry() {
+	if s.resendTimer.enabled() {
+		return
 	}
-
-	return err
+	d := s.RTO
+	if timeout := s.ep.userTimeout; timeout != 0 {
+		d = min(d, max(time.Duration(0), timeout-s.ep.stack.Clock().NowMonotonic().Sub(s.localWriteSince)))
+	}
+	s.resendTimer.enable(d)
 }
 
 // sendSegmentFromPacketBuffer sends a new segment containing the given payload,
 // flags and sequence number.
 // +checklocks:s.ep.mu
-func (s *sender) sendSegmentFromPacketBuffer(pkt *stack.PacketBuffer, flags header.TCPFlags, seq seqnum.Value) tcpip.Error {
-	s.LastSendTime = s.ep.stack.Clock().NowMonotonic()
-	if seq == s.RTTMeasureSeqNum {
-		s.RTTMeasureTime = s.LastSendTime
-	}
+func (s *sender) sendSegmentFromPacketBuffer(pkt *stack.PacketBuffer, flags header.TCPFlags, seq seqnum.Value) (int, tcpip.Error) {
+	now := s.ep.stack.Clock().NowMonotonic()
 
 	rcvNxt, rcvWnd := s.ep.rcv.getSendParams()
-
-	// Remember the max sent ack.
-	s.MaxSentAck = rcvNxt
 
 	// We need to clone the packet because sendRaw takes ownership of pkt,
 	// and pkt could be reprocessed later on (i.e retrasmission).
 	pkt = pkt.Clone()
 	defer pkt.DecRef()
 
-	return s.ep.sendRaw(pkt, flags, seq, rcvNxt, rcvWnd)
+	n, err := s.ep.sendRaw(pkt, flags, seq, rcvNxt, rcvWnd)
+	if n != 0 || err == nil {
+		s.LastSendTime = now
+		if seq == s.RTTMeasureSeqNum {
+			s.RTTMeasureTime = now
+		}
+		s.MaxSentAck = rcvNxt
+	}
+	return n, err
 }
 
 // sendEmptySegment sends a new empty segment, flags and sequence number.

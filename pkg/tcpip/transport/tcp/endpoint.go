@@ -1028,6 +1028,7 @@ func (e *Endpoint) purgeWriteQueue() {
 		e.sndQueueInfo.sndQueueMu.Lock()
 		defer e.sndQueueInfo.sndQueueMu.Unlock()
 		e.snd.updateWriteNext(nil)
+		e.snd.localWriteRetries = 0
 		for s := e.snd.writeList.Front(); s != nil; s = e.snd.writeList.Front() {
 			e.snd.writeList.Remove(s)
 			s.DecRef()

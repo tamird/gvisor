@@ -64,12 +64,16 @@ func (sr *sackRecovery) handleSACKRecovery(limit int, end seqnum.Value) (dataSen
 			//
 			// We pass s.smss as the limit as the Step 2) requires that
 			// new data sent should be of size s.smss or less.
-			if sent := snd.maybeSendSegment(nextSeg, limit, end); !sent {
+			sent, err := snd.maybeSendSegment(nextSeg, limit, end)
+			if !sent {
 				return dataSent
 			}
 			dataSent = true
 			snd.Outstanding++
 			snd.updateWriteNext(nextSeg.Next())
+			if err != nil {
+				return dataSent
+			}
 			continue
 		}
 
@@ -80,9 +84,12 @@ func (sr *sackRecovery) handleSACKRecovery(limit int, end seqnum.Value) (dataSen
 		// "The estimate of the amount of data outstanding in the network
 		// must be updated by incrementing pipe by the number of octets
 		// transmitted in (C.1)."
+		n, err := snd.sendSegment(nextSeg)
+		if err != nil && n == 0 {
+			return dataSent
+		}
 		snd.Outstanding++
 		dataSent = true
-		snd.sendSegment(nextSeg)
 
 		segEnd := nextSeg.sequenceNumber.Add(nextSeg.logicalLen())
 		if rescueRtx {
@@ -98,6 +105,9 @@ func (sr *sackRecovery) handleSACKRecovery(limit int, end seqnum.Value) (dataSen
 			// number of the retransmitted segment unless NextSeg ()
 			// rule (4) was invoked for this retransmission."
 			snd.FastRecovery.HighRxt = segEnd - 1
+		}
+		if err != nil {
+			return dataSent
 		}
 	}
 	return dataSent
