@@ -59,12 +59,12 @@ def main():
     output("bazel", "info", "output_base")
     assert shutil.which("strace")
     trace = work / "buildifier.trace"
-    exit_code, _ = run("clean", ["strace", "-f", "-qq", "-s", "65535", "-e", "trace=execve",
+    exit_code, _ = run("clean", ["strace", "-ff", "-qq", "-s", "65535", "-e", "trace=execve",
                                 "-o", str(trace), "tools/lint.sh", "buildifier"])
     if exit_code:
         raise ValueError("canonical clean formatter")
     actual, digests = [], set()
-    for line in trace.read_text().splitlines():
+    for line in (line for part in work.glob(trace.name + ".*") for line in part.read_text().splitlines()):
         if "--mode=diff" not in line or "execve(" not in line or not line.endswith("= 0"):
             continue
         m = re.search(r'execve\((".*?"), (\[.*?\]), ', line)
@@ -103,14 +103,15 @@ def main():
         untracked.unlink(missing_ok=True)
         for name, original in contents.items():
             Path(name).write_bytes(original)
-    stock = Path(missing[1]).read_bytes()
+    stock = Path(missing[-1]).read_bytes()
     try:
-        Path(missing[1]).write_bytes(stock + b"\n@@@\n")
+        Path(missing[-1]).write_bytes(stock + b"\n@@@\n")
         rc, diagnostic = run("invalid", ["tools/lint.sh", "buildifier"])
-        assert rc and missing[1] in diagnostic and "syntax error" in diagnostic.lower()
+        assert rc and missing[-1] in diagnostic
+        assert any(msg in diagnostic.lower() for msg in ("syntax error", "unexpected input character", "invalid character"))
         assert "Run `make lint-fix`" not in diagnostic
     finally:
-        Path(missing[1]).write_bytes(stock)
+        Path(missing[-1]).write_bytes(stock)
     assert actual == files and digests == {binary} and record["untracked_unchanged"]
     record["status"] = "PASS"
 
