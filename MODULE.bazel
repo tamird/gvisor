@@ -206,6 +206,7 @@ python.single_version_platform_override(
     python_version = "3.11.18",
     sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
     strip_prefix = "python/install",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
     target_settings = ["@rules_python//python/config_settings:_is_py_linux_libc_musl"],
     urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
 )
@@ -216,6 +217,7 @@ python.single_version_platform_override(
     python_version = "3.11.18",
     sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
     strip_prefix = "python/install",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
     target_settings = ["@rules_python//python/config_settings:_is_py_linux_libc_musl"],
     urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
 )
