@@ -1,11 +1,23 @@
 """Stateify is a tool for generating state wrappers for Go types."""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
+load("//tools/bazeldefs:go.bzl", "go_context", "go_rule")
+
 def _go_stateify_impl(ctx):
     """Implementation for the stateify tool."""
+    go = go_context(ctx)
     output = ctx.outputs.out
 
+    # Only the SDK's go command belongs on goimports' PATH.
+    go_tool = ctx.actions.declare_file(ctx.label.name + "_tools/go")
+    ctx.actions.symlink(output = go_tool, target_file = go.go, is_executable = True)
+
     # Run the stateify command.
-    args = ["-output=%s" % output.path]
+    args = ["-go=%s" % go_tool.path, "-output=%s" % output.path]
+    if any([src.is_source for src in ctx.files.srcs]):
+        # Without source files, imports must be resolved alongside generated inputs.
+        srcdir = paths.join(ctx.label.workspace_root, ctx.label.package) or "."
+        args.append("-srcdir=%s" % srcdir)
     args.append("-fullpkg=%s" % ctx.attr.package)
     if ctx.attr._statepkg:
         args.append("-statepkg=%s" % ctx.attr._statepkg)
@@ -16,6 +28,8 @@ def _go_stateify_impl(ctx):
         args += [f.path for f in src.files.to_list()]
     ctx.actions.run(
         inputs = ctx.files.srcs,
+        tools = [go_tool, go.runfiles],
+        env = dict(go.env, GOPROXY = "off", GOTOOLCHAIN = "local", GOWORK = "off"),
         outputs = [output],
         mnemonic = "GoStateify",
         progress_message = "Generating state library %s" % ctx.label,
@@ -23,7 +37,8 @@ def _go_stateify_impl(ctx):
         executable = ctx.executable._tool,
     )
 
-go_stateify = rule(
+go_stateify = go_rule(
+    rule,
     implementation = _go_stateify_impl,
     doc = "Generates save and restore logic from a set of Go files.",
     attrs = {
