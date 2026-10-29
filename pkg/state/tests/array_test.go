@@ -15,8 +15,11 @@
 package tests
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 var allArrayPrimitives = []any{
@@ -134,4 +137,79 @@ func TestSliceContainers(t *testing.T) {
 		slicePtrContainer{v: &fullSlice},
 		slicePtrContainer{v: &unusedCapacitySlice},
 	})
+}
+
+type blockedCheckpointWriter struct {
+	buf     bytes.Buffer
+	entered chan struct{}
+	resume  chan struct{}
+}
+
+func (w *blockedCheckpointWriter) Write(p []byte) (int, error) {
+	if w.entered != nil {
+		close(w.entered)
+		<-w.resume
+		w.entered = nil
+	}
+	return w.buf.Write(p)
+}
+
+// TestSaveSliceAliases takes an independent snapshot before Save. A
+// comparison against the same backing array after Save would miss corruption
+// that affected both the input and restored output.
+func TestSaveSliceAliases(t *testing.T) {
+	state.EnableGraphEngine(true)
+	t.Cleanup(func() { state.EnableGraphEngine(false) })
+	for _, tc := range []struct {
+		name    string
+		lengths [2]int
+		long    int
+	}{
+		{"both-long", [2]int{3, 3}, 0},
+		{"short-first", [2]int{1, 3}, 1},
+		{"long-first", [2]int{3, 1}, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			want := [3]byte{0x11, 0x22, 0x33}
+			backing := want
+			in := [2][]byte{backing[:tc.lengths[0]], backing[:tc.lengths[1]]}
+			entered := make(chan struct{})
+			w := blockedCheckpointWriter{entered: entered, resume: make(chan struct{})}
+			done := make(chan error, 1)
+			go func() {
+				_, err := state.Save(t.Context(), &w, &in)
+				done <- err
+			}()
+			select {
+			case <-entered:
+				if got := [3]byte(in[tc.long]); got != want {
+					t.Errorf("live while Save is writing = %x, want %x", got, want)
+				}
+				close(w.resume)
+				if err := <-done; err != nil {
+					t.Fatal(err)
+				}
+			case err := <-done:
+				t.Fatalf("Save returned before writing: %v", err)
+			}
+			if got := [3]byte(in[tc.long]); got != want {
+				t.Errorf("live after Save = %x, want %x", got, want)
+			}
+			var out [2][]byte
+			if _, err := state.Load(t.Context(), &w.buf, &out); err != nil {
+				t.Fatal(err)
+			}
+			for i, s := range out {
+				if got, want := [2]int{len(s), cap(s)}, [2]int{tc.lengths[i], len(backing)}; got != want {
+					t.Fatalf("restored view %d dimensions = %v, want %v", i, got, want)
+				}
+			}
+			if got := [3]byte(out[tc.long]); got != want {
+				t.Errorf("restored longer view = %x, want %x", got, want)
+			}
+			if &out[0][0] != &out[1][0] {
+				t.Errorf("restored slices have distinct backing arrays")
+			}
+		})
+	}
 }
