@@ -131,11 +131,11 @@ type sender struct {
 
 	// zeroWindowProbing is set if the sender is currently probing
 	// for zero receive window.
-	zeroWindowProbing bool `state:"nosave"`
+	zeroWindowProbing bool
 
 	// unackZeroWindowProbes is the number of unacknowledged zero
 	// window probes.
-	unackZeroWindowProbes uint32 `state:"nosave"`
+	unackZeroWindowProbes uint32
 
 	// writeNext is the next segment to write that hasn't already been
 	// written, i.e. the first payload starting at SND.NXT.
@@ -149,7 +149,7 @@ type sender struct {
 	writeList protectedWriteList
 
 	// resendTimer is used for RTOs.
-	resendTimer timer `state:"nosave"`
+	resendTimer timer
 
 	// rtt.TCPRTTState.SRTT and rtt.TCPRTTState.RTTVar are the "smoothed
 	// round-trip time", and "round-trip time variation", as defined in
@@ -183,7 +183,7 @@ type sender struct {
 	reorderTimer timer `state:"nosave"`
 
 	// probeTimer is used to schedule PTO for RACK TLP algorithm.
-	probeTimer timer `state:"nosave"`
+	probeTimer timer
 
 	// spuriousRecovery indicates whether the sender entered recovery
 	// spuriously as described in RFC3522 Section 3.2.

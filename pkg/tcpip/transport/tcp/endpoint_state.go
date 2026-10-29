@@ -184,9 +184,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		e.keepalive.timer.init(s.Clock(), timerHandler(e, e.keepaliveTimerExpired))
 	}
 	if snd := e.snd; snd != nil {
-		snd.resendTimer.init(s.Clock(), timerHandler(e, e.snd.retransmitTimerExpired))
 		snd.reorderTimer.init(s.Clock(), timerHandler(e, e.snd.rc.reorderTimerExpired))
-		snd.probeTimer.init(s.Clock(), timerHandler(e, e.snd.probeTimerExpired))
 		snd.corkTimer.init(s.Clock(), timerHandler(e, e.snd.corkTimerExpired))
 	}
 	e.ops.InitHandler(e, e.stack, GetTCPSendBufferLimits, GetTCPReceiveBufferLimits)
@@ -274,6 +272,10 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			e.timeWaitTimer = e.stack.Clock().AfterFunc(e.getTimeWaitDuration(), e.timeWaitTimerExpired)
 		}
 
+		// The callbacks take e.mu and need the restored route. An overdue
+		// timer can run as soon as this endpoint is unlocked.
+		e.snd.resendTimer.restore(s.Clock(), timerHandler(e, e.snd.retransmitTimerExpired))
+		e.snd.probeTimer.restore(s.Clock(), timerHandler(e, e.snd.probeTimerExpired))
 		if e.ops.GetCorkOption() {
 			// Rearm the timer if TCP_CORK is enabled which will
 			// drain all the segments in the queue after restore.
