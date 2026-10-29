@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T13:09:49.634379+00:00",
+    "updatedAt": "2026-10-29T13:22:09.757150+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24810,6 +24810,14 @@
         {
           "label": "Proposal: three of three repairs, three new packets with room for two",
           "url": "https://app.buildbuddy.io/invocation/12d34854-bf4f-4fa4-a2b6-eaf0a7fa4a01"
+        },
+        {
+          "label": "Stock admits eight new packets where seven fit after a probe",
+          "url": "https://app.buildbuddy.io/invocation/70cc5b22-9597-418c-8806-1107ca14af7a"
+        },
+        {
+          "label": "Positive and negative probes after one SACK",
+          "url": "https://app.buildbuddy.io/invocation/3a19ac47-27c3-42f7-8839-0e0ca1af5a05"
         }
       ]
     },
@@ -32606,53 +32614,54 @@
       "id": "branch:bazel-cpplint",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/bazel-cpplint-package-owners",
-      "head": "46110fd411b52a7b72da0418360a1382ac915f8a",
-      "title": "Check tracked C++ sources with package-local Bazel tests",
-      "url": "https://github.com/tamird/gvisor/commit/46110fd411b52a7b72da0418360a1382ac915f8a",
+      "ref": "review/bazel-cpplint-bcr-nostamp",
+      "head": "3166a17cb14171cd23b30d826eb5d5b299385ac8",
+      "title": "Run cpplint once over the repository’s tracked C++ sources",
+      "url": "https://github.com/tamird/gvisor/commit/3166a17cb14171cd23b30d826eb5d5b299385ac8",
       "group": "analysis",
-      "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
-      "status": "Agent work",
+      "summary": "Run the BCR checker once on the tracked C++ sources. No package BUILD file or per-directory check needs updating.",
+      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
+      "status": "Contributor review requested",
       "evidence": [
         {
-          "label": "All 23 original package results",
-          "url": "https://app.buildbuddy.io/invocation/4044b955-3c81-47e0-8548-a631eb597ad6"
+          "label": "All 485 tracked files",
+          "url": "https://app.buildbuddy.io/invocation/e5541d9c-bd25-4df5-b852-110de5dc4b49"
         },
         {
-          "label": "One changed package and 22 cache hits",
-          "url": "https://app.buildbuddy.io/invocation/da9caaf4-38b2-4a9c-940d-5ffcf9e6063b"
+          "label": "Tracked bad file in new package",
+          "url": "https://app.buildbuddy.io/invocation/5b88fc8b-dd38-400a-a493-4ede1ba9c0d7"
         },
         {
-          "label": "Replay of the 46 original results",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40829033959"
-        },
-        {
-          "label": "Untracked sources, configuration, and combined failure checks",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40830617674"
-        },
-        {
-          "label": "Formatter, 23 C++ owners, driver tests and 222 license entries together",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40837208140"
+          "label": "Package-local configuration",
+          "url": "https://app.buildbuddy.io/invocation/6abfd96b-a698-4128-bea2-c6b51991064a"
         }
       ],
       "refinement": {
         "before": {
-          "head": "869a7b324568a5743e32724096ed06207dcd0b93"
+          "head": "d463cc2d90dfa1cb04956016051ba868af187fd4"
         },
         "after": {
-          "head": "46110fd411b52a7b72da0418360a1382ac915f8a"
+          "head": "3166a17cb14171cd23b30d826eb5d5b299385ac8"
         }
       },
       "followup": {
-        "owner": "native_runtime",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
-        "sourceHead": "46110fd411b52a7b72da0418360a1382ac915f8a",
-        "disposition": "Agent work",
-        "nextAction": "Replace the 23 package hooks with one repository-wide check and verify it still detects new tracked files. Return the simpler revision for contributor review.",
+        "owner": "root",
+        "sourceHead": "3166a17cb14171cd23b30d826eb5d5b299385ac8",
+        "observedAt": "2026-10-29T13:22:09.757150+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Open after contributor review. Rework clang-format against this selection.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/46110fd411b52a7b72da0418360a1382ac915f8a"
+          "https://github.com/tamird/gvisor/commit/3166a17cb14171cd23b30d826eb5d5b299385ac8"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3166a17cb14171cd23b30d826eb5d5b299385ac8",
+        "url": "https://github.com/tamird/gvisor/commit/3166a17cb14171cd23b30d826eb5d5b299385ac8",
+        "title": "Run cpplint once over the repository’s tracked C++ sources",
+        "summary": "Run the BCR checker once on the tracked C++ sources. No package BUILD file or per-directory check needs updating.",
+        "body": "The 485 existing files pass. A new tracked file in a new package is diagnosed, and its local configuration is honored. Bazel builds the checker; the repository-wide check runs in the checkout rather than as a cacheable Bazel test. The original workflow’s verifier had a stale checksum; the exact checker and reports were verified against the released 2.0.2 source."
       }
     },
     {
@@ -32840,37 +32849,46 @@
       "id": "branch:buildkite-source-lint-native",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/buildkite-source-lint-native",
-      "head": "679a7f69c68079476efbd4f13ae219f1c2309713",
-      "title": "Run Buildkite source lint with the repository’s pinned Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/679a7f69c68079476efbd4f13ae219f1c2309713",
+      "ref": "review/buildkite-source-lint-bazelisk",
+      "head": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
+      "title": "Use Bazelisk for Buildkite source lint",
+      "url": "https://github.com/tamird/gvisor/commit/eafcb8392effca7769ef6e220d24feaadb3bdf17",
       "group": "analysis",
-      "status": "Agent work",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
-      "summary": "The two source-lint jobs install the same verified Bazel as the default builder and run Make directly on the agent. The post-command hook uses that Bazel to clean and shut down the original server, including after a lint failure.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
+      "summary": "Reuse Bazelisk on PATH or install its pinned Go module. Bazelisk selects the project’s .bazelversion for lint and for shutdown.",
       "evidence": [
         {
-          "label": "AMD64: all five checks, intentional spelling failure and actual cleanup",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40846002715/job/123353530929"
-        },
-        {
-          "label": "ARM64: verified executable, bad-digest rejection and hook cleanup",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40846002715/job/123353531200"
-        },
-        {
-          "label": "23 C++ lint targets",
-          "url": "https://app.buildbuddy.io/invocation/83248001-21ce-4610-8164-3c6941450a0e"
+          "label": "AMD64 and ARM64 validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40879898718"
         }
       ],
       "followup": {
-        "owner": "pinring_source_scope",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
-        "sourceHead": "679a7f69c68079476efbd4f13ae219f1c2309713",
-        "disposition": "Agent work",
-        "nextAction": "Check the actual Buildkite host environment and replace the custom Bazel downloader with Bazelisk where possible; validate the revised bootstrap before requesting review.",
+        "owner": "root",
+        "sourceHead": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
+        "observedAt": "2026-10-29T13:22:09.757150+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Submit after contributor review and the declared codespell prerequisite.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/679a7f69c68079476efbd4f13ae219f1c2309713"
+          "https://github.com/tamird/gvisor/commit/eafcb8392effca7769ef6e220d24feaadb3bdf17"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "679a7f69c68079476efbd4f13ae219f1c2309713"
+        },
+        "after": {
+          "head": "eafcb8392effca7769ef6e220d24feaadb3bdf17"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
+        "url": "https://github.com/tamird/gvisor/commit/eafcb8392effca7769ef6e220d24feaadb3bdf17",
+        "title": "Use Bazelisk for Buildkite source lint",
+        "summary": "Reuse Bazelisk on PATH or install its pinned Go module. Bazelisk selects the project’s .bazelversion for lint and for shutdown.",
+        "body": "Both Linux architectures passed the clean source, bad spelling, installed executable reuse and failed-install cases. The workflow checks do not assert that Buildkite provisions Bazelisk on every host."
       }
     },
     {
@@ -33036,8 +33054,8 @@
       "title": "Link host-run benchmarks and the container test app statically",
       "url": "https://github.com/tamird/gvisor/commit/b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T13:09:49.634379+00:00",
+      "status": "Published as #16669",
+      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
       "summary": "The benchmark binaries and container test app requested static linking, but the Go rules ignored their C++ feature. With the Go rule’s static setting, the two binaries no longer require a host loader or shared libraries on AMD64 or ARM64. TestRootNotMount now runs on AMD64 instead of skipping.",
       "evidence": [
         {
@@ -33059,28 +33077,23 @@
         {
           "label": "ARM64 corrected GNU binaries",
           "url": "https://app.buildbuddy.io/invocation/9e9e9e9d-f75a-4621-844b-b444793921df"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16669"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
-        "url": "https://github.com/tamird/gvisor/commit/b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
-        "title": "Link host-run benchmarks and the container test app statically",
-        "summary": "The benchmark binaries and container test app requested static linking, but the Go rules ignored their C++ feature. With the Go rule’s static setting, the two binaries no longer require a host loader or shared libraries on AMD64 or ARM64. TestRootNotMount now runs on AMD64 instead of skipping.",
-        "body": "Independent of the LLVM migration. The AMD64 runtime test executed without a skip. ARM64 was cross-built with GNU and verified from both executable files; no ARM64 runtime or Docker benchmark result is claimed."
-      },
       "followup": {
         "owner": "root",
         "sourceHead": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
-        "observedAt": "2026-10-29T13:09:49.634379+00:00",
-        "disposition": "GNU validation complete; contributor review requested",
-        "nextAction": "Open the independent PR after contributor review.",
+        "observedAt": "2026-10-29T13:22:09.757150+00:00",
+        "disposition": "Published as #16669",
+        "nextAction": "Follow checks and maintainer review on #16669.",
         "evidence": [
-          "https://app.buildbuddy.io/invocation/9e9e9e9d-f75a-4621-844b-b444793921df",
           "https://github.com/tamird/gvisor/commit/b9193eed0d34d1ad1aa0a5da5603c82871052e2e"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:16661",
@@ -33476,6 +33489,118 @@
           "https://github.com/google/gvisor/pull/16668",
           "https://github.com/tamird/gvisor/commit/6d92728f18ba35b130ca178de202096adf67f544"
         ]
+      }
+    },
+    {
+      "head": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
+      "ref": "review/static-benchmark-and-test-app",
+      "group": "bazel",
+      "summary": "The benchmark binaries and container test app requested static linking, but the Go rules ignored their C++ feature. With the Go rule’s static setting, the two binaries no longer require a host loader or shared libraries on AMD64 or ARM64. TestRootNotMount now runs on AMD64 instead of skipping.",
+      "evidence": [
+        {
+          "label": "Original GNU ELF imports",
+          "url": "https://app.buildbuddy.io/invocation/45c7ca93-0f44-4845-a115-44800e8f932d"
+        },
+        {
+          "label": "Corrected GNU ELF files",
+          "url": "https://app.buildbuddy.io/invocation/381849e9-7341-4585-abe3-d5cc37180e44"
+        },
+        {
+          "label": "TestRootNotMount executed and passed",
+          "url": "https://app.buildbuddy.io/invocation/44f1f38c-8507-4b6c-b03d-b940ecda6ea1"
+        },
+        {
+          "label": "ARM64 stock GNU binaries",
+          "url": "https://app.buildbuddy.io/invocation/b268e401-b304-41bb-bb41-f4561e02f5c7"
+        },
+        {
+          "label": "ARM64 corrected GNU binaries",
+          "url": "https://app.buildbuddy.io/invocation/9e9e9e9d-f75a-4621-844b-b444793921df"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16669"
+        }
+      ],
+      "id": "pr:16669",
+      "repo": "google/gvisor",
+      "type": "pr",
+      "number": 16669,
+      "title": "Link host-run benchmarks and the container test app statically",
+      "url": "https://github.com/google/gvisor/pull/16669",
+      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
+      "status": "open",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
+        "observedAt": "2026-10-29T13:22:09.757150+00:00",
+        "disposition": "Contributor-approved change published",
+        "nextAction": "Follow checks and maintainer review on #16669.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16669"
+        ]
+      }
+    },
+    {
+      "id": "branch:tcp-partial-gso",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "runtime",
+      "ref": "review/tcp-partial-gso-assertions",
+      "head": "ecae1badc0b76b54f83b691f59f913ff77041e04",
+      "title": "Account for the bytes a TCP software GSO send actually emitted",
+      "summary": "When a link accepts only the first wire packet of an aggregate, TCP accounts for all three as sent. The correction advances send state only over accepted bytes and keeps the remaining packets available for retry.",
+      "url": "https://github.com/tamird/gvisor/commit/ecae1badc0b76b54f83b691f59f913ff77041e04",
+      "refinement": {
+        "before": {
+          "head": "2315c94dd5b268f5329d89c763123c5df8219cc3"
+        },
+        "after": {
+          "head": "ecae1badc0b76b54f83b691f59f913ff77041e04"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Original 1,608 versus 536 bytes",
+          "url": "https://app.buildbuddy.io/invocation/ce9d7cc9-afaf-4dae-86be-593352cfea8a"
+        },
+        {
+          "label": "Five readable wire cases",
+          "url": "https://app.buildbuddy.io/invocation/e5b325cc-3515-4837-b44e-86dcca660d44"
+        },
+        {
+          "label": "Full TCP suite",
+          "url": "https://app.buildbuddy.io/invocation/35127686-effb-48df-b6a5-8226145c0458"
+        },
+        {
+          "label": "Both architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/18a63e32-4632-4061-aa2a-8392e0fe0de9"
+        },
+        {
+          "label": "Assertion-only refinement",
+          "url": "https://github.com/tamird/gvisor/compare/073cc1427aa2125c7f0bd98e3255197e2a16c42e...ecae1badc0b76b54f83b691f59f913ff77041e04"
+        }
+      ],
+      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
+      "status": "Contributor review requested",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ecae1badc0b76b54f83b691f59f913ff77041e04",
+        "observedAt": "2026-10-29T13:22:09.757150+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Submit after contributor review and #16666.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/ecae1badc0b76b54f83b691f59f913ff77041e04"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "ecae1badc0b76b54f83b691f59f913ff77041e04",
+        "url": "https://github.com/tamird/gvisor/commit/ecae1badc0b76b54f83b691f59f913ff77041e04",
+        "title": "Account for the bytes a TCP software GSO send actually emitted",
+        "summary": "When a link accepts only the first wire packet of an aggregate, TCP accounts for all three as sent. The correction advances send state only over accepted bytes and keeps the remaining packets available for retry.",
+        "body": "Five packet cases distinguish an ACK, timeout, checkpoint and a link that accepts nothing. All 42 TCP cases and both Nogo targets passed on the same production code. The final revision changes assertion messages only."
       }
     }
   ],
@@ -36576,6 +36701,12 @@
         "https://github.com/tamird/gvisor/compare/962df4d1a82a86b875d103f342f81fd4f95aefe4...55210b651ecb1c5350d8011c0997669f392f8870",
         "https://github.com/tamird/gvisor/commit/dd0c5f16ad8c7ab0ac5856e3719c48bb2a0cd8cc"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-partial-gso",
+      "to": "pr:16666",
+      "reason": "TCP restores its route before the partial-write cases exercise a checkpoint."
     }
   ],
   "investigations": [
@@ -49541,6 +49672,120 @@
         {
           "label": "Paired six-tool cgo and race runs on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/40848396398"
+        }
+      ]
+    },
+    {
+      "id": "investigation:tcp-issues-and-reviews",
+      "title": "TCP performance reports and independent PR reviews",
+      "status": "active",
+      "owner": "Netstack",
+      "group": "runtime",
+      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
+      "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
+      "nextStep": "Review independent changes against current source, capture the first packet that distinguishes each mechanism, and update the linked records when a new head or reproducer arrives. In particular, test the two latest RACK/TLP proposals against invalid ACKs and partial SACKs.",
+      "findings": [
+        {
+          "text": "Initial census: 510 open PRs inspected by changed path and title, including exports. The networking/performance labels and TCP, retransmission, SACK, RACK, CUBIC and netstack searches yielded 184 distinct candidate issues; many are not TCP defects.",
+          "evidence": [
+            {
+              "label": "Open networking issues",
+              "url": "https://github.com/google/gvisor/issues?q=is%3Aopen+is%3Aissue+label%3A%22area%3A+networking%22"
+            },
+            {
+              "label": "Open TCP PRs by term",
+              "url": "https://github.com/google/gvisor/pulls?q=is%3Apr+is%3Aopen+TCP"
+            }
+          ]
+        },
+        {
+          "text": "A downstream reporter observed that #16081, #15432 or #16495 individually prevented their no-timestamp synthetic stall in the configurations they tried. #16081 preserves RTO recovery across duplicate ACKs; #16495 preserves the boundary specifically after an RTO interrupts SACK recovery. #15432 updates the estimate of packets still in flight, a different mechanism. The production path and kernel settings remain unconfirmed.",
+          "evidence": [
+            {
+              "label": "Downstream runs and configurations",
+              "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6494127902"
+            },
+            {
+              "label": "Timeout recovery",
+              "url": "https://github.com/google/gvisor/pull/16081"
+            },
+            {
+              "label": "RACK loss and flight",
+              "url": "https://github.com/google/gvisor/pull/15432"
+            },
+            {
+              "label": "Interrupted SACK recovery",
+              "url": "https://github.com/google/gvisor/pull/16495"
+            },
+            {
+              "label": "Tailscale reproduction",
+              "url": "https://github.com/tailscale/tailscale/issues/21946"
+            }
+          ]
+        },
+        {
+          "text": "Two independent authors’ timer proposals address different bounds: #15785 adds a multi-packet delay on very short RTT paths; #15972 caps the probe deadline at the retransmission deadline. Review them together under idle, no-ACK and delayed-ACK conditions. The timestamp and new-data probe changes need separate tests for incomplete SACK ranges and invalid ACK numbers.",
+          "evidence": [
+            {
+              "label": "Low-RTT probe floor",
+              "url": "https://github.com/google/gvisor/pull/15785"
+            },
+            {
+              "label": "Probe upper bound",
+              "url": "https://github.com/google/gvisor/pull/15972"
+            },
+            {
+              "label": "Timestamp/SACK delivery",
+              "url": "https://github.com/google/gvisor/pull/16659"
+            },
+            {
+              "label": "New data as loss probe",
+              "url": "https://github.com/google/gvisor/pull/16660"
+            }
+          ]
+        },
+        {
+          "text": "Outside burst loss: #14092/#14101 report excess packets in flight after benign reordering; #14102/#14458 address undoing congestion response after spurious recovery. #15144/#15325 concern receive-buffer pressure, and #14011/#14579 concern forwarding large packets. #15253 is a downstream offload report, not yet established as the same forwarding defect. #16437 reports a 200 ms close/shutdown delay with TCP_CORK, independently of congestion control.",
+          "evidence": [
+            {
+              "label": "Flight after reordering",
+              "url": "https://github.com/google/gvisor/pull/14101"
+            },
+            {
+              "label": "Undo after spurious loss",
+              "url": "https://github.com/google/gvisor/pull/14458"
+            },
+            {
+              "label": "Small-segment receive pressure",
+              "url": "https://github.com/google/gvisor/pull/15325"
+            },
+            {
+              "label": "Forwarding GSO",
+              "url": "https://github.com/google/gvisor/pull/14579"
+            },
+            {
+              "label": "Docker offload report",
+              "url": "https://github.com/google/gvisor/issues/15253"
+            },
+            {
+              "label": "TCP_CORK latency",
+              "url": "https://github.com/google/gvisor/issues/16437"
+            },
+            {
+              "label": "Structural RACK transmission-order work",
+              "url": "https://github.com/google/gvisor/issues/3308"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Reproducible 5/5 Reno stall on the reported synthetic trace",
+          "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6445217353"
+        },
+        {
+          "label": "Separate Tailscale reordering investigation",
+          "url": "https://github.com/tailscale/tailscale/issues/21651"
         }
       ]
     }
