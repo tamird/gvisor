@@ -475,11 +475,6 @@ func (e *SCMSender) beforeSave() {
 	e.destroyLocked()
 }
 
-// Init will do the initialization required without holding other locks.
-func (e *SCMSender) Init() error {
-	return fdnotifier.AddFD(int32(e.fd), e.queue)
-}
-
 // Release implements Sender.Release and Receiver.Release.
 func (e *SCMSender) Release(ctx context.Context) {
 	e.DecRef(func() {
@@ -501,9 +496,8 @@ func (e *SCMSender) Release(ctx context.Context) {
 // NewSCMSender creates a new SCMSender backed by a host fd that
 // was passed through a Unix socket.
 //
-// The caller is responsible for calling Init(). Additionally, Release needs to
-// be called twice because Sender is both a Receiver and
-// Sender.
+// On success, the sender owns hostFD and holds one reference each for the
+// Sender and Receiver. On failure, the caller retains hostFD.
 func NewSCMSender(hostFD int, queue *waiter.Queue, addr string) (*SCMSender, *syserr.Error) {
 	e := SCMSender{
 		HostSender: HostSender{
@@ -513,11 +507,14 @@ func NewSCMSender(hostFD int, queue *waiter.Queue, addr string) (*SCMSender, *sy
 		queue: queue,
 	}
 
-	if err := e.init(); err != nil {
+	if err := e.initFromOptions(); err != nil {
 		return nil, err
 	}
+	if err := fdnotifier.AddFD(int32(hostFD), queue); err != nil {
+		return nil, syserr.FromError(err)
+	}
 
-	// e starts off with a single reference. We need two.
+	e.InitRefs()
 	e.IncRef()
 	return &e, nil
 }

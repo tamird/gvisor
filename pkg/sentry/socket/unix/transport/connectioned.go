@@ -535,7 +535,6 @@ func (e *connectionedEndpoint) getAcceptedEndpointLocked(ctx context.Context) (*
 		unix.Close(nfd)
 		return nil, serr
 	}
-	scme.Init()
 	return NewExternal(e.stype, e.idGenerator, q, scme, scme).(*connectionedEndpoint), nil
 
 }
