@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T21:40:26.765571+00:00",
+    "updatedAt": "2026-10-29T21:52:21.505470+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34425,8 +34425,8 @@
       "title": "Keep the first TCP zero-window probe on its deadline",
       "url": "https://github.com/tamird/gvisor/commit/51b6df1b5",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T21:40:26.765571+00:00",
+      "status": "Published as #16706",
+      "updatedAt": "2026-10-29T21:52:21.505470+00:00",
       "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
       "refinement": {
         "before": {
@@ -34437,16 +34437,54 @@
           "head": "51b6df1b578a14e5305eda1fac372ca80e400972"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "51b6df1b578a14e5305eda1fac372ca80e400972",
-        "baseHead": "6e83e25594f96341d6115cb8cfc269168df7adfb",
-        "url": "https://github.com/tamird/gvisor/commit/51b6df1b5",
-        "title": "Review the first zero-window probe deadline",
-        "body": "The existing TestZeroWindowSend now writes one byte and writes two more half an RTO later. Stock emitted no probe at the original deadline. The correction sends one then and delivers all three bytes after the peer reopens its window. The case and both owning analyzers passed on AMD64. Please review the change for upstream submission.",
-        "requestedAt": "2026-10-29T21:40:26.765571+00:00"
-      },
+      "evidence": [
+        {
+          "label": "Reviewed proposal opened upstream as #16706",
+          "url": "https://github.com/google/gvisor/pull/16706"
+        },
+        {
+          "label": "Stock: no probe at the original deadline",
+          "url": "https://app.buildbuddy.io/invocation/d0cb0097-13f1-46ec-9118-f74a6f68b13e"
+        },
+        {
+          "label": "Correction: probe on deadline, all bytes delivered after reopen",
+          "url": "https://app.buildbuddy.io/invocation/ec19c35b-dc31-4174-b515-5505c40058be"
+        },
+        {
+          "label": "Both owning AMD64 analyzers",
+          "url": "https://app.buildbuddy.io/invocation/718a7aa1-2317-47d8-802c-e02d2057a9b1"
+        },
+        {
+          "label": "Original bundled verdicts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40958196273"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "tcp_recovery",
+        "sourceHead": "51b6df1b578a14e5305eda1fac372ca80e400972",
+        "observedAt": "2026-10-29T21:52:21.505470+00:00",
+        "disposition": "Approved and delivered as #16706",
+        "nextAction": "Follow review, checks and import on #16706.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16706",
+          "https://github.com/tamird/gvisor/commit/51b6df1b5"
+        ]
+      }
+    },
+    {
+      "id": "pr:16706",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16706,
+      "group": "runtime",
+      "ref": "research/tcp-persist-first-probe",
+      "head": "51b6df1b578a14e5305eda1fac372ca80e400972",
+      "title": "Keep the first TCP zero-window probe on its deadline",
+      "url": "https://github.com/google/gvisor/pull/16706",
+      "status": "open",
+      "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
+      "updatedAt": "2026-10-29T21:52:21.505470+00:00",
       "evidence": [
         {
           "label": "Stock: no probe at the original deadline",
@@ -34464,7 +34502,16 @@
           "label": "Original bundled verdicts",
           "url": "https://github.com/tamird/gvisor/actions/runs/40958196273"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "base": "8f9e31eddd9c72048f13bf807f333ec6e33a64f4",
+          "head": "6e83e25594f96341d6115cb8cfc269168df7adfb"
+        },
+        "after": {
+          "head": "51b6df1b578a14e5305eda1fac372ca80e400972"
+        }
+      }
     }
   ],
   "edges": [
