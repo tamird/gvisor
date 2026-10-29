@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T21:26:56.985913+00:00",
+    "updatedAt": "2026-10-29T21:40:26.765571+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34413,6 +34413,56 @@
           "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
           "outcome": "approved",
           "at": "2026-10-29T20:38:34.195870+00:00"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcp-persist-first-probe",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-persist-first-probe",
+      "head": "51b6df1b578a14e5305eda1fac372ca80e400972",
+      "title": "Keep the first TCP zero-window probe on its deadline",
+      "url": "https://github.com/tamird/gvisor/commit/51b6df1b5",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T21:40:26.765571+00:00",
+      "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
+      "refinement": {
+        "before": {
+          "base": "8f9e31eddd9c72048f13bf807f333ec6e33a64f4",
+          "head": "6e83e25594f96341d6115cb8cfc269168df7adfb"
+        },
+        "after": {
+          "head": "51b6df1b578a14e5305eda1fac372ca80e400972"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "51b6df1b578a14e5305eda1fac372ca80e400972",
+        "baseHead": "6e83e25594f96341d6115cb8cfc269168df7adfb",
+        "url": "https://github.com/tamird/gvisor/commit/51b6df1b5",
+        "title": "Review the first zero-window probe deadline",
+        "body": "The existing TestZeroWindowSend now writes one byte and writes two more half an RTO later. Stock emitted no probe at the original deadline. The correction sends one then and delivers all three bytes after the peer reopens its window. The case and both owning analyzers passed on AMD64. Please review the change for upstream submission.",
+        "requestedAt": "2026-10-29T21:40:26.765571+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Stock: no probe at the original deadline",
+          "url": "https://app.buildbuddy.io/invocation/d0cb0097-13f1-46ec-9118-f74a6f68b13e"
+        },
+        {
+          "label": "Correction: probe on deadline, all bytes delivered after reopen",
+          "url": "https://app.buildbuddy.io/invocation/ec19c35b-dc31-4174-b515-5505c40058be"
+        },
+        {
+          "label": "Both owning AMD64 analyzers",
+          "url": "https://app.buildbuddy.io/invocation/718a7aa1-2317-47d8-802c-e02d2057a9b1"
+        },
+        {
+          "label": "Original bundled verdicts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40958196273"
         }
       ]
     }
