@@ -18,6 +18,7 @@ def _sources_impl(ctx):
     pending = [(ctx.path(ctx.attr.root).dirname, "")]
     paths = []
     groups = []
+
     # A package's glob cannot see a subpackage. Project only the selected
     # inputs, in their original directories, with generated package metadata.
     for _ in range(4096):  # Maximum Linux path length in bytes.
@@ -45,6 +46,7 @@ def _sources_impl(ctx):
                     paths.append(child)
             if names:
                 pkg = ("src/" + relative).removesuffix("/")
+
                 # BUILD is a lint input; BUILD.bazel takes precedence for analysis.
                 ctx.file(pkg + "/BUILD.bazel", 'filegroup(name = "inputs", srcs = %s, visibility = ["//visibility:public"])\n' % repr(sorted(names)))
                 groups.append("//" + pkg + ":inputs")

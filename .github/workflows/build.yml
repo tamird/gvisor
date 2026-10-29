@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: source, ref: caf3c35407f6dd2015ac8b6405ce15ff83013cae, persist-credentials: false}
+        with: {path: source, ref: 4aa1057417d93e929c9955c7878bb3a509d6e267, persist-credentials: false}
       - name: Check the unchanged supplier on two empty workers
         working-directory: source
         env:

@@ -11,8 +11,8 @@ import sys
 from urllib.parse import unquote, urlparse
 from xml.etree import ElementTree
 
-SOURCE = "caf3c35407f6dd2015ac8b6405ce15ff83013cae"
-TREE = "9585406f4a7f9ba4f3588bc77aeeeac75770c490"
+SOURCE = "4aa1057417d93e929c9955c7878bb3a509d6e267"
+TREE = "0cd4aa8b9131fed6934e86f9bff5072dde20ad27"
 TOOL = {"amd64": "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7", "arm64": "947bf6700d708026b2057b09bea09abbc3cafc15d9ecea35bb3885c4b09ccd04"}
 EMPTY = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
 CASE = Path("pkg/.buildifier-declared-new")
@@ -79,6 +79,8 @@ def phase(name, arch, files, op="build", negative=False):
     row["build_finish"] = [x["finished"].get("exitCode") for x in events if "finished" in x]
     row["diagnostic"] = [line for line in message.splitlines() if line.startswith(str(NEW)) and len(line) < 400]
     row["formatting"] = [m for m in message.splitlines() if re.fullmatch(r'[A-Za-z0-9_/ .+-]+ # reformat', m)]
+    row["lint_locations"] = sorted({(m.group(1), m.group(2), m.group(3)) for line in message.splitlines()
+                                    if (m := re.match(r"^(.+?):([0-9]+): ([A-Za-z0-9_-]+):", line)) and m.group(1) in files})
     errors = [x for x in message.splitlines() if x.startswith("ERROR:")]
     row["error_count"] = len(errors)
     row["error_digest"] = sha("\n".join(errors).encode())
