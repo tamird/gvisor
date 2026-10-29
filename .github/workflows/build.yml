@@ -1,35 +1,105 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Qualify the Nogo and licensecheck error cases
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/nogo-license-errors-oct29'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Run the two focused upstream test amendments
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970"
+        test "$(git rev-parse HEAD^2)" = "eff87694165c245ffac3999d0faf160d6713ba67"
+        test "$(git rev-parse HEAD^3)" = "63e9f5dadc33c98738456ec5ff3385639256ede3"
+        test "$(git rev-parse HEAD^4)" = "812b2c65b5997d91ec702ece254ed0e8ff73ad6e"
+        test "$(git diff --name-only 63e9f5dadc33c98738456ec5ff3385639256ede3 ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970)" = "tools/nogo/check/check_test.go"
+        test "$(git diff --name-only 812b2c65b5997d91ec702ece254ed0e8ff73ad6e eff87694165c245ffac3999d0faf160d6713ba67)" = "tools/licensecheck/licensecheck_test.go"
+        mkdir -p "$RUNNER_TEMP/checker"
+        for file in qualify.sh unit_matrix.py focused_report.py focused_preflight.py; do
+          cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
+        done
+        python3 -B "$RUNNER_TEMP/checker/focused_preflight.py"
+        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/focused"
+        platform=$RUNNER_TEMP/focused_platform
+        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/focused.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=focused_platform=$platform" \
+            'build --host_platform=@focused_platform//:ubuntu' \
+            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/focused-bin"
+        cat > "$RUNNER_TEMP/focused-bin/bazel" <<'SH'
+        #!/bin/sh
+        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/focused-bin/bazel"
+        export PATH="$RUNNER_TEMP/focused-bin:$PATH"
+        overall=0
+        for mode in nogo license; do
+          args=()
+          case "$mode" in
+            nogo) source=ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970; owner=//tools/nogo/check:check_test; filter='^TestExportDataInputs$' ;;
+            license) source=eff87694165c245ffac3999d0faf160d6713ba67; owner=//tools/licensecheck:licensecheck_test; filter='^TestParseGitRefs$' ;;
+          esac
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          mkdir -p test/rbe "$RUNNER_TEMP/focused/$mode"
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          out="$RUNNER_TEMP/focused/$mode"
+          code=0
+          if [[ -n "$filter" ]]; then args+=("--test-filter=$filter"); fi
+          bash test/rbe/qualify.sh --arch=amd64 "--test-target=$owner" "${args[@]}"             "--bazel-option=--build_event_json_file=$out/events.jsonl"             --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no             --bazel-option=--remote_download_outputs=toplevel test || code=$?
+          test -z "$(git status --porcelain --untracked-files=no)"
+          python3 -B "$RUNNER_TEMP/checker/focused_report.py" "$out" "$mode" "$source" "$owner" "$code" || overall=1
+        done
+        exit "$overall"
+    - name: Save only the typed results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: focused-error-cases
+        path: ${{ runner.temp }}/focused/*/result.json
+        if-no-files-found: error
