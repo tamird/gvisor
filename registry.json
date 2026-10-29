@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T07:00:56.448261+00:00",
+    "updatedAt": "2026-10-29T07:27:09.106086+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32385,7 +32385,7 @@
       "url": "https://github.com/tamird/gvisor/commit/5a22e6beaa402db7b9e182f9e72b321f46205504",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T05:12:30.144224+00:00",
+      "updatedAt": "2026-10-29T07:27:09.106086+00:00",
       "summary": "Stock CUBIC sent 17 packets after dense one-segment writes and 29 after spaced writes. The correction sends 14 in both cases, matching its idle control. In four Linux flows, sparse writes likewise did not grow the window.",
       "evidence": [
         {
@@ -32403,6 +32403,14 @@
         {
           "label": "Original Linux packet capture verified",
           "url": "https://github.com/tamird/gvisor/actions/runs/40820918000"
+        },
+        {
+          "label": "Unmodified sender: four independent controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40834197857"
+        },
+        {
+          "label": "Window-use change: four corrected traces",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40832781696"
         }
       ],
       "contributorReview": {
@@ -32412,7 +32420,7 @@
         "url": "https://github.com/tamird/gvisor/commit/5a22e6beaa402db7b9e182f9e72b321f46205504",
         "title": "Grow the TCP congestion window only when the sender uses it",
         "summary": "Stock CUBIC sent 17 packets after dense one-segment writes and 29 after spaced writes. The correction sends 14 in both cases, matching its idle control. In four Linux flows, sparse writes likewise did not grow the window.",
-        "body": "Independent PR; #15604 has landed. The measurement is burst size; Linux and gVisor used different segment sizes and loss setups."
+        "body": "Independent PR; #15604 has landed. The measurement is burst size; Linux and gVisor used different segment sizes and loss setups. The same patch fixes CUBIC\u2019s growth across a 30-second idle period before and after the first complete congestion-avoidance flight. Both Reno controls preserved their flight sizes."
       }
     },
     {
@@ -35607,7 +35615,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-29T07:00:56.448261+00:00",
+      "updatedAt": "2026-10-29T07:27:09.106086+00:00",
       "summary": "The reporter\u2019s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -37219,9 +37227,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40832451672"
             }
           ]
+        },
+        {
+          "text": "In four independent packet traces, thirty seconds idle inflated stock CUBIC\u2019s fifth backlogged flight from 9 to 34 segments before its first full congestion-avoidance flight, and from 10 to 40 after it. The pending window-use change preserved both five-flight sequences with or without the idle interval: [7, 8, 8, 9, 9] and [8, 8, 9, 9, 10]. Reno was unchanged in both controls. The narrower experiment that added an idle timestamp to every sender is unnecessary.",
+          "evidence": [
+            {
+              "label": "Unmodified sender: four independent controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40834197857"
+            },
+            {
+              "label": "Window-use change: four corrected traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40832781696"
+            }
+          ]
         }
       ],
-      "nextStep": "Run the same primed and unprimed cases against the pending window-use fix. Keep the idle-only experiment separate from contributor review unless it fixes a remaining defect. Recheck combined SACK recovery if a flight-count prerequisite changes.",
+      "nextStep": "Investigate established-socket congestion-control selection after real loss, including what credit survives a change of algorithm. If #15634, #14101 or #15432 lands first, repeat combined SACK recovery coverage because those changes affect the flight count used by the correction.",
       "evidence": [
         {
           "label": "Sustained shared FIFO: eight schedules repeated twice per source",
@@ -38225,7 +38246,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T07:00:56.448261+00:00",
+      "updatedAt": "2026-10-29T07:27:09.106086+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -40698,9 +40719,22 @@
               "url": "https://app.buildbuddy.io/invocation/5c5ce0f9-0126-4d25-8ac0-327317406dc8"
             }
           ]
+        },
+        {
+          "text": "Storing callback dependencies in a more compact FIFO saved 260,632 bytes per cold Nginx restore across eight paired allocation samples, but used 12 more allocations. Across 16 paired timings, first verified kernel load was 6.386 ms faster by median difference; only 9 of 16 pairs improved and the differences ranged from 182 ms faster to 428 ms slower. The hook-heavy fixture grew from 31,654 to 33,355 B/op and 6 to 7 allocs/op. There is no established startup improvement, and this is not proposed for the rewrite. The wrapper failed because ordinary Go benchmark output has no individual PASS record: each original benchmark log contains all 32 iterations and a successful exit; the unit-test records passed.",
+          "evidence": [
+            {
+              "label": "Native Nginx startup and callback measurements",
+              "url": "https://app.buildbuddy.io/invocation/d10c8bd7-f562-4dc8-912e-4a44abeea5ea"
+            },
+            {
+              "label": "Original wrapper failure and retained evidence",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40832303100"
+            }
+          ]
         }
       ],
-      "nextStep": "Evaluate compact dependency edges within the existing FIFO, preserving ordering during hooks and clearing pooled pointers. Compare full restore startup alongside callback-heavy controls. Parth leads the graph rewrite.",
+      "nextStep": "Support Parth\u2019s graph decoder by testing whether a deferred restore hook can change a value already copied into a map. Use the benchmark lane separately from unit tests for future measurements.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
