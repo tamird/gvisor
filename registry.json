@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T23:58:18.281575+00:00",
+    "updatedAt": "2026-10-29T23:58:41.731839+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50119,7 +50119,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T23:58:18.281575+00:00",
+      "updatedAt": "2026-10-29T23:58:41.731839+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -50253,7 +50253,7 @@
             },
             {
               "label": "Unstamped metadata action in rules_python 2.4.5",
-              "url": "https://github.com/bazel-contrib/rules_python/blob/1a96d8178/python/private/py_executable.bzl#L1632"
+              "url": "https://github.com/bazel-contrib/rules_python/blob/1a96d8178/python/private/py_executable.bzl#L1639-L1652"
             },
             {
               "label": "Real writers: input-tree diagnostics",
@@ -50845,7 +50845,7 @@
         },
         {
           "label": "Unstamped metadata action in rules_python 2.4.5",
-          "url": "https://github.com/bazel-contrib/rules_python/blob/1a96d8178/python/private/py_executable.bzl#L1632"
+          "url": "https://github.com/bazel-contrib/rules_python/blob/1a96d8178/python/private/py_executable.bzl#L1639-L1652"
         },
         {
           "label": "Real writers: input-tree diagnostics",
