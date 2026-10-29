@@ -20,6 +20,26 @@ OLD = "2000-01-01T00:00:00+00:00"
 LATER = "2000-01-02T00:00:00+00:00"
 
 
+class FeedbackSweepTest(unittest.TestCase):
+    def test_old_commit_force_push_and_merge_stay_queued_until_reviewed(self) -> None:
+        review = {"id": "investigation:project-feedback", "status": "active", "lastReviewedAt": OLD}
+        registry = {"investigations": [review], "nodes": []}
+        old = {"url": "pr", "head": "old", "status": "open", "headCommittedAt": OLD}
+        pushed = {**old, "head": "even-older"}
+        merged = {**pushed, "status": "merged", "mergedAt": LATER}
+        previous = {"checkedAt": OLD, "prs": [old]}
+        report = updater.feedback_sweep(registry, [pushed], previous, LATER)
+        self.assertEqual(report, {"lastReviewed": OLD, "dailyReviewDue": True,
+                                  "changedWork": {"pr": {"head": "even-older", "status": "open"}}})
+        previous = {"checkedAt": LATER, "prs": [pushed], "projectFeedbackReview": report}
+        self.assertEqual(updater.feedback_sweep(registry, [pushed], previous, LATER), report)
+        self.assertEqual(updater.feedback_sweep(registry, [merged], previous, LATER)["changedWork"]["pr"]["status"], "merged")
+        review["lastReviewedAt"] = LATER
+        previous["prs"] = [merged]
+        self.assertEqual(updater.feedback_sweep(registry, [merged], previous, LATER),
+                         {"lastReviewed": LATER, "dailyReviewDue": False, "changedWork": {}})
+
+
 def raw_pr(number: int, state: str = "OPEN", *, author: str = "tamird", head: int | None = None) -> dict:
     oid = f"{head if head is not None else number:040x}"
     return {

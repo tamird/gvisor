@@ -924,6 +924,31 @@ def issue_discussions(issues: dict, previous: dict):
             yield {"issue": identity, "gap": issue["githubURL"]}
 
 
+def feedback_sweep(registry: dict, prs: list[dict], previous: dict, checked_at: str) -> dict | None:
+    """Keep changed work in the owner's queue until the next substantive review."""
+    review = next((item for item in registry.get("investigations", [])
+                   if item["id"] == "investigation:project-feedback" and item["status"] == "active"), None)
+    if review is None:
+        return None
+    cutoff = review["lastReviewedAt"]
+    reviewed = datetime.fromisoformat(cutoff)
+    prior = previous.get("projectFeedbackReview", {})
+    changes = dict(prior["changedWork"]) if prior.get("lastReviewed") == cutoff else {}
+    old = {pr["url"]: (pr["head"], pr["status"])
+           for key in ("prs", "reviewPRs") for pr in previous.get(key, [])}
+    for pr in prs:
+        # A force-push can introduce an old commit. A merge need not change the head at all.
+        times = (pr.get(k) for k in ("createdAt", "headIntroducedAt", "headCommittedAt", "mergedAt", "closedAt"))
+        if (old and old.get(pr["url"]) != (pr["head"], pr["status"])
+                or any(t and datetime.fromisoformat(t.replace("Z", "+00:00")) > reviewed for t in times)):
+            changes[pr["url"]] = {"head": pr["head"], "status": pr["status"]}
+    for node in registry["nodes"]:
+        if node["type"] == "branch" and node.get("head") and datetime.fromisoformat(node["updatedAt"]) > reviewed:
+            changes[node["url"]] = {"head": node["head"], "status": node["status"]}
+    return {"lastReviewed": cutoff, "dailyReviewDue": datetime.fromisoformat(checked_at).date() > reviewed.date(),
+            "changedWork": changes}
+
+
 def main() -> None:
     policies = repository_policies(REGISTRY)
     output = ROOT / "github-status.json"
@@ -975,6 +1000,9 @@ def main() -> None:
                            "nestedPageSize": 100, "maxOpenPRs": 200, "repositories": inventories,
                            **{key: sum(item[key] for item in inventories.values() if item[key] is not None)
                               for key in ("openInventoryTotal", "retainedSources", "retainedImports")}}}
+    if sweep := feedback_sweep(REGISTRY, [*prs, *review_prs], previous, checked_at):
+        snapshot["projectFeedbackReview"] = sweep
+        print(json.dumps({"projectFeedbackReview": sweep}))
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
     # Run the same validator used by the browser before publishing any bytes.

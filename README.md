@@ -83,6 +83,14 @@ with a repository (`repo`), PR `numbers`, an `owner`, and `reviewers`. A new
 head or substantive reply then appears in the refresh workflow's review
 report without putting the other author's PR in the contributor delivery queue.
 
+The project feedback investigation belongs to the agent. On refresh,
+`projectFeedbackReview` lists newly published or landed work since the last
+substantive sweep, including fork proposals and observed force-pushes. The
+next UTC day makes a full pass due even if the list is empty. The collector
+only assembles leads; the owner reads the actual diffs, checks older work
+when the guidance changes, and then advances the investigation's
+`lastReviewedAt`. No contributor decision or maintainer comment is generated.
+
 ### GitHub attribute snapshot
 
 Run this from the Pages checkout with the existing authenticated GitHub CLI:

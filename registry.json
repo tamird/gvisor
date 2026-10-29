@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T13:59:21.762754+00:00",
+    "updatedAt": "2026-10-29T14:17:15.982925+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1333,12 +1333,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": null,
-      "updatedAt": "2026-10-29T07:51:58.874846+00:00",
+      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
       "summary": "The rebased socket fixture enables host Unix sockets in both upstream inode-number modes. All four package owners ran remotely; both socket cases pass. No maintainer approval is recorded.",
       "followup": {
-        "disposition": "Rebase published; waiting for maintainer review",
+        "disposition": "Checking a fork amendment",
         "owner": "root",
-        "nextAction": "Answer maintainer feedback or an actual public check failure on the new head.",
+        "nextAction": "Verify the existing UDS fixture and its analyzer on the proposed head; review the two-line change before publishing.",
         "sourceHead": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
@@ -1347,7 +1347,7 @@
           "https://github.com/tamird/gvisor/actions/runs/40837380180",
           "https://app.buildbuddy.io/invocation/44e4fb11-e6bb-42cc-adfe-b4bd0395d8c8"
         ],
-        "observedAt": "2026-10-29T07:51:58.874846+00:00"
+        "observedAt": "2026-10-29T14:17:15.982925+00:00"
       },
       "head": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
       "evidence": [
@@ -1366,14 +1366,18 @@
         {
           "label": "52 passed, two skipped; both inode modes passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/40837380180"
+        },
+        {
+          "label": "Temp-directory amendment",
+          "url": "https://github.com/tamird/gvisor/commit/412f99aaeae95242664e2612c1ed8d41fdf68319"
         }
       ],
       "refinement": {
         "before": {
-          "head": "145ad61500f0fee79a135922a4d8ae789a69984c"
+          "head": "75ffc8b5c76b03639ea7502f305d5708663a29ea"
         },
         "after": {
-          "head": "75ffc8b5c76b03639ea7502f305d5708663a29ea"
+          "head": "412f99aaeae95242664e2612c1ed8d41fdf68319"
         }
       }
     },
@@ -24739,15 +24743,17 @@
       "url": "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-29T13:42:17.573597+00:00",
+      "updatedAt": "2026-10-29T14:13:23.833788+00:00",
       "summary": "On the same wire histories the corrected estimator repairs all three lost 496-byte segments, caps new data at two when three of five slots are occupied, and admits seven before the probe ACK. The predecessor repaired all three but sent an extra packet. The #15634 parent repaired only two. Both native architectures ran complete TCP/RACK suites and Nogo: 71 passed, one pre-existing skip each.",
       "followup": {
         "owner": "root",
         "sourceHead": "7859018167653b4fb3f762878cba599c4d1ec5c7",
-        "observedAt": "2026-10-29T13:42:17.573597+00:00",
-        "disposition": "Both native architecture suites passed; compare the open author’s implementation",
-        "nextAction": "Compare the wire behavior of open #15432 with this change; coordinate the overlapping loss-accounting work before requesting upstream publication.",
+        "observedAt": "2026-10-29T14:13:23.833788+00:00",
+        "disposition": "Coordinate with pending #15432; no duplicate PR",
+        "nextAction": "Recommend the missing before-ACK probe charge on #15432 or as an agreed follow-up. Keep the fork estimator comparative, not a competing PR. Both #15432 and the fork already repair all three segments and send precisely two after the selective ACK.",
         "evidence": [
+          "https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef",
+          "https://github.com/google/gvisor/issues/16670",
           "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7",
           "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...7859018167653b4fb3f762878cba599c4d1ec5c7",
           "https://github.com/tamird/gvisor/compare/83ab4392c284f6804ef13dc0efe5291d688bdca5...7859018167653b4fb3f762878cba599c4d1ec5c7",
@@ -24765,6 +24771,14 @@
         "condition": "Qualified 7859018167 is directly atop 83ab4392c2 and #15634 b909bc689. Older contributor approval does not cover this correction; #15432 is an alternative to 83ab, not a prerequisite."
       },
       "evidence": [
+        {
+          "label": "Exact open #15432: three repairs and post-SACK cap pass; before SACK sends 8 where 7 fit",
+          "url": "https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef"
+        },
+        {
+          "label": "Living TCP review index",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        },
         {
           "label": "Corrected, signed fork head",
           "url": "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7"
@@ -32637,13 +32651,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/bazel-cpplint-bcr-nostamp",
-      "head": "3166a17cb14171cd23b30d826eb5d5b299385ac8",
+      "head": "b4720d1975646e4d202ba3f59b7b835cedcdee3b",
       "title": "Run cpplint once over the repository’s tracked C++ sources",
-      "url": "https://github.com/tamird/gvisor/commit/3166a17cb14171cd23b30d826eb5d5b299385ac8",
+      "url": "https://github.com/tamird/gvisor/commit/b4720d1975646e4d202ba3f59b7b835cedcdee3b",
       "group": "analysis",
-      "summary": "Run the BCR checker once on the tracked C++ sources. No package BUILD file or per-directory check needs updating.",
-      "updatedAt": "2026-10-29T13:29:38.654210+00:00",
-      "status": "Agent work",
+      "summary": "One declared action checks the repository, including new packages and dotfiles, with the selected Python and cpplint. The action ran from scratch; the optional bazel test wrapper uses Bash.",
+      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
+      "status": "Contributor review requested",
       "evidence": [
         {
           "label": "All 485 tracked files",
@@ -32656,25 +32670,45 @@
         {
           "label": "Package-local configuration",
           "url": "https://app.buildbuddy.io/invocation/6abfd96b-a698-4128-bea2-c6b51991064a"
+        },
+        {
+          "label": "485 files from scratch",
+          "url": "https://app.buildbuddy.io/invocation/a98b6745-cb67-4e80-942a-1b9d286a60d3"
+        },
+        {
+          "label": "Dotfile failure",
+          "url": "https://app.buildbuddy.io/invocation/bcadcb84-8dd6-47d2-aefe-0032a11c625e"
+        },
+        {
+          "label": "Local config",
+          "url": "https://app.buildbuddy.io/invocation/3b77576e-6621-4832-b662-b40ed3e4d987"
         }
       ],
       "refinement": {
         "before": {
-          "head": "d463cc2d90dfa1cb04956016051ba868af187fd4"
+          "head": "3166a17cb14171cd23b30d826eb5d5b299385ac8"
         },
         "after": {
-          "head": "3166a17cb14171cd23b30d826eb5d5b299385ac8"
+          "head": "b4720d1975646e4d202ba3f59b7b835cedcdee3b"
         }
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "3166a17cb14171cd23b30d826eb5d5b299385ac8",
-        "observedAt": "2026-10-29T13:29:38.654210+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Replace the host lint.sh invocation with one Bazel test with declared source and configuration inputs. Verify it without a host shell or Git, including a new package.",
+        "sourceHead": "b4720d1975646e4d202ba3f59b7b835cedcdee3b",
+        "observedAt": "2026-10-29T14:17:15.982925+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the single repository check. Use bazel build //:cpplint on scratch; bazel test uses the standard Bash test wrapper.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3166a17cb14171cd23b30d826eb5d5b299385ac8"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b4720d1975646e4d202ba3f59b7b835cedcdee3b",
+        "url": "https://github.com/tamird/gvisor/commit/b4720d1975646e4d202ba3f59b7b835cedcdee3b",
+        "title": "Run cpplint once over the repository’s tracked C++ sources",
+        "summary": "One declared action checks the repository, including new packages and dotfiles, with the selected Python and cpplint. The action ran from scratch; the optional bazel test wrapper uses Bash."
       }
     },
     {
@@ -32846,13 +32880,13 @@
         }
       ],
       "status": "Contributor approval retained; waiting for prerequisites",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "observedAt": "2026-10-29T14:17:15.982925+00:00",
         "sourceHead": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
-        "disposition": "Contributor approval retained; waiting for prerequisites",
-        "nextAction": "Open after clang-format, clang-tidy and #15114 land. Retain contributor approval for the reviewed change.",
+        "disposition": "Contributor approved the existing revision; newer lint guidance applies",
+        "nextAction": "Reconcile the remaining shell-driven file selection with the shared declared input list before opening after the prerequisites. Preserve the existing approval for the unchanged portion.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
         ]
@@ -33219,13 +33253,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "observedAt": "2026-10-29T14:17:15.982925+00:00",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow maintainer review, checks and import on #16663.",
+        "disposition": "Preparing an amendment",
+        "nextAction": "Keep the registered Buildifier binary and replace shell-driven file selection/diff with a declared repository check. The PR is not approved.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299"
@@ -33596,6 +33630,68 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ecae1badc0b76b54f83b691f59f913ff77041e04"
         ]
+      }
+    },
+    {
+      "id": "branch:tcp-cork-flush-before-fin",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/tcp-cork-flush-before-fin",
+      "head": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
+      "title": "Flush corked TCP data before a queued FIN",
+      "url": "https://github.com/tamird/gvisor/commit/abf07439013a8d09fba58d8325ff2e00340e8b7f",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-29T14:13:23.833788+00:00",
+      "summary": "On stock, closing a corked socket or shutting down its write side held a 14-byte write and FIN for 200 ms. Explicit uncork sent both immediately. With the change all three cases send at virtual time zero. Native Linux independently delivered the complete write and EOF promptly.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
+        "observedAt": "2026-10-29T14:13:23.833788+00:00",
+        "disposition": "Ready for contributor decision",
+        "nextAction": "Review the standalone fork commit and wrapped PR description. No prerequisite beyond its master parent; references issue #16437. Do not open without contributor approval.",
+        "evidence": [
+          "https://github.com/google/gvisor/issues/16437",
+          "https://app.buildbuddy.io/invocation/0cd69d79-fdee-44fc-99ea-0bb3cd55fcf8",
+          "https://app.buildbuddy.io/invocation/11f13935-3275-49b4-9600-f8c19332135a",
+          "https://app.buildbuddy.io/invocation/ea18ab19-9ebf-4670-ab86-db9177aba7ba",
+          "https://app.buildbuddy.io/invocation/f9f8e527-9b69-4199-96f4-4c0bd840440f",
+          "https://github.com/google/gvisor/issues/16670"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Reported cork timeout on close or SHUT_WR",
+          "url": "https://github.com/google/gvisor/issues/16437"
+        },
+        {
+          "label": "Close and write shutdown each waited 200 ms; explicit uncork did not",
+          "url": "https://app.buildbuddy.io/invocation/0cd69d79-fdee-44fc-99ea-0bb3cd55fcf8"
+        },
+        {
+          "label": "Same traces, all three at virtual time zero",
+          "url": "https://app.buildbuddy.io/invocation/11f13935-3275-49b4-9600-f8c19332135a"
+        },
+        {
+          "label": "Linux loopback: 14 bytes and EOF after close/SHUT_WR/explicit uncork",
+          "url": "https://app.buildbuddy.io/invocation/ea18ab19-9ebf-4670-ab86-db9177aba7ba"
+        },
+        {
+          "label": "Uncached final contributor branch and standalone wire regression",
+          "url": "https://app.buildbuddy.io/invocation/f9f8e527-9b69-4199-96f4-4c0bd840440f"
+        },
+        {
+          "label": "Living TCP review index",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
+        "url": "https://github.com/tamird/gvisor/commit/abf07439013a8d09fba58d8325ff2e00340e8b7f",
+        "title": "Flush corked TCP data before a queued FIN",
+        "summary": "On stock, closing a corked socket or shutting down its write side held a 14-byte write and FIN for 200 ms. Explicit uncork sent both immediately. With the change all three cases send at virtual time zero. Native Linux independently delivered the complete write and EOF promptly."
       }
     }
   ],
@@ -49913,6 +50009,54 @@
           "tamird"
         ]
       }
+    },
+    {
+      "id": "investigation:project-feedback",
+      "title": "Reconcile earlier proposals with current review guidance",
+      "status": "active",
+      "owner": "Codex",
+      "updatedAt": "2026-10-29T14:17:15.982925+00:00",
+      "lastReviewedAt": "2026-10-29T14:17:15.982925+00:00",
+      "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
+      "findings": [
+        {
+          "text": "The first pass covered all 102 open gVisor PR heads, plus 54 other available proposal heads in the gVisor checkout. A LisaFS fixture conflated an unset environment variable with an explicitly empty one. Buildifier, cpplint, clang-format and codespell need to distinguish declared checks from host-shell selection.",
+          "evidence": [
+            {
+              "label": "LisaFS proposal",
+              "url": "https://github.com/tamird/gvisor/commit/412f99aaeae95242664e2612c1ed8d41fdf68319"
+            },
+            {
+              "label": "Buildifier PR",
+              "url": "https://github.com/google/gvisor/pull/16663"
+            },
+            {
+              "label": "cpplint proposal",
+              "url": "https://github.com/tamird/gvisor/commit/b4720d1975646e4d202ba3f59b7b835cedcdee3b"
+            }
+          ]
+        },
+        {
+          "text": "Go import grouping landed in #15868. The check on master still uses tools/lint.sh and Git to select files. Prepare a separate native check on the same inventory as the other linters; retain the generator golden-file exception and explicit write mode.",
+          "evidence": [
+            {
+              "label": "Landed import enforcement",
+              "url": "https://github.com/google/gvisor/commit/727417a0ce123a7f06cb4dfefce4e6a52aaf7523"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Owners pick up changes as guidance arrives and check the full queue once each UTC day while the goal is active. Pending changes can be amended; imported or merged changes get a follow-up when useful. Only advance the review date after checking evidence.",
+      "evidence": [
+        {
+          "label": "TCP review map",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "State design",
+          "url": "https://github.com/google/gvisor/issues/16216"
+        }
+      ]
     }
   ]
 }
