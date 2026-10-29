@@ -1054,6 +1054,10 @@ func (s *sender) sendZeroWindowProbe() {
 
 // +checklocks:s.ep.mu
 func (s *sender) enableZeroWindowProbing() {
+	// Writing more data to a closed window must not postpone the probe.
+	if s.zeroWindowProbing && s.resendTimer.enabled() {
+		return
+	}
 	s.zeroWindowProbing = true
 	// We piggyback the probing on the retransmit timer with the
 	// current retranmission interval, as we may start probing while
