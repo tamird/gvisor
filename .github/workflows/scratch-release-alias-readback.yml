@@ -1,0 +1,98 @@
+name: Reconcile the original release alias
+on:
+  push:
+    branches: [qualification/scratch-release-alias-readback]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  alias:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ORIGINAL: dc905d2e049bdd6f3a5da40d9fba233b2a2aecee
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Retain the original verdict and hydrate its exact analysis inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP"/{old,row,out}
+          gh run download 40811831714 --repo tamird/gvisor --name qualification-row-amd64-remote-build-attempt-1 --dir "$RUNNER_TEMP/old"
+          mapfile -t archives < <(find "$RUNNER_TEMP/old" -type f -name qualification.tar.gz)
+          (( ${#archives[@]} == 1 ))
+          printf '%s  %s\n' 7916d5664f320ca4881cff7f36a9df7c6f41d03b5923cf2a4fed3a6a02f67945 "${archives[0]}" | sha256sum --check --strict
+          tar -xzf "${archives[0]}" -C "$RUNNER_TEMP/row"
+          [[ $(git rev-parse HEAD~2) == "$ORIGINAL" ]]
+          [[ $(git diff --name-only HEAD~2 HEAD~1) == test/rbe/actions.sh ]]
+          cp test/rbe/actions.sh "$RUNNER_TEMP/corrected-actions.sh"
+          git checkout --detach "$ORIGINAL"
+          row=$RUNNER_TEMP/row
+          [[ $(cat "$row/final-head.txt") == "$ORIGINAL" ]]
+          cp "$row/MODULE.bazel.lock" MODULE.bazel.lock
+          curl -fsSL --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          printf '%s  %s\n' f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb "$RUNNER_TEMP/bb" | sha256sum --check --strict
+          chmod +x "$RUNNER_TEMP/bb"
+      - name: Query the configured alias without running any build or test action
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          umask 077
+          rc="$RUNNER_TEMP/analysis.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          printf '%s\n' 'common --lockfile_mode=error' 'startup --host_jvm_args=-Xmx8g' \
+            'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build:buildbuddy_remote_executor --local_resources=memory=4096' \
+            'build:buildbuddy_remote_executor --experimental_remote_merkle_tree_cache' > "$rc"
+          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          inv=$RUNNER_TEMP/row/invocation-wcbDoY
+          [[ $(cat "$inv/native-exit.txt") == 0 && $(cat "$inv/capture-exit.txt") == 2 ]]
+          options=()
+          while IFS= read -r option; do
+            case "$option" in --target_pattern_file=*) ;; --*) options+=("$option");; esac
+          done < "$inv/arguments.txt"
+          projection=$(sed -n 's/^ *\(--proto:[^\\]*\) *\\$/\1/p' "$RUNNER_TEMP/corrected-actions.sh")
+          read -r -a projection_options <<< "$projection"
+          [[ ${#projection_options[@]} == 2 ]]
+          bazelisk --bazelrc="$rc" cquery "${options[@]}" --output=jsonproto --transitions=lite \
+            "${projection_options[@]}" "$(cat "$inv/source-image-alias-query.txt")" > "$inv/source-image-aliases.json"
+      - name: Reconcile the six-output job's original source-image capture
+        run: |
+          row=$RUNNER_TEMP/row
+          inv=$row/invocation-wcbDoY
+          cp "$row/matrix-audits.json" "$RUNNER_TEMP/out/original-audit.json"
+          python3 test/rbe/qualification_report.py source-image-row --directory "$row" --decoder "$RUNNER_TEMP/bb"
+          cp "$row/matrix-audits.json" "$RUNNER_TEMP/out/replayed-audit.json"
+          cp "$inv"/source-image-{aliases,expectations,audit}.json "$RUNNER_TEMP/out/"
+          python3 - "$inv" "$RUNNER_TEMP/out" <<'PY'
+          import json, sys
+          from pathlib import Path
+          inv, out = map(Path, sys.argv[1:])
+          original = json.loads((inv / "verdict.json").read_text())
+          audit = json.loads((out / "replayed-audit.json").read_text())["audits"]
+          owners = json.loads((out / "source-image-expectations.json").read_text())["configured_owners"]
+          assert original["status"] == "INCOMPLETE" and original["native_exit"] == 0 and original["capture_exit"] == 2
+          assert len(audit) == 1 and audit[0]["status"] == "PASS" and not audit[0]["errors"]
+          assert len(owners) == 1
+          owner = owners[0]
+          assert owner["label"] == "//test/release:artifacts" and owner["configuration"] == "ed5bc8f1dcbbe34e5297530b3657feeca2f65596a80c4620fb8ec7f81c989e84"
+          assert owner["producer"]["label"] == "//test/release:artifacts_with_cfg"
+          assert owner["contract"]["sha256"] == "8288fabe683663a602f5f920ffc04ea2aaf0cca035df6fe24a2e33045e72d079"
+          assert not owner["images"] and not owner["source_commands"]
+          PY
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-alias-readback
+          path: ${{ runner.temp }}/out/*.json
