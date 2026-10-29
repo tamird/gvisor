@@ -12,13 +12,15 @@ jobs:
         with:
           ref: f4c23779b4e5179eb368f425a90a16ab859d90b2
           persist-credentials: false
-      - name: Build the native syscall fixture and exercise the gVisor component
+      - name: Install upstream's ARM cross compiler for the vDSO built in gVisor tests
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq install g++-aarch64-linux-gnu
+      - name: Build the native syscall fixture
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = f4c23779b4e5179eb368f425a90a16ab859d90b2
-          bazel test --config=x86_64 --jobs=4 --local_ram_resources=HOST_RAM*.65 \
-            --test_filter='^TestEpollDeviceAcrossAbort$' --test_arg=-test.v --test_output=all \
-            //pkg/sentry/fsimpl/fuse:fuse_test //test/syscalls/linux:fuse_test 2>&1 | tee "$RUNNER_TEMP/fuse-build.log"
+          bazel build --config=x86_64 --jobs=4 //test/syscalls/linux:fuse_test
       - name: Exercise the mounted device on native Linux
         run: |
           set -euo pipefail
@@ -29,6 +31,13 @@ jobs:
             if ! mountpoint -q /sys/fs/fuse/connections; then mount -t fusectl fusectl /sys/fs/fuse/connections; fi
             exec timeout 45s "$1" --gtest_filter=FuseTest.EpollDeviceAcrossAbort --gtest_output=xml:"$2"
           ' _ "$PWD/bazel-bin/test/syscalls/linux/fuse_test" "$RUNNER_TEMP/fuse-native.xml" | tee "$RUNNER_TEMP/fuse-native.log"
+      - name: Exercise the gVisor FUSE connection
+        if: '!cancelled()'
+        run: |
+          set -euo pipefail
+          bazel test --config=x86_64 --jobs=4 --local_ram_resources=HOST_RAM*.65 \
+            --test_filter='^TestEpollDeviceAcrossAbort$' --test_arg=-test.v --test_output=all \
+            //pkg/sentry/fsimpl/fuse:fuse_test 2>&1 | tee "$RUNNER_TEMP/fuse-build.log"
       - name: Summarize actual controls
         if: always()
         env:
