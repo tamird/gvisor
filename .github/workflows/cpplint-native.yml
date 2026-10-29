@@ -1,7 +1,7 @@
 name: Check native cpplint inputs and cache
 on:
   push:
-    branches: [qualification/bazel-cpplint-native-owners]
+    branches: [qualification/bazel-cpplint-inputs]
 permissions:
   contents: read
 jobs:
@@ -40,7 +40,7 @@ jobs:
           umask 077
           trap 'rm -f "$rc"' EXIT
           {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=lint_platform=$p" 'build --host_platform=@lint_platform//:ubuntu' 'build --extra_execution_platforms=@lint_platform//:ubuntu' 'build --platforms=//tools/bazeldefs:linux_amd64' 'test --cache_test_results=yes' 'test --remote_download_regex=.*[/](test[.](log|xml))$' "test --build_event_json_file=$RUNNER_TEMP/cpplint/events.raw" 'test --build_event_json_file_path_conversion=false'
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=lint_platform=$p" 'build --host_platform=@lint_platform//:ubuntu' 'build --extra_execution_platforms=@lint_platform//:ubuntu' 'build --platforms=//tools/bazeldefs:linux_amd64' 'test --cache_test_results=yes' 'test --keep_going' 'test --remote_download_regex=.*[/](test[.](log|xml))$' "test --build_event_json_file=$RUNNER_TEMP/cpplint/events.raw" 'test --build_event_json_file_path_conversion=false'
             if [[ $MODE == good ]]; then echo 'build --noremote_accept_cached'; fi
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"

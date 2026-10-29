@@ -57,11 +57,6 @@ def main():
     assert paths == tracked and len(paths) == count and len(owners) == 23
     result["sources"] = {"count": count, "list_sha256": sha256(("\x00".join(paths) + "\x00").encode()).hexdigest(), "by_package": {owner: sum(x.rsplit(":",1)[0] == owner.rsplit(":",1)[0] for x in labels) for owner in owners}}
     save()
-    # These are the input bytes Bazel resolved for the original rule/provider.
-    execroot = Path(command("bazel", "info", "execution_root").strip())
-    checker, = command("bazel", "cquery", "--output=files", "@cpplint//:cpplint.py").splitlines()
-    assert sha256((execroot / checker).read_bytes()).hexdigest() == CHECKER
-    result["checker_sha256"] = CHECKER
     exit_code, _ = run("lint", ["tools/lint.sh", "cpplint"])
     save()
     raw = d / "events.raw"
@@ -85,6 +80,7 @@ def main():
         info = tr.get("executionInfo", {})
         rows[label] = {"status": tr["status"], "strategy": info.get("strategy",""), "local_cache": bool(tr.get("cachedLocally")), "remote_cache": bool(info.get("cachedRemotely")), "reports": {k:{"sha256": v["sha256"],"bytes":v["bytes"]} for k,v in reports[label].items()}, "include_order_control": bool(re.search(r"test/util/cpplint_order_control[.]cc:3:.*\[build/include_order\]", log))}
     result["tests"] = rows
+    result["bazel_exit"] = [e["finished"].get("exitCode", {}) for e in events if "finished" in e]
     save()
     assert sorted(rows) == owners
     assert not command("git", "status", "--porcelain", "--untracked-files=no")
@@ -96,6 +92,15 @@ def main():
         if mode == "good" or bad:
             assert row["strategy"] == "remote" and not row["remote_cache"]
     assert exit_code == (0 if mode == "good" else 3) or (mode == "bad" and exit_code == 1)  # lint.sh aggregates nonzero checks.
+    # Querying an external source does not promise an execution-root symlink.
+    # The repository exists under the output base regardless of staging.
+    checker, = command("bazel", "cquery", "--output=files", "@cpplint//:cpplint.py").splitlines()
+    parts = Path(checker).parts
+    assert parts[0] in ("external", "..") and parts[-1] == "cpplint.py"
+    checked = base.joinpath("external", *parts[1:])
+    result["checker_file"] = checker
+    result["checker_sha256"] = sha256(checked.read_bytes()).hexdigest()
+    assert result["checker_sha256"] == CHECKER
     if mode == "bad":
         result["unchanged_remote_hits"] = sum(r["remote_cache"] for r in rows.values())
     if mode == "good":
