@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+    "updatedAt": "2026-10-29T15:52:12.577490+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50548,7 +50548,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "updatedAt": "2026-10-29T15:52:12.577490+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
@@ -50560,13 +50560,30 @@
               "url": "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
             }
           ]
+        },
+        {
+          "text": "An external gVisor license target failed on the codespell wheel when only marked dev-only. Isolating the load restored the gVisor root license check with development dependencies disabled. The external Go target hit an existing Gazelle restriction on both stock and isolated sources; downstream Go support is not yet qualified.",
+          "evidence": [
+            {
+              "label": "Root, dev-disabled and external module controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40905219042"
+            },
+            {
+              "label": "Stock external Go target",
+              "url": "https://app.buildbuddy.io/invocation/a7df6eb9-a593-4a9e-93cc-be4780e8739a"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify the supplier rule, an unowned file in a new package and a separate consumer that builds a public gVisor target with lint-only repositories absent.",
+      "nextStep": "Qualify the supplier run_binary adapter on scratch and a shared file inventory for Buildifier and cpplint. Reconcile the separate non-root Gazelle override failure before claiming external Go support.",
       "evidence": [
         {
           "label": "Design and qualification controls",
           "url": "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
+        },
+        {
+          "label": "Root, dev-disabled and external module controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40905219042"
         }
       ]
     }
