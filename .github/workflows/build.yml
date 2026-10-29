@@ -1,7 +1,7 @@
-name: Read original compiler stderr
+name: Read original array test results
 on:
   push:
-    branches: [qualification/recover-protobuf-f68018e9]
+    branches: [qualification/array-result-recovery]
 permissions: {contents: read}
 jobs:
   diagnostic:
@@ -12,11 +12,11 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         persist-credentials: false
-    - name: Recover only the failed compiler stderr
+    - name: Recover only incomplete or failing array test owners
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 -B .github/qualification/epoll/compiler_resources.py
+      run: python3 -B .github/qualification/epoll/array_results.py
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: original-compiler-diagnostic
-        path: original-compiler-diagnostic.json
+        name: array-original
+        path: array-original.json
