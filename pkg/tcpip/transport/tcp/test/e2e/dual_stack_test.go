@@ -565,3 +565,44 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+
+func TestMappedConnectReleasesBothBoundFamilies(t *testing.T) {
+	c := context.New(t, e2e.DefaultMTU)
+	defer c.Cleanup()
+	c.CreateV6Endpoint(false)
+	if err := c.EP.Bind(tcpip.FullAddress{}); err != nil {
+		t.Fatalf("dual-stack wildcard bind: %v", err)
+	}
+	bound, err := c.EP.GetLocalAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+	e2e.TestV4Connect(t, c)
+	c.EP.SocketOptions().SetLinger(tcpip.LingerOption{Enabled: true})
+	c.EP.Close()
+	c.EP = nil
+
+	for _, tc := range []struct {
+		name string
+		proto tcpip.NetworkProtocolNumber
+	}{
+		{"IPv4", header.IPv4ProtocolNumber},
+		{"IPv6Only", header.IPv6ProtocolNumber},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var wq waiter.Queue
+			ep, err := c.Stack().NewEndpoint(tcp.ProtocolNumber, tc.proto, &wq)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer ep.Close()
+			if tc.proto == header.IPv6ProtocolNumber {
+				ep.SocketOptions().SetV6Only(true)
+			}
+			if err := ep.Bind(tcpip.FullAddress{Port: bound.Port}); err != nil {
+				t.Fatalf("rebinding wildcard port %d after mapped connect and abortive close: %v", bound.Port, err)
+			}
+		})
+	}
+}
