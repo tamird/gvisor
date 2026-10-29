@@ -61,6 +61,15 @@ def sidecars(flavor):
 # to find under the `gvisor-bin/` directory next to its own binary.
 SIDECARS = sidecars("default")
 
+# Containerd finds its shim through PATH, so it lives beside runsc.
+EXTRA_RELEASE_FILES = {"//shim:containerd-shim-runsc-v1": "containerd-shim-runsc-v1"}
+
+# The two downloadable archives and the staged-binary check use these names.
+RELEASE_FILES = {RUNSC["default"]: "runsc"} | EXTRA_RELEASE_FILES | {
+    label: "gvisor-bin/" + filename
+    for label, filename in SIDECARS.items()
+}
+
 # RELEASE_RUNSC and RELEASE_SIDECARS are the runsc binary and the sidecars of
 # the flavor matching the build configuration: race under --config=race,
 # default otherwise.
