@@ -15,7 +15,7 @@ jobs:
     - name: Recover only the failed compiler stderr
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 -B .github/qualification/epoll/compiler_failure.py
+      run: python3 -B .github/qualification/epoll/compiler_resources.py
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: original-compiler-diagnostic
