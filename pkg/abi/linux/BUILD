@@ -11,6 +11,8 @@ package(
 
 go_library(
     name = "linux",
+    # The default Firecracker worker killed both target-ISA Nogo actions.
+    exec_properties = {"EstimatedMemory": "16GB"},
     srcs = [
         "aio.go",
         "arch_amd64.go",
