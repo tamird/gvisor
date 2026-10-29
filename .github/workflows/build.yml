@@ -1,13 +1,13 @@
-name: Verify missing epoll analyzer results
+name: Verify optional plugin analyzer results
 on: workflow_dispatch
 permissions:
   contents: read
   actions: read
 jobs:
   analyze:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/epoll-exact-analyzer-recovery'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/plugin-exact-analyzers'
     runs-on: ubuntu-24.04
-    timeout-minutes: 165
+    timeout-minutes: 175
     env:
       SOURCE: c3b5dc8de9a7b547529aa65740e7bb766f4b6ac0
       ORIGINAL: 0dad36edccfd1ca5ce82e498d6c5fd2bca9ffa66
@@ -18,46 +18,21 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         persist-credentials: false
-    - name: Recover independent original owner records
-      env:
-        GH_TOKEN: ${{ github.token }}
+    - name: Prepare exact plugin owners
       run: |
         set -euo pipefail
-        [[ $(gh run view "$PREVIOUS" -R tamird/gvisor --json status --jq .status) == completed ]]
-        id=$(gh api "repos/tamird/gvisor/actions/runs/$PREVIOUS/artifacts" --jq '.artifacts[]|select(.name=="epoll-in-place-verdict" and (.expired|not))|.id')
-        test -n "$id"
-        dir="$RUNNER_TEMP/source-records"
-        mkdir -p "$dir" "$RUNNER_TEMP/exact"
-        gh api "repos/tamird/gvisor/actions/artifacts/$id" > "$dir/artifact.json"
-        gh api "repos/tamird/gvisor/actions/artifacts/$id/zip" > "$dir/original.zip"
-        printf '%s  %s\n' "$(jq -er '.digest|ltrimstr("sha256:")' "$dir/artifact.json")" "$dir/original.zip" | sha256sum --check
-        python3 -B .github/qualification/epoll/missing_owners.py "$dir/original.zip" "$ORIGINAL" "$RUNNER_TEMP/exact"
+        mkdir -p "$RUNNER_TEMP/exact/plugin"
+        printf '%s\n' //pkg/sentry/socket/plugin/stack:stack_nogo //pkg/sentry/socket/plugin/stack:stack_test_nogo //pkg/sentry/socket/plugin/cgo:cgo_nogo > "$RUNNER_TEMP/exact/plugin/targets.txt"
         cp -a .github/qualification/epoll "$RUNNER_TEMP/checker"
-        git fetch --no-tags --depth=2 origin "$SOURCE" "$ORIGINAL"
-        diff -u <(printf '%s\n' pkg/sentry/devices/tpuproxy/vfio/pci_device_fd_test.go pkg/sentry/fsimpl/overlay/regular_file.go) <(git diff --name-only "$ORIGINAL" "$SOURCE")
-        mkdir "$RUNNER_TEMP/exact/pci"
-        echo //pkg/sentry/devices/tpuproxy/vfio:vfio_test > "$RUNNER_TEMP/exact/pci/targets.txt"
+        git fetch --no-tags --depth=2 origin "$SOURCE"
         git checkout --quiet --detach "$SOURCE"
         [[ $(git rev-parse HEAD^) == "$PRODUCT" ]]
-    - name: Select the available execution platforms
-      run: |
-        if [[ -s $RUNNER_TEMP/exact/arm/targets.txt ]]; then
-          # The final test runner invokes the ARM64 filter executable. Go
-          # analysis itself uses the Bazel exec toolchain on this Linux worker.
-          if [[ ! -f /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
-            sudo apt-get -qq update
-            sudo apt-get -qq install --no-install-recommends qemu-user-static binfmt-support
-            sudo update-binfmts --enable qemu-aarch64
-          fi
-          cat /proc/sys/fs/binfmt_misc/qemu-aarch64
-          cat /proc/sys/fs/binfmt_misc/qemu-aarch64 > "$RUNNER_TEMP/exact/arm/filter-runner.txt"
-        fi
         if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
         unshare --user --map-root-user true
-    - name: Verify the corrected PCI test
+    - name: Verify the optional plugin and cgo analyzer owners
       if: ${{ !cancelled() }}
       env:
-        LANE: pci
+        LANE: plugin
         CONFIG: x86_64
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
@@ -110,34 +85,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: epoll-exact-pci
-        path: ${{ runner.temp }}/exact/pci
-        if-no-files-found: warn
-    - name: Verify the remaining AMD64 owners
-      if: ${{ !cancelled() }}
-      env:
-        LANE: analyzers
-        CONFIG: x86_64
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      shell: bash
-      run: *verify_owner
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always()
-      with:
-        name: epoll-exact-analyzers
-        path: ${{ runner.temp }}/exact/analyzers
-        if-no-files-found: warn
-    - name: Verify the remaining ARM64 owners
-      if: ${{ !cancelled() }}
-      env:
-        LANE: arm
-        CONFIG: aarch64
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      shell: bash
-      run: *verify_owner
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always()
-      with:
-        name: epoll-exact-arm
-        path: ${{ runner.temp }}/exact/arm
+        name: epoll-plugin-analyzers
+        path: ${{ runner.temp }}/exact/plugin
         if-no-files-found: warn
