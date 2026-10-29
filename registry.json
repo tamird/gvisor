@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T14:44:50.506287+00:00",
+    "updatedAt": "2026-10-29T15:12:15.868499+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33340,16 +33340,24 @@
         {
           "label": "ARM64 stopped during Bazel analysis before the lint action",
           "url": "https://app.buildbuddy.io/invocation/ebe9628b-afe6-471a-beb0-ad3913859100"
+        },
+        {
+          "label": "Scratch builds, negative controls, and explicit fix",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40897684060"
+        },
+        {
+          "label": "Qualified intermediate source",
+          "url": "https://github.com/tamird/gvisor/commit/4089e4d00cf2cf178639b7ff6d83e0613e7814a0"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T14:44:50.506287+00:00",
+      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T14:44:50.506287+00:00",
+        "observedAt": "2026-10-29T15:12:15.868499+00:00",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "disposition": "Verifying replacement for the shell lint path",
-        "nextAction": "Distinguish an unset workspace path from an invalid explicit value in fix mode and qualify the revised source. AMD64 executed the 617-source check in scratch; ARM64 stopped before executing it.",
+        "disposition": "Agent work",
+        "nextAction": "Cover new BUILD.bazel packages and make Buildifier ignore ambient configuration; retain the two verified scratch architectures.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16663",
           "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299"
@@ -33360,7 +33368,7 @@
           "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
         },
         "after": {
-          "head": "4aa1057417d93e929c9955c7878bb3a509d6e267"
+          "head": "4089e4d00cf2cf178639b7ff6d83e0613e7814a0"
         }
       }
     },
@@ -33836,6 +33844,33 @@
         {
           "label": "Published PR",
           "url": "https://github.com/google/gvisor/pull/16671"
+        }
+      ]
+    },
+    {
+      "id": "branch:release-archives-versioned",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/release-archives-versioned",
+      "head": "e4e5276c25c0b60d11ecdfe03f0d3709624cdd41",
+      "title": "Stage both release architectures with one Bazel target",
+      "url": "https://github.com/tamird/gvisor/commit/e4e5276c25c0b60d11ecdfe03f0d3709624cdd41",
+      "group": "release",
+      "status": "Agent work",
+      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
+      "summary": "Build the Debian packages and both compressed archives in a single Bazel invocation and publish from architecture-named directories. The build passed; signing, archive contents and the Make handoff are being qualified.",
+      "evidence": [
+        {
+          "label": "Proposed release target",
+          "url": "https://github.com/tamird/gvisor/commit/e4e5276c25c0b60d11ecdfe03f0d3709624cdd41"
+        },
+        {
+          "label": "Both architectures built",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40896347477"
+        },
+        {
+          "label": "Signing and published-layout check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40897823760"
         }
       ]
     }
@@ -36940,9 +36975,33 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:tcp-partial-gso",
-      "to": "pr:16666",
+      "from": "pr:16666",
+      "to": "branch:tcp-partial-gso",
       "reason": "TCP restores its route before the partial-write cases exercise a checkpoint."
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:declared-release-version",
+      "to": "branch:release-archives-versioned",
+      "reason": "Both split configurations consume the caller-supplied release identity."
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:buildkite-source-lint-native",
+      "to": "branch:release-archives-versioned",
+      "reason": "The Buildkite hook supplies Bazelisk when these release jobs request a native build."
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:bazel-python-release",
+      "to": "branch:release-archives-versioned",
+      "reason": "The native release job also needs the declared Python wheel and sdist build."
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:hermetic-compiler-review",
+      "to": "branch:release-archives-versioned",
+      "reason": "Both architectures’ release binaries need declared C and C++ toolchains on native workers."
     }
   ],
   "investigations": [
@@ -48857,7 +48916,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T05:53:56.471294+00:00",
+      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -49445,6 +49504,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40825051679"
             }
           ]
+        },
+        {
+          "text": "One declared Bazel target built both Debian packages and the two compressed release archives for each architecture. It places artifacts in the same architecture directories used by the public mirror. Its build verdict was available 0.25 s after the command returned; the signature and installed-binary comparison is separate.",
+          "evidence": [
+            {
+              "label": "Proposed release target",
+              "url": "https://github.com/tamird/gvisor/commit/e4e5276c25c0b60d11ecdfe03f0d3709624cdd41"
+            },
+            {
+              "label": "Both architectures built",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40896347477"
+            },
+            {
+              "label": "Signing and published-layout check",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40897823760"
+            }
+          ]
         }
       ],
       "nextStep": "Compare the same Buildkite selections using the declared architecture toolchains. Qualify native source lint against the full tracked inventory and the original checker.",
@@ -49482,7 +49558,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T03:22:07.307518+00:00",
+      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -49529,7 +49605,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the file-lock waiter PR (#16621) and pipe cursor annotations (#16606). The epoll field annotation (#16505) has merged; the separate epoll MOD amendment has its own contributor review. Keep VFS initialization in #14343 separate.",
+      "nextStep": "Check whether overlay copy-up drops a cached lower file’s final reference inside OnClose, then verify preserving that reference also preserves the lower error. Follow #16621 and #16606 for the file-lock and pipe contracts.",
       "evidence": [
         {
           "label": "Verified epoll registration contract",
@@ -49550,6 +49626,10 @@
         {
           "label": "Fork: document the lock protecting the splice cursor",
           "url": "https://github.com/tamird/gvisor/commit/fc328dc0b24cf21da8b08dd6e84f10203a867859"
+        },
+        {
+          "label": "Concurrent overlay close/copy-up comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40896760129"
         }
       ]
     },
@@ -49988,9 +50068,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-29T13:59:21.762754+00:00",
+      "updatedAt": "2026-10-29T15:12:15.868499+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Keep the upstream reviewer guide current as fixes land or supersede one another. Follow the receive-pressure and two SACK/probe review threads; compare the timeout and flight-count fixes on their respective packet traces.",
+      "nextStep": "Determine what distinguishes the five timed-out tail probes from the other 35. Track changes to the receive-pressure, SACK, and probe PRs and keep the reviewer guide current.",
       "findings": [
         {
           "text": "Initial census: 510 open PRs inspected by changed path and title, including exports. The networking/performance labels and TCP, retransmission, SACK, RACK, CUBIC and netstack searches yielded 184 distinct candidate issues; many are not TCP defects.",
@@ -50183,6 +50263,23 @@
             {
               "label": "Corrected gVisor trace",
               "url": "https://app.buildbuddy.io/invocation/11f13935-3275-49b4-9600-f8c19332135a"
+            }
+          ]
+        },
+        {
+          "text": "In the reporter’s minimum-RTT scenario, 35 of 40 scripted tail losses recovered in 21–26 ms; five required one retransmission timeout (219–221 ms). Seeding the minimum from the handshake changed some estimates but none of those 40 recovery decisions. All arms used the same data-ACK estimator; the five timeouts still need explanation.",
+          "evidence": [
+            {
+              "label": "Living TCP reviewer guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            },
+            {
+              "label": "Reporter’s trace",
+              "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6494127902"
+            },
+            {
+              "label": "40 completed transfers",
+              "url": "https://app.buildbuddy.io/invocation/70defa53-242e-4674-a2db-f6a2b3ec4297"
             }
           ]
         }
