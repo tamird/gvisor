@@ -127,3 +127,6 @@ func (r *renoState) PostRecovery() {
 func (r *renoState) HandleWindowRestart() {
 	r.s.SndCAAckCount = 0
 }
+
+// HandleIdle implements congestionControl.HandleIdle.
+func (*renoState) HandleIdle(_, _ tcpip.MonotonicTime) {}

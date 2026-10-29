@@ -1672,6 +1672,9 @@ func (e *Endpoint) queueSegment(p tcpip.Payloader, opts tcpip.WriteOptions) (*se
 	size := int(buf.Size())
 	s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buf, e.ops.GetMark())
 	e.sndQueueInfo.SndBufUsed += size
+	if e.snd.writeList.Front() == nil {
+		e.snd.cc.HandleIdle(e.snd.queueEmptySince, s.rcvdTime)
+	}
 	e.snd.writeList.PushBack(s)
 
 	return s, size, nil

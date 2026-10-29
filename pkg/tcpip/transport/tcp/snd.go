@@ -76,6 +76,9 @@ type congestionControl interface {
 	// notifies congestion control with CA_EVENT_CWND_RESTART.
 	HandleWindowRestart()
 
+	// HandleIdle excludes time when the send queue was empty.
+	HandleIdle(start, end tcpip.MonotonicTime)
+
 	// Update is invoked when processing inbound acks. It's passed the
 	// number of packet's that were acked by the most recent cumulative
 	// acknowledgement.  rtt is the round-trip time, or is set to unknownRTT
@@ -116,6 +119,10 @@ type sender struct {
 	// The endpoint may be in FIN_WAIT1/LAST_ACK while the FIN is still
 	// queued behind blocked data; finSent guards closing ACK completions.
 	finSent bool
+
+	// queueEmptySince is when the last data in writeList was acknowledged.
+	// It is used only when the application refills an empty queue.
+	queueEmptySince tcpip.MonotonicTime
 
 	// smallSegmentEnd is the sequence number after the last newly sent
 	// partial-MSS segment, including a partial tail in a GSO packet. Minshall's
@@ -296,6 +303,8 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 			set: make(map[*segment]struct{}),
 		},
 	}
+
+	ep.snd.queueEmptySince = ep.snd.LastSendTime
 
 	if ep.snd.gso {
 		ep.snd.ep.gso.MSS = uint16(maxPayloadSize)
@@ -1778,6 +1787,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// RFC 6298 Rule 5.3
 		if s.SndUna == s.SndNxt {
 			s.Outstanding = 0
+			if s.writeList.Front() == nil {
+				s.queueEmptySince = rcvdSeg.rcvdTime
+			}
 			// Reset firstRetransmittedSegXmitTime to the zero value.
 			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
 			s.resendTimer.disable()

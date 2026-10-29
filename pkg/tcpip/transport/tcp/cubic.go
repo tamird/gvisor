@@ -362,6 +362,23 @@ func (c *cubicState) HandleWindowRestart() {
 	}
 }
 
+// HandleIdle implements congestionControl.HandleIdle.
+//
+// +checklocks:c.s.ep.mu
+func (c *cubicState) HandleIdle(start, end tcpip.MonotonicTime) {
+	if c.s.SndCwnd < c.s.Ssthresh {
+		return
+	}
+	// Only time spent sending data counts toward the CUBIC curve
+	// (RFC 9438 section 5.8). An epoch can begin after the queue drains.
+	if start.Before(c.T) {
+		start = c.T
+	}
+	if end.After(start) {
+		c.T = c.T.Add(end.Sub(start))
+	}
+}
+
 // reduceSlowStartThreshold returns new SsThresh as described in
 // https://tools.ietf.org/html/rfc8312#section-4.7.
 //
