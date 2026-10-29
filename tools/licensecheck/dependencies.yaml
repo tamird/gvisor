@@ -1165,6 +1165,12 @@
   commit: 4eb9011f3e6d551d067d87c89f082261164fac31
   sha256: 26dc6db523ee943af51fdfc292658a2dbe7046735654f1dc839745988f0fe26b
   license: Apache-2.0
+- dependency: pypi/codespell-2.3.0-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/0e/20/b6019add11e84f821184234cea0ad91442373489ef7ccfa3d73a71b908fa/codespell-2.3.0-py3-none-any.whl
+  retrieved: "2026-10-06"
+  commit: ""
+  sha256: a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1
+  license: GPL-2.0-only
 - dependency: qemu_user_prebuilt_linux_amd64_aarch64
   version: https://github.com/hermeticbuild/qemu-prebuilt/releases/download/11.0.0.1/qemu-user-linux-amd64-aarch64-11.0.0.1.tar.zst
   retrieved: "2026-10-17"
