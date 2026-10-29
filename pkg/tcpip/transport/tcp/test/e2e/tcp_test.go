@@ -10605,3 +10605,68 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestZeroWindowProbeDeadline observes whether adding data moves the first
+// probe. No bytes have left the sender, and the peer never changes its window.
+func TestZeroWindowProbeDeadline(t *testing.T) {
+	for _, extra := range []bool{false, true} {
+		name := "one-write"
+		if extra {
+			name = "second-write-at-half-rto"
+		}
+		t.Run(name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: e2e.DefaultMTU, Clock: clock})
+			defer c.Cleanup()
+			c.CreateConnected(context.TestInitialSequenceNumber, 0, -1)
+			drain := func() {
+				c.Stack().Pause()
+				c.Stack().Resume()
+			}
+			write := func() {
+				t.Helper()
+				if n, err := c.EP.Write(bytes.NewReader([]byte("x")), tcpip.WriteOptions{}); err != nil || n != 1 {
+					t.Fatalf("write = %d, %v; want 1, nil", n, err)
+				}
+				drain()
+			}
+			probe := func() bool {
+				t.Helper()
+				p := c.GetPacketNonBlocking()
+				if p == nil {
+					return false
+				}
+				defer p.Release()
+				checker.IPv4(t, p, checker.PayloadLen(header.TCPMinimumSize + 1), checker.TCP(
+					checker.TCPSeqNum(uint32(c.IRS)),
+					checker.TCPAckNum(uint32(context.TestInitialSequenceNumber + 1)),
+					checker.TCPFlagsMatch(header.TCPFlagAck, ^header.TCPFlagPsh),
+				))
+				return true
+			}
+			write()
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil || info.RTO <= 0 {
+				t.Fatalf("get RTO: %v, %v", info.RTO, err)
+			}
+			clock.Advance(info.RTO / 2)
+			drain()
+			if extra {
+				write()
+			}
+			if probe() {
+				t.Fatal("probe before its deadline")
+			}
+			clock.Advance(info.RTO - info.RTO/2)
+			drain()
+			atFirst := probe()
+			clock.Advance(info.RTO / 2)
+			drain()
+			atLater := probe()
+			if !atFirst && !atLater {
+				t.Fatal("no probe by either deadline")
+			}
+			t.Logf("TCP-PERSIST extra=%t first=%t later=%t", extra, atFirst, atLater)
+		})
+	}
+}
