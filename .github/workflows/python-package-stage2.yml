@@ -35,6 +35,7 @@ jobs:
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           mkdir -p "$RUNNER_TEMP/evidence"
           bazelisk mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/evidence/graph.json"
+          bazelisk mod show_extension --lockfile_mode=update @rules_python//python/extensions:python.bzl%python > "$RUNNER_TEMP/evidence/python-extension.txt"
           cp MODULE.bazel.lock "$RUNNER_TEMP/evidence/MODULE.bazel.lock"
       - name: Execute original tar and deb actions on both worker architectures
         env:
