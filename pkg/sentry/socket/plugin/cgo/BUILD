@@ -8,6 +8,7 @@ package(
 config_setting(
     name = "network_plugins",
     values = {"define": "network_plugins=true"},
+    visibility = ["//pkg/sentry/socket/plugin/stack:__pkg__"],
 )
 
 go_library(
@@ -26,17 +27,6 @@ go_library(
     bazel_cgo = select({
         ":network_plugins": True,
         "//conditions:default": False,
-    }),
-    bazel_clinkopts = select({
-        ":network_plugins": ["-L external/libpluginstack"],
-        "//conditions:default": [],
-    }),
-    bazel_copts = select({
-        ":network_plugins": [
-            "-march=native",
-            "-I external/libpluginstack/lib/libtle_glue",
-        ],
-        "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [
