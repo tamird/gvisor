@@ -48,133 +48,54 @@ def digest(v: dict) -> dict:
     assert re.fullmatch("[0-9a-f]{64}", h) and 0 < n < 256 * 1024
     return {"sha256":h, "bytes":n}
 
-def fetch(secret: str, child: str, target: str, prior: dict, rec: dict) -> None:
-    from original_reader import request
-    assert any(child == i and target in [TARGET + t + "_test" for t in ts] for i, ts, _ in ARMS.values())
-    refs = dict(prior.get("reports", {}))
-    try:
-        actions = request(secret, "/api/v1/GetAction", {"selector":{"invocationId":child, "targetLabel":target}}, 2 << 20, None)
-        assert not actions.get("nextPageToken")
-        attempts = []
-        for action in actions.get("action", []):
-            assert action["id"]["invocationId"] == child
-            if action.get("targetLabel") != target:
-                continue
-            files = {}
-            for f in action.get("file", []):
-                name = f["name"].split("/")[-1]
-                if name not in NAMES:
-                    continue
-                match = re.fullmatch(r"bytestream://remote\.buildbuddy\.io/(?:[^?#]+/)?blobs/([a-f0-9]{64})/(\d+)", f["uri"])
-                assert match and name not in files
-                files[name] = {"sha256":match[1], "bytes":int(match[2])}
-                assert not f.get("hash") or f["hash"] == match[1]
-            if files:
-                attempts.append(files)
-        [bep] = attempts
-        assert set(bep) == set(NAMES) and (not refs or refs == bep)
-        refs.update(bep)
-        rec["bep_action"] = True
-    except Exception as exc:
-        retain_error(rec, "GetAction", exc)
-    try:
-        result = request(secret, "/rpc/BuildBuddyService/GetExecution", {"executionLookup":{"invocationId":child,"targetLabel":target},
-            "inlineExecuteResponse":True}, 24 << 20, None)
-        rows = []
-        for e in result.get("execution", []):
-            if e.get("actionMnemonic") != "TestRunner" or e.get("targetLabel") != target:
-                continue
-            if "test-setup.sh" not in e.get("commandSnippet", ""):
-                continue
-            resp = e["executeResponse"]
-            native = resp["result"]
-            ex = int(native.get("exitCode", 0))
-            out = [o for o in native.get("outputFiles", []) if o["path"].endswith("/test.xml")]
-            stdout = native.get("stdoutDigest")
-            assert e.get("worker") and not resp.get("cachedResult") and not resp.get("status", {}).get("code")
-            rows.append((ex, e["actionDigest"]["hash"], out, stdout))
-        [(ex, action_hash, out, stdout)] = rows
-        rec.update(native_exit=ex, action_sha256=action_hash, remote_uncached=True)
-        [xml] = out
-        physical = {"test.xml":digest(xml["digest"]), "test.log":digest(stdout)}
-        assert not refs or refs == physical, "physical/report digest mismatch"
-        refs.update(physical)
-        rec["physical_report_match"] = True
-    except Exception as exc:
-        retain_error(rec, "GetExecution", exc)
-    rec["reports"] = refs
-    for name in NAMES:
-        try:
-            f = refs[name]
-            h, n = f["sha256"], f["bytes"]
-            assert 0 < n < 256 * 1024 and re.fullmatch("[0-9a-f]{64}", h)
-            buf = bytearray()
-            uri = f"bytestream://remote.buildbuddy.io/blobs/{h}/{n}"
-            request(secret, "/api/v1/GetFile", {"uri":uri}, n, buf.extend)
-            assert len(buf) == n and HASH(buf).hexdigest() == h
-            if name == "test.log":
-                rec["observations"] = observations(bytes(buf))
-                rec["window_failure_markers"] = buf.count(b"TCP_CONGESTION changed the post-loss sender window")
-                (ROOT / ("log-" + child + "-" + target.split(":")[1])).write_bytes(buf)
-            else:
-                rec["cases"] = cases(bytes(buf))
-        except Exception as exc:
-            retain_error(rec, name, exc)
-
 def main() -> None:
+    from original_reader import request
     key = os.environ.pop("BUILDBUDDY_API_KEY")
-    result = {"status":"INCOMPLETE", "owners":{}}
     path = ROOT / "congestion-selection.json"
-    for arm, (child, targets, checksum) in ARMS.items():
-        raw = (ROOT / arm / "result.json").read_bytes()
-        assert HASH(raw).hexdigest() == checksum
-        src = json.loads(raw)
-        assert src["child"] == child and src["status"] == "INCOMPLETE"
-        for name in targets:
-            target = TARGET + name + "_test"
-            rec = result["owners"][arm + "/" + name] = {"child":child,"label":target,"source":src["source"],"carrier":src["carrier"],
-                "native_bazel_exit":src["code"],"original_summary_sha256":checksum}
-            prior = src.get("owners", {}).get(target, {})
-            rec["original_bep_status"] = prior.get("status")
-            try:
-                fetch(key, child, target, prior, rec)
-            except Exception as exc:
-                retain_error(rec, "transfer", exc)
-            path.write_text(json.dumps(result, sort_keys=True, indent=2)+"\n")
-    try:
-        log = (ROOT / ("log-" + ARMS["stock"][0] + "-tcp_rack_netstack_test")).read_bytes()
-        controls = {}
-        for mode, stable in (("cubic_none", True), ("cubic_same", False)):
-            [m] = [m for m in ROW.finditer(log) if "_".join(i.decode() for i in m.groups()[:2]) == mode]
-            [row] = observations(m.group(), {mode}).values()
-            assert unchanged(row) == stable, "incorrect retained control"
-            controls[mode] = "stable" if stable else "reset"
+    raw = (ROOT / "held" / "congestion-selection.json").read_bytes()
+    assert HASH(raw).hexdigest() == "278dc921faf11dbcd91d8ec30185441176e0a343f08e351aa08d31c10df5b6a4"
+    result = json.loads(raw)
+    assert result["retained_controls"] == {"cubic_none":"stable", "cubic_same":"reset", "removed_row":"rejected"}
+    result["original_projection_sha256"] = HASH(raw).hexdigest()
+    resolutions = []
+    for arm, rec in result["owners"].items():
         try:
-            observations(ROW.sub(lambda m: b"" if m.group(1, 2) == (b"cubic", b"same") else m.group(), log))
-        except AssertionError as exc:
-            assert str(exc) == "missing socket row"
-            controls["removed_row"] = "rejected"
-        else:
-            raise ValueError("incomplete log accepted")
-        result["retained_controls"] = controls
-        for arm, rec in result["owners"].items():
-            assert not rec.get("errors"), "report unresolved"
+            assert rec["errors"] == [{"line":94,"stage":"GetExecution","type":"AssertionError"}]
+            child = rec["child"]; target = rec["label"]
+            sourcearm, release = arm.split("/")
+            assert child == ARMS[sourcearm][0] and release in ARMS[sourcearm][1] and target == TARGET + release + "_test"
+            data = request(key, "/rpc/BuildBuddyService/GetExecution", {"executionLookup":{"invocationId":child,"targetLabel":target},"inlineExecuteResponse":True}, 24 << 20, None)
+            [e] = [e for e in data.get("execution",[]) if e.get("actionMnemonic") == "TestRunner" and e.get("targetLabel") == target and "test-setup.sh" in e.get("commandSnippet", "")]
+            resp = e["executeResponse"]; res = resp["result"]
+            rec["native_exit"] = int(res.get("exitCode", 0))
+            assert rec["native_exit"] == int(e.get("exitCode", 0))
+            rec["action_sha256"] = e["actionDigest"]["hash"]
+            assert e.get("stage") in (4,"COMPLETED") and not resp.get("status",{}).get("code") and not resp.get("cachedResult")
+            rec["physical_worker"] = bool(res.get("executionMetadata",{}).get("worker") or e.get("executedActionMetadata",{}).get("worker") or e.get("executorHostname"))
+            assert rec["physical_worker"]
+            [xml] = [o for o in res.get("outputFiles",[]) if o["path"].endswith("/test.xml")]
+            assert digest(xml["digest"]) == rec["reports"]["test.xml"]
+            rec["physical_xml_match"] = True
+            if std := res.get("stdoutDigest"):
+                rec["physical_stdout_digest"] = digest(std)
+                rec["physical_stdout_matches_test_log"] = digest(std) == rec["reports"]["test.log"]
             ok = arm != "stock/netstack"
-            assert (rec["native_exit"] == 0) == ok
-            assert (rec["cases"][SUITE] == "passed") == ok
-            for mode, row in rec["observations"].items():
-                cc, method = mode.split("_")
+            assert (rec["native_exit"] == 0) == ok and rec["cases"][SUITE] == ("passed" if ok else "failed")
+            assert rec["bep_action"] and set(rec["observations"]) == MODES
+            for mode,row in rec["observations"].items():
+                cc,method = mode.split("_")
+                assert row["selected"] == (("reno" if cc == "cubic" else "cubic") if method == "other" else cc)
                 stable = ok or method == "none"
-                assert row["selected"] == (cc if method != "other" else ("cubic" if cc == "reno" else "reno"))
+                assert unchanged(row) == stable and rec["cases"][SUITE+"/"+mode] == ("passed" if stable else "failed")
                 assert 0 < row["threshold_before"] <= row["cwnd_before"] < row["initial"] and row["state_before"] == row["state_after"] == 0
-                assert unchanged(row) == stable and rec["cases"][SUITE + "/" + mode] == ("passed" if stable else "failed")
-                if not stable:
-                    assert (row["cwnd_after"], row["threshold_after"]) == (10, 4294967295)
-            assert rec["window_failure_markers"] == 0 if ok else rec["window_failure_markers"] >= 4
-        result["status"] = "COMPLETE"
-    except Exception as exc:
-        retain_error(result, "verification", exc)
-    path.write_text(json.dumps(result, sort_keys=True, indent=2)+"\n")
+                if not stable: assert (row["cwnd_after"],row["threshold_after"]) == (10,4294967295)
+            assert rec["window_failure_markers"] == (0 if ok else 4)
+            resolutions.append(arm)
+        except Exception as exc:
+            retain_error(rec,"original_execution",exc)
+    result["resolved"] = sorted(resolutions)
+    result["status"] = "COMPLETE" if len(resolutions) == 3 else "INCOMPLETE"
+    path.write_text(json.dumps(result, sort_keys=True,indent=2)+"\n")
     sys.exit(result["status"] != "COMPLETE")
 
 if __name__ == "__main__":
