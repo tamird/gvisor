@@ -185,8 +185,11 @@ jobs:
       run: |
         set -euo pipefail
         test "$QUALIFICATION_COMMIT" = "$(git rev-parse HEAD)"
-        test "$QUALIFICATION_TARGETS" = "//pkg/tcpip/tests/integration:virtual_tcp_test"
-        test "$QUALIFICATION_TEST_FILTER" = "^TestVirtualTCPRecoveryDecision$"
+        case "$QUALIFICATION_TARGETS:$QUALIFICATION_TEST_FILTER" in
+          "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test:^TestRACKLossFlight$") ;;
+          "//pkg/tcpip/tests/integration:virtual_tcp_test:^TestVirtualTCPRACKFlight$") test "$GITHUB_REF_NAME" = qualification/rack-pipe-fixed ;;
+          *) exit 2 ;;
+        esac
         test "$QUALIFICATION_LANES" = "test"
         test "$QUALIFICATION_ARCH" = "amd64"
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
@@ -237,21 +240,15 @@ jobs:
         status=0
         bash test/rbe/qualify.sh --arch=amd64 "--test-target=$QUALIFICATION_TARGETS" \
           "--test-filter=$QUALIFICATION_TEST_FILTER" "--bazel-option=--build_event_json_file=$RUNNER_TEMP/fifo/events.jsonl" \
-          "--bazel-option=--cache_test_results=yes" "--bazel-option=--remote_download_outputs=toplevel" test || status=$?
-        # Retain typed recovery/packet evidence even if the receipt rejects metadata.
-        testlog=bazel-testlogs/pkg/tcpip/tests/integration/virtual_tcp_test/test.log
-        if test -f "$testlog"; then
-          sed -n -E '/FIFO_WIRE [a-z_]+ \[|FIFO_DECISIONS \{/p' "$testlog" | gzip -c > "$RUNNER_TEMP/fifo/events-only.log.gz"
-        fi
+          "--bazel-option=--cache_test_results=no" "--bazel-option=--remote_download_outputs=toplevel" test || status=$?
         python3 -B test/rbe/first_loss_result.py "$RUNNER_TEMP/fifo" "$status"
     - name: Retain the measured event and original report digests
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: shared-fifo-recovery
+        name: rack-pipe-evidence
         path: |
           ${{ runner.temp }}/fifo/result.json
-          ${{ runner.temp }}/fifo/events-only.log.gz
           ${{ runner.temp }}/fifo/recovery.json.gz
         if-no-files-found: error
 
