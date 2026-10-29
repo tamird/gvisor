@@ -17,12 +17,10 @@ package stack_test
 import (
 	"math"
 	"math/rand"
-	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
@@ -137,7 +135,7 @@ func TestNUDFunctions(t *testing.T) {
 				}
 			}
 
-			for _, addr := range []netip.Addr{llAddr1, llAddr2} {
+			for _, addr := range []tcpip.Address{llAddr1, llAddr2} {
 				{
 					err := s.AddStaticNeighbor(test.nicID, ipv6.ProtocolNumber, addr, linkAddr1)
 					if diff := cmp.Diff(test.expectedErr, err); diff != "" {
@@ -174,7 +172,7 @@ func TestNUDFunctions(t *testing.T) {
 					if diff := cmp.Diff(
 						[]stack.NeighborEntry{{Addr: llAddr2, LinkAddr: linkAddr1, State: stack.Static, UpdatedAt: clock.NowMonotonic()}},
 						neighbors,
-						cmpopts.EquateComparable(stack.NeighborEntry{}),
+						cmp.AllowUnexported(tcpip.MonotonicTime{}),
 					); diff != "" {
 						t.Errorf("neighbors mismatch (-want +got):\n%s", diff)
 					}

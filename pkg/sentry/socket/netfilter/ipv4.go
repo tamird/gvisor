@@ -16,7 +16,6 @@ package netfilter
 
 import (
 	"fmt"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/syserr"
@@ -28,20 +27,25 @@ import (
 // emptyIPv4Filter is for comparison with a rule's filters to determine whether
 // it is also empty. It is immutable.
 var emptyIPv4Filter = stack.IPHeaderFilter{
-	Dst:     netip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
-	DstMask: netip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
-	Src:     netip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
-	SrcMask: netip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
+	Dst:     tcpip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
+	DstMask: tcpip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
+	Src:     tcpip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
+	SrcMask: tcpip.AddrFrom4([4]byte{0x00, 0x00, 0x00, 0x00}),
 }
 
 // convertNetstackToBinary4 converts the iptables as stored in netstack to the
 // format expected by the iptables tool. Linux stores each table as a binary
 // blob that can only be traversed by parsing a little data, reading some
 // offsets, jumping to those offsets, parsing again, etc.
-func convertNetstackToBinary4(stk *stack.Stack, tablename linux.TableName) (linux.KernelIPTGetEntries, linux.IPTGetinfo, *syserr.Error) {
+func convertNetstackToBinary4(stk *stack.Stack, tablename linux.TableName) (linux.KernelIPTGetEntries, linux.IPTGetinfo, error) {
+	// The table name has to fit in the struct.
+	if linux.XT_TABLE_MAXNAMELEN < len(tablename) {
+		return linux.KernelIPTGetEntries{}, linux.IPTGetinfo{}, fmt.Errorf("table name %q too long", tablename)
+	}
+
 	id, ok := nameToID[tablename.String()]
 	if !ok {
-		return linux.KernelIPTGetEntries{}, linux.IPTGetinfo{}, syserr.ErrNoFileOrDir
+		return linux.KernelIPTGetEntries{}, linux.IPTGetinfo{}, fmt.Errorf("couldn't find table %q: %w", tablename, errTableNotFound)
 	}
 
 	// Setup the info struct.
@@ -217,11 +221,11 @@ func filterFromIPTIP(iptip linux.IPTIP) (stack.IPHeaderFilter, error) {
 		Protocol: tcpip.TransportProtocolNumber(iptip.Protocol),
 		// A Protocol value of 0 indicates all protocols match.
 		CheckProtocol:         iptip.Protocol != 0,
-		Dst:                   netip.AddrFrom4(iptip.Dst),
-		DstMask:               netip.AddrFrom4(iptip.DstMask),
+		Dst:                   tcpip.AddrFrom4(iptip.Dst),
+		DstMask:               tcpip.AddrFrom4(iptip.DstMask),
 		DstInvert:             iptip.InverseFlags&linux.IPT_INV_DSTIP != 0,
-		Src:                   netip.AddrFrom4(iptip.Src),
-		SrcMask:               netip.AddrFrom4(iptip.SrcMask),
+		Src:                   tcpip.AddrFrom4(iptip.Src),
+		SrcMask:               tcpip.AddrFrom4(iptip.SrcMask),
 		SrcInvert:             iptip.InverseFlags&linux.IPT_INV_SRCIP != 0,
 		InputInterface:        string(trimNullBytes(iptip.InputInterface[:])),
 		InputInterfaceMask:    string(trimNullBytes(iptip.InputInterfaceMask[:])),

@@ -15,9 +15,9 @@
 package stack_test
 
 import (
-	"net/netip"
 	"testing"
 
+	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
@@ -32,7 +32,10 @@ func TestAddressableEndpointStateCleanup(t *testing.T) {
 	var s stack.AddressableEndpointState
 	s.Init(&ep, stack.AddressableEndpointStateOptions{HiddenWhileDisabled: false})
 
-	addr := netip.PrefixFrom(netip.AddrFrom4([4]byte{1, 0, 0, 0}), 32)
+	addr := tcpip.AddressWithPrefix{
+		Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
+		PrefixLen: 32,
+	}
 
 	{
 		properties := stack.AddressProperties{PEB: stack.NeverPrimaryEndpoint}
@@ -44,15 +47,15 @@ func TestAddressableEndpointStateCleanup(t *testing.T) {
 		ep.DecRef()
 	}
 	{
-		ep := s.AcquireAssignedAddress(addr.Addr(), false /* allowTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */)
+		ep := s.AcquireAssignedAddress(addr.Address, false /* allowTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */)
 		if ep == nil {
-			t.Fatalf("got s.AcquireAssignedAddress(%s, false, NeverPrimaryEndpoint) = nil, want = non-nil", addr.Addr())
+			t.Fatalf("got s.AcquireAssignedAddress(%s, false, NeverPrimaryEndpoint) = nil, want = non-nil", addr.Address)
 		}
 	}
 
 	s.Cleanup()
-	if ep := s.AcquireAssignedAddress(addr.Addr(), false /* allowTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */); ep != nil {
-		t.Fatalf("got s.AcquireAssignedAddress(%s, false, NeverPrimaryEndpoint) = %s, want = nil", addr.Addr(), ep.AddressWithPrefix())
+	if ep := s.AcquireAssignedAddress(addr.Address, false /* allowTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */); ep != nil {
+		t.Fatalf("got s.AcquireAssignedAddress(%s, false, NeverPrimaryEndpoint) = %s, want = nil", addr.Address, ep.AddressWithPrefix())
 	}
 }
 
@@ -65,7 +68,10 @@ func TestAddressDispatcherExpiredToAssigned(t *testing.T) {
 	var s stack.AddressableEndpointState
 	s.Init(&networkEp, stack.AddressableEndpointStateOptions{HiddenWhileDisabled: false})
 
-	addr := netip.PrefixFrom(netip.AddrFrom4([4]byte{1, 0, 0, 0}), 32)
+	addr := tcpip.AddressWithPrefix{
+		Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
+		PrefixLen: 32,
+	}
 
 	ep, err := s.AddAndAcquirePermanentAddress(addr, stack.AddressProperties{})
 	if err != nil {
@@ -94,5 +100,60 @@ func TestAddressDispatcherExpiredToAssigned(t *testing.T) {
 	defer readdedEp.DecRef()
 	if err := addrDisp.expectChanged(stack.AddressLifetimes{}, stack.AddressAssigned); err != nil {
 		t.Fatalf("expect to observe address added: %s", err)
+	}
+}
+
+// TestAddressableEndpointStateDisabled tests address acquisition while the
+// network endpoint is disabled.
+func TestAddressableEndpointStateDisabled(t *testing.T) {
+	addr := tcpip.AddressWithPrefix{
+		Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
+		PrefixLen: 32,
+	}
+
+	for _, tc := range []struct {
+		name                string
+		hiddenWhileDisabled bool
+	}{
+		{
+			name: "acquiresPermanentAddrWhenVisible",
+		},
+		{
+			name:                "hidesPermanentAddrWhenHidden",
+			hiddenWhileDisabled: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var networkEp fakeNetworkEndpoint
+			var s stack.AddressableEndpointState
+			s.Init(&networkEp, stack.AddressableEndpointStateOptions{
+				HiddenWhileDisabled: tc.hiddenWhileDisabled,
+			})
+			defer s.Cleanup()
+
+			// Temporary addresses should never be created on a disabled endpoint.
+			if got := s.AcquireAssignedAddress(addr.Address, true /* allowTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */); got != nil {
+				t.Errorf("s.AcquireAssignedAddress(%s, true, ...) = %v while disabled, want = nil", addr.Address, got)
+			}
+
+			ep, err := s.AddAndAcquirePermanentAddress(addr, stack.AddressProperties{PEB: stack.CanBePrimaryEndpoint})
+			if err != nil {
+				t.Fatalf("s.AddAndAcquirePermanentAddress(%s, ...): %s", addr, err)
+			}
+			ep.DecRef()
+
+			wantAddress := !tc.hiddenWhileDisabled
+			if got := s.AcquireAssignedAddress(addr.Address, tc.hiddenWhileDisabled /* allowTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */); (got != nil) != wantAddress {
+				t.Errorf("s.AcquireAssignedAddress(%s, %t, ...) = %v while disabled, wantAddress=%t", addr.Address, tc.hiddenWhileDisabled, got, wantAddress)
+			}
+
+			got := s.AcquireOutgoingPrimaryAddress(addr.Address, tcpip.Address{} /* srcHint */, true /* allowExpired */)
+			if got != nil {
+				got.DecRef()
+			}
+			if (got != nil) != wantAddress {
+				t.Errorf("s.AcquireOutgoingPrimaryAddress(%s, '', true) = %v while disabled, wantAddress=%t", addr.Address, got, wantAddress)
+			}
+		})
 	}
 }

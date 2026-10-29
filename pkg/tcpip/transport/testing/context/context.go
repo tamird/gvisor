@@ -18,12 +18,10 @@ package context
 
 import (
 	"bytes"
-	"net/netip"
 	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"golang.org/x/time/rate"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
@@ -124,7 +122,7 @@ func NewWithOptions(t *testing.T, transportProtocols []stack.TransportProtocolFa
 
 	protocolAddrV4 := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(netip.Addr(StackAddr)),
+		AddressWithPrefix: tcpip.Address(StackAddr).WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddrV4, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", NICID, protocolAddrV4, err)
@@ -132,7 +130,7 @@ func NewWithOptions(t *testing.T, transportProtocols []stack.TransportProtocolFa
 
 	protocolAddrV6 := tcpip.ProtocolAddress{
 		Protocol:          ipv6.ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(netip.Addr(StackV6Addr)),
+		AddressWithPrefix: tcpip.Address(StackV6Addr).WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddrV6, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", NICID, protocolAddrV6, err)
@@ -326,7 +324,7 @@ func (c *Context) readFromEndpoint(expectations readExpectations, checkers ...ch
 		"ControlMessages", // ControlMessages are checked below.
 		"RemoteAddr.NIC",
 		"RemoteAddr.Port",
-	), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+	)); diff != "" {
 		c.T.Fatalf("Read: unexpected result (-want +got):\n%s", diff)
 	}
 

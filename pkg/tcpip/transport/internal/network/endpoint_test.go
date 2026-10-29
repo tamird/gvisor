@@ -16,12 +16,10 @@ package network_test
 
 import (
 	"fmt"
-	"net/netip"
 	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -72,11 +70,11 @@ func TestEndpointStateTransitions(t *testing.T) {
 		netProto                tcpip.NetworkProtocolNumber
 		expectedMaxHeaderLength uint16
 		expectedNetProto        tcpip.NetworkProtocolNumber
-		expectedLocalAddr       netip.Addr
-		bindAddr                netip.Addr
-		expectedBoundAddr       netip.Addr
-		remoteAddr              netip.Addr
-		expectedRemoteAddr      netip.Addr
+		expectedLocalAddr       tcpip.Address
+		bindAddr                tcpip.Address
+		expectedBoundAddr       tcpip.Address
+		remoteAddr              tcpip.Address
+		expectedRemoteAddr      tcpip.Address
 		checker                 func(*testing.T, *buffer.View)
 		resume                  bool
 	}{
@@ -149,14 +147,14 @@ func TestEndpointStateTransitions(t *testing.T) {
 
 			ipv4ProtocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(ipv4NICAddr),
+				AddressWithPrefix: ipv4NICAddr.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, ipv4ProtocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("s.AddProtocolAddress(%d, %+v, {}: %s", nicID, ipv4ProtocolAddr, err)
 			}
 			ipv6ProtocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ipv6.ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(ipv6NICAddr),
+				AddressWithPrefix: ipv6NICAddr.WithPrefix(),
 			}
 
 			if err := s.AddProtocolAddress(nicID, ipv6ProtocolAddr, stack.AddressProperties{}); err != nil {
@@ -164,8 +162,8 @@ func TestEndpointStateTransitions(t *testing.T) {
 			}
 
 			s.SetRouteTable([]tcpip.Route{
-				{Destination: tcpip.FullPrefix(ipv4RemoteAddr).Masked(), NIC: nicID},
-				{Destination: tcpip.FullPrefix(ipv6RemoteAddr).Masked(), NIC: nicID},
+				{Destination: ipv4RemoteAddr.WithPrefix().Subnet(), NIC: nicID},
+				{Destination: ipv6RemoteAddr.WithPrefix().Subnet(), NIC: nicID},
 			})
 
 			var ops tcpip.SocketOptions
@@ -184,7 +182,7 @@ func TestEndpointStateTransitions(t *testing.T) {
 			if state := ep.State(); state != transport.DatagramEndpointStateBound {
 				t.Fatalf("got ep.State() = %s, want = %s", state, transport.DatagramEndpointStateBound)
 			}
-			if diff := cmp.Diff(tcpip.FullAddress{Addr: test.expectedBoundAddr}, ep.GetLocalAddress(), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+			if diff := cmp.Diff(ep.GetLocalAddress(), tcpip.FullAddress{Addr: test.expectedBoundAddr}); diff != "" {
 				t.Errorf("ep.GetLocalAddress() mismatch (-want +got):\n%s", diff)
 			}
 			if addr, connected := ep.GetRemoteAddress(); connected {
@@ -198,12 +196,12 @@ func TestEndpointStateTransitions(t *testing.T) {
 			if state := ep.State(); state != transport.DatagramEndpointStateConnected {
 				t.Fatalf("got ep.State() = %s, want = %s", state, transport.DatagramEndpointStateConnected)
 			}
-			if diff := cmp.Diff(tcpip.FullAddress{Addr: test.expectedLocalAddr}, ep.GetLocalAddress(), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+			if diff := cmp.Diff(ep.GetLocalAddress(), tcpip.FullAddress{Addr: test.expectedLocalAddr}); diff != "" {
 				t.Errorf("ep.GetLocalAddress() mismatch (-want +got):\n%s", diff)
 			}
 			if addr, connected := ep.GetRemoteAddress(); !connected {
 				t.Errorf("got ep.GetRemoteAddress() = (false, _), want = (true, %#v)", connectAddr)
-			} else if diff := cmp.Diff(tcpip.FullAddress{Addr: test.expectedRemoteAddr}, addr, cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+			} else if diff := cmp.Diff(addr, tcpip.FullAddress{Addr: test.expectedRemoteAddr}); diff != "" {
 				t.Errorf("remote address mismatch (-want +got):\n%s", diff)
 			}
 
@@ -219,7 +217,7 @@ func TestEndpointStateTransitions(t *testing.T) {
 				RemoteAddress:               test.expectedRemoteAddr,
 				MaxHeaderLength:             test.expectedMaxHeaderLength,
 				RequiresTXTransportChecksum: true,
-			}, info, cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+			}, info); diff != "" {
 				t.Errorf("write packet info mismatch (-want +got):\n%s", diff)
 			}
 			injectPkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
@@ -266,7 +264,7 @@ func TestBindNICID(t *testing.T) {
 	tests := []struct {
 		name     string
 		netProto tcpip.NetworkProtocolNumber
-		bindAddr netip.Addr
+		bindAddr tcpip.Address
 		unicast  bool
 	}{
 		{
@@ -311,14 +309,14 @@ func TestBindNICID(t *testing.T) {
 
 					ipv4ProtocolAddr := tcpip.ProtocolAddress{
 						Protocol:          ipv4.ProtocolNumber,
-						AddressWithPrefix: tcpip.FullPrefix(ipv4NICAddr),
+						AddressWithPrefix: ipv4NICAddr.WithPrefix(),
 					}
 					if err := s.AddProtocolAddress(nicID, ipv4ProtocolAddr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("s.AddProtocolAddress(%d, %+v, {}): %s", nicID, ipv4ProtocolAddr, err)
 					}
 					ipv6ProtocolAddr := tcpip.ProtocolAddress{
 						Protocol:          ipv6.ProtocolNumber,
-						AddressWithPrefix: tcpip.FullPrefix(ipv6NICAddr),
+						AddressWithPrefix: ipv6NICAddr.WithPrefix(),
 					}
 					if err := s.AddProtocolAddress(nicID, ipv6ProtocolAddr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("s.AddProtocolAddress(%d, %+v, {}): %s", nicID, ipv6ProtocolAddr, err)
@@ -333,7 +331,7 @@ func TestBindNICID(t *testing.T) {
 						t.Fatal("got ep.WasBound() = true, want = false")
 					}
 					wantInfo := stack.TransportEndpointInfo{NetProto: test.netProto, TransProto: udp.ProtocolNumber}
-					if diff := cmp.Diff(wantInfo, ep.Info(), cmpopts.EquateComparable(netip.Addr{}, netip.AddrPort{})); diff != "" {
+					if diff := cmp.Diff(wantInfo, ep.Info()); diff != "" {
 						t.Fatalf("ep.Info() mismatch (-want +got):\n%s", diff)
 					}
 
@@ -344,7 +342,7 @@ func TestBindNICID(t *testing.T) {
 					if !ep.WasBound() {
 						t.Error("got ep.WasBound() = false, want = true")
 					}
-					wantInfo.ID = stack.TransportEndpointID{Local: netip.AddrPortFrom(bindAddr.Addr, 0)}
+					wantInfo.ID = stack.TransportEndpointID{LocalAddress: bindAddr.Addr}
 					wantInfo.BindAddr = bindAddr.Addr
 					wantInfo.BindNICID = bindAddr.NIC
 					if test.unicast {
@@ -352,7 +350,7 @@ func TestBindNICID(t *testing.T) {
 					} else {
 						wantInfo.RegisterNICID = bindAddr.NIC
 					}
-					if diff := cmp.Diff(wantInfo, ep.Info(), cmpopts.EquateComparable(netip.Addr{}, netip.AddrPort{})); diff != "" {
+					if diff := cmp.Diff(wantInfo, ep.Info()); diff != "" {
 						t.Errorf("ep.Info() mismatch (-want +got):\n%s", diff)
 					}
 				})

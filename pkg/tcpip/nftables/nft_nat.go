@@ -16,12 +16,11 @@ package nftables
 
 import (
 	"encoding/binary"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/syserr"
-
+	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
@@ -107,20 +106,23 @@ func (n *natOp) destroy() {}
 
 // nfNatRange is the equivalent of struct nf_nat_range2 in Linux.
 type nfNatRange struct {
-	minAddr  netip.Addr
-	maxAddr  netip.Addr
+	minAddr  tcpip.Address
+	maxAddr  tcpip.Address
 	minProto uint16
 	maxProto uint16
 	flags    uint16
 }
 
 // getAddrRange returns the min and max addresses from the register set.
-func (n *natOp) getAddrRange(regs *registerSet) (minAddr, maxAddr netip.Addr) {
+func (n *natOp) getAddrRange(regs *registerSet) (minAddr, maxAddr tcpip.Address) {
 	regBuffer := regs.data
+	sz := header.IPv4AddressSize
 	if n.family == linux.NFPROTO_IPV6 {
-		return netip.AddrFrom16([16]byte(regBuffer[n.sregAddrMinIdx:])), netip.AddrFrom16([16]byte(regBuffer[n.sregAddrMaxIdx:]))
+		sz = header.IPv6AddressSize
 	}
-	return netip.AddrFrom4([4]byte(regBuffer[n.sregAddrMinIdx:])), netip.AddrFrom4([4]byte(regBuffer[n.sregAddrMaxIdx:]))
+	minAddr = tcpip.AddrFromSlice(regBuffer[n.sregAddrMinIdx : int(n.sregAddrMinIdx)+sz])
+	maxAddr = tcpip.AddrFromSlice(regBuffer[n.sregAddrMaxIdx : int(n.sregAddrMaxIdx)+sz])
+	return
 }
 
 // getProtoRange returns the min max proto data.
@@ -138,8 +140,8 @@ func (n *natOp) getProtoRange(regs *registerSet) (minProto, maxProto uint32) {
 // setupNetmap sets up the netmap for the NAT operation.
 // See `nft_nat_setup_netmap` in kernel.
 // TODO: b/486197011 - Support and verify netmaps.
-func (n *natOp) setupNetmap(pkt *stack.PacketBuffer, minAddr, maxAddr *netip.Addr) {
-	var manipAddr netip.Addr
+func (n *natOp) setupNetmap(pkt *stack.PacketBuffer, minAddr, maxAddr *tcpip.Address) {
+	var manipAddr tcpip.Address
 	var addrLen int
 
 	switch n.manipType {
@@ -171,11 +173,7 @@ func (n *natOp) setupNetmap(pkt *stack.PacketBuffer, minAddr, maxAddr *netip.Add
 		binary.BigEndian.PutUint32(newAddrBytes[offset:], m)
 	}
 
-	if addrLen == header.IPv4AddressSize {
-		*minAddr = netip.AddrFrom4([4]byte(newAddrBytes))
-	} else {
-		*minAddr = netip.AddrFrom16([16]byte(newAddrBytes))
-	}
+	*minAddr = tcpip.AddrFromSlice(newAddrBytes)
 	*maxAddr = *minAddr
 }
 
@@ -202,7 +200,7 @@ func (n *natOp) evaluate(regs *registerSet, evalCtx opEvalCtx) {
 	// Just fill the data for the NAT operation.
 	changeAddress := false
 	changePort := false
-	var minAddr, maxAddr netip.Addr
+	var minAddr, maxAddr tcpip.Address
 	if n.sregAddrMinIdx >= 0 {
 		changeAddress = true
 		minAddr, maxAddr = n.getAddrRange(regs)

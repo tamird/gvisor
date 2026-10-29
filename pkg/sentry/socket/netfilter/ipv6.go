@@ -16,7 +16,6 @@ package netfilter
 
 import (
 	"fmt"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/syserr"
@@ -28,20 +27,25 @@ import (
 // emptyIPv6Filter is for comparison with a rule's filters to determine whether
 // it is also empty. It is immutable.
 var emptyIPv6Filter = stack.IPHeaderFilter{
-	Dst:     netip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
-	DstMask: netip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
-	Src:     netip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
-	SrcMask: netip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
+	Dst:     tcpip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
+	DstMask: tcpip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
+	Src:     tcpip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
+	SrcMask: tcpip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
 }
 
 // convertNetstackToBinary6 converts the ip6tables as stored in netstack to the
 // format expected by the iptables tool. Linux stores each table as a binary
 // blob that can only be traversed by parsing a little data, reading some
 // offsets, jumping to those offsets, parsing again, etc.
-func convertNetstackToBinary6(stk *stack.Stack, tablename linux.TableName) (linux.KernelIP6TGetEntries, linux.IPTGetinfo, *syserr.Error) {
+func convertNetstackToBinary6(stk *stack.Stack, tablename linux.TableName) (linux.KernelIP6TGetEntries, linux.IPTGetinfo, error) {
+	// The table name has to fit in the struct.
+	if linux.XT_TABLE_MAXNAMELEN < len(tablename) {
+		return linux.KernelIP6TGetEntries{}, linux.IPTGetinfo{}, fmt.Errorf("table name %q too long", tablename)
+	}
+
 	id, ok := nameToID[tablename.String()]
 	if !ok {
-		return linux.KernelIP6TGetEntries{}, linux.IPTGetinfo{}, syserr.ErrNoFileOrDir
+		return linux.KernelIP6TGetEntries{}, linux.IPTGetinfo{}, fmt.Errorf("couldn't find table %q: %w", tablename, errTableNotFound)
 	}
 
 	// Setup the info struct, which is the same in IPv4 and IPv6.
@@ -220,11 +224,11 @@ func filterFromIP6TIP(iptip linux.IP6TIP) (stack.IPHeaderFilter, error) {
 		Protocol: tcpip.TransportProtocolNumber(iptip.Protocol),
 		// In ip6tables a flag controls whether to check the protocol.
 		CheckProtocol:         iptip.Flags&linux.IP6T_F_PROTO != 0,
-		Dst:                   netip.AddrFrom16(iptip.Dst),
-		DstMask:               netip.AddrFrom16(iptip.DstMask),
+		Dst:                   tcpip.AddrFrom16(iptip.Dst),
+		DstMask:               tcpip.AddrFrom16(iptip.DstMask),
 		DstInvert:             iptip.InverseFlags&linux.IP6T_INV_DSTIP != 0,
-		Src:                   netip.AddrFrom16(iptip.Src),
-		SrcMask:               netip.AddrFrom16(iptip.SrcMask),
+		Src:                   tcpip.AddrFrom16(iptip.Src),
+		SrcMask:               tcpip.AddrFrom16(iptip.SrcMask),
 		SrcInvert:             iptip.InverseFlags&linux.IP6T_INV_SRCIP != 0,
 		InputInterface:        string(trimNullBytes(iptip.InputInterface[:])),
 		InputInterfaceMask:    string(trimNullBytes(iptip.InputInterfaceMask[:])),

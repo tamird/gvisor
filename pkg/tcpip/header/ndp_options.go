@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -645,16 +644,18 @@ func (o NDPPrefixInformation) PreferredLifetime() time.Duration {
 //
 // Hosts SHOULD ignore an NDP Prefix Information option where the Prefix field
 // holds the link-local prefix (fe80::).
-func (o NDPPrefixInformation) Prefix() netip.Addr {
-	return netip.AddrFrom16([16]byte(o[ndpPrefixInformationPrefixOffset:][:IPv6AddressSize]))
+func (o NDPPrefixInformation) Prefix() tcpip.Address {
+	return tcpip.AddrFrom16Slice(o[ndpPrefixInformationPrefixOffset:][:IPv6AddressSize])
 }
 
 // Subnet returns the Prefix field and Prefix Length field represented in a
-// netip.Prefix.
-func (o NDPPrefixInformation) Subnet() netip.Prefix {
-	addrWithPrefix := netip.PrefixFrom(o.Prefix(), min(int(o.PrefixLength()), IPv6AddressSize*8))
-
-	return addrWithPrefix.Masked()
+// tcpip.Subnet.
+func (o NDPPrefixInformation) Subnet() tcpip.Subnet {
+	addrWithPrefix := tcpip.AddressWithPrefix{
+		Address:   o.Prefix(),
+		PrefixLen: int(o.PrefixLength()),
+	}
+	return addrWithPrefix.Subnet()
 }
 
 // NDPRecursiveDNSServer is the NDP Recursive DNS Server option, as defined by
@@ -716,9 +717,9 @@ func (o NDPRecursiveDNSServer) Lifetime() time.Duration {
 // used for name resolution.
 //
 // Note, the addresses MAY be link-local addresses.
-func (o NDPRecursiveDNSServer) Addresses() ([]netip.Addr, error) {
-	var addrs []netip.Addr
-	return addrs, o.iterAddresses(func(addr netip.Addr) { addrs = append(addrs, addr) })
+func (o NDPRecursiveDNSServer) Addresses() ([]tcpip.Address, error) {
+	var addrs []tcpip.Address
+	return addrs, o.iterAddresses(func(addr tcpip.Address) { addrs = append(addrs, addr) })
 }
 
 // checkAddresses iterates over the addresses in an NDP Recursive DNS Server
@@ -731,7 +732,7 @@ func (o NDPRecursiveDNSServer) checkAddresses() error {
 // option and calls a function with each valid unicast IPv6 address.
 //
 // Note, the addresses MAY be link-local addresses.
-func (o NDPRecursiveDNSServer) iterAddresses(fn func(netip.Addr)) error {
+func (o NDPRecursiveDNSServer) iterAddresses(fn func(tcpip.Address)) error {
 	if l := len(o); l < minNDPRecursiveDNSServerBodySize {
 		return fmt.Errorf("got %d bytes for NDP Recursive DNS Server option's body, expected at least %d bytes: %w", l, minNDPRecursiveDNSServerBodySize, io.ErrUnexpectedEOF)
 	}
@@ -743,7 +744,7 @@ func (o NDPRecursiveDNSServer) iterAddresses(fn func(netip.Addr)) error {
 	}
 
 	for i := 0; len(o) != 0; i++ {
-		addr := netip.AddrFrom16([16]byte(o[:IPv6AddressSize]))
+		addr := tcpip.AddrFrom16Slice(o[:IPv6AddressSize])
 		if !IsV6UnicastAddress(addr) {
 			return fmt.Errorf("%d-th address (%s) in NDP Recursive DNS Server option is not a valid unicast IPv6 address: %w", i, addr, ErrNDPOptMalformedBody)
 		}
@@ -1017,10 +1018,10 @@ func (o NDPRouteInformation) RouteLifetime() time.Duration {
 }
 
 // Prefix returns the prefix of the destination subnet this route is for.
-func (o NDPRouteInformation) Prefix() (netip.Prefix, error) {
+func (o NDPRouteInformation) Prefix() (tcpip.Subnet, error) {
 	prefixLength := int(o.PrefixLength())
 	if max := IPv6AddressSize * 8; prefixLength > max {
-		return netip.Prefix{}, fmt.Errorf("got prefix length = %d, want <= %d", prefixLength, max)
+		return tcpip.Subnet{}, fmt.Errorf("got prefix length = %d, want <= %d", prefixLength, max)
 	}
 
 	prefix := o[ndpRouteInformationRoutePrefixIdx:]
@@ -1029,7 +1030,10 @@ func (o NDPRouteInformation) Prefix() (netip.Prefix, error) {
 		panic(fmt.Sprintf("got copy(addrBytes, prefix) = %d, want = %d", n, len(prefix)))
 	}
 
-	return netip.PrefixFrom(netip.AddrFrom16(addrBytes), prefixLength).Masked(), nil
+	return tcpip.AddressWithPrefix{
+		Address:   tcpip.AddrFrom16(addrBytes),
+		PrefixLen: prefixLength,
+	}.Subnet(), nil
 }
 
 func (o NDPRouteInformation) hasError() error {

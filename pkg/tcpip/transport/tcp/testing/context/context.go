@@ -19,7 +19,6 @@ package context
 import (
 	"bytes"
 	"context"
-	"net/netip"
 	"testing"
 	"time"
 
@@ -56,34 +55,40 @@ const (
 
 var (
 	// StackAddr is the IPv4 address assigned to the stack.
-	StackAddr = netip.AddrFrom4([4]byte{10, 0, 0, 1})
+	StackAddr = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x01"))
 
 	// TestAddr is the source address for packets sent to the stack via the
 	// link layer endpoint.
-	TestAddr = netip.AddrFrom4([4]byte{10, 0, 0, 2})
+	TestAddr = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x02"))
 
 	// StackV6Addr is the IPv6 address assigned to the stack.
-	StackV6Addr = netip.MustParseAddr("a00::1")
+	StackV6Addr = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01"))
 
 	// TestV6Addr is the source address for packets sent to the stack via
 	// the link layer endpoint.
-	TestV6Addr = netip.MustParseAddr("a00::2")
+	TestV6Addr = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02"))
 
 	// StackV4MappedAddr is StackAddr as a mapped v6 address.
-	StackV4MappedAddr = netip.AddrFrom16(StackAddr.As16())
+	StackV4MappedAddr = tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" + string(StackAddr.AsSlice())))
 
 	// TestV4MappedAddr is TestAddr as a mapped v6 address.
-	TestV4MappedAddr = netip.AddrFrom16(TestAddr.As16())
+	TestV4MappedAddr = tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" + string(TestAddr.AsSlice())))
 
 	// V4MappedWildcardAddr is the mapped v6 representation of 0.0.0.0.
-	V4MappedWildcardAddr = netip.MustParseAddr("::ffff:0.0.0.0")
+	V4MappedWildcardAddr = tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00\x00\x00"))
 )
 
 // StackAddrWithPrefix is StackAddr with its associated prefix length.
-var StackAddrWithPrefix = netip.PrefixFrom(StackAddr, 24)
+var StackAddrWithPrefix = tcpip.AddressWithPrefix{
+	Address:   StackAddr,
+	PrefixLen: 24,
+}
 
 // StackV6AddrWithPrefix is StackV6Addr with its associated prefix length.
-var StackV6AddrWithPrefix = netip.PrefixFrom(StackV6Addr, header.IIDOffsetInIPv6Address*8)
+var StackV6AddrWithPrefix = tcpip.AddressWithPrefix{
+	Address:   StackV6Addr,
+	PrefixLen: header.IIDOffsetInIPv6Address * 8,
+}
 
 // Headers is used to represent the TCP header fields when building a
 // new packet.
@@ -487,7 +492,7 @@ func (c *Context) BuildSegment(payload []byte, h *Headers) buffer.Buffer {
 
 // BuildSegmentWithAddrs builds a TCP segment based on the given Headers,
 // payload and source and destination IPv4 addresses.
-func (c *Context) BuildSegmentWithAddrs(payload []byte, h *Headers, src, dst netip.Addr) buffer.Buffer {
+func (c *Context) BuildSegmentWithAddrs(payload []byte, h *Headers, src, dst tcpip.Address) buffer.Buffer {
 	// Allocate a buffer for data and headers.
 	buf := make([]byte, header.TCPMinimumSize+header.IPv4MinimumSize+len(h.TCPOpts)+len(payload))
 	copy(buf[len(buf)-len(payload):], payload)
@@ -550,7 +555,7 @@ func (c *Context) SendPacket(payload []byte, h *Headers) {
 // SendPacketWithAddrs builds and sends a TCP segment(with the provided payload
 // & TCPheaders) in an IPv4 packet via the link layer endpoint using the
 // provided source and destination IPv4 addresses.
-func (c *Context) SendPacketWithAddrs(payload []byte, h *Headers, src, dst netip.Addr) {
+func (c *Context) SendPacketWithAddrs(payload []byte, h *Headers, src, dst tcpip.Address) {
 	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 		Payload: c.BuildSegmentWithAddrs(payload, h, src, dst),
 	})
@@ -695,7 +700,7 @@ func (c *Context) SendV6Packet(payload []byte, h *Headers) {
 // SendV6PacketWithAddrs builds and sends an IPv6 Packet via the link layer
 // endpoint of the context using the provided source and destination IPv6
 // addresses.
-func (c *Context) SendV6PacketWithAddrs(payload []byte, h *Headers, src, dst netip.Addr) {
+func (c *Context) SendV6PacketWithAddrs(payload []byte, h *Headers, src, dst tcpip.Address) {
 	// Allocate a buffer for data and headers.
 	buf := make([]byte, header.TCPMinimumSize+header.IPv6MinimumSize+len(payload)+len(h.TCPOpts))
 	copy(buf[len(buf)-len(payload):], payload)
@@ -1248,7 +1253,7 @@ func (c *Context) PassiveConnectWithOptions(maxPayload, wndScale int, synOptions
 		checker.DstPort(TestPort),
 		checker.TCPFlags(header.TCPFlagAck | header.TCPFlagSyn),
 		checker.TCPAckNum(uint32(iss) + 1),
-		checker.TCPSynOptions(header.TCPSynOptions{MSS: synOptions.MSS, WS: wndScale, SACKPermitted: synOptions.SACKPermitted && c.SACKEnabled()}),
+		checker.TCPSynOptions(header.TCPSynOptions{MSS: synOptions.MSS, WS: wndScale}),
 	}
 
 	// If TS option was enabled in the original SYN then add a checker to
@@ -1304,7 +1309,7 @@ func (c *Context) PassiveConnectWithOptions(maxPayload, wndScale int, synOptions
 		NextSeqNum:    iss + 1,
 		AckNum:        c.IRS + 1,
 		WndSize:       rcvWnd,
-		SACKPermitted: synOptions.SACKPermitted && c.SACKEnabled(),
+		SACKPermitted: rcvdSynOptions.SACKPermitted,
 		RecentTS:      parsedOpts.TSVal,
 		TSVal:         synOptions.TSVal + 1,
 	}

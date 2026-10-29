@@ -75,30 +75,6 @@ func StringFromEnv(name, def string) string {
 	return str
 }
 
-// RuntimeTestClockSource returns the explicitly selected qualification clock,
-// if any. Production configuration defaults do not read this setting.
-func RuntimeTestClockSource() (config.ClockSource, bool) {
-	value := os.Getenv("GVISOR_TEST_CLOCK_SOURCE")
-	if value == "" {
-		return config.ClockSourceCalibrated, false
-	}
-	var source config.ClockSource
-	if err := source.Set(value); err != nil {
-		panic(fmt.Errorf("invalid GVISOR_TEST_CLOCK_SOURCE: %w", err))
-	}
-	return source, true
-}
-
-// RuntimeTestFlags returns explicit qualification settings for runtimes under
-// test. Callers prepend them to their own flags so explicit fixture settings
-// retain precedence.
-func RuntimeTestFlags() []string {
-	if source, ok := RuntimeTestClockSource(); ok {
-		return []string{"--clock-source=" + source.String()}
-	}
-	return nil
-}
-
 // IntFromEnv returns the integer value of the named environment variable, or `def` if unset/empty.
 // It is useful for defining flags where the default value can be specified through the environment.
 func IntFromEnv(name string, def int) int {
@@ -298,9 +274,6 @@ func TestConfig(t *testing.T) *config.Config {
 
 	testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
-	if err := testFlags.Parse(RuntimeTestFlags()); err != nil {
-		t.Fatalf("error parsing runtime test flags: %v", err)
-	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		t.Fatalf("error loading configuration from flags: %v", err)
@@ -330,9 +303,6 @@ func isCgroupV2() bool {
 func ConfigForBenchmark(b *testing.B) *config.Config {
 	testFlags := flag.NewFlagSet("bench", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
-	if err := testFlags.Parse(RuntimeTestFlags()); err != nil {
-		b.Fatalf("error parsing runtime test flags: %v", err)
-	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		b.Fatalf("error loading configuration from flags: %v", err)
@@ -571,7 +541,44 @@ func WaitForHTTP(ip string, port int, timeout time.Duration) error {
 	return Poll(cb, timeout)
 }
 
-// Reaper reaps child processes.
+// ownedMu protects owned, the set of children started by StartCmd. Reapers
+// leave those children for exec.Cmd.Wait. StartCmd holds ownedMu across the
+// fork, so a Reaper never sees such a child before it is in owned.
+var (
+	ownedMu sync.Mutex
+	owned   = make(map[int]struct{})
+)
+
+// StartCmd starts cmd so that no Reaper reaps it. The caller must wait for
+// cmd with WaitCmd instead of cmd.Wait.
+func StartCmd(cmd *exec.Cmd) error {
+	ownedMu.Lock()
+	defer ownedMu.Unlock()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	owned[cmd.Process.Pid] = struct{}{}
+	return nil
+}
+
+// WaitCmd waits for a command started by StartCmd.
+func WaitCmd(cmd *exec.Cmd) error {
+	err := cmd.Wait()
+	ownedMu.Lock()
+	delete(owned, cmd.Process.Pid)
+	ownedMu.Unlock()
+	return err
+}
+
+// RunCmd is like cmd.Run, but a running Reaper does not race with it.
+func RunCmd(cmd *exec.Cmd) error {
+	if err := StartCmd(cmd); err != nil {
+		return err
+	}
+	return WaitCmd(cmd)
+}
+
+// Reaper reaps child processes, except those started by StartCmd.
 type Reaper struct {
 	// mu protects ch, which will be nil if the reaper is not running.
 	mu sync.Mutex
@@ -604,14 +611,54 @@ func (r *Reaper) Start() {
 				// Channel closed.
 				return
 			}
-			for {
-				cpid, _ := unix.Wait4(-1, nil, unix.WNOHANG, nil)
-				if cpid < 1 {
-					break
-				}
-			}
+			reapChildren()
 		}
 	}()
+}
+
+// reapChildren reaps every exited child that StartCmd did not start.
+func reapChildren() {
+	ownedMu.Lock()
+	defer ownedMu.Unlock()
+
+	if len(owned) == 0 {
+		for {
+			cpid, _ := unix.Wait4(-1, nil, unix.WNOHANG, nil)
+			if cpid < 1 {
+				return
+			}
+		}
+	}
+	// Some children are owned, so don't use wait4(-1).
+	// Reap the others one at a time.
+	for _, pid := range childPIDs() {
+		if _, ok := owned[pid]; !ok {
+			unix.Wait4(pid, nil, unix.WNOHANG, nil)
+		}
+	}
+}
+
+// childPIDs returns the PIDs of this process's children. Each child is listed
+// under the thread that forked it, so all threads are read.
+func childPIDs() []int {
+	files, err := filepath.Glob("/proc/self/task/*/children")
+	if err != nil {
+		return nil
+	}
+	var pids []int
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			// The thread exited.
+			continue
+		}
+		for _, field := range strings.Fields(string(data)) {
+			if pid, err := strconv.Atoi(field); err == nil {
+				pids = append(pids, pid)
+			}
+		}
+	}
+	return pids
 }
 
 // Stop stops reaping child processes.

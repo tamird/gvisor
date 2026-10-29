@@ -305,21 +305,10 @@ func FindUIDGIDInPasswd(passwd io.Reader, user string) (auth.KUID, auth.KGID, er
 
 		parts := strings.Split(line, ":")
 		matched := len(parts) > idxToMatch && parts[idxToMatch] == uStringOrID
-		var uid, gid uint32
-		if matched {
-			if len(parts) <= gidIdx {
-				return 0, 0, fmt.Errorf("missing UID or GID for user %q: %w", uStringOrID, strconv.ErrSyntax)
-			}
-			uid, err = parseID(parts[uidIdx])
-			if err != nil {
-				return 0, 0, fmt.Errorf("invalid UID for user %q: %w", uStringOrID, err)
-			}
-			gid, err = parseID(parts[gidIdx])
-			if err != nil {
-				return 0, 0, fmt.Errorf("invalid GID for user %q: %w", uStringOrID, err)
-			}
-		}
 		if len(parts) != numFields {
+			if matched {
+				return 0, 0, fmt.Errorf("invalid passwd record for user %q: %w", uStringOrID, strconv.ErrSyntax)
+			}
 			// If format is invalid, return default values.
 			return fallbackUID, fallbackGID, nil
 		}
@@ -330,12 +319,23 @@ func FindUIDGIDInPasswd(passwd io.Reader, user string) (auth.KUID, auth.KGID, er
 				continue
 			}
 			if parts[i] == "" {
+				if matched {
+					return 0, 0, fmt.Errorf("empty field %d for user %q: %w", i, uStringOrID, strconv.ErrSyntax)
+				}
 				// If format is invalid, return default values.
 				return fallbackUID, fallbackGID, nil
 			}
 		}
 
 		if matched {
+			uid, err := parseID(parts[uidIdx])
+			if err != nil {
+				return 0, 0, fmt.Errorf("invalid UID for user %q: %w", uStringOrID, err)
+			}
+			gid, err := parseID(parts[gidIdx])
+			if err != nil {
+				return 0, 0, fmt.Errorf("invalid GID for user %q: %w", uStringOrID, err)
+			}
 			return auth.KUID(uid), auth.KGID(gid), nil
 		}
 	}

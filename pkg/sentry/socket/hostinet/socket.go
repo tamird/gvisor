@@ -683,10 +683,8 @@ func (s *Socket) RecvMsg(t *kernel.Task, dst usermem.IOSequence, flags int, have
 			if n != 0 {
 				panic(fmt.Sprintf("CopyOutFrom: got (%d, %v), wanted (0, %v)", n, err, err))
 			}
-			// A concurrent shutdown can make the preceding EAGAIN stale.
-			// A blocking reader with no data left must observe EOF.
+			// Are we closed for reading? No sense in trying to read if so.
 			if s.recvClosed.Load() {
-				err = nil
 				break
 			}
 			if ch != nil {

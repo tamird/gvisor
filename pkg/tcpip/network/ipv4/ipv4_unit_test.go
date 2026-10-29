@@ -18,7 +18,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"net/netip"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -67,17 +66,21 @@ func TestRecalculateChecksum(t *testing.T) {
 			return nil, fmt.Errorf("CreateNIC(1, _) failed: %s", err)
 		}
 
-		src := netip.AddrFrom4([4]byte{16, 0, 0, 1})
-		dst := netip.AddrFrom4([4]byte{16, 0, 0, 2})
+		src := tcpip.AddrFrom4([4]byte{16, 0, 0, 1})
+		dst := tcpip.AddrFrom4([4]byte{16, 0, 0, 2})
 		protocolAddr := tcpip.ProtocolAddress{
 			Protocol:          ProtocolNumber,
-			AddressWithPrefix: tcpip.FullPrefix(src),
+			AddressWithPrefix: src.WithPrefix(),
 		}
 		if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 			return nil, fmt.Errorf("AddProtocolAddress(1, %+v, {}) failed: %s", protocolAddr, err)
 		}
 		{
-			subnet := tcpip.FullPrefix(dst)
+			mask := tcpip.MaskFromBytes(header.IPv4Broadcast.AsSlice())
+			subnet, err := tcpip.NewSubnet(dst, mask)
+			if err != nil {
+				return nil, fmt.Errorf("NewSubnet(%s, %s) failed: %s", dst, mask, err)
+			}
 			s.SetRouteTable([]tcpip.Route{{
 				Destination: subnet,
 				NIC:         1,

@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
-	"net/netip"
 	"sync"
 	"testing"
 
@@ -145,22 +144,18 @@ func TestICMPv6Checksum(t *testing.T) {
 	}, want, fmt.Sprintf("header: {% x} data {% x}", h, b.Flatten()))
 }
 
-func randomAddress(size int) netip.Addr {
+func randomAddress(size int) tcpip.Address {
 	s := make([]byte, size)
 	for i := 0; i < size; i++ {
 		s[i] = byte(rand.Uint32())
 	}
-	addr, ok := netip.AddrFromSlice(s)
-	if !ok {
-		panic(fmt.Sprintf("invalid address size: %d", size))
-	}
-	return addr
+	return tcpip.AddrFromSlice(s)
 }
 
 func TestChecksummableNetworkUpdateAddress(t *testing.T) {
 	tests := []struct {
 		name   string
-		update func(header.IPv4, netip.Addr)
+		update func(header.IPv4, tcpip.Address)
 	}{
 		{
 			name:   "SetSourceAddressWithChecksumUpdate",
@@ -208,6 +203,15 @@ func TestChecksummableNetworkUpdateAddress(t *testing.T) {
 	}
 }
 
+func wireChecksum(proto tcpip.TransportProtocolNumber, sum uint16) uint16 {
+	// UDP reserves a zero field for disabled checksumming. A calculated
+	// checksum of zero is transmitted as all ones (RFC 768).
+	if proto == header.UDPProtocolNumber && sum == 0xffff {
+		return 0xffff
+	}
+	return ^sum
+}
+
 func TestChecksummableTransportUpdatePort(t *testing.T) {
 	// The fields in the pseudo header is not tested here so we just use 0.
 	const pseudoHeaderXSum = 0
@@ -247,18 +251,14 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 					Length:   0,
 					Checksum: 0,
 				})
-				h.SetChecksum(^h.CalculateChecksum(pseudoHeaderXSum))
+				h.SetChecksum(wireChecksum(header.UDPProtocolNumber, h.CalculateChecksum(pseudoHeaderXSum)))
 				return h, h.CalculateChecksum
 			},
 			proto: header.UDPProtocolNumber,
 		},
 	}
 
-	for i := 0; i < 1000; i++ {
-		origSrcPort := uint16(rand.Uint32())
-		origDstPort := uint16(rand.Uint32())
-		newPort := uint16(rand.Uint32())
-
+	check := func(origSrcPort, origDstPort, newPort uint16) {
 		t.Run(fmt.Sprintf("OrigSrcPort=%d,OrigDstPort=%d,NewPort=%d", origSrcPort, origDstPort, newPort), func(t *testing.T) {
 			for _, test := range tests {
 				t.Run(test.name, func(t *testing.T) {
@@ -278,12 +278,10 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 						t.Run(subTest.name, func(t *testing.T) {
 							h, calcXSum := test.transportHdr(origSrcPort, origDstPort)
 							subTest.update(h)
-							// TCP and UDP hold the 1s complement of the fully calculated
-							// checksum.
-							got := ^h.Checksum()
+							got := h.Checksum()
 							h.SetChecksum(0)
 
-							if want := calcXSum(pseudoHeaderXSum); got != want {
+							if want := wireChecksum(test.proto, calcXSum(pseudoHeaderXSum)); got != want {
 								h, _ := test.transportHdr(origSrcPort, origDstPort)
 								t.Errorf("got Checksum() = 0x%x, want = 0x%x; originalBytes = %#v, new port = %d", got, want, h, newPort)
 							}
@@ -292,6 +290,12 @@ func TestChecksummableTransportUpdatePort(t *testing.T) {
 				})
 			}
 		})
+	}
+	// Exercise a computed zero UDP checksum both before and after the update.
+	check(1, 0xfffe, 2)
+	check(2, 0xfffe, 1)
+	for i := 0; i < 1000; i++ {
+		check(uint16(rand.Uint32()), uint16(rand.Uint32()), uint16(rand.Uint32()))
 	}
 }
 
@@ -326,21 +330,17 @@ func TestChecksummableTransportUpdatePseudoHeaderAddress(t *testing.T) {
 					for _, fullChecksum := range []bool{true, false} {
 						t.Run(fmt.Sprintf("FullChecksum=%t", fullChecksum), func(t *testing.T) {
 							initialXSum := header.PseudoHeaderChecksum(test.proto, permanent, old, 0)
+							want := header.PseudoHeaderChecksum(test.proto, permanent, new, 0)
 							if fullChecksum {
-								// TCP and UDP hold the 1s complement of the fully calculated
-								// checksum.
-								initialXSum = ^initialXSum
+								initialXSum = wireChecksum(test.proto, initialXSum)
+								want = wireChecksum(test.proto, want)
 							}
 
 							h := test.transportHdr()
 							h.SetChecksum(initialXSum)
 							h.UpdateChecksumPseudoHeaderAddress(old, new, fullChecksum)
 
-							got := h.Checksum()
-							if fullChecksum {
-								got = ^got
-							}
-							if want := header.PseudoHeaderChecksum(test.proto, permanent, new, 0); got != want {
+							if got := h.Checksum(); got != want {
 								t.Errorf("got Checksum() = 0x%x, want = 0x%x; h = %#v", got, want, h)
 							}
 						})
@@ -358,40 +358,40 @@ func TestUDPChecksumIncrementalUpdate(t *testing.T) {
 		name            string
 		initialChecksum uint16
 		newPort         uint16
-		oldAddr         netip.Addr
-		newAddr         netip.Addr
+		oldAddr         tcpip.Address
+		newAddr         tcpip.Address
 		wantChecksum    uint16
 	}{
 		{
 			name:            "ChecksumIncrementalUpdate",
 			initialChecksum: 0x1234,
 			newPort:         0x5678,
-			oldAddr:         netip.IPv4Unspecified(),
-			newAddr:         netip.AddrFrom4([4]byte{86, 120, 0, 0}),
+			oldAddr:         tcpip.AddrFromSlice([]byte{0, 0, 0, 0}),
+			newAddr:         tcpip.AddrFromSlice([]byte{0x56, 0x78, 0, 0}),
 			wantChecksum:    0xBBBB,
 		},
 		{
 			name:            "ChecksumNoUpdate",
 			initialChecksum: 0x1234,
 			newPort:         0,
-			oldAddr:         netip.IPv4Unspecified(),
-			newAddr:         netip.IPv4Unspecified(),
+			oldAddr:         tcpip.AddrFromSlice([]byte{0, 0, 0, 0}),
+			newAddr:         tcpip.AddrFromSlice([]byte{0, 0, 0, 0}),
 			wantChecksum:    0x1234,
 		},
 		{
 			name:            "ChecksumZero",
 			initialChecksum: 0xEFFF,
 			newPort:         0xEFFF,
-			oldAddr:         netip.IPv4Unspecified(),
-			newAddr:         netip.AddrFrom4([4]byte{239, 255, 0, 0}),
+			oldAddr:         tcpip.AddrFromSlice([]byte{0, 0, 0, 0}),
+			newAddr:         tcpip.AddrFromSlice([]byte{0xEF, 0xFF, 0, 0}),
 			wantChecksum:    0xFFFF,
 		},
 		{
 			name:            "ChecksumDisabled",
 			initialChecksum: 0,
 			newPort:         0xEFFF,
-			oldAddr:         netip.IPv4Unspecified(),
-			newAddr:         netip.AddrFrom4([4]byte{239, 255, 0, 0}),
+			oldAddr:         tcpip.AddrFromSlice([]byte{0, 0, 0, 0}),
+			newAddr:         tcpip.AddrFromSlice([]byte{0xEF, 0xFF, 0, 0}),
 			wantChecksum:    0,
 		},
 	}

@@ -94,45 +94,11 @@ func (c *vCPU) archExitSanityCheck(context *arch.SignalContext64) {
 	printHex([]byte("rip       = "), rip)
 	printHex([]byte("rsp       = "), rsp)
 	printHex([]byte("rbp       = "), rbp)
-	printHex(exitRflagsTitle, c.CPU.Registers().Eflags)
-	printHex(exitStackTopTitle, c.CPU.StackTop())
-	errorCode, user := c.CPU.ErrorCode()
-	printHex(exitErrorCodeTitle, uint64(errorCode))
-	var userError uint64
-	if user {
-		userError = 1
-	}
-	printHex(exitUserErrorTitle, userError)
-
-	// KVM_RUN has returned and bluepillGuestExit has not released this vCPU.
-	// Reuse the fatal-path storage to avoid allocating on the signal stack.
-	guestRegs := &c.dieState.guestRegs
-	if errno := c.getUserRegisters(guestRegs); errno != 0 {
-		printHex(exitGetRegsErrnoTitle, uint64(errno))
-	} else {
-		printHex(exitKVMRipTitle, guestRegs.RIP)
-		printHex(exitKVMRspTitle, guestRegs.RSP)
-		printHex(exitKVMRbpTitle, guestRegs.RBP)
-		printHex(exitKVMRflagsTitle, guestRegs.RFLAGS)
-	}
 	context.R9 = rip
 	context.Rip = _PANIC_RIP_EXC_CHECK
 	context.R10 = vector
 	context.R11 = faultAddr
 }
-
-// Keep diagnostic titles off the signal stack.
-var (
-	exitRflagsTitle       = []byte("rflags    = ")
-	exitStackTopTitle     = []byte("StackTop  = ")
-	exitErrorCodeTitle    = []byte("ErrorCode = ")
-	exitUserErrorTitle    = []byte("UserError = ")
-	exitGetRegsErrnoTitle = []byte("KVM_GET_REGS errno = ")
-	exitKVMRipTitle       = []byte("KVM rip    = ")
-	exitKVMRspTitle       = []byte("KVM rsp    = ")
-	exitKVMRbpTitle       = []byte("KVM rbp    = ")
-	exitKVMRflagsTitle    = []byte("KVM rflags = ")
-)
 
 // KernelSyscall handles kernel syscalls.
 //

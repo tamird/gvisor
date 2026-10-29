@@ -37,7 +37,6 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/log"
-	"gvisor.dev/gvisor/pkg/safecopy"
 	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/sentry/checkpoint"
 	"gvisor.dev/gvisor/pkg/sentry/hostmm"
@@ -176,7 +175,7 @@ type MemoryFile struct {
 	knownCommittedBytes uint64
 	commitSeq           uint64
 	nextCommitScan      time.Time
-	ongoingCommitScan   atomic.Bool
+	ongoingCommitScan   atomicbitops.Bool
 	isSaving            bool
 
 	// evictable maps EvictableMemoryUsers to eviction state.
@@ -191,8 +190,8 @@ type MemoryFile struct {
 	opts MemoryFileOpts
 
 	// savable is true if this MemoryFile will be saved via SaveTo() during
-	// the kernel's SaveTo operation. savable is protected by mu.
-	savable bool
+	// the kernel's SaveTo operation.
+	savable atomicbitops.Bool
 
 	// destroyed is set by Destroy to instruct the releaser goroutine to
 	// release all MemoryFile resources and exit. destroyed is protected by mu.
@@ -297,10 +296,6 @@ type memAcctInfo struct {
 	// committed; pages that are definitely not committed are represented by
 	// gaps in MemoryFile.memAcct.)
 	knownCommitted bool
-
-	// retainCommitment prevents checkpointing from discarding backing storage
-	// for live allocations, even when their contents are zero.
-	retainCommitment bool
 
 	// If true, represented pages are waste or releasing pages.
 	wasteOrReleasing bool
@@ -544,12 +539,6 @@ type AllocOpts struct {
 	// Mode controls the commitment status of returned pages.
 	Mode AllocationMode
 
-	// RetainCommitment keeps the allocation committed until its last reference
-	// is released, including across save and restore. This is for callers that
-	// cannot handle backing-storage faults after allocation. Mode must be
-	// AllocateAndCommit, and Decommit must not be called on these pages.
-	RetainCommitment bool
-
 	// If Huge is true, the allocation should be hugepage-backed if possible.
 	Huge bool
 
@@ -633,9 +622,6 @@ func (f *MemoryFile) Allocate(length uint64, opts AllocOpts) (memmap.FileRange, 
 	if length == 0 || !hostarch.IsPageAligned(length) || (opts.Huge && !hostarch.IsHugePageAligned(length)) {
 		panic(fmt.Sprintf("invalid allocation length: %#x", length))
 	}
-	if opts.RetainCommitment && opts.Mode != AllocateAndCommit {
-		panic("RetainCommitment requires AllocateAndCommit")
-	}
 
 	alloc := allocState{
 		length:     length,
@@ -715,39 +701,17 @@ func (f *MemoryFile) Allocate(length uint64, opts AllocOpts) (memmap.FileRange, 
 					}
 				}
 			}
-			if alloc.recycled || needHugeTouch || opts.Mode == AllocateAndCommit {
-				f.forEachChunk(fr, func(chunk *chunkInfo, chunkFR memmap.FileRange) bool {
-					bs := chunk.sliceAt(chunkFR)
-					if alloc.recycled {
-						// Waste pages may be uncommitted and their contents are unknown.
-						_, err = safemem.Zero(safemem.BlockFromUnsafeSlice(bs))
-						return err == nil
+			if alloc.recycled {
+				// The contents of recycled waste pages are initially unknown, so we
+				// need to zero them.
+				f.manuallyZero(fr)
+			} else if needHugeTouch {
+				// We only need to touch a single byte in each huge page.
+				f.forEachMappingSlice(fr, func(bs []byte) {
+					for i := 0; i < len(bs); i += int(hostarch.HugePageSize) {
+						bs[i] = 0
 					}
-					// Establish the VMA's backing policy before fallocate. Population
-					// is only a hint: it may skip short or unaligned mappings.
-					for off := chunkFR.Start; off < chunkFR.End; off = hostarch.HugePageRoundDown(off) + uint64(hostarch.HugePageSize) {
-						i := off - chunkFR.Start
-						if _, err = safemem.Zero(safemem.BlockFromUnsafeSlice(bs[i : i+1])); err != nil {
-							return false
-						}
-					}
-					return true
 				})
-			}
-			// Full zeroing commits recycled shmem pages. Sparse policy touches
-			// still need full commitment, and disk-backed files need fallocate's
-			// storage reservation even after zeroing.
-			if err == nil && opts.Mode == AllocateAndCommit && (!alloc.recycled || f.opts.DiskBackedFile) {
-				err = f.commitFile(fr)
-			}
-			if err != nil {
-				f.DecRef(fr)
-				if _, ok := err.(safecopy.BusError); ok {
-					// This is failure to back our allocation, not a ReaderFunc
-					// fault while copying from application memory.
-					err = linuxerr.ENOMEM
-				}
-				return memmap.FileRange{}, err
 			}
 		default:
 			panic(fmt.Sprintf("unknown AllocOpts.Mode %d", alloc.opts.Mode))
@@ -792,24 +756,9 @@ func (f *MemoryFile) findAllocatableAndMarkUsed(alloc *allocState) (fr memmap.Fi
 		// Try to recycle waste pages, since this avoids the overhead of
 		// decommitting and then committing them again.
 		var uwgap unwasteGapIterator
-		if alloc.opts.Dir == BottomUp {
-			uwgap = unwaste.FirstLargeEnoughGap(alloc.length)
-		} else {
-			uwgap = unwaste.LastLargeEnoughGap(alloc.length)
-		}
+		uwgap, fr = findRecyclable(unwaste, alloc)
 		if uwgap.Ok() {
 			alloc.recycled = true
-			if alloc.opts.Dir == BottomUp {
-				fr = memmap.FileRange{
-					Start: uwgap.Start(),
-					End:   uwgap.Start() + alloc.length,
-				}
-			} else {
-				fr = memmap.FileRange{
-					Start: uwgap.End() - alloc.length,
-					End:   uwgap.End(),
-				}
-			}
 			unwaste.Insert(uwgap, fr, unwasteInfo{})
 			// Update reference count for these pages from 0 to 1.
 			unfree.MutateFullRange(fr, func(ufseg unfreeIterator) bool {
@@ -839,7 +788,6 @@ func (f *MemoryFile) findAllocatableAndMarkUsed(alloc *allocState) (fr memmap.Fi
 				}
 				ma.kind = alloc.opts.Kind
 				ma.memCgID = alloc.opts.MemCgID
-				ma.retainCommitment = alloc.opts.RetainCommitment
 				ma.wasteOrReleasing = false
 				return true
 			})
@@ -886,13 +834,71 @@ retryFree:
 	// them committed prematurely makes them more likely to be saved even if
 	// zeroed, unless SaveOpts.ExcludeCommittedZeroPages is enabled.
 	f.memAcct.InsertRange(fr, memAcctInfo{
-		kind:             alloc.opts.Kind,
-		memCgID:          alloc.opts.MemCgID,
-		knownCommitted:   false,
-		retainCommitment: alloc.opts.RetainCommitment,
-		commitSeq:        f.commitSeq,
+		kind:           alloc.opts.Kind,
+		memCgID:        alloc.opts.MemCgID,
+		knownCommitted: false,
+		commitSeq:      f.commitSeq,
 	})
 	return
+}
+
+// findRecyclable returns a gap in unwaste that is large enough for alloc, and
+// the range within it that alloc should recycle. Huge allocations must be
+// hugepage-aligned to be backed by huge pages, but waste is only page-aligned,
+// so if the first large enough gap can't fit an aligned range, a gap large
+// enough to contain one is used instead.
+func findRecyclable(unwaste *unwasteSet, alloc *allocState) (unwasteGapIterator, memmap.FileRange) {
+	uwgap := largeEnoughGap(unwaste, alloc, alloc.length)
+	if !uwgap.Ok() {
+		return uwgap, memmap.FileRange{}
+	}
+	fr, ok := recycleRange(uwgap, alloc)
+	if !ok && alloc.huge {
+		// A gap this large always contains a hugepage-aligned range of
+		// alloc.length bytes.
+		minSize := alloc.length + uint64(hostarch.HugePageSize) - uint64(hostarch.PageSize)
+		if minSize < alloc.length { // overflow
+			return unwasteGapIterator{}, memmap.FileRange{}
+		}
+		if uwgap = largeEnoughGap(unwaste, alloc, minSize); !uwgap.Ok() {
+			return uwgap, memmap.FileRange{}
+		}
+		fr, ok = recycleRange(uwgap, alloc)
+	}
+	if !ok {
+		return unwasteGapIterator{}, memmap.FileRange{}
+	}
+	return uwgap, fr
+}
+
+func largeEnoughGap(unwaste *unwasteSet, alloc *allocState, minSize uint64) unwasteGapIterator {
+	if alloc.opts.Dir == BottomUp {
+		return unwaste.FirstLargeEnoughGap(minSize)
+	}
+	return unwaste.LastLargeEnoughGap(minSize)
+}
+
+// recycleRange returns the range in uwgap that alloc should recycle, and
+// whether uwgap can fit it.
+func recycleRange(uwgap unwasteGapIterator, alloc *allocState) (memmap.FileRange, bool) {
+	var fr memmap.FileRange
+	if alloc.opts.Dir == BottomUp {
+		fr.Start = uwgap.Start()
+		if alloc.huge {
+			var ok bool
+			if fr.Start, ok = hostarch.HugePageRoundUp(fr.Start); !ok {
+				return fr, false
+			}
+		}
+		fr.End = fr.Start + alloc.length
+	} else {
+		fr.End = uwgap.End()
+		if alloc.huge {
+			fr.End = hostarch.HugePageRoundDown(fr.End)
+		}
+		fr.Start = fr.End - alloc.length
+	}
+	return fr, uwgap.Range().IsSupersetOf(fr)
 }
 
 // Preconditions: f.mu must be locked.
@@ -1088,23 +1094,10 @@ func tryPopulate(b safemem.Block) bool {
 //   - fr.Start and fr.End must be page-aligned.
 //   - fr.Length() > 0.
 //   - At least one reference must be held on all pages in fr.
-//   - No pages in fr were allocated with AllocOpts.RetainCommitment.
 func (f *MemoryFile) Decommit(fr memmap.FileRange) {
 	if !fr.WellFormed() || fr.Length() == 0 || !hostarch.IsPageAligned(fr.Start) || !hostarch.IsPageAligned(fr.End) {
 		panic(fmt.Sprintf("invalid range: %v", fr))
 	}
-	// Check the entire range before changing any backing storage. The caller's
-	// reference keeps this allocation policy stable after we release f.mu.
-	func() {
-		f.mu.Lock()
-		defer f.mu.Unlock()
-		f.memAcct.VisitFullRange(fr, func(maseg memAcctIterator) bool {
-			if maseg.ValuePtr().retainCommitment {
-				panic(fmt.Sprintf("Decommit(%v) overlaps retained commitment at %v", fr, maseg.Range()))
-			}
-			return true
-		})
-	}()
 
 	f.decommitOrManuallyZero(fr)
 
@@ -1295,7 +1288,6 @@ func (f *MemoryFile) DecRef(fr memmap.FileRange) {
 						usage.MemoryAccounting.Move(maseg.Range().Length(), usage.System, ma.kind, ma.memCgID)
 					}
 					ma.kind = usage.System
-					ma.retainCommitment = false
 					ma.wasteOrReleasing = true
 					return true
 				})
@@ -1694,10 +1686,11 @@ func (f *MemoryFile) UpdateUsage(memCgIDs map[uint32]struct{}) error {
 // Precondition: f.mu must be held; it may be unlocked and reacquired.
 // +checklocks:f.mu
 func (f *MemoryFile) updateUsageLocked(memCgIDs map[uint32]struct{}) error {
-	// Track if anything changed to elide the merge.
+	// Track if anything changed to elide the merge. f.SaveTo() holds an
+	// iterator into f.memAcct across f.mu unlocks, so don't merge while saving.
 	changedAny := false
 	defer func() {
-		if changedAny {
+		if changedAny && !f.isSaving {
 			f.memAcct.MergeAll()
 		}
 	}()

@@ -49,16 +49,12 @@ import (
 
 // MarkSavable marks f as savable.
 func (f *MemoryFile) MarkSavable() {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.savable = true
+	f.savable.Store(true)
 }
 
 // IsSavable returns true if f is savable.
 func (f *MemoryFile) IsSavable() bool {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return f.savable
+	return f.savable.Load()
 }
 
 // ResourceID returns the resource ID for f.
@@ -84,12 +80,11 @@ func (f *MemoryFile) exportMetadataProto() *pgallocpb.MemoryFileMetadataProto {
 	for s := f.memAcct.FirstSegment(); s.Ok(); s = s.NextSegment() {
 		val := s.Value()
 		pb.MemAcct = append(pb.MemAcct, &pgallocpb.MemAcctRangeProto{
-			Start:            s.Start(),
-			End:              s.End(),
-			Kind:             uint32(val.kind),
-			MemCgId:          val.memCgID,
-			KnownCommitted:   val.knownCommitted,
-			RetainCommitment: val.retainCommitment,
+			Start:          s.Start(),
+			End:            s.End(),
+			Kind:           uint32(val.kind),
+			MemCgId:        val.memCgID,
+			KnownCommitted: val.knownCommitted,
 		})
 	}
 	for s := f.unfreeSmall.FirstSegment(); s.Ok(); s = s.NextSegment() {
@@ -142,10 +137,9 @@ func (f *MemoryFile) importMetadataProto(pb *pgallocpb.MemoryFileMetadataProto) 
 	f.memAcct.RemoveAll()
 	for _, s := range pb.MemAcct {
 		f.memAcct.InsertRange(memmap.FileRange{Start: s.Start, End: s.End}, memAcctInfo{
-			kind:             usage.MemoryKind(s.Kind),
-			memCgID:          s.MemCgId,
-			knownCommitted:   s.KnownCommitted,
-			retainCommitment: s.RetainCommitment,
+			kind:           usage.MemoryKind(s.Kind),
+			memCgID:        s.MemCgId,
+			knownCommitted: s.KnownCommitted,
 		})
 	}
 	f.unfreeSmall.RemoveAll()
@@ -178,14 +172,17 @@ type SaveOpts struct {
 	// saved implicitly rather than explicitly to reduce checkpoint size. If
 	// ExcludeCommittedZeroPages is false, SaveTo() will scan only
 	// possibly-committed pages to find zero pages.
-	// Pages allocated with AllocOpts.RetainCommitment are always saved
-	// explicitly, regardless of this option.
 	//
 	// Enabling ExcludeCommittedZeroPages will usually increase the time taken
 	// by SaveTo() (due to the larger number of pages that must be scanned),
 	// but may instead improve SaveTo() and LoadFrom() time, and checkpoint
 	// size, if the application has many committed zero pages.
 	ExcludeCommittedZeroPages bool
+
+	// If ExitAfterSaving is true, the sentry exits soon after SaveTo()
+	// returns, so SaveTo() may leave zero pages that are already committed on
+	// the host in place rather than decommit them.
+	ExitAfterSaving bool
 }
 
 // SaveTo writes f's state to the given stream.
@@ -228,10 +225,10 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 		}
 	}
 
-	// Except for allocations that retain commitment, we only want to include
-	// pages containing non-zero bytes explicitly in the checkpoint, to reduce
-	// checkpoint size and improve restore performance. Scan pages for non-zero
-	// bytes and ensure that they are marked known-committed.
+	// We only want to explicitly include pages containing non-zero bytes in
+	// the checkpoint, to reduce the size of the checkpoint and improve restore
+	// performance. Scan pages for non-zero bytes and ensure that they are
+	// marked known-committed.
 	//
 	// If async page saving is enabled, emit writes to the pages file during
 	// scanning, which is feasible since the pages metadata file and pages file
@@ -250,11 +247,13 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 		alreadyUncommittedBytes uint64
 		newUncommittedBytes     uint64
 		hostHoleBytes           uint64
+		queuedPageBytes         uint64
 	)
 	asyncWritePages := func(fr memmap.FileRange) {}
 	if amfs != nil {
 		asyncWritePages = func(fr memmap.FileRange) {
 			amount := fr.Length()
+			queuedPageBytes += amount
 			amfs.pf.mu.Lock()
 			amfs.pf.unsaved.PushBack(apsRange{
 				amfs:      amfs,
@@ -379,6 +378,10 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 	}
 
 	dataSeeker := f.newHostFileDataSeeker()
+	// With dataSeeker, every page scanned below is already committed on the
+	// host, so keeping committed zero pages in place does not raise memory
+	// usage.
+	decommitZeroPages := !opts.ExitAfterSaving || dataSeeker == nil
 	zeroPage := make([]byte, hostarch.PageSize)
 	// f.mu is unlocked below, allowing concurrent calls to f.UpdateUsage() to
 	// observe pages that we transiently commit (for comparisons to zero) or
@@ -389,6 +392,10 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 	}
 	f.isSaving = true
 	defer func() { f.isSaving = false }()
+	// An f.updateUsageLocked() that is still in progress skips merging the
+	// segments it split in f.memAcct, since we hold an iterator into it
+	// across f.mu unlocks below.
+	f.memAcct.MergeAll()
 	// Reset f.commitSeq and memAcctInfo.commitSeq to 0 to make more segments
 	// in f.memAcct mergeable. This is safe because f.updateUsageLocked() is
 	// excluded by f.isSaving being set to true.
@@ -409,7 +416,9 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 				if isZeroed {
 					if !wasCommitted {
 						alreadyUncommittedBytes += uint64(hostarch.PageSize)
-						decommitAddPage(off)
+						if decommitZeroPages {
+							decommitAddPage(off)
+						}
 					} else {
 						newUncommittedBytes += uint64(hostarch.PageSize)
 					}
@@ -473,13 +482,9 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 		switch {
 		case scanErr != nil:
 			// Keep resetting commitSeq above; the save fails below.
-		case ma.retainCommitment || (wasCommitted && !opts.ExcludeCommittedZeroPages):
-			if wasCommitted {
-				alreadyCommittedBytes += fr.Length()
-			} else {
-				newCommittedBytes += fr.Length()
-			}
-			maseg = updateAddRange(maseg, fr, wasCommitted, true /* nowCommitted */)
+		case wasCommitted && !opts.ExcludeCommittedZeroPages:
+			alreadyCommittedBytes += fr.Length()
+			maseg = updateAddRange(maseg, fr, true /* wasCommitted */, true /* nowCommitted */)
 		case wasCommitted:
 			scanRange(fr, true /* wasCommitted */)
 		default:
@@ -504,7 +509,7 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 	}
 
 	durScan := time.Duration(gohacks.Nanotime() - timeScanStart)
-	log.Infof("MemoryFile(%p): save scanning took %s for %d allocated bytes: %d bytes of zero pages (%d bytes expected including %d bytes of host holes, decommitted in %d syscalls, + %d bytes new), %d bytes of non-zero pages (%d bytes expected + %d bytes new); ExcludeCommittedZeroPages=%v",
+	log.Infof("MemoryFile(%p): save scanning took %s for %d allocated bytes: %d bytes of zero pages (%d bytes expected including %d bytes of host holes, decommitted in %d syscalls, + %d bytes new), %d bytes of non-zero pages (%d bytes expected + %d bytes new); ExcludeCommittedZeroPages=%v ExitAfterSaving=%v",
 		f,
 		durScan,
 		allocatedBytes,
@@ -516,10 +521,16 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 		alreadyCommittedBytes+newCommittedBytes,
 		alreadyCommittedBytes,
 		newCommittedBytes,
-		opts.ExcludeCommittedZeroPages)
+		opts.ExcludeCommittedZeroPages,
+		opts.ExitAfterSaving)
 
 	// Save metadata.
 	timeMetadataStart := gohacks.Nanotime()
+	if amfs != nil && queuedPageBytes != f.knownCommittedBytes {
+		// MemoryFiles share a pages file, so a mismatch shifts the
+		// PagesFileOffset used to restore every subsequent MemoryFile.
+		return fmt.Errorf("async page save queued %d bytes, but metadata describes %d bytes", queuedPageBytes, f.knownCommittedBytes)
+	}
 	pb := f.exportMetadataProto()
 	data, err := proto.Marshal(pb)
 	if err != nil {

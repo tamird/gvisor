@@ -51,40 +51,41 @@ const (
 type RPCHandler func(c *Connection, comm Communicator, payloadLen uint32) (uint32, error)
 
 var handlers = [...]RPCHandler{
-	Error:            ErrorHandler,
-	Mount:            MountHandler,
-	Channel:          ChannelHandler,
-	FStat:            FStatHandler,
-	SetStat:          SetStatHandler,
-	Walk:             WalkHandler,
-	WalkStat:         WalkStatHandler,
-	OpenAt:           OpenAtHandler,
-	OpenCreateAt:     OpenCreateAtHandler,
-	Close:            CloseHandler,
-	FSync:            FSyncHandler,
-	PWrite:           PWriteHandler,
-	PRead:            PReadHandler,
-	MkdirAt:          MkdirAtHandler,
-	MknodAt:          MknodAtHandler,
-	SymlinkAt:        SymlinkAtHandler,
-	LinkAt:           LinkAtHandler,
-	FStatFS:          FStatFSHandler,
-	FAllocate:        FAllocateHandler,
-	ReadLinkAt:       ReadLinkAtHandler,
-	Flush:            FlushHandler,
-	UnlinkAt:         UnlinkAtHandler,
-	RenameAt:         RenameAtHandler,
-	Getdents64:       Getdents64Handler,
-	FGetXattr:        FGetXattrHandler,
-	FSetXattr:        FSetXattrHandler,
-	FListXattr:       FListXattrHandler,
-	FRemoveXattr:     FRemoveXattrHandler,
-	Connect:          ConnectHandler,
-	BindAt:           BindAtHandler,
-	Listen:           ListenHandler,
-	Accept:           AcceptHandler,
-	ConnectWithCreds: ConnectWithCredsHandler,
-	RenameAt2:        RenameAt2Handler,
+	Error:             ErrorHandler,
+	Mount:             MountHandler,
+	Channel:           ChannelHandler,
+	FStat:             FStatHandler,
+	SetStat:           SetStatHandler,
+	Walk:              WalkHandler,
+	WalkStat:          WalkStatHandler,
+	OpenAt:            OpenAtHandler,
+	OpenCreateAt:      OpenCreateAtHandler,
+	Close:             CloseHandler,
+	FSync:             FSyncHandler,
+	PWrite:            PWriteHandler,
+	PRead:             PReadHandler,
+	MkdirAt:           MkdirAtHandler,
+	MknodAt:           MknodAtHandler,
+	SymlinkAt:         SymlinkAtHandler,
+	LinkAt:            LinkAtHandler,
+	FStatFS:           FStatFSHandler,
+	FAllocate:         FAllocateHandler,
+	ReadLinkAt:        ReadLinkAtHandler,
+	Flush:             FlushHandler,
+	UnlinkAt:          UnlinkAtHandler,
+	RenameAt:          RenameAtHandler,
+	Getdents64:        Getdents64Handler,
+	FGetXattr:         FGetXattrHandler,
+	FSetXattr:         FSetXattrHandler,
+	FListXattr:        FListXattrHandler,
+	FRemoveXattr:      FRemoveXattrHandler,
+	Connect:           ConnectHandler,
+	BindAt:            BindAtHandler,
+	Listen:            ListenHandler,
+	Accept:            AcceptHandler,
+	ConnectWithCreds:  ConnectWithCredsHandler,
+	RenameAt2:         RenameAt2Handler,
+	ConnectWithGroups: ConnectWithGroupsHandler,
 }
 
 // ErrorHandler handles Error message.
@@ -1181,6 +1182,36 @@ func ConnectWithCredsHandler(c *Connection, comm Communicator, payloadLen uint32
 	return 0, nil
 }
 
+// ConnectWithGroupsHandler handles the ConnectWithGroups RPC.
+func ConnectWithGroupsHandler(c *Connection, comm Communicator, payloadLen uint32) (uint32, error) {
+	var req ConnectWithGroupsReq
+	if _, ok := req.CheckedUnmarshal(comm.PayloadBuf(payloadLen)); !ok {
+		return 0, unix.EIO
+	}
+
+	fd, err := c.lookupControlFD(req.FD)
+	if err != nil {
+		return 0, err
+	}
+	defer fd.DecRef(nil)
+	if !fd.IsSocket() {
+		return 0, unix.ENOTSOCK
+	}
+	var sock int
+	if err := fd.safelyRead(func() error {
+		if fd.node.isDeleted() {
+			return unix.EINVAL
+		}
+		sock, err = fd.impl.ConnectWithGroups(req.SockType, req.UID, req.GID, req.Groups)
+		return err
+	}); err != nil {
+		return 0, err
+	}
+
+	comm.DonateFD(sock)
+	return 0, nil
+}
+
 // BindAtHandler handles the BindAt RPC.
 //
 // +checklocksexclude:c.fdsMu
@@ -1251,7 +1282,6 @@ func ListenHandler(c *Connection, comm Communicator, payloadLen uint32) (uint32,
 	if err != nil {
 		return 0, err
 	}
-	defer sock.DecRef(nil)
 	if err := sock.controlFD.safelyRead(func() error {
 		if sock.controlFD.node.isDeleted() {
 			return unix.EINVAL
@@ -1276,7 +1306,6 @@ func AcceptHandler(c *Connection, comm Communicator, payloadLen uint32) (uint32,
 	if err != nil {
 		return 0, err
 	}
-	defer sock.DecRef(nil)
 	var (
 		newSock  int
 		peerAddr string
@@ -1486,8 +1515,6 @@ func renameAtCommon(c *Connection, comm Communicator, payloadLen uint32, oldDirF
 	})
 }
 
-// +checklocksexclude:n.controlFDsMu
-// +checklocksexclude:n.childrenMu
 func notifyRenameRecursive(n *Node) {
 	n.forEachFD(func(cfd *ControlFD) {
 		cfd.impl.Renamed()
@@ -1641,7 +1668,7 @@ func FListXattrHandler(c *Connection, comm Communicator, payloadLen uint32) (uin
 	defer fd.DecRef(nil)
 
 	var resp FListXattrResp
-	if err := fd.safelyRead(func() error {
+	if fd.safelyRead(func() error {
 		if fd.node.isDeleted() {
 			return unix.EINVAL
 		}

@@ -156,9 +156,6 @@ func hostVDSO(t *testing.T) []byte {
 		if vr.filename != "[vdso]" {
 			return false
 		}
-		if !vr.accessType.Read || !vr.accessType.Execute {
-			t.Fatalf("[vdso] mapping is not readable and executable: %v", vr.accessType)
-		}
 		vdso = append([]byte(nil), sliceFromAddr(vr.virtual, vr.length)...)
 		return true
 	}); err != nil {
@@ -184,61 +181,72 @@ func TestParseVDSOErrors(t *testing.T) {
 	})
 }
 
-func TestFindVDSOStubOffsetMappedTail(t *testing.T) {
-	const imageSize = 2 * testVDSOSize
+func TestFindStubOffset(t *testing.T) {
 	const totalStubsLen = 248
-	const wantStubOffset = (imageSize - totalStubsLen) &^ 7
-	makeImage := func() []byte {
-		buf := makeTestVDSOELF(183 /* EM_AARCH64 */, testPFRX, 0, nil)
-		buf = append(buf, make([]byte, testVDSOSize)...)
-		// As on the captured ARM64 host, the executable PT_LOAD ends in
-		// page one, but section headers occupy the second mapped page.
-		copy(buf[testVDSOSize:], buf[testVDSOShdrOff:testVDSOShdrEnd])
-		clear(buf[testVDSOShdrOff:testVDSOShdrEnd])
-		binary.LittleEndian.PutUint64(buf[40:48], testVDSOSize)
-		return buf
-	}
-	parse := func(t *testing.T, buf []byte) *vdsoImage {
-		t.Helper()
+
+	// On ARM64, PT_LOAD (all SHF_ALLOC sections) can fit within the first
+	// page while .shstrtab and the section header table spill into a
+	// second page. Verify that stubs can be placed in the second page's
+	// zero tail.
+	t.Run("TwoPageSpillAfterPTLoad", func(t *testing.T) {
+		buf := make([]byte, 2*testVDSOSize)
+		base := makeTestVDSOELF(183 /* EM_AARCH64 */, testPFRX, 0, nil)
+		copy(buf, base)
+		shdrOff := uint64(testVDSOSize + 128)
+		copy(buf[shdrOff:], base[testVDSOShdrOff:testVDSOShdrEnd])
+		binary.LittleEndian.PutUint64(buf[40:48], shdrOff) // e_shoff
+
 		img, err := parseVDSO(buf)
 		if err != nil {
 			t.Fatalf("parseVDSO failed: %v", err)
 		}
-		return img
-	}
+		got, err := img.findStubOffset(totalStubsLen)
+		if err != nil {
+			t.Fatalf("findStubOffset failed: %v", err)
+		}
+		if want := (len(buf) - totalStubsLen) &^ 7; got != want {
+			t.Errorf("findStubOffset = %d, want %d", got, want)
+		}
+	})
 
-	t.Run("ZeroTail", func(t *testing.T) {
-		off, err := parse(t, makeImage()).findStubOffset(totalStubsLen)
-		if err != nil || off != wantStubOffset {
-			t.Fatalf("findStubOffset = (%#x, %v), want (%#x, nil)", off, err, wantStubOffset)
+	// When .shstrtab and the section header table end close to a page
+	// boundary so the zero tail past sectionHeaderEnd() is smaller than
+	// totalStubsLen, findStubOffset should fall back to overwriting the
+	// non-SHF_ALLOC metadata at the end of the image.
+	t.Run("NonAllocTailFallback", func(t *testing.T) {
+		buf := makeTestVDSOELF(183 /* EM_AARCH64 */, testPFRX, 0, nil)
+		shdrLen := testVDSOShdrEnd - testVDSOShdrOff
+		shdrOff := uint64(testVDSOSize - shdrLen - 32)
+		copy(buf[shdrOff:], buf[testVDSOShdrOff:testVDSOShdrEnd])
+		binary.LittleEndian.PutUint64(buf[40:48], shdrOff) // e_shoff
+
+		img, err := parseVDSO(buf)
+		if err != nil {
+			t.Fatalf("parseVDSO failed: %v", err)
+		}
+		got, err := img.findStubOffset(totalStubsLen)
+		if err != nil {
+			t.Fatalf("findStubOffset failed: %v", err)
+		}
+		if want := (len(buf) - totalStubsLen) &^ 7; got != want {
+			t.Errorf("findStubOffset = %d, want %d", got, want)
 		}
 	})
-	t.Run("NonzeroTail", func(t *testing.T) {
-		buf := makeImage()
-		buf[wantStubOffset] = 1
-		if off, err := parse(t, buf).findStubOffset(totalStubsLen); err == nil {
-			t.Fatalf("findStubOffset = %#x, want an error for nonzero tail", off)
+
+	// Live SHF_ALLOC sections must never be overwritten.
+	t.Run("NoSpaceOverlappingSHFAlloc", func(t *testing.T) {
+		buf := makeTestVDSOELF(183 /* EM_AARCH64 */, testPFRX, 0, nil)
+		// Extend .text (section 2, SHF_ALLOC) to leave less than
+		// totalStubsLen bytes at the end of the image.
+		textShdrSizeOff := testVDSOShdrOff + 2*64 + 32
+		binary.LittleEndian.PutUint64(buf[textShdrSizeOff:textShdrSizeOff+8], uint64(testVDSOSize-testVDSOTextOff-64))
+
+		img, err := parseVDSO(buf)
+		if err != nil {
+			t.Fatalf("parseVDSO failed: %v", err)
 		}
-	})
-	t.Run("SectionHeaderOverlap", func(t *testing.T) {
-		buf := makeImage()
-		// Additional SHT_NULL entries occupy the otherwise-zero tail.
-		binary.LittleEndian.PutUint16(buf[60:62], testVDSOSize/64)
-		if off, err := parse(t, buf).findStubOffset(totalStubsLen); err == nil {
-			t.Fatalf("findStubOffset = %#x, want an error for overlapping section headers", off)
-		}
-	})
-	t.Run("LiveSectionOverlap", func(t *testing.T) {
-		buf := makeImage()
-		// Turn the empty .altinstructions entry into an unnamed live
-		// section occupying the zero tail.
-		header := buf[testVDSOSize+3*64:]
-		binary.LittleEndian.PutUint32(header[0:4], 0)
-		binary.LittleEndian.PutUint64(header[16:24], wantStubOffset)
-		binary.LittleEndian.PutUint64(header[24:32], wantStubOffset)
-		binary.LittleEndian.PutUint64(header[32:40], totalStubsLen)
-		if off, err := parse(t, buf).findStubOffset(totalStubsLen); err == nil {
-			t.Fatalf("findStubOffset = %#x, want an error for overlapping live section", off)
+		if got, err := img.findStubOffset(totalStubsLen); err == nil {
+			t.Errorf("expected error when SHF_ALLOC section leaves no space, got offset %d", got)
 		}
 	})
 }

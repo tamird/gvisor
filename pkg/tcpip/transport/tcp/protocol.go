@@ -19,11 +19,10 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"net/netip"
-	"runtime"
 	"strings"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/gomaxprocs"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/header/parse"
@@ -200,7 +199,7 @@ func (p *protocol) HandleUnknownDestinationPacket(id stack.TransportEndpointID, 
 	return stack.UnknownDestinationPacketHandled
 }
 
-func (p *protocol) tsOffset(src, dst netip.Addr) tcp.TSOffset {
+func (p *protocol) tsOffset(src, dst tcpip.Address) tcp.TSOffset {
 	// Initialize a random tsOffset that will be added to the recentTS
 	// every time the timestamp is sent when the Timestamp option is enabled.
 	//
@@ -416,15 +415,22 @@ func (p *protocol) SetOption(option tcpip.SettableTransportProtocolOption) tcpip
 	}
 }
 
+// sackPermitted reports whether the stack allows SACK negotiation.
+//
+// +checklocksexclude:p.mu
+func (p *protocol) sackPermitted() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.sackEnabled
+}
+
 // Option implements stack.TransportProtocol.Option.
 //
 // +checklocksexclude:p.mu
 func (p *protocol) Option(option tcpip.GettableTransportProtocolOption) tcpip.Error {
 	switch v := option.(type) {
 	case *tcpip.TCPSACKEnabled:
-		p.mu.RLock()
-		*v = tcpip.TCPSACKEnabled(p.sackEnabled)
-		p.mu.RUnlock()
+		*v = tcpip.TCPSACKEnabled(p.sackPermitted())
 		return nil
 
 	case *tcpip.TCPRecovery:
@@ -624,7 +630,7 @@ func newProtocol(s *stack.Stack, cc string, probe TCPProbeFunc) stack.TransportP
 		tsOffsetSecret:             tsOffsetSecret,
 		probe:                      probe,
 	}
-	p.dispatcher.init(s.InsecureRNG(), runtime.GOMAXPROCS(0))
+	p.dispatcher.init(s.InsecureRNG(), gomaxprocs.Base())
 	return &p
 }
 

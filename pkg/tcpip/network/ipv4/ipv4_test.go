@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net/netip"
+	"net"
 	"testing"
 	"time"
 
@@ -105,7 +105,7 @@ func TestExcludeBroadcast(t *testing.T) {
 		NIC:         1,
 	}})
 
-	randomAddr := tcpip.FullAddress{NIC: 1, Addr: netip.AddrFrom4([4]byte{10, 0, 0, 1}), Port: 53}
+	randomAddr := tcpip.FullAddress{NIC: 1, Addr: tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x01")), Port: 53}
 
 	var wq waiter.Queue
 	t.Run("WithoutPrimaryAddress", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestExcludeBroadcast(t *testing.T) {
 		// Add a valid primary endpoint address, now we can connect.
 		protocolAddr := tcpip.ProtocolAddress{
 			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: tcpip.FullPrefix(netip.AddrFrom4([4]byte{10, 0, 0, 2})),
+			AddressWithPrefix: tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x02")).WithPrefix(),
 		}
 		if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 			t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
@@ -156,11 +156,15 @@ const (
 )
 
 var (
-	incomingIPv4Addr = netip.PrefixFrom(testutil.MustParse4("10.0.0.1"), 8)
-
-	outgoingIPv4Addr = netip.PrefixFrom(testutil.MustParse4("11.0.0.1"), 8)
-
-	defaultEndpointConfigs = map[tcpip.NICID]netip.Prefix{
+	incomingIPv4Addr = tcpip.AddressWithPrefix{
+		Address:   testutil.MustParse4("10.0.0.1"),
+		PrefixLen: 8,
+	}
+	outgoingIPv4Addr = tcpip.AddressWithPrefix{
+		Address:   testutil.MustParse4("11.0.0.1"),
+		PrefixLen: 8,
+	}
+	defaultEndpointConfigs = map[tcpip.NICID]tcpip.AddressWithPrefix{
 		incomingNICID: incomingIPv4Addr,
 		outgoingNICID: outgoingIPv4Addr,
 	}
@@ -170,16 +174,16 @@ var (
 )
 
 func TestAddMulticastRouteIPv4Errors(t *testing.T) {
-	incomingEpSubnet := incomingIPv4Addr.Masked()
+	incomingEpSubnet := incomingIPv4Addr.Subnet()
 	wantErr := &tcpip.ErrBadAddress{}
 
 	tests := []struct {
 		name    string
-		srcAddr netip.Addr
+		srcAddr tcpip.Address
 	}{
 		{
 			name:    "subnet-local broadcast source",
-			srcAddr: header.IPv4SubnetBroadcast(incomingEpSubnet),
+			srcAddr: incomingEpSubnet.Broadcast().To4(),
 		},
 		{
 			name:    "broadcast source",
@@ -245,7 +249,7 @@ type packetOptions struct {
 	options       header.IPv4Options
 }
 
-func newICMPEchoPacket(t *testing.T, srcAddr, dstAddr netip.Addr, ttl uint8, options packetOptions) (*stack.PacketBuffer, []byte) {
+func newICMPEchoPacket(t *testing.T, srcAddr, dstAddr tcpip.Address, ttl uint8, options packetOptions) (*stack.PacketBuffer, []byte) {
 	const (
 		arbitraryICMPHeaderSequence = 123
 		randomIdent                 = 42
@@ -345,8 +349,8 @@ func TestForwarding(t *testing.T) {
 	tests := []struct {
 		name                                 string
 		TTL                                  uint8
-		srcAddr                              netip.Addr
-		dstAddr                              netip.Addr
+		srcAddr                              tcpip.Address
+		dstAddr                              tcpip.Address
 		options                              header.IPv4Options
 		forwardedOptions                     header.IPv4Options
 		icmpError                            *icmpError
@@ -486,7 +490,7 @@ func TestForwarding(t *testing.T) {
 		{
 			name:                             "initializing source",
 			TTL:                              2,
-			srcAddr:                          netip.AddrFrom4([4]byte{0, 0, 0, 255}),
+			srcAddr:                          tcpip.AddrFromSlice(net.ParseIP("0.0.0.255").To4()),
 			dstAddr:                          remoteIPv4Addr2,
 			expectedInitializingSourceErrors: 1,
 			expectPacketForwarded:            false,
@@ -529,11 +533,11 @@ func TestForwarding(t *testing.T) {
 
 			s.SetRouteTable([]tcpip.Route{
 				{
-					Destination: incomingIPv4Addr.Masked(),
+					Destination: incomingIPv4Addr.Subnet(),
 					NIC:         incomingNICID,
 				},
 				{
-					Destination: outgoingIPv4Addr.Masked(),
+					Destination: outgoingIPv4Addr.Subnet(),
 					NIC:         outgoingNICID,
 				},
 			})
@@ -569,7 +573,7 @@ func TestForwarding(t *testing.T) {
 				payload := stack.PayloadSince(reply.NetworkHeader())
 				defer payload.Release()
 				checker.IPv4(t, payload,
-					checker.SrcAddr(incomingIPv4Addr.Addr()),
+					checker.SrcAddr(incomingIPv4Addr.Address),
 					checker.DstAddr(test.srcAddr),
 					checker.TTL(ipv4.DefaultTTL),
 					checker.ICMPv4(
@@ -727,11 +731,11 @@ func TestFragmentForwarding(t *testing.T) {
 
 			s.SetRouteTable([]tcpip.Route{
 				{
-					Destination: incomingIPv4Addr.Masked(),
+					Destination: incomingIPv4Addr.Subnet(),
 					NIC:         incomingNICID,
 				},
 				{
-					Destination: outgoingIPv4Addr.Masked(),
+					Destination: outgoingIPv4Addr.Subnet(),
 					NIC:         outgoingNICID,
 				},
 			})
@@ -758,7 +762,7 @@ func TestFragmentForwarding(t *testing.T) {
 				payload := stack.PayloadSince(reply.NetworkHeader())
 				defer payload.Release()
 				checker.IPv4(t, payload,
-					checker.SrcAddr(incomingIPv4Addr.Addr()),
+					checker.SrcAddr(incomingIPv4Addr.Address),
 					checker.DstAddr(remoteIPv4Addr1),
 					checker.TTL(ipv4.DefaultTTL),
 					checker.ICMPv4(
@@ -1146,9 +1150,11 @@ func TestIPv4Sanity(t *testing.T) {
 		randomTimeOffset              = 0x10203040
 	)
 	var (
-		ipv4Addr = netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 1, 58}), 24)
-
-		remoteIPv4Addr = netip.AddrFrom4([4]byte{10, 0, 0, 1})
+		ipv4Addr = tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.1.58").To4()),
+			PrefixLen: 24,
+		}
+		remoteIPv4Addr = tcpip.AddrFromSlice(net.ParseIP("10.0.0.1").To4())
 	)
 
 	tests := []struct {
@@ -1806,7 +1812,7 @@ func TestIPv4Sanity(t *testing.T) {
 				Protocol:    test.transportProtocol,
 				TTL:         test.TTL,
 				SrcAddr:     remoteIPv4Addr,
-				DstAddr:     ipv4Addr.Addr(),
+				DstAddr:     ipv4Addr.Address,
 			})
 			if test.headerLength != 0 {
 				ip.SetHeaderLength(test.headerLength)
@@ -1851,8 +1857,8 @@ func TestIPv4Sanity(t *testing.T) {
 			}
 
 			// Check the route that brought the packet to us.
-			if reply.EgressRoute.LocalAddress != ipv4Addr.Addr() {
-				t.Errorf("got pkt.Route.LocalAddress = %s, want = %s", reply.EgressRoute.LocalAddress, ipv4Addr.Addr())
+			if reply.EgressRoute.LocalAddress != ipv4Addr.Address {
+				t.Errorf("got pkt.Route.LocalAddress = %s, want = %s", reply.EgressRoute.LocalAddress, ipv4Addr.Address)
 			}
 			if reply.EgressRoute.RemoteAddress != remoteIPv4Addr {
 				t.Errorf("got pkt.Route.RemoteAddress = %s, want = %s", reply.EgressRoute.RemoteAddress, remoteIPv4Addr)
@@ -1865,7 +1871,7 @@ func TestIPv4Sanity(t *testing.T) {
 			// At this stage we only know it's probably an IP+ICMP header so verify
 			// that much.
 			checker.IPv4(t, replyIPHeader,
-				checker.SrcAddr(ipv4Addr.Addr()),
+				checker.SrcAddr(ipv4Addr.Address),
 				checker.DstAddr(remoteIPv4Addr),
 				checker.ICMPv4(
 					checker.ICMPv4Checksum(),
@@ -2270,8 +2276,8 @@ func TestInvalidFragments(t *testing.T) {
 	)
 
 	var (
-		addr1 = netip.AddrFrom4([4]byte{10, 0, 0, 1})
-		addr2 = netip.AddrFrom4([4]byte{10, 0, 0, 2})
+		addr1 = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x01"))
+		addr2 = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x02"))
 	)
 
 	payloadGen := func(payloadLen int) []byte {
@@ -2535,7 +2541,7 @@ func TestInvalidFragments(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(addr2),
+				AddressWithPrefix: addr2.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -2595,8 +2601,8 @@ func TestFragmentReassemblyTimeout(t *testing.T) {
 	)
 
 	var (
-		addr1 = netip.AddrFrom4([4]byte{10, 0, 0, 1})
-		addr2 = netip.AddrFrom4([4]byte{10, 0, 0, 2})
+		addr1 = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x01"))
+		addr2 = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x02"))
 	)
 
 	type fragmentData struct {
@@ -2767,7 +2773,7 @@ func TestFragmentReassemblyTimeout(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(addr2),
+				AddressWithPrefix: addr2.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -2847,13 +2853,13 @@ func TestReceiveFragments(t *testing.T) {
 	)
 
 	var (
-		addr1 = netip.AddrFrom4([4]byte{12, 168, 0, 1}) // 192.168.0.1
-		addr2 = netip.AddrFrom4([4]byte{12, 168, 0, 2}) // 192.168.0.2
-		addr3 = netip.AddrFrom4([4]byte{12, 168, 0, 3}) // 192.168.0.3
+		addr1 = tcpip.AddrFromSlice([]byte("\x0c\xa8\x00\x01")) // 192.168.0.1
+		addr2 = tcpip.AddrFromSlice([]byte("\x0c\xa8\x00\x02")) // 192.168.0.2
+		addr3 = tcpip.AddrFromSlice([]byte("\x0c\xa8\x00\x03")) // 192.168.0.3
 	)
 
 	// Build and return a UDP header containing payload.
-	udpGen := func(payloadLen int, multiplier uint8, src, dst netip.Addr) []byte {
+	udpGen := func(payloadLen int, multiplier uint8, src, dst tcpip.Address) []byte {
 		payload := make([]byte, payloadLen)
 		for i := 0; i < len(payload); i++ {
 			payload[i] = uint8(i) * multiplier
@@ -2893,8 +2899,8 @@ func TestReceiveFragments(t *testing.T) {
 	udpPayload4Addr1ToAddr2 := ipv4Payload4Addr1ToAddr2[header.UDPMinimumSize:]
 
 	type fragmentData struct {
-		srcAddr        netip.Addr
-		dstAddr        netip.Addr
+		srcAddr        tcpip.Address
+		dstAddr        tcpip.Address
 		id             uint16
 		flags          uint8
 		fragmentOffset uint16
@@ -3243,7 +3249,7 @@ func TestReceiveFragments(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          header.IPv4ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(addr2),
+				AddressWithPrefix: addr2.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -3313,7 +3319,7 @@ func TestReceiveFragments(t *testing.T) {
 				if diff := cmp.Diff(tcpip.ReadResult{
 					Count: len(expectedPayload),
 					Total: len(expectedPayload),
-				}, result, checker.IgnoreCmpPath("ControlMessages"), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+				}, result, checker.IgnoreCmpPath("ControlMessages")); diff != "" {
 					t.Errorf("(i=%d) ep.Read: unexpected result (-want +got):\n%s", i, diff)
 				}
 				if diff := cmp.Diff(expectedPayload, buf.Bytes()); diff != "" {
@@ -3495,18 +3501,22 @@ func buildRoute(t *testing.T, c testContext, ep stack.LinkEndpoint) *stack.Route
 		t.Fatalf("CreateNIC(1, _) failed: %s", err)
 	}
 	var (
-		src = netip.AddrFrom4([4]byte{16, 0, 0, 1})
-		dst = netip.AddrFrom4([4]byte{16, 0, 0, 2})
+		src = tcpip.AddrFromSlice([]byte("\x10\x00\x00\x01"))
+		dst = tcpip.AddrFromSlice([]byte("\x10\x00\x00\x02"))
 	)
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(src),
+		AddressWithPrefix: src.WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 	{
-		subnet := tcpip.FullPrefix(dst)
+		mask := tcpip.MaskFromBytes(header.IPv4Broadcast.AsSlice())
+		subnet, err := tcpip.NewSubnet(dst, mask)
+		if err != nil {
+			t.Fatalf("NewSubnet(%s, %s) failed: %v", dst, mask, err)
+		}
 		s.SetRouteTable([]tcpip.Route{{
 			Destination: subnet,
 			NIC:         1,
@@ -3547,12 +3557,18 @@ func TestPacketQueuing(t *testing.T) {
 		host2NICLinkAddr = tcpip.LinkAddress("\x02\x03\x03\x04\x05\x09")
 
 		host1IPv4Addr = tcpip.ProtocolAddress{
-			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 1}), 24),
+			Protocol: ipv4.ProtocolNumber,
+			AddressWithPrefix: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+				PrefixLen: 24,
+			},
 		}
 		host2IPv4Addr = tcpip.ProtocolAddress{
-			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 2}), 8),
+			Protocol: ipv4.ProtocolNumber,
+			AddressWithPrefix: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+				PrefixLen: 8,
+			},
 		}
 	)
 
@@ -3571,7 +3587,7 @@ func TestPacketQueuing(t *testing.T) {
 					DstPort: 80,
 					Length:  header.UDPMinimumSize,
 				})
-				sum := header.PseudoHeaderChecksum(udp.ProtocolNumber, host2IPv4Addr.AddressWithPrefix.Addr(), host1IPv4Addr.AddressWithPrefix.Addr(), header.UDPMinimumSize)
+				sum := header.PseudoHeaderChecksum(udp.ProtocolNumber, host2IPv4Addr.AddressWithPrefix.Address, host1IPv4Addr.AddressWithPrefix.Address, header.UDPMinimumSize)
 				sum = checksum.Checksum(nil, sum)
 				u.SetChecksum(^u.CalculateChecksum(sum))
 				ip := header.IPv4(hdr.Prepend(header.IPv4MinimumSize))
@@ -3579,8 +3595,8 @@ func TestPacketQueuing(t *testing.T) {
 					TotalLength: header.IPv4MinimumSize + header.UDPMinimumSize,
 					TTL:         ipv4.DefaultTTL,
 					Protocol:    uint8(udp.ProtocolNumber),
-					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Addr(),
-					DstAddr:     host1IPv4Addr.AddressWithPrefix.Addr(),
+					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Address,
+					DstAddr:     host1IPv4Addr.AddressWithPrefix.Address,
 				})
 				ip.SetChecksum(^ip.CalculateChecksum())
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
@@ -3604,8 +3620,8 @@ func TestPacketQueuing(t *testing.T) {
 				payload := stack.PayloadSince(p.NetworkHeader())
 				defer payload.Release()
 				checker.IPv4(t, payload,
-					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Addr()),
-					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Addr()),
+					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Address),
+					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Address),
 					checker.ICMPv4(
 						checker.ICMPv4Type(header.ICMPv4DstUnreachable),
 						checker.ICMPv4Code(header.ICMPv4PortUnreachable)))
@@ -3627,8 +3643,8 @@ func TestPacketQueuing(t *testing.T) {
 					TotalLength: uint16(totalLen),
 					Protocol:    uint8(icmp.ProtocolNumber4),
 					TTL:         ipv4.DefaultTTL,
-					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Addr(),
-					DstAddr:     host1IPv4Addr.AddressWithPrefix.Addr(),
+					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Address,
+					DstAddr:     host1IPv4Addr.AddressWithPrefix.Address,
 				})
 				ip.SetChecksum(^ip.CalculateChecksum())
 				echoPkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
@@ -3652,8 +3668,8 @@ func TestPacketQueuing(t *testing.T) {
 				payload := stack.PayloadSince(p.NetworkHeader())
 				defer payload.Release()
 				checker.IPv4(t, payload,
-					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Addr()),
-					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Addr()),
+					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Address),
+					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Address),
 					checker.ICMPv4(
 						checker.ICMPv4Type(header.ICMPv4EchoReply),
 						checker.ICMPv4Code(header.ICMPv4UnusedCode)))
@@ -3680,7 +3696,7 @@ func TestPacketQueuing(t *testing.T) {
 
 			s.SetRouteTable([]tcpip.Route{
 				{
-					Destination: host1IPv4Addr.AddressWithPrefix.Masked(),
+					Destination: host1IPv4Addr.AddressWithPrefix.Subnet(),
 					NIC:         nicID,
 				},
 			})
@@ -3710,11 +3726,11 @@ func TestPacketQueuing(t *testing.T) {
 				if got := tcpip.LinkAddress(rep.HardwareAddressSender()); got != host1NICLinkAddr {
 					t.Errorf("got HardwareAddressSender = %s, want = %s", got, host1NICLinkAddr)
 				}
-				if got := netip.AddrFrom4([4]byte(rep.ProtocolAddressSender())); got != host1IPv4Addr.AddressWithPrefix.Addr() {
-					t.Errorf("got ProtocolAddressSender = %s, want = %s", got, host1IPv4Addr.AddressWithPrefix.Addr())
+				if got := tcpip.AddrFromSlice(rep.ProtocolAddressSender()); got != host1IPv4Addr.AddressWithPrefix.Address {
+					t.Errorf("got ProtocolAddressSender = %s, want = %s", got, host1IPv4Addr.AddressWithPrefix.Address)
 				}
-				if got := netip.AddrFrom4([4]byte(rep.ProtocolAddressTarget())); got != host2IPv4Addr.AddressWithPrefix.Addr() {
-					t.Errorf("got ProtocolAddressTarget = %s, want = %s", got, host2IPv4Addr.AddressWithPrefix.Addr())
+				if got := tcpip.AddrFromSlice(rep.ProtocolAddressTarget()); got != host2IPv4Addr.AddressWithPrefix.Address {
+					t.Errorf("got ProtocolAddressTarget = %s, want = %s", got, host2IPv4Addr.AddressWithPrefix.Address)
 				}
 			}
 
@@ -3725,9 +3741,9 @@ func TestPacketQueuing(t *testing.T) {
 				packet.SetIPv4OverEthernet()
 				packet.SetOp(header.ARPReply)
 				copy(packet.HardwareAddressSender(), host2NICLinkAddr)
-				copy(packet.ProtocolAddressSender(), host2IPv4Addr.AddressWithPrefix.Addr().AsSlice())
+				copy(packet.ProtocolAddressSender(), host2IPv4Addr.AddressWithPrefix.Address.AsSlice())
 				copy(packet.HardwareAddressTarget(), host1NICLinkAddr)
-				copy(packet.ProtocolAddressTarget(), host1IPv4Addr.AddressWithPrefix.Addr().AsSlice())
+				copy(packet.ProtocolAddressTarget(), host1IPv4Addr.AddressWithPrefix.Address.AsSlice())
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(hdr),
 				})
@@ -3801,7 +3817,7 @@ func TestCloseLocking(t *testing.T) {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(src),
+		AddressWithPrefix: src.WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(nicID1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID1, protocolAddr, err)
@@ -3873,12 +3889,18 @@ func TestCloseLocking(t *testing.T) {
 func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 	var (
 		localAddr = tcpip.ProtocolAddress{
-			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 1}), 24),
+			Protocol: ipv4.ProtocolNumber,
+			AddressWithPrefix: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+				PrefixLen: 24,
+			},
 		}
 		remoteAddr = tcpip.ProtocolAddress{
-			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 2}), 24),
+			Protocol: ipv4.ProtocolNumber,
+			AddressWithPrefix: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+				PrefixLen: 24,
+			},
 		}
 	)
 
@@ -3928,8 +3950,8 @@ func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 			if test.installHandler {
 				s.SetTransportProtocolHandler(icmp.ProtocolNumber4, func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 					handlerCalled = true
-					if got := id.Local.Port(); got != ident {
-						t.Errorf("got id.Local.Port() = %d, want = %d", got, ident)
+					if got := id.LocalPort; got != ident {
+						t.Errorf("got id.LocalPort = %d, want = %d", got, ident)
 					}
 					return test.handled
 				})
@@ -3944,7 +3966,7 @@ func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 				t.Fatalf("s.AddProtocolAddress(%d, %+v, {}): %s", nicID, localAddr, err)
 			}
 			s.SetRouteTable([]tcpip.Route{{
-				Destination: localAddr.AddressWithPrefix.Masked(),
+				Destination: localAddr.AddressWithPrefix.Subnet(),
 				NIC:         nicID,
 			}})
 
@@ -3961,8 +3983,8 @@ func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 				TotalLength: uint16(totalLength),
 				Protocol:    uint8(icmp.ProtocolNumber4),
 				TTL:         ipv4.DefaultTTL,
-				SrcAddr:     remoteAddr.AddressWithPrefix.Addr(),
-				DstAddr:     localAddr.AddressWithPrefix.Addr(),
+				SrcAddr:     remoteAddr.AddressWithPrefix.Address,
+				DstAddr:     localAddr.AddressWithPrefix.Address,
 			})
 			ip.SetChecksum(^ip.CalculateChecksum())
 			echoPkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
@@ -3991,8 +4013,8 @@ func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 			payload := stack.PayloadSince(p.NetworkHeader())
 			defer payload.Release()
 			checker.IPv4(t, payload,
-				checker.SrcAddr(localAddr.AddressWithPrefix.Addr()),
-				checker.DstAddr(remoteAddr.AddressWithPrefix.Addr()),
+				checker.SrcAddr(localAddr.AddressWithPrefix.Address),
+				checker.DstAddr(remoteAddr.AddressWithPrefix.Address),
 				checker.ICMPv4(
 					checker.ICMPv4Type(header.ICMPv4EchoReply),
 					checker.ICMPv4Code(header.ICMPv4UnusedCode)))
@@ -4002,12 +4024,18 @@ func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 
 func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 	localAddr := tcpip.ProtocolAddress{
-		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 1}), 24),
+		Protocol: ipv4.ProtocolNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+			PrefixLen: 24,
+		},
 	}
 	remoteAddr := tcpip.ProtocolAddress{
-		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 2}), 24),
+		Protocol: ipv4.ProtocolNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+			PrefixLen: 24,
+		},
 	}
 
 	clock := faketime.NewManualClock()
@@ -4031,7 +4059,7 @@ func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 		t.Fatalf("s.AddProtocolAddress(%d, %+v, {}): %s", nicID, localAddr, err)
 	}
 	s.SetRouteTable([]tcpip.Route{{
-		Destination: localAddr.AddressWithPrefix.Masked(),
+		Destination: localAddr.AddressWithPrefix.Subnet(),
 		NIC:         nicID,
 	}})
 
@@ -4042,7 +4070,7 @@ func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 		t.Fatalf("s.NewEndpoint(%d, %d, _) = %s", icmp.ProtocolNumber4, ipv4.ProtocolNumber, err)
 	}
 	defer ep.Close()
-	if err := ep.Bind(tcpip.FullAddress{Addr: localAddr.AddressWithPrefix.Addr(), Port: ident}); err != nil {
+	if err := ep.Bind(tcpip.FullAddress{Addr: localAddr.AddressWithPrefix.Address, Port: ident}); err != nil {
 		t.Fatalf("ep.Bind(...) = %s", err)
 	}
 
@@ -4065,8 +4093,8 @@ func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 		TotalLength: uint16(totalLength),
 		Protocol:    uint8(icmp.ProtocolNumber4),
 		TTL:         ipv4.DefaultTTL,
-		SrcAddr:     remoteAddr.AddressWithPrefix.Addr(),
-		DstAddr:     localAddr.AddressWithPrefix.Addr(),
+		SrcAddr:     remoteAddr.AddressWithPrefix.Address,
+		DstAddr:     localAddr.AddressWithPrefix.Address,
 	})
 	ip.SetChecksum(^ip.CalculateChecksum())
 	echoPkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
@@ -4088,8 +4116,8 @@ func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 	payload := stack.PayloadSince(p.NetworkHeader())
 	defer payload.Release()
 	checker.IPv4(t, payload,
-		checker.SrcAddr(localAddr.AddressWithPrefix.Addr()),
-		checker.DstAddr(remoteAddr.AddressWithPrefix.Addr()),
+		checker.SrcAddr(localAddr.AddressWithPrefix.Address),
+		checker.DstAddr(remoteAddr.AddressWithPrefix.Address),
 		checker.ICMPv4(
 			checker.ICMPv4Type(header.ICMPv4EchoReply),
 			checker.ICMPv4Code(header.ICMPv4UnusedCode)))
@@ -4097,13 +4125,19 @@ func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 
 func TestICMPEchoTemporaryAddressSuppressesReply(t *testing.T) {
 	assignedAddr := tcpip.ProtocolAddress{
-		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 1}), 24),
+		Protocol: ipv4.ProtocolNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+			PrefixLen: 24,
+		},
 	}
-	temporaryAddr := netip.AddrFrom4([4]byte{192, 168, 0, 99})
+	temporaryAddr := tcpip.AddrFromSlice(net.ParseIP("192.168.0.99").To4())
 	remoteAddr := tcpip.ProtocolAddress{
-		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 2}), 24),
+		Protocol: ipv4.ProtocolNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+			PrefixLen: 24,
+		},
 	}
 
 	clock := faketime.NewManualClock()
@@ -4130,7 +4164,7 @@ func TestICMPEchoTemporaryAddressSuppressesReply(t *testing.T) {
 		t.Fatalf("s.SetPromiscuousMode(%d, true): %s", nicID, err)
 	}
 	s.SetRouteTable([]tcpip.Route{{
-		Destination: assignedAddr.AddressWithPrefix.Masked(),
+		Destination: assignedAddr.AddressWithPrefix.Subnet(),
 		NIC:         nicID,
 	}})
 
@@ -4148,7 +4182,7 @@ func TestICMPEchoTemporaryAddressSuppressesReply(t *testing.T) {
 		TotalLength: uint16(totalLength),
 		Protocol:    uint8(icmp.ProtocolNumber4),
 		TTL:         ipv4.DefaultTTL,
-		SrcAddr:     remoteAddr.AddressWithPrefix.Addr(),
+		SrcAddr:     remoteAddr.AddressWithPrefix.Address,
 		DstAddr:     temporaryAddr,
 	})
 	ip.SetChecksum(^ip.CalculateChecksum())
@@ -4168,12 +4202,18 @@ func TestICMPEchoTemporaryAddressSuppressesReply(t *testing.T) {
 func TestIcmpRateLimit(t *testing.T) {
 	var (
 		host1IPv4Addr = tcpip.ProtocolAddress{
-			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 1}), 24),
+			Protocol: ipv4.ProtocolNumber,
+			AddressWithPrefix: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+				PrefixLen: 24,
+			},
 		}
 		host2IPv4Addr = tcpip.ProtocolAddress{
-			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{192, 168, 0, 2}), 24),
+			Protocol: ipv4.ProtocolNumber,
+			AddressWithPrefix: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+				PrefixLen: 24,
+			},
 		}
 	)
 	ctx := newTestContext()
@@ -4193,7 +4233,7 @@ func TestIcmpRateLimit(t *testing.T) {
 	}
 	s.SetRouteTable([]tcpip.Route{
 		{
-			Destination: host1IPv4Addr.AddressWithPrefix.Masked(),
+			Destination: host1IPv4Addr.AddressWithPrefix.Subnet(),
 			NIC:         nicID,
 		},
 	})
@@ -4219,8 +4259,8 @@ func TestIcmpRateLimit(t *testing.T) {
 					TotalLength: uint16(totalLength),
 					Protocol:    uint8(header.ICMPv4ProtocolNumber),
 					TTL:         1,
-					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Addr(),
-					DstAddr:     host1IPv4Addr.AddressWithPrefix.Addr(),
+					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Address,
+					DstAddr:     host1IPv4Addr.AddressWithPrefix.Address,
 				})
 				ip.SetChecksum(^ip.CalculateChecksum())
 				return hdr.View()
@@ -4237,8 +4277,8 @@ func TestIcmpRateLimit(t *testing.T) {
 				payload := stack.PayloadSince(p.NetworkHeader())
 				defer payload.Release()
 				checker.IPv4(t, payload,
-					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Addr()),
-					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Addr()),
+					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Address),
+					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Address),
 					checker.ICMPv4(
 						checker.ICMPv4Type(header.ICMPv4EchoReply),
 					))
@@ -4260,8 +4300,8 @@ func TestIcmpRateLimit(t *testing.T) {
 					TotalLength: uint16(totalLength),
 					Protocol:    uint8(header.UDPProtocolNumber),
 					TTL:         1,
-					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Addr(),
-					DstAddr:     host1IPv4Addr.AddressWithPrefix.Addr(),
+					SrcAddr:     host2IPv4Addr.AddressWithPrefix.Address,
+					DstAddr:     host1IPv4Addr.AddressWithPrefix.Address,
 				})
 				ip.SetChecksum(^ip.CalculateChecksum())
 				return hdr.View()
@@ -4282,8 +4322,8 @@ func TestIcmpRateLimit(t *testing.T) {
 				payload := stack.PayloadSince(p.NetworkHeader())
 				defer payload.Release()
 				checker.IPv4(t, payload,
-					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Addr()),
-					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Addr()),
+					checker.SrcAddr(host1IPv4Addr.AddressWithPrefix.Address),
+					checker.DstAddr(host2IPv4Addr.AddressWithPrefix.Address),
 					checker.ICMPv4(
 						checker.ICMPv4Type(header.ICMPv4DstUnreachable),
 					))
@@ -4304,7 +4344,7 @@ func TestIcmpRateLimit(t *testing.T) {
 	}
 }
 
-func newTCPPacket(t *testing.T, srcAddr, dstAddr netip.Addr, ttl uint8, tcpChecksum uint16) *stack.PacketBuffer {
+func newTCPPacket(t *testing.T, srcAddr, dstAddr tcpip.Address, ttl uint8, tcpChecksum uint16) *stack.PacketBuffer {
 	t.Helper()
 	ipHeaderLength := header.IPv4MinimumSize
 	tcpHeaderLength := header.TCPMinimumSize
@@ -4369,11 +4409,11 @@ func TestForwardingTCPChecksum(t *testing.T) {
 
 	s.SetRouteTable([]tcpip.Route{
 		{
-			Destination: incomingIPv4Addr.Masked(),
+			Destination: incomingIPv4Addr.Subnet(),
 			NIC:         incomingNICID,
 		},
 		{
-			Destination: outgoingIPv4Addr.Masked(),
+			Destination: outgoingIPv4Addr.Subnet(),
 			NIC:         outgoingNICID,
 		},
 	})
@@ -4433,8 +4473,8 @@ func TestForwardedICMPInnerIPv4OptionsPanics(t *testing.T) {
 	}
 
 	s.SetRouteTable([]tcpip.Route{
-		{Destination: incomingIPv4Addr.Masked(), NIC: incomingNICID},
-		{Destination: outgoingIPv4Addr.Masked(), NIC: outgoingNICID},
+		{Destination: incomingIPv4Addr.Subnet(), NIC: incomingNICID},
+		{Destination: outgoingIPv4Addr.Subnet(), NIC: outgoingNICID},
 	})
 
 	if err := s.SetForwardingDefaultAndAllNICs(header.IPv4ProtocolNumber, true); err != nil {
@@ -4484,8 +4524,8 @@ func TestOversizedFragmentedICMPEchoRequestDoesNotPanic(t *testing.T) {
 		ident = 42
 	)
 	var (
-		srcAddr = netip.AddrFrom4([4]byte{10, 0, 0, 1})
-		dstAddr = netip.AddrFrom4([4]byte{10, 0, 0, 2})
+		srcAddr = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x01"))
+		dstAddr = tcpip.AddrFromSlice([]byte("\x0a\x00\x00\x02"))
 	)
 
 	tests := []struct {
@@ -4520,7 +4560,7 @@ func TestOversizedFragmentedICMPEchoRequestDoesNotPanic(t *testing.T) {
 			}
 			protoAddr := tcpip.ProtocolAddress{
 				Protocol:          header.IPv4ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(dstAddr),
+				AddressWithPrefix: dstAddr.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protoAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("s.AddProtocolAddress(%d, %+v, {}): %s", nicID, protoAddr, err)

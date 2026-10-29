@@ -19,7 +19,6 @@ package arp
 
 import (
 	"fmt"
-	"net/netip"
 	"reflect"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
@@ -72,7 +71,7 @@ func (e *endpoint) Restore() {
 }
 
 // CheckDuplicateAddress implements stack.DuplicateAddressDetector.
-func (e *endpoint) CheckDuplicateAddress(addr netip.Addr, h stack.DADCompletionHandler) stack.DADCheckAddressDisposition {
+func (e *endpoint) CheckDuplicateAddress(addr tcpip.Address, h stack.DADCompletionHandler) stack.DADCheckAddressDisposition {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return e.dad.CheckDuplicateAddressLocked(addr, h)
@@ -91,7 +90,7 @@ func (*endpoint) DuplicateAddressProtocol() tcpip.NetworkProtocolNumber {
 }
 
 // SendDADMessage implements ip.DADProtocol.
-func (e *endpoint) SendDADMessage(addr netip.Addr, _ []byte) tcpip.Error {
+func (e *endpoint) SendDADMessage(addr tcpip.Address, _ []byte) tcpip.Error {
 	return e.sendARPRequest(header.IPv4Any, addr, header.EthernetBroadcastAddress)
 }
 
@@ -184,14 +183,14 @@ func (e *endpoint) HandlePacket(pkt *stack.PacketBuffer) {
 	switch h.Op() {
 	case header.ARPRequest:
 		stats.requestsReceived.Increment()
-		localAddr := netip.AddrFrom4([4]byte(h.ProtocolAddressTarget()))
+		localAddr := tcpip.AddrFrom4Slice(h.ProtocolAddressTarget())
 
 		if !e.nic.CheckLocalAddress(header.IPv4ProtocolNumber, localAddr) {
 			stats.requestsReceivedUnknownTargetAddress.Increment()
 			return // we have no useful answer, ignore the request
 		}
 
-		remoteAddr := netip.AddrFrom4([4]byte(h.ProtocolAddressSender()))
+		remoteAddr := tcpip.AddrFrom4Slice(h.ProtocolAddressSender())
 		remoteLinkAddr := tcpip.LinkAddress(h.HardwareAddressSender())
 
 		switch err := e.nic.HandleNeighborProbe(header.IPv4ProtocolNumber, remoteAddr, remoteLinkAddr); err.(type) {
@@ -238,7 +237,7 @@ func (e *endpoint) HandlePacket(pkt *stack.PacketBuffer) {
 
 	case header.ARPReply:
 		stats.repliesReceived.Increment()
-		addr := netip.AddrFrom4([4]byte(h.ProtocolAddressSender()))
+		addr := tcpip.AddrFrom4Slice(h.ProtocolAddressSender())
 		linkAddr := tcpip.LinkAddress(h.HardwareAddressSender())
 
 		e.mu.Lock()
@@ -281,8 +280,8 @@ type protocol struct {
 func (p *protocol) Number() tcpip.NetworkProtocolNumber { return ProtocolNumber }
 func (p *protocol) MinimumPacketSize() int              { return header.ARPSize }
 
-func (*protocol) ParseAddresses([]byte) (src, dst netip.Addr) {
-	return netip.Addr{}, netip.Addr{}
+func (*protocol) ParseAddresses([]byte) (src, dst tcpip.Address) {
+	return tcpip.Address{}, tcpip.Address{}
 }
 
 func (p *protocol) NewEndpoint(nic stack.NetworkInterface, _ stack.TransportDispatcher) stack.NetworkEndpoint {
@@ -316,25 +315,25 @@ func (*endpoint) LinkAddressProtocol() tcpip.NetworkProtocolNumber {
 }
 
 // LinkAddressRequest implements stack.LinkAddressResolver.LinkAddressRequest.
-func (e *endpoint) LinkAddressRequest(targetAddr, localAddr netip.Addr, remoteLinkAddr tcpip.LinkAddress) tcpip.Error {
+func (e *endpoint) LinkAddressRequest(targetAddr, localAddr tcpip.Address, remoteLinkAddr tcpip.LinkAddress) tcpip.Error {
 	stats := e.stats.arp
 
 	if len(remoteLinkAddr) == 0 {
 		remoteLinkAddr = header.EthernetBroadcastAddress
 	}
 
-	if !localAddr.IsValid() {
+	if localAddr.BitLen() == 0 {
 		addr, err := e.nic.PrimaryAddress(header.IPv4ProtocolNumber)
 		if err != nil {
 			return err
 		}
 
-		if !addr.Addr().IsValid() {
+		if addr.Address.BitLen() == 0 {
 			stats.outgoingRequestInterfaceHasNoLocalAddressErrors.Increment()
 			return &tcpip.ErrNetworkUnreachable{}
 		}
 
-		localAddr = addr.Addr()
+		localAddr = addr.Address
 	} else if !e.nic.CheckLocalAddress(header.IPv4ProtocolNumber, localAddr) {
 		stats.outgoingRequestBadLocalAddressErrors.Increment()
 		return &tcpip.ErrBadLocalAddress{}
@@ -343,7 +342,7 @@ func (e *endpoint) LinkAddressRequest(targetAddr, localAddr netip.Addr, remoteLi
 	return e.sendARPRequest(localAddr, targetAddr, remoteLinkAddr)
 }
 
-func (e *endpoint) sendARPRequest(localAddr, targetAddr netip.Addr, remoteLinkAddr tcpip.LinkAddress) tcpip.Error {
+func (e *endpoint) sendARPRequest(localAddr, targetAddr tcpip.Address, remoteLinkAddr tcpip.LinkAddress) tcpip.Error {
 	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 		ReserveHeaderBytes: int(e.MaxHeaderLength()),
 	})
@@ -372,7 +371,7 @@ func (e *endpoint) sendARPRequest(localAddr, targetAddr netip.Addr, remoteLinkAd
 }
 
 // ResolveStaticAddress implements stack.LinkAddressResolver.ResolveStaticAddress.
-func (*endpoint) ResolveStaticAddress(addr netip.Addr) (tcpip.LinkAddress, bool) {
+func (*endpoint) ResolveStaticAddress(addr tcpip.Address) (tcpip.LinkAddress, bool) {
 	if addr == header.IPv4Broadcast {
 		return header.EthernetBroadcastAddress, true
 	}

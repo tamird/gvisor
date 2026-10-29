@@ -181,48 +181,6 @@ func TestTasksEmpty(t *testing.T) {
 	s.AssertDirentOffsets(collector, tasksStaticFilesNextOffs)
 }
 
-func TestReadOnlyCreation(t *testing.T) {
-	s := setup(t)
-	defer s.Destroy()
-
-	proc := s.GetDentryOrDie(s.PathOpAtRoot("/proc"))
-	defer proc.DecRef(s.Ctx)
-	if err := s.VFS.SetMountReadOnly(proc.Mount(), true); err != nil {
-		t.Fatalf("SetMountReadOnly(/proc): %v", err)
-	}
-	for _, op := range []struct {
-		name   string
-		create func(*vfs.PathOperation) error
-	}{
-		{"mkdir", func(pop *vfs.PathOperation) error {
-			return s.VFS.MkdirAt(s.Ctx, s.Creds, pop, &vfs.MkdirOptions{Mode: 0700})
-		}},
-		{"symlink", func(pop *vfs.PathOperation) error {
-			return s.VFS.SymlinkAt(s.Ctx, s.Creds, pop, "target")
-		}},
-		{"mknod", func(pop *vfs.PathOperation) error {
-			return s.VFS.MknodAt(s.Ctx, s.Creds, pop, &vfs.MknodOptions{Mode: linux.S_IFIFO | 0600})
-		}},
-		{"open", func(pop *vfs.PathOperation) error {
-			fd, err := s.VFS.OpenAt(s.Ctx, s.Creds, pop, &vfs.OpenOptions{Flags: linux.O_CREAT | linux.O_EXCL | linux.O_RDONLY, Mode: 0600})
-			if fd != nil {
-				fd.DecRef(s.Ctx)
-			}
-			return err
-		}},
-	} {
-		t.Run(op.name, func(t *testing.T) {
-			// procfs lookup errors take precedence over the read-only mount.
-			if err := op.create(s.PathOpAtRoot("/proc/nonexistent")); !linuxerr.Equals(linuxerr.ENOENT, err) {
-				t.Errorf("create missing child: got %v, want ENOENT", err)
-			}
-			if err := op.create(s.PathOpAtRoot("/proc/version")); !linuxerr.Equals(linuxerr.EEXIST, err) {
-				t.Errorf("create existing child: got %v, want EEXIST", err)
-			}
-		})
-	}
-}
-
 func TestSyntheticMountpointCreation(t *testing.T) {
 	s := setup(t)
 	defer s.Destroy()
@@ -278,6 +236,27 @@ func TestManyProcMounts(t *testing.T) {
 	}
 	if newStat.RdevMajor != stat.RdevMajor {
 		t.Errorf("/proc/gvisor/checkpoint rdev major = %d, want %d", newStat.RdevMajor, stat.RdevMajor)
+	}
+}
+
+func TestSpecEnvironPermissions(t *testing.T) {
+	s := setupWithData(t, &InternalData{ContainerUID: 343, ContainerGID: 2401})
+	defer s.Destroy()
+
+	const path = "/proc/gvisor/spec_environ"
+	opts := &vfs.OpenOptions{Flags: linux.O_RDONLY}
+	owner := auth.NewUserCredentials(343, 2401, nil, nil, s.Creds.UserNamespace)
+	for _, creds := range []*auth.Credentials{s.Creds, owner} {
+		fd, err := s.VFS.OpenAt(s.Ctx, creds, s.PathOpAtRoot(path), opts)
+		if err != nil {
+			t.Fatalf("OpenAt(%q) as UID %d: %v", path, creds.EffectiveKUID, err)
+		}
+		fd.DecRef(s.Ctx)
+	}
+
+	other := auth.NewUserCredentials(344, 2401, nil, nil, s.Creds.UserNamespace)
+	if _, err := s.VFS.OpenAt(s.Ctx, other, s.PathOpAtRoot(path), opts); !linuxerr.Equals(linuxerr.EACCES, err) {
+		t.Errorf("OpenAt(%q) as UID 344 got error %v, want EACCES", path, err)
 	}
 }
 

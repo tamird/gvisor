@@ -34,8 +34,4 @@ go_test(
     size = "small",
     srcs = ["testutil_test.go"],
     embed = [":testutil"],
-    deps = [
-        "//runsc/config",
-        "//runsc/flag",
-    ],
 )

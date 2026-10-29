@@ -71,6 +71,11 @@ type congestionControl interface {
 	// HandleRTOExpired is invoked when the retransmit timer expires.
 	HandleRTOExpired()
 
+	// HandleWindowRestart is invoked when the sender reduces its window
+	// after an idle period (RFC 5681 section 4.1). Linux tcp_cwnd_restart()
+	// notifies congestion control with CA_EVENT_CWND_RESTART.
+	HandleWindowRestart()
+
 	// Update is invoked when processing inbound acks. It's passed the
 	// number of packet's that were acked by the most recent cumulative
 	// acknowledgement.  rtt is the round-trip time, or is set to unknownRTT
@@ -517,10 +522,6 @@ func (s *sender) updateRTO(rtt time.Duration) {
 // resendSegment resends the first unacknowledged segment.
 // +checklocks:s.ep.mu
 func (s *sender) resendSegment() {
-	// Don't use any segments we already sent to measure RTT as they may
-	// have been affected by packets being lost.
-	s.RTTMeasureSeqNum = s.SndNxt
-
 	// Resend the segment.
 	if seg := s.writeList.Front(); seg != nil {
 		if seg.payloadSize() > s.MaxPayloadSize {
@@ -1123,6 +1124,7 @@ func (s *sender) sendData() {
 	if !s.FastRecovery.Active && s.state != tcpip.RTORecovery && s.ep.stack.Clock().NowMonotonic().Sub(s.LastSendTime) > s.RTO {
 		if s.SndCwnd > InitialCwnd {
 			s.SndCwnd = InitialCwnd
+			s.cc.HandleWindowRestart()
 		}
 	}
 
@@ -1830,6 +1832,10 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 // +checklocks:s.ep.mu
 func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	if seg.xmitCount > 0 {
+		// Karn's algorithm excludes ambiguous RTT samples after a
+		// retransmission, including a tail loss probe (RFC 6298, section 3).
+		// Timestamp-based samples are selected separately by the ACK path.
+		s.RTTMeasureSeqNum = s.SndNxt
 		s.ep.stack.Stats().TCP.Retransmits.Increment()
 		s.ep.stats.SendErrors.Retransmits.Increment()
 		if s.SndCwnd < s.Ssthresh {

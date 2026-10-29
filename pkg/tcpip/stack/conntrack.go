@@ -18,7 +18,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"net/netip"
 	"sync"
 	"time"
 
@@ -93,7 +92,7 @@ type tuple struct {
 //
 // +stateify savable
 type tupleID struct {
-	srcAddr netip.Addr
+	srcAddr tcpip.Address
 	// The source port of a packet in the original direction is overloaded with
 	// the ident of an Echo Request packet.
 	//
@@ -104,7 +103,7 @@ type tupleID struct {
 	//   IPv4: https://github.com/torvalds/linux/blob/c5c17547b778975b3d83a73c8d84e8fb5ecf3ba5/net/ipv4/ping.c#L810
 	//   IPv6: https://github.com/torvalds/linux/blob/c5c17547b778975b3d83a73c8d84e8fb5ecf3ba5/net/ipv6/ping.c#L133
 	srcPortOrEchoRequestIdent uint16
-	dstAddr                   netip.Addr
+	dstAddr                   tcpip.Address
 	// The opposite of srcPortOrEchoRequestIdent; the destination port of a packet
 	// in the reply direction is overloaded with the ident of an Echo Reply.
 	dstPortOrEchoReplyIdent uint16
@@ -465,7 +464,13 @@ func getTupleID(pkt *PacketBuffer) (tupleID, getTupleIDDisposition) {
 		}
 
 		// TODO(https://gvisor.dev/issue/6789): Handle extension headers.
-		if tid, ok := getTupleIDForPacketInICMPError(pkt, v6NetAndTransHdr, header.IPv6ProtocolNumber, header.IPv6MinimumSize, header.IPv6(h).TransportProtocol()); ok {
+		if tid, ok := getTupleIDForPacketInICMPError(
+			pkt,
+			v6NetAndTransHdr,
+			header.IPv6ProtocolNumber,
+			header.IPv6MinimumSize,
+			tcpip.TransportProtocolNumber(header.IPv6(h).NextHeader()),
+		); ok {
 			// Do not create a new connection in response to an ICMP error.
 			return tid, getTupleIDOKAndDontAllowNewConn
 		}
@@ -598,8 +603,8 @@ func (ct *ConnTrack) connForTID(tid tupleID) *tuple {
 type ConnTrackInfo struct {
 	State      ConnTrackState
 	Direction  ConnTrackDirection
-	SrcAddr    netip.Addr
-	DstAddr    netip.Addr
+	SrcAddr    tcpip.Address
+	DstAddr    tcpip.Address
 	SrcPort    uint16
 	DstPort    uint16
 	NetProto   tcpip.NetworkProtocolNumber
@@ -926,28 +931,28 @@ func (ct *ConnTrack) reapTupleLocked(reapingTuple *tuple, bktID int, bkt *bucket
 	return true
 }
 
-func (ct *ConnTrack) originalDst(epID TransportEndpointID, netProto tcpip.NetworkProtocolNumber, transProto tcpip.TransportProtocolNumber) (netip.Addr, uint16, tcpip.Error) {
+func (ct *ConnTrack) originalDst(epID TransportEndpointID, netProto tcpip.NetworkProtocolNumber, transProto tcpip.TransportProtocolNumber) (tcpip.Address, uint16, tcpip.Error) {
 	// Lookup the connection. The reply's original destination
 	// describes the original address.
 	tid := tupleID{
-		srcAddr:                   epID.Local.Addr(),
-		srcPortOrEchoRequestIdent: epID.Local.Port(),
-		dstAddr:                   epID.Remote.Addr(),
-		dstPortOrEchoReplyIdent:   epID.Remote.Port(),
+		srcAddr:                   epID.LocalAddress,
+		srcPortOrEchoRequestIdent: epID.LocalPort,
+		dstAddr:                   epID.RemoteAddress,
+		dstPortOrEchoReplyIdent:   epID.RemotePort,
 		transProto:                transProto,
 		netProto:                  netProto,
 	}
 	t := ct.connForTID(tid)
 	if t == nil {
 		// Not a tracked connection.
-		return netip.Addr{}, 0, &tcpip.ErrNoSuchFile{}
+		return tcpip.Address{}, 0, &tcpip.ErrNoSuchFile{}
 	}
 
 	t.conn.mu.RLock()
 	defer t.conn.mu.RUnlock()
 	if t.conn.destinationManip == manipNotPerformed {
 		// Unmanipulated destination.
-		return netip.Addr{}, 0, &tcpip.ErrInvalidOptionValue{}
+		return tcpip.Address{}, 0, &tcpip.ErrInvalidOptionValue{}
 	}
 
 	id := t.conn.original.tupleID

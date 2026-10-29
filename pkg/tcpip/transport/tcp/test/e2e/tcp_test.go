@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net/netip"
 	"os"
 	"runtime"
 	"strings"
@@ -27,7 +26,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/rand"
 	"gvisor.dev/gvisor/pkg/refs"
@@ -177,7 +175,7 @@ func (e *endpointTester) CheckReadError(t *testing.T, want tcpip.Error) {
 	if got != want {
 		t.Fatalf("ep.Read = %s, want %s", got, want)
 	}
-	if diff := cmp.Diff(tcpip.ReadResult{}, res, cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+	if diff := cmp.Diff(tcpip.ReadResult{}, res); diff != "" {
 		t.Errorf("ep.Read: unexpected non-zero result (-want +got):\n%s", diff)
 	}
 }
@@ -194,7 +192,7 @@ func (e *endpointTester) CheckRead(t *testing.T) []byte {
 	if diff := cmp.Diff(tcpip.ReadResult{
 		Count: buf.Len(),
 		Total: buf.Len(),
-	}, res, checker.IgnoreCmpPath("ControlMessages"), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+	}, res, checker.IgnoreCmpPath("ControlMessages")); diff != "" {
 		t.Errorf("ep.Read: unexpected result (-want +got):\n%s", diff)
 	}
 	return buf.Bytes()
@@ -355,7 +353,12 @@ func TestConnectICMPError(t *testing.T) {
 			runtime.Gosched()
 		}
 	}
-	id := stack.TransportEndpointID{Local: netip.AddrPortFrom(context.StackAddr, context.StackPort), Remote: netip.AddrPortFrom(context.TestAddr, context.TestPort)}
+	id := stack.TransportEndpointID{
+		LocalAddress:  context.StackAddr,
+		LocalPort:     context.StackPort,
+		RemoteAddress: context.TestAddr,
+		RemotePort:    context.TestPort,
+	}
 	waitFor("endpoint registration", func() bool {
 		return c.Stack().FindTransportEndpoint(ipv4.ProtocolNumber, tcp.ProtocolNumber, id, 1) != nil
 	})
@@ -1177,7 +1180,7 @@ func TestUserSuppliedMSSOnConnect(t *testing.T) {
 	ips := []struct {
 		name        string
 		createEP    func(*context.Context)
-		connectAddr netip.Addr
+		connectAddr tcpip.Address
 		checker     func(*testing.T, *context.Context, uint16, int)
 		maxMSS      uint16
 	}{
@@ -1898,7 +1901,7 @@ func TestListenerReadinessOnEvent(t *testing.T) {
 		}
 		protocolAddr := tcpip.ProtocolAddress{
 			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: tcpip.FullPrefix(netip.Addr(context.StackAddr)),
+			AddressWithPrefix: tcpip.Address(context.StackAddr).WithPrefix(),
 		}
 		if err := s.AddProtocolAddress(id, protocolAddr, stack.AddressProperties{}); err != nil {
 			t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", id, protocolAddr, err)
@@ -2757,15 +2760,21 @@ func TestSmallReceiveBufferReadiness(t *testing.T) {
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), 32),
+		Protocol: ipv4.ProtocolNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice([]byte("\x7f\x00\x00\x01")),
+			PrefixLen: 32,
+		},
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}) failed: %s", nicID, protocolAddr, err)
 	}
 
 	{
-		subnet := header.IPv4LoopbackSubnet
+		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x7f\x00\x00\x00")), tcpip.MaskFrom("\xff\x00\x00\x00"))
+		if err != nil {
+			t.Fatalf("tcpip.NewSubnet failed: %s", err)
+		}
 		s.SetRouteTable([]tcpip.Route{
 			{
 				Destination: subnet,
@@ -3479,27 +3488,23 @@ func TestNonScaledWindowAccept(t *testing.T) {
 }
 
 func TestZeroScaledWindowReceive(t *testing.T) {
-	// This test ensures that the endpoint sends a non-zero window size
-	// advertisement when the scaled window transitions from 0 to non-zero,
-	// but the actual window (not scaled) hasn't gotten to zero.
 	c := context.New(t, e2e.DefaultMTU)
 	defer c.Cleanup()
 
 	// Set the buffer size such that a window scale of 5 will be used.
 	const bufSz = 65535 * 10
 	const ws = uint32(5)
+	const segmentSize = 50000
 	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, bufSz, []byte{
 		header.TCPOptionWS, 3, 0, header.TCPOptionNOP,
 	})
 
-	// Write chunks of 50000 bytes.
-	remain := 0
 	sent := 0
-	data := make([]byte, 50000)
+	data := make([]byte, segmentSize)
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	// Keep writing till the window drops below len(data).
-	for {
-		c.SendPacket(data, &context.Headers{
+	send := func(n int) int {
+		t.Helper()
+		c.SendPacket(data[:n], &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
 			Flags:   header.TCPFlagAck,
@@ -3507,7 +3512,7 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 			AckNum:  c.IRS.Add(1),
 			RcvWnd:  30000,
 		})
-		sent += len(data)
+		sent += n
 		pkt := c.GetPacket()
 		defer pkt.Release()
 		checker.IPv4(t, pkt,
@@ -3519,64 +3524,73 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 				checker.TCPFlags(header.TCPFlagAck),
 			),
 		)
-		// Don't reduce window to zero here.
-		if wnd := int(header.TCP(header.IPv4(pkt.AsSlice()).Payload()).WindowSize()); wnd<<ws < len(data) {
-			remain = wnd << ws
-			break
+		return int(header.TCP(header.IPv4(pkt.AsSlice()).Payload()).WindowSize()) << ws
+	}
+
+	// Leave one window unit unconsumed. Every ACK must still cover the
+	// bytes the peer was entitled to send under the previous advertisement.
+	const unit = 1 << ws
+	remain := send(segmentSize)
+	for remain > unit {
+		n := min(segmentSize, remain-unit)
+		next := send(n)
+		if left := remain - n; next < left {
+			t.Fatalf("window after sending %d bytes = %d, want at least %d", n, next, left)
+		}
+		remain = next
+	}
+	if got, want := remain, unit; got != want {
+		t.Fatalf("remaining window = %d, want %d", got, want)
+	}
+	// A one-byte ACK advances RCV.NXT by less than one window unit.
+	remain = send(1)
+	if remain < unit-1 {
+		t.Fatalf("window after sending one byte = %d, want at least %d", remain, unit-1)
+	}
+	for remain != 0 {
+		remain = send(min(segmentSize, remain))
+	}
+
+	read := func(size int64) {
+		t.Helper()
+		w := tcpip.LimitedWriter{W: io.Discard, N: size}
+		for w.N != 0 {
+			if _, err := c.EP.Read(&w, tcpip.ReadOptions{}); err != nil {
+				t.Fatalf("Read failed: %s", err)
+			}
 		}
 	}
 
-	// Make the window non-zero, but the scaled window zero.
-	for remain >= 16 {
-		data = data[:remain-15]
-		c.SendPacket(data, &context.Headers{
-			SrcPort: context.TestPort,
-			DstPort: c.Port,
-			Flags:   header.TCPFlagAck,
-			SeqNum:  iss.Add(seqnum.Size(sent)),
-			AckNum:  c.IRS.Add(1),
-			RcvWnd:  30000,
-		})
-		sent += len(data)
-		pkt := c.GetPacket()
-		defer pkt.Release()
-		checker.IPv4(t, pkt,
-			checker.PayloadLen(header.TCPMinimumSize),
-			checker.TCP(
-				checker.DstPort(context.TestPort),
-				checker.TCPSeqNum(uint32(c.IRS)+1),
-				checker.TCPAckNum(uint32(iss)+uint32(sent)),
-				checker.TCPFlags(header.TCPFlagAck),
-			),
-		)
-		// Since the receive buffer is split between window advertisement and
-		// application data buffer the window does not always reflect the space
-		// available and actual space available can be a bit more than what is
-		// advertised in the window.
-		wnd := int(header.TCP(header.IPv4(pkt.AsSlice()).Payload()).WindowSize())
-		if wnd == 0 {
-			break
-		}
-		remain = wnd << ws
+	// Releasing one segment leaves the available window below the reopening
+	// threshold. A probe must still see a zero window.
+	read(segmentSize)
+	if pkt := c.GetPacketNonBlocking(); pkt != nil {
+		pkt.Release()
+		t.Fatal("unexpected ACK below the window reopening threshold")
 	}
+	c.SendPacket([]byte{0}, &context.Headers{
+		SrcPort: context.TestPort,
+		DstPort: c.Port,
+		Flags:   header.TCPFlagAck,
+		SeqNum:  iss.Add(seqnum.Size(sent - 1)),
+		AckNum:  c.IRS.Add(1),
+		RcvWnd:  30000,
+	})
+	probeACK := c.GetPacket()
+	defer probeACK.Release()
+	checker.IPv4(t, probeACK,
+		checker.PayloadLen(header.TCPMinimumSize),
+		checker.TCP(
+			checker.DstPort(context.TestPort),
+			checker.TCPSeqNum(uint32(c.IRS)+1),
+			checker.TCPAckNum(uint32(iss)+uint32(sent)),
+			checker.TCPWindow(0),
+			checker.TCPFlags(header.TCPFlagAck),
+		),
+	)
 
-	// Read at least 2MSS of data. An ack should be sent in response to that.
-	// Since buffer space is now split in half between window and application
-	// data we need to read more than 1 MSS(65536) of data for a non-zero window
-	// update to be sent. For 1MSS worth of window to be available we need to
-	// read at least 128KB. Since our segments above were 50KB each it means
-	// we need to read at 3 packets.
-	w := tcpip.LimitedWriter{
-		W: io.Discard,
-		N: e2e.DefaultMTU * 2,
-	}
-	for w.N != 0 {
-		res, err := c.EP.Read(&w, tcpip.ReadOptions{})
-		t.Logf("err=%v res=%#v", err, res)
-		if err != nil {
-			t.Fatalf("Read failed: %s", err)
-		}
-	}
+	// Reading the rest frees enough space to cross the reopening threshold.
+	read(e2e.DefaultMTU*2 - segmentSize)
 
 	v := c.GetPacket()
 	defer v.Release()
@@ -4208,7 +4222,7 @@ func TestDefaultTTL(t *testing.T) {
 	for _, test := range []struct {
 		name     string
 		protoNum tcpip.NetworkProtocolNumber
-		addr     netip.Addr
+		addr     tcpip.Address
 	}{
 		{"ipv4", ipv4.ProtocolNumber, context.TestAddr},
 		{"ipv6", ipv6.ProtocolNumber, context.TestV6Addr},
@@ -4270,7 +4284,7 @@ func TestSetTTL(t *testing.T) {
 	for _, test := range []struct {
 		name          string
 		protoNum      tcpip.NetworkProtocolNumber
-		addr          netip.Addr
+		addr          tcpip.Address
 		relevantOpt   tcpip.SockOptInt
 		irrelevantOpt tcpip.SockOptInt
 	}{
@@ -6069,7 +6083,7 @@ func makeStack() (*stack.Stack, tcpip.Error) {
 
 	for _, ct := range []struct {
 		number         tcpip.NetworkProtocolNumber
-		addrWithPrefix netip.Prefix
+		addrWithPrefix tcpip.AddressWithPrefix
 	}{
 		{ipv4.ProtocolNumber, context.StackAddrWithPrefix},
 		{ipv6.ProtocolNumber, context.StackV6AddrWithPrefix},
@@ -6172,16 +6186,16 @@ func TestConnectAvoidsBoundPorts(t *testing.T) {
 		panic("unreachable")
 	}
 
-	address := func(t *testing.T, addressType string, isAny bool) netip.Addr {
+	address := func(t *testing.T, addressType string, isAny bool) tcpip.Address {
 		switch addressType {
 		case "v4":
 			if isAny {
-				return netip.Addr{}
+				return tcpip.Address{}
 			}
 			return context.StackAddr
 		case "v6":
 			if isAny {
-				return netip.Addr{}
+				return tcpip.Address{}
 			}
 			return context.StackV6Addr
 		case "mapped":
@@ -6381,16 +6395,16 @@ func TestTCPEndpointProbe(t *testing.T) {
 		//
 		// We don't do an extensive validation of every field but a
 		// basic sanity test.
-		if got, want := state.ID.Local.Addr(), netip.Addr(context.StackAddr); got != want {
+		if got, want := state.ID.LocalAddress, tcpip.Address(context.StackAddr); got != want {
 			t.Fatalf("got LocalAddress: %q, want: %q", got, want)
 		}
-		if got, want := state.ID.Local.Port(), port; got != want {
+		if got, want := state.ID.LocalPort, port; got != want {
 			t.Fatalf("got LocalPort: %d, want: %d", got, want)
 		}
-		if got, want := state.ID.Remote.Addr(), netip.Addr(context.TestAddr); got != want {
+		if got, want := state.ID.RemoteAddress, tcpip.Address(context.TestAddr); got != want {
 			t.Fatalf("got RemoteAddress: %q, want: %q", got, want)
 		}
-		if got, want := state.ID.Remote.Port(), uint16(context.TestPort); got != want {
+		if got, want := state.ID.RemotePort, uint16(context.TestPort); got != want {
 			t.Fatalf("got RemotePort: %d, want: %d", got, want)
 		}
 
@@ -6936,13 +6950,13 @@ func TestListenBacklogFull(t *testing.T) {
 func TestListenNoAcceptNonUnicastV4(t *testing.T) {
 	multicastAddr := tcpiptestutil.MustParse4("224.0.1.2")
 	otherMulticastAddr := tcpiptestutil.MustParse4("224.0.1.3")
-	subnet := context.StackAddrWithPrefix.Masked()
-	subnetBroadcastAddr := header.IPv4SubnetBroadcast(subnet)
+	subnet := context.StackAddrWithPrefix.Subnet()
+	subnetBroadcastAddr := subnet.Broadcast()
 
 	tests := []struct {
 		name    string
-		srcAddr netip.Addr
-		dstAddr netip.Addr
+		srcAddr tcpip.Address
+		dstAddr tcpip.Address
 	}{
 		{
 			name:    "SourceUnspecified",
@@ -7053,8 +7067,8 @@ func TestListenNoAcceptNonUnicastV6(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		srcAddr netip.Addr
-		dstAddr netip.Addr
+		srcAddr tcpip.Address
+		dstAddr tcpip.Address
 	}{
 		{
 			"SourceUnspecified",
@@ -9675,9 +9689,6 @@ func TestSendBufferTuning(t *testing.T) {
 
 func TestTimestampSynCookies(t *testing.T) {
 	clock := faketime.NewManualClock()
-	tsNow := func() uint32 {
-		return uint32(clock.NowMonotonic().Sub(tcpip.MonotonicTime{}).Milliseconds())
-	}
 	// Advance the clock so that NowMonotonic is non-zero.
 	clock.Advance(time.Second)
 	c := context.NewWithOpts(t, context.Options{
@@ -9721,8 +9732,6 @@ func TestTimestampSynCookies(t *testing.T) {
 	tcpHdr := header.TCP(header.IPv4(b.AsSlice()).Payload())
 	c.IRS = seqnum.Value(tcpHdr.SequenceNumber())
 	initialTSVal := tcpHdr.ParsedOptions().TSVal
-	// derive the tsOffset.
-	tsOffset := initialTSVal - tsNow()
 
 	header.EncodeTSOption(420, initialTSVal, tcpOpts[2:])
 	c.SendPacket(nil, &context.Headers{
@@ -9756,7 +9765,8 @@ func TestTimestampSynCookies(t *testing.T) {
 	}
 
 	// Advance the clock again so that we expect the next TSVal to change.
-	clock.Advance(time.Second)
+	const elapsed = time.Second
+	clock.Advance(elapsed)
 	data := []byte{1, 2, 3}
 	var r bytes.Reader
 	r.Reset(data)
@@ -9764,12 +9774,12 @@ func TestTimestampSynCookies(t *testing.T) {
 		t.Fatalf("Write failed: %s", err)
 	}
 
-	// The endpoint should have a correct TSOffset so that the received TSVal
-	// should match our expectation.
+	// The SYN-ACK may be one tick behind the endpoint clock to encode SACK.
 	p := c.GetPacket()
 	defer p.Release()
-	if got, want := header.TCP(header.IPv4(p.AsSlice()).Payload()).ParsedOptions().TSVal, tsNow()+tsOffset; got != want {
-		t.Fatalf("got TSVal = %d, want %d", got, want)
+	dataTSVal := header.TCP(header.IPv4(p.AsSlice()).Payload()).ParsedOptions().TSVal
+	if got, want := dataTSVal-initialTSVal, uint32(elapsed/time.Millisecond); got != want && got != want+1 {
+		t.Fatalf("timestamp advanced by %d ticks, want %d or %d", got, want, want+1)
 	}
 }
 
@@ -10037,6 +10047,101 @@ func TestLateSynCookieAck(t *testing.T) {
 	}
 	if err := testutil.Poll(metricPollFn, 1*time.Second); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestSynCookieACKAfterClose(t *testing.T) {
+	for _, delivery := range []string{"queued", "after_close"} {
+		t.Run(delivery, func(t *testing.T) {
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true,
+				MTU:      e2e.DefaultMTU,
+				Clock:    faketime.NewManualClock(),
+			})
+			defer c.Cleanup()
+			cookies := tcpip.TCPAlwaysUseSynCookies(true)
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &cookies); err != nil {
+				t.Fatalf("SetTransportProtocolOption(TCPAlwaysUseSynCookies): %s", err)
+			}
+			c.Create(-1)
+			listener := c.EP
+			if err := listener.Bind(tcpip.FullAddress{Port: context.StackPort}); err != nil {
+				t.Fatalf("Bind: %s", err)
+			}
+			if err := listener.Listen(1); err != nil {
+				t.Fatalf("Listen: %s", err)
+			}
+			peer := c.PassiveConnectWithOptions(int(c.MSSWithoutOptions()), -1, header.TCPSynOptions{
+				MSS: c.MSSWithoutOptions(),
+				WS:  -1,
+			}, 0)
+			// Drain queued packet work with virtual time held still.
+			c.Stack().Pause()
+			c.Stack().Resume()
+			accepted, _, err := listener.Accept(nil)
+			if err != nil {
+				t.Fatalf("Accept: %s", err)
+			}
+			defer accepted.Close()
+
+			// Close the peer's write side, then the accepted socket's write
+			// side. Each FIN consumes one sequence number.
+			peer.Flags = header.TCPFlagFin | header.TCPFlagAck
+			peer.SendPacket(nil, nil)
+			peer.NextSeqNum++
+			peer.VerifyACKNoSACK()
+			if err := accepted.Shutdown(tcpip.ShutdownWrite); err != nil {
+				t.Fatalf("Shutdown: %s", err)
+			}
+			fin := c.GetPacket()
+			checker.IPv4(t, fin, checker.TCP(
+				checker.TCPFlags(header.TCPFlagFin|header.TCPFlagAck),
+				checker.TCPSeqNum(uint32(peer.AckNum)),
+				checker.TCPAckNum(uint32(peer.NextSeqNum)),
+			))
+			fin.Release()
+			peer.AckNum++
+			peer.Flags = header.TCPFlagAck
+
+			if delivery == "queued" {
+				// Queue both copies before processing the ACK that closes the
+				// endpoint; its remaining packets are rematched to the listener.
+				ep := accepted.(*tcp.Endpoint)
+				ep.LockUser()
+				peer.SendPacket(nil, nil)
+				peer.SendPacket(nil, nil)
+				ep.UnlockUser()
+				// Drain the accepted endpoint before the listener barrier below.
+				c.Stack().Pause()
+				c.Stack().Resume()
+			} else {
+				peer.SendPacket(nil, nil)
+				c.Stack().Pause()
+				c.Stack().Resume()
+				peer.SendPacket(nil, nil)
+			}
+			c.Stack().Pause()
+			c.Stack().Resume()
+			if got, want := tcp.EndpointState(accepted.State()), tcp.StateClose; got != want {
+				t.Fatalf("state after final ACK = %s, want %s", got, want)
+			}
+
+			// Both numbers in this ACK advanced since the handshake. It must
+			// not validate as a new cookie and create another accepted socket.
+			extra, _, err := listener.Accept(nil)
+			if extra != nil {
+				extra.Close()
+			}
+			if _, ok := err.(*tcpip.ErrWouldBlock); !ok {
+				t.Fatalf("Accept after duplicate close ACK = %v, want ErrWouldBlock", err)
+			}
+			reset := c.GetPacket()
+			checker.IPv4(t, reset, checker.TCP(
+				checker.TCPFlags(header.TCPFlagRst),
+				checker.TCPSeqNum(uint32(peer.AckNum)),
+			))
+			reset.Release()
+		})
 	}
 }
 
@@ -10499,4 +10604,108 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+func TestCongestionWindowAfterIdle(t *testing.T) {
+	for _, cc := range []string{"cubic", "reno"} {
+		t.Run(cc, func(t *testing.T) {
+			baseline := windowAfterIdle(t, cc, 0)
+			idle := windowAfterIdle(t, cc, 30*time.Second)
+			t.Logf("IDLE_RESULT %s baseline=%v idle=%v", cc, baseline, idle)
+			if got, want := idle[0], baseline[0]; got != want {
+				t.Errorf("first flight after idle = %d, want %d", got, want)
+			}
+			if cc == "reno" && idle != baseline {
+				t.Errorf("Reno windows %v after idle, want %v", idle, baseline)
+			}
+		})
+	}
+}
+
+func windowAfterIdle(t *testing.T, cc string, idle time.Duration) [5]int {
+	t.Helper()
+	const mss, rtt = 32, 10 * time.Millisecond
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true, Clock: clock,
+		MTU: header.TCPMinimumSize + header.IPv4MinimumSize + mss,
+	})
+	defer c.Cleanup()
+	opt := tcpip.CongestionControlOption(cc)
+	if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
+		t.Fatal(err)
+	}
+	c.CreateConnected(789, 30000, -1)
+	fence := func() { c.Stack().Pause(); c.Stack().Resume() }
+	info := func() tcpip.TCPInfoOption {
+		t.Helper()
+		var s tcpip.TCPInfoOption
+		if err := c.EP.GetSockOpt(&s); err != nil {
+			t.Fatal(err)
+		}
+		return s
+	}
+	data := make([]byte, (256+tcp.InitialCwnd)*mss)
+	for i := range data {
+		data[i] = byte(i % 239)
+	}
+	write := func(b []byte) {
+		t.Helper()
+		n, err := c.EP.Write(bytes.NewReader(b), tcpip.WriteOptions{})
+		if err != nil || n != int64(len(b)) {
+			t.Fatalf("Write: got (%d, %v), want (%d, nil)", n, err, len(b))
+		}
+		fence()
+	}
+	ack := func(offset int) { c.SendAck(790, offset); fence() }
+	expectSilence := func() {
+		t.Helper()
+		if v := c.GetPacketNonBlocking(); v != nil {
+			v.Release()
+			t.Fatal("unexpected packet on a drained connection")
+		}
+	}
+
+	// Drop the first segment of a full initial window. Three duplicate
+	// ACKs must trigger an actual retransmission on the wire.
+	first := tcp.InitialCwnd * mss
+	write(data[:first])
+	for off := 0; off < first; off += mss {
+		c.ReceiveAndCheckPacket(data, off, mss)
+	}
+	clock.Advance(rtt)
+	for range 3 {
+		ack(0)
+	}
+	c.ReceiveAndCheckPacket(data, 0, mss)
+	ack(first)
+	expectSilence()
+	before := info()
+	if before.SndCwnd >= tcp.InitialCwnd || before.SndCwnd < before.SndSsthresh || before.RTO <= 0 || (idle > 0 && idle <= before.RTO) {
+		t.Fatalf("need congestion avoidance below the initial window and idle above RTO; got %+v, idle %v", before, idle)
+	}
+	retrans, timeouts := c.Stack().Stats().TCP.Retransmits.Value(), c.Stack().Stats().TCP.Timeouts.Value()
+	clock.Advance(idle)
+	fence()
+	expectSilence()
+	write(data[first:])
+	var flights [5]int
+	offset := first
+	for i := range flights {
+		if i > 0 {
+			clock.Advance(rtt)
+			ack(offset)
+		}
+		for c.ReceiveNonBlockingAndCheckPacket(data, offset, mss) {
+			flights[i]++
+			offset += mss
+		}
+		if got, want := flights[i], int(info().SndCwnd); got == 0 || got != want {
+			t.Fatalf("flight %d: received %d segments, cwnd %d", i, got, want)
+		}
+	}
+	if c.Stack().Stats().TCP.Retransmits.Value() != retrans || c.Stack().Stats().TCP.Timeouts.Value() != timeouts {
+		t.Fatal("unexpected loss or timeout after recovery")
+	}
+	return flights
 }

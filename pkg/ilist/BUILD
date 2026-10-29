@@ -85,7 +85,6 @@ go_library(
     srcs = [
         "interface_ring.go",
     ],
-    importpath = "gvisor.dev/gvisor/pkg/ilist/ring",
     visibility = ["//visibility:public"],
 )
 

@@ -170,7 +170,7 @@ func TestRACKDetectReorder(t *testing.T) {
 		t.Fatalf("reordering window = %s, want a positive window", got)
 	}
 
-	// ACK the first packet within the reordering window, before it can be
+	// ACK the missing packet within the reordering window, before it is
 	// retransmitted. Step 3 detects this as reordering without a DSACK:
 	// https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2
 	c.SendAck(seq, len(data))

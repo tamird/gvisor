@@ -45,8 +45,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"math"
-	"net/netip"
+	"net"
 	"os"
 	"strconv"
 
@@ -99,33 +98,21 @@ func main() {
 	remoteAddrName := os.Args[4]
 	remotePortName := os.Args[5]
 
-	localIP, err := netip.ParseAddr(addrName)
-	if err != nil || localIP.Zone() != "" || !localIP.Unmap().Is4() {
-		log.Fatalf("Bad local IPv4 address: %q", addrName)
-	}
-	remoteIP, err := netip.ParseAddr(remoteAddrName)
-	if err != nil || remoteIP.Zone() != "" || !remoteIP.Unmap().Is4() {
-		log.Fatalf("Bad remote IPv4 address: %q", remoteAddrName)
-	}
-	addr := netip.AddrFrom4(localIP.As4())
+	addr := tcpip.AddrFromSlice(net.ParseIP(addrName).To4())
 	remote := tcpip.FullAddress{
 		NIC:  1,
-		Addr: netip.AddrFrom4(remoteIP.As4()),
+		Addr: tcpip.AddrFromSlice(net.ParseIP(remoteAddrName).To4()),
 	}
 
 	var localPort uint16
-	if v, err := strconv.ParseInt(portName, 10, 64); err != nil {
+	if v, err := strconv.ParseUint(portName, 10, 16); err != nil {
 		log.Fatalf("Unable to convert port %v: %v", portName, err)
-	} else if v < 0 || v > math.MaxUint16 {
-		log.Fatalf("Unable to convert port %v: %v", portName, strconv.ErrRange)
 	} else {
 		localPort = uint16(v)
 	}
 
-	if v, err := strconv.ParseInt(remotePortName, 10, 64); err != nil {
+	if v, err := strconv.ParseUint(remotePortName, 10, 16); err != nil {
 		log.Fatalf("Unable to convert port %v: %v", remotePortName, err)
-	} else if v < 0 || v > math.MaxUint16 {
-		log.Fatalf("Unable to convert port %v: %v", remotePortName, strconv.ErrRange)
 	} else {
 		remote.Port = uint16(v)
 	}
@@ -157,7 +144,7 @@ func main() {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(addr),
+		AddressWithPrefix: addr.WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		log.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)

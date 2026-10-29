@@ -1178,7 +1178,7 @@ func (fs *filesystem) RenameAt(ctx context.Context, rp *vfs.ResolvingPath, oldPa
 		newParent.dirMu.NestedLock(dirLockNew)
 		defer newParent.dirMu.NestedUnlock(dirLockNew)
 	}
-	if newParent.vfsd.IsDead() {
+	if oldParent.vfsd.IsDead() || newParent.vfsd.IsDead() {
 		return linuxerr.ENOENT
 	}
 	var (
@@ -1434,8 +1434,12 @@ func (fs *filesystem) RenameAt(ctx context.Context, rp *vfs.ResolvingPath, oldPa
 	oldParent.dirents = nil
 	toDecRef = vfsObj.CommitRenameReplaceDentry(ctx, &handle, &renamed.vfsd, replacedVFSD)
 
-	if err := CreateWhiteout(ctx, vfsObj, fs.creds, &oldpop); err != nil {
-		panic(fmt.Sprintf("unrecoverable overlayfs inconsistency: failed to create whiteout at origin after RenameAt: %v", err))
+	// Determine if the renamed file exists on any lower layers of oldParent;
+	// if not, we can skip creating the whiteout.
+	if newChildLayer, err := fs.lookupLayerLocked(ctx, oldParent, oldName); err != nil || newChildLayer != lookupLayerNone {
+		if err := CreateWhiteout(ctx, vfsObj, fs.creds, &oldpop); err != nil {
+			panic(fmt.Sprintf("unrecoverable overlayfs inconsistency: failed to create whiteout at origin after RenameAt: %v", err))
+		}
 	}
 	if renamed.isDir() {
 		if err := vfsObj.SetXattrAt(ctx, fs.creds, &newpop, &vfs.SetXattrOptions{
@@ -1622,6 +1626,21 @@ func (fs *filesystem) SetStatAt(ctx context.Context, rp *vfs.ResolvingPath, opts
 	return err
 }
 
+// isNoopChown returns true if opts only sets d's owner to its current value
+// and would not clear setid bits, which the gofer filesystem also skips.
+func (d *dentry) isNoopChown(opts *vfs.SetStatOptions) bool {
+	stat := &opts.Stat
+	mode := d.mode.Load()
+	setsMore := stat.Mask&^(linux.STATX_UID|linux.STATX_GID) != 0
+	changesUID := stat.Mask&linux.STATX_UID != 0 && stat.UID != d.uid.Load()
+	changesGID := stat.Mask&linux.STATX_GID != 0 && stat.GID != d.gid.Load()
+	clearsSetid := opts.ClearPrivs && vfs.ClearSUIDAndSGID(mode) != mode
+	if setsMore || changesUID || changesGID || clearsSetid {
+		return false
+	}
+	return true
+}
+
 // Preconditions: d.fs.renameMu must be held for reading, and the caller must hold a reference on d.
 func (d *dentry) setStatLocked(ctx context.Context, rp *vfs.ResolvingPath, opts vfs.SetStatOptions) error {
 	mode := linux.FileMode(d.mode.Load())
@@ -1641,6 +1660,9 @@ func (d *dentry) setStatLocked(ctx context.Context, rp *vfs.ResolvingPath, opts 
 		return err
 	}
 	defer mnt.EndWrite()
+	if !d.isCopiedUp() && d.isNoopChown(&opts) {
+		return nil
+	}
 	if err := d.copyUpForWriteLocked(ctx); err != nil {
 		return err
 	}

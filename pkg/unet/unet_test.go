@@ -49,49 +49,6 @@ func randomFilename() (string, error) {
 	return file, nil
 }
 
-func TestNewSocketRejectsFDAliases(t *testing.T) {
-	for _, tc := range []struct {
-		name   string
-		offset int
-	}{
-		{name: "oversized", offset: 1 << 32},
-		{name: "negative", offset: -(1 << 32)},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0)
-			if err != nil {
-				t.Fatalf("Socketpair: %v", err)
-			}
-			defer unix.Close(fds[0])
-			defer unix.Close(fds[1])
-
-			flags, err := unix.FcntlInt(uintptr(fds[0]), unix.F_GETFL, 0)
-			if err != nil {
-				t.Fatalf("F_GETFL before NewSocket: %v", err)
-			}
-			badFD := fds[0] + tc.offset
-			s, err := NewSocket(badFD)
-			if s != nil {
-				// Keep ownership of the real FD if an invalid alias was accepted.
-				if _, err := s.Release(); err != nil {
-					t.Errorf("Release unexpected socket: %v", err)
-				}
-				t.Errorf("NewSocket(%d) returned a socket, want nil", badFD)
-			}
-			if err != unix.EBADF {
-				t.Errorf("NewSocket(%d): got error %v, want EBADF", badFD, err)
-			}
-			gotFlags, err := unix.FcntlInt(uintptr(fds[0]), unix.F_GETFL, 0)
-			if err != nil {
-				t.Fatalf("F_GETFL after NewSocket: %v", err)
-			}
-			if gotFlags != flags {
-				t.Errorf("NewSocket(%d) changed real FD flags: got %#x, want %#x", badFD, gotFlags, flags)
-			}
-		})
-	}
-}
-
 func TestConnectFailure(t *testing.T) {
 	name, err := randomFilename()
 	if err != nil {

@@ -43,6 +43,7 @@ go_library(
         "//pkg/marshal",
         "//pkg/marshal/primitive",
         "//pkg/metric",
+        "//pkg/refs",
         "//pkg/sentry/arch",
         "//pkg/sentry/fsimpl/sockfs",
         "//pkg/sentry/inet",
@@ -89,7 +90,6 @@ go_test(
         "//pkg/sentry/socket/netlink/nlmsg",
         "//pkg/syserr",
         "//pkg/tcpip",
-        "//pkg/tcpip/link/channel",
         "//pkg/tcpip/stack",
     ],
 )

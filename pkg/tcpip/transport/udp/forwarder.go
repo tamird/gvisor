@@ -95,12 +95,12 @@ func (r *ForwarderRequest) CreateEndpoint(queue *waiter.Queue) (tcpip.Endpoint, 
 	defer ep.mu.Unlock()
 
 	netHdr := r.pkt.Network()
-	if err := ep.net.Bind(tcpip.FullAddress{NIC: r.pkt.NICID, Addr: netHdr.DestinationAddress(), Port: r.id.Local.Port()}); err != nil {
+	if err := ep.net.Bind(tcpip.FullAddress{NIC: r.pkt.NICID, Addr: netHdr.DestinationAddress(), Port: r.id.LocalPort}); err != nil {
 		ep.closeLocked()
 		return nil, err
 	}
 
-	if err := ep.net.Connect(tcpip.FullAddress{NIC: r.pkt.NICID, Addr: netHdr.SourceAddress(), Port: r.id.Remote.Port()}); err != nil {
+	if err := ep.net.Connect(tcpip.FullAddress{NIC: r.pkt.NICID, Addr: netHdr.SourceAddress(), Port: r.id.RemotePort}); err != nil {
 		ep.closeLocked()
 		return nil, err
 	}
@@ -110,8 +110,8 @@ func (r *ForwarderRequest) CreateEndpoint(queue *waiter.Queue) (tcpip.Endpoint, 
 		return nil, err
 	}
 
-	ep.localPort = r.id.Local.Port()
-	ep.remotePort = r.id.Remote.Port()
+	ep.localPort = r.id.LocalPort
+	ep.remotePort = r.id.RemotePort
 	ep.effectiveNetProtos = []tcpip.NetworkProtocolNumber{r.pkt.NetworkProtocolNumber}
 	ep.boundPortFlags = ep.portFlags
 

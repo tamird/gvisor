@@ -32,6 +32,10 @@ import (
 )
 
 const (
+	// cookieTimestampSACK records SACK negotiation in the SYN-ACK timestamp,
+	// like TS_OPT_SACK in Linux's net/ipv4/syncookies.c.
+	cookieTimestampSACK = 1
+
 	// tsLen is the length, in bits, of the timestamp in the SYN cookie.
 	tsLen = 8
 
@@ -136,8 +140,8 @@ func (l *listenContext) cookieHash(id stack.TransportEndpointID, value uint32, n
 
 	// Initialize the block with the ports and value.
 	var payload [8]byte
-	binary.BigEndian.PutUint16(payload[0:], id.Local.Port())
-	binary.BigEndian.PutUint16(payload[2:], id.Remote.Port())
+	binary.BigEndian.PutUint16(payload[0:], id.LocalPort)
+	binary.BigEndian.PutUint16(payload[2:], id.RemotePort)
 	binary.BigEndian.PutUint32(payload[4:], value)
 
 	// Feed everything to the hasher.
@@ -149,8 +153,8 @@ func (l *listenContext) cookieHash(id stack.TransportEndpointID, value uint32, n
 	// It never returns an error.
 	l.hasher.Write(payload[:])
 	l.hasher.Write(l.nonce[nonceIndex][:])
-	l.hasher.Write(id.Local.Addr().AsSlice())
-	l.hasher.Write(id.Remote.Addr().AsSlice())
+	l.hasher.Write(id.LocalAddress.AsSlice())
+	l.hasher.Write(id.RemoteAddress.AsSlice())
 
 	// Finalize the calculation of the hash and return the first 4 bytes.
 	h := l.hasher.Sum(nil)
@@ -386,11 +390,15 @@ func (e *Endpoint) propagateInheritableOptionsLocked(n *Endpoint) {
 //
 // +checklocks:e.mu
 func (e *Endpoint) reserveTupleLocked() bool {
-	dest := e.TransportEndpointInfo.ID.Remote
+	dest := tcpip.FullAddress{
+		Addr: e.TransportEndpointInfo.ID.RemoteAddress,
+		Port: e.TransportEndpointInfo.ID.RemotePort,
+	}
 	portRes := ports.Reservation{
 		Networks:     e.effectiveNetProtos,
 		Transport:    ProtocolNumber,
-		Local:        e.TransportEndpointInfo.ID.Local,
+		Addr:         e.TransportEndpointInfo.ID.LocalAddress,
+		Port:         e.TransportEndpointInfo.ID.LocalPort,
 		Flags:        e.boundPortFlags,
 		BindToDevice: e.boundBindToDevice,
 		Dest:         dest,
@@ -453,7 +461,7 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 	netProtos := []tcpip.NetworkProtocolNumber{s.pkt.NetworkProtocolNumber}
 	// If the local address is an IPv4 Address then also look for IPv6
 	// dual stack endpoints.
-	if s.id.Local.Addr().Unmap().Is4() {
+	if s.id.LocalAddress.To4() != (tcpip.Address{}) {
 		netProtos = []tcpip.NetworkProtocolNumber{header.IPv4ProtocolNumber, header.IPv6ProtocolNumber}
 	}
 	for _, netProto := range netProtos {
@@ -562,6 +570,12 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 			offset := e.protocol.tsOffset(net.DestinationAddress(), net.SourceAddress())
 			now := e.stack.Clock().NowMonotonic()
 			synOpts.TSVal = offset.TSVal(now)
+			synOpts.SACKPermitted = opts.SACKPermitted && e.protocol.sackPermitted()
+			// Like Linux's cookie_init_timestamp(), round down so the
+			// timestamp on the first data packet cannot go backward.
+			if (synOpts.TSVal&cookieTimestampSACK != 0) != synOpts.SACKPermitted {
+				synOpts.TSVal--
+			}
 		}
 		cookie := ctx.createCookie(s.id, s.sequenceNumber, encodeMSS(opts.MSS))
 		fields := tcpFields{
@@ -652,6 +666,10 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 			rcvdSynOptions.TS = true
 			rcvdSynOptions.TSVal = s.parsedOptions.TSVal
 			rcvdSynOptions.TSEcr = s.parsedOptions.TSEcr
+			// Like Linux's cookie_timestamp_decode(), recover SACK from
+			// TSEcr. The cookie does not authenticate it: the peer can
+			// request SACK here just as in its SYN, subject to the stack setting.
+			rcvdSynOptions.SACKPermitted = s.parsedOptions.TSEcr&cookieTimestampSACK != 0
 		}
 
 		n, err := ctx.createConnectingEndpoint(s, rcvdSynOptions, &waiter.Queue{})

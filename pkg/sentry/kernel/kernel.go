@@ -40,6 +40,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -78,13 +79,12 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
 	sentrytime "gvisor.dev/gvisor/pkg/sentry/time"
 	"gvisor.dev/gvisor/pkg/sentry/unimpl"
+	uspb "gvisor.dev/gvisor/pkg/sentry/unimpl/unimplemented_syscall_go_proto"
 	"gvisor.dev/gvisor/pkg/sentry/uniqueid"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/timing"
-
-	uspb "gvisor.dev/gvisor/pkg/sentry/unimpl/unimplemented_syscall_go_proto"
 )
 
 // UserCounters is a set of user counters.
@@ -429,8 +429,17 @@ type Kernel struct {
 	// Names are preserved between save/restore session, while IDs can change.
 	//
 	// Mapping: cid -> name.
-	// It's protected by extMu.
+	//
+	// +checklocks:extMu
 	containerNames map[string]string
+
+	// containerEnvs stores the initial environment variables of each container
+	// based on its container ID.
+	//
+	// Mapping: cid -> env.
+	//
+	// +checklocks:extMu
+	containerEnvs map[string][]string
 
 	// Lock order: checkpointMu precedes CheckpointWait.mu.
 	checkpointMu sync.Mutex `state:"nosave"`
@@ -645,7 +654,10 @@ func (k *Kernel) Init(args InitKernelArgs) error {
 		args.MaxFDLimit = MaxFdLimit
 	}
 	k.MaxFDLimit.Store(args.MaxFDLimit)
+	k.extMu.Lock()
 	k.containerNames = make(map[string]string)
+	k.containerEnvs = make(map[string][]string)
+	k.extMu.Unlock()
 	k.CheckpointWait.k = k
 
 	ctx := k.SupervisorContext()
@@ -792,7 +804,11 @@ func savePrivateMFs(ctx context.Context, w io.Writer, mfsToSave map[checkpoint.R
 // +checklocksexclude:k.extMu
 // +checklocksexclude:k.runningTasksMu
 // +checklocksexclude:k.tasks.mu
-func (k *Kernel) SaveTo(ctx context.Context, stateFile, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, appMFExcludeCommittedZeroPages, resume bool, fsOpts *FSSaveOpts) error {
+func (k *Kernel) SaveTo(ctx context.Context, stateFile, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, appMFExcludeCommittedZeroPages, resume bool, fsOpts *FSSaveOpts, vfsOpts vfs.PrepareSaveOptions) error {
+	// The bypass is part of the saved task state, so it is armed before the
+	// state is written and covers both resuming after the save and restoring.
+	k.armSeccompRestartSyscallBypasses()
+
 	stateFileCleanup := cleanup.Make(func() { stateFile.Close() })
 	defer stateFileCleanup.Clean()
 
@@ -815,14 +831,14 @@ func (k *Kernel) SaveTo(ctx context.Context, stateFile, pagesMetadata io.WriteCl
 	defer fsCleanup.Clean()
 
 	return k.quiescePausedAnd(ctx, func() error {
-		return k.saveToLocked(ctx, stateFile, pagesMetadata, pagesFile, appMFExcludeCommittedZeroPages, resume, fsOpts, &stateFileCleanup, &pagesCleanup, &fsCleanup)
+		return k.saveToLocked(ctx, stateFile, pagesMetadata, pagesFile, appMFExcludeCommittedZeroPages, resume, fsOpts, vfsOpts, &stateFileCleanup, &pagesCleanup, &fsCleanup)
 	})
 }
 
 // saveToLocked saves the kernel state while the kernel is paused and quiesced.
 //
 // Preconditions: The kernel must be paused and quiesced.
-func (k *Kernel) saveToLocked(ctx context.Context, stateFile, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, appMFExcludeCommittedZeroPages, resume bool, fsOpts *FSSaveOpts, stateFileCleanup, pagesCleanup, fsCleanup *cleanup.Cleanup) error {
+func (k *Kernel) saveToLocked(ctx context.Context, stateFile, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, appMFExcludeCommittedZeroPages, resume bool, fsOpts *FSSaveOpts, vfsOpts vfs.PrepareSaveOptions, stateFileCleanup, pagesCleanup, fsCleanup *cleanup.Cleanup) error {
 	saveStart := time.Now()
 
 	// Discard unsavable mappings, such as those for host file descriptors.
@@ -836,7 +852,7 @@ func (k *Kernel) saveToLocked(ctx context.Context, stateFile, pagesMetadata io.W
 	// Prepare filesystems for saving. This must be done after
 	// invalidateUnsavableMappings(), since dropping memory mappings may
 	// affect filesystem state (e.g. page cache reference counts).
-	if err := k.vfs.PrepareSave(vfsCtx); err != nil {
+	if err := k.vfs.PrepareSave(vfsCtx, vfsOpts); err != nil {
 		return err
 	}
 	// Mark all to-be-saved MemoryFiles as savable to inform kernel save below.
@@ -865,7 +881,7 @@ func (k *Kernel) saveToLocked(ctx context.Context, stateFile, pagesMetadata io.W
 		mfSaveWg.Add(1)
 		go func() {
 			defer mfSaveWg.Done()
-			mfSaveErr = k.saveMemoryFiles(ctx, nil, pagesMetadata, pagesFile, mfsToSaveActual, appMFExcludeCommittedZeroPages) // transfers ownership
+			mfSaveErr = k.saveMemoryFiles(ctx, nil, pagesMetadata, pagesFile, mfsToSaveActual, appMFExcludeCommittedZeroPages, resume) // transfers ownership
 		}()
 		pagesCleanup.Release()
 		// Defer a Wait() so we wait for k.saveMemoryFiles() to complete even if we
@@ -930,7 +946,7 @@ func (k *Kernel) saveToLocked(ctx context.Context, stateFile, pagesMetadata io.W
 			return mfSaveErr
 		}
 	} else {
-		mfSaveErr = k.saveMemoryFiles(ctx, stateFile, nil, nil, mfsToSaveActual, appMFExcludeCommittedZeroPages)
+		mfSaveErr = k.saveMemoryFiles(ctx, stateFile, nil, nil, mfsToSaveActual, appMFExcludeCommittedZeroPages, resume)
 		if mfSaveErr != nil {
 			return mfSaveErr
 		}
@@ -958,7 +974,7 @@ func (k *Kernel) BeforeResume(ctx context.Context) {
 // pagesFile must be non-nil, saveMemoryFiles takes ownership of both
 // pagesMetadata and pagesFile (even if it returns a non-nil error), and
 // MemoryFile state will be saved to pagesMetadata and pagesFile.
-func (k *Kernel) saveMemoryFiles(ctx context.Context, w io.Writer, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, mfsToSave map[checkpoint.ResourceID]*pgalloc.MemoryFile, appMFExcludeCommittedZeroPages bool) error {
+func (k *Kernel) saveMemoryFiles(ctx context.Context, w io.Writer, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, mfsToSave map[checkpoint.ResourceID]*pgalloc.MemoryFile, appMFExcludeCommittedZeroPages, resume bool) error {
 	memoryStart := time.Now()
 
 	pmw := w
@@ -971,6 +987,7 @@ func (k *Kernel) saveMemoryFiles(ctx context.Context, w io.Writer, pagesMetadata
 
 	mfOpts := pgalloc.SaveOpts{
 		ExcludeCommittedZeroPages: appMFExcludeCommittedZeroPages,
+		ExitAfterSaving:           !resume,
 	}
 	var (
 		asyncPageSaveWg      sync.WaitGroup
@@ -1020,6 +1037,27 @@ func (k *Kernel) saveMemoryFiles(ctx context.Context, w io.Writer, pagesMetadata
 	}
 	log.Infof("Memory files save took [%s].", time.Since(memoryStart))
 	return nil
+}
+
+// armSeccompRestartSyscallBypasses arms Task.bypassSeccompRestartSyscall for
+// every task that a checkpoint quiesced outside an internal stop.
+//
+// Preconditions: The kernel must be paused.
+//
+// +checklocksexclude:k.tasks.mu
+func (k *Kernel) armSeccompRestartSyscallBypasses() {
+	k.tasks.mu.RLock()
+	defer k.tasks.mu.RUnlock()
+	if k.tasks.Root == nil {
+		return
+	}
+	for t := range k.tasks.Root.tids {
+		t.tg.signalHandlers.mu.Lock()
+		if t.stop == nil {
+			t.armSeccompRestartSyscallBypass()
+		}
+		t.tg.signalHandlers.mu.Unlock()
+	}
 }
 
 // Preconditions: The kernel must be paused.
@@ -1086,9 +1124,6 @@ func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *Async
 	defer fdnotifier.Resume()
 
 	// Load the kernel state.
-	var mappedStorage pgalloc.MappedStorageRestore
-	ctx = context.WithValue(ctx, pgalloc.CtxMappedStorageRestore, &mappedStorage)
-	defer mappedStorage.Clear()
 	kernelStart := time.Now()
 	stats, err := state.Load(ctx, r, k)
 	if err != nil {
@@ -1113,12 +1148,6 @@ func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *Async
 			return fmt.Errorf("main MF start failed: %w", err)
 		}
 		timeline.Reached("Main MemoryFile loading started")
-	}
-
-	// Buffer byte access is infallible. Complete fallible mapping and async
-	// page loading before restoring network endpoints or other consumers.
-	if err := mappedStorage.Restore(); err != nil {
-		return err
 	}
 
 	k.Timekeeper().SetClocks(clocks, k.vdsoParams)
@@ -1582,6 +1611,12 @@ func (k *Kernel) CreateProcess(args CreateProcessArgs) (*ThreadGroup, ThreadID, 
 	}
 
 	// Success.
+	if args.Origin != OriginExec {
+		if k.containerEnvs == nil {
+			k.containerEnvs = make(map[string][]string)
+		}
+		k.containerEnvs[args.ContainerID] = slices.Clone(args.Envv)
+	}
 	cu.Release()
 	tgid := k.tasks.Root.IDOfThreadGroup(tg)
 	// A namespace with a reserved init TID never gets a global init.
@@ -1854,6 +1889,45 @@ func (k *Kernel) WaitForTaskActivity(stop <-chan struct{}) bool {
 		return true
 	case <-stop:
 		return false
+	}
+}
+
+// WaitForIdle blocks until no task has run for at least d, while the kernel
+// is not paused.
+//
+// The kernel is idle when the CPU clock ticker stops, which happens at the
+// first CPU clock tick at which no task is running. So WaitForIdle may return
+// up to one CPU clock tick later than d after the last task stops running. A
+// kernel that is not started is idle.
+//
+// +checklocksexclude:k.runningTasksMu
+func (k *Kernel) WaitForIdle(d time.Duration) {
+	timer := time.NewTimer(d)
+	timer.Stop()
+	for {
+		k.runningTasksMu.Lock()
+		for k.cpuClockTickerRunning {
+			k.cpuClockTickerStopCond.Wait()
+		}
+		// No task is running. incRunningTasks closes this channel, with
+		// runningTasksMu locked, when a task starts running.
+		activity := k.taskActivityCh
+		k.runningTasksMu.Unlock()
+
+		timer.Reset(d)
+		select {
+		case <-activity:
+			timer.Stop()
+			continue
+		case <-timer.C:
+		}
+		if k.IsPaused() {
+			// All tasks are stopped, which makes the kernel idle until
+			// it is resumed.
+			k.WaitForTaskActivity(nil)
+			continue
+		}
+		return
 	}
 }
 
@@ -2686,6 +2760,16 @@ func (k *Kernel) RestoreContainerMapping(containerIDs map[string]string) {
 	k.extMu.Lock()
 	defer k.extMu.Unlock()
 
+	newContainerEnvs := make(map[string][]string, len(k.containerEnvs))
+	for oldCID, env := range k.containerEnvs {
+		if name, ok := k.containerNames[oldCID]; ok {
+			if newCID, ok := containerIDs[name]; ok {
+				newContainerEnvs[newCID] = env
+			}
+		}
+	}
+	k.containerEnvs = newContainerEnvs
+
 	// Delete mapping from old session and replace with new values.
 	k.containerNames = make(map[string]string)
 	for name, cid := range containerIDs {
@@ -2698,6 +2782,36 @@ func (k *Kernel) ContainerName(cid string) string {
 	k.extMu.Lock()
 	defer k.extMu.Unlock()
 	return k.containerNames[cid]
+}
+
+// SetContainerEnv sets the environment variables for a given container ID.
+func (k *Kernel) SetContainerEnv(cid string, env []string) {
+	k.extMu.Lock()
+	defer k.extMu.Unlock()
+	if k.containerEnvs == nil {
+		k.containerEnvs = make(map[string][]string)
+	}
+	k.containerEnvs[cid] = slices.Clone(env)
+}
+
+// SpecEnviron returns the environment variables for a given container ID.
+func (k *Kernel) SpecEnviron(cid string) []string {
+	k.extMu.Lock()
+	defer k.extMu.Unlock()
+	return slices.Clone(k.containerEnvs[cid])
+}
+
+// SpecEnvironByName returns the environment variables for the container with
+// the given name.
+func (k *Kernel) SpecEnvironByName(containerName string) []string {
+	k.extMu.Lock()
+	defer k.extMu.Unlock()
+	for cid, name := range k.containerNames {
+		if name == containerName {
+			return slices.Clone(k.containerEnvs[cid])
+		}
+	}
+	return nil
 }
 
 func filterMFsToSave(mfsToSave map[checkpoint.ResourceID]*pgalloc.MemoryFile, matchCtxs []*fsCheckpointMatchContext) map[checkpoint.ResourceID]*pgalloc.MemoryFile {

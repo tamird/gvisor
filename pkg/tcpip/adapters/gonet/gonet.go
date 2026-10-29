@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/sync"
@@ -692,10 +691,8 @@ func (c *UDPConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 	if addr != nil {
 		ua := addr.(*net.UDPAddr)
 		writeOptions.To = &tcpip.FullAddress{
+			Addr: tcpip.AddrFromSlice(ua.IP),
 			Port: uint16(ua.Port),
-		}
-		if ip, ok := netip.AddrFromSlice(ua.IP); ok {
-			writeOptions.To.Addr = ip
 		}
 	}
 

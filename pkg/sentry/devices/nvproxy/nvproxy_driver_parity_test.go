@@ -20,9 +20,8 @@
 package nvproxy_driver_parity_test
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -30,65 +29,66 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/abi/nvgpu"
-	"gvisor.dev/gvisor/pkg/test/testutil"
-
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy/nvconf"
+	"gvisor.dev/gvisor/pkg/test/testutil"
+	"gvisor.dev/gvisor/tools/gpu/drivers"
 	"gvisor.dev/gvisor/tools/nvidia_driver_differ/parser"
 )
 
-func readDriverData(t *testing.T, path string, value any) {
+func createParserRunner(t *testing.T) *parser.Runner {
 	t.Helper()
-	resolved, err := testutil.FindFile(path)
+
+	// Find the parser binary
+	parserPath, err := testutil.FindFile("tools/nvidia_driver_differ/driver_ast_parser")
 	if err != nil {
-		t.Fatalf("find driver ABI data %q: %v", path, err)
+		t.Fatalf("Failed to find driver_ast_parser: %v", err)
 	}
-	data, err := os.ReadFile(resolved)
+
+	runner, err := parser.NewRunner(parserPath)
 	if err != nil {
-		t.Fatalf("read driver ABI data %q: %v", path, err)
+		t.Fatalf("Failed to create parser runner: %v", err)
 	}
-	if err := json.Unmarshal(data, value); err != nil {
-		t.Fatalf("decode driver ABI data %q: %v", path, err)
-	}
+
+	return runner
 }
 
-func getDriverDefs(t *testing.T, path string, version nvconf.DriverVersion) (*nvproxy.DriverABIInfo, *parser.OutputJSON) {
+func getDriverDefs(t *testing.T, runner *parser.Runner, version nvconf.DriverVersion) (*nvproxy.DriverABIInfo, *parser.OutputJSON) {
 	t.Helper()
+
 	info, ok := nvproxy.SupportedIoctls(version)
 	if !ok {
 		t.Fatalf("failed to get struct names for driver %q", version.String())
 	}
-	var defs parser.OutputJSON
-	readDriverData(t, path, &defs)
-	return info, &defs
+
+	// Create structs file for parser
+	if err := runner.CreateInputFile(info); err != nil {
+		t.Fatalf("failed to create temporary structs list: %v", err)
+	}
+
+	// Run parser
+	defs, err := runner.ParseDriver(version)
+	if err != nil {
+		if errors.Is(err, parser.ErrDriverSourceNotFound) {
+			t.Skipf("Skipping parity test for %s because driver source is not available: %v", version, err)
+		}
+		t.Fatalf("failed to run driver_ast_parser: %v", err)
+	}
+
+	return info, defs
 }
 
 // TestStructDefinitionParity tests that the struct definitions in nvproxy are the same as the
 // definitions in the driver source code.
 func TestStructDefinitionParity(t *testing.T) {
 	nvproxy.Init()
-	var sources map[string]*string
-	readDriverData(t, "tools/nvidia_driver_differ/driver_abi.json", &sources)
-	versions := nvproxy.SupportedDrivers()
-	if len(sources) != len(versions) {
-		t.Fatalf("driver source index has %d versions, want %d; regenerate //tools/nvidia_driver_differ/sources:update", len(sources), len(versions))
-	}
-	for _, version := range versions {
-		if _, ok := sources[version.String()]; !ok {
-			t.Fatalf("driver %s is missing from the source index; regenerate //tools/nvidia_driver_differ/sources:update", version)
-		}
-	}
-	for _, version := range versions {
+
+	nvproxy.ForEachSupportDriver(func(version nvconf.DriverVersion, _ nvproxy.Checksums) {
 		t.Run(version.String(), func(t *testing.T) {
 			t.Parallel()
-			path := sources[version.String()]
-			if path == nil {
-				t.Skipf("driver %s has no public source tag in the generated source index", version)
-			}
-			if *path == "" {
-				t.Fatalf("driver %s has an empty ABI data path", version)
-			}
-			nvproxyIoctls, defs := getDriverDefs(t, *path, version)
+			runner := createParserRunner(t)
+
+			nvproxyIoctls, defs := getDriverDefs(t, runner, version)
 
 			checkIoctl := func(ioctlNum uint32, nvproxyIoctl nvproxy.IoctlInfo) {
 				if nvproxyIoctl.Name == "" {
@@ -150,8 +150,15 @@ func TestStructDefinitionParity(t *testing.T) {
 			for num, info := range nvproxyIoctls.UvmInfos {
 				checkIoctl(num, info)
 			}
+			for name, value := range nvproxyIoctls.UvmConstants {
+				if driverValue, ok := defs.Constants[name]; !ok {
+					t.Errorf("constant %q not found in driver source code", name)
+				} else if driverValue != value {
+					t.Errorf("constant %q differs between nvproxy (%d) and driver (%d)", name, value, driverValue)
+				}
+			}
 		})
-	}
+	})
 }
 
 // checkSimpleRecord checks that a record is still a simple ioctl.
@@ -402,6 +409,7 @@ func compareTypes(t *testing.T, nvproxyType reflect.Type, driverTypeName string,
 	if typeAlias, ok := output.Aliases[driverTypeName]; ok {
 		driverTypeName = typeAlias.Type
 	}
+	driverTypeName = strings.TrimPrefix(driverTypeName, "volatile ")
 
 	// We have the following cases to compare:
 	// - Base type is given by typeMap
@@ -428,4 +436,20 @@ func compareTypes(t *testing.T, nvproxyType reflect.Type, driverTypeName string,
 
 	t.Fatalf("unknown driver type %q", driverTypeName)
 	return nil
+}
+
+// TestDriverChecksums tests that the checksums of all drivers are correct.
+func TestDriverChecksums(t *testing.T) {
+	ctx := t.Context()
+	var downloader drivers.Downloader
+	nvproxy.Init()
+	nvproxy.ForEachSupportDriver(func(version nvconf.DriverVersion, checksums nvproxy.Checksums) {
+		t.Run(version.String(), func(t *testing.T) {
+			t.Parallel()
+			if err := downloader.ValidateChecksum(ctx, version, checksums); err != nil {
+				t.Errorf("checksum mismatch for driver %q: %v", version.String(), err)
+			}
+		})
+	})
+
 }

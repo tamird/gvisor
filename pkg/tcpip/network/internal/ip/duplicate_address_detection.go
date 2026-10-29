@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -48,7 +47,7 @@ type dadState struct {
 // DADProtocol is a protocol whose core state machine can be represented by DAD.
 type DADProtocol interface {
 	// SendDADMessage attempts to send a DAD probe message.
-	SendDADMessage(netip.Addr, []byte) tcpip.Error
+	SendDADMessage(tcpip.Address, []byte) tcpip.Error
 }
 
 // DADOptions holds options for DAD.
@@ -71,8 +70,8 @@ type DAD struct {
 	opts    DADOptions
 	configs stack.DADConfigurations
 
-	protocolMU sync.Locker             `state:"nosave"`
-	addresses  map[netip.Addr]dadState `state:"nosave"`
+	protocolMU sync.Locker                `state:"nosave"`
+	addresses  map[tcpip.Address]dadState `state:"nosave"`
 }
 
 // Init initializes the DAD state.
@@ -96,7 +95,7 @@ func (d *DAD) Init(protocolMU sync.Locker, configs stack.DADConfigurations, opts
 		opts:       opts,
 		configs:    configs,
 		protocolMU: protocolMU,
-		addresses:  make(map[netip.Addr]dadState),
+		addresses:  make(map[tcpip.Address]dadState),
 	}
 }
 
@@ -106,7 +105,7 @@ func (d *DAD) Init(protocolMU sync.Locker, configs stack.DADConfigurations, opts
 func (d *DAD) Restore(protocolMU sync.Locker, secureRNG io.Reader) {
 	d.protocolMU = protocolMU
 	d.opts.SecureRNG = secureRNG
-	d.addresses = make(map[netip.Addr]dadState)
+	d.addresses = make(map[tcpip.Address]dadState)
 }
 
 // CheckDuplicateAddressLocked performs DAD for an address, calling the
@@ -116,7 +115,7 @@ func (d *DAD) Restore(protocolMU sync.Locker, secureRNG io.Reader) {
 // the currently running process completes.
 //
 // Precondition: d.protocolMU must be locked.
-func (d *DAD) CheckDuplicateAddressLocked(addr netip.Addr, h stack.DADCompletionHandler) stack.DADCheckAddressDisposition {
+func (d *DAD) CheckDuplicateAddressLocked(addr tcpip.Address, h stack.DADCompletionHandler) stack.DADCheckAddressDisposition {
 	if d.configs.DupAddrDetectTransmits == 0 {
 		return stack.DADDisabled
 	}
@@ -251,7 +250,7 @@ const (
 // same as the nonce sent in the last DAD message.
 //
 // Precondition: d.protocolMU must be locked.
-func (d *DAD) ExtendIfNonceEqualLocked(addr netip.Addr, nonce []byte) ExtendIfNonceEqualLockedDisposition {
+func (d *DAD) ExtendIfNonceEqualLocked(addr tcpip.Address, nonce []byte) ExtendIfNonceEqualLockedDisposition {
 	s, ok := d.addresses[addr]
 	if !ok {
 		return NoDADStateFound
@@ -290,7 +289,7 @@ func (d *DAD) ExtendIfNonceEqualLocked(addr netip.Addr, nonce []byte) ExtendIfNo
 // StopLocked stops a currently running DAD process.
 //
 // Precondition: d.protocolMU must be locked.
-func (d *DAD) StopLocked(addr netip.Addr, reason stack.DADResult) {
+func (d *DAD) StopLocked(addr tcpip.Address, reason stack.DADResult) {
 	s, ok := d.addresses[addr]
 	if !ok {
 		return

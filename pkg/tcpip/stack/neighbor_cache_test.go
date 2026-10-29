@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"net/netip"
 	"strings"
 	"sync"
 	"testing"
@@ -54,7 +53,7 @@ const (
 var (
 	// testEntryBroadcastAddr is a special address that indicates a packet should
 	// be sent to all nodes.
-	testEntryBroadcastAddr = netip.AddrFrom4([4]byte{222, 173, 190, 239})
+	testEntryBroadcastAddr = tcpip.AddrFrom4Slice([]byte("\xde\xad\xbe\xef"))
 )
 
 // unorderedEventsDiffOpts returns options passed to cmp.Diff to sort slices of
@@ -64,7 +63,7 @@ func unorderedEventsDiffOpts() []cmp.Option {
 		cmpopts.SortSlices(func(a, b testEntryEventInfo) bool {
 			return strings.Compare(string(a.Entry.Addr.AsSlice()), string(b.Entry.Addr.AsSlice())) < 0
 		}),
-		cmpopts.EquateComparable(NeighborEntry{}),
+		cmp.AllowUnexported(tcpip.MonotonicTime{}),
 	}
 }
 
@@ -75,7 +74,7 @@ func unorderedEntriesDiffOpts() []cmp.Option {
 		cmpopts.SortSlices(func(a, b NeighborEntry) bool {
 			return strings.Compare(string(a.Addr.AsSlice()), string(b.Addr.AsSlice())) < 0
 		}),
-		cmpopts.EquateComparable(NeighborEntry{}),
+		cmp.AllowUnexported(tcpip.MonotonicTime{}),
 	}
 }
 
@@ -106,16 +105,16 @@ func newTestNeighborResolver(nudDisp NUDDispatcher, config NUDConfigurations, cl
 // testEntryStore contains a set of IP to NeighborEntry mappings.
 type testEntryStore struct {
 	mu         sync.RWMutex
-	entriesMap map[netip.Addr]NeighborEntry
+	entriesMap map[tcpip.Address]NeighborEntry
 }
 
-func toAddress(i uint16) netip.Addr {
-	return netip.AddrFrom4([4]byte([]byte{
+func toAddress(i uint16) tcpip.Address {
+	return tcpip.AddrFrom4Slice([]byte{
 		1,
 		0,
 		byte(i >> 8),
 		byte(i),
-	}))
+	})
 }
 
 func toLinkAddress(i uint16) tcpip.LinkAddress {
@@ -132,7 +131,7 @@ func toLinkAddress(i uint16) tcpip.LinkAddress {
 // newTestEntryStore returns a testEntryStore pre-populated with entries.
 func newTestEntryStore() *testEntryStore {
 	store := &testEntryStore{
-		entriesMap: make(map[netip.Addr]NeighborEntry),
+		entriesMap: make(map[tcpip.Address]NeighborEntry),
 	}
 	for i := uint16(0); i < entryStoreSize; i++ {
 		addr := toAddress(i)
@@ -161,7 +160,7 @@ func (s *testEntryStore) entry(i uint16) (NeighborEntry, bool) {
 
 // entryByAddr returns the entry matching addr for situations when the index is
 // not available. Returns an empty entry and false if no entries match addr.
-func (s *testEntryStore) entryByAddr(addr netip.Addr) (NeighborEntry, bool) {
+func (s *testEntryStore) entryByAddr(addr tcpip.Address) (NeighborEntry, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	entry, ok := s.entriesMap[addr]
@@ -206,7 +205,7 @@ type testNeighborResolver struct {
 
 var _ LinkAddressResolver = (*testNeighborResolver)(nil)
 
-func (r *testNeighborResolver) LinkAddressRequest(targetAddr, _ netip.Addr, _ tcpip.LinkAddress) tcpip.Error {
+func (r *testNeighborResolver) LinkAddressRequest(targetAddr, _ tcpip.Address, _ tcpip.LinkAddress) tcpip.Error {
 	if !r.dropReplies {
 		// Delay handling the request to emulate network latency.
 		r.clock.AfterFunc(r.delay, func() {
@@ -222,7 +221,7 @@ func (r *testNeighborResolver) LinkAddressRequest(targetAddr, _ netip.Addr, _ tc
 }
 
 // fakeRequest emulates handling a response for a link address request.
-func (r *testNeighborResolver) fakeRequest(addr netip.Addr) {
+func (r *testNeighborResolver) fakeRequest(addr tcpip.Address) {
 	if entry, ok := r.entries.entryByAddr(addr); ok {
 		r.neigh.handleConfirmation(addr, entry.LinkAddr, ReachabilityConfirmationFlags{
 			Solicited: true,
@@ -232,7 +231,7 @@ func (r *testNeighborResolver) fakeRequest(addr netip.Addr) {
 	}
 }
 
-func (*testNeighborResolver) ResolveStaticAddress(addr netip.Addr) (tcpip.LinkAddress, bool) {
+func (*testNeighborResolver) ResolveStaticAddress(addr tcpip.Address) (tcpip.LinkAddress, bool) {
 	if addr == testEntryBroadcastAddr {
 		return testEntryBroadcastLinkAddr, true
 	}
@@ -256,7 +255,7 @@ func TestNeighborCacheGetConfig(t *testing.T) {
 	// No events should have been dispatched.
 	nudDisp.mu.Lock()
 	defer nudDisp.mu.Unlock()
-	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		t.Errorf("nud dispatcher events mismatch (-want, +got):\n%s", diff)
 	}
 }
@@ -278,7 +277,7 @@ func TestNeighborCacheSetConfig(t *testing.T) {
 	// No events should have been dispatched.
 	nudDisp.mu.Lock()
 	defer nudDisp.mu.Unlock()
-	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		t.Errorf("nud dispatcher events mismatch (-want, +got):\n%s", diff)
 	}
 }
@@ -286,7 +285,7 @@ func TestNeighborCacheSetConfig(t *testing.T) {
 func addReachableEntryWithRemoved(nudDisp *testNUDDispatcher, clock *faketime.ManualClock, linkRes *testNeighborResolver, entry NeighborEntry, removed []NeighborEntry) error {
 	var gotLinkResolutionResult LinkResolutionResult
 
-	_, ch, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, func(r LinkResolutionResult) {
+	_, ch, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, func(r LinkResolutionResult) {
 		gotLinkResolutionResult = r
 	})
 	if _, ok := err.(*tcpip.ErrWouldBlock); !ok {
@@ -321,7 +320,7 @@ func addReachableEntryWithRemoved(nudDisp *testNUDDispatcher, clock *faketime.Ma
 		})
 
 		nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		nudDisp.mu.events = nil
 		nudDisp.mu.Unlock()
 		if diff != "" {
@@ -355,7 +354,7 @@ func addReachableEntryWithRemoved(nudDisp *testNUDDispatcher, clock *faketime.Ma
 			},
 		}
 		nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		nudDisp.mu.events = nil
 		nudDisp.mu.Unlock()
 		if diff != "" {
@@ -384,14 +383,14 @@ func TestNeighborCacheEntry(t *testing.T) {
 		t.Fatalf("addReachableEntry(...) = %s", err)
 	}
 
-	if _, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil); err != nil {
+	if _, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil); err != nil {
 		t.Fatalf("unexpected error from linkRes.neigh.entry(%s, '', nil): %s", entry.Addr, err)
 	}
 
 	// No more events should have been dispatched.
 	nudDisp.mu.Lock()
 	defer nudDisp.mu.Unlock()
-	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		t.Errorf("nud dispatcher events mismatch (-want, +got):\n%s", diff)
 	}
 }
@@ -427,7 +426,7 @@ func TestNeighborCacheRemoveEntry(t *testing.T) {
 			},
 		}
 		nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		nudDisp.mu.Unlock()
 		if diff != "" {
 			t.Fatalf("nud dispatcher events mismatch (-want, +got):\n%s", diff)
@@ -435,7 +434,7 @@ func TestNeighborCacheRemoveEntry(t *testing.T) {
 	}
 
 	{
-		_, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil)
+		_, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil)
 		if _, ok := err.(*tcpip.ErrWouldBlock); !ok {
 			t.Errorf("got linkRes.neigh.entry(%s, '', nil) = %v, want = %s", entry.Addr, err, &tcpip.ErrWouldBlock{})
 		}
@@ -517,7 +516,7 @@ func (c *testContext) overflowCache(opts overflowOptions) error {
 	// No more events should have been dispatched.
 	c.nudDisp.mu.Lock()
 	defer c.nudDisp.mu.Unlock()
-	if diff := cmp.Diff([]testEntryEventInfo(nil), c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff([]testEntryEventInfo(nil), c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		return fmt.Errorf("nud dispatcher events mismatch (-want, +got):\n%s", diff)
 	}
 
@@ -579,7 +578,7 @@ func TestNeighborCacheRemoveEntryThenOverflow(t *testing.T) {
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -624,7 +623,7 @@ func TestNeighborCacheDuplicateStaticEntryWithSameLinkAddress(t *testing.T) {
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -637,7 +636,7 @@ func TestNeighborCacheDuplicateStaticEntryWithSameLinkAddress(t *testing.T) {
 
 	c.nudDisp.mu.Lock()
 	defer c.nudDisp.mu.Unlock()
-	if diff := cmp.Diff([]testEntryEventInfo(nil), c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff([]testEntryEventInfo(nil), c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		t.Errorf("nud dispatcher events mismatch (-want, +got):\n%s", diff)
 	}
 }
@@ -671,7 +670,7 @@ func TestNeighborCacheDuplicateStaticEntryWithDifferentLinkAddress(t *testing.T)
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -697,7 +696,7 @@ func TestNeighborCacheDuplicateStaticEntryWithDifferentLinkAddress(t *testing.T)
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -741,7 +740,7 @@ func TestNeighborCacheRemoveStaticEntryThenOverflow(t *testing.T) {
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -766,7 +765,7 @@ func TestNeighborCacheRemoveStaticEntryThenOverflow(t *testing.T) {
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -832,7 +831,7 @@ func TestNeighborCacheOverwriteWithStaticEntryThenOverflow(t *testing.T) {
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -870,7 +869,7 @@ func TestNeighborCacheAddStaticEntryThenOverflow(t *testing.T) {
 		t.Fatal("got c.linkRes.entries.entry(0) = _, false, want = true ")
 	}
 	c.linkRes.neigh.addStaticEntry(entry.Addr, entry.LinkAddr)
-	e, _, err := c.linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil)
+	e, _, err := c.linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil)
 	if err != nil {
 		t.Errorf("unexpected error from c.linkRes.neigh.entry(%s, \"\", nil): %s", entry.Addr, err)
 	}
@@ -883,7 +882,7 @@ func TestNeighborCacheAddStaticEntryThenOverflow(t *testing.T) {
 	e.mu.RLock()
 	gotNeighbor := e.mu.neigh
 	e.mu.RUnlock()
-	if diff := cmp.Diff(want, gotNeighbor, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff(want, gotNeighbor, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		t.Errorf("c.linkRes.neigh.entry(%s, \"\", nil) mismatch (-want, +got):\n%s", entry.Addr, diff)
 	}
 
@@ -901,7 +900,7 @@ func TestNeighborCacheAddStaticEntryThenOverflow(t *testing.T) {
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -958,7 +957,7 @@ func TestNeighborCacheClear(t *testing.T) {
 			},
 		}
 		nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		nudDisp.mu.events = nil
 		nudDisp.mu.Unlock()
 		if diff != "" {
@@ -1038,7 +1037,7 @@ func TestNeighborCacheClearThenOverflow(t *testing.T) {
 			},
 		}
 		c.nudDisp.mu.Lock()
-		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+		diff := cmp.Diff(wantEvents, c.nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 		c.nudDisp.mu.events = nil
 		c.nudDisp.mu.Unlock()
 		if diff != "" {
@@ -1090,7 +1089,7 @@ func TestNeighborCacheKeepFrequentlyUsed(t *testing.T) {
 	for i := uint16(NeighborCacheSize); i < linkRes.entries.size(); i++ {
 		// Periodically refresh the frequently used entry
 		if i%(NeighborCacheSize/2) == 0 {
-			if _, _, err := linkRes.neigh.entry(frequentlyUsedEntry.Addr, netip.Addr{}, nil); err != nil {
+			if _, _, err := linkRes.neigh.entry(frequentlyUsedEntry.Addr, tcpip.Address{}, nil); err != nil {
 				t.Errorf("unexpected error from linkRes.neigh.entry(%s, '', nil): %s", frequentlyUsedEntry.Addr, err)
 			}
 		}
@@ -1146,7 +1145,7 @@ func TestNeighborCacheKeepFrequentlyUsed(t *testing.T) {
 	// No more events should have been dispatched.
 	nudDisp.mu.Lock()
 	defer nudDisp.mu.Unlock()
-	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff([]testEntryEventInfo(nil), nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		t.Errorf("nud dispatcher events mismatch (-want, +got):\n%s", diff)
 	}
 }
@@ -1167,7 +1166,7 @@ func TestNeighborCacheConcurrent(t *testing.T) {
 			wg.Add(1)
 			go func(entry NeighborEntry) {
 				defer wg.Done()
-				switch e, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil); err.(type) {
+				switch e, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil); err.(type) {
 				case nil, *tcpip.ErrWouldBlock:
 				default:
 					t.Errorf("got linkRes.neigh.entry(%s, '', nil) = (%+v, _, %s), want (_, _, nil) or (_, _, %s)", entry.Addr, e, err, &tcpip.ErrWouldBlock{})
@@ -1242,7 +1241,7 @@ func TestNeighborCacheReplace(t *testing.T) {
 	//
 	// Verify the entry's new link address and the new state.
 	{
-		e, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil)
+		e, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil)
 		if err != nil {
 			t.Fatalf("linkRes.neigh.entry(%s, '', nil): %s", entry.Addr, err)
 		}
@@ -1255,7 +1254,7 @@ func TestNeighborCacheReplace(t *testing.T) {
 		e.mu.RLock()
 		gotNeighbor := e.mu.neigh
 		e.mu.RUnlock()
-		if diff := cmp.Diff(want, gotNeighbor, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+		if diff := cmp.Diff(want, gotNeighbor, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 			t.Errorf("linkRes.neigh.entry(%s, '', nil) mismatch (-want, +got):\n%s", entry.Addr, diff)
 		}
 	}
@@ -1264,7 +1263,7 @@ func TestNeighborCacheReplace(t *testing.T) {
 
 	// Verify that the neighbor is now reachable.
 	{
-		e, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil)
+		e, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil)
 		if err != nil {
 			t.Errorf("unexpected error from linkRes.neigh.entry(%s, '', nil): %s", entry.Addr, err)
 		}
@@ -1277,7 +1276,7 @@ func TestNeighborCacheReplace(t *testing.T) {
 		e.mu.RLock()
 		gotNeighbor := e.mu.neigh
 		e.mu.RUnlock()
-		if diff := cmp.Diff(want, gotNeighbor, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+		if diff := cmp.Diff(want, gotNeighbor, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 			t.Errorf("linkRes.neigh.entry(%s, '', nil) mismatch (-want, +got):\n%s", entry.Addr, diff)
 		}
 	}
@@ -1305,7 +1304,7 @@ func TestNeighborCacheResolutionFailed(t *testing.T) {
 		t.Fatalf("addReachableEntry(...) = %s", err)
 	}
 
-	got, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil)
+	got, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil)
 	if err != nil {
 		t.Fatalf("unexpected error from linkRes.neigh.entry(%s, '', nil): %s", entry.Addr, err)
 	}
@@ -1318,16 +1317,16 @@ func TestNeighborCacheResolutionFailed(t *testing.T) {
 	got.mu.RLock()
 	gotNeighbor := got.mu.neigh
 	got.mu.RUnlock()
-	if diff := cmp.Diff(want, gotNeighbor, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+	if diff := cmp.Diff(want, gotNeighbor, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 		t.Errorf("linkRes.neigh.entry(%s, '', nil) mismatch (-want, +got):\n%s", entry.Addr, diff)
 	}
 
 	// Verify address resolution fails for an unknown address.
 	before := requestCount.Load()
 
-	entry.Addr = netip.AddrFrom4([4]byte{254, 238, 238, 237})
+	entry.Addr = tcpip.AddrFrom4Slice([]byte("\xfe\xee\xee\xed"))
 	{
-		_, ch, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, func(r LinkResolutionResult) {
+		_, ch, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, func(r LinkResolutionResult) {
 			if diff := cmp.Diff(LinkResolutionResult{Err: &tcpip.ErrTimeout{}}, r); diff != "" {
 				t.Fatalf("got link resolution result mismatch (-want +got):\n%s", diff)
 			}
@@ -1367,7 +1366,7 @@ func TestNeighborCacheResolutionTimeout(t *testing.T) {
 		t.Fatal("got linkRes.entries.entry(0) = _, false, want = true ")
 	}
 
-	_, ch, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, func(r LinkResolutionResult) {
+	_, ch, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, func(r LinkResolutionResult) {
 		if diff := cmp.Diff(LinkResolutionResult{Err: &tcpip.ErrTimeout{}}, r); diff != "" {
 			t.Fatalf("got link resolution result mismatch (-want +got):\n%s", diff)
 		}
@@ -1402,7 +1401,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 
 	// Perform address resolution with a faulty link, which will fail.
 	{
-		_, ch, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, func(r LinkResolutionResult) {
+		_, ch, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, func(r LinkResolutionResult) {
 			if diff := cmp.Diff(LinkResolutionResult{Err: &tcpip.ErrTimeout{}}, r); diff != "" {
 				t.Fatalf("got link resolution result mismatch (-want +got):\n%s", diff)
 			}
@@ -1425,7 +1424,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 				},
 			}
 			nudDisp.mu.Lock()
-			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 			nudDisp.mu.events = nil
 			nudDisp.mu.Unlock()
 			if diff != "" {
@@ -1456,7 +1455,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 				},
 			}
 			nudDisp.mu.Lock()
-			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 			nudDisp.mu.events = nil
 			nudDisp.mu.Unlock()
 			if diff != "" {
@@ -1482,7 +1481,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 	// Retry address resolution with a working link.
 	linkRes.dropReplies = false
 	{
-		incompleteEntry, ch, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, func(r LinkResolutionResult) {
+		incompleteEntry, ch, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, func(r LinkResolutionResult) {
 			if diff := cmp.Diff(LinkResolutionResult{LinkAddress: entry.LinkAddr, Err: nil}, r); diff != "" {
 				t.Fatalf("got link resolution result mismatch (-want +got):\n%s", diff)
 			}
@@ -1511,7 +1510,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 				},
 			}
 			nudDisp.mu.Lock()
-			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 			nudDisp.mu.events = nil
 			nudDisp.mu.Unlock()
 			if diff != "" {
@@ -1541,7 +1540,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 				},
 			}
 			nudDisp.mu.Lock()
-			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmpopts.EquateComparable(NeighborEntry{}))
+			diff := cmp.Diff(wantEvents, nudDisp.mu.events, cmp.AllowUnexported(tcpip.MonotonicTime{}))
 			nudDisp.mu.events = nil
 			nudDisp.mu.Unlock()
 			if diff != "" {
@@ -1550,7 +1549,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 		}
 
 		{
-			gotEntry, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil)
+			gotEntry, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil)
 			if err != nil {
 				t.Fatalf("linkRes.neigh.entry(%s, '', _): %s", entry.Addr, err)
 			}
@@ -1564,7 +1563,7 @@ func TestNeighborCacheRetryResolution(t *testing.T) {
 			gotEntry.mu.RLock()
 			gotNeighbor := gotEntry.mu.neigh
 			gotEntry.mu.RUnlock()
-			if diff := cmp.Diff(gotNeighbor, wantEntry, cmpopts.EquateComparable(NeighborEntry{})); diff != "" {
+			if diff := cmp.Diff(gotNeighbor, wantEntry, cmp.AllowUnexported(tcpip.MonotonicTime{})); diff != "" {
 				t.Fatalf("neighbor entry mismatch (-got, +want):\n%s", diff)
 			}
 		}
@@ -1606,7 +1605,7 @@ func TestNeighborCacheIgnoreInvalidLinkAddress(t *testing.T) {
 		t.Fatal("got linkRes.entries.entry(0) = _, false, want = true ")
 	}
 
-	_, _, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, nil)
+	_, _, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, nil)
 	if _, ok := err.(*tcpip.ErrWouldBlock); !ok {
 		t.Fatalf("linkRes.neigh.entry(%s, \"\", nil): %s", entry.Addr, err)
 	}
@@ -1644,7 +1643,7 @@ func BenchmarkCacheClear(b *testing.B) {
 				b.Fatalf("got linkRes.entries.entry(%d) = _, false, want = true", i)
 			}
 
-			_, ch, err := linkRes.neigh.entry(entry.Addr, netip.Addr{}, func(r LinkResolutionResult) {
+			_, ch, err := linkRes.neigh.entry(entry.Addr, tcpip.Address{}, func(r LinkResolutionResult) {
 				if diff := cmp.Diff(LinkResolutionResult{LinkAddress: entry.LinkAddr, Err: nil}, r); diff != "" {
 					b.Fatalf("got link resolution result mismatch (-want +got):\n%s", diff)
 				}

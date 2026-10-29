@@ -20,7 +20,6 @@ package unet
 
 import (
 	"errors"
-	"math"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/atomicbitops"
@@ -49,7 +48,7 @@ func socketType(packet bool) int {
 // socket creates a new host socket.
 func socket(packet bool) (int, error) {
 	// Make a new socket.
-	fd, err := unix.Socket(unix.AF_UNIX, socketType(packet), 0)
+	fd, err := unix.Socket(unix.AF_UNIX, socketType(packet)|unix.SOCK_CLOEXEC, 0)
 	if err != nil {
 		return 0, err
 	}
@@ -81,12 +80,6 @@ type Socket struct {
 //
 // NewSocket takes ownership of fd.
 func NewSocket(fd int) (*Socket, error) {
-	// Linux fcntl truncates its FD argument to 32 bits. Reject aliases before
-	// changing the flags of an unrelated descriptor.
-	if fd < 0 || fd > math.MaxInt32 {
-		return nil, unix.EBADF
-	}
-
 	// fd must be non-blocking for non-blocking unix.Accept in
 	// ServerSocket.Accept.
 	if err := unix.SetNonblock(fd, true); err != nil {

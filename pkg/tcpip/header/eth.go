@@ -16,7 +16,6 @@ package header
 
 import (
 	"encoding/binary"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 )
@@ -153,7 +152,7 @@ func IsValidUnicastEthernetAddress(addr tcpip.LinkAddress) bool {
 // for a multicast IPv4 address.
 //
 // addr MUST be a multicast IPv4 address.
-func EthernetAddressFromMulticastIPv4Address(addr netip.Addr) tcpip.LinkAddress {
+func EthernetAddressFromMulticastIPv4Address(addr tcpip.Address) tcpip.LinkAddress {
 	var linkAddrBytes [EthernetAddressSize]byte
 	// RFC 1112 Host Extensions for IP Multicasting
 	//
@@ -175,7 +174,7 @@ func EthernetAddressFromMulticastIPv4Address(addr netip.Addr) tcpip.LinkAddress 
 // for a multicast IPv6 address.
 //
 // addr MUST be a multicast IPv6 address.
-func EthernetAddressFromMulticastIPv6Address(addr netip.Addr) tcpip.LinkAddress {
+func EthernetAddressFromMulticastIPv6Address(addr tcpip.Address) tcpip.LinkAddress {
 	// RFC 2464 Transmission of IPv6 Packets over Ethernet Networks
 	//
 	// 7. Address Mapping -- Multicast

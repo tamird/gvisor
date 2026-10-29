@@ -130,12 +130,9 @@ type Filesystem struct {
 	// defaults to 0 and kernfs does not cache any dentries. This is immutable.
 	MaxCachedDentries uint64
 
-	// NoNegativeDentries makes failed lookups remain errors during creation,
-	// rather than treating ENOENT as a negative dentry in which to create a
-	// child. Linux procfs has this behavior, including for names longer than
-	// NAME_MAX, so lookups also bypass the generic filename length limit.
-	// Synthetic mountpoint creation is exempt.
-	// This is immutable.
+	// NoNegativeDentries preserves lookup errors during creation, including for
+	// names longer than NAME_MAX, as in Linux's fs/proc/generic.c:proc_lookup_de().
+	// Synthetic mountpoint creation is exempt. This is immutable.
 	NoNegativeDentries bool
 
 	// root is the root dentry of this filesystem. Note that root may be nil for

@@ -17,7 +17,6 @@ package icmp
 import (
 	"fmt"
 	"io"
-	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -130,7 +129,7 @@ func (e *endpoint) Close() {
 			return false
 		case transport.DatagramEndpointStateBound, transport.DatagramEndpointStateConnected:
 			info := e.net.Info()
-			info.ID.Local = netip.AddrPortFrom(info.ID.Local.Addr(), e.ident)
+			info.ID.LocalPort = e.ident
 			e.stack.UnregisterTransportEndpoint([]tcpip.NetworkProtocolNumber{info.NetProto}, e.transProto, info.ID, e, ports.Flags{}, tcpip.NICID(e.ops.GetBindToDevice()))
 		default:
 			panic(fmt.Sprintf("unhandled state = %s", state))
@@ -447,7 +446,7 @@ func send4(s *stack.Stack, ctx *network.WriteContext, ident uint16, data *buffer
 	return nil
 }
 
-func send6(s *stack.Stack, ctx *network.WriteContext, ident uint16, data *buffer.View, src, dst netip.Addr, maxHeaderLength uint16) tcpip.Error {
+func send6(s *stack.Stack, ctx *network.WriteContext, ident uint16, data *buffer.View, src, dst tcpip.Address, maxHeaderLength uint16) tcpip.Error {
 	if data.Size() < header.ICMPv6EchoMinimumSize {
 		return &tcpip.ErrInvalidEndpointState{}
 	}
@@ -505,14 +504,14 @@ func (e *endpoint) Connect(addr tcpip.FullAddress) tcpip.Error {
 
 	ident := e.ident
 	err := e.net.ConnectAndThen(addr, func(netProto tcpip.NetworkProtocolNumber, previousID, nextID stack.TransportEndpointID) tcpip.Error {
-		nextID.Local = netip.AddrPortFrom(nextID.Local.Addr(), ident)
+		nextID.LocalPort = ident
 
 		nextID, err := e.registerWithStack(netProto, nextID)
 		if err != nil {
 			return err
 		}
 
-		ident = nextID.Local.Port()
+		ident = nextID.LocalPort
 		return nil
 	})
 	if err != nil {
@@ -578,7 +577,7 @@ func (*endpoint) Accept(*tcpip.FullAddress) (tcpip.Endpoint, *waiter.Queue, tcpi
 
 func (e *endpoint) registerWithStack(netProto tcpip.NetworkProtocolNumber, id stack.TransportEndpointID) (stack.TransportEndpointID, tcpip.Error) {
 	bindToDevice := tcpip.NICID(e.ops.GetBindToDevice())
-	if id.Local.Port() != 0 {
+	if id.LocalPort != 0 {
 		// The endpoint already has a local port, just attempt to
 		// register it.
 		return id, e.stack.RegisterTransportEndpoint([]tcpip.NetworkProtocolNumber{netProto}, e.transProto, id, e, ports.Flags{}, bindToDevice)
@@ -586,7 +585,7 @@ func (e *endpoint) registerWithStack(netProto tcpip.NetworkProtocolNumber, id st
 
 	// We need to find a port for the endpoint.
 	_, err := e.stack.PickEphemeralPort(e.stack.SecureRNG(), func(p uint16) (bool, tcpip.Error) {
-		id.Local = netip.AddrPortFrom(id.Local.Addr(), p)
+		id.LocalPort = p
 		err := e.stack.RegisterTransportEndpoint([]tcpip.NetworkProtocolNumber{netProto}, e.transProto, id, e, ports.Flags{}, bindToDevice)
 		switch err.(type) {
 		case nil:
@@ -610,14 +609,17 @@ func (e *endpoint) bindLocked(addr tcpip.FullAddress) tcpip.Error {
 	}
 
 	var ident uint16
-	err := e.net.BindAndThen(addr, func(boundNetProto tcpip.NetworkProtocolNumber, boundAddr netip.Addr) tcpip.Error {
-		id := stack.TransportEndpointID{Local: netip.AddrPortFrom(addr.Addr, addr.Port)}
+	err := e.net.BindAndThen(addr, func(boundNetProto tcpip.NetworkProtocolNumber, boundAddr tcpip.Address) tcpip.Error {
+		id := stack.TransportEndpointID{
+			LocalPort:    addr.Port,
+			LocalAddress: addr.Addr,
+		}
 		id, err := e.registerWithStack(boundNetProto, id)
 		if err != nil {
 			return err
 		}
 
-		ident = id.Local.Port()
+		ident = id.LocalPort
 		return nil
 	})
 	if err != nil {
@@ -632,7 +634,7 @@ func (e *endpoint) bindLocked(addr tcpip.FullAddress) tcpip.Error {
 	return nil
 }
 
-func (e *endpoint) isBroadcastOrMulticast(nicID tcpip.NICID, addr netip.Addr) bool {
+func (e *endpoint) isBroadcastOrMulticast(nicID tcpip.NICID, addr tcpip.Address) bool {
 	return addr == header.IPv4Broadcast ||
 		header.IsV4MulticastAddress(addr) ||
 		header.IsV6MulticastAddress(addr) ||
@@ -642,7 +644,7 @@ func (e *endpoint) isBroadcastOrMulticast(nicID tcpip.NICID, addr netip.Addr) bo
 // Bind binds the endpoint to a specific local address and port.
 // Specifying a NIC is optional.
 func (e *endpoint) Bind(addr tcpip.FullAddress) tcpip.Error {
-	if addr.Addr.IsValid() && e.isBroadcastOrMulticast(addr.NIC, addr.Addr) {
+	if addr.Addr.BitLen() != 0 && e.isBroadcastOrMulticast(addr.NIC, addr.Addr) {
 		return &tcpip.ErrBadLocalAddress{}
 	}
 
@@ -742,7 +744,7 @@ func (e *endpoint) HandlePacket(id stack.TransportEndpointID, pkt *stack.PacketB
 	packet := &icmpPacket{
 		senderAddress: tcpip.FullAddress{
 			NIC:  pkt.NICID,
-			Addr: id.Remote.Addr(),
+			Addr: id.RemoteAddress,
 		},
 		packetInfo: tcpip.IPPacketInfo{
 			// Linux does not 'prepare' [1] in_pktinfo on socket buffers destined to
@@ -798,7 +800,7 @@ func (e *endpoint) Info() tcpip.EndpointInfo {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	ret := e.net.Info()
-	ret.ID.Local = netip.AddrPortFrom(ret.ID.Local.Addr(), e.ident)
+	ret.ID.LocalPort = e.ident
 	return &ret
 }
 

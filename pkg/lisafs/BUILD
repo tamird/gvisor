@@ -110,6 +110,7 @@ go_library(
         "//pkg/fdchannel",
         "//pkg/flipcall",
         "//pkg/fspath",
+        "//pkg/gomaxprocs",
         "//pkg/hostarch",
         "//pkg/log",
         "//pkg/marshal/primitive",
@@ -142,6 +143,7 @@ go_test(
     deps = [
         ":lisafs",
         "//pkg/abi/linux",
+        "//pkg/context",
         "//pkg/sync",
         "//pkg/unet",
         "@org_golang_x_sys//unix:go_default_library",

@@ -1,19 +1,27 @@
 """Macro for precompiling seccomp-bpf programs."""
 
-load("//tools:defs.bzl", "go_binary")
-
-_QEMU_TOOLCHAIN = "@rules_qemu//qemu:toolchain_type"
+load("//tools:defs.bzl", "go_binary", "select_arch", "target_emulator")
 
 def _run_generator_impl(ctx):
     generator = ctx.attr.exec_generator or ctx.attr.generator
     executable = generator[DefaultInfo].files_to_run
     tools = []
     arguments = []
-    qemu = None if ctx.attr.exec_generator else ctx.toolchains[_QEMU_TOOLCHAIN]
+    qemu = None
+    toolchain = None
+    if not ctx.attr.exec_generator:
+        if ctx.attr.qemu:
+            qemu = ctx.attr.qemu[DefaultInfo].files_to_run
+        elif target_emulator.toolchain_type:
+            qemu_info = ctx.toolchains[target_emulator.toolchain_type]
+            if qemu_info:
+                qemu = qemu_info.qemu
+                toolchain = target_emulator.toolchain_type
     if qemu:
+        arguments.extend(ctx.attr.qemu_args)
         tools.append(executable)
         arguments.append(executable.executable.path)
-        executable = qemu.qemu
+        executable = qemu
     arguments.extend([
         "--package=" + ctx.attr.out_package_name,
         "--out=" + ctx.outputs.out.path,
@@ -24,7 +32,7 @@ def _run_generator_impl(ctx):
         tools = tools,
         arguments = arguments,
         mnemonic = "PrecompileSeccomp",
-        toolchain = _QEMU_TOOLCHAIN if qemu else None,
+        toolchain = toolchain,
     )
     return [DefaultInfo(files = depset([ctx.outputs.out]))]
 
@@ -35,8 +43,10 @@ _run_generator = rule(
         "exec_generator": attr.label(executable = True, cfg = "exec"),
         "out": attr.output(mandatory = True),
         "out_package_name": attr.string(mandatory = True),
+        "qemu": attr.label(executable = True, cfg = "exec"),
+        "qemu_args": attr.string_list(),
     },
-    toolchains = [config_common.toolchain_type(_QEMU_TOOLCHAIN, mandatory = False)],
+    toolchains = target_emulator.toolchains,
 )
 
 def precompiled_seccomp_rules(
@@ -77,11 +87,11 @@ def precompiled_seccomp_rules(
 
     # This genrule copies precompiled_lib.tmpl.go to the directory of wherever
     # `precompiled_seccomp_rules` is called.
-    # The generated data file has a non-Go suffix so Go package discovery does
-    # not interpret its contents as another source package beside the command.
+    # This allows the go:embed directive inside the `.gen.go` file below to
+    # work without rewriting the full path.
     native.genrule(
         name = name + "_gen_lib",
-        outs = [out + ".gen.lib.tmpl"],
+        outs = [out + ".gen.lib.tmpl.go"],
         cmd = "cat < $(SRCS) > $@",
         srcs = [
             "//pkg/seccomp/precompiledseccomp:precompiled_lib.tmpl.go",
@@ -97,7 +107,7 @@ def precompiled_seccomp_rules(
         "    elif echo \"$$line\" | grep -q 'PROGRAMS_FUNC_THIS_IS_A_LOAD_BEARING_COMMENT'; then" +
         "        {load_programs_fn_echo}" +
         "    elif echo \"$$line\" | grep -q 'go:embed precompiled_lib.tmpl.go'; then" +
-        "        echo -e \"//go:embed " + out + ".gen.lib.tmpl\";" +
+        "        echo -e \"//go:embed " + out + ".gen.lib.tmpl.go\";" +
         "    else" +
         "      echo \"$$line\";" +
         "    fi;" +
@@ -147,11 +157,9 @@ def precompiled_seccomp_rules(
     go_binary(
         name = name + "_gen_dynamic_bin",
         srcs = [out + ".gen.go"],
-        importpath = "gvisor.dev/gvisor/" + native.package_name() + "/" + name + "_gen_bin",
-        visibility = ["//tools/codeql:__pkg__"],
         deps = gen_bin_deps,
         embedsrcs = [
-            ":" + out + ".gen.lib.tmpl",
+            ":" + out + ".gen.lib.tmpl.go",
         ],
         pure = True,
         noasan = True,
@@ -164,11 +172,9 @@ def precompiled_seccomp_rules(
     go_binary(
         name = name + "_gen_static_bin",
         srcs = [out + ".gen.go"],
-        importpath = "gvisor.dev/gvisor/" + native.package_name() + "/" + name + "_gen_static_bin",
-        visibility = ["//tools/codeql:__pkg__"],
         deps = gen_bin_deps,
         embedsrcs = [
-            ":" + out + ".gen.lib.tmpl",
+            ":" + out + ".gen.lib.tmpl.go",
         ],
         pure = True,
         static = True,
@@ -183,17 +189,14 @@ def precompiled_seccomp_rules(
             "//tools:gotsan": ":" + name + "_gen_static_bin",
             "//conditions:default": ":" + name + "_gen_dynamic_bin",
         }),
-        visibility = ["//tools/codeql:__pkg__"],
     )
     if exclude_in_fastbuild:
         go_binary(
             name = name + "_gen_stubbed_bin",
             srcs = [out + ".gen_stubbed.go"],
-            importpath = "gvisor.dev/gvisor/" + native.package_name() + "/" + name + "_gen_stubbed_bin",
-            visibility = ["//tools/codeql:__pkg__"],
             deps = base_gen_bin_deps,
             embedsrcs = [
-                ":" + out + ".gen.lib.tmpl",
+                ":" + out + ".gen.lib.tmpl.go",
             ],
         )
 
@@ -216,5 +219,7 @@ def precompiled_seccomp_rules(
         exec_generator = exec_generator,
         out = out,
         out_package_name = out_package_name,
+        qemu = target_emulator.binary,
+        qemu_args = select_arch(arm64 = ["-cpu", "neoverse-n1"], default = []),
         tags = tags + ["requires-mem:16g"],
     )

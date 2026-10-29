@@ -20,8 +20,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/link/tun"
 )
 
-// TUNFlagsToLinux converts a tun.Flags to flags reported by TUNGETIFF.
-// IFF_TUN_EXCL only controls creation and is not reported by Linux.
+// TUNFlagsToLinux converts a tun.Flags to Linux TUN flags.
 func TUNFlagsToLinux(flags tun.Flags) uint16 {
 	ret := uint16(linux.IFF_NOFILTER)
 	if flags.TAP {
@@ -32,6 +31,9 @@ func TUNFlagsToLinux(flags tun.Flags) uint16 {
 	}
 	if flags.NoPacketInfo {
 		ret |= linux.IFF_NO_PI
+	}
+	if flags.Exclusive {
+		ret |= linux.IFF_TUN_EXCL
 	}
 	return ret
 }

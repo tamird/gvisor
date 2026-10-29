@@ -18,7 +18,6 @@ package checker
 
 import (
 	"encoding/binary"
-	"net/netip"
 	"slices"
 	"testing"
 	"time"
@@ -86,7 +85,7 @@ func IPv6(t *testing.T, v *buffer.View, checkers ...NetworkChecker) {
 }
 
 // SrcAddr creates a checker that checks the source address.
-func SrcAddr(addr netip.Addr) NetworkChecker {
+func SrcAddr(addr tcpip.Address) NetworkChecker {
 	return func(t *testing.T, h []header.Network) {
 		t.Helper()
 
@@ -97,7 +96,7 @@ func SrcAddr(addr netip.Addr) NetworkChecker {
 }
 
 // DstAddr creates a checker that checks the destination address.
-func DstAddr(addr netip.Addr) NetworkChecker {
+func DstAddr(addr tcpip.Address) NetworkChecker {
 	return func(t *testing.T, h []header.Network) {
 		t.Helper()
 
@@ -390,8 +389,8 @@ func ReceiveIPPacketInfo(want tcpip.IPPacketInfo) ControlMessagesChecker {
 		t.Helper()
 		if !cm.HasIPPacketInfo {
 			t.Error("got cm.HasIPPacketInfo = false, want = true")
-		} else if got := cm.PacketInfo; got != want {
-			t.Errorf("got IPPacketInfo = %+v, want = %+v", got, want)
+		} else if diff := cmp.Diff(want, cm.PacketInfo); diff != "" {
+			t.Errorf("IPPacketInfo mismatch (-want +got):\n%s", diff)
 		}
 	}
 }
@@ -414,8 +413,8 @@ func ReceiveIPv6PacketInfo(want tcpip.IPv6PacketInfo) ControlMessagesChecker {
 		t.Helper()
 		if !cm.HasIPv6PacketInfo {
 			t.Error("got cm.HasIPv6PacketInfo = false, want = true")
-		} else if got := cm.IPv6PacketInfo; got != want {
-			t.Errorf("got IPv6PacketInfo = %+v, want = %+v", got, want)
+		} else if diff := cmp.Diff(want, cm.IPv6PacketInfo); diff != "" {
+			t.Errorf("IPv6PacketInfo mismatch (-want +got):\n%s", diff)
 		}
 	}
 }
@@ -438,8 +437,8 @@ func ReceiveOriginalDstAddr(want tcpip.FullAddress) ControlMessagesChecker {
 		t.Helper()
 		if !cm.HasOriginalDstAddress {
 			t.Error("got cm.HasOriginalDstAddress = false, want = true")
-		} else if got := cm.OriginalDstAddress; got != want {
-			t.Errorf("got OriginalDstAddress = %+v, want = %+v", got, want)
+		} else if diff := cmp.Diff(want, cm.OriginalDstAddress); diff != "" {
+			t.Errorf("OriginalDstAddress mismatch (-want +got):\n%s", diff)
 		}
 	}
 }
@@ -1231,7 +1230,7 @@ func MLDMaxRespDelay(want time.Duration) TransportChecker {
 //
 // The returned TransportChecker assumes that a valid ICMPv6 is passed to it
 // containing a valid MLD message as far as the size is concerned.
-func MLDMulticastAddressUnordered(expectedGroups map[netip.Addr]struct{}) TransportChecker {
+func MLDMulticastAddressUnordered(expectedGroups map[tcpip.Address]struct{}) TransportChecker {
 	return func(t *testing.T, h header.Transport) {
 		t.Helper()
 
@@ -1253,8 +1252,8 @@ func MLDMulticastAddressUnordered(expectedGroups map[netip.Addr]struct{}) Transp
 //
 // The returned TransportChecker assumes that a valid ICMPv6 is passed to it
 // containing a valid MLD message as far as the size is concerned.
-func MLDMulticastAddress(want netip.Addr) TransportChecker {
-	return MLDMulticastAddressUnordered(map[netip.Addr]struct{}{
+func MLDMulticastAddress(want tcpip.Address) TransportChecker {
+	return MLDMulticastAddressUnordered(map[tcpip.Address]struct{}{
 		want: {},
 	})
 }
@@ -1264,7 +1263,7 @@ func MLDMulticastAddress(want netip.Addr) TransportChecker {
 //
 // Note that observed records are removed from expectedRecords. No error is
 // logged if the report does not have all the records expected.
-func MLDv2Report(expectedRecords map[netip.Addr]header.MLDv2ReportRecordType) NetworkChecker {
+func MLDv2Report(expectedRecords map[tcpip.Address]header.MLDv2ReportRecordType) NetworkChecker {
 	return func(t *testing.T, h []header.Network) {
 		t.Helper()
 
@@ -1370,7 +1369,7 @@ func NDPNS(checkers ...TransportChecker) NetworkChecker {
 //
 // The returned TransportChecker assumes that a valid ICMPv6 is passed to it
 // containing a valid NDPNS message as far as the size is concerned.
-func NDPNSTargetAddress(want netip.Addr) TransportChecker {
+func NDPNSTargetAddress(want tcpip.Address) TransportChecker {
 	return func(t *testing.T, h header.Transport) {
 		t.Helper()
 
@@ -1399,7 +1398,7 @@ func NDPNA(checkers ...TransportChecker) NetworkChecker {
 //
 // The returned TransportChecker assumes that a valid ICMPv6 is passed to it
 // containing a valid NDPNA message as far as the size is concerned.
-func NDPNATargetAddress(want netip.Addr) TransportChecker {
+func NDPNATargetAddress(want tcpip.Address) TransportChecker {
 	return func(t *testing.T, h header.Transport) {
 		t.Helper()
 
@@ -1605,7 +1604,7 @@ func IGMPMaxRespTime(want time.Duration) TransportChecker {
 //
 // The returned TransportChecker assumes that a valid IGMP is passed to it
 // containing a valid IGMP message as far as the size is concerned.
-func IGMPGroupAddressUnordered(expectedGroups map[netip.Addr]struct{}) TransportChecker {
+func IGMPGroupAddressUnordered(expectedGroups map[tcpip.Address]struct{}) TransportChecker {
 	return func(t *testing.T, h header.Transport) {
 		t.Helper()
 
@@ -1625,8 +1624,8 @@ func IGMPGroupAddressUnordered(expectedGroups map[netip.Addr]struct{}) Transport
 }
 
 // IGMPGroupAddress creates a checker that checks the IGMP Group Address field.
-func IGMPGroupAddress(want netip.Addr) TransportChecker {
-	return IGMPGroupAddressUnordered(map[netip.Addr]struct{}{
+func IGMPGroupAddress(want tcpip.Address) TransportChecker {
+	return IGMPGroupAddressUnordered(map[tcpip.Address]struct{}{
 		want: {},
 	})
 }
@@ -1636,7 +1635,7 @@ func IGMPGroupAddress(want netip.Addr) TransportChecker {
 //
 // Note that observed records are removed from expectedRecords. No error is
 // logged if the report does not have all the records expected.
-func IGMPv3Report(expectedRecords map[netip.Addr]header.IGMPv3ReportRecordType) NetworkChecker {
+func IGMPv3Report(expectedRecords map[tcpip.Address]header.IGMPv3ReportRecordType) NetworkChecker {
 	return func(t *testing.T, h []header.Network) {
 		t.Helper()
 

@@ -28,7 +28,6 @@ go_library(
         "muldiv_amd64.s",
         "muldiv_arm64.s",
         "parameters.go",
-        "reference_clock.go",
         "sampler.go",
         "sampler_amd64.go",
         "sampler_arm64.go",
@@ -57,7 +56,6 @@ go_test(
     srcs = [
         "calibrated_clock_test.go",
         "parameters_test.go",
-        "reference_clock_test.go",
         "sampler_test.go",
         "tsc_offset_test.go",
         "vdso_test.go",
@@ -65,7 +63,6 @@ go_test(
     embed = [":time"],
     deps = [
         "//pkg/abi/linux",
-        "//pkg/errors/linuxerr",
         "//pkg/sync",
         "@org_golang_x_sys//unix:go_default_library",
     ],

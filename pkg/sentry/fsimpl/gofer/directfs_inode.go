@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 
 	"golang.org/x/sys/unix"
-
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/cleanup"
@@ -135,6 +134,11 @@ func (fs *filesystem) newDirectfsDentry(controlFD int) (*dentry, error) {
 	}
 	isDir := uint32(stat.Mode)&linux.FileTypeMask == linux.ModeDirectory
 	inoKey := inoKeyFromUnixStatx(&stat)
+	devMinor, err := fs.devMinorFromKey(inoKey)
+	if err != nil {
+		_ = unix.Close(controlFD)
+		return nil, err
+	}
 
 	// Common case. Performance hack which is used to allocate the dentry
 	// and its inode together in the heap. This will help reduce allocations and memory
@@ -149,14 +153,19 @@ func (fs *filesystem) newDirectfsDentry(controlFD int) (*dentry, error) {
 	// This also avoids a correctness issue when a directory is bind-mounted on the host:
 	// different paths (e.g., /mnt/ and /mnt/a/b/c if /mnt/a/b/c is a bind mount of /mnt/)
 	// can return the same device ID and inode number from a stat call.
+	var cacheHit bool
 	temp.d.inode = fs.getOrCreateInode(inoKey /* dontCache = */, isDir,
-		func() { _ = unix.Close(controlFD) },
+		func() {
+			cacheHit = true
+			_ = unix.Close(controlFD)
+		},
 		func() *inode {
 			temp.i = directfsInode{
 				inode: inode{
 					fs:        fs,
 					inoKey:    inoKey,
 					ino:       fs.inoFromKey(inoKey),
+					devMinor:  devMinor,
 					rdevMajor: stat.Rdev_major,
 					rdevMinor: stat.Rdev_minor,
 					mode:      atomicbitops.FromUint32(uint32(stat.Mode)),
@@ -214,6 +223,12 @@ func (fs *filesystem) newDirectfsDentry(controlFD int) (*dentry, error) {
 			}
 			return inode
 		})
+	if cacheHit && !temp.d.inode.cachedMetadataAuthoritative() {
+		i := temp.d.inode.impl.(*directfsInode)
+		i.metadataMu.Lock()
+		i.updateMetadataFromStatxLocked(&stat)
+		i.metadataMu.Unlock()
+	}
 
 	temp.d.init()
 	// If this dentry adopted a cached inode that already carries a bound-socket
@@ -755,7 +770,7 @@ func (i *directfsInode) mknod(ctx context.Context, name string, creds *auth.Cred
 	if err := unix.Mknodat(i.controlFD, name, uint32(opts.Mode), 0); err != nil {
 		return nil, err
 	}
-	return i.getCreatedChild(name, creds.EffectiveKUID, creds.EffectiveKGID, false /* isDir */, true /* createDentry */, d)
+	return i.getCreatedChild(name, creds.FilesystemKUID, creds.FilesystemKGID, false /* isDir */, true /* createDentry */, d)
 }
 
 // Precondition: opts.Endpoint != nil and is transport.HostBoundEndpoint type.
@@ -766,7 +781,7 @@ func (i *directfsInode) bindAt(ctx context.Context, name string, creds *auth.Cre
 		return nil, err
 	}
 	sockType := opts.Endpoint.(transport.Endpoint).Type()
-	childInode, boundSocketFD, err := i.controlFDLisa.BindAt(ctx, sockType, name, opts.Mode, lisafs.UID(creds.EffectiveKUID), lisafs.GID(creds.EffectiveKGID))
+	childInode, boundSocketFD, err := i.controlFDLisa.BindAt(ctx, sockType, name, opts.Mode, lisafs.UID(creds.FilesystemKUID), lisafs.GID(creds.FilesystemKGID))
 	if err != nil {
 		return nil, err
 	}
@@ -820,7 +835,7 @@ func (i *directfsInode) symlink(name, target string, creds *auth.Credentials, d 
 	if err := unix.Symlinkat(target, i.controlFD, name); err != nil {
 		return nil, err
 	}
-	return i.getCreatedChild(name, creds.EffectiveKUID, creds.EffectiveKGID, false /* isDir */, true /* createDentry */, d)
+	return i.getCreatedChild(name, creds.FilesystemKUID, creds.FilesystemKGID, false /* isDir */, true /* createDentry */, d)
 }
 
 func (i *directfsInode) openCreate(name string, accessFlags uint32, mode linux.FileMode, uid auth.KUID, gid auth.KGID, createDentry bool, d *dentry) (*dentry, handle, error) {
@@ -845,9 +860,12 @@ func (i *directfsInode) getDirentsLocked(recordDirent func(name string, key inoK
 	}
 
 	return fsutil.ForEachDirent(readFD, func(ino uint64, off int64, ftype uint8, name string, reclen uint16) {
-		// We also want the device ID, which annoyingly incurs an additional
-		// syscall per dirent.
-		// TODO(gvisor.dev/issue/6665): Get rid of per-dirent stat.
+		if !i.fs.opts.virtualInodeNumbers {
+			recordDirent(name, inoKey{ino: ino}, ftype)
+			return
+		}
+		// We also want the device ID, which incurs an additional syscall per
+		// dirent.
 		stat, err := fsutil.StatAt(i.controlFD, name)
 		if err != nil {
 			log.Warningf("Getdent64: skipping file %q with failed stat, err: %v", path.Join(genericDebugPathname(i.fs, d), name), err)
@@ -858,13 +876,13 @@ func (i *directfsInode) getDirentsLocked(recordDirent func(name string, key inoK
 }
 
 // Precondition: fs.renameMu is locked.
-func (i *directfsInode) connect(ctx context.Context, sockType linux.SockType, euid lisafs.UID, egid lisafs.GID, d *dentry) (int, error) {
+func (i *directfsInode) connect(ctx context.Context, sockType linux.SockType, euid lisafs.UID, egid lisafs.GID, groups []lisafs.GID, d *dentry) (int, error) {
 	// There are no filesystems mounted in the sandbox process's mount namespace.
 	// So we can't perform absolute path traversals. So fallback to using lisafs.
 	if err := i.ensureLisafsControlFD(ctx, d); err != nil {
 		return -1, err
 	}
-	return i.controlFDLisa.Connect(ctx, sockType, euid, egid)
+	return i.controlFDLisa.Connect(ctx, sockType, euid, egid, groups)
 }
 
 func (i *directfsInode) readlink() (string, error) {
@@ -910,22 +928,8 @@ func (i *directfsInode) restoreFile(ctx context.Context, controlFD int, opts *vf
 		return fmt.Errorf("failed to stat %q in mount %q: %w", genericDebugPathname(i.fs, d), i.fs.iopts.UniqueID, err)
 	}
 	i.controlFD = controlFD
-	// We do not preserve inoKey across checkpoint/restore, so:
-	//
-	//	- We must assume that the host filesystem did not change in a way that
-	//		would invalidate dentries, since we can't revalidate dentries by
-	//		checking inoKey.
-	//
-	//	- We need to associate the new inoKey with the existing d.ino.
-	i.inoKey = inoKeyFromUnixStatx(&stat)
-	i.fs.inoMu.Lock()
-	i.fs.inoByKey[i.inoKey] = i.ino
-	i.fs.inoMu.Unlock()
-	// inodeByKey contains non-directory inodes only.
-	if !d.isDir() {
-		i.fs.inodeMu.Lock()
-		i.fs.inodeByKey[i.inoKey] = &i.inode
-		i.fs.inodeMu.Unlock()
+	if err := i.restoreInoKey(inoKeyFromUnixStatx(&stat)); err != nil {
+		return err
 	}
 
 	// Check metadata stability before updating metadata.
@@ -1020,4 +1024,4 @@ func checkSupportedFileType(mode uint32) error {
 	}
 }
 
-// LINT.ThenChange(../../../../runsc/fsgofer/lisafs.go)
+// LINT.ThenChange(../../../../runsc/gofer/fs/lisafs.go)

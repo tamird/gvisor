@@ -130,8 +130,6 @@ func TestChecksum(t *testing.T) {
 		rnd.Read(testCases[i].buf)
 	}
 
-	// A subtest for every random sample produces hundreds of megabytes of
-	// verbose test reports. Group samples by size and alignment instead.
 	for sizeIndex, size := range bufSizes {
 		t.Run(fmt.Sprintf("buf size %d", size), func(t *testing.T) {
 			// Also test different offsets into the buffers. This

@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	"golang.org/x/sys/unix"
-
 	"gvisor.dev/gvisor/pkg/bpf"
 	"gvisor.dev/gvisor/pkg/hostsyscall"
 	"gvisor.dev/gvisor/pkg/seccomp"

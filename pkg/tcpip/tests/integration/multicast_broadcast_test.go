@@ -16,11 +16,9 @@ package multicast_broadcast_test
 
 import (
 	"bytes"
-	"net/netip"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
@@ -56,18 +54,18 @@ func TestPingMulticastBroadcast(t *testing.T) {
 	tests := []struct {
 		name        string
 		protoNum    tcpip.NetworkProtocolNumber
-		rxICMP      func(*channel.Endpoint, netip.Addr, netip.Addr, uint8)
-		srcAddr     netip.Addr
-		dstAddr     netip.Addr
-		expectedSrc netip.Addr
+		rxICMP      func(*channel.Endpoint, tcpip.Address, tcpip.Address, uint8)
+		srcAddr     tcpip.Address
+		dstAddr     tcpip.Address
+		expectedSrc tcpip.Address
 	}{
 		{
 			name:        "IPv4 unicast",
 			protoNum:    header.IPv4ProtocolNumber,
-			dstAddr:     utils.Ipv4Addr.Addr(),
+			dstAddr:     utils.Ipv4Addr.Address,
 			srcAddr:     utils.RemoteIPv4Addr,
 			rxICMP:      utils.RxICMPv4EchoRequest,
-			expectedSrc: utils.Ipv4Addr.Addr(),
+			expectedSrc: utils.Ipv4Addr.Address,
 		},
 		{
 			name:        "IPv4 directed broadcast",
@@ -75,7 +73,7 @@ func TestPingMulticastBroadcast(t *testing.T) {
 			rxICMP:      utils.RxICMPv4EchoRequest,
 			srcAddr:     utils.RemoteIPv4Addr,
 			dstAddr:     utils.Ipv4SubnetBcast,
-			expectedSrc: utils.Ipv4Addr.Addr(),
+			expectedSrc: utils.Ipv4Addr.Address,
 		},
 		{
 			name:        "IPv4 broadcast",
@@ -83,7 +81,7 @@ func TestPingMulticastBroadcast(t *testing.T) {
 			rxICMP:      utils.RxICMPv4EchoRequest,
 			srcAddr:     utils.RemoteIPv4Addr,
 			dstAddr:     header.IPv4Broadcast,
-			expectedSrc: utils.Ipv4Addr.Addr(),
+			expectedSrc: utils.Ipv4Addr.Address,
 		},
 		{
 			name:        "IPv4 all-systems multicast",
@@ -91,15 +89,15 @@ func TestPingMulticastBroadcast(t *testing.T) {
 			rxICMP:      utils.RxICMPv4EchoRequest,
 			srcAddr:     utils.RemoteIPv4Addr,
 			dstAddr:     header.IPv4AllSystems,
-			expectedSrc: utils.Ipv4Addr.Addr(),
+			expectedSrc: utils.Ipv4Addr.Address,
 		},
 		{
 			name:        "IPv6 unicast",
 			protoNum:    header.IPv6ProtocolNumber,
 			rxICMP:      utils.RxICMPv6EchoRequest,
 			srcAddr:     utils.RemoteIPv6Addr,
-			dstAddr:     utils.Ipv6Addr.Addr(),
-			expectedSrc: utils.Ipv6Addr.Addr(),
+			dstAddr:     utils.Ipv6Addr.Address,
+			expectedSrc: utils.Ipv6Addr.Address,
 		},
 		{
 			name:        "IPv6 all-nodes multicast",
@@ -107,7 +105,7 @@ func TestPingMulticastBroadcast(t *testing.T) {
 			rxICMP:      utils.RxICMPv6EchoRequest,
 			srcAddr:     utils.RemoteIPv6Addr,
 			dstAddr:     header.IPv6AllNodesMulticastAddress,
-			expectedSrc: utils.Ipv6Addr.Addr(),
+			expectedSrc: utils.Ipv6Addr.Address,
 		},
 	}
 
@@ -177,7 +175,7 @@ func TestPingMulticastBroadcast(t *testing.T) {
 
 }
 
-func rxIPv4UDP(e *channel.Endpoint, src, dst netip.Addr, data []byte) {
+func rxIPv4UDP(e *channel.Endpoint, src, dst tcpip.Address, data []byte) {
 	payloadLen := header.UDPMinimumSize + len(data)
 	totalLen := header.IPv4MinimumSize + payloadLen
 	hdr := prependable.New(totalLen)
@@ -207,7 +205,7 @@ func rxIPv4UDP(e *channel.Endpoint, src, dst netip.Addr, data []byte) {
 	}))
 }
 
-func rxIPv6UDP(e *channel.Endpoint, src, dst netip.Addr, data []byte) {
+func rxIPv6UDP(e *channel.Endpoint, src, dst tcpip.Address, data []byte) {
 	payloadLen := header.UDPMinimumSize + len(data)
 	hdr := prependable.New(header.IPv6MinimumSize + payloadLen)
 	u := header.UDP(hdr.Prepend(payloadLen))
@@ -245,11 +243,11 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 	tests := []struct {
 		name       string
 		proto      tcpip.NetworkProtocolNumber
-		remoteAddr netip.Addr
-		localAddr  netip.Prefix
-		rxUDP      func(*channel.Endpoint, netip.Addr, netip.Addr, []byte)
-		bindAddr   netip.Addr
-		dstAddr    netip.Addr
+		remoteAddr tcpip.Address
+		localAddr  tcpip.AddressWithPrefix
+		rxUDP      func(*channel.Endpoint, tcpip.Address, tcpip.Address, []byte)
+		bindAddr   tcpip.Address
+		dstAddr    tcpip.Address
 		expectRx   bool
 	}{
 		{
@@ -258,8 +256,8 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 			remoteAddr: utils.RemoteIPv4Addr,
 			localAddr:  utils.Ipv4Addr,
 			rxUDP:      rxIPv4UDP,
-			bindAddr:   utils.Ipv4Addr.Addr(),
-			dstAddr:    utils.Ipv4Addr.Addr(),
+			bindAddr:   utils.Ipv4Addr.Address,
+			dstAddr:    utils.Ipv4Addr.Address,
 			expectRx:   true,
 		},
 		{
@@ -269,7 +267,7 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 			localAddr:  utils.Ipv4Addr,
 			rxUDP:      rxIPv4UDP,
 			bindAddr:   header.IPv4Broadcast,
-			dstAddr:    utils.Ipv4Addr.Addr(),
+			dstAddr:    utils.Ipv4Addr.Address,
 			expectRx:   false,
 		},
 		{
@@ -278,7 +276,7 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 			remoteAddr: utils.RemoteIPv4Addr,
 			localAddr:  utils.Ipv4Addr,
 			rxUDP:      rxIPv4UDP,
-			dstAddr:    utils.Ipv4Addr.Addr(),
+			dstAddr:    utils.Ipv4Addr.Address,
 			expectRx:   true,
 		},
 
@@ -367,7 +365,7 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 			remoteAddr: utils.RemoteIPv4Addr,
 			localAddr:  utils.Ipv4Addr,
 			rxUDP:      rxIPv4UDP,
-			bindAddr:   utils.Ipv4Addr.Addr(),
+			bindAddr:   utils.Ipv4Addr.Address,
 			dstAddr:    header.IPv4AllSystems,
 			expectRx:   false,
 		},
@@ -375,7 +373,7 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 		// IPv6 has no notion of a broadcast.
 		{
 			name:       "IPv6 unicast binding to wildcard",
-			dstAddr:    utils.Ipv6Addr.Addr(),
+			dstAddr:    utils.Ipv6Addr.Address,
 			proto:      header.IPv6ProtocolNumber,
 			remoteAddr: utils.RemoteIPv6Addr,
 			localAddr:  utils.Ipv6Addr,
@@ -431,7 +429,7 @@ func TestIncomingMulticastAndBroadcast(t *testing.T) {
 				if diff := cmp.Diff(tcpip.ReadResult{
 					Count: buf.Len(),
 					Total: buf.Len(),
-				}, res, checker.IgnoreCmpPath("ControlMessages"), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+				}, res, checker.IgnoreCmpPath("ControlMessages")); diff != "" {
 					t.Errorf("ep.Read: unexpected result (-want +got):\n%s", diff)
 				}
 				if diff := cmp.Diff(data, buf.Bytes()); diff != "" {
@@ -455,7 +453,7 @@ func TestReuseAddrAndBroadcast(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		broadcastAddr netip.Addr
+		broadcastAddr tcpip.Address
 	}{
 		{
 			name:          "Subnet directed broadcast",
@@ -477,8 +475,11 @@ func TestReuseAddrAndBroadcast(t *testing.T) {
 				t.Fatalf("CreateNIC(%d, _): %s", nicID, err)
 			}
 			protoAddr := tcpip.ProtocolAddress{
-				Protocol:          header.IPv4ProtocolNumber,
-				AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), 8),
+				Protocol: header.IPv4ProtocolNumber,
+				AddressWithPrefix: tcpip.AddressWithPrefix{
+					Address:   tcpip.AddrFromSlice([]byte("\x7f\x00\x00\x01")),
+					PrefixLen: 8,
+				},
 			}
 			if err := s.AddProtocolAddress(nicID, protoAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protoAddr, err)
@@ -563,7 +564,7 @@ func TestReuseAddrAndBroadcast(t *testing.T) {
 					if diff := cmp.Diff(tcpip.ReadResult{
 						Count: buf.Len(),
 						Total: buf.Len(),
-					}, result, checker.IgnoreCmpPath("ControlMessages"), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+					}, result, checker.IgnoreCmpPath("ControlMessages")); diff != "" {
 						t.Errorf("(eps[%d] write) eps[%d].Read: unexpected result (-want +got):\n%s", i, j, diff)
 					}
 					if diff := cmp.Diff([]byte(data), buf.Bytes()); diff != "" {
@@ -585,14 +586,14 @@ func TestUDPAddRemoveMembershipSocketOption(t *testing.T) {
 	tests := []struct {
 		name          string
 		proto         tcpip.NetworkProtocolNumber
-		remoteAddr    netip.Addr
-		localAddr     netip.Prefix
-		rxUDP         func(*channel.Endpoint, netip.Addr, netip.Addr, []byte)
-		multicastAddr netip.Addr
+		remoteAddr    tcpip.Address
+		localAddr     tcpip.AddressWithPrefix
+		rxUDP         func(*channel.Endpoint, tcpip.Address, tcpip.Address, []byte)
+		multicastAddr tcpip.Address
 	}{
 		{
 			name:          "IPv4 unicast binding to unicast",
-			multicastAddr: netip.AddrFrom4([4]byte{224, 1, 2, 3}),
+			multicastAddr: tcpip.AddrFromSlice([]byte("\xe0\x01\x02\x03")),
 			proto:         header.IPv4ProtocolNumber,
 			remoteAddr:    utils.RemoteIPv4Addr,
 			localAddr:     utils.Ipv4Addr,
@@ -600,7 +601,7 @@ func TestUDPAddRemoveMembershipSocketOption(t *testing.T) {
 		},
 		{
 			name:          "IPv6 broadcast-like address binding to wildcard",
-			multicastAddr: netip.MustParseAddr("ff02::102:304"),
+			multicastAddr: tcpip.AddrFromSlice([]byte("\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04")),
 			proto:         header.IPv6ProtocolNumber,
 			remoteAddr:    utils.RemoteIPv6Addr,
 			localAddr:     utils.Ipv6Addr,
@@ -685,7 +686,7 @@ func TestUDPAddRemoveMembershipSocketOption(t *testing.T) {
 						memOpt.NIC = nicID
 					}
 					if subTest.specifyNICAddr {
-						memOpt.InterfaceAddr = test.localAddr.Addr()
+						memOpt.InterfaceAddr = test.localAddr.Address
 					}
 
 					// We should receive UDP packets to the group once we join the
@@ -703,7 +704,7 @@ func TestUDPAddRemoveMembershipSocketOption(t *testing.T) {
 						if diff := cmp.Diff(tcpip.ReadResult{
 							Count: buf.Len(),
 							Total: buf.Len(),
-						}, result, checker.IgnoreCmpPath("ControlMessages"), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+						}, result, checker.IgnoreCmpPath("ControlMessages")); diff != "" {
 							t.Errorf("ep.Read: unexpected result (-want +got):\n%s", diff)
 						}
 						if diff := cmp.Diff(data, buf.Bytes()); diff != "" {
@@ -731,13 +732,15 @@ func TestUDPAddRemoveMembershipSocketOption(t *testing.T) {
 
 func TestAddMembershipInterfacePrecedence(t *testing.T) {
 	const nicID = 1
-	multicastAddr := netip.AddrFrom4([4]byte{224, 1, 2, 3})
+	multicastAddr := tcpip.AddrFromSlice([]byte("\xe0\x01\x02\x03"))
 	proto := header.IPv4ProtocolNumber
 	// This address is nonsensical. If the precedence is correct, this should not
 	// matter, because ADD_IP_MEMBERSHIP should consider the interface index
 	// and use that before checking the address.
-	localAddr := netip.PrefixFrom(testutil.MustParse4("8.0.8.0"), 24)
-
+	localAddr := tcpip.AddressWithPrefix{
+		Address:   testutil.MustParse4("8.0.8.0"),
+		PrefixLen: 24,
+	}
 	s := stack.New(stack.Options{
 		NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
 		TransportProtocols: []stack.TransportProtocolFactory{udp.NewProtocol},
@@ -766,7 +769,7 @@ func TestAddMembershipInterfacePrecedence(t *testing.T) {
 
 	memOpt := tcpip.MembershipOption{MulticastAddr: multicastAddr}
 	memOpt.NIC = nicID
-	memOpt.InterfaceAddr = localAddr.Addr()
+	memOpt.InterfaceAddr = localAddr.Address
 
 	// Add membership should succeed when the interface index is specified,
 	// even if a bad interface address is specified.

@@ -1,0 +1,6 @@
+{
+  "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": [
+    "TestCongestionWindowAfterIdle/cubic",
+    "TestCongestionWindowAfterIdle/reno"
+  ]
+}

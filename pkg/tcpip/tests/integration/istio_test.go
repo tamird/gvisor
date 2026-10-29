@@ -19,7 +19,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/netip"
 	"strconv"
 	"testing"
 
@@ -136,7 +135,7 @@ func newTestContext(t *testing.T) *testContext {
 	}
 	loopbackAddr := tcpip.ProtocolAddress{
 		Protocol:          header.IPv4ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(loopbackIPv4Addr),
+		AddressWithPrefix: loopbackIPv4Addr.WithPrefix(),
 	}
 	if err := localStack.AddProtocolAddress(loopbackNICID, loopbackAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("localStack.AddProtocolAddress(%d, %+v, {}): %s", loopbackNICID, loopbackAddr, err)
@@ -152,10 +151,10 @@ func newTestContext(t *testing.T) *testContext {
 		t.Fatalf("remoteStack.CreateNIC(%d, _): %s", remoteNICID, err)
 	}
 
-	for _, addr := range []netip.Addr{localIPv4Addr1, localIPv4Addr2} {
+	for _, addr := range []tcpip.Address{localIPv4Addr1, localIPv4Addr2} {
 		localProtocolAddr := tcpip.ProtocolAddress{
 			Protocol:          header.IPv4ProtocolNumber,
-			AddressWithPrefix: tcpip.FullPrefix(addr),
+			AddressWithPrefix: addr.WithPrefix(),
 		}
 		if err := localStack.AddProtocolAddress(localNICID, localProtocolAddr, stack.AddressProperties{}); err != nil {
 			t.Fatalf("localStack.AddProtocolAddress(%d, %+v, {}): %s", localNICID, localProtocolAddr, err)
@@ -164,7 +163,7 @@ func newTestContext(t *testing.T) *testContext {
 
 	remoteProtocolAddr := tcpip.ProtocolAddress{
 		Protocol:          header.IPv4ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(remoteIPv4Addr1),
+		AddressWithPrefix: remoteIPv4Addr1.WithPrefix(),
 	}
 	if err := remoteStack.AddProtocolAddress(remoteNICID, remoteProtocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("remoteStack.AddProtocolAddress(%d, %+v, {}): %s", remoteNICID, remoteProtocolAddr, err)
@@ -307,7 +306,7 @@ func TestOutboundNATRedirect(t *testing.T) {
 		Protocol:      tcp.ProtocolNumber,
 		CheckProtocol: true,
 		Src:           localIPv4Addr1,
-		SrcMask:       netip.AddrFrom4([4]byte{255, 255, 255, 255}),
+		SrcMask:       tcpip.AddrFromSlice([]byte("\xff\xff\xff\xff")),
 	}
 	tbl.Rules[ruleIdx].Target = &stack.RedirectTarget{
 		Port:            localServerPort,
@@ -322,23 +321,13 @@ func TestOutboundNATRedirect(t *testing.T) {
 			return nil, fmt.Errorf("unable to parse address: %s, err: %s", address, err)
 		}
 
-		remoteServerIP, err := netip.ParseAddr(host)
-		if err != nil {
-			return nil, err
-		}
-		if remoteServerIP.Zone() != "" {
-			return nil, fmt.Errorf("unexpected IPv6 zone in %q", host)
-		}
-		remoteServerIP = remoteServerIP.Unmap()
-		if !remoteServerIP.Is4() {
-			return nil, fmt.Errorf("expected IPv4 address, got %s", remoteServerIP)
-		}
+		remoteServerIP := net.ParseIP(host)
 		remoteServerPort, err := strconv.Atoi(port)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse port from string %s, err: %s", port, err)
 		}
 		remoteAddress := tcpip.FullAddress{
-			Addr: remoteServerIP,
+			Addr: tcpip.AddrFrom4Slice(remoteServerIP.To4()),
 			Port: uint16(remoteServerPort),
 		}
 

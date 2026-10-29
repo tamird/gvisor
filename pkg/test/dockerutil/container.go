@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/netip"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -32,7 +32,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/checkpoint"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -345,7 +344,7 @@ func (c *Container) config(ctx context.Context, r RunOpts, args []string) (*cont
 		if len(entrypoint) == 0 || len(args) == 0 {
 			// Need to look up the image's default entrypoint/args so we can prepend to them.
 			// If we don't, then we will end up overwriting them.
-			imageInfo, _, err := c.client.ImageInspectWithRaw(ctx, image)
+			imageInfo, err := c.client.ImageInspect(ctx, image)
 			if err != nil {
 				return nil, fmt.Errorf("cannot inspect image %q: %w", image, err)
 			}
@@ -521,28 +520,15 @@ func (c *Container) ID() string {
 
 // RootDirectory returns an educated guess about the container's root directory.
 func (c *Container) RootDirectory() (string, error) {
-	configBytes, err := os.ReadFile(*config)
-	if err != nil {
-		return "", err
-	}
-	var cfg struct {
-		ExecRoot string `json:"exec-root"`
-	}
-	if err := json.Unmarshal(configBytes, &cfg); err != nil {
-		return "", err
-	}
-	if cfg.ExecRoot == "" {
-		cfg.ExecRoot = "/var/run/docker"
-	}
 	// The root directory of this container's runtime.
-	rootDir := filepath.Join(cfg.ExecRoot, "runtime-"+c.runtime, "moby")
-	_, err = os.Stat(rootDir)
+	rootDir := fmt.Sprintf("/var/run/docker/runtime-%s/moby", c.runtime)
+	_, err := os.Stat(rootDir)
 	if err == nil {
 		return rootDir, nil
 	}
 	// In docker v20+, due to https://github.com/moby/moby/issues/42345 the
 	// rootDir seems to always be the following.
-	defaultDir := filepath.Join(cfg.ExecRoot, "runtime-runc/moby")
+	const defaultDir = "/var/run/docker/runtime-runc/moby"
 	_, derr := os.Stat(defaultDir)
 	if derr == nil {
 		return defaultDir, nil
@@ -575,26 +561,22 @@ func (c *Container) NetworkSandboxKey(ctx context.Context) (string, error) {
 var ErrNoIP = errors.New("no IP available")
 
 // FindIP returns the IP address of the container.
-func (c *Container) FindIP(ctx context.Context, ipv6 bool) (netip.Addr, error) {
+func (c *Container) FindIP(ctx context.Context, ipv6 bool) (net.IP, error) {
 	resp, err := c.client.ContainerInspect(ctx, c.id)
 	if err != nil {
-		return netip.Addr{}, err
+		return nil, err
 	}
 
-	addr := resp.NetworkSettings.DefaultNetworkSettings.IPAddress
+	var ip net.IP
 	if ipv6 {
-		addr = resp.NetworkSettings.DefaultNetworkSettings.GlobalIPv6Address
+		ip = net.ParseIP(resp.NetworkSettings.DefaultNetworkSettings.GlobalIPv6Address)
+	} else {
+		ip = net.ParseIP(resp.NetworkSettings.DefaultNetworkSettings.IPAddress)
 	}
-	ip, err := netip.ParseAddr(addr)
-	if err != nil || ip.Zone() != "" {
-		return netip.Addr{}, ErrNoIP
+	if ip == nil {
+		return net.IP{}, ErrNoIP
 	}
-	if ipv6 {
-		if err := waitForOwnedIPv6Gateway(ctx, c.client, resp.NetworkSettings.DefaultNetworkSettings.IPv6Gateway); err != nil {
-			return netip.Addr{}, err
-		}
-	}
-	return ip.Unmap(), nil
+	return ip, nil
 }
 
 // FindPort returns the host port that is mapped to 'sandboxPort'.
@@ -668,10 +650,10 @@ func (c *Container) Stats(ctx context.Context) (*container.StatsResponse, error)
 }
 
 // Status inspects the container returns its status.
-func (c *Container) Status(ctx context.Context) (types.ContainerState, error) {
+func (c *Container) Status(ctx context.Context) (container.State, error) {
 	resp, err := c.client.ContainerInspect(ctx, c.id)
 	if err != nil {
-		return types.ContainerState{}, err
+		return container.State{}, err
 	}
 	return *resp.State, err
 }
@@ -771,9 +753,8 @@ func (c *Container) Remove(ctx context.Context) error {
 	return c.client.ContainerRemove(ctx, c.Name, remove)
 }
 
-// CleanUp attempts to kill and delete the container, logging and returning errors.
-// Already stopped or removed containers are not errors.
-func (c *Container) CleanUp(ctx context.Context) error {
+// CleanUp kills and deletes the container (best effort).
+func (c *Container) CleanUp(ctx context.Context) {
 	// Execute all cleanups. We execute cleanups here to close any
 	// open connections to the container before closing. Open connections
 	// can cause Kill and Remove to hang.
@@ -782,24 +763,19 @@ func (c *Container) CleanUp(ctx context.Context) error {
 	}
 	c.cleanups = nil
 
-	var cleanupErr error
 	// Kill the container.
-	if err := c.Kill(ctx); err != nil && !client.IsErrNotFound(err) && !strings.Contains(err.Error(), "is not running") {
-		err = fmt.Errorf("error killing container %q: %w", c.Name, err)
-		c.logger.Logf("%v", err)
-		cleanupErr = err
+	if err := c.Kill(ctx); err != nil && !strings.Contains(err.Error(), "is not running") {
+		// Just log; can't do anything here.
+		c.logger.Logf("error killing container %q: %v", c.Name, err)
 	}
 
-	// Remove the container and its anonymous volumes.
-	if err := c.Remove(ctx); err != nil && !client.IsErrNotFound(err) {
-		err = fmt.Errorf("error removing container %q: %w", c.Name, err)
-		c.logger.Logf("%v", err)
-		cleanupErr = errors.Join(cleanupErr, err)
+	// Remove the image.
+	if err := c.Remove(ctx); err != nil {
+		c.logger.Logf("error removing container %q: %v", c.Name, err)
 	}
 
 	// Forget all mounts.
 	c.mounts = nil
-	return cleanupErr
 }
 
 // Update is analogous to 'docker update'.

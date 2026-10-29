@@ -17,7 +17,6 @@ package tcp
 import (
 	"fmt"
 	"io"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/sync"
@@ -95,8 +94,8 @@ type segment struct {
 
 func newIncomingSegment(id stack.TransportEndpointID, clock tcpip.Clock, pkt *stack.PacketBuffer) (*segment, error) {
 	hdr := header.TCP(pkt.TransportHeader().Slice())
-	var srcAddr netip.Addr
-	var dstAddr netip.Addr
+	var srcAddr tcpip.Address
+	var dstAddr tcpip.Address
 	switch netProto := pkt.NetworkProtocolNumber; netProto {
 	case header.IPv4ProtocolNumber:
 		hdr := header.IPv4(pkt.NetworkHeader().Slice())

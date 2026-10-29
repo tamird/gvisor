@@ -61,6 +61,19 @@ var nameToID = map[string]stack.TableID{
 	rawTable:    stack.RawID,
 }
 
+// errTableNotFound is returned when a requested table doesn't exist.
+// It is translated to `ENOENT`.
+var errTableNotFound = errors.New("table not found")
+
+// tableLookupError converts an error from convertNetstackToBinary{4,6} into a
+// syserr.Error.
+func tableLookupError(err error) *syserr.Error {
+	if errors.Is(err, errTableNotFound) {
+		return syserr.ErrNoFileOrDir
+	}
+	return syserr.ErrInvalidArgument
+}
+
 // DefaultLinuxTables returns the rules of stack.DefaultTables() wrapped for
 // compatibility with netfilter extensions.
 func DefaultLinuxTables(clock tcpip.Clock, rand *rand.Rand) *stack.IPTables {
@@ -96,7 +109,7 @@ func GetInfo(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, ipv6 bool
 		return linux.IPTGetinfo{}, syserr.FromError(err)
 	}
 
-	var err *syserr.Error
+	var err error
 	if ipv6 {
 		_, info, err = convertNetstackToBinary6(stack, info.Name)
 	} else {
@@ -104,7 +117,7 @@ func GetInfo(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, ipv6 bool
 	}
 	if err != nil {
 		nflog("couldn't convert iptables: %v", err)
-		return linux.IPTGetinfo{}, err
+		return linux.IPTGetinfo{}, tableLookupError(err)
 	}
 
 	nflog("returning info: %+v", info)
@@ -129,7 +142,7 @@ func GetEntries4(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, outLe
 	entries, _, err := convertNetstackToBinary4(stack, userEntries.Name)
 	if err != nil {
 		nflog("couldn't read entries: %v", err)
-		return linux.KernelIPTGetEntries{}, err
+		return linux.KernelIPTGetEntries{}, tableLookupError(err)
 	}
 	if entries.SizeBytes() > outLen {
 		nflog("insufficient GetEntries output size: %d", uintptr(outLen))
@@ -158,7 +171,7 @@ func GetEntries6(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, outLe
 	entries, _, err := convertNetstackToBinary6(stack, userEntries.Name)
 	if err != nil {
 		nflog("couldn't read entries: %v", err)
-		return linux.KernelIP6TGetEntries{}, err
+		return linux.KernelIP6TGetEntries{}, tableLookupError(err)
 	}
 	if entries.SizeBytes() > outLen {
 		nflog("insufficient GetEntries output size: %d", uintptr(outLen))

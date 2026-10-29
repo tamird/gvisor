@@ -208,6 +208,10 @@ type ExpectedOpts struct {
 	NetNamespaceTarget   string
 	CgoEnabled           bool
 	GoDebug              string
+	CoreTags             bool
+
+	// Cgroup is whether `runsc` put the sandbox in a cgroup.
+	Cgroup bool
 
 	// ChildOfRef is whether the sandbox is expected to be a direct child
 	// of the reference process. False under shim.
@@ -247,7 +251,15 @@ func Expected(opts ExpectedOpts) *Posture {
 		FDs:        expectedFDs(opts),
 		Attrs:      expectedAttrs(opts, applyCaps, newUserNS),
 		Threads:    Threads{Uniform: true},
+		CoreTag:    expectedCoreTag(opts),
 	}
+}
+
+func expectedCoreTag(opts ExpectedOpts) string {
+	if opts.CoreTags {
+		return CoreTagOwn
+	}
+	return CoreTagNone
 }
 
 func expectedCreds(applyCaps bool) Credentials {
@@ -380,6 +392,9 @@ func expectedAttrs(opts ExpectedOpts, applyCaps, newUserNS bool) Attrs {
 	}
 	if opts.GoDebug != "" {
 		env = append(env, "GODEBUG="+opts.GoDebug)
+	}
+	if opts.Cgroup {
+		env = append(env, EnvGOMAXPROCSFromCPUNum)
 	}
 	if opts.Ref.TMPDIR != "" {
 		env = append(env, "TMPDIR="+opts.Ref.TMPDIR)

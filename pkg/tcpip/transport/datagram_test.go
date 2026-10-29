@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"net/netip"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -100,7 +99,7 @@ func TestStateUpdates(t *testing.T) {
 
 			addr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(testutil.MustParse4("1.2.3.4")),
+				AddressWithPrefix: testutil.MustParse4("1.2.3.4").WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", nicID, addr, err)
@@ -252,7 +251,7 @@ func TestSndBuf(t *testing.T) {
 
 			addr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(testutil.MustParse4("1.2.3.4")),
+				AddressWithPrefix: testutil.MustParse4("1.2.3.4").WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", nicID, addr, err)
@@ -371,8 +370,8 @@ func TestDeviceReturnErrNoBufferSpace(t *testing.T) {
 	for _, networkTest := range []struct {
 		name       string
 		netProto   tcpip.NetworkProtocolNumber
-		localAddr  netip.Addr
-		remoteAddr netip.Addr
+		localAddr  tcpip.Address
+		remoteAddr tcpip.Address
 		buf        []byte
 	}{
 		{
@@ -458,7 +457,7 @@ func TestDeviceReturnErrNoBufferSpace(t *testing.T) {
 
 					addr := tcpip.ProtocolAddress{
 						Protocol:          networkTest.netProto,
-						AddressWithPrefix: tcpip.FullPrefix(networkTest.localAddr),
+						AddressWithPrefix: networkTest.localAddr.WithPrefix(),
 					}
 					if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", nicID, addr, err)
@@ -541,21 +540,21 @@ func TestMulticastLoop(t *testing.T) {
 	for _, netProto := range []struct {
 		name            string
 		num             tcpip.NetworkProtocolNumber
-		localAddr       netip.Prefix
-		destAddr        netip.Addr
+		localAddr       tcpip.AddressWithPrefix
+		destAddr        tcpip.Address
 		rawSocketHdrLen int
 	}{
 		{
 			name:            "IPv4",
 			num:             header.IPv4ProtocolNumber,
-			localAddr:       tcpip.FullPrefix(testutil.MustParse4("1.2.3.4")),
+			localAddr:       testutil.MustParse4("1.2.3.4").WithPrefix(),
 			destAddr:        header.IPv4AllSystems,
 			rawSocketHdrLen: header.IPv4MinimumSize,
 		},
 		{
 			name:            "IPv6",
 			num:             header.IPv6ProtocolNumber,
-			localAddr:       tcpip.FullPrefix(testutil.MustParse6("a::1")),
+			localAddr:       testutil.MustParse6("a::1").WithPrefix(),
 			destAddr:        header.IPv6AllNodesMulticastAddress,
 			rawSocketHdrLen: 0,
 		},
@@ -685,7 +684,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 
 	type localNICAddr struct {
 		nicID tcpip.NICID
-		addr  netip.Prefix
+		addr  tcpip.AddressWithPrefix
 	}
 
 	type testCase struct {
@@ -697,8 +696,8 @@ func TestIPv6PacketInfo(t *testing.T) {
 		pktInfo     tcpip.IPv6PacketInfo
 
 		expectedErr        tcpip.Error
-		expectedLocalAddr  netip.Addr
-		expectedRemoteAddr netip.Addr
+		expectedLocalAddr  tcpip.Address
+		expectedRemoteAddr tcpip.Address
 	}
 
 	ipv6Addr1 := testutil.MustParse6("1::1")
@@ -709,11 +708,11 @@ func TestIPv6PacketInfo(t *testing.T) {
 	localAddrs := []localNICAddr{
 		{
 			nicID: nicID1,
-			addr:  tcpip.FullPrefix(ipv6Addr1),
+			addr:  ipv6Addr1.WithPrefix(),
 		},
 		{
 			nicID: nicID2,
-			addr:  tcpip.FullPrefix(ipv6Addr2),
+			addr:  ipv6Addr2.WithPrefix(),
 		},
 	}
 
@@ -722,7 +721,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 		{
 			name: "Bind wildcard & SendTo with packet info NIC",
 			bindAddr: tcpip.FullAddress{
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			toAddr: tcpip.FullAddress{
@@ -739,7 +738,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 			name:       "BindToDevice & Bind wildcard & SendTo with packet info NIC not matching",
 			boundNICID: nicID2,
 			bindAddr: tcpip.FullAddress{
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			toAddr: tcpip.FullAddress{
@@ -755,7 +754,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 			name: "Bind wildcard and NIC & SendTo with packet info NIC matching",
 			bindAddr: tcpip.FullAddress{
 				NIC:  nicID1,
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			toAddr: tcpip.FullAddress{
@@ -772,7 +771,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 			name: "Bind wildcard and NIC & SendTo with packet info NIC not matching",
 			bindAddr: tcpip.FullAddress{
 				NIC:  nicID2,
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			toAddr: tcpip.FullAddress{
@@ -822,7 +821,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 		{
 			name: "Bind wildcard & Connect then Send with packet info NIC",
 			bindAddr: tcpip.FullAddress{
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			connectAddr: tcpip.FullAddress{
@@ -839,7 +838,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 			name: "Bind wildcard and NIC & Connect then Send with packet info NIC matching",
 			bindAddr: tcpip.FullAddress{
 				NIC:  nicID1,
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			connectAddr: tcpip.FullAddress{
@@ -856,7 +855,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 			name: "Bind wildcard and NIC & Connect then Send with packet info NIC not matching",
 			bindAddr: tcpip.FullAddress{
 				NIC:  nicID2,
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			connectAddr: tcpip.FullAddress{
@@ -871,7 +870,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 		{
 			name: "Bind wildcard & Connect with NIC then Send with packet info NIC matching",
 			bindAddr: tcpip.FullAddress{
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			connectAddr: tcpip.FullAddress{
@@ -888,7 +887,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 		{
 			name: "Bind wildcard & Connect with NIC then Send with packet info NIC not matching",
 			bindAddr: tcpip.FullAddress{
-				Addr: netip.Addr{},
+				Addr: tcpip.Address{},
 				Port: port,
 			},
 			connectAddr: tcpip.FullAddress{

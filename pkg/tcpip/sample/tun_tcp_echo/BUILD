@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_binary", "go_test")
+load("//tools:defs.bzl", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -21,11 +21,4 @@ go_binary(
         "//pkg/tcpip/transport/tcp",
         "//pkg/waiter",
     ],
-)
-
-go_test(
-    name = "tun_tcp_echo_test",
-    srcs = ["main_test.go"],
-    data = [":tun_tcp_echo"],
-    deps = ["//pkg/test/testutil"],
 )

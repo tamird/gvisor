@@ -17,7 +17,6 @@ package stack_test
 import (
 	"bytes"
 	"io"
-	"net/netip"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -44,7 +43,7 @@ type fakeTransportEndpoint struct {
 	tcpip.DefaultSocketOptionsHandler
 
 	proto    *fakeTransportProtocol
-	peerAddr netip.Addr
+	peerAddr tcpip.Address
 	route    *stack.Route
 
 	// acceptQueue is non-nil iff bound.
@@ -94,7 +93,7 @@ func (*fakeTransportEndpoint) Read(io.Writer, tcpip.ReadOptions) (tcpip.ReadResu
 }
 
 func (f *fakeTransportEndpoint) Write(p tcpip.Payloader, opts tcpip.WriteOptions) (int64, tcpip.Error) {
-	if !f.route.RemoteAddress().IsValid() {
+	if f.route.RemoteAddress().Len() == 0 {
 		return 0, &tcpip.ErrHostUnreachable{}
 	}
 
@@ -144,13 +143,13 @@ func (f *fakeTransportEndpoint) Connect(addr tcpip.FullAddress) tcpip.Error {
 	f.peerAddr = addr.Addr
 
 	// Find the route.
-	r, err := f.proto.stack.FindRoute(addr.NIC, netip.Addr{}, addr.Addr, fakeNetNumber, false /* multicastLoop */)
+	r, err := f.proto.stack.FindRoute(addr.NIC, tcpip.Address{}, addr.Addr, fakeNetNumber, false /* multicastLoop */)
 	if err != nil {
 		return &tcpip.ErrHostUnreachable{}
 	}
 
 	// Try to register so that we can start receiving packets.
-	f.ID.Remote = netip.AddrPortFrom(addr.Addr, f.ID.Remote.Port())
+	f.ID.RemoteAddress = addr.Addr
 	err = f.proto.stack.RegisterTransportEndpoint([]tcpip.NetworkProtocolNumber{fakeNetNumber}, fakeTransNumber, f.ID, f, ports.Flags{}, 0 /* bindToDevice */)
 	if err != nil {
 		r.Release()
@@ -190,7 +189,7 @@ func (f *fakeTransportEndpoint) Bind(a tcpip.FullAddress) tcpip.Error {
 	if err := f.proto.stack.RegisterTransportEndpoint(
 		[]tcpip.NetworkProtocolNumber{fakeNetNumber},
 		fakeTransNumber,
-		stack.TransportEndpointID{Local: netip.AddrPortFrom(a.Addr, 0)},
+		stack.TransportEndpointID{LocalAddress: a.Addr},
 		f,
 		ports.Flags{},
 		0, /* bindtoDevice */
@@ -219,8 +218,8 @@ func (f *fakeTransportEndpoint) HandlePacket(id stack.TransportEndpointID, pkt *
 	netHdr := pkt.NetworkHeader().Slice()
 	route, err := f.proto.stack.FindRoute(
 		pkt.NICID,
-		netip.AddrFrom4([4]byte(netHdr[dstAddrOffset:][:header.IPv4AddressSize])),
-		netip.AddrFrom4([4]byte(netHdr[srcAddrOffset:][:header.IPv4AddressSize])),
+		tcpip.AddrFromSlice(netHdr[dstAddrOffset:][:header.IPv4AddressSize]),
+		tcpip.AddrFromSlice(netHdr[srcAddrOffset:][:header.IPv4AddressSize]),
 		pkt.NetworkProtocolNumber,
 		false /* multicastLoop */)
 	if err != nil {
@@ -365,13 +364,19 @@ func TestTransportReceive(t *testing.T) {
 	}
 
 	{
-		subnet := header.IPv4EmptySubnet
-		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: netip.IPv4Unspecified(), NIC: 1}})
+		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol:          fakeNetNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{1, 0, 0, 0}), fakeDefaultPrefixLen),
+		Protocol: fakeNetNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
+			PrefixLen: fakeDefaultPrefixLen,
+		},
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
@@ -384,7 +389,7 @@ func TestTransportReceive(t *testing.T) {
 		t.Fatalf("NewEndpoint failed: %v", err)
 	}
 
-	if err := ep.Connect(tcpip.FullAddress{Addr: netip.AddrFrom4([4]byte{2, 0, 0, 0})}); err != nil {
+	if err := ep.Connect(tcpip.FullAddress{Addr: tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00"))}); err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
 
@@ -437,13 +442,19 @@ func TestTransportControlReceive(t *testing.T) {
 	}
 
 	{
-		subnet := header.IPv4EmptySubnet
-		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: netip.IPv4Unspecified(), NIC: 1}})
+		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol:          fakeNetNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{1, 0, 0, 0}), fakeDefaultPrefixLen),
+		Protocol: fakeNetNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
+			PrefixLen: fakeDefaultPrefixLen,
+		},
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
@@ -456,7 +467,7 @@ func TestTransportControlReceive(t *testing.T) {
 		t.Fatalf("NewEndpoint failed: %v", err)
 	}
 
-	if err := ep.Connect(tcpip.FullAddress{Addr: netip.AddrFrom4([4]byte{2, 0, 0, 0})}); err != nil {
+	if err := ep.Connect(tcpip.FullAddress{Addr: tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00"))}); err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
 
@@ -515,16 +526,22 @@ func TestTransportSend(t *testing.T) {
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol:          fakeNetNumber,
-		AddressWithPrefix: netip.PrefixFrom(netip.AddrFrom4([4]byte{1, 0, 0, 0}), fakeDefaultPrefixLen),
+		Protocol: fakeNetNumber,
+		AddressWithPrefix: tcpip.AddressWithPrefix{
+			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
+			PrefixLen: fakeDefaultPrefixLen,
+		},
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 
 	{
-		subnet := header.IPv4EmptySubnet
-		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: netip.IPv4Unspecified(), NIC: 1}})
+		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
 	// Create endpoint and bind it.
@@ -534,7 +551,7 @@ func TestTransportSend(t *testing.T) {
 		t.Fatalf("NewEndpoint failed: %v", err)
 	}
 
-	if err := ep.Connect(tcpip.FullAddress{Addr: netip.AddrFrom4([4]byte{2, 0, 0, 0})}); err != nil {
+	if err := ep.Connect(tcpip.FullAddress{Addr: tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00"))}); err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
 

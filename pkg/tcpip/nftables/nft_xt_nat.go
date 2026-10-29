@@ -19,7 +19,6 @@ package nftables
 
 import (
 	"fmt"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
@@ -38,7 +37,7 @@ type natTargetInfo struct {
 	// natType indicates SNAT or DNAT.
 	natType stack.NATType
 	// address is the NAT address.
-	address netip.Addr
+	address tcpip.Address
 	// portsOrIdents specifies the port range to map.
 	portsOrIdents stack.PortOrIdentRange
 	// changePort represents if port should be changed.
@@ -145,11 +144,7 @@ func (info *natTargetInfo) init(name string, tab *Table, flags uint32, minAddrSl
 
 	info.netProto = netProto
 	info.natType = natType
-	address, ok := netip.AddrFromSlice(minAddrSlice)
-	if !ok {
-		return syserr.NewAnnotatedError(syserr.ErrInvalidArgument, fmt.Sprintf("invalid NAT address length: %d", len(minAddrSlice)))
-	}
-	info.address = address
+	info.address = tcpip.AddrFromSlice(minAddrSlice)
 	info.changeAddress = (flags & linux.NF_NAT_RANGE_MAP_IPS) != 0
 	info.changePort = (flags & linux.NF_NAT_RANGE_PROTO_SPECIFIED) != 0
 	info.portsOrIdents = stack.PortOrIdentRange{Start: 0, Size: 1}

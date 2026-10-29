@@ -5,6 +5,11 @@ package(
     licenses = ["notice"],
 )
 
+config_setting(
+    name = "network_plugins",
+    values = {"define": "network_plugins=true"},
+)
+
 go_library(
     name = "cgo",
     srcs = [
@@ -15,12 +20,23 @@ go_library(
         "util_unsafe.go",
     ],
     bazel_cdeps = select({
-        "//external/tools/plugin-stack:plugin_tldk": ["@libpluginstack//:libpluginstack"],
+        ":network_plugins": ["@libpluginstack//:libpluginstack"],
         "//conditions:default": [],
     }),
     bazel_cgo = select({
-        "//external/tools/plugin-stack:plugin_tldk": True,
+        ":network_plugins": True,
         "//conditions:default": False,
+    }),
+    bazel_clinkopts = select({
+        ":network_plugins": ["-L external/libpluginstack"],
+        "//conditions:default": [],
+    }),
+    bazel_copts = select({
+        ":network_plugins": [
+            "-march=native",
+            "-I external/libpluginstack/lib/libtle_glue",
+        ],
+        "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [

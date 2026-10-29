@@ -15,10 +15,10 @@
 package stack
 
 import (
-	"net/netip"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
@@ -273,8 +273,8 @@ type genTCPOpts struct {
 	ackNum      *uint32
 	flags       *header.TCPFlags
 	data        []byte
-	srcAddr     *netip.Addr
-	dstAddr     *netip.Addr
+	srcAddr     *tcpip.Address
+	dstAddr     *tcpip.Address
 	srcPort     *uint16
 	dstPort     *uint16
 }

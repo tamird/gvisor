@@ -17,7 +17,6 @@ package netfilter
 import (
 	"encoding/binary"
 	"fmt"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/bits"
@@ -190,7 +189,7 @@ type redirectTarget struct {
 
 	// addr must be (un)marshalled when reading and writing the target to
 	// userspace, but does not affect behavior.
-	addr netip.Addr
+	addr tcpip.Address
 }
 
 func (rt *redirectTarget) id() targetID {
@@ -394,7 +393,7 @@ func (*redirectTargetMaker) unmarshal(buf []byte, filter stack.IPHeaderFilter) (
 		return nil, syserr.ErrInvalidArgument
 	}
 
-	target.addr = netip.AddrFrom4(nfRange.RangeIPV4.MinIP)
+	target.addr = tcpip.AddrFrom4(nfRange.RangeIPV4.MinIP)
 	target.Port = ntohs(nfRange.RangeIPV4.MinPort)
 
 	return &target, nil
@@ -467,7 +466,7 @@ func (*nfNATTargetMaker) unmarshal(buf []byte, filter stack.IPHeaderFilter) (tar
 			NetworkProtocol: filter.NetworkProtocol(),
 			Port:            ntohs(natRange.MinProto),
 		},
-		addr: netip.AddrFrom16(natRange.MinAddr),
+		addr: tcpip.AddrFrom16(natRange.MinAddr),
 	}
 
 	return &target, nil

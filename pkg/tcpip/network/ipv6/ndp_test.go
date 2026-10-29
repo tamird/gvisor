@@ -16,12 +16,11 @@ package ipv6
 
 import (
 	"math/rand"
-	"net/netip"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
@@ -38,37 +37,37 @@ var _ NDPDispatcher = (*testNDPDispatcher)(nil)
 
 // testNDPDispatcher is an NDPDispatcher only allows default router discovery.
 type testNDPDispatcher struct {
-	addr netip.Addr
+	addr tcpip.Address
 }
 
-func (*testNDPDispatcher) OnDuplicateAddressDetectionResult(tcpip.NICID, netip.Addr, stack.DADResult) {
+func (*testNDPDispatcher) OnDuplicateAddressDetectionResult(tcpip.NICID, tcpip.Address, stack.DADResult) {
 }
 
-func (t *testNDPDispatcher) OnOffLinkRouteUpdated(_ tcpip.NICID, _ netip.Prefix, addr netip.Addr, _ header.NDPRoutePreference) {
+func (t *testNDPDispatcher) OnOffLinkRouteUpdated(_ tcpip.NICID, _ tcpip.Subnet, addr tcpip.Address, _ header.NDPRoutePreference) {
 	t.addr = addr
 }
 
-func (t *testNDPDispatcher) OnOffLinkRouteInvalidated(_ tcpip.NICID, _ netip.Prefix, addr netip.Addr) {
+func (t *testNDPDispatcher) OnOffLinkRouteInvalidated(_ tcpip.NICID, _ tcpip.Subnet, addr tcpip.Address) {
 	t.addr = addr
 }
 
-func (*testNDPDispatcher) OnOnLinkPrefixDiscovered(tcpip.NICID, netip.Prefix) {
+func (*testNDPDispatcher) OnOnLinkPrefixDiscovered(tcpip.NICID, tcpip.Subnet) {
 }
 
-func (*testNDPDispatcher) OnOnLinkPrefixInvalidated(tcpip.NICID, netip.Prefix) {
+func (*testNDPDispatcher) OnOnLinkPrefixInvalidated(tcpip.NICID, tcpip.Subnet) {
 }
 
-func (*testNDPDispatcher) OnAutoGenAddress(tcpip.NICID, netip.Prefix) stack.AddressDispatcher {
+func (*testNDPDispatcher) OnAutoGenAddress(tcpip.NICID, tcpip.AddressWithPrefix) stack.AddressDispatcher {
 	return nil
 }
 
-func (*testNDPDispatcher) OnAutoGenAddressDeprecated(tcpip.NICID, netip.Prefix) {
+func (*testNDPDispatcher) OnAutoGenAddressDeprecated(tcpip.NICID, tcpip.AddressWithPrefix) {
 }
 
-func (*testNDPDispatcher) OnAutoGenAddressInvalidated(tcpip.NICID, netip.Prefix) {
+func (*testNDPDispatcher) OnAutoGenAddressInvalidated(tcpip.NICID, tcpip.AddressWithPrefix) {
 }
 
-func (*testNDPDispatcher) OnRecursiveDNSServerOption(tcpip.NICID, []netip.Addr, time.Duration) {
+func (*testNDPDispatcher) OnRecursiveDNSServerOption(tcpip.NICID, []tcpip.Address, time.Duration) {
 }
 
 func (*testNDPDispatcher) OnDNSSearchListOption(tcpip.NICID, []string, time.Duration) {
@@ -104,7 +103,7 @@ func TestStackNDPEndpointInvalidateDefaultRouter(t *testing.T) {
 		t.Fatalf("got ndpDisp.addr = %s, want = %s", ndpDisp.addr, lladdr1)
 	}
 
-	ndpDisp.addr = netip.Addr{}
+	ndpDisp.addr = tcpip.Address{}
 	ndpEP := ep.(stack.NDPEndpoint)
 	ndpEP.InvalidateDefaultRouter(lladdr1)
 	if ndpDisp.addr != lladdr1 {
@@ -152,7 +151,7 @@ func TestNeighborSolicitationWithSourceLinkLayerOption(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(lladdr0),
+				AddressWithPrefix: lladdr0.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -199,11 +198,11 @@ func TestNeighborSolicitationWithSourceLinkLayerOption(t *testing.T) {
 				t.Fatalf("s.Neighbors(%d, %d): %s", nicID, ProtocolNumber, err)
 			}
 
-			neighborByAddr := make(map[netip.Addr]stack.NeighborEntry)
+			neighborByAddr := make(map[tcpip.Address]stack.NeighborEntry)
 			for _, n := range neighbors {
 				if existing, ok := neighborByAddr[n.Addr]; ok {
-					if existing != n {
-						t.Fatalf("s.Neighbors(%d, %d) returned duplicate neighbor entries: existing=%+v, new=%+v", nicID, ProtocolNumber, existing, n)
+					if diff := cmp.Diff(existing, n); diff != "" {
+						t.Fatalf("s.Neighbors(%d, %d) returned unexpected duplicate neighbor entry (-existing +got):\n%s", nicID, ProtocolNumber, diff)
 					}
 					t.Fatalf("s.Neighbors(%d, %d) returned unexpected duplicate neighbor entry: %#v", nicID, ProtocolNumber, existing)
 				}
@@ -251,13 +250,13 @@ func TestNeighborSolicitationResponse(t *testing.T) {
 	tests := []struct {
 		name                   string
 		nsOpts                 header.NDPOptionsSerializer
-		nsSrc                  netip.Addr
-		nsDst                  netip.Addr
+		nsSrc                  tcpip.Address
+		nsDst                  tcpip.Address
 		nsInvalid              bool
 		naDstLinkAddr          tcpip.LinkAddress
 		naSolicited            bool
-		naSrc                  netip.Addr
-		naDst                  netip.Addr
+		naSrc                  tcpip.Address
+		naDst                  tcpip.Address
 		performsLinkResolution bool
 		forwardingEnabled      bool
 	}{
@@ -426,7 +425,7 @@ func TestNeighborSolicitationResponse(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(nicAddr),
+				AddressWithPrefix: nicAddr.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -504,7 +503,7 @@ func TestNeighborSolicitationResponse(t *testing.T) {
 				want.NetProto = ProtocolNumber
 				want.LocalLinkAddress = nicLinkAddr
 				want.RemoteLinkAddress = header.EthernetAddressFromMulticastIPv6Address(respNSDst)
-				if diff := cmp.Diff(want, p.EgressRoute, cmp.AllowUnexported(want), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+				if diff := cmp.Diff(want, p.EgressRoute, cmp.AllowUnexported(want)); diff != "" {
 					t.Errorf("route info mismatch (-want +got):\n%s", diff)
 				}
 
@@ -640,7 +639,7 @@ func TestNeighborAdvertisementWithTargetLinkLayerOption(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(lladdr0),
+				AddressWithPrefix: lladdr0.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -686,11 +685,11 @@ func TestNeighborAdvertisementWithTargetLinkLayerOption(t *testing.T) {
 				t.Fatalf("s.Neighbors(%d, %d): %s", nicID, ProtocolNumber, err)
 			}
 
-			neighborByAddr := make(map[netip.Addr]stack.NeighborEntry)
+			neighborByAddr := make(map[tcpip.Address]stack.NeighborEntry)
 			for _, n := range neighbors {
 				if existing, ok := neighborByAddr[n.Addr]; ok {
-					if existing != n {
-						t.Fatalf("s.Neighbors(%d, %d) returned duplicate neighbor entries: existing=%+v, new=%+v", nicID, ProtocolNumber, existing, n)
+					if diff := cmp.Diff(existing, n); diff != "" {
+						t.Fatalf("s.Neighbors(%d, %d) returned unexpected duplicate neighbor entry (-existing +got):\n%s", nicID, ProtocolNumber, diff)
 					}
 					t.Fatalf("s.Neighbors(%d, %d) returned unexpected duplicate neighbor entry: %#v", nicID, ProtocolNumber, existing)
 				}
@@ -844,7 +843,10 @@ func TestNDPValidation(t *testing.T) {
 		},
 	}
 
-	subnet := tcpip.FullPrefix(lladdr1)
+	subnet, err := tcpip.NewSubnet(lladdr1, tcpip.MaskFrom(strings.Repeat("\xff", lladdr0.Len())))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, typ := range types {
 		for _, isRouter := range []bool{false, true} {
@@ -872,7 +874,7 @@ func TestNDPValidation(t *testing.T) {
 
 						protocolAddr := tcpip.ProtocolAddress{
 							Protocol:          ProtocolNumber,
-							AddressWithPrefix: tcpip.FullPrefix(lladdr0),
+							AddressWithPrefix: lladdr0.WithPrefix(),
 						}
 						if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 							t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -965,7 +967,7 @@ func TestNDPValidation(t *testing.T) {
 func TestNeighborAdvertisementValidation(t *testing.T) {
 	tests := []struct {
 		name          string
-		ipDstAddr     netip.Addr
+		ipDstAddr     tcpip.Address
 		solicitedFlag bool
 		valid         bool
 	}{
@@ -1009,7 +1011,7 @@ func TestNeighborAdvertisementValidation(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ProtocolNumber,
-				AddressWithPrefix: tcpip.FullPrefix(lladdr0),
+				AddressWithPrefix: lladdr0.WithPrefix(),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -1085,7 +1087,7 @@ func TestNeighborAdvertisementValidation(t *testing.T) {
 func TestRouterAdvertValidation(t *testing.T) {
 	tests := []struct {
 		name            string
-		src             netip.Addr
+		src             tcpip.Address
 		hopLimit        uint8
 		code            header.ICMPv6Code
 		ndpPayload      []byte
@@ -1335,7 +1337,7 @@ func TestCheckDuplicateAddress(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(lladdr0),
+		AddressWithPrefix: lladdr0.WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)

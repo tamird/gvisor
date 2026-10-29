@@ -21,4 +21,5 @@ go_test(
     name = "testutil_test",
     srcs = ["testutil_test.go"],
     embed = [":testutil"],
+    deps = ["//pkg/tcpip"],
 )

@@ -17,7 +17,6 @@ package nftables
 import (
 	"encoding/binary"
 	"fmt"
-	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/log"
@@ -36,7 +35,7 @@ type fib struct {
 }
 
 // fibIPv4AddrRouteType determines the route type of the given IPv4 address.
-func fibIPv4AddrRouteType(st *stack.Stack, addr netip.Addr, nicID tcpip.NICID, rt *stack.Route) uint32 {
+func fibIPv4AddrRouteType(st *stack.Stack, addr tcpip.Address, nicID tcpip.NICID, rt *stack.Route) uint32 {
 	switch {
 	case addr == header.IPv4Any || addr == header.IPv4Broadcast:
 		return uint32(linux.RTN_BROADCAST)
@@ -55,7 +54,7 @@ func fibIPv4AddrRouteType(st *stack.Stack, addr netip.Addr, nicID tcpip.NICID, r
 }
 
 // fibIPv6AddrRouteType determines the route type of the given IPv6 address.
-func fibIPv6AddrRouteType(st *stack.Stack, addr netip.Addr, nicID tcpip.NICID, rt *stack.Route) uint32 {
+func fibIPv6AddrRouteType(st *stack.Stack, addr tcpip.Address, nicID tcpip.NICID, rt *stack.Route) uint32 {
 	switch {
 	case header.IsV6MulticastAddress(addr):
 		return uint32(linux.RTN_MULTICAST)
@@ -75,7 +74,7 @@ func fibIPv6AddrRouteType(st *stack.Stack, addr netip.Addr, nicID tcpip.NICID, r
 // fibGetAddrRouteType determines the route type of the given address.
 // nicID represents the constraint interface ID.
 // rt is the route to 'addr' (if one was found).
-func fibGetAddrRouteType(netProto tcpip.NetworkProtocolNumber, st *stack.Stack, addr netip.Addr, nicID tcpip.NICID, rt *stack.Route) uint32 {
+func fibGetAddrRouteType(netProto tcpip.NetworkProtocolNumber, st *stack.Stack, addr tcpip.Address, nicID tcpip.NICID, rt *stack.Route) uint32 {
 	switch netProto {
 	case header.IPv4ProtocolNumber:
 		return fibIPv4AddrRouteType(st, addr, nicID, rt)
@@ -125,7 +124,7 @@ func fibValidatePktHeader(pkt *stack.PacketBuffer) bool {
 	return true
 }
 
-func fibGetSrcDstAddr(pkt *stack.PacketBuffer) (netip.Addr, netip.Addr, bool) {
+func fibGetSrcDstAddr(pkt *stack.PacketBuffer) (tcpip.Address, tcpip.Address, bool) {
 	switch pkt.NetworkProtocolNumber {
 	case header.IPv4ProtocolNumber:
 		hdr := pkt.NetworkHeader().Slice()
@@ -136,13 +135,13 @@ func fibGetSrcDstAddr(pkt *stack.PacketBuffer) (netip.Addr, netip.Addr, bool) {
 		iph := header.IPv6(hdr)
 		return iph.SourceAddress(), iph.DestinationAddress(), true
 	}
-	return netip.Addr{}, netip.Addr{}, false
+	return tcpip.Address{}, tcpip.Address{}, false
 }
 
 // fibGetOrFindRoute returns a route from the stack. If the route is found in the
 // evalCtx, it is returned directly. Otherwise, the route is found using
 // FindRoute.
-func fibGetOrFindRoute(evalCtx opEvalCtx, srcAddr, dstAddr netip.Addr, netProto tcpip.NetworkProtocolNumber, nicID tcpip.NICID, dAddr bool) (rt *stack.Route, release func(), err tcpip.Error) {
+func fibGetOrFindRoute(evalCtx opEvalCtx, srcAddr, dstAddr tcpip.Address, netProto tcpip.NetworkProtocolNumber, nicID tcpip.NICID, dAddr bool) (rt *stack.Route, release func(), err tcpip.Error) {
 	if dAddr && evalCtx.route != nil {
 		return evalCtx.route, func() {}, nil
 	}
@@ -225,7 +224,7 @@ func (op *fib) evaluateOIF(regs *registerSet, evalCtx opEvalCtx) {
 		if srcAddr == header.IPv4Broadcast || header.IsV4MulticastAddress(srcAddr) ||
 			// Ref: include/linux/in.h:ipv4_is_zeronet()
 			srcAddr == header.IPv4Any {
-			srcAddr = netip.Addr{}
+			srcAddr = tcpip.Address{}
 		}
 	}
 	addr := dstAddr
@@ -255,7 +254,7 @@ func (op *fib) evaluateOIF(regs *registerSet, evalCtx opEvalCtx) {
 
 // fibIPv6SkipICMP returns true if FIB should skip the route lookup.
 // Ref: net/ipv6/netfilter/nft_fib_ipv6.c:nft_fib_v6_skip_icmpv6()
-func fibIPv6SkipICMP(pkt *stack.PacketBuffer, saddr, daddr netip.Addr) bool {
+func fibIPv6SkipICMP(pkt *stack.PacketBuffer, saddr, daddr tcpip.Address) bool {
 	if pkt.TransportProtocolNumber != header.ICMPv6ProtocolNumber {
 		return false
 	}

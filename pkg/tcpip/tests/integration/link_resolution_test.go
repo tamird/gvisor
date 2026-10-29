@@ -17,7 +17,7 @@ package link_resolution_test
 import (
 	"bytes"
 	"fmt"
-	"net/netip"
+	"net"
 	"runtime"
 	"testing"
 	"time"
@@ -80,21 +80,21 @@ func setupStackWithSeparateOpts(t *testing.T, stack1Opts stack.Options, stack2Op
 
 	host1Stack.SetRouteTable([]tcpip.Route{
 		{
-			Destination: utils.Ipv4Addr1.AddressWithPrefix.Masked(),
+			Destination: utils.Ipv4Addr1.AddressWithPrefix.Subnet(),
 			NIC:         host1NICID,
 		},
 		{
-			Destination: utils.Ipv6Addr1.AddressWithPrefix.Masked(),
+			Destination: utils.Ipv6Addr1.AddressWithPrefix.Subnet(),
 			NIC:         host1NICID,
 		},
 	})
 	host2Stack.SetRouteTable([]tcpip.Route{
 		{
-			Destination: utils.Ipv4Addr2.AddressWithPrefix.Masked(),
+			Destination: utils.Ipv4Addr2.AddressWithPrefix.Subnet(),
 			NIC:         host2NICID,
 		},
 		{
-			Destination: utils.Ipv6Addr2.AddressWithPrefix.Masked(),
+			Destination: utils.Ipv6Addr2.AddressWithPrefix.Subnet(),
 			NIC:         host2NICID,
 		},
 	})
@@ -118,14 +118,14 @@ func TestPing(t *testing.T) {
 		name       string
 		transProto tcpip.TransportProtocolNumber
 		netProto   tcpip.NetworkProtocolNumber
-		remoteAddr netip.Addr
+		remoteAddr tcpip.Address
 		icmpBuf    func(*testing.T) []byte
 	}{
 		{
 			name:       "IPv4 Ping",
 			transProto: icmp.ProtocolNumber4,
 			netProto:   ipv4.ProtocolNumber,
-			remoteAddr: utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+			remoteAddr: utils.Ipv4Addr2.AddressWithPrefix.Address,
 			icmpBuf: func(t *testing.T) []byte {
 				data := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
 				hdr := header.ICMPv4(make([]byte, header.ICMPv4MinimumSize+len(data)))
@@ -140,7 +140,7 @@ func TestPing(t *testing.T) {
 			name:       "IPv6 Ping",
 			transProto: icmp.ProtocolNumber6,
 			netProto:   ipv6.ProtocolNumber,
-			remoteAddr: utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+			remoteAddr: utils.Ipv6Addr2.AddressWithPrefix.Address,
 			icmpBuf: func(t *testing.T) []byte {
 				data := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
 				hdr := header.ICMPv6(make([]byte, header.ICMPv6MinimumSize+len(data)))
@@ -200,7 +200,7 @@ func TestPing(t *testing.T) {
 				"ControlMessages",
 				"RemoteAddr.NIC",
 				"RemoteAddr.Port",
-			), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+			)); diff != "" {
 				t.Errorf("ep.Read: unexpected result (-want +got):\n%s", diff)
 			}
 			if diff := cmp.Diff(buf.Bytes()[icmpDataOffset:], icmpBuf[icmpDataOffset:]); diff != "" {
@@ -227,7 +227,7 @@ func TestTCPLinkResolutionFailure(t *testing.T) {
 	tests := []struct {
 		name             string
 		netProto         tcpip.NetworkProtocolNumber
-		remoteAddr       netip.Addr
+		remoteAddr       tcpip.Address
 		expectedWriteErr tcpip.Error
 		sockError        tcpip.SockError
 		transErr         transportError
@@ -235,30 +235,30 @@ func TestTCPLinkResolutionFailure(t *testing.T) {
 		{
 			name:             "IPv4 with resolvable remote",
 			netProto:         ipv4.ProtocolNumber,
-			remoteAddr:       utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:       utils.Ipv4Addr2.AddressWithPrefix.Address,
 			expectedWriteErr: nil,
 		},
 		{
 			name:             "IPv6 with resolvable remote",
 			netProto:         ipv6.ProtocolNumber,
-			remoteAddr:       utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:       utils.Ipv6Addr2.AddressWithPrefix.Address,
 			expectedWriteErr: nil,
 		},
 		{
 			name:             "IPv4 without resolvable remote",
 			netProto:         ipv4.ProtocolNumber,
-			remoteAddr:       utils.Ipv4Addr3.AddressWithPrefix.Addr(),
+			remoteAddr:       utils.Ipv4Addr3.AddressWithPrefix.Address,
 			expectedWriteErr: &tcpip.ErrHostUnreachable{},
 			sockError: tcpip.SockError{
 				Err: &tcpip.ErrHostUnreachable{},
 				Dst: tcpip.FullAddress{
 					NIC:  host1NICID,
-					Addr: utils.Ipv4Addr3.AddressWithPrefix.Addr(),
+					Addr: utils.Ipv4Addr3.AddressWithPrefix.Address,
 					Port: 1234,
 				},
 				Offender: tcpip.FullAddress{
 					NIC:  host1NICID,
-					Addr: utils.Ipv4Addr1.AddressWithPrefix.Addr(),
+					Addr: utils.Ipv4Addr1.AddressWithPrefix.Address,
 				},
 				NetProto: ipv4.ProtocolNumber,
 			},
@@ -272,18 +272,18 @@ func TestTCPLinkResolutionFailure(t *testing.T) {
 		{
 			name:             "IPv6 without resolvable remote",
 			netProto:         ipv6.ProtocolNumber,
-			remoteAddr:       utils.Ipv6Addr3.AddressWithPrefix.Addr(),
+			remoteAddr:       utils.Ipv6Addr3.AddressWithPrefix.Address,
 			expectedWriteErr: &tcpip.ErrHostUnreachable{},
 			sockError: tcpip.SockError{
 				Err: &tcpip.ErrHostUnreachable{},
 				Dst: tcpip.FullAddress{
 					NIC:  host1NICID,
-					Addr: utils.Ipv6Addr3.AddressWithPrefix.Addr(),
+					Addr: utils.Ipv6Addr3.AddressWithPrefix.Address,
 					Port: 1234,
 				},
 				Offender: tcpip.FullAddress{
 					NIC:  host1NICID,
-					Addr: utils.Ipv6Addr1.AddressWithPrefix.Addr(),
+					Addr: utils.Ipv6Addr1.AddressWithPrefix.Address,
 				},
 				NetProto: ipv6.ProtocolNumber,
 			},
@@ -381,7 +381,6 @@ func TestTCPLinkResolutionFailure(t *testing.T) {
 			defer sockErr.Payload.Release()
 
 			sockErrCmpOpts := []cmp.Option{
-				cmpopts.EquateComparable(netip.Addr{}),
 				cmpopts.IgnoreUnexported(tcpip.SockError{}),
 				cmp.Comparer(func(a, b tcpip.Error) bool {
 					// tcpip.Error holds an unexported field but the errors netstack uses
@@ -436,15 +435,15 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 	)
 	outgoingLinkAddr := tcptestutil.MustParseLink("02:03:03:04:05:06")
 
-	rxICMPv4EchoRequest := func(e *channel.Endpoint, src, dst netip.Addr) {
+	rxICMPv4EchoRequest := func(e *channel.Endpoint, src, dst tcpip.Address) {
 		utils.RxICMPv4EchoRequest(e, src, dst, ttl)
 	}
 
-	rxICMPv6EchoRequest := func(e *channel.Endpoint, src, dst netip.Addr) {
+	rxICMPv6EchoRequest := func(e *channel.Endpoint, src, dst tcpip.Address) {
 		utils.RxICMPv6EchoRequest(e, src, dst, ttl)
 	}
 
-	arpChecker := func(t *testing.T, request *stack.PacketBuffer, src, dst netip.Addr) {
+	arpChecker := func(t *testing.T, request *stack.PacketBuffer, src, dst tcpip.Address) {
 		if request.NetworkProtocolNumber != arp.ProtocolNumber {
 			t.Errorf("got request.NetworkProtocolNumber = %d, want = %d", request.NetworkProtocolNumber, arp.ProtocolNumber)
 		}
@@ -458,15 +457,15 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 		if got := tcpip.LinkAddress(rep.HardwareAddressSender()); got != outgoingLinkAddr {
 			t.Errorf("got HardwareAddressSender = %s, want = %s", got, outgoingLinkAddr)
 		}
-		if got := netip.AddrFrom4([4]byte(rep.ProtocolAddressSender())); got != src {
+		if got := tcpip.AddrFromSlice(rep.ProtocolAddressSender()); got != src {
 			t.Errorf("got ProtocolAddressSender = %s, want = %s", got, src)
 		}
-		if got := netip.AddrFrom4([4]byte(rep.ProtocolAddressTarget())); got != dst {
+		if got := tcpip.AddrFromSlice(rep.ProtocolAddressTarget()); got != dst {
 			t.Errorf("got ProtocolAddressTarget = %s, want = %s", got, dst)
 		}
 	}
 
-	ndpChecker := func(t *testing.T, request *stack.PacketBuffer, src, dst netip.Addr) {
+	ndpChecker := func(t *testing.T, request *stack.PacketBuffer, src, dst tcpip.Address) {
 		if request.NetworkProtocolNumber != header.IPv6ProtocolNumber {
 			t.Fatalf("got Proto = %d, want = %d", request.NetworkProtocolNumber, header.IPv6ProtocolNumber)
 		}
@@ -487,7 +486,7 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 			))
 	}
 
-	icmpv4Checker := func(t *testing.T, v *buffer.View, src, dst netip.Addr) {
+	icmpv4Checker := func(t *testing.T, v *buffer.View, src, dst tcpip.Address) {
 		checker.IPv4(t, v,
 			checker.SrcAddr(src),
 			checker.DstAddr(dst),
@@ -500,7 +499,7 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 		)
 	}
 
-	icmpv6Checker := func(t *testing.T, v *buffer.View, src, dst netip.Addr) {
+	icmpv6Checker := func(t *testing.T, v *buffer.View, src, dst tcpip.Address) {
 		checker.IPv6(t, v,
 			checker.SrcAddr(src),
 			checker.DstAddr(dst),
@@ -516,14 +515,14 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 		name                         string
 		networkProtocolFactory       []stack.NetworkProtocolFactory
 		networkProtocolNumber        tcpip.NetworkProtocolNumber
-		sourceAddr                   netip.Addr
-		destAddr                     netip.Addr
-		incomingAddr                 netip.Prefix
-		outgoingAddr                 netip.Prefix
+		sourceAddr                   tcpip.Address
+		destAddr                     tcpip.Address
+		incomingAddr                 tcpip.AddressWithPrefix
+		outgoingAddr                 tcpip.AddressWithPrefix
 		transportProtocol            func(*stack.Stack) stack.TransportProtocol
-		rx                           func(*channel.Endpoint, netip.Addr, netip.Addr)
-		linkResolutionRequestChecker func(*testing.T, *stack.PacketBuffer, netip.Addr, netip.Addr)
-		icmpReplyChecker             func(*testing.T, *buffer.View, netip.Addr, netip.Addr)
+		rx                           func(*channel.Endpoint, tcpip.Address, tcpip.Address)
+		linkResolutionRequestChecker func(*testing.T, *stack.PacketBuffer, tcpip.Address, tcpip.Address)
+		icmpReplyChecker             func(*testing.T, *buffer.View, tcpip.Address, tcpip.Address)
 		mtu                          uint32
 	}{
 		{
@@ -532,10 +531,14 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 			networkProtocolNumber:  header.IPv4ProtocolNumber,
 			sourceAddr:             tcptestutil.MustParse4("10.0.0.2"),
 			destAddr:               tcptestutil.MustParse4("11.0.0.2"),
-			incomingAddr:           netip.PrefixFrom(netip.AddrFrom4([4]byte{10, 0, 0, 1}), 8),
-
-			outgoingAddr: netip.PrefixFrom(netip.AddrFrom4([4]byte{11, 0, 0, 1}), 8),
-
+			incomingAddr: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("10.0.0.1").To4()),
+				PrefixLen: 8,
+			},
+			outgoingAddr: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("11.0.0.1").To4()),
+				PrefixLen: 8,
+			},
 			transportProtocol:            icmp.NewProtocol4,
 			linkResolutionRequestChecker: arpChecker,
 			icmpReplyChecker:             icmpv4Checker,
@@ -548,10 +551,14 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 			networkProtocolNumber:  header.IPv6ProtocolNumber,
 			sourceAddr:             tcptestutil.MustParse6("10::2"),
 			destAddr:               tcptestutil.MustParse6("11::2"),
-			incomingAddr:           netip.PrefixFrom(netip.MustParseAddr("10::1"), 64),
-
-			outgoingAddr: netip.PrefixFrom(netip.MustParseAddr("11::1"), 64),
-
+			incomingAddr: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("10::1").To16()),
+				PrefixLen: 64,
+			},
+			outgoingAddr: tcpip.AddressWithPrefix{
+				Address:   tcpip.AddrFromSlice(net.ParseIP("11::1").To16()),
+				PrefixLen: 64,
+			},
 			transportProtocol:            icmp.NewProtocol6,
 			linkResolutionRequestChecker: ndpChecker,
 			icmpReplyChecker:             icmpv6Checker,
@@ -599,11 +606,11 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 
 			s.SetRouteTable([]tcpip.Route{
 				{
-					Destination: test.incomingAddr.Masked(),
+					Destination: test.incomingAddr.Subnet(),
 					NIC:         incomingNICID,
 				},
 				{
-					Destination: test.outgoingAddr.Masked(),
+					Destination: test.outgoingAddr.Subnet(),
 					NIC:         outgoingNICID,
 				},
 			})
@@ -627,7 +634,7 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 					t.Fatal("expected ARP packet through outgoing NIC")
 				}
 
-				test.linkResolutionRequestChecker(t, request, test.outgoingAddr.Addr(), test.destAddr)
+				test.linkResolutionRequestChecker(t, request, test.outgoingAddr.Address, test.destAddr)
 				request.DecRef()
 
 				// Advance the clock the span of one request timeout.
@@ -645,7 +652,7 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 
 			payload := stack.PayloadSince(reply.NetworkHeader())
 			defer payload.Release()
-			test.icmpReplyChecker(t, payload, test.incomingAddr.Addr(), test.sourceAddr)
+			test.icmpReplyChecker(t, payload, test.incomingAddr.Address, test.sourceAddr)
 			reply.DecRef()
 
 			// Since link resolution failed, we don't expect the packet to be
@@ -671,45 +678,45 @@ func TestGetLinkAddress(t *testing.T) {
 	tests := []struct {
 		name                  string
 		netProto              tcpip.NetworkProtocolNumber
-		remoteAddr, localAddr netip.Addr
+		remoteAddr, localAddr tcpip.Address
 		expectedErr           tcpip.Error
 	}{
 		{
 			name:        "IPv4 resolvable",
 			netProto:    ipv4.ProtocolNumber,
-			remoteAddr:  utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:  utils.Ipv4Addr2.AddressWithPrefix.Address,
 			expectedErr: nil,
 		},
 		{
 			name:        "IPv6 resolvable",
 			netProto:    ipv6.ProtocolNumber,
-			remoteAddr:  utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:  utils.Ipv6Addr2.AddressWithPrefix.Address,
 			expectedErr: nil,
 		},
 		{
 			name:        "IPv4 not resolvable",
 			netProto:    ipv4.ProtocolNumber,
-			remoteAddr:  utils.Ipv4Addr3.AddressWithPrefix.Addr(),
+			remoteAddr:  utils.Ipv4Addr3.AddressWithPrefix.Address,
 			expectedErr: &tcpip.ErrTimeout{},
 		},
 		{
 			name:        "IPv6 not resolvable",
 			netProto:    ipv6.ProtocolNumber,
-			remoteAddr:  utils.Ipv6Addr3.AddressWithPrefix.Addr(),
+			remoteAddr:  utils.Ipv6Addr3.AddressWithPrefix.Address,
 			expectedErr: &tcpip.ErrTimeout{},
 		},
 		{
 			name:        "IPv4 bad local address",
 			netProto:    ipv4.ProtocolNumber,
-			remoteAddr:  utils.Ipv4Addr2.AddressWithPrefix.Addr(),
-			localAddr:   utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:  utils.Ipv4Addr2.AddressWithPrefix.Address,
+			localAddr:   utils.Ipv4Addr2.AddressWithPrefix.Address,
 			expectedErr: &tcpip.ErrBadLocalAddress{},
 		},
 		{
 			name:        "IPv6 bad local address",
 			netProto:    ipv6.ProtocolNumber,
-			remoteAddr:  utils.Ipv6Addr2.AddressWithPrefix.Addr(),
-			localAddr:   utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:  utils.Ipv6Addr2.AddressWithPrefix.Address,
+			localAddr:   utils.Ipv6Addr2.AddressWithPrefix.Address,
 			expectedErr: &tcpip.ErrBadLocalAddress{},
 		},
 	}
@@ -765,8 +772,8 @@ func TestRouteResolvedFields(t *testing.T) {
 	tests := []struct {
 		name                  string
 		netProto              tcpip.NetworkProtocolNumber
-		localAddr             netip.Addr
-		remoteAddr            netip.Addr
+		localAddr             tcpip.Address
+		remoteAddr            tcpip.Address
 		immediatelyResolvable bool
 		expectedErr           tcpip.Error
 		expectedLinkAddr      tcpip.LinkAddress
@@ -774,7 +781,7 @@ func TestRouteResolvedFields(t *testing.T) {
 		{
 			name:                  "IPv4 immediately resolvable",
 			netProto:              ipv4.ProtocolNumber,
-			localAddr:             utils.Ipv4Addr1.AddressWithPrefix.Addr(),
+			localAddr:             utils.Ipv4Addr1.AddressWithPrefix.Address,
 			remoteAddr:            header.IPv4AllSystems,
 			immediatelyResolvable: true,
 			expectedErr:           nil,
@@ -783,7 +790,7 @@ func TestRouteResolvedFields(t *testing.T) {
 		{
 			name:                  "IPv6 immediately resolvable",
 			netProto:              ipv6.ProtocolNumber,
-			localAddr:             utils.Ipv6Addr1.AddressWithPrefix.Addr(),
+			localAddr:             utils.Ipv6Addr1.AddressWithPrefix.Address,
 			remoteAddr:            header.IPv6AllNodesMulticastAddress,
 			immediatelyResolvable: true,
 			expectedErr:           nil,
@@ -792,8 +799,8 @@ func TestRouteResolvedFields(t *testing.T) {
 		{
 			name:                  "IPv4 resolvable",
 			netProto:              ipv4.ProtocolNumber,
-			localAddr:             utils.Ipv4Addr1.AddressWithPrefix.Addr(),
-			remoteAddr:            utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+			localAddr:             utils.Ipv4Addr1.AddressWithPrefix.Address,
+			remoteAddr:            utils.Ipv4Addr2.AddressWithPrefix.Address,
 			immediatelyResolvable: false,
 			expectedErr:           nil,
 			expectedLinkAddr:      utils.LinkAddr2,
@@ -801,8 +808,8 @@ func TestRouteResolvedFields(t *testing.T) {
 		{
 			name:                  "IPv6 resolvable",
 			netProto:              ipv6.ProtocolNumber,
-			localAddr:             utils.Ipv6Addr1.AddressWithPrefix.Addr(),
-			remoteAddr:            utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+			localAddr:             utils.Ipv6Addr1.AddressWithPrefix.Address,
+			remoteAddr:            utils.Ipv6Addr2.AddressWithPrefix.Address,
 			immediatelyResolvable: false,
 			expectedErr:           nil,
 			expectedLinkAddr:      utils.LinkAddr2,
@@ -810,16 +817,16 @@ func TestRouteResolvedFields(t *testing.T) {
 		{
 			name:                  "IPv4 not resolvable",
 			netProto:              ipv4.ProtocolNumber,
-			localAddr:             utils.Ipv4Addr1.AddressWithPrefix.Addr(),
-			remoteAddr:            utils.Ipv4Addr3.AddressWithPrefix.Addr(),
+			localAddr:             utils.Ipv4Addr1.AddressWithPrefix.Address,
+			remoteAddr:            utils.Ipv4Addr3.AddressWithPrefix.Address,
 			immediatelyResolvable: false,
 			expectedErr:           &tcpip.ErrTimeout{},
 		},
 		{
 			name:                  "IPv6 not resolvable",
 			netProto:              ipv6.ProtocolNumber,
-			localAddr:             utils.Ipv6Addr1.AddressWithPrefix.Addr(),
-			remoteAddr:            utils.Ipv6Addr3.AddressWithPrefix.Addr(),
+			localAddr:             utils.Ipv6Addr1.AddressWithPrefix.Address,
+			remoteAddr:            utils.Ipv6Addr3.AddressWithPrefix.Address,
 			immediatelyResolvable: false,
 			expectedErr:           &tcpip.ErrTimeout{},
 		},
@@ -871,7 +878,7 @@ func TestRouteResolvedFields(t *testing.T) {
 
 				select {
 				case got := <-ch:
-					if diff := cmp.Diff(stack.ResolvedFieldsResult{RouteInfo: wantRouteInfo, Err: test.expectedErr}, got, cmp.AllowUnexported(stack.RouteInfo{}), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+					if diff := cmp.Diff(stack.ResolvedFieldsResult{RouteInfo: wantRouteInfo, Err: test.expectedErr}, got, cmp.AllowUnexported(stack.RouteInfo{})); diff != "" {
 						t.Errorf("route resolve result mismatch (-want +got):\n%s", diff)
 					}
 				default:
@@ -893,7 +900,7 @@ func TestRouteResolvedFields(t *testing.T) {
 			}
 			select {
 			case routeResolveRes := <-ch:
-				if diff := cmp.Diff(stack.ResolvedFieldsResult{RouteInfo: wantRouteInfo, Err: nil}, routeResolveRes, cmp.AllowUnexported(stack.RouteInfo{}), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+				if diff := cmp.Diff(stack.ResolvedFieldsResult{RouteInfo: wantRouteInfo, Err: nil}, routeResolveRes, cmp.AllowUnexported(stack.RouteInfo{})); diff != "" {
 					t.Errorf("route resolve result from resolved route mismatch (-want +got):\n%s", diff)
 				}
 			default:
@@ -912,19 +919,19 @@ func TestWritePacketsLinkResolution(t *testing.T) {
 	tests := []struct {
 		name             string
 		netProto         tcpip.NetworkProtocolNumber
-		remoteAddr       netip.Addr
+		remoteAddr       tcpip.Address
 		expectedWriteErr tcpip.Error
 	}{
 		{
 			name:             "IPv4",
 			netProto:         ipv4.ProtocolNumber,
-			remoteAddr:       utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:       utils.Ipv4Addr2.AddressWithPrefix.Address,
 			expectedWriteErr: nil,
 		},
 		{
 			name:             "IPv6",
 			netProto:         ipv6.ProtocolNumber,
-			remoteAddr:       utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:       utils.Ipv6Addr2.AddressWithPrefix.Address,
 			expectedWriteErr: nil,
 		},
 	}
@@ -954,7 +961,7 @@ func TestWritePacketsLinkResolution(t *testing.T) {
 				t.Fatalf("serverEP.Bind(%#v): %s", serverAddr, err)
 			}
 
-			r, err := host1Stack.FindRoute(host1NICID, netip.Addr{}, test.remoteAddr, test.netProto, false /* multicastLoop */)
+			r, err := host1Stack.FindRoute(host1NICID, tcpip.Address{}, test.remoteAddr, test.netProto, false /* multicastLoop */)
 			if err != nil {
 				t.Fatalf("host1Stack.FindRoute(%d, '', %s, %d, false): %s", host1NICID, test.remoteAddr, test.netProto, err)
 			}
@@ -1082,7 +1089,7 @@ func (d *nudDispatcher) OnNeighborRemoved(nicID tcpip.NICID, entry stack.Neighbo
 }
 
 func (d *nudDispatcher) expectEvent(want eventInfo) error {
-	if diff := cmp.Diff(want, <-d.c, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt"), cmpopts.EquateComparable(netip.Addr{})); diff != "" {
+	if diff := cmp.Diff(want, <-d.c, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt")); diff != "" {
 		return fmt.Errorf("got invalid event (-want +got):\n%s", diff)
 	}
 	return nil
@@ -1094,16 +1101,16 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 	tests := []struct {
 		name            string
 		netProto        tcpip.NetworkProtocolNumber
-		remoteAddr      netip.Addr
-		neighborAddr    netip.Addr
+		remoteAddr      tcpip.Address
+		neighborAddr    tcpip.Address
 		getEndpoints    func(*testing.T, *stack.Stack, *stack.Stack, *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{})
 		isHost1Listener bool
 	}{
 		{
 			name:         "IPv4 active connection through neighbor",
 			netProto:     ipv4.ProtocolNumber,
-			remoteAddr:   utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.Host2IPv4Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, _, host2Stack *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1127,8 +1134,8 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 		{
 			name:         "IPv6 active connection through neighbor",
 			netProto:     ipv6.ProtocolNumber,
-			remoteAddr:   utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.Host2IPv6Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, _, host2Stack *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1152,8 +1159,8 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 		{
 			name:         "IPv4 active connection to neighbor",
 			netProto:     ipv4.ProtocolNumber,
-			remoteAddr:   utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, routerStack, _ *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1177,8 +1184,8 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 		{
 			name:         "IPv6 active connection to neighbor",
 			netProto:     ipv6.ProtocolNumber,
-			remoteAddr:   utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, routerStack, _ *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1202,8 +1209,8 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 		{
 			name:         "IPv4 passive connection to neighbor",
 			netProto:     ipv4.ProtocolNumber,
-			remoteAddr:   utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.Host1IPv4Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, routerStack, _ *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1228,8 +1235,8 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 		{
 			name:         "IPv6 passive connection to neighbor",
 			netProto:     ipv6.ProtocolNumber,
-			remoteAddr:   utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.Host1IPv6Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, routerStack, _ *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1254,8 +1261,8 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 		{
 			name:         "IPv4 passive connection through neighbor",
 			netProto:     ipv4.ProtocolNumber,
-			remoteAddr:   utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.Host1IPv4Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, _, host2Stack *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1280,8 +1287,8 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 		{
 			name:         "IPv6 passive connection through neighbor",
 			netProto:     ipv6.ProtocolNumber,
-			remoteAddr:   utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
-			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
+			remoteAddr:   utils.Host1IPv6Addr.AddressWithPrefix.Address,
+			neighborAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
 			getEndpoints: func(t *testing.T, host1Stack, _, host2Stack *stack.Stack) (tcpip.Endpoint, <-chan struct{}, tcpip.Endpoint, <-chan struct{}) {
 				var listenerWQ waiter.Queue
 				listenerWE, listenerCH := waiter.NewChannelEntry(waiter.EventIn)
@@ -1330,7 +1337,7 @@ func TestTCPConfirmNeighborReachability(t *testing.T) {
 			// Add a reachable dynamic entry to our neighbor table for the remote.
 			{
 				ch := make(chan stack.LinkResolutionResult, 1)
-				err := host1Stack.GetLinkAddress(utils.Host1NICID, test.neighborAddr, netip.Addr{}, test.netProto, func(r stack.LinkResolutionResult) {
+				err := host1Stack.GetLinkAddress(utils.Host1NICID, test.neighborAddr, tcpip.Address{}, test.netProto, func(r stack.LinkResolutionResult) {
 					ch <- r
 				})
 				if _, ok := err.(*tcpip.ErrWouldBlock); !ok {
@@ -1524,49 +1531,49 @@ func TestDAD(t *testing.T) {
 		name           string
 		netProto       tcpip.NetworkProtocolNumber
 		dadNetProto    tcpip.NetworkProtocolNumber
-		remoteAddr     netip.Addr
+		remoteAddr     tcpip.Address
 		expectedResult stack.DADResult
 	}{
 		{
 			name:           "IPv4 own address",
 			netProto:       ipv4.ProtocolNumber,
 			dadNetProto:    arp.ProtocolNumber,
-			remoteAddr:     utils.Ipv4Addr1.AddressWithPrefix.Addr(),
+			remoteAddr:     utils.Ipv4Addr1.AddressWithPrefix.Address,
 			expectedResult: &stack.DADSucceeded{},
 		},
 		{
 			name:           "IPv6 own address",
 			netProto:       ipv6.ProtocolNumber,
 			dadNetProto:    ipv6.ProtocolNumber,
-			remoteAddr:     utils.Ipv6Addr1.AddressWithPrefix.Addr(),
+			remoteAddr:     utils.Ipv6Addr1.AddressWithPrefix.Address,
 			expectedResult: &stack.DADSucceeded{},
 		},
 		{
 			name:           "IPv4 duplicate address",
 			netProto:       ipv4.ProtocolNumber,
 			dadNetProto:    arp.ProtocolNumber,
-			remoteAddr:     utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:     utils.Ipv4Addr2.AddressWithPrefix.Address,
 			expectedResult: &stack.DADDupAddrDetected{HolderLinkAddress: utils.LinkAddr2},
 		},
 		{
 			name:           "IPv6 duplicate address",
 			netProto:       ipv6.ProtocolNumber,
 			dadNetProto:    ipv6.ProtocolNumber,
-			remoteAddr:     utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+			remoteAddr:     utils.Ipv6Addr2.AddressWithPrefix.Address,
 			expectedResult: &stack.DADDupAddrDetected{HolderLinkAddress: utils.LinkAddr2},
 		},
 		{
 			name:           "IPv4 no duplicate address",
 			netProto:       ipv4.ProtocolNumber,
 			dadNetProto:    arp.ProtocolNumber,
-			remoteAddr:     utils.Ipv4Addr3.AddressWithPrefix.Addr(),
+			remoteAddr:     utils.Ipv4Addr3.AddressWithPrefix.Address,
 			expectedResult: &stack.DADSucceeded{},
 		},
 		{
 			name:           "IPv6 no duplicate address",
 			netProto:       ipv6.ProtocolNumber,
 			dadNetProto:    ipv6.ProtocolNumber,
-			remoteAddr:     utils.Ipv6Addr3.AddressWithPrefix.Addr(),
+			remoteAddr:     utils.Ipv6Addr3.AddressWithPrefix.Address,
 			expectedResult: &stack.DADSucceeded{},
 		},
 	}
@@ -1782,19 +1789,19 @@ func TestUpdateCachedNeighborEntry(t *testing.T) {
 
 	host1Stack.SetRouteTable([]tcpip.Route{
 		{
-			Destination: utils.Ipv4Addr1.AddressWithPrefix.Masked(),
+			Destination: utils.Ipv4Addr1.AddressWithPrefix.Subnet(),
 			NIC:         host1NICID,
 		},
 	})
 	host2Stack.SetRouteTable([]tcpip.Route{
 		{
-			Destination: utils.Ipv4Addr2.AddressWithPrefix.Masked(),
+			Destination: utils.Ipv4Addr2.AddressWithPrefix.Subnet(),
 			NIC:         host2NICID,
 		},
 	})
 
-	localAddr := utils.Ipv4Addr1.AddressWithPrefix.Addr()
-	neighborAddr := utils.Ipv4Addr2.AddressWithPrefix.Addr()
+	localAddr := utils.Ipv4Addr1.AddressWithPrefix.Address
+	neighborAddr := utils.Ipv4Addr2.AddressWithPrefix.Address
 
 	// Obtain a route to a neighbor.
 	r, err := host1Stack.FindRoute(host1NICID, localAddr, neighborAddr, header.IPv4ProtocolNumber, false)

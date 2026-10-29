@@ -19,7 +19,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/sync"
@@ -177,7 +176,7 @@ func (e *Endpoint) newHandshake() (h *handshake) {
 	// Store reference to handshake state in endpoint.
 	e.h = h
 	// By the time handshake is created, e.ID is already initialized.
-	e.TSOffset = e.protocol.tsOffset(e.ID.Local.Addr(), e.ID.Remote.Addr())
+	e.TSOffset = e.protocol.tsOffset(e.ID.LocalAddress, e.ID.RemoteAddress)
 	timer, err := newBackoffTimer(h.ep.stack.Clock(), InitialRTO, MaxRTO, timerHandler(e, h.retransmitHandlerLocked))
 	if err != nil {
 		panic(fmt.Sprintf("newBackOffTimer(_, %s, %s, _) failed: %s", InitialRTO, MaxRTO, err))
@@ -230,12 +229,12 @@ func generateSecureISN(id stack.TransportEndpointID, clock tcpip.Clock, seed [16
 	//
 	// It never returns an error.
 	_, _ = isnHasher.Write(seed[:])
-	_, _ = isnHasher.Write(id.Local.Addr().AsSlice())
-	_, _ = isnHasher.Write(id.Remote.Addr().AsSlice())
+	_, _ = isnHasher.Write(id.LocalAddress.AsSlice())
+	_, _ = isnHasher.Write(id.RemoteAddress.AsSlice())
 	portBuf := make([]byte, 2)
-	binary.LittleEndian.PutUint16(portBuf, id.Local.Port())
+	binary.LittleEndian.PutUint16(portBuf, id.LocalPort)
 	_, _ = isnHasher.Write(portBuf)
-	binary.LittleEndian.PutUint16(portBuf, id.Remote.Port())
+	binary.LittleEndian.PutUint16(portBuf, id.RemotePort)
 	_, _ = isnHasher.Write(portBuf)
 	// The time period here is 64ns. This is similar to what linux uses
 	// generate a sequence number that overlaps less than one
@@ -574,19 +573,13 @@ func (h *handshake) processSegments() tcpip.Error {
 func (h *handshake) start() {
 	h.startTime = h.ep.stack.Clock().NowMonotonic()
 	h.ep.amss = calculateAdvertisedMSS(h.ep.userMSS, h.ep.route)
-	var sackEnabled tcpip.TCPSACKEnabled
-	if err := h.ep.stack.TransportProtocolOption(ProtocolNumber, &sackEnabled); err != nil {
-		// If stack returned an error when checking for SACKEnabled
-		// status then just default to switching off SACK negotiation.
-		sackEnabled = false
-	}
 
 	synOpts := header.TCPSynOptions{
 		WS:            h.rcvWndScale,
 		TS:            true,
 		TSVal:         h.ep.tsValNow(),
 		TSEcr:         h.ep.recentTimestamp(),
-		SACKPermitted: bool(sackEnabled),
+		SACKPermitted: h.ep.protocol.sackPermitted(),
 		MSS:           h.ep.amss,
 	}
 
@@ -594,7 +587,7 @@ func (h *handshake) start() {
 	// send the TS/SACK option when we received the TS/SACK in the initial SYN.
 	if h.state == handshakeSynRcvd {
 		synOpts.TS = h.ep.SendTSOk
-		synOpts.SACKPermitted = h.ep.SACKPermitted && bool(sackEnabled)
+		synOpts.SACKPermitted = synOpts.SACKPermitted && h.ep.SACKPermitted
 		if h.sndWndScale < 0 {
 			// Disable window scaling if the peer did not send us
 			// the window scaling option.
@@ -873,8 +866,8 @@ func buildTCPHdr(r *stack.Route, tf tcpFields, pkt *stack.PacketBuffer, gso stac
 	tcp := header.TCP(pkt.TransportHeader().Push(header.TCPMinimumSize + optLen))
 	pkt.TransportProtocolNumber = header.TCPProtocolNumber
 	tcp.Encode(&header.TCPFields{
-		SrcPort:    tf.id.Local.Port(),
-		DstPort:    tf.id.Remote.Port(),
+		SrcPort:    tf.id.LocalPort,
+		DstPort:    tf.id.RemotePort,
 		SeqNum:     uint32(tf.seq),
 		AckNum:     uint32(tf.ack),
 		DataOffset: uint8(header.TCPMinimumSize + optLen),
@@ -1165,7 +1158,7 @@ func (e *Endpoint) transitionToStateCloseLocked() {
 // to any other listening endpoint. We reply with RST if we cannot find one.
 func (e *Endpoint) tryDeliverSegmentFromClosedEndpoint(s *segment) {
 	ep := e.stack.FindTransportEndpoint(e.NetProto, e.TransProto, e.TransportEndpointInfo.ID, s.pkt.NICID)
-	if ep == nil && e.NetProto == header.IPv6ProtocolNumber && e.TransportEndpointInfo.ID.Local.Addr().Unmap().Is4() {
+	if ep == nil && e.NetProto == header.IPv6ProtocolNumber && e.TransportEndpointInfo.ID.LocalAddress.To4() != (tcpip.Address{}) {
 		// Dual-stack socket, try IPv4.
 		ep = e.stack.FindTransportEndpoint(
 			header.IPv4ProtocolNumber,
@@ -1514,12 +1507,13 @@ func (e *Endpoint) handleTimeWaitSegments() (extendTimeWait bool, reuseTW func()
 		if newSyn {
 			info := e.TransportEndpointInfo
 			newID := info.ID
-			newID.Remote = netip.AddrPort{}
+			newID.RemoteAddress = tcpip.Address{}
+			newID.RemotePort = 0
 			netProtos := []tcpip.NetworkProtocolNumber{info.NetProto}
 			// If the local address is an IPv4 address then also
 			// look for IPv6 dual stack endpoints that might be
 			// listening on the local address.
-			if newID.Local.Addr().Unmap().Is4() {
+			if newID.LocalAddress.To4() != (tcpip.Address{}) {
 				netProtos = []tcpip.NetworkProtocolNumber{header.IPv4ProtocolNumber, header.IPv6ProtocolNumber}
 			}
 			for _, netProto := range netProtos {

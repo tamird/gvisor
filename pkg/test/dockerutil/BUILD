@@ -1,5 +1,3 @@
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("//test/docker:config.bzl", "RUNTIME_SUITES")
 load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
@@ -23,16 +21,13 @@ go_library(
     testonly = 1,
     srcs = [
         "container.go",
-        "daemon.go",
         "dockerutil.go",
         "exec.go",
         "gpu.go",
         "profile.go",
-        "runtime.go",
     ],
     embedsrcs = [
         ":run_sniffer_bin",  # keep
-        ":runtime_variants",  # keep
     ],
     nogo = False,
     visibility = ["//:sandbox"],
@@ -40,8 +35,6 @@ go_library(
         "//pkg/sync",
         "//pkg/test/testutil",
         "//runsc/cgroup",
-        "//runsc/specutils",
-        "@com_github_cenkalti_backoff//:go_default_library",
         "@com_github_docker_docker//api/types:go_default_library",
         "@com_github_docker_docker//api/types/checkpoint:go_default_library",
         "@com_github_docker_docker//api/types/container:go_default_library",
@@ -50,16 +43,8 @@ go_library(
         "@com_github_docker_docker//client:go_default_library",
         "@com_github_docker_docker//pkg/stdcopy:go_default_library",
         "@com_github_docker_go_connections//nat:go_default_library",
-        "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
-        "@com_github_vishvananda_netlink//:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
-)
-
-write_file(
-    name = "runtime_variants",
-    out = "runtime_variants.json",
-    content = [json.encode(RUNTIME_SUITES)],
 )
 
 go_test(

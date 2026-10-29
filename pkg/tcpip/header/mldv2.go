@@ -18,8 +18,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"net/netip"
 	"time"
+
+	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
 const (
@@ -51,7 +52,7 @@ var (
 	//   address of FF02:0:0:0:0:0:0:16, to which all MLDv2-capable multicast
 	//   routers listen (see section 11 for IANA considerations related to
 	//   this special destination address).
-	MLDv2RoutersAddress = netip.AddrFrom16([16]byte{0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16})
+	MLDv2RoutersAddress = tcpip.AddrFrom16([16]byte{0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16})
 )
 
 // MLDv2Query is a Multicast Listener Discovery Version 2 Query message in an
@@ -157,7 +158,7 @@ func MLDv2MaximumResponseDelay(codeRaw uint16) time.Duration {
 }
 
 // MulticastAddress returns the Multicast Address.
-func (m MLDv2Query) MulticastAddress() netip.Addr {
+func (m MLDv2Query) MulticastAddress() tcpip.Address {
 	// As per RFC 2710 section 3.5:
 	//
 	//   In a Query message, the Multicast Address field is set to zero when
@@ -167,7 +168,7 @@ func (m MLDv2Query) MulticastAddress() netip.Addr {
 	//   In a Report or Done message, the Multicast Address field holds a
 	//   specific IPv6 multicast address to which the message sender is
 	//   listening or is ceasing to listen, respectively.
-	return netip.AddrFrom16([16]byte(m[mldMulticastAddressOffset:][:IPv6AddressSize]))
+	return tcpip.AddrFrom16([16]byte(m[mldMulticastAddressOffset:][:IPv6AddressSize]))
 }
 
 // QuerierRobustnessVariable returns the querier's robustness variable.
@@ -268,8 +269,8 @@ const (
 //	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 type MLDv2ReportMulticastAddressRecordSerializer struct {
 	RecordType       MLDv2ReportRecordType
-	MulticastAddress netip.Addr
-	Sources          []netip.Addr
+	MulticastAddress tcpip.Address
+	Sources          []tcpip.Address
 }
 
 // Length returns the number of bytes this serializer would occupy.
@@ -277,7 +278,7 @@ func (s *MLDv2ReportMulticastAddressRecordSerializer) Length() int {
 	return mldv2ReportMulticastAddressRecordSourcesOffset + len(s.Sources)*IPv6AddressSize
 }
 
-func copyIPv6Address(dst []byte, src netip.Addr) {
+func copyIPv6Address(dst []byte, src tcpip.Address) {
 	if n := copy(dst, src.AsSlice()); n != IPv6AddressSize {
 		panic(fmt.Sprintf("got copy(...) = %d, want = %d", n, IPv6AddressSize))
 	}
@@ -432,8 +433,8 @@ func (r MLDv2ReportMulticastAddressRecord) numberOfSources() uint16 {
 }
 
 // MulticastAddress returns the multicast address this record targets.
-func (r MLDv2ReportMulticastAddressRecord) MulticastAddress() netip.Addr {
-	return netip.AddrFrom16([16]byte(r[mldv2ReportMulticastAddressRecordMulticastAddressOffset:][:IPv6AddressSize]))
+func (r MLDv2ReportMulticastAddressRecord) MulticastAddress() tcpip.Address {
+	return tcpip.AddrFrom16([16]byte(r[mldv2ReportMulticastAddressRecordMulticastAddressOffset:][:IPv6AddressSize]))
 }
 
 // Sources returns an iterator over source addresses in the query.

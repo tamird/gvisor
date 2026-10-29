@@ -16,7 +16,6 @@ package icmp_test
 
 import (
 	"bytes"
-	"net/netip"
 	"os"
 	"testing"
 
@@ -49,7 +48,7 @@ const (
 	testTTL = 42
 )
 
-func addNICWithDefaultRoute(t *testing.T, s *stack.Stack, id tcpip.NICID, name string, addrV4 netip.Addr) *channel.Endpoint {
+func addNICWithDefaultRoute(t *testing.T, s *stack.Stack, id tcpip.NICID, name string, addrV4 tcpip.Address) *channel.Endpoint {
 	t.Helper()
 
 	ep := channel.New(1 /* size */, header.IPv4MinimumMTU, "" /* linkAddr */)
@@ -67,7 +66,7 @@ func addNICWithDefaultRoute(t *testing.T, s *stack.Stack, id tcpip.NICID, name s
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.FullPrefix(addrV4),
+		AddressWithPrefix: addrV4.WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(id, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", id, protocolAddr, err)
@@ -178,7 +177,7 @@ func TestWriteUnboundWithBindToDevice(t *testing.T) {
 			To: &tcpip.FullAddress{Addr: remoteV4Addr},
 		})
 		if err != nil {
-			t.Fatalf("socket.Write(_, {To:%s}) = %s", netip.Addr(remoteV4Addr), err)
+			t.Fatalf("socket.Write(_, {To:%s}) = %s", tcpip.Address(remoteV4Addr), err)
 		}
 		if n != int64(len(buf)) {
 			t.Fatalf("got n = %d, want n = %d", n, len(buf))
@@ -221,7 +220,7 @@ func TestWriteUnboundWithBindToDevice(t *testing.T) {
 			To: &tcpip.FullAddress{Addr: remoteV4Addr},
 		})
 		if err != nil {
-			t.Fatalf("socket.Write(_, {To:%s}) = %s", netip.Addr(remoteV4Addr), err)
+			t.Fatalf("socket.Write(_, {To:%s}) = %s", tcpip.Address(remoteV4Addr), err)
 		}
 		if n != int64(len(buf)) {
 			t.Fatalf("got n = %d, want n = %d", n, len(buf))
