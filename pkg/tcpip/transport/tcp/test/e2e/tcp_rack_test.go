@@ -27,6 +27,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/test/e2e"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/testing/context"
@@ -1132,4 +1133,54 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+// TestRACKRepairsLostBatch sends two segments in one GSO write. A selective
+// ACK for a later write should repair both segments without another peer ACK.
+func TestRACKRepairsLostBatch(t *testing.T) {
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true,
+		MTU:      1500,
+		GSO:      stack.GVisorGSOSupported,
+		Clock:    clock,
+	})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatal(err)
+	}
+	mss := int(info.SndMss)
+	if mss <= 0 {
+		t.Fatalf("sender MSS = %d, want a positive size", mss)
+	}
+	lostEnd := 2 * mss
+	data := make([]byte, lostEnd+mss)
+	for i := range data {
+		data[i] = byte(i)
+	}
+	write := func(start, end int) {
+		t.Helper()
+		n, err := c.EP.Write(bytes.NewReader(data[start:end]), tcpip.WriteOptions{})
+		if want := int64(end - start); n != want || err != nil {
+			t.Fatalf("write [%d,%d) = %d, %v; want %d, nil", start, end, n, err, want)
+		}
+		for off := start; off < end; off += mss {
+			c.ReceiveAndCheckPacketWithOptions(data, off, mss, e2e.TSOptionSize)
+		}
+	}
+	write(0, lostEnd)
+	clock.Advance(30 * time.Millisecond)
+	write(lostEnd, len(data))
+	clock.Advance(10 * time.Millisecond)
+	start := c.IRS.Add(1 + seqnum.Size(lostEnd))
+	c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber+1), 0,
+		[]header.SACKBlock{{Start: start, End: start.Add(seqnum.Size(mss))}})
+
+	// The peer sends nothing else and the retransmission timer cannot fire.
+	for off := 0; off < lostEnd; off += mss {
+		c.ReceiveAndCheckPacketWithOptions(data, off, mss, e2e.TSOptionSize)
+	}
 }
