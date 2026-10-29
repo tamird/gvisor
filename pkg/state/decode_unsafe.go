@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"slices"
 	"sync"
@@ -108,7 +109,9 @@ type decodeState struct {
 	leaves []int32
 
 	// strings is the current allocation for string data.
-	strings []byte
+	strings                                                              []byte
+	stringMode                                                           string
+	stringCount, stringPayload, stringSlabs, stringCapacity, directBytes int
 
 	itabCache itabCache
 
@@ -156,6 +159,11 @@ func (ds *decodeState) release() {
 
 // load decodes the stream in data into the value of type ti at root.
 func (ds *decodeState) load(root unsafe.Pointer, ti *typeInfo) {
+	mode, study := os.LookupEnv("GVISOR_STUDY_STRING_SLAB")
+	if study && mode != "stock" && mode != "bounded" {
+		Failf("unknown string study policy %q", mode)
+	}
+	ds.stringMode = mode
 	d := &ds.in
 	if magic := d.uint32(); magic != streamMagic {
 		Failf("invalid stream: bad magic %#x", magic)
@@ -172,6 +180,10 @@ func (ds *decodeState) load(root unsafe.Pointer, ti *typeInfo) {
 		Failf("%d bytes of trailing data", len(d.b)-d.pos)
 	}
 	ds.runCallbacks()
+	if study {
+		fmt.Printf("string-study mode=%s wire=%d small=%d payload=%d slabs=%d capacity=%d direct=%d\n",
+			ds.stringMode, len(d.b), ds.stringCount, ds.stringPayload, ds.stringSlabs, ds.stringCapacity, ds.directBytes)
+	}
 }
 
 // readTypes reads the type table.
@@ -579,10 +591,19 @@ func isZero(b []byte) bool {
 func (ds *decodeState) makeString(b []byte) string {
 	const chunkSize = 16 << 10
 	if len(b) > chunkSize/4 {
+		ds.directBytes += len(b)
 		return string(b)
 	}
+	ds.stringCount++
+	ds.stringPayload += len(b)
 	if len(ds.strings) < len(b) {
-		ds.strings = make([]byte, chunkSize)
+		n := chunkSize
+		if ds.stringMode == "bounded" {
+			n = min(n, len(ds.in.b)-ds.in.pos+len(b))
+		}
+		ds.strings = make([]byte, n)
+		ds.stringSlabs++
+		ds.stringCapacity += n
 	}
 	s := ds.strings[:len(b):len(b)]
 	ds.strings = ds.strings[len(b):]

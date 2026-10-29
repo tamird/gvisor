@@ -170,6 +170,27 @@ func TestRandomGraphs(t *testing.T) {
 	}
 }
 
+// TestStringSlabStudy compares the same wire stream under both policies.
+func TestStringSlabStudy(t *testing.T) {
+	one := "xy"
+	oneWire := saveBytes(t, &one)
+	graph := randomGraph(1, graphOptions{nodes: benchGraphNodes, all: true})
+	graphWire := saveBytes(t, graph)
+	for _, mode := range []string{"stock", "bounded"} {
+		t.Run(mode, func(t *testing.T) {
+			t.Setenv("GVISOR_STUDY_STRING_SLAB", mode)
+			t.Run("OneString", func(t *testing.T) {
+				if got := *loadBytes[string](t, oneWire); got != one {
+					t.Fatalf("got %q, want %q", got, one)
+				}
+			})
+			t.Run("BenchmarkGraph", func(t *testing.T) {
+				checkIsomorphic(t, graph, loadBytes[gRoot](t, graphWire))
+			})
+		})
+	}
+}
+
 // TestSharedSliceWindows checks that slices sharing a backing array still
 // share it after loading, and that saving one of them does not modify the
 // elements of the others.
