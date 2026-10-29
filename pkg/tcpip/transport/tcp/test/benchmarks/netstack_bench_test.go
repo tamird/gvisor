@@ -350,6 +350,7 @@ func benchmarkTransfer(b *testing.B, rack bool, batch time.Duration, data []byte
 		b.Fatal(err)
 	}
 	stats := n.stacks[0].Stats().TCP
+	beforeEqual, beforeLater := tcp.QualificationEqualTail.Load(), tcp.QualificationLaterTail.Load()
 	beforeRxt, beforeRecovery := stats.Retransmits.Value(), stats.SACKRecovery.Value()
 	b.StartTimer()
 	start := time.Now()
@@ -359,6 +360,7 @@ func benchmarkTransfer(b *testing.B, rack bool, batch time.Duration, data []byte
 	if err != nil {
 		b.Fatal(err)
 	}
+	b.Logf("TAILPROOF iterations=%d recovery=%d equal=%d later=%d", b.N, stats.SACKRecovery.Value()-beforeRecovery, tcp.QualificationEqualTail.Load()-beforeEqual, tcp.QualificationLaterTail.Load()-beforeLater)
 	return elapsed, stats.Retransmits.Value() - beforeRxt, stats.SACKRecovery.Value() - beforeRecovery
 }
 

@@ -15,11 +15,14 @@
 package tcp
 
 import (
+	"sync/atomic"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 )
+
+var QualificationEqualTail, QualificationLaterTail atomic.Uint64
 
 const (
 	// wcDelayedACKTimeout is the recommended maximum delayed ACK timer
@@ -74,6 +77,7 @@ type rackControl struct {
 	// tlpHighRxt the value of sender.sndNxt at the time of sending
 	// a TLP retransmission.
 	tlpHighRxt seqnum.Value
+	tlpAckSeq seqnum.Value
 
 	// snd is a reference to the sender.
 	snd *sender
@@ -268,37 +272,36 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 //
 // +checklocks:s.ep.mu
 func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
-	if !(s.ep.SACKPermitted && s.rc.tlpRxtOut) {
+	end := s.rc.tlpHighRxt
+	if !s.ep.SACKPermitted || !s.rc.tlpRxtOut || ack.LessThan(end) {
 		return
 	}
 
-	// Step 1.
-	if s.isDupAck(rcvdSeg) && ack == s.rc.tlpHighRxt {
-		var sbAboveTLPHighRxt bool
-		for _, sb := range rcvdSeg.parsedOptions.SACKBlocks {
-			if s.rc.tlpHighRxt.LessThan(sb.End) {
-				sbAboveTLPHighRxt = true
-				break
-			}
-		}
-		if !sbAboveTLPHighRxt {
-			// TLP episode is complete.
+	blocks := rcvdSeg.parsedOptions.SACKBlocks
+	if len(blocks) != 0 && blocks[0].End == end && blocks[0].Start.LessThan(end) {
+		// The cumulative ACK covers the probe. A first SACK block ending
+		// there reports duplicate delivery of the probed segment.
+		s.rc.tlpRxtOut = false
+		return
+	}
+	if ack == end {
+		if s.SndUna.LessThan(ack) || s.rc.tlpAckSeq.LessThan(rcvdSeg.sequenceNumber) {
+			// The first ACK can be for either copy. A later peer sequence
+			// updates the send window even if its size is unchanged.
+			s.rc.tlpAckSeq = rcvdSeg.sequenceNumber
+		} else if ack == s.SndUna && rcvdSeg.logicalLen() == 0 && rcvdSeg.window != 0 && rcvdSeg.window == s.SndWnd && len(blocks) == 0 {
+			// A pure duplicate ACK indicates that both copies arrived.
 			s.rc.tlpRxtOut = false
 		}
+		return
 	}
 
-	if s.rc.tlpRxtOut && s.rc.tlpHighRxt.LessThanEq(ack) {
-		// TLP episode is complete.
-		s.rc.tlpRxtOut = false
-		if !checkDSACK(rcvdSeg) {
-			// Step 2. Either the original packet or the retransmission (in the
-			// form of a probe) was lost. Invoke a congestion control response
-			// equivalent to fast recovery.
-			s.cc.HandleLossDetected()
-			s.enterRecovery()
-			s.leaveRecovery()
-		}
-	}
+	// New data beyond the probe was delivered without evidence that both
+	// copies arrived. Respond to the loss once, as in fast recovery.
+	s.rc.tlpRxtOut = false
+	if ack == s.rc.tlpHighRxt { QualificationEqualTail.Add(1) } else { QualificationLaterTail.Add(1) }; s.cc.HandleLossDetected()
+	s.enterRecovery()
+	s.leaveRecovery()
 }
 
 // updateRACKReorderWindow updates the reorder window.
