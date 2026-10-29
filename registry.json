@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T07:27:09.106086+00:00",
+    "updatedAt": "2026-10-29T07:51:58.874846+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1333,23 +1333,23 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": null,
-      "updatedAt": "2026-10-26T22:43:37.425124+00:00",
-      "summary": "The contributor-approved compatibility amendment is published at 145ad6150. The UDS fixture passes nil supplementary groups to the upstream Connect API. Seven exact-source remote owners passed 31 case records, including TestFSGofer/UDS, without skips. GitHub confirms the published head is mergeable, existing reviewer requests remain, and no contributor decision is pending.\n\nEarlier source-specific history:\n\nThe requested post-#16046 rebase is published at 752de31a1b3c on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nRoot published the corrected rebase at 41efa809a, retaining the approved removal outside the callback while preserving upstream\u2019s linked condition. Both architecture node tests and both owning analyzers passed in 01445e0a (68.24 seconds). Current CI and review are tracked from the exact published head; no contributor hold is inferred.",
+      "updatedAt": "2026-10-29T07:51:58.874846+00:00",
+      "summary": "The rebased socket fixture enables host Unix sockets in both upstream inode-number modes. All four package owners ran remotely; both socket cases pass. No maintainer approval is recorded.",
       "followup": {
-        "disposition": "Approved amendment published; maintainer review and CI remain",
+        "disposition": "Rebase published; waiting for maintainer review",
         "owner": "root",
-        "nextAction": "Follow current source checks, maintainer responses and exact-source import; do not repeat the consumed contributor decision.",
-        "sourceHead": "145ad61500f0fee79a135922a4d8ae789a69984c",
+        "nextAction": "Answer maintainer feedback or an actual public check failure on the new head.",
+        "sourceHead": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/145ad61500f0fee79a135922a4d8ae789a69984c",
-          "https://app.buildbuddy.io/invocation/702a15e2-df6f-469a-869c-7c03d96fea36"
+          "https://github.com/tamird/gvisor/actions/runs/40837380180",
+          "https://app.buildbuddy.io/invocation/44e4fb11-e6bb-42cc-adfe-b4bd0395d8c8"
         ],
-        "observedAt": "2026-10-26T22:43:37.425124+00:00"
+        "observedAt": "2026-10-29T07:51:58.874846+00:00"
       },
-      "head": "145ad61500f0fee79a135922a4d8ae789a69984c",
+      "head": "75ffc8b5c76b03639ea7502f305d5708663a29ea",
       "evidence": [
         {
           "label": "Exact-source qualification",
@@ -1362,14 +1362,18 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/752de31a1b3cbc9c800f64fc88c8148ff294888a"
+        },
+        {
+          "label": "52 passed, two skipped; both inode modes passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837380180"
         }
       ],
       "refinement": {
         "before": {
-          "head": "03a567ebbf667332b2fe12c3817f8b8005784a9c"
+          "head": "145ad61500f0fee79a135922a4d8ae789a69984c"
         },
         "after": {
-          "head": "145ad61500f0fee79a135922a4d8ae789a69984c"
+          "head": "75ffc8b5c76b03639ea7502f305d5708663a29ea"
         }
       }
     },
@@ -32530,21 +32534,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/bazel-cpplint-package-owners",
-      "head": "869a7b324568a5743e32724096ed06207dcd0b93",
+      "head": "46110fd411b52a7b72da0418360a1382ac915f8a",
       "title": "Check tracked C++ sources with package-local Bazel tests",
-      "url": "https://github.com/tamird/gvisor/commit/869a7b324568a5743e32724096ed06207dcd0b93",
+      "url": "https://github.com/tamird/gvisor/commit/46110fd411b52a7b72da0418360a1382ac915f8a",
       "group": "analysis",
       "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
-      "updatedAt": "2026-10-29T06:44:03.442743+00:00",
+      "updatedAt": "2026-10-29T07:49:47.210758+00:00",
       "status": "Contributor review requested",
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "869a7b324568a5743e32724096ed06207dcd0b93",
-        "url": "https://github.com/tamird/gvisor/commit/869a7b324568a5743e32724096ed06207dcd0b93",
+        "head": "46110fd411b52a7b72da0418360a1382ac915f8a",
+        "url": "https://github.com/tamird/gvisor/commit/46110fd411b52a7b72da0418360a1382ac915f8a",
         "title": "Check tracked C++ sources with package-local Bazel tests",
         "summary": "Run the include-order and C++11 checks with the BCR cpplint tool. All 23 package checks passed on 485 tracked files; introducing an out-of-order include failed only its owner, and the other 22 reused cached results.",
-        "body": "Open independently on upstream master. CI lists the actual untracked sources and unsupported CPPLINT.cfg files. The lint entrypoint disables stamping; local tracked-file selection remains a checkout operation."
+        "body": "Open independently on upstream master. CI lists the actual untracked sources and unsupported CPPLINT.cfg files. The lint entrypoint disables stamping; local tracked-file selection remains a checkout operation. Both uses of the external cpplint tool share the abbreviated label; the combined source also passes the registered Buildifier."
       },
       "evidence": [
         {
@@ -32562,15 +32566,59 @@
         {
           "label": "Untracked sources, configuration, and combined failure checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/40830617674"
+        },
+        {
+          "label": "Formatter, 23 C++ owners, driver tests and 222 license entries together",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837208140"
         }
       ],
       "refinement": {
         "before": {
-          "head": "d463cc2d90dfa1cb04956016051ba868af187fd4"
+          "head": "869a7b324568a5743e32724096ed06207dcd0b93"
         },
         "after": {
-          "head": "869a7b324568a5743e32724096ed06207dcd0b93"
+          "head": "46110fd411b52a7b72da0418360a1382ac915f8a"
         }
+      }
+    },
+    {
+      "id": "branch:buildifier-native-diff",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/buildifier-native-diff",
+      "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+      "title": "Use the registered Buildifier binary for source lint",
+      "url": "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+      "group": "analysis",
+      "updatedAt": "2026-10-29T07:49:47.210758+00:00",
+      "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository\u2019s tracked inputs. The builder image no longer downloads Buildifier.",
+      "status": "Contributor review requested",
+      "refinement": {
+        "before": {
+          "head": "7770b6241f051b2784b61174049e73e41b7d1303"
+        },
+        "after": {
+          "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+        }
+      },
+      "evidence": [
+        {
+          "label": "All 614 tracked files, seven damaged-file diffs and repairs, malformed-input behavior, and CLI identity",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40833710579"
+        },
+        {
+          "label": "Formatter, 23 C++ owners, driver tests and 222 license entries together",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40837208140"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+        "url": "https://github.com/tamird/gvisor/commit/1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+        "title": "Use the registered Buildifier binary for source lint",
+        "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository\u2019s tracked inputs. The builder image no longer downloads Buildifier.",
+        "body": "Open independently on master. Tracked Starlark files are checked even if they are outside Bazel packages. The malformed untracked file was left alone. Source inputs are selected from the checkout; the formatter executable comes from Bazel."
       }
     }
   ],
@@ -38246,7 +38294,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T07:27:09.106086+00:00",
+      "updatedAt": "2026-10-29T07:49:47.210758+00:00",
       "summary": "We are helping review the maintainers' graph codec. The integrated encoder can save two views of one Go map that its decoder refuses to restore; the review on #16584 includes a reproducer and a tested fix. Our separate interface-setter experiment stays closed: it made GraphLoad slower and added allocations.",
       "findings": [
         {
@@ -40732,9 +40780,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40832303100"
             }
           ]
+        },
+        {
+          "text": "On Parth\u2019s patch-16 decoder components, a direct interface and a pointer-to-value both kept the hook\u2019s pointer; an interface copied into a map kept nil although the hook ran once. Delaying insertion fixed the direct key and two-map cases too. This is a component test; this head has no public graph Load dispatcher.",
+          "evidence": [
+            {
+              "label": "Original, correction, and exact scope",
+              "url": "https://github.com/tamird/gvisor/blob/57515e448870c7326844c3b4d761bc33f56fc730/.github/qualification/graph-map-word/evidence.md"
+            },
+            {
+              "label": "Seven corrected XML nodes",
+              "url": "https://app.buildbuddy.io/invocation/495f0216-8fa0-4c27-9ba3-93fd2814599b"
+            }
+          ]
         }
       ],
-      "nextStep": "Support Parth\u2019s graph decoder by testing whether a deferred restore hook can change a value already copied into a map. Use the benchmark lane separately from unit tests for future measurements.",
+      "nextStep": "Offer Parth the tested decoder finding, then check that the integrated graph loader also exposes the repaired entry to a dependent parent\u2019s AfterLoad.",
       "evidence": [
         {
           "label": "Unbound interface assignment: measured source",
