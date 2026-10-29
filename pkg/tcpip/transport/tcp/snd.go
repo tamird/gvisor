@@ -1250,6 +1250,11 @@ func (s *sender) SetPipe() {
 			if !s1.lost && !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
+			// An original that RACK marked lost has left the flight.
+			// Retransmission clears its loss mark and is already counted above.
+			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+				continue
+			}
 			// SetPipe():
 			//    (b) If S1 <= HighRxt, Pipe is incremented by 1.
 			if s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt) {
