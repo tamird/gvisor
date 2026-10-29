@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T13:46:36.662116+00:00",
+    "updatedAt": "2026-10-29T13:59:21.762754+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49676,9 +49676,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-29T13:46:36.662116+00:00",
+      "updatedAt": "2026-10-29T13:59:21.762754+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Review new heads and replies on the two SACK/probe PRs and the receive-pressure proposal. Compare corked shutdown on Linux and gVisor. Continue looking for related issues and PRs outside this list.",
+      "nextStep": "Keep the upstream reviewer guide current as fixes land or supersede one another. Follow the receive-pressure and two SACK/probe review threads; compare the timeout and flight-count fixes on their respective packet traces.",
       "findings": [
         {
           "text": "Initial census: 510 open PRs inspected by changed path and title, including exports. The networking/performance labels and TCP, retransmission, SACK, RACK, CUBIC and netstack searches yielded 184 distinct candidate issues; many are not TCP defects.",
@@ -49876,6 +49876,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Reviewer guide: TCP recovery and performance fixes",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        },
         {
           "label": "Reproducible 5/5 Reno stall on the reported synthetic trace",
           "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6445217353"
