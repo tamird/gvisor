@@ -38,7 +38,7 @@ def main(temp):
                 failures.append(text.splitlines()[0][:350])
     if not result:
         for line in (temp / "kernel-build.log").read_text(errors="replace").splitlines():
-            if line.startswith("ERROR: ") and not any(s in line.lower() for s in ("api-key","header","token","secret","password","credential","authorization")):
+            if (line.startswith("ERROR: ") or any(t in line.lower() for t in ("no such file", "not found", "fatal:", "undefined reference", "cannot ", "unrecognized", "unexpected"))) and not any(s in line.lower() for s in ("api-key","header","token","secret","password","credential","authorization")):
                 failures.append(line[:350])
     record = {"source": os.environ["SOURCE"], "study_source": "bd5e5d082f27cd82d0d9b8d78c8c6b80d2818864",
               "collected": datetime.now(timezone.utc).isoformat(), "exit": int((out / "bazel-exit").read_text()),
