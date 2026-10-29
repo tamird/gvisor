@@ -11,11 +11,11 @@ import xml.etree.ElementTree as ET
 import qualification_report as report
 
 pr, architecture, source, rc, destination = sys.argv[1:]
-assert pr == "tcp-error-locks"
+assert pr == "rack-split-loss"
 case_owners = {
     "//pkg/tcpip/transport/tcp:tcp_nogo": [],
     "//pkg/tcpip/transport/tcp:tcp_test": ["TestCubicRecoveryDiscardsACKCredit"],
-    "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": ["TestConnectICMPError"],
+    "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test": ["TestRACKRepairsLostBatch"],
 }
 owners = list(case_owners)
 required = {(label, case) for label, cases in case_owners.items() for case in cases}
@@ -32,7 +32,7 @@ r = {"pr": pr, "architecture": architecture, "source": source, "expected": owner
 try:
     r["worker_image"] = os.environ["WORKER_IMAGE"]
     assert git("rev-parse", "HEAD").decode().strip() == source
-    assert git("rev-parse", "HEAD^").decode().strip() == "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
+    assert git("rev-parse", "HEAD^").decode().strip() == "5edf5d13c7a6749df466add29d8811260edb4cda"
     r["tree"] = git("rev-parse", "HEAD^{tree}").decode().strip()
     (d/"before").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
     assert not (d/"before").read_bytes()
