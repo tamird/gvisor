@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -59,3 +60,5 @@ go_test(
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
+
+cpplint_test()

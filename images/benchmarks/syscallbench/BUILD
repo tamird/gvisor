@@ -2,6 +2,7 @@ load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "cc_binary")
+load("//tools/lint:cpplint.bzl", "cpplint_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -39,3 +40,5 @@ image_outputs(
     image = ":syscallbench_image",
     image_name = "benchmarks/syscallbench",
 )
+
+cpplint_test()
