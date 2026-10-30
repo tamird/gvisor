@@ -1,7 +1,7 @@
 name: Exercise native package tool launchers
 on:
   push:
-    branches: [qualification/released-zip-archive-writers-separated]
+    branches: [qualification/released-zip-archive-writers-native-arm]
 permissions:
   actions: read
   contents: read
@@ -29,7 +29,7 @@ jobs:
           export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/preflight.bazelrc"
           bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
-          for cfg in "rbe x86_64" "rbe-arm64 aarch64"; do
+          for cfg in "rbe-arm64 aarch64"; do
             read -r ex cpu <<< "$cfg"
             bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config="$ex" --config="$cpu" --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=script --output=jsonproto \
               'mnemonic("PackageTar|MakeDeb", deps(set(//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package)))' > "$RUNNER_TEMP/zip-graph-$cpu.json"
@@ -46,34 +46,59 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Run the selected writers on the two real empty workers
+      - name: Read the original AMD64 action roots
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          root=$RUNNER_TEMP
+          gh api repos/tamird/gvisor/actions/artifacts/12947526783/zip > "$root/original.zip"
+          unzip -q "$root/original.zip" 'amd64/physical.binpb' -d "$root"
+          QUALIFICATION_ARCH=amd64 RUNNER_TEMP="$root/amd64" BB="$root/bb" \
+              CHECK_HEAD=97b326ec8503e56ee65d06dd87df11a358083b88 CHECK_INVOCATION=279c968f-177d-47da-a15a-684a37501ae3 \
+              python3 test/rbe/python_package_writers/zip_closure.py
+      - name: Run the real writers on the required ARM64 execution platform
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          QUALIFICATION_ARCH: arm64
         run: |
           set +e
           set -u
-          root_temp=$RUNNER_TEMP
-          export BB=$root_temp/bb
-          result=0
-          for arch in amd64 arm64; do
-            export QUALIFICATION_ARCH=$arch RUNNER_TEMP="$root_temp/$arch"
-            mkdir -p "$RUNNER_TEMP"
-            native=0
-            bash test/rbe/actions.sh \
+          root=$RUNNER_TEMP
+          export RUNNER_TEMP=$root/arm64 BB=$root/bb
+          mkdir -p "$RUNNER_TEMP"
+          bash test/rbe/actions.sh \
+              --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_arm64 \
+              --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
               --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=script \
               --bazel-option=--remote_download_outputs=all \
-              '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || native=$?
-            python3 test/rbe/python_package_writers/package_zip_report.py || result=1
-            if ((native != 0)); then result=1; fi
-          done
-          exit "$result"
+              '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache'
+          native=$?
+          set -e
+          export CHECK_HEAD=$GITHUB_SHA
+          export CHECK_INVOCATION=$(python3 - <<'PYTHON'
+          import json,os,tarfile
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])
+          with tarfile.open(p/"qualification.tar.gz") as tf:
+              assert tf.extractfile("final-head.txt").read().decode().strip()==os.environ["GITHUB_SHA"]
+              raw,=[n for n in tf.getnames() if n.endswith("/execution.binpb")]
+              (p/"physical.binpb").write_bytes(tf.extractfile(raw).read())
+              ev,=[n for n in tf.getnames() if n.endswith("/events.jsonl")]
+              inv,=[e["started"]["uuid"] for e in map(json.loads,tf.extractfile(ev)) if "started" in e]
+              print(inv)
+          PYTHON
+          )
+          python3 test/rbe/python_package_writers/zip_closure.py
+          exit "$native"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: package-zip-verdicts
+          name: verified-package-writers
           path: |
-            ${{ runner.temp }}/amd64/writers.json
-            ${{ runner.temp }}/arm64/writers.json
-            ${{ runner.temp }}/amd64/physical.binpb
+            ${{ runner.temp }}/amd64/closure.json
+            ${{ runner.temp }}/arm64/closure.json
             ${{ runner.temp }}/arm64/physical.binpb
           if-no-files-found: error
