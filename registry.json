@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T02:58:38.945196+00:00",
+    "updatedAt": "2026-10-30T03:43:50.365987+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33974,13 +33974,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/release-archives-builder",
-      "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0",
+      "head": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
       "title": "Build and sign release artifacts with one version",
-      "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...4472e47b6",
+      "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...99a5c82ef",
       "group": "release",
       "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T15:32:30.872309+00:00",
-      "summary": "Review three changes together: the package-version reader, the shared identity of the release and checkpoint, and staging and signing both architectures. The links show each commit separately.",
+      "updatedAt": "2026-10-30T03:43:50.365987+00:00",
+      "summary": "Build six native release archives with Bazel and sign them on the host. Both architectures passed with Docker unreachable; withholding one archive stopped signing. The separate Python wheel still uses the builder.",
       "evidence": [
         {
           "label": "1 · Write the Debian package version",
@@ -33992,7 +33992,11 @@
         },
         {
           "label": "3 · Stage and sign the six native outputs",
-          "url": "https://github.com/tamird/gvisor/compare/55210b651...4472e47b6"
+          "url": "https://github.com/tamird/gvisor/compare/55210b651...99a5c82ef"
+        },
+        {
+          "label": "No-Docker release: six archives, signatures, and missing-input control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40995892643/artifacts/12951757224"
         },
         {
           "label": "Build in the existing builder and sign the independent prebuilt copy",
@@ -34000,7 +34004,7 @@
         },
         {
           "label": "Proposed release target",
-          "url": "https://github.com/tamird/gvisor/commit/e4e5276c25c0b60d11ecdfe03f0d3709624cdd41"
+          "url": "https://github.com/tamird/gvisor/commit/e4e5276c2"
         },
         {
           "label": "Both architectures built",
@@ -34012,7 +34016,7 @@
         },
         {
           "label": "Source and complete-input preflight",
-          "url": "https://github.com/tamird/gvisor/commit/0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5"
+          "url": "https://github.com/tamird/gvisor/commit/0ac3fa285"
         },
         {
           "label": "Offline publication and missing-input checks",
@@ -34029,21 +34033,21 @@
       ],
       "refinement": {
         "before": {
-          "head": "0ac3fa2856b3e5f918b9e32ca8a345f7d7930bd5"
+          "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0"
         },
         "after": {
-          "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0"
+          "head": "99a5c82ef96f1b5e7de108e2cd55affba8766f34"
         }
       },
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0",
+        "head": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
         "baseHead": "ac7b4e0fdc7dc4674453438e5e15fc069895620c",
-        "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...4472e47b6",
+        "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...99a5c82ef",
         "title": "Review the package version, release identity and signing together",
-        "summary": "Review three changes together: the package-version reader, the shared identity of the release and checkpoint, and staging and signing both architectures. The links show each commit separately.",
-        "body": "1. Write the Debian package version using a declared tool.\n2. Use the same explicit version for the release binaries and their checkpoint identity.\n3. Stage the two native architectures and sign prebuilt artifacts without rerunning Bazel. The signer accepts exactly the six canonical native outputs, three per architecture. Python distributions are separate and required only when the tagged release uploads them. Buildkite still routes through its existing builder."
+        "summary": "Build six native release archives with Bazel and sign them on the host. Both architectures passed with Docker unreachable; withholding one archive stopped signing. The separate Python wheel still uses the builder.",
+        "body": "1. Write the Debian package version with a declared tool.\n2. Give release binaries and checkpoints the same version.\n3. Build the AMD64 and ARM64 packages and archives with Bazel on the release host. The signing step consumes the six artifacts together. The isolated Linux run checked each payload, the package-index signature, and that an absent ARM64 archive prevents signing. Tagged releases still build the Python wheel separately. Host Bazelisk is required."
       }
     },
     {

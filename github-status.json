@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T00:17:42.714676+00:00",
-  "registryDate": "2026-10-30T02:58:38.945196+00:00",
+  "registryDate": "2026-10-30T03:43:50.365987+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -242402,7 +242402,7 @@
         "since": "2026-10-29T01:35:12.698800+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T00:11:26.175497+00:00"
+        "observedAt": "2026-10-30T03:43:50.365987+00:00"
       }
     },
     "pr:16052": {
@@ -243926,13 +243926,22 @@
         "observedAt": "2026-10-30T00:17:08.346157+00:00"
       }
     },
-    "branch:release-archives-versioned": {
+    "branch:epoll-modify-preserve": {
       "contributor-review": {
-        "scope": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0",
-        "since": "2026-10-29T16:50:32.090252+00:00",
+        "scope": "82f0e4f38f65529f18851f196504957874ec56fa",
+        "since": "2026-10-30T00:11:26.175497+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T00:11:26.175497+00:00"
+        "observedAt": "2026-10-30T03:43:50.365987+00:00"
+      }
+    },
+    "branch:release-archives-versioned": {
+      "contributor-review": {
+        "scope": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
+        "since": "2026-10-30T03:43:50.365987+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T03:43:50.365987+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -243941,7 +243950,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T00:11:26.175497+00:00"
+        "observedAt": "2026-10-30T03:43:50.365987+00:00"
       }
     },
     "branch:declared-staged-release-check": {
@@ -243950,16 +243959,7 @@
         "since": "2026-10-30T00:11:26.175497+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T00:11:26.175497+00:00"
-      }
-    },
-    "branch:epoll-modify-preserve": {
-      "contributor-review": {
-        "scope": "82f0e4f38f65529f18851f196504957874ec56fa",
-        "since": "2026-10-30T00:11:26.175497+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T00:11:26.175497+00:00"
+        "observedAt": "2026-10-30T03:43:50.365987+00:00"
       }
     }
   },
