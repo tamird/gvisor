@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/overlay"
@@ -126,6 +127,7 @@ func TestPollWaiterAfterOverlayCopyUp(t *testing.T) {
 }
 
 func TestOverlayPollCost(t *testing.T) {
+	t.Logf("SIZES file=%d pollState=%d waiter=%d", unsafe.Sizeof(vfs.FileDescription{}), unsafe.Sizeof(pollState{}), unsafe.Sizeof(waiter.Entry{}))
 	k, err := testutil.Boot()
 	if err != nil {
 		t.Fatal(err)
