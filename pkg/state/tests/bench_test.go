@@ -300,3 +300,66 @@ func BenchmarkSparseIndexSave(b *testing.B) {
 		})
 	}
 }
+
+// wideIndexInput mixes large, disjoint backing ranges with a one-byte alias
+// of each range, in both discovery orders. Permute addresses independently
+// of discovery order; each alias must survive Save and Load.
+func wideIndexInput(n int) [][2][]byte {
+	const size = 32 << 10
+	const stride = size + 64
+	storage := make([]byte, n*stride)
+	views := make([][2][]byte, n)
+	for i := range views {
+		base := ((i*73 + 7) % n) * stride
+		wide := storage[base : base+1 : base+size]
+		tail := storage[base+size-1 : base+size : base+size]
+		wide[0], tail[0] = 41, 73
+		views[i][i%2], views[i][1-i%2] = wide, tail
+	}
+	return views
+}
+
+func TestIndexWideNeighborhoods(t *testing.T) {
+	forceGraphEngine(t)
+	views := wideIndexInput(16)
+	var encoded bytes.Buffer
+	if _, err := state.Save(context.Background(), &encoded, &views); err != nil {
+		t.Fatal(err)
+	}
+	var restored [][2][]byte
+	if _, err := state.Load(context.Background(), &encoded, &restored); err != nil {
+		t.Fatal(err)
+	}
+	if len(restored) != len(views) {
+		t.Fatalf("restored %d pairs, want %d", len(restored), len(views))
+	}
+	for i, pair := range restored {
+		wide, tail := pair[i%2], pair[1-i%2]
+		if len(wide) != 1 || cap(wide) != 32<<10 || len(tail) != 1 || cap(tail) != 1 {
+			t.Fatalf("pair %d: unexpected slice bounds", i)
+		}
+		last := &wide[:cap(wide)][cap(wide)-1]
+		if wide[0] != 41 || *last != 73 || last != &tail[0] {
+			t.Fatalf("pair %d: lost aliased tail", i)
+		}
+	}
+}
+
+func BenchmarkManyWideIndexSave(b *testing.B) {
+	forceGraphEngine(b)
+	for _, n := range []int{16, 256, 1024} {
+		b.Run(fmt.Sprint(n), func(b *testing.B) {
+			views := wideIndexInput(n)
+			b.ReportAllocs()
+			var size int
+			for b.Loop() {
+				w := countingWriter{}
+				if _, err := state.Save(context.Background(), &w, &views); err != nil {
+					b.Fatal(err)
+				}
+				size = w.n
+			}
+			b.ReportMetric(float64(size), "encoded-B")
+		})
+	}
+}
