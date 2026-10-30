@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:50:57.471231+00:00",
+    "updatedAt": "2026-10-30T15:57:13.800523+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36362,9 +36362,9 @@
       "head": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9",
       "title": "Check the full eventfd counter when VFIO configures an interrupt",
       "url": "https://github.com/tamird/gvisor/commit/41d324e51",
-      "status": "Awaiting contributor review",
+      "status": "Contributor approved; waiting for #16743",
       "summary": "The same real VFIO PCI interrupt ioctl preserved at least 4,294,967,297 events on Linux and on corrected ordinary/direct gVisor. Both stock gVisor modes read 1. The positive test uses the device fixture from #16743 and the implementation from #16627; it adds one syscall test and shares setup with the open-device check.",
-      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
+      "updatedAt": "2026-10-30T15:57:13.800523+00:00",
       "evidence": [
         {
           "label": "Pure test change against its integrated parent",
@@ -36379,16 +36379,6 @@
           "url": "https://github.com/google/gvisor/pull/16627"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9",
-        "baseHead": "105c6933531246c0b19127a71396067aeb509c3a",
-        "title": "Check the full eventfd counter when VFIO configures an interrupt",
-        "summary": "The same real VFIO PCI interrupt ioctl preserved at least 4,294,967,297 events on Linux and on corrected ordinary/direct gVisor. Both stock gVisor modes read 1. The positive test uses the device fixture from #16743 and the implementation from #16627; it adds one syscall test and shares setup with the open-device check.",
-        "url": "https://github.com/tamird/gvisor/compare/105c69335...41d324e51",
-        "body": "Review only the VFIO interrupt test. After #16743 lands, add it to #16627 if that PR is still open and unapproved; if already approved or landed, submit a separate test follow-up. The six-arm receipt includes both negative controls. The fixture is identical on both products: git -C ~/code/gvisor range-diff 2c5ff2434^! 41d324e51^!. For the actual change against its base: git -C ~/code/gvisor diff 105c69335..41d324e51."
-      },
       "refinement": {
         "before": {
           "base": "73a709bdc845f47cc85dda13925e86a80606e2ad",
@@ -36398,6 +36388,26 @@
           "base": "105c6933531246c0b19127a71396067aeb509c3a",
           "head": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9",
+          "at": "2026-10-30T15:57:13.800523+00:00",
+          "outcome": "approved"
+        }
+      ],
+      "followup": {
+        "owner": "overlay_owner",
+        "sourceHead": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9",
+        "observedAt": "2026-10-30T15:57:13.800523+00:00",
+        "disposition": "Approved after #16743",
+        "nextAction": "Once the VFIO fixture lands, add the approved test to #16627 if still unapproved; otherwise submit it as a follow-up. Do not amend an approved PR.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16743",
+          "https://github.com/google/gvisor/pull/16627",
+          "https://github.com/tamird/gvisor/actions/runs/41080784167/artifacts/12990052532"
+        ]
       }
     },
     {
@@ -36405,14 +36415,18 @@
       "type": "branch",
       "group": "runtime",
       "repo": "tamird/gvisor",
-      "ref": "review/tun-packet-info-header",
-      "head": "57bd4a9e5ee67a7b4d23cb0ad9d38455dd98ad64",
+      "ref": "review/tun-packet-info-standalone",
+      "head": "e539b6e86e21b645f9d8a100e71235c1541477ab",
       "title": "Honor packet information and preserve queued packets on empty TUN reads",
-      "url": "https://github.com/tamird/gvisor/commit/57bd4a9e5",
+      "url": "https://github.com/tamird/gvisor/commit/e539b6e86",
       "status": "Agent work",
-      "summary": "Independent parity correction for a pre-existing behavior reproduced on both master and #15449. The actual native/master/PR run covers EINVAL, TUN_PKT_STRIP and EFAULT; the candidate adds a zero-byte queue preservation case. Await exact native, corrected gVisor, existing suite, and owning analyzer results.",
-      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
+      "summary": "Current master and #15449 exhibit the same TUN packet-information failures on the shared Linux test. The independent correction uses master’s existing segmented writer; it neither includes nor requires #15449’s write changes. The corrected read function and syscall fixture match the prior qualification exactly. Exact current-master native/stock/fixed checks and owner suite are running.",
+      "updatedAt": "2026-10-30T15:57:13.800523+00:00",
       "evidence": [
+        {
+          "label": "Native Linux, unchanged master and standalone correction, including full corrected owner suite",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41085306145"
+        },
         {
           "label": "The same PI truncation/partial-copy ABI mismatch predates this PR: Linux passes, master and the PR fail identically",
           "url": "https://github.com/tamird/gvisor/actions/runs/41079914780/artifacts/12990497068"
@@ -36420,16 +36434,20 @@
         {
           "label": "Augmented native/PR/fixed case, full corrected suite, owner analyzers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41083132225"
+        },
+        {
+          "label": "Earlier source on #15449; not the submitted source",
+          "url": "https://github.com/tamird/gvisor/commit/57bd4a9e5"
         }
       ],
       "followup": {
         "owner": "overlay_owner",
-        "sourceHead": "57bd4a9e5ee67a7b4d23cb0ad9d38455dd98ad64",
-        "observedAt": "2026-10-30T15:44:14.108156+00:00",
-        "disposition": "Qualify corrected shared TUN behavior",
-        "nextAction": "Review exact case and owner results before seeking contributor assessment. Keep separate from the buffer refactor.",
+        "sourceHead": "e539b6e86e21b645f9d8a100e71235c1541477ab",
+        "observedAt": "2026-10-30T15:57:13.800523+00:00",
+        "disposition": "Qualify the independent correction directly on master",
+        "nextAction": "Verify the matched shared case, complete TUN suite and owning analyzers. Keep the pending buffer PR separate and record its read-path overlap.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41079914780/artifacts/12990497068",
+          "https://github.com/tamird/gvisor/actions/runs/41085306145",
           "https://github.com/tamird/gvisor/actions/runs/41083132225"
         ]
       }
@@ -39747,16 +39765,6 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16743",
         "https://github.com/tamird/gvisor/actions/runs/41080784167/artifacts/12990052532"
-      ]
-    },
-    {
-      "type": "depends_on",
-      "from": "branch:tun-packet-info-header",
-      "to": "pr:15449",
-      "reason": "The correction is implemented against the segmented buffer API; the original mismatch is present on master as well as #15449.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/15449",
-        "https://github.com/tamird/gvisor/commit/57bd4a9e5"
       ]
     },
     {
