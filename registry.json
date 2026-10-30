@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T10:36:22.103416+00:00",
+    "updatedAt": "2026-10-30T10:46:19.726076+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32181,8 +32181,8 @@
       "title": "Keep an epoll watch intact when MOD fails",
       "url": "https://github.com/tamird/gvisor/commit/82f0e4f38",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T01:33:59.333384+00:00",
+      "status": "Contributor approved; waiting for provider prerequisites",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
       "summary": "A rejected MOD leaves the original watch registered. A rearm with the same mask still polls for readiness; changing its mask needs no extra waiter allocation. Stable overlay backing keeps its poll support.",
       "evidence": [
         {
@@ -32293,17 +32293,25 @@
           "head": "710c59cdadfb5f222b6a323a3b5eabeec7940a5a",
           "outcome": "changes-requested",
           "at": "2026-10-29T18:56:07.113045+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "82f0e4f38f65529f18851f196504957874ec56fa",
+          "outcome": "approved",
+          "at": "2026-10-30T10:46:19.726076+00:00"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "82f0e4f38f65529f18851f196504957874ec56fa",
-        "url": "https://github.com/tamird/gvisor/compare/3ded0a3d6...82f0e4f38",
-        "title": "Keep an epoll watch intact when MOD fails",
-        "summary": "A rejected MOD leaves the original watch registered. A rearm with the same mask still polls for readiness; changing its mask needs no extra waiter allocation. Stable overlay backing keeps its poll support.",
-        "body": "Review only the final two commits, after the separate Unix, waiter-mask, host fdnotifier, plugin/VFIO, FUSE and gofer provider prerequisites. The matched earlier core measured 112 B/one allocation for ADD+DEL and no allocation for changed MOD. The exact combined source passed nine owning analyzer targets on each architecture; stable overlay-backed files remain pollable, and an unpinned lower file that can copy up is refused.",
-        "baseHead": "3ded0a3d65f69fcabbb1b0361aff10e1b2230679"
+      "followup": {
+        "owner": "root",
+        "sourceHead": "82f0e4f38f65529f18851f196504957874ec56fa",
+        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "disposition": "Final two commits approved",
+        "nextAction": "Integrate and submit the two reviewed commits after the waiter and file-provider changes are ready. The separate provider prerequisites retain their own review scopes.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/3ded0a3d6...82f0e4f38",
+          "https://github.com/google/gvisor/pull/16739",
+          "https://github.com/google/gvisor/pull/16697"
+        ]
       }
     },
     {
@@ -34199,28 +34207,45 @@
       "number": 16677,
       "repo": "google/gvisor",
       "ref": "review/overlay-close-lifetime",
-      "head": "4ce9994cdab4bb668a9b9059a608d165260086f7",
-      "title": "overlay: keep the lower file alive during close",
+      "head": "e4a78767b89adc5e806334ce41ad5d6c73109927",
+      "title": "overlay: retain the backing file selected for close",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
-      "reviewDecision": null,
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "reviewDecision": "CHANGES_REQUESTED",
       "url": "https://github.com/google/gvisor/pull/16677",
-      "summary": "A chmod on the same open overlay file can copy it up and release the lower file while its close callback is still running. Retain the lower file until its callback returns.",
+      "summary": "A dup refers to the same overlay file. Between selecting the lower file and entering its close callback, fchmod through that dup can drop the cached file’s last reference. Stock sent FUSE FLUSH after RELEASE and close returned EBADF.",
       "followup": {
         "owner": "root",
-        "sourceHead": "4ce9994cdab4bb668a9b9059a608d165260086f7",
-        "observedAt": "2026-10-29T15:46:52.917812+00:00",
-        "disposition": "Published",
-        "nextAction": "Follow the standalone change on #16677.",
+        "sourceHead": "e4a78767b89adc5e806334ce41ad5d6c73109927",
+        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "disposition": "Approved amendment published and reviewer answered",
+        "nextAction": "Follow Ayush’s review on the published amendment.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16677"
+          "https://github.com/google/gvisor/pull/16677#discussion_r4422775128",
+          "https://github.com/tamird/gvisor/compare/4ce9994cd...e4a78767b"
         ]
       },
       "evidence": [
         {
+          "label": "Reviewed amendment and reply to Ayush",
+          "url": "https://github.com/google/gvisor/pull/16677#discussion_r4422775128"
+        },
+        {
+          "label": "Stock sent FLUSH(1) after RELEASE(1) and close returned EBADF",
+          "url": "https://app.buildbuddy.io/invocation/910bfa68-aa50-49e8-9658-3a5cc5cd1a68"
+        },
+        {
+          "label": "Fixed sent FLUSH(1) before RELEASE(1) and close succeeded",
+          "url": "https://app.buildbuddy.io/invocation/b14cd43e-2399-46fc-91d6-15cd915e3f4c"
+        },
+        {
+          "label": "Native Linux under its own scheduler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41041801101/artifacts/12970144079"
+        },
+        {
           "label": "Fork patch",
-          "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a09cf17e2564e1b738d4c1dc16c34a7c"
+          "url": "https://github.com/tamird/gvisor/commit/6b6aadd1a"
         },
         {
           "label": "Premature release on stock",
@@ -34234,7 +34259,23 @@
           "label": "Owning analyzer",
           "url": "https://app.buildbuddy.io/invocation/0a520392-8d77-48f3-8f65-2417af7d8802"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "e4a78767b89adc5e806334ce41ad5d6c73109927",
+          "outcome": "approved",
+          "at": "2026-10-30T10:46:19.726076+00:00"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "4ce9994cdab4bb668a9b9059a608d165260086f7"
+        },
+        "after": {
+          "head": "e4a78767b89adc5e806334ce41ad5d6c73109927"
+        }
+      }
     },
     {
       "id": "pr:15432",
@@ -34271,12 +34312,12 @@
       "repo": "google/gvisor",
       "number": 16620,
       "ref": "test/cl1009024537",
-      "head": "573f6bb9c2b6701af0270b33b55b7035a4abb55b",
+      "head": "f8de954338bee7e738f28c389eb7cad962866be0",
       "title": "Review LoadValue callback snapshots",
       "url": "https://github.com/google/gvisor/pull/16620",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "status": "merged",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
       "summary": "Posted the LoadValue callback aliasing regression inline on the reviewed PR head.",
       "settledReviews": [
         {
@@ -34292,7 +34333,8 @@
           "label": "Posted review",
           "url": "https://github.com/google/gvisor/pull/16620#discussion_r4416549128"
         }
-      ]
+      ],
+      "reviewDecision": null
     },
     {
       "id": "branch:overlay-file-cache-guards",
@@ -35256,15 +35298,31 @@
       "id": "branch:state-loadvalue-scratch",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/state-loadvalue-scratch-on-author",
-      "head": "07b30159f3972037e9b77c8353e388f5f9409ab0",
+      "ref": "review/state-nested-conversion-merged",
+      "head": "905873f0ea52d9d279bb05195f9239953451971b",
       "title": "Keep nested checkpoint conversions from overwriting each other",
-      "url": "https://github.com/tamird/gvisor/commit/07b30159f",
+      "url": "https://github.com/tamird/gvisor/commit/905873f0e",
       "group": "runtime",
-      "status": "Contributor approved; waiting for #16728",
+      "status": "Published as #16740",
       "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
-      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
       "evidence": [
+        {
+          "label": "Published upstream as #16740",
+          "url": "https://github.com/google/gvisor/pull/16740"
+        },
+        {
+          "label": "Both state suites on the merged callback code",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039107964/artifacts/12970325078"
+        },
+        {
+          "label": "Prerequisite #16728 merged",
+          "url": "https://github.com/google/gvisor/pull/16728"
+        },
+        {
+          "label": "Nested fix against the merged source",
+          "url": "https://github.com/tamird/gvisor/commit/905873f0e"
+        },
         {
           "label": "Original master and author failures, repaired master and the four state suites",
           "url": "https://github.com/tamird/gvisor/actions/runs/41011113384/artifacts/12957114896"
@@ -35282,10 +35340,6 @@
           "url": "https://github.com/tamird/gvisor/commit/011889bf4"
         },
         {
-          "label": "Author’s open checkpoint hook change",
-          "url": "https://github.com/google/gvisor/pull/16728"
-        },
-        {
           "label": "Existing checkpoint round-trip issue",
           "url": "https://github.com/google/gvisor/issues/16715"
         }
@@ -35300,15 +35354,23 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "07b30159f3972037e9b77c8353e388f5f9409ab0",
-        "observedAt": "2026-10-30T10:22:03.833397+00:00",
-        "disposition": "Approved after prerequisite",
-        "nextAction": "When #16728 lands, submit the nested conversion follow-up if the regression still fails. The state and generator trees are identical on the refreshed author base.",
+        "sourceHead": "905873f0ea52d9d279bb05195f9239953451971b",
+        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "disposition": "Delivered as #16740",
+        "nextAction": "Follow the upstream review on #16740.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16728",
-          "https://github.com/tamird/gvisor/actions/runs/41039107964/artifacts/12970325078"
+          "https://github.com/google/gvisor/pull/16740"
         ]
-      }
+      },
+      "refinement": {
+        "before": {
+          "head": "07b30159f3972037e9b77c8353e388f5f9409ab0"
+        },
+        "after": {
+          "head": "905873f0ea52d9d279bb05195f9239953451971b"
+        }
+      },
+      "inactive": true
     },
     {
       "id": "branch:bazel-lib-native-arch",
@@ -35365,10 +35427,14 @@
       "title": "Remove a Unix socket waiter if host registration fails",
       "url": "https://github.com/tamird/gvisor/commit/ed3929b26",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
+      "status": "Published as #16739",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
       "summary": "If host epoll registration fails, remove only the rejected waiter from the Unix socket queue. Before the fix, it continued receiving notifications alongside a live registration.",
       "evidence": [
+        {
+          "label": "Published upstream as #16739",
+          "url": "https://github.com/google/gvisor/pull/16739"
+        },
         {
           "label": "Rejected registration notified on stock",
           "url": "https://app.buildbuddy.io/invocation/267eb38f-ae8c-45e1-bf43-eb6d6a62c5b3"
@@ -35410,14 +35476,24 @@
           "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
-        "url": "https://github.com/tamird/gvisor/commit/ed3929b26",
-        "title": "Remove a Unix socket waiter if host registration fails",
-        "summary": "If host epoll registration fails, remove only the rejected waiter from the Unix socket queue. Before the fix, it continued receiving notifications alongside a live registration.",
-        "body": "The stock test delivered a notification after EventRegister returned EPERM. The corrected transport suite and race test passed. This change is independent of the epoll and overlay proposals."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+          "outcome": "approved",
+          "at": "2026-10-30T10:46:19.726076+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "disposition": "Delivered as #16739",
+        "nextAction": "Follow the upstream review on #16739.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16739"
+        ]
       }
     },
     {
@@ -35481,10 +35557,11 @@
       "summary": "Restores map hooks and recursive graph descriptors. The nested conversion correction is a separate follow-up.",
       "group": "runtime",
       "ref": "test/cl1009255064",
-      "head": "007fdc5769ba0bf08a4e0a56ee70a7e3b879d0f8",
+      "head": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd",
       "url": "https://github.com/google/gvisor/pull/16728",
-      "status": "open",
-      "updatedAt": "2026-10-30T10:22:03.833397+00:00"
+      "status": "merged",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "reviewDecision": null
     },
     {
       "id": "branch:rack-delivery-per-ack",
@@ -35557,6 +35634,244 @@
         {
           "label": "Integration with #16659, five original cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41039678990/artifacts/12970255781"
+        }
+      ]
+    },
+    {
+      "id": "pr:16739",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16739,
+      "title": "Remove a Unix socket waiter if host registration fails",
+      "group": "runtime",
+      "summary": "If host epoll registration fails, remove only the rejected waiter from the Unix socket queue. Before the fix, it continued receiving notifications alongside a live registration.",
+      "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+      "ref": "review/unix-host-waiter-rollback",
+      "url": "https://github.com/google/gvisor/pull/16739",
+      "status": "open",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "refinement": {
+        "before": {
+          "head": "e35288cb1f5b4f25fb72fd321461222c0dccdb0e"
+        },
+        "after": {
+          "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+          "outcome": "approved",
+          "at": "2026-10-30T10:46:19.726076+00:00"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Published upstream as #16739",
+          "url": "https://github.com/google/gvisor/pull/16739"
+        },
+        {
+          "label": "Rejected registration notified on stock",
+          "url": "https://app.buildbuddy.io/invocation/267eb38f-ae8c-45e1-bf43-eb6d6a62c5b3"
+        },
+        {
+          "label": "Corrected full transport package",
+          "url": "https://app.buildbuddy.io/invocation/fd571b5a-0963-4f78-a570-35d3e1a024ad"
+        },
+        {
+          "label": "Race regression",
+          "url": "https://app.buildbuddy.io/invocation/072110a3-bae0-46b1-b0e9-7772ab0d3eba"
+        },
+        {
+          "label": "Current master queues before the peer update",
+          "url": "https://github.com/google/gvisor/blob/cd90d7a74/pkg/sentry/socket/unix/transport/unix.go#L961"
+        },
+        {
+          "label": "Stock: a rejected waiter received a notification",
+          "url": "https://app.buildbuddy.io/invocation/b1c6518f-d883-4000-b5af-0d427c88df33"
+        },
+        {
+          "label": "Corrected integrated source: the rejected waiter stays detached",
+          "url": "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
+        },
+        {
+          "label": "Race check on the integrated source",
+          "url": "https://app.buildbuddy.io/invocation/645cfbf5-6367-4be0-a0e5-e17cf1894cee"
+        },
+        {
+          "label": "Earlier one-line rollback",
+          "url": "https://github.com/tamird/gvisor/commit/6ac36a7fd"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "disposition": "Delivered as #16739",
+        "nextAction": "Follow the upstream review on #16739.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16739"
+        ]
+      },
+      "reviewDecision": null
+    },
+    {
+      "id": "pr:16740",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16740,
+      "title": "Keep nested checkpoint conversions from overwriting each other",
+      "group": "runtime",
+      "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
+      "head": "905873f0ea52d9d279bb05195f9239953451971b",
+      "ref": "review/state-nested-conversion-merged",
+      "url": "https://github.com/google/gvisor/pull/16740",
+      "status": "open",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "refinement": {
+        "before": {
+          "head": "07b30159f3972037e9b77c8353e388f5f9409ab0"
+        },
+        "after": {
+          "head": "905873f0ea52d9d279bb05195f9239953451971b"
+        }
+      },
+      "settledReviews": [
+        {
+          "head": "07b30159f3972037e9b77c8353e388f5f9409ab0",
+          "kind": "proposal",
+          "outcome": "approved",
+          "at": "2026-10-30T10:22:03.833397+00:00"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Published upstream as #16740",
+          "url": "https://github.com/google/gvisor/pull/16740"
+        },
+        {
+          "label": "Both state suites on the merged callback code",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039107964/artifacts/12970325078"
+        },
+        {
+          "label": "Prerequisite #16728 merged",
+          "url": "https://github.com/google/gvisor/pull/16728"
+        },
+        {
+          "label": "Nested fix against the merged source",
+          "url": "https://github.com/tamird/gvisor/commit/905873f0e"
+        },
+        {
+          "label": "Original master and author failures, repaired master and the four state suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011113384/artifacts/12957114896"
+        },
+        {
+          "label": "Author-head correction, nested conversion, direct and synchronous hooks, state suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011923774/artifacts/12957658596"
+        },
+        {
+          "label": "Original master-based correction",
+          "url": "https://github.com/tamird/gvisor/commit/e5a505c74"
+        },
+        {
+          "label": "Same nested fixture on the author’s unmodified source",
+          "url": "https://github.com/tamird/gvisor/commit/011889bf4"
+        },
+        {
+          "label": "Existing checkpoint round-trip issue",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "905873f0ea52d9d279bb05195f9239953451971b",
+        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "disposition": "Delivered as #16740",
+        "nextAction": "Follow the upstream review on #16740.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16740"
+        ]
+      },
+      "reviewDecision": null
+    },
+    {
+      "id": "branch:state-loadvalue-snapshot",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/state-loadvalue-snapshot-merged",
+      "head": "13a44008304ed152babfd929a28dc2cb1ab160b5",
+      "title": "Snapshot ordinary LoadValue callback arguments at delivery",
+      "url": "https://github.com/tamird/gvisor/commit/13a440083",
+      "group": "runtime",
+      "summary": "When a handwritten callback retains the interface it received, changing the destination afterward must not change that saved value. The graph reader kept a pointer to the destination; the legacy reader returned its value.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "refinement": {
+        "before": {
+          "head": "0316d4624e80996c59be12bb1c3516cd7c389e0b"
+        },
+        "after": {
+          "head": "13a44008304ed152babfd929a28dc2cb1ab160b5"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "13a44008304ed152babfd929a28dc2cb1ab160b5",
+        "url": "https://github.com/tamird/gvisor/commit/13a440083",
+        "title": "Snapshot ordinary LoadValue callback arguments at delivery",
+        "summary": "When a handwritten callback retains the interface it received, changing the destination afterward must not change that saved value. The graph reader kept a pointer to the destination; the legacy reader returned its value.",
+        "body": "Review the standalone shallow copy for ordinary LoadValue and its regression. The regression runs on both engines; the two owning state suites passed. The nested conversion correction in #16740 is a different change.",
+        "requestedAt": "2026-10-30T10:46:19.726076+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Original callback retained the changed value",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011609738/artifacts/12958111579"
+        },
+        {
+          "label": "Both state suites and the named graph/legacy callback cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039107964/artifacts/12970325078"
+        },
+        {
+          "label": "Original review finding",
+          "url": "https://github.com/google/gvisor/pull/16620#discussion_r4416549128"
+        },
+        {
+          "label": "Previously tested source, identical tree",
+          "url": "https://github.com/tamird/gvisor/commit/0316d4624"
+        },
+        {
+          "label": "State round-trip investigation",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        }
+      ]
+    },
+    {
+      "id": "branch:skylib-native-copy",
+      "type": "branch",
+      "repo": "tamird/bazel-skylib",
+      "ref": "proposal/native-copy-file",
+      "head": "b035bf6d358aa9184a738086c64979928db38951",
+      "title": "Use Bazel’s native action for ordinary Skylib file copies",
+      "url": "https://github.com/tamird/bazel-skylib/commit/b035bf6d3",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "summary": "With a native copy action available, Skylib can copy regular files without a shell when is_executable is false. Other cases retain the existing platform-specific copy action. The attribute describes whether the Bazel target can run; the file may still have execute bits.",
+      "evidence": [
+        {
+          "label": "Supplier fork branch",
+          "url": "https://github.com/tamird/bazel-skylib/tree/proposal/native-copy-file"
+        },
+        {
+          "label": "Supplier implementation and documentation",
+          "url": "https://github.com/tamird/bazel-skylib/compare/5f88ea649...b035bf6d3"
+        },
+        {
+          "label": "Compatibility and copy qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41040732572"
         }
       ]
     }
@@ -38720,33 +39035,32 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:unix-waiter-attachment",
+      "from": "pr:16739",
       "to": "branch:mutable-overlay-poll-waiter",
       "reason": "Poll releases only entries whose registration succeeds. Unix sockets must first unlink a rejected waiter so skipping cleanup cannot leave it registered.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/e35288cb1",
-        "https://app.buildbuddy.io/invocation/b1c6518f-d883-4000-b5af-0d427c88df33",
-        "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
+        "https://github.com/google/gvisor/pull/16739",
+        "https://github.com/tamird/gvisor/commit/ed3929b26"
       ]
     },
     {
       "type": "depends_on",
-      "from": "branch:unix-waiter-attachment",
+      "from": "pr:16739",
       "to": "branch:epoll-modify-preserve",
       "reason": "The reviewed epoll range already builds on the Unix provider rollback. Failed Unix registrations must leave the rejected waiter detached.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/e35288cb1",
-        "https://app.buildbuddy.io/invocation/b1c6518f-d883-4000-b5af-0d427c88df33",
-        "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
+        "https://github.com/google/gvisor/pull/16739",
+        "https://github.com/tamird/gvisor/commit/ed3929b26"
       ]
     },
     {
       "type": "depends_on",
-      "from": "branch:state-loadvalue-scratch",
-      "to": "pr:16728",
-      "reason": "The nested conversion correction uses the graph callback scheduling in #16728.",
+      "from": "pr:16728",
+      "to": "pr:16740",
+      "reason": "The nested callback fix builds on the merged graph callback scheduling in #16728.",
       "evidence": [
-        "https://github.com/google/gvisor/pull/16728"
+        "https://github.com/google/gvisor/pull/16728",
+        "https://github.com/google/gvisor/pull/16740"
       ]
     }
   ],
@@ -51032,7 +51346,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T02:58:38.945196+00:00",
+      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -51830,6 +52144,10 @@
       ],
       "nextStep": "Qualify the full release on current sources and a complete native ARM64 compiler build separately. The historical cross-build, nine native ARM64 prerequisite actions, native version reader, changelog writer, module-map helper and consuming compiler-rt archives have scoped results. The next packaging decision is upstream review of the opt-in rules_python launcher; ordinary tar/deb writers are qualified on both architectures.",
       "evidence": [
+        {
+          "label": "Skylib supplier proposal for shell-free native file copies",
+          "url": "https://github.com/tamird/bazel-skylib/commit/b035bf6d3"
+        },
         {
           "label": "Cold native ARM64 build: complete action inventory and six archive traces",
           "url": "https://github.com/tamird/gvisor/actions/runs/40993356576/artifacts/12950408289"
