@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T06:27:28.827277+00:00",
+    "updatedAt": "2026-10-30T10:22:03.833397+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10073,25 +10073,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-sack-credit-accounting",
-      "head": "b909bc6898663235442ae8be2ff97607115d39d8",
-      "title": "Preserve selective ACK credit through recovery",
+      "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4",
+      "title": "Count selectively acknowledged TCP packets on their transmit boundaries",
       "url": "https://github.com/google/gvisor/pull/15634",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-30T04:19:54.582741+00:00",
-      "summary": "TCP can report negative selectively acknowledged packets after recovery. The proposed amendment counts transmitted packets across partial ACKs, GSO queue splits, a path MTU change, timeouts and checkpoint restore. The independent flight estimate is in #14101.",
-      "followup": {
-        "owner": "work_map_current",
-        "disposition": "Qualified amendment; contributor review",
-        "sourceHead": "b909bc6898663235442ae8be2ff97607115d39d8",
-        "observedAt": "2026-10-30T04:19:54.582741+00:00",
-        "nextAction": "Publish the reviewed replacement to #15634 only after contributor approval. Other PRs about the flight estimate and RACK delivery are independently reviewable.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/15634",
-          "https://github.com/tamird/gvisor/commit/7d7f55233",
-          "https://github.com/tamird/gvisor/actions/runs/41001085658/artifacts/12954091545"
-        ]
-      },
+      "status": "open",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "summary": "Credit each selectively acknowledged packet at its transmit boundaries. Stock lost credit or counted it twice, including after a change in segment size.",
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
@@ -10150,17 +10138,14 @@
           "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4",
-        "baseHead": "b909bc6898663235442ae8be2ff97607115d39d8",
-        "url": "https://github.com/tamird/gvisor/commit/7d7f55233",
-        "title": "Count TCP SACKed packets on their transmit boundaries",
-        "summary": "Linux counts 1, 1, 4, 0 where stock counts 0, 0, 0, −3. Each selectively acknowledged packet now has one owner even when recovery splits its queue entry.",
-        "body": "Review this replacement for the existing unapproved #15634. Normal and gated analyzer results are linked alongside the real wire/checkpoint cases and the single-CPU sparse-window benchstat. #14101 covers the separate Outstanding flight estimate; it is not a prerequisite.",
-        "requestedAt": "2026-10-30T04:19:54.582741+00:00"
-      }
+      "settledReviews": [
+        {
+          "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4",
+          "kind": "amendment",
+          "outcome": "approved",
+          "at": "2026-10-30T10:22:03.833397+00:00"
+        }
+      ]
     },
     {
       "id": "pr:15618",
@@ -18471,21 +18456,16 @@
       "status": "open",
       "summary": "The additive conflict after #15970 landed is resolved and published at 36d42cd42ed7535e9106267046beb65b38880612, directly on merged 0912018a096a3cedc6467a311a1cc98f26abf3c6. Both original 1669fae manual-audit postimages are preserved exactly, with only the landed codeload regexp and test added. Independent source review confirms the inverse. GitHub observed the new head as MERGEABLE at 21:37:45Z; current checks were pending. The existing approval and qualification retain their original revision identities; the raw APPROVED rollup is not a newly submitted review of this head. No native workload was repeated. The 21:47:05Z provider snapshot confirms the delivered head is MERGEABLE and reports effective REVIEW_REQUIRED.\n\nEarlier source-specific evidence:\n\nEtienne approved the exact current head 1669fae493856ba8428381b93fabe3dbd7579131 on October 24 at 09:23 UTC. No source change or reply was requested; ordinary public checks and matching import remain separate.\n\nThe requested post-#16046 rebase is published at 1669fae49385 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 0e6946fc8d. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 0e6946fc8d1821246fced5f960b37860d79e3d99 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nCurrent Gazelle job118631958637 fails solely on the inherited unused //pkg/zip dependency in tools/nogo/check/BUILD; existing import16031 carries the shared correction. No duplicate patch, retry or reviewer message is needed.\n\nThe user-approved change is delivered as google/gvisor#16051 at 24cae478d49a084a93cd26aba9a57d528d67b7cc. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nStandalone public-source proposal 24cae478d4 is published and independently qualified: four public checker/Nogo owners, four uncached attempts and 26 XML positives, plus canonical buildifier command exit 0. It preserves explicitly audited standard SPDX or LicenseRef terms only while artifact URL and checksum stay fixed; duplicate and invalid records fail before mutation. This standalone cut does not depend on held #15146, and adds no npm inventory, policy exception or catalog adoption. Root requested contributor review/open-PR once; no upstream PR exists yet. Automatic verification took 4.533 seconds; the later owner seal took 759.573 seconds, retained separately.\n\n",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Additive codeload conflict resolution published; follow the new revision",
-        "sourceHead": "36d42cd42ed7535e9106267046beb65b38880612",
-        "observedAt": "2026-10-24T21:37:45.127267+00:00",
-        "nextAction": "Follow the newly published head through current checks, matching Copybara import and actual revision-bound reviews using the existing watcher. Preserve previous-head validation and import history; no automatic reviewer request or merge.",
+        "owner": "overlay_owner",
+        "sourceHead": "ce676f0d3346881fc09b11523fc6aabcc3084486",
+        "observedAt": "2026-10-30T10:22:03.833397+00:00",
+        "disposition": "Contributor approved subject to simplifying LicenseRef validation",
+        "nextAction": "Remove licenseRefRE; verify that Fetch preserves artifact pins and rejects malformed references.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16051",
-          "https://github.com/google/gvisor/pull/16048",
-          "https://github.com/google/gvisor/actions/runs/39424045404/job/118631958637",
-          "https://github.com/tamird/gvisor/commit/1669fae493856ba8428381b93fabe3dbd7579131",
-          "https://github.com/google/gvisor/pull/16051#pullrequestreview-5637717783",
-          "https://github.com/google/gvisor/pull/16051/commits/36d42cd42ed7535e9106267046beb65b38880612"
+          "https://github.com/tamird/gvisor/commit/ce676f0d3"
         ]
       },
-      "updatedAt": "2026-10-30T05:20:14.564066+00:00",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
       "evidence": [
         {
           "label": "46 passing named test records; none skipped or missing",
@@ -18556,16 +18536,6 @@
           }
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "ce676f0d3346881fc09b11523fc6aabcc3084486",
-        "baseHead": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a",
-        "url": "https://github.com/tamird/gvisor/commit/ce676f0d3",
-        "title": "Preserve LicenseRef audits for pinned artifacts",
-        "summary": "The fork candidate retains the CodeQL bundle’s terms and both libcrypt1 package audits while their URL and SHA256 match. It removes the proposed manually_audited field. Existing license_source fetches and classification failures keep their current behavior.",
-        "body": "The public PR remains at 8f1cfd8f2. Review ce676f0d3 before updating it. The owning Bazel suite passed on Linux. The CodeQL bundle's CLI notice matches the immutable 66a113954 notice and ships with separate component notices. Both libcrypt1 packages carry the same per-file copyright notice. Puma’s standard BSD and MIT terms each match an immutable upstream file. The QEMU and LLVM notice audits do not need this change."
-      },
       "refinement": {
         "before": {
           "head": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a"
@@ -18573,7 +18543,15 @@
         "after": {
           "head": "ce676f0d3346881fc09b11523fc6aabcc3084486"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "head": "ce676f0d3346881fc09b11523fc6aabcc3084486",
+          "kind": "amendment",
+          "outcome": "changes-requested",
+          "at": "2026-10-30T10:22:03.833397+00:00"
+        }
+      ]
     },
     {
       "id": "pr:16056",
@@ -35142,7 +35120,7 @@
       "title": "Preserve signaling NaNs in legacy checkpoints",
       "url": "https://github.com/tamird/gvisor/commit/1e9e13978",
       "group": "runtime",
-      "status": "Awaiting contributor review",
+      "status": "Published as #16737",
       "summary": "Saving or restoring float32 and complex64 could quiet a signaling NaN. Preserve its bits through defined float types and map values, including complex values whose other component is infinite.",
       "evidence": [
         {
@@ -35154,15 +35132,25 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40998475925/artifacts/12952099358"
         }
       ],
-      "updatedAt": "2026-10-30T04:18:06.119315+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
-        "url": "https://github.com/tamird/gvisor/commit/1e9e13978",
-        "title": "Preserve signaling NaNs in legacy checkpoints",
-        "summary": "Saving or restoring float32 and complex64 could quiet a signaling NaN. Preserve its bits through defined float types and map values, including complex values whose other component is infinite.",
-        "body": "Review the change for submission. Both state suites and all 36 bit probes ran on native ARM64. The focused regression and the AMD64 and ARM64 package analyzers passed. Finite float and complex arrays kept the same allocation counts and bytes per operation as the preceding candidate."
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "settledReviews": [
+        {
+          "head": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
+          "kind": "proposal",
+          "outcome": "approved",
+          "at": "2026-10-30T10:22:03.833397+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
+        "observedAt": "2026-10-30T10:22:03.833397+00:00",
+        "disposition": "Published as #16737",
+        "nextAction": "Follow upstream review and checks on #16737.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16737"
+        ]
       }
     },
     {
@@ -35174,8 +35162,8 @@
       "title": "Generate wheel namespace initializers without a shell",
       "url": "https://github.com/tamird/gvisor/commit/005930e18",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-30T04:33:56.242748+00:00",
+      "status": "Investigating Skylib upstream",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
       "summary": "The proposed rules_python change replaces a shell copy with a Bazel template expansion. Existing namespace selection, target names and file contents are preserved.",
       "evidence": [
         {
@@ -35199,14 +35187,24 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41001494828/artifacts/12953173515"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "005930e18a30e580161f3674a686b05ff5392a80",
-        "url": "https://github.com/tamird/gvisor/commit/005930e18",
-        "title": "Submit the initializer change to rules_python",
-        "summary": "Review the supplier patch, including its upstream tests and release note.",
-        "body": "Approve creating a public rules_python fork and submitting the reviewed change upstream, with the separate disclosure comment that the supplier requires."
+      "settledReviews": [
+        {
+          "head": "005930e18a30e580161f3674a686b05ff5392a80",
+          "kind": "proposal",
+          "outcome": "changes-requested",
+          "at": "2026-10-30T10:22:03.833397+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "python_supplier_review",
+        "sourceHead": "005930e18a30e580161f3674a686b05ff5392a80",
+        "observedAt": "2026-10-30T10:22:03.833397+00:00",
+        "disposition": "Pursue the provider-side fix",
+        "nextAction": "Qualify Skylib’s regular-file copy against the proposed native Bazel action. Hold the rules_python substitution while the shared fix is evaluated.",
+        "evidence": [
+          "https://github.com/bazelbuild/bazel/pull/30386",
+          "https://github.com/bazelbuild/bazel-skylib/issues/604"
+        ]
       }
     },
     {
@@ -35255,9 +35253,9 @@
       "title": "Keep nested checkpoint conversions from overwriting each other",
       "url": "https://github.com/tamird/gvisor/commit/07b30159f",
       "group": "runtime",
-      "status": "Awaiting contributor review",
+      "status": "Contributor approved; waiting for #16728",
       "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
-      "updatedAt": "2026-10-30T06:06:52.793764+00:00",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
       "evidence": [
         {
           "label": "Original master and author failures, repaired master and the four state suites",
@@ -35284,14 +35282,24 @@
           "url": "https://github.com/google/gvisor/issues/16715"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "07b30159f3972037e9b77c8353e388f5f9409ab0",
-        "url": "https://github.com/tamird/gvisor/commit/07b30159f",
-        "title": "Keep nested checkpoint conversions from overwriting each other",
-        "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
-        "body": "Review the two-commit follow-up on the author’s #16728. On master cd90d7a74 and the author’s 168a31e6e, graph Load restores 22, 22 and the legacy reader restores 11, 22. The corrected graph reader restores 11, 22 on both bases. The author-head version preserves the synchronous-hook and deferred-value storage lifetimes in #16728. All four state test targets passed on each correction."
+      "settledReviews": [
+        {
+          "head": "07b30159f3972037e9b77c8353e388f5f9409ab0",
+          "kind": "proposal",
+          "outcome": "approved",
+          "at": "2026-10-30T10:22:03.833397+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "07b30159f3972037e9b77c8353e388f5f9409ab0",
+        "observedAt": "2026-10-30T10:22:03.833397+00:00",
+        "disposition": "Approved after prerequisite",
+        "nextAction": "When #16728 lands, submit the nested conversion follow-up if the regression still fails. The state and generator trees are identical on the refreshed author base.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16728",
+          "https://github.com/tamird/gvisor/actions/runs/41039107964/artifacts/12970325078"
+        ]
       }
     },
     {
@@ -35303,9 +35311,9 @@
       "title": "Select the governance tool without a host uname",
       "url": "https://github.com/tamird/gvisor/commit/6e1caeba7",
       "group": "bazel",
-      "status": "Awaiting contributor review",
+      "status": "Published as #16736",
       "summary": "Without uname, the governance extension asks yq for the invalid platform linux_. Updating bazel_lib to 3.4.0 lets the same fresh coordinator read the repository’s actual areas file. The canonical license check changed one row and verified all 220 dependencies.",
-      "updatedAt": "2026-10-30T06:17:00.186776+00:00",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
       "evidence": [
         {
           "label": "Stock and fixed governance query; exact areas.yaml bytes",
@@ -35320,14 +35328,24 @@
           "url": "https://github.com/bazel-contrib/bazel-lib/blob/c511ac0a1/lib/private/repo_utils.bzl#L85"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2",
-        "url": "https://github.com/tamird/gvisor/commit/6e1caeba7",
-        "title": "Select the governance tool without a host uname",
-        "summary": "Without uname, the governance extension asks yq for the invalid platform linux_. Updating bazel_lib to 3.4.0 lets the same fresh coordinator read the repository’s actual areas file. The canonical license check changed one row and verified all 220 dependencies.",
-        "body": "Review the module pin and canonical license record for a standalone upstream PR. The paired stock/fixed governance query used current master with unchanged Gazelle and no LLVM migration."
+      "settledReviews": [
+        {
+          "head": "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2",
+          "kind": "proposal",
+          "outcome": "approved",
+          "at": "2026-10-30T10:22:03.833397+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2",
+        "observedAt": "2026-10-30T10:22:03.833397+00:00",
+        "disposition": "Published as #16736",
+        "nextAction": "Follow upstream review and checks on #16736.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16736"
+        ]
       }
     },
     {
@@ -35364,6 +35382,108 @@
           "url": "https://github.com/tamird/gvisor/commit/6ac36a7fd"
         }
       ]
+    },
+    {
+      "id": "pr:16736",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16736,
+      "title": "Select the governance tool without a host uname",
+      "summary": "Without uname, the governance extension asks yq for the invalid platform linux_. Updating bazel_lib to 3.4.0 lets the same fresh coordinator read the repository’s actual areas file. The canonical license check changed one row and verified all 220 dependencies.",
+      "group": "bazel",
+      "ref": "review/bazel-lib-native-arch",
+      "head": "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2",
+      "url": "https://github.com/google/gvisor/pull/16736",
+      "status": "open",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "evidence": [
+        {
+          "label": "Stock and fixed governance query; exact areas.yaml bytes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41012722830/artifacts/12958511505"
+        },
+        {
+          "label": "Canonical Fetch/Verify, BCR archive hash, upstream license notice",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41012333362/artifacts/12958372225"
+        },
+        {
+          "label": "Supplier: read CPU architecture from Bazel",
+          "url": "https://github.com/bazel-contrib/bazel-lib/blob/c511ac0a1/lib/private/repo_utils.bzl#L85"
+        }
+      ]
+    },
+    {
+      "id": "pr:16737",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16737,
+      "title": "Preserve signaling NaNs in legacy checkpoints",
+      "summary": "Saving or restoring float32 and complex64 could quiet a signaling NaN. Preserve its bits through defined float types and map values, including complex values whose other component is infinite.",
+      "group": "runtime",
+      "ref": "review/state-signaling-nan",
+      "head": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
+      "url": "https://github.com/google/gvisor/pull/16737",
+      "status": "open",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "evidence": [
+        {
+          "label": "Native ARM64 state suites, AMD64 regression, owning analyzers on both architectures and finite-array comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41001428564/artifacts/12953866434"
+        },
+        {
+          "label": "Four original AMD64 failures and checkpoint bit probes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40998475925/artifacts/12952099358"
+        }
+      ]
+    },
+    {
+      "id": "pr:16728",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16728,
+      "title": "pkg/state: fix graph engine type info, type cache, and map hook edge cases",
+      "summary": "Restores map hooks and recursive graph descriptors. The nested conversion correction is a separate follow-up.",
+      "group": "runtime",
+      "ref": "test/cl1009255064",
+      "head": "007fdc5769ba0bf08a4e0a56ee70a7e3b879d0f8",
+      "url": "https://github.com/google/gvisor/pull/16728",
+      "status": "open",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00"
+    },
+    {
+      "id": "branch:rack-delivery-per-ack",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rack-delivery-per-ack",
+      "head": "715df78ea05a1b292331a746d50ddeee0690403d",
+      "title": "Measure RACK delivery across the whole ACK",
+      "url": "https://github.com/tamird/gvisor/commit/715df78ea",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "summary": "Linux and stock gVisor agree when two ACKs establish reordering. On one ACK with cumulative and selective credit, stock gVisor also reported reordering; Linux did not. Compare each delivery with the FACK from before that ACK.",
+      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "evidence": [
+        {
+          "label": "One-ACK negative and two-ACK positive Linux/gVisor controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011810557/artifacts/12957533684"
+        },
+        {
+          "label": "Stock and corrected tests / analyzers / race",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039678990/artifacts/12968809674"
+        },
+        {
+          "label": "Integration with #16659, five original cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039678990/artifacts/12970255781"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "715df78ea05a1b292331a746d50ddeee0690403d",
+        "url": "https://github.com/tamird/gvisor/commit/715df78ea",
+        "title": "Measure RACK delivery across the whole ACK",
+        "summary": "Linux and stock gVisor agree when two ACKs establish reordering. On one ACK with cumulative and selective credit, stock gVisor also reported reordering; Linux did not. Compare each delivery with the FACK from before that ACK.",
+        "body": "Review this ACK boundary independently of which bytes count as acknowledged in #16659; the changes have been tested together."
+      }
     }
   ],
   "edges": [
@@ -38544,6 +38664,15 @@
         "https://app.buildbuddy.io/invocation/b1c6518f-d883-4000-b5af-0d427c88df33",
         "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:state-loadvalue-scratch",
+      "to": "pr:16728",
+      "reason": "The nested conversion correction uses the graph callback scheduling in #16728.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16728"
+      ]
     }
   ],
   "investigations": [
@@ -38555,6 +38684,15 @@
       "updatedAt": "2026-10-30T04:40:42.488176+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "gVisor with #15634 received less than 44% of the common-interval bytes in all 16 mixed-stack trials against Linux. Eight same-stack controls ranged from 41% to 60% for the first lane. Increasing the queue to 256 packets did not close the gap. The cause remains open.",
+          "evidence": [
+            {
+              "label": "24 receiver comparisons, both lane orders, two queue depths",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41010414443/artifacts/12959895522"
+            }
+          ]
+        },
         {
           "text": "With RACK disabled, the peer reported packet 3, cumulatively ACKed 100 bytes, then also reported packets 6–8 to enter SACK recovery, then acknowledged the whole flight. Linux counted 1,1,4,0; stock gVisor 0,0,0,−3. A fork prototype counted 1,1,6,0 and is not ready: splitting the transmit queue can credit a wire packet twice. This counter discrepancy does not establish a bandwidth effect.",
           "evidence": [
