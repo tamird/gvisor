@@ -1,0 +1,42 @@
+Graph Save range index: original blocks vs deferred wide-range indexing
+
+Before: https://github.com/tamird/gvisor/commit/6e1c4aad7
+After:  https://github.com/tamird/gvisor/commit/0ca688f73
+
+12 alternating pairs, one pinned Linux/AMD64 CPU. The table retains the
+dense control and all sparse timings. All seven encoded lengths matched.
+These are graph Save benchmarks, not a whole-container checkpoint.
+
+                         │ control.bench  │           candidate.bench           │
+                         │     sec/op     │   sec/op     vs base                │
+GraphSave                     350.8m ± 6%   355.0m ± 3%        ~ (p=0.347 n=12)
+SparseIndexSave/1             955.8n ± 0%   969.5n ± 1%   +1.43% (p=0.000 n=12)
+SparseIndexSave/65536        2588.0n ± 1%   990.4n ± 1%  -61.73% (p=0.000 n=12)
+SparseIndexSave/16777216   757224.0n ± 0%   790.8n ± 2%  -99.90% (p=0.000 n=12)
+ManyWideIndexSave/16          27.48µ ± 1%   15.70µ ± 2%  -42.85% (p=0.000 n=12)
+ManyWideIndexSave/256         455.8µ ± 1%   291.7µ ± 3%  -36.00% (p=0.000 n=12)
+ManyWideIndexSave/1024        6.569m ± 3%   1.376m ± 2%  -79.05% (p=0.000 n=12)
+
+Four-worker Nginx kernel state file, 16 alternating pairs on one pinned
+Firecracker Linux/AMD64 worker. Both binaries consumed the same graph
+checkpoint. Encode includes the state-file write; the verification reload
+happens after the timer stops. The benchmark disables GC during Encode
+and Decode. This measures the state stage, not pause-to-resume latency.
+
+                               │ before.bench │             after.bench             │
+                               │    sec/op    │    sec/op     vs base               │
+CheckpointFile/DecodeStatefile   9.498m ± 17%   9.548m ± 21%       ~ (p=0.838 n=16)
+CheckpointFile/EncodeStatefile   2.114m ± 13%   2.046m ±  3%       ~ (p=0.128 n=16)
+
+Other changed metrics in the Nginx comparison:
+
+                               │ before.bench │             after.bench             │
+                               │     B/op     │     B/op      vs base               │
+CheckpointFile/EncodeStatefile   3.064Mi ± 0%   3.002Mi ± 0%  -2.02% (p=0.000 n=16)
+
+                               │ before.bench │            after.bench             │
+                               │  allocs/op   │  allocs/op   vs base               │
+CheckpointFile/EncodeStatefile    1.522k ± 0%   1.531k ± 0%  +0.59% (p=0.000 n=16)
+
+Full native result: https://github.com/tamird/gvisor/actions/runs/41115189223/artifacts/13007475516
+Nginx result: https://github.com/tamird/gvisor/actions/runs/41118121377/artifacts/13007432197

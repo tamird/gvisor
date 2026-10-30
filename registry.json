@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T19:11:38.251914+00:00",
+    "updatedAt": "2026-10-30T19:59:57.043832+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43296,9 +43296,30 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T19:11:38.251914+00:00",
+      "updatedAt": "2026-10-30T19:59:57.043832+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
+        {
+          "text": "The dense graph showed why the first hybrid regressed: only 3 of 373,226 queries were wide, none visited an occupied small bucket, yet the encoder maintained 42,075 such keys. Deferring that directory removed the detectable dense slowdown (350.8 → 355.0 ms, p=.347; seven more allocations). A one-byte slice with 16 MiB capacity took 757 → 0.791 µs; with capacity one it took 956 → 970 ns. Saving 1,024 disjoint wide ranges fell from 6.569 to 1.376 ms. The same four-worker Nginx graph checkpoint showed no detectable Encode timing change (2.114 → 2.046 ms, p=.128; 16 pairs). Encode allocated 2.02% fewer bytes but performed nine more allocations. This is a fork experiment for sparse address ranges, not a demonstrated whole-kernel speedup. Both alias orders passed and all seven microbenchmark wire lengths matched.",
+          "evidence": [
+            {
+              "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
+              "url": "https://tamird.github.io/gvisor/graph-range-index-benchstat.txt"
+            },
+            {
+              "label": "Dense graph: actual query counts, CPU and allocation profiles",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41113856581/artifacts/13004937266"
+            },
+            {
+              "label": "Deferred index: 12 paired dense and sparse trials, 34 passing cases per arm",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41115189223/artifacts/13007475516"
+            },
+            {
+              "label": "Deferred index: 16 paired graph checkpoint trials on four-worker Nginx",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41118121377/artifacts/13007432197"
+            }
+          ]
+        },
         {
           "text": "Retaining the small-object hash and ordering occupied buckets and wide roots also lost on the 20,000-node graph: 334.7 → 378.2 ms (+13.01%), 46,804 → 53,696 allocations (+14.73%). It removed the 16 MiB sparse cliff (663 → 1.056 µs). With 16, 256 and 1,024 disjoint 32 KiB ranges, each also seen through a one-byte alias, Save fell 39%, 36% and 78%, respectively (1.09, 1.10 and 1.28 µs per range after the change). Both sources passed 34 cases and skipped the same ten legacy cases; all seven wire lengths matched across twelve pairs on one AMD64 CPU. Repeatedly expanding overlapping views can still revisit absorbed small-object entries. Neither index is proposed for upstream.",
           "evidence": [
@@ -46060,6 +46081,22 @@
       ],
       "nextStep": "Compare one index entry per live graph range against the 512-byte bucket index on both sparse slices and the 20,000-node graph. Verify alias identity and wire sizes before interpreting timing. Keep the four separately reproduced correctness cases open in #16715 until #16747 lands.",
       "evidence": [
+        {
+          "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
+          "url": "https://tamird.github.io/gvisor/graph-range-index-benchstat.txt"
+        },
+        {
+          "label": "Dense graph: actual query counts, CPU and allocation profiles",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41113856581/artifacts/13004937266"
+        },
+        {
+          "label": "Deferred index: 12 paired dense and sparse trials, 34 passing cases per arm",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41115189223/artifacts/13007475516"
+        },
+        {
+          "label": "Deferred index: 16 paired graph checkpoint trials on four-worker Nginx",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41118121377/artifacts/13007432197"
+        },
         {
           "label": "Tiered graph index: 12 pairs, seven workloads, case records and benchstat",
           "url": "https://github.com/tamird/gvisor/actions/runs/41112328467/artifacts/13003813031"
