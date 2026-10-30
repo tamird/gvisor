@@ -1,5 +1,6 @@
+load("@rules_python//python/zipapp:py_zipapp_binary.bzl", "py_zipapp_binary")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_deb", "pkg_tar")
-load(":relocation.bzl", "relocated_writer")
+load(":relocation.bzl", "native_zipapp", "relocated_writer")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -41,10 +42,22 @@ filegroup(
     ],
 )
 
+# Exercise only the supplier's public archive, without an archive-writer patch.
+py_zipapp_binary(
+    name = "tar_archive",
+    binary = "@rules_pkg//pkg/private/tar:build_tar",
+    executable = False,
+)
+
+native_zipapp(
+    name = "tar_native",
+    archive = ":tar_archive",
+)
+
 # Run the original writer again through a moved, manifest-only entry point.
 relocated_writer(
     name = "relocated",
     seed = "seed.tar.gz",
     script = "relocation.py",
-    writer = "@rules_pkg//pkg/private/tar:build_tar",
+    writer = ":tar_native",
 )

@@ -1,7 +1,7 @@
 name: Exercise native package tool launchers
 on:
   push:
-    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated, qualification/rules-python-native-launcher-4183-relocated-argv]
+    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated, qualification/rules-python-native-launcher-4183-relocated-public-zip]
 permissions:
   actions: read
   contents: read
@@ -24,13 +24,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
-      - name: Install the lock resolved by the exact no-credential graph
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh run download 40804613540 --repo "$GITHUB_REPOSITORY" --name launcher-resolution --dir "$RUNNER_TEMP/launcher-resolution"
-          cp "$RUNNER_TEMP/launcher-resolution/gvisor/gvisor/MODULE.bazel.lock" MODULE.bazel.lock
-          echo '8c79115ccdedab474c241d04425b9bd4a94269904510e6e4bd380fdfbcad45af  MODULE.bazel.lock' | sha256sum -c -
       - name: Fetch the pinned execution log decoder
         run: |
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
@@ -41,7 +34,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           bash test/rbe/actions.sh \
-            --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native \
+            --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=script \
             --bazel-option=--remote_download_outputs=all \
             '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|RelocatedPythonWriter)$=+no-remote-cache'
       - name: Compare the actual Linux worker outputs

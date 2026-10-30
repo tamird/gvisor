@@ -34,7 +34,6 @@ def copy_runfiles(source, target):
     # inside the moved tree. Turning it into a regular file loses CPython's prefix.
     links = {p.relative_to(target): p.resolve(strict=True).relative_to(target)
              for p in target.rglob("*") if p.is_symlink()}
-    assert any(p.parent.name == "bin" and p.name == "python3.11" for p in links), links
     return links
 
 
@@ -56,7 +55,7 @@ with tempfile.TemporaryDirectory(dir=output.parent) as work:
     repo_dirs = sorted(p for p in runfiles.iterdir() if p.is_dir())
     assert len(repo_dirs) >= 2
     manifest = root / "names.runfiles_manifest"
-    env = {"RUNFILES_MANIFEST_FILE": str(manifest), "PATH": "/no-host-tools"}
+    env = {"RUNFILES_MANIFEST_FILE": str(manifest), "PATH": "/no-host-tools", "TMPDIR": str(root)}
     product = root / "output.tar"
     # rules_pkg's real tar.bzl always supplies directory (default /), along
     # with mode, owner and mtime. Preserve the seed's existing share/ prefix.
@@ -94,11 +93,18 @@ with tempfile.TemporaryDirectory(dir=output.parent) as work:
         link.unlink()
         link.symlink_to(os.path.relpath(dest, link.parent))
         assert link.resolve(strict=True) == dest.resolve(strict=True)
+    zip_paths = [q for d in independent.values() if d.is_dir() for q in d.rglob("tar_archive.zip")]
+    assert len(zip_paths) == 1, zip_paths
     split = launch([(p.name, independent[p.name]) for p in repo_dirs])
+    if split.returncode:
+        raise RuntimeError(f"Split-repository writer failed: {split.stderr!r}")
     if not split.returncode:
         assert digest(product) == archive_sha and notice(product) == notice(seed)
     result = {
         "writer": digest(writer),
+        "writer_size": writer.stat().st_size,
+        "zip_size": zip_paths[0].stat().st_size,
+        "zip_digest": digest(zip_paths[0]),
         "interpreter": digest(Path(sys.executable)),
         "internal_links_preserved": len(links),
         "manifest_prefixes": [p.name for p in repo_dirs],

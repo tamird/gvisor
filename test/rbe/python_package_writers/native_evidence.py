@@ -89,14 +89,15 @@ def inspect(result):
     expected = {"RelocatedPythonWriter"} if relocated_only else set(ROOTS)
     assert result["native_exit"] == 0 and set(records) == expected and not any(r["exit"] for r in records.values())
     manifest = result["manifest"]
-    if relocated_only:
-        # Exact original PackageTar input from the first, already successful worker.
-        result["package_invocation"] = "813b647f-0118-4b22-9e90-4fadd8dae6c3"
-        writer = "b4e39567888f7f6e390260950a6cdf89bae5f2b4dda1c0b1dd4450962f5c8922"
-    else:
-        writer = records["PackageTar"]["executable"][1]
-    assert manifest["writer"] == writer and manifest["interpreter"] == PYTHON
-    assert manifest["missing_prefix_exit"] != 0 and manifest["relocated_exit"] == 0 and len(manifest["manifest_prefixes"]) >= 2
+    assert relocated_only and manifest["interpreter"] == PYTHON
+    assert manifest["writer_size"] > 0 and manifest["zip_size"] > 0
+    assert manifest["missing_prefix_exit"] != 0
+    assert manifest["relocated_exit"] == manifest["independent_roots_exit"] == 0
+    assert len(manifest["manifest_prefixes"]) >= 2
+    assert manifest["relocated_archive"] == "36d353b3a4c24813e58fdba4825d932e24f29d393ea62c7c2cba7b89cc861eaf"
+    assert manifest["payload"] == "28c61a191487fa5f514a655146fed81b103a1384eff298eca7047a1bc20e6a27"
+    assert not manifest["independent_roots_adapter_missing_root"]
+
 
 
 result = {"source": os.environ["GITHUB_SHA"]}

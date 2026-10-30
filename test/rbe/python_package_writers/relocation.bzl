@@ -1,5 +1,32 @@
 """Run a real package writer with its executable and runfiles relocated."""
 
+load("@hermetic_launcher//launcher:lib.bzl", "launcher")
+
+def _native_zipapp_impl(ctx):
+    runtime = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
+    archive = ctx.file.archive
+    exe = ctx.actions.declare_file(ctx.label.name)
+    args, transformed = launcher.args_from_entrypoint(runtime.interpreter)
+    args.extend(["-I", "-S"])
+    launcher.append_runfile(file = archive, embedded_args = args, transformed_args = transformed)
+    launcher.compile_stub(ctx = ctx, embedded_args = args, transformed_args = transformed, output_file = exe)
+    return [DefaultInfo(
+        executable = exe,
+        files = depset([exe]),
+        runfiles = ctx.runfiles(files = [runtime.interpreter, archive], transitive_files = runtime.files),
+    )]
+
+native_zipapp = rule(
+    implementation = _native_zipapp_impl,
+    executable = True,
+    attrs = {"archive": attr.label(allow_single_file = [".zip"], mandatory = True)},
+    toolchains = [
+        "@bazel_tools//tools/python:toolchain_type",
+        launcher.finalizer_toolchain_type,
+        launcher.template_toolchain_type,
+    ],
+)
+
 def _relocated_writer_impl(ctx):
     runtime = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
     writer = ctx.attr.writer[DefaultInfo].files_to_run
