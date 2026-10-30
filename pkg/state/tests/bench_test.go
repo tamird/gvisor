@@ -204,6 +204,7 @@ const benchGraphNodes = 20000
 
 // BenchmarkGraphSave saves a large random graph.
 func BenchmarkGraphSave(b *testing.B) {
+	forceGraphEngine(b)
 	root := randomGraph(1, graphOptions{nodes: benchGraphNodes, all: true})
 	b.ReportAllocs()
 	var n int
@@ -243,4 +244,59 @@ type countingWriter struct {
 func (w *countingWriter) Write(p []byte) (int, error) {
 	w.n += len(p)
 	return len(p), nil
+}
+
+func forceGraphEngine(tb testing.TB) {
+	old := state.GraphEngineEnabled()
+	state.EnableGraphEngine(true)
+	tb.Cleanup(func() { state.EnableGraphEngine(old) })
+}
+
+func TestIndexSparseAliasing(t *testing.T) {
+	forceGraphEngine(t)
+	for _, reverse := range []bool{false, true} {
+		back := make([]byte, 1<<16)
+		back[0], back[len(back)-1] = 41, 73
+		views := [2][]byte{back[:1], back[len(back)-1:]}
+		i, j := 0, 1
+		if reverse {
+			i, j = j, i
+			views[i], views[j] = views[j], views[i]
+		}
+		var encoded bytes.Buffer
+		if _, err := state.Save(context.Background(), &encoded, &views); err != nil {
+			t.Fatal(err)
+		}
+		var read [2][]byte
+		if _, err := state.Load(context.Background(), &encoded, &read); err != nil {
+			t.Fatal(err)
+		}
+		wide := read[i][:cap(read[i])]
+		if got, want := len(wide), len(back); got != want {
+			t.Fatalf("cap = %d, want %d", got, want)
+		}
+		if wide[0] != 41 || wide[len(wide)-1] != 73 || &wide[len(wide)-1] != &read[j][0] {
+			t.Fatalf("sparse alias did not survive (reverse=%t)", reverse)
+		}
+	}
+}
+
+func BenchmarkSparseIndexSave(b *testing.B) {
+	forceGraphEngine(b)
+	for _, size := range []int{1, 64 << 10, 16 << 20} {
+		b.Run(fmt.Sprint(size), func(b *testing.B) {
+			payload := make([]byte, 1, size)
+			payload[0] = 41
+			b.ReportAllocs()
+			var n int
+			for b.Loop() {
+				w := countingWriter{}
+				if _, err := state.Save(context.Background(), &w, &payload); err != nil {
+					b.Fatal(err)
+				}
+				n = w.n
+			}
+			b.ReportMetric(float64(n), "encoded-B")
+		})
+	}
 }
