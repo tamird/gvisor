@@ -18,6 +18,22 @@ try:
     verdict = json.loads((stage / "verdict.json").read_text())
     result.update({k: verdict.get(k) for k in ("invocation", "native_exit", "capture_exit", "expected", "missing", "failures", "verified", "execution_finished_at")})
     result["harness_status"] = verdict["status"]
+    decoded = root / "compiler-spawns.json"
+    with decoded.open("w") as dst:
+        subprocess.run([os.environ["BB_LOG_DECODER"], "print", f"--compact_execution_log={log}", "--raw=true", "--sort=false"], stdout=dst, check=True)
+    records, spawns = compact_records(decoded)
+    required = {"GoToolchainBinaryBuild": "", "CppCompile": "//vdso:", "CppLink": "//vdso:", "GoStateify": "//pkg/abi/linux:", "GoCompilePkg": "//pkg/abi/linux:linux", "GoLink": "//tools/package_version:package_version"}
+    proof = {k: [] for k in required}
+    result["executions"] = proof
+    for s in spawns:
+        m, lbl = s.get("mnemonic"), s.get("targetLabel", "")
+        if m not in required or not lbl.startswith(required[m]):
+            continue
+        props = {p["name"]: p["value"] for p in s["platform"]["properties"]}
+        image = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
+        proof[m].append({"owner": lbl, "action": s["digest"]["hash"], "outputs": spawn_output_files(records, s),
+                         "arch": props.get("Arch"), "os": props.get("OSFamily"), "image": props.get("container-image"),
+                         "runner": s.get("runner"), "cached": bool(s.get("cacheHit") or s.get("remoteCacheHit")), "exit": s.get("exitCode", 0), "status": s.get("status", "")})
     # Keep the original process exit separate from qualification/report errors.
     assert result["native_exit"] == 0, result["native_exit"]
     wanted = {"//vdso:vdso.so", "//pkg/abi/linux:linux", "//tools/package_version:package_version"}
@@ -40,22 +56,6 @@ try:
         assert header[:6] == b"\x7fELF\x02\x01" and int.from_bytes(header[18:20], "little") == 183, label
         elfs[label] = {"sha256": output["sha256"], "bytes": output["bytes"], "machine": "AArch64"}
     result["elfs"] = elfs
-    decoded = root / "compiler-spawns.json"
-    with decoded.open("w") as dst:
-        subprocess.run([os.environ["BB_LOG_DECODER"], "print", f"--compact_execution_log={log}", "--raw=true", "--sort=false"], stdout=dst, check=True)
-    records, spawns = compact_records(decoded)
-    required = {"CppCompile": "//vdso:", "CppLink": "//vdso:", "GoStateify": "//pkg/abi/linux:", "GoCompilePkg": "//pkg/abi/linux:linux", "GoLink": "//tools/package_version:package_version"}
-    proof = {k: [] for k in required}
-    result["executions"] = proof
-    for s in spawns:
-        m, lbl = s.get("mnemonic"), s.get("targetLabel", "")
-        if m not in required or not lbl.startswith(required[m]):
-            continue
-        props = {p["name"]: p["value"] for p in s["platform"]["properties"]}
-        image = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-        proof[m].append({"owner": lbl, "action": s["digest"]["hash"], "outputs": spawn_output_files(records, s),
-                         "arch": props.get("Arch"), "os": props.get("OSFamily"), "image": props.get("container-image"),
-                         "runner": s.get("runner"), "cached": bool(s.get("cacheHit") or s.get("remoteCacheHit")), "exit": s.get("exitCode", 0), "status": s.get("status", "")})
     assert all(proof.values()), {m: len(v) for m, v in proof.items()}
     for expected in proof.values():
         for p in expected:

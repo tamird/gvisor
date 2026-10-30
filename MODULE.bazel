@@ -2869,4 +2869,5 @@ archive_override(
 )
 
 bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
-bootstrap_busybox(name = "bootstrap_busybox")
+bootstrap_busybox(name = "bootstrap_busybox", cpu = "amd64")
+bootstrap_busybox(name = "bootstrap_busybox_arm64", cpu = "arm64")

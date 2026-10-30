@@ -64,7 +64,8 @@ jobs:
             --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_arm64 \
             --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
             --bazel-option=--remote_download_outputs=toplevel \
-            '--bazel-option=--modify_execution_info=^(CppCompile|CppLink|GoStateify|GoCompilePkg|GoLink)$=+no-remote-cache'
+            --bazel-option=--remote_accept_cached \
+            '--bazel-option=--modify_execution_info=^(CppLink|GoStateify|GoLink)$=+no-remote-cache'
       - name: Verify exact worker actions, target architectures and build exit separately
         if: ${{ !cancelled() && steps.native.outcome != 'skipped' }}
         env:
