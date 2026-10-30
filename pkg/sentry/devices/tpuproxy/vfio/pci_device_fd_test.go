@@ -1,0 +1,60 @@
+// Copyright 2026 The gVisor Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package vfio
+
+import (
+	"bytes"
+	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/waiter"
+)
+
+func TestPCIDeviceRestoredWaiter(t *testing.T) {
+	fd := &pciDeviceFD{hostFD: -1, tpuproxy: &tpuproxy{}}
+	var entry waiter.Entry
+	entry.Init(waiter.NoopListener{}, waiter.EventIn)
+	// Older checkpoints can contain epoll watches on a PCI descriptor.
+	// Save the reference normally held by epoll alongside the device.
+	fd.queue.EventRegister(&entry)
+	saved := [2]any{fd, &entry}
+	var buf bytes.Buffer
+	if _, err := state.Save(t.Context(), &buf, &saved); err != nil {
+		t.Fatal(err)
+	}
+	var restored [2]any
+	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+		t.Fatal(err)
+	}
+	device := restored[0].(*pciDeviceFD)
+	watch := restored[1].(*waiter.Entry)
+	if got, want := device.queue.Events(), waiter.EventIn; got != want {
+		t.Fatalf("saved wait mask: got %v, want %v", got, want)
+	}
+	device.EventUnregister(watch)
+	if !device.queue.IsEmpty() {
+		t.Fatal("removing the restored watch left it on the PCI device")
+	}
+	if err := device.EventRegister(watch); err != nil {
+		t.Fatal(err)
+	}
+	defer device.EventUnregister(watch)
+	if got, want := device.queue.Events(), waiter.EventIn; got != want {
+		t.Errorf("new wait mask: got %v, want %v", got, want)
+	}
+	if got, want := device.Readiness(waiter.AllEvents), waiter.EventMask(0); got != want {
+		t.Errorf("restored PCI device readiness: got %v, want %v", got, want)
+	}
+}
