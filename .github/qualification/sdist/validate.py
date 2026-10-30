@@ -3,9 +3,9 @@ import json
 import os
 from pathlib import Path
 
-PRODUCT = "378a719ac38bf5d2fa98c99eb980152a819e3114"
-SOURCE = "ba488ce1b6e6e02cc368dcb4538dcb786713ffc9"
-TREE = "ec24e9946ed96208e743205cb48a97026584a9b7"
+PRODUCT = "d095cd927271c4994799b8c71685a8664bb45891"
+SOURCE = "41fc8aeb66f31ed395f64ce2e99712704fba9122"
+TREE = "90adfcc4cdbe04a08178ccba6cd5056698ef5a91"
 BLOB = "c70e529889e51183d2479db63794fb5b10dea601"
 
 out = Path(os.environ["RUNNER_TEMP"]) / "publication"
