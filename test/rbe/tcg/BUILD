@@ -149,13 +149,9 @@ sh_test(
     srcs = ["vfio_arm.sh"],
     data = [
         "vfio_stock/runsc",
-        "vfio_stock/gvisor-bin/gvisor_sentry",
-        "vfio_stock/gvisor-bin/checkpointgofer",
         "vfio_fixed/runsc",
-        "vfio_fixed/gvisor-bin/gvisor_sentry",
-        "vfio_fixed/gvisor-bin/checkpointgofer",
         "vfio_pci_root.tar",
-    ],
+    ] + glob(["vfio_*/gvisor-bin/*"], allow_empty = True),
 )
 
 amd64_kvm_test(

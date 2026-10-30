@@ -74,21 +74,22 @@ jobs:
         sha256sum "$RUNNER_TEMP/"{vfio_pci_probe_bin,vfio_pci_root.tar} >"$out/probe-sha"
         git checkout --quiet --detach "$carrier"
         cp "$RUNNER_TEMP/vfio_pci_root.tar" test/rbe/tcg/
-    - name: Open and poll a real Linux PCI descriptor before building either runsc
+    - name: Verify the existing native device result from the same test source
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         out="$RUNNER_TEMP/records"
-        rc=0
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nozip_undeclared_test_outputs --nocache_test_results --test_output=all --test_timeout=480 //test/rbe/tcg:vfio_linux_test >"$RUNNER_TEMP/preflight.log" 2>&1 || rc=$?
-        echo "$rc" >"$out/native-exit"
-        { grep 'INFO: Invocation ID:' "$RUNNER_TEMP/preflight.log"; grep -A14 -E '^ERROR:|FAILED|qemu-system|vfio.*failed|cannot|Cannot' "$RUNNER_TEMP/preflight.log" | tail -65; } >"$out/native-receipt" || :
-        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt; do
-          name=${path##*/}
-          docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_linux_test/$path" | tail -160 >"$out/native-$name" || :
-        done
-        test "$rc" -eq 0
-        grep -q 'Native VFIO driver=' "$out/native-vfio-device.txt"
-        grep -Fq '[       OK ] VfioPCIDeviceTest.Readiness' "$out/native-console.log"
+        gh api repos/tamird/gvisor/actions/artifacts/12984210801/zip > "$RUNNER_TEMP/original-native.zip"
+        unzip -po "$RUNNER_TEMP/original-native.zip" native-vfio-device.txt > "$out/original-native-device"
+        unzip -po "$RUNNER_TEMP/original-native.zip" native-gtest.txt > "$out/original-native-readiness"
+        unzip -po "$RUNNER_TEMP/original-native.zip" native-irq.txt > "$out/original-native-irq"
+        test "$(unzip -po "$RUNNER_TEMP/original-native.zip" probe-source)" = "$PROBE_SRC"
+        previous=$(unzip -po "$RUNNER_TEMP/original-native.zip" probe-sha | head -1 | cut -d' ' -f1)
+        test "$previous" = "$(head -1 "$out/probe-sha" | cut -d' ' -f1)"
+        grep -q 'Native VFIO driver=' "$out/original-native-device"
+        grep -Fq '[       OK ] VfioPCIDeviceTest.Readiness' "$out/original-native-readiness"
+        grep -Fq '[       OK ] VfioPCIDeviceTest.InterruptEventfdKeepsFullCounter' "$out/original-native-irq"
     - name: Build the stock and corrected runsc from their exact source
       run: |
         set -euo pipefail
@@ -101,7 +102,7 @@ jobs:
           docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel //:release > "$RUNNER_TEMP/$arm-build.log" 2>&1 || { grep -E 'ERROR:|INFO: Invocation ID:|FAILED' "$RUNNER_TEMP/$arm-build.log" | tail -40; exit 1; }
           mkdir -p "$RUNNER_TEMP/vfio_$arm"
           docker exec overlay-guest cp -RL --preserve=mode bazel-bin/release/. "$RUNNER_TEMP/vfio_$arm"
-          for file in runsc gvisor-bin/gvisor_sentry gvisor-bin/checkpointgofer; do test -x "$RUNNER_TEMP/vfio_$arm/$file"; done
+          for file in runsc gvisor-bin/gvisor_sentry gvisor-bin/checkpointgofer gvisor-bin/gvisor-sentry-prewarmer gvisor-bin/gvisor-proc-umounter gvisor-bin/runsc-fd-parking gvisor-bin/runsc-metric-server; do test -x "$RUNNER_TEMP/vfio_$arm/$file"; done
           sha256sum "$RUNNER_TEMP/vfio_$arm/"{runsc,gvisor-bin/*} > "$RUNNER_TEMP/records/$arm-binary"
         done
         git checkout --detach "$carrier"
@@ -115,9 +116,14 @@ jobs:
         docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nozip_undeclared_test_outputs --nocache_test_results --test_output=all --test_timeout=480 "$target" >"$RUNNER_TEMP/abi.log" 2>&1 || rc=$?
         echo "$rc" >"$out/bazel-exit"
         grep -E 'INFO: Invocation ID:|ERROR:|FAILED|::|fail|VFIO|vfio|Error|Cannot|curl|qemu|wget|tcg|Build (did NOT complete|completed)' "$RUNNER_TEMP/abi.log" | tail -80 >"$out/bazel-receipt" || :
-        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt test.outputs/guest/outputs/native-gtest.txt test.outputs/guest/outputs/native-irq.txt test.outputs/guest/outputs/native-irq-qualified test.outputs/guest/outputs/stock-exit test.outputs/guest/outputs/fixed-exit test.outputs/guest/outputs/stock-gtest.txt test.outputs/guest/outputs/fixed-gtest.txt test.outputs/guest/outputs/stock-diagnostics.txt test.outputs/guest/outputs/fixed-diagnostics.txt; do
+        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt test.outputs/guest/outputs/native-gtest.txt test.outputs/guest/outputs/native-irq.txt test.outputs/guest/outputs/native-irq-qualified test.outputs/guest/outputs/stock-exit test.outputs/guest/outputs/fixed-exit test.outputs/guest/outputs/stock-sha test.outputs/guest/outputs/fixed-sha test.outputs/guest/outputs/stock-gtest.txt test.outputs/guest/outputs/fixed-gtest.txt test.outputs/guest/outputs/stock-diagnostics.txt test.outputs/guest/outputs/fixed-diagnostics.txt; do
           name=${path##*/}
           docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_comparison_test/$path" | tail -150 >"$out/$name" || :
+        done
+        for mode in stock fixed; do
+          awk '{n=split($2,path,"/"); print $1,path[n]}' "$out/$mode-binary" | sort >"$out/$mode.hosted"
+          awk '{n=split($2,path,"/"); print $1,path[n]}' "$out/$mode-sha" | sort >"$out/$mode.guest"
+          diff -u "$out/$mode.hosted" "$out/$mode.guest"
         done
         test "$rc" = 0
         grep -q 'Native VFIO driver=' "$out/vfio-device.txt"
