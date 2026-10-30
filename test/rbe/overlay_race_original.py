@@ -1,5 +1,5 @@
 """Recover bounded diagnostics from the one completed Linux race test."""
-import hashlib,json,os,re,urllib.request
+import base64,hashlib,json,os,re,urllib.request
 from pathlib import Path
 from urllib.parse import urlsplit
 inv='8a0ec6b0-804b-4719-8fc8-312ed10e0e03'
@@ -19,10 +19,14 @@ report={"invocation":inv,"label":label,"files":[]}
 for a in d.get('action',[]):
     for f in a.get('file',[]):
         if f.get('name','').rsplit('/',1)[-1] not in ('test.log','test.xml'): continue
-        u=urlsplit(f['uri']);m=re.search(r'/blobs/([a-f0-9]{64})/(\d+)$',u.path)
-        if u.scheme!='bytestream' or u.hostname!='remote.buildbuddy.io' or not m:continue
+        u=urlsplit(f['uri']);m=re.search(r'/([a-f0-9]{64})/(\d+)$',u.path)
+        desc={'scheme':u.scheme,'host':u.hostname,'bytes':m[2] if m else None,'segments':[('digest' if re.fullmatch('[0-9a-f]{40,}',seg) else seg) for seg in u.path.strip('/').split('/')[-4:]]}
+        if u.scheme != 'bytestream' or u.hostname and not (u.hostname=='buildbuddy.io' or u.hostname.endswith('.buildbuddy.io')) or not m:
+            report.setdefault('missing',[]).append(desc)
+            continue
         n=int(m[2])
-        if not 0<n<=6<<20:continue
+        if not 0<n<=16<<20:
+            report.setdefault('missing',[]).append(desc);continue
         raw=read('GetFile',{'uri':f['uri']},n)
         if len(raw)!=n or hashlib.sha256(raw).hexdigest()!=m[1]:raise ValueError('action output differs')
         p={'name':f['name'].rsplit('/',1)[-1],'bytes':n,'sha256':m[1]};lines=raw.decode(errors='replace').splitlines()
@@ -43,6 +47,9 @@ if not report['files']:
         seen.add(token)
         page=json.loads(read('GetLog',{'selector':{'invocation_id':inv},'page_token':token},4<<20))
         raw=page.get('log',{}).get('contents','')
+        if re.fullmatch(r'[A-Za-z0-9+/=\n\r]+',raw) and len(raw)>40:
+            try:raw=base64.b64decode(raw).decode(errors='replace')
+            except ValueError:pass
         for line in re.sub(r'\x1b\[[;\d]*[A-Za-z]','',raw).replace('\r','\n').splitlines():
             item=safe(line)
             if item and item not in selected and len(selected)<60:selected.append(item)
