@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T19:01:02.657670+00:00",
+    "updatedAt": "2026-10-30T19:02:28.727412+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43284,9 +43284,18 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T18:51:08.912815+00:00",
+      "updatedAt": "2026-10-30T19:02:28.727412+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
+        {
+          "text": "Replacing the 512-byte buckets with one B-tree entry per graph range cut a one-byte Save with 16 MiB capacity from 675 µs to 0.982 µs. On the same AMD64 CPU the 20,000-node graph took 358.0 → 403.8 ms (+12.77%) and 46,804 → 73,175 allocations (+56.34%). All 33 cases passed on each source; ten legacy-only cases skipped. Wire lengths matched in all twelve pairs. A hybrid retaining small hash buckets is being evaluated; no whole-kernel timing is inferred.",
+          "evidence": [
+            {
+              "label": "Twelve paired graph-save comparisons, cases and benchstat",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41110148739/artifacts/13004355286"
+            }
+          ]
+        },
         {
           "text": "Legacy Save cleared bytes still visible through another slice, whichever slice it visited first. Two attempted fixes are off the submission queue: tracking byte ranges saved an unrelated sibling field; copying reachable values into a private array changed the identity of both self-pointers produced by a save hook. The integrated graph preserved the live bytes, slice aliases and self-pointers. It covers whole array elements: a pointer to one field can also save its sibling. Dropping the legacy clear would revive a kernfs failure by following a destroyed dentry in unused capacity.",
           "evidence": [
@@ -46030,6 +46039,10 @@
       ],
       "nextStep": "Compare one index entry per live graph range against the 512-byte bucket index on both sparse slices and the 20,000-node graph. Verify alias identity and wire sizes before interpreting timing. Keep the four separately reproduced correctness cases open in #16715 until #16747 lands.",
       "evidence": [
+        {
+          "label": "Twelve paired graph-save comparisons, cases and benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41110148739/artifacts/13004355286"
+        },
         {
           "label": "Legacy Save cleared live slice data in both orders",
           "url": "https://app.buildbuddy.io/invocation/ca94264a-5dd7-45e6-9d36-a98804675e73"
