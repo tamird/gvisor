@@ -1,4 +1,4 @@
-name: Compare guest MemTotal under nested OCI memory limits
+name: Check the cgroup package and owning analyzers
 on:
   push:
     branches: [qualification/oci-ancestor-memory]
@@ -23,9 +23,8 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        cp test/rbe/verify-oci-direct.py "$RUNNER_TEMP/verify-tcp.py"
-        cp test/rbe/run-oci-mem.py "$RUNNER_TEMP/oci.py"
-        [[ "$(git rev-parse HEAD^1^1^1^1)" == "$CURRENT" && "$(git rev-parse HEAD^1^1^1^2)" == "$STOCK" ]]
+        cp test/rbe/{qualification_report.py,unit_matrix.py,state_result.py} "$RUNNER_TEMP/"
+        [[ "$(git rev-parse HEAD^2)" == "$CURRENT" ]]
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -40,37 +39,33 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Verify and reuse the six completed OCI kernel reads
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        gh api repos/tamird/gvisor/actions/artifacts/12993434913/zip > "$RUNNER_TEMP/previous.zip"
-        echo "f770738ccaa9a290c42f3d3cfc655affe12439f1c929790ec5d08cf14b0cf960  $RUNNER_TEMP/previous.zip" | sha256sum -c
-        unzip -p "$RUNNER_TEMP/previous.zip" verdict.json > "$RUNNER_TEMP/records/guests.json"
-    - name: Run only the missing canonical root fixture
+    - name: Run the complete cgroup package and owning analyzers
       run: |
         set -euo pipefail
-        for arm in stock fixed; do
-          src=$STOCK; [[ $arm == stock ]] || src=$CURRENT
-          git checkout --quiet --detach "$src"; [[ "$(git rev-parse HEAD)" == "$src" ]]
-          rec=$RUNNER_TEMP/records/$arm; mkdir -p "$rec"
-          echo "$src" > "$rec/source"; sha256sum test/root/runsc_test.go > "$rec/test.sha256"
-          cli=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
-          opts=(--config=x86_64 --jobs=2 --spawn_strategy=remote,local --remote_download_outputs=toplevel --strategy=CppCompile=local)
-          "${cli[@]}" build "${opts[@]}" //:release > "$rec/release.log" 2>&1
-          docker exec tcp-compiler cp -rL bazel-bin/release "$RUNNER_TEMP/release-$arm"
-          echo "{\"runtimes\":{\"runsc\":{\"path\":\"$RUNNER_TEMP/release-$arm/runsc\"}}}" > "$RUNNER_TEMP/docker-config-$arm.json"
-          tst=0
-          "${cli[@]}" test "${opts[@]}" --strategy=TestRunner=local --test_arg=-test.v --test_arg=-test.run='^TestNestedMemoryLimit$' --test_arg=-docker_cli=/usr/local/bin/host-docker --test_arg=-runtime=runsc --test_arg=-config_path="$RUNNER_TEMP/docker-config-$arm.json" --nocache_test_results --test_output=all //test/root:root_test > "$rec/owner.log" 2>&1 || tst=$?
-          echo "$tst" > "$rec/owner.exit"
-          if [[ $tst == 0 || $tst == 3 ]]; then for f in test.xml test.log; do docker exec tcp-compiler cat "bazel-testlogs/test/root/root_test/$f" > "$rec/$f"; done; fi
-          grep -E 'Invocation ID:|fatal error:|error:|^ERROR:|^FAIL|MemTotal|^=== RUN|panic:|docker:|cannot|requires ' "$rec/owner.log" | head -100 > "$rec/owner.diagnostics" || true
-          rm "$rec/release.log" "$rec/owner.log"
-        done
-        date -u +%FT%TZ > "$RUNNER_TEMP/records/end"
-    - name: Verify each canonical root fixture result and combine with the original guest records
-      if: always()
-      run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
+        git checkout --quiet --detach "$CURRENT"
+        rec="$RUNNER_TEMP/records"
+        git cat-file commit HEAD > "$rec/commit"; git status --porcelain --untracked-files=no > "$rec/before"
+        args=(test --config=x86_64 --jobs=2 --strategy=CppCompile=local --spawn_strategy=remote,local --strategy=TestRunner=local --test_env=GO_TEST_WRAP_TESTV=1 --nocache_test_results --build_event_json_file="$RUNNER_TEMP/events.bep" --build_event_publish_all_actions --nobuild_event_json_file_path_conversion)
+        labels=(//runsc/cgroup:cgroup_test //runsc/cgroup:cgroup_nogo //test/root:root_test_nogo)
+        printf '%s\n' "${args[@]}" "${labels[@]}" > "$rec/arguments"; printf '%s\n' "${labels[@]}" > "$rec/targets"
+        cli=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
+        outbase=$("${cli[@]}" info output_base)
+        code=0; "${cli[@]}" "${args[@]}" "${labels[@]}" > "$RUNNER_TEMP/package.log" 2>&1 || code=$?
+        date -u +%FT%T.%3NZ > "$rec/finish"; echo "$code" > "$rec/exit"; git rev-parse HEAD > "$rec/head"; git status --porcelain --untracked-files=no > "$rec/after"
+        tail -20 "$RUNNER_TEMP/package.log"
+        cap=0; docker exec tcp-compiler python3 -B "$RUNNER_TEMP/qualification_report.py" capture --events "$RUNNER_TEMP/events.bep" --output "$rec/events.jsonl" --output-root "$outbase" --report-dir "$rec/original" || cap=$?
+        echo "$cap" > "$rec/capture-exit"
+        python3 -B "$RUNNER_TEMP/state_result.py" context "$rec" "$CURRENT"
+        python3 -B "$RUNNER_TEMP/qualification_report.py" verdict --events "$rec/events.jsonl" --context "$rec/context.json" --expected-targets "$rec/targets" --output "$rec/verdict.json"
+        python3 - "$rec" <<'PYTHON'
+        from pathlib import Path
+        import sys,json
+        from xml.etree import ElementTree as ET
+        p=Path(sys.argv[1]); v=json.loads((p/"verdict.json").read_text()); assert v["status"]=="PASS" and len(v["expected_labels"])==3 and not v["missing"] and not v["errors"],v
+        records={c.get("name"):c for f in (p/"original").rglob("test.xml") for c in ET.parse(f).iter("testcase")}
+        for case in ("TestGetLimits","TestGetLimits/get_limit_from_parent_cgroup","TestGetLimits/get_limit_from_leaf_cgroup"):
+            assert case in records and not list(records[case].iter("skipped")) and not list(records[case].iter("failure")),case
+        PYTHON
     - name: Exclude credentials from the evidence bundle
       if: always()
       env:
@@ -87,6 +82,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: oci-memtotal-owner
+        name: cgroup-package-results
         path: ${{ runner.temp }}/records/
         if-no-files-found: error
