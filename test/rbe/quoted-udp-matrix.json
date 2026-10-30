@@ -1,0 +1,98 @@
+{
+  "current-native": {
+    "source": "845633fdb1255152936278c21c65318c6a1f1c63",
+    "target": "//test/syscalls:udp_raw_socket_test_native",
+    "exit": 0,
+    "fixture-sha256": "3236ff83a6867bfe876245ee54b4bae11212e142c1db007bc53dcc10ef33fdf8  test/syscalls/linux/udp_raw_socket.cc",
+    "cases": {
+      "Plain/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "DestinationOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "FirstFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "AtomicFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "NoninitialFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "TruncatedOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ]
+    }
+  },
+  "current-guest": {
+    "source": "845633fdb1255152936278c21c65318c6a1f1c63",
+    "target": "//test/syscalls:udp_raw_socket_test_runsc_ptrace",
+    "exit": 0,
+    "fixture-sha256": "3236ff83a6867bfe876245ee54b4bae11212e142c1db007bc53dcc10ef33fdf8  test/syscalls/linux/udp_raw_socket.cc",
+    "cases": {
+      "Plain/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "DestinationOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "FirstFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "AtomicFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "NoninitialFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "TruncatedOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ]
+    }
+  },
+  "stock-guest": {
+    "source": "bed468c0a6252f9ea630db64a181f668cc98fd35",
+    "target": "//test/syscalls:udp_raw_socket_test_runsc_ptrace",
+    "exit": 3,
+    "fixture-sha256": "3236ff83a6867bfe876245ee54b4bae11212e142c1db007bc53dcc10ef33fdf8  test/syscalls/linux/udp_raw_socket.cc",
+    "cases": {
+      "Plain/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "DestinationOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "FAIL",
+        "poll"
+      ],
+      "FirstFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "FAIL",
+        "poll"
+      ],
+      "AtomicFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "FAIL",
+        "poll"
+      ],
+      "NoninitialFragment/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "TruncatedOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ]
+    }
+  }
+}
