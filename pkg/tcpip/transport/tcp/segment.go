@@ -78,9 +78,19 @@ type segment struct {
 	// xmitTime is the last transmit time of this segment.
 	xmitTime  tcpip.MonotonicTime
 	xmitCount uint32
+	// gsoMSS is the packet size used to transmit a multi-packet segment.
+	// A zero value denotes a single packet.
+	gsoMSS uint16
+	// gsoStart is the sequence number of the first unit when this
+	// aggregate was transmitted. Trimming a prefix does not move its
+	// remaining packet boundaries.
+	gsoStart seqnum.Value
 
 	// acked indicates if the segment has already been SACKed.
-	acked bool
+	acked bool `state:"nosave"`
+	// sackCredit is the number of packets in this segment included in SackedOut.
+	// The SACK scoreboard is discarded on restore.
+	sackCredit uint32 `state:"nosave"`
 
 	// dataMemSize is the memory used by pkt initially. The value is used for
 	// memory accounting in the receive buffer instead of pkt.MemSize() because
@@ -161,6 +171,8 @@ func (s *segment) clone() *segment {
 	t.rcvdTime = s.rcvdTime
 	t.xmitTime = s.xmitTime
 	t.xmitCount = s.xmitCount
+	t.gsoMSS = s.gsoMSS
+	t.gsoStart = s.gsoStart
 	t.ep = s.ep
 	t.qFlags = s.qFlags
 	t.dataMemSize = s.dataMemSize

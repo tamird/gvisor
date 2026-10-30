@@ -166,6 +166,35 @@ func (s *SACKScoreboard) IsSACKED(r header.SACKBlock) bool {
 	return found
 }
 
+// coveredGSO counts complete packet units in a segment spanning multiple
+// MSSes. Each stored SACK range contributes only whole packets, including
+// the shorter final packet if its last byte is covered.
+func (s *SACKScoreboard) coveredGSO(seg header.SACKBlock, mss, offset seqnum.Size, packets int) (n int, full bool) {
+	last := header.SACKBlock{Start: seg.End - 1}
+	s.ranges.DescendLessOrEqual(last, func(r header.SACKBlock) bool {
+		if r.End.LessThanEq(seg.Start) {
+			return false
+		}
+		if r.Contains(seg) {
+			n = packets
+			full = true
+			return false
+		}
+		// [first, end) are packet indices. A FIN shares the final data
+		// packet even when its payload occupies an exact multiple of MSS.
+		first, end := 0, packets
+		if seg.Start.LessThan(r.Start) {
+			first = int((offset + seg.Start.Size(r.Start) + mss - 1) / mss)
+		}
+		if r.End.LessThan(seg.End) {
+			end = min(packets-1, int((offset+seg.Start.Size(r.End))/mss))
+		}
+		n += max(0, end-first)
+		return seg.Start.LessThan(r.Start)
+	})
+	return n, full
+}
+
 // String returns human-readable state of the scoreboard structure.
 func (s *SACKScoreboard) String() string {
 	var str strings.Builder
