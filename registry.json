@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T23:29:29.400226+00:00",
+    "updatedAt": "2026-10-30T23:35:30.492132+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37332,20 +37332,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/declared-jekyll-site",
-      "head": "8503225c7c07e0d7ab95846250e6c0ce044abfd4",
+      "head": "7b81fd10a5af9729d8d6953c41df562bfb25e71c",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-10-30T21:11:20.286137+00:00",
-      "summary": "The ordinary Linux/AMD64 Bazel build produced the complete checkout website and serving image without a Docker daemon. All 278 published paths are present. 276 match the original bytes; css.tar preserves its contents and modes with normalized ownership and timestamps, and the same 84 sitemap records now have a stable order. Make loaded the custom image tag and five HTTP responses matched the original, including the hard-linked logo.",
+      "updatedAt": "2026-10-30T23:35:30.492132+00:00",
+      "summary": "Bazel builds the website without a Docker daemon. Dropping the inline-SVG plugin and its optimizer preserved all 278 published files byte for byte; neither gem was installed in the selected SDK. Disabling Autoprefixer changed css/main.css, so it stays. The serving-image check also covered the hard-linked logo.",
       "followup": {
-        "owner": "release_owner",
-        "sourceHead": "8503225c7c07e0d7ab95846250e6c0ce044abfd4",
-        "observedAt": "2026-10-30T21:11:20.286137+00:00",
+        "owner": "root",
+        "sourceHead": "7b81fd10a5af9729d8d6953c41df562bfb25e71c",
+        "observedAt": "2026-10-30T23:35:30.492132+00:00",
         "disposition": "Qualify builder-free publication and resolve source notices",
-        "nextAction": "Use the first BCR release containing rules_img #811 and the declared Buildkite Bazelisk bootstrap before enabling this job. Complete license review for the selected Ruby runtime and seven gems, including the GPL-3.0 inline-SVG plugin and the data bundled by Autoprefixer. The renderer itself passed on scratch; the enclosing Go documentation and server build still uses GNU tools.",
+        "nextAction": "Wait for a rules_img release with #811 and the declared Buildkite Bazelisk bootstrap. Finish the Ruby SDK and five gem notices. Autoprefixer ships a restored July bundle: its 61 named browser feature tables match caniuse-lite 1.0.30001109, not the later release lock. The enclosing Go docs and server build still uses GNU tools.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780",
           "https://github.com/tamird/gvisor/actions/runs/41127231437/artifacts/13011169580",
           "https://github.com/tamird/gvisor/actions/runs/41122472914/artifacts/13009007947",
           "https://github.com/tamird/gvisor/actions/runs/41120650004/artifacts/13008608480",
@@ -37356,13 +37357,19 @@
       },
       "refinement": {
         "before": {
-          "head": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644"
+          "base": "70cb23c0de3c8d1295054663b50717546fbbc7a7",
+          "head": "8503225c7c07e0d7ab95846250e6c0ce044abfd4"
         },
         "after": {
-          "head": "8503225c7c07e0d7ab95846250e6c0ce044abfd4"
+          "base": "70cb23c0de3c8d1295054663b50717546fbbc7a7",
+          "head": "7b81fd10a5af9729d8d6953c41df562bfb25e71c"
         }
       },
       "evidence": [
+        {
+          "label": "278 matching files without the SVG gems; CSS changes without Autoprefixer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780"
+        },
         {
           "label": "Full GNU build, all 278 site paths, preview date and five served responses",
           "url": "https://github.com/tamird/gvisor/actions/runs/41127231437/artifacts/13011169580"
@@ -37406,12 +37413,16 @@
           "url": "https://tamird.github.io/gvisor/?view=table#branch%3Ahermetic-compiler-review"
         },
         {
-          "label": "Autoprefixer release lock",
-          "url": "https://github.com/ai/autoprefixer-rails/blob/c5c843405/build/yarn.lock"
+          "label": "Restored Autoprefixer bundle shipped in the RubyGem",
+          "url": "https://github.com/ai/autoprefixer-rails/commit/9cff9076d"
         },
         {
-          "label": "License of its browser compatibility data",
-          "url": "https://github.com/browserslist/caniuse-lite/blob/08a646231/LICENSE"
+          "label": "License of the browser feature data present in that bundle",
+          "url": "https://github.com/browserslist/caniuse-lite/blob/ad3ad75fc/LICENSE"
+        },
+        {
+          "label": "Source notice for jekyll-relative-links 0.6.1",
+          "url": "https://github.com/benbalter/jekyll-relative-links/blob/493d6333b/LICENSE.md"
         }
       ]
     },
