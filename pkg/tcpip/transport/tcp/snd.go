@@ -17,7 +17,7 @@ package tcp
 import (
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -392,7 +392,6 @@ func (s *sender) updateMaxPayloadSize(mtu, count int) {
 		m = 1
 	}
 
-	oldMSS := s.MaxPayloadSize
 	s.MaxPayloadSize = m
 	if s.gso {
 		s.ep.gso.MSS = uint16(m)
@@ -423,17 +422,13 @@ func (s *sender) updateMaxPayloadSize(mtu, count int) {
 			break
 		}
 
-		if nextSeg == s.writeNext && seg.payloadSize() > m {
+		if seg.payloadSize() > m {
 			// We found a segment exceeding the MTU. Rewind
 			// writeNext and try to retransmit it.
 			nextSeg = seg
+			break
 		}
 
-		if s.ep.SACKPermitted && s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
-			// Update sackedOut for new maximum payload size.
-			s.SackedOut -= s.pCount(seg, oldMSS)
-			s.SackedOut += s.pCount(seg, s.MaxPayloadSize)
-		}
 	}
 
 	// Since we likely reduced the number of outstanding packets, we may be
@@ -668,6 +663,11 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// information as we lack more rigorous checks to validate if the SACK
 	// information is usable after an RTO.
 	s.ep.scoreboard.Reset()
+	s.SackedOut = 0
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+		seg.sackCredit = 0
+		seg.acked = false
+	}
 	s.updateWriteNext(s.writeList.Front())
 
 	// RFC 1122 4.2.2.17: Start sending zero window probes when we still see a
@@ -733,6 +733,10 @@ func (s *sender) splitSeg(seg *segment, size int) {
 		seg.flags ^= header.TCPFlagPsh
 	}
 	seg.pkt.Data().CapLength(size)
+	if seg.xmitCount != 0 && s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
+		s.updateSACKCredit(seg)
+		s.updateSACKCredit(nSeg)
+	}
 }
 
 // NextSeg implements the RFC6675 NextSeg() operation.
@@ -1168,7 +1172,6 @@ func (s *sender) enterRecovery() {
 	// We inflate the cwnd by 3 to account for the 3 packets which triggered
 	// the 3 duplicate ACKs and are now not in flight.
 	s.SndCwnd = s.Ssthresh + 3
-	s.SackedOut = 0
 	s.DupAckCount = 0
 	s.FastRecovery.First = s.SndUna
 	s.FastRecovery.Last = s.SndNxt - 1
@@ -1361,6 +1364,27 @@ func (s *sender) isDupAck(seg *segment) bool {
 		s.SndWnd == seg.window
 }
 
+// updateSACKCredit accounts for actual packet units in a transmitted segment.
+// Only its queued data and its own transmit MSS determine those units.
+//
+// +checklocks:s.ep.mu
+func (s *sender) updateSACKCredit(seg *segment) bool {
+	block := seg.sackBlock()
+	n := 0
+	var full bool
+	if mss := int(seg.gsoMSS); mss != 0 && seg.payloadSize() > mss {
+		n, full = s.ep.scoreboard.coveredGSO(block, seqnum.Size(mss), s.pCount(seg, mss))
+	} else {
+		full = s.ep.scoreboard.IsSACKED(block)
+		if full {
+			n = 1
+		}
+	}
+	s.SackedOut += n - int(seg.sackCredit)
+	seg.sackCredit = uint32(n)
+	return full
+}
+
 // Iterate the writeList and update RACK for each segment which is newly acked
 // either cumulatively or selectively. Loop through the segments which are
 // sacked, and update the RACK related variables and check for reordering.
@@ -1370,47 +1394,43 @@ func (s *sender) isDupAck(seg *segment) bool {
 // steps 2 and 3.
 //
 // +checklocks:s.ep.mu
-func (s *sender) walkSACK(rcvdSeg *segment) bool {
-	s.rc.setDSACKSeen(false)
+func (s *sender) walkSACK(rcvdSeg *segment, sackBlocks []header.SACKBlock) bool {
+	rack := s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0
+	if rack {
+		s.rc.setDSACKSeen(false)
+	}
 
 	// Look for DSACK block.
-	hasDSACK := false
-	idx := 0
-	n := len(rcvdSeg.parsedOptions.SACKBlocks)
-	if checkDSACK(rcvdSeg) {
+	hasDSACK := rack && checkDSACK(rcvdSeg)
+	if hasDSACK {
 		dsackBlock := rcvdSeg.parsedOptions.SACKBlocks[0]
 		numDSACK := uint64(dsackBlock.End-dsackBlock.Start) / uint64(s.MaxPayloadSize)
-		// numDSACK can be zero when DSACK is sent for subsegments.
-		if numDSACK < 1 {
-			numDSACK = 1
-		}
-		s.ep.stack.Stats().TCP.SegmentsAckedWithDSACK.IncrementBy(numDSACK)
+		// A subsegment can also be reported as a duplicate.
+		s.ep.stack.Stats().TCP.SegmentsAckedWithDSACK.IncrementBy(max(numDSACK, 1))
 		s.rc.setDSACKSeen(true)
-		idx = 1
-		n--
-		hasDSACK = true
 	}
-
-	if n == 0 {
+	if len(sackBlocks) == 0 {
 		return hasDSACK
 	}
-
-	// Sort the SACK blocks. The first block is the most recent unacked
-	// block. The following blocks can be in arbitrary order.
-	sackBlocks := make([]header.SACKBlock, n)
-	copy(sackBlocks, rcvdSeg.parsedOptions.SACKBlocks[idx:])
-	sort.Slice(sackBlocks, func(i, j int) bool {
-		return sackBlocks[j].Start.LessThan(sackBlocks[i].Start)
+	// Visit newly acknowledged ranges and the transmit queue in the same order.
+	slices.SortFunc(sackBlocks, func(a, b header.SACKBlock) int {
+		return int(int32(a.Start - b.Start))
 	})
-
 	seg := s.writeList.Front()
 	for _, sb := range sackBlocks {
-		for seg != nil && seg.sequenceNumber.LessThan(sb.End) && seg.xmitCount != 0 {
-			if sb.Start.LessThanEq(seg.sequenceNumber) && !seg.acked {
-				s.rc.update(seg, rcvdSeg)
-				s.rc.detectReorder(seg)
-				seg.acked = true
-				s.SackedOut += s.pCount(seg, s.MaxPayloadSize)
+		for seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(sb.End) {
+			end := seg.sackBlock().End
+			if sb.Start.LessThan(end) {
+				full := s.updateSACKCredit(seg)
+				if rack && full && !seg.acked {
+					s.rc.update(seg, rcvdSeg)
+					s.rc.detectReorder(seg)
+					seg.acked = true
+				}
+			}
+			if sb.End.LessThan(end) {
+				// The next block can cover another packet in this GSO segment.
+				break
 			}
 			seg = seg.Next()
 		}
@@ -1576,6 +1596,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 	// Insert SACKBlock information into our scoreboard.
 	hasDSACK := false
 	if s.ep.SACKPermitted {
+		newBlocks := make([]header.SACKBlock, 0, header.TCPMaxSACKBlocks)
 		for _, sb := range rcvdSeg.parsedOptions.SACKBlocks {
 			// Only insert the SACK block if the following holds
 			// true:
@@ -1589,8 +1610,12 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// NOTE: This check specifically excludes DSACK blocks
 			// which have start/end before sndUna and are used to
 			// indicate spurious retransmissions.
-			if rcvdSeg.ackNumber.LessThan(sb.Start) && s.SndUna.LessThan(sb.Start) && sb.End.LessThanEq(s.SndNxt) && !s.ep.scoreboard.IsSACKED(sb) {
+			if rcvdSeg.ackNumber.LessThan(sb.Start) && s.SndUna.LessThan(sb.Start) && sb.Start.LessThan(sb.End) && sb.End.LessThanEq(s.SndNxt) && !s.ep.scoreboard.IsSACKED(sb) {
+				old := s.ep.scoreboard.Sacked()
 				s.ep.scoreboard.Insert(sb)
+				if s.ep.scoreboard.Sacked() != old {
+					newBlocks = append(newBlocks, sb)
+				}
 				rcvdSeg.hasNewSACKInfo = true
 			}
 		}
@@ -1608,9 +1633,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		//		unacknowledged and also never retransmitted sequence below
 		//		RACK.fack, then the corresponding packet has been
 		//		reordered and RACK.reord is set to TRUE.
-		if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
-			hasDSACK = s.walkSACK(rcvdSeg)
-		}
+		hasDSACK = s.walkSACK(rcvdSeg, newBlocks)
 		s.SetPipe()
 	}
 
@@ -1710,6 +1733,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 				prevCount := s.pCount(seg, s.MaxPayloadSize)
 				seg.TrimFront(ackLeft)
 				seg.sequenceNumber.UpdateForward(ackLeft)
+				if s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
+					s.updateSACKCredit(seg)
+				}
 				s.Outstanding -= prevCount - s.pCount(seg, s.MaxPayloadSize)
 				break
 			}
@@ -1731,9 +1757,8 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// already been accounted for in SetPipe().
 			if !s.ep.SACKPermitted || !s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
 				s.Outstanding -= s.pCount(seg, s.MaxPayloadSize)
-			} else {
-				s.SackedOut -= s.pCount(seg, s.MaxPayloadSize)
 			}
+			s.SackedOut -= int(seg.sackCredit)
 			seg.DecRef()
 			ackLeft -= datalen
 		}
@@ -1848,6 +1873,18 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	seg.lost = false
 
 	err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
+	if err == nil {
+		var mss uint16
+		if s.gso && seg.payloadSize() > int(s.ep.gso.MSS) {
+			mss = s.ep.gso.MSS
+		}
+		if seg.gsoMSS != mss {
+			seg.gsoMSS = mss
+			if s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
+				s.updateSACKCredit(seg)
+			}
+		}
+	}
 
 	// Every time a packet containing data is sent (including a
 	// retransmission), if SACK is enabled and we are retransmitting data
