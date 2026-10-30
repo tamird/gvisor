@@ -216,6 +216,11 @@ python.defaults(python_version = PYTHON_VERSION)
 python.toolchain(python_version = PYTHON_VERSION)
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.override(
+    file = "setuptools-84.0.0-py3-none-any.whl",
+    patch_strip = 1,
+    patches = ["//tools/python_distribution:setuptools_reproducible_sdist.patch"],
+)
 pip.parse(
     # Reject source archives instead of building wheels during dependency fetching.
     # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L520-L550
@@ -2909,25 +2914,4 @@ sdist_test_http_file(
     downloaded_file_path = "wheel-0.42.0-py3-none-any.whl",
     sha256 = "177f9c9b0d45c47873b619f5b650346d632cdc35fb5e4d25058e09c9e581433d",
     urls = ["https://files.pythonhosted.org/packages/c7/c3/55076fc728723ef927521abaa1955213d094933dc36d4a2008d5101e1af5/wheel-0.42.0-py3-none-any.whl"],
-)
-
-sdist_http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-sdist_http_archive(
-    name = "sdist_supplier_wheel",
-    build_file_content = """
-load("@rules_python//python:py_library.bzl", "py_library")
-py_library(
-    name = "backend",
-    srcs = glob(["**/*.py"]),
-    data = glob(["**"], exclude = ["**/*.py", "BUILD.bazel", "REPO.bazel", "WORKSPACE", "MODULE.bazel"]),
-    imports = ["."],
-    visibility = ["//visibility:public"],
-)
-""",
-    patch_args = ["-p1"],
-    patch_tool = "patch",
-    patches = ["//tools/python_distribution:setuptools_reproducible_sdist.patch"],
-    sha256 = "51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670",
-    type = "zip",
-    urls = ["https://files.pythonhosted.org/packages/95/9c/c510029fc6ef33a6275cd2c5d3cecd6613dfd6aa401d57c54f1c18852ccf/setuptools-84.0.0-py3-none-any.whl"],
 )

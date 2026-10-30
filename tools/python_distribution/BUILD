@@ -27,7 +27,7 @@ py_console_script_binary(
     pkg = requirement("build"),
     script = "pyproject-build",
     deps = [
-        "@sdist_supplier_wheel//:backend",
+        requirement("setuptools"),
         requirement("wheel"),
     ],
 )

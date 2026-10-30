@@ -1,3 +1,4 @@
+diff --git a/setuptools/_distutils/archive_util.py b/setuptools/_distutils/archive_util.py
 --- a/setuptools/_distutils/archive_util.py
 +++ b/setuptools/_distutils/archive_util.py
 @@ -102,7 +102,12 @@
@@ -34,6 +35,7 @@
  
      return archive_name
  
+diff --git a/setuptools-84.0.0.dist-info/RECORD b/setuptools-84.0.0.dist-info/RECORD
 --- a/setuptools-84.0.0.dist-info/RECORD
 +++ b/setuptools-84.0.0.dist-info/RECORD
 @@ -51,7 +51,7 @@
