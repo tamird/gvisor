@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T17:30:26.247954+00:00",
-  "registryDate": "2026-10-30T17:25:41.390690+00:00",
+  "registryDate": "2026-10-30T17:32:27.326543+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -12,7 +12,8 @@
     "bazelbuild/bazel-central-registry": "none",
     "hermeticbuild/hermetic-llvm": "none",
     "bazel-contrib/rules_python": "none",
-    "bazelbuild/bazel": "none"
+    "bazelbuild/bazel": "none",
+    "hermeticbuild/rules_rs": "none"
   },
   "prs": [
     {
@@ -243139,6 +243140,370 @@
         },
         "description": "No matching public export was found in the complete lookup."
       }
+    },
+    {
+      "number": 333,
+      "repo": "hermeticbuild/rules_rs",
+      "title": "feat(toolchains): expose the Rust standard library notice",
+      "url": "https://github.com/hermeticbuild/rules_rs/pull/333",
+      "status": "open",
+      "ref": "rust-library-notice",
+      "head": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+      "base": "99e2e11265235c148a2acf4201f534829248784f",
+      "branchHead": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+      "mergeable": "MERGEABLE",
+      "mergeState": "UNSTABLE",
+      "mergeabilityCheckedAt": "2026-10-30T17:32:28.503899+00:00",
+      "headCommittedAt": "2026-10-30T17:09:41Z",
+      "headHistoryComplete": true,
+      "headIntroducedAt": null,
+      "headOwner": "tamird",
+      "headRepo": "tamird/rules_rs",
+      "authorLogin": "tamird",
+      "updatedAt": "2026-10-30T17:15:04Z",
+      "createdAt": "2026-10-30T16:53:50Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": null,
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [],
+      "reviewRequestsComplete": true,
+      "labels": [],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": []
+      },
+      "threads": {
+        "unresolved": 1,
+        "total": 1,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOPqZ2hs8AAAABhR8b1g",
+            "url": "https://github.com/hermeticbuild/rules_rs/pull/333#issuecomment-6528375766",
+            "body": "<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 {\"code_review\":{\"commit_sha\":\"636da66aba4cab5a6a6466cb0ae635074f7a0585\",\"has_any_findings\":false,\"has_unresolved_findings\":false,\"status\":\"completed\"},\"security_review\":{\"commit_sha\":null,\"has_any_findings\":null,\"has_unresolved_findings\":null,\"status\":null}} -->\n\n## Codex Review Summary\n\nThis comment shows the latest Codex review activity on this pull request.\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 📝 **Code Review** | ✅ **Completed** <relative-time datetime=\"2026-10-30T17:15:03.408319Z\">2026-10-30T17:15:03.408319Z</relative-time> | `636da66` | New commits |\n\n\n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\" or \"@codex security review\".\n\nCodex reacts with 👀 while any review is running, comments if it has suggestions, and reacts with 👍 once all reviews finish with no findings.\n\n</details>",
+            "createdAt": "2026-10-30T16:54:03Z",
+            "updatedAt": "2026-10-30T17:15:04Z",
+            "author": {
+              "login": "chatgpt-codex-connector",
+              "__typename": "Bot"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOPqZ2hs8AAAABVLB7kQ",
+            "url": "https://github.com/hermeticbuild/rules_rs/pull/333#pullrequestreview-5715819409",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-30T17:03:26Z",
+            "updatedAt": "2026-10-30T17:03:26Z",
+            "authorAssociation": "MEMBER",
+            "author": {
+              "login": "dzbarsky",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "bfb86e3e703e71c45ffa004f3c894b59b5ad9d4f"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOPqZ2hs8AAAABVLCwKA",
+            "url": "https://github.com/hermeticbuild/rules_rs/pull/333#pullrequestreview-5715832872",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-30T17:04:28Z",
+            "updatedAt": "2026-10-30T17:04:28Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "bfb86e3e703e71c45ffa004f3c894b59b5ad9d4f"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOPqZ2hs8AAAABVLDUxQ",
+            "url": "https://github.com/hermeticbuild/rules_rs/pull/333#pullrequestreview-5715842245",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-30T17:05:07Z",
+            "updatedAt": "2026-10-30T17:05:07Z",
+            "authorAssociation": "MEMBER",
+            "author": {
+              "login": "dzbarsky",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "bfb86e3e703e71c45ffa004f3c894b59b5ad9d4f"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOPqZ2hs6yEB-O",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "README.md",
+            "line": 70,
+            "id": "PRRC_kwDOPqZ2hs8AAAABB9Pu7A",
+            "url": "https://github.com/hermeticbuild/rules_rs/pull/333#discussion_r4426297068",
+            "body": "doesn't this mean we gonna have analysis failures before 1.86? That was april 2025, not thaaat long ago. might need to turn that exports_files into a filegroup + glob + allow_empty.?",
+            "createdAt": "2026-10-30T17:03:23Z",
+            "updatedAt": "2026-10-30T17:03:26Z",
+            "author": {
+              "login": "dzbarsky",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOPqZ2hs6yEB-O",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "README.md",
+            "line": 70,
+            "id": "PRRC_kwDOPqZ2hs8AAAABB9QZ0A",
+            "url": "https://github.com/hermeticbuild/rules_rs/pull/333#discussion_r4426308048",
+            "body": "dare i say we should have some test coverage with older rust versions?",
+            "createdAt": "2026-10-30T17:04:28Z",
+            "updatedAt": "2026-10-30T17:04:28Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOPqZ2hs6yEB-O",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "README.md",
+            "line": 70,
+            "id": "PRRC_kwDOPqZ2hs8AAAABB9Q2pQ",
+            "url": "https://github.com/hermeticbuild/rules_rs/pull/333#discussion_r4426315429",
+            "body": "yeah realistically we should pick a minimum rust version and test with that, probably don't need a full matrix",
+            "createdAt": "2026-10-30T17:05:07Z",
+            "updatedAt": "2026-10-30T17:05:07Z",
+            "author": {
+              "login": "dzbarsky",
+              "__typename": "User"
+            }
+          }
+        ]
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 10,
+        "reportedTotal": 10,
+        "supersededContexts": [],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7Uhg",
+            "name": "Test . with Bazel 8.x on ubuntu-latest",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204799110",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7URg",
+            "name": "Test test with Bazel 8.x on ubuntu-latest",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204799046",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7U_A",
+            "name": "Test . with Bazel 9.x on ubuntu-latest",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204799228",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7ToQ",
+            "name": "Test test with Bazel 9.x on ubuntu-latest",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798881",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7U8w",
+            "name": "Test . with Bazel 8.x on ubuntu-24.04-arm",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204799219",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7VSQ",
+            "name": "Test test with Bazel 8.x on ubuntu-24.04-arm",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204799305",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7TdA",
+            "name": "Test . with Bazel 9.x on ubuntu-24.04-arm",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798836",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7SrA",
+            "name": "Test test with Bazel 9.x on ubuntu-24.04-arm",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798636",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7XfQ",
+            "name": "Test test with Bazel 9.x on windows-latest",
+            "state": "SUCCESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204799869",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOPqZ2hs8AAAAc6y7T5A",
+            "name": "Test test with Bazel 9.x on windows-11-arm",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798948",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "CI",
+            "workflowId": "W_kwDOPqZ2hs4LIqiK",
+            "runNumber": 1236,
+            "runAttempt": 1,
+            "purpose": "validation"
+          }
+        ]
+      },
+      "crossReferences": {
+        "complete": true,
+        "items": []
+      },
+      "reviewDecision": null,
+      "approvedHead": null,
+      "approvedAt": null,
+      "checkedAt": "2026-10-30T17:32:28.503951+00:00",
+      "mergeabilityObservation": {
+        "state": "MERGEABLE",
+        "head": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+        "base": "99e2e11265235c148a2acf4201f534829248784f",
+        "checkedAt": "2026-10-30T17:32:28.503899+00:00"
+      },
+      "importsComplete": true,
+      "importPolicy": "none",
+      "imports": [],
+      "publicImportDisposition": {
+        "binding": {
+          "sourceHead": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+          "approvedHead": null,
+          "currentApproval": false,
+          "complete": true,
+          "labels": [],
+          "labelsComplete": true,
+          "labelHistory": {
+            "complete": true,
+            "items": []
+          },
+          "imports": [],
+          "eligible": false
+        },
+        "scope": "none",
+        "state": "absent",
+        "action": null,
+        "trigger": {
+          "label": "ready to pull",
+          "state": "unknown"
+        },
+        "description": "No matching public export was found in the complete lookup."
+      }
     }
   ],
   "issues": {
@@ -249187,7 +249552,7 @@
         "since": "2026-10-30T16:10:34.939505+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "pr:16097": {
@@ -250364,7 +250729,7 @@
         "since": "2026-10-30T17:24:00.776380+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "pr:16736": {
@@ -250672,13 +251037,36 @@
         "observedAt": "2026-10-30T17:29:54.753875+00:00"
       }
     },
+    "pr:hermeticbuild/rules_rs:333": {
+      "checks-pending": {
+        "scope": "333:636da66aba4cab5a6a6466cb0ae635074f7a0585",
+        "since": "2026-10-30T17:32:28.503951+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T17:32:28.503951+00:00"
+      },
+      "maintainer-review": {
+        "scope": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+        "since": "2026-10-30T17:32:28.503951+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T17:32:28.503951+00:00"
+      },
+      "contributor-review": {
+        "scope": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+        "since": "2026-10-30T17:32:27.326543+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
+      }
+    },
     "branch:bazel-python-release": {
       "changes-requested": {
         "scope": "b5bd72431940ce903fe7521e2498811d8420f750",
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "branch:python-release-staging-isolation": {
@@ -250687,7 +251075,7 @@
         "since": "2026-10-30T17:24:24.119828+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -250696,7 +251084,7 @@
         "since": "2026-10-30T03:43:50.365987+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "branch:gofer-character-device-restore": {
@@ -250705,7 +251093,7 @@
         "since": "2026-10-30T13:19:13.082582+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -250714,7 +251102,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "branch:declared-staged-release-check": {
@@ -250723,7 +251111,7 @@
         "since": "2026-10-30T00:11:26.175497+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -250732,7 +251120,7 @@
         "since": "2026-10-30T05:07:07.633004+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     },
     "branch:cgroup-v2-effective-memory": {
@@ -250741,7 +251129,7 @@
         "since": "2026-10-30T16:57:21.716977+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T17:25:41.390690+00:00"
+        "observedAt": "2026-10-30T17:32:27.326543+00:00"
       }
     }
   },
@@ -250962,6 +251350,17 @@
         }
       },
       "bazelbuild/bazel": {
+        "scope": "registered-only",
+        "registeredCount": 1,
+        "openInventoryTotal": null,
+        "retainedSources": 0,
+        "retainedImports": 0,
+        "mergeabilityRecheck": {
+          "status": "not-needed",
+          "numbers": []
+        }
+      },
+      "hermeticbuild/rules_rs": {
         "scope": "registered-only",
         "registeredCount": 1,
         "openInventoryTotal": null,

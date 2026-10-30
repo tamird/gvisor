@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T17:25:41.390690+00:00",
+    "updatedAt": "2026-10-30T17:32:27.326543+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -15,14 +15,16 @@
       "bazelbuild/bazel-central-registry": "none",
       "hermeticbuild/hermetic-llvm": "none",
       "bazel-contrib/rules_python": "none",
-      "bazelbuild/bazel": "none"
+      "bazelbuild/bazel": "none",
+      "hermeticbuild/rules_rs": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
       "bazelbuild/bazel-central-registry",
       "hermeticbuild/hermetic-llvm",
       "bazel-contrib/rules_python",
-      "bazelbuild/bazel"
+      "bazelbuild/bazel",
+      "hermeticbuild/rules_rs"
     ]
   },
   "groups": [
@@ -36946,6 +36948,43 @@
         "title": "Post the GC budget review",
         "summary": "With a 192 MiB ancestor and two unlimited descendants, the proposed boot policy set Go’s soft limit to 1 GiB. A tighter 128 MiB leaf still yielded 64 MiB.",
         "body": "@parth-opensrc, can the boot budget use the lowest visible cgroup v2\nmemory limit? On a real cgroup hierarchy with a 192 MiB grandparent and\ntwo unlimited descendants, this call set Go's soft limit to 1 GiB. If\nthe leaf instead specified 512 MiB, it set 256 MiB. The kernel ceiling\nwas still 192 MiB in both cases.\n\nThe existing cgroup reader stops at the leaf or its immediate parent.\nTaking the minimum through the mount root gave 96 MiB in both cases and\npreserved 64 MiB for a tighter 128 MiB leaf. The [same three\ncases](https://github.com/tamird/gvisor/actions/runs/41087163852/artifacts/12991414869)\nmeasured the soft limit directly; they did not induce an OOM.\n\nPosted on behalf of @tamird."
+      }
+    },
+    {
+      "id": "pr:hermeticbuild/rules_rs:333",
+      "type": "pr",
+      "repo": "hermeticbuild/rules_rs",
+      "number": 333,
+      "ref": "rust-library-notice",
+      "head": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+      "title": "Expose the Rust standard library notice",
+      "url": "https://github.com/hermeticbuild/rules_rs/pull/333",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-30T17:32:27.326543+00:00",
+      "summary": "David asked what happens on Rust 1.85, which lacks the library notice. The normal Linux CI verified the generated repository query and ran an existing crate using that compiler. A target that consumes the notice fails when it needs the absent file.",
+      "evidence": [
+        {
+          "label": "Maintainer question about older Rust releases",
+          "url": "https://github.com/hermeticbuild/rules_rs/pull/333#discussion_r4426297068"
+        },
+        {
+          "label": "Rust 1.85 query and crate test in normal upstream CI",
+          "url": "https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798881"
+        },
+        {
+          "label": "Older compiler registration and missing notice consumer",
+          "url": "https://github.com/tamird/rules_rs/actions/runs/41093475315/artifacts/12994678505"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
+        "url": "https://github.com/hermeticbuild/rules_rs/pull/333#discussion_r4426297068",
+        "title": "Reply to David about Rust 1.85",
+        "summary": "David asked what happens on Rust 1.85, which lacks the library notice. The normal Linux CI verified the generated repository query and ran an existing crate using that compiler. A target that consumes the notice fails when it needs the absent file.",
+        "body": "Rust 1.85 can still register the toolchains and compile an existing crate. The library notice first shipped in 1.86. Building a target that consumes :library_notice on 1.85 fails because the archive lacks the file. Omitting its export when the glob is empty also breaks recursive queries that traverse the alias [1].\n\n636da66ab adds one Linux CI step for 1.85. It queries the generated toolchain repository and runs an existing crate test with that toolchain [2]. The existing test still packages the notice from a current compiler.\n\n[1]: https://github.com/tamird/rules_rs/actions/runs/41093475315/artifacts/12994678505\n[2]: https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798881\n\nPosted on behalf of @tamird."
       }
     }
   ],
