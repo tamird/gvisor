@@ -1,35 +1,123 @@
-name: CI
-
-"on":
+name: Compare the deferred range index on dense and real kernel checkpoints
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/graph-deferred-range-pair]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      BASE: 6e1c4aad76d023a5313f00625604f01b5705dc8b
+      AFTER: 0ca688f73ed901aa29252544380cc5242c4fef2a
+      CONTROL: efc0a127492bc7ec314aa118f07659e99e9be842
+      TREATMENT: 8f1caa0bd21c060fd1891a930d46f9a9df4baad3
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      NGINX_IMAGE: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 10
+          persist-credentials: false
+      - name: Check both exact sources and measure their paired graph saves
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/sacked"
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          mkdir -p "$RUNNER_TEMP/graph-results"
+          printf '%s\n' '{"status":"FAIL","errors":["qualification did not finish"]}' >"$RUNNER_TEMP/graph-results/pair-verdict.json"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/epoll.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          export rc
+          git show "$GITHUB_SHA:test/rbe/state_check.sh" > "$RUNNER_TEMP/run.sh"
+          bash "$RUNNER_TEMP/run.sh"
+      - name: Verify both source arms and stage the pinned Nginx fixture
+        id: nginx_inputs
+        if: always() && !cancelled()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --quiet --detach "$GITHUB_SHA"
+          [[ $(git rev-parse HEAD^1) == "$CONTROL" && $(git rev-parse HEAD^2) == "$TREATMENT" ]]
+          [[ $(git rev-parse "$CONTROL^") == "$BASE" && $(git rev-parse "$TREATMENT^") == "$AFTER" ]]
+          bench=test/benchmarks/checkpointfile/checkpointfile.go
+          for arm in "$CONTROL" "$TREATMENT"; do
+            diff -u <(printf '%s\n' test/benchmarks/checkpointfile/BUILD "$bench") <(git diff --name-only "$arm^" "$arm")
+          done
+          git diff --exit-code "$CONTROL" "$TREATMENT" -- "$bench" test/benchmarks/checkpointfile/BUILD
+          git show "$CONTROL:$bench" | grep -F 'state.EnableGraphEngine(true)'
+          mkdir -p "$RUNNER_TEMP/checker" "$RUNNER_TEMP/paired-public"
+          cp test/rbe/array_pair/checker/*.py "$RUNNER_TEMP/checker/"
+          (cd "$RUNNER_TEMP/checker"; python3 -B -c 'import qualification_report, unit_matrix')
+          cp test/rbe/array_pair/coordinator.sh "$RUNNER_TEMP/"
+          docker pull --platform=linux/amd64 "$NGINX_IMAGE"
+          [[ $(docker image inspect --format '{{.Id}}' "$NGINX_IMAGE") == sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5 ]]
+          docker tag "$NGINX_IMAGE" gvisor.dev/images/benchmarks/nginx:latest
+          docker save -o "$RUNNER_TEMP/nginx.tar" gvisor.dev/images/benchmarks/nginx:latest
+      - name: Build the two binaries and compare them on the same remote worker
+        if: always() && !cancelled() && steps.nginx_inputs.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull --platform=linux/amd64 "$GNU"
+          plat=$RUNNER_TEMP/poll-gnu-platform
+          mkdir -p "$plat"
+          printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+          cat >"$plat/BUILD" <<BUILD
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "container-image":"docker://$GNU"},
+              visibility = ["//visibility:public"],
+          )
+          platform(
+              name = "compile",
+              parents = [":gnu"],
+              exec_properties = {"EstimatedMemory": "4GB"},
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc=$RUNNER_TEMP/poll-gnu.bazelrc
+          umask 077
+          trap 'rm -f "$rc" "$RUNNER_TEMP/poll-compile.bazelrc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } >"$rc"
+          sed 's,@poll_gnu_platform//:gnu,@poll_gnu_platform//:compile,g' "$rc" >"$RUNNER_TEMP/poll-compile.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" "$RUNNER_TEMP/coordinator.sh" "$RUNNER_TEMP" "$CONTROL" "$TREATMENT" "$GITHUB_SHA"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          echo '{"status":"PASS","samples":16,"matched_input":true}' > "$RUNNER_TEMP/paired-public/nginx-status.json"
+      - name: Collect both independent measurements
+        if: always()
+        run: |
+          set -eu
+          out="$RUNNER_TEMP/graph-results/nginx"
+          mkdir -p "$out"
+          if [[ -d "$RUNNER_TEMP/paired-public" ]]; then cp -a "$RUNNER_TEMP/paired-public/." "$out/"; fi
+          if [[ ! -s "$out/nginx-status.json" ]]; then printf '%s\n' '{"status":"FAIL","error":"Nginx comparison did not qualify"}' > "$out/nginx-status.json"; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: graph-deferred-range-pair
+          path: ${{ runner.temp }}/graph-results
+          if-no-files-found: error
