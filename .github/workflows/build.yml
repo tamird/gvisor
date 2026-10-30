@@ -1,35 +1,208 @@
-name: CI
-
-"on":
+name: Compare repeated SACK reports and recovery on the combined sender
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-sack-rack-competition]
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-rack-competition'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 8
+        persist-credentials: false
+    - name: Read the first compiler diagnostics for the three recorded FIB invocations
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYLOG'
+        import base64
+        import json
+        import os
+        from pathlib import Path
+        import re
+        import urllib.error
+        import urllib.request
+        identifiers = {"linux":"98b32c0f-363d-4179-b120-d0ec63d5af34","current":"dd4e6499-10fb-4ae1-9ea9-578b1f6d4cc7","original":"2c27615f-d561-4e20-a2e7-f7c1f6b7c8a4"}
+        def fetch(url, data):
+            request=urllib.request.Request(url,data=json.dumps(data).encode(),headers={"content-type":"application/json","x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
+            with urllib.request.urlopen(request,timeout=25) as reply:
+                return json.load(reply)
+        rows={}
+        for arm,identifier in identifiers.items():
+            errors=[]
+            chunks=[]
+            for route in ("rpc","api"):
+                try:
+                    cursor=""
+                    for page in range(20):
+                        if route=="rpc":
+                            response=fetch("https://app.buildbuddy.io/rpc/BuildBuddyService/GetEventLogChunk",{"invocationId":identifier,"minLines":10000,"chunkId":cursor})
+                            chunks.append(base64.b64decode(response.get("buffer","")).decode(errors="replace"))
+                            cursor=response.get("previousChunkId",response.get("previous_chunk_id",""))
+                        else:
+                            response=fetch("https://app.buildbuddy.io/api/v1/GetLog",{"selector":{"invocation_id":identifier},"page_token":cursor})
+                            chunks.append(response.get("log",{}).get("contents",""))
+                            cursor=response.get("nextPageToken",response.get("next_page_token",""))
+                        if not cursor:break
+                    if any(chunks):break
+                except (urllib.error.HTTPError,ValueError,OSError) as error:
+                    errors.append(str(error)[:150])
+            text="\n".join(chunks)
+            clean=[]
+            for line in text.splitlines():
+                plain=re.sub(r"\x1b\[[0-9;]*[a-zA-Z]","",line)
+                if any(word in plain.lower() for word in ("header=x-buildbuddy","api-key","token=")):continue
+                if re.search(r"socket_netlink_netfilter\.cc:\d+:|fatal error:|error:.*(?:not declared|not found|no such file|undeclared|unrecognized|cannot|Killed)|missing dependency declarations|undeclared inclusion|program cc1plus|Killed signal",plain,re.I):
+                    clean.append(plain[:650])
+            rows[arm]={"invocation":identifier,"diagnostics":clean[:16],"read_errors":errors,"read_bytes":len(text)}
+        out=Path(os.environ["RUNNER_TEMP"])/"fib-compiler.json"
+        out.write_text(json.dumps(rows,indent=2)+"\n")
+        print(json.dumps(rows,indent=2))
+        PYLOG
+    - name: Retain the scoped FIB compiler diagnostics
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: fib-compiler-diagnostics
+        path: ${{ runner.temp }}/fib-compiler.json
+        if-no-files-found: error
+    - name: Replay lower SACK reports on Linux, RACK and combined gVisor
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        combined=777852bfe36452d63715f2c678e82b0f41cd760f
+        rack=715df78ea05a1b292331a746d50ddeee0690403d
+        test "$(git rev-parse HEAD^)" = "$combined"
+        test "$(git rev-parse "$combined^1")" = "$rack"
+        test "$(git rev-parse "$combined^2")" = 7d7f552333cf0aa6fa9563577b97adbda779eff4
+        git diff --exit-code "$combined" -- pkg runsc tools .bazelrc MODULE.bazel
+        cp test/rbe/combined_sack_wire.py "$RUNNER_TEMP/report.py"
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        export FIFO_RC=$rc
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        test -x /sbin/iptables-nft
+        test -x /sbin/ip6tables-nft
+        test -x /usr/bin/x86_64-linux-gnu-gcc
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"compiler installation"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        export FENCE_HOST_ID=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT FENCE_HOST_PROBE=$RUNNER_TEMP/host-marker
+        export XTABLES_LOCKFILE=$RUNNER_TEMP/fence-xtables.lock
+        touch "$XTABLES_LOCKFILE"
+        printf '%s' "$FENCE_HOST_ID" > "$FENCE_HOST_PROBE"
+        probe_raw=$RUNNER_TEMP/host-probe.jsonl
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"Bazel host compiler/namespace test"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        bazelisk --bazelrc="$rc" test --nocache_test_results --test_output=all --strategy=TestRunner=local \
+          --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --build_event_json_file="$probe_raw" \
+          //test/rbe/fence_host_probe:check
+        python3 - "$probe_raw" "$RUNNER_TEMP/replay-public/preflight.json" <<'PYCHECK'
+        import json, sys
+        from pathlib import Path
+        events = [json.loads(row) for row in Path(sys.argv[1]).read_text().splitlines()]
+        results = [e["testResult"] for e in events if "testResult" in e]
+        assert len(results) == 1, results
+        result = results[0]
+        assert result["status"] == "PASSED" and not result.get("cachedLocally"), result
+        assert result["executionInfo"]["strategy"] in ("local", "standalone"), result["executionInfo"]
+        assert not result["executionInfo"].get("cachedRemotely"), result["executionInfo"]
+        Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
+        print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
+        PYCHECK
+        out="$RUNNER_TEMP/replay-public"
+        uname -r > "$out/kernel"
+        cat /proc/sys/net/ipv4/tcp_recovery > "$out/linux-tcp-recovery"
+        for arm in combined; do
+          tested=$combined
+          if [[ $arm = rack ]]; then tested=$rack; fi
+          git restore --source="$tested" --staged --worktree -- pkg/tcpip/transport/tcp
+          git diff --exit-code "$tested" -- pkg runsc tools .bazelrc MODULE.bazel
+          if [[ $arm = linux ]]; then label=tcp_rack_native_test; else label=tcp_rack_netstack_test; fi
+          d="$out/$arm"
+          mkdir -p "$d"
+          date -u --iso-8601=ns > "$d/started"
+          code=0
+          bazelisk --bazelrc="$rc" test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
+            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
+            --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
+            --nocache_test_results --test_output=all --test_filter=TestRACKRepeatedLowerSACK --test_timeout=300 \
+            "--build_event_json_file=$d/bep.jsonl" --build_event_json_file_path_conversion=false \
+            "//test/packetimpact/tests:$label" > "$RUNNER_TEMP/$arm.log" 2>&1 || code=$?
+          echo "$code" > "$d/exit"
+          date -u --iso-8601=ns > "$d/ended"
+          root="bazel-testlogs/test/packetimpact/tests/$label"
+          printf "%s\n" "$tested" > "$d/source"
+          python3 "$RUNNER_TEMP/report.py" "$arm" "$root" "$d"
+          sed -nE '/^(ERROR|FATAL)|tcpi_reord_seen=|^--- (FAIL|PASS): TestRACKRepeatedLowerSACK/p' "$RUNNER_TEMP/$arm.log" | tail -18 > "$d/diagnostic"
+          rm -f "$d/bep.jsonl"
+        done
+        git diff --exit-code HEAD -- pkg
+        python3 - "$out" <<'PYWIRE'
+        import json,sys
+        from pathlib import Path
+        d=Path(sys.argv[1])
+        rows={n:json.loads((d/n/"result.json").read_text()) for n in ("combined",)}
+        (d/"verdict.json").write_text(json.dumps(rows,indent=2)+"\n")
+        assert all(r.get("observed") and r["expected_result"] for r in rows.values()),rows
+        PYWIRE
+    - name: Run only the four combined-source competition arms
+      if: always()
+      run: bash test/benchmarks/tcp/current-shared-driver.sh
+    - name: Reconcile transfer, packet and recovery observations
+      if: always()
+      run: |
+        python3 test/benchmarks/tcp/current-shared-report.py
+        python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/tcp-public" "$RUNNER_TEMP/tcp-public/episodes.json"
+    - name: Publish socket cases and transfer evidence
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: sack-rack-combined
+        path: |
+          ${{ runner.temp }}/tcp-public/
+          ${{ runner.temp }}/replay-public/
+        if-no-files-found: error
