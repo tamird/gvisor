@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:49:47.743640+00:00",
+    "updatedAt": "2026-10-30T04:55:24.525379+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34981,7 +34981,7 @@
       "url": "https://github.com/tamird/gvisor/commit/215b93439",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-30T04:33:56.242748+00:00",
+      "updatedAt": "2026-10-30T04:55:24.525379+00:00",
       "summary": "On mutable overlay, copying up a file can redirect a canceled poll waiter’s unregister operation to a different backing file. The old proc file can still wake that waiter; retaining the original file passes the cancellation case. The read-only overlay control passes. Check lifetime, checkpoint behavior and cost before proposing the change.",
       "evidence": [
         {
@@ -35019,6 +35019,22 @@
         {
           "label": "Direct path: FileDescription remains 112 B and waiter.Entry remains 40 B; transient pollState grows from 48 to 56 B",
           "url": "https://github.com/tamird/gvisor/actions/runs/41001975310/artifacts/12954265851"
+        },
+        {
+          "label": "Stock SIGIO was delivered for canceled lower observer after rearming on upper",
+          "url": "https://app.buildbuddy.io/invocation/be5dcd96-8794-4dba-b9f7-8413bcc4823b"
+        },
+        {
+          "label": "Both nested copy orders passed under the race detector on a2ae1ad4d",
+          "url": "https://app.buildbuddy.io/invocation/49a337bd-492e-4f44-909b-2a22b11de4cd"
+        },
+        {
+          "label": "Candidate SIGIO: original lower notified, rearmed upper quiet, direct peer retained",
+          "url": "https://app.buildbuddy.io/invocation/442241a5-50ee-46a6-b953-914b315657e6"
+        },
+        {
+          "label": "Same three SIGIO observations after checkpoint/restore",
+          "url": "https://app.buildbuddy.io/invocation/9d64cd2b-92ca-43c6-8f0b-ab4e82c8f21e"
         }
       ]
     },
@@ -35096,6 +35112,43 @@
         "title": "Submit the initializer change to rules_python",
         "summary": "Review the supplier patch, including its upstream tests and release note.",
         "body": "Approve creating a public rules_python fork and submitting the reviewed change upstream, with the separate disclosure comment that the supplier requires."
+      }
+    },
+    {
+      "id": "pr:16726",
+      "type": "pr",
+      "number": 16726,
+      "repo": "google/gvisor",
+      "ref": "test/cl1008391870",
+      "head": "c6afaa53a68057de1e83c33f25c8ca94978ac0e8",
+      "title": "tools/go_stateify: emit typed calls, registration, and callbacks (20/21)",
+      "url": "https://github.com/google/gvisor/pull/16726",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-30T04:55:24.525379+00:00",
+      "summary": "Graph Load restores two nested tags as 22 and 22 instead of 11 and 22 on this generator revision. The same fixture and both flat controls distinguish scratch reuse from a wire-format discrepancy.",
+      "evidence": [
+        {
+          "label": "Review location: tools/go_stateify/main.go:479",
+          "url": "https://github.com/google/gvisor/pull/16726/files#diff-10f2e135cc9a248e2f5bc3f41ca75dde791006ca9afa821000608c862b0ea96dR479"
+        },
+        {
+          "label": "Matched parent, PR and scratch-lifetime repair: original records and logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41004896184/artifacts/12955071834"
+        },
+        {
+          "label": "Tested scratch-lifetime correction",
+          "url": "https://github.com/tamird/gvisor/commit/8def2ecbb"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "c6afaa53a68057de1e83c33f25c8ca94978ac0e8",
+        "url": "https://github.com/google/gvisor/pull/16726",
+        "title": "Post the inline nested-value corruption finding",
+        "summary": "Review the proposed inline comment at tools/go_stateify/main.go:479. It describes the observed values and links a tested correction.",
+        "body": "@parth-opensrc, this can corrupt a nested converted value during graph Load. In the [reproducer](https://github.com/tamird/gvisor/commit/d3afb4db4), an outer value with tag 11 holds another generated holder through an interface; the inner value of the same type has tag 22. The [parent](https://app.buildbuddy.io/invocation/a06ed41b-aa64-41c9-82a7-943cc62461ed) restored 11 and 22. [This head](https://app.buildbuddy.io/invocation/8e57e151-2229-4ba5-b03d-a100a22d09d6) restored 22 twice. The legacy and non-nested controls passed.\n\nWhile the outer value is being decoded, [its scratch slot is still available](https://github.com/google/gvisor/blob/c6afaa53a/pkg/state/graph_decode_callbacks_unsafe.go#L151-L165). Could the slot stay checked out until the decode and immediate callback return? [That change](https://github.com/tamird/gvisor/commit/8def2ecbb) [restored both tags](https://app.buildbuddy.io/invocation/570143b4-9029-4cfa-b99e-02d92b2efdd2).\n\nReview by Codex on behalf of @tamird."
       }
     }
   ],
@@ -41144,7 +41197,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T04:46:20.780605+00:00",
+      "updatedAt": "2026-10-30T04:55:24.525379+00:00",
       "summary": "Parth leads the graph codec. The graph preserves the tested shared maps, slice aliases and saver self-pointers. Neither legacy slice prototype is suitable for submission. Issue #16715 tracks the open map callback, recursive type, LoadValue and encoder scratch findings, with reproducers and the revisions they exercised.",
       "findings": [
         {
@@ -43851,6 +43904,27 @@
             {
               "label": "Legacy/graph comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/41004400244"
+            }
+          ]
+        },
+        {
+          "text": "At generator revision c6afaa53a, graph Load restored a nested converted value as 22/22 instead of 11/22. The parent and legacy controls restored 11/22. Keeping the outer scratch slot unavailable during recursive LoadValueTo restored both tags. Issue #16715 tracks the finding.",
+          "evidence": [
+            {
+              "label": "Open graph codec correctness findings",
+              "url": "https://github.com/google/gvisor/issues/16715"
+            },
+            {
+              "label": "Review location: tools/go_stateify/main.go:479",
+              "url": "https://github.com/google/gvisor/pull/16726/files#diff-10f2e135cc9a248e2f5bc3f41ca75dde791006ca9afa821000608c862b0ea96dR479"
+            },
+            {
+              "label": "Matched parent, PR and scratch-lifetime repair: original records and logs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41004896184/artifacts/12955071834"
+            },
+            {
+              "label": "Tested scratch-lifetime correction",
+              "url": "https://github.com/tamird/gvisor/commit/8def2ecbb"
             }
           ]
         }

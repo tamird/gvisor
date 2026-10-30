@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T04:48:20.300325+00:00",
-  "registryDate": "2026-10-30T04:49:47.743640+00:00",
+  "registryDate": "2026-10-30T04:55:24.525379+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -241724,7 +241724,7 @@
         "since": "2026-10-30T04:18:06.119315+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     },
     "pr:15635": {
@@ -242463,7 +242463,7 @@
         "since": "2026-10-29T01:35:12.698800+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     },
     "pr:16052": {
@@ -243986,7 +243986,7 @@
         "since": "2026-10-30T00:11:26.175497+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -243995,7 +243995,7 @@
         "since": "2026-10-30T03:43:50.365987+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -244004,7 +244004,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     },
     "branch:declared-staged-release-check": {
@@ -244013,7 +244013,7 @@
         "since": "2026-10-30T00:11:26.175497+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     },
     "branch:state-signaling-nan": {
@@ -244022,7 +244022,7 @@
         "since": "2026-10-30T04:18:06.119315+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     },
     "branch:rules-python-namespace-inits": {
@@ -244031,7 +244031,16 @@
         "since": "2026-10-30T04:33:56.242748+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T04:49:47.743640+00:00"
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
+      }
+    },
+    "pr:16726": {
+      "contributor-review": {
+        "scope": "c6afaa53a68057de1e83c33f25c8ca94978ac0e8",
+        "since": "2026-10-30T04:55:24.525379+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T04:55:24.525379+00:00"
       }
     }
   },
