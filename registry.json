@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:54:38.225849+00:00",
+    "updatedAt": "2026-10-30T20:59:40.379727+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34880,16 +34880,16 @@
       }
     },
     {
-      "id": "branch:gofer-character-device-restore",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16761",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/gofer-restored-device-syscall",
       "head": "103965803b95d0d06b9b2341046f56828489ff1b",
       "title": "Restore gofer poll registration on character devices",
-      "url": "https://github.com/tamird/gvisor/commit/103965803",
+      "url": "https://github.com/google/gvisor/pull/16761",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T13:25:56.596550+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-30T20:59:38.674936+00:00",
       "summary": "After checkpointing an open /dev/random file, fresh EPOLL_CTL_ADD returned EPERM in both stock gofer modes. The ordinary syscall test passes on Linux and the four corrected gVisor configurations.",
       "evidence": [
         {
@@ -34935,15 +34935,15 @@
           "head": "103965803b95d0d06b9b2341046f56828489ff1b"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "103965803b95d0d06b9b2341046f56828489ff1b",
-        "url": "https://github.com/tamird/gvisor/commit/103965803",
-        "title": "Restore gofer poll registration on character devices",
-        "summary": "After checkpointing an open /dev/random file, fresh EPOLL_CTL_ADD returned EPERM in both stock gofer modes. The ordinary syscall test passes on Linux and the four corrected gVisor configurations.",
-        "body": "Review one standalone PR combining the gofer fix with the ordinary epoll syscall regression. Compared to the earlier two-commit proposal, only the fixture and its runner option changed. The original test kept a watch that could report its queued event; this regression creates a new watch after restore. The missing-donor controls are separate from the native ABI case."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "103965803b95d0d06b9b2341046f56828489ff1b",
+          "outcome": "approved",
+          "at": "2026-10-30T20:59:38.674936+00:00"
+        }
+      ],
+      "number": 16761
     },
     {
       "id": "pr:16697",
@@ -37190,7 +37190,7 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "research/tun-persist-reference-v2",
-      "head": "736b926672075e20b03410b52b6f3308751a7bb4",
+      "head": "b616271679703669920b1f2b7fff567ccd8ff069",
       "title": "Take the TUN persistence reference before publishing it",
       "url": "https://github.com/google/gvisor/pull/16757",
       "summary": "Deleting a TUN link while enabling persistence can consume the open file’s reference. A controlled replay panics on stock and leaves the open file’s reference intact with the fix. In a separate syscall test, Linux and corrected gVisor reject both persistence settings on the deleted link with EBADFD; stock returns success for both.",
@@ -37208,7 +37208,7 @@
           "url": "https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L3113-L3116"
         }
       ],
-      "updatedAt": "2026-10-30T20:25:22.790363+00:00",
+      "updatedAt": "2026-10-30T20:59:38.674936+00:00",
       "status": "open",
       "number": 16757,
       "settledReviews": [
@@ -40504,7 +40504,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:gofer-character-device-restore",
+      "from": "pr:16761",
       "to": "branch:epoll-modify-preserve",
       "reason": "Keep the queue attached to a reopened character device and reject restore if a saved queue has no host descriptor.",
       "evidence": [
