@@ -1,3 +1,7 @@
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
+load("@rules_img//img:load.bzl", "image_load")
+load("//website:render.bzl", "render_site", "syscall_pages")
 load("//images:defs.bzl", "docker_image")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
 load("//tools/yamltest:defs.bzl", "yaml_test")
@@ -240,3 +244,49 @@ yaml_test(
     srcs = ["_data/application-compatibility.yml"],
     schema = "//website:application-compatibility.schema.json",
 )
+
+syscall_pages(name = "native_syscall_pages")
+
+render_site(
+    name = "rendered_site",
+    srcs = [
+        "_config.yml",
+        "//website/application_compatibility:index.html",
+        "//website/blog:index.html",
+        "//website/security_track_record:index.html",
+    ] + glob(["_data/**", "assets/**", "css/**", "_includes/**", "_layouts/**", "_plugins/**", "_sass/**"]),
+    docs = [":docs", "//website/blog:posts"],
+    static = ["archive.key"] + glob(["performance/**"]),
+    css = ":css",
+    syscalls = ":native_syscall_pages",
+    driver = "render.rb",
+    as_of = "2026-10-30T12:00:00Z",
+    checks = "//test/rbe/website-jekyll:checks.rb",
+    runtime = ["//test/rbe/website-jekyll:sdk_files"],
+    gems = ["//test/rbe/website-jekyll:pinned_gems"],
+    loader = "//test/rbe/website-jekyll:tool_files/lib/ld-musl-x86_64.so.1",
+    tags = ["manual"],
+)
+
+image_layer(
+    name = "site_layer",
+    srcs = {
+        "/_site": ":rendered_site",
+        "/server": "//website/cmd/server",
+        "/etc/ssl/cert.pem": "@google_root_pem//file",
+    },
+    file_metadata = {"/server": file_metadata(mode = "0755")},
+    include_runfiles = False,
+)
+
+image_manifest(
+    name = "site_image",
+    layers = [":site_layer"],
+    entrypoint = ["/server"],
+    config_fragment = "server_config.json",
+    working_dir = "/",
+    tags = ["manual"],
+)
+
+image_load(name = "site_load", image = ":site_image", tag = "gvisor-website:qualify")
+filegroup(name = "site_docker_archive", srcs = [":site_load"], output_group = "tarball")

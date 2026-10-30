@@ -1,0 +1,37 @@
+name: Compare the complete website and target serving image
+on:
+  push:
+    branches: [qualification/website-jekyll-pair]
+permissions:
+  contents: read
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Prepare the stock source and packaged SDK
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq install --no-install-recommends build-essential crossbuild-essential-arm64
+          mkdir "$RUNNER_TEMP/website-probe"
+          cp images/jekyll/checks.rb test/rbe/website-jekyll/checks.rb
+          python3 test/rbe/website-jekyll/sdk_inputs.py
+          docker pull us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/jekyll_x86_64@sha256:97528c5497adaa2a507596d74cf89103aff46d44939ba4e3a93fd8aadec2f76e
+          docker tag us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/jekyll_x86_64@sha256:97528c5497adaa2a507596d74cf89103aff46d44939ba4e3a93fd8aadec2f76e gvisor.dev/images/jekyll
+      - name: Build both full sites and compare public responses
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/website-jekyll/pair.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: full-website-pair
+          path: |
+            ${{ runner.temp }}/website-probe/*.json
+            ${{ runner.temp }}/website-probe/*.log
+            ${{ runner.temp }}/website-probe/*.diff
+          if-no-files-found: error

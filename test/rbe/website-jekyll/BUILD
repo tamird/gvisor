@@ -19,3 +19,7 @@ probe(
     loader = "tool_files/lib/ld-musl-x86_64.so.1",
     gems = glob(["gems/*.gem"]),
 )
+
+filegroup(name = "sdk_files", srcs = glob(["tool_files/**"]), visibility = ["//website:__pkg__"])
+filegroup(name = "pinned_gems", srcs = glob(["gems/*.gem"]), visibility = ["//website:__pkg__"])
+exports_files(["checks.rb", "tool_files/lib/ld-musl-x86_64.so.1"])

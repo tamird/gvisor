@@ -90,6 +90,29 @@ doc = rule(
     },
 )
 
+SiteDocs = provider(fields = ["entries", "files"])
+
+def _site_docs(ctx):
+    entries = []
+    for dep in ctx.attr.deps:
+        doc = dep[DocInfo]
+        for file in dep.files.to_list():
+            entries.append(dict(
+                file = file.path,
+                short = file.short_path,
+                description = doc.description,
+                permalink = doc.permalink,
+                category = doc.category,
+                subcategory = doc.subcategory,
+                weight = doc.weight,
+                editpath = doc.editpath,
+                authors = doc.authors,
+                layout = doc.layout,
+                include_in_menu = doc.include_in_menu,
+                body_classes = doc.body_classes,
+            ))
+    return SiteDocs(entries = entries, files = depset(transitive = [d.files for d in ctx.attr.deps]))
+
 def _docs_impl(ctx):
     # Tarball is the actual output.
     tarball = ctx.actions.declare_file(ctx.label.name + ".tgz")
@@ -183,7 +206,7 @@ body_classes: {body_classes}"""
     )
     return [DefaultInfo(
         files = depset([tarball]),
-    )]
+    ), _site_docs(ctx)]
 
 docs = rule(
     implementation = _docs_impl,
