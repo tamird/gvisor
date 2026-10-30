@@ -199,11 +199,16 @@ func resolveOutputPath(outPath string) (targetPath string, directOpen bool, err 
 		if base == "." || base == ".." || base == string(filepath.Separator) {
 			return cur, true, nil
 		}
-		absDir, err := filepath.Abs(filepath.Dir(cur))
+		// Resolve symlinks before simplifying .., as the kernel does.
+		dir, _ := filepath.Split(cur)
+		if dir == "" {
+			dir = "."
+		}
+		dir, err := filepath.EvalSymlinks(dir)
 		if err != nil {
 			return "", false, err
 		}
-		realDir, err := filepath.EvalSymlinks(absDir)
+		realDir, err := filepath.Abs(dir)
 		if err != nil {
 			return "", false, err
 		}
@@ -225,12 +230,8 @@ func resolveOutputPath(outPath string) (targetPath string, directOpen bool, err 
 		if err != nil {
 			return "", false, err
 		}
-		trailingSep := strings.HasSuffix(linkDest, string(filepath.Separator))
 		if !filepath.IsAbs(linkDest) {
-			linkDest = filepath.Join(realDir, linkDest)
-			if trailingSep && !strings.HasSuffix(linkDest, string(filepath.Separator)) {
-				linkDest += string(filepath.Separator)
-			}
+			linkDest = realDir + string(filepath.Separator) + linkDest
 		}
 		cur = linkDest
 	}
