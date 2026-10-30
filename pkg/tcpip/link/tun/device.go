@@ -404,6 +404,10 @@ type tunEndpoint struct {
 	closed bool
 }
 
+// Qualification-only scheduler gates at the persistence publication point.
+var persistPublished = make(chan struct{})
+var resumePersist = make(chan struct{})
+
 // +checklocksexclude:e.mu
 func (e *tunEndpoint) setPersistent(v bool) error {
 	e.mu.Lock()
@@ -420,6 +424,10 @@ func (e *tunEndpoint) setPersistent(v bool) error {
 	}
 	e.persistent = v
 	e.mu.Unlock()
+	if v {
+		close(persistPublished)
+		<-resumePersist
+	}
 	if !v {
 		e.DecRef(context.Background())
 	}
