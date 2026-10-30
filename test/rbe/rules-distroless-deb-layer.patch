@@ -1,5 +1,5 @@
 diff --git a/apt/private/deb_postfix.bzl b/apt/private/deb_postfix.bzl
-index 172bfff..6af0c4f 100644
+index 172bfff..ee2f020 100644
 --- a/apt/private/deb_postfix.bzl
 +++ b/apt/private/deb_postfix.bzl
 @@ -1,28 +1,64 @@
@@ -24,7 +24,7 @@ index 172bfff..6af0c4f 100644
 +            tools = tc.default.files,
 +            inputs = [src],
 +            outputs = [tar],
-+            arguments = ["--decompress", "--force", "--pass-through", src.path, "-o", tar.path],
++            arguments = ["--decompress", "--force", "--quiet", "--pass-through", src.path, "-o", tar.path],
 +            mnemonic = "DebDecompress",
 +            toolchain = _ZSTD,
 +        )
@@ -38,7 +38,7 @@ index 172bfff..6af0c4f 100644
 +        tools = tc.default.files,
 +        inputs = [src],
 +        outputs = [out],
-+        arguments = ["--force", "--format=gzip", "-6", src.path, "-o", out.path],
++        arguments = ["--force", "--quiet", "--format=gzip", "-6", src.path, "-o", out.path],
 +        mnemonic = "DebGzip",
 +        toolchain = _ZSTD,
 +    )
@@ -147,7 +147,7 @@ index 172bfff..6af0c4f 100644
          **kwargs
      )
 diff --git a/apt/tests/deb_postfix_test.bzl b/apt/tests/deb_postfix_test.bzl
-index 0c373f6..2e0361f 100644
+index 0c373f6..f538b17 100644
 --- a/apt/tests/deb_postfix_test.bzl
 +++ b/apt/tests/deb_postfix_test.bzl
 @@ -1,5 +1,7 @@
@@ -211,7 +211,7 @@ index 0c373f6..2e0361f 100644
 +            name = data,
 +            srcs = [":_deb_postfix_basic_data"],
 +            outs = ["lib_data.tar.%s" % extension],
-+            cmd = '"$(ZSTD_BIN)" --format=%s "$<" -o "$@"' % compression,
++            cmd = '"$(ZSTD_BIN)" --force --format=%s "$<" -o "$@"' % compression,
 +            toolchains = ["@zstd_toolchains//:resolved_toolchain"],
 +        )
 +        deb_postfix(

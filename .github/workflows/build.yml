@@ -25,9 +25,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/receipt"
           test "$(git rev-parse HEAD)" = 15f9fc8d39ba3178c313e61d94feb3f6eb88f95f
           git apply --index ../test/rbe/rules-distroless-deb-layer.patch
-          test "$(git write-tree)" = 8dff793a948dacb2aa6a0ff12406c25e5eb39869
-          printf '%s\n' a0180a7a60d0ec1b44c216b4336135c8a96597ac > "$RUNNER_TEMP/receipt/supplier-commit"
-          printf '%s\n' 8dff793a948dacb2aa6a0ff12406c25e5eb39869 > "$RUNNER_TEMP/receipt/supplier-tree"
+          test "$(git write-tree)" = 1aebbe25175d8ef0faf3161379880317ef02258a
+          printf '%s\n' 86a5661f4a0eb15a41bf4364c9b0542da02cfa7e > "$RUNNER_TEMP/receipt/supplier-commit"
+          printf '%s\n' 1aebbe25175d8ef0faf3161379880317ef02258a > "$RUNNER_TEMP/receipt/supplier-tree"
       - name: Run the supplier's declared Debian layer tests
         working-directory: supplier
         run: |
@@ -35,7 +35,7 @@ jobs:
           tests=(mergedusr basic_normalization gzip_input gzip_passthrough uncompressed_bytes xz_input zst_input lzma_input uncompressed_as_zstd complex_structure)
           labels=()
           for test in "${tests[@]}"; do labels+=("//apt/tests:deb_postfix/$test"); done
-          bazel test --jobs=4 --test_output=errors \
+          bazel test --keep_going --jobs=4 --test_output=errors \
             --build_event_json_file="$RUNNER_TEMP/bep.json" \
             "${labels[@]}"
       - name: Reconcile actual test records
