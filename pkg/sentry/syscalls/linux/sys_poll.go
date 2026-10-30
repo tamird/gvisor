@@ -59,7 +59,7 @@ const (
 // pollState tracks the associated file description and waiter of a PollFD.
 type pollState struct {
 	file   *vfs.FileDescription
-	waiter waiter.Entry
+	waiter vfs.FileWaiter
 }
 
 // initReadiness gets the current ready mask for the file represented by the FD
@@ -81,11 +81,12 @@ func initReadiness(t *kernel.Task, pfd *linux.PollFD, state *pollState, ch chan 
 	if ch == nil {
 		defer file.DecRef(t)
 	} else {
-		state.file = file
 		state.waiter.Init(waiter.ChannelNotifier(ch), waiter.EventMaskFromLinux(uint32(pfd.Events)))
-		if err := file.EventRegister(&state.waiter); err != nil {
+		if err := file.RegisterWaiter(&state.waiter); err != nil {
+			file.DecRef(t)
 			return err
 		}
+		state.file = file
 	}
 
 	r := file.Readiness(waiter.EventMaskFromLinux(uint32(pfd.Events)))
@@ -97,7 +98,7 @@ func initReadiness(t *kernel.Task, pfd *linux.PollFD, state *pollState, ch chan 
 func releaseState(t *kernel.Task, state []pollState) {
 	for i := range state {
 		if state[i].file != nil {
-			state[i].file.EventUnregister(&state[i].waiter)
+			state[i].file.UnregisterWaiter(t, &state[i].waiter)
 			state[i].file.DecRef(t)
 		}
 	}

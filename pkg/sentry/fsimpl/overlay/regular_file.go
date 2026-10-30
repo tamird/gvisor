@@ -245,18 +245,32 @@ func (fd *regularFileFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return wrappedFD.Readiness(mask)
 }
 
-// EventRegister implements waiter.Waitable.EventRegister.
-func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
-	fd.mu.Lock()
-	defer fd.mu.Unlock()
+// eventSourceLocked returns the file to register for readiness notifications.
+//
+// +checklocks:fd.mu
+func (fd *regularFileFD) eventSourceLocked() *vfs.FileDescription {
 	wrappedFD, err := fd.currentFDLocked(context.Background())
 	if err != nil {
 		// TODO(b/171089913): Just use fd.cachedFD for backward compatibility
 		// with VFS1.
 		log.Warningf("overlay.regularFileFD.EventRegister: currentFDLocked failed: %v", err)
-		wrappedFD = fd.cachedFD
+		return fd.cachedFD
 	}
-	return wrappedFD.EventRegister(e)
+	return wrappedFD
+}
+
+// BindWaiter binds w to the file currently providing its notifications.
+func (fd *regularFileFD) BindWaiter(w *vfs.FileWaiter) error {
+	fd.mu.Lock()
+	defer fd.mu.Unlock()
+	return fd.eventSourceLocked().RegisterForwardedWaiter(w)
+}
+
+// EventRegister implements waiter.Waitable.EventRegister.
+func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
+	fd.mu.Lock()
+	defer fd.mu.Unlock()
+	return fd.eventSourceLocked().EventRegister(e)
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.

@@ -84,6 +84,10 @@ type FileDescription struct {
 
 	usedLockBSD atomicbitops.Uint32
 
+	// directWaiters is true when impl accepts registrations on its own file.
+	// After restore the first registration recomputes it from impl.
+	directWaiters atomicbitops.Bool `state:"nosave"`
+
 	// impl is the FileDescriptionImpl associated with this Filesystem. impl is
 	// immutable. This should be the last field in FileDescription.
 	impl FileDescriptionImpl
@@ -176,6 +180,8 @@ func (fd *FileDescription) Init(impl FileDescriptionImpl, flags uint32, creds *a
 	d.IncRef()
 	fd.opts = *opts
 	fd.impl = impl
+	_, forwards := impl.(waiterForwarder)
+	fd.directWaiters.Store(!forwards)
 	mnt.vfs.numFiles.Add(1)
 	return nil
 }
@@ -682,6 +688,62 @@ func (fd *FileDescription) EventRegister(e *waiter.Entry) error {
 // It unregisters e for I/O readiness events.
 func (fd *FileDescription) EventUnregister(e *waiter.Entry) {
 	fd.impl.EventUnregister(e)
+}
+
+// FileWaiter records the file that actually accepted an event registration.
+// The caller retains a reference to the open file throughout the registration.
+type FileWaiter struct {
+	waiter.Entry
+	source *FileDescription
+}
+
+type waiterForwarder interface {
+	// BindWaiter registers w with the selected backing file.
+	BindWaiter(w *FileWaiter) error
+}
+
+// RegisterWaiter registers w for events on fd.
+func (fd *FileDescription) RegisterWaiter(w *FileWaiter) error {
+	if fd.directWaiters.Load() {
+		return fd.impl.EventRegister(&w.Entry)
+	}
+	return fd.registerWaiterSlow(w)
+}
+
+func (fd *FileDescription) registerWaiterSlow(w *FileWaiter) error {
+	if forwarder, ok := fd.impl.(waiterForwarder); ok {
+		return forwarder.BindWaiter(w)
+	}
+	fd.directWaiters.Store(true)
+	return fd.impl.EventRegister(&w.Entry)
+}
+
+// RegisterForwardedWaiter registers w on behalf of another file. It holds the
+// source until UnregisterWaiter, even if the forwarding file switches backing.
+func (fd *FileDescription) RegisterForwardedWaiter(w *FileWaiter) error {
+	if err := fd.RegisterWaiter(w); err != nil {
+		return err
+	}
+	if w.source == nil {
+		fd.IncRef()
+		w.source = fd
+	}
+	return nil
+}
+
+// UnregisterWaiter removes w from the file that accepted it.
+func (fd *FileDescription) UnregisterWaiter(ctx context.Context, w *FileWaiter) {
+	if w.source == nil {
+		fd.impl.EventUnregister(&w.Entry)
+		return
+	}
+	w.unregisterForwarded(ctx)
+}
+
+func (w *FileWaiter) unregisterForwarded(ctx context.Context) {
+	w.source.impl.EventUnregister(&w.Entry)
+	w.source.DecRef(ctx)
+	w.source = nil
 }
 
 // Epollable returns whether this file can be used with epoll_ctl(2).
