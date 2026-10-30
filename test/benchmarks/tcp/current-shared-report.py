@@ -107,26 +107,30 @@ def trial(root, mode, case):
     return dict(overlap_seconds=B-A,mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])],sockets=sockets)
 
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
-public=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
-public.mkdir(exist_ok=True)
-expected=[(m,n) for m in ("plain","measured") for n in ("reno-netstack","cubic-netstack")]
-verdict={"upstream":"d8ff478596acc888f2b90baa7769d78debe1f512","harness":os.environ["GITHUB_SHA"],"expected":len(expected),"passed":{},"failures":{},"missing":[],"skips":[]}
-for mode,case in expected:
-    key=f"{mode}/{case}"
-    if not (root/mode/case/"exit.txt").exists():
-        verdict["missing"].append(key); continue
+destination=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
+destination.mkdir(exist_ok=True)
+heads=(destination/"source-heads").read_text().splitlines() if (destination/"source-heads").exists() else []
+verdict={"heads":heads,"upstream":heads[0] if heads else None,"harness":os.environ["GITHUB_SHA"],"passed":{},"failures":{},"missing":[]}
+for arm in ("a-stock","a-zero","b-zero","b-stock"):
+    name=arm+"/measured/reno-netstack"
+    folder=root/name
+    if not (folder/"exit.txt").exists():
+        verdict["missing"].append(name)
+        continue
+    public=destination/arm
+    public.mkdir(exist_ok=True)
     try:
-        bounds=trial(root,mode,case)
-        bounds["wire"]=capture(root/mode/case/"results",public,f"{mode}-{case}")
-        verdict["passed"][key]=bounds
+        d=trial(root/arm,"measured","reno-netstack")
+        d["wire"]=capture(folder/"results",public,"measured-reno-netstack")
+        d["start"]=(folder/"start").read_text().strip()
+        d["end"]=(folder/"finish").read_text().strip()
+        d["exit"]=int((folder/"exit.txt").read_text().strip())
+        for p in ("qdisc-before.txt","qdisc-after.txt","interface-features.txt"):
+            (public/p).write_bytes((folder/"results"/p).read_bytes())
+        verdict["passed"][name]=d
     except (AssertionError,KeyError,ValueError,IndexError,OSError,subprocess.SubprocessError) as exc:
-        verdict["failures"][key]={"reason":f"{type(exc).__name__}: {exc}","diagnostics":diagnostics(root/mode/case)}
-verdict["preflight"]={k:diagnostics(root/"preflight"/k) for k in ("default","staged")}
-verdict["execution_finished"]=(root/"trials-finished.txt").read_text().strip() if (root/"trials-finished.txt").exists() else None
+        verdict["failures"][name]={"reason":repr(exc),"diagnostics":diagnostics(folder)}
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
-verdict["verified"]=datetime.now(timezone.utc).isoformat()
-verdict["status"]="pass" if not verdict["failures"] and not verdict["missing"] and verdict["driver"] and verdict["driver"]["status"]==0 else "incomplete"
-(public/"worker.txt").write_text((root/"worker.txt").read_text())
-(public/"verdict.json").write_text(json.dumps(verdict,indent=2)+"\n")
-print(json.dumps({k:v if k!="passed" else list(v) for k,v in verdict.items()},indent=2))
-raise SystemExit(int(verdict["status"]!="pass"))
+verdict["status"]="pass" if len(verdict["passed"])==4 and verdict["driver"] and verdict["driver"]["status"]==0 else "incomplete"
+(destination/"verdict.json").write_text(json.dumps(verdict,indent=2)+"\n")
+if verdict["status"]!="pass":raise SystemExit(1)

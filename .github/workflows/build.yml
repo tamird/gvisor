@@ -1,13 +1,13 @@
-name: Observe ACK and recovery on the shared WAN
+name: Trace RACK across loss on an ordered WAN
 on:
   push:
-    branches: [qualification/tcp-shared-flight-traces]
+    branches: [qualification/tcp-rack-reownd-episodes]
 permissions:
   contents: read
 jobs:
   compare:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -17,10 +17,13 @@ jobs:
       - name: Reconcile expected trials, receiver intervals and socket samples
         if: always()
         run: python3 test/benchmarks/tcp/current-shared-report.py
+      - name: Match each observed packet and recovery interval across the WAN
+        if: always()
+        run: python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/tcp-public" "$RUNNER_TEMP/tcp-public/episodes.json"
       - name: Publish allowlisted evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-shared-flight-traces
+          name: tcp-rack-reownd-episodes
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error
