@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+    "updatedAt": "2026-10-30T10:36:22.103416+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18449,24 +18449,22 @@
       "repo": "google/gvisor",
       "number": 16051,
       "ref": "fix/license-manual-artifacts",
-      "head": "36d42cd42ed7535e9106267046beb65b38880612",
-      "title": "Preserve manually audited artifact licenses",
+      "head": "62d7054b7f5b5b22521e7346ed84f533c49f081e",
+      "title": "Preserve LicenseRef audits for pinned artifacts",
       "url": "https://github.com/google/gvisor/pull/16051",
       "group": "release",
       "status": "open",
-      "summary": "The additive conflict after #15970 landed is resolved and published at 36d42cd42ed7535e9106267046beb65b38880612, directly on merged 0912018a096a3cedc6467a311a1cc98f26abf3c6. Both original 1669fae manual-audit postimages are preserved exactly, with only the landed codeload regexp and test added. Independent source review confirms the inverse. GitHub observed the new head as MERGEABLE at 21:37:45Z; current checks were pending. The existing approval and qualification retain their original revision identities; the raw APPROVED rollup is not a newly submitted review of this head. No native workload was repeated. The 21:47:05Z provider snapshot confirms the delivered head is MERGEABLE and reports effective REVIEW_REQUIRED.\n\nEarlier source-specific evidence:\n\nEtienne approved the exact current head 1669fae493856ba8428381b93fabe3dbd7579131 on October 24 at 09:23 UTC. No source change or reply was requested; ordinary public checks and matching import remain separate.\n\nThe requested post-#16046 rebase is published at 1669fae49385 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 0e6946fc8d. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 0e6946fc8d1821246fced5f960b37860d79e3d99 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nCurrent Gazelle job118631958637 fails solely on the inherited unused //pkg/zip dependency in tools/nogo/check/BUILD; existing import16031 carries the shared correction. No duplicate patch, retry or reviewer message is needed.\n\nThe user-approved change is delivered as google/gvisor#16051 at 24cae478d49a084a93cd26aba9a57d528d67b7cc. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nStandalone public-source proposal 24cae478d4 is published and independently qualified: four public checker/Nogo owners, four uncached attempts and 26 XML positives, plus canonical buildifier command exit 0. It preserves explicitly audited standard SPDX or LicenseRef terms only while artifact URL and checksum stay fixed; duplicate and invalid records fail before mutation. This standalone cut does not depend on held #15146, and adds no npm inventory, policy exception or catalog adoption. Root requested contributor review/open-PR once; no upstream PR exists yet. Automatic verification took 4.533 seconds; the later owner seal took 759.573 seconds, retained separately.\n\n",
-      "followup": {
-        "owner": "overlay_owner",
-        "sourceHead": "ce676f0d3346881fc09b11523fc6aabcc3084486",
-        "observedAt": "2026-10-30T10:22:03.833397+00:00",
-        "disposition": "Contributor approved subject to simplifying LicenseRef validation",
-        "nextAction": "Remove licenseRefRE; verify that Fetch preserves artifact pins and rejects malformed references.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/ce676f0d3"
-        ]
-      },
-      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "summary": "Keep audited license terms while the URL and SHA256 of a binary artifact match. An invalid local reference cannot cause automatic discovery to overwrite a reviewed entry.",
+      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
       "evidence": [
+        {
+          "label": "Exact revision: all 46 checker cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41041102181/artifacts/12970700622"
+        },
+        {
+          "label": "Stock replaced invalid local reference with MIT",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41040695929/artifacts/12969489449"
+        },
         {
           "label": "46 passing named test records; none skipped or missing",
           "url": "https://app.buildbuddy.io/invocation/ad3b0168-0414-4337-9193-8bda9c1aeb8c"
@@ -18538,10 +18536,10 @@
       },
       "refinement": {
         "before": {
-          "head": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a"
+          "head": "ce676f0d3346881fc09b11523fc6aabcc3084486"
         },
         "after": {
-          "head": "ce676f0d3346881fc09b11523fc6aabcc3084486"
+          "head": "62d7054b7f5b5b22521e7346ed84f533c49f081e"
         }
       },
       "settledReviews": [
@@ -18550,6 +18548,12 @@
           "kind": "amendment",
           "outcome": "changes-requested",
           "at": "2026-10-30T10:22:03.833397+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "62d7054b7f5b5b22521e7346ed84f533c49f081e",
+          "outcome": "approved",
+          "at": "2026-10-30T10:36:22.103416+00:00"
         }
       ]
     },
@@ -35163,9 +35167,13 @@
       "url": "https://github.com/tamird/gvisor/commit/005930e18",
       "group": "bazel",
       "status": "Investigating Skylib upstream",
-      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
       "summary": "The proposed rules_python change replaces a shell copy with a Bazel template expansion. Existing namespace selection, target names and file contents are preserved.",
       "evidence": [
+        {
+          "label": "Supplier fix on actual Skylib fork",
+          "url": "https://github.com/tamird/bazel-skylib/tree/proposal/native-copy-file"
+        },
         {
           "label": "Supplier patch against bfbcc014d",
           "url": "https://github.com/tamird/gvisor/blob/005930e18/test/rbe/supplier-namespace/namespace-initializers.patch"
@@ -35200,7 +35208,7 @@
         "sourceHead": "005930e18a30e580161f3674a686b05ff5392a80",
         "observedAt": "2026-10-30T10:22:03.833397+00:00",
         "disposition": "Pursue the provider-side fix",
-        "nextAction": "Qualify Skylib’s regular-file copy against the proposed native Bazel action. Hold the rules_python substitution while the shared fix is evaluated.",
+        "nextAction": "Validate the Skylib branch on Bazel 8.8.1 and Bazel’s pending native copy action; keep the rules_python workaround on hold.",
         "evidence": [
           "https://github.com/bazelbuild/bazel/pull/30386",
           "https://github.com/bazelbuild/bazel-skylib/issues/604"
@@ -35352,15 +35360,27 @@
       "id": "branch:unix-waiter-attachment",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/unix-waiter-attachment",
-      "head": "e35288cb1f5b4f25fb72fd321461222c0dccdb0e",
-      "title": "Unlink Unix socket waiters when registration fails",
-      "url": "https://github.com/tamird/gvisor/commit/e35288cb1",
+      "ref": "review/unix-host-waiter-rollback",
+      "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+      "title": "Remove a Unix socket waiter if host registration fails",
+      "url": "https://github.com/tamird/gvisor/commit/ed3929b26",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T06:27:28.827277+00:00",
-      "summary": "A connected Unix socket queues a waiter before asking the peer to update host polling. If that update fails, the rejected waiter can still receive a notification. The poll and epoll changes require the Unix producer to undo the failed registration first. The historical fork revision is the validated reference for this prerequisite.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
+      "summary": "If host epoll registration fails, remove only the rejected waiter from the Unix socket queue. Before the fix, it continued receiving notifications alongside a live registration.",
       "evidence": [
+        {
+          "label": "Rejected registration notified on stock",
+          "url": "https://app.buildbuddy.io/invocation/267eb38f-ae8c-45e1-bf43-eb6d6a62c5b3"
+        },
+        {
+          "label": "Corrected full transport package",
+          "url": "https://app.buildbuddy.io/invocation/fd571b5a-0963-4f78-a570-35d3e1a024ad"
+        },
+        {
+          "label": "Race regression",
+          "url": "https://app.buildbuddy.io/invocation/072110a3-bae0-46b1-b0e9-7772ab0d3eba"
+        },
         {
           "label": "Current master queues before the peer update",
           "url": "https://github.com/google/gvisor/blob/cd90d7a74/pkg/sentry/socket/unix/transport/unix.go#L961"
@@ -35381,7 +35401,24 @@
           "label": "Earlier one-line rollback",
           "url": "https://github.com/tamird/gvisor/commit/6ac36a7fd"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "e35288cb1f5b4f25fb72fd321461222c0dccdb0e"
+        },
+        "after": {
+          "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+        "url": "https://github.com/tamird/gvisor/commit/ed3929b26",
+        "title": "Remove a Unix socket waiter if host registration fails",
+        "summary": "If host epoll registration fails, remove only the rejected waiter from the Unix socket queue. Before the fix, it continued receiving notifications alongside a live registration.",
+        "body": "The stock test delivered a notification after EventRegister returned EPERM. The corrected transport suite and race test passed. This change is independent of the epoll and overlay proposals."
+      }
     },
     {
       "id": "pr:16736",
@@ -35458,9 +35495,9 @@
       "title": "Measure RACK delivery across the whole ACK",
       "url": "https://github.com/tamird/gvisor/commit/715df78ea",
       "group": "runtime",
-      "status": "Awaiting contributor review",
+      "status": "Published as #16738",
       "summary": "Linux and stock gVisor agree when two ACKs establish reordering. On one ACK with cumulative and selective credit, stock gVisor also reported reordering; Linux did not. Compare each delivery with the FACK from before that ACK.",
-      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
       "evidence": [
         {
           "label": "One-ACK negative and two-ACK positive Linux/gVisor controls",
@@ -35475,15 +35512,53 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41039678990/artifacts/12970255781"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "715df78ea05a1b292331a746d50ddeee0690403d",
-        "url": "https://github.com/tamird/gvisor/commit/715df78ea",
-        "title": "Measure RACK delivery across the whole ACK",
-        "summary": "Linux and stock gVisor agree when two ACKs establish reordering. On one ACK with cumulative and selective credit, stock gVisor also reported reordering; Linux did not. Compare each delivery with the FACK from before that ACK.",
-        "body": "Review this ACK boundary independently of which bytes count as acknowledged in #16659; the changes have been tested together."
+      "settledReviews": [
+        {
+          "head": "715df78ea05a1b292331a746d50ddeee0690403d",
+          "kind": "proposal",
+          "outcome": "approved",
+          "at": "2026-10-30T10:36:22.103416+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "715df78ea05a1b292331a746d50ddeee0690403d",
+        "observedAt": "2026-10-30T10:36:22.103416+00:00",
+        "disposition": "Published as #16738",
+        "nextAction": "Follow upstream review and checks on #16738.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16738"
+        ]
       }
+    },
+    {
+      "id": "pr:16738",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16738,
+      "title": "Measure RACK delivery across the whole ACK",
+      "summary": "Linux and stock gVisor agree when two ACKs establish reordering. On one ACK with cumulative and selective credit, stock gVisor also reported reordering; Linux did not. Compare each delivery with the FACK from before that ACK.",
+      "group": "runtime",
+      "ref": "review/rack-delivery-per-ack",
+      "head": "715df78ea05a1b292331a746d50ddeee0690403d",
+      "url": "https://github.com/google/gvisor/pull/16738",
+      "status": "open",
+      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
+      "evidence": [
+        {
+          "label": "One-ACK negative and two-ACK positive Linux/gVisor controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011810557/artifacts/12957533684"
+        },
+        {
+          "label": "Stock and corrected tests / analyzers / race",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039678990/artifacts/12968809674"
+        },
+        {
+          "label": "Integration with #16659, five original cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039678990/artifacts/12970255781"
+        }
+      ]
     }
   ],
   "edges": [
