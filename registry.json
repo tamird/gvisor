@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:31:32.617147+00:00",
+    "updatedAt": "2026-10-30T15:44:14.108156+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2974,7 +2974,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "The requested post-#16046 rebase is published at 57834789e0f3 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at ad6ccc6be236 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe reviewer-assignment workflow failed after selecting reviewers: GitHub POST requested_reviewers returned HTTP 500 at 16:55:30 UTC. The log contains no source diagnosis; no rerun, manual reviewer request or public reply has been made.\n\nThe contributor approved exact 46ad8cc5b22b84e9116e68567532cab9e8b664c7, and ready PR #15449 is now open against master. Root verified the single commit, head, reviewed body and thread metadata. The standing sweep owns CI, import and review follow-up.\n\nThe contributor-requested Read/cursor amendment is public and tracked at 46ad8cc5b22b84e9116e68567532cab9e8b664c7. Its complete owning obligations now have passing composed evidence. The original https://app.buildbuddy.io/invocation/c574883b-21c5-47d9-bb6f-e475aa2faa80 remains FAILED before runtime because the mapped-write qualification context left an unused io import; its actual tun_nogo passed both CPU analyses. The one-line qualified-only correction dfe4d9af5a95de70c3532d639ba93fc4a0441b1d passes https://app.buildbuddy.io/invocation/1b2c3b0a-6185-40f4-99a0-42a8b4bab724 in 211.698 seconds. Both complete shared/directfs TUN suites execute 44 named entries: 42 passes and the two existing WriteToDownDevice skips. Tundev Nogo passes both CPU analyses; the already-passed tun_nogo is reused.\n\nIndependent cumulative peer 40a95d085143 verifies both saved archives, 398 indexed files, four raw compact traces and all original uncached 300-second Action/Command/stdout/XML joins, with no local spawns. Source composition preserves the separate mapped writer/MTU context while applying the exact reviewed Read/Device.Write functions; this is not an exact standalone whole-file run. Existing suites do not directly exercise truncated-read or partial-EFAULT contracts. That renewed review request is resolved by the approved publication above.\n\nPrior proposal and source-specific evidence:\n\nThe independent TUN proposal is refreshed, public and tracked at fb54693011eb96d5d75e1af74a0944e86ab95061 on upstream e1bc. Both production blobs exactly match the reviewed original 900d proposal. It keeps segmented Buffer ownership through Device and file-description I/O, copying only fixed-size input headers and preserving the existing write-size guard and Go heap allocation. The future sentry-managed storage consumer remains separate. Complete source/lifetime and historical evidence peer 770a7bccd844 is closed. The contributor answered with questions and requested changes to the segmented TUN proposal. Root owns the source/design response; that earlier revision was superseded by the approved 46ad publication above. Prior evidence below remains source-specific historical proof.\n\nPrimary metadata recovered from parent cd518896 confirms COMPLETE/OK in 232.963 seconds at tested composition d59821c91, with both full shared/DirectFS syscall owners and both production Nogo owners PASSED. All five changed I/O functions and the complete tundev source match that tested composition; its Device also contains separate errno/MTU setup changes, so this is source-specific composed evidence.\n\nThe prior closed record reports 22 XML cases per syscall owner (21 passes plus the existing WriteToDownDevice skip), and AMD64/ARM64 analysis for both Nogo owners. Five requested old CAS output/summary objects are unavailable; those detailed case and architecture observations remain historical, not freshly replayed. No new standalone run, ARM runtime, mapped-storage/restore or performance claim is made.",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
       "followup": {
         "disposition": "Mechanical rebase delivered; current-head review and checks",
         "owner": "external_sweeps",
@@ -2994,6 +2994,10 @@
       "head": "57834789e0f3343fc67a6bf2eb12544ea867a632",
       "number": 15449,
       "evidence": [
+        {
+          "label": "The same PI truncation/partial-copy ABI mismatch predates this PR: Linux passes, master and the PR fail identically",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41079914780/artifacts/12990497068"
+        },
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/ad6ccc6be2369707e07deac0670a15f340041c4d"
@@ -32133,9 +32137,13 @@
       "url": "https://github.com/google/gvisor/pull/16627",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-28T21:55:52Z",
+      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
       "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
       "evidence": [
+        {
+          "label": "Permanent IRQ syscall proposal after the device fixture lands; existing PR unchanged",
+          "url": "https://github.com/tamird/gvisor/compare/105c69335...41d324e51"
+        },
         {
           "label": "Published upstream as #16627",
           "url": "https://github.com/google/gvisor/pull/16627"
@@ -36344,6 +36352,87 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41074917348/artifacts/12987455909"
         }
       ]
+    },
+    {
+      "id": "branch:vfio-eventfd-irq-syscall",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "review/vfio-eventfd-syscall",
+      "head": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9",
+      "title": "Check the full eventfd counter when VFIO configures an interrupt",
+      "url": "https://github.com/tamird/gvisor/commit/41d324e51",
+      "status": "Awaiting contributor review",
+      "summary": "The same real VFIO PCI interrupt ioctl preserved at least 4,294,967,297 events on Linux and on corrected ordinary/direct gVisor. Both stock gVisor modes read 1. The positive test uses the device fixture from #16743 and the implementation from #16627; it adds one syscall test and shares setup with the open-device check.",
+      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
+      "evidence": [
+        {
+          "label": "Pure test change against its integrated parent",
+          "url": "https://github.com/tamird/gvisor/compare/105c69335...41d324e51"
+        },
+        {
+          "label": "Six native/ordinary/direct control and corrected runs; the Open control always passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41080784167/artifacts/12990052532"
+        },
+        {
+          "label": "Eventfd fix under upstream review",
+          "url": "https://github.com/google/gvisor/pull/16627"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9",
+        "baseHead": "105c6933531246c0b19127a71396067aeb509c3a",
+        "title": "Check the full eventfd counter when VFIO configures an interrupt",
+        "summary": "The same real VFIO PCI interrupt ioctl preserved at least 4,294,967,297 events on Linux and on corrected ordinary/direct gVisor. Both stock gVisor modes read 1. The positive test uses the device fixture from #16743 and the implementation from #16627; it adds one syscall test and shares setup with the open-device check.",
+        "url": "https://github.com/tamird/gvisor/compare/105c69335...41d324e51",
+        "body": "Review only the VFIO interrupt test. After #16743 lands, add it to #16627 if that PR is still open and unapproved; if already approved or landed, submit a separate test follow-up. The six-arm receipt includes both negative controls. The fixture is identical on both products: git -C ~/code/gvisor range-diff 2c5ff2434^! 41d324e51^!. For the actual change against its base: git -C ~/code/gvisor diff 105c69335..41d324e51."
+      },
+      "refinement": {
+        "before": {
+          "base": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+          "head": "2c5ff24341e9f7372d73825de81cf6b64a364ef2"
+        },
+        "after": {
+          "base": "105c6933531246c0b19127a71396067aeb509c3a",
+          "head": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9"
+        }
+      }
+    },
+    {
+      "id": "branch:tun-packet-info-header",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "review/tun-packet-info-header",
+      "head": "57bd4a9e5ee67a7b4d23cb0ad9d38455dd98ad64",
+      "title": "Honor packet information and preserve queued packets on empty TUN reads",
+      "url": "https://github.com/tamird/gvisor/commit/57bd4a9e5",
+      "status": "Agent work",
+      "summary": "Independent parity correction for a pre-existing behavior reproduced on both master and #15449. The actual native/master/PR run covers EINVAL, TUN_PKT_STRIP and EFAULT; the candidate adds a zero-byte queue preservation case. Await exact native, corrected gVisor, existing suite, and owning analyzer results.",
+      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
+      "evidence": [
+        {
+          "label": "The same PI truncation/partial-copy ABI mismatch predates this PR: Linux passes, master and the PR fail identically",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41079914780/artifacts/12990497068"
+        },
+        {
+          "label": "Augmented native/PR/fixed case, full corrected suite, owner analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41083132225"
+        }
+      ],
+      "followup": {
+        "owner": "overlay_owner",
+        "sourceHead": "57bd4a9e5ee67a7b4d23cb0ad9d38455dd98ad64",
+        "observedAt": "2026-10-30T15:44:14.108156+00:00",
+        "disposition": "Qualify corrected shared TUN behavior",
+        "nextAction": "Review exact case and owner results before seeking contributor assessment. Keep separate from the buffer refactor.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41079914780/artifacts/12990497068",
+          "https://github.com/tamird/gvisor/actions/runs/41083132225"
+        ]
+      }
     }
   ],
   "edges": [
@@ -39553,6 +39642,26 @@
         "https://github.com/google/gvisor/pull/16743",
         "https://github.com/tamird/gvisor/commit/73a709bdc",
         "https://github.com/tamird/gvisor/actions/runs/41077957739/artifacts/12989396172"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:vfio-eventfd-irq-syscall",
+      "to": "pr:16743",
+      "reason": "The permanent manual syscall fixture binds a real VFIO device through the ordinary device gofer. It is introduced by #16743; the existing #16627 production fix does not depend on it.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16743",
+        "https://github.com/tamird/gvisor/actions/runs/41080784167/artifacts/12990052532"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tun-packet-info-header",
+      "to": "pr:15449",
+      "reason": "The correction is implemented against the segmented buffer API; the original mismatch is present on master as well as #15449.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15449",
+        "https://github.com/tamird/gvisor/commit/57bd4a9e5"
       ]
     }
   ],
