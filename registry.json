@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T02:44:11.899632+00:00",
+    "updatedAt": "2026-10-30T02:58:38.945196+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38082,9 +38082,18 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-30T02:44:11.899632+00:00",
+      "updatedAt": "2026-10-30T02:58:38.945196+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "With RACK disabled, the peer reported packet 3, cumulatively ACKed 100 bytes, then also reported packets 6–8 to enter SACK recovery, then acknowledged the whole flight. Linux counted 1,1,4,0; stock gVisor 0,0,0,−3. A fork prototype counted 1,1,6,0 and is not ready: splitting the transmit queue can credit a wire packet twice. This counter discrepancy does not establish a bandwidth effect.",
+          "evidence": [
+            {
+              "label": "Linux TCP_INFO vs stock and experimental gVisor through RFC 6675 recovery",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40993662609/artifacts/12949958196"
+            }
+          ]
+        },
         {
           "text": "Linux kept one previously SACKed 1,460-byte packet counted as one when ICMP lowered its MSS to 1,160 and it retransmitted the preceding hole at the new size. Stock gVisor reported a negative SACK count on final ACK. A fork candidate removes the negative count, counts overlapping/reversed SACK blocks correctly in the measured cases, and retains a packet boundary after a partial cumulative ACK on a real 4,000-byte GSO buffer. Its duplicate ACK cost fell, but new SACK handling cost 6–15% more in the checked cases. No measured bandwidth effect; still investigating RFC 6675 queue splits before proposing a fix.",
           "evidence": [
@@ -39886,6 +39895,10 @@
       ],
       "nextStep": "Compare #16081 and #16495 after a second timeout. For a locally refused first write, distinguish retrying unsent data, probing the peer’s window and retransmitting data already in flight. Qualify those transitions before proposing the change upstream.",
       "evidence": [
+        {
+          "label": "Linux TCP_INFO vs stock and experimental gVisor through RFC 6675 recovery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40993662609/artifacts/12949958196"
+        },
         {
           "label": "Matched gVisor packet controls and accepted/duplicate SACK processing costs",
           "url": "https://github.com/tamird/gvisor/actions/runs/40992344169/artifacts/12949952656"
@@ -50211,7 +50224,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T02:44:11.899632+00:00",
+      "updatedAt": "2026-10-30T02:58:38.945196+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -50224,8 +50237,12 @@
           ]
         },
         {
-          "text": "The first full native ARM64 release failed in PackageTar. Selecting static ARM64 Python fixed its shim tar; on the same fork source all six release archives were then verified. Both runsc links, all 14 PackageTar actions and both MakeDeb actions executed on shell-free ARM64. Of all actions, 64 executed and 8,691 hit cache; the verdict was available 3.94 seconds after execution. This establishes a working incremental ARM64 release, not a fully uncached ARM64 build.",
+          "text": "A cold ARM64 build ran all 8,755 spawns on shell-free ARM64 workers: no cache hits, missing results or failures. Each of six release archives traces to its architecture’s runsc link. Execution finished at 02:54:41.689 UTC; the verified verdict was available 2.506 seconds later. This verifies build actions, not repository fetching or release publishing; the bundle records generated files whose provenance is not traced. The earlier warm run executed 64 actions and reused 8,691.",
           "evidence": [
+            {
+              "label": "Cold native ARM64 build: complete action inventory and six archive traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40993356576/artifacts/12950408289"
+            },
             {
               "label": "Six ARM64 release archives, fourteen tar and two deb packaging actions",
               "url": "https://github.com/tamird/gvisor/actions/runs/40992079979/artifacts/12950161465"
@@ -51005,6 +51022,10 @@
       ],
       "nextStep": "Qualify the full release on current sources and a complete native ARM64 compiler build separately. The historical cross-build, nine native ARM64 prerequisite actions, native version reader, changelog writer, module-map helper and consuming compiler-rt archives have scoped results. The next packaging decision is upstream review of the opt-in rules_python launcher; ordinary tar/deb writers are qualified on both architectures.",
       "evidence": [
+        {
+          "label": "Cold native ARM64 build: complete action inventory and six archive traces",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40993356576/artifacts/12950408289"
+        },
         {
           "label": "Six ARM64 release archives, fourteen tar and two deb packaging actions",
           "url": "https://github.com/tamird/gvisor/actions/runs/40992079979/artifacts/12950161465"
