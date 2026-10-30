@@ -1,35 +1,95 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Measure original, listener, and transition overlay costs
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/overlay-poll-cost'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      STOCK: a7900a6ec7912f06f3c9eabae64e5f4c454c9caa
+      TRANSITION: a25cac698d19a97c49fb5ee5bed654ba5365a330
+      LISTENER: 6c3d54cdbdbca443ecdccdcf1e5e0a9c182aa856
+      BENCHTOOL: 2b51abee8530385431b7225198fdd5cd65e78696
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        git fetch --no-tags --depth=3 origin "$STOCK" "$TRANSITION" "$LISTENER" "$BENCHTOOL"
+        [[ $(git rev-parse HEAD^) == "$TRANSITION" ]]
+        [[ "$STOCK" == "a7900a6ec7912f06f3c9eabae64e5f4c454c9caa" && "$LISTENER" == "6c3d54cdbdbca443ecdccdcf1e5e0a9c182aa856" && "$TRANSITION" == "a25cac698d19a97c49fb5ee5bed654ba5365a330" ]]
+        [[ "$STOCK" != "$LISTENER" && "$STOCK" != "$TRANSITION" && "$LISTENER" != "$TRANSITION" ]]
+
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Measure direct and forwarded registrations in ABBA order
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        root="$RUNNER_TEMP/overlay-proof/cost"; mkdir -p "$root"; i=0
+        for arm in stock listener transition transition listener stock; do
+          i=$((i+1)); rev=$STOCK; [[ $arm == stock ]] || rev=$TRANSITION; [[ $arm != listener ]] || rev=$LISTENER
+          git checkout --quiet --detach "$rev"; [[ $(git rev-parse HEAD) == "$rev" ]]; out="$root/$i-$arm"; mkdir -p "$out"; echo "$rev" >"$out/source"; rc=0
+          bazelisk --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=48 --strategy=TestRunner=local --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_sharding_strategy=disabled --test_arg=-test.v '--test_arg=-test.run=^TestOverlayPollCost$' //pkg/sentry/syscalls/linux:linux_test >"$RUNNER_TEMP/cost.log" 2>&1 || rc=$?
+          echo "$rc" >"$out/exit"; file=bazel-testlogs/pkg/sentry/syscalls/linux/linux_test/test.log
+          if [[ -f $file ]]; then grep -E 'SIZES file=[0-9]+ pollState=[0-9]+ waiter=[0-9]+' "$file" > "$out/sizes"; grep -E '^BenchmarkOverlayPoll/(direct-)?(proc|tmpfs)/live(1|8) 100000 [0-9.]+ ns/op [0-9.]+ allocs/op$' "$file" >"$out/samples" || true; fi
+          grep -E '^ERROR:|INFO: Invocation ID:|Build (did NOT complete|completed)|[.]go:[0-9]+:[0-9]+:' "$RUNNER_TEMP/cost.log" | tail -12 >"$out/receipt" || true
+          cat "$out/receipt"; [[ $rc == 0 ]]; [[ $(wc -l <"$out/samples") == 80 ]]; for layer in tmpfs proc direct-tmpfs direct-proc; do for n in 1 8; do [[ $(grep -c "^BenchmarkOverlayPoll/$layer/live$n " "$out/samples") == 10 ]]; done; done
+          cat "$out/samples" >>"$root/$arm.bench"
+        done
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: overlay-distinct-costs
+        path: ${{ runner.temp }}/overlay-proof/cost/
+    - name: Summarize the original samples with the pinned benchstat executable
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$BENCHTOOL"; out="$RUNNER_TEMP/overlay-proof/cost"; [[ $(wc -l <"$out/stock.bench") == 160 && $(wc -l <"$out/transition.bench") == 160 && $(wc -l <"$out/listener.bench") == 160 ]]
+        tgt=@org_golang_x_perf//cmd/benchstat; baz=(bazelisk --bazelrc="$RUNNER_TEMP/overlay.bazelrc")
+        "${baz[@]}" build -c opt --config=x86_64 --jobs=48 --remote_download_outputs=toplevel "$tgt" >"$RUNNER_TEMP/build-benchstat.log" 2>&1
+        "${baz[@]}" cquery -c opt --config=x86_64 --output=files "$tgt" > "$RUNNER_TEMP/paths" 2>"$RUNNER_TEMP/query.log"
+        mapfile -t bins < <(while IFS= read -r f; do [[ ! -f $f || ! -x $f ]] || echo "$f"; done <"$RUNNER_TEMP/paths"); [[ ${#bins[@]} == 1 ]]; tool=$PWD/${bins[0]}; cd "$out"; "$tool" stock.bench listener.bench transition.bench >benchstat.txt; cat benchstat.txt
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: overlay-distinct-benchstat
+        path: ${{ runner.temp }}/overlay-proof/cost/benchstat.txt
+    - name: Verify the two previously unexecuted listener Nogo labels
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$LISTENER"; [[ $(git rev-parse HEAD) == "$LISTENER" ]]; out="$RUNNER_TEMP/overlay-proof/owners"; mkdir -p "$out"; git rev-parse HEAD >"$out/source"; rc=0
+        bazelisk --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=4 --strategy=TestRunner=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStaticAnalysis=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --nocache_test_results --keep_going --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled --test_output=errors //pkg/waiter:waiter_nogo //pkg/sentry/fsimpl/overlay:overlay_nogo >"$RUNNER_TEMP/owners.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"; grep -E '^ERROR:|INFO: Invocation ID:|Build (did NOT complete|completed)|[.]go:[0-9]+:[0-9]+:|^//pkg/|^Executed ' "$RUNNER_TEMP/owners.log" | tail -18 >"$out/receipt" || true; cat "$out/receipt"; [[ $rc == 0 ]]; grep -Eq '^//pkg/sentry/fsimpl/overlay:overlay_nogo[[:space:]]+.*PASSED' "$out/receipt"; grep -Eq '^//pkg/waiter:waiter_nogo[[:space:]]+.*PASSED' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: overlay-listener-exact-owners
+        path: ${{ runner.temp }}/overlay-proof/owners/
+    - name: Clear temporary RBE settings
+      if: always()
+      run: rm -f "$RUNNER_TEMP/overlay.bazelrc"
