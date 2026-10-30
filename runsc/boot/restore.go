@@ -179,6 +179,7 @@ func saveOptsFromSpec(spec *specs.Spec, fds []*fd.FD, useCheckpointGofer bool) (
 		HavePagesFile:            len(files) > 1,
 		Resume:                   specutils.AnnotationToBool(spec, annotationCheckpointResume),
 		CudaCheckpointSequential: specutils.AnnotationToBool(spec, annotationCheckpointCudaCheckpointSequential),
+		MemoryLimit:              configuredMemoryLimit(),
 	}
 	if cudaPath, ok := spec.Annotations[annotationCheckpointCudaCheckpointPath]; ok {
 		saveOpts.CudaCheckpointPath = cudaPath
@@ -275,11 +276,14 @@ type restorer struct {
 
 	// rootFsOutputTar is the file to write the rootfs upper layer tar archive to.
 	rootFsOutputTar *os.File
+
+	// memoryLimit is the host and cgroup memory bound in bytes for restore.
+	memoryLimit uint64
 }
 
 // restoreSubcontainer restores a subcontainer.
 // It returns whether this started the kernel.
-func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l *Loader, cid string, stdioFDs, goferFDs, goferFilestoreFDs []*fd.FD, devGoferFD *fd.FD, goferMountConfs []specutils.GoferMountConf) (bool, error) {
+func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l *Loader, cid string, stdioFDs, goferFDs, goferFilestoreFDs []*fd.FD, devGoferFD *fd.FD, goferMountConfs []specutils.GoferMountConf, memoryLimit uint64) (bool, error) {
 	containerName := r.registerContainer(l, spec, cid)
 	info := &containerInfo{
 		cid:               cid,
@@ -292,7 +296,7 @@ func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l 
 		goferFilestoreFDs: goferFilestoreFDs,
 		goferMountConfs:   goferMountConfs,
 	}
-	return r.restoreContainerInfo(l, info)
+	return r.restoreContainerInfo(l, info, memoryLimit)
 }
 
 // registerContainer registers container cid. A container without a name gets
@@ -324,7 +328,7 @@ func (r *restorer) registerContainer(l *Loader, spec *specs.Spec, cid string) st
 
 // restoreContainerInfo restores a container.
 // It returns whether this started the kernel.
-func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) (bool, error) {
+func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo, memoryLimit uint64) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -338,6 +342,9 @@ func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) (bool, e
 	}
 
 	r.containers = append(r.containers, info)
+	if memoryLimit > 0 {
+		r.memoryLimit = memoryLimit
+	}
 
 	if log.IsLogging(log.Debug) {
 		for i, fd := range info.stdioFDs {
@@ -351,7 +358,7 @@ func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) (bool, e
 
 	if len(r.containers) == r.totalContainers {
 		// Trigger the restore if this is the last container.
-		if err := r.restore(l); err != nil {
+		if err := r.restore(l, r.memoryLimit); err != nil {
 			return false, err
 		}
 		return true, nil
@@ -370,8 +377,14 @@ func (r *restoreMounts) String() string {
 	return fmt.Sprintf("fdmap: %#v, mfmap: %v, fsCheckpointedMfs: %v", r.fdmap, r.mfmap, r.fsCheckpointedMfs)
 }
 
-func (r *restorer) restore(l *Loader) error {
+func (r *restorer) restore(l *Loader, memoryLimit uint64) error {
 	log.Infof("Starting to restore %d containers", len(r.containers))
+	// Using cleanup to end gcSuspension on failure.
+	// On success the ownership is transferred to l.startupGC
+	// and cleanup is cancelled.
+	gcSuspension := state.SuspendGCForRestore(memoryLimit, r.metadata)
+	gcCleanup := cleanup.Make(gcSuspension.End)
+	defer gcCleanup.Clean()
 
 	// Validate the container specs to ensure they did not meaningfully change
 	// between checkpoint and restore.
@@ -674,6 +687,10 @@ func (r *restorer) restore(l *Loader) error {
 	}
 
 	r.stateFile.Close()
+	// Transfer gcSuspension to l.startupGC so
+	// post restore ends it on idle or timeout.
+	gcCleanup.Release()
+	l.setStartupGC(gcSuspension)
 
 	// Transfer ownership of the `timer` to a new goroutine.
 	// This is because `timer.Log` blocks until all timed tasks are finished,

@@ -378,6 +378,7 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 			cm.onRestoreFailed(fmt.Errorf("Restore failed: %w", retErr))
 		}
 	}()
+	cm.l.startupGC.Swap(nil).End()
 	cm.l.lifecycleCPUs.holdForRestore()
 
 	// If filesystem restore files were donated to the loader during sandbox
@@ -418,9 +419,10 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 	timer.Reached("got restore readers")
 
 	cm.restorer = &restorer{
-		cm:         cm,
-		background: o.Background,
-		timer:      timer,
+		cm:          cm,
+		background:  o.Background,
+		timer:       timer,
+		memoryLimit: o.MemoryLimit,
 	}
 
 	// Create the main MemoryFile.
@@ -495,7 +497,7 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 		return fmt.Errorf("checkpoint taken with no-root-container=%t cannot be restored with no-root-container=%t", saved, cm.l.noRootContainer.enabled)
 	}
 	timer.Reached("restorer initialized")
-	reply.KernelStarted, err = cm.restorer.restoreContainerInfo(cm.l, &cm.l.root)
+	reply.KernelStarted, err = cm.restorer.restoreContainerInfo(cm.l, &cm.l.root, o.MemoryLimit)
 	return err
 }
 
@@ -597,6 +599,7 @@ func getRestoreReadersForCheckpointGofer(o *sentryapi.RestoreOpts) (io.ReadClose
 }
 
 func (cm *containerManager) onRestoreFailed(err error) {
+	cm.l.startupGC.Swap(nil).End()
 	cm.l.lifecycleCPUs.releaseForRestore()
 	cm.l.mu.Lock()
 	cm.l.state = restoreFailed
@@ -696,7 +699,10 @@ func (cm *containerManager) RestoreSubcontainer(args *sentryapi.StartArgs, reply
 		return fmt.Errorf("error dup'ing gofer files: %w", err)
 	}
 
-	reply.KernelStarted, err = cm.restorer.restoreSubcontainer(args.Spec, args.Conf, cm.l, args.CID, stdios, goferFDs, goferFilestoreFDs, devGoferFD, args.GoferMountConfs)
+	kernelStarted, err := cm.restorer.restoreSubcontainer(args.Spec, args.Conf, cm.l, args.CID, stdios, goferFDs, goferFilestoreFDs, devGoferFD, args.GoferMountConfs, args.MemoryLimit)
+	if reply != nil {
+		reply.KernelStarted = kernelStarted
+	}
 	if err != nil {
 		log.Debugf("containerManager.RestoreSubcontainer failed, cid: %s, args: %+v, err: %v", args.CID, args, err)
 		return err

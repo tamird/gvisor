@@ -17,6 +17,7 @@ package sandbox
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -26,6 +27,7 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/hostos"
 	"gvisor.dev/gvisor/runsc/cgroup"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/specutils"
@@ -103,6 +105,8 @@ type fakeCgroup struct {
 	numCPUErr error
 	cpuQuota  int64
 	cpuPeriod int64
+	memLimit  uint64
+	memErr    error
 	updates   []specs.LinuxCPU
 }
 
@@ -121,6 +125,10 @@ func (f *fakeCgroup) CPUQuota() (int64, error) {
 
 func (f *fakeCgroup) CPUPeriod() (int64, error) {
 	return f.cpuPeriod, nil
+}
+
+func (f *fakeCgroup) MemoryLimit() (uint64, error) {
+	return f.memLimit, f.memErr
 }
 
 func TestCalculateCPUNum(t *testing.T) {
@@ -602,6 +610,32 @@ func TestSentryGODEBUG(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := sentryGODEBUG(&tc.conf); !slices.Equal(got, tc.want) {
 				t.Errorf("sentryGODEBUG() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestEffectiveMemoryLimit(t *testing.T) {
+	host, err := hostos.TotalSystemMemory()
+	if err != nil {
+		t.Fatalf("TotalSystemMemory() failed: %v", err)
+	}
+	tightLimit := min(host/2, 200<<20)
+
+	for _, tc := range []struct {
+		name string
+		cg   cgroup.Cgroup
+		want uint64
+	}{
+		{name: "no cgroup uses host limit", want: host},
+		{name: "unlimited cgroup uses host limit", cg: &fakeCgroup{memLimit: math.MaxUint64}, want: host},
+		{name: "tighter cgroup limit", cg: &fakeCgroup{memLimit: tightLimit}, want: tightLimit},
+		{name: "cgroup read error returns zero", cg: &fakeCgroup{memErr: errors.New("read failed")}, want: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &Sandbox{CgroupJSON: cgroup.CgroupJSON{Cgroup: tc.cg}}
+			if got := s.effectiveMemoryLimit(); got != tc.want {
+				t.Errorf("effectiveMemoryLimit() = %d, want %d", got, tc.want)
 			}
 		})
 	}

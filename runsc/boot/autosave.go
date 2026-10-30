@@ -38,6 +38,7 @@ func getTargetForSaveResume(l *Loader) func(k *kernel.Kernel) {
 			Autosave:    true,
 			Resume:      true,
 			Destination: io.Discard,
+			MemoryLimit: configuredMemoryLimit(),
 		}
 		defer saveOpts.Close()
 		l.saveWithOpts(&saveOpts, &controlapi.SaveRestoreExecOpts{})
@@ -56,6 +57,7 @@ func getTargetForSaveRestore(l *Loader, files []*fd.FD) func(k *kernel.Kernel) {
 				Autosave:    true,
 				Resume:      false,
 				Destination: files[0],
+				MemoryLimit: configuredMemoryLimit(),
 			}
 			if len(files) == 3 {
 				saveOpts.PagesMetadata = stateio.NewBufioWriteCloser(files[1])

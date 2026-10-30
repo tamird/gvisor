@@ -19,10 +19,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/gccontrol"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
@@ -40,6 +42,9 @@ const (
 	// GvisorWallTimeKey is the metadata key to store and retrieve wall time
 	// across save restore.
 	GvisorWallTimeKey = "gvisor_wall_time"
+	// metadataMemoryFileUsedBytesKey is the save metadata key for pre-save
+	// MemoryFile byte usage.
+	metadataMemoryFileUsedBytesKey = "gvisor_memory_file_used_bytes"
 )
 
 // SaveOpts contains save-related options.
@@ -94,6 +99,10 @@ type SaveOpts struct {
 	// GraphEngine, when non-nil, overrides the process-wide state engine for
 	// this save operation.
 	GraphEngine *bool
+
+	// MemoryLimit is the current host and cgroup memory bound in bytes, or zero
+	// if unknown.
+	MemoryLimit uint64
 }
 
 // Close releases resources owned by opts.
@@ -117,11 +126,23 @@ func (opts *SaveOpts) Close() error {
 	return err
 }
 
+// saveExitGCResumeDelay bounds how long GC stays suspended after a
+// non-resuming save while the sandbox exits.
+var saveExitGCResumeDelay = 500 * time.Millisecond
+
+func finishSaveGCSuspension(s *gccontrol.Suspension, resume bool, saveErr error) {
+	if resume || saveErr != nil {
+		s.End()
+	} else if s != nil {
+		time.AfterFunc(saveExitGCResumeDelay, s.End)
+	}
+}
+
 // Save saves the system state.
-func (opts *SaveOpts) Save(ctx context.Context, k *kernel.Kernel, w *watchdog.Watchdog) error {
-	t, err := CPUTime()
-	if err != nil {
-		log.Warningf("Error getting cpu time: %v", err)
+func (opts *SaveOpts) Save(ctx context.Context, k *kernel.Kernel, w *watchdog.Watchdog) (err error) {
+	t, cpuErr := CPUTime()
+	if cpuErr != nil {
+		log.Warningf("Error getting cpu time: %v", cpuErr)
 	}
 	log.Infof("Before save CPU usage: %s", t.String())
 
@@ -146,6 +167,22 @@ func (opts *SaveOpts) Save(ctx context.Context, k *kernel.Kernel, w *watchdog.Wa
 	w.Stop()
 	defer w.Start()
 
+	// Exclude application MemoryFile usage from the Go heap budget while
+	// encoding state with GC suspended.
+	var memoryFileBytes uint64
+	if mf := k.MemoryFile(); mf != nil {
+		if u, err := mf.TotalUsage(); err == nil {
+			memoryFileBytes = u
+		}
+	}
+	// Suspend GC to avoid scanning the transient object graph during save. On a
+	// non-resuming save the sandbox is exiting, so delay re-enabling GC unless
+	// save failed.
+	gcSuspension := gccontrol.Suspend(opts.MemoryLimit, memoryFileBytes)
+	defer func() {
+		finishSaveGCSuspension(gcSuspension, opts.Resume, err)
+	}()
+
 	// Supplement the metadata.
 	if opts.Metadata == nil {
 		opts.Metadata = make(map[string]string)
@@ -165,6 +202,7 @@ func (opts *SaveOpts) Save(ctx context.Context, k *kernel.Kernel, w *watchdog.Wa
 		wt += w
 	}
 	opts.Metadata[GvisorCPUUsageKey] = t.String()
+	opts.Metadata[metadataMemoryFileUsedBytesKey] = strconv.FormatUint(memoryFileBytes, 10 /* base */)
 	if wt != 0 {
 		opts.Metadata[GvisorWallTimeKey] = wt.String()
 	}
@@ -216,4 +254,17 @@ func NewStatefileReader(source io.ReadCloser, key []byte) (statefile.Reader, map
 	}
 	previousMetadata = m
 	return r, m, nil
+}
+
+// SuspendGCForRestore suspends GC for a checkpoint restore. When memoryLimit is
+// zero, ordinary GC remains enabled.
+//
+// TODO(gvisor.dev/issue/16134): Reduce transient decode allocations to avoid
+// extra minor page faults while GC is suspended.
+func SuspendGCForRestore(memoryLimit uint64, metadata map[string]string) *gccontrol.Suspension {
+	var savedMemoryFileBytes uint64
+	if v, err := strconv.ParseUint(metadata[metadataMemoryFileUsedBytesKey], 10 /* base */, 64 /* bitSize */); err == nil {
+		savedMemoryFileBytes = v
+	}
+	return gccontrol.Suspend(memoryLimit, savedMemoryFileBytes)
 }
