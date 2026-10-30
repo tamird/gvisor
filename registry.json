@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T13:03:39.698453+00:00",
+    "updatedAt": "2026-10-30T13:14:01.657854+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35910,8 +35910,8 @@
       "title": "Use Bazel’s native action for ordinary Skylib file copies",
       "url": "https://github.com/tamird/bazel-skylib/commit/b035bf6d3",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-30T13:14:01.657854+00:00",
       "summary": "With a native copy action available, Skylib can copy regular files without a shell when is_executable is false. Other cases retain the existing platform-specific copy action. The attribute describes whether the Bazel target can run; the file may still have execute bits.",
       "evidence": [
         {
@@ -35925,8 +35925,22 @@
         {
           "label": "Compatibility and copy qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/41040732572"
+        },
+        {
+          "label": "Native-copy comparison and compatibility controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41040732572/artifacts/12970883240"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b035bf6d358aa9184a738086c64979928db38951",
+        "baseHead": "5f88ea649f9d4aaf2bec78c0426fc38b3dcc11d7",
+        "url": "https://github.com/tamird/bazel-skylib/compare/5f88ea649...b035bf6d3",
+        "title": "Use Bazel’s native action for ordinary Skylib file copies",
+        "summary": "May I send this change to Skylib after Bazel #30386 lands? Regular files can be copied on a scratch worker. Older Bazel versions and executable, directory, and unresolved-symlink copies keep their existing handling.",
+        "body": "The comparison checks native copies and compatibility on the existing action paths. The native action requires https://github.com/bazelbuild/bazel/pull/30386."
+      }
     },
     {
       "id": "branch:vfio-pci-file-poll",
