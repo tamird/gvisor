@@ -392,3 +392,47 @@ func TestStatefileOutputRespectsUmask(t *testing.T) {
 		t.Errorf("existing output mode = %#o, want preserved %#o", got, want)
 	}
 }
+
+func TestStatefileOutputParentSymlink(t *testing.T) {
+	for _, mode := range []string{"argument", "link_target", "working_directory"} {
+		t.Run(mode, func(t *testing.T) {
+			root := t.TempDir()
+			child := filepath.Join(root, "other", "child")
+			if err := os.MkdirAll(child, 0755); err != nil {
+				t.Fatal(err)
+			}
+			link := filepath.Join(root, "link")
+			if err := os.Symlink(child, link); err != nil {
+				t.Fatal(err)
+			}
+
+			img := filepath.Join(root, "checkpoint")
+			raw := writeSyntheticStatefile(t, img, map[string]string{"k": "v"}, []byte("payload"))
+			// Each spelling names other/checkpoint. None names the input.
+			output := link + "/../checkpoint"
+			switch mode {
+			case "link_target":
+				output = filepath.Join(root, "output")
+				if err := os.Symlink("link/../checkpoint", output); err != nil {
+					t.Fatal(err)
+				}
+			case "working_directory":
+				output = "../checkpoint"
+			}
+			cmd := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+output, img)
+			if mode == "working_directory" {
+				cmd.Dir = child
+				cmd.Env = append(cmd.Environ(), "PWD="+link)
+			}
+			if b, err := cmd.CombinedOutput(); err != nil {
+				t.Fatalf("statefile: %v: %s", err, b)
+			}
+			if got, err := os.ReadFile(img); err != nil || !bytes.Equal(got, raw) {
+				t.Errorf("checkpoint changed: got %q, read error %v", got, err)
+			}
+			if got, err := os.ReadFile(filepath.Join(root, "other", "checkpoint")); err != nil || string(got) != "v\n" {
+				t.Errorf("output = %q, %v; want v followed by newline", got, err)
+			}
+		})
+	}
+}
