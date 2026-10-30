@@ -1,102 +1,23 @@
-name: Check legacy NaN round trips and array cost
+name: Qualify legacy NaNs on ARM64 and analyze both architectures
 on:
   push:
-    branches: [qualification/state-signaling-nan-finite]
+    branches: [qualification/state-signaling-nan-arm]
 permissions: {contents: read}
 jobs:
-  probe:
+  qualify:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 3, persist-credentials: false}
-    - name: Exercise the graph checkpoint round trip on Linux
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        set -euo pipefail
-        test "$(git rev-parse HEAD^)" = 0e2d23ed2e6d60a724e0da199bed111050a094c5
-        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/focused"
-        platform=$RUNNER_TEMP/focused_platform
-        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
-        cat > "$platform/BUILD" <<'BUILD'
-        platform(
-            name = "ubuntu",
-            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-            exec_properties = {
-                "Arch": "amd64",
-                "OSFamily": "linux",
-                "workload-isolation-type": "oci",
-                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
-            },
-            visibility = ["//visibility:public"],
-        )
-        BUILD
-        export USE_BAZEL_VERSION
-        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-        rc=$RUNNER_TEMP/focused.bazelrc
-        umask 077
-        trap 'rm -f "$rc"' EXIT
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
-            'build --remote_cache=grpcs://remote.buildbuddy.io' \
-            'build --bes_backend=grpcs://remote.buildbuddy.io' \
-            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
-            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
-            'build --remote_accept_cached' \
-            "build --inject_repository=focused_platform=$platform" \
-            'build --host_platform=@focused_platform//:ubuntu' \
-            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
-            'build --platforms=//tools/bazeldefs:linux_amd64'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$rc"
-        unset BUILDBUDDY_API_KEY
-        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
-        cp -r .github/qualification/float-fix "$RUNNER_TEMP/fixture"
-        product=0e2d23ed2e6d60a724e0da199bed111050a094c5
-        base=757d67e79ca401d6d662c470d6470d13f9e23a45
-        stock_target=//pkg/state/tests:tests_test
-        fix_target=//pkg/state:state_test
-        testfile=pkg/state/tests/float_test.go
-        probe=pkg/state/graph_decode_callbacks_test.go
-        mkdir -p "$RUNNER_TEMP/results"
-        prepare() {
-          git restore "$testfile" "$probe"
-          git checkout --detach "$1"
-          git show "$product:$testfile" > "$testfile"
-          cat "$RUNNER_TEMP/fixture/benchmark.txt" >> "$testfile"
-          sed -i '/^[[:space:]]*"fmt"$/a\	"math"' "$probe"
-          cat "$RUNNER_TEMP/fixture/observation.go" >> "$probe"
-        }
-        common=(--config=x86_64 --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$')
-        for arm in stock fix; do
-          if [[ $arm == stock ]]; then
-            head=$base
-            selection=(--test_filter='^TestSignalingNaN$' "$stock_target")
-          else
-            head=$product
-            selection=("$stock_target" "$fix_target")
-          fi
-          prepare "$head"
-          code=0
-          bazelisk --bazelrc="$rc" test "${common[@]}" --nocache_test_results --test_arg=-test.v --build_event_json_file="$RUNNER_TEMP/$arm.jsonl" "${selection[@]}" || code=$?
-          python3 -B "$RUNNER_TEMP/fixture/verify-fix.py" "$arm" "$code" "$head"
-        done
-        block=0
-        for head in "$base" "$product" "$product" "$base"; do
-          block=$((block+1))
-          prepare "$head"
-          # Bazel builds the benchmark for Linux; bazel run executes both variants
-          # on the same runner. Store only benchmark records in the public bundle.
-          bazelisk --bazelrc="$rc" run "${common[@]}" "$stock_target" -- -test.run='^$' -test.bench='^BenchmarkLegacyScalarArray$' -test.benchmem -test.benchtime=100ms -test.count=4 > "$RUNNER_TEMP/bench.txt"
-          grep -E '^(BenchmarkLegacyScalarArray/|goos:|goarch:|cpu:|pkg:)' "$RUNNER_TEMP/bench.txt" > "$RUNNER_TEMP/results/bench$block.txt"
-        done
-        python3 -B "$RUNNER_TEMP/fixture/verify-fix.py" finish
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always()
-      with:
-        name: legacy-float-correction
-        path: ${{ runner.temp }}/results/
-        if-no-files-found: error
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Exercise ARM64 checkpointing and the owning split-architecture analyzers
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: bash .github/qualification/float-fix/run-arm.sh
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: legacy-float-arm-and-analyzers
+          path: ${{ runner.temp }}/results/arm.json
+          if-no-files-found: warn
