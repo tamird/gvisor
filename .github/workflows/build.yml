@@ -1,13 +1,13 @@
-name: Check native VFIO PCI descriptor in a private KVM guest
+name: Recover original native VFIO evidence and diagnose linker input
 on:
   push:
-    branches: [qualification/vfio-private-guest]
+    branches: [qualification/vfio-original-diagnostics]
 permissions:
   contents: read
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/vfio-private-guest'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/vfio-original-diagnostics'
     runs-on: ubuntu-24.04
     timeout-minutes: 165
     env:
@@ -19,7 +19,18 @@ jobs:
       with:
         fetch-depth: 2
         persist-credentials: false
+    - name: Read the original invocation data
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 test/rbe/tcg/vfio_evidence.py
+    - name: Decide whether a linker replay is needed
+      id: needs
+      run: |
+        shopt -s nullglob
+        files=("$RUNNER_TEMP"/records/link-error-*)
+        if (( ${#files[@]} )) && grep -Eq 'ld\.lld: error|undefined reference|undefined symbol|cannot find|cannot open' "${files[@]}"; then echo 'link=false' >>"$GITHUB_OUTPUT"; else echo 'link=true' >>"$GITHUB_OUTPUT"; fi
     - name: Prepare native Linux coordinator
+      if: steps.needs.outputs.link == 'true'
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records"
@@ -33,6 +44,7 @@ jobs:
         printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
     - name: Configure authenticated remote actions
+      if: steps.needs.outputs.link == 'true'
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
@@ -43,31 +55,24 @@ jobs:
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } >"$RUNNER_TEMP/overlay.bazelrc"
     - name: Start the existing GNU Bazel coordinator
-      if: ${{ !cancelled() }}
+      if: steps.needs.outputs.link == 'true'
       run: |
         set -euo pipefail
         docker pull --platform=linux/amd64 "$GNU"
         docker run --device=/dev/kvm -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-    - name: Run the actual file descriptor test
+    - name: Recover only the omitted original linker stderr
+      if: steps.needs.outputs.link == 'true'
       run: |
-        set -euo pipefail
         out="$RUNNER_TEMP/records"
-        target=//test/rbe/tcg:vfio_linux_test
         rc=0
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nocache_test_results --test_output=all --test_timeout=480 "$target" >"$RUNNER_TEMP/abi.log" 2>&1 || rc=$?
-        echo "$rc" >"$out/bazel-exit"
-        grep -E 'INFO: Invocation ID:|ERROR:|FAILED|::|fail|VFIO|vfio|Error|Cannot|curl|qemu|wget|tcg|Build (did NOT complete|completed)' "$RUNNER_TEMP/abi.log" | tail -80 >"$out/bazel-receipt" || :
-        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt; do
-          name=${path##*/}
-          docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_linux_test/$path" | tail -150 >"$out/$name" || :
-        done
-        test "$rc" = 0
-        grep -q 'Native VFIO driver=' "$out/vfio-device.txt"
-        grep -q 'VfioPCIDeviceTest.Readiness' "$out/console.log"
-        grep -Fq '[       OK ] VfioPCIDeviceTest.Readiness' "$out/console.log"
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel //test/syscalls/linux:vfio_pci_device_test > "$RUNNER_TEMP/raw.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/original-link-exit"
+        grep -E 'INFO: Invocation ID:|^ERROR:|^ld\.lld:|^/[^ ]*ld:|undefined (reference|symbol)|^>>>|cannot find|cannot open|^clang\+\+:|Linking.*failed' "$RUNNER_TEMP/raw.log" | head -80 > "$out/original-link-stderr"
+        cat "$out/original-link-stderr"
+        test -s "$out/original-link-stderr"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: private-vfio-pci
+        name: private-vfio-original-diagnostics
         path: ${{ runner.temp }}/records
         if-no-files-found: error
