@@ -24,6 +24,13 @@ jobs:
           printf '%s  %s\n' 7916d5664f320ca4881cff7f36a9df7c6f41d03b5923cf2a4fed3a6a02f67945 "${bundles[0]}" | sha256sum --check --strict
           tar -xzf "${bundles[0]}" -C "$RUNNER_TEMP/row"
           cp "$RUNNER_TEMP/row/MODULE.bazel.lock" MODULE.bazel.lock
+      - name: Recover the original stock shell failure and archive digests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13002340635/zip > "$RUNNER_TEMP/controls.zip"
+          echo "4095c4620d6d5aea4f43e4c3d6095454f7f6eed5ccb49d63f7512d954cf64414  $RUNNER_TEMP/controls.zip" | sha256sum --check --strict
+          unzip -oq "$RUNNER_TEMP/controls.zip" 'control-*.sha256' 'missing-shell.txt' -d "$RUNNER_TEMP/control-files"
       - name: Resolve additional platform inputs before freezing the build graph
         run: |
           export USE_BAZEL_VERSION

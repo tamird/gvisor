@@ -29,7 +29,7 @@
 +
 +    ctx.actions.run(
 +        executable = tool,
-+        arguments = ["--force", "--format=gzip", "-6", "--no-name", src.path, "-o", out.path],
++        arguments = ["--force", "--format=gzip", "-6", src.path, "-o", out.path],
 +        inputs = [src],
 +        outputs = [out],
 +        mnemonic = "DebGzip",
