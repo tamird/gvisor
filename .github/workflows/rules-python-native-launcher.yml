@@ -1,7 +1,7 @@
 name: Exercise native package tool launchers
 on:
   push:
-    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated, qualification/rules-python-native-launcher-4183-relocated-public-zip]
+    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated, qualification/rules-python-native-launcher-4183-relocated-public-zip-lock]
 permissions:
   actions: read
   contents: read
@@ -24,6 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
+      - name: Resolve the published modules before snapshotting the lock
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/preflight.bazelrc"
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config=rbe --config=x86_64 --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=script --output=jsonproto \
+            //test/rbe/python_package_writers:relocated > "$RUNNER_TEMP/zip-graph.json"
+          test -s MODULE.bazel.lock
       - name: Fetch the pinned execution log decoder
         run: |
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
