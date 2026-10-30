@@ -1,0 +1,48 @@
+name: Check the existing Jekyll site
+on:
+  push:
+    branches: [qualification/website-jekyll-source]
+permissions:
+  contents: read
+jobs:
+  site:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 58
+    env:
+      IMAGE: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/jekyll_x86_64@sha256:97528c5497adaa2a507596d74cf89103aff46d44939ba4e3a93fd8aadec2f76e
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Fetch the actual released site generator
+        run: |
+          mkdir "$RUNNER_TEMP/website"
+          docker pull "$IMAGE"
+          docker tag "$IMAGE" gvisor.dev/images/jekyll
+      - name: Identify the Ruby, gems and JavaScript used by the original build
+        run: |
+          docker run --rm --network none --entrypoint ruby "$IMAGE" -rjson -rjekyll -rexecjs -e '
+            puts JSON.pretty_generate({
+              ruby: RUBY_DESCRIPTION,
+              jekyll: Jekyll::VERSION,
+              javascript: ExecJS.runtime.name,
+              gems: Gem::Specification.map { |s| [s.name, s.version.to_s, s.platform.to_s] }.sort,
+            })' > "$RUNNER_TEMP/website/generator.json"
+      - name: Build the existing complete website through Bazel
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          bazel build --jobs=4 --noshow_progress --verbose_failures //website:files 2>&1 | tee "$RUNNER_TEMP/website/bazel.log"
+      - name: Inspect the actual site filesystem, server and CA
+        if: ${{ !cancelled() }}
+        run: |
+          test -s bazel-bin/website/files.tgz
+          python3 test/rbe/website-jekyll/inspect.py bazel-bin/website/files.tgz "$RUNNER_TEMP/website/"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: website-baseline
+          path: |
+            ${{ runner.temp }}/website/generator.json
+            ${{ runner.temp }}/website/site-files.json
+            ${{ runner.temp }}/website/bazel.log
+          if-no-files-found: error
