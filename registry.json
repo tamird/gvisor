@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T13:25:56.596550+00:00",
+    "updatedAt": "2026-10-30T14:32:00.242729+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35962,14 +35962,30 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "runtime",
-      "ref": "review/vfio-pci-poll-abi",
-      "head": "5d7de5a80e2acbfabc4954c1175ef40259008444",
+      "ref": "research/vfio-device-syscall",
+      "head": "b670607168f7e993bfc4801de4fc079e74479fbd",
       "title": "Match Linux polling on VFIO PCI device files",
-      "url": "https://github.com/tamird/gvisor/commit/5d7de5a80",
+      "url": "https://github.com/tamird/gvisor/commit/b67060716",
       "status": "Agent work",
-      "updatedAt": "2026-10-30T13:00:52.974373+00:00",
-      "summary": "Stock admitted an epoll watch on a PCI descriptor and left a restored waiter linked after removal. Match Linux’s no-poll file operations and preserve deletion of old checkpoint watches.",
+      "updatedAt": "2026-10-30T14:32:00.242729+00:00",
+      "summary": "A real VFIO PCI descriptor rejected EPOLL_CTL_ADD on Linux but accepted it on stock gVisor. The corrected gVisor returned EPERM; all three agreed on poll readiness. The earlier /dev/null fixture is not PCI ABI evidence.",
       "evidence": [
+        {
+          "label": "Six original syscall records: Linux, stock and corrected gVisor; all seven release files matched for each arm",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41070502069/artifacts/12985915758"
+        },
+        {
+          "label": "Actual syscall test source, including the independently measured #16627 eventfd case",
+          "url": "https://github.com/tamird/gvisor/commit/147343a4d"
+        },
+        {
+          "label": "Private Linux guest: native PCI and IRQ cases, and exact probe identity",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41065652801/artifacts/12984210801"
+        },
+        {
+          "label": "Ordinary workers have no provisioned VFIO PCI group",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41063764804/artifacts/12981836737"
+        },
         {
           "label": "Review the VFIO ABI change",
           "url": "https://github.com/tamird/gvisor/commit/5d7de5a80"
@@ -36001,12 +36017,12 @@
       ],
       "followup": {
         "owner": "overlay_owner",
-        "sourceHead": "5d7de5a80e2acbfabc4954c1175ef40259008444",
-        "observedAt": "2026-10-30T13:00:52.974373+00:00",
-        "disposition": "Linux/gVisor syscall evidence requested",
-        "nextAction": "Qualify the actual VFIO_GROUP_GET_DEVICE_FD descriptor on native Linux and gVisor, or record precisely which device fixture is unavailable. Preserve restored-waiter checkpoint coverage. The /dev/null non-poll control does not establish VFIO ABI parity.",
+        "sourceHead": "b670607168f7e993bfc4801de4fc079e74479fbd",
+        "observedAt": "2026-10-30T14:32:00.242729+00:00",
+        "disposition": "Prepare the permanent hardware-qualified syscall test",
+        "nextAction": "Retain the existing checkpoint waiter test and package the real Linux/gVisor PCI syscall fixture for review. A QEMU e1000e backed by Linux vfio-pci is not a physical TPU. The separate IRQ conversion case for #16627 read 1 instead of 4,294,967,297 on stock; it passed on Linux and corrected gVisor. The outer verifier expected a symbolic constant instead of its expanded value; all six original test and process outcomes were checked independently.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/5d7de5a80"
+          "https://github.com/tamird/gvisor/actions/runs/41070502069/artifacts/12985915758"
         ]
       }
     },
