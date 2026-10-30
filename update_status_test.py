@@ -327,14 +327,18 @@ class MergeabilityBatchTest(unittest.TestCase):
             self.assertEqual(row["checkedAt"], row["mergeabilityCheckedAt"])
         self.assertEqual([row["number"] for row in rows if row["checkedAt"] != OLD], list(range(1, 9)))
 
-        # Exercise the same paired metadata validator the collector uses to publish.
-        snapshot = json.loads((updater.ROOT / "github-status.json").read_bytes())
-        snapshot.update(prs=rows, workStates={}, checkedAt=rows[0]["checkedAt"])
+        # Validate the reobserved PRs independently of the last published snapshot.
+        meta = {"repo": "google/gvisor", "owner": "tamird", "updatedAt": OLD}
+        registry = {"meta": meta, "nodes": [], "edges": [], "groups": []}
+        snapshot = {"schema": 1, "repo": meta["repo"], "owner": meta["owner"], "registryDate": OLD,
+                    "checkedAt": rows[0]["checkedAt"], "prs": rows, "issues": {}}
         with tempfile.TemporaryDirectory() as directory:
-            candidate = Path(directory) / "snapshot.json"
-            candidate.write_text(json.dumps(snapshot))
-            subprocess.run(["node", updater.ROOT / "metadata-preflight.mjs", updater.ROOT, candidate],
-                           check=True, capture_output=True, text=True, timeout=30)
+            root = Path(directory)
+            (root / "app.js").symlink_to(updater.ROOT / "app.js")
+            (root / "registry.json").write_text(json.dumps(registry))
+            (root / "github-status.json").write_text(json.dumps(snapshot))
+            subprocess.run(["node", updater.ROOT / "metadata-preflight.mjs", root],
+                           check=True, stdout=subprocess.DEVNULL, timeout=30)
 
 
 class CollectorHistoryTest(unittest.TestCase):

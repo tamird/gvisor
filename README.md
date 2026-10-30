@@ -706,6 +706,10 @@ investigation panel scroll position.
 
 ## Maintenance checks
 
+When editing `registry.json`, publish its matching `github-status.json`
+in the same commit. Run `node metadata-preflight.mjs .` on the pair before
+pushing. The browser rejects a snapshot from a different registry revision.
+
 No build is required. Before publishing, inspect changed relationships against
 the linked sources, ensure IDs are unique and edge endpoints exist, and check
 JavaScript syntax. Use the hosted browser check to exercise search, filters,
