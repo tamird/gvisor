@@ -165,7 +165,7 @@ from qualification_report import compact_records,spawn_output_files,input_chain
 import xml.etree.ElementTree as ET
 expected_image="docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
 expected_cases={"TestEventFD","TestEventFDStat"};report={"source":SOURCE,"target":target,"entrypoint":"bazel test","lock":LOCK,"image":expected_image,"coordinator":inventory}
-for arm,command,targets in [("native","test",["--incompatible_use_native_posix_test_wrapper","--remote_accept_cached","--nocache_test_results","--features=fully_static_link","--nobuild_event_json_file_path_conversion",target])]:
+for arm,command,targets in [("native","test",["--incompatible_use_native_posix_test_wrapper","--remote_accept_cached","--nocache_test_results","--test_env=GO_TEST_WRAP_TESTV=1","--features=fully_static_link","--nobuild_event_json_file_path_conversion",target])]:
     event_file=receipt/(arm+".events");action_file=receipt/(arm+".actions")
     argv=client_prefix+[command]+common+[f"--execution_log_compact_file=/receipt/{arm}.actions",f"--build_event_json_file=/receipt/{arm}.events"]+targets
     try:
