@@ -12,7 +12,7 @@ import time
 
 stage = Path(os.environ["RUNNER_TEMP"]) / "namespace-results"
 stage.mkdir(exist_ok=True)
-supplier = "bfbcc014dd0be8763c467040eebd19baf926735b"
+supplier = "674ce0745dea93e54865d9cfb846510b30475969"
 template = Path("python/private/pypi/namespace_pkg_tmpl.py")
 patch = Path(__file__).with_name("namespace-initializers.patch")
 bazel = shutil.which("bazelisk") or shutil.which("bazel")

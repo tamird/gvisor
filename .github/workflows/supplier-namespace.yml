@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: bazel-contrib/rules_python
-          ref: bfbcc014dd0be8763c467040eebd19baf926735b
+          ref: 674ce0745dea93e54865d9cfb846510b30475969
           path: supplier
           persist-credentials: false
       - name: Select the supplier's formatter
