@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T18:51:08.912815+00:00",
+    "updatedAt": "2026-10-30T19:01:02.657670+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37109,18 +37109,18 @@
       "id": "branch:rules-distroless-debian-layer",
       "type": "branch",
       "group": "bazel",
-      "repo": "tamird/gvisor",
-      "ref": "qualification/deb-layer-supplier",
-      "head": "eac484f5550f043fa23b1fd983d4963b09348d17",
+      "repo": "tamird/rules_distroless",
+      "ref": "deb-layer-actions",
+      "head": "86a5661f4a0eb15a41bf4364c9b0542da02cfa7e",
       "title": "Remove Bash from ordinary Debian image layers in rules_distroless",
-      "url": "https://github.com/tamird/gvisor/blob/eac484f55/test/rbe/rules-distroless-deb-layer.patch",
+      "url": "https://github.com/tamird/rules_distroless/commit/86a5661f4",
       "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T18:51:08.912815+00:00",
-      "summary": "Upstream candidate against bazel-contrib/rules_distroless at 15f9fc8d3. The linked patch is the supplier change, archived on gVisor’s qualification branch. It keeps gzip streams unchanged and runs the registered zstd directly for uncompressed, xz, zstd and lzma tar inputs. The merged-/usr path is unchanged.",
+      "updatedAt": "2026-10-30T19:01:02.657670+00:00",
+      "summary": "The ordinary Debian layer action runs the compressor supplied by its Bazel toolchain directly. It forwards existing gzip streams and produces the same layer bytes from raw, xz, zstd and lzma tar inputs.",
       "evidence": [
         {
-          "label": "Supplier patch",
-          "url": "https://github.com/tamird/gvisor/blob/eac484f55/test/rbe/rules-distroless-deb-layer.patch"
+          "label": "Review commit and message",
+          "url": "https://github.com/tamird/rules_distroless/commit/86a5661f4"
         },
         {
           "label": "All 10 supplier tests passed",
@@ -37134,10 +37134,10 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "eac484f5550f043fa23b1fd983d4963b09348d17",
-        "url": "https://github.com/tamird/gvisor/commit/eac484f55",
+        "head": "86a5661f4a0eb15a41bf4364c9b0542da02cfa7e",
+        "url": "https://github.com/tamird/rules_distroless/commit/86a5661f4",
         "title": "Send the Debian layer fix to rules_distroless",
-        "summary": "The ordinary layer action needs Bash today. The proposed upstream fix uses the compressor already supplied by its Bazel toolchain. The “Supplier patch” evidence link opens the complete change.",
+        "summary": "The ordinary Debian layer action needs Bash even when its compressor is available. This change calls the compressor directly. Review the two changed files and the commit message in the rules_distroless fork.",
         "body": "A worker with the registered zstd tool but no Bash cannot convert a\nDebian package into an image layer. Run zstd directly for ordinary\nlayers and forward existing gzip archives unchanged.\n\nThe reference gzip bytes match for raw tar, gzip, xz, zstd and lzma\ninputs. The merged-/usr rewrite continues to use its existing rule."
       }
     }
@@ -52687,7 +52687,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T18:51:08.912815+00:00",
+      "updatedAt": "2026-10-30T19:01:02.657670+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -53512,8 +53512,8 @@
           "text": "The supplier patch preserves the full gzip bytes for raw tar, gzip, xz, zstd and lzma inputs. All ten rules_distroless tests passed. The separate merged-/usr archive rewrite keeps its existing shell rule. The upstream submission is awaiting contributor review.",
           "evidence": [
             {
-              "label": "Supplier patch",
-              "url": "https://github.com/tamird/gvisor/blob/eac484f55/test/rbe/rules-distroless-deb-layer.patch"
+              "label": "Review commit and message",
+              "url": "https://github.com/tamird/rules_distroless/commit/86a5661f4"
             },
             {
               "label": "All 10 supplier tests passed",
