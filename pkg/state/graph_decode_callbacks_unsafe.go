@@ -154,9 +154,12 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 		if ds.valueScratch == nil {
 			ds.valueScratch = make(map[*typeInfo]unsafe.Pointer)
 		}
-		ds.valueScratch[ti] = p
-	} else if ti.partial {
-		reflect.NewAt(ti.typ, p).Elem().SetZero()
+	} else {
+		// A nested conversion of this type needs its own storage while p is in use.
+		delete(ds.valueScratch, ti)
+		if ti.partial {
+			reflect.NewAt(ti.typ, p).Elem().SetZero()
+		}
 	}
 	hooks, refs := ds.hooks, ds.refs
 	ds.lastRef = -1
@@ -172,18 +175,17 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	}
 	if ds.lastRef >= 0 {
 		if ds.lastRef != ds.cur && ds.lastRef != 0 {
-			delete(ds.valueScratch, ti)
 			ds.wait(ds.cur, ds.lastRef, cb)
 			return
 		}
 	} else if ds.refs != refs || ds.hooks != hooks {
-		delete(ds.valueScratch, ti)
 		if !ds.noCallbacks {
 			ds.addCallback(ds.cur, cb)
 		}
 		return
 	}
 	ds.runCallback(&cb)
+	ds.valueScratch[ti] = p
 }
 
 // runCallbacks runs the callbacks of objects as they become complete.
