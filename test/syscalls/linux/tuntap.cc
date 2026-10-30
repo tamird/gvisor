@@ -450,6 +450,7 @@ TEST_F(TuntapTest, SetPersistAfterLinkDeletion) {
   struct ifreq ifr = {};
   ifr.ifr_flags = IFF_TUN;
   ASSERT_THAT(ioctl(tun.get(), TUNSETIFF, &ifr), SyscallSucceeds());
+  ASSERT_THAT(ioctl(tun.get(), TUNGETIFF, &ifr), SyscallSucceeds());
   const auto link = ASSERT_NO_ERRNO_AND_VALUE(GetLinkByName(ifr.ifr_name));
   const FileDescriptor nlsk =
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE));
