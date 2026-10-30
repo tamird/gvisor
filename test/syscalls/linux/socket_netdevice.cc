@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <sched.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
@@ -168,10 +169,12 @@ TEST(NetdeviceTest, InterfaceName) {
   ASSERT_THAT(ioctl(sock.get(), SIOCGIFINDEX, &ifr), SyscallSucceeds());
   EXPECT_NE(ifr.ifr_ifindex, 0);
 
-  // Check that SIOCGIFNAME finds the loopback interface.
-  snprintf(ifr.ifr_name, IFNAMSIZ, "foo");
+  // SIOCGIFNAME uses the index, not the contents of the name field.
+  memset(ifr.ifr_name, 'x', sizeof(ifr.ifr_name));
   ASSERT_THAT(ioctl(sock.get(), SIOCGIFNAME, &ifr), SyscallSucceeds());
   EXPECT_STREQ(ifr.ifr_name, "lo");
+  EXPECT_EQ(ifr.ifr_name[IFNAMSIZ - 2], 'x');
+  EXPECT_EQ(ifr.ifr_name[IFNAMSIZ - 1], '\0');
 }
 
 TEST(NetdeviceTest, InterfaceFlags) {
