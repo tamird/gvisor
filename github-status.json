@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T23:39:31.271263+00:00",
-  "registryDate": "2026-10-30T23:35:30.492132+00:00",
+  "registryDate": "2026-10-30T23:43:49.478418+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -254445,6 +254445,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T23:35:30.492132+00:00"
+      }
+    },
+    "branch:ipv6-multicast-socket-options": {
+      "contributor-review": {
+        "scope": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+        "since": "2026-10-30T23:43:49.478418+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T23:43:49.478418+00:00"
       }
     }
   },

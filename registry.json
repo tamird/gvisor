@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T23:35:30.492132+00:00",
+    "updatedAt": "2026-10-30T23:43:49.478418+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37736,6 +37736,68 @@
         "summary": "Decide whether to post the proposed inline at snd.go line 1080. The change preserves the postXmit guard and starts the ACK timer only after removing acknowledged packets.",
         "body": "Could you schedule the probe after accounting for the ACK? When two\nsegments are outstanding and the first is acknowledged, schedulePTO\nstill sees two. This guard preserves that timer for the lone remaining\nsegment. In the packet test the PR retransmits the last 10 bytes at\n20 ms (twice the measured RTT) [1]. Moving the timer calculation below\nACK accounting sends those bytes at the 50 ms RTO and keeps the three\nexisting tests passing [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41140493959/artifacts/13018229764\n[2]: https://github.com/tamird/gvisor/commit/b0b469219\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:ipv6-multicast-socket-options",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/ipv6-multicast-socket-options",
+      "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+      "title": "Implement IPv6 multicast hop and loopback options",
+      "url": "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f",
+      "summary": "OpenJDK reached eth0 with the interface flags from #16059, then failed to read IPV6_MULTICAST_HOPS. Five shared syscall cases on both gVisor network modes now agree with Linux, including which packet a connected dual-stack sender loops back.",
+      "evidence": [
+        {
+          "label": "Both commits for review",
+          "url": "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f"
+        },
+        {
+          "label": "Changes since the earlier route implementation",
+          "url": "https://github.com/tamird/gvisor/compare/4724a5fcd...972a7152f"
+        },
+        {
+          "label": "Original Java importer failure",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/52852/jobs/01a18479-3be3-4571-8423-f723c54a33b6/log"
+        },
+        {
+          "label": "Linux and stock connected multicast delivery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41139775803/artifacts/13017933283"
+        },
+        {
+          "label": "Five syscall cases on netstack and host networking",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020224398"
+        },
+        {
+          "label": "Both OpenJDK modes and nine production analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149"
+        },
+        {
+          "label": "Old and new writes retain their own route",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "4724a5fcd92228f319166b0d2451311b2dc958c2"
+        },
+        "after": {
+          "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+        "baseHead": "89a7d2beb0d553c3ffaff8b79478ffef09e09abc",
+        "url": "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f",
+        "title": "Implement IPv6 multicast hop and loopback options",
+        "summary": "Open this standalone PR. It fixes the socket options used by #16059’s Java importer and keeps the original route for a write already in flight.",
+        "body": "OpenJDK’s DatagramSocketMulticasting test failed when #16059 exposed a multicast-capable interface. Its default DatagramSocket reads IPV6_MULTICAST_HOPS even when sending to an IPv4 group. Netstack returned ENOPROTOOPT. In IPv4-only mode, the JDK reads IP_MULTICAST_TTL and IP_MULTICAST_LOOP into a one-byte buffer, which netstack also rejected [1] [2].\n\nKeep IPv4 and IPv6 multicast settings independent. On a dual-stack socket sending to an IPv4-mapped group, Linux uses the IPv4 TTL and the IPv6 socket’s loopback setting [3]. Change the connected route’s loopback policy when the application sets the option. A send that already acquired the route keeps its original policy. With host networking, forward IPV6_MULTICAST_LOOP to the host socket.\n\nFive shared syscall cases cover option lengths, independent values, and delivery over a real multicast interface. Stock delivered a packet after the sender disabled loopback. Linux, corrected netstack and corrected hostinet delivered the following packet with IPv4 TTL 11 [4] [5]. The original Java test also completed on eth0 in both its default and IPv4-only modes [6]. A focused writer test sends two packets after changing the option. Mutating the old route incorrectly disables loopback for the first packet; retaining its acquired route passes, as do the full network suite and its analyzer [7].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/52852/jobs/01a18479-3be3-4571-8423-f723c54a33b6/log\n[2]: https://github.com/tamird/gvisor/actions/runs/41131750771/artifacts/13013753296\n[3]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/core/sock.c#L774-L790\n[4]: https://github.com/tamird/gvisor/actions/runs/41139775803/artifacts/13017933283\n[5]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020224398\n[6]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149\n[7]: https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853",
+        "requestedAt": "2026-10-30T23:43:49.478418+00:00"
+      },
+      "updatedAt": "2026-10-30T23:43:49.478418+00:00",
+      "status": "Contributor review requested"
     }
   ],
   "edges": [
