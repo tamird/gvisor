@@ -201,9 +201,28 @@ for arm, revision in [("original",original),("corrected",corrected)]:
     # rule, actual runner and setup helper, and normal public target definition.
     with tarfile.open(fileobj=io.BytesIO(cmd("git","archive",revision,"--",*paths,stdout=subprocess.PIPE).stdout)) as package:
         package.extractall(work, filter="data")
+    if arm=="original":
+        # Compare the target configurations of the actual transitive C++ links.
+        # Both comparisons keep the execution platform and static feature fixed.
+        for platform_label in ["linux_arm64","rbe_linux_arm64"]:
+            log = "aquery-"+platform_label
+            query='outputs(".*(vdso/vdso.so|sysmsg/sighandler.built-in.bin.o|test/syscalls/linux/eventfd_test|test/runner/setup_container/setup_container|tools/test/compiled_posix_test_wrapper)$", mnemonic("CppLink", deps('+target+')))'
+            query_args=client_prefix+["aquery"]+common+["--platforms=//tools/bazeldefs:"+platform_label,"--features=fully_static_link","--incompatible_use_native_posix_test_wrapper","--include_param_files","--output=jsonproto",query]
+            proc=subprocess.run(query_args,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=800)
+            (evidence/(log+".log")).write_text(redact(proc.stderr.decode(errors="replace"))[-40000:])
+            src=json.loads(proc.stdout) if proc.returncode==0 else {}
+            labels={str(x["id"]):x["label"] for x in src.get("targets",[])}
+            entries=[]
+            for action in src.get("actions",[]):
+                args=[*action.get("arguments",[])]
+                for param in action.get("paramFiles",[]): args.extend(param.get("arguments",[]))
+                entries.append({"target":labels.get(str(action.get("targetId"))), "argv":[x for x in args if (any(y in x for y in ("musl","glibc","-pthread","-lpthread","-ldl","-nostdlib","-static","-target","--target=","--sysroot")))]})
+            (evidence/(log+".json")).write_text(json.dumps({"exit":proc.returncode,"links":entries},indent=2))
+            print(log,proc.returncode,[(e["target"],e["argv"][:3]) for e in entries],flush=True)
+        common+=["--platforms=//tools/bazeldefs:rbe_linux_arm64"]
     required_sources = {p:digest((work/p).read_bytes()) for p in ["test/runner/defs.bzl","test/runner/main.go","test/runner/setup_container/setup_container.cc","test/runner/BUILD","test/syscalls/BUILD","test/syscalls/linux/eventfd.cc"]}
     command="test"
-    targets=["--incompatible_use_native_posix_test_wrapper","--remote_accept_cached","--nocache_test_results","--test_output=errors","--test_arg=--debug=false","--features=fully_static_link","--nobuild_event_json_file_path_conversion",target]
+    targets=["--keep_going","--verbose_failures","--incompatible_use_native_posix_test_wrapper","--remote_accept_cached","--nocache_test_results","--test_output=errors","--test_arg=--debug=false","--features=fully_static_link","--nobuild_event_json_file_path_conversion",target]
     if arm=="corrected": targets.append(control)
     event_file=receipt/(arm+".events");action_file=receipt/(arm+".actions")
     argv=client_prefix+[command]+common+[f"--execution_log_compact_file=/receipt/{arm}.actions",f"--build_event_json_file=/receipt/{arm}.events"]+targets
@@ -216,6 +235,7 @@ for arm, revision in [("original",original),("corrected",corrected)]:
     print(arm,rc,log[-1700:],flush=True)
     result={"exit":rc,"invocation":"","cases":[],"owner_spawns":[],"failures":[],"cached_other_images":[],"noncached_wrong_platform":[]}
     result["source_files"]=required_sources
+    result["target_platform"]="//tools/bazeldefs:rbe_linux_arm64"
     report[arm]=result
     if event_file.exists():
         for line in event_file.read_text().splitlines():
@@ -234,7 +254,9 @@ for arm, revision in [("original",original),("corrected",corrected)]:
             cached=bool(spawn.get("cacheHit") or spawn.get("remoteCacheHit") or "cache" in runner.lower())
             item=dict(mnemonic=mnemonic,label=label,runner=runner,arch=arch,image=image,cached=cached,action=spawn.get("digest"),exit=spawn.get("exitCode",0),status=spawn.get("status",""))
             count[(mnemonic,"cached" if cached else "ran")]+=1
-            if item["exit"] or item["status"]:result["failures"].append(item)
+            if item["exit"] or item["status"]:
+                item["argv"]=[redact(x) for x in spawn.get("args",[])[:20]]
+                result["failures"].append(item)
             if not cached and (runner!="remote" or arch!="arm64" or image!=expected_image): result["noncached_wrong_platform"].append(item)
             if mnemonic not in ("TestRunner","ScratchEventfdTest","GoLink") or label not in [target,control]:continue
             if mnemonic=="TestRunner":
@@ -266,7 +288,17 @@ for arm, revision in [("original",original),("corrected",corrected)]:
     for launcher_file in launcher:
         if launcher_file.is_file():
             payload=launcher_file.read_bytes()
-            result["launchers"].append({"path":str(launcher_file.relative_to(base/"output")),"sha256":digest(payload),"size":len(payload),"head":payload[:64].hex(),"shebang":payload.split(b"\n",1)[0].decode(errors="replace") if payload.startswith(b"#!") else None,"elf_machine":int.from_bytes(payload[18:20],"little") if payload.startswith(b"\x7fELF") else None})
+            def interpreter(data):
+                import struct
+                if not data.startswith(b"\x7fELF") or data[4:6]!=b"\x02\x01": return None
+                headers=struct.unpack_from("<Q",data,32)[0];size,count=struct.unpack_from("<HH",data,54)
+                for n in range(count):
+                    hdr=headers+n*size
+                    if struct.unpack_from("<I",data,hdr)[0]==3:
+                        pos=struct.unpack_from("<Q",data,hdr+8)[0]
+                        return data[pos:data.index(b"\0",pos)].decode()
+                return None
+            result["launchers"].append({"interpreter":interpreter(payload),"path":str(launcher_file.relative_to(base/"output")),"sha256":digest(payload),"size":len(payload),"head":payload[:64].hex(),"shebang":payload.split(b"\n",1)[0].decode(errors="replace") if payload.startswith(b"#!") else None,"elf_machine":int.from_bytes(payload[18:20],"little") if payload.startswith(b"\x7fELF") else None})
     (evidence/"eventfd.json").write_text(json.dumps(report,indent=2))
 
 
@@ -285,7 +317,7 @@ assert any(x["shebang"]=="#!/bin/bash" for x in original["launchers"]),original[
 assert ("No such file or directory" in stocklog or "ENOENT" in stocklog) and "eventfd_test_native" in stocklog,stocklog
 assert not any("[ RUN      ] EventfdTest."+n in stocklog for n in names),stocklog
 assert revised["exit"]==0 and actual_runner("corrected") and not revised["noncached_wrong_platform"],revised
-assert any(x["elf_machine"]==183 for x in revised["launchers"]),revised["launchers"]
+assert any(x["elf_machine"]==183 and x["interpreter"] is None for x in revised["launchers"]),revised["launchers"]
 passed={n for n in names if "[       OK ] EventfdTest."+n in fixedlog}
 skipped={n for n in names if "[  SKIPPED ] EventfdTest."+n in fixedlog}
 assert all("[ RUN      ] EventfdTest."+n in fixedlog for n in names),fixedlog
