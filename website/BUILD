@@ -249,6 +249,12 @@ syscall_pages(name = "native_syscall_pages")
 
 render_site(
     name = "rendered_site",
+    exec_properties = {
+        "OSFamily": "linux",
+        "Arch": "amd64",
+        "workload-isolation-type": "oci",
+        "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+    },
     srcs = [
         "_config.yml",
         "//website/application_compatibility:index.html",

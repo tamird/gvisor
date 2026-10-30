@@ -16,14 +16,14 @@ rc = p / "private.bazelrc"
 rc.write_text(f"build --remote_header=x-buildbuddy-api-key={secret}\nbuild --bes_header=x-buildbuddy-api-key={secret}\n")
 rc.chmod(0o600)
 flags = ["bazel", "--bazelrc="+str(rc), "build", "--jobs=4", "--curses=no", "--color=no", "--noshow_progress",
-         "--workspace_status_command=", "--remote_executor=grpcs://remote.buildbuddy.io", "--remote_cache=grpcs://remote.buildbuddy.io",
+         "--remote_executor=grpcs://remote.buildbuddy.io", "--remote_cache=grpcs://remote.buildbuddy.io",
          "--bes_backend=grpcs://remote.buildbuddy.io", "--bes_results_url=https://app.buildbuddy.io/invocation/",
-         "--remote_download_outputs=toplevel", "--extra_execution_platforms=//test/rbe/website-jekyll:scratch",
-         "--spawn_strategy=sandboxed", "--strategy=JekyllSite=remote", "--strategy=WebsiteSyscallJSON=sandboxed",
-         "--strategy=WebsiteSyscallDocs=sandboxed", "--verbose_failures", "--build_event_publish_all_actions",
+         "--remote_download_outputs=all",
+         "--spawn_strategy=sandboxed,local", "--strategy=JekyllSite=remote",
+         "--verbose_failures", "--build_event_publish_all_actions",
          "--nobuild_event_json_file_path_conversion", "--build_event_json_file="+str(p/"pair.bep")]
 try:
-    cmd = flags + ["--keep_going", "//website:files", "//website:site_docker_archive", "//website:rendered_site"]
+    cmd = flags + ["--keep_going", "//website:site_docker_archive", "//website:rendered_site"]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=4500)
     log = result.stdout.decode(errors="replace").replace(secret, "[redacted]")
     (p/"bazel.log").write_text(log)
@@ -43,7 +43,7 @@ try:
 finally:
     rc.unlink(missing_ok=True)
 stock, fixed = {}, {}
-baseline_tar = Path("bazel-bin/website/files.tgz")
+baseline_tar = p / "stock-site.tgz"
 if baseline_tar.exists():
     with tarfile.open(baseline_tar, "r:*") as archive:
         digests = {entry.name.removeprefix("./"): {"size": entry.size, "sha256": hashlib.sha256(archive.extractfile(entry).read()).hexdigest()} for entry in archive.getmembers() if entry.isfile()}
