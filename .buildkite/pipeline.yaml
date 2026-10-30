@@ -704,7 +704,9 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":earth_americas: Website tests"
-    command: make website-build
+    env:
+      DOCKER_BUILD: "false"
+    command: bazel build //website:site_image
     agents:
       arch: "amd64"
       kernel: "modern"

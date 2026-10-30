@@ -843,9 +843,9 @@ seccomp-sentry-filters:  # Dumps seccomp-bpf program for the Sentry binary.
 ##
 ## Website & documentation helpers.
 ##
-##   The website is built from repository documentation and wrappers, using
-##   using a locally-defined Docker image (see images/jekyll). The following
-##   variables may be set when using website-push:
+##   Bazel renders the repository documentation and checks the resulting site.
+##   These variables configure website-build, website-push and website-deploy:
+##     WEBSITE_PUBLICATION_TIME - Publication timestamp; defaults to current UTC.
 ##     WEBSITE_IMAGE   - The name of the container image.
 ##     WEBSITE_SERVICE - The backend service.
 ##     WEBSITE_PROJECT - The project id to use.
@@ -856,8 +856,9 @@ WEBSITE_SERVICE := gvisordev
 WEBSITE_PROJECT := gvisordev
 WEBSITE_REGION  := us-central1
 
-website-build: load-jekyll ## Build the site image locally.
-	@$(call run,//website:website,$(WEBSITE_IMAGE))
+WEBSITE_PUBLICATION_TIME ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+website-build: ## Build the site image locally.
+	@$(call wrapper,$(BAZEL) run $(BASE_OPTIONS) $(BAZEL_OPTIONS) --//website:publication_time="$(WEBSITE_PUBLICATION_TIME)" --//website:image_name="$(WEBSITE_IMAGE)" //website:website)
 .PHONY: website-build
 
 website-server: website-build ## Run a local server for development.

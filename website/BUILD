@@ -1,132 +1,71 @@
-load("//images:defs.bzl", "docker_image")
-load("//tools:defs.bzl", "bzl_library", "pkg_tar")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("@rules_img//img:convert.bzl", "image_flatten")
+load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
+load("@rules_img//img:load.bzl", "image_load")
+load("@tar.bzl//tar:tar.bzl", "tar")
+load("//tools:defs.bzl", "bzl_library")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc", "docs")
+load("//website:jekyll.bzl", "jekyll_sdk", "render_site", "syscall_pages")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-docker_image(
-    name = "website",
-    data = ":files",
-    statements = [
-        "EXPOSE 8080/tcp",
-        'ENTRYPOINT ["/server"]',
-    ],
-    tags = [
-        "local",
-        "manual",
-        "no-sandbox",
-    ],
-)
-
-# files is the full file system of the generated container.
-#
-# It must collect the all tarballs (produced by the rules below), and run it
-# through the Dockerfile to generate the site. Note that this checks all links,
-# and therefore requires all static content to be present as well.
-#
-# Note that this rule violates most aspects of hermetic builds. However, this
-# works much more reliably than depending on the container_image rules from
-# bazel itself, which are convoluted and seem to have a hard time even finding
-# the toolchain.
-genrule(
+# Sources are rendered and checked before being added to the serving image.
+image_layer(
     name = "files",
-    srcs = [
-        ":config",
-        ":css",
-        ":docs",
-        ":static",
-        ":syscallmd",
-        "//website/blog:posts",
-        "//website/cmd/server",
-        "@google_root_pem//file",
-    ],
-    outs = ["files.tgz"],
-    cmd = "set -x; " +
-          "T=$$(mktemp -d); " +
-          "mkdir -p $$T/input && " +
-          "mkdir -p $$T/output/_site && " +
-          "tar -xf $(location :config)    -C $$T/input && " +
-          "tar -xf $(location :css)       -C $$T/input && " +
-          "tar -xf $(location :docs)      -C $$T/input && " +
-          "tar -xf $(location :syscallmd) -C $$T/input && " +
-          "tar -xf $(location //website/blog:posts) -C $$T/input && " +
-          "find $$T/input -type f -exec chmod u+rw {} \\; && " +
-          "docker run -i --user $$(id -u):$$(id -g) " +
-          "-v $$(readlink -m $$T/input):/input " +
-          "-v $$(readlink -m $$T/output/_site):/output " +
-          "gvisor.dev/images/jekyll && " +
-          "tar -xf $(location :static) -C $$T/output/_site && " +
-          "docker run -i --user $$(id -u):$$(id -g) " +
-          "-v $$(readlink -m $$T/output/_site):/output " +
-          "gvisor.dev/images/jekyll " +
-          "ruby /checks.rb " +
-          "/output && " +
-          "cp $(location //website/cmd/server) $$T/output/server && " +
-          "mkdir -p $$T/output/etc/ssl && " +
-          "cp $(location @google_root_pem//file) $$T/output/etc/ssl/cert.pem && " +
-          "tar -zcf $@ -C $$T/output . && " +
-          "rm -rf $$T",
-    tags = [
-        "local",
-        "manual",
-        "no-sandbox",
-    ],
+    srcs = {
+        "/_site": ":site",
+        "/etc/ssl/cert.pem": "@google_root_pem//file",
+        "/server": "//website/cmd/server",
+    },
+    compress = "gzip",
+    file_metadata = {"/server": file_metadata(mode = "0755")},
+    include_runfiles = False,
 )
 
-# static are the purely static parts of the site. These are effectively copied
-# in after jekyll generates all the dynamic content.
-pkg_tar(
-    name = "static",
-    srcs = [
-        "archive.key",
-    ] + glob([
-        "performance/**",
-    ]),
-    strip_prefix = "./",
+image_manifest(
+    name = "site_image",
+    config_fragment = "server_config.json",
+    entrypoint = ["/server"],
+    layers = [":files"],
+    working_dir = "/",
 )
 
-# main.scss requires front-matter to be processed.
-genrule(
+image_load(
+    name = "website",
+    build_settings = {"website_image": ":image_name"},
+    image = ":site_image",
+    tag = "{{.website_image}}",
+    tags = ["manual"],
+)
+
+string_flag(
+    name = "image_name",
+    build_setting_default = "gcr.io/gvisordev/gvisordev",
+)
+
+# The publisher supplies its timestamp explicitly. An unconfigured preview
+# retains the date at which Bazel last built it.
+string_flag(
+    name = "publication_time",
+    build_setting_default = "",
+)
+
+# Preserve the public css.tar and avoid recording the build user's identity or clock.
+tar(
     name = "css",
-    srcs = glob([
-        "css/**",
-    ]),
-    outs = [
-        "css.tar",
+    srcs = ["css/main.scss"],
+    out = "css.tar",
+    compress = "gzip",
+    mtree = [
+        ". type=dir uid=0 gid=0 mode=0700 time=0",
+        "./css type=dir uid=0 gid=0 mode=0755 time=0",
+        "./css/main.scss type=file uid=0 gid=0 mode=0644 time=0 content=$(execpath css/main.scss)",
     ],
-    cmd = "T=$$(mktemp -d); " +
-          "mkdir -p $$T/css && " +
-          "for file in $(SRCS); do " +
-          "echo -en '---\\n---\\n' > $$T/css/$$(basename $$file) && " +
-          "cat $$file >> $$T/css/$$(basename $$file); " +
-          "done && " +
-          "tar -C $$T -czf $@ . && " +
-          "rm -rf $$T",
-)
-
-# config is "mostly" static content. These are parts of the site that are
-# present when jekyll runs, but are not dynamically generated.
-pkg_tar(
-    name = "config",
-    srcs = [
-        "_config.yml",
-        ":css",
-        "//website/application_compatibility:index.html",
-        "//website/blog:index.html",
-        "//website/security_track_record:index.html",
-    ] + glob([
-        "_data/**",
-        "assets/**",
-        "_includes/**",
-        "_layouts/**",
-        "_plugins/**",
-        "_sass/**",
-    ]),
-    strip_prefix = "./",
 )
 
 # index is the index file.
@@ -202,24 +141,58 @@ docs(
     ],
 )
 
-# Generate JSON for system call tables
-genrule(
-    name = "syscalljson",
-    outs = ["syscalls.json"],
-    cmd = "$(location //runsc/cmd/sentry:gvisor_sentry) -- help syscalls -format json -filename $@",
-    tools = ["//runsc/cmd/sentry:gvisor_sentry"],
+syscall_pages(name = "syscallmd")
+
+image_flatten(
+    name = "jekyll_filesystem",
+    image = "@jekyll_runtime",
 )
 
-# Generate markdown from the json dump.
-genrule(
-    name = "syscallmd",
-    srcs = [":syscalljson"],
-    outs = ["syscallsmd"],
-    cmd = "T=$$(mktemp -d) && " +
-          "$(location //website/cmd/syscalldocs) -in $< -out $$T && " +
-          "tar -C $$T -czf $@ . && " +
-          "rm -rf $$T",
-    tools = ["//website/cmd/syscalldocs"],
+jekyll_sdk(
+    name = "jekyll_sdk",
+    image = ":jekyll_filesystem",
+)
+
+render_site(
+    name = "site",
+    srcs = [
+        "_config.yml",
+        "//website/application_compatibility:index.html",
+        "//website/blog:index.html",
+        "//website/security_track_record:index.html",
+    ] + glob([
+        "_data/**",
+        "_includes/**",
+        "_layouts/**",
+        "_plugins/**",
+        "_sass/**",
+        "assets/**",
+        "css/**",
+    ]),
+    as_of = ":publication_time",
+    checks = "html_checks.rb",
+    css = ":css",
+    docs = [
+        ":docs",
+        "//website/blog:posts",
+    ],
+    driver = "render.rb",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    gems = [
+        "@jekyll_gem_autoprefixer_rails//file",
+        "@jekyll_gem_jekyll_autoprefixer//file",
+        "@jekyll_gem_jekyll_feed//file",
+        "@jekyll_gem_jekyll_inline_svg//file",
+        "@jekyll_gem_jekyll_relative_links//file",
+        "@jekyll_gem_jekyll_sitemap//file",
+        "@jekyll_gem_svg_optimizer//file",
+    ],
+    runtime = ":jekyll_sdk",
+    static = ["archive.key"] + glob(["performance/**"]),
+    syscalls = ":syscallmd",
 )
 
 bzl_library(

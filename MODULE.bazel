@@ -11,6 +11,9 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+
+bazel_dep(name = "tar.bzl", version = "0.10.9", dev_dependency = True)
+
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
@@ -918,4 +921,71 @@ go_deps.gazelle_override(
         "gazelle:proto disable_global",
     ],
     path = "k8s.io/apimachinery",
+)
+
+# Jekyll plugins absent from the published runtime are consumed as local gem archives.
+img_pull(
+    name = "jekyll_runtime",
+    dev_dependency = True,
+    digest = "sha256:fa979718aac3528a2c127eedf1e4f721ac07aed5c22bd5ea493e6ab7b8eca9a1",
+    downloader = "bazel",
+    layer_handling = "eager",
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "jekyll/jekyll",
+)
+
+http_file(
+    name = "jekyll_gem_autoprefixer_rails",
+    dev_dependency = True,
+    downloaded_file_path = "autoprefixer-rails-9.8.6.5.gem",
+    sha256 = "15b036f5fac8d1b0439bec7881cf1322ba86474c81d93e02be42741b476770ea",
+    urls = ["https://rubygems.org/gems/autoprefixer-rails-9.8.6.5.gem"],
+)
+
+http_file(
+    name = "jekyll_gem_jekyll_autoprefixer",
+    dev_dependency = True,
+    downloaded_file_path = "jekyll-autoprefixer-1.0.2.gem",
+    sha256 = "7aee7ef80ea1cce9f33fbff979189e19867c3677b26c96b24a2a874410d3fe27",
+    urls = ["https://rubygems.org/gems/jekyll-autoprefixer-1.0.2.gem"],
+)
+
+http_file(
+    name = "jekyll_gem_jekyll_feed",
+    dev_dependency = True,
+    downloaded_file_path = "jekyll-feed-0.13.0.gem",
+    sha256 = "3906c7d7365f6a15c42d86caa5d75fb72ece7c36a068b346e581a206e7b6a8d3",
+    urls = ["https://rubygems.org/gems/jekyll-feed-0.13.0.gem"],
+)
+
+http_file(
+    name = "jekyll_gem_jekyll_inline_svg",
+    dev_dependency = True,
+    downloaded_file_path = "jekyll-inline-svg-1.1.4.gem",
+    sha256 = "909004a6ec69ec944dd496e18c940d8986faa151bc2564b50bc324cc7d73fd81",
+    urls = ["https://rubygems.org/gems/jekyll-inline-svg-1.1.4.gem"],
+)
+
+http_file(
+    name = "jekyll_gem_jekyll_relative_links",
+    dev_dependency = True,
+    downloaded_file_path = "jekyll-relative-links-0.6.1.gem",
+    sha256 = "d11301f57b39e94b6c04fff2a3b145fe2f6a27be631a403e2542fa2e1548dd6d",
+    urls = ["https://rubygems.org/gems/jekyll-relative-links-0.6.1.gem"],
+)
+
+http_file(
+    name = "jekyll_gem_jekyll_sitemap",
+    dev_dependency = True,
+    downloaded_file_path = "jekyll-sitemap-1.4.0.gem",
+    sha256 = "0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218",
+    urls = ["https://rubygems.org/gems/jekyll-sitemap-1.4.0.gem"],
+)
+
+http_file(
+    name = "jekyll_gem_svg_optimizer",
+    dev_dependency = True,
+    downloaded_file_path = "svg_optimizer-0.2.6.gem",
+    sha256 = "bd83e5eb0203d73a74ca337845006968828dfd98002da00dfde8c40260893b2b",
+    urls = ["https://rubygems.org/gems/svg_optimizer-0.2.6.gem"],
 )

@@ -41,9 +41,15 @@
 ##                              (default: no device file is exposed).
 ##
 ##   To opt out of these wrappers, set DOCKER_BUILD=false.
+# The Jekyll runtime executes on Linux/AMD64. Other hosts may provide a
+# Linux execution platform with DOCKER_BUILD=false or use the existing wrapper.
+native_goals := help
+ifeq ($(shell uname -sm),Linux x86_64)
+native_goals += website-build website-server website-push website-deploy
+endif
 DOCKER_BUILD := true
 ifneq ($(MAKECMDGOALS),)
-ifeq ($(filter-out help,$(MAKECMDGOALS)),)
+ifeq ($(filter-out $(native_goals),$(MAKECMDGOALS)),)
 DOCKER_BUILD := false
 endif
 endif

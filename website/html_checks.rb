@@ -21,16 +21,12 @@ class NoOpenerCheck < ::HTMLProofer::Check
   end
 end
 
-def main()
+def check_site(path)
   options = {
     :check_html => true,
     :check_favicon => true,
     :disable_external => true,
   }
 
-  HTMLProofer.check_directories(ARGV, options).run
-end
-
-if __FILE__ == $0
-  main
+  HTMLProofer.check_directories([path], options).run
 end
