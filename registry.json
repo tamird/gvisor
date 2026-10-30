@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T06:06:52.793764+00:00",
+    "updatedAt": "2026-10-30T06:17:00.186776+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35292,6 +35292,42 @@
         "title": "Keep nested checkpoint conversions from overwriting each other",
         "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
         "body": "Review the two-commit follow-up on the author’s #16728. On master cd90d7a74 and the author’s 168a31e6e, graph Load restores 22, 22 and the legacy reader restores 11, 22. The corrected graph reader restores 11, 22 on both bases. The author-head version preserves the synchronous-hook and deferred-value storage lifetimes in #16728. All four state test targets passed on each correction."
+      }
+    },
+    {
+      "id": "branch:bazel-lib-native-arch",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/bazel-lib-native-arch",
+      "head": "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2",
+      "title": "Select the governance tool without a host uname",
+      "url": "https://github.com/tamird/gvisor/commit/6e1caeba7",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "summary": "Without uname, the governance extension asks yq for the invalid platform linux_. Updating bazel_lib to 3.4.0 lets the same fresh coordinator read the repository’s actual areas file. The canonical license check changed one row and verified all 220 dependencies.",
+      "updatedAt": "2026-10-30T06:17:00.186776+00:00",
+      "evidence": [
+        {
+          "label": "Stock and fixed governance query; exact areas.yaml bytes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41012722830/artifacts/12958511505"
+        },
+        {
+          "label": "Canonical Fetch/Verify, BCR archive hash, upstream license notice",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41012333362/artifacts/12958372225"
+        },
+        {
+          "label": "Supplier: read CPU architecture from Bazel",
+          "url": "https://github.com/bazel-contrib/bazel-lib/blob/c511ac0a1/lib/private/repo_utils.bzl#L85"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2",
+        "url": "https://github.com/tamird/gvisor/commit/6e1caeba7",
+        "title": "Select the governance tool without a host uname",
+        "summary": "Without uname, the governance extension asks yq for the invalid platform linux_. Updating bazel_lib to 3.4.0 lets the same fresh coordinator read the repository’s actual areas file. The canonical license check changed one row and verified all 220 dependencies.",
+        "body": "Review the module pin and canonical license record for a standalone upstream PR. The paired stock/fixed governance query used current master with unchanged Gazelle and no LLVM migration."
       }
     }
   ],
