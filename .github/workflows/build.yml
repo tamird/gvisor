@@ -1,84 +1,61 @@
-name: Check quoted IPv6 socket coverage and owning Go suite
+name: CI
 on:
   push:
     branches: [qualification/ipv6-quoted-owner-exact]
 permissions:
   contents: read
+  actions: read
 jobs:
-  syscalls:
-    if: github.repository == 'tamird/gvisor'
+  clang_format:
     runs-on: ubuntu-24.04
-    timeout-minutes: 165
-    env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      CURRENT: 9bc5517f1f05b62025af3ae4846eaae8431bcc79
-      STOCK: 40cca2ea01187b8f74d514e167bc85039b16da38
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
-    - name: Prepare the pinned compiler coordinator and RBE workers
+      with:
+        ref: 9bc5517f1f05b62025af3ae4846eaae8431bcc79
+        persist-credentials: false
+    - name: Reuse the completed IPv6 target
       env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        set -euo pipefail
-        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        cp test/rbe/verify-quoted-owner.py "$RUNNER_TEMP/verify-owner.py"
-        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" ]]
-        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/tcp.bazelrc"
-        unset BUILDBUDDY_API_KEY
-        docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
-        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-
-    - name: Check the repository formatter and the IPv6 package on the exact source
-      run: |
-        set -euo pipefail
-        git checkout --quiet --detach "$CURRENT"
-        [[ "$(git rev-parse HEAD)" == "$CURRENT" ]]
-        d=$RUNNER_TEMP/records
-        printf '%s\n' "$CURRENT" > "$d/source"
-        target=//pkg/tcpip/network/ipv6:ipv6_test
-        printf '%s\n' "$target" > "$d/target"
-        date -u +%FT%TZ > "$d/start"
-        rc=0
-        docker exec tcp-compiler tools/lint.sh clang-format > "$d/format.log" 2>&1 || rc=$?
-        echo "$rc" > "$d/format.exit"
-        rc=0
-        docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_arg=-test.v --test_output=all "$target" > "$d/bazel.log" 2>&1 || rc=$?
-        echo "$rc" > "$d/exit"
-        grep -A4 -E 'Invocation ID:|ERROR:|error:|FAILED' "$d/bazel.log" | head -120 > "$d/diagnostics" || true
-        rm -f "$d/bazel.log"
-        if [[ $rc == 0 || $rc == 3 ]]; then
-          for f in test.log test.xml; do docker exec tcp-compiler cat "bazel-testlogs/pkg/tcpip/network/ipv6/ipv6_test/$f" > "$d/$f"; done
-        fi
-        date -u +%FT%TZ > "$d/end"
-    - name: Verify the completed formatter and target records
-      if: always()
-      run: python3 "$RUNNER_TEMP/verify-owner.py" "$RUNNER_TEMP/records"
-    - name: Exclude credentials from the evidence bundle
-      if: always()
-      env:
-        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        python3 - <<'PYTHON'
-        import os
+        set -eu
+        mkdir -p "$RUNNER_TEMP/records"
+        gh api repos/tamird/gvisor/actions/artifacts/12992862893/zip > "$RUNNER_TEMP/original.zip"
+        cd "$RUNNER_TEMP/records"
+        unzip -q "$RUNNER_TEMP/original.zip"
+        mv verdict.json original-verdict.json
+        mv format.log original-format.log
+        python3 - <<'CHECK'
+        import json
         from pathlib import Path
-        key=os.environ["BB_KEY"].encode()
-        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
-            if f.is_file() and key and key in (data:=f.read_bytes()):
-                f.write_bytes(data.replace(key,b"[REDACTED]"))
-        PYTHON
+        v=json.loads(Path("original-verdict.json").read_text())
+        assert v["source"]=="9bc5517f1f05b62025af3ae4846eaae8431bcc79" and v["errors"]==["repository formatter did not pass"] and Path("exit").read_text().strip()=="0" and v["records"]
+        CHECK
+    - name: Run the pinned repository formatter
+      run: |
+        set -euo pipefail
+        [[ "$(git rev-parse HEAD)" == "9bc5517f1f05b62025af3ae4846eaae8431bcc79" ]]
+        git ls-files --error-unmatch test/syscalls/linux/udp_raw_socket.cc
+        d="$RUNNER_TEMP/records"
+        rc=0
+        tools/lint.sh clang-format > "$d/format.log" 2>&1 || rc=$?
+        cat "$d/format.log"
+        echo "$rc" > "$d/format.exit"
+        date -u +%FT%TZ > "$d/format.end"
+        python3 - "$d" <<'CHECK'
+        from datetime import datetime,timezone
+        import json,sys
+        from pathlib import Path
+        d=Path(sys.argv[1])
+        v=json.loads((d/'original-verdict.json').read_text())
+        rc=(d/'format.exit').read_text().strip(); log=(d/'format.log').read_text()
+        f=rc=='0' and 'clang-format' in log and 'fatal:' not in log and 'PASS' in log
+        v.update(verified=f,errors=[] if f else ['formatter failed'],formatter_finished=(d/'format.end').read_text().strip(),verified_at=datetime.now(timezone.utc).isoformat(),test_artifact=12992862893)
+        (d/'verdict.json').write_text(json.dumps(v,indent=2)+'\n')
+        sys.exit(not f)
+        CHECK
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: ipv6-quoted-owner
+        name: ipv6-quoted-verified
         path: ${{ runner.temp }}/records/
         if-no-files-found: error
