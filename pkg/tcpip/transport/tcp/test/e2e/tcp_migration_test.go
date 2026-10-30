@@ -638,16 +638,32 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 }
 
 func TestSACKPacketsAfterLiveRestore(t *testing.T) {
+	testSACKRestore(t, false)
+}
+
+func TestRACKObservationAfterLiveRestore(t *testing.T) {
+	testSACKRestore(t, true)
+}
+
+func testSACKRestore(t *testing.T, rack bool) {
 	const mss, advertised, packets = 1000, 1036, 8
-	samples := make(chan int, 32)
-	probe := func(s *tcp.TCPEndpointState) { samples <- s.Sender.SackedOut }
+	type observation struct {
+		credit    int
+		reordered bool
+	}
+	samples := make(chan observation, 32)
+	probe := func(s *tcp.TCPEndpointState) { samples <- observation{s.Sender.SackedOut, s.Sender.RACKState.Reord} }
 	c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, Clock: faketime.NewManualClock(), Probe: probe})
 	defer c.Cleanup()
 	c.Stack().SetAllowLiveTCPMigration(true)
 	c.Stack().SetRemoveConf(true)
-	c.SetGSOEnabled(true)
+	c.SetGSOEnabled(!rack)
 	e2e.SetStackSACKPermitted(t, c, true)
-	e2e.SetStackTCPRecovery(t, c, 0)
+	recovery := 0
+	if rack {
+		recovery = int(tcpip.TCPRACKLossDetection)
+	}
+	e2e.SetStackTCPRecovery(t, c, recovery)
 	c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, []byte{header.TCPOptionMSS, 4, byte(advertised / 256), byte(advertised % 256), header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP})
 	if n, err := c.EP.Write(bytes.NewReader(make([]byte, packets*mss)), tcpip.WriteOptions{}); err != nil || n != packets*mss {
 		t.Fatalf("write=%d: %v", n, err)
@@ -657,25 +673,48 @@ func TestSACKPacketsAfterLiveRestore(t *testing.T) {
 	base := seqnum.Value(wire.SequenceNumber())
 	size := len(wire.Payload())
 	p.Release()
-	if size != packets*mss {
+	sb := []header.SACKBlock{{Start: base.Add(2 * mss), End: base.Add(3 * mss)}}
+	before := sb
+	if rack {
+		sent := []header.SACKBlock{{Start: base, End: base.Add(seqnum.Size(size))}}
+		for size < packets*mss {
+			p := c.GetPacket()
+			wire := header.TCP(header.IPv4(p.AsSlice()).Payload())
+			start := seqnum.Value(wire.SequenceNumber())
+			length := len(wire.Payload())
+			p.Release()
+			if length == 0 || start != base.Add(seqnum.Size(size)) {
+				t.Fatalf("non-original packet at %d after %d original bytes", start, size)
+			}
+			sent = append(sent, header.SACKBlock{Start: start, End: start.Add(seqnum.Size(length))})
+			size += length
+		}
+		if len(sent) < 5 {
+			t.Fatalf("only %d original segments", len(sent))
+		}
+		sb = []header.SACKBlock{sent[2]}
+		before = []header.SACKBlock{sent[4], sent[2]}
+	} else if size != packets*mss {
 		t.Fatalf("sent aggregate %d want %d", size, packets*mss)
 	}
-	sb := []header.SACKBlock{{Start: base.Add(2 * mss), End: base.Add(3 * mss)}}
 	seq := seqnum.Value(testcontext.TestInitialSequenceNumber).Add(1)
 	expect := func(stage string, want int) {
 		t.Helper()
 		select {
 		case got := <-samples:
-			t.Logf("SACK_RESTORE stage=%s count=%d", stage, got)
-			if got != want {
-				t.Fatalf("%s received count=%d want %d", stage, got, want)
+			t.Logf("SACK_RESTORE rack=%t stage=%s count=%d reord=%t", rack, stage, got.credit, got.reordered)
+			if stage != "drain" && got.reordered {
+				t.Errorf("%s reordering=true, want false", stage)
+			}
+			if got.credit != want {
+				t.Fatalf("%s received count=%d want %d", stage, got.credit, want)
 			}
 		case <-time.After(5 * time.Second):
 			t.Fatalf("%s did not process peer ACK", stage)
 		}
 	}
-	c.SendAckWithSACK(seq, 0, sb)
-	expect("before", 1)
+	c.SendAckWithSACK(seq, 0, before)
+	expect("before", len(before))
 	var image bytes.Buffer
 	if _, err := state.Save(context.Background(), &image, c.Stack()); err != nil {
 		t.Fatalf("save: %v", err)
