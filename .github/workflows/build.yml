@@ -1,35 +1,81 @@
-name: CI
-
-"on":
+name: Trace TCP selective acknowledgment accounting
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-sack-ledger]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 4
+      - name: Exercise recovery on both sources
+        run: |
+          set -uo pipefail
+          out="$RUNNER_TEMP/sacked"
+          mkdir -p "$out"
+          while read -r name expected; do
+            git checkout --detach "$expected" || exit 1
+            test "$(git rev-parse HEAD)" = "$expected" || exit 1
+            start=$(date -u +%FT%TZ)
+            ec=0
+            bazel test --jobs=5 --test_output=errors --test_arg=-test.v --test_filter='TestSackedOut(AcrossRecovery|AfterPMTU)' //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test > "$out/$name-bazel.log" 2>&1 || ec=$?
+            tail -35 "$out/$name-bazel.log"
+            file=bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test/test.log
+            if test -f "$file"; then cp -L "$file" "$out/$name-test.log"; fi
+            printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$(git rev-parse HEAD)" "$ec" "$start" "$(date -u +%FT%TZ)" >> "$out/results.tsv"
+          done <<'ARMS'
+          stock 40bee23c1f1c4915a7c689229541f0d100de8b74
+          candidate af818061fa5e28b191e6b58f519e8401852e060d
+          ARMS
+      - name: Verify the traces and full RACK suite
+        run: |
+          set -uo pipefail
+          out="$RUNNER_TEMP/sacked"
+          ec=0
+          bazel test --jobs=5 --test_output=errors --test_arg=-test.v //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test > "$out/suite-bazel.log" 2>&1 || ec=$?
+          tail -16 "$out/suite-bazel.log"
+          file=bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test/test.log
+          if test -f "$file"; then cp -L "$file" "$out/suite-test.log"; fi
+          printf '%s\n' "$ec" > "$out/suite-exit"
+          python3 - "$out" <<'PY'
+          import json, re, sys
+          from pathlib import Path
+          from datetime import datetime,timezone
+          out=Path(sys.argv[1]); expected={"stock":"40bee23c1f1c4915a7c689229541f0d100de8b74","candidate":"af818061fa5e28b191e6b58f519e8401852e060d"}
+          actual={}
+          for row in (out/"results.tsv").read_text().splitlines():
+              name,source,ec,start,end=row.split("\t")
+              path=out/f"{name}-test.log"
+              log=path.read_text() if path.exists() else ""
+              obs={}
+              arm=None
+              for line in log.splitlines():
+                  match=re.search(r'^=== RUN   TestSackedOutAcrossRecovery/RACK=(false|true)',line)
+                  if match: arm=match[1]
+                  match=re.search(r'cumulative=(\d+) SACK=.* sacked=(-?\d+) recovery=(true|false)',line)
+                  if match: obs.setdefault(arm,[]).append(dict(cumulative=int(match[1]),count=int(match[2]),recovery=match[3]=="true"))
+              trace_valid=sorted(obs)==["false","true"] and all([x["cumulative"] for x in rows]==[1,1,1,1,8] for rows in obs.values())
+              matches=lambda rows: [x["count"] for x in rows]==[0,1,2,3,0]
+              mtu=[(int(mss),int(count)) for mss,count in re.findall(r'cumulative=\d+ SACK=.* MSS=(\d+) sacked=(-?\d+)',log)]
+              mtu_valid=len(mtu)==4 and [m for m,_ in mtu]==[1460,1460,1160,1160] and ([c for _,c in mtu]==[0,1,2,0] if name=="candidate" else [c for _,c in mtu]!=[0,1,2,0])
+              expect_state=mtu_valid and trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values()) and all(rows[-1]["count"]<0 for rows in obs.values()))
+              actual[name]={"source":source,"exit":int(ec),"start":start,"end":end,"observations":obs,"pmtu":mtu,"valid":source==expected[name] and (int(ec)==0 if name=="candidate" else int(ec)==3) and expect_state}
+          path=out/"suite-test.log"
+          suite=path.read_text() if path.exists() else ""
+          suite_pass=re.findall(r'^--- PASS: (\S+)',suite,re.M)
+          suite_fail=re.findall(r'^--- FAIL: (\S+)',suite,re.M)
+          verdict={"expected":expected,"actual":actual,"missing":[k for k in expected if not actual.get(k,{}).get("observations")],"suite":{"exit":int((out/"suite-exit").read_text()),"passed":suite_pass,"failed":suite_fail},"verified":datetime.now(timezone.utc).isoformat()}
+          verdict["status"]="pass" if set(actual)==set(expected) and all(v["valid"] for v in actual.values()) and verdict["suite"]["exit"]==0 and len(suite_pass)>10 and not suite_fail else "incomplete"
+          (out/"verdict.json").write_text(json.dumps(verdict,indent=2)); print(json.dumps(verdict)); sys.exit(verdict["status"]!="pass")
+          PY
+      - name: Publish case records once
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tcp-selective-acknowledgments
+          path: ${{ runner.temp }}/sacked/
+          if-no-files-found: error
