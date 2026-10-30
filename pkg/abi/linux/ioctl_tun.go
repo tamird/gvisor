@@ -31,3 +31,6 @@ const (
 	// According to linux/if_tun.h "This flag has no real effect"
 	IFF_ONE_QUEUE = 0x2000
 )
+
+// TUN_PKT_STRIP indicates that the TUN read truncated the packet.
+const TUN_PKT_STRIP = 0x0001
