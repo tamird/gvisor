@@ -959,14 +959,6 @@ http_file(
 )
 
 http_file(
-    name = "jekyll_gem_jekyll_inline_svg",
-    dev_dependency = True,
-    downloaded_file_path = "jekyll-inline-svg-1.1.4.gem",
-    sha256 = "909004a6ec69ec944dd496e18c940d8986faa151bc2564b50bc324cc7d73fd81",
-    urls = ["https://rubygems.org/gems/jekyll-inline-svg-1.1.4.gem"],
-)
-
-http_file(
     name = "jekyll_gem_jekyll_relative_links",
     dev_dependency = True,
     downloaded_file_path = "jekyll-relative-links-0.6.1.gem",
@@ -980,12 +972,4 @@ http_file(
     downloaded_file_path = "jekyll-sitemap-1.4.0.gem",
     sha256 = "0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218",
     urls = ["https://rubygems.org/gems/jekyll-sitemap-1.4.0.gem"],
-)
-
-http_file(
-    name = "jekyll_gem_svg_optimizer",
-    dev_dependency = True,
-    downloaded_file_path = "svg_optimizer-0.2.6.gem",
-    sha256 = "bd83e5eb0203d73a74ca337845006968828dfd98002da00dfde8c40260893b2b",
-    urls = ["https://rubygems.org/gems/svg_optimizer-0.2.6.gem"],
 )
