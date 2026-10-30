@@ -17,10 +17,13 @@ package cgroup
 import (
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"testing"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"gvisor.dev/gvisor/pkg/garbage"
+	"gvisor.dev/gvisor/pkg/hostos"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
@@ -754,5 +757,42 @@ func TestOwnsCPULimit(t *testing.T) {
 	cg.Own = []string{"/sys/fs/cgroup/parent/leaf"}
 	if !OwnsCPULimit(cg) {
 		t.Errorf("OwnsCPULimit() = false for a cgroup created by Install")
+	}
+}
+
+func TestAncestorMemoryBudget(t *testing.T) {
+	root := os.Getenv("GC_PROBE_HIERARCHY")
+	if root == "" {
+		t.Skip("requires a delegated Linux cgroup hierarchy")
+	}
+	mem, err := hostos.TotalSystemMemory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		path string
+		want uint64
+	}{
+		{"open/unbounded", 192 << 20},
+		{"open/large", 192 << 20},
+		{"open/small", 128 << 20},
+	} {
+		t.Run(filepath.Base(tc.path), func(t *testing.T) {
+			c := cgroupV2{Mountpoint: root, Path: tc.path}
+			reported, err := c.MemoryLimit()
+			if err != nil {
+				t.Fatal(err)
+			}
+			s := garbage.Suspend(min(mem, reported), 0)
+			if s == nil {
+				t.Fatal("GC suspension did not start")
+			}
+			defer s.End()
+			got := debug.SetMemoryLimit(-1)
+			t.Logf("cgroup report=%d, host=%d, effective cgroup ceiling=%d, actual GC soft limit=%d", reported, mem, tc.want, got)
+			if want := int64(tc.want / 2); got != want {
+				t.Errorf("GC soft limit = %d, want %d (half the effective ceiling)", got, want)
+			}
+		})
 	}
 }
