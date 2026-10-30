@@ -17,12 +17,18 @@ if pr == "15647":
         "//runsc/boot:boot_nogo": [],
         "//test/runner:runner_nogo": [],
     }
+elif pr == "graph":
+    case_owners = {"//pkg/state/tests:tests_test": ["TestNetipValues/wire", "TestNetipValues/graph"]}
 elif pr == "15730":
     case_owners = {
         "//pkg/tcpip/network/ipv4:ipv4_test": ["TestIPv4Sanity", "TestForwarding"],
         "//pkg/tcpip/header:header_x_test": ["TestICMPv4Checksum"],
         "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": ["TestConnectICMPError"],
         "//pkg/tcpip/network/ipv4:ipv4_nogo": [],
+        "//pkg/tcpip/stack:stack_test": ["TestNeighborCacheOverflow", "TestNeighborCacheEntry", "TestNeighborCacheKeepFrequentlyUsed", "TestNeighborCacheConcurrent"],
+        "//pkg/tcpip/stack:stack_nogo": [],
+        "//pkg/state/tests:tests_test": ["TestNetipValues"],
+        "//pkg/sentry/socket/netstack:netstack_test": ["TestRemoveRouteRemovesFirstMatchOnly"],
         "//pkg/tcpip/transport/tcp:tcp_nogo": [],
         "//pkg/tcpip/sample/tun_tcp_connect:tun_tcp_connect_nogo": [],
         "//pkg/tcpip/sample/tun_tcp_echo:tun_tcp_echo_nogo": [],
@@ -43,13 +49,14 @@ def save(name, value):
 r = {"pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
 try:
     assert git("rev-parse", "HEAD").decode().strip() == source
-    assert git("rev-parse", "HEAD^").decode().strip() == "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
+    assert git("rev-parse", "HEAD^").decode().strip() == ("6c48739a92438e54d1223a17f1806259d50cba17" if pr == "graph" else "7317e2f45ed1410ff688ebaaf9c0e4ff1c7ce6e9")
     r["tree"] = git("rev-parse", "HEAD^{tree}").decode().strip()
     (d/"before").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
     assert not (d/"before").read_bytes()
     (d/"commit").write_bytes(git("cat-file", "commit", source))
     bazel = ["bazel", "--bazelrc=" + rc]
     args = ["test", "--nocache_test_results", "--test_sharding_strategy=disabled",
+            *(["--test_filter=TestNetipValues"] if pr == "graph" else []),
             "--test_env=GO_TEST_WRAP_TESTV=1", "--build_event_json_file=" + str(d/"events.raw"),
             "--build_event_json_file_path_conversion=false",
             "--remote_download_regex=.*[/](test[.](log|xml)|test[.]outputs/.*)$", *owners]
