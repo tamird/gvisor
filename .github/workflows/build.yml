@@ -13,31 +13,19 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 6
-      - name: Run the state tests on the exact rebased source
+      - name: Verify the original nine test reports
         env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          out="$RUNNER_TEMP/sacked"
-          mkdir -p "$RUNNER_TEMP/gnu"
-          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
-          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
-          test -n "$BUILDBUDDY_API_KEY"
-          rc=$RUNNER_TEMP/epoll.bazelrc
-          umask 077
-          trap 'rm -f "$rc"' EXIT
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$rc"
-          unset BUILDBUDDY_API_KEY
-          git show "$GITHUB_SHA:test/rbe/state_check.sh" > "$RUNNER_TEMP/run.sh"
-          source "$RUNNER_TEMP/run.sh"
+          git fetch --depth=1 origin 62e214867e089f4ba2db0b79beecd8148c4da509
+          out="$RUNNER_TEMP/state-results"
+          gh api repos/tamird/gvisor/actions/artifacts/12989230169/zip > "$RUNNER_TEMP/original.zip"
+          unzip -q "$RUNNER_TEMP/original.zip" -d "$out"
+          python3 test/rbe/state_result.py final "$out"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: state-graph-nested-rebase
-          path: ${{ runner.temp }}/state-results
+          path: ${{ runner.temp }}/state-results/groups.json
           if-no-files-found: error

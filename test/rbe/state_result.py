@@ -15,7 +15,16 @@ import re
 import subprocess
 
 source="62e214867e089f4ba2db0b79beecd8148c4da509"
-top={name for name in re.findall(r"func (Test[A-Za-z0-9_]+)\(",subprocess.check_output(["git","grep","-h","-E","^func Test[A-Za-z0-9_]+\\(",source,"--","pkg/state/tests/*_test.go"],text=True))}
+top=set()
+for name in subprocess.check_output(["git","ls-tree","--name-only","-r",source,"pkg/state/tests"],text=True).splitlines():
+    if not name.endswith("_test.go"):
+        continue
+    content=subprocess.check_output(["git","show",source+":"+name],text=True)
+    tags=re.findall(r"^//go:build (.+)$",content,re.MULTILINE)
+    if tags:
+        assert tags==["race"] and name.endswith("/register_test.go"), (name,tags)
+        continue
+    top.update(re.findall(r"^func (Test[A-Za-z0-9_]+)\(",content,re.MULTILINE))
 assert len(top)>40
 maps={"TestMapsEmpty","TestMapsFull"}
 groups=["core"]+[mode+"-"+prefix for mode,prefixes in (("Empty",("plain","pointers","interfaces","interfacesToPointers")),("Full",("plain","pointers","interfaces","interfacesToPointer"))) for prefix in prefixes]
