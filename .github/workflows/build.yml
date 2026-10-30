@@ -33,8 +33,8 @@ jobs:
             if test -f "$file"; then cp -L "$file" "$out/$name-test.log"; fi
             printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$(git rev-parse HEAD)" "$ec" "$start" "$(date -u +%FT%TZ)" >> "$out/results.tsv"
           done <<'ARMS'
-          stock 40bee23c1f1c4915a7c689229541f0d100de8b74
-          candidate af818061fa5e28b191e6b58f519e8401852e060d
+          stock e028ad71e5f5f076095526a8f490b939e4b024dc
+          candidate cb20da070798008c30ee7ff88cd4705074cffa4d
           ARMS
       - name: Verify the traces and full RACK suite
         run: |
@@ -50,7 +50,7 @@ jobs:
           import json, re, sys
           from pathlib import Path
           from datetime import datetime,timezone
-          out=Path(sys.argv[1]); expected={"stock":"40bee23c1f1c4915a7c689229541f0d100de8b74","candidate":"af818061fa5e28b191e6b58f519e8401852e060d"}
+          out=Path(sys.argv[1]); expected={"stock":"e028ad71e5f5f076095526a8f490b939e4b024dc","candidate":"cb20da070798008c30ee7ff88cd4705074cffa4d"}
           actual={}
           for row in (out/"results.tsv").read_text().splitlines():
               name,source,ec,start,end=row.split("\t")
