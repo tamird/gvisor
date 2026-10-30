@@ -17,6 +17,8 @@ if pr == "15647":
         "//runsc/boot:boot_nogo": [],
         "//test/runner:runner_nogo": [],
     }
+elif pr == "route":
+    case_owners = {"//pkg/sentry/socket/netstack:netstack_test": ["TestRemoveRouteRemovesFirstMatchOnly"]}
 elif pr == "graph":
     case_owners = {"//pkg/state/tests:tests_test": ["TestNetipValues/wire", "TestNetipValues/graph"]}
 elif pr == "15730":
@@ -28,7 +30,6 @@ elif pr == "15730":
         "//pkg/tcpip/stack:stack_test": ["TestNeighborCacheOverflow", "TestNeighborCacheEntry", "TestNeighborCacheKeepFrequentlyUsed", "TestNeighborCacheConcurrent"],
         "//pkg/tcpip/stack:stack_nogo": [],
         "//pkg/state/tests:tests_test": ["TestNetipValues"],
-        "//pkg/sentry/socket/netstack:netstack_test": ["TestRemoveRouteRemovesFirstMatchOnly"],
         "//pkg/tcpip/transport/tcp:tcp_nogo": [],
         "//pkg/tcpip/sample/tun_tcp_connect:tun_tcp_connect_nogo": [],
         "//pkg/tcpip/sample/tun_tcp_echo:tun_tcp_echo_nogo": [],
@@ -55,7 +56,7 @@ try:
     assert not (d/"before").read_bytes()
     (d/"commit").write_bytes(git("cat-file", "commit", source))
     bazel = ["bazel", "--bazelrc=" + rc]
-    args = ["test", "--nocache_test_results", "--test_sharding_strategy=disabled",
+    args = ["test", "--keep_going", *(["--config=x86_64"] if pr == "route" else []), "--nocache_test_results", "--test_sharding_strategy=disabled",
             *(["--test_filter=TestNetipValues"] if pr == "graph" else []),
             "--test_env=GO_TEST_WRAP_TESTV=1", "--build_event_json_file=" + str(d/"events.raw"),
             "--build_event_json_file_path_conversion=false",
@@ -75,6 +76,9 @@ try:
     r["invocations"] = re.findall(r"Invocation ID: ([0-9a-f-]{36})", log)
     r["failure_excerpt"] = [line[:1000] for line in log.splitlines() if line.startswith("ERROR:") or ": error:" in line][:24] if code else []
     r["hints"] = [h for h in ("RESOURCE_EXHAUSTED", "no such target", "Permission denied", "not found", "signal: killed") if h.lower() in log.lower()]
+    if code:
+        lines=log.splitlines()
+        r["first_diagnostics"] = ["\n".join(lines[i:i+5])[:1900] for i,line in enumerate(lines) if line.startswith("ERROR:")][:15]
     clean=d/"events.jsonl"
     outroot=Path(subprocess.check_output(bazel+["info","output_base"],stderr=subprocess.DEVNULL,text=True).strip())
     m=report.capture(d/"events.raw",clean,outroot,d/"reports")

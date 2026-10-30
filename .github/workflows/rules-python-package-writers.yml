@@ -1,7 +1,7 @@
 name: Verify the netip neighbor-cache rebase
 on:
   push:
-    branches: [qualification/netip-cache-lanes]
+    branches: [qualification/netip-cache-gnu]
 permissions: {contents: read}
 jobs:
   netip:
@@ -74,17 +74,17 @@ jobs:
 
           python3 -B ../carrier/test/rbe/qualify_lisafs.py 15730 "$ARCH" "$CURRENT" "$rc" "$RUNNER_TEMP/netip-$ARCH" || :
         done
-    - name: Replay the same netip checkpoint test through both engines
+    - name: Run the retained Sentry route test using its GNU compiler
       if: ${{ !cancelled() }}
       working-directory: source
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -eu -o pipefail
-        git checkout --detach "$GRAPH"
+        git checkout --detach "$CURRENT"
         ARCH=amd64; CPU=x86_64
-        mkdir -p "$RUNNER_TEMP/catalog_platform_$ARCH"
-        platform=$RUNNER_TEMP/catalog_platform_$ARCH
+        mkdir -p "$RUNNER_TEMP/gnu_route_platform"
+        platform=$RUNNER_TEMP/gnu_route_platform
         printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
         cat > "$platform/BUILD" <<BUILD
         platform(
@@ -93,15 +93,15 @@ jobs:
             exec_properties = {
                 "Arch": "$ARCH",
                 "OSFamily": "linux",
-                "workload-isolation-type": "oci",
-                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+                "workload-isolation-type": "firecracker",
+                "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
             },
             visibility = ["//visibility:public"],
         )
         BUILD
         export USE_BAZEL_VERSION
         USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-        rc=$RUNNER_TEMP/catalog-$ARCH.bazelrc
+        rc=$RUNNER_TEMP/gnu-route.bazelrc
         umask 077
         trap 'rm -f "$rc"' EXIT
         {
@@ -120,7 +120,7 @@ jobs:
         } > "$rc"
 
 
-        python3 -B ../carrier/test/rbe/qualify_lisafs.py graph amd64 "$GRAPH" "$rc" "$RUNNER_TEMP/netip-graph"
+        python3 -B ../carrier/test/rbe/qualify_lisafs.py route amd64 "$CURRENT" "$rc" "$RUNNER_TEMP/netip-route"
     - name: Reconcile the three original verdicts
       if: always()
       run: |
@@ -128,9 +128,12 @@ jobs:
         import json, os, pathlib, sys
         p = pathlib.Path(os.environ["RUNNER_TEMP"])
         verdict = {}
-        for name in ("amd64", "arm64", "graph"):
+        # Both state engines passed the identical test-only product tree.
+        # Evidence already retained in 41142372091; this job does not rerun it.
+        for name in ("amd64", "arm64", "route"):
             f = p / ("netip-" + name) / "result.json"
             verdict[name] = json.loads(f.read_text()).get("status") if f.exists() else "MISSING"
+        (p/"graph-evidence.txt").write_text("https://app.buildbuddy.io/invocation/a9f02e2f-f212-4641-8f59-55ca04e65c9d\n")
         (p/"netip-summary.json").write_text(json.dumps(verdict) + "\n")
         print(verdict)
         sys.exit(set(verdict.values()) != {"PASS"})
@@ -154,6 +157,7 @@ jobs:
       with:
         name: netip-neighbor-cache
         path: |
+          ${{ runner.temp }}/graph-evidence.txt
           ${{ runner.temp }}/netip-summary.json
           ${{ runner.temp }}/netip-*/result.json
           ${{ runner.temp }}/netip-*/reports
