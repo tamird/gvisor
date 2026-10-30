@@ -51,18 +51,22 @@ type SACKScoreboard struct {
 	//    of the network, the path MTU discovery [RFC1191, RFC4821] algorithm,
 	//    RMSS (see next item), or other factors.  The size does not include
 	//    the TCP/IP headers and options.
-	smss      uint16
-	maxSACKED seqnum.Value
-	sacked    seqnum.Size                     `state:"nosave"`
-	ranges    *btree.BTreeG[header.SACKBlock] `state:"nosave"`
+	smss uint16
+	// initialMSS bounds the wire units that may remain in the queue
+	// after a path MTU reduction. The sender never raises its MSS.
+	initialMSS uint16
+	maxSACKED  seqnum.Value
+	sacked     seqnum.Size                     `state:"nosave"`
+	ranges     *btree.BTreeG[header.SACKBlock] `state:"nosave"`
 }
 
 // NewSACKScoreboard returns a new SACK Scoreboard.
 func NewSACKScoreboard(smss uint16, iss seqnum.Value) *SACKScoreboard {
 	return &SACKScoreboard{
-		smss:      smss,
-		ranges:    btree.NewG[header.SACKBlock](defaultBtreeDegree, sackBlockLess),
-		maxSACKED: iss,
+		smss:       smss,
+		initialMSS: smss,
+		ranges:     btree.NewG[header.SACKBlock](defaultBtreeDegree, sackBlockLess),
+		maxSACKED:  iss,
 	}
 }
 
@@ -72,10 +76,11 @@ func (s *SACKScoreboard) Reset() {
 	s.sacked = 0
 }
 
-// Insert inserts/merges the provided SACKBlock into the scoreboard.
-func (s *SACKScoreboard) Insert(r header.SACKBlock) {
+// Insert merges r with the scoreboard and returns the resulting range.
+// The empty range means the scoreboard was full.
+func (s *SACKScoreboard) Insert(r header.SACKBlock) header.SACKBlock {
 	if s.ranges.Len() >= maxSACKBlocks {
-		return
+		return header.SACKBlock{}
 	}
 
 	// Check if we can merge the new range with a range before or after it.
@@ -143,6 +148,13 @@ func (s *SACKScoreboard) Insert(r header.SACKBlock) {
 	if !replaced {
 		s.sacked += r.Start.Size(r.End)
 	}
+	return r
+}
+
+// creditEnd bounds the part of an existing SACK range that newly received
+// bytes can complete. No wire unit ends more than one MSS after those bytes.
+func (s *SACKScoreboard) creditEnd(end, mergedEnd seqnum.Value) seqnum.Value {
+	return end.Add(min(end.Size(mergedEnd), seqnum.Size(s.initialMSS)-1))
 }
 
 // IsSACKED returns true if the a given range of sequence numbers denoted by r

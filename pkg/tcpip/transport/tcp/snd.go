@@ -1375,6 +1375,22 @@ func (s *sender) updateSACKCredit(seg *segment, known header.SACKBlock) {
 	seg.sackCredit = uint32(n)
 }
 
+// recordSACK updates packet ownership and, for a fully reported queue entry,
+// supplies the acknowledgment to RACK only once.
+//
+// +checklocks:s.ep.mu
+func (s *sender) recordSACK(seg, rcvd *segment, info header.SACKBlock) {
+	s.updateSACKCredit(seg, info)
+	if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 && !seg.acked && seg.sackCredit != 0 {
+		span := seg.sackBlock()
+		if info.Contains(span) || s.ep.scoreboard.IsSACKED(span) {
+			s.rc.update(seg, rcvd)
+			s.rc.detectReorder(seg)
+			seg.acked = true
+		}
+	}
+}
+
 // Iterate the writeList and update RACK for each segment which is newly acked
 // either cumulatively or selectively. Loop through the segments which are
 // sacked, and update the RACK related variables and check for reordering.
@@ -1417,29 +1433,12 @@ func (s *sender) walkSACK(rcvdSeg *segment, sackBlocks []header.SACKBlock) bool 
 			}
 			seg = next
 		}
-		for seg != nil && seg.xmitCount != 0 {
-			span := seg.sackBlock()
-			p := seg.sackPackets()
-			if !span.Start.LessThan(sb.End) && !p.block.Start.LessThan(sb.End) {
-				break
+		for seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(sb.End) {
+			end := seg.sackBlock().End
+			if sb.Start.LessThan(end) {
+				s.recordSACK(seg, rcvdSeg, sb)
 			}
-			if sb.Start.LessThan(span.End) {
-				s.updateSACKCredit(seg, sb)
-				if rack && !seg.acked && seg.sackCredit != 0 && (sb.Contains(span) || s.ep.scoreboard.IsSACKED(span)) {
-					s.rc.update(seg, rcvdSeg)
-					s.rc.detectReorder(seg)
-					seg.acked = true
-				}
-			}
-			if sb.End.LessThan(span.End) {
-				// Keep the cursor here for the next block; finish any unit
-				// extending into entries beyond this purely logical cut.
-				for next := seg.Next(); next != nil && next.xmitCount != 0; next = next.Next() {
-					if !next.sackPackets().block.Start.LessThan(sb.End) {
-						break
-					}
-					s.updateSACKCredit(next, sb)
-				}
+			if sb.End.LessThan(end) {
 				break
 			}
 			seg = seg.Next()
@@ -1622,8 +1621,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// indicate spurious retransmissions.
 			if rcvdSeg.ackNumber.LessThan(sb.Start) && s.SndUna.LessThan(sb.Start) && sb.Start.LessThan(sb.End) && sb.End.LessThanEq(s.SndNxt) && !s.ep.scoreboard.IsSACKED(sb) {
 				old := s.ep.scoreboard.Sacked()
-				s.ep.scoreboard.Insert(sb)
+				merged := s.ep.scoreboard.Insert(sb)
 				if s.ep.scoreboard.Sacked() != old {
+					// When new bytes bridge a previously reported suffix, the
+					// packet they complete may end in a later queue entry.
+					sb.End = s.ep.scoreboard.creditEnd(sb.End, merged.End)
 					newBlocks = append(newBlocks, sb)
 				}
 				rcvdSeg.hasNewSACKInfo = true
@@ -1773,13 +1775,19 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// Clear SACK information for all acked data.
 		s.ep.scoreboard.Delete(s.SndUna)
 		if head := s.writeList.Front(); head != nil && s.ep.SACKPermitted && (head.sackCredit != 0 || !s.ep.scoreboard.Empty()) {
-			// An ACK ending at a queue split can complete the prefix of a
-			// packet whose final byte is owned by a surviving entry.
-			for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-				if s.SndUna.LessThan(seg.sackPackets().block.Start) {
+			// Trimming the head may remove credit. If the first SACK range
+			// starts at UNA, the acknowledged prefix can also complete a
+			// packet whose final byte belongs to a subsequent queue entry.
+			info, ok := s.ep.scoreboard.ranges.Get(header.SACKBlock{Start: s.SndUna})
+			end := s.SndUna
+			if ok {
+				end = s.ep.scoreboard.creditEnd(s.SndUna, info.End)
+			}
+			for seg := head; seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+				if seg != head && !seg.sequenceNumber.LessThan(end) {
 					break
 				}
-				s.updateSACKCredit(seg, header.SACKBlock{})
+				s.recordSACK(seg, rcvdSeg, info)
 			}
 		}
 
