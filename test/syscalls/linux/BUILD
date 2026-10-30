@@ -5685,3 +5685,16 @@ cc_binary(
         "@com_google_absl//absl/time",
     ],
 )
+
+cc_binary(
+    name = "vfio_pci_device_test",
+    testonly = 1,
+    srcs = ["vfio_pci_device.cc"],
+    linkopts = ["-static"],
+    linkstatic = 1,
+    deps = select_gtest() + [
+        "//test/util:file_descriptor",
+        "//test/util:test_main",
+        "//test/util:test_util",
+    ],
+)

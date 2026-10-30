@@ -15,7 +15,7 @@
 load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "bzl_library")
-load(":defs.bzl", "tcg_image")
+load(":defs.bzl", "amd64_kvm_test", "tcg_image")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -114,6 +114,8 @@ tcg_image(
     kernel_modules = [
         "9p",
         "9pnet_virtio",
+        "vfio-pci",
+        "vfio_iommu_type1",
         "overlay",
         "kvm_intel",
         "kvm_amd",
@@ -132,4 +134,11 @@ bzl_library(
         "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
     ],
+)
+
+amd64_kvm_test(
+    name = "vfio_linux_test",
+    image = ":amd64_rc_guest",
+    payload = "//test/syscalls/linux:vfio_pci_device_test",
+    tags = [],
 )

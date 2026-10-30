@@ -37,7 +37,11 @@ case "$machine" in
     # The RC guest must retain VMX/SVM so the payload can run gVisor's KVM
     # platform. Never fall back to emulation if this host cannot provide it.
     # https://docs.kernel.org/virt/kvm/x86/running-nested-guests.html
-    machine_options=(-machine pc-i440fx-6.2 -cpu host -accel kvm)
+    machine_options=(-machine pc-q35-6.2,kernel-irqchip=split -cpu host -accel kvm
+      -device intel-iommu,intremap=on,caching-mode=on
+      -device pcie-root-port,id=vfioport,bus=pcie.0,addr=1e.0,chassis=31
+      -netdev hubport,id=vfiohub,hubid=17
+      -device e1000e,bus=vfioport,addr=0.0,netdev=vfiohub,romfile=)
     console=ttyS0
     ;;
   *) printf 'Unsupported guest machine: %s\n' "$machine" >&2; exit 1 ;;
@@ -142,7 +146,7 @@ QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "${machine_options[@]}" \
   -smp 2 -m 3072 -nic none -L "$host/usr/share/qemu" \
   -kernel "$kernel" -initrd "$initramfs" \
-  -append "console=$console rdinit=/init panic=-1" \
+  -append "console=$console rdinit=/init panic=-1 intel_iommu=on" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \
   -drive "file=$scratch/scratch.ext4,format=raw,if=none,id=scratch" \
   -device virtio-blk-pci,drive=scratch \

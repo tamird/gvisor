@@ -1,150 +1,73 @@
-name: CI
-
-"on":
+name: Check native VFIO PCI descriptor in a private KVM guest
+on:
   push:
-    branches:
-      - "*"
-  workflow_dispatch:
-    inputs:
-      lanes:
-        description: Space-separated qualification lanes
-        type: string
-        default: smoke
-        required: true
-      architecture:
-        description: Target architecture selection
-        type: choice
-        options: [amd64, arm64, all]
-        default: amd64
-      execution:
-        description: Run tests on BuildBuddy or this Actions runner
-        type: choice
-        options: [remote, local]
-        default: remote
-      syscall_bucket:
-        description: Optional hash15 bucket (0..14) for local syscall lanes
-        type: string
-      benchmark_target:
-        description: Optional individual target from the continuous benchmark suite
-        type: string
-      header_base:
-        description: Full comparison commit SHA for license-headers
-        type: string
-      cos_catalog_gzip_base64:
-        description: Gzip/base64-encoded complete gcloud COS image catalog
-        type: string
-      cos_catalog_sha256:
-        description: SHA256 of the uncompressed COS catalog
-        type: string
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}
-  cancel-in-progress: true
-
+    branches: [qualification/vfio-private-guest]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid' && github.ref != 'refs/heads/qualification/guest-lanes-current'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-          name: runsc
-          path: bin/runsc
-
-  remote-qualification:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation' || github.ref == 'refs/heads/qualification/moby-public-lane' || github.ref == 'refs/heads/qualification/kvm-public-lane' || github.ref == 'refs/heads/qualification/php-8-5-full-actions' || github.ref == 'refs/heads/qualification/go-1-27-1-canonical' || github.ref == 'refs/heads/qualification/guest-lanes-current') && github.event_name == 'workflow_dispatch'))
-    runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/vfio-private-guest'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
     env:
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution }}
-      QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
-      QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
-      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
-      QUALIFICATION_BENCHMARK_TARGET: ${{ inputs.benchmark_target }}
-      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
-      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
-      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      OSTOCK: 1d9c89c688bc2e03dc54a8313167bc6fc7cef76d
+      OFIXED: 4b155ef913179b993b8fbb6d57fb5b38f3dbc2db
     steps:
-    - name: Check the Remote Bazel credential
-      shell: bash
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: ': "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"'
-
-    - name: Checkout the triggering commit
-      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        ref: ${{ github.sha }}
+        fetch-depth: 2
         persist-credentials: false
-
-    - name: Download the pinned BuildBuddy CLI
-      if: inputs.execution != 'local'
-      shell: bash
+    - name: Prepare native Linux coordinator
       run: |
-        curl --fail --silent --show-error --location --max-time 120 \
-          https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 \
-          --output "$RUNNER_TEMP/bb"
-        printf '%s  %s\n' \
-          f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb \
-          "$RUNNER_TEMP/bb" | sha256sum --check --strict
-        chmod +x "$RUNNER_TEMP/bb"
-
-    - name: Qualify on Remote Bazel
-      if: inputs.execution != 'local'
-      shell: bash
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records"
+        uname -a | tee "$RUNNER_TEMP/records/host-kernel"
+        test -c /dev/kvm && sudo test -r /dev/kvm && sudo test -w /dev/kvm
+        git rev-parse HEAD > "$RUNNER_TEMP/records/source"
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        GIT_REPO_DEFAULT_BRANCH: master
-        REMOTE_TIMEOUT: ${{ github.event_name == 'workflow_dispatch' && '45m' || '15m' }}
       run: |
-        exec "$RUNNER_TEMP/bb" remote \
-          --run_from_commit="$GITHUB_SHA" \
-          --os=linux --arch=amd64 \
-          --runner_exec_properties=EstimatedCPU=4 \
-          --runner_exec_properties=EstimatedMemory=16GB \
-          --runner_exec_properties=EstimatedFreeDiskBytes=40GB \
-          --env="QUALIFICATION_COMMIT=$GITHUB_SHA" \
-          --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
-          --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
-          --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
-          --env="QUALIFICATION_BENCHMARK_TARGET=$QUALIFICATION_BENCHMARK_TARGET" \
-          --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
-          --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
-          --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
-          --timeout="$REMOTE_TIMEOUT" --disable_retry \
-          --script='bash test/rbe/actions.sh'
-
-    - name: Compile on RBE and test on Actions
-      if: inputs.execution == 'local'
-      timeout-minutes: ${{ inputs.lanes == 'syscalls-rc' && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
-      shell: bash
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: bash test/rbe/actions.sh
-
-    - name: Retain local test placement and host facts
-      if: always() && inputs.execution == 'local'
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run --device=/dev/kvm -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Run the actual file descriptor test
+      run: |
+        set -euo pipefail
+        out="$RUNNER_TEMP/records"
+        target=//test/rbe/tcg:vfio_linux_test
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nocache_test_results --test_output=all --test_timeout=480 "$target" >"$RUNNER_TEMP/abi.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/bazel-exit"
+        grep -E 'INFO: Invocation ID:|ERROR:|FAILED|::|fail|VFIO|vfio|Error|Cannot|curl|qemu|wget|tcg|Build (did NOT complete|completed)' "$RUNNER_TEMP/abi.log" | tail -80 >"$out/bazel-receipt" || :
+        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt; do
+          name=${path##*/}
+          docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_linux_test/$path" | tail -150 >"$out/$name" || :
+        done
+        test "$rc" = 0
+        grep -q 'Native VFIO driver=' "$out/vfio-device.txt"
+        grep -q 'VfioPCIDeviceTest.Readiness' "$out/console.log"
+        grep -Fq '[       OK ] VfioPCIDeviceTest.Readiness' "$out/console.log"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-        name: qualification-${{ inputs.architecture }}
-        path: ${{ runner.temp }}/qualification
+        name: private-vfio-pci
+        path: ${{ runner.temp }}/records
         if-no-files-found: error

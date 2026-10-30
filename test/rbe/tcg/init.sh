@@ -52,20 +52,29 @@ page_size="$(getconf PAGESIZE)"
 printf 'Guest page size: %s\n' "$page_size" | tee /result/page-size.txt
 [[ "$page_size" == "${expected_page_size:?}" ]]
 if [[ "${expected_architecture:?}" == amd64 ]]; then
-  # Host KVM access alone does not prove the CPU exposes virtualization to this
-  # extra guest layer. Require the vendor module and device before the payload.
-  flags=
-  while read -r key colon flags; do
-    [[ "$key" == flags && "$colon" == : ]] && break
-  done < /proc/cpuinfo
-  case " $flags " in
-    *" vmx "*) module=kvm_intel ;;
-    *" svm "*) module=kvm_amd ;;
-    *) echo 'The guest CPU does not expose VMX or SVM.'; exit 1 ;;
-  esac
-  modprobe "$module"
-  [[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]]
-  printf 'Guest KVM module: %s\n' "$module" | tee /result/kvm.txt
+  # Bind only the synthetic NIC behind this guest's private root port.
+  printf 'PCI devices and IOMMU groups before binding:\n'
+  ls -l /sys/kernel/iommu_groups/*/devices/ || :
+  modprobe vfio-pci
+  modprobe vfio_iommu_type1
+  devices=()
+  for d in /sys/bus/pci/devices/*; do
+    if [[ $(cat "$d/vendor") == 0x8086 && $(cat "$d/device") == 0x10d3 ]]; then devices+=("$d"); fi
+  done
+  [[ ${#devices[@]} == 1 ]]
+  target=${devices[0]}
+  export TEST_VFIO_DEVICE=${target##*/}
+  group=$(readlink -f "$target/iommu_group")
+  [[ -d $group ]]
+  peers=("$group"/devices/*)
+  [[ ${#peers[@]} == 1 && ${peers[0]##*/} == "$TEST_VFIO_DEVICE" ]]
+  echo vfio-pci > "$target/driver_override"
+  if [[ -e "$target/driver/unbind" ]]; then echo "$TEST_VFIO_DEVICE" > "$target/driver/unbind"; fi
+  echo "$TEST_VFIO_DEVICE" > /sys/bus/pci/drivers_probe
+  [[ $(basename "$(readlink -f "$target/driver")") == vfio-pci ]]
+  export TEST_VFIO_GROUP=/dev/vfio/${group##*/}
+  [[ -c "$TEST_VFIO_GROUP" && -c /dev/vfio/vfio ]]
+  printf 'Native VFIO driver=%s device=%s group=%s\n' "$(readlink "$target/driver")" "$TEST_VFIO_DEVICE" "$TEST_VFIO_GROUP" | tee /result/vfio-device.txt
 fi
 mount -t ext4 /dev/vda /work
 mkdir -p /work/payload /work/tmp
