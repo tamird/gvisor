@@ -25,6 +25,26 @@ for a in d.get('action',[]):
             report.setdefault('missing',[]).append(desc)
             continue
         n=int(m[2])
+        if f['name'].rsplit('/',1)[-1]=='test.log' and n==109316683:
+            rq=urllib.request.Request('https://app.buildbuddy.io/api/v1/GetFile',data=json.dumps({'uri':f['uri']}).encode(),headers={'Content-Type':'application/json','x-buildbuddy-api-key':os.environ['BUILDBUDDY_API_KEY']})
+            digest=hashlib.sha256();size=0;rest=b'';selected=[];errors=[];cases=[];counts={}
+            with urllib.request.urlopen(rq,timeout=90) as response:
+                while chunk:=response.read(1<<17):
+                    digest.update(chunk);size+=len(chunk)
+                    if size>n:raise ValueError('oversize blob')
+                    rows=(rest+chunk).split(b'\n');rest=rows.pop()[:16384]
+                    for row in rows:
+                        line=row[:4096].decode(errors='replace')
+                        hit=safe(line)
+                        if not hit:continue
+                        if re.search('(?i)race|fatal|panic|error:|checkptr|SIG[A-Z]+:|runtime error',hit):
+                            if hit not in errors and len(errors)<24:errors.append(hit)
+                        elif '=== RUN' in hit or '--- PASS' in hit or '--- FAIL' in hit:
+                            if hit not in cases and len(cases)<24:cases.append(hit)
+                        elif hit not in selected and len(selected)<24:selected.append(hit)
+            if size!=n or digest.hexdigest()!=m[1]:raise ValueError('different original test.log')
+            report['files'].append({'name':'test.log','bytes':size,'sha256':m[1],'errors':errors,'cases':cases,'other':selected})
+            continue
         if not 0<n<=16<<20:
             report.setdefault('missing',[]).append(desc);continue
         raw=read('GetFile',{'uri':f['uri']},n)
