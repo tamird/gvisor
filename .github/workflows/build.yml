@@ -1,35 +1,85 @@
-name: CI
-
-"on":
+name: Compare TUN read payload faults
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tun-payload-fault]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tun-payload-fault'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PROBE: 968753c08270abb75b0db08ed75b24a1a0050344
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$PROBE"
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Observe both layouts on stock and native Linux
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$PROBE"
+        out="$RUNNER_TEMP/tun-payload"; mkdir -p "$out"
+        git rev-parse HEAD HEAD^ > "$out/source"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --keep_going --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=300 --test_sharding_strategy=disabled '--test_env=GTEST_FILTER=TuntapTest.PayloadFault*' //test/syscalls:tuntap_test_runsc_systrap_directfs //test/syscalls:tuntap_test_native > "$RUNNER_TEMP/probe-bazel.log" 2>&1 || rc=$?
+        echo "$rc" > "$out/exit"
+        grep -A3 -E 'INFO: Invocation ID:|ERROR:|error:|failed to|Build (did NOT complete|completed)| FAILED| PASSED|FAIL:' "$RUNNER_TEMP/probe-bazel.log" | tail -65 > "$out/bazel.receipt" || :
+        for t in tuntap_test_native tuntap_test_runsc_systrap_directfs; do
+          docker exec overlay-guest cat "bazel-testlogs/test/syscalls/$t/test.log" | grep -E 'TUN_PAYLOAD_OBS|TuntapTest[.]PayloadFault|tuntap.cc:[0-9]+|Value of:|Which is:|Expected:|Actual:|skipped|Failed|Success' > "$out/$t.receipt" || :
+        done
+        for t in tuntap_test_native tuntap_test_runsc_systrap_directfs; do
+          receipt="$out/$t.receipt"
+          grep -Eq '\[ *OK *\] TuntapTest.PayloadFaultPI' "$receipt"
+          grep -Eq '\[ *OK *\] TuntapTest.PayloadFaultNoPI' "$receipt"
+          test "$(grep -cF 'TUN_PAYLOAD_OBS ' "$receipt")" = 2
+        done
+        test "$rc" = 0
+    - name: Exclude credentials from receipts
+      if: always()
+      env:
+        KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'VERIFY'
+        from pathlib import Path
+        import os
+        key=os.environ['KEY'].encode()
+        for f in (Path(os.environ['RUNNER_TEMP'])/'tun-payload').glob('*'):
+            if f.is_file() and key and key in (b:=f.read_bytes()):
+                f.write_bytes(b.replace(key,b'[REDACTED]'))
+        VERIFY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: tun-payload-fault
+        path: ${{ runner.temp }}/tun-payload/
+        if-no-files-found: error
