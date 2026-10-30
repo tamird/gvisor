@@ -116,20 +116,8 @@ func (r *Route) WithMulticastLoop(enabled bool) *Route {
 		return r
 	}
 
-	info := r.routeInfo
-	info.Loop ^= PacketLoop
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return &Route{
-		routeInfo:            info,
-		localAddressNIC:      r.localAddressNIC,
-		localAddressEndpoint: r.localAddressEndpoint,
-		remoteLinkAddress:    r.remoteLinkAddress,
-		outgoingNIC:          r.outgoingNIC,
-		linkRes:              r.linkRes,
-		neighborEntry:        r.neighborEntry,
-		mtu:                  r.mtu,
-	}
+	r.routeInfo.Loop ^= PacketLoop
+	return r
 }
 
 // OutgoingNIC returns the route's outgoing NIC.
