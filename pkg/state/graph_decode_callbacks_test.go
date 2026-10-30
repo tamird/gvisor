@@ -408,3 +408,35 @@ func TestGraphDecodeValueIntegerOverflow(t *testing.T) {
 		}
 	}
 }
+
+func TestGraphZeroSizeCapacityObservation(t *testing.T) {
+	for _, c := range []int{7, 1 << 40, 1<<40 + 1} {
+		saved := make([]struct{}, 0, c)
+		var buf bytes.Buffer
+		if _, err := saveGraph(t.Context(), &buf, &saved); err != nil {
+			t.Fatalf("saveGraph(cap=%d): %v", c, err)
+		}
+		n := buf.Len()
+		if n > 4096 {
+			t.Fatalf("empty slice produced %d checkpoint bytes", n)
+		}
+		wr := wire.Reader{Reader: &buf}
+		hdr, err := ReadHeaderMode(&wr)
+		if err != nil || !hdr.Graph || !hdr.Object {
+			t.Fatalf("cap=%d: header=%+v, err=%v", c, hdr, err)
+		}
+		var loaded []struct{}
+		_, err = loadGraph(t.Context(), &buf, &loaded, hdr.Length, 0)
+		if err != nil {
+			if c <= 1<<40 || !strings.Contains(err.Error(), fmt.Sprintf("invalid slice capacity %d", c)) {
+				t.Fatalf("cap=%d: %v", c, err)
+			}
+			t.Logf("CAPACITY %d BYTES %d RESULT rejected-capacity", c, n)
+			continue
+		}
+		if loaded == nil || len(loaded) != 0 || cap(loaded) != c {
+			t.Fatalf("cap=%d: restored nil=%t len=%d cap=%d", c, loaded == nil, len(loaded), cap(loaded))
+		}
+		t.Logf("CAPACITY %d BYTES %d RESULT round-trip", c, n)
+	}
+}

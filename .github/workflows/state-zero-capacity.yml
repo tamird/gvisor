@@ -1,0 +1,69 @@
+name: Observe zero-sized checkpoint slice capacity
+on:
+  push:
+    branches: [qualification/state-zero-capacity]
+permissions: {contents: read}
+jobs:
+  probe:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Exercise the graph checkpoint round trip on Linux
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = fbef70ac697e0b4c622daf548a0101b57c388894
+        test "$(git diff --name-only HEAD^ HEAD -- pkg/state)" = pkg/state/graph_decode_callbacks_test.go
+        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/focused"
+        platform=$RUNNER_TEMP/focused_platform
+        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/focused.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=focused_platform=$platform" \
+            'build --host_platform=@focused_platform//:ubuntu' \
+            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        code=0
+        bazelisk --bazelrc="$rc" test --config=x86_64 --test_filter='^TestGraphZeroSizeCapacityObservation$' --test_arg=-test.v \
+          --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' \
+          --nocache_test_results --build_event_json_file="$RUNNER_TEMP/probe-events.jsonl" //pkg/state:state_test || code=$?
+        date -u +'%Y-%m-%dT%H:%M:%S.%NZ' > "$RUNNER_TEMP/end"
+        python3 -B .github/qualification/state-capacity.py "$code"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: state-zero-capacity
+        path: ${{ runner.temp }}/probe-result.json
+        if-no-files-found: error
