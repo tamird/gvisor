@@ -1,4 +1,4 @@
-name: Check the existing Jekyll site
+name: Check the complete existing Jekyll site with its cross compiler
 on:
   push:
     branches: [qualification/website-jekyll-source]
@@ -8,25 +8,22 @@ jobs:
   site:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 58
+    timeout-minutes: 86
     env:
       IMAGE: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/jekyll_x86_64@sha256:97528c5497adaa2a507596d74cf89103aff46d44939ba4e3a93fd8aadec2f76e
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Fetch the actual released site generator
+      - name: Supply the same GNU cross compiler required by the stock syscall table
         run: |
-          mkdir "$RUNNER_TEMP/website"
-          docker pull "$IMAGE"
-          docker tag "$IMAGE" gvisor.dev/images/jekyll
-      - name: Identify the Ruby, gems and JavaScript used by the original build
+          sudo apt-get -qq update
+          sudo apt-get -qq install --no-install-recommends gcc-aarch64-linux-gnu
+          /usr/bin/aarch64-linux-gnu-gcc --version | head -1
+      - name: Observe which gem versions the unmodified renderer and proofer activate
         run: |
-          docker run --rm --network none --entrypoint ruby "$IMAGE" -rjson -rjekyll -rexecjs -e '
-            puts JSON.pretty_generate({
-              ruby: RUBY_DESCRIPTION,
-              jekyll: Jekyll::VERSION,
-              javascript: ExecJS.runtime.name,
-              gems: Gem::Specification.map { |s| [s.name, s.version.to_s, s.platform.to_s] }.sort,
-            })' > "$RUNNER_TEMP/website/generator.json"
+          mkdir "$RUNNER_TEMP/website" "$RUNNER_TEMP/website-probe"
+          cp test/rbe/website-jekyll/gem_activation.rb "$RUNNER_TEMP/website-probe"
+          printf 'FROM %s\nCOPY gem_activation.rb /gem_activation.rb\nENV RUBYOPT=-r/gem_activation.rb\n' "$IMAGE" > "$RUNNER_TEMP/website-probe/Dockerfile"
+          docker build --network none -t gvisor.dev/images/jekyll "$RUNNER_TEMP/website-probe"
       - name: Build the existing complete website through Bazel
         if: ${{ !cancelled() }}
         run: |
@@ -37,12 +34,16 @@ jobs:
         run: |
           test -s bazel-bin/website/files.tgz
           python3 test/rbe/website-jekyll/inspect.py bazel-bin/website/files.tgz "$RUNNER_TEMP/website/"
+      - name: Save activated versions independently of the overall verdict
+        if: always()
+        run: |
+          python3 test/rbe/website-jekyll/gem_activation.py "$RUNNER_TEMP/website"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: website-baseline
+          name: website-cross-reference
           path: |
-            ${{ runner.temp }}/website/generator.json
+            ${{ runner.temp }}/website/activation.json
             ${{ runner.temp }}/website/site-files.json
             ${{ runner.temp }}/website/bazel.log
           if-no-files-found: error
