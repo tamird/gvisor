@@ -14,6 +14,7 @@
 
 load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "bzl_library")
 load(":defs.bzl", "amd64_kvm_test", "tcg_image")
 
@@ -140,5 +141,26 @@ amd64_kvm_test(
     name = "vfio_linux_test",
     image = ":amd64_rc_guest",
     payload = "//test/syscalls/linux:vfio_pci_device_test",
+    tags = [],
+)
+
+sh_test(
+    name = "vfio_arm",
+    srcs = ["vfio_arm.sh"],
+    data = [
+        "vfio_stock/runsc",
+        "vfio_stock/gvisor-bin/gvisor_sentry",
+        "vfio_stock/gvisor-bin/checkpointgofer",
+        "vfio_fixed/runsc",
+        "vfio_fixed/gvisor-bin/gvisor_sentry",
+        "vfio_fixed/gvisor-bin/checkpointgofer",
+        "//test/syscalls/linux:vfio_pci_device_test",
+    ],
+)
+
+amd64_kvm_test(
+    name = "vfio_comparison_test",
+    image = ":amd64_rc_guest",
+    payload = ":vfio_arm",
     tags = [],
 )
