@@ -149,7 +149,44 @@ from qualification_report import compact_records,spawn_output_files,input_chain
 import xml.etree.ElementTree as ET
 expected_image="docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
 expected_cases={"TestEventFD","TestEventFDStat"};report={"source":SOURCE,"target":target,"entrypoint":"bazel test","lock":LOCK,"image":expected_image,"coordinator":inventory}
-for arm,command,targets in [("native","test",["--incompatible_use_native_posix_test_wrapper","--nocache_test_results","--features=fully_static_link","--nobuild_event_json_file_path_conversion",target])]:
+# The original GoLink action identified these bytes before the two named cases
+# passed in the direct control. Register that same binary as a normal Bazel test
+# under its own label to isolate TestRunner from rules_go's exec bootstrap.
+from urllib.request import Request,urlopen
+size=15650173
+sha="fafbd241b210501d85956bb0354d3226c79b7f1f681696898f975868692cab02"
+uri=f"bytestream://remote.buildbuddy.io/blobs/{sha}/{size}"
+req=Request("https://app.buildbuddy.io/api/v1/GetFile",json.dumps({"uri":uri}).encode(),{"x-buildbuddy-api-key":secret,"Content-Type":"application/json"})
+with urlopen(req,timeout=90) as reply:data=reply.read(size+1)
+assert len(data)==size and digest(data)==sha and data[:4]==b"\x7fELF" and int.from_bytes(data[18:20],"little")==183
+pkg=work/"test/rbe/native_xml_eventfd";pkg.mkdir(parents=True)
+binary=pkg/"eventfd_test";binary.write_bytes(data);binary.chmod(0o755)
+(pkg/"defs.bzl").write_text('''def _impl(ctx):
+    out = ctx.outputs.executable
+    ctx.actions.symlink(output=out, target_file=ctx.file.binary, is_executable=True)
+    return [DefaultInfo(executable=out, runfiles=ctx.runfiles(files=[ctx.file.binary])),
+            RunEnvironmentInfo(environment={"GO_TEST_WRAP_TESTV":"1"})]
+retained_test = rule(test=True, implementation=_impl, attrs={"binary":attr.label(allow_single_file=True)})
+''')
+(pkg/"BUILD.bazel").write_text('load(":defs.bzl","retained_test")\nretained_test(name="original_eventfd_test",binary="eventfd_test")\n')
+target="//test/rbe/native_xml_eventfd:original_eventfd_test"
+control="//pkg/sentry/fsimpl/eventfd:eventfd_test"
+report.update(target=target,original_go_target=control,original_link_action="639eb8dcc2020bf9d1302523b48fed269638132ee35d09fab75c2c046ab46afc",original_elf={"sha256":sha,"bytes":size,"machine":183})
+# cquery does not run the package's failing bootstrap again. It records the
+# actual exec-configuration flag and shell provider from the first failed run.
+query=client_prefix+["cquery"]+common+[
+    "--toolchain_resolution_debug=.*shell.*toolchain_type",
+    "kind('go_tool_binary rule', deps("+control+"))",
+    "--output=starlark","--starlark:expr=str(target.label) + ' ' + str(build_options(target).get('@@rules_go+//go/config:experimental_use_sh_toolchain'))"]
+r=subprocess.run(query,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=850)
+txt=redact(r.stdout.decode(errors="replace"))
+(evidence/"go-configuration.log").write_text("\n".join(x for x in txt.splitlines() if ("go/config:experimental_use_sh_toolchain" in x or "linux_arm64_ash" in x or "linux_amd64_ash" in x or "go_tool_binary" in x or ("builder " in x and "@@" in x) or "ERROR:" in x))[-48000:])
+bfiles=list((base/"output").glob("*/external/rules_go+/go/private/rules/binary.bzl"))
+if len(bfiles)==1:
+ rules_text=bfiles[0].read_text()
+ report["consumer_bootstrap_provider"]={"source_sha256":digest(bfiles[0].read_bytes()),"has_declared_interpreter_branch":"if setting and shell_exec" in rules_text}
+ print("bootstrap supplier",report["consumer_bootstrap_provider"],flush=True)
+for arm,command,targets in [("native","test",["--incompatible_use_native_posix_test_wrapper","--remote_accept_cached","--nocache_test_results","--features=fully_static_link","--remote_download_regex=.*test/rbe/native_xml_eventfd/.*","--nobuild_event_json_file_path_conversion",target])]:
     event_file=receipt/(arm+".events");action_file=receipt/(arm+".actions")
     argv=client_prefix+[command]+common+[f"--execution_log_compact_file=/receipt/{arm}.actions",f"--build_event_json_file=/receipt/{arm}.events"]+targets
     try:
