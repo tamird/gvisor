@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:59:40.379727+00:00",
+    "updatedAt": "2026-10-30T21:08:14.496709+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37372,8 +37372,8 @@
       "head": "e1fef1717c9875d137ad593d91dd148aee39df83",
       "title": "Keep unchanged host epoll interests armed",
       "url": "https://github.com/tamird/gvisor/commit/e1fef1717",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T20:54:38.225849+00:00",
+      "status": "Published as #16763",
+      "updatedAt": "2026-10-30T21:08:14.496709+00:00",
       "summary": "Adding a second epoll watch repeated the first watch’s readable edge on host Unix stream and sequenced-packet listeners. Linux and the corrected notifier deliver one edge to each watch. This change applies directly to master.",
       "evidence": [
         {
@@ -37397,16 +37397,70 @@
           "url": "https://app.buildbuddy.io/invocation/1cada729-e81f-4bc8-9c4b-13a7ec6f5b26"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e1fef1717c9875d137ad593d91dd148aee39df83",
-        "baseHead": "6cf94b45e5c36a3593c3289be91a3aca0bdeae8f",
-        "title": "Keep unchanged host epoll interests armed",
-        "summary": "Adding a second epoll watch repeated the first watch’s readable edge on host Unix stream and sequenced-packet listeners. Linux and the corrected notifier deliver one edge to each watch. This change applies directly to master.",
-        "url": "https://github.com/tamird/gvisor/commit/e1fef1717",
-        "body": "Adding a watcher can leave the set of events requested from the host\nunchanged. Issuing EPOLL_CTL_MOD in that case polls an already-ready\nfile again and can deliver the same edge to another watcher.\n\nRecord the mask installed in host epoll so a still-readable Unix\nlistener delivers one edge to each epoll instance."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e1fef1717c9875d137ad593d91dd148aee39df83",
+          "outcome": "approved",
+          "at": "2026-10-30T21:08:14.496709+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "overlay_owner",
+        "sourceHead": "e1fef1717c9875d137ad593d91dd148aee39df83",
+        "observedAt": "2026-10-30T21:08:14.496709+00:00",
+        "disposition": "Contributor approved; delivered as #16763",
+        "nextAction": "Follow upstream review and checks on #16763.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16763",
+          "https://github.com/tamird/gvisor/commit/e1fef1717"
+        ]
       }
+    },
+    {
+      "id": "pr:16763",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16763,
+      "group": "runtime",
+      "ref": "review/host-epoll-unchanged-mask",
+      "head": "e1fef1717c9875d137ad593d91dd148aee39df83",
+      "title": "Keep unchanged host epoll interests armed",
+      "url": "https://github.com/google/gvisor/pull/16763",
+      "status": "open",
+      "summary": "Adding a second epoll watch repeated the first watch’s readable edge on host Unix stream and sequenced-packet listeners. Linux and the corrected notifier deliver one edge to each watch. This change applies directly to master.",
+      "updatedAt": "2026-10-30T21:08:14.496709+00:00",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e1fef1717c9875d137ad593d91dd148aee39df83",
+          "outcome": "approved",
+          "at": "2026-10-30T21:08:14.496709+00:00"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Six exact Linux and gVisor cases, original records and source hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41125382329/artifacts/13010008844"
+        },
+        {
+          "label": "Linux: each watcher received one edge for the pending connection",
+          "url": "https://app.buildbuddy.io/invocation/1d890691-c2ad-4745-93dc-557ab2a33a41"
+        },
+        {
+          "label": "Stock gVisor: first watcher received the same edge twice, for both socket types",
+          "url": "https://app.buildbuddy.io/invocation/709b66e2-7db4-4e78-b9da-32ca15d9e1a6"
+        },
+        {
+          "label": "Corrected gVisor: both socket cases matched Linux",
+          "url": "https://app.buildbuddy.io/invocation/89d1f378-8e03-4d1a-997d-a5a56f4a6787"
+        },
+        {
+          "label": "fdnotifier Nogo on AMD64",
+          "url": "https://app.buildbuddy.io/invocation/1cada729-e81f-4bc8-9c4b-13a7ec6f5b26"
+        }
+      ]
     }
   ],
   "edges": [
