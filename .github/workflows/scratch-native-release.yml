@@ -40,35 +40,21 @@ jobs:
           curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bb"
-      - name: Build the release artifacts through the normal wheel override
+      - name: Inspect verified original action inputs
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -B .github/qualification/sdist/inspect_original.py
+      - name: Recover the clean proposal's actual module diagnostic
+        if: always()
         run: |
-          rc=0
-          bash "$RUNNER_TEMP/sdist-fixture/run.sh" canonical ba488ce1b6e6e02cc368dcb4538dcb786713ffc9 || rc=$?
-          mkdir -p "$RUNNER_TEMP/publication/canonical"
-          echo "$rc" > "$RUNNER_TEMP/publication/canonical/stage.exit"
-      - name: Resolve the clean product source with its declared rules_python
-        run: |
-          out="$RUNNER_TEMP/publication"
           git checkout --quiet --detach 378a719ac38bf5d2fa98c99eb980152a819e3114
-          git rev-parse HEAD > "$out/product.source"
-          git rev-parse HEAD^{tree} > "$out/product.tree"
-          git rev-parse HEAD:tools/python_distribution/setuptools_reproducible_sdist.patch > "$out/product.patch"
-          git rev-parse ba488ce1b6e6e02cc368dcb4538dcb786713ffc9:tools/python_distribution/setuptools_reproducible_sdist.patch | cmp - "$out/product.patch"
           export USE_BAZEL_VERSION
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-          rc=0
-          bazelisk query --lockfile_mode=update 'deps(//tools/python_distribution:frontend)' > "$RUNNER_TEMP/product-query.log" 2>"$RUNNER_TEMP/product-query.stderr" || rc=$?
-          echo "$rc" > "$out/product.exit"
-          if ((rc)); then
-            sed -nE '/^(ERROR|FATAL|WARNING):/p' "$RUNNER_TEMP/product-query.stderr" | grep -viE 'header|token|secret|authorization|credential' | head -10 > "$out/product-preflight.txt" || :
-          fi
-      - name: Compare to the archives already installed on Python 3.7
-        run: python3 "$RUNNER_TEMP/sdist-fixture/validate.py"
+          bazelisk query --lockfile_mode=update 'deps(//tools/python_distribution:frontend)' > "$RUNNER_TEMP/product-query.log" 2>"$RUNNER_TEMP/product-query.stderr" || :
+          sed -nE '/fail\(|Error in |ERROR:/{p;}' "$RUNNER_TEMP/product-query.stderr" |grep -viE 'header|token|secret|authorization|credential' | tail -15 > "$RUNNER_TEMP/publication/product-diagnostic.txt"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: release-wheel-frontend
+          name: release-wheel-inputs
           path: ${{ runner.temp }}/publication/
           if-no-files-found: error
