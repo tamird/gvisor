@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T06:01:46.148211+00:00",
+    "updatedAt": "2026-10-30T06:06:52.793764+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35244,6 +35244,54 @@
         "title": "Post the inline nested-value corruption finding",
         "summary": "Review the proposed inline comment at tools/go_stateify/main.go:479. It describes the observed values and links a tested correction.",
         "body": "This can corrupt a nested converted value during graph Load. In the [reproducer](https://github.com/tamird/gvisor/commit/d3afb4db4), an outer value with tag 11 holds another generated holder through an interface; the inner value of the same type has tag 22. The [parent](https://app.buildbuddy.io/invocation/a06ed41b-aa64-41c9-82a7-943cc62461ed) restored 11 and 22. [This head](https://app.buildbuddy.io/invocation/8e57e151-2229-4ba5-b03d-a100a22d09d6) restored 22 twice. The legacy and non-nested controls passed.\n\nWhile the outer value is being decoded, [its scratch slot is still available](https://github.com/google/gvisor/blob/c6afaa53a/pkg/state/graph_decode_callbacks_unsafe.go#L151-L165). Could the slot stay checked out until the decode and immediate callback return? [That change](https://github.com/tamird/gvisor/commit/8def2ecbb) [restored both tags](https://app.buildbuddy.io/invocation/570143b4-9029-4cfa-b99e-02d92b2efdd2).\n\nReview by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "branch:state-loadvalue-scratch",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/state-loadvalue-scratch-on-author",
+      "head": "07b30159f3972037e9b77c8353e388f5f9409ab0",
+      "title": "Keep nested checkpoint conversions from overwriting each other",
+      "url": "https://github.com/tamird/gvisor/commit/07b30159f",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
+      "updatedAt": "2026-10-30T06:06:52.793764+00:00",
+      "evidence": [
+        {
+          "label": "Original master and author failures, repaired master and the four state suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011113384/artifacts/12957114896"
+        },
+        {
+          "label": "Author-head correction, nested conversion, direct and synchronous hooks, state suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011923774/artifacts/12957658596"
+        },
+        {
+          "label": "Original master-based correction",
+          "url": "https://github.com/tamird/gvisor/commit/e5a505c74"
+        },
+        {
+          "label": "Same nested fixture on the author’s unmodified source",
+          "url": "https://github.com/tamird/gvisor/commit/011889bf4"
+        },
+        {
+          "label": "Author’s open checkpoint hook change",
+          "url": "https://github.com/google/gvisor/pull/16728"
+        },
+        {
+          "label": "Existing checkpoint round-trip issue",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "07b30159f3972037e9b77c8353e388f5f9409ab0",
+        "url": "https://github.com/tamird/gvisor/commit/07b30159f",
+        "title": "Keep nested checkpoint conversions from overwriting each other",
+        "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
+        "body": "Review the two-commit follow-up on the author’s #16728. On master cd90d7a74 and the author’s 168a31e6e, graph Load restores 22, 22 and the legacy reader restores 11, 22. The corrected graph reader restores 11, 22 on both bases. The author-head version preserves the synchronous-hook and deferred-value storage lifetimes in #16728. All four state test targets passed on each correction."
       }
     }
   ],
