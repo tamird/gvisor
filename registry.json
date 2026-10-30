@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T03:43:50.365987+00:00",
+    "updatedAt": "2026-10-30T04:18:06.119315+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34914,6 +34914,38 @@
           "url": "https://app.buildbuddy.io/invocation/438a0677-8207-42af-9d27-109fcfe7380e"
         }
       ]
+    },
+    {
+      "id": "branch:state-signaling-nan",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/state-signaling-nan",
+      "head": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
+      "title": "Preserve signaling NaNs in legacy checkpoints",
+      "url": "https://github.com/tamird/gvisor/commit/1e9e13978",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "summary": "Saving or restoring float32 and complex64 could quiet a signaling NaN. Preserve its bits through defined float types and map values, including complex values whose other component is infinite.",
+      "evidence": [
+        {
+          "label": "Native ARM64 state suites, AMD64 regression, owning analyzers on both architectures and finite-array comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41001428564/artifacts/12953866434"
+        },
+        {
+          "label": "Four original AMD64 failures and checkpoint bit probes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40998475925/artifacts/12952099358"
+        }
+      ],
+      "updatedAt": "2026-10-30T04:18:06.119315+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
+        "url": "https://github.com/tamird/gvisor/commit/1e9e13978",
+        "title": "Preserve signaling NaNs in legacy checkpoints",
+        "summary": "Saving or restoring float32 and complex64 could quiet a signaling NaN. Preserve its bits through defined float types and map values, including complex values whose other component is infinite.",
+        "body": "Review the change for submission. Both state suites and all 36 bit probes ran on native ARM64. The focused regression and the AMD64 and ARM64 package analyzers passed. Finite float and complex arrays kept the same allocation counts and bytes per operation as the preceding candidate."
+      }
     }
   ],
   "edges": [
