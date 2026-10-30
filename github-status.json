@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T19:07:17.087909+00:00",
-  "registryDate": "2026-10-30T20:19:07.910627+00:00",
+  "registryDate": "2026-10-30T20:20:09.488385+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -248470,7 +248470,7 @@
         "since": "2026-10-30T18:30:15.668722+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:11:38.251914+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "pr:15435": {
@@ -249846,7 +249846,7 @@
         "since": "2026-10-30T16:10:34.939505+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "pr:16097": {
@@ -251374,7 +251374,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:bazel-python-release": {
@@ -251383,7 +251383,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:python-release-staging-isolation": {
@@ -251392,7 +251392,7 @@
         "since": "2026-10-30T17:24:24.119828+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -251401,7 +251401,7 @@
         "since": "2026-10-30T03:43:50.365987+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:gofer-character-device-restore": {
@@ -251410,7 +251410,7 @@
         "since": "2026-10-30T13:19:13.082582+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -251419,7 +251419,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:declared-staged-release-check": {
@@ -251428,7 +251428,7 @@
         "since": "2026-10-30T00:11:26.175497+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -251437,7 +251437,7 @@
         "since": "2026-10-30T05:07:07.633004+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:tun-packet-info-header": {
@@ -251446,7 +251446,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:cgroup-v2-effective-memory": {
@@ -251455,7 +251455,7 @@
         "since": "2026-10-30T16:57:21.716977+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:proc-forwarding-mounts": {
@@ -251464,7 +251464,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:rules-distroless-debian-layer": {
@@ -251473,7 +251473,16 @@
         "since": "2026-10-30T19:02:28.727412+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:02:28.727412+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
+      }
+    },
+    "branch:tun-persistent-reference": {
+      "contributor-review": {
+        "scope": "736b926672075e20b03410b52b6f3308751a7bb4",
+        "since": "2026-10-30T20:20:09.488385+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     }
   },
