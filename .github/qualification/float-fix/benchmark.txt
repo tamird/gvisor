@@ -1,0 +1,38 @@
+
+func BenchmarkLegacyScalarArray(b *testing.B) {
+	const n = 128
+	fs, cs := make([]float32, n), make([]complex64, n)
+	for i := range fs {
+		fs[i] = float32(i) + 0.5
+		cs[i] = complex(fs[i], -fs[i])
+	}
+	for _, tc := range []struct {
+		name string
+		src  any
+		dst  func() any
+	}{
+		{"Float32", &fs, func() any { return new([]float32) }},
+		{"Complex64", &cs, func() any { return new([]complex64) }},
+	} {
+		b.Run(tc.name+"/Save", func(b *testing.B) {
+			var buf bytes.Buffer
+			for b.Loop() {
+				buf.Reset()
+				if _, err := state.Save(b.Context(), &buf, tc.src); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+		b.Run(tc.name+"/Load", func(b *testing.B) {
+			var buf bytes.Buffer
+			if _, err := state.Save(b.Context(), &buf, tc.src); err != nil {
+				b.Fatal(err)
+			}
+			for b.Loop() {
+				if _, err := state.Load(b.Context(), bytes.NewReader(buf.Bytes()), tc.dst()); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}
