@@ -1,35 +1,84 @@
-name: CI
-
-"on":
+name: Compare TUN packet-information reads on Linux and gVisor
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tun-packet-info]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tun-packet-info'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      OSTOCK: c46fd81faf5c7bee4e81fc7d31dc9810598ab30d
+      OFIXED: dec13733329b4299c10cef5daddf994d2af8cf92
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        git fetch --no-tags --depth=2 origin "$OSTOCK" "$OFIXED"
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Run common syscall on native Linux, current gVisor, and the exact PR
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        for arm in master pr; do
+          src=$OSTOCK; [[ $arm == master ]] || src=$OFIXED
+          git checkout --quiet --detach "$src"
+          out="$RUNNER_TEMP/tun-info/$arm"; mkdir -p "$out"
+          git rev-parse HEAD HEAD^ > "$out/source"
+          tests=(tuntap_test_runsc_systrap_directfs)
+          [[ $arm == pr ]] || tests+=(tuntap_test_native)
+          labels=(); for t in "${tests[@]}"; do labels+=("//test/syscalls:$t"); done
+          rc=0
+          docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --keep_going --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=300 --test_sharding_strategy=disabled --test_env=GTEST_FILTER=TuntapTest.ReadPacketInfoHeader "${labels[@]}" >"$RUNNER_TEMP/tun-$arm.log" 2>&1 || rc=$?
+          echo "$rc" > "$out/exit"
+          for t in "${tests[@]}"; do
+            docker exec overlay-guest cat "bazel-testlogs/test/syscalls/$t/test.log" | grep -E 'TuntapTest[.]ReadPacketInfoHeader|tuntap.cc:[0-9]+|Value of:|Which is:|Expected:|Actual:|errno|pi[.]flags|TUN_PKT_STRIP|skipped|CAP_NET_ADMIN|Failed|Success' | head -110 > "$out/$t.receipt" || :
+          done
+          grep -E 'INFO: Invocation ID:|ERROR:|failed to|Build (did NOT complete|completed)|FAILED|PASSED|FAIL:' "$RUNNER_TEMP/tun-$arm.log" | tail -100 >"$out/bazel.receipt" || :
+        done
+    - name: Verify each arm actually ran the case
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        cd "$RUNNER_TEMP/tun-info"
+        for f in master/tuntap_test_native.receipt master/tuntap_test_runsc_systrap_directfs.receipt pr/tuntap_test_runsc_systrap_directfs.receipt; do
+          test -s "$f"
+          grep -Eq '\[ *(FAILED|OK) *\] TuntapTest.ReadPacketInfoHeader' "$f"
+          ! grep -qE '\[ *SKIPPED *\] TuntapTest.ReadPacketInfoHeader' "$f"
+        done
+        grep -Eq '\[ *OK *\] TuntapTest.ReadPacketInfoHeader' master/tuntap_test_native.receipt
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: tun-pi-cases
+        path: ${{ runner.temp }}/tun-info
+        if-no-files-found: error
