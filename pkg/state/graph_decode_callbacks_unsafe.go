@@ -148,15 +148,15 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	// only passed to l immediately: generated StateLoadValue methods copy
 	// them. Values passed later, or whose decoding ran code that may keep
 	// their address, keep their storage.
-	p, ok := ds.valueScratch[ti]
-	if !ok {
+	p := ds.valueScratch[ti]
+	if p == nil {
 		p = reflect.New(ti.typ).UnsafePointer()
-		if ds.valueScratch == nil {
-			ds.valueScratch = make(map[*typeInfo]unsafe.Pointer)
+	} else {
+		// A nested LoadValueTo of the same type must not reuse p.
+		delete(ds.valueScratch, ti)
+		if ti.partial {
+			reflect.NewAt(ti.typ, p).Elem().SetZero()
 		}
-		ds.valueScratch[ti] = p
-	} else if ti.partial {
-		reflect.NewAt(ti.typ, p).Elem().SetZero()
 	}
 	hooks, refs := ds.hooks, ds.refs
 	ds.lastRef = -1
@@ -172,18 +172,20 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	}
 	if ds.lastRef >= 0 {
 		if ds.lastRef != ds.cur && ds.lastRef != 0 {
-			delete(ds.valueScratch, ti)
 			ds.wait(ds.cur, ds.lastRef, cb)
 			return
 		}
 	} else if ds.refs != refs || ds.hooks != hooks {
-		delete(ds.valueScratch, ti)
 		if !ds.noCallbacks {
 			ds.addCallback(ds.cur, cb)
 		}
 		return
 	}
 	ds.runCallback(&cb)
+	if ds.valueScratch == nil {
+		ds.valueScratch = make(map[*typeInfo]unsafe.Pointer)
+	}
+	ds.valueScratch[ti] = p
 }
 
 // runCallbacks runs the callbacks of objects as they become complete.
