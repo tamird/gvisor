@@ -1133,3 +1133,61 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestSackedOutAcrossRecovery counts packets beyond one hole before and
+// after a cumulative ACK fills it, with and without RACK loss detection.
+
+func TestSACKRecoverySplitAfterPartialACK(t *testing.T) {
+	const mss, advertised, packets = 1000, 1036, 8
+	type sample struct {
+		count    int
+		recovery bool
+	}
+	states := make(chan sample, 32)
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: faketime.NewManualClock(), Probe: func(s *tcp.TCPEndpointState) { states <- sample{s.Sender.SackedOut, s.Sender.FastRecovery.Active} }})
+	defer c.Cleanup()
+	c.SetGSOEnabled(true)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, 0)
+	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, []byte{header.TCPOptionMSS, 4, byte(advertised / 256), byte(advertised % 256), header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP})
+	cc := tcpip.CongestionControlOption("reno")
+	if err := c.EP.SetSockOpt(&cc); err != nil {
+		t.Fatalf("reno: %s", err)
+	}
+	if n, err := c.EP.Write(bytes.NewReader(make([]byte, packets*mss)), tcpip.WriteOptions{}); err != nil || n != packets*mss {
+		t.Fatalf("write: %d, %v", n, err)
+	}
+	p := c.GetPacket()
+	h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+	base := seqnum.Value(h.SequenceNumber())
+	size := len(h.Payload())
+	p.Release()
+	if size != packets*mss {
+		t.Fatalf("initial GSO aggregate=%d, want %d", size, packets*mss)
+	}
+	b := func(start, end int) header.SACKBlock {
+		return header.SACKBlock{Start: base.Add(seqnum.Size(start * mss)), End: base.Add(seqnum.Size(end * mss))}
+	}
+	process := func(stage string, cum int, blocks []header.SACKBlock) sample {
+		t.Helper()
+		c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), cum, blocks)
+		select {
+		case s := <-states:
+			t.Logf("SPLIT stage=%s count=%d recovery=%t", stage, s.count, s.recovery)
+			return s
+		case <-time.After(3 * time.Second):
+			t.Fatalf("no processed peer ACK: %s", stage)
+			return sample{}
+		}
+	}
+	process("sack3", 0, []header.SACKBlock{b(2, 3)})
+	process("trim", 100, []header.SACKBlock{b(2, 3)})
+	loss := process("loss", 100, []header.SACKBlock{b(5, 8), b(2, 3)})
+	if !loss.recovery {
+		t.Fatal("the ACK did not trigger RFC 6675 recovery")
+	}
+	s := process("done", packets*mss, nil)
+	if s.recovery {
+		t.Fatal("ACK of full flight did not exit recovery")
+	}
+}
