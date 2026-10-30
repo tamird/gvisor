@@ -113,12 +113,22 @@ TEST(EpollTest, OverlayAsyncRegistration) {
   enable(peer.get(), SIGUSR2);
   ASSERT_THAT(sethostname("before", 6), SyscallSucceeds());
   receive(SIGUSR1,file.get()); receive(SIGUSR2,peer.get());
+  if (IsRunningWithSaveRestore()) {setup.reset(); MaybeSave();}
+  DisableSave copying;
+  ASSERT_THAT(sethostname("lower", 5), SyscallSucceeds());
+  receive(SIGUSR1,file.get()); receive(SIGUSR2,peer.get());
   ASSERT_THAT(fchmod(file.get(), 0600), SyscallSucceeds());
+  {
+    auto writer = ASSERT_NO_ERRNO_AND_VALUE(Open(hostname, O_WRONLY));
+    const std::string content = "upper";
+    ASSERT_THAT(pwrite(writer.get(), content.data(), content.size(), 0),
+                SyscallSucceedsWithValue(content.size()));
+  }
   struct pollfd force = {file.get(), POLLPRI, 0};
   ASSERT_THAT(poll(&force, 1, 0), SyscallSucceedsWithValue(0));
   const std::string copied = ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname));
   fprintf(stderr,"OVERLAY_ASYNC_READY: both signal FDs armed; overlay switched to upper\n");
-  if (IsRunningWithSaveRestore()) {setup.reset(); MaybeSave();}
+  if (IsRunningWithSaveRestore()) {copying.reset(); MaybeSave();}
   DisableSave restored;
   ASSERT_THAT(sethostname("restored", 8), SyscallSucceeds());
   receive(SIGUSR1,file.get()); receive(SIGUSR2,peer.get());
