@@ -260,6 +260,68 @@ TEST_P(DualStackAfMismatchTest, V4ListenerV6Connect) {
       SyscallFailsWithErrno(EAFNOSUPPORT));
 }
 
+TEST(SocketInetLoopback, MappedConnectReleasesBothWildcardBinds) {
+  const auto listener =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+  auto server = V4Loopback();
+  ASSERT_THAT(bind(listener.get(), AsSockAddr(&server.addr), server.addr_len),
+              SyscallSucceeds());
+  ASSERT_THAT(listen(listener.get(), 1), SyscallSucceeds());
+  ASSERT_THAT(
+      getsockname(listener.get(), AsSockAddr(&server.addr), &server.addr_len),
+      SyscallSucceeds());
+
+  auto client =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP));
+  const int off = 0;
+  ASSERT_THAT(
+      setsockopt(client.get(), IPPROTO_IPV6, IPV6_V6ONLY, &off, sizeof(off)),
+      SyscallSucceeds());
+  auto bound = V6Any();
+  ASSERT_THAT(bind(client.get(), AsSockAddr(&bound.addr), bound.addr_len),
+              SyscallSucceeds());
+  ASSERT_THAT(
+      getsockname(client.get(), AsSockAddr(&bound.addr), &bound.addr_len),
+      SyscallSucceeds());
+
+  const uint16_t server_port =
+      ASSERT_NO_ERRNO_AND_VALUE(AddrPort(AF_INET, server.addr));
+  auto mapped = V4MappedLoopback();
+  ASSERT_NO_ERRNO(SetAddrPort(AF_INET6, &mapped.addr, server_port));
+  ASSERT_THAT(RetryEINTR(connect)(client.get(), AsSockAddr(&mapped.addr),
+                                  mapped.addr_len),
+              SyscallSucceeds());
+  const auto peer =
+      ASSERT_NO_ERRNO_AND_VALUE(Accept(listener.get(), nullptr, nullptr));
+
+  // An abortive close lets us test the port reservation without TIME_WAIT.
+  const struct linger rst = {.l_onoff = 1, .l_linger = 0};
+  ASSERT_THAT(
+      setsockopt(client.get(), SOL_SOCKET, SO_LINGER, &rst, sizeof(rst)),
+      SyscallSucceeds());
+  client.reset();
+  char c;
+  ASSERT_THAT(RetryEINTR(read)(peer.get(), &c, sizeof(c)),
+              SyscallFailsWithErrno(ECONNRESET));
+
+  const auto v4 =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+  const uint16_t port =
+      ASSERT_NO_ERRNO_AND_VALUE(AddrPort(AF_INET6, bound.addr));
+  auto v4_addr = V4Any();
+  ASSERT_NO_ERRNO(SetAddrPort(AF_INET, &v4_addr.addr, port));
+  EXPECT_THAT(bind(v4.get(), AsSockAddr(&v4_addr.addr), v4_addr.addr_len),
+              SyscallSucceeds());
+
+  const auto v6 =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP));
+  const int on = 1;
+  ASSERT_THAT(setsockopt(v6.get(), IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)),
+              SyscallSucceeds());
+  EXPECT_THAT(bind(v6.get(), AsSockAddr(&bound.addr), bound.addr_len),
+              SyscallSucceeds());
+}
+
 TEST(DualStackAfMismatchTest, UdpV6ListenerV4SendTo) {
   const FileDescriptor socket_fd =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP));
