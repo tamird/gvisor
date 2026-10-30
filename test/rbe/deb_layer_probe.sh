@@ -13,7 +13,20 @@ printf '%s\n' \
 printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\nbuild:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >> "$auth"
 unset BUILDBUDDY_API_KEY
 baz=(bazelisk --bazelrc=test/rbe/qualification.bazelrc --bazelrc="$auth")
-flags=(--config=rbe --config=x86_64 --noremote_accept_cached --remote_download_outputs=all --jobs=4)
+# The snapshot host can return 502 for these unchanged Noble packages.
+# Bazel and the explicit pins both verify the same official mirror bytes.
+dist="$RUNNER_TEMP/deb-inputs"
+mkdir -p "$dist"
+for arch in amd64 arm64; do
+  case "$arch" in
+    amd64) mirror=https://archive.ubuntu.com/ubuntu; hash=ce1a7283a3ffc47bc832dfd77c4fba6a327f3928f1c90c64fe14e251251cfc3a ;;
+    arm64) mirror=https://ports.ubuntu.com/ubuntu-ports; hash=afc3f29f3c0ec4547c60985aa2373dc1dce3324cb3e8970f03b92c4789e74665 ;;
+  esac
+  name=erofs-utils_1.7.1-1build2_$arch.deb
+  curl --fail --silent --show-error --location --retry 2 --max-time 45 "$mirror/pool/universe/e/erofs-utils/$name" -o "$dist/$name"
+  printf '%s  %s\n' "$hash" "$dist/$name" | sha256sum --check --strict
+done
+flags=(--distdir="$dist" --config=rbe --config=x86_64 --noremote_accept_cached --remote_download_outputs=all --jobs=4)
 targets=()
 for arch in amd64 arm64; do
   targets+=("@@rules_distroless++_apt+++container_apt+noble_erofs-utils-${arch}_1.7.1-1build2//:data")
