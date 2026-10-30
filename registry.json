@@ -26,7 +26,7 @@
       "bazelbuild/bazel",
       "hermeticbuild/rules_rs"
     ],
-    "registryDate": "2026-10-30T18:49:31.284640+00:00"
+    "registryDate": "2026-10-30T19:04:40.999932+00:00"
   },
   "groups": [
     {
@@ -34504,8 +34504,8 @@
       "url": "https://github.com/google/gvisor/pull/15432",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T18:49:31.284640+00:00",
-      "summary": "The first inline review distinguishes a lost packet from an outstanding probe copy. A separate repeated-repair replay shows 44 RACK-lost tail packets blocking a congestion window of 5. The two RACK changes release the next repair on the preceding ACK.",
+      "updatedAt": "2026-10-30T19:04:40.999932+00:00",
+      "summary": "The two RACK changes release a missing-tail stall. On the exact PR a later ACK leaves four live repairs uncounted. Five more leave the sender with nine outstanding against a window of five.",
       "settledReviews": [
         {
           "kind": "review",
@@ -34535,6 +34535,10 @@
         {
           "label": "Living TCP reviewer guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Exact PR and rejected RACK-loop-only fix, with raw repair counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41111079975/artifacts/13004156935"
         }
       ],
       "contributorReview": {
@@ -34543,8 +34547,8 @@
         "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
         "url": "https://github.com/google/gvisor/pull/15432",
         "title": "Review the RACK tail-loss fix",
-        "summary": "A separate review would ask the author to rebase and narrow the two RACK hunks. The original packet trace and a manual-clock test distinguish the loss accounting. The full transfer comparison does not establish a throughput improvement.",
-        "body": "The two RACK changes in this PR release a reproducible stall. A\nmanual-clock replay matched how often the three lowest ranges had\nalready been sent in a shared-link capture. After the 108-byte repair was ACKed, the\ncombined #15634 and #16738 sender still counted 44 tail packets\nagainst a congestion window of 5. RACK had marked all 44 lost, but\nthere was no higher SACK to mark them lost in the scoreboard. It sent\nthe next repair only at the following retransmission timeout. With\nyour two changes, none of the 44 tail packets counted. The sender\nhad already sent both repairs on the preceding ACK [1].\n\nThe original capture had 45 tail packets missing at the receiver and a\n200 ms gap. The replay waited six simulated seconds. A separate\npaired transfer did not reproduce the long stall on the same combined\nbinary, so it doesn't establish a throughput effect [2] [3].\n\nCould you rebase the RACK changes onto current master? It already\nadvances writeNext after retransmission on timeout. #15634 also\npreserves the clone's delivery and loss state. Please coordinate that\noverlap and retain the delivered-probe case from the existing inline\nreview. That case checks a transmit copy still in flight [4] [5].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41108811393/artifacts/13002067553\n[2]: https://github.com/tamird/gvisor/actions/runs/41098212501/artifacts/12997387247\n[3]: https://github.com/tamird/gvisor/actions/runs/41104025638/artifacts/13000928053\n[4]: https://github.com/google/gvisor/pull/15432#discussion_r4416541513\n[5]: https://github.com/google/gvisor/pull/15432#issuecomment-6494121552\n\nPosted by Codex on behalf of @tamird."
+        "summary": "Review both sides of the estimate. Exclude genuinely lost copies while counting repairs still outstanding after a later partial ACK. Updating only the RACK recovery loop did not preserve those live copies.",
+        "body": "The RACK changes release a reproducible stall. In a replay with\n#15634 and #16738, the combined sender counted 44 RACK-lost tail\npackets against a congestion window of five. With your changes, it\nsent the short repair and four more repairs on the first ACK [1].\n\nThe next ACK covered only the short repair. On your exact head, the\nfour later repairs were still unacknowledged and RACK had not marked\ntheir latest transmissions lost. SetPipe counted none of them. The\nearlier SACKs still classified their ranges as lost, and HighRxt\nstopped at the short repair. Five more transmissions left nine\noutstanding against a window of five [2].\n\nAdvancing HighRxt only in RACK's recovery loop produced the same\nresult [2]. After a timeout the ordinary send loop also retransmits\nfrom writeNext [3]. RFC 6675 updates the highest retransmitted byte\non ordinary recovery retransmissions. Linux separately counts copies\nretransmitted after loss [4] [5].\n\nCould you rebase the RACK changes and cover both advancing and\nconserving the congestion window on the short ACK? Master already\nadvances writeNext after the timeout retransmission. #15634 also\npreserves the clone's delivery and loss state. Please keep the\nseparate case where the original and its probe may both still be in\nflight [6]. The full-transfer control did not reproduce the original\nstall, so it doesn't establish a throughput effect [7].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41108811393/artifacts/13002067553\n[2]: https://github.com/tamird/gvisor/actions/runs/41111079975/artifacts/13004156935\n[3]: https://github.com/google/gvisor/blob/00aaa82b9/pkg/tcpip/transport/tcp/snd.go#L1113-L1137\n[4]: https://www.rfc-editor.org/rfc/rfc6675.html#section-5\n[5]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_input.c#L1320-L1342\n[6]: https://github.com/google/gvisor/pull/15432#discussion_r4416541513\n[7]: https://github.com/tamird/gvisor/actions/runs/41104025638/artifacts/13000928053\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
