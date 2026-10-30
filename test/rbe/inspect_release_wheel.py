@@ -1,6 +1,6 @@
 """Supplement the qualification harness with wheel execution and payload evidence."""
 from datetime import datetime, timezone
-from email.parser import BytesParser
+from email.parser import Parser
 import base64
 import csv
 import hashlib
@@ -12,6 +12,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import tomllib
 import zipfile
 
 sys.path.insert(0, str(Path.cwd() / "test/rbe"))
@@ -19,7 +20,7 @@ from qualification_report import compact_records
 
 root = Path(os.environ["RUNNER_TEMP"])
 arch = os.environ["QUALIFICATION_ARCH"]
-record = {"source": os.environ["GITHUB_SHA"], "architecture": arch, "expected": ["//sandboxexec/sandbox/python:dist"], "status": "FAIL"}
+record = {"source": os.environ["QUALIFICATION_COMMIT"], "architecture": arch, "expected": ["//sandboxexec/sandbox/python:dist"], "status": "FAIL"}
 image = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
 def missing_executables(log):
     tools = set()
@@ -68,13 +69,26 @@ def audit():
     assert set(p.iterdir()) == {wheel,sdist}
     pkg = {str(f.relative_to(project)):f.read_bytes() for f in (project/"gvisor").glob("*.py")}
     assert pkg
+    info=tomllib.loads((project/"pyproject.toml").read_text())["project"]
     def metadata(data):
-        msg=BytesParser().parsebytes(data)
+        msg=Parser().parsestr(data.decode())
+        relevant = {k:sorted(msg.get_all(k, [])) for k in (
+            "Name", "Version", "Requires-Python", "Summary", "License", "License-Expression", "Classifier",
+            "Project-URL", "Requires-Dist", "Provides-Extra", "Description-Content-Type", "Metadata-Version", "Dynamic")}
+        assert relevant["Summary"] == [info["description"]]
+        assert relevant["License"] == [info["license"]["text"]]
+        assert relevant["Classifier"] == sorted(info["classifiers"])
+        assert [u.replace(", ", ",") for u in relevant["Project-URL"]] == sorted(k+","+v for k,v in info["urls"].items())
+        assert not relevant["Requires-Dist"] and not relevant["Provides-Extra"]
+        assert relevant["Description-Content-Type"] == ["text/markdown"]
+        assert msg.get_payload().strip() == (project/"README.md").read_text().strip()
+        record.setdefault("metadata", []).append(relevant)
         assert (msg["Name"],msg["Version"],msg["Requires-Python"]) == ("gvisor",version,">=3.7"), str(msg)
     with zipfile.ZipFile(wheel) as z:
         assert z.testzip() is None
         for name,v in pkg.items():
             assert z.read(name)==v
+        record["wheel_members"] = z.namelist()
         prefix=f"gvisor-{version}.dist-info/"
         metadata(z.read(prefix+"METADATA"))
         for name,h,n in csv.reader(io.StringIO(z.read(prefix+"RECORD").decode())):

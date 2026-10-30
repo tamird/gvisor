@@ -216,6 +216,11 @@ python.defaults(python_version = PYTHON_VERSION)
 python.toolchain(python_version = PYTHON_VERSION)
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.override(
+    file = "setuptools-84.0.0-py3-none-any.whl",
+    patch_strip = 1,
+    patches = ["//tools/python_distribution:setuptools_reproducible_sdist.patch"],
+)
 pip.parse(
     # Reject source archives instead of building wheels during dependency fetching.
     # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L520-L550
@@ -2888,3 +2893,25 @@ archive_override(
 bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
 bootstrap_busybox(name = "bootstrap_busybox", cpu = "amd64")
 bootstrap_busybox(name = "bootstrap_busybox_arm64", cpu = "arm64")
+
+sdist_test_http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+sdist_test_http_file(
+    name = "sdist_py37_flit_core",
+    downloaded_file_path = "flit_core-3.12.0-py3-none-any.whl",
+    sha256 = "e7a0304069ea895172e3c7bb703292e992c5d1555dd1233ab7b5621b5b69e62c",
+    urls = ["https://files.pythonhosted.org/packages/f2/65/b6ba90634c984a4fcc02c7e3afe523fef500c4980fec67cc27536ee50acf/flit_core-3.12.0-py3-none-any.whl"],
+)
+
+sdist_test_http_file(
+    name = "sdist_py37_setuptools",
+    downloaded_file_path = "setuptools-68.0.0-py3-none-any.whl",
+    sha256 = "11e52c67415a381d10d6b462ced9cfb97066179f0e871399e006c4ab101fc85f",
+    urls = ["https://files.pythonhosted.org/packages/c7/42/be1c7bbdd83e1bfb160c94b9cafd8e25efc7400346cf7ccdbdb452c467fa/setuptools-68.0.0-py3-none-any.whl"],
+)
+
+sdist_test_http_file(
+    name = "sdist_py37_wheel",
+    downloaded_file_path = "wheel-0.42.0-py3-none-any.whl",
+    sha256 = "177f9c9b0d45c47873b619f5b650346d632cdc35fb5e4d25058e09c9e581433d",
+    urls = ["https://files.pythonhosted.org/packages/c7/c3/55076fc728723ef927521abaa1955213d094933dc36d4a2008d5101e1af5/wheel-0.42.0-py3-none-any.whl"],
+)
