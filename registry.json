@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T00:11:26.175497+00:00",
+    "updatedAt": "2026-10-30T01:33:59.333384+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10164,20 +10164,20 @@
       "id": "branch:state-primitive-array-storage",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/state-primitive-arrays",
-      "head": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
+      "ref": "review/state-primitive-arrays-current",
+      "head": "f76d229c04d56c4a800f0e3561d36e75410f91a1",
       "title": "Capture primitive state arrays in typed storage",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
+      "url": "https://github.com/tamird/gvisor/commit/f76d229c0",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-29T23:29:40.685248+00:00",
-      "summary": "The primitive-array implementation is approved. Open it after the independent signed-zero correction lands; the array changes do not need another contributor review.",
+      "updatedAt": "2026-10-30T01:33:59.333384+00:00",
+      "summary": "Primitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
-        "observedAt": "2026-10-29T23:24:21.085456+00:00",
+        "sourceHead": "f76d229c04d56c4a800f0e3561d36e75410f91a1",
+        "observedAt": "2026-10-30T01:33:59.333384+00:00",
         "disposition": "Approved for automatic opening after prerequisites",
-        "nextAction": "Once #16718 lands, carry forward the approved primitive-array implementation and its qualified source.",
+        "nextAction": "Open the reviewed primitive-array change after #16718 lands. #16380 has landed; the reparented pkg/state diff changes only BUILD context.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
           "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
@@ -10187,6 +10187,14 @@
       "inactive": false,
       "evidence": [
         {
+          "label": "Sixteen paired Nginx measurements, raw samples and benchstat",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40975839764/artifacts/12943782591"
+        },
+        {
+          "label": "Twenty selected checks on the reparented source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40975946648/artifacts/12942682016"
+        },
+        {
           "label": "Approved split source",
           "url": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b"
         },
@@ -10194,7 +10202,15 @@
           "label": "Exact stage normal qualification",
           "url": "https://app.buildbuddy.io/invocation/8da1f7ff-38b9-42fc-9863-673bb171a228"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "689706c8805c86a0c79e0cf09de80d0245f0dc8b"
+        },
+        "after": {
+          "head": "f76d229c04d56c4a800f0e3561d36e75410f91a1"
+        }
+      }
     },
     {
       "id": "pr:15643",
@@ -32067,10 +32083,30 @@
       "title": "Keep an epoll watch intact when MOD fails",
       "url": "https://github.com/tamird/gvisor/commit/82f0e4f38",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-29T22:57:17.831574+00:00",
-      "summary": "Modifying an epoll watch keeps its existing waiter and preserves the old subscription if the new mask fails. Rearming an unchanged mask checks readiness without touching the host. The compatible overlay change preserves polling on stable backing files. The combined source is under qualification.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T01:33:59.333384+00:00",
+      "summary": "A rejected MOD leaves the original watch registered. A rearm with the same mask still polls for readiness; changing its mask needs no extra waiter allocation. Stable overlay backing keeps its poll support.",
       "evidence": [
+        {
+          "label": "Contributor review: core and compatible overlay change only",
+          "url": "https://github.com/tamird/gvisor/compare/3ded0a3d6...82f0e4f38"
+        },
+        {
+          "label": "Earlier matched one-waiter measurements: ADD+DEL 112 B / 1; changed MOD 0 allocations",
+          "url": "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
+        },
+        {
+          "label": "Stable backing accepted; mutable lower backing refused",
+          "url": "https://app.buildbuddy.io/invocation/4661ba61-db91-4f2d-9ec9-6cdde8d38469"
+        },
+        {
+          "label": "Nine owning checks on each architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40966651406/artifacts/12946256924"
+        },
+        {
+          "label": "Optional socket plugin and cgo analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40973934821/artifacts/12942637215"
+        },
         {
           "label": "Fieldless epoll core and updated PCI fixture",
           "url": "https://github.com/tamird/gvisor/commit/9a663f2a5"
@@ -32078,10 +32114,6 @@
         {
           "label": "Combined source: stable overlay backing",
           "url": "https://github.com/tamird/gvisor/commit/82f0e4f38"
-        },
-        {
-          "label": "Combined PCI/analyzer qualification (pending)",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40966651406"
         },
         {
           "label": "Watch update, checkpoint, race and analyzer checks",
@@ -32136,10 +32168,6 @@
           "url": "https://app.buildbuddy.io/invocation/9492cefc-8a12-45f0-8caf-dcb49763ff7f"
         },
         {
-          "label": "Stock: pending edge, delivered edge, disarmed one-shot and controlled FUSE abort",
-          "url": "https://app.buildbuddy.io/invocation/83329566-0448-4561-8b33-6ee433c9f811"
-        },
-        {
           "label": "Earlier revision: Corrected FUSE comparison",
           "url": "https://app.buildbuddy.io/invocation/400d0fe5-ffb9-46f9-abfa-399f23b7f557"
         },
@@ -32168,7 +32196,17 @@
           "outcome": "changes-requested",
           "at": "2026-10-29T18:56:07.113045+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "82f0e4f38f65529f18851f196504957874ec56fa",
+        "url": "https://github.com/tamird/gvisor/compare/3ded0a3d6...82f0e4f38",
+        "title": "Keep an epoll watch intact when MOD fails",
+        "summary": "A rejected MOD leaves the original watch registered. A rearm with the same mask still polls for readiness; changing its mask needs no extra waiter allocation. Stable overlay backing keeps its poll support.",
+        "body": "Review only the final two commits, after the separate Unix, waiter-mask, host fdnotifier, plugin/VFIO, FUSE and gofer provider prerequisites. The matched earlier core measured 112 B/one allocation for ADD+DEL and no allocation for changed MOD. The exact combined source passed nine owning analyzer targets on each architecture; stable overlay-backed files remain pollable, and an unpinned lower file that can copy up is refused.",
+        "baseHead": "3ded0a3d65f69fcabbb1b0361aff10e1b2230679"
+      }
     },
     {
       "id": "branch:tcp-dsack-above-gap",
@@ -34822,12 +34860,16 @@
       "title": "Check release staging without building runsc",
       "url": "https://github.com/tamird/gvisor/commit/a5627c731",
       "group": "release",
-      "status": "Agent work",
-      "summary": "Use the staged release outputs directly. The native check and eight archive layouts have passed; the before/after archive payload comparison is still being verified.",
+      "status": "Awaiting contributor review",
+      "summary": "Buildkite verifies the staged release outputs directly. The checker has no configured runsc or Sentry dependencies; all eight actual archive payloads and metadata matched for both compression formats.",
       "evidence": [
         {
-          "label": "Native checker and configured graph",
+          "label": "Native checker, negative tests and configured dependencies",
           "url": "https://github.com/tamird/gvisor/actions/runs/40970081968/artifacts/12940116829"
+        },
+        {
+          "label": "Eight matching binary payloads and archive metadata in both formats",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40977469311/artifacts/12943941273"
         },
         {
           "label": "All eight archive layouts",
@@ -34838,7 +34880,16 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40970081968"
         }
       ],
-      "updatedAt": "2026-10-29T23:24:21.085456+00:00"
+      "updatedAt": "2026-10-30T01:33:59.333384+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
+        "url": "https://github.com/tamird/gvisor/commit/a5627c731",
+        "title": "Check release staging without building runsc",
+        "summary": "Buildkite verifies the staged release outputs directly. The checker has no configured runsc or Sentry dependencies; all eight actual archive payloads and metadata matched for both compression formats.",
+        "body": "Review for submission once the Buildkite Bazelisk prerequisite lands. The native checker, intentional failures, configured dependencies, and original archive writers were all exercised."
+      }
     }
   ],
   "edges": [
@@ -50119,7 +50170,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T00:11:26.175497+00:00",
+      "updatedAt": "2026-10-30T01:33:59.333384+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -50849,10 +50900,23 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40926137963"
             }
           ]
+        },
+        {
+          "evidence": [
+            {
+              "label": "Compiled release inventory",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40985975381/artifacts/12946752881"
+            }
+          ],
+          "text": "At dc905d2e0 all 8,533 logged release spawns were uncached. AMD64 ran 8,528, including 4,376 CppCompile, 2,087 GoCompilePkg and both runsc GoLinks; five PrecompileSeccomp actions ran on ARM64. Both architecture archives traced to their runsc links. This is a historical cross-build, not evidence of a native ARM64 compiler or repository-wide adoption."
         }
       ],
       "nextStep": "Qualify the full compiler and release graphs on scratch. The native version reader, changelog writer, module-map helper and consuming compiler-rt archives already have scoped results. For the Python packaging tools, compare the cost of the released ZIP option against a normal launcher and qualify the chosen mode for the archive writers on both architectures.",
       "evidence": [
+        {
+          "label": "Compiled release inventory: 8,533 uncached spawns on pinned scratch workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40985975381/artifacts/12946752881"
+        },
         {
           "label": "Relocated ZIP writer: exact output and negative control",
           "url": "https://github.com/tamird/gvisor/actions/runs/40977676875/artifacts/12942638937"
