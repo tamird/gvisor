@@ -24,6 +24,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/usermem"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
@@ -256,6 +257,15 @@ type lowerWaiter struct {
 	backing *vfs.FileDescription
 }
 
+var lowerWaiterPool = sync.Pool{New: func() any { return new(lowerWaiter) }}
+
+func (w *lowerWaiter) release(e *waiter.Entry) {
+	e.Init(w.EventListener, e.Mask())
+	w.backing.DecRef(context.Background())
+	*w = lowerWaiter{}
+	lowerWaiterPool.Put(w)
+}
+
 // EventRegister implements waiter.Waitable.EventRegister.
 func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 	fd.mu.Lock()
@@ -270,12 +280,12 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 	if fd.copiedUp || !fd.filesystem().opts.UpperRoot.Ok() {
 		return wrappedFD.EventRegister(e)
 	}
-	w := &lowerWaiter{EventListener: e.Listener(), overlay: fd, backing: wrappedFD}
+	w := lowerWaiterPool.Get().(*lowerWaiter)
+	*w = lowerWaiter{EventListener: e.Listener(), overlay: fd, backing: wrappedFD}
 	wrappedFD.IncRef()
 	e.Init(w, e.Mask())
 	if err := wrappedFD.EventRegister(e); err != nil {
-		e.Init(w.EventListener, e.Mask())
-		wrappedFD.DecRef(context.Background())
+		w.release(e)
 		return err
 	}
 	return nil
@@ -292,8 +302,7 @@ func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 			// Unregister through the same backing. Any inner overlay removes
 			// its own wrapper before we restore the original listener.
 			w.backing.EventUnregister(e)
-			e.Init(w.EventListener, e.Mask())
-			w.backing.DecRef(context.Background())
+			w.release(e)
 			return
 		}
 		listener = w.EventListener
