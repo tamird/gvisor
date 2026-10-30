@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T15:45:54.706075+00:00",
+  "registryDate": "2026-10-30T15:50:57.471231+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -248047,15 +248047,6 @@
         "observedAt": "2026-10-30T11:43:52.308556+00:00"
       }
     },
-    "pr:15449": {
-      "maintainer-review": {
-        "scope": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
-        "since": "2026-10-25T12:53:20.570315+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T11:43:52.308556+00:00"
-      }
-    },
     "branch:socket-netfilter-fib-boundaries": {
       "contributor-review": {
         "scope": "632655077dd22ba059b970f211c3cf2a59dd2ac9",
@@ -248063,6 +248054,24 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T15:44:14.108156+00:00"
+      }
+    },
+    "branch:proc-mount-sack-owned-pidns": {
+      "contributor-review": {
+        "scope": "17b24a03b5528f7949b258f5001e25fb4304de90",
+        "since": "2026-10-30T15:45:54.706075+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T15:45:54.706075+00:00"
+      }
+    },
+    "pr:15449": {
+      "maintainer-review": {
+        "scope": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
+        "since": "2026-10-25T12:53:20.570315+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T11:43:52.308556+00:00"
       }
     }
   },

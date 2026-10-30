@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:45:54.706075+00:00",
+    "updatedAt": "2026-10-30T15:50:57.471231+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2974,7 +2974,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "The requested post-#16046 rebase is published at 57834789e0f3 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at ad6ccc6be236 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe reviewer-assignment workflow failed after selecting reviewers: GitHub POST requested_reviewers returned HTTP 500 at 16:55:30 UTC. The log contains no source diagnosis; no rerun, manual reviewer request or public reply has been made.\n\nThe contributor approved exact 46ad8cc5b22b84e9116e68567532cab9e8b664c7, and ready PR #15449 is now open against master. Root verified the single commit, head, reviewed body and thread metadata. The standing sweep owns CI, import and review follow-up.\n\nThe contributor-requested Read/cursor amendment is public and tracked at 46ad8cc5b22b84e9116e68567532cab9e8b664c7. Its complete owning obligations now have passing composed evidence. The original https://app.buildbuddy.io/invocation/c574883b-21c5-47d9-bb6f-e475aa2faa80 remains FAILED before runtime because the mapped-write qualification context left an unused io import; its actual tun_nogo passed both CPU analyses. The one-line qualified-only correction dfe4d9af5a95de70c3532d639ba93fc4a0441b1d passes https://app.buildbuddy.io/invocation/1b2c3b0a-6185-40f4-99a0-42a8b4bab724 in 211.698 seconds. Both complete shared/directfs TUN suites execute 44 named entries: 42 passes and the two existing WriteToDownDevice skips. Tundev Nogo passes both CPU analyses; the already-passed tun_nogo is reused.\n\nIndependent cumulative peer 40a95d085143 verifies both saved archives, 398 indexed files, four raw compact traces and all original uncached 300-second Action/Command/stdout/XML joins, with no local spawns. Source composition preserves the separate mapped writer/MTU context while applying the exact reviewed Read/Device.Write functions; this is not an exact standalone whole-file run. Existing suites do not directly exercise truncated-read or partial-EFAULT contracts. That renewed review request is resolved by the approved publication above.\n\nPrior proposal and source-specific evidence:\n\nThe independent TUN proposal is refreshed, public and tracked at fb54693011eb96d5d75e1af74a0944e86ab95061 on upstream e1bc. Both production blobs exactly match the reviewed original 900d proposal. It keeps segmented Buffer ownership through Device and file-description I/O, copying only fixed-size input headers and preserving the existing write-size guard and Go heap allocation. The future sentry-managed storage consumer remains separate. Complete source/lifetime and historical evidence peer 770a7bccd844 is closed. The contributor answered with questions and requested changes to the segmented TUN proposal. Root owns the source/design response; that earlier revision was superseded by the approved 46ad publication above. Prior evidence below remains source-specific historical proof.\n\nPrimary metadata recovered from parent cd518896 confirms COMPLETE/OK in 232.963 seconds at tested composition d59821c91, with both full shared/DirectFS syscall owners and both production Nogo owners PASSED. All five changed I/O functions and the complete tundev source match that tested composition; its Device also contains separate errno/MTU setup changes, so this is source-specific composed evidence.\n\nThe prior closed record reports 22 XML cases per syscall owner (21 passes plus the existing WriteToDownDevice skip), and AMD64/ARM64 analysis for both Nogo owners. Five requested old CAS output/summary objects are unavailable; those detailed case and architecture observations remain historical, not freshly replayed. No new standalone run, ARM runtime, mapped-storage/restore or performance claim is made.",
-      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
+      "updatedAt": "2026-10-30T15:50:57.471231+00:00",
       "followup": {
         "disposition": "Mechanical rebase delivered; current-head review and checks",
         "owner": "external_sweeps",
@@ -2991,7 +2991,7 @@
         "mergeable": "UNKNOWN",
         "observedAt": "2026-10-22T00:33:19.689675+00:00"
       },
-      "head": "57834789e0f3343fc67a6bf2eb12544ea867a632",
+      "head": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
       "number": 15449,
       "evidence": [
         {
@@ -36487,6 +36487,47 @@
           "url": "https://app.buildbuddy.io/invocation/0f0d4491-dfa2-4cd8-90b8-641b2b23fdf8"
         }
       ]
+    },
+    {
+      "id": "branch:proc-mount-sack-owned-pidns",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "proc-mount-sack-owned-pidns",
+      "head": "17b24a03b5528f7949b258f5001e25fb4304de90",
+      "title": "Test that proc mounts share the TCP SACK setting",
+      "url": "https://github.com/tamird/gvisor/commit/17b24a03b",
+      "status": "Awaiting contributor review",
+      "summary": "After TCP SACK was disabled through the new proc mount, native Linux and current gVisor read 0 through the first mount. Restoring the old per-inode cache on the same source made that read return 1. The common syscall test is independent of the already merged #14369.",
+      "updatedAt": "2026-10-30T15:50:57.471231+00:00",
+      "evidence": [
+        {
+          "label": "Same syscall on Linux, current gVisor and the old per-mount implementation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41082945196/artifacts/12989664166"
+        },
+        {
+          "label": "Exact tested source; identical file tree to the review head",
+          "url": "https://github.com/tamird/gvisor/commit/a0f7a3a50"
+        },
+        {
+          "label": "Old per-mount implementation restored as the control",
+          "url": "https://github.com/tamird/gvisor/commit/ee94bb33b"
+        },
+        {
+          "label": "Original fix, already merged",
+          "url": "https://github.com/google/gvisor/pull/14369"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "17b24a03b5528f7949b258f5001e25fb4304de90",
+        "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
+        "title": "Test that proc mounts share the TCP SACK setting",
+        "summary": "After TCP SACK was disabled through the new proc mount, native Linux and current gVisor read 0 through the first mount. Restoring the old per-inode cache on the same source made that read return 1. The common syscall test is independent of the already merged #14369.",
+        "url": "https://github.com/tamird/gvisor/commit/17b24a03b",
+        "body": "Read tcp_sack through two proc mounts in one network namespace, then\nchange it through the new mount. Both paths must observe the new value.\nIf a proc inode caches its first read, the original mount returns stale\ndata."
+      }
     }
   ],
   "edges": [
