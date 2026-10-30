@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T01:45:44.250348+00:00",
+    "updatedAt": "2026-10-30T01:57:05.801498+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21913,24 +21913,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "group": "bazel",
-      "head": "996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8",
+      "head": "f8b7988ba059b9e88edda1264a0ad4907463e48e",
       "ref": "license-llvm-source-current",
       "title": "Enumerate the declared LLVM source archive",
       "url": "https://github.com/google/gvisor/pull/16249",
       "status": "open",
-      "summary": "Contributor approved the LLVM archive enumeration amendment at f8b7988ba. The patch identifies and pins the supplier’s archive without changing artifact license retention. Publication and the existing import conflict remain agent work.",
-      "updatedAt": "2026-10-29T21:10:41.864614+00:00",
-      "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "f8b7988ba059b9e88edda1264a0ad4907463e48e",
-        "observedAt": "2026-10-29T21:10:41.864614+00:00",
-        "disposition": "Contributor approved; publish amendment",
-        "nextAction": "Verify the PR’s current head and lease, then publish the approved f8b7988ba. Keep the manual-artifact and pinned-notice changes separate.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/f8b7988ba",
-          "https://github.com/google/gvisor/pull/16249"
-        ]
-      },
+      "summary": "The published amendment enumerates the declared LLVM source archive without changing artifact-license retention. Follow review and checks on the current head.",
+      "updatedAt": "2026-10-30T01:57:05.801498+00:00",
       "number": 16249,
       "refinement": {
         "before": {
@@ -21952,6 +21941,14 @@
         {
           "label": "Published additive resolution on landed codeload base",
           "url": "https://github.com/google/gvisor/pull/16249/commits/996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "f8b7988ba059b9e88edda1264a0ad4907463e48e",
+          "outcome": "approved",
+          "at": "2026-10-30T01:57:05.801498+00:00"
         }
       ]
     },
