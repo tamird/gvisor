@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: consumer, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: bazel-contrib/rules_python, ref: 674ce0745dea93e54865d9cfb846510b30475969, path: supplier, persist-credentials: false}
+        with: {repository: bazel-contrib/rules_python, ref: 1a96d8178c22f0787fe35d37c1d9978ca6271f9b, path: supplier, persist-credentials: false}
       - name: Run the supplier's real namespace generator and replay its declared action
         env:
           USE_BAZEL_VERSION: 8.8.1
