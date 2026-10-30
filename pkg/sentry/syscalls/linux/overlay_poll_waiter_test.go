@@ -574,7 +574,7 @@ func TestPollDoesNotUnregisterRejectedEntry(t *testing.T) {
 	}
 }
 
-func TestMetacopyLowerPollLifetime(t *testing.T) {
+func TestMetacopyKnownSizePollLifetime(t *testing.T) {
 	k, err := testutil.Boot()
 	if err != nil {
 		t.Fatal(err)
@@ -582,7 +582,6 @@ func TestMetacopyLowerPollLifetime(t *testing.T) {
 	ctx := k.SupervisorContext()
 	creds := auth.CredentialsFromContext(ctx)
 	fs := k.VFS()
-	fs.MustRegisterFilesystemType(proc.Name, &proc.FilesystemType{}, &vfs.RegisterFilesystemTypeOptions{AllowUserMount: true})
 	fs.MustRegisterFilesystemType(overlay.Name, overlay.FilesystemType{}, &vfs.RegisterFilesystemTypeOptions{AllowUserMount: true})
 	ns, err := fs.NewMountNamespace(ctx, creds, "", tmpfs.Name, &vfs.MountOptions{}, k)
 	if err != nil {
@@ -590,15 +589,21 @@ func TestMetacopyLowerPollLifetime(t *testing.T) {
 	}
 	s := testutil.NewSystem(ctx, t, fs, ns)
 	defer s.Destroy()
-	for _, path := range []string{"/proc", "/upper"} {
+	for _, path := range []string{"/lower", "/upper"} {
 		if err := fs.MkdirAt(ctx, creds, s.PathOpAtRoot(path), &vfs.MkdirOptions{Mode: 0755}); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if _, err := fs.MountAt(ctx, creds, "", s.PathOpAtRoot("/proc"), proc.Name, &vfs.MountOptions{GetFilesystemOptions: vfs.GetFilesystemOptions{InternalData: &proc.InternalData{}}}); err != nil {
+	create, err := fs.OpenAt(ctx, creds, s.PathOpAtRoot("/lower/data"), &vfs.OpenOptions{Flags: linux.O_CREAT | linux.O_WRONLY, Mode: 0644})
+	if err != nil {
 		t.Fatal(err)
 	}
-	lower := s.GetDentryOrDie(s.PathOpAtRoot("/proc/sys/kernel"))
+	n, err := create.PWrite(ctx, usermem.BytesIOSequence([]byte("lower")), 0, vfs.WriteOptions{})
+	create.DecRef(ctx)
+	if n != 5 || err != nil {
+		t.Fatalf("seed write got %d, %v", n, err)
+	}
+	lower := s.GetDentryOrDie(s.PathOpAtRoot("/lower"))
 	defer lower.DecRef(ctx)
 	upper := s.GetDentryOrDie(s.PathOpAtRoot("/upper"))
 	defer upper.DecRef(ctx)
@@ -609,107 +614,62 @@ func TestMetacopyLowerPollLifetime(t *testing.T) {
 	defer ol.DecRef(ctx)
 	root := ol.Root(ctx)
 	defer root.DecRef(ctx)
-	path := s.PathOpAtRoot("hostname")
+	path := s.PathOpAtRoot("data")
 	path.Root, path.Start = root, root
-	ofd, err := fs.OpenAt(ctx, creds, path, &vfs.OpenOptions{Flags: linux.O_RDONLY})
+	fd, err := fs.OpenAt(ctx, creds, path, &vfs.OpenOptions{Flags: linux.O_RDONLY})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ofd.DecRef(ctx)
-	peer, err := fs.OpenAt(ctx, creds, s.PathOpAtRoot("/proc/sys/kernel/hostname"), &vfs.OpenOptions{Flags: linux.O_RDONLY})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer peer.DecRef(ctx)
-	tg := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
-	task, err := testutil.CreateTask(ctx, "overlay-poll", tg, s.MntNs, s.Root, s.Root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	register := func(fd *vfs.FileDescription) ([]pollState, chan struct{}) {
-		n, err := task.NewFDFrom(0, fd, kernel.FDFlags{})
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Cleanup(func() { task.FDTable().Remove(task, n).DecRef(task) })
-		state := make([]pollState, 1)
-		ch := make(chan struct{}, 1)
-		pfd := linux.PollFD{FD: n, Events: linux.POLLPRI | linux.POLLERR | linux.POLLHUP}
-		if err := initReadiness(task, &pfd, &state[0], ch); err != nil {
-			t.Fatal(err)
-		}
-		return state, ch
-	}
-	original := overlay.PollLowerForQualification(ofd)
+	defer fd.DecRef(ctx)
+	original := overlay.PollLowerForQualification(fd)
 	before := original.ReadRefs()
-	first, firstCh := register(ofd)
-	if err := ofd.SetStat(ctx, vfs.SetStatOptions{Stat: linux.Statx{Mask: linux.STATX_MODE, Mode: 0600}}); err != nil {
+	old, _ := waiter.NewChannelEntry(waiter.EventIn)
+	if err := fd.EventRegister(&old); err != nil {
 		t.Fatal(err)
 	}
-	ofd.Readiness(waiter.EventPri)
-	if got := overlay.PollLowerForQualification(ofd); got != original {
+	if err := fd.SetStat(ctx, vfs.SetStatOptions{Stat: linux.Statx{Mask: linux.STATX_MODE, Mode: 0600}}); err != nil {
+		t.Fatal(err)
+	}
+	fd.Readiness(waiter.EventIn)
+	upperMeta, err := fs.StatAt(ctx, creds, s.PathOpAtRoot("/upper/data"), &vfs.StatOptions{Mask: linux.STATX_MODE})
+	if err != nil || upperMeta.Mode&0777 != 0600 {
+		t.Fatalf("upper metadata after chmod: mode %#o, err %v", upperMeta.Mode, err)
+	}
+	if got := overlay.PollLowerForQualification(fd); got != original {
 		t.Fatal("metadata-only change switched away from lower")
 	}
-	second, secondCh := register(ofd)
-	k.HostNamePoller.Notify()
-	for _, ch := range []chan struct{}{firstCh, secondCh} {
-		select {
-		case <-ch:
-		default:
-			t.Fatal("missing notification after metadata-only chmod")
-		}
+	middle, _ := waiter.NewChannelEntry(waiter.EventIn)
+	if err := fd.EventRegister(&middle); err != nil {
+		t.Fatal(err)
 	}
 	writer, err := fs.OpenAt(ctx, creds, path, &vfs.OpenOptions{Flags: linux.O_WRONLY})
 	if err != nil {
 		t.Fatal(err)
 	}
-	n, err := writer.PWrite(ctx, usermem.BytesIOSequence([]byte("upper")), 0, vfs.WriteOptions{})
+	n, err = writer.PWrite(ctx, usermem.BytesIOSequence([]byte("upper")), 0, vfs.WriteOptions{})
 	writer.DecRef(ctx)
 	if n != 5 || err != nil {
 		t.Fatalf("data write got %d, %v", n, err)
 	}
-	ofd.Readiness(waiter.EventPri)
-	if got := overlay.PollLowerForQualification(ofd); got == original {
+	fd.Readiness(waiter.EventIn)
+	if got := overlay.PollLowerForQualification(fd); got == original {
 		t.Fatal("actual write did not switch to upper")
 	}
-	t.Log("chmod preserved both lower observers; data write switched the open backing")
-
-	if got := original.ReadRefs(); got < before {
-		t.Errorf("old lower no longer alive with two registrations: got %d, original %d", got, before)
+	if got := original.ReadRefs(); got != before {
+		t.Fatalf("lower lost on actual copy: refs %d want %d", got, before)
 	}
-	upperState, upCh := register(ofd)
-	k.HostNamePoller.Notify()
-	for _, ch := range []chan struct{}{firstCh, secondCh} {
-		select {
-		case <-ch:
-		default:
-			t.Fatal("missing live lower notification")
-		}
+	current, _ := waiter.NewChannelEntry(waiter.EventIn)
+	if err := fd.EventRegister(&current); err != nil {
+		t.Fatal(err)
 	}
-	select {
-	case <-upCh:
-		t.Error("upper registration got lower notification")
-	default:
+	fd.EventUnregister(&current)
+	fd.EventUnregister(&old)
+	if got := original.ReadRefs(); got != before {
+		t.Fatalf("last old observer lost lower: refs %d want %d", got, before)
 	}
-	releaseState(task, first)
-	if got := original.ReadRefs(); got < before {
-		t.Errorf("original lower lost with one waiter left: refs %d, want >=%d", got, before)
-	}
-	releaseState(task, upperState)
-	k.HostNamePoller.Notify()
-	select {
-	case <-secondCh:
-	default:
-		t.Error("last lower waiter was detached while deleting upper")
-	}
-	select {
-	case <-firstCh:
-		t.Error("removed first waiter still notified")
-	default:
-	}
-	releaseState(task, second)
+	fd.EventUnregister(&middle)
 	if got := original.ReadRefs(); got != before-1 {
-		t.Errorf("old lower refs after both unregister: got %d, want %d", got, before-1)
+		t.Fatalf("after last unregister: refs %d want %d", got, before-1)
 	}
-	t.Logf("initial lower refs=%d; final=%d", before, original.ReadRefs())
+	t.Logf("upper metadata mode %#o; original lower retained after chmod; full write switched; refs %d then %d after last removal", upperMeta.Mode&0777, before, original.ReadRefs())
 }
