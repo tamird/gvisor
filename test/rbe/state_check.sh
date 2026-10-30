@@ -5,7 +5,7 @@ mkdir -p "$tools" "$out"
 for script in qualification_report.py unit_matrix.py state_result.py; do
   git show "$GITHUB_SHA:test/rbe/$script" > "$tools/$script"
 done
-for arm in proposed; do
+for arm in focused proposed; do
   src=62e214867e089f4ba2db0b79beecd8148c4da509
   git checkout --quiet --detach "$src"
   dir="$out/$arm"
@@ -14,7 +14,9 @@ for arm in proposed; do
   git cat-file commit HEAD > "$dir/commit"
   args=(test --config=x86_64 --jobs=4 --test_sharding_strategy=disabled --nocache_test_results --test_output=errors --build_event_publish_all_actions --nobuild_event_json_file_path_conversion --build_event_json_file="$RUNNER_TEMP/$arm.bep")
   labels=(//pkg/state/tests:tests_test)
-  args+=(--test_arg=-test.v)
+  if [[ $arm == focused ]]; then
+    args+=(--test_arg=-test.v '--test_filter=^Test(NestedValueConversion|BothEnginesStatefulCallbacks)$')
+  fi
   printf '%s\n' "${labels[@]}" > "$dir/targets"
   printf '%s\n' "${args[@]}" "${labels[@]}" > "$dir/arguments"
   root=$(bazel --bazelrc="$rc" info output_base)
