@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T17:24:00.776380+00:00",
+    "updatedAt": "2026-10-30T17:24:24.119828+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2037,31 +2037,47 @@
       "group": "release",
       "repo": "tamird/gvisor",
       "ref": "research/python-release-staging-isolation",
-      "head": "1ca62a67091928c6a536a1436e5378889202f747",
+      "head": "6be2b030b0018a818ebfba80fe8191969aa078f6",
       "title": "Stage only the current Python release archives",
-      "url": "https://github.com/tamird/gvisor/commit/1ca62a670",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T17:20:52.276929+00:00",
-      "summary": "Building two tagged releases from the same checkout placed both versions’ wheels and source archives in the second destination. Build in a temporary project, so only the current pair is staged and the tracked pyproject.toml keeps its original version.",
+      "url": "https://github.com/tamird/gvisor/commit/6be2b030b",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T17:24:24.119828+00:00",
+      "summary": "Building two tags in the same checkout placed four files in the second release and overwrote pyproject.toml. A private project and fresh setuptools source list leave just the current wheel and source archive. Both frontends preserved the tracked version; the corrected sdist retained the same 12 members even when an old manifest named the previous tarball.",
       "evidence": [
         {
-          "label": "Ordinary archive membership and retained SOURCES.txt control",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41097520647/artifacts/12997166771"
+          "label": "Both corrected frontends and all 12 source archive members",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41098132210/artifacts/12997227463"
         },
         {
-          "label": "Two tagged releases with each of the PyPA and uv frontends",
+          "label": "Two releases reproduced the stock and corrected staging behavior",
           "url": "https://github.com/tamird/gvisor/actions/runs/41096058921/artifacts/12995053764"
         },
         {
+          "label": "Stale setuptools source list included the earlier archive before the follow-up",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41097520647/artifacts/12997166771"
+        },
+        {
           "label": "One-file change against upstream master",
-          "url": "https://github.com/tamird/gvisor/compare/8f15deb0c...1ca62a670"
+          "url": "https://github.com/tamird/gvisor/compare/8f15deb0c...6be2b030b"
         }
       ],
-      "followup": {
-        "owner": "release_owner",
-        "disposition": "Agent work",
-        "observedAt": "2026-10-30T17:20:52.276929+00:00",
-        "nextAction": "Remove setuptools’ cached source list from the work copy, so an archive listed by an older release cannot enter the new source distribution. Verify the archive members and cleanup before requesting review."
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6be2b030b0018a818ebfba80fe8191969aa078f6",
+        "baseHead": "8f15deb0c38d1cb62c3047239d64f6879ff54f32",
+        "url": "https://github.com/tamird/gvisor/commit/6be2b030b",
+        "title": "Stage only the current Python release archives",
+        "summary": "Building two tags in the same checkout placed four files in the second release and overwrote pyproject.toml. A private project and fresh setuptools source list leave just the current wheel and source archive. Both frontends preserved the tracked version; the corrected sdist retained the same 12 members even when an old manifest named the previous tarball.",
+        "body": "The Python release script builds in the source checkout and copies every\nwheel and source archive in dist/. Building two tags in succession puts\nthe first tag’s archives in the second release and changes the version\nin the checked-in pyproject.toml.\n\nBuild in a temporary copy of the project and copy only the archives that\ninvocation produced. Regenerate setuptools’ source list so it cannot pull\nin an archive named by an older build. With both release frontends, the\nsecond tag stages its own wheel and source archive and preserves the\ntracked version [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41098132210/artifacts/12997227463"
+      },
+      "refinement": {
+        "before": {
+          "head": "1ca62a67091928c6a536a1436e5378889202f747"
+        },
+        "after": {
+          "head": "6be2b030b0018a818ebfba80fe8191969aa078f6"
+        }
       }
     },
     {
