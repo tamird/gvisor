@@ -1,5 +1,5 @@
 load("@python_distribution_deps//:requirements.bzl", "requirement")
-load("@rules_python//python/entry_points:py_console_script_binary.bzl", "py_console_script_binary")
+load("@rules_python//python:py_binary.bzl", "py_binary")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 
 package(
@@ -13,7 +13,11 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//:__subpackages__"],
-    deps = ["@bazel_skylib//rules:common_settings"],
+    deps = [
+        "@bazel_skylib//lib:paths",
+        "@bazel_skylib//rules:common_settings",
+        "@rules_python//python:py_executable_info",
+    ],
 )
 
 go_binary(
@@ -22,11 +26,11 @@ go_binary(
     deps = ["@com_github_burntsushi_toml//:go_default_library"],
 )
 
-py_console_script_binary(
+py_binary(
     name = "frontend",
-    pkg = requirement("build"),
-    script = "pyproject-build",
+    main_module = "build",
     deps = [
+        requirement("build"),
         requirement("setuptools"),
         requirement("wheel"),
     ],

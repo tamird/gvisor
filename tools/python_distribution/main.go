@@ -29,10 +29,13 @@ import (
 
 var (
 	pyproject = flag.String("pyproject", "", "Project's pyproject.toml")
-	frontend  = flag.String("frontend", "", "Declared PyPA build executable")
+	frontend  = flag.String("frontend", "", "Declared frontend virtual environment interpreter")
+	bootstrap = flag.String("bootstrap", "", "Declared PyPA frontend entry point")
 	version   = flag.String("version", "", "Optional project version override")
 	output    = flag.String("output", "", "Distribution output directory")
 )
+
+var pythonArgs []string
 
 func build() error {
 	command, err := filepath.Abs(*frontend)
@@ -91,7 +94,7 @@ func build() error {
 			return err
 		}
 	}
-	cmd := exec.Command(command, "--no-isolation", "--outdir", out, project)
+	cmd := exec.Command(command, append(pythonArgs, *bootstrap, "--no-isolation", "--outdir", out, project)...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	cmd.Env = append(os.Environ(),
 		"TMPDIR="+work,
@@ -109,6 +112,10 @@ func build() error {
 }
 
 func main() {
+	flag.Func("python-arg", "Argument to the frontend interpreter", func(arg string) error {
+		pythonArgs = append(pythonArgs, arg)
+		return nil
+	})
 	flag.Parse()
 	if err := build(); err != nil {
 		log.Fatal(err)

@@ -70,14 +70,6 @@ single_version_override(
     patches = ["//tools:bazel-lib-generated-tests.patch"],
 )
 
-archive_override(
-    module_name = "rules_python",
-    integrity = "sha256-hx9NQx3SUNUCs2WH9vMTAgWkspMYNrNkbAZ5h+380Lo=",
-    patch_strip = 1,
-    patches = ["//tools:rules_python_namespace_template.patch", "//tools:rules_python_native_launcher.patch"],
-    strip_prefix = "rules_python-7fac02f245a10a16c71e04b395d00a89c67688a2",
-    urls = ["https://github.com/bazel-contrib/rules_python/archive/7fac02f245a10a16c71e04b395d00a89c67688a2.tar.gz"],
-)
 
 single_version_override(
     module_name = "rules_go",
@@ -199,6 +191,13 @@ http_archive(
     urls = ["https://github.com/cpplint/cpplint/archive/2676b8abaa00063729a033660870bcf66cc5ac26.tar.gz"],
 )
 
+# https://github.com/bazel-contrib/rules_python/pull/4385
+single_version_override(
+    module_name = "rules_python",
+    patch_strip = 1,
+    patches = ["//tools:rules_python_namespace_template.patch"],
+)
+
 ### Python
 PYTHON_VERSION = "3.11"
 
@@ -213,7 +212,41 @@ PYTHON_WHEEL_PLATFORMS = [
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = PYTHON_VERSION)
-python.toolchain(python_version = PYTHON_VERSION)
+# Register the standalone distribution beside the default Python toolchain.
+PYTHON_RELEASE = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026"
+PYTHON_STATIC_ARCHIVE = PYTHON_RELEASE + "/cpython-3.11.18%2B20261026-{}-unknown-linux-musl-lto%2Bstatic-full.tar.zst"
+python.override(
+    add_runtime_manifest_urls = [PYTHON_RELEASE + "/SHA256SUMS"],
+    minor_mapping = {"3.11": "3.11.15"},
+    runtime_manifest_sha = "39af6e3d3c712476893409f714a3b9ab795a861a89ec1628cbc99b45d1271a73",
+)
+python.toolchain(python_version = "3.11")
+python.toolchain(python_version = "3.11.18")
+
+# Scratch workers have no ELF interpreter. Python's normal Linux builds
+# still use glibc; the musl toolchains use the statically linked executable.
+python.single_version_platform_override(
+    arch = "aarch64",
+    os_name = "linux",
+    platform = "aarch64-unknown-linux-musl",
+    python_version = "3.11.18",
+    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
+    strip_prefix = "python/install",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
+    target_settings = ["@rules_python//python/config_settings:_is_py_linux_libc_musl"],
+    urls = [PYTHON_STATIC_ARCHIVE.format("aarch64")],
+)
+python.single_version_platform_override(
+    arch = "x86_64",
+    os_name = "linux",
+    platform = "x86_64-unknown-linux-musl",
+    python_version = "3.11.18",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+    target_settings = ["@rules_python//python/config_settings:_is_py_linux_libc_musl"],
+    urls = [PYTHON_STATIC_ARCHIVE.format("x86_64")],
+)
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.override(

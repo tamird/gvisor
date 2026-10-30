@@ -16,12 +16,21 @@
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@rules_python//python:py_executable_info.bzl", "PyExecutableInfo")
+
 def _python_distribution_impl(ctx):
     dist = ctx.actions.declare_directory(ctx.label.name)
     args = ctx.actions.args()
     args.add("--pyproject", ctx.file.pyproject)
     args.add("--version", ctx.attr.version[BuildSettingInfo].value)
-    args.add("--frontend", ctx.executable._frontend)
+    # Use the frontend's virtual environment and second-stage entry point.
+    # Its first-stage launcher otherwise requires a shell on the worker.
+    frontend = ctx.attr._frontend[PyExecutableInfo]
+    runfiles = ctx.executable._frontend.path + ".runfiles"
+    for name, file in [("--frontend", frontend.venv_python_exe), ("--bootstrap", frontend.stage2_bootstrap)]:
+        args.add(name, paths.normalize(paths.join(runfiles, ctx.workspace_name, file.short_path)))
+    args.add_all(frontend.interpreter_args, before_each = "--python-arg")
     args.add("--output", dist.path)
     args.add_all(ctx.files.srcs)
     ctx.actions.run(
