@@ -1,0 +1,72 @@
+diff --git a/rules/private/copy_file_private.bzl b/rules/private/copy_file_private.bzl
+--- a/rules/private/copy_file_private.bzl
++++ b/rules/private/copy_file_private.bzl
+@@ -14,9 +14,8 @@
+
+ """Implementation of copy_file macro and underlying rules.
+
+-These rules copy a file to another location using Bash (on Linux/macOS) or
+-cmd.exe (on Windows). '_copy_xfile' marks the resulting file executable,
+-'_copy_file' does not.
++These rules copy a file to another location. '_copy_xfile' marks the resulting
++file executable, '_copy_file' does not.
+ """
+
+ load(":copy_common.bzl", "OsInfo")
+@@ -66,6 +65,10 @@
+             target_file = ctx.file.src,
+             is_executable = ctx.attr.is_executable,
+         )
++    # The native action accepts regular files and has no executable-mode option.
++    elif (hasattr(ctx.actions, "copy") and not ctx.attr.is_executable and
++          not ctx.file.src.is_directory and not ctx.file.src.is_symlink):
++        ctx.actions.copy(output = ctx.outputs.out, src = ctx.file.src)
+     elif ctx.attr._exec_is_windows[OsInfo].is_windows:
+         copy_cmd(ctx, ctx.file.src, ctx.outputs.out)
+     else:
+@@ -112,7 +115,7 @@
+
+     `native.genrule()` is sometimes used to copy files (often wishing to rename them). The 'copy_file' rule does this with a simpler interface than genrule.
+
+-    This rule uses a Bash command on Linux/macOS/non-Windows, and a cmd.exe command on Windows (no Bash is required).
++    When available, Bazel copies non-executable outputs from ordinary files without a shell. Other hard copies use cmd.exe on Windows and a shell with cp on other platforms.
+
+     Args:
+       name: Name of the rule.
+diff --git a/rules/copy_file.bzl b/rules/copy_file.bzl
+--- a/rules/copy_file.bzl
++++ b/rules/copy_file.bzl
+@@ -17,8 +17,8 @@
+ native.genrule() is sometimes used to copy files (often wishing to rename them).
+ The 'copy_file' rule does this with a simpler interface than genrule.
+
+-The rule uses a Bash command on Linux/macOS/non-Windows, and a cmd.exe command
+-on Windows (no Bash is required).
++When available, Bazel copies ordinary files without a shell. Other hard copies use
++cmd.exe on Windows and a shell with cp on other platforms.
+ """
+
+ load(
+diff --git a/docs/copy_file_doc.md b/docs/copy_file_doc.md
+--- a/docs/copy_file_doc.md
++++ b/docs/copy_file_doc.md
+@@ -5,8 +5,8 @@
+ native.genrule() is sometimes used to copy files (often wishing to rename them).
+ The 'copy_file' rule does this with a simpler interface than genrule.
+
+-The rule uses a Bash command on Linux/macOS/non-Windows, and a cmd.exe command
+-on Windows (no Bash is required).
++When available, Bazel copies ordinary files without a shell. Other hard copies use
++cmd.exe on Windows and a shell with cp on other platforms.
+
+ <a id="copy_file"></a>
+
+@@ -22,7 +22,7 @@
+
+ `native.genrule()` is sometimes used to copy files (often wishing to rename them). The 'copy_file' rule does this with a simpler interface than genrule.
+
+-This rule uses a Bash command on Linux/macOS/non-Windows, and a cmd.exe command on Windows (no Bash is required).
++When available, Bazel copies non-executable outputs from ordinary files without a shell. Other hard copies use cmd.exe on Windows and a shell with cp on other platforms.
+
+
+ **PARAMETERS**
