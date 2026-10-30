@@ -37,6 +37,7 @@
 #endif
 
 #include <algorithm>
+#include <atomic>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
@@ -56,6 +57,7 @@
 #include "test/util/eventfd_util.h"
 #include "test/util/file_descriptor.h"
 #include "test/util/fs_util.h"
+#include "test/util/fuse_util.h"
 #include "test/util/linux_capability_util.h"
 #include "test/util/logging.h"
 #include "test/util/mount_util.h"
@@ -847,6 +849,145 @@ class FuseServerTest : public ::testing::Test {
   TempPath mount_point_;
   Cleanup mount_;
 };
+
+// Hold the lower layer's LISTXATTR during copy-up until the closing file
+// descriptor issues FLUSH. Both syscalls are then pending at the FUSE server.
+TEST_F(FuseServerTest, OverlayCloseDuringCopyUp) {
+  SKIP_IF(IsRunningWithSaveRestore());
+  const FileDescriptor stop = ASSERT_NO_ERRNO_AND_VALUE(NewEventFD(0, 0));
+  const FileDescriptor entering = ASSERT_NO_ERRNO_AND_VALUE(NewEventFD(0, 0));
+  const FileDescriptor released = ASSERT_NO_ERRNO_AND_VALUE(NewEventFD(0, 0));
+  std::atomic<bool> armed = false;
+  std::atomic<bool> overlap = false;
+  ScopedThread server([&, fd = fd_.release()] {
+    uint64_t handle = 0, pending = 0;
+    bool flushed = false, first_released = false;
+    RunFuseServer(fd, stop.get(), [&](int fd, const fuse_in_header& in) {
+      const auto* payload = reinterpret_cast<const char*>(&in + 1);
+      fprintf(stderr, "OVLBOUND opcode=%u inode=%llu\n", in.opcode,
+              static_cast<unsigned long long>(in.nodeid));
+      switch (in.opcode) {
+        case FUSE_STATFS: {
+          fuse_statfs_out out = {};
+          out.st.bsize = out.st.frsize = 4096;
+          out.st.blocks = 1024;
+          out.st.bfree = out.st.bavail = 512;
+          out.st.files = 1024;
+          out.st.ffree = 512;
+          out.st.namelen = 255;
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
+        case FUSE_LOOKUP: {
+          if (std::string(payload) != "file") {
+            FuseRespond(fd, in.unique, nullptr, 0, -ENOENT);
+            break;
+          }
+          auto out = DefaultEntryOut(S_IFREG | 0644, 2, 0);
+          out.attr.nlink = 1;
+          out.attr.uid = out.attr.gid = 0;
+          out.entry_valid = out.attr_valid = 120;
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
+        case FUSE_GETATTR: {
+          fuse_attr_out out = {};
+          out.attr = DefaultFuseAttr(in.nodeid == 1 ? S_IFDIR | 0755 :
+                                     S_IFREG | 0644, in.nodeid, 0);
+          out.attr.nlink = 1;
+          out.attr.uid = out.attr.gid = 0;
+          out.attr_valid = 120;
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
+        case FUSE_OPEN: {
+          fuse_open_out out = {.fh = ++handle};
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
+        case FUSE_LISTXATTR: {
+          if (in.nodeid == 2 && armed.exchange(false)) {
+            pending = in.unique;
+            EXPECT_THAT(eventfd_write(entering.get(), 1), SyscallSucceeds());
+          } else {
+            fuse_getxattr_out out = {};
+            FuseRespond(fd, in.unique, &out, sizeof(out));
+          }
+          break;
+        }
+        case FUSE_GETXATTR:
+          FuseRespond(fd, in.unique, nullptr, 0, -ENODATA);
+          break;
+        case FUSE_FLUSH: {
+          const auto fh = reinterpret_cast<const fuse_flush_in*>(payload)->fh;
+          if (fh == 1) {
+            EXPECT_FALSE(first_released);
+            flushed = true;
+            if (pending != 0) {
+              overlap = true;
+              fuse_getxattr_out out = {};
+              FuseRespond(fd, pending, &out, sizeof(out));
+              pending = 0;
+            }
+          }
+          fprintf(stderr, "OVLBOUND flush=%llu overlap=%d\n",
+                  static_cast<unsigned long long>(fh), static_cast<int>(overlap.load()));
+          FuseRespond(fd, in.unique);
+          break;
+        }
+        case FUSE_RELEASE: {
+          const auto fh = reinterpret_cast<const fuse_release_in*>(payload)->fh;
+          if (fh == 1) {
+            EXPECT_TRUE(flushed);
+            first_released = true;
+            EXPECT_THAT(eventfd_write(released.get(), 1), SyscallSucceeds());
+          }
+          fprintf(stderr, "OVLBOUND release=%llu\n",
+                  static_cast<unsigned long long>(fh));
+          FuseRespond(fd, in.unique);
+          break;
+        }
+        case FUSE_ACCESS:
+        case FUSE_READ:
+          FuseRespond(fd, in.unique);
+          break;
+        default:
+          FuseRespond(fd, in.unique, nullptr, 0, -ENOSYS);
+      }
+      return true;
+    });
+  });
+  Cleanup stop_server([&] {
+    EXPECT_THAT(eventfd_write(stop.get(), 1), SyscallSucceeds());
+  });
+  auto upper = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto work = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto merged = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto mounted = ASSERT_NO_ERRNO_AND_VALUE(Mount(
+      "overlay", merged.path(), "overlay", 0,
+      absl::StrFormat("lowerdir=%s,upperdir=%s,workdir=%s",
+                      mount_point_.path(), upper.path(), work.path()), MNT_DETACH));
+  FileDescriptor original = ASSERT_NO_ERRNO_AND_VALUE(
+      Open(JoinPath(merged.path(), "file"), O_RDONLY));
+  FileDescriptor duplicate(dup(original.get()));
+  ASSERT_GE(duplicate.get(), 0);
+  armed = true;
+  ScopedThread changer([&] {
+    EXPECT_THAT(fchmod(duplicate.get(), 0600), SyscallSucceeds());
+    // Let close run even if this implementation did not issue LISTXATTR.
+    EXPECT_THAT(eventfd_write(entering.get(), 1), SyscallSucceeds());
+  });
+  eventfd_t signal;
+  ASSERT_THAT(eventfd_read(entering.get(), &signal), SyscallSucceeds());
+  EXPECT_THAT(close(original.release()), SyscallSucceeds());
+  changer.Join();
+  struct stat st = {};
+  ASSERT_THAT(stat(JoinPath(upper.path(), "file").c_str(), &st), SyscallSucceeds());
+  EXPECT_EQ(st.st_mode & 0777, 0600);
+  duplicate.reset();
+  EXPECT_THAT(eventfd_read(released.get(), &signal), SyscallSucceeds());
+  EXPECT_TRUE(overlap.load());
+}
 
 class FuseInterruptTest : public FuseServerTest {
  protected:
