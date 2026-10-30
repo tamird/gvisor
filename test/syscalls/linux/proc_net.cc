@@ -18,10 +18,14 @@
 #include <linux/capability.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <sched.h>
+#include <signal.h>
+#include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <cstddef>
@@ -29,6 +33,7 @@
 #include <cstring>
 #include <iostream>
 #include <ostream>
+#include <string>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -42,12 +47,14 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "test/util/capability_util.h"
+#include "test/util/cleanup.h"
 #include "test/util/file_descriptor.h"
 #include "test/util/fs_util.h"
 #include "test/util/linux_capability_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
 #include "test/util/socket_util.h"
+#include "test/util/temp_path.h"
 #include "test/util/test_util.h"
 
 namespace gvisor {
@@ -135,6 +142,44 @@ TEST(ProcSysNetIpv4Sack, CanReadAndWrite) {
   EXPECT_THAT(PreadFd(fd.get(), &buf, sizeof(buf), 0),
               SyscallSucceedsWithValue(sizeof(buf)));
   EXPECT_EQ(buf, to_write);
+}
+
+TEST(ProcSysNetIpv4Sack, SharedAcrossProcMounts) {
+  SKIP_IF(IsRunningWithHostinet() ||
+          !ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)) ||
+          !ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SYS_ADMIN)));
+
+  const auto dir = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  // The runner can own its mount namespace without owning its PID namespace.
+  // Mount proc from a child in a PID namespace owned by our user namespace.
+  const char* target = dir.path().c_str();
+  const pid_t child = syscall(SYS_clone, CLONE_NEWPID | SIGCHLD, 0, 0, 0, 0);
+  if (child == 0) {
+    TEST_PCHECK(mount("proc", target, "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC,
+                      nullptr) == 0);
+    _exit(0);
+  }
+  ASSERT_THAT(child, SyscallSucceeds());
+  int status;
+  ASSERT_THAT(RetryEINTR(waitpid)(child, &status, 0),
+              SyscallSucceedsWithValue(child));
+  ASSERT_EQ(status, 0);
+  const Cleanup unmount(
+      [&] { EXPECT_THAT(umount(target), SyscallSucceeds()); });
+
+  constexpr char kSack[] = "sys/net/ipv4/tcp_sack";
+  const std::string original_path = JoinPath("/proc", kSack);
+  const std::string mounted_path = JoinPath(dir.path(), kSack);
+
+  const std::string original =
+      ASSERT_NO_ERRNO_AND_VALUE(GetContents(original_path));
+  ASSERT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(mounted_path)), original);
+  ASSERT_TRUE(original == "0\n" || original == "1\n") << original;
+  const std::string updated = original == "1\n" ? "0\n" : "1\n";
+  ASSERT_NO_ERRNO(SetContents(mounted_path, updated));
+  const Cleanup restore(
+      [&] { EXPECT_NO_ERRNO(SetContents(mounted_path, original)); });
+  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(original_path)), updated);
 }
 
 // DeviceEntry is an entry in /proc/net/dev

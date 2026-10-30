@@ -126,42 +126,20 @@ func (*readOnlySysctlTestStack) SetForwarding(tcpip.NetworkProtocolNumber, bool)
 	return linuxerr.EACCES
 }
 
-func TestTCPSACKReadback(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		writeErr error
-		want     string
-	}{
-		{name: "shared stack", want: "1\n"},
-		{name: "rejected write", writeErr: linuxerr.EACCES, want: "0\n"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := contexttest.Context(t)
-			s := inet.NewTestStack()
-			s.TCPSACKFlag = false
-			reader := &tcpSackData{stack: s}
-			writer := &tcpSackData{stack: s}
-			if tc.writeErr != nil {
-				writer = &tcpSackData{stack: &readOnlySysctlTestStack{TestStack: s}}
-				reader = writer
-			}
-			var buf bytes.Buffer
-			if err := reader.Generate(ctx, &buf); err != nil {
-				t.Fatal(err)
-			}
+func TestRejectedTCPSACKWrite(t *testing.T) {
+	ctx := contexttest.Context(t)
+	file := tcpSackData{stack: &readOnlySysctlTestStack{TestStack: inet.NewTestStack()}}
 
-			const value = "1\n"
-			if n, err := writer.Write(ctx, nil, usermem.BytesIOSequence([]byte(value)), 0); n != int64(len(value)) || err != tc.writeErr {
-				t.Fatalf("Write() = (%d, %v), want (%d, %v)", n, err, len(value), tc.writeErr)
-			}
-			buf.Reset()
-			if err := reader.Generate(ctx, &buf); err != nil {
-				t.Fatal(err)
-			}
-			if got := buf.String(); got != tc.want {
-				t.Errorf("Generate() = %q, want %q", got, tc.want)
-			}
-		})
+	const value = "1\n"
+	if n, err := file.Write(ctx, nil, usermem.BytesIOSequence([]byte(value)), 0); n != int64(len(value)) || err != linuxerr.EACCES {
+		t.Fatalf("Write() = (%d, %v), want (%d, %v)", n, err, len(value), linuxerr.EACCES)
+	}
+	var buf bytes.Buffer
+	if err := file.Generate(ctx, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := buf.String(), "0\n"; got != want {
+		t.Errorf("Generate() = %q, want %q", got, want)
 	}
 }
 
