@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T22:42:48.683812+00:00",
+    "updatedAt": "2026-10-30T23:00:22.480244+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37657,6 +37657,47 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41138862683/artifacts/13018915238"
         }
       ]
+    },
+    {
+      "id": "pr:15972",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15972,
+      "ref": "rack-pto-rto-cap",
+      "head": "8147e9ad3c95c67a0a9dd560f37aff9d7842f861",
+      "title": "Review the tail probe deadline after an ACK",
+      "url": "https://github.com/google/gvisor/pull/15972",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-30T23:00:22.480244+00:00",
+      "summary": "The PR caps a tail probe at the retransmission deadline. After an ACK reduces two outstanding segments to one, the parent retransmits the tail at 220 ms and the PR at 20 ms. Scheduling after ACK accounting retransmits it at the 50 ms RTO.",
+      "evidence": [
+        {
+          "label": "Three sources, packet bytes and timing",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41140493959/artifacts/13018229764"
+        },
+        {
+          "label": "Guard retaining the pre-ACK timer",
+          "url": "https://github.com/google/gvisor/blob/8147e9ad3/pkg/tcpip/transport/tcp/snd.go#L1076-L1082"
+        },
+        {
+          "label": "Tested scheduling change",
+          "url": "https://github.com/tamird/gvisor/commit/b0b469219"
+        },
+        {
+          "label": "TCP review guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "8147e9ad3c95c67a0a9dd560f37aff9d7842f861",
+        "url": "https://github.com/google/gvisor/pull/15972",
+        "title": "Review the timer for the last segment",
+        "summary": "Decide whether to post the proposed inline at snd.go line 1080. The change preserves the postXmit guard and starts the ACK timer only after removing acknowledged packets.",
+        "body": "Could you schedule the probe after accounting for the ACK? When two\nsegments are outstanding and the first is acknowledged, schedulePTO\nstill sees two. This guard preserves that timer for the lone remaining\nsegment. In the packet test the PR retransmits the last 10 bytes at\n20 ms (twice the measured RTT) [1]. Moving the timer calculation below\nACK accounting sends those bytes at the 50 ms RTO and keeps the three\nexisting tests passing [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41140493959/artifacts/13018229764\n[2]: https://github.com/tamird/gvisor/commit/b0b469219\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -54921,7 +54962,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-29T17:08:11.207118+00:00",
+      "updatedAt": "2026-10-30T23:00:22.480244+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -54977,7 +55018,7 @@
           ]
         },
         {
-          "text": "Two independent authors’ timer proposals address different bounds: #15785 adds a multi-packet delay on very short RTT paths; #15972 caps the probe deadline at the retransmission deadline. Review them together under idle, no-ACK and delayed-ACK conditions. The timestamp and new-data probe changes need separate tests for incomplete SACK ranges and invalid ACK numbers.",
+          "text": "#15785 adds 2 ms to probe timing for multiple packets. #15972 caps the timer even after idle. When an ACK left one packet, the parent retransmitted it at 220 ms and #15972 at 20 ms. Scheduling after ACK accounting gave the 50 ms RTO and preserved the three PR tests. The timestamp and new-data probe changes need separate tests for incomplete SACK ranges and invalid ACK numbers.",
           "evidence": [
             {
               "label": "Low-RTT probe floor",
@@ -54994,6 +55035,14 @@
             {
               "label": "New data as loss probe",
               "url": "https://github.com/google/gvisor/pull/16660"
+            },
+            {
+              "label": "Two-to-one flight packet evidence",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41140493959/artifacts/13018229764"
+            },
+            {
+              "label": "Tested timer order",
+              "url": "https://github.com/tamird/gvisor/commit/b0b469219"
             }
           ]
         },
