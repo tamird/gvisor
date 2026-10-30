@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-29T23:58:41.731839+00:00",
+    "updatedAt": "2026-10-30T00:07:45.438244+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50119,9 +50119,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T23:58:41.731839+00:00",
+      "updatedAt": "2026-10-30T00:07:45.438244+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The native version reader and Debian changelog writer completed eight uncached actions on empty AMD64 and ARM64 workers. Neither executable needed an ELF interpreter. Both CPU configurations produced the same 186-byte changelog for release-20261029.0 (midnight UTC, October 29), and the same 185-byte changelog for git-9c271665f (Unix epoch). Verification followed the last execution by 1.195 seconds without manual recovery. A separate run tested the module-map helper and the compiler-rt archives that consume it; the full compiler and release graphs have not been qualified on scratch.",
+          "evidence": [
+            {
+              "label": "Version reader and changelog: all eight empty-worker action verdicts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40976973163/artifacts/12942293991"
+            },
+            {
+              "label": "Two CPU configurations and both version forms",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40976973163"
+            },
+            {
+              "label": "Module-map helper and compiler-rt archive controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40808042591"
+            }
+          ]
+        },
         {
           "text": "Unmodified rules_pkg and a plain py_binary both pass with rules_python 2.4.5 on Linux. Both launch through /usr/bin/env: script mode selects Bash, and the default selects host python3. Blocking that one path prevented either tool from starting while /bin/true still ran. The archive-specific workaround was withdrawn.",
           "evidence": [
@@ -50813,8 +50830,20 @@
           ]
         }
       ],
-      "nextStep": "Before proposing the static Python runtime, verify an upstream-supported launcher can start the unmodified writers without /usr/bin/env and can locate application runfiles across independent manifest directories. The unstamped metadata prerequisite has landed. Qualify the compiler and changelog separately.",
+      "nextStep": "Qualify the full compiler and release graphs on scratch. The version reader, changelog writer, module-map helper and consuming compiler-rt archives have scoped results. For static Python, test a launcher for the unmodified writers that needs no host programs and supports separate manifest directories; unstamped metadata is already on master.",
       "evidence": [
+        {
+          "label": "Version reader and changelog: all eight empty-worker action verdicts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40976973163/artifacts/12942293991"
+        },
+        {
+          "label": "Two CPU configurations and both version forms",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40976973163"
+        },
+        {
+          "label": "Module-map helper and compiler-rt archive controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40808042591"
+        },
         {
           "label": "Published rules_go upgrade #16593",
           "url": "https://github.com/google/gvisor/pull/16593"
