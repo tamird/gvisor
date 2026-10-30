@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:57:13.800523+00:00",
+    "updatedAt": "2026-10-30T15:58:38.909513+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39748,8 +39748,8 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:vfio-pci-file-poll",
-      "to": "pr:16743",
+      "from": "pr:16743",
+      "to": "branch:vfio-pci-file-poll",
       "reason": "The permanent shared PCI readiness fixture needs to open the VFIO group through the device gofer before asking the driver about pollability. Stock ordinary systrap failed the first open with EBUSY.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16743",
@@ -39759,8 +39759,8 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:vfio-eventfd-irq-syscall",
-      "to": "pr:16743",
+      "from": "pr:16743",
+      "to": "branch:vfio-eventfd-irq-syscall",
       "reason": "The permanent manual syscall fixture binds a real VFIO device through the ordinary device gofer. It is introduced by #16743; the existing #16627 production fix does not depend on it.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16743",
