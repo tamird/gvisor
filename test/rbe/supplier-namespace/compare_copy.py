@@ -19,7 +19,7 @@ stage = tmp / 'copy-results'
 fixture.mkdir()
 stage.mkdir()
 baseline = '1a96d8178c22f0787fe35d37c1d9978ca6271f9b'
-receipt = dict(source=baseline, patch_sha256=hashlib.sha256(patch.read_bytes()).hexdigest(), expected=['stock','candidate','s390x'], observed={}, commands=[])
+receipt = dict(source=baseline, patch_sha256=hashlib.sha256(patch.read_bytes()).hexdigest(), expected=['stock','candidate','s390x','portable'], observed={}, commands=[])
 bazel = shutil.which('bazelisk') or shutil.which('bazel')
 
 def run(args, cwd=fixture, name='cmd', ok=True):
@@ -46,6 +46,8 @@ def main():
     assert run(['git','rev-parse','HEAD'],base,name='source').stdout.decode().strip()==baseline
     (fixture / 'MODULE.bazel').write_text(f'''module(name = "copy_witness")
 bazel_dep(name = "rules_python", version = "2.4.5")
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
 local_path_override(module_name = "rules_python", path = "{base}")
 ''')
     (fixture / 'BUILD.bazel').write_text('''load("@rules_python//python/private/pypi:namespace_pkgs.bzl", "create_inits")
@@ -91,6 +93,21 @@ platform(name = "linux_s390x", constraint_values = ["@platforms//os:linux", "@pl
     other=bz('build','--nobuild',*opt,*templates,ok=False,name='s390x')
     assert other.returncode and b'coreutils_toolchain_type' in other.stdout,other.stdout[-3800:]
     receipt['observed']['s390x']={'configuration':'no default coreutils toolchain','exit':other.returncode}
+    # Use the same producer generator and template with its no-spawn text rule.
+    portable=fixture/'portable'; portable.mkdir()
+    (portable/'templates.bzl').write_text('''load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_python//python/private/pypi:namespace_pkgs.bzl", "create_inits")
+def _expand(name, src, out, **kwargs):
+    expand_template(name = name, template = src, out = out, substitutions = {}, **kwargs)
+def portable_inits():
+    create_inits(srcs = ["alpha/beta/example.py"], copy_file = _expand)
+''')
+    (portable/'BUILD.bazel').write_text('load(":templates.bzl", "portable_inits")\nportable_inits()\n')
+    bz('build',*opts,*opt,*[t.replace('//:', '//portable:') for t in templates],name='portable')
+    output=Path(bz('info',*opt,'bazel-bin',name='portable-bin').stdout.decode().strip().splitlines()[-1])/'portable'
+    for file in files:
+        assert (output/file).is_file() and (output/file).read_bytes()==src
+    receipt['observed']['portable']={'configuration':'linux_s390x','outputs':files}
     receipt['execution_finished_at']=now()
 
 try:
