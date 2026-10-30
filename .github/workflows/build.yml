@@ -68,9 +68,9 @@ jobs:
         sed 's,^/,,' "$RUNNER_TEMP/interpreter" >> "$RUNNER_TEMP/libs"
         sort -u "$RUNNER_TEMP/libs" -o "$RUNNER_TEMP/libs"
         if grep -vE '^(lib|usr/lib)' "$RUNNER_TEMP/libs"; then exit 1; fi
-        docker exec overlay-guest tar -chf "$RUNNER_TEMP/vfio_pci_root.tar" -C / -T "$RUNNER_TEMP/libs"
         cp "$RUNNER_TEMP/vfio_pci_probe_bin" "$RUNNER_TEMP/probe"
-        tar -rf "$RUNNER_TEMP/vfio_pci_root.tar" -C "$RUNNER_TEMP" probe interpreter
+        docker exec overlay-guest tar -chf "$RUNNER_TEMP/vfio_pci_root.tar" -C / -T "$RUNNER_TEMP/libs" -C "$RUNNER_TEMP" probe interpreter
+        tar -tf "$RUNNER_TEMP/vfio_pci_root.tar" > "$out/probe-runtime-contents"
         sha256sum "$RUNNER_TEMP/"{vfio_pci_probe_bin,vfio_pci_root.tar} >"$out/probe-sha"
         git checkout --quiet --detach "$carrier"
         cp "$RUNNER_TEMP/vfio_pci_root.tar" test/rbe/tcg/
