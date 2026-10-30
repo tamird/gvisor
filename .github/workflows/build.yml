@@ -1,18 +1,18 @@
-name: Check the permanent VFIO PCI syscall targets
+name: Check eventfd conversion through the VFIO IRQ ioctl
 on:
   push:
-    branches: [qualification/vfio-permanent-device]
+    branches: [qualification/vfio-eventfd-irq]
 permissions:
   contents: read
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/vfio-permanent-device'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/vfio-eventfd-irq'
     runs-on: ubuntu-24.04
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: 1801418f9a170d7fe78c5b92141f8e8c9e166d4a
+      PRODUCT: 41d324e51e290a3b7a52bcdb6b0685147f74d2a9
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
@@ -49,25 +49,25 @@ jobs:
         docker run --device=/dev/kvm -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
     - name: Retain the qualification command on the coordinator
       run: cp test/rbe/tcg/check_vfio_suite.sh "$RUNNER_TEMP/check_vfio_suite.sh"
-    - name: Open the provisioned device on the isolated gofer fix
-      run: '"$RUNNER_TEMP/check_vfio_suite.sh" 73a709bdc845f47cc85dda13925e86a80606e2ad group Open'
-    - name: Exercise PCI poll and epoll on the independent follow-up
-      if: ${{ !cancelled() }}
-      run: '"$RUNNER_TEMP/check_vfio_suite.sh" "$PRODUCT" pci Readiness'
-    - name: Check saved-waiter round-trip on the exact product
-      if: ${{ !cancelled() }}
+    - name: Prove the uncorrected runtime loses the upper counter bits
       run: |
         set -euo pipefail
-        out="$RUNNER_TEMP/records"
-        git checkout --quiet --detach "$PRODUCT"
         rc=0
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=24 --remote_download_outputs=toplevel --nocache_test_results --test_output=all //pkg/sentry/devices/tpuproxy/vfio:vfio_test > "$RUNNER_TEMP/checkpoint-test.log" 2>&1 || rc=$?
-        echo "$rc" > "$out/checkpoint-exit"
-        grep -E 'INFO: Invocation ID:|ERROR:|FAIL|PASS|RUN |Build completed' "$RUNNER_TEMP/checkpoint-test.log" | tail -65 > "$out/checkpoint-receipt" || :
-        test "$rc" = 0
+        "$RUNNER_TEMP/check_vfio_suite.sh" 2c5ff24341e9f7372d73825de81cf6b64a364ef2 stock InterruptEventfdKeepsFullCounter || rc=$?
+        test "$rc" != 0
+        out="$RUNNER_TEMP/records/stock"
+        grep -Fq 'native: 0' "$out/verdict.txt"
+        grep -Fq 'OK ' "$out/native.txt"
+        for mode in runsc_systrap runsc_systrap_direct; do
+          grep -Eq 'FAILED .*VfioPCIDeviceTest.InterruptEventfdKeepsFullCounter' "$out/$mode.txt"
+          grep -Eiq 'actual: [[:digit:]]+ vs 4294967297' "$out/$mode.txt"
+        done
+    - name: Run the same native and guest syscall with the corrected eventfd
+      if: ${{ !cancelled() }}
+      run: '"$RUNNER_TEMP/check_vfio_suite.sh" "$PRODUCT" fixed InterruptEventfdKeepsFullCounter'
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: permanent-vfio-pci
+        name: permanent-vfio-eventfd
         path: ${{ runner.temp }}/records
         if-no-files-found: error
