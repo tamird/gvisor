@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T05:07:07.633004+00:00",
+    "updatedAt": "2026-10-30T06:01:46.148211+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35015,15 +35015,51 @@
       "id": "branch:mutable-overlay-poll-waiter",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/mutable-overlay-poll-waiter",
-      "head": "215b9343911736fac960834eedb5cb92fe4e1b3c",
+      "ref": "research/overlay-overlap-waiters",
+      "head": "65b4611218d04b56fe0d65d4ca39dddb292fa658",
       "title": "Unregister overlay poll waiters from their original backing file",
-      "url": "https://github.com/tamird/gvisor/commit/215b93439",
+      "url": "https://github.com/tamird/gvisor/compare/85d46891e...65b461121",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T04:55:24.525379+00:00",
-      "summary": "On mutable overlay, copying up a file can redirect a canceled poll waiter’s unregister operation to a different backing file. The old proc file can still wake that waiter; retaining the original file passes the cancellation case. The read-only overlay control passes. Check lifetime, checkpoint behavior and cost before proposing the change.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T06:01:46.148211+00:00",
+      "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap.",
       "evidence": [
+        {
+          "label": "Only unregister successful poll registrations",
+          "url": "https://github.com/tamird/gvisor/commit/85cb9f489"
+        },
+        {
+          "label": "Retain lower overlay until its waiters drain",
+          "url": "https://github.com/tamird/gvisor/commit/65b461121"
+        },
+        {
+          "label": "Four registration and cleanup cases",
+          "url": "https://app.buildbuddy.io/invocation/ced02845-8623-473f-af40-146af7dab79c"
+        },
+        {
+          "label": "Same-build checkpoint during lower/upper overlap",
+          "url": "https://app.buildbuddy.io/invocation/bc5ec678-9aeb-400e-96c4-4f0ef2ca740a"
+        },
+        {
+          "label": "Metadata-only copy-up",
+          "url": "https://app.buildbuddy.io/invocation/44e738c6-3432-4611-9aa9-b4367b79258e"
+        },
+        {
+          "label": "Nested race, both copy-up orders",
+          "url": "https://app.buildbuddy.io/invocation/8ecbd92f-2192-465e-99aa-686284815e78"
+        },
+        {
+          "label": "Nogo: overlay and ABI both pass",
+          "url": "https://app.buildbuddy.io/invocation/4eaf5426-a5f9-4c3c-a2c5-ab48fa1903e4"
+        },
+        {
+          "label": "Stock vs. final, 20 alternating samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41007120186/artifacts/12956227771"
+        },
+        {
+          "label": "Per-waiter listener vs. final, 20 alternating samples",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41009811606/artifacts/12956734639"
+        },
         {
           "label": "Stock: old backing still sends canceled waiter a notification",
           "url": "https://app.buildbuddy.io/invocation/62f29665-2f0d-4c93-8723-f51ae4149fdb"
@@ -35076,7 +35112,26 @@
           "label": "Same three SIGIO observations after checkpoint/restore",
           "url": "https://app.buildbuddy.io/invocation/9d64cd2b-92ca-43c6-8f0b-ab4e82c8f21e"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "215b9343911736fac960834eedb5cb92fe4e1b3c"
+        },
+        "after": {
+          "base": "85d46891e97cf43c1e30935dc56f77b2ec5a5bf7",
+          "head": "65b4611218d04b56fe0d65d4ca39dddb292fa658"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "65b4611218d04b56fe0d65d4ca39dddb292fa658",
+        "baseHead": "85d46891e97cf43c1e30935dc56f77b2ec5a5bf7",
+        "url": "https://github.com/tamird/gvisor/compare/85d46891e...65b461121",
+        "title": "Unregister overlay poll waiters from their original backing file",
+        "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap.",
+        "body": "Review the two commits for standalone submissions: poll skips unregistering a failed registration; overlay retains the backing file of each accepted waiter. The checkpoint regression restores waiters on both files in the same build. This changes the checkpoint representation of regular overlay file descriptions. In 20 alternating samples, eight warmed tmpfs registration pairs were 2.21% faster and eight proc pairs 1.05% slower than stock, all without allocation."
+      }
     },
     {
       "id": "branch:state-signaling-nan",
