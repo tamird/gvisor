@@ -500,3 +500,136 @@ func TestRACKRepeatedSACKAfterRTO(t *testing.T) {
 	}
 	ack(3, first.Add(seqnum.Size(mss)), block(2))
 }
+
+// TestRACKRepeatedSACKAfterTimeout compares an ACK of a retransmitted
+// first packet that repeats an already reported high or low SACK range.
+// Neither ACK first reports an original packet below the earlier high range.
+func TestRACKRepeatedSACKAfterTimeout(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		rangeStart int
+		tag        byte
+	}{
+		{"repeat_high", 4, 1},
+		{"repeat_low", 2, 4},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			const peerRTT = 150 * time.Millisecond
+			dut, conn, fd, mss := createSACKConnectionWithPeerRTT(t, peerRTT)
+			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("cubic"))
+			cc := unix.ByteSliceToString(dut.GetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, 16))
+			if cc != "cubic" {
+				t.Fatalf("TCP_CONGESTION = %q, want cubic", cc)
+			}
+			for range 4 {
+				sendAndReceive(t, dut, conn, 1, fd, mss, false)
+				time.Sleep(peerRTT)
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+			}
+			first := *conn.RemoteSeqNum(t)
+			sendAndReceive(t, dut, conn, 5, fd, mss, false)
+			time.Sleep(peerRTT)
+			seq := func(index int) seqnum.Value { return first.Add(seqnum.Size(index * mss)) }
+			block := func(index int) header.SACKBlock { return header.SACKBlock{Start: seq(index), End: seq(index + 1)} }
+			report := func(tag byte, cum int, ranges ...header.SACKBlock) {
+				t.Helper()
+				var opts [40]byte
+				n := header.EncodeNOP(opts[:])
+				n += header.EncodeNOP(opts[n:])
+				n += header.EncodeSACKBlocks(ranges, opts[n:])
+				conn.Send(t, testbench.TCP{
+					Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seq(cum))), Options: opts[:n],
+				}, &testbench.Payload{Bytes: []byte{tag}})
+				if got := dut.Recv(t, fd, 1, 0); len(got) != 1 || got[0] != tag {
+					t.Fatalf("recv = %v, want tag %d", got, tag)
+				}
+				info := dut.GetSockOptTCPInfo(t, fd)
+				t.Logf("tag=%d cc=%s ca=%d reord=%d cwnd=%d total_retrans=%d", tag, cc, info.CaState, info.ReordSeen, info.SndCwnd, info.TotalRetrans)
+				if info.ReordSeen != 0 {
+					t.Errorf("tag %d: TCP_INFO.ReordSeen = %d with no newly reported original below the previous high SACK", tag, info.ReordSeen)
+				}
+			}
+
+			report(tc.tag, 0, block(4), block(2))
+			report(tc.tag+1, 0, block(2))
+
+			// The oldest packet can be retransmitted by fast recovery first.
+			// Wait for that packet on the wire while TCP_INFO actually says Loss.
+			deadline := time.Now().Add(8 * time.Second)
+			for {
+				_, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(first))}, &testbench.Payload{Bytes: make([]byte, mss)}, time.Until(deadline))
+				if err != nil {
+					t.Fatalf("waiting for retransmission of oldest packet in Loss: %v", err)
+				}
+				info := dut.GetSockOptTCPInfo(t, fd)
+				t.Logf("oldest case=%s ca=%d reord=%d cwnd=%d total_retrans=%d", tc.name, info.CaState, info.ReordSeen, info.SndCwnd, info.TotalRetrans)
+				if info.CaState == linux.TCP_CA_Loss {
+					if info.ReordSeen != 0 {
+						t.Fatalf("TCP_INFO.ReordSeen = %d before the post-timeout ACK", info.ReordSeen)
+					}
+					break
+				}
+			}
+			// Only the retransmitted first segment advances the ACK. The next
+			// segment is still missing, so the earlier SACK remains disjoint.
+			report(tc.tag+2, 1, block(tc.rangeStart))
+			if tc.name == "repeat_high" {
+				// The peer discards the previously reported third segment.
+				// First receive and ACK the second, then wait for the third on
+				// the wire. TCP must resend it even though RACK already saw it.
+				for i := 1; i <= 2; i++ {
+					if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seq(i)))}, &testbench.Payload{Bytes: make([]byte, mss)}, 8*time.Second); err != nil {
+						t.Fatalf("waiting for retransmitted segment %d: %v", i+1, err)
+					}
+					tag := byte(10 + i)
+					conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seq(i + 1)))}, &testbench.Payload{Bytes: []byte{tag}})
+					if got := dut.Recv(t, fd, 1, 0); len(got) != 1 || got[0] != tag {
+						t.Fatalf("recv = %v, want tag %d", got, tag)
+					}
+				}
+				t.Log("reneged third segment retransmitted and acknowledged")
+			}
+		})
+	}
+}
+
+// TestRACKRepeatedLowerSACK reports two distinct ranges together, then repeats
+// the lower one. No new delivery occurred between those two ACKs. The third
+// ACK credits a previously unseen original below the earlier high range.
+func TestRACKRepeatedLowerSACK(t *testing.T) {
+	const peerRTT = 150 * time.Millisecond
+	dut, conn, fd, mss := createSACKConnectionWithPeerRTT(t, peerRTT)
+	for range 4 {
+		sendAndReceive(t, dut, conn, 1, fd, mss, false)
+		time.Sleep(peerRTT)
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+	}
+
+	first := *conn.RemoteSeqNum(t)
+	sendAndReceive(t, dut, conn, 6, fd, mss, false)
+	time.Sleep(peerRTT)
+	block := func(start, end int) header.SACKBlock {
+		return header.SACKBlock{Start: first.Add(seqnum.Size(start * mss)), End: first.Add(seqnum.Size(end * mss))}
+	}
+	ack := func(tag byte, ranges []header.SACKBlock, want bool) {
+		t.Helper()
+		var opts [40]byte
+		n := header.EncodeNOP(opts[:])
+		n += header.EncodeNOP(opts[n:])
+		n += header.EncodeSACKBlocks(ranges, opts[n:])
+		conn.Send(t, testbench.TCP{
+			Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(first)), Options: opts[:n],
+		}, &testbench.Payload{Bytes: []byte{tag}})
+		if got := dut.Recv(t, fd, 1, 0); len(got) != 1 || got[0] != tag {
+			t.Fatalf("recv = %v, want tag %d", got, tag)
+		}
+		info := dut.GetSockOptTCPInfo(t, fd)
+		t.Logf("tag=%d tcpi_reord_seen=%d tcpi_total_retrans=%d", tag, info.ReordSeen, info.TotalRetrans)
+		if (info.ReordSeen != 0) != want {
+			t.Errorf("tag %d: tcpi_reord_seen = %d, want detected %t", tag, info.ReordSeen, want)
+		}
+	}
+	ack(1, []header.SACKBlock{block(5, 6), block(2, 3)}, false)
+	ack(2, []header.SACKBlock{block(2, 3)}, false)
+	ack(3, []header.SACKBlock{block(2, 4), block(5, 6)}, true)
+}
