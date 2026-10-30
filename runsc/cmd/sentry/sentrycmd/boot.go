@@ -34,6 +34,7 @@ import (
 	"gvisor.dev/gvisor/pkg/coretag"
 	"gvisor.dev/gvisor/pkg/cpuid"
 	"gvisor.dev/gvisor/pkg/fd"
+	"gvisor.dev/gvisor/pkg/garbage"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/metric"
@@ -354,6 +355,14 @@ func (b *Boot) willReexec() bool {
 	return false
 }
 
+// suspendGCForBoot suspends GC for sandbox boot.
+func suspendGCForBoot(totalMem uint64) *garbage.Suspension {
+	if totalMem == 0 {
+		totalMem = garbage.NoMemoryLimit
+	}
+	return garbage.Suspend(totalMem, 0 /* untrackedMem */)
+}
+
 // Execute implements subcommands.Command.Execute.  It starts a sandbox in a
 // waiting state.
 func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcommands.ExitStatus {
@@ -367,6 +376,10 @@ func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomma
 	timer := starttime.Timer("runsc boot")
 	timer.ReachedAt("Go code running", starttime.GoStartTime())
 	timer.Reached("boot subcommand dispatched")
+
+	// Suspend GC across sandbox boot and initial startup to avoid scanning the
+	// growing startup heap on the boot critical path.
+	startupGC := suspendGCForBoot(b.totalMem)
 
 	if hostPageSize := unix.Getpagesize(); hostPageSize != hostarch.PageSize {
 		util.Fatalf("host page size (%d) does not match compiled page size (%d)", hostPageSize, hostarch.PageSize)
@@ -750,6 +763,7 @@ func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomma
 		RootfsUpperTarFD:         b.rootfsUpperTarFD,
 		NoRootContainer:          b.noRootContainer,
 		StartupTimer:             timer,
+		StartupGC:                startupGC,
 	}
 	timer.Reached("creating loader")
 	l, err := boot.New(bootArgs)

@@ -20,6 +20,7 @@ import (
 	"net"
 	"os"
 	"runtime"
+	runtimedebug "runtime/debug"
 	"strings"
 	"testing"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"gvisor.dev/gvisor/pkg/control/server"
 	"gvisor.dev/gvisor/pkg/cpuid"
 	"gvisor.dev/gvisor/pkg/fspath"
+	"gvisor.dev/gvisor/pkg/garbage"
 	"gvisor.dev/gvisor/pkg/lisafs"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
@@ -337,6 +339,64 @@ func TestStartupHeapReleaseOnRestore(t *testing.T) {
 	// A second trigger while the release is pending doesn't add a release.
 	l.releaseStartupHeapWhenIdle()
 	expectOneStartupHeapRelease(t, released)
+}
+
+func TestStartupGC(t *testing.T) {
+	newSuspendedLoader := func(t *testing.T) *Loader {
+		t.Helper()
+		l, cleanup, err := createLoader(testConfig(), testSpec())
+		if err != nil {
+			t.Fatalf("createLoader: %v", err)
+		}
+		t.Cleanup(func() {
+			cleanup()
+			l.Destroy()
+		})
+		runtime.GC()
+		l.startupGC = garbage.Suspend(garbage.NoMemoryLimit, 0)
+		return l
+	}
+	gcPercent := func() int {
+		p := runtimedebug.SetGCPercent(-1 /* percent */)
+		runtimedebug.SetGCPercent(p)
+		return p
+	}
+
+	t.Run("resumesBeforeIdleRelease", func(t *testing.T) {
+		l := newSuspendedLoader(t)
+		gotAtRelease := make(chan int, 1)
+		l.freeOSMemory = func() { gotAtRelease <- gcPercent() }
+		l.releaseStartupHeapWhenIdle()
+		if got := <-gotAtRelease; got < 0 {
+			t.Fatalf("GCPercent during freeOSMemory = %d, want >= 0", got)
+		}
+	})
+
+	t.Run("resumesOnRunError", func(t *testing.T) {
+		l := newSuspendedLoader(t)
+		l.mu.Lock()
+		l.state = restoreFailed
+		l.mu.Unlock()
+		if err := l.run(); err == nil {
+			t.Fatal("l.run() in state=restoreFailed succeeded")
+		}
+		if got := gcPercent(); got < 0 {
+			t.Fatalf("GCPercent after failed run = %d, want >= 0", got)
+		}
+	})
+
+	t.Run("resumesOnRestoreRun", func(t *testing.T) {
+		l := newSuspendedLoader(t)
+		l.mu.Lock()
+		l.state = restoringUnstarted
+		l.mu.Unlock()
+		if err := l.run(); err != nil {
+			t.Fatalf("l.run() in state=restoringUnstarted: %v", err)
+		}
+		if got := gcPercent(); got < 0 {
+			t.Fatalf("GCPercent after restore run = %d, want >= 0", got)
+		}
+	})
 }
 
 // Test that network=host with raw sockets enabled requires CAP_NET_RAW on the
