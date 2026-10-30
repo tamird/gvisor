@@ -684,6 +684,28 @@ func (fd *FileDescription) EventUnregister(e *waiter.Entry) {
 	fd.impl.EventUnregister(e)
 }
 
+// RegisterWaiter associates e with the file that will deliver its events. If
+// the implementation forwards the registration, it returns an owned reference
+// to the file that accepted e. Pass the result to UnregisterWaiter on success.
+func (fd *FileDescription) RegisterWaiter(e *waiter.Entry) (*FileDescription, error) {
+	if forwarder, ok := fd.impl.(interface {
+		RegisterWaiter(*waiter.Entry) (*FileDescription, error)
+	}); ok {
+		return forwarder.RegisterWaiter(e)
+	}
+	return nil, fd.impl.EventRegister(e)
+}
+
+// UnregisterWaiter removes e from the same file that accepted it.
+func (fd *FileDescription) UnregisterWaiter(ctx context.Context, e *waiter.Entry, source *FileDescription) {
+	if source == nil {
+		fd.impl.EventUnregister(e)
+		return
+	}
+	source.impl.EventUnregister(e)
+	source.DecRef(ctx)
+}
+
 // Epollable returns whether this file can be used with epoll_ctl(2).
 func (fd *FileDescription) Epollable() bool {
 	return fd.impl.Epollable()
