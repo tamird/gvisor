@@ -1,35 +1,56 @@
-name: CI
-
-"on":
+name: Verify catalog audit policy
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/license-ref-policy]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Run the complete checker package on the clean candidate
+        run: |
+          set -eu
+          out="$RUNNER_TEMP/license-proof"
+          mkdir -p "$out"
+          git rev-parse HEAD > "$out/carrier"
+          test "$(git rev-parse HEAD^)" = 62d7054b7f5b5b22521e7346ed84f533c49f081e
+          git checkout --quiet --detach 62d7054b7f5b5b22521e7346ed84f533c49f081e
+          test -z "$(git status --porcelain)"
+          git rev-parse HEAD > "$out/source"
+          git rev-parse 'HEAD^{tree}' > "$out/tree"
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          rc=0
+          bazelisk test --nocache_test_results --test_output=errors --test_arg=-test.v=test2json //tools/licensecheck:licensecheck_test > "$RUNNER_TEMP/candidate-test.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$out/bazel.exit"
+          log=$(bazelisk info bazel-testlogs 2>/dev/null)/tools/licensecheck/licensecheck_test
+          for f in test.log test.xml; do if test -f "$log/$f"; then cp "$log/$f" "$out/$f"; fi; done
+          tail -25 "$RUNNER_TEMP/candidate-test.log" > "$out/bazel-summary"
+          exit "$rc"
+      - name: Verify policy, explicit notice and bundle results
+        run: |
+          python3 - "$RUNNER_TEMP/license-proof" <<'PY'
+          from pathlib import Path
+          import sys, xml.etree.ElementTree as ET
+          p=Path(sys.argv[1])
+          assert int((p/'bazel.exit').read_text())==0
+          cases={t.attrib['name'] for t in ET.parse(p/'test.xml').iter('testcase') if not any(v.tag in ('failure','error','skipped') for v in t)}
+          log=(p/'test.log').read_text().replace('\x16','')
+          for ln in log.splitlines():
+              if ln.lstrip().startswith('--- PASS: '): cases.add(ln.split('PASS: ',1)[1].split()[0])
+          for key in ('TestFetchArtifactAudit/misspelled_reference','TestArtifactLicensePolicy','TestEnumerateAndFetchQemuLicenseSource'):
+              assert key in cases, (key,sorted(cases))
+          assert '--- FAIL' not in log and '--- SKIP' not in log
+          (p/'verified-cases').write_text('\n'.join(sorted(cases))+'\n')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: license-ref-policy-fixed
+          path: ${{ runner.temp }}/license-proof
+          if-no-files-found: error
