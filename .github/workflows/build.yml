@@ -1,35 +1,141 @@
-name: CI
-
-"on":
+name: Qualify nested graph conversion scratch
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-value-scratch]
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/state-value-scratch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 6
+        persist-credentials: false
+    - name: Run the failure on master and the author head, then the repaired state suite
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        fixed=e5a505c74d0dd7fc2cad41725dca2337505c1df6
+        mastertest=1f74b93561a4e40ef7d40bfebe86ff72651c6897
+        authortest=011889bf4d913b31c160402795f10d65707ade55
+        test "$(git rev-parse HEAD^1)" = "$fixed"
+        test "$(git rev-parse HEAD^2)" = "$authortest"
+        test "$(git rev-parse "$fixed^")" = "$mastertest"
+        test "$(git rev-parse "$mastertest^")" = "cd90d7a7403ed4a739b2cf109463b0e76270b87a"
+        test "$(git rev-parse "$authortest^")" = "168a31e6eebd6e36323a5ae8fc3326daefc87ad2"
+        test "$(git diff --name-only "$mastertest" "$fixed")" = pkg/state/graph_decode_callbacks_unsafe.go
+        test "$(git diff --unified=0 "$mastertest^" "$mastertest" -- pkg/state/tests | grep '^+[^+]' | sha256sum)" = "$(git diff --unified=0 "$authortest^" "$authortest" -- pkg/state/tests | grep '^+[^+]' | sha256sum)"
+        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/focused"
+        platform=$RUNNER_TEMP/focused_platform
+        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/focused.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=focused_platform=$platform" \
+            'build --host_platform=@focused_platform//:ubuntu' \
+            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        out="$RUNNER_TEMP/state-results"
+        mkdir -p "$out"
+        overall=0
+        for arm in master author fixed suite; do
+          source=$fixed
+          case "$arm" in
+            master) source=$mastertest ;;
+            author) source=$authortest ;;
+          esac
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          d="$out/$arm"
+          mkdir -p "$d"
+          date -u --iso-8601=ns > "$d/started"
+          args=(--test_filter='^TestNestedValueConversion$' //pkg/state/tests:tests_test)
+          if [[ $arm = suite ]]; then
+            args=(//pkg/state:state_test //pkg/state/statefile:statefile_test //pkg/state/tests:tests_test //pkg/state/wire:wire_test)
+          fi
+          code=0
+          bazelisk --bazelrc="$rc" test --config=x86_64 --strategy=TestRunner=remote --spawn_strategy=remote \
+            --nocache_test_results --remote_download_outputs=toplevel --test_env=GO_TEST_WRAP_TESTV=1 \
+            --test_sharding_strategy=disabled --test_output=all "--build_event_json_file=$RUNNER_TEMP/$arm.bep" \
+            "${args[@]}" > "$RUNNER_TEMP/$arm.log" 2>&1 || code=$?
+          date -u --iso-8601=ns > "$d/ended"
+          python3 - "$arm" "$source" "$code" "$d" "$RUNNER_TEMP" <<'PYRESULT' || overall=1
+        import json,sys,re
+        from pathlib import Path
+        from xml.etree import ElementTree as ET
+        arm,source,status,d,tmp=sys.argv[1:];d=Path(d);tmp=Path(tmp)
+        result={"arm":arm,"source":source,"bazel_exit":int(status),"verified":False}
+        try:
+            events=[json.loads(l) for l in (tmp/(arm+".bep")).read_text().splitlines()]
+            targets={row["id"]["testResult"]["label"]:row["testResult"] for row in events if "testResult" in row}
+            result["targets"]={label:{"status":t["status"],"strategy":t.get("executionInfo",{}).get("strategy"),"cached":bool(t.get("cachedLocally") or t.get("executionInfo",{}).get("cachedRemotely"))} for label,t in targets.items()}
+            assert targets and all(t["strategy"]=="remote" and not t["cached"] for t in result["targets"].values())
+            root=Path("bazel-testlogs/pkg/state/tests/tests_test")
+            cases={e.get("name"):("failure" if e.find("failure") is not None else "error" if e.find("error") is not None else "skip" if e.find("skipped") is not None else "pass") for e in ET.parse(root/"test.xml").iter("testcase") if "TestNestedValueConversion" in e.get("name","")}
+            result["nested"]=cases
+            failure=(arm in ("master","author"))
+            assert cases.get("TestNestedValueConversion/wire")=="pass"
+            graph=cases.get("TestNestedValueConversion/graph")
+            log=(root/"test.log").read_text(errors="replace")
+            result["mismatch"]=re.findall(r"restored outer, inner = \((\d+, \d+)\), want \(11, 22\)",log)
+            if failure:
+                if graph=="pass":
+                    assert arm=="author" and status=="0"
+                else:
+                    assert graph=="failure" and status=="3" and result["mismatch"]==["22, 22"]
+            else:
+                assert graph=="pass" and status=="0"
+            assert len(targets)==(4 if arm=="suite" else 1)
+            if arm=="suite":assert all(t["status"]=="PASSED" for t in result["targets"].values())
+            result["verified"]=True
+        except Exception as e:
+            result["error"]=type(e).__name__+": "+str(e)[:480]
+            log=(tmp/(arm+".log")).read_text(errors="replace")
+            result["diagnostics"]=[l[:350] for l in log.splitlines() if l.startswith(("ERROR:","FATAL:"))][-5:]
+        (d/"result.json").write_text(json.dumps(result,indent=2)+"\n")
+        print(result)
+        raise SystemExit(not result["verified"])
+        PYRESULT
+        done
+        exit "$overall"
+    - name: Save original observations and remote test results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: state-value-scratch
+        path: ${{ runner.temp }}/state-results
+        if-no-files-found: error
