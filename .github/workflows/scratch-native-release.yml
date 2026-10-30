@@ -1,4 +1,4 @@
-name: Qualify the release package install and pip-hub license record
+name: Diagnose the release wheel scanner on its actual graph
 on:
   push:
     branches: [qualification/release-wheel-frontend]
@@ -23,38 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 0}
-      - name: Prepare the existing execution-log decoder and comparison
-        run: |
-          cp -R .github/qualification/sdist "$RUNNER_TEMP/sdist-fixture"
-          git show 41fc8aeb66f31ed395f64ce2e99712704fba9122:test/rbe/qualification_report.py > "$RUNNER_TEMP/sdist-fixture/qualification_report.py"
-          git show 41fc8aeb66f31ed395f64ce2e99712704fba9122:test/rbe/unit_matrix.py > "$RUNNER_TEMP/sdist-fixture/unit_matrix.py"
-          curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
-          echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/bb"
-      - name: Install both release distributions with offline CPython 3.7
+      - name: Prepare canonical scanner capture
         env:
-          INSTALL_SOURCE: 9c2ebbaef19b9c810b46b613d3cebee862303804
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
+          cp -R .github/qualification/sdist "$RUNNER_TEMP/sdist-fixture"
           mkdir -p "$RUNNER_TEMP/publication"
-          (umask 077; printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >"$RUNNER_TEMP/current-release.bazelrc")
-          unset BUILDBUDDY_API_KEY
-          bash "$RUNNER_TEMP/sdist-fixture/compat.sh"
-      - name: Verify the exact installed hashes against both scratch builders and GNU
-        if: always()
-        run: |
-          python3 - <<'PYVERIFY'
-          import json, os
-          from pathlib import Path
-          out=Path(os.environ["RUNNER_TEMP"]) / "publication"
-          rows=json.loads((out/"compat.json").read_text())["installs"]
-          assert all(row["python"]=="3.7.17" for row in rows), rows
-          assert {r["artifact"]:r["sha256"] for r in rows}=={
-            "gvisor-2026.10.29.2-py3-none-any.whl": "7e9e8d37be9b4d66a18fe5c3d9216767e51e25c9581a4d00a2dab6d232f43a29",
-            "gvisor-2026.10.29.2.tar.gz": "e82b0f28d7618677b5f4cc408017a366e79b61b09f5ac572e14fdee83cf851ad",
-          }, rows
-          print(rows)
-          PYVERIFY
+          (umask 077; printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >"$RUNNER_TEMP/current-release.bazelrc")
       - name: Verify the release wheels with the canonical pip-hub scanner
         if: always()
         env:
