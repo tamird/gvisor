@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:37:25.878075+00:00",
+    "updatedAt": "2026-10-30T20:44:38.135618+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37299,11 +37299,11 @@
       "type": "branch",
       "group": "runtime",
       "repo": "tamird/gvisor",
-      "ref": "review/tun-setiff-copyout",
-      "head": "9ae1e5242f0364f5ad75588fa55b697f4d2308da",
+      "ref": "review/tun-setiff-shared-name",
+      "head": "3278152c32b9202d21e10cb4949d88b04da03ce7",
       "title": "Return the assigned interface name from TUNSETIFF",
-      "url": "https://github.com/tamird/gvisor/commit/9ae1e5242",
-      "summary": "Linux returns the generated name in TUNSETIFF. Stock returned an empty name for tap2 and succeeded on a read-only request; Linux and corrected gVisor returned EFAULT with the interface still attached. All six original syscall records executed. The review head adds only a comment to the source tested by Nogo and the syscall cases. Independent of #16757.",
+      "url": "https://github.com/tamird/gvisor/commit/3278152c3",
+      "summary": "Use the shared IFReq.SetName for TUNSETIFF, TUNGETIFF and host queries. SIOCGIFNAME returns a name into the caller’s request; SIOCGIFCONF writes fresh zeroed records. A syscall comparison is checking both behaviors.",
       "evidence": [
         {
           "label": "Linux: both shared syscall cases passed",
@@ -37334,17 +37334,33 @@
           "url": "https://github.com/google/gvisor/pull/6035#issuecomment-888710039"
         }
       ],
-      "updatedAt": "2026-10-30T20:33:26.178070+00:00",
-      "status": "Awaiting contributor review",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "9ae1e5242f0364f5ad75588fa55b697f4d2308da",
-        "baseHead": "70cb23c0de3c8d1295054663b50717546fbbc7a7",
-        "url": "https://github.com/tamird/gvisor/commit/9ae1e5242",
-        "title": "Return the assigned interface name from TUNSETIFF",
-        "summary": "Linux returns the generated name in TUNSETIFF. Stock returned an empty name for tap2 and succeeded on a read-only request; Linux and corrected gVisor returned EFAULT with the interface still attached. All six original syscall records executed. The review head adds only a comment to the source tested by Nogo and the syscall cases. Independent of #16757.",
-        "body": "A caller that passed an empty name to TUNSETIFF got an interface but\ncould not identify it from the returned request [1]. The TUN device has\nassigned a name since b8f56c79b, but the ioctl never copied it back.\n\nCopy the original request back with the attached interface's name, as\nLinux does [2]. This preserves the caller's flags. If the request is\nreadable but not writable, the ioctl returns EFAULT and the interface\nremains attached. Check both cases using the same syscalls on Linux and\ngVisor.\n\n[1]: https://github.com/google/gvisor/issues/6034\n[2]: https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L3086-L3095"
+      "updatedAt": "2026-10-30T20:44:38.135618+00:00",
+      "status": "Agent work",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9ae1e5242f0364f5ad75588fa55b697f4d2308da",
+          "outcome": "changes-requested",
+          "at": "2026-10-30T20:44:38.135618+00:00"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "9ae1e5242f0364f5ad75588fa55b697f4d2308da"
+        },
+        "after": {
+          "head": "3278152c32b9202d21e10cb4949d88b04da03ce7"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "3278152c32b9202d21e10cb4949d88b04da03ce7",
+        "observedAt": "2026-10-30T20:44:38.135618+00:00",
+        "disposition": "Address contributor feedback on the shared name setter",
+        "nextAction": "Qualify the new socket regression, existing interface list and TUN cases against Linux. Return the revised commit for review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3278152c3"
+        ]
       }
     }
   ],
