@@ -1,35 +1,27 @@
-import json,sys
-from datetime import datetime,timezone
 from pathlib import Path
-d=Path(sys.argv[1]);err=[];arms={};fixtures=[]
-def read(p):return p.read_text().strip() if p.is_file() else ''
-for name,src in [('stock','d624fba03a2b3f1f9a314e54198c95460005cc15'),('fixed','c89f8f55abfe0d08c2bfc836192bd27d0aee7161')]:
-    a=d/name
-    fixtures.append(read(a/'test.sha256'))
-    if read(a/'source')!=src or read(a/'build.exit')!='0':err.append('unbuilt source: '+name)
-    rows={}
-    for label,leaf in [('unlimited',None),('larger',768<<20),('smaller',384<<20)]:
-        try: row=json.loads(read(a/(label+'.json')))
-        except ValueError:row={}
-        v=row.get('MemTotal')
-        levels=[str(512<<20),'max','max' if leaf is None else str(leaf)]
-        correct=v==min(512<<20,leaf or 512<<20)
-        old_expected=v is not None and (v>(512<<20) if leaf is None else v==leaf)
-        if row.get('status')!=0 or row.get('limits')!=levels or not (correct if name=='fixed' else old_expected):err.append(name+' '+label+' failed or not run')
-        rows[label]=row
-    arms[name]={'source':src,'expected_cases':3,'executed_cases':sum(v.get('MemTotal') is not None for v in rows.values()),'results':rows}
-from xml.etree import ElementTree as ET
-for arm in ['stock','fixed']:
-    a=d/arm;owner={}
-    if (a/'test.xml').is_file():
-        for c in ET.parse(a/'test.xml').iter('testcase'):
-            n=c.get('name') or ''
-            if 'TestNestedMemoryLimit/' in n:
-                owner[n.split('/')[-1]]='fail' if c.find('failure') is not None else ('skip' if c.find('skipped') is not None else ('error' if c.find('error') is not None else 'pass'))
-    expected={x:'fail' if arm=='stock' and x!='smaller' else 'pass' for x in ['unlimited','larger','smaller']}
-    arms[arm]['owner_cases']=owner
-    if owner!=expected or read(a/'owner.exit')!=('3' if arm=='stock' else '0'):
-        err.append(arm+' canonical root fixture missing or wrong')
-if not fixtures[0] or fixtures[0]!=fixtures[1]:err.append('mismatched source fixtures')
-verdict={'verified':not err,'errors':err,'arms':arms,'end':read(d/'end'),'available':datetime.now(timezone.utc).isoformat()}
-(d/'verdict.json').write_text(json.dumps(verdict,indent=2)+'\n');print(json.dumps(verdict));sys.exit(bool(err))
+from datetime import datetime,timezone
+import json,re,sys
+d=Path(sys.argv[1]);errors=[];results={};sha=set()
+def read(p):return p.read_text() if p.is_file() else ''
+try:prior=json.loads(read(d/'guests.json'))
+except ValueError:prior={}
+for arm,src in [('stock','d624fba03a2b3f1f9a314e54198c95460005cc15'),('fixed','c89f8f55abfe0d08c2bfc836192bd27d0aee7161')]:
+    a=d/arm;guests=prior.get('arms',{}).get(arm,{})
+    checks={};log=read(a/'test.log').replace('\x16','')
+    if guests.get('source')!=src or guests.get('executed_cases')!=3 or read(a/'source').strip()!=src:errors.append(arm+' source identity or guest results')
+    sha.add(read(a/'test.sha256').strip())
+    for name in ['unlimited','larger','smaller']:
+        g=guests.get('results',{}).get(name,{})
+        want={'unlimited':536870912,'larger':536870912,'smaller':402653184}[name]
+        if arm=='stock' and name=='larger':want=805306368
+        size=g.get('MemTotal')
+        if size is None or (size<=536870912 if arm=='stock' and name=='unlimited' else size!=want) or g.get('status')!=0:errors.append(arm+' '+name+' incorrect OCI observation')
+        verdict=re.findall(r'--- (PASS|FAIL|SKIP): TestNestedMemoryLimit/'+name+r'\s',log)
+        if verdict!=['FAIL' if arm=='stock' and name!='smaller' else 'PASS']:errors.append(arm+' '+name+' missing or incorrect canonical test')
+        checks[name]={'guest_MemTotal':size,'owner_results':verdict}
+    if arm=='stock' and (len(re.findall('guest MemTotal = [0-9]+ bytes, want 536870912',log))!=2):errors.append('stock must fail both intended assertions')
+    if read(a/'owner.exit').strip()!=('3' if arm=='stock' else '0'):errors.append(arm+' canonical target exit')
+    results[arm]={'source':src,'cases':checks}
+if len(sha)!=1 or '' in sha:errors.append('different test fixtures')
+verdict={'verified':not errors,'errors':errors,'source_fixture':list(sha),'results':results,'execution_finished':read(d/'end').strip(),'available':datetime.now(timezone.utc).isoformat()}
+(d/'verdict.json').write_text(json.dumps(verdict,indent=2)+'\n');print(json.dumps(verdict));sys.exit(bool(errors))
