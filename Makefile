@@ -955,19 +955,10 @@ syzkaller-smoke-test: $(SYZKALLER_TARBALL)
 ##
 RELEASE_ROOT      := repo
 RELEASE_KEY       := repo.key
-# The signer runs on the host. A Docker-only cache doesn't expose bazel-bin's
-# symlink targets there; copy the declared outputs into the shared checkout.
-release_output_dir := bazel-bin/debian/release-artifacts
 release_native_files := $(foreach arch,x86_64 aarch64, \
 	$(addprefix $(arch)/,runsc.deb gvisor.tar.bz2 gvisor.tar.zstd))
-ifeq ($(DOCKER_BUILD),true)
-ifneq ($(BAZEL_CACHE_USE_VOLUME):$(abspath $(BAZEL_CACHE)),false:$(abspath $(HOME)/.cache/bazel))
-release_copy_dir := artifacts/native
-endif
-endif
 define build_release_artifacts
-$(call wrapper,$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel $(1) //debian:release-artifacts)
-$(if $(release_copy_dir),mkdir -p "$(release_copy_dir)" && $(call wrapper,sh -ec 'cd $(release_output_dir) && cp -L --parents $(release_native_files) "$(abspath $(release_copy_dir))/"'))
+$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel $(1) //debian:release-artifacts
 endef
 ifeq ($(origin RELEASE_ARTIFACTS),undefined)
 ifeq ($(origin RELEASE_VERSION),undefined)
@@ -975,10 +966,10 @@ release: build-release-artifacts
 else
 release: release-artifacts
 endif
-build-release-artifacts: ensure-bazel-server
+build-release-artifacts:
 	$(call build_release_artifacts)
 .PHONY: build-release-artifacts
-RELEASE_ARTIFACTS := $(or $(release_copy_dir),$(release_output_dir))
+RELEASE_ARTIFACTS := bazel-bin/debian/release-artifacts
 PYTHON_RELEASE_DEST ?= artifacts/python
 endif
 PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
@@ -1004,7 +995,7 @@ $(RELEASE_KEY):
 
 # Use one caller-supplied identity for both sets of release binaries and packages.
 release-artifacts: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
-release-artifacts: ensure-bazel-server ## Build the release archives for both architectures with RELEASE_VERSION.
+release-artifacts: ## Build the release archives for both architectures with RELEASE_VERSION.
 	@case "$$GVISOR_RELEASE_LABEL" in ''|0.0.0|VERSION_MISSING|*[!A-Za-z0-9._+-]*) echo "invalid RELEASE_VERSION" >&2; exit 1;; esac; \
 	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac; \
 	$(call build_release_artifacts,--config=release_version --embed_label="$$GVISOR_RELEASE_LABEL")

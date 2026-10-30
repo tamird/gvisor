@@ -89,7 +89,8 @@ and package versions without running the Git workspace status command:
 make release-artifacts RELEASE_VERSION=release-20261029.0
 ```
 
-The packages appear under `bazel-bin/debian/release-artifacts/{x86_64,aarch64}/`.
+Run this command on a Linux host with Bazel on PATH. Both architectures'
+packages appear under `bazel-bin/debian/release-artifacts/{x86_64,aarch64}/`.
 Use `make release RELEASE_VERSION=...` to build and sign both architectures
 in one invocation.
 
