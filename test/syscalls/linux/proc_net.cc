@@ -144,7 +144,9 @@ TEST(ProcSysNetIpv4Sack, CanReadAndWrite) {
   EXPECT_EQ(buf, to_write);
 }
 
-TEST(ProcSysNetIpv4Sack, SharedAcrossProcMounts) {
+void CheckSysctlAcrossProcMounts(absl::string_view sysctl,
+                                 const std::string& first,
+                                 const std::string& second) {
   SKIP_IF(IsRunningWithHostinet() ||
           !ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)) ||
           !ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SYS_ADMIN)));
@@ -167,19 +169,34 @@ TEST(ProcSysNetIpv4Sack, SharedAcrossProcMounts) {
   const Cleanup unmount(
       [&] { EXPECT_THAT(umount(target), SyscallSucceeds()); });
 
-  constexpr char kSack[] = "sys/net/ipv4/tcp_sack";
-  const std::string original_path = JoinPath("/proc", kSack);
-  const std::string mounted_path = JoinPath(dir.path(), kSack);
-
+  const std::string original_path = JoinPath("/proc/sys/net/ipv4", sysctl);
+  const std::string mounted_path = JoinPath(dir.path(), "sys/net/ipv4", sysctl);
   const std::string original =
       ASSERT_NO_ERRNO_AND_VALUE(GetContents(original_path));
   ASSERT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(mounted_path)), original);
-  ASSERT_TRUE(original == "0\n" || original == "1\n") << original;
-  const std::string updated = original == "1\n" ? "0\n" : "1\n";
+
+  // Linux separates the port numbers with a tab; gVisor uses a space.
+  const auto fields =
+      [](absl::string_view contents) -> std::vector<std::string> {
+    return absl::StrSplit(contents, absl::ByAnyChar(" \t\n"),
+                          absl::SkipEmpty());
+  };
+  const std::string& updated =
+      fields(original) == fields(first) ? second : first;
   ASSERT_NO_ERRNO(SetContents(mounted_path, updated));
   const Cleanup restore(
       [&] { EXPECT_NO_ERRNO(SetContents(mounted_path, original)); });
-  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(original_path)), updated);
+  EXPECT_EQ(fields(ASSERT_NO_ERRNO_AND_VALUE(GetContents(original_path))),
+            fields(updated));
+}
+
+TEST(ProcSysNetIpv4Sack, SharedAcrossProcMounts) {
+  CheckSysctlAcrossProcMounts("tcp_sack", "0\n", "1\n");
+}
+
+TEST(ProcSysNetPortRange, SharedAcrossProcMounts) {
+  CheckSysctlAcrossProcMounts("ip_local_port_range", "40000 50001\n",
+                              "40002 50003\n");
 }
 
 // DeviceEntry is an entry in /proc/net/dev
