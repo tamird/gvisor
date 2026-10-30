@@ -349,10 +349,6 @@ func (rc *rackControl) updateRACKReorderWindow() {
 			return
 		}
 
-		if snd.SackedOut >= nDupAckThreshold {
-			rc.ReoWnd = 0
-			return
-		}
 	}
 
 	// Calculate reorder window.
@@ -380,8 +376,34 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 	var timeout time.Duration
 	numLost := 0
 	clockResolution := rc.snd.ep.stack.ClockResolution()
+	expired := func(remaining time.Duration) bool {
+		return remaining < 0 || (remaining == 0 && clockResolution == 0)
+	}
+	// Three SACKed packets eliminate the reordering allowance if the
+	// peer has never reordered data. Count them during the loss scan.
+	countSACKs := rc.ReoWnd > 0 && !rc.Reord && !rc.snd.ep.scoreboard.Empty()
+	var sacked int
+	var windowPreventedLoss bool
 	for seg := rc.snd.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-		if rc.snd.ep.scoreboard.IsSACKED(seg.sackBlock()) {
+		var covered bool
+		if countSACKs {
+			var n int
+			n, covered = rc.snd.sackCoverage(seg)
+			sacked += n
+			if sacked >= nDupAckThreshold {
+				timeout = max(0, timeout-rc.ReoWnd)
+				rc.ReoWnd = 0
+				if windowPreventedLoss {
+					// A previously visited segment now qualifies for
+					// retransmission. The zero window needs no recount.
+					return rc.detectLoss(rcvTime)
+				}
+				countSACKs = false
+			}
+		} else {
+			covered = rc.snd.ep.scoreboard.IsSACKED(seg.sackBlock())
+		}
+		if covered {
 			continue
 		}
 
@@ -397,7 +419,7 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			// the network reordering window, which RACK may intentionally reduce to
 			// zero during recovery.
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
-			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
+			if expired(timeRemaining) {
 				seg.lost = true
 				numLost++
 			} else {
@@ -405,6 +427,9 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 				// target re-evaluation is strictly negative and loss is declared on
 				// the first expiry. Arming only to timeRemaining would make the
 				// expiry a no-op at equality that re-arms a second timer.
+				if countSACKs && expired(timeRemaining-rc.ReoWnd) {
+					windowPreventedLoss = true
+				}
 				timeWait := timeRemaining
 				if clockResolution > 0 {
 					timeWait += clockResolution
