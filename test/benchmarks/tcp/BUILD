@@ -10,6 +10,7 @@ go_binary(
     name = "tcp_proxy",
     srcs = [
         "tcp_proxy.go",
+        "observation.go",
         "xdp.go",
     ],
     visibility = ["//:sandbox"],
