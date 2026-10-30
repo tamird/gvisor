@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T18:14:56.863778+00:00",
+    "updatedAt": "2026-10-30T18:24:04.695422+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32830,12 +32830,16 @@
       "ref": "research/go-architecture-sources",
       "head": "08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
       "title": "Build generated Go inputs only for the requested architecture",
-      "url": "https://github.com/tamird/gvisor/commit/08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
+      "url": "https://github.com/tamird/gvisor/commit/08a25f981",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "Approved for submission after #16518 lands. The release selects one architecture; the Go source archive still includes both.",
+      "status": "Published as #16753",
+      "updatedAt": "2026-10-30T18:24:04.695422+00:00",
+      "summary": "Delivered as #16753 after #16518 landed. The earlier reviewed fork ref remains available.",
       "evidence": [
+        {
+          "label": "Published upstream as #16753",
+          "url": "https://github.com/google/gvisor/pull/16753"
+        },
         {
           "label": "Go archive: all twelve files match",
           "url": "https://github.com/tamird/gvisor/actions/runs/40816991126"
@@ -32852,7 +32856,8 @@
           "outcome": "approved",
           "at": "2026-10-29T18:56:07.113045+00:00"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:ci-bazel-release",
@@ -37021,6 +37026,50 @@
       },
       "updatedAt": "2026-10-30T17:46:38.208685+00:00",
       "status": "Awaiting contributor review"
+    },
+    {
+      "id": "pr:16753",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16753,
+      "ref": "review/go-architecture-sources-current",
+      "head": "48f6def325100b17fd6a57894b6f7d1c9630805d",
+      "title": "Select generated Go sources for the requested architecture",
+      "url": "https://github.com/google/gvisor/pull/16753",
+      "group": "bazel",
+      "status": "open",
+      "summary": "Release builds configure only the requested architecture’s generated sources. The Go archive still exports both architectures, so a downstream consumer can select either when it builds.",
+      "updatedAt": "2026-10-30T18:24:04.695422+00:00",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "08a25f9818d1fb17c53e086fcf63d1e6e0a7e294",
+          "outcome": "approved",
+          "at": "2026-10-29T18:56:07.113045+00:00"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "08a25f9818d1fb17c53e086fcf63d1e6e0a7e294"
+        },
+        "after": {
+          "head": "48f6def325100b17fd6a57894b6f7d1c9630805d"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Current AMD64, ARM64 and Go archive configuration outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41106038963/artifacts/13000263977"
+        },
+        {
+          "label": "Original qualification: all 12 archive paths and Git blob hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40818636787/artifacts/12873837927"
+        },
+        {
+          "label": "Approved source (identical added and removed product lines)",
+          "url": "https://github.com/tamird/gvisor/commit/08a25f981"
+        }
+      ]
     }
   ],
   "edges": [
@@ -39988,15 +40037,16 @@
     {
       "type": "depends_on",
       "from": "pr:16518",
-      "to": "branch:go-architecture-sources",
+      "to": "pr:16753",
       "reason": "The implementation uses the declared copy tool in #16518 and avoids an overlapping change to the generator.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/08a25f9818d1fb17c53e086fcf63d1e6e0a7e294"
+        "https://github.com/google/gvisor/pull/16518",
+        "https://github.com/google/gvisor/pull/16753"
       ]
     },
     {
       "type": "depends_on",
-      "from": "branch:go-architecture-sources",
+      "from": "pr:16753",
       "to": "branch:ci-bazel-release",
       "reason": "The native AMD64 runner lacks the ARM64 cross-compiler pulled in by the unfiltered build.",
       "evidence": [
