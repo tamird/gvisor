@@ -35,19 +35,19 @@ type PacketInfoFields struct {
 	Protocol tcpip.NetworkProtocolNumber
 }
 
-// PacketInfoHeader is the wire representation of the packet information sent if
-// IFF_NO_PI flag is not set.
+// PacketInfoHeader is the packet information sent when IFF_NO_PI is unset.
+// Linux uses native byte order for flags and network byte order for protocol.
 type PacketInfoHeader []byte
 
 // Encode encodes f into h.
 func (h PacketInfoHeader) Encode(f *PacketInfoFields) {
-	binary.BigEndian.PutUint16(h[offsetFlags:][:2], f.Flags)
+	binary.NativeEndian.PutUint16(h[offsetFlags:][:2], f.Flags)
 	binary.BigEndian.PutUint16(h[offsetProtocol:][:2], uint16(f.Protocol))
 }
 
 // Flags returns the flag field in h.
 func (h PacketInfoHeader) Flags() uint16 {
-	return binary.BigEndian.Uint16(h[offsetFlags:])
+	return binary.NativeEndian.Uint16(h[offsetFlags:])
 }
 
 // Protocol returns the protocol field in h.
