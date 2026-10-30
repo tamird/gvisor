@@ -5619,6 +5619,7 @@ cc_binary(
         "//test/util:eventfd_util",
         "//test/util:file_descriptor",
         "//test/util:fs_util",
+        "//test/util:fuse_util",
         "//test/util:logging",
         "//test/util:mount_util",
         "//test/util:posix_error",
