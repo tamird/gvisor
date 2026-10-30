@@ -496,6 +496,11 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 		if sent := snd.maybeSendSegment(seg, int(snd.ep.scoreboard.SMSS()), snd.SndUna.Add(snd.SndWnd)); !sent {
 			break
 		}
+		// Track the inclusive end of a successful recovery retransmission.
+		last := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize())) - 1
+		if snd.FastRecovery.HighRxt.LessThan(last) {
+			snd.FastRecovery.HighRxt = last
+		}
 		dataSent = true
 		snd.Outstanding += snd.pCount(seg, snd.MaxPayloadSize)
 	}
