@@ -1,0 +1,34 @@
+name: Run the declared Jekyll runtime on a scratch worker
+on:
+  push:
+    branches: [qualification/website-jekyll-runtime]
+permissions:
+  contents: read
+jobs:
+  runtime:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 58
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Materialize the official Ruby/Node distribution and checksum-locked pure gems
+        run: |
+          mkdir "$RUNNER_TEMP/website-probe"
+          cp images/jekyll/checks.rb test/rbe/website-jekyll/checks.rb
+          python3 test/rbe/website-jekyll/sdk_inputs.py
+      - name: Run RubyGems, the actual Jekyll plugins, V8, Sass and HTMLProofer as a Bazel scratch action
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/website-jekyll/runtime_report.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: website-scratch-runtime
+          path: |
+            ${{ runner.temp }}/website-probe/sdk.json
+            ${{ runner.temp }}/website-probe/actions.json
+            ${{ runner.temp }}/website-probe/generator.json
+            ${{ runner.temp }}/website-probe/bazel.log
+          if-no-files-found: error
