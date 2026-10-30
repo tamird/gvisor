@@ -17,12 +17,12 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 2
+        fetch-depth: 3
         persist-credentials: false
     - name: Prepare native Linux coordinator
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = "$OFIXED"
+        test "$(git rev-parse HEAD^^)" = "$OFIXED"
         if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
         unshare --user --map-root-user true
         plat=$RUNNER_TEMP/overlay-gnu
@@ -39,12 +39,6 @@ jobs:
           printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } >"$RUNNER_TEMP/overlay.bazelrc"
-    - name: Start the existing GNU Bazel coordinator
-      if: ${{ !cancelled() }}
-      run: |
-        set -euo pipefail
-        docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
     - name: Analyze the exact standalone TUN change
       run: |
         set -euo pipefail
@@ -52,7 +46,7 @@ jobs:
         out=$RUNNER_TEMP/tun-owners; mkdir -p "$out"
         printf '%s\n' "$OFIXED" > "$out/source"
         rc=0
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=4 --keep_going --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --nocache_test_results --test_output=errors //pkg/sentry/devices/tundev:tundev_nogo //pkg/tcpip/link/tun:tun_nogo > "$RUNNER_TEMP/tun-nogo.log" 2>&1 || rc=$?
+        bazelisk --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=4 --keep_going --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --strategy=TestRunner=linux-sandbox --nocache_test_results --test_output=errors //pkg/sentry/devices/tundev:tundev_nogo //pkg/tcpip/link/tun:tun_nogo > "$RUNNER_TEMP/tun-nogo.log" 2>&1 || rc=$?
         printf '%s\n' "$rc" > "$out/exit"
         grep -A4 -E 'Invocation ID:|ERROR:|error:|diagnostic|FAILED|PASSED|tests? pass|failed to build' "$RUNNER_TEMP/tun-nogo.log" | tail -115 > "$out/receipt" || :
         test "$rc" -eq 0
