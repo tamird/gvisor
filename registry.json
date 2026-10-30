@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T05:02:51.680037+00:00",
+    "updatedAt": "2026-10-30T05:05:43.774745+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41209,8 +41209,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T04:55:24.525379+00:00",
-      "summary": "Parth leads the graph codec. The graph preserves the tested shared maps, slice aliases and saver self-pointers. Neither legacy slice prototype is suitable for submission. Issue #16715 tracks the open map callback, recursive type, LoadValue and encoder scratch findings, with reproducers and the revisions they exercised.",
+      "updatedAt": "2026-10-30T05:05:43.774745+00:00",
+      "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The full checkpoint round-tripped. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
         {
           "text": "Legacy Save cleared bytes still visible through another slice, whichever slice it visited first. Two attempted fixes are off the submission queue: tracking byte ranges saved an unrelated sibling field; copying reachable values into a private array changed the identity of both self-pointers produced by a save hook. The integrated graph preserved the live bytes, slice aliases and self-pointers. It covers whole array elements: a pointer to one field can also save its sibling. Dropping the legacy clear would revive a kernfs failure by following a destroyed dentry in unused capacity.",
@@ -43894,7 +43894,7 @@
           ]
         },
         {
-          "text": "The Nginx checkpoint comparison measures the legacy encoder and decoder before and after the upstream format-dispatch change. It does not measure the graph encoder or decoder.",
+          "text": "On the legacy engine, adding upstream format dispatch did not produce a detectable timing change for either encoding or decoding a four-worker Nginx kernel in 16 matched pairs.",
           "evidence": [
             {
               "label": "Benchmark protocol and original run",
@@ -43903,11 +43903,15 @@
             {
               "label": "Upstream format dispatch",
               "url": "https://github.com/google/gvisor/commit/aa5305e99"
+            },
+            {
+              "label": "Original matched legacy results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41003868303/artifacts/12955128885"
             }
           ]
         },
         {
-          "text": "The stateify comparison builds the same PR head twice. It restores one Nginx kernel, verifies the wire headers of both CPUID and kernel streams in each format, and reloads the resulting checkpoints before measuring either engine. Results are pending.",
+          "text": "With graph format enabled on the same generator head, the four-worker Nginx kernel encoded in 2.25 ms instead of 12.71 ms and decoded in 8.99 ms instead of 17.75 ms. The state file shrank from 263.7 to 144.5 KiB. Both wire formats reloaded before measurement.",
           "evidence": [
             {
               "label": "Generator review",
@@ -43916,6 +43920,14 @@
             {
               "label": "Legacy/graph comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/41004400244"
+            },
+            {
+              "label": "Benchstat for both engines",
+              "url": "https://tamird.github.io/gvisor/checkpoint-nginx-stateify-benchstat.txt"
+            },
+            {
+              "label": "Both inputs, 16 pairs and complete verifier receipt",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41004400244/artifacts/12955367788"
             }
           ]
         },
@@ -44937,6 +44949,59 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "Graph vs legacy: four-worker Nginx",
+          "description": "Same generator head (c6afaa53a), one captured kernel, 16 balanced pairs on a single AMD64 worker.",
+          "columns": [
+            "Operation",
+            "Legacy",
+            "Graph",
+            "Change"
+          ],
+          "rows": [
+            [
+              "Encode state file",
+              "12.706 ms",
+              "2.249 ms",
+              "−82.30%"
+            ],
+            [
+              "Decode state file",
+              "17.748 ms",
+              "8.992 ms",
+              "−49.34%"
+            ],
+            [
+              "Encoded kernel state file",
+              "263.7 KiB",
+              "144.5 KiB",
+              "−45.20%"
+            ],
+            [
+              "Encode allocations",
+              "67,648",
+              "1,532",
+              "−97.74%"
+            ],
+            [
+              "Decode allocations",
+              "78,862",
+              "5,693",
+              "−92.78%"
+            ]
+          ],
+          "note": "Both formats reloaded. The pages file was unchanged. The nested-value failure in #16715 uses a state shape absent from this workload.",
+          "evidence": [
+            {
+              "label": "Benchstat",
+              "url": "https://tamird.github.io/gvisor/checkpoint-nginx-stateify-benchstat.txt"
+            },
+            {
+              "label": "Samples and verifier receipt",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41004400244/artifacts/12955367788"
+            }
+          ]
+        },
         {
           "title": "Unbound interface assignment: GraphLoad versus stock",
           "description": "Medians from 12 pairs on one pinned Linux AMD64 CPU, alternating which source ran first. Stock: bd7e3d2a8a; unbound assignment: 9b688698c7.",

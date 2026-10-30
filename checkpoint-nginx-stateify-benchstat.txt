@@ -1,0 +1,39 @@
+Nginx checkpoint: legacy and graph codecs on gVisor c6afaa53a
+before.bench = legacy, after.bench = graph. Both kernel streams were read back.
+16 pairs on one AMD64 worker, alternating the order. In sec/op, m means milliseconds.
+One four-worker Nginx kernel was captured with the legacy engine; each engine encoded its own input to the timed operations.
+The benchmark writes the state file in memory. Guest memory pages are separate from that file.
+
+│ before.bench │             after.bench              │
+                               │    sec/op    │    sec/op     vs base                │
+CheckpointFile/DecodeStatefile   17.748m ± 2%   8.992m ± 14%  -49.34% (p=0.000 n=16)
+CheckpointFile/EncodeStatefile   12.706m ± 6%   2.249m ±  6%  -82.30% (p=0.000 n=16)
+geomean                           15.02m        4.497m        -70.06%
+
+                               │ before.bench │             after.bench              │
+                               │   cpu-sec    │   cpu-sec     vs base                │
+CheckpointFile/DecodeStatefile   17.759m ± 1%   9.048m ± 13%  -49.05% (p=0.000 n=16)
+CheckpointFile/EncodeStatefile   12.774m ± 5%   2.301m ±  6%  -81.99% (p=0.000 n=16)
+geomean                           15.06m        4.562m        -69.71%
+
+                               │ before.bench │             after.bench              │
+                               │ state-file-B │ state-file-B  vs base                │
+CheckpointFile/DecodeStatefile   263.7Ki ± 0%   144.5Ki ± 0%  -45.20% (p=0.000 n=16)
+
+                               │ before.bench │             after.bench              │
+                               │     B/op     │     B/op      vs base                │
+CheckpointFile/DecodeStatefile   4.226Mi ± 0%   2.637Mi ± 0%  -37.60% (p=0.000 n=16)
+CheckpointFile/EncodeStatefile   5.882Mi ± 0%   3.064Mi ± 0%  -47.90% (p=0.000 n=16)
+geomean                          4.986Mi        2.843Mi       -42.98%
+
+                               │ before.bench │             after.bench             │
+                               │  allocs/op   │  allocs/op   vs base                │
+CheckpointFile/DecodeStatefile   78.862k ± 0%   5.693k ± 0%  -92.78% (p=0.000 n=16)
+CheckpointFile/EncodeStatefile   67.648k ± 0%   1.532k ± 0%  -97.74% (p=0.000 n=16)
+geomean                           73.04k        2.953k       -95.96%
+
+                               │     before.bench     │                 after.bench                  │
+                               │ encoded-state-file-B │ encoded-state-file-B  vs base                │
+CheckpointFile/EncodeStatefile           263.7Ki ± 0%           144.5Ki ± 0%  -45.20% (p=0.000 n=16)
+
+Original measurements, full benchstat and verification: https://github.com/tamird/gvisor/actions/runs/41004400244/artifacts/12955367788
