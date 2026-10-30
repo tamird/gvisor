@@ -22,7 +22,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        native=fa4ec055ca3f8008e21d15f06d51b83e5ed47f45; nparent=ba1947269b1b733c8110f785961ea883fd3ed7a8
+        native=aa38c46b309c7a07f78fe5d30057041319f24474; nparent=ba1947269b1b733c8110f785961ea883fd3ed7a8
         test "$(git rev-parse HEAD^2)" = "$native"
         test "$(git rev-parse "$native^")" = "$nparent"
         git diff --quiet "$nparent" "$native" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)test/packetimpact/testbench/layers.go'
