@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 version, binary = sys.argv[1:3]
 binary = str(Path(binary).resolve())
 temp = Path(os.environ['RUNNER_TEMP'])
-work = temp / 'native-xml-consumer'
+work = temp / ('native-xml-consumer-' + version)
 receipt = temp / 'native-xml-results'
 work.mkdir(exist_ok=True)
 receipt.mkdir(exist_ok=True)
@@ -51,11 +51,16 @@ args = [binary, '--nosystem_rc', '--noworkspace_rc', '--nohome_rc', 'test',
         '--sandbox_block_path=/usr/bin', '--test_env=PATH=/no-programs',
         '--nocache_test_results','--test_output=errors',
         '--incompatible_use_native_posix_test_wrapper',
-        '--unzip_undeclared_test_outputs', '--nobuild_event_json_file_path_conversion',
+        '--keep_going', '--nobuild_event_json_file_path_conversion',
         f'--build_event_json_file={receipt}/{version}.bep',
         f'--execution_log_json_file={receipt}/{version}.spawns', '--jobs=4',
         '//:silent','//:broken','//:own_xml']
-r = subprocess.run(args, cwd=work, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+own = subprocess.run([x for x in args[:-3] if not x.startswith(('--execution_log_json_file=','--build_event_json_file='))] + ['//:own_xml'], cwd=work, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+(receipt / (version+'-own.log')).write_bytes(own.stdout)
+if own.returncode != 0:
+    print(own.stdout.decode(errors='replace')[-3500:], flush=True)
+    raise RuntimeError('the test-owned XML control failed')
+r = subprocess.run(args[:-1], cwd=work, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
 (receipt / (version+'-test.log')).write_bytes(r.stdout)
 print(r.stdout.decode(errors='replace')[-2800:],flush=True)
 logdir=work/'bazel-testlogs'

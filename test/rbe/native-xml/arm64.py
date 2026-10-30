@@ -200,4 +200,5 @@ x=report["native"]
 print("normal entrypoint", x["exit"], x["cases"], x["owner_spawns"], flush=True)
 assert x["exit"]==0 and not x["noncached_wrong_platform"] and x["owner_spawns"],x
 assert sorted(p[0] for p in x["cases"] if not p[1])==sorted(expected_cases),x["cases"]
+assert any(q.get("matches") and q["path"].endswith("/test.xml") for o in x["owner_spawns"] for q in o["outputs"]),x
 assert any(o["mnemonic"]=="TestRunner" and o["runner"]=="remote" and o["arch"]=="arm64" and not o["cached"] and not o["exit"] for o in x["owner_spawns"]),x
