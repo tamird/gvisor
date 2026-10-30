@@ -18485,7 +18485,7 @@
           "https://github.com/google/gvisor/pull/16051/commits/36d42cd42ed7535e9106267046beb65b38880612"
         ]
       },
-      "updatedAt": "2026-10-29T01:35:12.698800+00:00",
+      "updatedAt": "2026-10-30T05:20:14.564066+00:00",
       "evidence": [
         {
           "label": "46 passing named test records; none skipped or missing",
@@ -18514,6 +18514,26 @@
         {
           "label": "Published additive resolution on landed codeload base",
           "url": "https://github.com/google/gvisor/pull/16051/commits/36d42cd42ed7535e9106267046beb65b38880612"
+        },
+        {
+          "label": "Qualified narrower fork proposal",
+          "url": "https://github.com/tamird/gvisor/commit/ce676f0d3"
+        },
+        {
+          "label": "Linux Bazel and actual CodeQL, libcrypt1 and Puma archives",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41007188397/artifacts/12956285947"
+        },
+        {
+          "label": "CodeQL CLI notice matching the bundle byte-for-byte",
+          "url": "https://github.com/github/codeql-cli-binaries/blob/66a113954/LICENSE.md"
+        },
+        {
+          "label": "MIT notice in the CodeQL action repository that hosts the bundle",
+          "url": "https://github.com/github/codeql-action/blob/416ff0dea/LICENSE"
+        },
+        {
+          "label": "Prior fork candidate with both audit modes",
+          "url": "https://github.com/tamird/gvisor/commit/dbf12f4d3"
         }
       ],
       "ciRecovery": {
@@ -18539,19 +18559,19 @@
       "contributorReview": {
         "status": "pending",
         "kind": "amendment",
-        "head": "dbf12f4d327472f76a83423c08ee14bbe7ec7058",
+        "head": "ce676f0d3346881fc09b11523fc6aabcc3084486",
         "baseHead": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a",
-        "url": "https://github.com/tamird/gvisor/commit/dbf12f4d327472f76a83423c08ee14bbe7ec7058",
-        "title": "Keep source verification mandatory for manual license records",
-        "summary": "A manual audit and a pinned license-source URL now produce an error instead of allowing the manual audit to bypass refetching.",
-        "body": "The candidate passed 46 named licensecheck records and the 220-entry catalog check. Review the change before updating the upstream PR."
+        "url": "https://github.com/tamird/gvisor/commit/ce676f0d3",
+        "title": "Preserve LicenseRef audits for pinned artifacts",
+        "summary": "The fork candidate retains the CodeQL bundle’s terms and both libcrypt1 package audits while their URL and SHA256 match. It removes the proposed manually_audited field. Existing license_source fetches and classification failures keep their current behavior.",
+        "body": "The public PR remains at 8f1cfd8f2. Review ce676f0d3 before updating it. The owning Bazel suite passed on Linux. The CodeQL bundle's CLI notice matches the immutable 66a113954 notice and ships with separate component notices. Both libcrypt1 packages carry the same per-file copyright notice. Puma’s standard BSD and MIT terms each match an immutable upstream file. The QEMU and LLVM notice audits do not need this change."
       },
       "refinement": {
         "before": {
           "head": "8f1cfd8f2911402933f697ac7b8794aa0ca9850a"
         },
         "after": {
-          "head": "dbf12f4d327472f76a83423c08ee14bbe7ec7058"
+          "head": "ce676f0d3346881fc09b11523fc6aabcc3084486"
         }
       }
     },
