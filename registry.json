@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:40:42.488176+00:00",
+    "updatedAt": "2026-10-30T04:46:20.780605+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21806,23 +21806,25 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "protobuf-37-current",
-      "head": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
+      "head": "94e8c3760f27577ab466bb750a3479531bb7a676",
       "title": "Use released Protobuf Rust lockfiles",
       "url": "https://github.com/google/gvisor/pull/16254",
       "group": "bazel",
       "status": "open",
-      "summary": "Tamir answered the RC/patch question at 09:51, and the authorized description update is now published at unchanged5eb5b76. No separate reply or contributor decision remains. The description distinguishes the Rust hello-world runtime from the repository-wide license audit and explains the producer lockfile and gRPC compatibility tradeoff.\n\nHistorical record:\n\nThe contributor has been asked to authorize the direct reply to Etienne and a clearer description; the public source remains 5eb5b76e. The concrete follow-up is the Bazel-built Rust smoke-test image. Its hello-world executable does not use Protobuf, but the repository-wide license audit evaluates the full module graph and failed in Protobuf’s transitive Rust resolver without producer-owned lockfiles. Stable 36.2 still lacks those files; 37.0-rc1 supplies them. A qualified 35.1 lockfile backport plus rules_rust override also works, so the RC trades roughly 40 KB of generated backport for the small gRPC reflection-header dependency patch. Waiting for stable 37 is a reasonable alternative offered in the proposed reply. The human question remains open; no public reply, description edit or source amendment has been made.\n\nEarlier source-specific record:\n\nApproved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
+      "summary": "The rebase preserves master’s newer rules_python license record and the existing four-library gRPC patch. Two full catalog fetches reproduced the checked-in bytes, and all four libraries built. The PR is mergeable and awaiting upstream review.\n\nHistorical record:\n\nThe contributor has been asked to authorize the direct reply to Etienne and a clearer description; the public source remains 5eb5b76e. The concrete follow-up is the Bazel-built Rust smoke-test image. Its hello-world executable does not use Protobuf, but the repository-wide license audit evaluates the full module graph and failed in Protobuf’s transitive Rust resolver without producer-owned lockfiles. Stable 36.2 still lacks those files; 37.0-rc1 supplies them. A qualified 35.1 lockfile backport plus rules_rust override also works, so the RC trades roughly 40 KB of generated backport for the small gRPC reflection-header dependency patch. Waiting for stable 37 is a reasonable alternative offered in the proposed reply. The human question remains open; no public reply, description edit or source amendment has been made.\n\nEarlier source-specific record:\n\nApproved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
-        "observedAt": "2026-10-24T10:53:05.058293+00:00",
-        "disposition": "Contributor reply and description update completed",
-        "nextAction": "Follow new substantive reviewer feedback through the existing watcher. Do not repeat the fulfilled reply or decision.",
+        "owner": "maintainer",
+        "sourceHead": "94e8c3760f27577ab466bb750a3479531bb7a676",
+        "observedAt": "2026-10-30T04:46:20.780605+00:00",
+        "disposition": "Merge conflict repaired",
+        "nextAction": "Review the Protobuf upgrade.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16254#issuecomment-6382233256",
           "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3",
           "https://github.com/protocolbuffers/protobuf/blob/v36.2/MODULE.bazel#L217",
-          "https://github.com/protocolbuffers/protobuf/blob/v37.0-rc1/MODULE.bazel#L216-L219"
+          "https://github.com/protocolbuffers/protobuf/blob/v37.0-rc1/MODULE.bazel#L216-L219",
+          "https://github.com/tamird/gvisor/commit/94e8c3760",
+          "https://github.com/tamird/gvisor/actions/runs/41003452270/artifacts/12954284152"
         ],
         "attentionDispositions": [
           {
@@ -21891,17 +21893,22 @@
           }
         ]
       },
-      "updatedAt": "2026-10-24T09:11:20.611674+00:00",
+      "updatedAt": "2026-10-30T04:46:20.780605+00:00",
       "refinement": {
         "before": {
-          "head": "1e27ec7e101cd5bd327344b76497b0884fbc594e"
+          "head": "6c330bf066b45334570a16b293a135fc167951b2",
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266"
         },
         "after": {
-          "head": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
-          "base": "8938ebcf1c12a6266bdf5a650088e1360777aa94"
+          "head": "94e8c3760f27577ab466bb750a3479531bb7a676",
+          "base": "aa5305e99cc2501aede44cac257338d954e7d7dc"
         }
       },
       "evidence": [
+        {
+          "label": "Protobuf catalog and four gRPC builds at the published head",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41003452270/artifacts/12954284152"
+        },
         {
           "label": "Final qualified source",
           "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2"
@@ -41138,7 +41145,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T04:40:42.488176+00:00",
+      "updatedAt": "2026-10-30T04:46:20.780605+00:00",
       "summary": "Parth leads the graph codec. The graph preserves the tested shared maps, slice aliases and saver self-pointers. Neither legacy slice prototype is suitable for submission. Issue #16715 tracks the open map callback, recursive type, LoadValue and encoder scratch findings, with reproducers and the revisions they exercised.",
       "findings": [
         {
@@ -43832,6 +43839,19 @@
             {
               "label": "Upstream format dispatch",
               "url": "https://github.com/google/gvisor/commit/aa5305e99"
+            }
+          ]
+        },
+        {
+          "text": "The stateify comparison builds the same PR head twice. It restores one Nginx kernel, verifies the wire headers of both CPUID and kernel streams in each format, and reloads the resulting checkpoints before measuring either engine. Results are pending.",
+          "evidence": [
+            {
+              "label": "Generator review",
+              "url": "https://github.com/google/gvisor/pull/16726"
+            },
+            {
+              "label": "Legacy/graph comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41004400244"
             }
           ]
         }
