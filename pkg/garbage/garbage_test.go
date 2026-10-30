@@ -168,6 +168,26 @@ func TestSuspend(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "disableSuspend",
+			fn: func(t *testing.T) {
+				t.Cleanup(func() {
+					mu.Lock()
+					suspendNoop = false
+					mu.Unlock()
+				})
+
+				s := Suspend(highTotalMem, 0)
+				defer s.End()
+				DisableSuspend()
+				assertGCSettings(t, origPercent, origLimit)
+
+				if s2 := Suspend(highTotalMem, 0); s2 != nil {
+					s2.End()
+					t.Fatalf("Suspend while disabled = %v, want nil", s2)
+				}
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			runtime.GC()

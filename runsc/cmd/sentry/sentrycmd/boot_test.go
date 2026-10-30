@@ -17,6 +17,8 @@ package sentrycmd
 import (
 	"runtime/debug"
 	"testing"
+
+	"gvisor.dev/gvisor/runsc/config"
 )
 
 func TestSuspendGCForBoot(t *testing.T) {
@@ -27,8 +29,10 @@ func TestSuspendGCForBoot(t *testing.T) {
 		debug.SetMemoryLimit(origLimit)
 	}()
 
+	conf := &config.Config{SuspendLifecycleGC: config.SuspendLifecycleGCAll}
+
 	// Unlimited totalMem (0) caps the soft memory limit at 1 GiB.
-	s := suspendGCForBoot(0)
+	s := suspendGCForBoot(conf, 0)
 	if s == nil {
 		t.Fatal("suspendGCForBoot(0) = nil, want non-nil")
 	}
@@ -39,7 +43,7 @@ func TestSuspendGCForBoot(t *testing.T) {
 	s.End()
 
 	// Explicit totalMem uses half of totalMem.
-	s = suspendGCForBoot(400 << 20)
+	s = suspendGCForBoot(conf, 400<<20)
 	if s == nil {
 		t.Fatal("suspendGCForBoot(400 MiB) = nil, want non-nil")
 	}
@@ -48,4 +52,15 @@ func TestSuspendGCForBoot(t *testing.T) {
 	}
 	debug.SetMemoryLimit(200 << 20)
 	s.End()
+
+	// SuspendLifecycleGCNone permanently disables suspension for the process.
+	noneConf := &config.Config{SuspendLifecycleGC: config.SuspendLifecycleGCNone}
+	if s := suspendGCForBoot(noneConf, 400<<20); s != nil {
+		s.End()
+		t.Fatal("suspendGCForBoot(SuspendLifecycleGCNone) != nil, want nil")
+	}
+	if s := suspendGCForBoot(conf, 400<<20); s != nil {
+		s.End()
+		t.Fatal("suspendGCForBoot after DisableSuspend != nil, want nil")
+	}
 }

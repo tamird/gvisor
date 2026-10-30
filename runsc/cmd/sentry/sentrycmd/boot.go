@@ -355,8 +355,13 @@ func (b *Boot) willReexec() bool {
 	return false
 }
 
-// suspendGCForBoot suspends GC for sandbox boot.
-func suspendGCForBoot(totalMem uint64) *garbage.Suspension {
+// suspendGCForBoot suspends GC for sandbox boot, or disables GC suspension for
+// the Sentry process when configured to SuspendLifecycleGCNone.
+func suspendGCForBoot(conf *config.Config, totalMem uint64) *garbage.Suspension {
+	if conf.SuspendLifecycleGC == config.SuspendLifecycleGCNone {
+		garbage.DisableSuspend()
+		return nil
+	}
 	if totalMem == 0 {
 		totalMem = garbage.NoMemoryLimit
 	}
@@ -379,7 +384,7 @@ func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomma
 
 	// Suspend GC across sandbox boot and initial startup to avoid scanning the
 	// growing startup heap on the boot critical path.
-	startupGC := suspendGCForBoot(b.totalMem)
+	startupGC := suspendGCForBoot(conf, b.totalMem)
 
 	if hostPageSize := unix.Getpagesize(); hostPageSize != hostarch.PageSize {
 		util.Fatalf("host page size (%d) does not match compiled page size (%d)", hostPageSize, hostarch.PageSize)

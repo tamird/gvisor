@@ -85,16 +85,27 @@ const (
 	stateSuspended
 	// stateResumed means a session is still open, but GC resumed early.
 	stateResumed
+	// stateSuspendNoop means GC suspension is disabled/no-op.
+	stateSuspendNoop
 )
 
-// current holds the active session, or nil when idle.
-//
-// +checklocks:mu
-var current *suspensionSession
+var (
+	// suspendNoop permanently disables GC suspension.
+	//
+	// +checklocks:mu
+	suspendNoop bool
+
+	// current holds the active session, or nil when idle.
+	//
+	// +checklocks:mu
+	current *suspensionSession
+)
 
 // +checklocks:mu
 func currentStateLocked() gcState {
 	switch {
+	case suspendNoop:
+		return stateSuspendNoop
 	case current == nil:
 		return stateIdle
 	case current.resumed:
@@ -115,6 +126,17 @@ func resumeOnGC(s *suspensionSession) {
 	}
 	s.resumeGCLocked()
 	log.Infof("Garbage collection ran while suspended; resuming it early")
+}
+
+// DisableSuspend permanently turns Suspend into a no-op, resuming GC
+// immediately if currently suspended.
+func DisableSuspend() {
+	mu.Lock()
+	defer mu.Unlock()
+	if currentStateLocked() == stateSuspended {
+		current.resumeGCLocked()
+	}
+	suspendNoop = true
 }
 
 // Suspension is a caller's handle to a suspensionSession.
@@ -168,12 +190,15 @@ func startSuspensionLocked(prevLimit int64, effectiveLimit uint64) *suspensionSe
 }
 
 // Suspend disables GC with a soft memory limit until End is called.
-// Returns nil if insufficient headroom remains.
+// Returns nil if disabled or insufficient headroom remains.
 func Suspend(totalMem, untrackedMem uint64) *Suspension {
 	limit := memoryLimit(totalMem, untrackedMem)
 	mu.Lock()
 	defer mu.Unlock()
 	switch currentStateLocked() {
+	case stateSuspendNoop:
+		// Suspension is permanently disabled.
+		return nil
 	case stateIdle:
 		if limit == 0 {
 			return nil
@@ -239,7 +264,8 @@ func (h *Suspension) End() {
 func MaybeFreeOSMemory() {
 	mu.Lock()
 	defer mu.Unlock()
-	if currentStateLocked() == stateIdle {
+	switch currentStateLocked() {
+	case stateIdle, stateSuspendNoop:
 		debug.FreeOSMemory()
 	}
 }
