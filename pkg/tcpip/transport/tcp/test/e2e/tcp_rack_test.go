@@ -1306,3 +1306,446 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestRACKRepeatedRepairHistory observes the captured cumulative ACK pair in
+// a live CUBIC sender. Its prehistory is synthetic; packet counts decide
+// whether the generated connection reproduced the observed three earlier losses.
+func TestRACKRepeatedRepairHistory(t *testing.T) {
+	const mss = 1420
+	const tail = 468568
+	const rtt = 100 * time.Millisecond
+	const advertisedMSS = mss + 36
+	clock := faketime.NewManualClock()
+	states := make(chan tcp.TCPSenderState, 128)
+	c := context.NewWithOpts(t, context.Options{MTU: 1500, EnableV4: true, Clock: clock,
+		Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender }})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	e2e.SetStackSACKPermitted(t, c, true)
+	opts := []byte{header.TCPOptionMSS, 4, advertisedMSS >> 8, advertisedMSS & 0xff, header.TCPOptionSACKPermitted, 2, header.TCPOptionWS, 3, 4, header.TCPOptionNOP, header.TCPOptionNOP, header.TCPOptionNOP}
+	if len(opts)%4 != 0 {
+		t.Fatalf("unaligned SYN options: %d bytes", len(opts))
+	}
+	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, opts)
+	c.EP.SocketOptions().SetDelayOption(false)
+	begin := c.IRS.Add(1)
+	peer := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+	var now time.Duration
+	advance := func(d time.Duration) { clock.Advance(d); now += d }
+	write := func(n int) {
+		t.Helper()
+		got, err := c.EP.Write(bytes.NewReader(make([]byte, n)), tcpip.WriteOptions{})
+		if err != nil || got != int64(n) {
+			t.Fatalf("write %d = (%d,%v)", n, got, err)
+		}
+	}
+	type span struct{ start, end int }
+	type wire struct {
+		span
+		at time.Duration
+	}
+	var warm int
+	recv := func(timeout time.Duration) (wire, bool) {
+		t.Helper()
+		p := c.GetPacketNonBlocking()
+		if p == nil && timeout > 0 {
+			p = c.GetPacketWithTimeout(timeout)
+		}
+		if p == nil {
+			return wire{}, false
+		}
+		h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+		x := int(uint32(h.SequenceNumber())-uint32(begin)) - warm
+		end := x + len(h.Payload())
+		p.Release()
+		return wire{span{x, end}, now}, true
+	}
+	ack := func(n, w int, blocks []span) tcp.TCPSenderState {
+		t.Helper()
+		var sb []header.SACKBlock
+		for _, b := range blocks {
+			sb = append(sb, header.SACKBlock{Start: begin.Add(seqnum.Size(warm + b.start)), End: begin.Add(seqnum.Size(warm + b.end))})
+		}
+		opt := make([]byte, 40)
+		l := 0
+		if len(sb) > 0 {
+			l += header.EncodeNOP(opt[l:])
+			l += header.EncodeNOP(opt[l:])
+			l += header.EncodeSACKBlocks(sb, opt[l:])
+		}
+		c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: peer, AckNum: begin.Add(seqnum.Size(n)), RcvWnd: seqnum.Size(w), TCPOpts: opt[:l]})
+		select {
+		case st := <-states:
+			if st.SndUna != begin.Add(seqnum.Size(n)) {
+				t.Fatalf("ACK %d yielded SndUna %v", n, st.SndUna)
+			}
+			return st
+		case <-time.After(5 * time.Second):
+			t.Fatal("no state after ACK")
+			return tcp.TCPSenderState{}
+		}
+	}
+	cwnd := 10
+	for cwnd < 335 {
+		// No receive-window-limited growth or unobserved packets.
+		count := cwnd
+		if count > 335-cwnd {
+			count = 335 - cwnd
+		}
+		n := count * mss
+		write(n)
+		got := 0
+		for got < n {
+			p, ok := recv(5 * time.Second)
+			if !ok || p.end == p.start {
+				t.Fatalf("warm bytes %d/%d", got, n)
+			}
+			got += p.end - p.start
+		}
+		warm += n
+		advance(rtt)
+		st := ack(warm, 64000, nil)
+		if st.SndCwnd <= cwnd {
+			t.Fatalf("warm cwnd stalled at %d", st.SndCwnd)
+		}
+		cwnd = st.SndCwnd
+	}
+	// Split writes at each observed low/SACK boundary, so the short low
+	// range is a genuine 108-byte wire transmission. Flight beyond the
+	// highest SACK contains 61,276 unacknowledged bytes.
+	fixed := []span{{344760, 407292}, {341920, 343340}, {74164, 75584}}
+	focus := []span{{0, 1420}, {1420, 1528}, {1528, 2948}}
+	var initial []wire
+	pos := 0
+	for _, end := range []int{1420, 1528, 2948, 74164, 75584, 341920, 343340, 344760, 407292, tail} {
+		write(end - pos)
+		for pos < end {
+			p, ok := recv(5 * time.Second)
+			if !ok || p.start != pos || p.end <= p.start || p.end > end {
+				t.Fatalf("original offset %d: %+v present=%t end=%d", pos, p, ok, end)
+			}
+			initial = append(initial, p)
+			pos = p.end
+		}
+	}
+	for i, b := range focus {
+		if initial[i].span != b {
+			t.Fatalf("original[%d]=%v want %v", i, initial[i], b)
+		}
+	}
+	t.Logf("HISTORY fixture base=%d warm=%d mss=%d initial_packets=%d cwnd=%d tail=%d", uint32(begin)+uint32(warm), warm, mss, len(initial), cwnd, tail)
+	tx := map[span]int{}
+	for _, p := range initial {
+		tx[p.span]++
+	}
+	counts := func() [3]int { return [3]int{tx[focus[0]], tx[focus[1]], tx[focus[2]]} }
+	drain := func(wait time.Duration) []wire {
+		var batch []wire
+		for p, ok := recv(wait); ok; p, ok = recv(0) {
+			if p.end > p.start {
+				tx[p.span]++
+				batch = append(batch, p)
+			}
+		}
+		return batch
+	}
+	printState := func(label string, n int, st tcp.TCPSenderState, batch []wire) {
+		var lows []span
+		for _, p := range batch {
+			if p.start < 2948 {
+				lows = append(lows, p.span)
+			}
+		}
+		t.Logf("HISTORY %s t_us=%d ack=%d timeout=%d cwnd=%d pipe=%d sacked=%d high=%d sndnxt=%d count=%v low_tx=%v batch=%d", label, now.Microseconds(), n, c.Stack().Stats().TCP.Timeouts.Value(), st.SndCwnd, st.Outstanding, st.SackedOut, int32(st.FastRecovery.HighRxt-begin)-int32(warm), int32(st.SndNxt-begin)-int32(warm), counts(), lows, len(batch))
+	}
+	advance(rtt)
+	st := ack(warm, 29286, fixed)
+	batch := drain(50 * time.Millisecond)
+	printState("initial_sack", 0, st, batch)
+	// Deliver at most one higher repair per report. This gives RACK real
+	// proof of a transmission later than the lost lower repairs. The
+	// captured peer's final SACK ranges stay retained throughout.
+	var extra span
+	for wave := 0; wave < 10 && (counts()[0] < 3 || counts()[1] < 3 || counts()[2] < 3); wave++ {
+		var next span
+		for _, p := range batch {
+			if p.start >= 2948 && p.end <= fixed[2].start && p.span != extra {
+				next = p.span
+			}
+		}
+		if next != (span{}) {
+			extra = next
+		}
+		blocks := fixed
+		if extra != (span{}) {
+			blocks = append([]span{extra}, fixed...)
+		}
+		advance(rtt)
+		drain(0) // Timer-driven output is accounted separately from this ACK.
+		st = ack(warm, 29286, blocks)
+		batch = drain(50 * time.Millisecond)
+		printState("prehistory", 0, st, batch)
+	}
+	// Now suspend lower delivery until a real RTO has retransmitted the
+	// first low range. This resets SACK credit, independently of RACK's
+	// per-transmission history. No actual timer firing is inferred from time.
+	rtoBefore := c.Stack().Stats().TCP.Timeouts.Value()
+	for i := 0; i < 3000 && c.Stack().Stats().TCP.Timeouts.Value() == rtoBefore; i++ {
+		advance(10 * time.Millisecond)
+		batch = drain(0)
+	}
+	foundFirst := false
+	for _, p := range batch {
+		if p.span == focus[0] {
+			foundFirst = true
+		}
+	}
+	if !foundFirst || c.Stack().Stats().TCP.Timeouts.Value() != rtoBefore+1 {
+		t.Fatalf("no RTO repair of first full range: timeouts=%d batch=%+v", c.Stack().Stats().TCP.Timeouts.Value(), batch)
+	}
+	before := counts()
+	t.Logf("HISTORY final_rto t_us=%d count=%v", now.Microseconds(), before)
+	// Queue unsent application data for the gated period. The actual
+	// remote ACK opens to the original observed 1,024,000-byte window.
+	write(16 * mss)
+	drain(0)
+	advance(rtt)
+	prior := drain(0)
+	st = ack(warm+1420, 64000, fixed)
+	batch = drain(50 * time.Millisecond)
+	printState("ack_full", 1420, st, batch)
+	t.Logf("COPY first_batch=%v", batch)
+	shortReceived := false
+	thirdAlreadySent := false
+	for _, p := range append(prior, batch...) {
+		if p.span == focus[1] {
+			shortReceived = true
+		}
+		if p.span == focus[2] {
+			thirdAlreadySent = true
+		}
+	}
+	if !shortReceived {
+		t.Logf("HISTORY outcome divergent_no_short pre=%v", before)
+		return
+	}
+	advance(rtt)
+	early := drain(0)
+	st = ack(warm+1528, 64000, fixed)
+	batch = drain(50 * time.Millisecond)
+	printState("ack_short", 1528, st, batch)
+	t.Logf("COPY second_batch=%v", batch)
+	if thirdAlreadySent {
+		// Hold the four older repairs and acknowledge only a repair sent
+		// on the short ACK. This is new evidence that their retransmissions
+		// have been lost, distinct from the receiver's older SACK blocks.
+		if len(batch) > 0 {
+			later := batch[len(batch)-1].span
+			if later.start >= 2948 && later.end <= fixed[2].start {
+				advance(rtt)
+				drain(0)
+				st = ack(warm+1528, 64000, append([]span{later}, fixed...))
+				writes := drain(50 * time.Millisecond)
+				printState("later_delivery", 1528, st, writes)
+				t.Logf("COPY later_delivered=%v new_batch=%v", later, writes)
+			}
+		}
+		t.Logf("HISTORY outcome third_already_sent_on_full_ack pre=%v post=%v fourth_prefix=%t", before, counts(), before == [3]int{4, 3, 3})
+		return
+	}
+	all := append(early, batch...)
+	at := now
+	thirdPresent := func() bool {
+		for _, p := range all {
+			if p.span == focus[2] {
+				return true
+			}
+		}
+		return false
+	}
+	t0 := c.Stack().Stats().TCP.Timeouts.Value()
+	for i := 0; !thirdPresent() && i < 3000; i++ {
+		advance(10 * time.Millisecond)
+		all = append(all, drain(0)...)
+	}
+	if !thirdPresent() {
+		t.Logf("HISTORY outcome no_third_within_bound pre=%v", before)
+		return
+	}
+	t.Logf("HISTORY outcome ack_pair pre=%v gap_us=%d new_timeouts=%d fourth_prefix=%t", before, (now - at).Microseconds(), c.Stack().Stats().TCP.Timeouts.Value()-t0, before == [3]int{4, 3, 3})
+}
+
+// TestRACKRetainedSACKWithMissingTail records which CUBIC repairs leave on an
+// ACK and which require a timeout. The peer retains three original packets,
+// drops the rest and discards early repairs until the first RTO. After that
+// every emitted packet is delivered and acknowledged after a 100 ms RTT.
+func TestRACKRetainedSACKWithMissingTail(t *testing.T) {
+	const rtt = 100 * time.Millisecond
+	clock := faketime.NewManualClock()
+	states := make(chan tcp.TCPSenderState, 32)
+	c := context.NewWithOpts(t, context.Options{
+		MTU: mtu, EnableV4: true, Clock: clock,
+		Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender },
+	})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	write := func(n int) {
+		t.Helper()
+		if got, err := c.EP.Write(bytes.NewReader(make([]byte, n)), tcpip.WriteOptions{}); err != nil || got != int64(n) {
+			t.Fatalf("Write(%d) = (%d, %v)", n, got, err)
+		}
+	}
+	const warm = 8
+	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+	first := c.IRS.Add(1 + warm*maxPayload)
+	var elapsed time.Duration
+	advance := func(d time.Duration) { clock.Advance(d); elapsed += d }
+	ack := func(packets int, blocks []header.SACKBlock) tcp.TCPSenderState {
+		t.Helper()
+		c.SendAckWithSACK(seq, (warm+packets)*maxPayload, blocks)
+		select {
+		case st := <-states:
+			if want := first.Add(seqnum.Size(packets * maxPayload)); st.SndUna != want {
+				t.Fatalf("sender SndUna = %v, want %v", st.SndUna, want)
+			}
+			return st
+		case <-time.After(5 * time.Second):
+			t.Fatal("ACK was not processed")
+			return tcp.TCPSenderState{}
+		}
+	}
+	write(warm * maxPayload)
+	for i := 0; i < warm; i++ {
+		c.ReceiveAndCheckPacketWithOptions(make([]byte, warm*maxPayload), i*maxPayload, maxPayload, e2e.TSOptionSize)
+	}
+	advance(rtt)
+	st := ack(0, nil)
+	if st.RTTState.SRTT <= 0 {
+		t.Fatal("no positive trained RTT")
+	}
+
+	// The test context emits one MSS per packet. Read complete egress while
+	// the manual clock stays frozen, without consuming any sender timeout.
+	read := func() []int {
+		t.Helper()
+		var tx []int
+		for {
+			p := c.GetPacketWithTimeout(50 * time.Millisecond)
+			if p == nil {
+				return tx
+			}
+			h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+			n := len(h.Payload())
+			offset := uint32(h.SequenceNumber()) - uint32(first)
+			p.Release()
+			if n == 0 {
+				continue
+			}
+			if n != maxPayload || offset%maxPayload != 0 {
+				t.Fatalf("unexpected egress offset %d, bytes %d", offset, n)
+			}
+			tx = append(tx, int(offset)/maxPayload+1)
+		}
+	}
+	write((st.SndCwnd + 12) * maxPayload)
+	initial := read()
+	if len(initial) < 10 {
+		t.Fatalf("only %d original packets: %v", len(initial), initial)
+	}
+	for i, n := range initial {
+		if n != i+1 {
+			t.Fatalf("original sequence %v", initial)
+		}
+	}
+	t.Logf("PIPE initial=%v queued_more=12 srtt=%s", initial, st.RTTState.SRTT)
+	// Originals 4--6 arrive, leaving at least four unsacked originals above
+	// the highest SACK as well as holes below it. Hold all subsequent
+	// repairs until a real RTO retransmits packet 1.
+	block := header.SACKBlock{Start: first.Add(3 * maxPayload), End: first.Add(6 * maxPayload)}
+	advance(rtt)
+	st = ack(0, []header.SACKBlock{block})
+	early := read()
+	t.Logf("PIPE before_timeout t=%s sacked=%d out=%d cwnd=%d repairs=%v", elapsed, st.SackedOut, st.Outstanding, st.SndCwnd, early)
+	if st.SackedOut != 3 {
+		t.Fatalf("pre-timeout credited %d, want three high originals", st.SackedOut)
+	}
+	timeoutCount := func() uint64 { return c.Stack().Stats().TCP.Timeouts.Value() }
+	// Advance in small increments and leave the clock frozen at the first
+	// real timeout. Discard earlier PTO probes with the early repairs.
+	var afterRTO []int
+	for i := 0; i < 500 && timeoutCount() == 0; i++ {
+		advance(10 * time.Millisecond)
+		if timeoutCount() != 0 {
+			afterRTO = read()
+		} else {
+			for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+				p.Release()
+			}
+		}
+	}
+	if timeoutCount() != 1 || len(afterRTO) == 0 || afterRTO[0] != 1 {
+		t.Fatalf("first timeout = %d, emitted %v", timeoutCount(), afterRTO)
+	}
+	t.Logf("PIPE first_timeout t=%s packets=%v", elapsed, afterRTO)
+	delivered := map[int]bool{4: true, 5: true, 6: true}
+	for _, n := range afterRTO {
+		delivered[n] = true
+	}
+	// Stop after three advancing ACKs. If no repair is sent on an ACK,
+	// advance the manual clock until the next *observed* sender timeout.
+	cumulative := 0
+	for round := 1; round <= 3; round++ {
+		for delivered[cumulative+1] {
+			cumulative++
+		}
+		var sacks []header.SACKBlock
+		for n := cumulative + 1; n <= len(initial)+12; n++ {
+			if !delivered[n] {
+				continue
+			}
+			lo := n
+			for delivered[n+1] {
+				n++
+			}
+			sacks = append(sacks, header.SACKBlock{Start: first.Add(seqnum.Size((lo - 1) * maxPayload)), End: first.Add(seqnum.Size(n * maxPayload))})
+		}
+		advance(rtt)
+		inTransit := read()
+		if len(inTransit) > 0 {
+			t.Logf("PIPE in_transit t=%s timeouts=%d packets=%v", elapsed, timeoutCount(), inTransit)
+		}
+		st = ack(cumulative, sacks)
+		sent := read()
+		t.Logf("PIPE ack=%d t=%s timeouts=%d active=%t cwnd=%d out=%d sacked=%d high_rxt=%d sndnxt=%d packets=%v", cumulative, elapsed, timeoutCount(), st.FastRecovery.Active, st.SndCwnd, st.Outstanding, st.SackedOut, int32(st.FastRecovery.HighRxt-first), int32(st.SndNxt-first), sent)
+		if round == 3 {
+			break
+		}
+		// Several packets can be repaired in one ACK round. If it made no
+		// cumulative progress, distinguish a later timer from ACK-driven work.
+		for _, n := range append(inTransit, sent...) {
+			delivered[n] = true
+		}
+		for i := 0; !delivered[cumulative+1] && i < 500; i++ {
+			advance(10 * time.Millisecond)
+			var tx []int
+			for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+				h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+				if len(h.Payload()) > 0 {
+					tx = append(tx, int(uint32(h.SequenceNumber())-uint32(first))/maxPayload+1)
+				}
+				p.Release()
+			}
+			if len(tx) != 0 {
+				t.Logf("PIPE later t=%s timeouts=%d packets=%v", elapsed, timeoutCount(), tx)
+				for _, n := range tx {
+					delivered[n] = true
+				}
+			}
+		}
+		if !delivered[cumulative+1] {
+			t.Fatalf("no next repair for packet %d", cumulative+1)
+		}
+	}
+}
