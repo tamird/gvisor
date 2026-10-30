@@ -1,7 +1,7 @@
-name: Build release archives using the native ARM64 compiler
+name: Build two Debian layers on a scratch worker
 on:
   push:
-    branches: [qualification/scratch-native-release]
+    branches: [qualification/scratch-deb-layers]
 permissions:
   contents: read
   actions: read
@@ -10,17 +10,6 @@ jobs:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
     timeout-minutes: 100
-    env:
-      QUALIFICATION_ARCH: arm64
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_EXECUTION: remote-actions
-      QUALIFICATION_LANES: build
-      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
-      QUALIFICATION_CLOCK_SOURCE: calibrated
-      QUALIFICATION_HEADER_BASE: ''
-      QUALIFICATION_COS_SHA256: ''
-      QUALIFICATION_COS_GZIP_BASE64: ''
-      QUALIFICATION_TARGETS: //test/release:artifacts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
@@ -51,29 +40,13 @@ jobs:
           receipt.write_text(json.dumps({"original": hashlib.sha256(original.read_bytes()).hexdigest(), "prepared": hashlib.sha256(prepared.read_bytes()).hexdigest(),
               "added_registry_hashes": len(after.keys() - before.keys()), "removed_registry_hashes": len(before.keys() - after.keys())}) + "\n")
           PY
-          curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
-          echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/bb"
-      - name: Build all six archives without accepting cached actions
-        id: native
+      - name: Compare the stock and shell-free Debian payload actions
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-          BB_LOG_DECODER: ${{ runner.temp }}/bb
-        run: |
-          bash test/rbe/actions.sh \
-            --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_arm64 \
-            --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
-            --bazel-option=--remote_download_outputs=toplevel \
-            --bazel-option=--noremote_accept_cached \
-            '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|GoLink)$=+no-remote-cache'
-      - name: Trace archives to producing actions and preserve the original build result
-        if: ${{ !cancelled() && steps.native.outcome != 'skipped' }}
-        env:
-          BB_LOG_DECODER: ${{ runner.temp }}/bb
-        run: python3 test/rbe/native_release_inventory.py
+        run: bash test/rbe/deb_layer_probe.sh
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: scratch-native-release-evidence
+          name: deb-layer-result
           path: ${{ runner.temp }}/publication/
-          if-no-files-found: warn
+          if-no-files-found: error

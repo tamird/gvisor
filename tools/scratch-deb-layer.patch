@@ -1,0 +1,84 @@
+--- a/apt/private/deb_postfix.bzl
++++ b/apt/private/deb_postfix.bzl
+@@ -1,26 +1,50 @@
+ "normalization rules"
++
++_ZSTD = "@bazel_lib//lib:zstd_toolchain_type"
++
++def _deb_layer_impl(ctx):
++    src = ctx.file.src
++    out = ctx.outputs.out
++    if src.basename.endswith(".tar.gz"):
++        ctx.actions.symlink(output = out, target_file = src)
++        return
++
++    tool = ctx.toolchains[_ZSTD].zstdinfo.binary
++    if any([src.basename.endswith(suffix) for suffix in (".tar.xz", ".tar.zst", ".tar.lzma")]):
++        uncompressed = ctx.actions.declare_file(ctx.label.name + ".tar")
++        ctx.actions.run(
++            executable = tool,
++            arguments = ["--force", "--decompress", src.path, "-o", uncompressed.path],
++            inputs = [src],
++            outputs = [uncompressed],
++            mnemonic = "DebDecompress",
++            toolchain = _ZSTD,
++        )
++        src = uncompressed
++    elif not src.basename.endswith(".tar"):
++        fail("unsupported Debian data archive: %s" % src.basename)
++
++    ctx.actions.run(
++        executable = tool,
++        arguments = ["--force", "--format=gzip", "-6", "--no-name", src.path, "-o", out.path],
++        inputs = [src],
++        outputs = [out],
++        mnemonic = "DebGzip",
++        toolchain = _ZSTD,
++    )
++
++_deb_layer = rule(
++    implementation = _deb_layer_impl,
++    attrs = {
++        "out": attr.output(mandatory = True),
++        "src": attr.label(allow_single_file = True, mandatory = True),
++    },
++    toolchains = [_ZSTD],
++)
+ 
+ # buildifier: disable=function-docstring-args
+ def deb_postfix(name, srcs, outs, mergedusr = False, **kwargs):
+     """Private. DO NOT USE."""
+-    apply = """
+-    case "$$data_file" in
+-        *data.tar.gz)
+-            mv "$$data_file" "$$layer"
+-        ;;
+-        *data.tar)
+-            (exec -a gzip $(ZSTD_BIN) -n) < "$$data_file" > "$$layer"
+-        ;;
+-        *data.tar.xz|*data.tar.zst|*data.tar.lzma)
+-            $(ZSTD_BIN) --force --decompress --stdout "$$data_file" |
+-            (exec -a gzip $(ZSTD_BIN) -n) > "$$layer"
+-        ;;
+-        *)
+-            echo "ERROR: data file not supported: $$data_file"
+-            exit 1
+-        ;;
+-    esac
+-"""
+     toolchains = ["@zstd_toolchains//:resolved_toolchain"]
+     tools = []
+ 
+@@ -64,6 +88,12 @@
+             )
+         """
+ 
++    else:
++        if len(srcs) != 1 or len(outs) != 1:
++            fail("expected one Debian data archive and one output")
++        _deb_layer(name = name, src = srcs[0], out = outs[0], **kwargs)
++        return
++
+     native.genrule(
+         name = name,
+         srcs = srcs,

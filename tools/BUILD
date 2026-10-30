@@ -109,6 +109,7 @@ bzl_library(
 
 exports_files([
     "benchmark-umbrella-exports.patch",
+    "scratch-deb-layer.patch",
     "gazelle-module-metadata.patch",
     "go-packages-provenance.patch",
     "llvm-libunwind-system-libraries.patch",
