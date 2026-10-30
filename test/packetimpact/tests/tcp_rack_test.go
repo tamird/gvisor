@@ -42,6 +42,11 @@ const (
 
 func createSACKConnection(t *testing.T) (testbench.DUT, testbench.TCPIPv4, int32, int) {
 	t.Helper()
+	return createSACKConnectionWithPeerRTT(t, 0)
+}
+
+func createSACKConnectionWithPeerRTT(t *testing.T, rtt time.Duration) (testbench.DUT, testbench.TCPIPv4, int32, int) {
+	t.Helper()
 	dut := testbench.NewDUT(t)
 	listenFd, remotePort := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
 	t.Cleanup(func() { dut.Close(t, listenFd) })
@@ -55,7 +60,16 @@ func createSACKConnection(t *testing.T) (testbench.DUT, testbench.TCPIPv4, int32
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeSACKPermittedOption(opts[optsOff:])
 
-	conn.ConnectWithOptions(t, opts[:optsOff])
+	if rtt == 0 {
+		conn.ConnectWithOptions(t, opts[:optsOff])
+	} else {
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: opts[:optsOff]})
+		if _, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second); err != nil {
+			t.Fatalf("waiting for SYN+ACK: %s", err)
+		}
+		time.Sleep(rtt)
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+	}
 	acceptFd, _ := dut.Accept(t, listenFd)
 	t.Cleanup(func() { dut.Close(t, acceptFd) })
 
@@ -447,22 +461,39 @@ func TestRACKReorderACKBoundary(t *testing.T) {
 		{"two_acks", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			dut, conn, fd, mss := createSACKConnection(t)
-			sendAndReceive(t, dut, conn, numPktsForRTT, fd, mss, true)
+			var peerRTT time.Duration
+			segments, cumulative := 3, 1
+			if tc.separate {
+				// Establish the peer's round-trip delay before measuring:
+				// RACK must not declare every lower sequence lost as
+				// soon as the higher sequence is reported.
+				peerRTT = 150 * time.Millisecond
+				segments, cumulative = 6, 4
+			}
+			dut, conn, fd, mss := createSACKConnectionWithPeerRTT(t, peerRTT)
+			if tc.separate {
+				for range 4 {
+					sendAndReceive(t, dut, conn, 1, fd, mss, false)
+					time.Sleep(peerRTT)
+					conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+				}
+			} else {
+				sendAndReceive(t, dut, conn, numPktsForRTT, fd, mss, true)
+			}
 			first := *conn.RemoteSeqNum(t)
-			sendAndReceive(t, dut, conn, 3, fd, mss, false)
+			sendAndReceive(t, dut, conn, segments, fd, mss, false)
 			if info := dut.GetSockOptTCPInfo(t, fd); info.ReordSeen != 0 {
 				t.Fatalf("before SACK: tcpi_reord_seen=%d, want 0", info.ReordSeen)
 			}
 
-			// The middle segment stays unacknowledged. Each ACK reports
-			// the third segment with the same SACK block.
+			// The penultimate segment remains a hole. Only the final
+			// segment is reported in the SACK block.
 			var opts [40]byte
 			n := header.EncodeNOP(opts[:])
 			n += header.EncodeNOP(opts[n:])
 			n += header.EncodeSACKBlocks([]header.SACKBlock{{
-				Start: first.Add(seqnum.Size(2 * mss)),
-				End:   first.Add(seqnum.Size(3 * mss)),
+				Start: first.Add(seqnum.Size((segments - 1) * mss)),
+				End:   first.Add(seqnum.Size(segments * mss)),
 			}}, opts[n:])
 
 			ack := func(cumulative seqnum.Value, tag byte) linux.TCPInfo {
@@ -480,15 +511,16 @@ func TestRACKReorderACKBoundary(t *testing.T) {
 				}
 				info := dut.GetSockOptTCPInfo(t, fd)
 				t.Logf("ack=%d sack=[%d,%d) tcpi_reord_seen=%d tcpi_total_retrans=%d",
-					cumulative-first, 2*mss, 3*mss, info.ReordSeen, info.TotalRetrans)
+					cumulative-first, (segments-1)*mss, segments*mss, info.ReordSeen, info.TotalRetrans)
 				return info
 			}
 			if tc.separate {
+				time.Sleep(peerRTT)
 				if got := ack(first, 1).ReordSeen; got != 0 {
 					t.Fatalf("first SACK: tcpi_reord_seen=%d, want 0", got)
 				}
 			}
-			info := ack(first.Add(seqnum.Size(mss)), 2)
+			info := ack(first.Add(seqnum.Size(cumulative*mss)), 2)
 			if (info.ReordSeen != 0) != tc.separate {
 				t.Errorf("tcpi_reord_seen=%d, want reordering %t", info.ReordSeen, tc.separate)
 			}
