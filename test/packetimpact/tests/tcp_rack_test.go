@@ -435,3 +435,63 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 		t.Fatalf("expected connection to be in fast recovery, want: %v got: %v", linux.TCP_CA_Recovery, info.CaState)
 	}
 }
+
+// TestRACKReorderACKBoundary reports reordering only when separate ACKs
+// establish that a higher sequence was delivered before a lower one.
+func TestRACKReorderACKBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		separate bool
+	}{
+		{"one_ack", false},
+		{"two_acks", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dut, conn, fd, mss := createSACKConnection(t)
+			sendAndReceive(t, dut, conn, numPktsForRTT, fd, mss, true)
+			first := *conn.RemoteSeqNum(t)
+			sendAndReceive(t, dut, conn, 3, fd, mss, false)
+			if info := dut.GetSockOptTCPInfo(t, fd); info.ReordSeen != 0 {
+				t.Fatalf("before SACK: tcpi_reord_seen=%d, want 0", info.ReordSeen)
+			}
+
+			// The middle segment stays unacknowledged. Each ACK reports
+			// the third segment with the same SACK block.
+			var opts [40]byte
+			n := header.EncodeNOP(opts[:])
+			n += header.EncodeNOP(opts[n:])
+			n += header.EncodeSACKBlocks([]header.SACKBlock{{
+				Start: first.Add(seqnum.Size(2 * mss)),
+				End:   first.Add(seqnum.Size(3 * mss)),
+			}}, opts[n:])
+
+			ack := func(cumulative seqnum.Value, tag byte) linux.TCPInfo {
+				t.Helper()
+				// Read the byte carried by this ACK before sampling the
+				// socket. This establishes processing without injecting a
+				// further peer ACK or depending on a sleep.
+				conn.Send(t, testbench.TCP{
+					Flags:   testbench.TCPFlags(header.TCPFlagAck),
+					AckNum:  testbench.Uint32(uint32(cumulative)),
+					Options: opts[:n],
+				}, &testbench.Payload{Bytes: []byte{tag}})
+				if got := dut.Recv(t, fd, 1, 0); len(got) != 1 || got[0] != tag {
+					t.Fatalf("recv=%v, want tag %d", got, tag)
+				}
+				info := dut.GetSockOptTCPInfo(t, fd)
+				t.Logf("ack=%d sack=[%d,%d) tcpi_reord_seen=%d tcpi_total_retrans=%d",
+					cumulative-first, 2*mss, 3*mss, info.ReordSeen, info.TotalRetrans)
+				return info
+			}
+			if tc.separate {
+				if got := ack(first, 1).ReordSeen; got != 0 {
+					t.Fatalf("first SACK: tcpi_reord_seen=%d, want 0", got)
+				}
+			}
+			info := ack(first.Add(seqnum.Size(mss)), 2)
+			if (info.ReordSeen != 0) != tc.separate {
+				t.Errorf("tcpi_reord_seen=%d, want reordering %t", info.ReordSeen, tc.separate)
+			}
+		})
+	}
+}
