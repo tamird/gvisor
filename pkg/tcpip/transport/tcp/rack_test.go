@@ -413,3 +413,13 @@ func TestRACKZeroClockResolutionPreservesLossBoundary(t *testing.T) {
 		t.Fatalf("detectLoss at zero-resolution boundary got %d losses, want 1", got)
 	}
 }
+
+func benchSACKGeometry(seg *segment, mss uint16) { seg.gsoMSS = mss }
+func benchClearSACKCredit(seg *segment)          { seg.sackCredit = 0 }
+func benchSACKWalk(s *sender, seg *segment, fresh bool) {
+	if fresh {
+		s.walkSACK(seg, seg.parsedOptions.SACKBlocks)
+	} else {
+		s.walkSACK(seg, nil)
+	}
+}
