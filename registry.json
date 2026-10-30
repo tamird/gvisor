@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:24:53.079022+00:00",
+    "updatedAt": "2026-10-30T15:31:32.617147+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35989,8 +35989,8 @@
       "head": "1801418f9a170d7fe78c5b92141f8e8c9e166d4a",
       "title": "Match Linux poll and epoll on VFIO PCI descriptors",
       "url": "https://github.com/tamird/gvisor/commit/1801418f9",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T15:24:53.079022+00:00",
+      "status": "Contributor approved; waiting for #16743",
+      "updatedAt": "2026-10-30T15:31:32.617147+00:00",
       "summary": "Linux reports the default read/write readiness mask on a VFIO PCI file and rejects epoll ADD with EPERM. Stock gVisor accepted ADD; the corrected guest matches Linux.",
       "evidence": [
         {
@@ -36044,18 +36044,14 @@
           "kind": "proposal",
           "outcome": "changes-requested",
           "at": "2026-10-30T13:00:52.974373+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "1801418f9a170d7fe78c5b92141f8e8c9e166d4a",
+          "at": "2026-10-30T15:31:32.617147+00:00",
+          "outcome": "approved"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "1801418f9a170d7fe78c5b92141f8e8c9e166d4a",
-        "baseHead": "73a709bdc845f47cc85dda13925e86a80606e2ad",
-        "url": "https://github.com/tamird/gvisor/commit/1801418f9",
-        "title": "Match Linux poll and epoll on VFIO PCI descriptors",
-        "summary": "Linux reports the default read/write readiness mask on a VFIO PCI file and rejects epoll ADD with EPERM. Stock gVisor accepted ADD; the corrected guest matches Linux.",
-        "body": "Review only the PCI change after the device-gofer prerequisite. The permanent syscall fixture after VFIO_GROUP_GET_DEVICE_FD and PCI identity checks ran on native Linux and both ordinary/direct gVisor. The existing saved-waiter unit test covers checkpoint state separately from Linux. The previous PCI proposal used an internal test, so its review did not cover Linux parity."
-      },
       "refinement": {
         "before": {
           "base": "e82a0e179198f72260185166fb2be5336abee8b2",
@@ -36065,6 +36061,17 @@
           "base": "73a709bdc845f47cc85dda13925e86a80606e2ad",
           "head": "1801418f9a170d7fe78c5b92141f8e8c9e166d4a"
         }
+      },
+      "followup": {
+        "owner": "overlay_owner",
+        "sourceHead": "1801418f9a170d7fe78c5b92141f8e8c9e166d4a",
+        "observedAt": "2026-10-30T15:31:32.617147+00:00",
+        "disposition": "Approved to open after #16743",
+        "nextAction": "Open the accepted PCI readiness change after the device-gofer change merges.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16743",
+          "https://github.com/tamird/gvisor/commit/1801418f9"
+        ]
       }
     },
     {
@@ -36272,19 +36279,61 @@
       "ref": "review/vfio-device-gofer",
       "title": "Open exclusive devices only once through the device gofer",
       "url": "https://github.com/tamird/gvisor/commit/73a709bdc",
-      "status": "Awaiting contributor review",
+      "status": "Published as #16743",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-10-30T15:24:53.079022+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "73a709bdc845f47cc85dda13925e86a80606e2ad",
-        "baseHead": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd",
-        "url": "https://github.com/tamird/gvisor/commit/73a709bdc",
-        "title": "Open exclusive devices only once through the device gofer",
-        "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-        "body": "Review this prerequisite independently. The shared VfioPCIDeviceTest.Open opens a provisioned VFIO group, gets the device from it and requires VFIO_DEVICE_FLAGS_PCI. It passed on Linux and on gVisor with directfs off and on. The e1000e PCI device uses the real vfio-pci driver in a Linux guest; this is not physical TPU coverage."
-      },
+      "updatedAt": "2026-10-30T15:31:32.617147+00:00",
+      "evidence": [
+        {
+          "label": "Real Linux and both gVisor modes passed the shared Open case",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41077957739/artifacts/12989396172"
+        },
+        {
+          "label": "Stock ordinary systrap failed the real exclusive group open with EBUSY",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41074917348/artifacts/12987455909"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+          "at": "2026-10-30T15:31:32.617147+00:00",
+          "outcome": "approved"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "overlay_owner",
+        "sourceHead": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+        "observedAt": "2026-10-30T15:31:32.617147+00:00",
+        "disposition": "Approved and delivered as #16743",
+        "nextAction": "Follow review, checks, and import on #16743.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16743",
+          "https://github.com/tamird/gvisor/commit/73a709bdc"
+        ]
+      }
+    },
+    {
+      "id": "pr:16743",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16743,
+      "group": "runtime",
+      "ref": "review/vfio-device-gofer",
+      "head": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+      "title": "Open exclusive devices only when the application opens them",
+      "url": "https://github.com/google/gvisor/pull/16743",
+      "status": "open",
+      "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
+      "updatedAt": "2026-10-30T15:31:32.617147+00:00",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+          "at": "2026-10-30T15:31:32.617147+00:00",
+          "outcome": "approved"
+        }
+      ],
       "evidence": [
         {
           "label": "Real Linux and both gVisor modes passed the shared Open case",
@@ -39498,9 +39547,10 @@
     {
       "type": "depends_on",
       "from": "branch:vfio-pci-file-poll",
-      "to": "branch:vfio-device-gofer-open",
+      "to": "pr:16743",
       "reason": "The permanent shared PCI readiness fixture needs to open the VFIO group through the device gofer before asking the driver about pollability. Stock ordinary systrap failed the first open with EBUSY.",
       "evidence": [
+        "https://github.com/google/gvisor/pull/16743",
         "https://github.com/tamird/gvisor/commit/73a709bdc",
         "https://github.com/tamird/gvisor/actions/runs/41077957739/artifacts/12989396172"
       ]
