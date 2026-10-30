@@ -1,35 +1,97 @@
-name: CI
-
-"on":
+name: Check rebased runner XML collation
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/runner-xml-current]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  runner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CURRENT: cf68281770e2eb1d1324031d053659c4b02d25b1
+      REPORTER: cb87af840b2569c2c5b3c7080d712da568df71b0
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        [[ "$(git rev-parse HEAD^)" == "$CURRENT" ]]
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        git fetch --no-tags --depth=1 origin "$REPORTER"
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
+
+    - name: Execute the complete runner test suite
+      run: |
+        set -euo pipefail
+        [[ "$(git rev-parse HEAD^)" == "$CURRENT" ]]
+        dir=$RUNNER_TEMP/records/runner
+        mkdir -p "$dir" "$RUNNER_TEMP/reporter"
+        for file in qualification_report.py unit_matrix.py rack_ack_result.py; do
+          git show "$REPORTER:test/rbe/$file" > "$RUNNER_TEMP/reporter/$file"
+        done
+        git checkout --quiet --detach "$CURRENT"
+        git cat-file commit HEAD > "$dir/commit"
+        git status --porcelain --untracked-files=no > "$dir/before"
+        in_worker=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
+        # The runner binary built in 41140759531; recover only its missing suite.
+        cfg=(test --config=x86_64 --jobs=4 --test_strategy=standalone --nocache_test_results --test_output=errors --test_arg=-test.v --build_event_publish_all_actions --nobuild_event_json_file_path_conversion --build_event_json_file="$RUNNER_TEMP/runner.bep" //test/runner:runner_test)
+        printf '%s\n' "${cfg[@]}" > "$dir/arguments"
+        echo //test/runner:runner_test > "$dir/targets"
+        root=$("${in_worker[@]}" info output_base)
+        native=0
+        "${in_worker[@]}" "${cfg[@]}" > "$RUNNER_TEMP/test.log" 2>&1 || native=$?
+        date -u +%FT%T.%3NZ > "$dir/finish"
+        printf '%s\n' "$native" > "$dir/exit"
+        tail -15 "$RUNNER_TEMP/test.log"
+        git status --porcelain --untracked-files=no > "$dir/after"
+        git rev-parse HEAD > "$dir/head"
+        tools=$RUNNER_TEMP/reporter
+        cap=0
+        docker exec tcp-compiler python3 -B "$tools/qualification_report.py" capture --events "$RUNNER_TEMP/runner.bep" --output "$dir/events.jsonl" --output-root "$root" --report-dir "$dir/original" || cap=$?
+        echo "$cap" > "$dir/capture-exit"
+        python3 -B "$tools/rack_ack_result.py" context "$dir" "$CURRENT"
+        verdict=0
+        python3 -B "$tools/qualification_report.py" verdict --events "$dir/events.jsonl" --context "$dir/context.json" --expected-targets "$dir/targets" --output "$dir/verdict.json" || verdict=$?
+        cat "$dir/verdict.json"
+        for test in TestPrintCheckpointDir TestCollateXMLs TestCollateXMLsNoReports TestCollateXMLsMalformedReport; do
+          grep -REq -- "--- PASS: ${test} " "$dir/original"
+        done
+        [[ "$native" == 0 && "$cap" == 0 && "$verdict" == 0 ]]
+    - name: Exclude credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: runner-xml-results
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
