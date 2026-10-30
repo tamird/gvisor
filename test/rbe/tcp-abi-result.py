@@ -11,7 +11,7 @@ prefix = "AllTCPSockets/TCPSocketPairTest."
 groups = ("TCPCork", "TCPCorkFlushOnClose", "TCPCorkFlushOnShutdown")
 expected = {f"{prefix}{group}/{i}" for group in groups for i in range(12)}
 result = {}
-for name in ("mapped-native","mapped-guest","cork-native","cork-stock","cork-fixed"):
+for name in sys.argv[2:] or ("mapped-native","mapped-guest","cork-native","cork-stock","cork-fixed"):
     directory = root/name
     status = int((directory/"exit").read_text()) if (directory/"exit").is_file() else None
     assertions = {}
