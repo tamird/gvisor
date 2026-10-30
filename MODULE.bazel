@@ -70,10 +70,13 @@ single_version_override(
     patches = ["//tools:bazel-lib-generated-tests.patch"],
 )
 
-single_version_override(
+archive_override(
     module_name = "rules_python",
+    integrity = "sha256-hx9NQx3SUNUCs2WH9vMTAgWkspMYNrNkbAZ5h+380Lo=",
     patch_strip = 1,
-    patches = ["//tools:rules_python_namespace_template.patch"],
+    patches = ["//tools:rules_python_namespace_template.patch", "//tools:rules_python_native_launcher.patch"],
+    strip_prefix = "rules_python-7fac02f245a10a16c71e04b395d00a89c67688a2",
+    urls = ["https://github.com/bazel-contrib/rules_python/archive/7fac02f245a10a16c71e04b395d00a89c67688a2.tar.gz"],
 )
 
 single_version_override(
