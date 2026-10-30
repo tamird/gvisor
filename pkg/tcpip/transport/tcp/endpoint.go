@@ -3289,6 +3289,7 @@ func (e *Endpoint) completeStateLocked(s *TCPEndpointState) {
 	s.SegTime = e.stack.Clock().NowMonotonic()
 	s.Receiver = e.rcv.TCPReceiverState
 	s.Sender = e.snd.TCPSenderState
+	s.Sender.SackedOut = e.snd.sackedPackets(0)
 
 	sndBufSize := e.getSendBufferSize()
 	// Copy the send buffer atomically.

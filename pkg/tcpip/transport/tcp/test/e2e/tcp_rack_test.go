@@ -1133,3 +1133,109 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestSackedOutAcrossRecovery counts packets beyond one hole before and
+// after a cumulative ACK fills it, with and without RACK loss detection.
+func TestSackedOutAcrossRecovery(t *testing.T) {
+	for _, rack := range []bool{false, true} {
+		t.Run(fmt.Sprintf("RACK=%t", rack), func(t *testing.T) {
+			states := make(chan tcp.TCPSenderState, 16)
+			c := context.NewWithProbe(t, mtu, func(s *tcp.TCPEndpointState) {
+				states <- s.Sender
+			})
+			defer c.Cleanup()
+			const packets = 8
+			e2e.SendAndReceiveWithSACK(t, c, maxPayload, packets, rack)
+			seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+			ack := func(cumulative int, blocks []header.SACKBlock, want int) {
+				t.Helper()
+				c.SendAckWithSACK(seq, cumulative*maxPayload, blocks)
+				select {
+				case state := <-states:
+					t.Logf("cumulative=%d SACK=%v sacked=%d recovery=%t", cumulative, blocks, state.SackedOut, state.FastRecovery.Active)
+					if state.SackedOut != want {
+						t.Errorf("SackedOut=%d, want %d after ACK of %d packets, SACK %v", state.SackedOut, want, cumulative, blocks)
+					}
+				case <-time.After(3 * time.Second):
+					t.Fatalf("timeout waiting for ACK of %d packets, SACK %v", cumulative, blocks)
+				}
+			}
+			ack(1, nil, 0)
+			start := c.IRS.Add(1 + 2*maxPayload)
+			for n := 1; n <= 3; n++ {
+				ack(1, []header.SACKBlock{{Start: start, End: start.Add(seqnum.Size(n * maxPayload))}}, n)
+			}
+			ack(packets, nil, 0)
+		})
+	}
+}
+
+// TestSackedOutAfterPMTU counts the packet units covered by the same SACK
+// when an ICMP message reduces the path MTU.
+func TestSackedOutAfterPMTU(t *testing.T) {
+	const (
+		linkMTU = 1500
+		pathMTU = 1200
+		oldMSS  = linkMTU - header.IPv4MinimumSize - header.TCPMinimumSize
+		newMSS  = pathMTU - header.IPv4MinimumSize - header.TCPMinimumSize
+	)
+	type sample struct{ mss, sacked int }
+	states := make(chan sample, 16)
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true, MTU: linkMTU, Clock: faketime.NewManualClock(),
+		Probe: func(s *tcp.TCPEndpointState) { states <- sample{s.Sender.MaxPayloadSize, s.Sender.SackedOut} },
+	})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, 0)
+	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, []byte{
+		header.TCPOptionMSS, 4, byte(oldMSS / 256), byte(oldMSS % 256),
+		header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength,
+	})
+	const packets = 5
+	if _, err := c.EP.Write(bytes.NewReader(make([]byte, packets*oldMSS)), tcpip.WriteOptions{}); err != nil {
+		t.Fatalf("Write: %s", err)
+	}
+	var quoted *buffer.View
+	for i := 0; i < packets; i++ {
+		p := c.GetPacket()
+		seg := header.TCP(header.IPv4(p.AsSlice()).Payload())
+		if got := len(seg.Payload()); got != oldMSS {
+			t.Errorf("original payload = %d, want %d", got, oldMSS)
+		}
+		if i == 1 {
+			quoted = p
+			defer quoted.Release()
+		} else {
+			p.Release()
+		}
+	}
+	start := c.IRS.Add(1 + 2*oldMSS)
+	block := []header.SACKBlock{{Start: start, End: start.Add(oldMSS)}}
+	ack := func(bytes int, blocks []header.SACKBlock, want sample) {
+		t.Helper()
+		c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), bytes, blocks)
+		select {
+		case got := <-states:
+			t.Logf("cumulative=%d SACK=%v MSS=%d sacked=%d", bytes, blocks, got.mss, got.sacked)
+			if got != want {
+				t.Errorf("got %+v, want %+v", got, want)
+			}
+		case <-time.After(3 * time.Second):
+			t.Fatal("no ACK processed")
+		}
+	}
+	ack(oldMSS, nil, sample{oldMSS, 0})
+	ack(oldMSS, block, sample{oldMSS, 1})
+	mtuField := buffer.NewViewWithData([]byte{0, 0, byte(pathMTU / 256), byte(pathMTU % 256)})
+	defer mtuField.Release()
+	c.SendICMPPacket(header.ICMPv4DstUnreachable, header.ICMPv4FragmentationNeeded, mtuField, quoted, pathMTU)
+	p := c.GetPacket()
+	seg := header.TCP(header.IPv4(p.AsSlice()).Payload())
+	if got := len(seg.Payload()); got != newMSS {
+		t.Errorf("first retransmitted payload = %d, want %d", got, newMSS)
+	}
+	p.Release()
+	ack(oldMSS, block, sample{newMSS, 2})
+	ack(packets*oldMSS, nil, sample{newMSS, 0})
+}
