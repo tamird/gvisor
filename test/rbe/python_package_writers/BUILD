@@ -15,7 +15,6 @@ package(default_visibility = ["//visibility:public"])
 
 pkg_tar(
     name = "payload",
-    exec_compatible_with = ["@platforms//cpu:aarch64"],
     srcs = ["notice.txt"],
     package_dir = "share",
 )
@@ -24,7 +23,6 @@ pkg_tar(
 # independent PackageTar action fails on a different worker.
 pkg_deb(
     name = "package",
-    exec_compatible_with = ["@platforms//cpu:aarch64"],
     architecture = "all",
     data = "seed.tar.gz",
     description = "Python package writer qualification",
@@ -46,7 +44,6 @@ filegroup(
 # Run the original writer again through a moved, manifest-only entry point.
 relocated_writer(
     name = "relocated",
-    exec_compatible_with = ["@platforms//cpu:aarch64"],
     seed = "seed.tar.gz",
     script = "relocation.py",
     writer = "@rules_pkg//pkg/private/tar:build_tar",

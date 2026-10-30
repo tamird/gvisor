@@ -65,6 +65,7 @@ def observe(arm, row):
     [spawn] = rows
     row.update(action=digest(spawn["digest"]), runner=spawn.get("runner"), cache_hit=spawn.get("cacheHit", False),
                worker_exit=spawn.get("exitCode", 0), metrics=spawn.get("metrics", {}))
+    row["writer"] = spawn["commandArgs"][0]
     row["platform"] = {prop["name"]: prop["value"] for prop in spawn["platform"]["properties"]}
     row["archives"] = [digest(output["digest"]) for output in spawn.get("actualOutputs", [])
                        if output["path"].endswith("/payload.tar")]
@@ -113,9 +114,13 @@ def compare(name, rows):
 
 
 def main():
-    result = {"source": os.environ["GITHUB_SHA"], "packaging_source": "59142d59bd23b8891a96af038f85959731de873d",
+    result = {"source": os.environ["GITHUB_SHA"], "packaging_source": "486116dfa098006b6ea371a7559aa71ec1f3ba78",
               "initial_arm64_receipt": "https://github.com/tamird/gvisor/actions/runs/40993879539/artifacts/12950686847",
-              "target": TARGET, "expected_archive": EXPECTED_OUTPUT, "arms": {}, "comparisons": {}}
+              "arm64_constraint_receipt": "https://github.com/tamird/gvisor/actions/runs/40994610355/artifacts/12951066167",
+              "preflight": {}, "target": TARGET, "expected_archive": EXPECTED_OUTPUT, "arms": {}, "comparisons": {}}
+    for mode in ("inherited", "pinned"):
+        path = TEMP / f"{mode}-configured.json"
+        result["preflight"][mode] = json.loads(path.read_bytes()) if path.is_file() else None
     for arm in ARMS:
         row = result["arms"][arm] = {}
         try:

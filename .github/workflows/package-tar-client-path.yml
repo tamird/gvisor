@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   package:
-    if: github.repository == 'tamird/gvisor' && github.event.before == 'c968ec350093345b8093dda253ff036df26ca846' && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.event.before == 'fd3bf6992def05cece20777f14acca991ea674cd' && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     env:
@@ -28,11 +28,40 @@ jobs:
           set -euo pipefail
           export USE_BAZEL_VERSION
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-          printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/analysis.bazelrc"
+          printf '%s\n' 'build:buildbuddy_remote_executor --remote_download_outputs=all' > "$RUNNER_TEMP/analysis.bazelrc"
           bazelisk --bazelrc="$RUNNER_TEMP/analysis.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
           curl -fsSL --retry 3 https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
+      - name: Verify the selected PackageTar platform and AMD64 interpreter
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          package=//test/rbe/python_package_writers
+          query="mnemonic('PackageTar', $package:payload) union outputs('.*/(build_tar|make_deb)$', deps(set($package:payload $package:package)))"
+          for mode in inherited pinned; do
+            flags=(--config=rbe --config=x86_64 --host_platform=//tools/bazeldefs:rbe_linux_amd64
+                   --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64
+                   --@rules_python//python/config_settings:bootstrap_impl=native)
+            if [[ $mode == pinned ]]; then flags+=(--action_env=PATH=/usr/bin:/bin); fi
+            graph="$RUNNER_TEMP/$mode-graph.json"
+            writers="$RUNNER_TEMP/$mode-writers.json"
+            bazelisk --bazelrc="$RUNNER_TEMP/analysis.bazelrc" aquery "${flags[@]}" --output=jsonproto "$query" > "$graph"
+            python3 test/rbe/python_package_writers/launcher_graph.py "$graph" "$writers"
+            python3 - "$graph" "$writers" "$RUNNER_TEMP/$mode-configured.json" <<'PYTHON'
+          import json, sys
+          from pathlib import Path
+          graph, writers, receipt = map(Path, sys.argv[1:])
+          [action] = [a for a in json.loads(graph.read_bytes())["actions"] if a["mnemonic"] == "PackageTar"]
+          writer = json.loads(writers.read_bytes())["build_tar"]
+          platform = action["executionPlatform"]
+          assert platform.split("//", 1)[1] == "tools/bazeldefs:rbe_linux_amd64", platform
+          assert writer["executable"] == action["arguments"][0], writer
+          assert writer["interpreter"] == "+_repo_rules+protoc_check_static_python/bin/python3.11", writer
+          receipt.write_text(json.dumps({"platform": platform, **writer}))
+          PYTHON
+          done
       - name: Run both client paths with inherited and fixed action environments
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
