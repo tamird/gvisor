@@ -84,6 +84,13 @@ http_archive(
     ],
 )
 
+# https://github.com/bazel-contrib/rules_python/pull/4385
+single_version_override(
+    module_name = "rules_python",
+    patch_strip = 1,
+    patches = ["//tools:rules_python_namespace_template.patch"],
+)
+
 ### Python
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
