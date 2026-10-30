@@ -154,7 +154,7 @@ sh_test(
         "vfio_fixed/runsc",
         "vfio_fixed/gvisor-bin/gvisor_sentry",
         "vfio_fixed/gvisor-bin/checkpointgofer",
-        "vfio_pci_probe_bin",
+        "vfio_pci_root.tar",
     ],
 )
 
@@ -168,5 +168,5 @@ amd64_kvm_test(
 sh_test(
     name = "vfio_native_sanity",
     srcs = ["vfio_native_sanity.sh"],
-    data = ["vfio_pci_probe_bin"],
+    data = ["vfio_pci_root.tar"],
 )
