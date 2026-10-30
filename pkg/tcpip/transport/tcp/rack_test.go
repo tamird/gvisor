@@ -15,8 +15,10 @@
 package tcp
 
 import (
+	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"testing"
 	"time"
+	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -412,4 +414,124 @@ func TestRACKZeroClockResolutionPreservesLossBoundary(t *testing.T) {
 	if got := ctx.snd.rc.detectLoss(tcpip.MonotonicTime{}); got != 1 {
 		t.Fatalf("detectLoss at zero-resolution boundary got %d losses, want 1", got)
 	}
+}
+
+func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
+	clock := faketime.NewManualClock()
+	ctx := newRACKTestContext(clock, 0)
+	defer ctx.cleanup()
+	s := &ctx.snd
+	s.ep.mu.Lock()
+	defer s.ep.mu.Unlock()
+	s.ep.SACKPermitted = true
+	s.ep.scoreboard = NewSACKScoreboard(1000, 0)
+	first := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(1000)), 0)
+	first.sequenceNumber, first.gsoStart, first.gsoMSS, first.xmitCount = 2000, 2000, 1000, 1
+	s.writeList.PushBack(first)
+	s.splitSeg(first, 300)
+	middle := first.Next()
+	s.splitSeg(middle, 400)
+	last := middle.Next()
+	ctx.segs = append(ctx.segs, first, middle, last)
+	// The middle fragment has since been transmitted separately. The last
+	// fragment still owns the original transmitted unit [2000,3000).
+	middle.gsoStart, middle.gsoMSS, middle.truncatedTail = 2300, 400, false
+	apply := func(block header.SACKBlock) {
+		merged := s.ep.scoreboard.Insert(block)
+		block.End = s.ep.scoreboard.creditEnd(block.End, merged.End)
+		s.walkSACK(&segment{}, []header.SACKBlock{block})
+	}
+	apply(header.SACKBlock{Start: 2100, End: 3000})
+	if last.sackCredit != 0 {
+		t.Fatalf("incomplete original unit counts as %d", last.sackCredit)
+	}
+	apply(header.SACKBlock{Start: 2000, End: 2100})
+	if last.sackCredit != 1 {
+		t.Fatalf("last fragment lost its fully SACKed original unit: %d", last.sackCredit)
+	}
+}
+
+func benchSACKGeometry(seg *segment, mss uint16) { seg.gsoMSS = mss; seg.gsoStart = seg.sequenceNumber }
+func benchClearSACKCredit(seg *segment)          { seg.sackCredit = 0 }
+func benchSACKWalk(s *sender, seg *segment, fresh bool) {
+	if fresh {
+		s.walkSACK(seg, seg.parsedOptions.SACKBlocks)
+	} else {
+		s.walkSACK(seg, nil)
+	}
+}
+
+func BenchmarkRACKSparseCoverage(b *testing.B) {
+	for _, tc := range []struct {
+		name             string
+		units, size, mss int
+		partial          bool
+	}{
+		{"ordinary-128", 128, 32, 32, false},
+		{"tail-4096", 4096, 32, 32, false},
+		{"partial-GSO-4096", 4096, 256, 32, true},
+	} {
+		for _, fresh := range []bool{false, true} {
+			name := tc.name + "/duplicate"
+			if fresh {
+				name = tc.name + "/new"
+			}
+			b.Run(name, func(b *testing.B) {
+				clock := faketime.NewManualClock()
+				ctx := newRACKTestContext(clock, 0)
+				defer ctx.cleanup()
+				s := &ctx.snd
+				s.ep.mu.Lock()
+				defer s.ep.mu.Unlock()
+				s.ep.tcpRecovery = tcpip.TCPRACKLossDetection
+				s.ep.SACKPermitted = true
+				s.MaxPayloadSize = tc.mss
+				s.rc.minRTT = 100 * time.Millisecond
+				s.rtt.SRTT = 100 * time.Millisecond
+				for i := 0; i < tc.units; i++ {
+					seg := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(tc.size)), 0)
+					seg.sequenceNumber = seqnum.Value(i * tc.size)
+					seg.xmitCount = 1
+					benchSACKGeometry(seg, uint16(tc.mss))
+					s.writeList.PushBack(seg)
+					ctx.segs = append(ctx.segs, seg)
+				}
+				s.SndNxt = seqnum.Value(tc.units * tc.size)
+				sb := header.SACKBlock{Start: s.SndNxt - seqnum.Value(tc.size), End: s.SndNxt}
+				if tc.partial {
+					for i := 0; i < 60; i++ {
+						start := seqnum.Value((tc.units-1-i*64)*tc.size + 9)
+						s.ep.scoreboard.Insert(header.SACKBlock{Start: start, End: start.Add(15)})
+					}
+					sb.Start += 9
+					sb.End = sb.Start.Add(15)
+				} else {
+					s.ep.scoreboard.Insert(sb)
+				}
+				in := &segment{}
+				in.parsedOptions.SACKBlocks = []header.SACKBlock{sb}
+				in.hasNewSACKInfo = fresh
+				benchSACKWalk(s, in, true)
+				before := s.SackedOut
+				b.ReportAllocs()
+				for b.Loop() {
+					if fresh {
+						last := s.writeList.Back()
+						benchClearSACKCredit(last)
+						last.acked = false
+						if !tc.partial {
+							s.SackedOut = before - 1
+						}
+					}
+					benchSACKWalk(s, in, fresh)
+					s.rc.updateRACKReorderWindow()
+					s.rc.detectLoss(tcpip.MonotonicTime{})
+				}
+			})
+		}
+	}
+}
+
+func TestWireCreditSegmentSize(t *testing.T) {
+	t.Logf("SACK_SEGMENT_BYTES=%d", unsafe.Sizeof(segment{}))
 }
