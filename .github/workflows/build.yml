@@ -1,35 +1,36 @@
-name: CI
-
-"on":
+name: Measure the RACK observation amendment on a shared WAN
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-rack-observation-competition]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-rack-observation-competition'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 30
+      - name: Build proxy and run matched transfers
+        run: bash test/benchmarks/tcp/current-shared-driver.sh
+      - name: Reconcile expected trials, receiver intervals and socket samples
+        if: always()
+        run: python3 test/benchmarks/tcp/current-shared-report.py
+      - name: Match each observed packet and recovery interval across the WAN
+        if: always()
+        run: python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/tcp-public" "$RUNNER_TEMP/tcp-public/episodes.json"
+      - name: Keep original exits, captures and paired decision criteria
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/tcp-public"
+          cp test/benchmarks/tcp/competition-protocol.md "$RUNNER_TEMP/tcp-public/"
+          python3 test/benchmarks/tcp/competition-summary.py
+      - name: Publish allowlisted evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tcp-rack-observation-competition
+          path: ${{ runner.temp }}/tcp-public/
+          if-no-files-found: error
