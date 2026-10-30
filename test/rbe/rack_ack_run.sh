@@ -14,7 +14,7 @@ for arm in control tests analyze race; do
   mkdir "$dir"
   git status --porcelain --untracked-files=no > "$dir/before"
   git cat-file commit HEAD > "$dir/commit"
-  args=(test --config=x86_64 --jobs=4 --test_sharding_strategy=disabled --nocache_test_results --test_output=errors --build_event_publish_all_actions --build_event_json_file="$RUNNER_TEMP/$arm.bep")
+  args=(test --config=x86_64 --jobs=4 --test_sharding_strategy=disabled --nocache_test_results --test_output=errors --build_event_publish_all_actions --nobuild_event_json_file_path_conversion --build_event_json_file="$RUNNER_TEMP/$arm.bep")
   case $arm in
     control) labels=("$rack"); args+=(--test_arg=-test.v '--test_arg=-test.run=^TestRACKDetectReorder$');;
     tests) labels=("$rack" "$tcppkg:tcp_test" "$tcppkg/test/e2e:tcp_sack_test"); args+=(--test_arg=-test.v);;
