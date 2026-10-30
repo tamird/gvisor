@@ -63,3 +63,6 @@ build:aarch64 --platforms=//tools/bazeldefs:linux_arm64
 # Use prebuilt protoc to speed up builds.
 common --@com_google_protobuf//bazel/toolchains:prefer_prebuilt_protoc
 common --incompatible_enable_proto_toolchain_resolution=true
+
+build:static-python --@rules_python//python/config_settings:python_version=3.11.18
+build:static-python --@rules_python//python/config_settings:py_linux_libc=musl
