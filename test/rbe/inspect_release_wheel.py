@@ -36,6 +36,7 @@ def audit():
     with spawns_file.open("w") as dest:
         subprocess.run([os.environ["BB_LOG_DECODER"], "print", f"--compact_execution_log={stage.parent/'execution.binpb'}", "--raw=true","--sort=false"],stdout=dest,check=True)
     _,spawns = compact_records(spawns_file)
+    record["failed_actions"] = [{k:s.get(k) for k in ("mnemonic","targetLabel","runner","exitCode","status")} for s in spawns if s.get("exitCode") or s.get("status")][:20]
     actions = [s for s in spawns if s.get("mnemonic")=="PythonDistribution"]
     record["distribution"] = [{k:s.get(k) for k in ("runner","cacheHit","exitCode","status","digest","targetLabel","platform")} for s in actions]
     assert record["harness"]["status"]=="PASS" and not record["harness"]["native_exit"] and not record["harness"]["capture_exit"]

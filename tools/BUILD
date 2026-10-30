@@ -107,6 +107,8 @@ bzl_library(
     ],
 )
 
+exports_files(["rules_python_namespace_template.patch"])
+
 exports_files([
     "benchmark-umbrella-exports.patch",
     "gazelle-module-metadata.patch",

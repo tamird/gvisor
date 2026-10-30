@@ -1,0 +1,57 @@
+# Generate namespace package initializers from their text template without
+# requiring a shell or cp in wheel consumers' execution environments.
+--- a/python/private/pypi/namespace_pkgs.bzl
++++ b/python/private/pypi/namespace_pkgs.bzl
+@@ -1,6 +1,6 @@
+ """Utilities to get where we should write namespace pkg paths."""
+ 
+-load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
++load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+ 
+ _ext = struct(
+     py = ".py",
+@@ -59,7 +59,7 @@
+ 
+     return sorted([d for d in dirs if d not in ignored])
+ 
+-def create_inits(*, srcs, ignored_dirnames = [], root = None, copy_file = copy_file, **kwargs):
++def create_inits(*, srcs, ignored_dirnames = [], root = None, **kwargs):
+     """Create init files and return the list to be included `py_library` srcs.
+ 
+     Args:
+@@ -67,8 +67,7 @@
+             as `srcs` and `data`. This is usually a result of a {obj}`glob`.
+         ignored_dirnames: {type}`str` a list of patterns to ignore.
+         root: {type}`str` the prefix to use as the root.
+-        copy_file: the `copy_file` rule to copy files in build context.
+-        **kwargs: passed to {obj}`copy_file`.
++        **kwargs: passed to {obj}`expand_template`.
+ 
+     Returns:
+         {type}`list[str]` to be included as part of `py_library`.
+@@ -78,11 +77,12 @@
+         src = "{}/__init__.py".format(out)
+         ret.append(src)
+ 
+-        copy_file(
++        expand_template(
+             # For the target name, use a number instead of trying to convert an output
+             # path into a valid label.
+             name = "_cp_{}_namespace".format(i),
+-            src = _TEMPLATE,
++            template = _TEMPLATE,
++            substitutions = {},
+             out = src,
+             **kwargs
+         )
+--- a/python/private/pypi/BUILD.bazel
++++ b/python/private/pypi/BUILD.bazel
+@@ -229,7 +229,7 @@
+ bzl_library(
+     name = "namespace_pkgs",
+     srcs = ["namespace_pkgs.bzl"],
+-    deps = ["@bazel_skylib//rules:copy_file"],
++    deps = ["@bazel_skylib//rules:expand_template"],
+ )
+ 
+ bzl_library(
