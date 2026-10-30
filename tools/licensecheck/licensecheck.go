@@ -499,10 +499,12 @@ func enumerate(p Paths) ([]dep, error) {
 		case "local_repository", "new_local_repository":
 			// Local paths are part of the gVisor checkout, not external
 			// dependencies.
-		case "hub_repository", "whl_library":
+		case "hub_repository":
 			// Already expanded by enumerateWheels.
 		default:
-			return nil, fmt.Errorf("unsupported repository rule %s for %s", repo.rule, r.name)
+			if !isWheelRule(repo.rule) {
+				return nil, fmt.Errorf("unsupported repository rule %s for %s", repo.rule, r.name)
+			}
 		}
 	}
 	for path, version := range goVersions {

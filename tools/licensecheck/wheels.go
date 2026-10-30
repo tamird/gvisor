@@ -40,10 +40,10 @@ func enumerateWheels(repos map[string]repoInfo) ([]dep, error) {
 	wheels := make(map[string]repoInfo)
 	refs := make(map[string]struct{})
 	for ref, repo := range repos {
-		switch repo.rule {
-		case "whl_library":
+		switch {
+		case isWheelRule(repo.rule):
 			wheels[ref] = repo
-		case "hub_repository":
+		case repo.rule == "hub_repository":
 			name := repo.first("name")
 			if name == "" {
 				return nil, fmt.Errorf("pip hub %s has no canonical name", ref)
@@ -73,8 +73,8 @@ func enumerateWheels(repos map[string]repoInfo) ([]dep, error) {
 		}
 		for ref := range refs {
 			repo, ok := resolved[ref]
-			if !ok || repo.rule != "whl_library" {
-				return nil, fmt.Errorf("pip hub wheel %s did not resolve to whl_library", ref)
+			if !ok {
+				return nil, fmt.Errorf("bazel mod show_repo did not report pip hub wheel %s", ref)
 			}
 			wheels[ref] = repo
 		}
@@ -129,8 +129,18 @@ func hubWheelRefs(hub repoInfo, mappingOut string) ([]string, error) {
 	return slices.Compact(refs), nil
 }
 
+func isWheelRule(rule string) bool {
+	return rule == "whl_library" || rule == "whl_archive" || rule == "pip_archive"
+}
+
 func wheelDependency(repo repoInfo) (dep, error) {
-	filename, urls, sum := repo.first("filename"), repo.attrs["urls"], repo.first("sha256")
+	if !isWheelRule(repo.rule) {
+		return dep{}, fmt.Errorf("unsupported wheel repository rule %s", repo.rule)
+	}
+	if file := repo.first("whl_file"); file != "" {
+		return dep{}, fmt.Errorf("local wheel %s has no auditable download URL", file)
+	}
+	filename, urls, sum := repo.first("filename"), repo.attrs["urls"], repoSHA256(repo)
 	if !fs.ValidPath(filename) || strings.ContainsAny(filename, `/\`) || !strings.HasSuffix(filename, ".whl") || len(urls) == 0 {
 		return dep{}, fmt.Errorf("audit requires an explicit wheel filename and URL; configure pip.parse with experimental_index_url and download_only=True")
 	}

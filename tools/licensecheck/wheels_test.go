@@ -17,6 +17,7 @@ package licensecheck
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"maps"
 	"slices"
@@ -80,6 +81,7 @@ func TestWheelDependency(t *testing.T) {
 	}{
 		{name: "pinned wheel"},
 		{"pip fallback", "filename", "", "explicit wheel filename"},
+		{"local wheel overrides URL", "whl_file", "//:local.whl", "local wheel"},
 		{"source archive", "filename", "example-1.0.tar.gz", "explicit wheel filename"},
 		{"unhashed", "sha256", "", "SHA256 pin"},
 		{"invalid hash", "sha256", strings.Repeat("z", 64), "SHA256 pin"},
@@ -102,8 +104,13 @@ func TestWheelDependency(t *testing.T) {
 			}
 		})
 	}
+	if _, err := wheelDependency(repoInfo{rule: "http_archive", attrs: attrs}); err == nil || !strings.Contains(err.Error(), "unsupported wheel repository rule") {
+		t.Fatalf("unrecognized wheel repository error = %v", err)
+	}
 	first := repoInfo{rule: "whl_library", attrs: attrs}
-	second := repoInfo{rule: "whl_library", attrs: maps.Clone(attrs)}
+	second := repoInfo{rule: "whl_archive", attrs: maps.Clone(attrs)}
+	delete(second.attrs, "sha256")
+	second.attrs["integrity"] = []string{"sha256-" + base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0xab}, sha256.Size))}
 	repos := map[string]repoInfo{"@first": first, "@second": second}
 	deps, err := enumerateWheels(repos)
 	if err != nil || len(deps) != 1 {
