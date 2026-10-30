@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:20:09.488385+00:00",
+    "updatedAt": "2026-10-30T20:21:43.076174+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37215,6 +37215,80 @@
       },
       "updatedAt": "2026-10-30T20:20:09.488385+00:00",
       "status": "Awaiting contributor review"
+    },
+    {
+      "id": "branch:declared-jekyll-site",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/declared-jekyll-site",
+      "head": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644",
+      "title": "Render the gVisor website without its Jekyll builder",
+      "group": "bazel",
+      "status": "Agent work",
+      "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
+      "updatedAt": "2026-10-30T20:21:43.076174+00:00",
+      "summary": "Bazel renders Jekyll and runs HTMLProofer with declared Ruby, Node, plugins and styles. The scratch comparison recovered all 278 public paths at the original publication time. The only initial raw difference was sitemap order. The stylesheet archive now has reproducible metadata with the original payload. The ordinary GNU build reached Jekyll but loaded the same Ruby files by both their sandbox and physical paths. The duplicate GFM parser stopped the build before the image could be served.",
+      "followup": {
+        "owner": "release_owner",
+        "sourceHead": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644",
+        "observedAt": "2026-10-30T20:21:43.076174+00:00",
+        "disposition": "Qualify builder-free publication and resolve source notices",
+        "nextAction": "Compare the original and corrected Ruby path resolution in a local Linux Bazel sandbox with the retained syscall pages. If that succeeds, verify the normal Bazel image and Make serving entry points. Wait for a released rules_img containing image_flatten and the native Buildkite bootstrap. Qualify a notice policy for the existing GPL-licensed inline-SVG plugin and CC-BY-4.0 browser data. The full dependency graph still needs GNU to compile the syscall-reference generator. Linux/AMD64 can run locally; other hosts can use a Linux execution platform or the existing Make wrapper.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41120650004/artifacts/13008608480",
+          "https://github.com/tamird/gvisor/actions/runs/41115737834/artifacts/13005113336",
+          "https://github.com/tamird/gvisor/actions/runs/41118437298/artifacts/13007432076",
+          "https://github.com/bazel-contrib/rules_img/pull/811"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "845e6b0a6cd56225f76b7d054e2d6abd13b97ff3"
+        },
+        "after": {
+          "head": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Ordinary public Bazel and Make result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41120650004/artifacts/13008608480"
+        },
+        {
+          "label": "Stock site and all public files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41109579937/artifacts/13002064979"
+        },
+        {
+          "label": "Scratch renderer at two publication dates",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41115737834/artifacts/13005113336"
+        },
+        {
+          "label": "Declared stylesheet and archive metadata",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41116400232/artifacts/13006366622"
+        },
+        {
+          "label": "Canonical verifier and original mixed-execution failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41118437298/artifacts/13007432076"
+        }
+      ],
+      "links": [
+        {
+          "label": "Unreleased rules_img layer flattening",
+          "url": "https://github.com/bazel-contrib/rules_img/pull/811"
+        },
+        {
+          "label": "Declared compiler work",
+          "url": "https://tamird.github.io/gvisor/?view=table#branch%3Ahermetic-compiler-review"
+        },
+        {
+          "label": "Autoprefixer release lock",
+          "url": "https://github.com/ai/autoprefixer-rails/blob/c5c843405/build/yarn.lock"
+        },
+        {
+          "label": "License of its browser compatibility data",
+          "url": "https://github.com/browserslist/caniuse-lite/blob/08a646231/LICENSE"
+        }
+      ]
     }
   ],
   "edges": [
@@ -40466,6 +40540,13 @@
         "https://github.com/google/gvisor/pull/16745",
         "https://github.com/tamird/gvisor/commit/abf9202ab"
       ]
+    },
+    {
+      "from": "branch:buildkite-source-lint-native",
+      "to": "branch:declared-jekyll-site",
+      "type": "depends_on",
+      "reason": "The native Buildkite job uses the same Bazelisk hook and Make environment override as the source-lint jobs.",
+      "evidence": "https://github.com/tamird/gvisor/commit/eafcb8392"
     }
   ],
   "investigations": [
