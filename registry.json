@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:33:26.178070+00:00",
+    "updatedAt": "2026-10-30T20:37:25.878075+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34427,26 +34427,31 @@
       "title": "overlay: retain the backing file selected for close",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-30T20:19:07.910627+00:00",
+      "updatedAt": "2026-10-30T20:37:25.878075+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "url": "https://github.com/google/gvisor/pull/16677",
-      "summary": "Removed the Go unit test and its test-only BUILD target at Ayush’s request. Stock gVisor returned EBADF after releasing the FUSE lower handle before FLUSH. Fixed gVisor and native Linux completed both guest syscalls.",
+      "summary": "Removed the Go unit test at Ayush’s request. With the old interleaving forced, stock gVisor released the FUSE handle before FLUSH and close returned EBADF. The fix kept the handle live. A separate public FUSE test observed close overlap with copy-up on Linux and both gVisor versions.",
       "followup": {
         "owner": "root",
         "sourceHead": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
-        "observedAt": "2026-10-30T20:19:07.910627+00:00",
+        "observedAt": "2026-10-30T20:37:25.878075+00:00",
         "disposition": "Approved test-removal amendment and reply published",
-        "nextAction": "Follow the upstream review. A separate shared syscall coverage investigation is in progress.",
+        "nextAction": "Follow upstream review. The 142-line public FUSE peer passed on stock as well as fixed gVisor, so it adds no regression coverage for this change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16677#discussion_r4428087788",
           "https://github.com/google/gvisor/pull/16677#discussion_r4427980717",
           "https://github.com/tamird/gvisor/commit/0bb7564e8",
           "https://app.buildbuddy.io/invocation/910bfa68-aa50-49e8-9658-3a5cc5cd1a68",
           "https://app.buildbuddy.io/invocation/b14cd43e-2399-46fc-91d6-15cd915e3f4c",
-          "https://github.com/tamird/gvisor/actions/runs/41041801101/artifacts/12970144079"
+          "https://github.com/tamird/gvisor/actions/runs/41041801101/artifacts/12970144079",
+          "https://github.com/tamird/gvisor/actions/runs/41123144567/artifacts/13010056609"
         ]
       },
       "evidence": [
+        {
+          "label": "Public FUSE overlap passed on Linux and both gVisor versions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41123144567/artifacts/13010056609"
+        },
         {
           "label": "Published reply to Ayush",
           "url": "https://github.com/google/gvisor/pull/16677#discussion_r4428087788"
