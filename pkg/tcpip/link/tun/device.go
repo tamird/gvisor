@@ -404,6 +404,10 @@ type tunEndpoint struct {
 	closed bool
 }
 
+// Qualification-only scheduler gates at the persistence publication point.
+var persistPublished = make(chan struct{})
+var resumePersist = make(chan struct{})
+
 // +checklocksexclude:e.mu
 func (e *tunEndpoint) setPersistent(v bool) {
 	e.mu.Lock()
@@ -413,6 +417,10 @@ func (e *tunEndpoint) setPersistent(v bool) {
 	}
 	e.persistent = v
 	e.mu.Unlock()
+	if v {
+		close(persistPublished)
+		<-resumePersist
+	}
 	// Update refs without holding the lock.
 	if v {
 		e.IncRef()
