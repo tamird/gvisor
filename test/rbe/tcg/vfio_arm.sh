@@ -29,8 +29,11 @@ for arm in stock fixed; do
   bundle="$PWD/$arm"
   mkdir -p "$bundle/rootfs" "$bundle/state" "$bundle/debug"
   tar -xf "$data" -C "$bundle/rootfs"
+  # The non-accelerator NIC has no TPU-specific PCI topology to project at
+  # /sys. Both ABI cases use the real VFIO control/group devices directly.
+  mkdir -p "$bundle/rootfs"/{proc,sys,dev,tmp}
   cat > "$bundle/config.json" <<JSON
-{"ociVersion":"1.0.2","root":{"path":"rootfs"},"process":{"terminal":false,"user":{"uid":0,"gid":0},"args":["/probe","--gtest_filter=$filter"],"env":["PATH=/","TEST_VFIO_GROUP=$TEST_VFIO_GROUP","TEST_VFIO_DEVICE=$TEST_VFIO_DEVICE"],"cwd":"/"},"mounts":[{"type":"proc","destination":"/proc","source":"proc"},{"type":"sysfs","destination":"/sys","source":"sysfs"}],"linux":{"namespaces":[{"type":"pid"},{"type":"mount"},{"type":"ipc"},{"type":"uts"},{"type":"network"}],"devices":[{"path":"/dev/vfio/vfio","type":"c","major":$((16#$(stat -c %t /dev/vfio/vfio))),"minor":$((16#$(stat -c %T /dev/vfio/vfio))),"fileMode":438},{"path":"$TEST_VFIO_GROUP","type":"c","major":$((16#$(stat -c %t "$TEST_VFIO_GROUP"))),"minor":$((16#$(stat -c %T "$TEST_VFIO_GROUP"))),"fileMode":438}]}}
+{"ociVersion":"1.0.2","root":{"path":"rootfs"},"process":{"terminal":false,"user":{"uid":0,"gid":0},"args":["/probe","--gtest_filter=$filter"],"env":["PATH=/","TEST_VFIO_GROUP=$TEST_VFIO_GROUP","TEST_VFIO_DEVICE=$TEST_VFIO_DEVICE"],"cwd":"/"},"mounts":[{"type":"proc","destination":"/proc","source":"proc"},{"type":"tmpfs","destination":"/sys","source":"tmpfs"}],"linux":{"namespaces":[{"type":"pid"},{"type":"mount"},{"type":"ipc"},{"type":"uts"},{"type":"network"}],"devices":[{"path":"/dev/vfio/vfio","type":"c","major":$((16#$(stat -c %t /dev/vfio/vfio))),"minor":$((16#$(stat -c %T /dev/vfio/vfio))),"fileMode":438},{"path":"$TEST_VFIO_GROUP","type":"c","major":$((16#$(stat -c %t "$TEST_VFIO_GROUP"))),"minor":$((16#$(stat -c %T "$TEST_VFIO_GROUP"))),"fileMode":438}]}}
 JSON
   bin="$root/test/rbe/tcg/vfio_$arm/runsc"
   sha256sum "$bin" "$(dirname "$bin")"/gvisor-bin/* > "$out/$arm-sha"
