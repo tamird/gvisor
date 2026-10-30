@@ -1,19 +1,19 @@
-name: Compare TUN packet-information reads on Linux and gVisor
+name: Verify truncated and zero-length TUN packet reads
 on:
   push:
-    branches: [qualification/tun-packet-info]
+    branches: [qualification/tun-pi-boundaries]
 permissions:
   contents: read
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tun-packet-info'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tun-pi-boundaries'
     runs-on: ubuntu-24.04
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      OSTOCK: c46fd81faf5c7bee4e81fc7d31dc9810598ab30d
-      OFIXED: dec13733329b4299c10cef5daddf994d2af8cf92
+      OSTOCK: 919216f2f102a25308a12f4ac80a99d71a025c78
+      OFIXED: 57bd4a9e5ee67a7b4d23cb0ad9d38455dd98ad64
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
@@ -45,17 +45,17 @@ jobs:
         set -euo pipefail
         docker pull --platform=linux/amd64 "$GNU"
         docker run -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-    - name: Run common syscall on native Linux, current gVisor, and the exact PR
+    - name: Compare the shared four-boundary case on Linux, the PR and its correction
       if: ${{ !cancelled() }}
       run: |
         set -euo pipefail
-        for arm in master pr; do
-          src=$OSTOCK; [[ $arm == master ]] || src=$OFIXED
+        for arm in stock fix; do
+          src=$OSTOCK; [[ $arm == stock ]] || src=$OFIXED
           git checkout --quiet --detach "$src"
           out="$RUNNER_TEMP/tun-info/$arm"; mkdir -p "$out"
           git rev-parse HEAD HEAD^ > "$out/source"
           tests=(tuntap_test_runsc_systrap_directfs)
-          [[ $arm == pr ]] || tests+=(tuntap_test_native)
+          [[ $arm == fix ]] || tests+=(tuntap_test_native)
           labels=(); for t in "${tests[@]}"; do labels+=("//test/syscalls:$t"); done
           rc=0
           docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --keep_going --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=300 --test_sharding_strategy=disabled --test_env=GTEST_FILTER=TuntapTest.ReadPacketInfoHeader "${labels[@]}" >"$RUNNER_TEMP/tun-$arm.log" 2>&1 || rc=$?
@@ -70,15 +70,31 @@ jobs:
       run: |
         set -euo pipefail
         cd "$RUNNER_TEMP/tun-info"
-        for f in master/tuntap_test_native.receipt master/tuntap_test_runsc_systrap_directfs.receipt pr/tuntap_test_runsc_systrap_directfs.receipt; do
+        for f in stock/tuntap_test_native.receipt stock/tuntap_test_runsc_systrap_directfs.receipt fix/tuntap_test_runsc_systrap_directfs.receipt; do
           test -s "$f"
           grep -Eq '\[ *(FAILED|OK) *\] TuntapTest.ReadPacketInfoHeader' "$f"
           ! grep -qE '\[ *SKIPPED *\] TuntapTest.ReadPacketInfoHeader' "$f"
         done
-        grep -Eq '\[ *OK *\] TuntapTest.ReadPacketInfoHeader' master/tuntap_test_native.receipt
+        grep -Eq '\[ *OK *\] TuntapTest.ReadPacketInfoHeader' stock/tuntap_test_native.receipt
+        grep -Eq '\[ *FAILED *\] TuntapTest.ReadPacketInfoHeader' stock/tuntap_test_runsc_systrap_directfs.receipt
+        grep -Fq 'Actual: 3 (of type long)' stock/tuntap_test_runsc_systrap_directfs.receipt
+        grep -Fq 'Actual: 1 (of type long)' stock/tuntap_test_runsc_systrap_directfs.receipt
+        grep -Eq '\[ *OK *\] TuntapTest.ReadPacketInfoHeader' fix/tuntap_test_runsc_systrap_directfs.receipt
+        test "$(cat fix/exit)" = 0
+    - name: Run the complete corrected TUN syscall and owner analyzers
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$OFIXED"
+        out="$RUNNER_TEMP/tun-info/fix"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=24 --keep_going --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=300 --test_sharding_strategy=disabled //test/syscalls:tuntap_test_runsc_systrap_directfs //pkg/sentry/devices/tundev:tundev_nogo //pkg/tcpip/link/tun:tun_nogo > "$RUNNER_TEMP/tun-suite.log" 2>&1 || rc=$?
+        echo "$rc" > "$out/full-exit"
+        grep -E '(INFO: Invocation ID:|ERROR:|FAIL|PASSED|SKIPPED|WARN:|\[ *OK *\]|tests from|Build (completed|did NOT complete))' "$RUNNER_TEMP/tun-suite.log" | tail -160 > "$out/full-receipt" || :
+        test "$rc" = 0
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tun-pi-cases
+        name: tun-pi-boundaries
         path: ${{ runner.temp }}/tun-info
         if-no-files-found: error
