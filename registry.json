@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T14:50:08.677188+00:00",
+    "updatedAt": "2026-10-30T15:01:09.436731+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36186,8 +36186,8 @@
       "title": "Generate fallback test XML with Bazel’s native POSIX wrapper",
       "url": "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-30T14:50:08.677188+00:00",
+      "status": "Approved; waiting for Bazel #30837",
+      "updatedAt": "2026-10-30T15:01:09.436731+00:00",
       "summary": "When a test produces no XML, Bazel launches a second action. With the native POSIX wrapper selected, that action can write the report on a worker without Bash, sed or cat. The POSIX and Windows wrappers share the XML writer.",
       "evidence": [
         {
@@ -36207,15 +36207,26 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41071795282/artifacts/12986015991"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
-        "baseHead": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
-        "url": "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b",
-        "title": "Generate fallback test XML with Bazel’s native POSIX wrapper",
-        "summary": "May I send the XML change to Bazel after #30837 lands?",
-        "body": "The parent wrapper can run a test without a shell but cannot generate its fallback XML. The revision reports both passing shards and a failure with exit 7, and preserves reports written by the test. The shell remains the fallback when the native wrapper is not selected."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
+          "outcome": "approved",
+          "at": "2026-10-30T15:01:09.436731+00:00",
+          "url": "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b",
+          "reason": "Approved to send upstream after Bazel #30837 merges."
+        }
+      ],
+      "followup": {
+        "owner": "release_owner",
+        "sourceHead": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
+        "observedAt": "2026-10-30T15:01:09.436731+00:00",
+        "disposition": "Approved after prerequisite",
+        "nextAction": "Submit to Bazel once its native POSIX wrapper parent #30837 merges.",
+        "evidence": [
+          "https://github.com/bazelbuild/bazel/pull/30837",
+          "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b"
+        ]
       }
     }
   ],

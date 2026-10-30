@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T14:50:08.677188+00:00",
+  "registryDate": "2026-10-30T15:01:09.436731+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -247830,15 +247830,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T14:50:12.258059+00:00"
-      }
-    },
-    "branch:bazel-native-test-xml": {
-      "contributor-review": {
-        "scope": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
-        "since": "2026-10-30T14:50:08.677188+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T14:50:08.677188+00:00"
       }
     }
   },
