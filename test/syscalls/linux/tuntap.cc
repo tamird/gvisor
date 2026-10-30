@@ -565,6 +565,11 @@ TEST_F(TuntapTest, ReadPacketInfoHeader) {
                  {.iov_base = inaccessible.ptr(), .iov_len = sizeof(pi) - 1}};
   ASSERT_NO_FATAL_FAILURE(send_packet());
   EXPECT_THAT(readv(tun.fd.get(), iov, 2), SyscallFailsWithErrno(EFAULT));
+
+  ASSERT_NO_FATAL_FAILURE(send_packet());
+  EXPECT_THAT(read(tun.fd.get(), &pi, 0), SyscallSucceedsWithValue(0));
+  EXPECT_THAT(read(tun.fd.get(), &pi, sizeof(pi)),
+              SyscallSucceedsWithValue(sizeof(pi)));
 }
 
 // This test sets up a TAP device and pings kernel by sending ICMP echo request.
