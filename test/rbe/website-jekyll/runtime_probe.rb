@@ -26,6 +26,10 @@ Dir.mktmpdir("site-", File.expand_path(".")) do |work|
       installer.install(spec.name, spec.version)
     end
   end
+  warn "Installed the checksum-pinned project gems"
+  # ExecJS checks for Node while loading. Its search path contains only the
+  # declared SDK's Node. Real executions must use the SDK's dynamic loader.
+  ENV["PATH"] = File.dirname(node)
   require "execjs"
   ExecJS.runtime = ExecJS::ExternalRuntime.new(
     name: "Declared Node",
@@ -33,7 +37,9 @@ Dir.mktmpdir("site-", File.expand_path(".")) do |work|
     runner_path: ExecJS.root + "/support/node_runner.js",
     encoding: "UTF-8",
   )
+  ENV["PATH"] = ""
   raise "V8 did not execute" unless ExecJS.eval("6 * 7") == 42
+  warn "Executed the explicitly selected Node"
   require "jekyll"
   plugin_names = %w[jekyll-paginate jekyll-autoprefixer jekyll-inline-svg jekyll-relative-links jekyll-feed jekyll-sitemap]
   plugin_names.each { |name| require name }
@@ -47,6 +53,7 @@ Dir.mktmpdir("site-", File.expand_path(".")) do |work|
   Jekyll::Site.new(Jekyll.configuration("source" => source, "destination" => dest, "disable_disk_cache" => true)).process
   raise "missing page" unless File.read(File.join(dest,"index.html")).include?("gVisor website")
   raise "missing stylesheet" unless File.read(File.join(dest,"main.css")).include?("display:")
+  warn "Rendered the Jekyll page and Sass stylesheet"
   require checks
   valid = File.join(work, "proof")
   FileUtils.mkdir_p(valid)

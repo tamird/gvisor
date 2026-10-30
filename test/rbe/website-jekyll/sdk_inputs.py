@@ -13,8 +13,13 @@ pkg = Path("test/rbe/website-jekyll")
 sdk = pkg / "tool_files"
 sdk.mkdir()
 temp = Path(os.environ["RUNNER_TEMP"])
-reference = "docker.io/jekyll/jekyll@sha256:fa979718aac3528a2c127eedf1e4f721ac07aed5c22bd5ea493e6ab7b8eca9a1"
-subprocess.run(["docker", "pull", reference], check=True)
+digest = "sha256:fa979718aac3528a2c127eedf1e4f721ac07aed5c22bd5ea493e6ab7b8eca9a1"
+for registry in ("mirror.gcr.io", "docker.io"):
+    reference = f"{registry}/jekyll/jekyll@{digest}"
+    if subprocess.run(["docker", "pull", reference]).returncode == 0:
+        break
+else:
+    raise RuntimeError("could not fetch the official Jekyll distribution")
 args = ["docker", "run", "--rm", "--network", "none", "--entrypoint", "ruby", reference, "-rjson", "-rrbconfig", "-e", """node=ENV.fetch('PATH').split(':').map { |d| File.join(d,'node') }.find { |f| File.executable?(f) }
 puts JSON.generate({ruby: RbConfig.ruby, node: node, gem_paths: Gem.path, load_paths: $LOAD_PATH})"""]
 meta = json.loads(subprocess.check_output(args))
