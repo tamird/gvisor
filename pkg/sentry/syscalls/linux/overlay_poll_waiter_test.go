@@ -21,6 +21,8 @@ import (
 	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
+	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/overlay"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/proc"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/testutil"
@@ -483,5 +485,90 @@ func TestStackedPollBinding(t *testing.T) {
 			}
 			t.Logf("innerFirst=%t selected final proc file, removed waiter silent, second woke, final refs=%d", innerFirst, physical.ReadRefs())
 		})
+	}
+}
+
+type failingPollFD struct {
+	vfs.FileDescriptionImpl
+	queue       waiter.Queue
+	reject      bool
+	unregisters int
+}
+
+func (f *failingPollFD) EventRegister(e *waiter.Entry) error {
+	if f.reject {
+		return linuxerr.EIO
+	}
+	f.queue.EventRegister(e)
+	return nil
+}
+
+func (f *failingPollFD) EventUnregister(e *waiter.Entry) {
+	f.unregisters++
+	f.queue.EventUnregister(e)
+}
+
+func (*failingPollFD) Release(context.Context) {}
+func (*failingPollFD) SupportsLocks() bool     { return false }
+
+func TestPollDoesNotUnregisterRejectedEntry(t *testing.T) {
+	k, err := testutil.Boot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := k.SupervisorContext()
+	creds := auth.CredentialsFromContext(ctx)
+	fs := k.VFS()
+	ns, err := fs.NewMountNamespace(ctx, creds, "", tmpfs.Name, &vfs.MountOptions{}, k)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := testutil.NewSystem(ctx, t, fs, ns)
+	defer s.Destroy()
+	backing, err := fs.OpenAt(ctx, creds, s.PathOpAtRoot("."), &vfs.OpenOptions{Flags: linux.O_RDONLY})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer backing.DecRef(ctx)
+	impl := &failingPollFD{FileDescriptionImpl: backing.Impl()}
+	var fd vfs.FileDescription
+	if err := fd.Init(impl, linux.O_RDONLY, creds, backing.Mount(), backing.Dentry(), &vfs.FileDescriptionOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	defer fd.DecRef(ctx)
+	tg := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
+	task, err := testutil.CreateTask(ctx, "failed-poll", tg, s.MntNs, s.Root, s.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n, err := task.NewFDFrom(0, &fd, kernel.FDFlags{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { task.FDTable().Remove(task, n).DecRef(task) }()
+	entry, ch := waiter.NewChannelEntry(waiter.EventIn)
+	if err := fd.EventRegister(&entry); err != nil {
+		t.Fatal(err)
+	}
+	defer fd.EventUnregister(&entry)
+	impl.queue.Notify(waiter.EventIn)
+	select {
+	case <-ch:
+	default:
+		t.Fatal("accepted waiter was not initially linked")
+	}
+	impl.reject = true
+	_, _, err = pollBlock(task, []linux.PollFD{{FD: n, Events: linux.POLLIN}}, time.Second)
+	if !linuxerr.Equals(linuxerr.EIO, err) {
+		t.Fatalf("pollBlock returned %v, want EIO", err)
+	}
+	if impl.unregisters != 0 {
+		t.Errorf("poll called EventUnregister %d times after registration failed", impl.unregisters)
+	}
+	impl.queue.Notify(waiter.EventIn)
+	select {
+	case <-ch:
+	default:
+		t.Error("failed poll removed the previously registered waiter")
 	}
 }

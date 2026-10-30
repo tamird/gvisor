@@ -109,6 +109,12 @@ TEST(EpollTest, OverlayAsyncRegistration) {
     if (res == SIGUSR1) fprintf(stderr, "OVERLAY_ASYNC_STALE: released lower signaled fd %d\n", info.si_fd);
     EXPECT_THAT(res, SyscallFailsWithErrno(EAGAIN));
   };
+  FileDescriptor watch(epoll_create1(EPOLL_CLOEXEC));
+  ASSERT_THAT(watch.get(), SyscallSucceeds());
+  epoll_event interest = {};
+  interest.events = EPOLLIN | EPOLLET;
+  interest.data.u64 = 0x1234;
+  ASSERT_THAT(epoll_ctl(watch.get(), EPOLL_CTL_ADD, file.get(), &interest), SyscallSucceeds());
   enable(file.get(), SIGUSR1);
   enable(peer.get(), SIGUSR2);
   ASSERT_THAT(sethostname("before", 6), SyscallSucceeds());
@@ -136,9 +142,23 @@ TEST(EpollTest, OverlayAsyncRegistration) {
   ASSERT_THAT(sethostname("released", 8), SyscallSucceeds());
   receive(SIGUSR2,peer.get()); quiet();
   ASSERT_THAT(fcntl(file.get(), F_SETFL, O_ASYNC), SyscallSucceeds());
+  // The original lower epoll entry and the rearmed upper SIGIO entry are
+  // both live across this checkpoint.
+  if (IsRunningWithSaveRestore()) { restored.reset(); MaybeSave(); }
+  DisableSave overlap_restored;
   ASSERT_THAT(sethostname("reused", 6), SyscallSucceeds());
   receive(SIGUSR2,peer.get()); quiet();
   ASSERT_THAT(fcntl(file.get(), F_SETFL, 0), SyscallSucceeds());
+  epoll_event event = {};
+  // Discard any edge queued before the upper observer was removed.
+  ASSERT_THAT(epoll_wait(watch.get(), &event, 1, 0), ::testing::AnyOf(0, 1));
+  ASSERT_THAT(epoll_wait(watch.get(), &event, 1, 0), SyscallSucceedsWithValue(0));
+  ASSERT_THAT(sethostname("old-watch", 9), SyscallSucceeds());
+  receive(SIGUSR2,peer.get()); quiet();
+  ASSERT_THAT(epoll_wait(watch.get(), &event, 1, 2000), SyscallSucceedsWithValue(1));
+  EXPECT_EQ(static_cast<uint64_t>(event.data.u64), 0x1234);
+  ASSERT_THAT(epoll_ctl(watch.get(), EPOLL_CTL_DEL, file.get(), nullptr), SyscallSucceeds());
+  fprintf(stderr,"OVERLAY_OVERLAP_FINISHED: lower epoll notified after restored upper SIGIO removal\n");
   EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname)), copied);
   fprintf(stderr,"OVERLAY_ASYNC_FINISHED: checkpoint=%d; original registration delivered, rearmed upper stayed quiet, direct peer remained live\n",IsRunningWithSaveRestore());
 }

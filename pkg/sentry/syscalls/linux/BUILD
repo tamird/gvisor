@@ -145,6 +145,8 @@ go_test(
     embed = [":linux"],
     deps = [
         "//pkg/abi/linux",
+        "//pkg/context",
+        "//pkg/errors/linuxerr",
         "//pkg/sentry/fsimpl/overlay",
         "//pkg/sentry/fsimpl/proc",
         "//pkg/sentry/fsimpl/testutil",
