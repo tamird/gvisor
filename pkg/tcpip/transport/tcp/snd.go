@@ -733,9 +733,10 @@ func (s *sender) splitSeg(seg *segment, size int) {
 		seg.flags ^= header.TCPFlagPsh
 	}
 	seg.pkt.Data().CapLength(size)
+	seg.truncatedTail = true
 	if seg.xmitCount != 0 && s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
-		s.updateSACKCredit(seg)
-		s.updateSACKCredit(nSeg)
+		s.updateSACKCredit(seg, header.SACKBlock{})
+		s.updateSACKCredit(nSeg, header.SACKBlock{})
 	}
 }
 
@@ -1364,27 +1365,14 @@ func (s *sender) isDupAck(seg *segment) bool {
 		s.SndWnd == seg.window
 }
 
-// updateSACKCredit accounts for actual packet units in a transmitted segment.
-// Only its queued data and its own transmit MSS determine those units.
+// updateSACKCredit transfers just the change in the queue entry's packet
+// count. Previously reported bytes may live on both sides of a queue split.
 //
 // +checklocks:s.ep.mu
-func (s *sender) updateSACKCredit(seg *segment) bool {
-	block := seg.sackBlock()
-	n := 0
-	var full bool
-	if mss := seqnum.Size(seg.gsoMSS); mss != 0 {
-		offset := seg.gsoStart.Size(block.Start) % mss
-		packets := max(1, int((offset+seqnum.Size(seg.payloadSize())+mss-1)/mss))
-		n, full = s.ep.scoreboard.coveredGSO(block, mss, offset, packets)
-	} else {
-		full = s.ep.scoreboard.IsSACKED(block)
-		if full {
-			n = 1
-		}
-	}
+func (s *sender) updateSACKCredit(seg *segment, known header.SACKBlock) {
+	n := s.ep.scoreboard.sackedPackets(seg.sackPackets(), s.SndUna, known)
 	s.SackedOut += n - int(seg.sackCredit)
 	seg.sackCredit = uint32(n)
-	return full
 }
 
 // Iterate the writeList and update RACK for each segment which is newly acked
@@ -1420,18 +1408,38 @@ func (s *sender) walkSACK(rcvdSeg *segment, sackBlocks []header.SACKBlock) bool 
 	})
 	seg := s.writeList.Front()
 	for _, sb := range sackBlocks {
-		for seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(sb.End) {
-			end := seg.sackBlock().End
-			if sb.Start.LessThan(end) {
-				full := s.updateSACKCredit(seg)
-				if rack && full && !seg.acked {
+		// Sent queue entries are contiguous. Locate the first overlap
+		// without fetching the packet buffer for every preceding entry.
+		for seg != nil {
+			next := seg.Next()
+			if next == nil || next.xmitCount == 0 || sb.Start.LessThan(next.sequenceNumber) {
+				break
+			}
+			seg = next
+		}
+		for seg != nil && seg.xmitCount != 0 {
+			span := seg.sackBlock()
+			p := seg.sackPackets()
+			if !span.Start.LessThan(sb.End) && !p.block.Start.LessThan(sb.End) {
+				break
+			}
+			if sb.Start.LessThan(span.End) {
+				s.updateSACKCredit(seg, sb)
+				if rack && !seg.acked && seg.sackCredit != 0 && (sb.Contains(span) || s.ep.scoreboard.IsSACKED(span)) {
 					s.rc.update(seg, rcvdSeg)
 					s.rc.detectReorder(seg)
 					seg.acked = true
 				}
 			}
-			if sb.End.LessThan(end) {
-				// The next block can cover another packet in this GSO segment.
+			if sb.End.LessThan(span.End) {
+				// Keep the cursor here for the next block; finish any unit
+				// extending into entries beyond this purely logical cut.
+				for next := seg.Next(); next != nil && next.xmitCount != 0; next = next.Next() {
+					if !next.sackPackets().block.Start.LessThan(sb.End) {
+						break
+					}
+					s.updateSACKCredit(next, sb)
+				}
 				break
 			}
 			seg = seg.Next()
@@ -1735,9 +1743,6 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 				prevCount := s.pCount(seg, s.MaxPayloadSize)
 				seg.TrimFront(ackLeft)
 				seg.sequenceNumber.UpdateForward(ackLeft)
-				if s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
-					s.updateSACKCredit(seg)
-				}
 				s.Outstanding -= prevCount - s.pCount(seg, s.MaxPayloadSize)
 				break
 			}
@@ -1767,6 +1772,16 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 		// Clear SACK information for all acked data.
 		s.ep.scoreboard.Delete(s.SndUna)
+		if head := s.writeList.Front(); head != nil && s.ep.SACKPermitted && (head.sackCredit != 0 || !s.ep.scoreboard.Empty()) {
+			// An ACK ending at a queue split can complete the prefix of a
+			// packet whose final byte is owned by a surviving entry.
+			for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+				if s.SndUna.LessThan(seg.sackPackets().block.Start) {
+					break
+				}
+				s.updateSACKCredit(seg, header.SACKBlock{})
+			}
+		}
 
 		// Eifel compares the ACK's echo to the retransmission time (RFC 3522, section 3.2).
 		// Like Linux, treat a zero echo as unavailable for this comparison.
@@ -1876,15 +1891,14 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 
 	err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
 	if err == nil {
-		var mss uint16
-		if s.gso && seg.payloadSize() > int(s.ep.gso.MSS) {
-			mss = s.ep.gso.MSS
+		mss := seg.logicalLen()
+		if s.gso && s.ep.gso.MSS != 0 {
+			mss = min(mss, seqnum.Size(s.ep.gso.MSS))
 		}
-		if seg.gsoMSS != mss || (mss != 0 && seg.gsoStart.Size(seg.sequenceNumber)%seqnum.Size(mss) != 0) {
-			seg.gsoMSS = mss
-			seg.gsoStart = seg.sequenceNumber
+		if mss != 0 && (seg.gsoMSS != uint16(mss) || seg.gsoStart != seg.sequenceNumber || seg.truncatedTail) {
+			seg.gsoStart, seg.gsoMSS, seg.truncatedTail = seg.sequenceNumber, uint16(mss), false
 			if s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
-				s.updateSACKCredit(seg)
+				s.updateSACKCredit(seg, header.SACKBlock{})
 			}
 		}
 	}

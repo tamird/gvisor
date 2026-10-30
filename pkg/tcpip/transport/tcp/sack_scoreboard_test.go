@@ -169,32 +169,30 @@ func BenchmarkSetPipeWorkload(b *testing.B) {
 	}
 }
 
-// SACK ranges can start and end inside a GSO packet. The FIN belongs to
-// the last payload packet, even when that packet has exactly one MSS of data.
-func TestSACKedGSOAcrossSequenceWrap(t *testing.T) {
+// Neither a queue split nor an ACK inside an original packet aligns the
+// wire grid to the new queue head. The sequence numbers wrap in this case.
+func TestSACKedSplitUnitsAcrossSequenceWrap(t *testing.T) {
 	start := seqnum.Value(0xfffffff0)
-	block := func(first, last int) header.SACKBlock {
-		return header.SACKBlock{Start: start.Add(seqnum.Size(first)), End: start.Add(seqnum.Size(last))}
+	block := func(a, b int) header.SACKBlock {
+		return header.SACKBlock{Start: start.Add(seqnum.Size(a)), End: start.Add(seqnum.Size(b))}
 	}
+	sb := NewSACKScoreboard(10, start)
+	sb.Insert(block(10, 20))
+	sb.Insert(block(25, 31))
 	for _, tc := range []struct {
-		name string
-		ends [][2]int
-		want int
-		full bool
+		name                         string
+		first, end, count, una, want int
 	}{
-		{"two_partial_edges", [][2]int{{2, 29}}, 1, false},
-		{"two_disjoint", [][2]int{{0, 10}, {12, 31}}, 2, false},
-		{"missing_FIN", [][2]int{{0, 30}}, 2, false},
-		{"complete", [][2]int{{0, 31}}, 3, true},
+		{"left_full_unit", 0, 10, 1, 0, 0},
+		{"right_owns_middle", 10, 30, 2, 0, 1},
+		{"no_short_tail_at_internal_cut", 10, 10, 0, 0, 0},
+		{"actual_short_tail", 30, 31, 1, 0, 1},
+		{"remaining_prefix_was_acknowledged", 20, 31, 2, 25, 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewSACKScoreboard(10, start)
-			for _, e := range tc.ends {
-				s.Insert(block(e[0], e[1]))
-			}
-			got, full := s.coveredGSO(block(0, 31), 10, 0, 3)
-			if got != tc.want || full != tc.full {
-				t.Errorf("coverage=(%d,%t), want (%d,%t)", got, full, tc.want, tc.full)
+			p := packetRun{block(tc.first, tc.end), 10, tc.count}
+			if got := sb.sackedPackets(p, start.Add(seqnum.Size(tc.una)), header.SACKBlock{}); got != tc.want {
+				t.Errorf("SACKed packets=%d, want %d", got, tc.want)
 			}
 		})
 	}

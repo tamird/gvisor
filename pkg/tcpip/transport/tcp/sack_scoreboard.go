@@ -166,33 +166,69 @@ func (s *SACKScoreboard) IsSACKED(r header.SACKBlock) bool {
 	return found
 }
 
-// coveredGSO counts complete packet units in a segment spanning multiple
-// MSSes. Each stored SACK range contributes only whole packets, including
-// the shorter final packet if its last byte is covered.
-func (s *SACKScoreboard) coveredGSO(seg header.SACKBlock, mss, offset seqnum.Size, packets int) (n int, full bool) {
-	last := header.SACKBlock{Start: seg.End - 1}
-	s.ranges.DescendLessOrEqual(last, func(r header.SACKBlock) bool {
-		if r.End.LessThanEq(seg.Start) {
-			return false
-		}
-		if r.Contains(seg) {
-			n = packets
-			full = true
-			return false
-		}
-		// [first, end) are packet indices. A FIN shares the final data
-		// packet even when its payload occupies an exact multiple of MSS.
-		first, end := 0, packets
-		if seg.Start.LessThan(r.Start) {
-			first = int((offset + seg.Start.Size(r.Start) + mss - 1) / mss)
-		}
-		if r.End.LessThan(seg.End) {
-			end = min(packets-1, int((offset+seg.Start.Size(r.End))/mss))
-		}
-		n += max(0, end-first)
-		return seg.Start.LessThan(r.Start)
+// packetRun contains the transmitted units whose final bytes belong to a
+// queue entry. Splitting that entry does not create another wire packet.
+type packetRun struct {
+	block header.SACKBlock
+	mss   seqnum.Size
+	count int
+}
+
+func (seg *segment) sackPackets() packetRun {
+	b := seg.sackBlock()
+	mss := seqnum.Size(seg.gsoMSS)
+	if mss == 0 {
+		// Entries constructed without a recorded transmission contain one
+		// unit. Production transmit records a size for every sent packet.
+		return packetRun{b, b.Start.Size(b.End), 1}
+	}
+	first := seg.gsoStart.Size(b.Start) / mss
+	last := seg.gsoStart.Size(b.End)
+	if seg.truncatedTail {
+		last -= last % mss
+	}
+	// The last short packet of a real transmission owns its endpoint too.
+	n := (last+mss-1)/mss - first
+	return packetRun{header.SACKBlock{
+		Start: seg.gsoStart.Add(first * mss),
+		End:   seg.gsoStart.Add(last),
+	}, mss, int(n)}
+}
+
+// covered counts whole transmitted units, including one whose prefix was
+// cumulatively acknowledged, without visiting each MSS of a large GSO.
+func (p packetRun) covered(r header.SACKBlock, una seqnum.Value) int {
+	start := p.block.Start
+	if start.LessThan(una) {
+		start = una
+	}
+	if !start.LessThan(r.End) || !r.Start.LessThan(p.block.End) {
+		return 0
+	}
+	first, last := 0, p.count
+	if start.LessThan(r.Start) {
+		first = int((p.block.Start.Size(r.Start) + p.mss - 1) / p.mss)
+	}
+	if r.End.LessThan(p.block.End) {
+		last = int(p.block.Start.Size(r.End) / p.mss)
+	}
+	return max(0, last-first)
+}
+
+// sackedPackets accounts for units reported across several disjoint ranges.
+func (s *SACKScoreboard) sackedPackets(p packetRun, una seqnum.Value, known header.SACKBlock) int {
+	if p.count == 0 {
+		return 0
+	}
+	if known.Start != known.End && p.covered(known, una) == p.count {
+		return p.count
+	}
+	n := 0
+	s.ranges.DescendLessOrEqual(header.SACKBlock{Start: p.block.End - 1}, func(r header.SACKBlock) bool {
+		n += p.covered(r, una)
+		return p.block.Start.LessThan(r.Start) && una.LessThan(r.Start)
 	})
-	return n, full
+	return n
 }
 
 // String returns human-readable state of the scoreboard structure.
