@@ -1663,17 +1663,6 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			}
 		}
 
-		if s.shouldSchedulePTO() {
-			// Schedule PTO upon receiving an ACK that cumulatively acknowledges data.
-			// See https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.5.1.
-			s.schedulePTO(true /* advancingRTO */)
-		} else {
-			// When an ack is received we must rearm the timer.
-			// RFC 6298 5.3
-			s.probeTimer.disable()
-			s.resendTimer.enable(s.RTO)
-		}
-
 		// Remove all acknowledged data from the write list.
 		acked := s.SndUna.Size(ack)
 		s.SndUna = ack
@@ -1766,6 +1755,15 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
 			s.resendTimer.disable()
 			s.probeTimer.disable()
+		} else if s.shouldSchedulePTO() {
+			// Schedule PTO upon receiving an ACK that cumulatively acknowledges data.
+			// See https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.5.1.
+			s.schedulePTO(true /* advancingRTO */)
+		} else {
+			// When an ack is received we must rearm the timer.
+			// RFC 6298 5.3
+			s.probeTimer.disable()
+			s.resendTimer.enable(s.RTO)
 		}
 	}
 
