@@ -1,0 +1,33 @@
+name: Compare the native syscall test launcher
+on:
+  push:
+    branches: [qualification/syscall-runner-shell]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  eventfd:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Restore the exact Bazel executable already tested on Linux
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/12982133352/zip > "$RUNNER_TEMP/verified-bazel.zip"
+          printf '%s  %s\n' c2889f822f8948b2982b903abb96b3498ce1136b1a5c9d60b3f61bb09f082701 "$RUNNER_TEMP/verified-bazel.zip" | sha256sum -c -
+          unzip -p "$RUNNER_TEMP/verified-bazel.zip" bazel-candidate > "$RUNNER_TEMP/bazel-candidate"
+          chmod +x "$RUNNER_TEMP/bazel-candidate"
+          sha256sum "$RUNNER_TEMP/bazel-candidate"
+      - name: Run the original package through the native test entry point
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/syscall-runner-shell.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: syscall-runner-shell
+          path: repo-fetch-evidence/
+          if-no-files-found: warn
