@@ -1,7 +1,7 @@
-name: Build the Python release on scratch workers
+name: Compare reproducible Python release backends
 on:
   push:
-    branches: [qualification/release-wheel-scratch]
+    branches: [qualification/release-sdist-repro]
 permissions:
   contents: read
   actions: read
@@ -22,7 +22,7 @@ jobs:
       QUALIFICATION_TARGETS: //sandboxexec/sandbox/python:dist
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false}
+        with: {persist-credentials: false, fetch-depth: 4}
       - name: Recover the dependency lock from the successful release build
         env:
           GH_TOKEN: ${{ github.token }}
@@ -34,119 +34,30 @@ jobs:
           printf '%s  %s\n' 7916d5664f320ca4881cff7f36a9df7c6f41d03b5923cf2a4fed3a6a02f67945 "${bundles[0]}" | sha256sum --check --strict
           tar -xzf "${bundles[0]}" -C "$RUNNER_TEMP/row"
           cp "$RUNNER_TEMP/row/MODULE.bazel.lock" MODULE.bazel.lock
-      - name: Resolve additional platform inputs before freezing the build graph
+      - name: Prepare the existing execution-log decoder and comparison
         run: |
-          export USE_BAZEL_VERSION
-          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-          sha256sum --check test/rbe/stateify-source.sha256
-          bazelisk mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/module-graph.json"
-          python3 - "$RUNNER_TEMP/row/MODULE.bazel.lock" MODULE.bazel.lock "$RUNNER_TEMP/publication/lock.json" <<'PY'
-          import hashlib, json, sys
-          from pathlib import Path
-          original, prepared, receipt = map(Path, sys.argv[1:])
-          before, after = (json.loads(p.read_bytes())["registryFileHashes"] for p in (original, prepared))
-          changed = [key for key, value in before.items() if key in after and after[key] != value]
-          assert not changed, changed
-          receipt.write_text(json.dumps({"original": hashlib.sha256(original.read_bytes()).hexdigest(), "prepared": hashlib.sha256(prepared.read_bytes()).hexdigest(),
-              "added_registry_hashes": len(after.keys() - before.keys()), "removed_registry_hashes": len(before.keys() - after.keys())}) + "\n")
-          PY
+          cp -R .github/qualification/sdist "$RUNNER_TEMP/sdist-fixture"
           curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bb"
-      - name: Build the two Python distributions on each scratch architecture
+      - name: Compare archive producers and Python 3.7 consumers
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-          BB_LOG_DECODER: ${{ runner.temp }}/bb
         run: |
-          set -eu
-          publication="$RUNNER_TEMP/publication"
-          parent="$RUNNER_TEMP"
-          export PUBLICATION="$publication"
-          status=0
-          for arch in amd64 arm64; do
-            export QUALIFICATION_ARCH="$arch" RUNNER_TEMP="$parent/$arch"
-            mkdir -p "$RUNNER_TEMP"
+          for mode in supplier flit; do
+            case "$mode" in
+              supplier) head=cca9ec0940872953ffc29e1a5a35e918dec0acfa ;;
+              flit) head=f73725861c2059c7553c907ce019f4cee951de6b ;;
+            esac
             rc=0
-            bash test/rbe/actions.sh \
-              --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_"$arch" \
-              --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_"$arch" \
-              --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native \
-              --bazel-option=--action_env=PATH=/usr/bin:/bin \
-              --bazel-option=--remote_download_outputs=toplevel \
-              --bazel-option=--//sandboxexec/sandbox/python:release_version=2026.10.29.2 \
-              '--bazel-option=--modify_execution_info=^PythonDistribution$=+no-remote-cache' > "$RUNNER_TEMP/coordinator.log" 2>&1 || rc=$?
-            cat "$RUNNER_TEMP/coordinator.log"
-            set +e
-            python3 test/rbe/inspect_release_wheel.py
-            inspected=$?
-            set -e
-            if ((rc!=0 && status==0)); then status=$rc; elif ((inspected!=0 && status==0)); then status=$inspected; fi
+            bash "$RUNNER_TEMP/sdist-fixture/run.sh" "$mode" "$head" || rc=$?
+            mkdir -p "$RUNNER_TEMP/publication/$mode"
+            echo "$rc" > "$RUNNER_TEMP/publication/$mode/stage.exit"
           done
-          exit "$status"
-      - name: Build and stage the same archives using the release Make target
-        run: |
-          set -euo pipefail
-          release_tmp="$RUNNER_TEMP/make-wheel"
-          mkdir -p "$release_tmp/bin"
-          cat > "$release_tmp/bin/docker" <<'SH'
-          #!/bin/sh
-          printf 'attempted\n' >> "$DOCKER_ATTEMPT"
-          exit 83
-          SH
-          chmod +x "$release_tmp/bin/docker"
-          export DOCKER_ATTEMPT="$release_tmp/docker-attempt" DOCKER_HOST="unix://$release_tmp/no-socket" PATH="$release_tmp/bin:$PATH"
-          # Exercise the previous recipe and builder selection on the same Linux checkout.
-          git fetch --depth=1 origin 98af91078c8ef8d3402501c096ae768dfd646a28
-          for file in Makefile tools/bazel.mk; do git show 98af91078:"$file" > "$file"; done
-          rc=0
-          timeout 45 make "DOCKER_CLI_PATH=$release_tmp/bin/docker" RELEASE_NAME=release-20261029.2 artifacts-python > "$release_tmp/stock.log" 2>&1 || rc=$?
-          for file in Makefile tools/bazel.mk; do git show HEAD:"$file" > "$file"; done
-          test "$rc" -ne 0 && test -s "$DOCKER_ATTEMPT"
-          mv "$DOCKER_ATTEMPT" "$release_tmp/stock-attempt"
-          # Use one configuration that was already built above. Only the Make entry point is new.
-          rcfile="$release_tmp/bazelrc"
-          umask 077
-          cat > "$rcfile" <<'RC'
-          build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io
-          build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io
-          RC
-          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rcfile"
-          unset BUILDBUDDY_API_KEY
-          flags="--config=rbe --config=x86_64 --config=buildbuddy_remote_executor --lockfile_mode=error --host_platform=//tools/bazeldefs:rbe_linux_amd64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64 --@rules_python//python/config_settings:bootstrap_impl=native --action_env=PATH=/usr/bin:/bin"
-          rc=0
-          make "BAZEL=bazelisk --bazelrc=$rcfile" "BAZEL_OPTIONS=$flags" "PYTHON_RELEASE_DEST=$release_tmp/output" "DOCKER_CLI_PATH=$release_tmp/bin/docker" RELEASE_NAME=release-20261029.2 artifacts-python > "$release_tmp/revised.log" 2>&1 || rc=$?
-          test ! -e "$DOCKER_ATTEMPT"
-          if ((rc)); then sed -nE '/^(ERROR:|make: \*\*\*)/p' "$release_tmp/revised.log" | grep -viE "remote_header|api.key|token|secret" | tail -6; exit "$rc"; fi
-          python3 - <<'END'
-          import hashlib,json,os
-          from pathlib import Path
-          p=Path(os.environ["RUNNER_TEMP"])
-          expected=json.loads((p/"publication/amd64.json").read_text())["files"]
-          files={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in (p/"make-wheel/output").iterdir()}
-          built={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in Path("bazel-bin/sandboxexec/sandbox/python/dist").iterdir()}
-          assert files==built and files.keys()==expected.keys(), (files,built,expected)
-          assert all(files[n]==digest for n,digest in expected.items() if n.endswith(".whl"))
-          (p/"publication/make.json").write_text(json.dumps({"source":os.environ["GITHUB_SHA"],"status":"PASS","stock_attempted_docker":True,"revised_attempted_docker":False,"files":files,"matched_independent_build":{n:files[n]==v for n,v in expected.items()}})+"\n")
-          END
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      - name: Reconcile the two expected architecture verdicts
-        if: always()
-        run: |
-          python3 - <<'PYCODE'
-          import json, os
-          from datetime import datetime, timezone
-          from pathlib import Path
-          dst=Path(os.environ["RUNNER_TEMP"])/"publication"
-          dst.mkdir(parents=True,exist_ok=True)
-          results={a:json.loads((dst/f"{a}.json").read_text())["status"] if (dst/f"{a}.json").is_file() else "MISSING" for a in ("amd64","arm64")}
-          bundle={"source":os.environ["GITHUB_SHA"],"architectures":results,"targets":["//sandboxexec/sandbox/python:dist"],"verified_at":datetime.now(timezone.utc).isoformat()}
-          (dst/"summary.json").write_text(json.dumps(bundle)+"\n")
-          if set(results.values())!={"PASS"}: raise SystemExit(1)
-          PYCODE
+          python3 "$RUNNER_TEMP/sdist-fixture/summarize.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: release-wheel-scratch
+          name: release-sdist-repro
           path: ${{ runner.temp }}/publication/
           if-no-files-found: error
