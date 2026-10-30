@@ -5,7 +5,12 @@ USE_BAZEL_VERSION=$(cat images/default/bazelversion)
 out="$RUNNER_TEMP/publication"
 umask 077
 auth="$RUNNER_TEMP/qualification-auth.bazelrc"
-printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\nbuild:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" > "$auth"
+printf '%s\n' \
+    'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
+    'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
+    'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
+    'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/' > "$auth"
+printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\nbuild:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >> "$auth"
 unset BUILDBUDDY_API_KEY
 baz=(bazelisk --bazelrc=test/rbe/qualification.bazelrc --bazelrc="$auth")
 flags=(--config=rbe --config=x86_64 --noremote_accept_cached --remote_download_outputs=all --jobs=4)
@@ -16,7 +21,7 @@ done
 expect_missing_shell() {
   local result=0
   "${baz[@]}" build "${flags[@]}" --keep_going "${targets[@]}" > "$RUNNER_TEMP/stock.log" 2>&1 || result=$?
-  if [[ "$result" == 0 ]] || ! grep -m1 -Ei '/bin/bash.*(not found|no such file|does not exist|could not be found|cannot find)' "$RUNNER_TEMP/stock.log" | cut -c1-480 > "$out/missing-shell.txt" || ! [[ -s "$out/missing-shell.txt" ]]; then
+  if [[ "$result" == 0 ]] || ! grep -m1 -Ei '(/bin/bash.*(not found|no such file|does not exist|could not be found|cannot find))|((not found|no such file|does not exist|could not be found|cannot find).*/bin/bash)' "$RUNNER_TEMP/stock.log" | cut -c1-480 > "$out/missing-shell.txt" || ! [[ -s "$out/missing-shell.txt" ]]; then
     tail -35 "$RUNNER_TEMP/stock.log" >&2
     return 1
   fi
