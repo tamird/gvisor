@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T17:24:24.119828+00:00",
+    "updatedAt": "2026-10-30T17:25:41.390690+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36595,16 +36595,24 @@
       "group": "runtime",
       "repo": "tamird/gvisor",
       "ref": "review/tun-packet-info-standalone",
-      "head": "e539b6e86e21b645f9d8a100e71235c1541477ab",
+      "head": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
       "title": "Honor packet information and preserve queued packets on empty TUN reads",
-      "url": "https://github.com/tamird/gvisor/commit/e539b6e86",
+      "url": "https://github.com/tamird/gvisor/commit/5fa30581c",
       "status": "Agent work",
-      "summary": "Current master and #15449 exhibit the same TUN packet-information failures on the shared Linux test. The independent correction uses master’s existing segmented writer; it neither includes nor requires #15449’s write changes. The corrected read function and syscall fixture match the prior qualification exactly. Exact current-master native/stock/fixed checks and owner suite are running.",
-      "updatedAt": "2026-10-30T15:57:13.800523+00:00",
+      "summary": "Linux and corrected gVisor pass all four TUN read boundaries. Stock fails all four; the full corrected gVisor suite passes 24 and skips its existing down-interface case. The review head changes only the exported TUN_PKT_STRIP comment from the tested source, addressing the sole finding of both owning analyzers. It is independent of #15449.",
+      "updatedAt": "2026-10-30T17:25:41.390690+00:00",
       "evidence": [
         {
-          "label": "Native Linux, unchanged master and standalone correction, including full corrected owner suite",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41085306145"
+          "label": "Full syscall/control results on the identical executable and test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41085306145/artifacts/12994698250"
+        },
+        {
+          "label": "Two original analyzer diagnoses; identical exported-constant comment on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41098115314"
+        },
+        {
+          "label": "Corrected source: both owner checks in progress",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41098295687"
         },
         {
           "label": "The same PI truncation/partial-copy ABI mismatch predates this PR: Linux passes, master and the PR fail identically",
@@ -36621,13 +36629,14 @@
       ],
       "followup": {
         "owner": "overlay_owner",
-        "sourceHead": "e539b6e86e21b645f9d8a100e71235c1541477ab",
-        "observedAt": "2026-10-30T15:57:13.800523+00:00",
-        "disposition": "Qualify the independent correction directly on master",
-        "nextAction": "Verify the matched shared case, complete TUN suite and owning analyzers. Keep the pending buffer PR separate and record its read-path overlap.",
+        "sourceHead": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
+        "observedAt": "2026-10-30T17:25:41.390690+00:00",
+        "disposition": "Verify the corrected exported-constant comment",
+        "nextAction": "Read both owning analyzer results on the revised source. This is not a new contributor decision yet.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41085306145",
-          "https://github.com/tamird/gvisor/actions/runs/41083132225"
+          "https://github.com/tamird/gvisor/actions/runs/41085306145/artifacts/12994698250",
+          "https://github.com/tamird/gvisor/actions/runs/41098115314",
+          "https://github.com/tamird/gvisor/actions/runs/41098295687"
         ]
       }
     },
