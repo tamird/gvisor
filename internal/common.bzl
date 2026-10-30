@@ -12,20 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//lib:versions.bzl", "versions")
+
 def env_execute(ctx, arguments, environment = {}, **kwargs):
-    """Executes a command in for a repository rule.
-    It prepends "env -i" to "arguments" before calling "ctx.execute".
+    """Executes a command for a repository rule.
     Variables that aren't explicitly mentioned in "environment"
     are removed from the environment. This should be preferred to "ctx.execute"
     in most situations.
     """
     if ctx.os.name.startswith("windows"):
         return ctx.execute(arguments, environment = environment, **kwargs)
-    env_args = ["env", "-i"]
     environment = dict(environment)
     for var in ["TMP", "TMPDIR"]:
         if var in ctx.os.environ and not var in environment:
             environment[var] = ctx.os.environ[var]
+    # Bazel 8 allows repository_ctx.execute to explicitly unset variables.
+    # The native version is available in repository evaluation, not BUILD analysis.
+    if versions.is_at_least("8.0.0", getattr(native, "bazel_version", "0")):
+        overrides = {key: None for key in ctx.os.environ}
+        overrides.update(environment)
+        return ctx.execute(arguments, environment = overrides, **kwargs)
+
+    env_args = ["env", "-i"]
     for k, v in environment.items():
         env_args.append("%s=%s" % (k, v))
     arguments = env_args + arguments

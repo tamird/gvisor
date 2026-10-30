@@ -220,16 +220,16 @@ def go_deps_test_suite(name):
     )
 
 def _mock_module_ctx(case, executions, isolated, isolate_module = None):
+    environ = {"GAZELLE_TEST_PARENT_ONLY": "must not reach go"}
     state = struct(
         case = case,
         repos = {},
-        environ = {},
+        environ = environ,
         files = {},
         executions = executions,
         printed_messages = [],
         failed_messages = [],
     )
-    environ = {}
     if isolated:
         modules = [_mock_isolated_module(isolate_module)]
     else:
@@ -328,23 +328,29 @@ _DEFAULT_EXECUTIONS = {
 }
 
 def _mock_module_ctx_execute(state, arguments, environment):
-    if len(environment) > 0:
-        fail("test case {}: environment was not empty; expected all environment variables to be passed through 'env -i'".format(state.case.name))
-    if len(arguments) < 3 or arguments[0] != "env" or arguments[1] != "-i":
-        fail("test case {}: executions expected to start with 'env -i'".format(state.case.name))
-    arguments = arguments[2:]
-    env_arguments = []
-    goroot = ""
-    for i, argument in enumerate(arguments):
-        if "=" not in argument:
-            arguments = arguments[i:]
-            break
-        if argument.startswith("GOROOT="):
-            goroot = argument[len("GOROOT="):]
-        if not (argument.startswith("GOROOT=") or
-                argument.startswith("GOPATH=") or
-                argument.startswith("GOCACHE=")):
-            env_arguments.append(argument)
+    if arguments[:2] == ["env", "-i"]:
+        child_env = {}
+        arguments = arguments[2:]
+        for i, argument in enumerate(arguments):
+            if "=" not in argument:
+                arguments = arguments[i:]
+                break
+            key, _, value = argument.partition("=")
+            child_env[key] = value
+    else:
+        child_env = dict(state.environ)
+        child_env.update(environment)
+        child_env = {key: value for key, value in child_env.items() if value != None}
+
+    if "GAZELLE_TEST_PARENT_ONLY" in child_env:
+        fail("test case {}: go inherited the parent environment".format(state.case.name))
+    env_arguments = [
+        "%s=%s" % (key, value)
+        for key, value in child_env.items()
+        if key not in ("GOROOT", "GOPATH", "GOCACHE")
+    ]
+    goroot = child_env.get("GOROOT", "")
+    arguments = list(arguments)
     if arguments[0] == goroot + "/bin/go":
         arguments[0] = "go"
 

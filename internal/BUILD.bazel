@@ -115,6 +115,7 @@ bzl_library(
     name = "common",
     srcs = ["common.bzl"],
     visibility = ["//:__subpackages__"],
+    deps = ["@bazel_skylib//lib:versions"],
 )
 
 bzl_library(

@@ -86,8 +86,8 @@ New tests must pass `//tests/bzlmod:go_deps_test` and
 
    If the test needs mocked `go` command output (for example when `go_deps`
    runs `go list`), create an `executions/` subdirectory. Add one file per
-   command. The first line must be `# ` followed by the command string (without
-   the `env -i` wrapper and with `go` instead of the GOROOT path). The
+   command. The first line must be `# ` followed by the Go command and arguments
+   (use `go` instead of the GOROOT path). The
    remaining lines are the command's stdout. When unpacking an existing test,
    the converter writes these files automatically.
 
