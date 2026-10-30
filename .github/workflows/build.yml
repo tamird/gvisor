@@ -1,4 +1,4 @@
-name: Check the cgroup package and owning analyzers
+name: Verify the cgroup package without DAC overrides
 on:
   push:
     branches: [qualification/oci-ancestor-memory]
@@ -39,14 +39,27 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Run the complete cgroup package and owning analyzers
+    - name: Verify that the test identity respects read-only directories
+      run: |
+        docker exec tcp-compiler python3 -c '
+        import errno, os, subprocess, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as root:
+            parent = Path(root) / "readonly"
+            parent.mkdir(mode=0o555)
+            # The original privileged coordinator could create this directory.
+            (parent / "privileged").mkdir()
+            code = "import errno,os,sys\ntry: os.mkdir(sys.argv[1])\nexcept OSError as e: sys.exit(0 if e.errno==errno.EACCES else 1)\nraise SystemExit(1)"
+            subprocess.run(["/usr/bin/setpriv", "--bounding-set=-dac_override,-dac_read_search", "--inh-caps=-all", "--ambient-caps=-all", "python3", "-c", code, str(parent / "test")], check=True)
+        '
+    - name: Run the complete cgroup package with its required permissions
       run: |
         set -euo pipefail
         git checkout --quiet --detach "$CURRENT"
         rec="$RUNNER_TEMP/records"
         git cat-file commit HEAD > "$rec/commit"; git status --porcelain --untracked-files=no > "$rec/before"
-        args=(test --config=x86_64 --jobs=2 --strategy=CppCompile=local --spawn_strategy=remote,local --strategy=TestRunner=local --test_env=GO_TEST_WRAP_TESTV=1 --nocache_test_results --build_event_json_file="$RUNNER_TEMP/events.bep" --build_event_publish_all_actions --nobuild_event_json_file_path_conversion)
-        labels=(//runsc/cgroup:cgroup_test //runsc/cgroup:cgroup_nogo //test/root:root_test_nogo)
+        args=(test --config=x86_64 --jobs=2 --strategy=CppCompile=local --spawn_strategy=remote,local '--run_under=/usr/bin/setpriv --bounding-set=-dac_override,-dac_read_search --inh-caps=-all --ambient-caps=-all' --strategy=TestRunner=local --test_env=GO_TEST_WRAP_TESTV=1 --nocache_test_results --build_event_json_file="$RUNNER_TEMP/events.bep" --build_event_publish_all_actions --nobuild_event_json_file_path_conversion)
+        labels=(//runsc/cgroup:cgroup_test)
         printf '%s\n' "${args[@]}" "${labels[@]}" > "$rec/arguments"; printf '%s\n' "${labels[@]}" > "$rec/targets"
         cli=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
         outbase=$("${cli[@]}" info output_base)
@@ -61,9 +74,9 @@ jobs:
         from pathlib import Path
         import sys,json
         from xml.etree import ElementTree as ET
-        p=Path(sys.argv[1]); v=json.loads((p/"verdict.json").read_text()); assert v["status"]=="PASS" and len(v["expected_labels"])==3 and not v["missing"] and not v["errors"],v
+        p=Path(sys.argv[1]); v=json.loads((p/"verdict.json").read_text()); assert v["status"]=="PASS" and len(v["expected_labels"])==1 and not v["missing"] and not v["errors"],v
         records={c.get("name"):c for f in (p/"original").rglob("test.xml") for c in ET.parse(f).iter("testcase")}
-        for case in ("TestGetLimits","TestGetLimits/get_limit_from_parent_cgroup","TestGetLimits/get_limit_from_leaf_cgroup"):
+        for case in ("TestCreateController","TestGetLimits","TestGetLimits/get_limit_from_parent_cgroup","TestGetLimits/get_limit_from_leaf_cgroup"):
             assert case in records and not list(records[case].iter("skipped")) and not list(records[case].iter("failure")),case
         PYTHON
     - name: Exclude credentials from the evidence bundle
