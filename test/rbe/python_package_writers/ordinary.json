@@ -1,0 +1,122 @@
+{
+  "amd64": {
+    "MakeDeb": [
+      [
+        "--output=bazel-out/k8-opt/bin/test/rbe/python_package_writers/gvisor-writer-input_1_all.deb",
+        "--changes=bazel-out/k8-opt/bin/test/rbe/python_package_writers/gvisor-writer-input_1_all.changes",
+        "--data=test/rbe/python_package_writers/seed.tar.gz",
+        "--package=gvisor-writer-input",
+        "--maintainer=The gVisor Authors",
+        "--architecture=all",
+        "--version=1",
+        "--description=Python package writer qualification",
+        "--distribution=unstable",
+        "--urgency=medium"
+      ],
+      {
+        "test/rbe/python_package_writers/seed.tar.gz": {
+          "hash": "e41ec3fc74fb597e6805663856a1d7b327d05edf827ee9afc0377f7ced5a5e8e",
+          "sizeBytes": "135"
+        }
+      },
+      {
+        "gvisor-writer-input_1_all.deb": {
+          "hash": "486d93a4ea624b12536af762811caeac49ab801c05169c7dc744d737673ab015",
+          "sizeBytes": "572"
+        },
+        "gvisor-writer-input_1_all.changes": {
+          "hash": "c0b1dce198f13a0c8e861d922d79242f41432c8d2639f67345e39c78ed17ce96",
+          "sizeBytes": "710"
+        }
+      }
+    ],
+    "PackageTar": [
+      [
+        "--output=bazel-out/k8-opt/bin/test/rbe/python_package_writers/payload.tar",
+        "--mode=0555",
+        "--owner=0.0",
+        "--owner_name=.",
+        "--directory=share",
+        "--mtime=portable",
+        "--manifest=bazel-out/k8-opt/bin/test/rbe/python_package_writers/payload.manifest",
+        "--create_parents"
+      ],
+      {
+        "test/rbe/python_package_writers/notice.txt": {
+          "hash": "28c61a191487fa5f514a655146fed81b103a1384eff298eca7047a1bc20e6a27",
+          "sizeBytes": "30"
+        },
+        "bazel-out/k8-opt/bin/test/rbe/python_package_writers/payload.manifest": {
+          "hash": "d3bd78b7891c2ac7dd8fdf87b7c6ad0cc9339e5a520803449a117db7a121b09b",
+          "sizeBytes": "206"
+        }
+      },
+      {
+        "payload.tar": {
+          "hash": "3a57a5fe4121f867ccd0c26c89c511dd0f5851712ae6723babed02f950193898",
+          "sizeBytes": "10240"
+        }
+      }
+    ]
+  },
+  "arm64": {
+    "PackageTar": [
+      [
+        "--output=bazel-out/aarch64-opt/bin/test/rbe/python_package_writers/payload.tar",
+        "--mode=0555",
+        "--owner=0.0",
+        "--owner_name=.",
+        "--directory=share",
+        "--mtime=portable",
+        "--manifest=bazel-out/aarch64-opt/bin/test/rbe/python_package_writers/payload.manifest",
+        "--create_parents"
+      ],
+      {
+        "test/rbe/python_package_writers/notice.txt": {
+          "hash": "28c61a191487fa5f514a655146fed81b103a1384eff298eca7047a1bc20e6a27",
+          "sizeBytes": "30"
+        },
+        "bazel-out/aarch64-opt/bin/test/rbe/python_package_writers/payload.manifest": {
+          "hash": "d3bd78b7891c2ac7dd8fdf87b7c6ad0cc9339e5a520803449a117db7a121b09b",
+          "sizeBytes": "206"
+        }
+      },
+      {
+        "payload.tar": {
+          "hash": "3a57a5fe4121f867ccd0c26c89c511dd0f5851712ae6723babed02f950193898",
+          "sizeBytes": "10240"
+        }
+      }
+    ],
+    "MakeDeb": [
+      [
+        "--output=bazel-out/aarch64-opt/bin/test/rbe/python_package_writers/gvisor-writer-input_1_all.deb",
+        "--changes=bazel-out/aarch64-opt/bin/test/rbe/python_package_writers/gvisor-writer-input_1_all.changes",
+        "--data=test/rbe/python_package_writers/seed.tar.gz",
+        "--package=gvisor-writer-input",
+        "--maintainer=The gVisor Authors",
+        "--architecture=all",
+        "--version=1",
+        "--description=Python package writer qualification",
+        "--distribution=unstable",
+        "--urgency=medium"
+      ],
+      {
+        "test/rbe/python_package_writers/seed.tar.gz": {
+          "hash": "e41ec3fc74fb597e6805663856a1d7b327d05edf827ee9afc0377f7ced5a5e8e",
+          "sizeBytes": "135"
+        }
+      },
+      {
+        "gvisor-writer-input_1_all.deb": {
+          "hash": "486d93a4ea624b12536af762811caeac49ab801c05169c7dc744d737673ab015",
+          "sizeBytes": "572"
+        },
+        "gvisor-writer-input_1_all.changes": {
+          "hash": "c0b1dce198f13a0c8e861d922d79242f41432c8d2639f67345e39c78ed17ce96",
+          "sizeBytes": "710"
+        }
+      }
+    ]
+  }
+}

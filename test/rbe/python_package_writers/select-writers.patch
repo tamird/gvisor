@@ -1,0 +1,20 @@
+diff --git a/pkg/private/tar/tar.bzl b/pkg/private/tar/tar.bzl
+--- a/pkg/private/tar/tar.bzl
++++ b/pkg/private/tar/tar.bzl
+@@ -304,5 +304,5 @@
+         # Implicit dependencies.
+         "_build_tar": attr.label(
+-            default = Label("//pkg/private/tar:build_tar"),
++            default = Label("@@//test/rbe/python_package_writers:tar_native"),
+             cfg = "exec",
+             executable = True,
+diff --git a/pkg/private/deb/deb.bzl b/pkg/private/deb/deb.bzl
+--- a/pkg/private/deb/deb.bzl
++++ b/pkg/private/deb/deb.bzl
+@@ -362,5 +362,5 @@
+         # Implicit dependencies.
+         "_make_deb": attr.label(
+-            default = Label("//pkg/private/deb:make_deb"),
++            default = Label("@@//test/rbe/python_package_writers:deb_native"),
+             cfg = "exec",
+             executable = True,

@@ -1,0 +1,10 @@
+{
+  "PackageTar": {
+    "path": "pkg/private/tar/build_tar.py",
+    "sha256": "adbcbbc3c257e56d063a9b92bbc73123517e35fd24096cb315f8df37423be31f"
+  },
+  "MakeDeb": {
+    "path": "pkg/private/deb/make_deb.py",
+    "sha256": "3e019f3897ac9274c9aea254db5fbe75c47e2fabd53d15bc27393f46248f43bd"
+  }
+}
