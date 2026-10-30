@@ -63,6 +63,7 @@ jobs:
           bash test/rbe/actions.sh \
             --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_arm64 \
             --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
+            --bazel-option=--action_env=PATH=/usr/bin:/bin \
             --bazel-option=--remote_download_outputs=toplevel \
             --bazel-option=--noremote_accept_cached \
             '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|GoLink)$=+no-remote-cache'
