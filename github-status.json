@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T15:58:38.909513+00:00",
+  "registryDate": "2026-10-30T16:00:18.051356+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -248045,15 +248045,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T15:44:14.108156+00:00"
-      }
-    },
-    "branch:proc-mount-sack-owned-pidns": {
-      "contributor-review": {
-        "scope": "17b24a03b5528f7949b258f5001e25fb4304de90",
-        "since": "2026-10-30T15:45:54.706075+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T15:45:54.706075+00:00"
       }
     },
     "pr:15449": {

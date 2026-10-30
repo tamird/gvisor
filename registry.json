@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:58:38.909513+00:00",
+    "updatedAt": "2026-10-30T16:00:18.051356+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36512,12 +36512,12 @@
       "group": "runtime",
       "repo": "tamird/gvisor",
       "ref": "proc-mount-sack-owned-pidns",
-      "head": "17b24a03b5528f7949b258f5001e25fb4304de90",
+      "head": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
       "title": "Test that proc mounts share the TCP SACK setting",
-      "url": "https://github.com/tamird/gvisor/commit/17b24a03b",
-      "status": "Awaiting contributor review",
+      "url": "https://github.com/tamird/gvisor/commit/422d2cb0c",
+      "status": "Contributor approved; qualifying retained Go test",
       "summary": "After TCP SACK was disabled through the new proc mount, native Linux and current gVisor read 0 through the first mount. Restoring the old per-inode cache on the same source made that read return 1. The common syscall test is independent of the already merged #14369.",
-      "updatedAt": "2026-10-30T15:50:57.471231+00:00",
+      "updatedAt": "2026-10-30T16:00:18.051356+00:00",
       "evidence": [
         {
           "label": "Same syscall on Linux, current gVisor and the old per-mount implementation",
@@ -36534,17 +36534,30 @@
         {
           "label": "Original fix, already merged",
           "url": "https://github.com/google/gvisor/pull/14369"
+        },
+        {
+          "label": "Remove the duplicate two-instance Go test; keep the rejected setter case",
+          "url": "https://github.com/tamird/gvisor/compare/17b24a03b...422d2cb0c"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "17b24a03b5528f7949b258f5001e25fb4304de90",
-        "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
-        "title": "Test that proc mounts share the TCP SACK setting",
-        "summary": "After TCP SACK was disabled through the new proc mount, native Linux and current gVisor read 0 through the first mount. Restoring the old per-inode cache on the same source made that read return 1. The common syscall test is independent of the already merged #14369.",
-        "url": "https://github.com/tamird/gvisor/commit/17b24a03b",
-        "body": "Read tcp_sack through two proc mounts in one network namespace, then\nchange it through the new mount. Both paths must observe the new value.\nIf a proc inode caches its first read, the original mount returns stale\ndata."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
+          "at": "2026-10-30T16:00:18.051356+00:00",
+          "outcome": "approved"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
+        "observedAt": "2026-10-30T16:00:18.051356+00:00",
+        "disposition": "Approved to submit with redundant Go success case removed",
+        "nextAction": "Verify the retained injected-EACCES case and open the standalone PR. The shared native/guest syscall fixture is unchanged.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/422d2cb0c",
+          "https://github.com/tamird/gvisor/actions/runs/41082945196/artifacts/12989664166"
+        ]
       }
     }
   ],
