@@ -34,7 +34,9 @@ done
 expect_missing_shell() {
   local result=0
   "${baz[@]}" build "${flags[@]}" --keep_going "${targets[@]}" > "$RUNNER_TEMP/stock.log" 2>&1 || result=$?
-  if [[ "$result" == 0 ]] || ! grep -m1 -Ei '(/bin/bash.*(not found|no such file|does not exist|could not be found|cannot find))|((not found|no such file|does not exist|could not be found|cannot find).*/bin/bash)' "$RUNNER_TEMP/stock.log" | cut -c1-480 > "$out/missing-shell.txt" || ! [[ -s "$out/missing-shell.txt" ]]; then
+  # Executor errors may JSON-escape slashes in the command path.
+  sed 's|\\/|/|g' "$RUNNER_TEMP/stock.log" > "$RUNNER_TEMP/stock.normalized"
+  if [[ "$result" == 0 ]] || ! grep -m1 -Ei '/bin/bash.*(not found|no such file|does not exist|could not be found|cannot find)|(not found|no such file|does not exist|could not be found|cannot find).*/bin/bash' "$RUNNER_TEMP/stock.normalized" | cut -c1-480 > "$out/missing-shell.txt" || ! [[ -s "$out/missing-shell.txt" ]]; then
     tail -35 "$RUNNER_TEMP/stock.log" >&2
     return 1
   fi
