@@ -1,7 +1,8 @@
 #!/bin/bash
 set -eu -o pipefail
 product=0e2d23ed2e6d60a724e0da199bed111050a094c5
-test "$(git rev-parse HEAD~2)" = "$product"
+git merge-base --is-ancestor "$product" HEAD
+git diff --exit-code "$product" HEAD -- pkg/state
 cp -R .github/qualification/float-fix "$RUNNER_TEMP/fixture"
 git checkout --quiet --detach "$product"
 git rev-parse HEAD:pkg/state > "$RUNNER_TEMP/state-tree"
@@ -54,8 +55,14 @@ probe=pkg/state/graph_decode_callbacks_test.go
 sed -i '/^[[:space:]]*"fmt"$/a\	"math"' "$probe"
 cat "$RUNNER_TEMP/fixture/observation.go" >> "$probe"
 test "$(git diff --name-only -- pkg/state)" = "$probe"
+native=(--config=aarch64 --platforms=@focused_platform//:ubuntu_arm64 --use_target_platform_for_tests)
+preflight=0
+bazelisk --bazelrc="$rc" aquery "${native[@]}" --output=text \
+  'mnemonic("TestRunner", set(//pkg/state:state_test //pkg/state/tests:tests_test))' > "$RUNNER_TEMP/native-actions.txt" || preflight=$?
+printf "Configured ARM test action query exited %s\n" "$preflight"
+grep -E '^(action |  Execution platform: )' "$RUNNER_TEMP/native-actions.txt" | head -24 || :
 rc_runtime=0
-bazelisk --bazelrc="$rc" test --config=aarch64 "${common[@]}" --test_arg=-test.v \
+bazelisk --bazelrc="$rc" test "${native[@]}" "${common[@]}" --test_arg=-test.v \
   '--modify_execution_info=^TestRunner$=+no-remote-cache' \
   --execution_log_compact_file="$RUNNER_TEMP/runtime.binpb" \
   --build_event_json_file="$RUNNER_TEMP/fix.jsonl" \
@@ -67,8 +74,8 @@ git diff --exit-code -- pkg/state
 rc_nogo=0
 bazelisk --bazelrc="$rc" test --config=x86_64 -c opt "${common[@]}" \
   --build_tag_filters= --test_tag_filters= --jobs=4 \
-  --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox \
-  --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStaticAnalysis=linux-sandbox \
+  --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed \
+  --strategy=GoStandardLibraryAnalysis=sandboxed --strategy=GoStaticAnalysis=sandboxed \
   '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis|StaticAnalysis)$=+no-remote-cache,^TestRunner$=+no-remote-cache' \
   --output_groups=+nogo_findings --execution_log_compact_file="$RUNNER_TEMP/nogo.binpb" \
   --build_event_json_file="$RUNNER_TEMP/nogo.jsonl" \

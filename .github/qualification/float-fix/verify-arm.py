@@ -84,6 +84,10 @@ for stage, labels in (("runtime", tests), ("nogo", analyzers)):
     except Exception as error:
         receipt["errors"].append(f"{stage}: {type(error).__name__}: {error}"[:1100])
 
+if (tmp / "native-actions.txt").exists():
+    receipt["preflight_execution_platforms"] = sorted(set(re.findall(
+        r"^  Execution platform: (.+)$", (tmp / "native-actions.txt").read_text(), re.M)))
+receipt["qualification_diagnostic"] = "https://github.com/tamird/gvisor/actions/runs/40999583492"
 receipt["qualified"] = not receipt["errors"]
 receipt["verified"] = datetime.now(timezone.utc).isoformat()
 (tmp / "results/arm.json").write_text(json.dumps(receipt, indent=2) + "\n")
