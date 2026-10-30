@@ -570,6 +570,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.pipeReplayTimer("RTO")
 	s.ep.stack.Stats().TCP.Timeouts.Increment()
 	s.ep.stats.SendErrors.Timeouts.Increment()
 
@@ -1230,6 +1231,7 @@ func (s *sender) SetPipe() {
 	if !s.ep.SACKPermitted || !s.FastRecovery.Active {
 		return
 	}
+	fmt.Printf("DIAG BEGIN now_ms=%d una=%d nxt=%d high=%d cwnd=%d sacked=%d out_before=%d\n", s.ep.stack.Clock().NowMonotonic().Milliseconds(), s.SndUna, s.SndNxt, s.FastRecovery.HighRxt, s.SndCwnd, s.SackedOut, s.Outstanding)
 	pipe := 0
 	smss := seqnum.Size(s.ep.scoreboard.SMSS())
 	for s1 := s.writeList.Front(); s1 != nil && s1.payloadSize() != 0 && s.isAssignedSequenceNumber(s1); s1 = s1.Next() {
@@ -1251,6 +1253,7 @@ func (s *sender) SetPipe() {
 				break
 			}
 			if s.ep.scoreboard.IsSACKED(sb) {
+				fmt.Printf("DIAG RANGE lo=%d hi=%d lost=%t xmits=%d observed=%t credit=%d scoreboard_sacked=true scoreboard_lost=skipped a=0 b=0\n", sb.Start, sb.End, s1.lost, s1.xmitCount, s1.acked, s1.sackCredit)
 				continue
 			}
 
@@ -1261,17 +1264,21 @@ func (s *sender) SetPipe() {
 			// NOTE: here we mark the whole segment as lost. We do not try
 			// and test every byte in our write buffer as we maintain our
 			// pipe in terms of outstanding packets and not bytes.
+			before := pipe
 			if !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
 			// SetPipe():
 			//    (b) If S1 <= HighRxt, Pipe is incremented by 1.
+			afterA := pipe
 			if s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt) {
 				pipe++
 			}
+			fmt.Printf("DIAG RANGE lo=%d hi=%d lost=%t xmits=%d observed=%t credit=%d scoreboard_sacked=false scoreboard_lost=%t a=%d b=%d\n", sb.Start, sb.End, s1.lost, s1.xmitCount, s1.acked, s1.sackCredit, s.ep.scoreboard.IsRangeLost(sb), afterA-before, pipe-afterA)
 		}
 	}
 	s.Outstanding = pipe
+	fmt.Printf("DIAG TOTAL now_ms=%d una=%d high=%d pipe=%d\n", s.ep.stack.Clock().NowMonotonic().Milliseconds(), s.SndUna, s.FastRecovery.HighRxt, pipe)
 }
 
 // shouldEnterRecovery returns true if the sender should enter fast recovery
@@ -2005,4 +2012,8 @@ func (s *sender) corkTimerExpired() tcpip.Error {
 	// Drain all the segments.
 	s.sendData()
 	return nil
+}
+
+func (s *sender) pipeReplayTimer(name string) {
+	fmt.Printf("DIAG TIMER name=%s now_ms=%d una=%d high=%d cwnd=%d pipe=%d\n", name, s.ep.stack.Clock().NowMonotonic().Milliseconds(), s.SndUna, s.FastRecovery.HighRxt, s.SndCwnd, s.Outstanding)
 }

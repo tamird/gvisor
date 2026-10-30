@@ -210,6 +210,7 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.pipeReplayTimer("PTO")
 	var dataSent bool
 	if s.writeNext != nil && s.writeNext.xmitCount == 0 && s.Outstanding < s.SndCwnd {
 		dataSent = s.maybeSendSegment(s.writeNext, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
@@ -433,6 +434,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	rc.snd.pipeReplayTimer("RACK")
 	// Evaluate loss as of the time the reorder timer was scheduled to fire (its
 	// target), not the current clock. The timer is armed for the instant a
 	// segment's reorder window elapses, but the timer callback itself can run
