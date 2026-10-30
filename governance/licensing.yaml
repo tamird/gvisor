@@ -60,6 +60,18 @@ exceptions:
       test containers and is not linked into released gVisor binaries.
       Its source archive and GPLv2 license are retained with the build inputs,
       and the test image includes the license text.
+  - dependency: pypi/setuptools-84.0.0-py3-none-any.whl
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - LGPL-3.0-only
+      - MIT
+    exception_rationale: >-
+      Setuptools is the declared build backend for the Python distribution,
+      used only by the Bazel execution tool. Its wheel bundles autocommand
+      under LGPLv3 alongside permissively licensed dependencies. These
+      tools are not distribution runtime requirements or payload files.
+      The distribution action stages only the declared project sources.
   - dependency: qemu_user_prebuilt_linux_amd64_aarch64
     license: GPL-2.0-only
     exception_rationale: >-

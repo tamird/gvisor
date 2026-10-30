@@ -130,6 +130,25 @@ python.single_version_platform_override(
     urls = [PYTHON_STATIC_ARCHIVE.format("x86_64")],
 )
 
+# Only gVisor's release target uses this wheel hub.
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip", dev_dependency = True)
+pip.parse(
+    # Reject source archives instead of building wheels during dependency fetching.
+    # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L520-L550
+    download_only = True,
+    # Select Bazel's downloader instead of pip so the license audit can see the
+    # wheels' URLs and hashes in Bazel's resolved repository records.
+    # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L216-L241
+    # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L557-L559
+    experimental_index_url = "https://pypi.org/simple",
+    hub_name = "python_distribution_deps",
+    python_version = "3.11",
+    requirements_lock = "//tools/python_distribution:requirements.txt",
+    # Resolve the same release tools on Linux and Darwin, regardless of the coordinator.
+    target_platforms = ["linux_aarch64", "linux_x86_64", "osx_aarch64", "osx_x86_64"],
+)
+use_repo(pip, "python_distribution_deps")
+
 ### Crosstool
 coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
 use_repo(coral_crosstool_extension, "coral_crosstool")
