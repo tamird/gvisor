@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T16:28:53.467944+00:00",
+  "registryDate": "2026-10-30T16:35:22.407373+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -245733,6 +245733,15 @@
         "observedAt": "2026-10-15T17:50:09.335568+00:00"
       }
     },
+    "pr:15449": {
+      "maintainer-review": {
+        "scope": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
+        "since": "2026-10-25T12:53:20.570315+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T11:43:52.308556+00:00"
+      }
+    },
     "pr:15453": {
       "merged": {
         "scope": "71a39f8405a27fe1f504ac541d942bb0632e4d33",
@@ -247007,7 +247016,7 @@
         "since": "2026-10-30T16:10:34.939505+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T16:10:34.939505+00:00"
+        "observedAt": "2026-10-30T16:35:22.407373+00:00"
       }
     },
     "pr:16097": {
@@ -247053,6 +247062,15 @@
         "basis": "transition",
         "qualifier": null,
         "observedAt": "2026-10-25T21:34:37.717619+00:00"
+      }
+    },
+    "pr:16180": {
+      "maintainer-review": {
+        "scope": "ed3f77eb2dc84b35f85083caac2acea26e682444",
+        "since": "2026-10-30T14:48:10.245840+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T15:04:35.804034+00:00"
       }
     },
     "pr:16194": {
@@ -248006,6 +248024,15 @@
         "observedAt": "2026-10-30T11:43:52.308556+00:00"
       }
     },
+    "pr:16627": {
+      "maintainer-review": {
+        "scope": "d94cb4a5563d03e38f0b0d5e62ee1744c091cfbb",
+        "since": "2026-10-28T21:57:15.752612+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T11:43:52.308556+00:00"
+      }
+    },
     "pr:16661": {
       "maintainer-review": {
         "scope": "5a22e6beaa402db7b9e182f9e72b321f46205504",
@@ -248469,60 +248496,6 @@
         "observedAt": "2026-10-30T13:03:42.615335+00:00"
       }
     },
-    "branch:release-archives-versioned": {
-      "contributor-review": {
-        "scope": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
-        "since": "2026-10-30T03:43:50.365987+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T13:03:39.698453+00:00"
-      }
-    },
-    "branch:tcp-restore-send-deadlines": {
-      "contributor-review": {
-        "scope": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
-        "since": "2026-10-29T21:52:21.505470+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T13:03:39.698453+00:00"
-      }
-    },
-    "branch:declared-staged-release-check": {
-      "contributor-review": {
-        "scope": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
-        "since": "2026-10-30T00:11:26.175497+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T13:03:39.698453+00:00"
-      }
-    },
-    "branch:mutable-overlay-poll-waiter": {
-      "contributor-review": {
-        "scope": "65b4611218d04b56fe0d65d4ca39dddb292fa658",
-        "since": "2026-10-30T05:07:07.633004+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T13:03:39.698453+00:00"
-      }
-    },
-    "branch:gofer-character-device-restore": {
-      "contributor-review": {
-        "scope": "103965803b95d0d06b9b2341046f56828489ff1b",
-        "since": "2026-10-30T13:19:13.082582+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T13:19:13.082582+00:00"
-      }
-    },
-    "pr:16180": {
-      "maintainer-review": {
-        "scope": "ed3f77eb2dc84b35f85083caac2acea26e682444",
-        "since": "2026-10-30T14:48:10.245840+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T15:04:35.804034+00:00"
-      }
-    },
     "pr:bazel-contrib/rules_python:4385": {
       "checks-pending": {
         "scope": "4385:1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
@@ -248546,40 +248519,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T14:50:12.258059+00:00"
-      }
-    },
-    "pr:16627": {
-      "maintainer-review": {
-        "scope": "d94cb4a5563d03e38f0b0d5e62ee1744c091cfbb",
-        "since": "2026-10-28T21:57:15.752612+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T11:43:52.308556+00:00"
-      }
-    },
-    "pr:15449": {
-      "maintainer-review": {
-        "scope": "3bfb8269fbe12ba074d3085ba83f5b321ca74912",
-        "since": "2026-10-25T12:53:20.570315+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T11:43:52.308556+00:00"
-      }
-    },
-    "pr:16745": {
-      "checks-pending": {
-        "scope": "16745:db2a858e8c6cceba5324a10a457327d5f23fa888",
-        "since": "2026-10-30T16:28:55.419031+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T16:28:55.419031+00:00"
-      },
-      "maintainer-review": {
-        "scope": "db2a858e8c6cceba5324a10a457327d5f23fa888",
-        "since": "2026-10-30T16:28:55.419031+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T16:28:55.419031+00:00"
       }
     },
     "pr:16743": {
@@ -248612,6 +248551,76 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T16:10:34.938722+00:00"
+      }
+    },
+    "pr:16745": {
+      "checks-pending": {
+        "scope": "16745:db2a858e8c6cceba5324a10a457327d5f23fa888",
+        "since": "2026-10-30T16:28:55.419031+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:28:55.419031+00:00"
+      },
+      "maintainer-review": {
+        "scope": "db2a858e8c6cceba5324a10a457327d5f23fa888",
+        "since": "2026-10-30T16:28:55.419031+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:28:55.419031+00:00"
+      }
+    },
+    "branch:bazel-python-release": {
+      "contributor-review": {
+        "scope": "b5bd72431940ce903fe7521e2498811d8420f750",
+        "since": "2026-10-30T16:35:22.407373+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:35:22.407373+00:00"
+      }
+    },
+    "branch:release-archives-versioned": {
+      "contributor-review": {
+        "scope": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
+        "since": "2026-10-30T03:43:50.365987+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:35:22.407373+00:00"
+      }
+    },
+    "branch:gofer-character-device-restore": {
+      "contributor-review": {
+        "scope": "103965803b95d0d06b9b2341046f56828489ff1b",
+        "since": "2026-10-30T13:19:13.082582+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:35:22.407373+00:00"
+      }
+    },
+    "branch:tcp-restore-send-deadlines": {
+      "contributor-review": {
+        "scope": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
+        "since": "2026-10-29T21:52:21.505470+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:35:22.407373+00:00"
+      }
+    },
+    "branch:declared-staged-release-check": {
+      "contributor-review": {
+        "scope": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
+        "since": "2026-10-30T00:11:26.175497+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:35:22.407373+00:00"
+      }
+    },
+    "branch:mutable-overlay-poll-waiter": {
+      "contributor-review": {
+        "scope": "65b4611218d04b56fe0d65d4ca39dddb292fa658",
+        "since": "2026-10-30T05:07:07.633004+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T16:35:22.407373+00:00"
       }
     }
   },

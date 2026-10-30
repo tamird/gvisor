@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T16:28:53.467944+00:00",
+    "updatedAt": "2026-10-30T16:35:22.407373+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1927,15 +1927,47 @@
       "id": "branch:bazel-python-release",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "bazel-python-release",
+      "ref": "research/release-wheel-frontend",
       "title": "Build Python distributions with Bazel",
-      "url": "https://github.com/tamird/gvisor/tree/bazel-python-release",
+      "url": "https://github.com/tamird/gvisor/commit/b5bd72431",
       "group": "release",
       "status": "branch",
-      "summary": "Bazel builds the wheel on AMD64 and ARM64 scratch workers, and Make stages it without Docker. The setuptools candidate also produces identical source archives across architectures while preserving all 13 original members, their contents, order, modes and ownership. The wheel and source archive both install on CPython 3.7.17. Flit dropped the license field and eight source entries. The release still depends on #15114.",
-      "updatedAt": "2026-10-30T05:02:51.680037+00:00",
-      "head": "d916fe3c16adda0472ab24d2e42ce84d91a8da29",
+      "summary": "Build SandboxExec’s wheel and source archive with the declared Python tools. The same bytes installed on CPython 3.7 and built on GNU and on AMD64 and ARM64 scratch workers.",
+      "updatedAt": "2026-10-30T16:35:22.407373+00:00",
+      "head": "b5bd72431940ce903fe7521e2498811d8420f750",
       "evidence": [
+        {
+          "label": "Release action b5bd72431",
+          "url": "https://github.com/tamird/gvisor/commit/b5bd72431"
+        },
+        {
+          "label": "Wheel scanner amendment to #15114 (d67495aac)",
+          "url": "https://github.com/tamird/gvisor/compare/e9289d0a2...d67495aac"
+        },
+        {
+          "label": "226 dependencies, omitted-wheel control, scanner suite and three matching archive pairs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41090172899/artifacts/12993841762"
+        },
+        {
+          "label": "Both distributions installed offline on CPython 3.7",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41086533339/artifacts/12991837566"
+        },
+        {
+          "label": "Physical GNU and AMD64/ARM64 scratch actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41085702907/artifacts/12992580531"
+        },
+        {
+          "label": "Static Python interpreter registration",
+          "url": "https://github.com/tamird/gvisor/commit/7bc279973"
+        },
+        {
+          "label": "Namespace initializer supplier",
+          "url": "https://github.com/bazel-contrib/rules_python/pull/4385"
+        },
+        {
+          "label": "Namespace initializer backport used in qualification",
+          "url": "https://github.com/tamird/gvisor/commit/6beca606f"
+        },
         {
           "label": "Remaining wheel-audit prerequisite",
           "url": "https://github.com/google/gvisor/pull/15114"
@@ -1972,7 +2004,38 @@
           "label": "CPython 3.7.17 installs and backend comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/41004416541/artifacts/12954523262"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "d916fe3c16adda0472ab24d2e42ce84d91a8da29"
+        },
+        "after": {
+          "head": "b5bd72431940ce903fe7521e2498811d8420f750"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b5bd72431940ce903fe7521e2498811d8420f750",
+        "baseHead": "6beca606f2cf450f71b2f93af39364fab8cc1911",
+        "url": "https://github.com/tamird/gvisor/commit/b5bd72431",
+        "title": "Review the Python release and selected-wheel audit",
+        "summary": "Review the release action and a separate correction to #15114. The complete inventory passes for all 226 dependencies; deleting the tomli_w record identifies exactly that missing wheel.",
+        "body": "b5bd72431 builds the distributions with rules_python’s selected interpreter and PyPA’s declared frontend. The release script still selects the version and publishes the artifacts. The archive bytes matched on GNU and both scratch architectures.\n\nd67495aac lets #15114 audit rules_python’s selected wheel archives and their SHA-256 pins. It rejects a local wheel that overrides an advertised URL. All 59 scanner test records passed.\n\nThe release depends on the wheel-audit changes, the static Python registration and the namespace initializer from rules_python #4385. The tested source includes the fork’s separate backport. #15114 is awaiting the maintainer’s response about internal license exceptions."
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Proposed release and scanner changes",
+        "sourceHead": "b5bd72431940ce903fe7521e2498811d8420f750",
+        "observedAt": "2026-10-30T16:35:22.407373+00:00",
+        "nextAction": "Review b5bd72431 and d67495aac together. Await the maintainer’s disposition on #15114 and open the release change after its audit and Python prerequisites land.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b5bd72431",
+          "https://github.com/tamird/gvisor/compare/e9289d0a2...d67495aac",
+          "https://github.com/tamird/gvisor/actions/runs/41090172899/artifacts/12993841762",
+          "https://github.com/tamird/gvisor/actions/runs/41086533339/artifacts/12991837566"
+        ]
+      }
     },
     {
       "id": "branch:bazel-clang-tidy-llvm",
