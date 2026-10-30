@@ -708,11 +708,14 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		*dest = wire.Uint(obj.Uint())
 	case reflect.Float32:
-		*dest = wire.Float32(obj.Float())
+		var f wire.Float32
+		scalarStorage(&f, obj.Type()).Set(obj)
+		*dest = f
 	case reflect.Float64:
 		*dest = wire.Float64(obj.Float())
 	case reflect.Complex64:
-		c := wire.Complex64(obj.Complex())
+		var c wire.Complex64
+		scalarStorage(&c, obj.Type()).Set(obj)
 		*dest = &c // Needs alloc.
 	case reflect.Complex128:
 		c := wire.Complex128(obj.Complex())
