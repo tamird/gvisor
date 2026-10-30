@@ -81,6 +81,20 @@ jobs:
             if ((rc!=0 && status==0)); then status=$rc; elif ((inspected!=0 && status==0)); then status=$inspected; fi
           done
           exit "$status"
+      - name: Reconcile the two expected architecture verdicts
+        if: always()
+        run: |
+          python3 - <<'PYCODE'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          dst=Path(os.environ["RUNNER_TEMP"])/"publication"
+          dst.mkdir(parents=True,exist_ok=True)
+          results={a:json.loads((dst/f"{a}.json").read_text())["status"] if (dst/f"{a}.json").is_file() else "MISSING" for a in ("amd64","arm64")}
+          bundle={"source":os.environ["GITHUB_SHA"],"architectures":results,"targets":["//sandboxexec/sandbox/python:dist"],"verified_at":datetime.now(timezone.utc).isoformat()}
+          (dst/"summary.json").write_text(json.dumps(bundle)+"\n")
+          if set(results.values())!={"PASS"}: raise SystemExit(1)
+          PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

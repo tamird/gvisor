@@ -1,5 +1,6 @@
 # Generate namespace package initializers from their text template without
 # requiring a shell or cp in wheel consumers' execution environments.
+diff --git a/python/private/pypi/namespace_pkgs.bzl b/python/private/pypi/namespace_pkgs.bzl
 --- a/python/private/pypi/namespace_pkgs.bzl
 +++ b/python/private/pypi/namespace_pkgs.bzl
 @@ -1,6 +1,6 @@
@@ -44,6 +45,7 @@
              out = src,
              **kwargs
          )
+diff --git a/python/private/pypi/BUILD.bazel b/python/private/pypi/BUILD.bazel
 --- a/python/private/pypi/BUILD.bazel
 +++ b/python/private/pypi/BUILD.bazel
 @@ -229,7 +229,7 @@
