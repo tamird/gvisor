@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T18:24:04.695422+00:00",
+    "updatedAt": "2026-10-30T18:30:15.668722+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36906,12 +36906,20 @@
       "title": "Respect ancestor memory limits in cgroup v2",
       "url": "https://github.com/tamird/gvisor/commit/c89f8f55a",
       "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T17:10:05.970966+00:00",
+      "updatedAt": "2026-10-30T18:30:15.668722+00:00",
       "summary": "With a 512 MiB ancestor, a sandbox reported 15.6 GiB or 768 MiB through /proc/meminfo. Both corrected guests report 512 MiB; a 384 MiB leaf still wins.",
       "evidence": [
         {
           "label": "Six guests and both complete three-case root test results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41093384824/artifacts/12994594698"
+        },
+        {
+          "label": "Both analyzers passed; privileged package runner bypassed one read-only fixture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41095218492/artifacts/13000328467"
+        },
+        {
+          "label": "Complete package without DAC overrides: 156 passed, 0 skipped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41106589645/artifacts/13001043012"
         }
       ],
       "contributorReview": {
@@ -52613,7 +52621,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T18:14:56.863778+00:00",
+      "updatedAt": "2026-10-30T18:30:15.668722+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -53420,9 +53428,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/40993356576/artifacts/12950408289"
             }
           ]
+        },
+        {
+          "text": "For each of the two real erofs-utils Debian packages, the existing layer action requires /bin/bash. On the empty AMD64 worker, a declared zstd executable decompressed and gzip-compressed the AMD64 and ARM64 inputs in four uncached actions. Both output hashes match the original layers. These are two package architectures on one worker; the other 28 Debian targets and optional merged-/usr transformation have not been qualified.",
+          "evidence": [
+            {
+              "label": "Original missing shell and both stock layer hashes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41106368340/artifacts/13002340635"
+            },
+            {
+              "label": "Four uncached actions and exact matching digests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41107074427/artifacts/13000859718"
+            }
+          ]
         }
       ],
-      "nextStep": "For the real AMD64 and ARM64 erofs-utils Debian packages, compare a declared zstd action on the empty worker with the original layer bytes. Separately, capture the stock Jekyll output and test the site generator with declared Ruby and Node. Neither experiment establishes repository-wide hermeticity.",
+      "nextStep": "Check whether rules_distroless can reuse an existing archive rule, and qualify the other supported input formats before proposing the change upstream. Independently compare all rendered files and run the serving image in the complete Jekyll site build.",
       "evidence": [
         {
           "label": "Skylib supplier proposal for shell-free native file copies",
@@ -53597,12 +53618,16 @@
           "url": "https://github.com/tamird/gvisor/blob/c1756b6d4/tools/rules_python_native_launcher.patch"
         },
         {
-          "label": "Debian package controls and scratch comparison",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41105073140"
+          "label": "Verified Debian layer comparison on scratch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41107074427/artifacts/13000859718"
         },
         {
           "label": "Jekyll plugin, Node and HTMLProofer scratch fixture",
           "url": "https://github.com/tamird/gvisor/actions/runs/41104916935"
+        },
+        {
+          "label": "Full Jekyll site, proof and serving-image comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41107304093"
         }
       ],
       "group": "rbe"
