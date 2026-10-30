@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:44:14.108156+00:00",
+    "updatedAt": "2026-10-30T15:44:50.173444+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22523,15 +22523,15 @@
       "title": "Validate FIB attributes by netlink ID",
       "group": "runtime",
       "url": "https://github.com/google/gvisor/pull/16264",
-      "status": "open",
-      "summary": "The contributor explicitly approved 00015441096e607fb99bb6d303dfd54a8ac2d3ea. The reviewed patch is delivered as PR #16264 at 00015441096e607fb99bb6d303dfd54a8ac2d3ea. The exact approved FIB source was published without another source change. Provider head and body are verified; the PR is open, non-draft and mergeable, with public CI starting. No merge or auto-merge was requested.\n\nPreserved source and review record:\n\nThe FIB attribute-policy proposal is refreshed and independently source-reviewed on current upstream dd6f after prerequisite #15816 merged. The original policy/test patch is unchanged: validate keyed netlink IDs, network-order register bounds before narrowing, and unknown flag bits. The published review commit is 0001544109. Prior failing-before and corrected qualification evidence remains source-specific; no fresh workload was run. Contributor approval is required before an upstream PR.\n\nPreserved earlier record:\n\nThe presence-fixture prerequisite #15816 has merged. WorkMap owns the now-unblocked source refresh against current upstream and the existing reproduced regression, followed by independent source review. Contributor approval is still required before opening a PR.\n\nPreserved source and qualification record:\n\nThe FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
-      "updatedAt": "2026-10-23T17:18:23.883889+00:00",
+      "status": "merged",
+      "summary": "#16264 merged as 77b527868 on October 24. It validates FIB netlink attributes. The separate socket-netfilter-fib-boundaries proposal adds native Linux and runsc coverage.\n\nPreserved source and review record:\n\nThe FIB attribute-policy proposal is refreshed and independently source-reviewed on current upstream dd6f after prerequisite #15816 merged. The original policy/test patch is unchanged: validate keyed netlink IDs, network-order register bounds before narrowing, and unknown flag bits. The published review commit is 0001544109. Prior failing-before and corrected qualification evidence remains source-specific; no fresh workload was run. Contributor approval is required before an upstream PR.\n\nPreserved earlier record:\n\nThe presence-fixture prerequisite #15816 has merged. WorkMap owns the now-unblocked source refresh against current upstream and the existing reproduced regression, followed by independent source review. Contributor approval is still required before opening a PR.\n\nPreserved source and qualification record:\n\nThe FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
+      "updatedAt": "2026-10-30T15:44:50.173444+00:00",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Contributor-approved patch delivered; current public CI and maintainer review pending",
+        "disposition": "Merged",
         "sourceHead": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
-        "observedAt": "2026-10-23T17:18:23.883889+00:00",
-        "nextAction": "Follow PR #16264 through the existing snapshot and route substantive current-head failures or review feedback. No new contributor decision or duplicate PR.",
+        "observedAt": "2026-10-30T15:44:50.173444+00:00",
+        "nextAction": "Review the separate common syscall-test proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c",
           "https://app.buildbuddy.io/invocation/3cb3ddab-5b91-4622-b809-afbb3270ac65",
@@ -36433,6 +36433,60 @@
           "https://github.com/tamird/gvisor/actions/runs/41083132225"
         ]
       }
+    },
+    {
+      "id": "branch:socket-netfilter-fib-boundaries",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/socket-netfilter-fib-boundaries",
+      "head": "632655077dd22ba059b970f211c3cf2a59dd2ac9",
+      "title": "Test FIB register and flag validation through netlink",
+      "url": "https://github.com/tamird/gvisor/compare/1398e3d66...632655077",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-30T15:44:50.173444+00:00",
+      "summary": "Use one socket program to check the register and flag policy from #16264. Linux and current gVisor passed all three cases. Pre-fix gVisor accepted both malformed requests and the valid boundary.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "632655077dd22ba059b970f211c3cf2a59dd2ac9",
+        "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
+        "url": "https://github.com/tamird/gvisor/compare/1398e3d66...632655077",
+        "title": "Test FIB register and flag validation through netlink",
+        "summary": "Use one socket program to check the register and flag policy from #16264. Linux and current gVisor passed all three cases. Pre-fix gVisor accepted both malformed requests and the valid boundary.",
+        "body": "Exercise the FIB destination register and flag validation added in #16264 through the existing nftables netlink table. A register that would truncate to NFT_REG_1 must return ERANGE. An unsupported flag must return EINVAL. The highest valid 32-bit register must succeed.\n\nAll three cases passed on native Linux and on gVisor at 1398e3d66. On dd6f043ac, gVisor accepted both malformed requests. The highest valid register succeeded on all three systems [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41081538440/artifacts/12989932992",
+        "requestedAt": "2026-10-30T15:44:50.173444+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Merged FIB policy",
+          "url": "https://github.com/google/gvisor/pull/16264"
+        },
+        {
+          "label": "Native Linux, pre-fix and current gVisor results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41081538440/artifacts/12989932992"
+        },
+        {
+          "label": "Original three compiler failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41079870059/artifacts/12988682950"
+        },
+        {
+          "label": "Original compiler diagnostics",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41081332294/artifacts/12989531588"
+        },
+        {
+          "label": "linux Bazel invocation",
+          "url": "https://app.buildbuddy.io/invocation/8d186f98-0954-4739-910c-b3b50a663d43"
+        },
+        {
+          "label": "original Bazel invocation",
+          "url": "https://app.buildbuddy.io/invocation/8b1c5efe-2f13-482e-971a-9591dd8bd51f"
+        },
+        {
+          "label": "current Bazel invocation",
+          "url": "https://app.buildbuddy.io/invocation/0f0d4491-dfa2-4cd8-90b8-641b2b23fdf8"
+        }
+      ]
     }
   ],
   "edges": [
@@ -39662,6 +39716,16 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/15449",
         "https://github.com/tamird/gvisor/commit/57bd4a9e5"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:socket-netfilter-fib-boundaries",
+      "to": "pr:16264",
+      "reason": "The syscall tests exercise the FIB policies added by this merged PR.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16264",
+        "https://github.com/tamird/gvisor/actions/runs/41081538440/artifacts/12989932992"
       ]
     }
   ],
