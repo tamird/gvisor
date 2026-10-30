@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:56:11.029169+00:00",
+    "updatedAt": "2026-10-30T05:02:51.680037+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1928,8 +1928,8 @@
       "url": "https://github.com/tamird/gvisor/tree/bazel-python-release",
       "group": "release",
       "status": "branch",
-      "summary": "The Bazel wheel proposal depends on #15114. On an integration branch, AMD64 and ARM64 scratch workers built byte-identical wheels. The release Make target staged them without invoking Docker. Source archives have identical payloads but differing tar and gzip timestamps; reproducing the source archive remains open.",
-      "updatedAt": "2026-10-30T04:23:11.019191+00:00",
+      "summary": "Bazel builds the wheel on AMD64 and ARM64 scratch workers, and Make stages it without Docker. The setuptools candidate also produces identical source archives across architectures while preserving all 13 original members, their contents, order, modes and ownership. The wheel and source archive both install on CPython 3.7.17. Flit dropped the license field and eight source entries. The release still depends on #15114.",
+      "updatedAt": "2026-10-30T05:02:51.680037+00:00",
       "head": "d916fe3c16adda0472ab24d2e42ce84d91a8da29",
       "evidence": [
         {
@@ -1955,6 +1955,18 @@
         {
           "label": "setuptools: source distribution timestamp handling",
           "url": "https://github.com/pypa/setuptools/issues/2133"
+        },
+        {
+          "label": "Setuptools candidate and its upstream issue",
+          "url": "https://github.com/tamird/gvisor/commit/997c27aa4"
+        },
+        {
+          "label": "Both native builds and the standard wheel override",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41005555923/artifacts/12954499469"
+        },
+        {
+          "label": "CPython 3.7.17 installs and backend comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41004416541/artifacts/12954523262"
         }
       ]
     },
