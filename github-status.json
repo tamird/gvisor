@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T19:07:17.087909+00:00",
-  "registryDate": "2026-10-30T19:59:57.043832+00:00",
+  "registryDate": "2026-10-30T20:14:01.214446+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -226091,14 +226091,14 @@
       "branchHead": "e4a78767b89adc5e806334ce41ad5d6c73109927",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-10-30T19:06:40.445990+00:00",
+      "mergeabilityCheckedAt": "2026-10-30T20:14:01.212798+00:00",
       "headCommittedAt": "2026-10-30T10:22:47Z",
       "headHistoryComplete": true,
       "headIntroducedAt": "2026-10-30T10:42:35Z",
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
       "authorLogin": "tamird",
-      "updatedAt": "2026-10-30T15:38:08Z",
+      "updatedAt": "2026-10-30T20:03:27Z",
       "createdAt": "2026-10-29T15:41:21Z",
       "mergedAt": null,
       "closedAt": null,
@@ -226170,6 +226170,23 @@
             }
           },
           {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVNIh_g",
+            "url": "https://github.com/google/gvisor/pull/16677#pullrequestreview-5718024702",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-30T20:03:27Z",
+            "updatedAt": "2026-10-30T20:03:27Z",
+            "authorAssociation": "COLLABORATOR",
+            "author": {
+              "login": "ayushr2",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "e4a78767b89adc5e806334ce41ad5d6c73109927"
+            }
+          },
+          {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6x4Bp5",
             "isResolved": false,
@@ -226200,6 +226217,23 @@
             "updatedAt": "2026-10-30T10:42:56Z",
             "author": {
               "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6x4Bp5",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "pkg/sentry/fsimpl/overlay/regular_file.go",
+            "line": 134,
+            "id": "PRRC_kwDOB9IlXs8AAAABB-2frQ",
+            "url": "https://github.com/google/gvisor/pull/16677#discussion_r4427980717",
+            "body": "I see, can we drop the unit test here. LGTM otherwise.",
+            "createdAt": "2026-10-30T20:03:26Z",
+            "updatedAt": "2026-10-30T20:03:27Z",
+            "author": {
+              "login": "ayushr2",
               "__typename": "User"
             }
           }
@@ -226401,12 +226435,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-30T19:06:58.908909+00:00",
+      "checkedAt": "2026-10-30T20:14:01.213112+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e4a78767b89adc5e806334ce41ad5d6c73109927",
         "base": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd",
-        "checkedAt": "2026-10-30T19:06:40.445990+00:00"
+        "checkedAt": "2026-10-30T20:14:01.212798+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -250923,7 +250957,14 @@
         "since": "2026-10-30T10:46:23.517860+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T19:06:58.908909+00:00"
+        "observedAt": "2026-10-30T20:14:01.213112+00:00"
+      },
+      "contributor-review": {
+        "scope": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
+        "since": "2026-10-30T20:14:01.214446+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T20:14:01.214446+00:00"
       }
     },
     "pr:16682": {

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T19:59:57.043832+00:00",
+    "updatedAt": "2026-10-30T20:14:01.214446+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34427,22 +34427,37 @@
       "title": "overlay: retain the backing file selected for close",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "updatedAt": "2026-10-30T20:14:01.214446+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "url": "https://github.com/google/gvisor/pull/16677",
-      "summary": "A dup refers to the same overlay file. Between selecting the lower file and entering its close callback, fchmod through that dup can drop the cached file’s last reference. Stock sent FUSE FLUSH after RELEASE and close returned EBADF.",
+      "summary": "Ayush asked to drop the Go unit test and otherwise gave LGTM. The signed fork amendment changes only the test and BUILD file compared with the live PR. The guest close/fchmod evidence remains in the PR description.",
       "followup": {
         "owner": "root",
         "sourceHead": "e4a78767b89adc5e806334ce41ad5d6c73109927",
-        "observedAt": "2026-10-30T10:46:19.726076+00:00",
-        "disposition": "Approved amendment published and reviewer answered",
-        "nextAction": "Follow Ayush’s review on the published amendment.",
+        "observedAt": "2026-10-30T20:14:01.214446+00:00",
+        "disposition": "Fork amendment and reply awaiting contributor review",
+        "nextAction": "Review the signed test removal and proposed reply before updating the live PR.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16677#discussion_r4422775128",
-          "https://github.com/tamird/gvisor/compare/4ce9994cd...e4a78767b"
+          "https://github.com/google/gvisor/pull/16677#discussion_r4427980717",
+          "https://github.com/tamird/gvisor/commit/0bb7564e8",
+          "https://app.buildbuddy.io/invocation/910bfa68-aa50-49e8-9658-3a5cc5cd1a68",
+          "https://app.buildbuddy.io/invocation/b14cd43e-2399-46fc-91d6-15cd915e3f4c",
+          "https://github.com/tamird/gvisor/actions/runs/41041801101/artifacts/12970144079"
         ]
       },
       "evidence": [
+        {
+          "label": "Ayush asks to remove the unit test",
+          "url": "https://github.com/google/gvisor/pull/16677#discussion_r4427980717"
+        },
+        {
+          "label": "Signed test-removal proposal",
+          "url": "https://github.com/tamird/gvisor/commit/0bb7564e8"
+        },
+        {
+          "label": "Shared FUSE guest fixture",
+          "url": "https://github.com/tamird/gvisor/blob/226647e5c/test/syscalls/linux/fuse.cc#L1232-L1347"
+        },
         {
           "label": "Reviewed amendment and reply to Ayush",
           "url": "https://github.com/google/gvisor/pull/16677#discussion_r4422775128"
@@ -34491,6 +34506,17 @@
         "after": {
           "head": "e4a78767b89adc5e806334ce41ad5d6c73109927"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
+        "baseHead": "e4a78767b89adc5e806334ce41ad5d6c73109927",
+        "url": "https://github.com/tamird/gvisor/commit/0bb7564e8",
+        "title": "Drop the overlay close unit test",
+        "summary": "The live PR remains at e4a78767b. The amendment removes 128 lines of Go test and its Bazel target. The qualified production file is byte-identical. The short reviewer reply is ready if the amendment is published.",
+        "body": "Proposed reply to Ayush after publication:\n\nDropped the Go unit test and its BUILD target. The guest test remains linked in the description. On stock gVisor, close returned EBADF after the FUSE server released the lower handle before flushing it. With the reference held, close succeeded. Native Linux also completed close and fchmod successfully.\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-10-30T20:14:01.214446+00:00"
       }
     },
     {
