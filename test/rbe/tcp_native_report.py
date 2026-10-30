@@ -23,22 +23,21 @@ def main():
     for row in captured["reports"]:
         if row["name"] == "test.log":
             log = (out / row["path"]).read_text()
-            for stage,mss,sacked,unacked,lost,retrans in re.findall(r"LINUX-PMTU stage=(\w+) mss=(\d+) sacked=(\d+) unacked=(\d+) lost=(\d+) retrans=(\d+)",log):
-                metrics.append(dict(stage=stage, MSS=int(mss), sacked=int(sacked), unacked=int(unacked), lost=int(lost),retrans=int(retrans)))
-            for old,new,size,sacked in re.findall(r"LINUX-WIRE pre_mss=(\d+) post_mss=(\d+) hole_bytes=(\d+) sacked=(\d+)",log):
-                metrics.append(dict(stage="wire",first_mss=int(old),new_mss=int(new),hole_bytes=int(size),sacked=int(sacked)))
+            for stage,count,recovery in re.findall(r"SPLIT stage=(\w+) count=(-?\d+) recovery=(true|false)",log):
+                metrics.append(dict(stage=stage,sacked=int(count),recovery=recovery=="true"))
+            if not metrics:
+                errors.extend(line[:360] for line in log.splitlines() if re.search(r"tcp_rack_test.go:\d+:|--- FAIL",line))
     results = [e["testResult"] for line in events.read_text().splitlines() if "testResult" in (e := json.loads(line))]
     invocation = next((e["started"]["uuid"] for line in events.read_text().splitlines() if "started" in (e := json.loads(line))), None)
     by_stage={m["stage"]:m for m in metrics}
-    if set(by_stage) != {"ack1","sack3","pmtu","done","wire"} or len(metrics)!=5:
-        errors.append("missing native kernel packet/PMTU observations")
-    else:
-        assert by_stage["ack1"]["sacked"]==0 and by_stage["sack3"]["sacked"]==1 and by_stage["done"]["sacked"]==0
-        assert by_stage["wire"]["hole_bytes"]==by_stage["pmtu"]["MSS"] < by_stage["sack3"]["MSS"]
+    if [m["stage"] for m in metrics] != ["sack3","trim","loss","done"] or not by_stage.get("loss",{}).get("recovery") or by_stage.get("done",{}).get("recovery"):
+        errors.append("missing peer observations of partial ACK, recovery entry and exit")
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") not in ("local","standalone") for r in results):
         errors.append("expected one uncached Linux host result")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
         errors.append("runner failed")
+    if verdict.get("case_counts",{}).get("passed")!=1 or verdict.get("case_counts",{}).get("skipped")!=0:
+        errors.append("expected exactly one completed case and no skips")
     if errors and verdict["status"] == "PASS":
         verdict["status"] = "INCOMPLETE"
     verdict["errors"].extend(errors)

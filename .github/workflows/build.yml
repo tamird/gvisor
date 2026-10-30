@@ -1,13 +1,13 @@
-name: Measure the native Linux SACK count across PMTU retransmission
+name: Measure selective acknowledgment through a partial ACK and recovery
 on:
   push:
-    branches: [qualification/tcp-sack-pmtu-linux]
+    branches: [qualification/tcp-sack-split]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-pmtu-linux'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-split'
     runs-on: ubuntu-24.04
     timeout-minutes: 100
     steps:
@@ -15,17 +15,26 @@ jobs:
       with:
         fetch-depth: 8
         persist-credentials: false
-    - name: Run the two missing cases on the preflighted Linux host
+    - name: Run matched Linux and gVisor recovery cases
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        native=308405432064a635ba9bf5361ef6b5065ee39134; nparent=ba1947269b1b733c8110f785961ea883fd3ed7a8
+        native=c91f50fce224627d38a7867e2e3c347b727b893b; nparent=ba1947269b1b733c8110f785961ea883fd3ed7a8
+        stock=7334cd876b68aa3c63aa442c8d6752e476833350; candidate=a18ba0077c3ca76dbbcdf8e6138cde29dd2b3d7b; product=4bf449d82f58d412ef835d0c949f4eba6a8eaeeb
         test "$(git rev-parse HEAD^2)" = "$native"
+        test "$(git rev-parse HEAD^3)" = "$stock"
+        test "$(git rev-parse HEAD^4)" = "$candidate"
         test "$(git rev-parse "$native^")" = "$nparent"
-        git diff --quiet "$nparent" "$native" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)test/packetimpact/testbench/layers.go'
+        test "$(git rev-parse "$stock^")" = "$nparent"
+        test "$(git rev-parse "$candidate^")" = "$product"
+        git diff --quiet "$nparent" "$native" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)test/packetimpact/dut/native/main.go'
+        for arm in "$stock" "$candidate"; do
+          test "$(git diff --name-only "$arm^" "$arm")" = "pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go"
+        done
+        git diff --quiet "$stock" "$candidate" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_native_report.py tcp_race_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -120,10 +129,14 @@ jobs:
         PYCHECK
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in linux; do
+        for arm in linux stock candidate; do
           case "$arm" in
             linux) source=$native; parent=$nparent; label=//test/packetimpact/tests:tcp_rack_native_test
-                   checker=tcp_native_report.py; options=(--test_filter=TestLinuxSACKCountAfterPMTU --test_timeout=240);;
+                   checker=tcp_native_report.py; options=(--test_filter=TestLinuxSACKRecoverySplit --test_timeout=240);;
+            stock|candidate) source=$stock; parent=$nparent
+                   if test "$arm" = candidate; then source=$candidate; parent=$product; fi
+                   label=//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
+                   checker=tcp_native_report.py; options=(--test_filter=TestSACKRecoverySplitAfterPartialACK --test_timeout=120);;
           esac
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
@@ -150,7 +163,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["linux"]
+        arms = ["linux","stock","candidate"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["status"] == "PASS" and v.get("verified",True) for v in verdicts.values()) else "FAIL"}
@@ -163,6 +176,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-native-sack-pmtu
+        name: tcp-sack-split
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
