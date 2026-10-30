@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T21:11:20.286137+00:00",
+    "updatedAt": "2026-10-30T21:19:57.406552+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2043,8 +2043,8 @@
       "head": "6be2b030b0018a818ebfba80fe8191969aa078f6",
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/tamird/gvisor/commit/6be2b030b",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T17:24:24.119828+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
       "summary": "Building two tags in the same checkout placed four files in the second release and overwrote pyproject.toml. A private project and fresh setuptools source list leave just the current wheel and source archive. Both frontends preserved the tracked version; the corrected sdist retained the same 12 members even when an old manifest named the previous tarball.",
       "evidence": [
         {
@@ -2064,16 +2064,6 @@
           "url": "https://github.com/tamird/gvisor/compare/8f15deb0c...6be2b030b"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6be2b030b0018a818ebfba80fe8191969aa078f6",
-        "baseHead": "8f15deb0c38d1cb62c3047239d64f6879ff54f32",
-        "url": "https://github.com/tamird/gvisor/commit/6be2b030b",
-        "title": "Stage only the current Python release archives",
-        "summary": "Building two tags in the same checkout placed four files in the second release and overwrote pyproject.toml. A private project and fresh setuptools source list leave just the current wheel and source archive. Both frontends preserved the tracked version; the corrected sdist retained the same 12 members even when an old manifest named the previous tarball.",
-        "body": "The Python release script builds in the source checkout and copies every\nwheel and source archive in dist/. Building two tags in succession puts\nthe first tag’s archives in the second release and changes the version\nin the checked-in pyproject.toml.\n\nBuild in a temporary copy of the project and copy only the archives that\ninvocation produced. Regenerate setuptools’ source list so it cannot pull\nin an archive named by an older build. With both release frontends, the\nsecond tag stages its own wheel and source archive and preserves the\ntracked version [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41098132210/artifacts/12997227463"
-      },
       "refinement": {
         "before": {
           "head": "1ca62a67091928c6a536a1436e5378889202f747"
@@ -2081,6 +2071,24 @@
         "after": {
           "head": "6be2b030b0018a818ebfba80fe8191969aa078f6"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6be2b030b0018a818ebfba80fe8191969aa078f6",
+          "outcome": "approved",
+          "at": "2026-10-30T21:19:57.406552+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "6be2b030b0018a818ebfba80fe8191969aa078f6",
+        "observedAt": "2026-10-30T21:19:57.406552+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Restore the brace-bodied release function as requested, preserve cleanup and working directory, and qualify the all path before opening the approved change.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6be2b030b"
+        ]
       }
     },
     {
@@ -19849,29 +19857,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fix/ipv6-quoted-extension-headers",
-      "head": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
+      "head": "9bc5517f1f05b62025af3ae4846eaae8431bcc79",
       "title": "netstack: parse quoted IPv6 extension headers",
       "url": "https://github.com/google/gvisor/pull/16096",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T16:18:46.780446+00:00",
+      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
       "summary": "Replace simulated ICMPv6 control delivery with six shared UDP socket cases. Native Linux and corrected gVisor passed all six. Stock gVisor missed errors quoting destination options, first fragments and atomic fragments; the other three controls agreed. The revision removes 98 lines of Go tests.",
-      "followup": {
-        "owner": "work_map_current",
-        "disposition": "Requested rebase delivered; follow exact-head checks and review",
-        "sourceHead": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
-        "observedAt": "2026-10-25T12:46:43.341670+00:00",
-        "nextAction": "Follow checks, matching imports and any required maintainer reapproval on the delivered head through the existing watcher. The human rebase request is handled; no acknowledgement, repeated contributor decision or runtime replay is needed.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16096",
-          "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d",
-          "https://app.buildbuddy.io/invocation/a8acb9fb-e1b7-4817-a035-9179e0e26fee",
-          "https://github.com/tamird/gvisor/commit/7a48d5a71efe1439fcb2621e3209e26cdd78393b",
-          "https://github.com/google/gvisor/pull/16096#issuecomment-6393576687",
-          "https://github.com/tamird/gvisor/commit/af38f71655e6a9d0ee3c780bd355fdae9bc53fc3"
-        ]
-      },
       "evidence": [
+        {
+          "label": "Exact Go suite and pinned formatter passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41089380740"
+        },
         {
           "label": "Six matching syscall cases on Linux, stock gVisor and corrected gVisor",
           "url": "https://github.com/tamird/gvisor/actions/runs/41087541506/artifacts/12992652699"
@@ -19898,15 +19895,21 @@
         }
       ],
       "number": 16096,
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "9bc5517f1f05b62025af3ae4846eaae8431bcc79",
-        "baseHead": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
-        "url": "https://github.com/tamird/gvisor/commit/9bc5517f1",
-        "title": "Replace simulated ICMPv6 control delivery with six shared UDP socket cases",
-        "summary": "Replace simulated ICMPv6 control delivery with six shared UDP socket cases. Native Linux and corrected gVisor passed all six. Stock gVisor missed errors quoting destination options, first fragments and atomic fragments; the other three controls agreed. The revision removes 98 lines of Go tests.",
-        "body": "Review the change from the published head before its amendment. The exact candidate’s Go suite and formatter must also pass before publication.\n\ngit -C ~/code/gvisor range-diff af38f7165^! 9bc5517f1^!"
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "9bc5517f1f05b62025af3ae4846eaae8431bcc79",
+          "outcome": "approved",
+          "at": "2026-10-30T21:19:57.406552+00:00"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3"
+        },
+        "after": {
+          "head": "9bc5517f1f05b62025af3ae4846eaae8431bcc79"
+        }
       }
     },
     {
@@ -29887,26 +29890,9 @@
       "title": "Use the official server images in port-forward tests",
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/16551",
-      "head": "149bb94456e2889ffa2e72ef44acd03fe5ac3215",
+      "head": "fa7daa135f0ca5de5461ac4b27f046632707e5e2",
       "status": "open",
-      "updatedAt": "2026-10-28T02:29:44.806571+00:00",
-      "followup": {
-        "owner": "root",
-        "sourceHead": "149bb94456e2889ffa2e72ef44acd03fe5ac3215",
-        "observedAt": "2026-10-28T02:29:44.806571+00:00",
-        "disposition": "Approved combined change delivered as #16551",
-        "nextAction": "Follow review, CI and import on #16551. The earlier runtime receipt remains attached to its qualified source.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16551",
-          "https://github.com/google/gvisor/commit/05154faacf50471f5e5bdfd19de09ae6f983ddf1",
-          "https://github.com/google/gvisor/pull/16527",
-          "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
-          "https://app.buildbuddy.io/invocation/94558fe7-29bb-4541-802f-26229e15ef94",
-          "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850",
-          "https://app.buildbuddy.io/invocation/50d20319-56f5-4dcf-8808-762d6c4dc61c",
-          "https://github.com/google/gvisor/pull/16430"
-        ]
-      },
+      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
       "links": [
         {
           "label": "Historical Nginx proposal",
@@ -29990,7 +29976,8 @@
           "label": "Remote configured-case lookup; audit command failure preserved",
           "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
-      ]
+      ],
+      "summary": "Rebased the Nginx and Redis images over the Bun image; all six patch paths retain the reviewed additions and deletions. The earlier import separately failed containerd sandbox creation."
     },
     {
       "id": "branch:sniffer-embed-symlink",
@@ -34884,14 +34871,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/gofer-restored-device-syscall",
-      "head": "103965803b95d0d06b9b2341046f56828489ff1b",
+      "head": "38104a3919e6ba9f3292056c2d22ebfdf57feb82",
       "title": "Restore gofer poll registration on character devices",
       "url": "https://github.com/google/gvisor/pull/16761",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T20:59:38.674936+00:00",
+      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
       "summary": "After checkpointing an open /dev/random file, fresh EPOLL_CTL_ADD returned EPERM in both stock gofer modes. The ordinary syscall test passes on Linux and the four corrected gVisor configurations.",
       "evidence": [
+        {
+          "label": "Format-only follow-up to the approved syscall fixture; upstream lint passed",
+          "url": "https://github.com/tamird/gvisor/commit/38104a391"
+        },
         {
           "label": "Seven case results: two stock EPERM failures and five passes",
           "url": "https://github.com/tamird/gvisor/actions/runs/41060778181/artifacts/12980906287"
@@ -36666,18 +36657,22 @@
       }
     },
     {
-      "id": "branch:tun-packet-info-header",
-      "type": "branch",
+      "id": "pr:16764",
+      "type": "pr",
       "group": "runtime",
-      "repo": "tamird/gvisor",
+      "repo": "google/gvisor",
       "ref": "review/tun-packet-info-standalone",
-      "head": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
-      "title": "Preserve the TUN packet-information header on reads",
-      "url": "https://github.com/tamird/gvisor/commit/5fa30581c",
-      "status": "Awaiting contributor review",
+      "head": "12141aeb30fa79076391cbb6b111cf3c8378e68e",
+      "title": "Honor packet information on truncated TUN reads",
+      "url": "https://github.com/google/gvisor/pull/16764",
+      "status": "open",
       "summary": "Linux and the standalone correction pass all four shared read boundaries; stock returned three bytes instead of EINVAL for a short header, omitted TUN_PKT_STRIP, returned one byte instead of EFAULT for an inaccessible header, and consumed a packet on a zero-byte read. The full corrected TUN suite passed 24 cases with the existing down-device skip. This is independent of #15449.",
-      "updatedAt": "2026-10-30T17:46:38.208685+00:00",
+      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
       "evidence": [
+        {
+          "label": "Linux UAPI declares native-order flags and network-order protocol",
+          "url": "https://github.com/torvalds/linux/blob/7d0a66e4b/include/uapi/linux/if_tun.h#L107-L110"
+        },
         {
           "label": "Linux, stock and full TUN suite; final source changes only an exported-constant comment",
           "url": "https://github.com/tamird/gvisor/actions/runs/41085306145/artifacts/12994698250"
@@ -36703,15 +36698,22 @@
           "url": "https://github.com/tamird/gvisor/commit/57bd4a9e5"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
-        "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
-        "url": "https://github.com/tamird/gvisor/commit/5fa30581c",
-        "title": "Preserve the TUN packet-information header on reads",
-        "summary": "Linux and the standalone correction pass all four shared read boundaries; stock returned three bytes instead of EINVAL for a short header, omitted TUN_PKT_STRIP, returned one byte instead of EFAULT for an inaccessible header, and consumed a packet on a zero-byte read. The full corrected TUN suite passed 24 cases with the existing down-device skip. This is independent of #15449.",
-        "body": "An IPv4 or IPv6 packet read from a TUN device with packet information\nenabled starts with a four-byte header. Linux returns EINVAL if the\nbuffer is too short for the header and EFAULT if the whole header cannot\nbe copied. If the header fits but the payload does not, the header\nreports TUN_PKT_STRIP [1]. A read of zero bytes leaves the packet queued\n[2].\n\nWrite the header before copying the packet data. This distinguishes a\npartial header fault from a short successful payload read. The flags use\nnative byte order; the protocol stays in network byte order.\n\nThe shared syscall test sends a UDP datagram through a TUN device before\neach read. It covers a three-byte buffer, a header-only buffer, an iovec\nthat faults after the first header byte, and a zero-byte read followed\nby a read of the pending packet.\n\n[1]: https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L2053\n[2]: https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L2164"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
+          "outcome": "approved",
+          "at": "2026-10-30T21:19:57.406552+00:00"
+        }
+      ],
+      "number": 16764,
+      "refinement": {
+        "before": {
+          "head": "5fa30581c58c120ca603051a3988163d1e9fc0bf"
+        },
+        "after": {
+          "head": "12141aeb30fa79076391cbb6b111cf3c8378e68e"
+        }
       }
     },
     {
@@ -36974,8 +36976,8 @@
       "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
       "title": "Respect ancestor memory limits in cgroup v2",
       "url": "https://github.com/tamird/gvisor/commit/c89f8f55a",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T18:30:15.668722+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
       "summary": "With a 512 MiB ancestor, a sandbox reported 15.6 GiB or 768 MiB through /proc/meminfo. Both corrected guests report 512 MiB; a 384 MiB leaf still wins.",
       "evidence": [
         {
@@ -36991,15 +36993,23 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41106589645/artifacts/13001043012"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
-        "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
-        "url": "https://github.com/tamird/gvisor/commit/c89f8f55a",
-        "title": "Respect ancestor memory limits in cgroup v2",
-        "summary": "With a 512 MiB ancestor, a sandbox reported 15.6 GiB or 768 MiB through /proc/meminfo. Both corrected guests report 512 MiB; a 384 MiB leaf still wins.",
-        "body": "A sandbox with no memory limit on its own cgroup can report the host's\nmemory in /proc/meminfo even when its pod has a much lower ceiling.\nSetting a limit on the sandbox does not help if it exceeds the pod's\nlimit. Linux enforces the parent limit on every descendant [1].\n\nUse the smallest memory.max between the sandbox and the root of its\nvisible cgroup hierarchy. With a 512 MiB ancestor, the guest now reports\n512 MiB for an unlimited leaf and for a 768 MiB leaf. A 384 MiB leaf\nstill reports 384 MiB.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/Documentation/admin-guide/cgroup-v2.rst#L545-L549"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
+          "outcome": "approved",
+          "at": "2026-10-30T21:19:57.406552+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
+        "observedAt": "2026-10-30T21:19:57.406552+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Check native Linux in the same host cgroups. The approved integration test starts runsc under a pod limit, then reads /proc/meminfo inside the guest. Submit if the requested audit confirms this is the correct boundary.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c89f8f55a"
+        ]
       }
     },
     {
@@ -37317,39 +37327,43 @@
       "head": "3278152c32b9202d21e10cb4949d88b04da03ce7",
       "title": "Return the assigned interface name from TUNSETIFF",
       "url": "https://github.com/tamird/gvisor/commit/3278152c3",
-      "summary": "Use the shared IFReq.SetName for TUNSETIFF, TUNGETIFF and host queries. SIOCGIFNAME returns a name into the caller’s request; SIOCGIFCONF writes fresh zeroed records. A syscall comparison is checking both behaviors.",
+      "summary": "Use the shared IFReq.SetName for TUNSETIFF, TUNGETIFF and host queries. Linux and corrected gVisor passed the same nine ioctl cases; stock zeroed a caller-owned byte after the name. The ABI, hostinet and TUN analyzers passed.",
       "evidence": [
         {
-          "label": "Linux: both shared syscall cases passed",
+          "label": "Exact syscall, stock control and analyzer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41125713649/artifacts/13012542083"
+        },
+        {
+          "label": "Earlier TUN proposal: Linux: both shared syscall cases passed",
           "url": "https://app.buildbuddy.io/invocation/1ec857f1-91e5-433f-b2fb-cfbb9d3420f5"
         },
         {
-          "label": "Stock: empty name; success on a read-only request",
+          "label": "Earlier TUN proposal: Stock: empty name; success on a read-only request",
           "url": "https://app.buildbuddy.io/invocation/49266657-958e-4787-8b33-3bd0084e49f2"
         },
         {
-          "label": "Fixed: both shared syscall cases passed",
+          "label": "Earlier TUN proposal: Fixed: both shared syscall cases passed",
           "url": "https://app.buildbuddy.io/invocation/6123fd42-3720-4eed-a8e4-fa9ca107ebfd"
         },
         {
-          "label": "Owning TUN device analyzer passed",
+          "label": "Earlier TUN proposal: Owning TUN device analyzer passed",
           "url": "https://app.buildbuddy.io/invocation/01a5cea9-5a35-4aa8-bc84-96effd3b3b38"
         },
         {
-          "label": "Verified original XML; the Actions verifier expected unexpanded C macro names",
+          "label": "Earlier TUN proposal: Verified original XML; the Actions verifier expected unexpanded C macro names",
           "url": "https://tamird.github.io/gvisor/tun-setiff-copyout-verdict.json"
         },
         {
-          "label": "Original six records and macro-expanded stock failure text",
+          "label": "Earlier TUN proposal: Original six records and macro-expanded stock failure text",
           "url": "https://github.com/tamird/gvisor/actions/runs/41121550130/artifacts/13008813777"
         },
         {
-          "label": "Original reproducer and maintainer diagnosis in 2021",
+          "label": "Earlier TUN proposal: Original reproducer and maintainer diagnosis in 2021",
           "url": "https://github.com/google/gvisor/pull/6035#issuecomment-888710039"
         }
       ],
-      "updatedAt": "2026-10-30T20:44:38.135618+00:00",
-      "status": "Agent work",
+      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
+      "status": "Awaiting contributor review",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -37366,15 +37380,15 @@
           "head": "3278152c32b9202d21e10cb4949d88b04da03ce7"
         }
       },
-      "followup": {
-        "owner": "root",
-        "sourceHead": "3278152c32b9202d21e10cb4949d88b04da03ce7",
-        "observedAt": "2026-10-30T20:44:38.135618+00:00",
-        "disposition": "Address contributor feedback on the shared name setter",
-        "nextAction": "Qualify the new socket regression, existing interface list and TUN cases against Linux. Return the revised commit for review.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/3278152c3"
-        ]
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "3278152c32b9202d21e10cb4949d88b04da03ce7",
+        "baseHead": "70cb23c0de3c8d1295054663b50717546fbbc7a7",
+        "url": "https://github.com/tamird/gvisor/commit/3278152c3",
+        "title": "Return the assigned interface name from TUNSETIFF",
+        "summary": "Use the shared IFReq.SetName for TUNSETIFF, TUNGETIFF and host queries. Linux and corrected gVisor passed the same nine ioctl cases; stock zeroed a caller-owned byte after the name. The ABI, hostinet and TUN analyzers passed.",
+        "body": "When a caller asks the kernel to choose a TUN interface name, Linux\ncopies the assigned name back into the request. gVisor creates the\ninterface but leaves the name empty [1]. Copy the request back after\nattachment, so a read-only output buffer returns EFAULT and leaves\nthe interface attached as on Linux [2].\n\nUse IFReq.SetName for the TUN ioctls. Like TUNSETIFF, SIOCGIFNAME\nwrites a terminated name into the caller's buffer without padding the\nentire field [3]. Preserve unused bytes instead of zeroing them all.\nSIOCGIFCONF builds each output record from zero, so its padding remains\nzero.\n\n[1]: https://github.com/google/gvisor/issues/6034\n[2]: https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L3081-L3095\n[3]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/core/dev.c#L1157-L1165"
       }
     },
     {
