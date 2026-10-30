@@ -19,6 +19,8 @@ import (
 	"reflect"
 	"sync"
 	"unsafe"
+
+	"github.com/google/btree"
 )
 
 // objectState is the encoding state of an object.
@@ -105,8 +107,6 @@ type encObject struct {
 	// x holds the state of arrays and of objects that absorbed others.
 	x *objExtra
 
-	// stamp deduplicates query results.
-	stamp uint32
 	// final is the index of the object in the stream.
 	final int32
 }
@@ -205,20 +205,11 @@ type work struct {
 	elemRange
 }
 
-// blockShift is the log2 byte size (512 B) of each address-space bucket in
-// graphEncodeState.blocks for overlap queries. 512 B balances two costs:
-// smaller blocks cause multi-KiB structs and slice backing arrays to span many
-// buckets on insertion and query, while page-sized blocks (4-8 KiB) group
-// dozens of unrelated small heap allocations from the same Go size-class span
-// into long bucket chains.
-const blockShift = 9
-
-// blockEntry is an entry in a list of objects intersecting a block.
-type blockEntry struct {
-	// addr and end are the range of the object, so that entries can be
-	// checked without accessing the object.
-	addr, end uintptr
-	obj, next int32
+// indexedRange identifies a top-level object by its exclusive end address.
+// Top-level objects do not overlap, so their ends and starts sort identically.
+type indexedRange struct {
+	end uintptr
+	obj int32
 }
 
 // splice is an encoding to reuse when encoding a containing object.
@@ -255,12 +246,9 @@ type graphEncodeState struct {
 	// byAddr maps addresses to the first target at that address.
 	byAddr addrMap
 	// maps maps map pointers to their targets.
-	maps map[unsafe.Pointer]int32
-	// blocks maps blocks of memory to the objects that intersect them.
-	blocks       addrMap
-	blockEntries []blockEntry
-	stamp        uint32
-	queryResult  []int32
+	maps        map[unsafe.Pointer]int32
+	ranges      *btree.BTreeG[indexedRange]
+	queryResult []int32
 
 	queue     []work
 	queueHead int
@@ -334,17 +322,16 @@ func newGraphEncodeState(ctx context.Context, root *typeInfo) *graphEncodeState 
 	// with the size of the last such graph saved or loaded.
 	bytes, targets := int(root.hintBytes.Load()), int(root.hintTargets.Load())
 	es := &graphEncodeState{
-		ctx:          ctx,
-		maps:         make(map[unsafe.Pointer]int32),
-		blockEntries: make([]blockEntry, 0, targets),
-		queue:        make([]work, 0, targets),
-		refs:         make([]int32, 0, targets),
-		segRefs:      make([]segmentRefs, 0, targets),
-		traversals:   make(map[traversalKey]bool),
-		out:          encBuf{b: make([]byte, 0, max(bytes, 4<<10))},
+		ctx:        ctx,
+		maps:       make(map[unsafe.Pointer]int32),
+		ranges:     btree.NewG(16, func(a, b indexedRange) bool { return a.end < b.end }),
+		queue:      make([]work, 0, targets),
+		refs:       make([]int32, 0, targets),
+		segRefs:    make([]segmentRefs, 0, targets),
+		traversals: make(map[traversalKey]bool),
+		out:        encBuf{b: make([]byte, 0, max(bytes, 4<<10))},
 	}
 	es.byAddr.init(targets)
-	es.blocks.init(targets)
 	return es
 }
 
@@ -356,8 +343,7 @@ func setHints(root *typeInfo, bytes, targets int) {
 }
 
 // chunkedShift is the log2 of the number of elements (1024) per slab in
-// chunked[T]. It sizes the encoder's internal metadata slabs (objs and targets)
-// and is unrelated to blockShift (which buckets target virtual addresses).
+// chunked[T]. It sizes the encoder's internal metadata slabs (objs and targets).
 // 1024 elements (~128 KiB for encObject, ~48 KiB for encTarget) amortizes slab
 // allocations on large checkpoints while letting chunks[0] grow incrementally
 // for small graphs.
@@ -435,8 +421,8 @@ const maxPooledSlots = 1 << 18
 // release returns es to graphEncodeStatePool, if it is not too large.
 func (es *graphEncodeState) release() {
 	if cap(es.out.b)+cap(es.final.b)+cap(es.binaryBuf) > maxPooledBytes ||
-		len(es.byAddr.slots)+len(es.blocks.slots) > maxPooledSlots ||
-		cap(es.blockEntries)+cap(es.queue) > maxPooledSlots ||
+		len(es.byAddr.slots) > maxPooledSlots ||
+		es.ranges.Len()+cap(es.queue) > maxPooledSlots ||
 		cap(es.refs)+cap(es.segRefs) > maxPooledSlots {
 		return
 	}
@@ -447,9 +433,7 @@ func (es *graphEncodeState) release() {
 	es.targets.reset()
 	es.byAddr.reset()
 	clear(es.maps)
-	es.blocks.reset()
-	es.blockEntries = es.blockEntries[:0]
-	es.stamp = 0
+	es.ranges.Clear(true)
 	es.queryResult = es.queryResult[:0]
 	es.queue = es.queue[:0]
 	es.queueHead = 0

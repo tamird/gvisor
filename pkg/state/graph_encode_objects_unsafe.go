@@ -24,45 +24,25 @@ import (
 // index adds the object to the object index.
 func (es *graphEncodeState) index(obj int32) {
 	o := es.obj(obj)
-	for b := o.addr >> blockShift; b <= (o.end-1)>>blockShift; b++ {
-		head, ok := es.blocks.get(b)
-		if !ok {
-			head = -1
-		}
-		es.blockEntries = append(es.blockEntries, blockEntry{addr: o.addr, end: o.end, obj: obj, next: head})
-		es.blocks.set(b, int32(len(es.blockEntries)-1))
-	}
+	es.ranges.ReplaceOrInsert(indexedRange{end: o.end, obj: obj})
 }
 
 // query returns the live objects overlapping [addr, end). The result is only
 // valid until the next call.
 func (es *graphEncodeState) query(addr, end uintptr) []int32 {
-	es.stamp++
-	if es.stamp == 0 {
-		for i := 0; i < es.objs.n; i++ {
-			es.objs.at(i).stamp = 0
-		}
-		es.stamp = 1
-	}
 	es.queryResult = es.queryResult[:0]
-	for b := addr >> blockShift; b <= (end-1)>>blockShift; b++ {
-		e, ok := es.blocks.get(b)
-		if !ok {
-			continue
+	// The first possible match ends strictly after addr. All subsequent
+	// ranges start later, so stop as soon as one starts at or beyond end.
+	es.ranges.AscendGreaterOrEqual(indexedRange{end: addr + 1}, func(r indexedRange) bool {
+		o := es.obj(r.obj)
+		if o.addr >= end {
+			return false
 		}
-		for ; e >= 0; e = es.blockEntries[e].next {
-			be := &es.blockEntries[e]
-			if be.addr >= end || addr >= be.end {
-				continue
-			}
-			o := es.obj(be.obj)
-			if o.parent >= 0 || o.dead || o.stamp == es.stamp {
-				continue
-			}
-			o.stamp = es.stamp
-			es.queryResult = append(es.queryResult, be.obj)
+		if !o.dead {
+			es.queryResult = append(es.queryResult, r.obj)
 		}
-	}
+		return true
+	})
 	return es.queryResult
 }
 
@@ -300,6 +280,7 @@ func (es *graphEncodeState) checkInterior(obj int32, off uintptr, ti *typeInfo, 
 // parent, part of parent.
 func (es *graphEncodeState) absorb(parent, obj int32) {
 	p, o := es.obj(parent), es.obj(obj)
+	es.ranges.Delete(indexedRange{end: o.end})
 	off := o.addr - p.addr
 	o.parent = parent
 	o.parentOff = off
