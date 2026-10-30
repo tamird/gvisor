@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T05:05:43.774745+00:00",
+    "updatedAt": "2026-10-30T05:06:38.535625+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4334,8 +4334,8 @@
       "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2",
       "group": "bazel",
       "status": "Contributor approved; waiting for prerequisites",
-      "summary": "The compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051.",
-      "updatedAt": "2026-10-29T22:32:40.423771+00:00",
+      "summary": "The compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051. The reviewed compiler now waits for #16669’s two-target static-link fix. Its delivery stack keeps the four other Go declarations at their upstream settings.",
+      "updatedAt": "2026-10-30T05:06:38.535625+00:00",
       "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
       "evidence": [
         {
@@ -4357,6 +4357,14 @@
         {
           "label": "Standalone source migration, independent of compiler selection",
           "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+        },
+        {
+          "label": "Compiler on the two-target prerequisite; reviewed compiler and SPDX changes preserved",
+          "url": "https://github.com/tamird/gvisor/commit/a6b802e4d"
+        },
+        {
+          "label": "Compare approved stack with narrowed stack (four inherited declarations)",
+          "url": "https://github.com/tamird/gvisor/compare/bcb5de5b2...a6b802e4d"
         }
       ],
       "refinement": {
@@ -36405,16 +36413,6 @@
       ]
     },
     {
-      "from": "pr:15463",
-      "to": "branch:hermetic-compiler-review",
-      "type": "includes",
-      "reason": "Satisfied upstream prerequisite. The compiler migration relies on actual Go static mode for six existing consumers. The independent 60a correction is composed into the validated 6614/4cd heads and remains separate from the final compiler proposal. GNU ioctl preload ABI remains owned by the LLVM delta.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/60a4c080d6103c96a8f77525daed9c12a66deec1",
-        "https://github.com/google/gvisor/pull/15536"
-      ]
-    },
-    {
       "from": "pr:15502",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
@@ -37335,13 +37333,6 @@
       "type": "depends_on",
       "reason": "Use the released Protobuf producer lockfiles instead of a local generated-lock patch.",
       "evidence": "https://github.com/google/gvisor/pull/16254"
-    },
-    {
-      "from": "pr:16234",
-      "to": "branch:hermetic-compiler-review",
-      "type": "depends_on",
-      "reason": "Upstream reverted #16234 after merge. Check the real cgo/race tools before deciding whether a replacement is needed.",
-      "evidence": "https://github.com/google/gvisor/commit/f4c82a02fc3e8452463d5b58f013ba2140003f17"
     },
     {
       "from": "pr:16249",
@@ -38325,6 +38316,18 @@
       "to": "branch:declared-staged-release-check",
       "reason": "The staged Buildkite validation uses the approved Bazelisk setup.",
       "evidence": "https://github.com/tamird/gvisor/commit/a5627c731"
+    },
+    {
+      "to": "branch:hermetic-compiler-review",
+      "type": "depends_on",
+      "reason": "#16669 is open. Host-run benchmarks and the test_app executable need to run without the build host’s loader. The four other original Go declarations remain at their upstream settings. The compiler patch applies on this two-target prerequisite.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16669",
+        "https://github.com/tamird/gvisor/commit/a6b802e4d",
+        "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888660533",
+        "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888051513"
+      ],
+      "from": "pr:16669"
     }
   ],
   "investigations": [
@@ -52073,11 +52076,11 @@
     {
       "id": "investigation:static-tool-rollback",
       "title": "Check static Go tools after the upstream rollback",
-      "status": "active",
+      "status": "concluded",
       "owner": "root",
       "group": "bazel",
-      "updatedAt": "2026-10-29T09:20:29.299794+00:00",
-      "summary": "Upstream reverted the six build declarations from #16234. The rollback gives no reason. Its affected tools include the shim, test helper, webhook and benchmarks.",
+      "updatedAt": "2026-10-30T05:06:38.535625+00:00",
+      "summary": "Only the host-run benchmarks and the test_app helper need changes to satisfy their documented use. #16669 covers both; the compiler waits for that open PR. The rollback did not explain its internal cause.",
       "findings": [
         {
           "text": "The decisive public evidence is the inverse patch in #16656. The tested package build used the restored shim setting and succeeded; that says nothing about the other tools under cgo or race.",
@@ -52095,9 +52098,52 @@
               "url": "https://app.buildbuddy.io/invocation/46b7348c-bd0b-41e3-9480-4ce4635e6c1f"
             }
           ]
+        },
+        {
+          "text": "All eight Bazel builds succeeded. The original reporter could not match some transitioned binaries to their GoLink outputs. Recovery tied the 48 actual executables to their successful producer actions across cgo/race, AMD64/ARM64 and both settings. That result establishes link behavior, not the reason for the internal rollback.",
+          "evidence": [
+            {
+              "label": "Recovered original AMD64 links and empty-root gvisor2pcap",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888660533"
+            },
+            {
+              "label": "Recovered original ARM64 links and empty-root gvisor2pcap",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888051513"
+            }
+          ]
+        },
+        {
+          "text": "Host-run benchmarks may see a different libc from the builder. TestRootNotMount runs test_app in an empty root and otherwise skips it. Both executables gained a loader and shared dependencies with the reverted setting; #16669 removes both on AMD64 and ARM64. The existing test ran and passed on AMD64.",
+          "evidence": [
+            {
+              "label": "Linux container test",
+              "url": "https://app.buildbuddy.io/invocation/44f1f38c-8507-4b6c-b03d-b940ecda6ea1"
+            },
+            {
+              "label": "Two-target fix",
+              "url": "https://github.com/google/gvisor/pull/16669"
+            }
+          ]
+        },
+        {
+          "text": "The webhook's single-file image needs a standalone executable, but pure mode already produces it on both settings. The shim, gvisor2pcap and run_sniffer do change cgo/race link mode; only gvisor2pcap was run in an empty root. That control establishes a loader dependency, not a documented requirement to deploy those cgo/race tools without libc. The GNU preload library remains shared.",
+          "evidence": [
+            {
+              "label": "Webhook image and pure binary",
+              "url": "https://github.com/google/gvisor/blob/c6afaa53a/webhook/BUILD#L10-L36"
+            },
+            {
+              "label": "Recovered original AMD64 links and empty-root gvisor2pcap",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888660533"
+            },
+            {
+              "label": "Recovered original ARM64 links and empty-root gvisor2pcap",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888051513"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the six actual binaries for interpreter and shared-library requirements, including a real empty-root execution. The upstream rollback did not state an internal cause.",
+      "nextStep": "Use #16669 when it lands. The compiler, hook and catalog changes remain separate; no further rollback investigation or contributor action is needed.",
       "evidence": [
         {
           "label": "Upstream revert",
@@ -52106,6 +52152,26 @@
         {
           "label": "Paired six-tool cgo and race runs on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/40848396398"
+        },
+        {
+          "label": "Recovered original AMD64 links and empty-root gvisor2pcap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888660533"
+        },
+        {
+          "label": "Recovered original ARM64 links and empty-root gvisor2pcap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888051513"
+        },
+        {
+          "label": "Actual TestRootNotMount completed in its minimal root",
+          "url": "https://app.buildbuddy.io/invocation/44f1f38c-8507-4b6c-b03d-b940ecda6ea1"
+        },
+        {
+          "label": "Two-consumer upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16669"
+        },
+        {
+          "label": "Compiler reparent with four upstream settings preserved",
+          "url": "https://github.com/tamird/gvisor/compare/bcb5de5b2...a6b802e4d"
         }
       ]
     },
