@@ -24,7 +24,7 @@ jobs:
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         cp test/rbe/verify-oci-direct.py "$RUNNER_TEMP/verify-tcp.py"
         cp test/rbe/run-oci-mem.py "$RUNNER_TEMP/oci.py"
-        [[ "$(git rev-parse HEAD^1^1)" == "$CURRENT" && "$(git rev-parse HEAD^1^2)" == "$STOCK" ]]
+        [[ "$(git rev-parse HEAD^1^1^1)" == "$CURRENT" && "$(git rev-parse HEAD^1^1^2)" == "$STOCK" ]]
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -67,12 +67,22 @@ jobs:
           rec=$RUNNER_TEMP/records/$arm; mkdir -p "$rec"
           echo "$src" > "$rec/source"
           sha256sum test/root/runsc_test.go > "$rec/test.sha256"
+          extra=(--per_file_copt='(text_format|descriptor)[.]cc@-O0,-g0')
           rc=0
-          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=x86_64 --jobs=32 --spawn_strategy=remote,local --remote_download_outputs=toplevel //runsc:runsc > "$rec/build.log" 2>&1 || rc=$?
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=x86_64 --jobs=8 --spawn_strategy=remote,local --remote_download_outputs=toplevel "${extra[@]}" //:release > "$rec/build.log" 2>&1 || rc=$?
           echo "$rc" > "$rec/build.exit"
           if [[ $rc == 0 ]]; then
-            docker exec tcp-compiler cp bazel-bin/runsc/runsc_/runsc "$RUNNER_TEMP/runsc-$arm"
-            docker exec tcp-compiler python3 "$RUNNER_TEMP/oci.py" "$RUNNER_TEMP/runsc-$arm" "$rec" || true
+            docker exec tcp-compiler cp -rL bazel-bin/release "$RUNNER_TEMP/release-$arm"
+            docker exec tcp-compiler python3 "$RUNNER_TEMP/oci.py" "$RUNNER_TEMP/release-$arm/runsc" "$rec" || true
+          fi
+          if [[ $rc == 0 ]]; then
+            echo "{\"runtimes\":{\"runsc\":{\"path\":\"$RUNNER_TEMP/release-$arm/runsc\"}}}" > "$RUNNER_TEMP/docker-config-$arm.json"
+            tst=0
+            docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=8 "${extra[@]}" --spawn_strategy=remote,local --remote_download_outputs=toplevel --strategy=TestRunner=local --test_arg=-test.v --test_arg=-test.run='^TestNestedMemoryLimit$' --test_arg=-docker_cli=/usr/local/bin/host-docker --test_arg=-runtime=runsc --test_arg=-config_path="$RUNNER_TEMP/docker-config-$arm.json" --nocache_test_results --test_output=all //test/root:root_test > "$rec/owner-full.log" 2>&1 || tst=$?
+            echo "$tst" > "$rec/owner.exit"
+            if [[ $tst == 0 || $tst == 3 ]]; then for f in test.xml test.log; do docker exec tcp-compiler cat "bazel-testlogs/test/root/root_test/$f" > "$rec/$f"; done; fi
+            grep -E 'Invocation ID:|fatal error:|error:|^ERROR:|^FAIL|MemTotal|^=== RUN' "$rec/owner-full.log" | head -80 > "$rec/owner.diagnostics" || true
+            rm "$rec/owner-full.log"
           fi
           grep -E 'Invocation ID:|fatal error:|error:|^ERROR:' "$rec/build.log" | head -60 > "$rec/build.diagnostics" || true
           rm "$rec/build.log"
@@ -97,6 +107,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: oci-memtotal-direct
+        name: oci-memtotal-release
         path: ${{ runner.temp }}/records/
         if-no-files-found: error

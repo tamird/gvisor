@@ -24,7 +24,10 @@ try:
             levels=[(g/'memory.max').read_text().strip() for g in [grand,middle,leaf]]
             (records/(name+'.json')).write_text(json.dumps({'status':p.returncode,'MemTotal':int(m.group(1))*1024 if m else None,'limits':levels}))
             subprocess.run(args+['delete','--force',cid],capture_output=True,timeout=10)
-        leaf.rmdir()
+            if (root/'null-netns').exists():
+                subprocess.run(['umount','-l',str(root/'null-netns')],capture_output=True)
+        if leaf.exists():
+            leaf.rmdir()
     middle.rmdir()
 finally:
     for path in sorted(grand.rglob('*'), key=lambda p:-len(p.parts)):
