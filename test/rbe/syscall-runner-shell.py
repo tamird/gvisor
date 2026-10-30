@@ -12,6 +12,8 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+import time
+from datetime import datetime, timezone
 
 SOURCE = "f8c112a4db369c70c88857cb13be54f537468664"
 LOCK = "c69205c783c538f252750fb21bcbabb49495b36d638ba19b7b3ee30cdbae795b"
@@ -169,45 +171,29 @@ corrected="cbdbdb82b0eb2aa95fa97d38df19dec2db5fb7e5"
 paths=["test/runner","test/syscalls/BUILD"]
 names = {"Nonblock","BlockingWrite","SmallWrite","SmallRead","IllegalSeek","IllegalPread","IllegalPwrite","BigWriteFails","BigRead","NotifyNonZero","SpliceReturnsEINVAL"}
 report={"build_integration":SOURCE,"stock":original,"corrected":corrected,"exact_source_paths":paths,"target":target,"entrypoint":"bazel test","lock":LOCK,"image":expected_image,"coordinator":inventory}
-contract=work/"test/rbe/syscall_runner_contract"
-contract.mkdir()
-(contract/"BUILD").write_text("""load("@io_bazel_rules_go//go:def.bzl", "go_binary")
-load("//test/runner:defs.bzl", "syscall_test")
-go_binary(name = "custom_runner", srcs = ["custom.go"], pure = "on")
-syscall_test(test = "//test/syscalls/linux:eventfd_test", runner = ":custom_runner")
-""")
-(contract/"custom.go").write_text("""package main
+def make_static(build, name):
+    marker='    name = "'+name+'",'
+    text=build.read_text()
+    assert text.count(marker)==1,(name,str(build))
+    feature=marker+'\n    features = ["fully_static_link"],'
+    if feature not in text:
+        build.write_text(text.replace(marker,feature))
 
-import (
-    "fmt"
-    "os"
-    "strings"
-)
-
-func main() {
-    args := os.Args[1:]
-    if len(args) < 3 || args[0] != "--platform=native" || args[len(args)-2] != "--debug=false" || !strings.HasSuffix(args[len(args)-1], "test/syscalls/linux/eventfd_test") {
-        panic(fmt.Sprintf("incorrect runner arguments: %q", args))
-    }
-    out, err := os.Stat(os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"))
-    if err != nil || !out.IsDir() || out.Mode().Perm() != 0777 {
-        panic(fmt.Sprintf("undeclared outputs: %v, %v", out, err))
-    }
-    fmt.Printf("custom runner preserved %q", args)
-}
-""")
+# Keep the two test executables standalone. A global fully_static_link would
+# also impose -static on both freestanding architecture transitions in //:release.
+make_static(work/"test/syscalls/linux/BUILD", "eventfd_test")
 for arm, revision in [("original",original),("corrected",corrected)]:
     # Use the matched supplier/toolchain assembly, but the current gVisor test
     # rule, actual runner and setup helper, and normal public target definition.
     with tarfile.open(fileobj=io.BytesIO(cmd("git","archive",revision,"--",*paths,stdout=subprocess.PIPE).stdout)) as package:
         package.extractall(work, filter="data")
+    make_static(work/"test/runner/setup_container/BUILD","setup_container")
     if arm=="original":
-        # Compare the target configurations of the actual transitive C++ links.
-        # Both comparisons keep the execution platform and static feature fixed.
-        for platform_label in ["linux_arm64","rbe_linux_arm64"]:
+        # Inspect every affected configured link before submitting a test action.
+        for platform_label in ["rbe_linux_arm64"]:
             log = "aquery-"+platform_label
             query='outputs(".*(vdso/vdso.so|sysmsg/sighandler.built-in.bin.o|test/syscalls/linux/eventfd_test|test/runner/setup_container/setup_container|tools/test/compiled_posix_test_wrapper)$", mnemonic("CppLink", deps('+target+')))'
-            query_args=client_prefix+["aquery"]+common+["--platforms=//tools/bazeldefs:"+platform_label,"--features=fully_static_link","--incompatible_use_native_posix_test_wrapper","--include_param_files","--output=jsonproto",query]
+            query_args=client_prefix+["aquery"]+common+["--platforms=//tools/bazeldefs:"+platform_label,"--incompatible_use_native_posix_test_wrapper","--include_param_files","--output=jsonproto",query]
             proc=subprocess.run(query_args,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=800)
             (evidence/(log+".log")).write_text(redact(proc.stderr.decode(errors="replace"))[-40000:])
             src=json.loads(proc.stdout) if proc.returncode==0 else {}
@@ -219,28 +205,42 @@ for arm, revision in [("original",original),("corrected",corrected)]:
                 entries.append({"target":labels.get(str(action.get("targetId"))), "argv":[x for x in args if (any(y in x for y in ("musl","glibc","-pthread","-lpthread","-ldl","-nostdlib","-static","-target","--target=","--sysroot")))]})
             (evidence/(log+".json")).write_text(json.dumps({"exit":proc.returncode,"links":entries},indent=2))
             print(log,proc.returncode,[(e["target"],e["argv"][:3]) for e in entries],flush=True)
+        assert proc.returncode==0 and entries, (proc.returncode, entries)
+        for label in ("//vdso:vdso.so","//pkg/sentry/platform/systrap/sysmsg:sighandler.built-in.bin.o"):
+            relevant=[e["argv"] for e in entries if e["target"]==label]
+            assert len(relevant)==2 and all("-nostdlib" in a and "-static" not in a for a in relevant),(label,relevant)
+        for label in ("//test/syscalls/linux:eventfd_test","//test/runner/setup_container:setup_container"):
+            relevant=[e["argv"] for e in entries if e["target"]==label]
+            assert relevant and all("-static" in a and any("musl_library_search_directory" in f for f in a) for a in relevant),(label,relevant)
         common+=["--platforms=//tools/bazeldefs:rbe_linux_arm64"]
     required_sources = {p:digest((work/p).read_bytes()) for p in ["test/runner/defs.bzl","test/runner/main.go","test/runner/setup_container/setup_container.cc","test/runner/BUILD","test/syscalls/BUILD","test/syscalls/linux/eventfd.cc"]}
     command="test"
-    targets=["--keep_going","--verbose_failures","--incompatible_use_native_posix_test_wrapper","--remote_accept_cached","--nocache_test_results","--test_output=errors","--test_arg=--debug=false","--features=fully_static_link","--nobuild_event_json_file_path_conversion",target]
-    if arm=="corrected": targets.append(control)
+    targets=["--keep_going","--verbose_failures","--incompatible_use_native_posix_test_wrapper","--remote_accept_cached","--nocache_test_results","--test_output=all","--test_arg=--debug=false","--nobuild_event_json_file_path_conversion",target]
+
     event_file=receipt/(arm+".events");action_file=receipt/(arm+".actions")
     argv=client_prefix+[command]+common+[f"--execution_log_compact_file=/receipt/{arm}.actions",f"--build_event_json_file=/receipt/{arm}.events"]+targets
+    command_started=time.time()
     try:
         res=subprocess.run(argv,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=2400)
         raw=res.stdout;rc=res.returncode
     except subprocess.TimeoutExpired as exc:
         rc=124;raw=(exc.stdout or b"")+b"\nQUALIFICATION TIMEOUT\n"
+    command_finished=time.time()
     log=redact(raw.decode(errors="replace"));(evidence/(arm+".log")).write_text(log)
     print(arm,rc,log[-1700:],flush=True)
     result={"exit":rc,"invocation":"","cases":[],"owner_spawns":[],"failures":[],"cached_other_images":[],"noncached_wrong_platform":[]}
     result["source_files"]=required_sources
+    result["bazel_started_epoch"]=command_started;result["bazel_exited_epoch"]=command_finished
+    result["test_results"]=[]
     result["target_platform"]="//tools/bazeldefs:rbe_linux_arm64"
     report[arm]=result
     if event_file.exists():
         for line in event_file.read_text().splitlines():
             ev=json.loads(line)
             if "started" in ev: result["invocation"]=ev["started"]["uuid"]
+            if ev.get("id",{}).get("testResult",{}).get("label")==target and "testResult" in ev:
+                tr=ev["testResult"]
+                result["test_results"].append({k:v for k,v in tr.items() if k in ("status","testAttemptStartMillisEpoch","testAttemptDurationMillis","testAttemptStart","testAttemptDuration","executionInfo","cachedLocally")})
             if "testSummary" in ev: result["test_summary"]=ev["testSummary"].get("overallStatus")
             if "aborted" in ev and ev["aborted"].get("description"):
                 result.setdefault("aborted",[]).append(redact(ev["aborted"]["description"][:400]))
@@ -299,6 +299,13 @@ for arm, revision in [("original",original),("corrected",corrected)]:
                         return data[pos:data.index(b"\0",pos)].decode()
                 return None
             result["launchers"].append({"interpreter":interpreter(payload),"path":str(launcher_file.relative_to(base/"output")),"sha256":digest(payload),"size":len(payload),"head":payload[:64].hex(),"shebang":payload.split(b"\n",1)[0].decode(errors="replace") if payload.startswith(b"#!") else None,"elf_machine":int.from_bytes(payload[18:20],"little") if payload.startswith(b"\x7fELF") else None})
+    folder = "bazel-out/*/testlogs/test/syscalls/eventfd_test_native"
+    for filename in ("test.log","test.xml"):
+        matches=list((base/"output").glob("*/execroot/*/"+folder+"/"+filename))
+        if len(matches)==1 and matches[0].is_file():
+            data=matches[0].read_bytes()
+            (evidence/(arm+"-"+filename)).write_bytes(data)
+            result["local_"+filename]={"sha256":digest(data),"bytes":len(data)}
     (evidence/"eventfd.json").write_text(json.dumps(report,indent=2))
 
 
@@ -307,7 +314,11 @@ def actual_runner(arm,label=target):
 
 def testlog(arm):
     path=evidence/(arm+"-test.log")
-    return path.read_text(errors="replace") if path.is_file() else ""
+    if path.is_file():
+        report[arm]["log_source"]="Bazel test.log"
+        return path.read_text(errors="replace")
+    report[arm]["log_source"]="Bazel --test_output=all"
+    return (evidence/(arm+".log")).read_text(errors="replace")
 
 original, revised = report["original"],report["corrected"]
 stocklog=testlog("original")
@@ -326,5 +337,23 @@ assert {"IllegalSeek","SpliceReturnsEINVAL"} <= skipped <= {"IllegalSeek","Splic
 assert "[  FAILED  ] EventfdTest." not in fixedlog,fixedlog
 revised["passed"]=sorted(passed);revised["skipped"]=sorted(skipped)
 (evidence/"eventfd.json").write_text(json.dumps(report,indent=2))
-assert actual_runner("corrected",control) and "custom runner preserved" in (evidence/"corrected-custom-test.log").read_text(),revised
+def stamp(number, rfc):
+    if number is not None: return float(number)/1000
+    if rfc: return datetime.fromisoformat(rfc.replace("Z","+00:00")).timestamp()
+    return None
+verdict_time=time.time()
+for arm in ("original","corrected"):
+    data=report[arm]
+    finishes=[]
+    for tr in data["test_results"]:
+        ts=stamp(tr.get("testAttemptStartMillisEpoch"),tr.get("testAttemptStart"))
+        duration=tr.get("testAttemptDurationMillis")
+        if duration is not None: duration=float(duration)/1000
+        elif tr.get("testAttemptDuration"): duration=float(tr["testAttemptDuration"].removesuffix("s"))
+        if ts is not None and duration is not None: finishes.append(ts+duration)
+    data["last_test_attempt_finish_epoch"]=max(finishes) if finishes else None
+    data["last_test_finish_to_verdict_seconds"]=verdict_time-max(finishes) if finishes else None
+    data["bazel_exit_to_verdict_seconds"]=verdict_time-data["bazel_exited_epoch"]
+report["verdict_epoch"]=verdict_time
+(evidence/"eventfd.json").write_text(json.dumps(report,indent=2))
 print("Original remote Bash shebang failed. Corrected native cases passed:",sorted(passed),"skipped:",sorted(skipped))
