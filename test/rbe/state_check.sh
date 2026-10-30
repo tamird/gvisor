@@ -5,7 +5,7 @@ mkdir -p "$tools" "$out"
 for script in qualification_report.py unit_matrix.py state_result.py; do
   git show "$GITHUB_SHA:test/rbe/$script" > "$tools/$script"
 done
-for arm in focused proposed; do
+for arm in core Empty-plain Empty-pointers Empty-interfaces Empty-interfacesToPointers Full-plain Full-pointers Full-interfaces Full-interfacesToPointer; do
   src=62e214867e089f4ba2db0b79beecd8148c4da509
   git checkout --quiet --detach "$src"
   dir="$out/$arm"
@@ -14,8 +14,11 @@ for arm in focused proposed; do
   git cat-file commit HEAD > "$dir/commit"
   args=(test --config=x86_64 --jobs=4 --test_sharding_strategy=disabled --nocache_test_results --test_output=errors --build_event_publish_all_actions --nobuild_event_json_file_path_conversion --build_event_json_file="$RUNNER_TEMP/$arm.bep")
   labels=(//pkg/state/tests:tests_test)
-  if [[ $arm == focused ]]; then
-    args+=(--test_arg=-test.v '--test_filter=^Test(NestedValueConversion|BothEnginesStatefulCallbacks)$')
+  args+=(--test_env=GO_TEST_WRAP_TESTV=1)
+  if [[ $arm == core ]]; then
+    args+=('--test_arg=-test.skip=^TestMaps(Empty|Full)$')
+  else
+    args+=("--test_filter=^TestMaps${arm%%-*}$/^${arm#*-}[0-9]+$")
   fi
   printf '%s\n' "${labels[@]}" > "$dir/targets"
   printf '%s\n' "${args[@]}" "${labels[@]}" > "$dir/arguments"

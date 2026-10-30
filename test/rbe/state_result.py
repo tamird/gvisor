@@ -11,12 +11,33 @@ if mode == 'context':
     sys.exit()
 
 from xml.etree import ElementTree as ET
-for arm in ('focused','proposed'):
-    d=root/arm
-    v=json.loads((d/'verdict.json').read_text())
-    cases={c.get('name'):c for p in (d/'original').rglob('test.xml') for c in ET.parse(p).iter('testcase')}
-    required=('TestNestedValueConversion/wire', 'TestNestedValueConversion/graph','TestBothEnginesStatefulCallbacks')
-    assert v['source']=='62e214867e089f4ba2db0b79beecd8148c4da509' and not v['errors'] and not v['missing'] and v['native_exit']==0 and v['case_counts'].get('failed',0)==0, v
-    assert set(v['expected_labels'])=={'//pkg/state/tests:tests_test'} and v['executed'], v
-    if arm == "focused": assert all(n in cases and all(x.tag not in ('failure','skipped','error') for x in cases[n]) for n in required)
-    print(json.dumps({k:v[k] for k in ('source','case_counts','execution_finished_at','verdict_available_at')}))
+import re
+import subprocess
+
+source="62e214867e089f4ba2db0b79beecd8148c4da509"
+top={name for name in re.findall(r"func (Test[A-Za-z0-9_]+)\(",subprocess.check_output(["git","grep","-h","-E","^func Test[A-Za-z0-9_]+\\(",source,"--","pkg/state/tests/*_test.go"],text=True))}
+assert len(top)>40
+maps={"TestMapsEmpty","TestMapsFull"}
+groups=["core"]+[mode+"-"+prefix for mode,prefixes in (("Empty",("plain","pointers","interfaces","interfacesToPointers")),("Full",("plain","pointers","interfaces","interfacesToPointer"))) for prefix in prefixes]
+seen=set()
+summary={}
+for group in groups:
+    d=root/group
+    verdict=json.loads((d/'verdict.json').read_text())
+    assert verdict['status']=='PASS' and verdict['source']==source and verdict['native_exit']==0 and not verdict['missing'] and not verdict['errors'], (group,verdict)
+    records={c.get('name'):c for p in (d/'original').rglob('test.xml') for c in ET.parse(p).iter('testcase')}
+    if group=='core':
+        assert {n.split('/')[0] for n in records}==top-maps, sorted((top-maps)^{n.split('/')[0] for n in records})
+        for name in ('TestNestedValueConversion/graph','TestNestedValueConversion/wire','TestBothEnginesStatefulCallbacks/graph','TestBothEnginesStatefulCallbacks/wire'):
+            assert name in records and all(x.tag not in ('error','skipped','failure') for x in records[name])
+    else:
+        mode,prefix=group.split('-')
+        owner='TestMaps'+mode
+        expected={owner}|{f'{owner}/{prefix}{n}' for n in range(1176)}
+        assert set(records)==expected, (group, sorted(expected-set(records))[:8], sorted(set(records)-expected)[:8])
+        assert verdict['case_counts'].get('passed')==len(expected), (group,verdict['case_counts'])
+    assert not ((seen & set(records))-maps)
+    seen.update(records)
+    summary[group]={k:verdict[k] for k in ('case_counts','execution_finished_at','verdict_available_at')}
+(root/'groups.json').write_text(json.dumps({'source':source,'topLevel':len(top),'uniqueNamed':len(seen),'mapSubcases':9408,'groups':summary},indent=2)+'\n')
+print((root/'groups.json').read_text())
