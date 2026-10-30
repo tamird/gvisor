@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T22:37:30.356196+00:00",
+    "updatedAt": "2026-10-30T22:42:48.683812+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37051,22 +37051,26 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T17:24:00.776380+00:00",
-      "summary": "With a 192 MiB ancestor and two unlimited descendants, the proposed boot policy set Go’s soft limit to 1 GiB. A tighter 128 MiB leaf still yielded 64 MiB.",
+      "updatedAt": "2026-10-30T22:42:48.683812+00:00",
+      "summary": "Under a 192 MiB cgroup ceiling, the updated boot policy set Go’s soft limit to 1 GiB or 256 MiB, depending on the leaf. With #16767 both were 96 MiB. A tighter leaf stayed at 64 MiB.",
       "evidence": [
         {
-          "label": "Soft limits under three cgroup configurations",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41087163852/artifacts/12991414869"
+          "label": "Actual Go memory limits on the current PR and with #16767",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034"
+        },
+        {
+          "label": "Ancestor memory-limit fix",
+          "url": "https://github.com/google/gvisor/pull/16767"
         }
       ],
       "contributorReview": {
         "status": "pending",
         "kind": "review",
-        "head": "d7d7264b1aa53c96a653407a2c7f85ee5f531848",
+        "head": "9d3e6518a0a467c6575390cb6a61ff134024d243",
         "url": "https://github.com/google/gvisor/pull/16735",
         "title": "Post the GC budget review",
-        "summary": "With a 192 MiB ancestor and two unlimited descendants, the proposed boot policy set Go’s soft limit to 1 GiB. A tighter 128 MiB leaf still yielded 64 MiB.",
-        "body": "@parth-opensrc, can the boot budget use the lowest visible cgroup v2\nmemory limit? On a real cgroup hierarchy with a 192 MiB grandparent and\ntwo unlimited descendants, this call set Go's soft limit to 1 GiB. If\nthe leaf instead specified 512 MiB, it set 256 MiB. The kernel ceiling\nwas still 192 MiB in both cases.\n\nThe existing cgroup reader stops at the leaf or its immediate parent.\nTaking the minimum through the mount root gave 96 MiB in both cases and\npreserved 64 MiB for a tighter 128 MiB leaf. The [same three\ncases](https://github.com/tamird/gvisor/actions/runs/41087163852/artifacts/12991414869)\nmeasured the soft limit directly; they did not induce an OOM.\n\nPosted on behalf of @tamird."
+        "summary": "Under a 192 MiB cgroup ceiling, the updated boot policy set Go’s soft limit to 1 GiB or 256 MiB, depending on the leaf. With #16767 both were 96 MiB. A tighter leaf stayed at 64 MiB.",
+        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit set by this revision](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird."
       }
     },
     {
