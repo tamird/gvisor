@@ -16,9 +16,16 @@
 #include <fcntl.h>
 #include <linux/vfio.h>
 #include <poll.h>
+#include <stdint.h>
+#include <string.h>
 #include <stdlib.h>
 #include <sys/epoll.h>
+#include <sys/eventfd.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
+
+#include <array>
+#include <cstddef>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -29,30 +36,40 @@ namespace gvisor {
 namespace testing {
 namespace {
 
-TEST(VfioPCIDeviceTest, Readiness) {
-  const char* group_path = getenv("TEST_VFIO_GROUP");
-  const char* device_name = getenv("TEST_VFIO_DEVICE");
-  ASSERT_NE(group_path, nullptr);
-  ASSERT_NE(device_name, nullptr);
+class VfioPCIDeviceTest : public ::testing::Test {
+ protected:
+  FileDescriptor container;
+  FileDescriptor group;
+  FileDescriptor device;
 
-  const FileDescriptor container =
-      ASSERT_NO_ERRNO_AND_VALUE(Open("/dev/vfio/vfio", O_RDWR));
-  const FileDescriptor group = ASSERT_NO_ERRNO_AND_VALUE(Open(group_path, O_RDWR));
-  int container_fd = container.get();
-  ASSERT_THAT(ioctl(group.get(), VFIO_GROUP_SET_CONTAINER, &container_fd),
-              SyscallSucceeds());
-  ASSERT_THAT(ioctl(container.get(), VFIO_SET_IOMMU, VFIO_TYPE1v2_IOMMU),
-              SyscallSucceeds());
-  const FileDescriptor device(ioctl(group.get(), VFIO_GROUP_GET_DEVICE_FD, device_name));
-  ASSERT_THAT(device.get(), SyscallSucceeds());
+  void SetUp() override {
+    const char* group_path = getenv("TEST_VFIO_GROUP");
+    const char* device_name = getenv("TEST_VFIO_DEVICE");
+    ASSERT_NE(group_path, nullptr);
+    ASSERT_NE(device_name, nullptr);
 
-  struct vfio_device_info info = {};
-  info.argsz = sizeof(info);
-  ASSERT_THAT(ioctl(device.get(), VFIO_DEVICE_GET_INFO, &info), SyscallSucceeds());
-  ASSERT_NE(info.flags & VFIO_DEVICE_FLAGS_PCI, 0);
+    container =
+        ASSERT_NO_ERRNO_AND_VALUE(Open("/dev/vfio/vfio", O_RDWR));
+    group = ASSERT_NO_ERRNO_AND_VALUE(Open(group_path, O_RDWR));
+    int container_fd = container.get();
+    ASSERT_THAT(ioctl(group.get(), VFIO_GROUP_SET_CONTAINER, &container_fd),
+                SyscallSucceeds());
+    ASSERT_THAT(ioctl(container.get(), VFIO_SET_IOMMU, VFIO_TYPE1v2_IOMMU),
+                SyscallSucceeds());
+    device = FileDescriptor(ioctl(group.get(), VFIO_GROUP_GET_DEVICE_FD, device_name));
+    ASSERT_THAT(device.get(), SyscallSucceeds());
+
+    struct vfio_device_info info = {};
+    info.argsz = sizeof(info);
+    ASSERT_THAT(ioctl(device.get(), VFIO_DEVICE_GET_INFO, &info), SyscallSucceeds());
+    ASSERT_NE(info.flags & VFIO_DEVICE_FLAGS_PCI, 0);
+  }
+};
+
+TEST_F(VfioPCIDeviceTest, Readiness) {
   constexpr short ready = POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM;
   struct pollfd pfd = {device.get(), ready | POLLPRI, 0};
-  ASSERT_THAT(poll(&pfd, 1, 0), SyscallSucceedsWithValue(1));
+  EXPECT_THAT(poll(&pfd, 1, 0), SyscallSucceedsWithValue(1));
   EXPECT_EQ(pfd.revents, ready);
 
   const FileDescriptor epoll(epoll_create1(EPOLL_CLOEXEC));
@@ -63,6 +80,47 @@ TEST(VfioPCIDeviceTest, Readiness) {
               SyscallFailsWithErrno(EPERM));
 }
 
+TEST_F(VfioPCIDeviceTest, InterruptEventfdKeepsFullCounter) {
+  struct vfio_irq_info irq = {};
+  irq.argsz = sizeof(irq);
+  for (unsigned int i : {VFIO_PCI_MSIX_IRQ_INDEX, VFIO_PCI_MSI_IRQ_INDEX,
+                         VFIO_PCI_INTX_IRQ_INDEX}) {
+    irq.index = i;
+    ASSERT_THAT(ioctl(device.get(), VFIO_DEVICE_GET_IRQ_INFO, &irq),
+                SyscallSucceeds());
+    if (irq.count && (irq.flags & VFIO_IRQ_INFO_EVENTFD)) {
+      break;
+    }
+  }
+  ASSERT_GT(irq.count, 0);
+  ASSERT_NE(irq.flags & VFIO_IRQ_INFO_EVENTFD, 0);
+
+  const FileDescriptor event(eventfd(0, EFD_NONBLOCK));
+  ASSERT_THAT(event.get(), SyscallSucceeds());
+  constexpr uint64_t saved = (uint64_t{1} << 32) + 1;
+  ASSERT_THAT(write(event.get(), &saved, sizeof(saved)),
+              SyscallSucceedsWithValue(sizeof(saved)));
+  alignas(vfio_irq_set) std::array<std::byte,
+                                  sizeof(vfio_irq_set) + sizeof(int)> buf{};
+  auto* setup = reinterpret_cast<vfio_irq_set*>(buf.data());
+  setup->argsz = buf.size();
+  setup->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
+  setup->index = irq.index;
+  setup->count = 1;
+  const int fd = event.get();
+  memcpy(setup->data, &fd, sizeof(fd));
+  ASSERT_THAT(ioctl(device.get(), VFIO_DEVICE_SET_IRQS, setup),
+              SyscallSucceeds());
+  uint64_t count;
+  ASSERT_THAT(read(fd, &count, sizeof(count)), SyscallSucceedsWithValue(sizeof(count)));
+  // The device may have delivered an interrupt after binding the eventfd.
+  EXPECT_GE(count, saved);
+  setup->argsz = sizeof(vfio_irq_set);
+  setup->flags = VFIO_IRQ_SET_DATA_NONE | VFIO_IRQ_SET_ACTION_TRIGGER;
+  setup->count = 0;
+  EXPECT_THAT(ioctl(device.get(), VFIO_DEVICE_SET_IRQS, setup),
+              SyscallSucceeds());
+}
 }  // namespace
 }  // namespace testing
 }  // namespace gvisor
