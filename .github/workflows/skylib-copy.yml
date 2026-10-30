@@ -24,7 +24,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/skylib-copy-receipt"
           git apply --check ../consumer/test/rbe/supplier-namespace/skylib-copy.patch
           git apply ../consumer/test/rbe/supplier-namespace/skylib-copy.patch
-          git apply MODULE.bazel-remove-override.patch
+          git apply --unidiff-zero MODULE.bazel-remove-override.patch
           git diff --check
       - name: Exercise Bazel 8.8.1 and the documented shell fallback
         id: released
