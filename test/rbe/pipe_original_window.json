@@ -1,0 +1,176 @@
+{
+  "artifact": 12997387247,
+  "sender_port": 30371,
+  "receiver_port": 44000,
+  "seq_zero": 1472600825,
+  "origin": "first full-sized TCP data at sender",
+  "last_new": [
+    953.911,
+    1351417,
+    1420,
+    1352837
+  ],
+  "peer_transmissions": [
+    {
+      "range": [
+        884269,
+        885689
+      ],
+      "sender_ms": [
+        664.861,
+        776.587,
+        951.693,
+        1304.446
+      ],
+      "receiver_ms": 1355.061
+    },
+    {
+      "range": [
+        885689,
+        885797
+      ],
+      "sender_ms": [
+        664.864,
+        776.59,
+        951.696,
+        1405.359
+      ],
+      "receiver_ms": 1455.44
+    },
+    {
+      "range": [
+        885797,
+        887217
+      ],
+      "sender_ms": [
+        664.867,
+        776.592,
+        951.698,
+        1705.955
+      ],
+      "receiver_ms": 1758.863
+    }
+  ],
+  "ack_pair_and_next": [
+    {
+      "when_ms": 1405.118,
+      "ack": 885689,
+      "sack_blocks": [
+        [
+          1229029,
+          1291561
+        ],
+        [
+          1226189,
+          1227609
+        ],
+        [
+          958433,
+          959853
+        ]
+      ],
+      "state": {
+        "una": 885689,
+        "nxt": 1352837,
+        "fack": 1291561,
+        "cwnd": 5,
+        "out": 46,
+        "sacked": 48,
+        "recovery": true,
+        "reord": false,
+        "reownd_us": 0,
+        "seq_flight": 467148,
+        "wnd": 1024000,
+        "queued": 763180
+      },
+      "state_delay_us": 213,
+      "next_tx": [
+        1405.359,
+        885689,
+        108,
+        1352837
+      ],
+      "next_tx_delay_us": 241
+    },
+    {
+      "when_ms": 1505.494,
+      "ack": 885797,
+      "sack_blocks": [
+        [
+          1229029,
+          1291561
+        ],
+        [
+          1226189,
+          1227609
+        ],
+        [
+          958433,
+          959853
+        ]
+      ],
+      "state": {
+        "una": 885797,
+        "nxt": 1352837,
+        "fack": 1291561,
+        "cwnd": 5,
+        "out": 45,
+        "sacked": 48,
+        "recovery": true,
+        "reord": false,
+        "reownd_us": 0,
+        "seq_flight": 467040,
+        "wnd": 1024000,
+        "queued": 763072
+      },
+      "state_delay_us": 231,
+      "next_tx": [
+        1705.955,
+        885797,
+        1420,
+        1352837
+      ],
+      "next_tx_delay_us": 200461
+    },
+    {
+      "when_ms": 1808.917,
+      "ack": 887217,
+      "sack_blocks": [
+        [
+          1229029,
+          1291561
+        ],
+        [
+          1226189,
+          1227609
+        ],
+        [
+          958433,
+          959853
+        ]
+      ],
+      "state": {
+        "una": 887217,
+        "nxt": 1352837,
+        "fack": 1291561,
+        "cwnd": 5,
+        "out": 46,
+        "sacked": 48,
+        "recovery": true,
+        "reord": false,
+        "reownd_us": 0,
+        "seq_flight": 465620,
+        "wnd": 1027072,
+        "queued": 761652
+      },
+      "state_delay_us": 213,
+      "next_tx": [
+        1809.159,
+        887217,
+        1420,
+        1352837
+      ],
+      "next_tx_delay_us": 242
+    }
+  ]
+}
