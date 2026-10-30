@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T21:08:14.496709+00:00",
+    "updatedAt": "2026-10-30T21:11:20.286137+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37225,20 +37225,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/declared-jekyll-site",
-      "head": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644",
+      "head": "8503225c7c07e0d7ab95846250e6c0ce044abfd4",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-10-30T20:21:43.076174+00:00",
-      "summary": "Bazel renders Jekyll and runs HTMLProofer with declared Ruby, Node, plugins and styles. The scratch comparison recovered all 278 public paths at the original publication time. The only initial raw difference was sitemap order. The stylesheet archive now has reproducible metadata with the original payload. The ordinary GNU build reached Jekyll but loaded the same Ruby files by both their sandbox and physical paths. The duplicate GFM parser stopped the build before the image could be served.",
+      "updatedAt": "2026-10-30T21:11:20.286137+00:00",
+      "summary": "The ordinary Linux/AMD64 Bazel build produced the complete checkout website and serving image without a Docker daemon. All 278 published paths are present. 276 match the original bytes; css.tar preserves its contents and modes with normalized ownership and timestamps, and the same 84 sitemap records now have a stable order. Make loaded the custom image tag and five HTTP responses matched the original, including the hard-linked logo.",
       "followup": {
         "owner": "release_owner",
-        "sourceHead": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644",
-        "observedAt": "2026-10-30T20:21:43.076174+00:00",
+        "sourceHead": "8503225c7c07e0d7ab95846250e6c0ce044abfd4",
+        "observedAt": "2026-10-30T21:11:20.286137+00:00",
         "disposition": "Qualify builder-free publication and resolve source notices",
-        "nextAction": "Compare the original and corrected Ruby path resolution in a local Linux Bazel sandbox with the retained syscall pages. If that succeeds, verify the normal Bazel image and Make serving entry points. Wait for a released rules_img containing image_flatten and the native Buildkite bootstrap. Qualify a notice policy for the existing GPL-licensed inline-SVG plugin and CC-BY-4.0 browser data. The full dependency graph still needs GNU to compile the syscall-reference generator. Linux/AMD64 can run locally; other hosts can use a Linux execution platform or the existing Make wrapper.",
+        "nextAction": "Use the first BCR release containing rules_img #811 and the declared Buildkite Bazelisk bootstrap before enabling this job. Complete license review for the selected Ruby runtime and seven gems, including the GPL-3.0 inline-SVG plugin and the data bundled by Autoprefixer. The renderer itself passed on scratch; the enclosing Go documentation and server build still uses GNU tools.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41127231437/artifacts/13011169580",
+          "https://github.com/tamird/gvisor/actions/runs/41122472914/artifacts/13009007947",
           "https://github.com/tamird/gvisor/actions/runs/41120650004/artifacts/13008608480",
           "https://github.com/tamird/gvisor/actions/runs/41115737834/artifacts/13005113336",
           "https://github.com/tamird/gvisor/actions/runs/41118437298/artifacts/13007432076",
@@ -37247,13 +37249,25 @@
       },
       "refinement": {
         "before": {
-          "head": "845e6b0a6cd56225f76b7d054e2d6abd13b97ff3"
+          "head": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644"
         },
         "after": {
-          "head": "0cd3f2bb57e14ea6cd1cb84793a6e1cdd498a644"
+          "head": "8503225c7c07e0d7ab95846250e6c0ce044abfd4"
         }
       },
       "evidence": [
+        {
+          "label": "Full GNU build, all 278 site paths, preview date and five served responses",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41127231437/artifacts/13011169580"
+        },
+        {
+          "label": "Ordinary sandbox reproducer and corrected renderer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41122472914/artifacts/13009007947"
+        },
+        {
+          "label": "Range from the original local-sandbox source",
+          "url": "https://github.com/tamird/gvisor/compare/0cd3f2bb5...8503225c7"
+        },
         {
           "label": "Ordinary public Bazel and Make result",
           "url": "https://github.com/tamird/gvisor/actions/runs/41120650004/artifacts/13008608480"
