@@ -48,3 +48,24 @@ relocated_writer(
     script = "relocation.py",
     writer = "@rules_pkg//pkg/private/tar:build_tar",
 )
+
+pkg_tar(
+    name = "payload_gzip",
+    srcs = ["notice.txt"],
+    extension = "tar.gz",
+    package_dir = "share",
+)
+
+pkg_tar(
+    name = "payload_bzip2",
+    srcs = ["notice.txt"],
+    extension = "tar.bz2",
+    package_dir = "share",
+)
+
+pkg_tar(
+    name = "payload_xz",
+    srcs = ["notice.txt"],
+    extension = "tar.xz",
+    package_dir = "share",
+)

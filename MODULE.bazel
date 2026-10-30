@@ -59,6 +59,13 @@ use_repo(governance, "governance_areas")
 tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
 use_repo(tar_toolchains, "bsd_tar_toolchains")
 
+# Qualification only: observe the released PackageTar without the default action environment.
+single_version_override(
+    module_name = "rules_pkg",
+    patch_strip = 1,
+    patches = ["//tools:rules_pkg_tar_env.patch"],
+)
+
 # Reuse the upstream test frontend for per-target test-action transitions.
 single_version_override(
     module_name = "with_cfg.bzl",

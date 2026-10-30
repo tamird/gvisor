@@ -142,3 +142,19 @@ instrumented_release_tars(
     bins = RELEASE_TAR_EXTRA_BINS,
     flavor = "race-coverage",
 )
+
+# The ordinary release tool and image-layer compressor receive one small input each.
+pkg_tar(
+    name = "path_zstd",
+    srcs = ["description"],
+    compressor = "//tools/zstd:compressor",
+    extension = "tar.zstd",
+)
+
+pkg_tar(
+    name = "path_pigz",
+    srcs = ["description"],
+    compressor = "@pigz//:pigz",
+    compressor_args = "-c -n -6 -p 1",
+    extension = "tar.gz",
+)

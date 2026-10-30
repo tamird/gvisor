@@ -1,4 +1,4 @@
-name: Compare PackageTar client paths
+name: Qualify PackageTar without the default environment
 on:
   push:
     branches: [qualification/package-tar-client-path]
@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   package:
-    if: github.repository == 'tamird/gvisor' && github.event.before == 'fd3bf6992def05cece20777f14acca991ea674cd' && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.event.before == '7cf2c0ddae9857ede3735cf195f625a91516b140' && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     env:
@@ -40,11 +40,10 @@ jobs:
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           package=//test/rbe/python_package_writers
           query="mnemonic('PackageTar', $package:payload) union outputs('.*/(build_tar|make_deb)$', deps(set($package:payload $package:package)))"
-          for mode in inherited pinned; do
+          for mode in inherited; do
             flags=(--config=rbe --config=x86_64 --host_platform=//tools/bazeldefs:rbe_linux_amd64
                    --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64
                    --@rules_python//python/config_settings:bootstrap_impl=native)
-            if [[ $mode == pinned ]]; then flags+=(--action_env=PATH=/usr/bin:/bin); fi
             graph="$RUNNER_TEMP/$mode-graph.json"
             writers="$RUNNER_TEMP/$mode-writers.json"
             bazelisk --bazelrc="$RUNNER_TEMP/analysis.bazelrc" aquery "${flags[@]}" --output=jsonproto "$query" > "$graph"
@@ -62,37 +61,44 @@ jobs:
           receipt.write_text(json.dumps({"platform": platform, **writer}))
           PYTHON
           done
-      - name: Run both client paths with inherited and fixed action environments
+      - name: Build built-in and declared compressors across two client paths
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
           base=$RUNNER_TEMP
-          for arm in inherited-a inherited-b pinned-a pinned-b; do
-            out=$base/$arm
-            mkdir -p "$out"
-            prefix=/unused-gvisor-path-$GITHUB_RUN_ID-${arm##*-}
-            test ! -e "$prefix"
-            flags=(--bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native
-                   --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_amd64
-                   --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64
-                   --bazel-option=--remote_download_outputs=all --bazel-option=--remote_accept_cached
-                   --bazel-option=--nokeep_state_after_build --bazel-option=--nouse_action_cache)
-            if [[ $arm == pinned-* ]]; then flags+=(--bazel-option=--action_env=PATH=/usr/bin:/bin); fi
-            date -u +%FT%T.%NZ > "$out/started"
-            status=0
-            PATH="$prefix:$PATH" RUNNER_TEMP="$out" bash test/rbe/actions.sh "${flags[@]}" || status=$?
-            printf '%s\n' "$status" > "$out/qualification-exit"
-            date -u +%FT%T.%NZ > "$out/finished"
+          for group in builtin declared; do
+            if [[ $group == builtin ]]; then
+              pkg=//test/rbe/python_package_writers
+              targets="$pkg:payload $pkg:payload_gzip $pkg:payload_bzip2 $pkg:payload_xz"
+            else
+              targets="//debian:path_zstd //debian:path_pigz"
+            fi
+            for arm in a b; do
+              out=$base/$group-$arm
+              mkdir -p "$out"
+              prefix=/unused-gvisor-path-$GITHUB_RUN_ID-$arm
+              test ! -e "$prefix"
+              date -u +%FT%T.%NZ > "$out/started"
+              status=0
+              PATH="$prefix:$PATH" RUNNER_TEMP="$out" QUALIFICATION_TARGETS="$targets" bash test/rbe/actions.sh \
+                --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native \
+                --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_amd64 \
+                --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64 \
+                --bazel-option=--remote_download_outputs=all --bazel-option=--remote_accept_cached \
+                --bazel-option=--nokeep_state_after_build --bazel-option=--nouse_action_cache || status=$?
+              printf '%s\n' "$status" > "$out/qualification-exit"
+              date -u +%FT%T.%NZ > "$out/finished"
+            done
           done
-      - name: Compare the actual Commands, inputs, archives and cache records
+      - name: Check the actual archives and remote actions
         if: always()
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/python_package_writers/path_comparison.py
+        run: python3 test/rbe/python_package_writers/path_compression.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: package-tar-path
-          path: ${{ runner.temp }}/package-tar-path.json
+          name: package-tar-compression
+          path: ${{ runner.temp }}/package-tar-compression.json
           if-no-files-found: error

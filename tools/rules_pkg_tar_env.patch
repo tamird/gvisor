@@ -1,0 +1,10 @@
+--- a/pkg/private/tar/tar.bzl
++++ b/pkg/private/tar/tar.bzl
+@@ -198,7 +198,6 @@
+             "PYTHONIOENCODING": "UTF-8",
+             "PYTHONUTF8": "1",
+         },
+-        use_default_shell_env = True,
+     )
+     return [
+         DefaultInfo(

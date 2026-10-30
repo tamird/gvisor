@@ -111,6 +111,7 @@ exports_files([
     "rules_go_benchmark_xml.patch",
     "rules_go_bootstrap.patch",
     "rules_go_package_provenance.patch",
+    "rules_pkg_tar_env.patch",
     "rules_python_native_launcher.patch",
     "with_cfg-test-frontend.patch",
 ])
