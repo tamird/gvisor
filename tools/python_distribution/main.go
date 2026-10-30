@@ -30,6 +30,7 @@ import (
 var (
 	pyproject = flag.String("pyproject", "", "Project's pyproject.toml")
 	frontend  = flag.String("frontend", "", "Declared frontend virtual environment interpreter")
+	runfiles  = flag.String("runfiles", "", "Runfiles directory of the release frontend")
 	bootstrap = flag.String("bootstrap", "", "Declared PyPA frontend entry point")
 	version   = flag.String("version", "", "Optional project version override")
 	output    = flag.String("output", "", "Distribution output directory")
@@ -39,6 +40,10 @@ var pythonArgs []string
 
 func build() error {
 	command, err := filepath.Abs(*frontend)
+	if err != nil {
+		return err
+	}
+	root, err := filepath.Abs(*runfiles)
 	if err != nil {
 		return err
 	}
@@ -96,18 +101,20 @@ func build() error {
 	}
 	cmd := exec.Command(command, append(pythonArgs, *bootstrap, "--no-isolation", "--outdir", out, project)...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	cmd.Env = append(os.Environ(),
-		"TMPDIR="+work,
+	cmd.Env = []string{
+		// The frontend and its build backend use the application's declared wheel imports.
+		"RUNFILES_DIR=" + root,
+		"TMPDIR=" + work,
 		// Keep setuptools from reading an undeclared ~/.pydistutils.cfg.
 		// https://github.com/pypa/setuptools/blob/72e919a8b/setuptools/_distutils/dist.py#L401-L410
-		"HOME="+work,
+		"HOME=" + work,
 		// Exclude user-installed packages from frontend and backend imports.
 		// https://github.com/python/cpython/blob/cd1c3a634/Doc/using/cmdline.rst#L786-L789
 		"PYTHONNOUSERSITE=1",
 		// Give wheel entries ZIP's earliest timestamp instead of the build time.
 		// https://github.com/pypa/setuptools/blob/72e919a8b/setuptools/_vendor/wheel/wheelfile.py#L48-L55
 		"SOURCE_DATE_EPOCH=315532800",
-	)
+	}
 	return cmd.Run()
 }
 

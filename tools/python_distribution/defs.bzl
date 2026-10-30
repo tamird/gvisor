@@ -28,6 +28,7 @@ def _python_distribution_impl(ctx):
     # Its first-stage launcher otherwise requires a shell on the worker.
     frontend = ctx.attr._frontend[PyExecutableInfo]
     runfiles = ctx.executable._frontend.path + ".runfiles"
+    args.add("--runfiles", runfiles)
     for name, file in [("--frontend", frontend.venv_python_exe), ("--bootstrap", frontend.stage2_bootstrap)]:
         args.add(name, paths.normalize(paths.join(runfiles, ctx.workspace_name, file.short_path)))
     args.add_all(frontend.interpreter_args, before_each = "--python-arg")
