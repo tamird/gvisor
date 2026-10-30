@@ -1,35 +1,51 @@
-name: CI
-
-"on":
+name: Trace the production RACK change on an ordered WAN
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-rack-ack-competition]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 30
+      - name: Build proxy and run matched transfers
+        run: bash test/benchmarks/tcp/current-shared-driver.sh
+      - name: Check genuine reordering on the exact PR
+        if: always()
+        run: |
+          set -euo pipefail
+          result="$RUNNER_TEMP/tcp-public/real-reorder"
+          mkdir -p "$result"
+          date -u +%FT%TZ > "$result/start"
+          git diff --exit-code 715df78ea05a1b292331a746d50ddeee0690403d -- pkg runsc tools .bazelrc MODULE.bazel
+          bazel test --jobs=5 --test_filter='^TestRACKDetectReorder$' --nocache_test_results --test_sharding_strategy=disabled --test_output=errors //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test > "$result/bazel.log" 2>&1 || code=$?
+          echo "${code:-0}" > "$result/exit"
+          date -u +%FT%TZ > "$result/finish"
+          testlog="$(bazel info bazel-testlogs)/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test"
+          cp "$testlog/test.log" "$testlog/test.xml" "$result"
+          RESULTS="$result" python3 - <<'PYTHON'
+          import os
+          from pathlib import Path
+          from xml.etree import ElementTree
+          p=Path(os.environ["RESULTS"])
+          cases=ElementTree.parse(p/"test.xml").findall(".//testcase")
+          assert [(c.attrib["name"],list(c)) for c in cases]==[("TestRACKDetectReorder",[])], [(c.attrib,list(c)) for c in cases]
+          assert (p/"exit").read_text().strip()=="0"
+          PYTHON
+      - name: Reconcile expected trials, receiver intervals and socket samples
+        if: always()
+        run: python3 test/benchmarks/tcp/current-shared-report.py
+      - name: Match each observed packet and recovery interval across the WAN
+        if: always()
+        run: python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/tcp-public" "$RUNNER_TEMP/tcp-public/episodes.json"
+      - name: Publish allowlisted evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tcp-rack-ack-competition
+          path: ${{ runner.temp }}/tcp-public/
+          if-no-files-found: error
