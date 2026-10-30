@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T22:31:33.400371+00:00",
+    "updatedAt": "2026-10-30T22:37:30.356196+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16,7 +16,8 @@
       "hermeticbuild/hermetic-llvm": "none",
       "bazel-contrib/rules_python": "none",
       "bazelbuild/bazel": "none",
-      "hermeticbuild/rules_rs": "none"
+      "hermeticbuild/rules_rs": "none",
+      "bazel-contrib/rules_distroless": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -24,7 +25,8 @@
       "hermeticbuild/hermetic-llvm",
       "bazel-contrib/rules_python",
       "bazelbuild/bazel",
-      "hermeticbuild/rules_rs"
+      "hermeticbuild/rules_rs",
+      "bazel-contrib/rules_distroless"
     ],
     "registryDate": "2026-10-30T19:20:31.842124+00:00"
   },
@@ -37191,34 +37193,71 @@
       "group": "bazel",
       "repo": "tamird/rules_distroless",
       "ref": "deb-layer-actions",
-      "head": "86a5661f4a0eb15a41bf4364c9b0542da02cfa7e",
+      "head": "9de063f595a7f0a0140e845bb23c2a0900a64059",
       "title": "Remove Bash from ordinary Debian image layers in rules_distroless",
-      "url": "https://github.com/tamird/rules_distroless/commit/86a5661f4",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T19:01:02.657670+00:00",
-      "summary": "The ordinary Debian layer action runs the compressor supplied by its Bazel toolchain directly. It forwards existing gzip streams and produces the same layer bytes from raw, xz, zstd and lzma tar inputs.",
+      "url": "https://github.com/tamird/rules_distroless/commit/9de063f59",
+      "status": "Published as rules_distroless #293",
+      "updatedAt": "2026-10-30T22:35:59.585347+00:00",
+      "summary": "The revised single-archive rule was approved and submitted as rules_distroless #293. It supersedes the proposal at 86a5661f4.",
       "evidence": [
         {
-          "label": "Review commit and message",
+          "label": "Published supplier PR #293",
+          "url": "https://github.com/bazel-contrib/rules_distroless/pull/293"
+        },
+        {
+          "label": "Submitted source at 9de063f59",
+          "url": "https://github.com/tamird/rules_distroless/commit/9de063f59"
+        },
+        {
+          "label": "Ten supplier tests passed, including merged-/usr. The package-import step failed in this run.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41138682424/artifacts/13017441535"
+        },
+        {
+          "label": "Separate package-import job verified the original AMD64 and ARM64 erofs-utils layer digests on 9de063f59",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41138862683/artifacts/13018915238"
+        },
+        {
+          "label": "Superseded fork proposal at 86a5661f4",
           "url": "https://github.com/tamird/rules_distroless/commit/86a5661f4"
         },
         {
-          "label": "All 10 supplier tests passed",
+          "label": "Ten tests on the earlier proposal",
           "url": "https://github.com/tamird/gvisor/actions/runs/41109292097/artifacts/13001643598"
         },
         {
-          "label": "AMD64 and ARM64 package layer bytes on scratch",
+          "label": "Earlier real-package and reference layer digests",
           "url": "https://github.com/tamird/gvisor/actions/runs/41107074427/artifacts/13000859718"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "86a5661f4a0eb15a41bf4364c9b0542da02cfa7e",
-        "url": "https://github.com/tamird/rules_distroless/commit/86a5661f4",
-        "title": "Send the Debian layer fix to rules_distroless",
-        "summary": "The ordinary Debian layer action needs Bash even when its compressor is available. This change calls the compressor directly. Review the two changed files and the commit message in the rules_distroless fork.",
-        "body": "A worker with the registered zstd tool but no Bash cannot convert a\nDebian package into an image layer. Run zstd directly for ordinary\nlayers and forward existing gzip archives unchanged.\n\nThe reference gzip bytes match for raw tar, gzip, xz, zstd and lzma\ninputs. The merged-/usr rewrite continues to use its existing rule."
+      "inactive": true,
+      "refinement": {
+        "before": {
+          "head": "86a5661f4a0eb15a41bf4364c9b0542da02cfa7e"
+        },
+        "after": {
+          "head": "9de063f595a7f0a0140e845bb23c2a0900a64059"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9de063f595a7f0a0140e845bb23c2a0900a64059",
+          "outcome": "approved",
+          "at": "2026-10-30T22:35:59.585347+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "9de063f595a7f0a0140e845bb23c2a0900a64059",
+        "observedAt": "2026-10-30T22:35:59.585347+00:00",
+        "disposition": "Approved and delivered as rules_distroless #293",
+        "nextAction": "Follow supplier review on #293.",
+        "evidence": [
+          "https://github.com/bazel-contrib/rules_distroless/pull/293",
+          "https://github.com/tamird/rules_distroless/commit/9de063f59",
+          "https://github.com/tamird/gvisor/actions/runs/41138682424/artifacts/13017441535",
+          "https://github.com/tamird/gvisor/actions/runs/41138862683/artifacts/13018915238"
+        ]
       }
     },
     {
@@ -37526,10 +37565,14 @@
       "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
       "title": "Watch bound Unix sockets only when they listen",
       "url": "https://github.com/tamird/gvisor/commit/a2d366673",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T22:31:33.400371+00:00",
-      "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets.",
+      "status": "Contributor approved; waiting for #16739",
+      "updatedAt": "2026-10-30T22:37:30.356196+00:00",
+      "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets. Approved for submission after #16739 lands.",
       "evidence": [
+        {
+          "label": "Approved upstream PR description",
+          "url": "https://tamird.github.io/gvisor/unix-listener-readiness-pr-body.md"
+        },
         {
           "label": "Review branch on top of #16739",
           "url": "https://github.com/tamird/gvisor/tree/research/unix-listener-readiness-current"
@@ -37563,16 +37606,53 @@
           "url": "https://github.com/torvalds/linux/commit/f0d9c3ffc"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
-        "baseHead": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
-        "url": "https://github.com/tamird/gvisor/commit/a2d366673",
-        "title": "Watch bound Unix sockets only when they listen",
-        "summary": "Review a2d366673 for upstream submission after #16739.",
-        "body": "Binding one end of a Unix socketpair to a pathname registered the\nnew host socket with epoll. If the peer had already sent a byte, the\nbind could report a second edge for that same unread byte. Calling\nlisten on the connected endpoint could also make SO_ACCEPTCONN report\nthat it was a listener [1].\n\nRegister the host socket when the endpoint starts listening, and\nremove the registration when it stops. A connected socketpair then\nuses its peer for readiness even after it acquires a pathname.\n\nThe shared syscall test covers stream and sequenced-packet sockets.\nLinux and corrected gVisor report one edge for the unread byte and\nkeep SO_ACCEPTCONN clear. The existing listener test still accepts a\nconnection [2][3]. The new test accepts either EINVAL or success\nfrom listen because some Linux kernels returned success without\nturning the socket into a listener [4].\n\nThis change builds on #16739.\n\n[1]: https://app.buildbuddy.io/invocation/2a66c070-0940-4129-a984-3ce7ac7b0430\n[2]: https://app.buildbuddy.io/invocation/3256a304-a0f0-4473-8cd4-1337ba2c486f\n[3]: https://app.buildbuddy.io/invocation/718d047e-f898-4ee9-b221-866f3422bc3b\n[4]: https://github.com/torvalds/linux/commit/f0d9c3ffc"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
+          "outcome": "approved",
+          "at": "2026-10-30T22:37:30.356196+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "a2d36667326189d023f1a2746121dec505a2ef2f",
+        "observedAt": "2026-10-30T22:37:30.356196+00:00",
+        "disposition": "Approved for upstream submission after #16739",
+        "nextAction": "Once #16739 lands, verify the prerequisite and submit the approved change.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16739",
+          "https://github.com/tamird/gvisor/commit/a2d366673"
+        ]
       }
+    },
+    {
+      "id": "pr:bazel-contrib/rules_distroless:293",
+      "type": "pr",
+      "repo": "bazel-contrib/rules_distroless",
+      "number": 293,
+      "ref": "deb-layer-actions",
+      "head": "9de063f595a7f0a0140e845bb23c2a0900a64059",
+      "title": "Run the Debian layer compressor without a shell",
+      "url": "https://github.com/bazel-contrib/rules_distroless/pull/293",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-30T22:35:59.585347+00:00",
+      "summary": "Ordinary Debian layers use the declared zstd tool or forward an existing gzip member. The merged-/usr rewrite still uses Bash. All ten supplier tests passed. The package-import step failed in the first run. A separate run at the same source verified both Ubuntu erofs-utils layer digests.",
+      "evidence": [
+        {
+          "label": "Submitted source at 9de063f59",
+          "url": "https://github.com/tamird/rules_distroless/commit/9de063f59"
+        },
+        {
+          "label": "Ten supplier tests passed, including merged-/usr. The package-import step failed in this run.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41138682424/artifacts/13017441535"
+        },
+        {
+          "label": "Separate package-import job verified the original AMD64 and ARM64 erofs-utils layer digests on 9de063f59",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41138862683/artifacts/13018915238"
+        }
+      ]
     }
   ],
   "edges": [
