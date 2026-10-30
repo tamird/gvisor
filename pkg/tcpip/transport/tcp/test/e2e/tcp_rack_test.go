@@ -1306,3 +1306,178 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestRACKRetainedSACKWithMissingTail records which CUBIC repairs leave on an
+// ACK and which require a timeout. The peer retains three original packets,
+// drops the rest and discards early repairs until the first RTO. After that
+// every emitted packet is delivered and acknowledged after a 100 ms RTT.
+func TestRACKRetainedSACKWithMissingTail(t *testing.T) {
+	const rtt = 100 * time.Millisecond
+	clock := faketime.NewManualClock()
+	states := make(chan tcp.TCPSenderState, 32)
+	c := context.NewWithOpts(t, context.Options{
+		MTU: mtu, EnableV4: true, Clock: clock,
+		Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender },
+	})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	write := func(n int) {
+		t.Helper()
+		if got, err := c.EP.Write(bytes.NewReader(make([]byte, n)), tcpip.WriteOptions{}); err != nil || got != int64(n) {
+			t.Fatalf("Write(%d) = (%d, %v)", n, got, err)
+		}
+	}
+	const warm = 8
+	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+	first := c.IRS.Add(1 + warm*maxPayload)
+	var elapsed time.Duration
+	advance := func(d time.Duration) { clock.Advance(d); elapsed += d }
+	ack := func(packets int, blocks []header.SACKBlock) tcp.TCPSenderState {
+		t.Helper()
+		c.SendAckWithSACK(seq, (warm+packets)*maxPayload, blocks)
+		select {
+		case st := <-states:
+			if want := first.Add(seqnum.Size(packets * maxPayload)); st.SndUna != want {
+				t.Fatalf("sender SndUna = %v, want %v", st.SndUna, want)
+			}
+			return st
+		case <-time.After(5 * time.Second):
+			t.Fatal("ACK was not processed")
+			return tcp.TCPSenderState{}
+		}
+	}
+	write(warm * maxPayload)
+	for i := 0; i < warm; i++ {
+		c.ReceiveAndCheckPacketWithOptions(make([]byte, warm*maxPayload), i*maxPayload, maxPayload, e2e.TSOptionSize)
+	}
+	advance(rtt)
+	st := ack(0, nil)
+	if st.RTTState.SRTT <= 0 {
+		t.Fatal("no positive trained RTT")
+	}
+
+	// The test context emits one MSS per packet. Read complete egress while
+	// the manual clock stays frozen, without consuming any sender timeout.
+	read := func() []int {
+		t.Helper()
+		var tx []int
+		for {
+			p := c.GetPacketWithTimeout(50 * time.Millisecond)
+			if p == nil {
+				return tx
+			}
+			h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+			n := len(h.Payload())
+			offset := uint32(h.SequenceNumber()) - uint32(first)
+			p.Release()
+			if n == 0 {
+				continue
+			}
+			if n != maxPayload || offset%maxPayload != 0 {
+				t.Fatalf("unexpected egress offset %d, bytes %d", offset, n)
+			}
+			tx = append(tx, int(offset)/maxPayload+1)
+		}
+	}
+	write((st.SndCwnd + 12) * maxPayload)
+	initial := read()
+	if len(initial) < 10 {
+		t.Fatalf("only %d original packets: %v", len(initial), initial)
+	}
+	for i, n := range initial {
+		if n != i+1 {
+			t.Fatalf("original sequence %v", initial)
+		}
+	}
+	t.Logf("PIPE initial=%v queued_more=12 srtt=%s", initial, st.RTTState.SRTT)
+	// Originals 4--6 arrive, leaving at least four unsacked originals above
+	// the highest SACK as well as holes below it. Hold all subsequent
+	// repairs until a real RTO retransmits packet 1.
+	block := header.SACKBlock{Start: first.Add(3 * maxPayload), End: first.Add(6 * maxPayload)}
+	advance(rtt)
+	st = ack(0, []header.SACKBlock{block})
+	early := read()
+	t.Logf("PIPE before_timeout t=%s sacked=%d out=%d cwnd=%d repairs=%v", elapsed, st.SackedOut, st.Outstanding, st.SndCwnd, early)
+	if st.SackedOut != 3 {
+		t.Fatalf("pre-timeout credited %d, want three high originals", st.SackedOut)
+	}
+	timeoutCount := func() uint64 { return c.Stack().Stats().TCP.Timeouts.Value() }
+	// Advance in small increments and leave the clock frozen at the first
+	// real timeout. Discard earlier PTO probes with the early repairs.
+	var afterRTO []int
+	for i := 0; i < 500 && timeoutCount() == 0; i++ {
+		advance(10 * time.Millisecond)
+		if timeoutCount() != 0 {
+			afterRTO = read()
+		} else {
+			for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+				p.Release()
+			}
+		}
+	}
+	if timeoutCount() != 1 || len(afterRTO) == 0 || afterRTO[0] != 1 {
+		t.Fatalf("first timeout = %d, emitted %v", timeoutCount(), afterRTO)
+	}
+	t.Logf("PIPE first_timeout t=%s packets=%v", elapsed, afterRTO)
+	delivered := map[int]bool{4: true, 5: true, 6: true}
+	for _, n := range afterRTO {
+		delivered[n] = true
+	}
+	// Stop after three advancing ACKs. If no repair is sent on an ACK,
+	// advance the manual clock until the next *observed* sender timeout.
+	cumulative := 0
+	for round := 1; round <= 3; round++ {
+		for delivered[cumulative+1] {
+			cumulative++
+		}
+		var sacks []header.SACKBlock
+		for n := cumulative + 1; n <= len(initial)+12; n++ {
+			if !delivered[n] {
+				continue
+			}
+			lo := n
+			for delivered[n+1] {
+				n++
+			}
+			sacks = append(sacks, header.SACKBlock{Start: first.Add(seqnum.Size((lo - 1) * maxPayload)), End: first.Add(seqnum.Size(n * maxPayload))})
+		}
+		advance(rtt)
+		inTransit := read()
+		if len(inTransit) > 0 {
+			t.Logf("PIPE in_transit t=%s timeouts=%d packets=%v", elapsed, timeoutCount(), inTransit)
+		}
+		st = ack(cumulative, sacks)
+		sent := read()
+		t.Logf("PIPE ack=%d t=%s timeouts=%d active=%t cwnd=%d out=%d sacked=%d high_rxt=%d sndnxt=%d packets=%v", cumulative, elapsed, timeoutCount(), st.FastRecovery.Active, st.SndCwnd, st.Outstanding, st.SackedOut, int32(st.FastRecovery.HighRxt-first), int32(st.SndNxt-first), sent)
+		if round == 3 {
+			break
+		}
+		// Several packets can be repaired in one ACK round. If it made no
+		// cumulative progress, distinguish a later timer from ACK-driven work.
+		for _, n := range append(inTransit, sent...) {
+			delivered[n] = true
+		}
+		for i := 0; !delivered[cumulative+1] && i < 500; i++ {
+			advance(10 * time.Millisecond)
+			var tx []int
+			for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+				h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+				if len(h.Payload()) > 0 {
+					tx = append(tx, int(uint32(h.SequenceNumber())-uint32(first))/maxPayload+1)
+				}
+				p.Release()
+			}
+			if len(tx) != 0 {
+				t.Logf("PIPE later t=%s timeouts=%d packets=%v", elapsed, timeoutCount(), tx)
+				for _, n := range tx {
+					delivered[n] = true
+				}
+			}
+		}
+		if !delivered[cumulative+1] {
+			t.Fatalf("no next repair for packet %d", cumulative+1)
+		}
+	}
+}
