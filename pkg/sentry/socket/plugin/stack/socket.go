@@ -23,6 +23,7 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/marshal"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
 	"gvisor.dev/gvisor/pkg/safemem"
@@ -257,17 +258,17 @@ func (s *socketOperations) OnClose(ctx context.Context) error {
 //
 // +checklocksexclude:s.eventInfo.Wq.mu
 func (s *socketOperations) EventRegister(e *waiter.Entry) error {
-	s.eventInfo.Wq.EventRegister(e)
-	stack.notifier.UpdateFD(s.fd)
-	return nil
+	return stack.notifier.register(s, e)
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 //
 // +checklocksexclude:s.eventInfo.Wq.mu
 func (s *socketOperations) EventUnregister(e *waiter.Entry) {
-	s.eventInfo.Wq.EventUnregister(e)
-	stack.notifier.UpdateFD(s.fd)
+	if err := stack.notifier.unregister(s, e); err != nil {
+		// The waiter is gone, but the plugin can still report its events.
+		log.Warningf("Updating plugin socket %d after removing a waiter: %v", s.fd, err)
+	}
 }
 
 // Readiness implements socket.Socket.Readiness.
@@ -293,6 +294,11 @@ func (s *socketOperations) Readiness(mask waiter.EventMask) waiter.EventMask {
 // Epollable implements socket.Socket.Epollable.
 func (s *socketOperations) Epollable() bool {
 	return true
+}
+
+// UpdateMask changes the mask of an installed socket waiter.
+func (s *socketOperations) UpdateMask(e *waiter.Entry, mask waiter.EventMask) error {
+	return stack.notifier.updateMask(s, e, mask)
 }
 
 // Refers to implementation in epsocket
