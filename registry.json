@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T02:12:30.958149+00:00",
+    "updatedAt": "2026-10-30T02:31:21.542178+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34887,6 +34887,29 @@
         "summary": "Buildkite verifies the staged release outputs directly. The checker has no configured runsc or Sentry dependencies; all eight actual archive payloads and metadata matched for both compression formats.",
         "body": "Review for submission once the Buildkite Bazelisk prerequisite lands. The native checker, intentional failures, configured dependencies, and original archive writers were all exercised."
       }
+    },
+    {
+      "id": "branch:mutable-overlay-poll-waiter",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/mutable-overlay-poll-waiter",
+      "head": "215b9343911736fac960834eedb5cb92fe4e1b3c",
+      "title": "Unregister overlay poll waiters from their original backing file",
+      "url": "https://github.com/tamird/gvisor/commit/215b93439",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T02:31:21.542178+00:00",
+      "summary": "On mutable overlay, copying up a file can redirect a canceled poll waiter’s unregister operation to a different backing file. The old proc file can still wake that waiter; retaining the original file passes the cancellation case. The read-only overlay control passes. Check lifetime, checkpoint behavior and cost before proposing the change.",
+      "evidence": [
+        {
+          "label": "Stock: old backing still sends canceled waiter a notification",
+          "url": "https://app.buildbuddy.io/invocation/62f29665-2f0d-4c93-8723-f51ae4149fdb"
+        },
+        {
+          "label": "Candidate: retaining original registration prevents this notification",
+          "url": "https://app.buildbuddy.io/invocation/438a0677-8207-42af-9d27-109fcfe7380e"
+        }
+      ]
     }
   ],
   "edges": [
@@ -50167,9 +50190,35 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T02:12:30.958149+00:00",
+      "updatedAt": "2026-10-30T02:31:21.542178+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Making the production Go overrides development-only cleared the stock Gazelle failure in a downstream graph, but --ignore_dev_dependency then dropped the protobuf startup patch. This does not provide the needed dependency policy.",
+          "evidence": [
+            {
+              "label": "Production Go overrides with --ignore_dev_dependency",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40991172117/artifacts/12949561740"
+            }
+          ]
+        },
+        {
+          "text": "The full native ARM64 release failed in PackageTar. Selecting the already-qualified static ARM64 Python fixed the original shim tar action on scratch: it ran uncached, and the verifier checked the output mode and bytes 1.07 seconds after execution finished. The full six-archive retry on the same fork SHA is running.",
+          "evidence": [
+            {
+              "label": "Full native ARM64 attempt fails in PackageTar writers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40990262556/artifacts/12949157129"
+            },
+            {
+              "label": "Same ARM64 shim tar runs uncached on scratch with static Python",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40991692766/artifacts/12949008650"
+            },
+            {
+              "label": "Full six-archive retry on 01a2394fe",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40992079979"
+            }
+          ]
+        },
         {
           "text": "The unchanged rules_pkg tar and Debian writers each ran on empty native AMD64 and ARM64 workers using the published rules_python 2.4.5 ZIP rule and hermetic_launcher 0.0.17. All four actions had the stock arguments and package inputs; the tar, .deb and .changes files matched the ordinary-worker outputs byte for byte. A separate test passed with the application and interpreter in independent manifest directories and failed as expected when the runtime mapping was removed. Each writer requires its own ZIP (65.65–65.67 MB for AMD64, 66.88–66.91 MB for ARM64), extracted on each launch. The experiment redirected two private rules_pkg labels on the fork. No upstream packaging change is proposed.",
           "evidence": [
@@ -50772,8 +50821,20 @@
           ]
         },
         {
-          "text": "An opt-in rules_python change starts its released Python bootstrap with a native executable. The unchanged rules_pkg tar and Debian writers produced the same packages on empty AMD64 and ARM64 workers, without per-writer ZIPs or extraction. The launchers are 19,080 bytes (AMD64) and 18,080 bytes (ARM64); the ARM64 writers share 66,293,347 bytes of Python runtime contents. A relocated common runfiles tree passed on both architectures. Arbitrarily split manifest roots still fail in the stock Python bootstrap. No upstream change has been submitted.",
+          "text": "An opt-in native rules_python launcher runs ordinary Python without a host PATH on Bazel 7.4 and 8.5 WORKSPACE builds. The unchanged tar and Debian writers passed on AMD64 and ARM64, as did a runtime-created venv and a custom shebang. Two upstream contracts still fail: symlinks and a nested Python binary can select the parent process’s runfiles. The launcher supplier needs to select the runfiles source for each process. The tested package writers remain valid; this is not a general launcher replacement.",
           "evidence": [
+            {
+              "label": "rules_python source and two upstream runfiles failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40991559714/artifacts/12949187778"
+            },
+            {
+              "label": "Launcher supplier: runfiles source precedence",
+              "url": "https://github.com/hermeticbuild/hermetic-launcher/pull/59#issuecomment-4781451180"
+            },
+            {
+              "label": "Runtime-created venv and custom shebang with empty PATH",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40991947068/artifacts/12949607294"
+            },
             {
               "label": "AMD64 original worker records and manifest controls",
               "url": "https://github.com/tamird/gvisor/actions/runs/40988827871/artifacts/12948063182"
@@ -50923,6 +50984,34 @@
       ],
       "nextStep": "Qualify the full release on current sources and a complete native ARM64 compiler build separately. The historical cross-build, nine native ARM64 prerequisite actions, native version reader, changelog writer, module-map helper and consuming compiler-rt archives have scoped results. The next packaging decision is upstream review of the opt-in rules_python launcher; ordinary tar/deb writers are qualified on both architectures.",
       "evidence": [
+        {
+          "label": "rules_python source and two upstream runfiles failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40991559714/artifacts/12949187778"
+        },
+        {
+          "label": "Launcher supplier: runfiles source precedence",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/pull/59#issuecomment-4781451180"
+        },
+        {
+          "label": "Runtime-created venv and custom shebang with empty PATH",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40991947068/artifacts/12949607294"
+        },
+        {
+          "label": "Full native ARM64 attempt fails in PackageTar writers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40990262556/artifacts/12949157129"
+        },
+        {
+          "label": "Same ARM64 shim tar runs uncached on scratch with static Python",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40991692766/artifacts/12949008650"
+        },
+        {
+          "label": "Full six-archive retry on 01a2394fe",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40992079979"
+        },
+        {
+          "label": "Production Go overrides with --ignore_dev_dependency",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40991172117/artifacts/12949561740"
+        },
         {
           "label": "AMD64 original worker records and manifest controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/40988827871/artifacts/12948063182"
