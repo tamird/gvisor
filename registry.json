@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T05:06:38.535625+00:00",
+    "updatedAt": "2026-10-30T05:07:07.633004+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41212,8 +41212,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T05:05:43.774745+00:00",
-      "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The full checkpoint round-tripped. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
+      "updatedAt": "2026-10-30T05:07:07.633004+00:00",
+      "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
         {
           "text": "Legacy Save cleared bytes still visible through another slice, whichever slice it visited first. Two attempted fixes are off the submission queue: tracking byte ranges saved an unrelated sibling field; copying reachable values into a private array changed the identity of both self-pointers produced by a save hook. The integrated graph preserved the live bytes, slice aliases and self-pointers. It covers whole array elements: a pointer to one field can also save its sibling. Dropping the legacy clear would revive a kernfs failure by following a destroyed dentry in unused capacity.",
@@ -44993,7 +44993,7 @@
               "−92.78%"
             ]
           ],
-          "note": "Both formats reloaded. The pages file was unchanged. The nested-value failure in #16715 uses a state shape absent from this workload.",
+          "note": "Both formats reloaded. The pages file was unchanged. Reloading this workload did not detect the silent nested-value corruption reproduced in #16715.",
           "evidence": [
             {
               "label": "Benchstat",
