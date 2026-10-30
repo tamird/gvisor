@@ -1,0 +1,106 @@
+{
+  "verified": true,
+  "lanes": {
+    "current-native": {
+      "source": "0625467a2ad37361a730bbc06fe0cbf6462abc34",
+      "target": "//test/syscalls:tuntap_test_native",
+      "expected_target": "//test/syscalls:tuntap_test_native",
+      "expected_cases": [
+        "TuntapTest.CreateInterface",
+        "TuntapTest.SetIffReadOnlyRequest"
+      ],
+      "cases": {
+        "TuntapTest.CreateInterface": {
+          "status": "PASS",
+          "failures": []
+        },
+        "TuntapTest.SetIffReadOnlyRequest": {
+          "status": "PASS",
+          "failures": []
+        }
+      },
+      "missing": [],
+      "fixture": "453750fcb375d8c4862f0e574146509e1104d76f0ed70dd7a13a13897f811520  test/syscalls/linux/tuntap.cc",
+      "finished": "2026-10-30T20:19:13Z",
+      "exit": "0",
+      "verified": true
+    },
+    "stock-guest": {
+      "source": "43c2372344307be8699cf4e9833de413f9f892da",
+      "target": "//test/syscalls:tuntap_test_runsc_systrap_directfs",
+      "expected_target": "//test/syscalls:tuntap_test_runsc_systrap_directfs",
+      "expected_cases": [
+        "TuntapTest.CreateInterface",
+        "TuntapTest.SetIffReadOnlyRequest"
+      ],
+      "cases": {
+        "TuntapTest.CreateInterface": {
+          "status": "FAIL",
+          "failures": [
+            "test/syscalls/linux/tuntap.cc:403\nExpected equality of these values:\n  ifr.ifr_ifrn.ifrn_name\n    Which is: \"\"\n  ifr_get.ifr_ifrn.ifrn_name\n    Which is: \"tap2\"\n"
+          ]
+        },
+        "TuntapTest.SetIffReadOnlyRequest": {
+          "status": "FAIL",
+          "failures": [
+            "test/syscalls/linux/tuntap.cc:425\nValue of: ioctl(fd.get(), (((1U) << (((0+8)+8)+14)) | ((('T')) << (0+8)) | (((202)) << 0) | ((((sizeof(int)))) << ((0+8)+8))), ifr)\nExpected: -1 (failure), with errno PosixError(errno=14 Bad address)\n  Actual: 0 (of type int)\n"
+          ]
+        }
+      },
+      "missing": [],
+      "fixture": "453750fcb375d8c4862f0e574146509e1104d76f0ed70dd7a13a13897f811520  test/syscalls/linux/tuntap.cc",
+      "finished": "2026-10-30T20:20:43Z",
+      "exit": "3",
+      "verified": true
+    },
+    "current-guest": {
+      "source": "0625467a2ad37361a730bbc06fe0cbf6462abc34",
+      "target": "//test/syscalls:tuntap_test_runsc_systrap_directfs",
+      "expected_target": "//test/syscalls:tuntap_test_runsc_systrap_directfs",
+      "expected_cases": [
+        "TuntapTest.CreateInterface",
+        "TuntapTest.SetIffReadOnlyRequest"
+      ],
+      "cases": {
+        "TuntapTest.CreateInterface": {
+          "status": "PASS",
+          "failures": []
+        },
+        "TuntapTest.SetIffReadOnlyRequest": {
+          "status": "PASS",
+          "failures": []
+        }
+      },
+      "missing": [],
+      "fixture": "453750fcb375d8c4862f0e574146509e1104d76f0ed70dd7a13a13897f811520  test/syscalls/linux/tuntap.cc",
+      "finished": "2026-10-30T20:20:49Z",
+      "exit": "0",
+      "verified": true
+    }
+  },
+  "analyzer": true,
+  "verified_at": "2026-10-30T20:30:16.981684+00:00",
+  "originalArtifact": "https://github.com/tamird/gvisor/actions/runs/41121550130/artifacts/13008813777",
+  "originalArchiveSHA256": "a0c3d7ab9a203f1dd8cc77e1cb6771f4586e34880cd5e5a1cadb30d7af13ff03",
+  "reviewCommit": "9ae1e5242f0364f5ad75588fa55b697f4d2308da",
+  "reviewDiff": "One explanatory Go comment after the runtime and analyzer checks.",
+  "replay": "Read retained XML, exit statuses, source IDs, fixture hashes and analyzer receipt. The original assertion collector looked for source-level ifr_name and TUNSETIFF; GoogleTest expands those macros in its output. No tests were rerun.",
+  "sourceRuns": [
+    {
+      "label": "Linux: both shared syscall cases passed",
+      "url": "https://app.buildbuddy.io/invocation/1ec857f1-91e5-433f-b2fb-cfbb9d3420f5"
+    },
+    {
+      "label": "Stock: empty name; success on a read-only request",
+      "url": "https://app.buildbuddy.io/invocation/49266657-958e-4787-8b33-3bd0084e49f2"
+    },
+    {
+      "label": "Fixed: both shared syscall cases passed",
+      "url": "https://app.buildbuddy.io/invocation/6123fd42-3720-4eed-a8e4-fa9ca107ebfd"
+    },
+    {
+      "label": "Owning TUN device analyzer passed",
+      "url": "https://app.buildbuddy.io/invocation/01a5cea9-5a35-4aa8-bc84-96effd3b3b38"
+    }
+  ]
+}

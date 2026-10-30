@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:25:22.790363+00:00",
+    "updatedAt": "2026-10-30T20:33:26.178070+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37288,6 +37288,59 @@
           "url": "https://github.com/browserslist/caniuse-lite/blob/08a646231/LICENSE"
         }
       ]
+    },
+    {
+      "id": "branch:tun-setiff-copyout",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "review/tun-setiff-copyout",
+      "head": "9ae1e5242f0364f5ad75588fa55b697f4d2308da",
+      "title": "Return the assigned interface name from TUNSETIFF",
+      "url": "https://github.com/tamird/gvisor/commit/9ae1e5242",
+      "summary": "Linux returns the generated name in TUNSETIFF. Stock returned an empty name for tap2 and succeeded on a read-only request; Linux and corrected gVisor returned EFAULT with the interface still attached. All six original syscall records executed. The review head adds only a comment to the source tested by Nogo and the syscall cases. Independent of #16757.",
+      "evidence": [
+        {
+          "label": "Linux: both shared syscall cases passed",
+          "url": "https://app.buildbuddy.io/invocation/1ec857f1-91e5-433f-b2fb-cfbb9d3420f5"
+        },
+        {
+          "label": "Stock: empty name; success on a read-only request",
+          "url": "https://app.buildbuddy.io/invocation/49266657-958e-4787-8b33-3bd0084e49f2"
+        },
+        {
+          "label": "Fixed: both shared syscall cases passed",
+          "url": "https://app.buildbuddy.io/invocation/6123fd42-3720-4eed-a8e4-fa9ca107ebfd"
+        },
+        {
+          "label": "Owning TUN device analyzer passed",
+          "url": "https://app.buildbuddy.io/invocation/01a5cea9-5a35-4aa8-bc84-96effd3b3b38"
+        },
+        {
+          "label": "Verified original XML; the Actions verifier expected unexpanded C macro names",
+          "url": "https://tamird.github.io/gvisor/tun-setiff-copyout-verdict.json"
+        },
+        {
+          "label": "Original six records and macro-expanded stock failure text",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41121550130/artifacts/13008813777"
+        },
+        {
+          "label": "Original reproducer and maintainer diagnosis in 2021",
+          "url": "https://github.com/google/gvisor/pull/6035#issuecomment-888710039"
+        }
+      ],
+      "updatedAt": "2026-10-30T20:33:26.178070+00:00",
+      "status": "Awaiting contributor review",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "9ae1e5242f0364f5ad75588fa55b697f4d2308da",
+        "baseHead": "70cb23c0de3c8d1295054663b50717546fbbc7a7",
+        "url": "https://github.com/tamird/gvisor/commit/9ae1e5242",
+        "title": "Return the assigned interface name from TUNSETIFF",
+        "summary": "Linux returns the generated name in TUNSETIFF. Stock returned an empty name for tap2 and succeeded on a read-only request; Linux and corrected gVisor returned EFAULT with the interface still attached. All six original syscall records executed. The review head adds only a comment to the source tested by Nogo and the syscall cases. Independent of #16757.",
+        "body": "A caller that passed an empty name to TUNSETIFF got an interface but\ncould not identify it from the returned request [1]. The TUN device has\nassigned a name since b8f56c79b, but the ioctl never copied it back.\n\nCopy the original request back with the attached interface's name, as\nLinux does [2]. This preserves the caller's flags. If the request is\nreadable but not writable, the ioctl returns EFAULT and the interface\nremains attached. Check both cases using the same syscalls on Linux and\ngVisor.\n\n[1]: https://github.com/google/gvisor/issues/6034\n[2]: https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L3086-L3095"
+      }
     }
   ],
   "edges": [
