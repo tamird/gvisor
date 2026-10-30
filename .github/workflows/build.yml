@@ -14,20 +14,17 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          repository: bazel-contrib/rules_distroless
-          ref: "15f9fc8d39ba3178c313e61d94feb3f6eb88f95f"
+          repository: tamird/rules_distroless
+          ref: "9de063f595a7f0a0140e845bb23c2a0900a64059"
           path: supplier
           persist-credentials: false
-      - name: Apply the complete supplier change
+      - name: Record supplier source
         working-directory: supplier
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/receipt"
-          test "$(git rev-parse HEAD)" = 15f9fc8d39ba3178c313e61d94feb3f6eb88f95f
-          git apply --index ../test/rbe/rules-distroless-deb-layer.patch
-          test "$(git write-tree)" = 1aebbe25175d8ef0faf3161379880317ef02258a
-          printf '%s\n' 86a5661f4a0eb15a41bf4364c9b0542da02cfa7e > "$RUNNER_TEMP/receipt/supplier-commit"
-          printf '%s\n' 1aebbe25175d8ef0faf3161379880317ef02258a > "$RUNNER_TEMP/receipt/supplier-tree"
+          test "$(git rev-parse HEAD)" = 9de063f595a7f0a0140e845bb23c2a0900a64059
+          git rev-parse HEAD > "$RUNNER_TEMP/receipt/supplier-commit"
       - name: Run the supplier's declared Debian layer tests
         working-directory: supplier
         run: |
@@ -52,6 +49,35 @@ jobs:
           print(cases)
           assert cases==dict.fromkeys(expected,"PASSED"),cases
           PYTHON
+      - name: Import pinned AMD64 and ARM64 packages
+        working-directory: supplier
+        run: |
+          set -euo pipefail
+          cat >> MODULE.bazel <<'MODULE'
+          deb_import = use_repo_rule("//apt/private:deb_import.bzl", "deb_import")
+          deb_import(
+              name = "deb_amd64",
+              package_name = "erofs-utils",
+              target_name = "erofs-utils",
+              urls = ["https://archive.ubuntu.com/ubuntu/pool/universe/e/erofs-utils/erofs-utils_1.7.1-1build2_amd64.deb"],
+              sha256 = "ce1a7283a3ffc47bc832dfd77c4fba6a327f3928f1c90c64fe14e251251cfc3a",
+          )
+          deb_import(
+              name = "deb_arm64",
+              package_name = "erofs-utils",
+              target_name = "erofs-utils",
+              urls = ["https://ports.ubuntu.com/ubuntu-ports/pool/universe/e/erofs-utils/erofs-utils_1.7.1-1build2_arm64.deb"],
+              sha256 = "afc3f29f3c0ec4547c60985aa2373dc1dce3324cb3e8970f03b92c4789e74665",
+          )
+          MODULE
+          bazel build --jobs=4 @deb_amd64//:data @deb_arm64//:data
+          for entry in amd64:6728633e7fd35e1a7d14d8da37017e516dbe524f2afb0489f50a088971a5f2eb arm64:96bef30c8a26038127d31e9d70e9ae534e3687fa556c217e4dd2f810ccbdd127; do
+            arch=${entry%%:*}
+            layer=$(bazel cquery "@deb_$arch//:data" --output=files)
+            test -f "$layer"
+            printf '%s  %s\n' "${entry#*:}" "$layer" | sha256sum --check --strict
+            sha256sum "$layer" > "$RUNNER_TEMP/receipt/$arch.sha256"
+          done
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
