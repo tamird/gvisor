@@ -1,4 +1,4 @@
-name: Check the complete existing Jekyll site with its cross compiler
+name: Check the original website with its complete GNU toolchain
 on:
   push:
     branches: [qualification/website-jekyll-source]
@@ -16,14 +16,23 @@ jobs:
       - name: Supply the same GNU cross compiler required by the stock syscall table
         run: |
           sudo apt-get -qq update
-          sudo apt-get -qq install --no-install-recommends gcc-aarch64-linux-gnu
-          /usr/bin/aarch64-linux-gnu-gcc --version | head -1
+          sudo apt-get -qq install --no-install-recommends build-essential crossbuild-essential-arm64
+          /usr/bin/aarch64-linux-gnu-g++ --version | head -1
       - name: Observe which gem versions the unmodified renderer and proofer activate
         run: |
           mkdir "$RUNNER_TEMP/website" "$RUNNER_TEMP/website-probe"
           cp test/rbe/website-jekyll/gem_activation.rb "$RUNNER_TEMP/website-probe"
           printf 'FROM %s\nCOPY gem_activation.rb /gem_activation.rb\nENV RUBYOPT=-r/gem_activation.rb\n' "$IMAGE" > "$RUNNER_TEMP/website-probe/Dockerfile"
           docker build --network none -t gvisor.dev/images/jekyll "$RUNNER_TEMP/website-probe"
+      - name: Identify plugins available in the supplier and custom generator independently
+        run: |
+          for image in "docker.io/jekyll/jekyll@sha256:fa979718aac3528a2c127eedf1e4f721ac07aed5c22bd5ea493e6ab7b8eca9a1" "$IMAGE"; do
+            docker run --rm --network none --entrypoint ruby "$image" -rjson -e '
+              features = %w[jekyll html-proofer nokogiri jekyll-autoprefixer jekyll-inline-svg jekyll-paginate kramdown-parser-gfm jekyll-relative-links jekyll-feed jekyll-sitemap]
+              missing = features.filter_map { |name| begin; require name; nil; rescue LoadError => err; [name, err.message]; end }
+              specs = Gem.loaded_specs.transform_values { |spec| spec.version.to_s }
+              puts JSON.generate({missing: missing, activated: specs})' > "$RUNNER_TEMP/website/components-${image##*@}.json"
+          done
       - name: Build the existing complete website through Bazel
         if: ${{ !cancelled() }}
         run: |
@@ -41,9 +50,10 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: website-cross-reference
+          name: website-gnu-reference
           path: |
             ${{ runner.temp }}/website/activation.json
+            ${{ runner.temp }}/website/components-*.json
             ${{ runner.temp }}/website/site-files.json
             ${{ runner.temp }}/website/bazel.log
           if-no-files-found: error
