@@ -1,0 +1,98 @@
+
+
+// TestSackedOutRetransmissionTiming creates a new SACK hole after a previous
+// recovery. The last ACK names three packets together, so only the RACK packet
+// threshold, not a series of three duplicate ACKs, shortens its timer.
+func TestSackedOutRetransmissionTiming(t *testing.T) {
+	clock := faketime.NewManualClock()
+	states := make(chan tcp.TCPSenderState, 32)
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true, MTU: mtu, Clock: clock,
+		Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender },
+	})
+	defer c.Cleanup()
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	base := c.IRS.Add(1)
+	payload := make([]byte, 16*maxPayload)
+	for i := range payload {
+		payload[i] = byte(i)
+	}
+	sent := 0
+	write := func(n int) {
+		t.Helper()
+		if _, err := c.EP.Write(bytes.NewReader(payload[sent*maxPayload:(sent+n)*maxPayload]), tcpip.WriteOptions{}); err != nil {
+			t.Fatalf("Write: %s", err)
+		}
+		for range n {
+			c.ReceiveAndCheckPacketWithOptions(payload, sent*maxPayload, maxPayload, e2e.TSOptionSize)
+			sent++
+		}
+	}
+	ack := func(cumulative, first, last int) tcp.TCPSenderState {
+		t.Helper()
+		var blocks []header.SACKBlock
+		if first > 0 {
+			blocks = []header.SACKBlock{{Start: base.Add(seqnum.Size((first - 1) * maxPayload)), End: base.Add(seqnum.Size(last * maxPayload))}}
+		}
+		c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), cumulative*maxPayload, blocks)
+		select {
+		case s := <-states:
+			t.Logf("ack=%d sack=%d-%d sacked=%d cwnd=%d reo=%s reord=%t recovery=%t", cumulative, first, last, s.SackedOut, s.SndCwnd, s.RACKState.ReoWnd, s.RACKState.Reord, s.FastRecovery.Active)
+			return s
+		case <-time.After(3 * time.Second):
+			t.Fatal("timeout waiting for ACK processing")
+			return tcp.TCPSenderState{}
+		}
+	}
+	const rtt = 100 * time.Millisecond
+	write(1)
+	clock.Advance(rtt)
+	ack(1, 0, 0)
+
+	// Retransmit packet 2 before filling the first hole. That prevents
+	// RACK from treating its later cumulative ACK as delivery reordering.
+	write(1)
+	clock.Advance(5 * time.Millisecond)
+	write(7)
+	clock.Advance(rtt)
+	for n := 3; n <= 5; n++ {
+		ack(1, 3, n)
+	}
+	c.ReceiveAndCheckPacketWithOptions(payload, maxPayload, maxPayload, e2e.TSOptionSize)
+	s := ack(9, 0, 0)
+	if s.FastRecovery.Active || s.RACKState.Reord {
+		t.Fatalf("the first recovery did not end without reordering: %+v", s.RACKState)
+	}
+	if s.SndCwnd < 4 {
+		t.Fatalf("need 4 packets for second flight, got cwnd=%d", s.SndCwnd)
+	}
+
+	// Packet 10 is 5 ms older than 11-13. Their single SACK arrives one
+	// RTT later, before MinRTT/4 has elapsed for the older packet.
+	write(1)
+	clock.Advance(5 * time.Millisecond)
+	write(3)
+	clock.Advance(rtt)
+	s = ack(9, 11, 13)
+	p := c.GetPacketNonBlocking()
+	immediate := p != nil
+	if !immediate {
+		clock.Advance(rtt/4 + time.Nanosecond)
+		p = c.GetPacket()
+	}
+	if p == nil {
+		t.Fatal("no retransmission by the reordering deadline")
+	}
+	defer p.Release()
+	seg := header.TCP(header.IPv4(p.AsSlice()).Payload())
+	seq := seqnum.Value(seg.SequenceNumber())
+	want := base.Add(9 * maxPayload)
+	if seq != want {
+		t.Fatalf("retransmission starts at %d, want %d", seq, want)
+	}
+	t.Logf("SECOND_HOLE immediate=%t seq=packet10 count=%d reownd=%s", immediate, s.SackedOut, s.RACKState.ReoWnd)
+	if !immediate {
+		t.Error("three SACKed packets did not trigger retransmission at the ACK")
+	}
+}

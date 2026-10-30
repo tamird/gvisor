@@ -17,12 +17,17 @@ jobs:
           set -uo pipefail
           out="$RUNNER_TEMP/sacked"
           mkdir -p "$out"
+          git show "$GITHUB_SHA:test/rbe/sack-retransmit.fixture" > "$out/packet.fixture"
+          printf '%s  %s\n' "97dde301efbcbb783b5aa6242f551c2a6cc8ebeb035bccf95c48737e5ca9d25c" "$out/packet.fixture" | sha256sum -c - || exit 1
           while read -r name expected; do
+            git restore -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
             git checkout --detach "$expected" || exit 1
             test "$(git rev-parse HEAD)" = "$expected" || exit 1
+            cat "$out/packet.fixture" >> pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
+            test "$(git diff --name-only)" = "pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go" || exit 1
             start=$(date -u +%FT%TZ)
             ec=0
-            bazel test --jobs=5 --test_output=errors --test_arg=-test.v --test_filter='TestSackedOut(AcrossRecovery|AfterPMTU)' //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test > "$out/$name-bazel.log" 2>&1 || ec=$?
+            bazel test --jobs=5 --test_output=errors --test_arg=-test.v --test_filter='TestSackedOut(AcrossRecovery|AfterPMTU|RetransmissionTiming)' //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test > "$out/$name-bazel.log" 2>&1 || ec=$?
             tail -35 "$out/$name-bazel.log"
             file=bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test/test.log
             if test -f "$file"; then cp -L "$file" "$out/$name-test.log"; fi
@@ -62,13 +67,15 @@ jobs:
               matches=lambda rows: [x["count"] for x in rows]==[0,1,2,3,0]
               mtu=[(int(mss),int(count)) for mss,count in re.findall(r'cumulative=\d+ SACK=.* MSS=(\d+) sacked=(-?\d+)',log)]
               mtu_valid=len(mtu)==4 and [m for m,_ in mtu]==[1460,1460,1160,1160] and ([c for _,c in mtu]==[0,1,2,0] if name=="candidate" else [c for _,c in mtu]!=[0,1,2,0])
-              expect_state=mtu_valid and trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values()) and all(rows[-1]["count"]<0 for rows in obs.values()))
-              actual[name]={"source":source,"exit":int(ec),"start":start,"end":end,"observations":obs,"pmtu":mtu,"valid":source==expected[name] and (int(ec)==0 if name=="candidate" else int(ec)==3) and expect_state}
+              wire=re.search(r"SECOND_HOLE immediate=(true|false) seq=packet10 count=(-?\d+) reownd=(\S+)",log)
+              wire_valid=wire is not None and (wire[1]=="true" if name=="candidate" else wire[1]=="false")
+              expect_state=wire_valid and mtu_valid and trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values()) and all(rows[-1]["count"]<0 for rows in obs.values()))
+              actual[name]={"source":source,"exit":int(ec),"start":start,"end":end,"observations":obs,"pmtu":mtu,"pmtu_valid":mtu_valid,"wire":wire.groups() if wire is not None else None,"ledger":trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values())),"valid":source==expected[name] and (int(ec)==0 if name=="candidate" else int(ec)==3) and expect_state}
           path=out/"suite-test.log"
           suite=path.read_text() if path.exists() else ""
           suite_pass=re.findall(r'^--- PASS: (\S+)',suite,re.M)
           suite_fail=re.findall(r'^--- FAIL: (\S+)',suite,re.M)
-          verdict={"expected":expected,"actual":actual,"missing":[k for k in expected if not actual.get(k,{}).get("observations")],"suite":{"exit":int((out/"suite-exit").read_text()),"passed":suite_pass,"failed":suite_fail},"verified":datetime.now(timezone.utc).isoformat()}
+          verdict={"fixture_sha256":"97dde301efbcbb783b5aa6242f551c2a6cc8ebeb035bccf95c48737e5ca9d25c","expected":expected,"actual":actual,"missing":[k for k in expected if not actual.get(k,{}).get("observations")],"suite":{"exit":int((out/"suite-exit").read_text()),"passed":suite_pass,"failed":suite_fail},"verified":datetime.now(timezone.utc).isoformat()}
           verdict["status"]="pass" if set(actual)==set(expected) and all(v["valid"] for v in actual.values()) and verdict["suite"]["exit"]==0 and len(suite_pass)>10 and not suite_fail else "incomplete"
           (out/"verdict.json").write_text(json.dumps(verdict,indent=2)); print(json.dumps(verdict)); sys.exit(verdict["status"]!="pass")
           PY
