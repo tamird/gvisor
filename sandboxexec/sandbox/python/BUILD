@@ -31,3 +31,9 @@ py_test(
         ":sandbox_py",
     ],
 )
+
+filegroup(
+    name = "release_fixture_inputs",
+    srcs = glob(["**"], exclude = ["BUILD"]),
+    visibility = ["//test/rbe/python_release_isolation:__pkg__"],
+)
