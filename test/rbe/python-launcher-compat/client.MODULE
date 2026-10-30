@@ -1,0 +1,7 @@
+module(name="rules_python_tests")
+bazel_dep(name="rules_python",version="2.4.5")
+local_path_override(module_name="rules_python",path="../upstream")
+bazel_dep(name="rules_shell",version="0.8.0")
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(python_version="3.11",is_default=True)
+use_repo(python, "python_3_11")

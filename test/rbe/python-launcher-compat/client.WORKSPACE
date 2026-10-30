@@ -1,0 +1,5 @@
+workspace(name="rules_python_tests")
+local_repository(name="rules_python",path="../upstream")
+load("@rules_python//python:repositories.bzl","py_repositories","python_register_toolchains")
+py_repositories()
+python_register_toolchains(name="python",python_version="3.11")

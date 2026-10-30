@@ -1,0 +1,24 @@
+name: Python launcher compatibility
+on:
+  push:
+    branches: [qualification/python-launcher-compat]
+permissions:
+  contents: read
+jobs:
+  compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        repository: bazel-contrib/rules_python
+        ref: 702931a9354bd08d53174bb1b40621a036a9346b
+        path: upstream
+    - run: bash test/rbe/python-launcher-compat/probe.sh
+    - if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-bootstrap-compatibility
+        path: results/
+        if-no-files-found: error

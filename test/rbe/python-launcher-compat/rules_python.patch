@@ -1,0 +1,168 @@
+diff --git a/MODULE.bazel b/MODULE.bazel
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -8,6 +8,7 @@
+ bazel_dep(name = "bazel_skylib", version = "1.8.2")
+ bazel_dep(name = "package_metadata", version = "0.0.7")
+ bazel_dep(name = "platforms", version = "0.0.11")
++bazel_dep(name = "hermetic_launcher", version = "0.0.17")
+ bazel_dep(name = "rules_cc", version = "0.2.17")
+ bazel_dep(name = "toml.bzl", version = "0.4.1")
+ 
+diff --git a/python/private/py_executable.bzl b/python/private/py_executable.bzl
+--- a/python/private/py_executable.bzl
++++ b/python/private/py_executable.bzl
+@@ -82,6 +82,9 @@
+ _EXTERNAL_PATH_PREFIX = "external"
+ _ZIP_RUNFILES_DIRECTORY_NAME = "runfiles"
+ _INIT_PY = "__init__.py"
++# The optional launcher toolchains are registered by their Bzlmod module.
++# WORKSPACE consumers continue to use the existing bootstrap implementations.
++_HAS_NATIVE_LAUNCHER = str(Label("//:__pkg__")).startswith("@@")
+ 
+ # Non-Google-specific attributes for executables
+ # These attributes are for rules that accept Python sources.
+@@ -214,6 +217,7 @@
+         "_allowlist_function_transition": lambda: attrb.Label(
+             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+         ),
++        "_native_launcher_api": lambda: attrb.Label(default = "//python/private/native_launcher:api" if _HAS_NATIVE_LAUNCHER else None),
+         "_bootstrap_impl_flag": lambda: attrb.Label(
+             default = labels.BOOTSTRAP_IMPL,
+             providers = [BuildSettingInfo],
+@@ -350,7 +354,7 @@
+             imports = imports,
+             runtime_details = runtime_details,
+             add_runfiles_root_to_sys_path = (
+-                "1" if BootstrapImplFlag.get_value(ctx) == BootstrapImplFlag.SYSTEM_PYTHON else "0"
++                "1" if BootstrapImplFlag.get_value(ctx) != BootstrapImplFlag.SCRIPT else "0"
+             ),
+             extra_deps = extra_deps,
+         )
+@@ -469,9 +473,20 @@
+             venv = venv,
+         )
+     elif bootstrap_output:
++        bootstrap = bootstrap_output
++        api = ctx.attr._native_launcher_api
++        native = api[platform_common.ToolchainInfo] if api else None
++        use_native = (
++            native != None and not is_windows and
++            BootstrapImplFlag.get_value(ctx) == BootstrapImplFlag.NATIVE and
++            native.supported(ctx, runtime_details.effective_runtime, bootstrap_output, native.bootstrap)
++        )
++        if use_native:
++            bootstrap = ctx.actions.declare_file(bootstrap_output.basename + ".bootstrap.py", sibling = bootstrap_output)
++            extra_runfiles = extra_runfiles.merge(ctx.runfiles([bootstrap]))
+         _create_stage1_bootstrap(
+             ctx,
+-            output = bootstrap_output,
++            output = bootstrap,
+             stage2_bootstrap = stage2_bootstrap,
+             runtime_details = runtime_details,
+             is_for_zip = False,
+@@ -479,6 +494,8 @@
+             main_py = main_py,
+             venv = venv,
+         )
++        if use_native:
++            native.create(ctx, runtime_details.effective_runtime, bootstrap_output, bootstrap)
+     else:
+         # Otherwise, this should be the Windows case of launcher + zip.
+         # Double check this just to make sure.
+@@ -2236,7 +2253,10 @@
+             ruleb.ToolchainType(TOOLCHAIN_TYPE),
+             ruleb.ToolchainType(EXEC_TOOLS_TOOLCHAIN_TYPE, mandatory = False),
+             ruleb.ToolchainType(CC_TOOLCHAIN_TYPE, mandatory = False),
+-        ] + ([ruleb.ToolchainType(LAUNCHER_MAKER_TOOLCHAIN_TYPE)] if rp_config.bazel_9_or_later else []),
++        ] + ([
++            ruleb.ToolchainType(Label("@hermetic_launcher//launcher:finalizer_toolchain_type"), mandatory = False),
++            ruleb.ToolchainType(Label("@hermetic_launcher//launcher:template_toolchain_type"), mandatory = False),
++        ] if _HAS_NATIVE_LAUNCHER else []) + ([ruleb.ToolchainType(LAUNCHER_MAKER_TOOLCHAIN_TYPE)] if rp_config.bazel_9_or_later else []),
+         cfg = dict(
+             implementation = _transition_executable_impl,
+             inputs = TRANSITION_LABELS + [
+diff --git a/python/private/flags.bzl b/python/private/flags.bzl
+--- a/python/private/flags.bzl
++++ b/python/private/flags.bzl
+@@ -174,6 +174,7 @@
+ BootstrapImplFlag = enum(
+     SYSTEM_PYTHON = "system_python",
+     SCRIPT = "script",
++    NATIVE = "native",
+     get_value = _bootstrap_impl_flag_get_value,
+ )
+ 
+diff --git a/docs/api/rules_python/python/config_settings/index.md b/docs/api/rules_python/python/config_settings/index.md
+--- a/docs/api/rules_python/python/config_settings/index.md
++++ b/docs/api/rules_python/python/config_settings/index.md
+@@ -388,6 +388,15 @@
+ * `script`: Use a bootstrap that uses an arbitrary executable script (usually a
+   shell script) instead of requiring it be a Python program.
+ 
++* `native`: With Bzlmod, start the standard Python bootstrap with a native
++  executable and the declared interpreter. Windows, custom shebangs and
++  custom bootstrap templates retain the existing bootstrap. The worker
++  must be able to run the interpreter and supply a physical runfiles tree.
++
++:::{versionadded} VERSION_NEXT_FEATURE
++Added the opt-in native bootstrap.
++:::
++
+ :::{note}
+ The `script` bootstrap requires the toolchain to provide the `PyRuntimeInfo`
+ provider from `rules_python`. This loosely translates to using Bazel 7+ with a
+diff --git a/python/private/native_launcher/BUILD.bazel b/python/private/native_launcher/BUILD.bazel
+--- /dev/null
++++ b/python/private/native_launcher/BUILD.bazel
+@@ -0,0 +1,6 @@
++load(":native_launcher.bzl", "native_launcher_api")
++native_launcher_api(
++    name = "api",
++    bootstrap = "//python/private:python_bootstrap_template.txt",
++    visibility = ["//visibility:public"],
++)
+diff --git a/python/private/native_launcher/native_launcher.bzl b/python/private/native_launcher/native_launcher.bzl
+--- /dev/null
++++ b/python/private/native_launcher/native_launcher.bzl
+@@ -0,0 +1,35 @@
++"""Start the standard Python bootstrap with the declared interpreter on POSIX.
++
++Load the finalizer through a configured target: Bazel 8 autoloads py_binary
++while loading foreign .bzl files, so importing it in py_executable would
++form a load cycle before any target could be configured.
++"""
++
++load("@hermetic_launcher//launcher:lib.bzl", "launcher")
++load("//python/private:py_runtime_info.bzl", "DEFAULT_STUB_SHEBANG")
++
++def _supported(ctx, runtime, executable, bootstrap):
++    # Only four slots are needed; the released template holds 256 bytes each.
++    # The Python bootstrap handles any application-specific interpreter options.
++    return (
++        runtime and runtime.interpreter and runtime.bootstrap_template == bootstrap and
++        runtime.stub_shebang == DEFAULT_STUB_SHEBANG and
++        ctx.toolchains[launcher.finalizer_toolchain_type] != None and
++        ctx.toolchains[launcher.template_toolchain_type] != None and
++        len(launcher.to_rlocation_path(runtime.interpreter)) <= 256 and
++        len(launcher.to_rlocation_path(executable) + ".bootstrap.py") <= 256
++    )
++
++def _create(ctx, runtime, output, adapter):
++    args, transformed = launcher.args_from_entrypoint(runtime.interpreter)
++    args.extend(["-I", "-S"])
++    launcher.append_runfile(file = adapter, embedded_args = args, transformed_args = transformed)
++    launcher.compile_stub(ctx = ctx, embedded_args = args, transformed_args = transformed, output_file = output)
++
++def _native_launcher_api_impl(ctx):
++    return [platform_common.ToolchainInfo(bootstrap = ctx.file.bootstrap, supported = _supported, create = _create)]
++
++native_launcher_api = rule(
++    implementation = _native_launcher_api_impl,
++    attrs = {"bootstrap": attr.label(allow_single_file = True, mandatory = True)},
++)
+diff --git a/news/2500.added.md b/news/2500.added.md
+--- /dev/null
++++ b/news/2500.added.md
+@@ -0,0 +1 @@
++Added an opt-in native bootstrap for Python binaries on platforms with a declared launcher and interpreter.
