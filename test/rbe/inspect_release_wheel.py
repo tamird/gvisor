@@ -21,6 +21,14 @@ root = Path(os.environ["RUNNER_TEMP"])
 arch = os.environ["QUALIFICATION_ARCH"]
 record = {"source": os.environ["GITHUB_SHA"], "architecture": arch, "expected": ["//sandboxexec/sandbox/python:dist"], "status": "FAIL"}
 image = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
+def missing_executables(log):
+    tools = set()
+    for path in re.findall(r"exec container process[^\n`]*`([^\n`]+)`: No such file or directory", log):
+        name = path.replace("\\/", "/").rsplit("/", 1)[-1]
+        if re.fullmatch(r"[A-Za-z0-9_.+-]{1,100}", name) and not re.search("token|secret|api.?key",name,re.I):
+            tools.add(name)
+    return sorted(tools)
+
 def audit():
     row = root / "qualification"
     assert (row / "final-head.txt").read_text().strip() == record["source"]
@@ -38,6 +46,12 @@ def audit():
     _,spawns = compact_records(spawns_file)
     record["failed_actions"] = [{k:s.get(k) for k in ("mnemonic","targetLabel","runner","exitCode","status")} for s in spawns if s.get("exitCode") or s.get("status")][:20]
     actions = [s for s in spawns if s.get("mnemonic")=="PythonDistribution"]
+    # Only publish tool basenames and action labels. Full coordinator output can contain credentials.
+    record["missing_executables"] = missing_executables((root/"coordinator.log").read_text(errors="replace"))
+    record["failed_actions"] = [
+        {k:s.get(k) for k in ("mnemonic", "targetLabel", "exitCode")}
+        for s in spawns if s.get("exitCode") or s.get("status")
+    ][:20]
     record["distribution"] = [{k:s.get(k) for k in ("runner","cacheHit","exitCode","status","digest","targetLabel","platform")} for s in actions]
     assert record["harness"]["status"]=="PASS" and not record["harness"]["native_exit"] and not record["harness"]["capture_exit"]
     s,=actions

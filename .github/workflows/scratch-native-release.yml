@@ -74,7 +74,8 @@ jobs:
               --bazel-option=--action_env=PATH=/usr/bin:/bin \
               --bazel-option=--remote_download_outputs=toplevel \
               --bazel-option=--//sandboxexec/sandbox/python:release_version=2026.10.29.2 \
-              '--bazel-option=--modify_execution_info=^PythonDistribution$=+no-remote-cache' || rc=$?
+              '--bazel-option=--modify_execution_info=^PythonDistribution$=+no-remote-cache' > "$RUNNER_TEMP/coordinator.log" 2>&1 || rc=$?
+            cat "$RUNNER_TEMP/coordinator.log"
             set +e
             python3 test/rbe/inspect_release_wheel.py
             inspected=$?
