@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:21:43.076174+00:00",
+    "updatedAt": "2026-10-30T20:25:22.790363+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37180,14 +37180,14 @@
       }
     },
     {
-      "id": "branch:tun-persistent-reference",
-      "type": "branch",
+      "id": "pr:16757",
+      "type": "pr",
       "group": "runtime",
-      "repo": "tamird/gvisor",
+      "repo": "google/gvisor",
       "ref": "research/tun-persist-reference-v2",
       "head": "736b926672075e20b03410b52b6f3308751a7bb4",
       "title": "Take the TUN persistence reference before publishing it",
-      "url": "https://github.com/tamird/gvisor/commit/736b92667",
+      "url": "https://github.com/google/gvisor/pull/16757",
       "summary": "Deleting a TUN link while enabling persistence can consume the open file’s reference. A controlled replay panics on stock and leaves the open file’s reference intact with the fix. In a separate syscall test, Linux and corrected gVisor reject both persistence settings on the deleted link with EBADFD; stock returns success for both.",
       "evidence": [
         {
@@ -37203,18 +37203,17 @@
           "url": "https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L3113-L3116"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "736b926672075e20b03410b52b6f3308751a7bb4",
-        "baseHead": "d611c720807d16cbe5fc87cc70c0743a0e96a490",
-        "url": "https://github.com/tamird/gvisor/commit/736b92667",
-        "title": "Take the TUN persistence reference before publishing it",
-        "summary": "Deleting a TUN link while enabling persistence can consume the open file’s reference. A controlled replay panics on stock and leaves the open file’s reference intact with the fix. In a separate syscall test, Linux and corrected gVisor reject both persistence settings on the deleted link with EBADFD; stock returns success for both.",
-        "body": "TUNSETPERSIST sets the persistent flag before taking its reference. A\nconcurrent RTM_DELLINK can see the flag and drop the only reference\nwhile the TUN file is still open. The ioctl then increments a dead\nendpoint. When deletion wins outright, the ioctl reports success on\nthe detached file.\n\nTake the reference while holding the lock that protects the flag.\nDrop it outside the lock because final release calls Close. Return\nEBADFD if the interface has been deleted, as Linux does."
-      },
-      "updatedAt": "2026-10-30T20:20:09.488385+00:00",
-      "status": "Awaiting contributor review"
+      "updatedAt": "2026-10-30T20:25:22.790363+00:00",
+      "status": "open",
+      "number": 16757,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "736b926672075e20b03410b52b6f3308751a7bb4",
+          "outcome": "approved",
+          "at": "2026-10-30T20:25:22.790363+00:00"
+        }
+      ]
     },
     {
       "id": "branch:declared-jekyll-site",
