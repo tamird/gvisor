@@ -602,3 +602,18 @@ type gSliceOfArraysRoot struct {
 	ptrFirst   *[2][2]int64
 	sliceNext  [][2]int64
 }
+
+// +stateify savable
+type gNestedValue struct {
+	tag  int64
+	next any
+}
+
+// +stateify savable
+type gConvertedValue struct {
+	value gNestedValue `state:".(gNestedValue)"`
+}
+
+func (h *gConvertedValue) saveValue() gNestedValue { return h.value }
+
+func (h *gConvertedValue) loadValue(_ context.Context, v gNestedValue) { h.value = v }
