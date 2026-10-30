@@ -1,35 +1,106 @@
-name: CI
-
-"on":
+name: Qualify TUN persistence after link deletion
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tun-persist-checks]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CURRENT: d611c720807d16cbe5fc87cc70c0743a0e96a490
+      STOCK: 9133e77f48c0c322391c3312411f7c816efec0aa
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        cp test/rbe/tun-persist-verdict.py "$RUNNER_TEMP/verify-tcp.py"
+        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" ]]
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        git fetch --no-tags --depth=1 origin "$STOCK"
+        if [[ ! -c /dev/net/tun ]]; then sudo mkdir -p /dev/net; sudo mknod /dev/net/tun c 10 200; fi
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --device /dev/net/tun --cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+    - name: Run the same two ioctls on Linux, stock gVisor and corrected gVisor
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        for name in current-native stock-guest current-guest; do
+          src=$CURRENT
+          [[ "$name" != stock-guest ]] || src=$STOCK
+          testname=tuntap_test
+          path=test/syscalls/linux/tuntap.cc
+          filter=TuntapTest.SetPersistAfterLinkDeletion:TuntapTest.CreatePersistentInterface
+          executor=remote
+          platform=runsc_systrap_directfs
+          if [[ "$name" == current-native ]]; then executor=local; platform=native; fi
+          git checkout --quiet --detach "$src"
+          [[ "$(git rev-parse HEAD)" == "$src" ]]
+          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
+          sha256sum "$path" > "$d/fixture-sha256"
+          target="//test/syscalls:${testname}_${platform}"
+          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
+          printf '%s\n' "$executor" > "$d/executor"; printf '%s\n' "$filter" > "$d/filter"
+          date -u +%FT%TZ > "$d/start"
+          rc=0
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --verbose_failures --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=600 --test_sharding_strategy=disabled --test_env=GTEST_FILTER="$filter" "$target" > "$d/bazel.log" 2>&1 || rc=$?
+          grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|Build did NOT complete' "$d/bazel.log" | head -100 > "$d/compiler-diagnostics" || true
+          rm -f "$d/bazel.log"
+          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
+          if [[ $rc != 0 && $rc != 3 ]]; then continue; fi
+          for file in test.log test.xml; do
+            docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/$file" > "$d/$file" || rm -f "$d/$file"
+          done
+        done
+    - name: Check the TUN endpoint lock contract
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$CURRENT"
+        d=$RUNNER_TEMP/records/owners; mkdir -p "$d"
+        rc=0
+        docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=4 --keep_going --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --test_timeout=300 --test_output=errors //pkg/tcpip/link/tun:tun_nogo > "$d/bazel.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$d/exit"
+        grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|diagnostic| PASSED ' "$d/bazel.log" | tail -120 > "$d/receipt" || :
+        rm -f "$d/bazel.log"
+        test "$rc" -eq 0
+    - name: Verify syscall assertions and the analyzer target
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: tun-persist-results
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
