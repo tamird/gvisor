@@ -1,20 +1,18 @@
-name: Compare native, stock and corrected VFIO PCI syscalls
+name: Check the permanent VFIO PCI syscall targets
 on:
   push:
-    branches: [qualification/vfio-private-comparison]
+    branches: [qualification/vfio-permanent-device]
 permissions:
   contents: read
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/vfio-private-comparison'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/vfio-permanent-device'
     runs-on: ubuntu-24.04
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PROBE_SRC: 147343a4d586cb2f9f74c06cb1f2414d56cd4291
-      OSTOCK: cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd
-      OFIXED: e7f2dbe3e685373a7d71190ecd0d4ba82c6a61bf
+      PRODUCT: 543df058c28d8bd6a842f27bd006287dfab5635f
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
@@ -49,90 +47,70 @@ jobs:
         set -euo pipefail
         docker pull --platform=linux/amd64 "$GNU"
         docker run --device=/dev/kvm -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-    - name: Package the syscall suite binary and its exact runtime libraries
+    - name: Build the exact public targets, runtime and helper libraries
       run: |
         set -euo pipefail
-        git fetch --no-tags --depth=2 origin "$PROBE_SRC" "$OSTOCK" "$OFIXED"
-        carrier=$(git rev-parse HEAD)
-        git checkout --quiet --detach "$PROBE_SRC"
         out="$RUNNER_TEMP/records"
-        echo "$PROBE_SRC" >"$out/probe-source"
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=24 --remote_download_outputs=toplevel //test/syscalls/linux:vfio_pci_device_test >"$RUNNER_TEMP/probe-build.log" 2>&1 || { grep -A12 -E 'ERROR:|INFO: Invocation ID:' "$RUNNER_TEMP/probe-build.log" | tail -60 | tee "$out/probe-receipt"; exit 1; }
-        docker exec overlay-guest cp -L bazel-bin/test/syscalls/linux/vfio_pci_device_test "$RUNNER_TEMP/vfio_pci_probe_bin"
-        file "$RUNNER_TEMP/vfio_pci_probe_bin" | tee "$out/probe-type"
-        readelf -l "$RUNNER_TEMP/vfio_pci_probe_bin" | sed -n 's/^.*Requesting program interpreter: \(.*\)\]/\1/p' > "$RUNNER_TEMP/interpreter"
-        grep -q '^/lib' "$RUNNER_TEMP/interpreter"
-        docker exec overlay-guest ldd "$RUNNER_TEMP/vfio_pci_probe_bin" > "$out/probe-ldd"
-        if grep -q 'not found' "$out/probe-ldd"; then cat "$out/probe-ldd"; exit 1; fi
-        awk '$2=="=>" && $3~/^\//{print substr($3,2)} $1~/^\//{print substr($1,2)}' "$out/probe-ldd" > "$RUNNER_TEMP/libs"
-        sed 's,^/,,' "$RUNNER_TEMP/interpreter" >> "$RUNNER_TEMP/libs"
-        sort -u "$RUNNER_TEMP/libs" -o "$RUNNER_TEMP/libs"
+        git fetch --no-tags --depth=2 origin "$PRODUCT"
+        carrier=$(git rev-parse HEAD)
+        git checkout --quiet --detach "$PRODUCT"
+        git rev-parse HEAD > "$out/product"
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=25 --remote_download_outputs=toplevel //:release //test/syscalls:vfio_pci_device_test_native //test/syscalls:vfio_pci_device_test_runsc_systrap > "$RUNNER_TEMP/product-build.log" 2>&1 || { grep -A15 -E 'ERROR:|INFO: Invocation ID:' "$RUNNER_TEMP/product-build.log" | tail -80 | tee "$out/build-receipt"; exit 1; }
+        grep -E 'INFO: Invocation ID:|Build completed' "$RUNNER_TEMP/product-build.log" > "$out/build-receipt"
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" query --output=build 'set(//test/syscalls:vfio_pci_device_test_native //test/syscalls:vfio_pci_device_test_runsc_systrap)' > "$out/target-arguments"
+        grep -Fq -- '--add-host-vfio' "$out/target-arguments"
+        stage="$RUNNER_TEMP/suite"
+        mkdir -p "$stage"/{test/runner/setup_container,test/syscalls/linux,release}
+        rf=bazel-bin/test/syscalls/vfio_pci_device_test_native.runfiles/_main
+        for path in test/runner/runner test/runner/setup_container/setup_container test/syscalls/linux/vfio_pci_device_test; do
+          docker exec overlay-guest cp -L "$rf/$path" "$stage/$path"
+        done
+        for platform in native runsc_systrap; do
+          docker exec overlay-guest cp -L "bazel-bin/test/syscalls/vfio_pci_device_test_$platform" "$stage/$platform"
+        done
+        docker exec overlay-guest cp -RL --preserve=mode bazel-bin/release/. "$stage/release"
+        for name in runsc gvisor-bin/gvisor_sentry gvisor-bin/checkpointgofer gvisor-bin/gvisor-sentry-prewarmer gvisor-bin/gvisor-proc-umounter gvisor-bin/runsc-fd-parking gvisor-bin/runsc-metric-server; do test -x "$stage/release/$name"; done
+        sha256sum "$stage"/{native,runsc_systrap,test/runner/runner,test/runner/setup_container/setup_container,test/syscalls/linux/vfio_pci_device_test,release/runsc,release/gvisor-bin/*} | sed "s#$stage/##" > "$stage/sha256"
+        cp "$stage/sha256" "$out/product-hashes"
+        for path in test/runner/runner test/runner/setup_container/setup_container test/syscalls/linux/vfio_pci_device_test; do
+          docker exec overlay-guest ldd "$stage/$path" >> "$out/ldd" 2>&1 || { file "$stage/$path" | grep -Eq 'statically linked|static-pie linked'; }
+        done
+        if grep -q 'not found' "$out/ldd"; then cat "$out/ldd"; exit 1; fi
+        awk '$2=="=>" && $3~/^\//{print substr($3,2)} $1~/^\//{print substr($1,2)}' "$out/ldd" | sort -u > "$RUNNER_TEMP/libs"
+        grep -q . "$RUNNER_TEMP/libs"
         if grep -vE '^(lib|usr/lib)' "$RUNNER_TEMP/libs"; then exit 1; fi
-        cp "$RUNNER_TEMP/vfio_pci_probe_bin" "$RUNNER_TEMP/probe"
-        docker exec overlay-guest tar -chf "$RUNNER_TEMP/vfio_pci_root.tar" -C / -T "$RUNNER_TEMP/libs" -C "$RUNNER_TEMP" probe interpreter
-        tar -tf "$RUNNER_TEMP/vfio_pci_root.tar" > "$out/probe-runtime-contents"
-        sha256sum "$RUNNER_TEMP/"{vfio_pci_probe_bin,vfio_pci_root.tar} >"$out/probe-sha"
-        git checkout --quiet --detach "$carrier"
-        cp "$RUNNER_TEMP/vfio_pci_root.tar" test/rbe/tcg/
-    - name: Verify the existing native device result from the same test source
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        set -euo pipefail
-        out="$RUNNER_TEMP/records"
-        gh api repos/tamird/gvisor/actions/artifacts/12984210801/zip > "$RUNNER_TEMP/original-native.zip"
-        unzip -po "$RUNNER_TEMP/original-native.zip" native-vfio-device.txt > "$out/original-native-device"
-        unzip -po "$RUNNER_TEMP/original-native.zip" native-gtest.txt > "$out/original-native-readiness"
-        unzip -po "$RUNNER_TEMP/original-native.zip" native-irq.txt > "$out/original-native-irq"
-        test "$(unzip -po "$RUNNER_TEMP/original-native.zip" probe-source)" = "$PROBE_SRC"
-        previous=$(unzip -po "$RUNNER_TEMP/original-native.zip" probe-sha | head -1 | cut -d' ' -f1)
-        test "$previous" = "$(head -1 "$out/probe-sha" | cut -d' ' -f1)"
-        grep -q 'Native VFIO driver=' "$out/original-native-device"
-        grep -Fq '[       OK ] VfioPCIDeviceTest.Readiness' "$out/original-native-readiness"
-        grep -Fq '[       OK ] VfioPCIDeviceTest.InterruptEventfdKeepsFullCounter' "$out/original-native-irq"
-    - name: Build the stock and corrected runsc from their exact source
-      run: |
-        set -euo pipefail
-        git fetch --no-tags --depth=2 origin "$OSTOCK" "$OFIXED"
-        carrier=$(git rev-parse HEAD)
-        for arm in stock fixed; do
-          src=$OSTOCK; [[ $arm == stock ]] || src=$OFIXED
-          git checkout --quiet --detach "$src"
-          echo "$src" > "$RUNNER_TEMP/records/$arm-source"
-          docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel //:release > "$RUNNER_TEMP/$arm-build.log" 2>&1 || { grep -E 'ERROR:|INFO: Invocation ID:|FAILED' "$RUNNER_TEMP/$arm-build.log" | tail -40; exit 1; }
-          mkdir -p "$RUNNER_TEMP/vfio_$arm"
-          docker exec overlay-guest cp -RL --preserve=mode bazel-bin/release/. "$RUNNER_TEMP/vfio_$arm"
-          for file in runsc gvisor-bin/gvisor_sentry gvisor-bin/checkpointgofer gvisor-bin/gvisor-sentry-prewarmer gvisor-bin/gvisor-proc-umounter gvisor-bin/runsc-fd-parking gvisor-bin/runsc-metric-server; do test -x "$RUNNER_TEMP/vfio_$arm/$file"; done
-          sha256sum "$RUNNER_TEMP/vfio_$arm/"{runsc,gvisor-bin/*} > "$RUNNER_TEMP/records/$arm-binary"
-        done
+        docker exec overlay-guest tar -chf "$stage/runtime-libs.tar" -C / -T "$RUNNER_TEMP/libs"
+        tar -cf "$RUNNER_TEMP/vfio_suite.tar" -C "$stage" .
         git checkout --detach "$carrier"
-        cp -R "$RUNNER_TEMP"/vfio_{stock,fixed} test/rbe/tcg/
-    - name: Run the actual file descriptor test
+        cp "$RUNNER_TEMP/vfio_suite.tar" test/rbe/tcg/
+    - name: Run both permanent syscall targets on assigned PCI
       run: |
         set -euo pipefail
-        out="$RUNNER_TEMP/records"
-        target=//test/rbe/tcg:vfio_comparison_test
+        out="$RUNNER_TEMP/records"; target=//test/rbe/tcg:vfio_permanent_test
         rc=0
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nozip_undeclared_test_outputs --nocache_test_results --test_output=all --test_timeout=480 "$target" >"$RUNNER_TEMP/abi.log" 2>&1 || rc=$?
-        echo "$rc" >"$out/bazel-exit"
-        grep -E 'INFO: Invocation ID:|ERROR:|FAILED|::|fail|VFIO|vfio|Error|Cannot|curl|qemu|wget|tcg|Build (did NOT complete|completed)' "$RUNNER_TEMP/abi.log" | tail -80 >"$out/bazel-receipt" || :
-        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt test.outputs/guest/outputs/native-gtest.txt test.outputs/guest/outputs/native-irq.txt test.outputs/guest/outputs/native-irq-qualified test.outputs/guest/outputs/stock-exit test.outputs/guest/outputs/fixed-exit test.outputs/guest/outputs/stock-sha test.outputs/guest/outputs/fixed-sha test.outputs/guest/outputs/stock-gtest.txt test.outputs/guest/outputs/fixed-gtest.txt test.outputs/guest/outputs/stock-diagnostics.txt test.outputs/guest/outputs/fixed-diagnostics.txt; do
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=25 --remote_download_outputs=toplevel --strategy=TestRunner=local --nozip_undeclared_test_outputs --nocache_test_results --test_output=all --test_timeout=500 "$target" > "$RUNNER_TEMP/permanent.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/guest-exit"
+        grep -E 'INFO: Invocation ID:|ERROR:|FAILED|failed|VfioPCI|VFIO|Build completed' "$RUNNER_TEMP/permanent.log" | tail -75 >"$out/guest-receipt" || :
+        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt test.outputs/guest/outputs/identity.txt test.outputs/guest/outputs/native.txt test.outputs/guest/outputs/runsc_systrap.txt test.outputs/guest/outputs/verdict.txt test.outputs/guest/outputs/runtime-diagnostics.txt; do
           name=${path##*/}
-          docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_comparison_test/$path" | tail -150 >"$out/$name" || :
-        done
-        for mode in stock fixed; do
-          awk '{n=split($2,path,"/"); print $1,path[n]}' "$out/$mode-binary" | sort >"$out/$mode.hosted"
-          awk '{n=split($2,path,"/"); print $1,path[n]}' "$out/$mode-sha" | sort >"$out/$mode.guest"
-          diff -u "$out/$mode.hosted" "$out/$mode.guest"
+          docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_permanent_test/$path" | tail -160 > "$out/$name" || :
         done
         test "$rc" = 0
-        grep -q 'Native VFIO driver=' "$out/vfio-device.txt"
-        grep -q 'VfioPCIDeviceTest.Readiness' "$out/console.log"
-        for mode in native fixed; do grep -Fq '[       OK ] VfioPCIDeviceTest.Readiness' "$out/$mode-gtest.txt"; done
-        grep -Fq '[  FAILED  ] VfioPCIDeviceTest.Readiness' "$out/stock-gtest.txt"
+        for mode in native runsc_systrap; do grep -q 'OK .*VfioPCIDeviceTest.Readiness' "$out/$mode.txt"; grep -Fq "$mode: 0" "$out/verdict.txt"; done
+    - name: Check saved-waiter round-trip on the exact product
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        out="$RUNNER_TEMP/records"
+        git checkout --quiet --detach "$PRODUCT"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=24 --remote_download_outputs=toplevel --nocache_test_results --test_output=all //pkg/sentry/devices/tpuproxy/vfio:vfio_test > "$RUNNER_TEMP/checkpoint-test.log" 2>&1 || rc=$?
+        echo "$rc" > "$out/checkpoint-exit"
+        grep -E 'INFO: Invocation ID:|ERROR:|FAIL|PASS|RUN |Build completed' "$RUNNER_TEMP/checkpoint-test.log" | tail -65 > "$out/checkpoint-receipt" || :
+        test "$rc" = 0
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: private-vfio-pci
+        name: permanent-vfio-pci
         path: ${{ runner.temp }}/records
         if-no-files-found: error

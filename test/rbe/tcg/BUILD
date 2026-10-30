@@ -166,3 +166,16 @@ sh_test(
     srcs = ["vfio_native_sanity.sh"],
     data = ["vfio_pci_root.tar"],
 )
+
+sh_test(
+    name = "vfio_permanent",
+    srcs = ["vfio_permanent.sh"],
+    data = ["vfio_suite.tar"],
+)
+
+amd64_kvm_test(
+    name = "vfio_permanent_test",
+    image = ":amd64_rc_guest",
+    payload = ":vfio_permanent",
+    tags = [],
+)
