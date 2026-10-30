@@ -1,35 +1,50 @@
-name: CI
-
+name: Verify architecture selection on the merged copy rule
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/go-architecture-sources-current]
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  select:
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Select exact product source
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "48f6def325100b17fd6a57894b6f7d1c9630805d"
+        git checkout --quiet --detach "48f6def325100b17fd6a57894b6f7d1c9630805d"
+    - name: Verify architecture selection
+      run: |
+        set -euo pipefail
+        sources() {
+          bazel cquery "filter('sighandler_go_arch$', deps($1))" --output=files "$2"
+        }
+        sources //:release --platforms=//tools/bazeldefs:linux_amd64 > "$RUNNER_TEMP/amd64-files"
+        sources //:release --platforms=//tools/bazeldefs:linux_arm64 > "$RUNNER_TEMP/arm64-files"
+        sources //:gopath --platforms=//tools/bazeldefs:linux_amd64 > "$RUNNER_TEMP/export-files"
+        for key in amd64 arm64 export; do
+          printf '%s\n' "$key"
+          cat "$RUNNER_TEMP/$key-files"
+        done
+        grep -q 'sighandler_amd64.go$' "$RUNNER_TEMP/amd64-files"
+        ! grep -q 'sighandler_arm64.go$' "$RUNNER_TEMP/amd64-files" || exit 1
+        grep -q 'sighandler_arm64.go$' "$RUNNER_TEMP/arm64-files"
+        ! grep -q 'sighandler_amd64.go$' "$RUNNER_TEMP/arm64-files" || exit 1
+        grep -q 'sighandler_amd64.go$' "$RUNNER_TEMP/export-files"
+        grep -q 'sighandler_arm64.go$' "$RUNNER_TEMP/export-files"
+        bazel cquery //:gopath --output=files
+    - name: Preserve the query results
+      run: |
+        set -euo pipefail
+        out="$RUNNER_TEMP/go-source-selection"; mkdir -p "$out"
+        git rev-parse HEAD >"$out/source"
+        for k in amd64 arm64 export; do cp "$RUNNER_TEMP/$k-files" "$out/$k-files"; done
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: go-source-selection
+        path: ${{ runner.temp }}/go-source-selection
+        if-no-files-found: error
