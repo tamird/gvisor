@@ -1,0 +1,38 @@
+name: Check the upstream wheel namespace generator
+on:
+  push:
+    branches: [qualification/rules-python-namespace-init]
+permissions:
+  contents: read
+jobs:
+  namespace:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: consumer, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: bazel-contrib/rules_python
+          ref: bfbcc014dd0be8763c467040eebd19baf926735b
+          path: supplier
+          persist-credentials: false
+      - name: Select the supplier's formatter
+        run: |
+          curl --fail --location --retry 3 -o "$RUNNER_TEMP/buildifier" https://github.com/bazel-contrib/buildtools/releases/download/v8.2.1/buildifier-linux-amd64
+          echo "6ceb7b0ab7cf66fceccc56a027d21d9cc557a7f34af37d2101edb56b92fcfa1a  $RUNNER_TEMP/buildifier" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/buildifier"
+      - name: Run upstream namespace tests as the root module
+        working-directory: supplier
+        run: python3 ../consumer/test/rbe/supplier-namespace/qualify.py supplier
+      - name: Read the real release frontend's generated wheel initializers
+        if: "!cancelled()"
+        working-directory: consumer
+        run: python3 test/rbe/supplier-namespace/qualify.py downstream
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: namespace-verdict
+          path: ${{ runner.temp }}/namespace-results/
+          if-no-files-found: error
