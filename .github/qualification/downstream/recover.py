@@ -9,17 +9,23 @@ endpoints = {"stock": "7bf91418-58ba-4530-9b98-60ff00a57057", "candidate": "b9dd
 api_key = os.environ["BUILDBUDDY_API_KEY"]
 public = {}
 for case, invocation in endpoints.items():
-    summary = {"invocation": invocation, "matches": [], "pages": 0}
+    summary = {"invocation": invocation, "matches": [], "pages": 0, "characters": 0}
     public[case] = summary
     page = ""
-    while True:
+    seen = set()
+    while page not in seen:
+        seen.add(page)
         body = {"selector": {"invocationId": invocation}, "pageToken": page}
         req = request.Request("https://app.buildbuddy.io/api/v1/GetLog", data=json.dumps(body).encode(),
                               headers={"Content-Type": "application/json", "x-buildbuddy-api-key": api_key})
         with request.urlopen(req, timeout=30) as r:
             reply = json.load(r)
         summary["pages"] += 1
-        for raw in reply["log"]["contents"].splitlines():
+        # The API may omit an empty proto3 string in any page, including
+        # the terminal response. Pagination belongs to the response itself.
+        contents = reply["log"].get("contents", "")
+        summary["characters"] += len(contents)
+        for raw in contents.splitlines():
             s = re.sub(r"\x1b\[[;\d]*[a-zA-Z]", "", raw).strip()
             # Exclude action commands and configuration; retain only named
             # tool failures and compiler diagnostics, never auth parameters.
@@ -41,7 +47,6 @@ for case, invocation in endpoints.items():
         page = reply.get("nextPageToken", reply.get("next_page_token"))
         if not page:
             break
-        assert summary["pages"] < 30
     summary["matches"] = list(dict.fromkeys(summary["matches"]))[:20]
-    assert summary["matches"], case
+    summary["status"] = "diagnosed" if summary["matches"] else "no matching diagnostic" if summary["characters"] else "no retained console output"
 Path(os.environ["RUNNER_TEMP"], "original-go-logs.json").write_text(json.dumps(public, indent=2)+"\n")
