@@ -247613,192 +247613,6 @@
     }
   ],
   "workStates": {
-    "pr:bazel-contrib/rules_python:4385": {
-      "maintainer-review": {
-        "scope": "601ffc8a7f265a685353ae3f4bfb9f4d7504a05e",
-        "since": "2026-10-30T17:13:02.770691+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:10.282000+00:00"
-      }
-    },
-    "pr:bazelbuild/bazel:30837": {
-      "conflicts": {
-        "scope": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
-        "since": "2026-10-30T17:29:54.753875+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:11.366810+00:00"
-      },
-      "maintainer-review": {
-        "scope": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
-        "since": "2026-10-30T14:50:12.258059+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:11.366810+00:00"
-      }
-    },
-    "pr:bazelbuild/bazel-central-registry:11314": {
-      "merged": {
-        "scope": "8624f4a5f494ed14a9724caf2e84b7d7d4909762",
-        "since": "2026-10-23T22:33:26Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:07.115964+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13781": {
-      "merged": {
-        "scope": "dd1bbf30e4f345371b487ecec00361f99a95f907",
-        "since": "2026-10-20T15:13:35Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-20T15:20:05.685070+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13802": {
-      "closed": {
-        "scope": "b30b67e0cb4d00d388a45e0c6daeadab3aefcbc6",
-        "since": "2026-10-15T18:20:40Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-19T13:08:15.637199+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13803": {
-      "closed": {
-        "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
-        "since": "2026-10-23T04:44:23Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-23T04:47:08.626999+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13814": {
-      "merged": {
-        "scope": "dc0536b69f294f07c1aa25fa43f87d92c0d5db7a",
-        "since": "2026-10-16T12:31:18Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-19T13:08:15.637199+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13826": {
-      "maintainer-review": {
-        "scope": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
-        "since": "2026-10-25T12:30:03.632078+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13848": {
-      "merged": {
-        "scope": "715688f5dda713463b7ce4252ceab32eae3c2b26",
-        "since": "2026-10-19T15:11:21Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-19T15:15:19.840664+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13849": {
-      "merged": {
-        "scope": "aa693d7f219987f20835f6db1ce94ec04a4cdeba",
-        "since": "2026-10-20T16:34:24Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-20T16:41:21.587781+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13850": {
-      "merged": {
-        "scope": "3398ceda716a32600e6b7b674471ea5e1762fef4",
-        "since": "2026-10-20T16:28:49Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-20T16:32:05.485221+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13855": {
-      "merged": {
-        "scope": "5f5d09f16df433a2ff8b193c5a2be7b7ed38df68",
-        "since": "2026-10-21T20:42:52Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-21T20:55:00.134221+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13858": {
-      "checks-pending": {
-        "scope": "13858:8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "since": "2026-10-25T12:30:03.632078+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      },
-      "conflicts": {
-        "scope": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "since": "2026-10-30T19:07:02.310580+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      },
-      "maintainer-review": {
-        "scope": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "since": "2026-10-25T12:30:03.632078+00:00",
-        "basis": "observed",
-        "qualifier": "BuildBuddy requires approving review before these checks run",
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13882": {
-      "checks-pending": {
-        "scope": "13882:38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
-        "since": "2026-10-25T12:30:03.632078+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      },
-      "conflicts": {
-        "scope": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
-        "since": "2026-10-30T17:29:47.029885+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      },
-      "maintainer-review": {
-        "scope": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
-        "since": "2026-10-25T12:30:03.632078+00:00",
-        "basis": "observed",
-        "qualifier": "BuildBuddy requires approving review before these checks run",
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      }
-    },
-    "pr:buildbuddy-io/buildbuddy:13938": {
-      "checks-pending": {
-        "scope": "13938:91c8a6b35e7ca4c0af5a2f9c139b246344bf20cf",
-        "since": "2026-10-25T12:30:03.632078+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      },
-      "maintainer-review": {
-        "scope": "91c8a6b35e7ca4c0af5a2f9c139b246344bf20cf",
-        "since": "2026-10-25T12:30:03.632078+00:00",
-        "basis": "observed",
-        "qualifier": "BuildBuddy requires approving review before these checks run",
-        "observedAt": "2026-10-30T19:07:02.310580+00:00"
-      }
-    },
-    "pr:golang/tools:702": {
-      "closed": {
-        "scope": "bf3dd53810fd2f6a25868e17b5c155fc100f3e5e",
-        "since": "2026-10-21T20:33:05Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-21T20:55:02.640572+00:00"
-      }
-    },
     "pr:12470": {
       "closed": {
         "scope": "9b07362b8673d7f0195ffb3df468a0b3715e3b3c",
@@ -248926,7 +248740,7 @@
         "since": "2026-10-30T18:30:15.668722+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "pr:15435": {
@@ -250302,7 +250116,7 @@
         "since": "2026-10-30T16:10:34.939505+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "pr:16097": {
@@ -251586,20 +251400,183 @@
         "observedAt": "2026-10-30T19:06:58.908909+00:00"
       }
     },
-    "pr:16757": {
-      "checks-pending": {
-        "scope": "16757:736b926672075e20b03410b52b6f3308751a7bb4",
-        "since": "2026-10-30T20:25:22.790363+00:00",
+    "pr:buildbuddy-io/buildbuddy:13781": {
+      "merged": {
+        "scope": "dd1bbf30e4f345371b487ecec00361f99a95f907",
+        "since": "2026-10-20T15:13:35Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-20T15:20:05.685070+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13802": {
+      "closed": {
+        "scope": "b30b67e0cb4d00d388a45e0c6daeadab3aefcbc6",
+        "since": "2026-10-15T18:20:40Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-19T13:08:15.637199+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13803": {
+      "closed": {
+        "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
+        "since": "2026-10-23T04:44:23Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-23T04:47:08.626999+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13814": {
+      "merged": {
+        "scope": "dc0536b69f294f07c1aa25fa43f87d92c0d5db7a",
+        "since": "2026-10-16T12:31:18Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-19T13:08:15.637199+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13826": {
+      "maintainer-review": {
+        "scope": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+        "since": "2026-10-25T12:30:03.632078+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13848": {
+      "merged": {
+        "scope": "715688f5dda713463b7ce4252ceab32eae3c2b26",
+        "since": "2026-10-19T15:11:21Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-19T15:15:19.840664+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13849": {
+      "merged": {
+        "scope": "aa693d7f219987f20835f6db1ce94ec04a4cdeba",
+        "since": "2026-10-20T16:34:24Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-20T16:41:21.587781+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13850": {
+      "merged": {
+        "scope": "3398ceda716a32600e6b7b674471ea5e1762fef4",
+        "since": "2026-10-20T16:28:49Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-20T16:32:05.485221+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13855": {
+      "merged": {
+        "scope": "5f5d09f16df433a2ff8b193c5a2be7b7ed38df68",
+        "since": "2026-10-21T20:42:52Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-21T20:55:00.134221+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13858": {
+      "checks-pending": {
+        "scope": "13858:8c704d5324518b02f430a3f5f0f9388549c65eab",
+        "since": "2026-10-25T12:30:03.632078+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      },
+      "conflicts": {
+        "scope": "8c704d5324518b02f430a3f5f0f9388549c65eab",
+        "since": "2026-10-30T19:07:02.310580+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
       },
       "maintainer-review": {
-        "scope": "736b926672075e20b03410b52b6f3308751a7bb4",
-        "since": "2026-10-30T20:25:22.790363+00:00",
+        "scope": "8c704d5324518b02f430a3f5f0f9388549c65eab",
+        "since": "2026-10-25T12:30:03.632078+00:00",
+        "basis": "observed",
+        "qualifier": "BuildBuddy requires approving review before these checks run",
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13882": {
+      "checks-pending": {
+        "scope": "13882:38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
+        "since": "2026-10-25T12:30:03.632078+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      },
+      "conflicts": {
+        "scope": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
+        "since": "2026-10-30T17:29:47.029885+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      },
+      "maintainer-review": {
+        "scope": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
+        "since": "2026-10-25T12:30:03.632078+00:00",
+        "basis": "observed",
+        "qualifier": "BuildBuddy requires approving review before these checks run",
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      }
+    },
+    "pr:buildbuddy-io/buildbuddy:13938": {
+      "checks-pending": {
+        "scope": "13938:91c8a6b35e7ca4c0af5a2f9c139b246344bf20cf",
+        "since": "2026-10-25T12:30:03.632078+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      },
+      "maintainer-review": {
+        "scope": "91c8a6b35e7ca4c0af5a2f9c139b246344bf20cf",
+        "since": "2026-10-25T12:30:03.632078+00:00",
+        "basis": "observed",
+        "qualifier": "BuildBuddy requires approving review before these checks run",
+        "observedAt": "2026-10-30T19:07:02.310580+00:00"
+      }
+    },
+    "pr:golang/tools:702": {
+      "closed": {
+        "scope": "bf3dd53810fd2f6a25868e17b5c155fc100f3e5e",
+        "since": "2026-10-21T20:33:05Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-21T20:55:02.640572+00:00"
+      }
+    },
+    "pr:nodejs/node:66835": {
+      "merged": {
+        "scope": "ca903891360eebd29c9264c606a3a2c47af85796",
+        "since": "2026-10-22T12:58:44Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:05.961638+00:00"
+      }
+    },
+    "pr:nodejs/node:66874": {
+      "maintainer-review": {
+        "scope": "f6966cdc4f193bca98a9a49b4ac268bef52aedfe",
+        "since": "2026-10-25T12:30:06.375588+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:05.961638+00:00"
+      }
+    },
+    "pr:bazelbuild/bazel-central-registry:11314": {
+      "merged": {
+        "scope": "8624f4a5f494ed14a9724caf2e84b7d7d4909762",
+        "since": "2026-10-23T22:33:26Z",
+        "basis": "transition",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:07.115964+00:00"
       }
     },
     "pr:hermeticbuild/hermetic-llvm:883": {
@@ -251629,6 +251606,31 @@
         "observedAt": "2026-10-30T19:07:08.976253+00:00"
       }
     },
+    "pr:bazel-contrib/rules_python:4385": {
+      "maintainer-review": {
+        "scope": "601ffc8a7f265a685353ae3f4bfb9f4d7504a05e",
+        "since": "2026-10-30T17:13:02.770691+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:10.282000+00:00"
+      }
+    },
+    "pr:bazelbuild/bazel:30837": {
+      "conflicts": {
+        "scope": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+        "since": "2026-10-30T17:29:54.753875+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:11.366810+00:00"
+      },
+      "maintainer-review": {
+        "scope": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+        "since": "2026-10-30T14:50:12.258059+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T19:07:11.366810+00:00"
+      }
+    },
     "pr:hermeticbuild/rules_rs:333": {
       "maintainer-review": {
         "scope": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
@@ -251642,25 +251644,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
-      }
-    },
-    "pr:nodejs/node:66835": {
-      "merged": {
-        "scope": "ca903891360eebd29c9264c606a3a2c47af85796",
-        "since": "2026-10-22T12:58:44Z",
-        "basis": "transition",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:05.961638+00:00"
-      }
-    },
-    "pr:nodejs/node:66874": {
-      "maintainer-review": {
-        "scope": "f6966cdc4f193bca98a9a49b4ac268bef52aedfe",
-        "since": "2026-10-25T12:30:06.375588+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T19:07:05.961638+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:bazel-python-release": {
@@ -251669,7 +251653,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:python-release-staging-isolation": {
@@ -251678,7 +251662,7 @@
         "since": "2026-10-30T17:24:24.119828+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -251687,7 +251671,7 @@
         "since": "2026-10-30T03:43:50.365987+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:gofer-character-device-restore": {
@@ -251696,7 +251680,7 @@
         "since": "2026-10-30T13:19:13.082582+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -251705,7 +251689,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:declared-staged-release-check": {
@@ -251714,7 +251698,7 @@
         "since": "2026-10-30T00:11:26.175497+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -251723,7 +251707,7 @@
         "since": "2026-10-30T05:07:07.633004+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:tun-packet-info-header": {
@@ -251732,7 +251716,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:cgroup-v2-effective-memory": {
@@ -251741,7 +251725,7 @@
         "since": "2026-10-30T16:57:21.716977+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:proc-forwarding-mounts": {
@@ -251750,13 +251734,29 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
       }
     },
     "branch:rules-distroless-debian-layer": {
       "contributor-review": {
         "scope": "86a5661f4a0eb15a41bf4364c9b0542da02cfa7e",
         "since": "2026-10-30T19:02:28.727412+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T20:20:09.488385+00:00"
+      }
+    },
+    "pr:16757": {
+      "checks-pending": {
+        "scope": "16757:736b926672075e20b03410b52b6f3308751a7bb4",
+        "since": "2026-10-30T20:25:22.790363+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T20:25:22.790363+00:00"
+      },
+      "maintainer-review": {
+        "scope": "736b926672075e20b03410b52b6f3308751a7bb4",
+        "since": "2026-10-30T20:25:22.790363+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T20:25:22.790363+00:00"
