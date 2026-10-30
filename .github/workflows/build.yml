@@ -1,35 +1,85 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Verify poll waiter lifetime on overlay copy-up
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/overlay-poll-waiter'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      STOCK: e92af741c2be32557b0f658dfdd024fa647ebf20
+      FIXED: b3fac3271fdbcbbd6307a2559d1c04da86e02cb8
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Fetch stock test object
+      env:
+        GH_TOKEN: ${{ github.token }}
+      shell: bash
+      run: |
+        gh api repos/tamird/gvisor/git/commits/"$STOCK" --jq .sha
+        git fetch --no-tags --depth=2 https://github.com/tamird/gvisor.git "$STOCK"
+        [[ $(git rev-parse HEAD^) == "$FIXED" ]]
+        mkdir -p "$RUNNER_TEMP/focused"
+    - name: Run both actual poll cleanup paths
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        plat=$RUNNER_TEMP/poll-gnu-platform
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        cat >"$plat/BUILD" <<BUILD
+        platform(
+            name = "gnu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "container-image":"docker://$GNU"},
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        rc=$RUNNER_TEMP/poll-gnu.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=poll_gnu_platform=$plat" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$rc"
+        unset BUILDBUDDY_API_KEY
+        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c '
+          set -euo pipefail
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
+          work=$1; stock=$2; fixed=$3
+          target=//pkg/sentry/syscalls/linux:linux_test
+          for lane in old new; do
+            rev="$stock"; if [[ $lane == new ]]; then rev="$fixed"; fi
+            git checkout --quiet --detach "$rev"
+            [[ $(git rev-parse HEAD) == "$rev" ]]
+            out="$work/focused/$lane"; mkdir -p "$out"
+            rc=0
+            bazel --bazelrc="$work/poll-gnu.bazelrc" test --config=x86_64 -c opt --test_timeout=300 --test_output=all --jobs=80 --nocache_test_results --modify_execution_info="^TestRunner$=+no-remote-cache" --remote_download_outputs=toplevel --remote_download_regex=".*[/]test[.](log|xml)$" --test_sharding_strategy=disabled --test_arg=-test.v --test_arg=-test.run=^TestPollWaiterAfterOverlayCopyUp$ "$target" >"$out/bazel.log" 2>&1 || rc=$?
+            printf "%s\n" "$rc" >"$out/exit"
+            for file in test.log test.xml; do cp -L bazel-testlogs/pkg/sentry/syscalls/linux/linux_test/"$file" "$out/" || true; done
+            sed -n -E "/Invocation ID:|Streaming build results|^--- (PASS|FAIL): TestPoll|released (poll waiter|waiter stayed silent)|^ERROR:|Build did NOT|Found [0-9]+ test target/p" "$out/bazel.log" | tail -15
+          done
+          grep -F "released poll waiter received a hostname notification (copyUp=true)" "$work/focused/old/test.log"
+          grep -F "released waiter stayed silent and active peer woke (copyUp=false)" "$work/focused/old/test.log"
+          grep -F "released waiter stayed silent and active peer woke (copyUp=true)" "$work/focused/new/test.log"
+          grep -F -- "--- PASS: TestPollWaiterAfterOverlayCopyUp" "$work/focused/new/test.log"
+          [[ $(cat "$work/focused/old/exit") == 3 && $(cat "$work/focused/new/exit") == 0 ]]
+        ' _ "$RUNNER_TEMP" "$STOCK" "$FIXED"
+    - name: Preserve both original test reports
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: overlay-poll-waiter
+        path: |
+          ${{ runner.temp }}/focused/*/test.log
+          ${{ runner.temp }}/focused/*/test.xml
+          ${{ runner.temp }}/focused/*/exit
