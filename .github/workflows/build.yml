@@ -1,7 +1,7 @@
-name: Compare SACK accounting on a shared TCP bottleneck
+name: Compare TCP senders under two shared queue limits
 on:
   push:
-    branches: [qualification/sack-shared-pairs]
+    branches: [qualification/tcp-queue-controls]
 permissions:
   contents: read
 jobs:
@@ -21,6 +21,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: sack-shared-pairs
+          name: tcp-queue-controls
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error

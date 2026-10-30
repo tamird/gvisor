@@ -1,5 +1,6 @@
 """Report the two competing senders over the same portion of a transfer."""
 import csv
+import re
 import json
 import os
 from pathlib import Path
@@ -35,17 +36,26 @@ def diagnostics(d):
 
 def trial(root, mode, case, variant, round_number):
     d = root / mode / case
-    cc, primary = case.split("-")
+    cc, primary, secondary = case.split("-")
     assert (code := (d/"exit.txt").read_text().strip()) == "0", f"benchmark exit={code}"
     results = d/"results"
     assert (results/"topology-cleanup-exit.txt").read_text().strip() == "0"
-    assert (results/"qdisc-after.txt").read_text().count("qdisc netem ") == 2
+    qdisc = (results/"qdisc-after.txt").read_text()
+    before = (results/"qdisc-before.txt").read_text()
+    for snapshot in (before, qdisc):
+        lines = [l for l in snapshot.splitlines() if l.startswith("qdisc netem ")]
+        assert len(lines) == 2 and all(f"limit {variant} " in l and re.search(r"delay +50(?:[.]0+)?ms\b", l) and re.search(r"rate +20(?:[.]0+)?Mbit\b", l, re.I) for l in lines), lines
+    queue = {}
+    for dev in ("wan.0", "wan.1"):
+        match = re.search(r"(?m)^"+re.escape(dev)+r"\n[^\n]*\n\s*Sent (\d+) bytes (\d+) pkt \(dropped (\d+)", qdisc)
+        assert match, qdisc
+        queue[dev] = dict(zip(("bytes", "packets", "dropped"), map(int, match.groups())))
     assert "client2.0" in (results/"interface-features.txt").read_text()
     assert (results/"ping-exit.txt").read_text().strip() in ("0","1")
     ping_phases = read_table(results/"ping-phases.tsv")
     assert [p["phase"] for p in ping_phases] == ["probe-launch","flows-begin","flows-end","probe-stop"]
     sides = []
-    for side, stack in [("primary",primary), ("secondary","linux" if primary=="netstack" else "netstack")]:
+    for side, stack in [("primary",primary), ("secondary",secondary)]:
         p = results/side
         for key in ("cleanup","iperf","receiver","flow"):
             assert (p/f"{key}-exit.txt").read_text().strip() == "0", key
@@ -73,45 +83,20 @@ def trial(root, mode, case, variant, round_number):
     for p,stack,lo,hi,dur,intervals,residual in sides:
         lower=sum(i["bytes"] for i in intervals if lo+i["start"]>=A and hi+i["end"]<=B)
         upper=sum(i["bytes"] for i in intervals if hi+i["end"]>A and lo+i["start"]<B)
-        rates[stack]=[max(0,lower+min(residual,0))*8/(B-A)/1e6,(upper+max(residual,0))*8/(B-A)/1e6]
+        rates[p.name]=[max(0,lower+min(residual,0))*8/(B-A)/1e6,(upper+max(residual,0))*8/(B-A)/1e6]
         rows=[json.loads(l.split("WANSAMPLE ",1)[1]) for l in (p/"stderr.txt").read_text().splitlines() if "WANSAMPLE " in l]
-        if mode != "measured":
-            assert not rows
-            continue
-        by={}
-        for s in rows:
-            if s["stack"]==stack and A<=s["ns"]/1e9<=B:
-                by.setdefault(s["port"],[]).append(s)
-        def acked(r):
-            if len(r)<2: return 0
-            if stack=="netstack": return (r[-1]["una"]-r[0]["una"]) % 2**32
-            return r[-1]["acked"]-r[0]["acked"]
-        samples=sorted(by.values(), key=acked, reverse=True)
-        assert samples, "no WAN socket samples"
-        r=samples[0]; n=len(r); progress=acked(r)
-        assert n>=20 and progress>1e5 and all(acked(other)<progress*.05 for other in samples[1:]), (stack,n,progress)
-        state=dict(samples=n,bytes_acked_during_samples=progress,cwnd_packets_median=median(v["cwnd"] for v in r),window_bytes_median=median(v["wnd"] for v in r),rtt_us_median=median(v["rtt_us"] for v in r),window_zero_samples=sum(v["wnd"]==0 for v in r),observed_ns=[r[0]["ns"],r[-1]["ns"]],max_sample_gap_seconds=max(b["ns"]-a["ns"] for a,b in zip(r,r[1:]))/1e9)
-        if stack=="netstack":
-            state.update(negative_sack_samples=sum(v["sacked"]<0 for v in r), minimum_sack_count=min(v["sacked"] for v in r), peer_headroom_at_most_one_MSS=sum(v["wnd"]-v["seq_flight"]<=v["mss"] for v in r),outstanding_at_or_above_cwnd=sum(v["out"]>=v["cwnd"] for v in r),buffered_beyond_seq_flight=sum(v["queued"]>v["seq_flight"] for v in r),recovery_samples=sum(v["recovery"] for v in r))
-        else:
-            for key in ("rwnd_us","sndbuf_us","busy_us","retrans"):
-                state[key+"_delta"]=r[-1][key]-r[0][key]
-            state["unsent_at_least_one_MSS"]=sum(v["notsent"]>=v["mss"] for v in r)
-        sockets[stack]=state
-        # Exact samples, limited to the experiment's synthetic, active flow.
-        dest=public/f"{variant}-{round_number}-{mode}-{case}-{stack}-samples.jsonl"
-        dest.write_text("".join(json.dumps(v)+"\n" for v in r))
-    g,l=rates["netstack"],rates["linux"]
-    return dict(overlap_seconds=B-A,mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])],sockets=sockets)
+        assert mode == "plain" and not rows
+    a,b=rates["primary"],rates["secondary"]
+    return dict(overlap_seconds=B-A,mbps_bounds=rates,primary_share_bounds=[a[0]/(a[0]+b[1]),a[1]/(a[1]+b[0])],queues=queue)
 
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
 public=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
 public.mkdir(exist_ok=True)
-cases=("reno-netstack","cubic-linux","cubic-netstack","reno-linux")
-expected=[(rnd,variant,"measured" if rnd==2 else "plain",case) for rnd in range(3) for variant in ("stock","fixed") for case in cases]
+cases=[f"{cc}-{primary}-{secondary}" for cc in ("reno","cubic") for primary in ("netstack","linux") for secondary in ("netstack","linux")]
+expected=[(rnd,size,"plain",case) for rnd in range(2) for size in (100,256) for case in cases if rnd == 0 or case.split("-")[1]!=case.split("-")[2]]
 verdict={"harness":os.environ["GITHUB_SHA"],"expected":len(expected),"passed":{},"failures":{},"missing":[],"skips":[],"reversals":[]}
 for rnd,v,mode,case in expected:
-    p=root/str(rnd)/v
+    p=root/str(rnd)/str(v)
     key=f"{rnd}/{v}/{mode}/{case}"
     if not (p/mode/case/"exit.txt").exists():
         verdict["missing"].append(key); continue
@@ -120,11 +105,24 @@ for rnd,v,mode,case in expected:
     except (AssertionError,KeyError,ValueError,IndexError,TypeError,OSError) as exc:
         verdict["failures"][key]={"reason":f"{type(exc).__name__}: {exc}","diagnostics":diagnostics(p/mode/case)}
 verdict["sources"]=(root/"binaries.txt").read_text().splitlines() if (root/"binaries.txt").exists() else []
-verdict["preflight"]={v:diagnostics(root/"preflight"/v) for v in ("stock","fixed")}
+verdict["preflight"]={v:diagnostics(root/"preflight"/v) for v in ("netstack-netstack","linux-linux")}
 verdict["execution_finished"]=(root/"trials-finished.txt").read_text().strip() if (root/"trials-finished.txt").exists() else None
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
+# Recover analysis without rerunning the traffic if a new iproute2 output
+# spelling or an interval assertion fails. Only synthetic benchmark files.
+import tarfile
+with tarfile.open(public/"receipts.tar.gz", "w:gz") as archive:
+    for rnd,size,mode,case in expected:
+        directory=root/str(rnd)/str(size)/mode/case
+        files=["exit.txt","results/topology-cleanup-exit.txt","results/qdisc-before.txt","results/qdisc-after.txt","results/ping-exit.txt","results/ping-phases.tsv","results/interface-features.txt"]
+        for side in ("primary","secondary"):
+            files += [f"results/{side}/{f}" for f in ("cleanup-exit.txt","iperf-exit.txt","receiver-exit.txt","flow-exit.txt","flow-settings.txt","flow-phases.tsv","receiver.json")]
+        for file in files:
+            source=directory/file
+            if source.is_file():
+                archive.add(source,arcname=str(source.relative_to(root)), recursive=False)
 verdict["verified"]=datetime.now(timezone.utc).isoformat()
-verdict["status"]="pass" if not verdict["failures"] and not verdict["missing"] and verdict["driver"] and verdict["driver"]["status"]==0 and len(verdict["sources"])==4 and len(verdict["passed"])==24 else "incomplete"
+verdict["status"]="pass" if not verdict["failures"] and not verdict["missing"] and verdict["driver"] and verdict["driver"]["status"]==0 and {(v.split()[0], v.split()[1]) for v in verdict["sources"]} == {("7d7f552333cf0aa6fa9563577b97adbda779eff4", tool) for tool in ("tcp_proxy","nsjoin")} and len(verdict["passed"])==24 else "incomplete"
 (public/"verdict.json").write_text(json.dumps(verdict,indent=2)+"\n")
 print(json.dumps({k:v if k!="passed" else list(v) for k,v in verdict.items()},indent=2))
 raise SystemExit(int(verdict["status"]!="pass"))
