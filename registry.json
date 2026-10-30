@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T06:17:00.186776+00:00",
+    "updatedAt": "2026-10-30T06:27:28.827277+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35021,7 +35021,7 @@
       "url": "https://github.com/tamird/gvisor/compare/85d46891e...65b461121",
       "group": "runtime",
       "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T06:01:46.148211+00:00",
+      "updatedAt": "2026-10-30T06:27:28.827277+00:00",
       "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap.",
       "evidence": [
         {
@@ -35130,7 +35130,7 @@
         "url": "https://github.com/tamird/gvisor/compare/85d46891e...65b461121",
         "title": "Unregister overlay poll waiters from their original backing file",
         "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap.",
-        "body": "Review the two commits for standalone submissions: poll skips unregistering a failed registration; overlay retains the backing file of each accepted waiter. The checkpoint regression restores waiters on both files in the same build. This changes the checkpoint representation of regular overlay file descriptions. In 20 alternating samples, eight warmed tmpfs registration pairs were 2.21% faster and eight proc pairs 1.05% slower than stock, all without allocation."
+        "body": "Open after the Unix waiter rollback. Review these two commits: poll skips unregistering a failed registration; overlay retains the backing file of each accepted waiter. The checkpoint regression restores waiters on both files in the same build. This changes the checkpoint representation of regular overlay file descriptions. In 20 alternating samples, eight warmed tmpfs registration pairs were 2.21% faster and eight proc pairs 1.05% slower than stock, all without allocation."
       }
     },
     {
@@ -35329,6 +35329,41 @@
         "summary": "Without uname, the governance extension asks yq for the invalid platform linux_. Updating bazel_lib to 3.4.0 lets the same fresh coordinator read the repository’s actual areas file. The canonical license check changed one row and verified all 220 dependencies.",
         "body": "Review the module pin and canonical license record for a standalone upstream PR. The paired stock/fixed governance query used current master with unchanged Gazelle and no LLVM migration."
       }
+    },
+    {
+      "id": "branch:unix-waiter-attachment",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/unix-waiter-attachment",
+      "head": "e35288cb1f5b4f25fb72fd321461222c0dccdb0e",
+      "title": "Unlink Unix socket waiters when registration fails",
+      "url": "https://github.com/tamird/gvisor/commit/e35288cb1",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T06:27:28.827277+00:00",
+      "summary": "A connected Unix socket queues a waiter before asking the peer to update host polling. If that update fails, the rejected waiter can still receive a notification. The poll and epoll changes require the Unix producer to undo the failed registration first. The historical fork revision is the validated reference for this prerequisite.",
+      "evidence": [
+        {
+          "label": "Current master queues before the peer update",
+          "url": "https://github.com/google/gvisor/blob/cd90d7a74/pkg/sentry/socket/unix/transport/unix.go#L961"
+        },
+        {
+          "label": "Stock: a rejected waiter received a notification",
+          "url": "https://app.buildbuddy.io/invocation/b1c6518f-d883-4000-b5af-0d427c88df33"
+        },
+        {
+          "label": "Corrected integrated source: the rejected waiter stays detached",
+          "url": "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
+        },
+        {
+          "label": "Race check on the integrated source",
+          "url": "https://app.buildbuddy.io/invocation/645cfbf5-6367-4be0-a0e5-e17cf1894cee"
+        },
+        {
+          "label": "Earlier one-line rollback",
+          "url": "https://github.com/tamird/gvisor/commit/6ac36a7fd"
+        }
+      ]
     }
   ],
   "edges": [
@@ -38487,6 +38522,28 @@
         "https://github.com/tamird/gvisor/actions/runs/40853018784/artifacts/12888051513"
       ],
       "from": "pr:16669"
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:unix-waiter-attachment",
+      "to": "branch:mutable-overlay-poll-waiter",
+      "reason": "Poll releases only entries whose registration succeeds. Unix sockets must first unlink a rejected waiter so skipping cleanup cannot leave it registered.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/e35288cb1",
+        "https://app.buildbuddy.io/invocation/b1c6518f-d883-4000-b5af-0d427c88df33",
+        "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:unix-waiter-attachment",
+      "to": "branch:epoll-modify-preserve",
+      "reason": "The reviewed epoll range already builds on the Unix provider rollback. Failed Unix registrations must leave the rejected waiter detached.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/e35288cb1",
+        "https://app.buildbuddy.io/invocation/b1c6518f-d883-4000-b5af-0d427c88df33",
+        "https://app.buildbuddy.io/invocation/3e2b4411-36f5-4b60-83b3-fb7492d57146"
+      ]
     }
   ],
   "investigations": [
