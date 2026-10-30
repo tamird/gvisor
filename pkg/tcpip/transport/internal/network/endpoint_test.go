@@ -391,7 +391,7 @@ func TestMulticastLoopInFlightWrite(t *testing.T) {
 
 	var ep network.Endpoint
 	var ops tcpip.SocketOptions
-	ops.InitHandler(multicastLoopHandler{ep: &ep}, s, nil, nil)
+	ops.InitHandler(&multicastLoopHandler{ep: &ep}, s, nil, nil)
 	ep.Init(s, ipv4.ProtocolNumber, udp.ProtocolNumber, &ops, &waiter.Queue{})
 	defer ep.Close()
 	ops.SetIPv4MulticastLoop(true)

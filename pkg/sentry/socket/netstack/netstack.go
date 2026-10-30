@@ -3820,9 +3820,6 @@ func nicStateFlagsToLinux(f stack.NICStateFlags) uint32 {
 	if f.Loopback {
 		rv |= linux.IFF_LOOPBACK
 	}
-	if f.Multicast {
-		rv |= linux.IFF_MULTICAST
-	}
 	return rv
 }
 
