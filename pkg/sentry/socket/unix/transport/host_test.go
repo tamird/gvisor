@@ -187,3 +187,70 @@ func TestFailedHostWaiterRegistration(t *testing.T) {
 	default:
 	}
 }
+
+func replaceWithUnpollableFile(t *testing.T, fd int) {
+	t.Helper()
+	null, err := unix.Open("/dev/null", unix.O_RDONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(null)
+	if err := unix.Dup3(null, fd, unix.O_CLOEXEC); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// testListener is a real host listener used as a BoundSocketFD without a gofer.
+type testListener int32
+
+func (fd testListener) NotificationFD() int32 { return int32(fd) }
+func (fd testListener) Close(context.Context) { unix.Close(int(fd)) }
+func (fd testListener) Listen(_ context.Context, backlog int32) error {
+	return unix.Listen(int(fd), int(backlog))
+}
+func (fd testListener) Accept(context.Context) (int, error) {
+	next, _, err := unix.Accept4(int(fd), unix.SOCK_NONBLOCK|unix.SOCK_CLOEXEC)
+	return next, err
+}
+
+func newTestListener(t *testing.T) testListener {
+	t.Helper()
+	fd, err := unix.Socket(unix.AF_UNIX, unix.SOCK_STREAM|unix.SOCK_NONBLOCK|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Bind(fd, &unix.SockaddrUnix{}); err != nil {
+		unix.Close(fd)
+		t.Fatal(err)
+	}
+	return testListener(fd)
+}
+
+func TestHostListenerAdmission(t *testing.T) {
+	ctx := context.Background()
+	for _, early := range []bool{false, true} {
+		name := "register-after-listen"
+		if early { name = "listen-after-register" }
+		t.Run(name, func(t *testing.T) {
+			ep := &connectionedEndpoint{baseEndpoint: baseEndpoint{WaitQueue: &waiter.Queue{}}}
+			fd := newTestListener(t)
+			if err := ep.SetBoundSocketFD(ctx, fd); err != nil { t.Fatal(err) }
+			if err := ep.Bind(Address{Addr:"test"}); err != nil { t.Fatal(err) }
+			defer ep.Close(ctx)
+			entry, _ := waiter.NewChannelEntry(waiter.EventIn)
+			if early {
+				if err := ep.EventRegister(&entry); err != nil { t.Fatal(err) }
+				defer ep.EventUnregister(&entry)
+				replaceWithUnpollableFile(t, int(fd))
+				err := ep.Listen(ctx, 1)
+				if err == nil || !errors.Is(err.ToError(), unix.EPERM) { t.Fatalf("Listen = %v, want EPERM", err) }
+				if ep.Listening() { t.Fatal("published a listener after failing to register its host fd") }
+				return
+			}
+			if err := ep.Listen(ctx, 1); err != nil { t.Fatal(err) }
+			replaceWithUnpollableFile(t, int(fd))
+			if err := ep.EventRegister(&entry); !errors.Is(err, unix.EPERM) { t.Fatalf("EventRegister = %v, want EPERM", err) }
+			if !ep.WaitQueue.IsEmpty() { t.Fatal("rejected registration remains in queue") }
+		})
+	}
+}
