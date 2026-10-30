@@ -1,4 +1,4 @@
-name: Compare retained release tar metadata from GNU and scratch
+name: Verify the Python-only release frontend on GNU and scratch
 on:
   push:
     branches: [qualification/release-wheel-frontend]
@@ -31,28 +31,31 @@ jobs:
           curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bb"
-      - name: Recover worker user, permissions and tar records
+      - name: Execute the PyPA release on GNU, AMD64 scratch, and ARM64 scratch
         env:
-          CURRENT_PRODUCT: d095cd927271c4994799b8c71685a8664bb45891
+          CURRENT_PRODUCT: a6a356a0593de1ebaefdb917144ecbe772eeaccf
+          INSTALL_SOURCE: 292bcd0ecd47989f2060fde3d0223528c9229989
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           mkdir -p "$RUNNER_TEMP/publication"
           git checkout --quiet --detach "$CURRENT_PRODUCT"
           bash "$RUNNER_TEMP/sdist-fixture/current_product.sh"
-      - name: Compare the original two outputs
-        run: |
-          python3 - <<'PYCODE'
-          import json,os
-          from pathlib import Path
-          out=Path(os.environ["RUNNER_TEMP"])/"publication"
-          expected={"gnu":"78f876079b1a8e262701241241671f2a9b2c3cdbd4844b204fb504b8d6ef702b","scratch":"0cd80e496073c993a63288e4e6bb5900fb6bc77f0fbd334550d148ac68f9e079"}
-          for lane,h in expected.items():
-              r=json.loads((out/f"{lane}-metadata.json").read_text())
-              assert r["compressed_sha256"]==h
-          PYCODE
+      - name: Load the ordinary Python library from an external root
+        if: always()
+        run: bash "$RUNNER_TEMP/sdist-fixture/consumer.sh"
+      - name: Install the two produced archives offline on Python 3.7
+        if: always()
+        env:
+          CURRENT_PRODUCT: a6a356a0593de1ebaefdb917144ecbe772eeaccf
+          INSTALL_SOURCE: 292bcd0ecd47989f2060fde3d0223528c9229989
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: bash "$RUNNER_TEMP/sdist-fixture/compat.sh"
+      - name: Compare the recorded archives and executed inputs
+        if: always()
+        run: python3 "$RUNNER_TEMP/sdist-fixture/single_result.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: release-wheel-metadata
+          name: release-python-build
           path: ${{ runner.temp }}/publication/
           if-no-files-found: error

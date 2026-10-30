@@ -8,19 +8,22 @@ rc="$RUNNER_TEMP/current-release.bazelrc"
 umask 077
 printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" > "$rc"
 unset BUILDBUDDY_API_KEY
-for lane in gnu scratch; do
+for lane in gnu scratch arm64; do
   data="$RUNNER_TEMP/release-$lane"
   mkdir -p "$data"
   flags=(--spawn_strategy=local -c opt --//sandboxexec/sandbox/python:release_version=2026.10.29.2)
-  if [[ $lane == scratch ]]; then
+  if [[ $lane != gnu ]]; then
+    arch=amd64
+    if [[ $lane == arm64 ]]; then arch=arm64; fi
+    flags+=(--spawn_strategy=remote "--host_platform=//tools/bazeldefs:linux_$arch" "--extra_execution_platforms=//tools/bazeldefs:linux_$arch" "--platforms=//tools/bazeldefs:linux_$arch")
     flags+=(--config=static-python --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
-      --remote_default_exec_properties=OSFamily=linux --remote_default_exec_properties=Arch=amd64
+      --remote_default_exec_properties=OSFamily=linux "--remote_default_exec_properties=Arch=$arch"
       --remote_default_exec_properties=workload-isolation-type=oci
       --remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef
       --strategy=PythonDistribution=remote --remote_download_outputs=toplevel)
   fi
   status=0
-  bazelisk --bazelrc="$rc" build --lockfile_mode=update --modify_execution_info='^PythonDistribution$=+no-remote-cache' --build_event_json_file="$data/events" --execution_log_compact_file="$data/execution.binpb" "${flags[@]}" //sandboxexec/sandbox/python:dist >"$data/private.log" 2>&1 || status=$?
+  bazelisk --bazelrc="$rc" build --lockfile_mode=update --modify_execution_info='^PythonDistribution$=+no-remote-cache' --nobuild_event_json_file_path_conversion --build_event_json_file="$data/events" --execution_log_compact_file="$data/execution.binpb" "${flags[@]}" //sandboxexec/sandbox/python:dist >"$data/private.log" 2>&1 || status=$?
   echo "$status" >"$out/current-$lane.exit"
   if [[ -s "$data/execution.binpb" ]]; then
     "$RUNNER_TEMP/bb" print --compact_execution_log="$data/execution.binpb" --raw=true --sort=false >"$data/spawns"
@@ -28,4 +31,4 @@ for lane in gnu scratch; do
   python3 -B "$RUNNER_TEMP/sdist-fixture/current_result.py" "$lane" "$data" "$out" || :
   if [[ $status == 0 ]]; then python3 -B "$RUNNER_TEMP/sdist-fixture/metadata.py" "$lane"; fi
 done
-test "$(cat "$out/current-gnu.exit")" = 0 && test "$(cat "$out/current-scratch.exit")" = 0
+for lane in gnu scratch arm64; do test "$(cat "$out/current-$lane.exit")" = 0 || exit 1; done

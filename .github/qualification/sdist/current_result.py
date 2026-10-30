@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import tomllib
 import tarfile
 import zipfile
 
@@ -28,7 +29,7 @@ try:
     assert status==0 and len(entry["actions"])==1,entry.get("native_exit")
     action=entry["actions"][0]
     assert not action.get("cacheHit") and not action.get("exitCode")
-    if lane=="scratch":
+    if lane!="gnu":
         assert action["runner"]=="remote"
         assert any("hello-world@sha256:c567" in p.get("value","") for p in action["platform"]["properties"])
     dist=Path("bazel-bin/sandboxexec/sandbox/python/dist")
@@ -48,6 +49,10 @@ try:
         all_payload={**pkg,"README.md":(project/"README.md").read_bytes()}
         prefix="gvisor-2026.10.29.2/"
         assert all(f.extractfile(prefix+name).read()==raw for name,raw in all_payload.items())
+        original=tomllib.loads((project/"pyproject.toml").read_text())
+        original["project"]["version"]="2026.10.29.2"
+        assert tomllib.loads(f.extractfile(prefix+"pyproject.toml").read().decode())==original
+        assert all(m.uid==m.gid==0 and m.uname==m.gname=="" for m in f)
     entry["source_members"]=sorted(all_payload)
     entry["sdist_members"]=13
     entry["gzip_mtime"]=int.from_bytes(archive.read_bytes()[4:8],"little")
