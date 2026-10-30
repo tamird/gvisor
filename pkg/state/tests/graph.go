@@ -573,3 +573,18 @@ type gBytesRoot struct {
 	n   int64
 	s   string
 }
+
+// +stateify savable
+type gNestedValue struct {
+	tag  int64
+	next any
+}
+
+// +stateify savable
+type gConvertedValue struct {
+	value gNestedValue `state:".(gNestedValue)"`
+}
+
+func (h *gConvertedValue) saveValue() gNestedValue { return h.value }
+
+func (h *gConvertedValue) loadValue(_ context.Context, v gNestedValue) { h.value = v }
