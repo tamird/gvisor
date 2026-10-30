@@ -27,14 +27,14 @@ jobs:
             test "$(git diff --name-only)" = "pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go" || exit 1
             start=$(date -u +%FT%TZ)
             ec=0
-            bazel test --jobs=5 --test_output=errors --test_arg=-test.v --test_filter='TestSackedOut(AcrossRecovery|AfterPMTU|RetransmissionTiming)' //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test > "$out/$name-bazel.log" 2>&1 || ec=$?
+            bazel test --jobs=5 --test_output=errors --test_arg=-test.v --test_filter='TestSackedOut(AcrossRecovery|AfterPMTU|RetransmissionTiming|DisjointBlocks|PartialGSOTrim)' //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test > "$out/$name-bazel.log" 2>&1 || ec=$?
             tail -35 "$out/$name-bazel.log"
             file=bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test/test.log
             if test -f "$file"; then cp -L "$file" "$out/$name-test.log"; fi
             printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$(git rev-parse HEAD)" "$ec" "$start" "$(date -u +%FT%TZ)" >> "$out/results.tsv"
           done <<'ARMS'
-          stock 7e8bfc1d7f4a798c36f25d65fb43c65f2da1829b
-          candidate 04e8302fd79f1557774b6b72a5a231b390674f32
+          stock 744f8caa43e8201d18a00a1abeda06de95701353
+          candidate 83c8d9eb640b3671107431cc11ffd3180c4655a5
           ARMS
       - name: Verify the traces and full RACK suite
         run: |
@@ -50,7 +50,7 @@ jobs:
           import json, re, sys
           from pathlib import Path
           from datetime import datetime,timezone
-          out=Path(sys.argv[1]); expected={"stock":"7e8bfc1d7f4a798c36f25d65fb43c65f2da1829b","candidate":"04e8302fd79f1557774b6b72a5a231b390674f32"}
+          out=Path(sys.argv[1]); expected={"stock":"744f8caa43e8201d18a00a1abeda06de95701353","candidate":"83c8d9eb640b3671107431cc11ffd3180c4655a5"}
           actual={}
           for row in (out/"results.tsv").read_text().splitlines():
               name,source,ec,start,end=row.split("\t")
@@ -66,11 +66,15 @@ jobs:
               trace_valid=sorted(obs)==["false","true"] and all([x["cumulative"] for x in rows]==[1,1,1,1,8] for rows in obs.values())
               matches=lambda rows: [x["count"] for x in rows]==[0,1,2,3,0]
               mtu=[(int(mss),int(count)) for mss,count in re.findall(r'cumulative=\d+ SACK=.* MSS=(\d+) sacked=(-?\d+)',log)]
-              mtu_valid=len(mtu)==4 and [m for m,_ in mtu]==[1424,1424,1124,1124] and ([c for _,c in mtu]==[0,1,2,0] if name=="candidate" else [c for _,c in mtu]!=[0,1,2,0])
+              mtu_valid=len(mtu)==4 and [m for m,_ in mtu]==[1424,1424,1124,1124] and ([c for _,c in mtu]==[0,1,1,0] if name=="candidate" else [c for _,c in mtu]!=[0,1,1,0])
               wire=re.search(r"SECOND_HOLE immediate=(true|false) seq=packet10 count=(-?\d+) reownd=(\S+)",log)
               wire_valid=wire is not None and (wire[1]=="true" if name=="candidate" else wire[1]=="false")
-              expect_state=wire_valid and mtu_valid and trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values()) and all(rows[-1]["count"]<0 for rows in obs.values()))
-              actual[name]={"source":source,"exit":int(ec),"start":start,"end":end,"observations":obs,"pmtu":mtu,"pmtu_valid":mtu_valid,"wire":wire.groups() if wire is not None else None,"ledger":trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values())),"valid":source==expected[name] and (int(ec)==0 if name=="candidate" else int(ec)==3) and expect_state}
+              multi={rack:list(map(int,(first,both,repeat,last))) for rack,first,both,repeat,last in re.findall(r"DISJOINT rack=(true|false) first=(-?\d+) both=(-?\d+) repeat=(-?\d+) last=(-?\d+)",log)}
+              multi_valid=set(multi)=={"false","true"} and (all(v==[0,2,2,0] for v in multi.values()) if name=="candidate" else all(v!=[0,2,2,0] for v in multi.values()))
+              gso=re.search(r"GSO aggregate=(\d+) first=(-?\d+) trim=(-?\d+) last=(-?\d+)",log)
+              gso_valid=gso is not None and int(gso[1])==4000 and (list(map(int,gso.groups()[1:]))==[1,1,0] if name=="candidate" else list(map(int,gso.groups()[1:]))!=[1,1,0])
+              expect_state=gso_valid and multi_valid and wire_valid and mtu_valid and trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values()) and all(rows[-1]["count"]<0 for rows in obs.values()))
+              actual[name]={"source":source,"exit":int(ec),"start":start,"end":end,"observations":obs,"gso":gso.groups() if gso is not None else None,"disjoint":multi,"pmtu":mtu,"pmtu_valid":mtu_valid,"wire":wire.groups() if wire is not None else None,"ledger":trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values())),"valid":source==expected[name] and (int(ec)==0 if name=="candidate" else int(ec)==3) and expect_state}
           path=out/"suite-test.log"
           suite=path.read_text() if path.exists() else ""
           suite_pass=re.findall(r'^--- PASS: (\S+)',suite,re.M)
@@ -87,13 +91,13 @@ jobs:
           f=pkg/tcpip/transport/tcp/rack_test.go
           e=pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
           git show "$GITHUB_SHA:test/rbe/sack-coverage-benchmark.fixture" > "$out/cost.fixture"
-          printf '%s  %s\n' "f037343c99bb38896cf0e7f375b0a41549318414d41600cf60c28d44b111fcaf" "$out/cost.fixture" | sha256sum -c -
+          printf '%s  %s\n' "36ef37e3a16626b0d515e25ae584797d25c718fed1ef6677e192245a7dc26c04" "$out/cost.fixture" | sha256sum -c -
           for round in 1 2 3 4 5 6 7 8; do
             if (( round % 2 )); then order="stock candidate"; else order="candidate stock"; fi
             for arm in $order; do
               case "$arm" in
-                stock) expected=7e8bfc1d7f4a798c36f25d65fb43c65f2da1829b ;;
-                candidate) expected=04e8302fd79f1557774b6b72a5a231b390674f32 ;;
+                stock) expected=744f8caa43e8201d18a00a1abeda06de95701353 ;;
+                candidate) expected=83c8d9eb640b3671107431cc11ffd3180c4655a5 ;;
               esac
               git restore -- "$e" "$f"
               git checkout --quiet --detach "$expected"
@@ -109,7 +113,7 @@ jobs:
             done
           done
           git restore -- "$e" "$f"
-          git checkout --quiet --detach 04e8302fd79f1557774b6b72a5a231b390674f32
+          git checkout --quiet --detach 83c8d9eb640b3671107431cc11ffd3180c4655a5
           bazel test --jobs=4 --test_arg=-test.v //pkg/tcpip/transport/tcp:tcp_test > "$out/package-bazel.log" 2>&1 || { tail -22 "$out/package-bazel.log"; exit 1; }
           cp -L bazel-testlogs/pkg/tcpip/transport/tcp/tcp_test/test.log "$out/package-test.log"
           bazel build --jobs=4 //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp:tcp_test_nogo > "$out/analysis.log" 2>&1 || { tail -22 "$out/analysis.log"; exit 1; }
@@ -121,12 +125,12 @@ jobs:
               _,arm,r,_=p.stem.split('-')
               for name,ns,b,alloc in re.findall(r'^BenchmarkRACKSparseCoverage/(\S+?)\s+\d+\s+([\d.]+) ns/op\s+(\d+) B/op\s+(\d+) allocs/op',p.read_text(),re.M):
                   rows.setdefault(arm,{}).setdefault(name,[]).append([float(ns),int(b),int(alloc)])
-          assert set(rows)=={'stock','candidate'} and all(len(series)==8 for vals in rows.values() for series in vals.values()) and all(len(vals)==3 for vals in rows.values()),rows
+          assert set(rows)=={'stock','candidate'} and all(len(series)==8 for vals in rows.values() for series in vals.values()) and all(len(vals)==6 for vals in rows.values()),rows
           pkg=(out/'package-test.log').read_text()
           assert re.search(r'^--- PASS: TestSACKedGSOAcrossSequenceWrap',pkg,re.M) and not re.search(r'^--- FAIL:',pkg,re.M)
           p=out/'verdict.json'
           v=json.loads(p.read_text())
-          v.update(cost={'samples':rows,'median_ns':{arm:{key:statistics.median(x[0] for x in values) for key,values in data.items()} for arm,data in rows.items()}},package={'passed':len(re.findall(r'^--- PASS:',pkg,re.M)),'source':'04e8302fd79f1557774b6b72a5a231b390674f32'},analysis={'owners':['tcp_nogo','tcp_test_nogo'],'status':'pass'})
+          v.update(cost={'samples':rows,'median_ns':{arm:{key:statistics.median(x[0] for x in values) for key,values in data.items()} for arm,data in rows.items()}},package={'passed':len(re.findall(r'^--- PASS:',pkg,re.M)),'source':'83c8d9eb640b3671107431cc11ffd3180c4655a5'},analysis={'owners':['tcp_nogo','tcp_test_nogo'],'status':'pass'})
           p.write_text(json.dumps(v,indent=2))
           print(json.dumps(v['cost']['median_ns']))
           PY
