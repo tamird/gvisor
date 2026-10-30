@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T13:19:13.082582+00:00",
+    "updatedAt": "2026-10-30T13:25:56.596550+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34603,15 +34603,31 @@
       "id": "branch:gofer-character-device-restore",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/gofer-restore-device-watches",
-      "head": "047b8258423a32fec329b7000a7f97b3591fafde",
-      "title": "Restore gofer character-device polling across checkpoints",
-      "url": "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584",
+      "ref": "review/gofer-restored-device-syscall",
+      "head": "103965803b95d0d06b9b2341046f56828489ff1b",
+      "title": "Restore gofer poll registration on character devices",
+      "url": "https://github.com/tamird/gvisor/commit/103965803",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T13:00:52.974373+00:00",
-      "summary": "After checkpoint, a new epoll watch on an open /dev/random file returned EPERM in both gofer modes. Reconnect the character device and reject restore when a saved wait queue has no host descriptor.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T13:25:56.596550+00:00",
+      "summary": "After checkpointing an open /dev/random file, fresh EPOLL_CTL_ADD returned EPERM in both stock gofer modes. The ordinary syscall test passes on Linux and the four corrected gVisor configurations.",
       "evidence": [
+        {
+          "label": "Seven case results: two stock EPERM failures and five passes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41060778181/artifacts/12980906287"
+        },
+        {
+          "label": "Original stock syscall run",
+          "url": "https://app.buildbuddy.io/invocation/e54c8ac9-5d91-4b71-8cc6-0bc38fc40eb2"
+        },
+        {
+          "label": "Corrected syscall run",
+          "url": "https://app.buildbuddy.io/invocation/cd25e1d9-a266-484a-9f0d-cf11592c8b23"
+        },
+        {
+          "label": "Existing- and fresh-watch controls, and missing-donor controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40958565392/artifacts/12934308229"
+        },
         {
           "label": "Combined contributor diff",
           "url": "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584"
@@ -34625,33 +34641,28 @@
           "url": "https://github.com/tamird/gvisor/commit/047b82584"
         },
         {
-          "label": "Fresh-watch and missing-donor controls, original Linux and both gofer modes",
-          "url": "https://github.com/tamird/gvisor/actions/runs/40958565392/artifacts/12934308229"
-        },
-        {
           "label": "Unmodified restore path",
           "url": "https://github.com/google/gvisor/blob/e82a0e179/pkg/sentry/fsimpl/gofer/save_restore.go#L503"
         }
       ],
       "refinement": {
         "before": {
-          "base": "e82a0e179198f72260185166fb2be5336abee8b2",
-          "head": "d971b7abc867da47292289eba8792aa62775df0c"
+          "base": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd",
+          "head": "047b8258423a32fec329b7000a7f97b3591fafde"
         },
         "after": {
           "base": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd",
-          "head": "047b8258423a32fec329b7000a7f97b3591fafde"
+          "head": "103965803b95d0d06b9b2341046f56828489ff1b"
         }
       },
-      "followup": {
-        "owner": "overlay_owner",
-        "sourceHead": "047b8258423a32fec329b7000a7f97b3591fafde",
-        "observedAt": "2026-10-30T13:00:52.974373+00:00",
-        "disposition": "Prepare permanent fresh-watch regression",
-        "nextAction": "Put the observed /dev/random fresh-watch case into the ordinary syscall save/resume suite if supported, and rerun the original Linux/gVisor controls before submitting the two changes.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "103965803b95d0d06b9b2341046f56828489ff1b",
+        "url": "https://github.com/tamird/gvisor/commit/103965803",
+        "title": "Restore gofer poll registration on character devices",
+        "summary": "After checkpointing an open /dev/random file, fresh EPOLL_CTL_ADD returned EPERM in both stock gofer modes. The ordinary syscall test passes on Linux and the four corrected gVisor configurations.",
+        "body": "Review one standalone PR combining the gofer fix with the ordinary epoll syscall regression. Compared to the earlier two-commit proposal, only the fixture and its runner option changed. The original test kept a watch that could report its queued event; this regression creates a new watch after restore. The missing-donor controls are separate from the native ABI case."
       }
     },
     {

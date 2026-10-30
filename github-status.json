@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T13:19:13.082582+00:00",
+  "registryDate": "2026-10-30T13:25:56.596550+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -246773,6 +246773,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T13:03:39.698453+00:00"
+      }
+    },
+    "branch:gofer-character-device-restore": {
+      "contributor-review": {
+        "scope": "103965803b95d0d06b9b2341046f56828489ff1b",
+        "since": "2026-10-30T13:19:13.082582+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T13:19:13.082582+00:00"
       }
     }
   },
