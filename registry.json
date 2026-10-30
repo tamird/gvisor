@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T13:00:10.813642+00:00",
+    "updatedAt": "2026-10-30T13:00:52.974373+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34608,8 +34608,8 @@
       "title": "Restore gofer character-device polling across checkpoints",
       "url": "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T13:00:10.813642+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T13:00:52.974373+00:00",
       "summary": "After checkpoint, a new epoll watch on an open /dev/random file returned EPERM in both gofer modes. Reconnect the character device and reject restore when a saved wait queue has no host descriptor.",
       "evidence": [
         {
@@ -34633,16 +34633,6 @@
           "url": "https://github.com/google/gvisor/blob/e82a0e179/pkg/sentry/fsimpl/gofer/save_restore.go#L503"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "047b8258423a32fec329b7000a7f97b3591fafde",
-        "url": "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584",
-        "title": "Restore gofer character-device polling across checkpoints",
-        "summary": "After checkpoint, a new epoll watch on an open /dev/random file returned EPERM in both gofer modes. Reconnect the character device and reject restore when a saved wait queue has no host descriptor.",
-        "body": "Review these two changes together for a standalone PR. A fresh watch returned tag 33 after restore on Linux and both corrected gVisor modes. A separate control omitted the host descriptor: the fixed restore failed with a path only if a waiter was saved. A watch already present can report a queued event on stock.",
-        "baseHead": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd"
-      },
       "refinement": {
         "before": {
           "base": "e82a0e179198f72260185166fb2be5336abee8b2",
@@ -34652,6 +34642,16 @@
           "base": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd",
           "head": "047b8258423a32fec329b7000a7f97b3591fafde"
         }
+      },
+      "followup": {
+        "owner": "overlay_owner",
+        "sourceHead": "047b8258423a32fec329b7000a7f97b3591fafde",
+        "observedAt": "2026-10-30T13:00:52.974373+00:00",
+        "disposition": "Prepare permanent fresh-watch regression",
+        "nextAction": "Put the observed /dev/random fresh-watch case into the ordinary syscall save/resume suite if supported, and rerun the original Linux/gVisor controls before submitting the two changes.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584"
+        ]
       }
     },
     {
@@ -35924,18 +35924,9 @@
       "head": "5d7de5a80e2acbfabc4954c1175ef40259008444",
       "title": "Match Linux polling on VFIO PCI device files",
       "url": "https://github.com/tamird/gvisor/commit/5d7de5a80",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T13:00:10.813642+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T13:00:52.974373+00:00",
       "summary": "Stock admitted an epoll watch on a PCI descriptor and left a restored waiter linked after removal. Match Linux’s no-poll file operations and preserve deletion of old checkpoint watches.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "5d7de5a80e2acbfabc4954c1175ef40259008444",
-        "url": "https://github.com/tamird/gvisor/commit/5d7de5a80",
-        "title": "Match Linux polling on VFIO PCI device files",
-        "summary": "Stock admitted an epoll watch on a PCI descriptor and left a restored waiter linked after removal. Match Linux’s no-poll file operations and preserve deletion of old checkpoint watches.",
-        "body": "Review this independent VFIO correction. The stock package failed both regressions; normal, race, and both owning analyzers passed. The Linux control used /dev/null as another file with no poll operation. Physical VFIO hardware was not exercised."
-      },
       "evidence": [
         {
           "label": "Review the VFIO ABI change",
@@ -35957,7 +35948,25 @@
           "label": "Both standalone analyzer owners",
           "url": "https://app.buildbuddy.io/invocation/a8186399-51e3-4342-8251-428d349e2259"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "head": "5d7de5a80e2acbfabc4954c1175ef40259008444",
+          "kind": "proposal",
+          "outcome": "changes-requested",
+          "at": "2026-10-30T13:00:52.974373+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "overlay_owner",
+        "sourceHead": "5d7de5a80e2acbfabc4954c1175ef40259008444",
+        "observedAt": "2026-10-30T13:00:52.974373+00:00",
+        "disposition": "Linux/gVisor syscall evidence requested",
+        "nextAction": "Qualify the actual VFIO_GROUP_GET_DEVICE_FD descriptor on native Linux and gVisor, or record precisely which device fixture is unavailable. Preserve restored-waiter checkpoint coverage. The /dev/null non-poll control does not establish VFIO ABI parity.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/5d7de5a80"
+        ]
+      }
     }
   ],
   "edges": [
