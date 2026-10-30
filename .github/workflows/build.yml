@@ -1,13 +1,13 @@
-name: Analyze the two TUN owners on a Linux GNU coordinator
+name: Read the two original TUN analyzer diagnoses
 on:
   push:
-    branches: [qualification/tun-pi-owners]
+    branches: [qualification/tun-pi-diagnostics]
 permissions:
   contents: read
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tun-pi-owners'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tun-pi-diagnostics'
     runs-on: ubuntu-24.04
     timeout-minutes: 165
     env:
@@ -15,59 +15,49 @@ jobs:
       OSTOCK: 13969a0fd2f1347a25e2b20e4e36e64787dcab15
       OFIXED: e539b6e86e21b645f9d8a100e71235c1541477ab
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with:
-        fetch-depth: 3
-        persist-credentials: false
-    - name: Prepare native Linux coordinator
-      run: |
-        set -euo pipefail
-        test "$(git rev-parse HEAD^^)" = "$OFIXED"
-        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
-        unshare --user --map-root-user true
-        plat=$RUNNER_TEMP/overlay-gnu
-        mkdir -p "$plat"
-        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
-    - name: Configure authenticated remote actions
+    - name: Read the original test logs
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        set -euo pipefail; umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } >"$RUNNER_TEMP/overlay.bazelrc"
-    - name: Analyze the exact standalone TUN change
-      run: |
         set -euo pipefail
-        git checkout --detach "$OFIXED"
-        out=$RUNNER_TEMP/tun-owners; mkdir -p "$out"
-        printf '%s\n' "$OFIXED" > "$out/source"
-        rc=0
-        bazelisk --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=4 --keep_going --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --strategy=TestRunner=linux-sandbox --nocache_test_results --test_output=errors //pkg/sentry/devices/tundev:tundev_nogo //pkg/tcpip/link/tun:tun_nogo > "$RUNNER_TEMP/tun-nogo.log" 2>&1 || rc=$?
-        printf '%s\n' "$rc" > "$out/exit"
-        grep -A4 -E 'Invocation ID:|ERROR:|error:|diagnostic|FAILED|PASSED|tests? pass|failed to build' "$RUNNER_TEMP/tun-nogo.log" | tail -115 > "$out/receipt" || :
-        test "$rc" -eq 0
-        grep -E '^//pkg/sentry/devices/tundev:tundev_nogo +PASSED' "$out/receipt"
-        grep -E '^//pkg/tcpip/link/tun:tun_nogo +PASSED' "$out/receipt"
-    - name: Exclude credentials from validation receipts
-      if: always()
-      env:
-        KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
+        mkdir -p "$RUNNER_TEMP/diagnoses"
         python3 - <<'PYTHON'
+        import hashlib,json,os,re,urllib.request as u
         from pathlib import Path
-        import os
-        key=os.environ['KEY'].encode()
-        for f in (Path(os.environ['RUNNER_TEMP'])/'tun-owners').glob('*'):
-            if f.is_file() and key and key in (x:=f.read_bytes()):
-                f.write_bytes(x.replace(key,b'[REDACTED]'))
+        key=os.environ.pop('BUILDBUDDY_API_KEY')
+        out=Path(os.environ['RUNNER_TEMP'])/'diagnoses';inv='75fb5565-d38d-4300-b873-7fefc949ca71'
+        def api(method,body,limit):
+            req=u.Request('https://app.buildbuddy.io/api/v1/'+method,data=json.dumps(body).encode(),headers={'Content-Type':'application/json','x-buildbuddy-api-key':key})
+            with u.urlopen(req,timeout=28) as res:raw=res.read(limit+1)
+            if len(raw)>limit:raise ValueError('unexpected result size')
+            return raw
+        report={}
+        for name,label in [('tun','//pkg/tcpip/link/tun:tun_nogo'),('tundev','//pkg/sentry/devices/tundev:tundev_nogo')]:
+            rows=json.loads(api('GetAction',{'selector':{'invocation_id':inv,'target_label':label}},4<<20))
+            files=[f for a in rows.get('action',[]) for f in a.get('file',[]) if f.get('name','').rsplit('/',1)[-1]=='test.log' and '/blobs/' in f.get('uri','')]
+            for f in files:
+                hn,size=f['uri'].rsplit('/',2)[-2:];size=int(size)
+                assert size<=1<<20
+                raw=api('GetFile',{'uri':f['uri']},size)
+                assert (hashlib.sha256(raw).hexdigest(),len(raw))==(hn,size)
+                txt=raw.decode(errors='replace').replace(key,'[REDACTED]')
+                kept=[l[:600] for l in txt.splitlines() if l and 'remote_header' not in l and 'bes_header' not in l and '://'+key not in l and len(l)<1600][:80]
+                if f['uri'] not in {v.get('uri') for v in report.get(name,[])}:
+                    report.setdefault(name,[]).append(dict(label=label,uri=f['uri'],sha256=hn,size=size,lines=kept))
+        if len(report)!=2:
+            page='0000';seen=set();kept=[]
+            while page and page not in seen and len(seen)<60:
+                seen.add(page)
+                row=json.loads(api('GetLog',{'selector':{'invocation_id':inv},'page_token':page},4<<20));txt=row.get('log',{}).get('contents','').replace(key,'[REDACTED]')
+                kept.extend(l[:600] for l in txt.splitlines() if (re.search(r'pkg/(tcpip/link/tun|sentry/devices/tundev)/[^ ]+\.go:[0-9]+|checklocks:|checkescape:|nogo: ',l) and len(l)<1600 and 'header' not in l))
+                page=row.get('nextPageToken','')
+            report['console']=kept[:100]
+        (out/'original-diagnostics.json').write_text(json.dumps(report,indent=2)+'\n')
+        assert {k for k,v in report.items() if v} >= {'tun','tundev'} or report.get('console'), 'no diagnostic recovered'
         PYTHON
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tun-pi-owners
-        path: ${{ runner.temp }}/tun-owners/
+        name: tun-pi-diagnoses
+        path: ${{ runner.temp }}/diagnoses/
         if-no-files-found: error
