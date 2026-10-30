@@ -1,35 +1,60 @@
-name: CI
-
-"on":
+name: Test rules_distroless Debian layer normalization
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: ["qualification/deb-layer-supplier"]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  supplier:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: bazel-contrib/rules_distroless
+          ref: "15f9fc8d39ba3178c313e61d94feb3f6eb88f95f"
+          path: supplier
+          persist-credentials: false
+      - name: Apply the complete supplier change
+        working-directory: supplier
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/receipt"
+          test "$(git rev-parse HEAD)" = 15f9fc8d39ba3178c313e61d94feb3f6eb88f95f
+          git apply --index ../test/rbe/rules-distroless-deb-layer.patch
+          test "$(git write-tree)" = 8dff793a948dacb2aa6a0ff12406c25e5eb39869
+          printf '%s\n' a0180a7a60d0ec1b44c216b4336135c8a96597ac > "$RUNNER_TEMP/receipt/supplier-commit"
+          printf '%s\n' 8dff793a948dacb2aa6a0ff12406c25e5eb39869 > "$RUNNER_TEMP/receipt/supplier-tree"
+      - name: Run the supplier's declared Debian layer tests
+        working-directory: supplier
+        run: |
+          set -euo pipefail
+          tests=(mergedusr basic_normalization gzip_input gzip_passthrough uncompressed_bytes xz_input zst_input lzma_input uncompressed_as_zstd complex_structure)
+          labels=()
+          for test in "${tests[@]}"; do labels+=("//apt/tests:deb_postfix/$test"); done
+          bazel test --jobs=4 --test_output=errors \
+            --build_event_json_file="$RUNNER_TEMP/bep.json" \
+            "${labels[@]}"
+      - name: Reconcile actual test records
+        working-directory: supplier
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])
+          expected="mergedusr basic_normalization gzip_input gzip_passthrough uncompressed_bytes xz_input zst_input lzma_input uncompressed_as_zstd complex_structure".split()
+          events=[json.loads(s) for s in (p/"bep.json").read_text().splitlines()]
+          cases={e["id"]["testSummary"]["label"].rsplit("/",1)[1]:e["testSummary"]["overallStatus"] for e in events if "testSummary" in e}
+          (p/"receipt"/"test-results.json").write_text(json.dumps(cases,indent=2)+"\n")
+          print(cases)
+          assert cases==dict.fromkeys(expected,"PASSED"),cases
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: supplier-deb-layer-results
+          path: ${{ runner.temp }}/receipt
+          if-no-files-found: error
