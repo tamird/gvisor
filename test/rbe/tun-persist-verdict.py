@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import json
+import re
 from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
@@ -30,7 +31,12 @@ for name in ("current-native", "stock-guest", "current-guest"):
         bad = cases.get("TuntapTest.SetPersistAfterLinkDeletion", {})
         fs = bad.get("failures", [])
         passed &= (read("exit") == "3" and len(fs) == 2 and
-                   all(any("TUNSETPERSIST, " + arg in f for f in fs) for arg in ["1", "0"]) and
+                   all(any(re.fullmatch(
+                       rf"test/syscalls/linux/tuntap\.cc:{line}\n"
+                       rf"Value of: ioctl\(tun\.get\(\), [^\n]+, {arg}\)\n"
+                       r"Expected: -1 \(failure\), with errno PosixError\(errno=77 [^\n]+\)\n"
+                       r"  Actual: 0 \(of type int\)\n?", f)
+                           for f in fs) for arg, line in [(1, 470), (0, 472)]) and
                    cases.get("TuntapTest.CreatePersistentInterface", {}).get("status") == "PASS")
     else:
         passed &= read("exit") == "0" and all(value["status"] == "PASS" for value in cases.values())

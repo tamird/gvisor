@@ -1,137 +1,32 @@
-name: Qualify TUN persistence after link deletion
+name: Reconcile retained TUN qualification reports
 on:
   push:
-    branches: [qualification/tun-persistence-recovery]
+    branches: [qualification/tun-persistence-verdict]
 permissions:
   contents: read
   actions: read
 jobs:
-  syscalls:
+  verify:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 165
-    env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      BEFORE: f14171d4b0243f51579ce3f340a8c42743a43fc6
-      AFTER: 25c2f461327b014fa23fc2a0f79ba88094a05e95
-      CURRENT: 736b926672075e20b03410b52b6f3308751a7bb4
-      STOCK: a98e7cd657808a2708dfad7bef8f0b312382ee2a
+    timeout-minutes: 10
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
-    - name: Prepare the pinned compiler coordinator and RBE workers
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        set -euo pipefail
-        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        cp test/rbe/tun-persist-verdict.py "$RUNNER_TEMP/verify-tcp.py"
-        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" ]]
-        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/tcp.bazelrc"
-        unset BUILDBUDDY_API_KEY
-        git fetch --no-tags --depth=1 origin "$STOCK" "$BEFORE" "$AFTER" d611c720807d16cbe5fc87cc70c0743a0e96a490
-        if [[ ! -c /dev/net/tun ]]; then sudo mkdir -p /dev/net; sudo mknod /dev/net/tun c 10 200; fi
-        docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --device /dev/net/tun --cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
-        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-
-    - name: Run the same two ioctls on Linux, stock gVisor and corrected gVisor
-      run: |
-        set -euo pipefail
-        for name in current-native stock-guest current-guest; do
-          src=$CURRENT
-          [[ "$name" != stock-guest ]] || src=$STOCK
-          testname=tuntap_test
-          path=test/syscalls/linux/tuntap.cc
-          filter=TuntapTest.SetPersistAfterLinkDeletion:TuntapTest.CreatePersistentInterface
-          executor=remote
-          platform=runsc_systrap_directfs
-          if [[ "$name" == current-native ]]; then executor=local; platform=native; fi
-          git checkout --quiet --detach "$src"
-          [[ "$(git rev-parse HEAD)" == "$src" ]]
-          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
-          sha256sum "$path" > "$d/fixture-sha256"
-          target="//test/syscalls:${testname}_${platform}"
-          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
-          printf '%s\n' "$executor" > "$d/executor"; printf '%s\n' "$filter" > "$d/filter"
-          date -u +%FT%TZ > "$d/start"
-          rc=0
-          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --verbose_failures --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=600 --test_sharding_strategy=disabled --test_env=GTEST_FILTER="$filter" "$target" > "$d/bazel.log" 2>&1 || rc=$?
-          grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|Build did NOT complete' "$d/bazel.log" | head -100 > "$d/compiler-diagnostics" || true
-          rm -f "$d/bazel.log"
-          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
-          if [[ $rc != 0 && $rc != 3 ]]; then continue; fi
-          for file in test.log test.xml; do
-            docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/$file" > "$d/$file" || rm -f "$d/$file"
-          done
-        done
-    - name: Reuse the passing analyzer result for identical TUN source
-      if: ${{ !cancelled() }}
+      with: {persist-credentials: false}
+    - name: Recover the original reports from the one execution job
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        git diff --exit-code d611c720807d16cbe5fc87cc70c0743a0e96a490 "$CURRENT" -- pkg/tcpip/link/tun
-        gh api repos/tamird/gvisor/actions/artifacts/13005496962/zip > "$RUNNER_TEMP/original.zip"
-        python3 - <<'PYTHON'
-        import json,os,zipfile
-        from pathlib import Path
-        root=Path(os.environ["RUNNER_TEMP"])
-        with zipfile.ZipFile(root/"original.zip") as z:
-            verdict=json.loads(z.read("verdict.json"))
-            assert verdict["analyzer"] and verdict["lanes"]["current-guest"]["source"] == "d611c720807d16cbe5fc87cc70c0743a0e96a490"
-            for name in ("owners/exit", "owners/receipt"):
-                path=root/"records"/name
-                path.parent.mkdir(exist_ok=True)
-                path.write_bytes(z.read(name))
-        PYTHON
-    - name: Exercise the same unlock and deletion ordering on both implementations
-      if: ${{ !cancelled() }}
-      run: |
-        set -euo pipefail
-        for lane in order-before order-after; do
-          src=$BEFORE; [[ "$lane" == order-before ]] || src=$AFTER
-          git checkout --quiet --detach "$src"
-          d=$RUNNER_TEMP/records/$lane; mkdir -p "$d"; git rev-parse HEAD > "$d/source"
-          sha256sum pkg/tcpip/link/tun/persistence_interleave_test.go > "$d/fixture-sha256"
-          target='//pkg/tcpip/link/tun:persistence_interleave_test'; echo "$target" > "$d/target"
-          rc=0; docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=12 --nocache_test_results --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_arg=-test.v "$target" > "$d/bazel.log" 2>&1 || rc=$?
-          echo "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
-          grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|Build did NOT complete' "$d/bazel.log" | head -100 > "$d/compiler-diagnostics" || true
-          rm -f "$d/bazel.log"
-          if [[ $rc == 0 || $rc == 3 ]]; then
-            for f in test.log test.xml; do
-              docker exec tcp-compiler cat "bazel-testlogs/pkg/tcpip/link/tun/persistence_interleave_test/$f" > "$d/$f" || rm -f "$d/$f"
-            done
-          fi
-        done
-    - name: Verify syscall assertions and the analyzer target
-      if: ${{ !cancelled() }}
-      run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
-    - name: Redact credentials from the evidence bundle
-      if: always()
-      env:
-        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        python3 - <<'PYTHON'
-        import os
-        from pathlib import Path
-        key=os.environ["BB_KEY"].encode()
-        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
-            if f.is_file() and key and key in (data:=f.read_bytes()):
-                f.write_bytes(data.replace(key,b"[REDACTED]"))
-        PYTHON
+        gh api repos/tamird/gvisor/actions/artifacts/13009345520/zip > "$RUNNER_TEMP/evidence.zip"
+        mkdir -p "$RUNNER_TEMP/records"
+        unzip -q "$RUNNER_TEMP/evidence.zip" -d "$RUNNER_TEMP/records"
+        cp "$RUNNER_TEMP/records/verdict.json" "$RUNNER_TEMP/records/original-verdict.json"
+    - name: Verify the source, ioctl values and errno, endpoint lifetime, and analyzer
+      run: python3 test/rbe/tun-persist-verdict.py "$RUNNER_TEMP/records"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tun-persist-results
+        name: tun-persistence-verified
         path: ${{ runner.temp }}/records/
         if-no-files-found: error
