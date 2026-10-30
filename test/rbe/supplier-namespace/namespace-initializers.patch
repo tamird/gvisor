@@ -1,0 +1,111 @@
+diff --git a/python/private/pypi/namespace_pkgs.bzl b/python/private/pypi/namespace_pkgs.bzl
+--- a/python/private/pypi/namespace_pkgs.bzl
++++ b/python/private/pypi/namespace_pkgs.bzl
+@@ -1,6 +1,6 @@
+ """Utilities to get where we should write namespace pkg paths."""
+ 
+-load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
++load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+ 
+ _ext = struct(
+     py = ".py",
+@@ -59,7 +59,7 @@
+ 
+     return sorted([d for d in dirs if d not in ignored])
+ 
+-def create_inits(*, srcs, ignored_dirnames = [], root = None, copy_file = copy_file, **kwargs):
++def create_inits(*, srcs, ignored_dirnames = [], root = None, write_init = expand_template, **kwargs):
+     """Create init files and return the list to be included `py_library` srcs.
+ 
+     Args:
+@@ -67,8 +67,8 @@
+             as `srcs` and `data`. This is usually a result of a {obj}`glob`.
+         ignored_dirnames: {type}`str` a list of patterns to ignore.
+         root: {type}`str` the prefix to use as the root.
+-        copy_file: the `copy_file` rule to copy files in build context.
+-        **kwargs: passed to {obj}`copy_file`.
++        write_init: rule that generates an initializer from the namespace template.
++        **kwargs: passed to `write_init`.
+ 
+     Returns:
+         {type}`list[str]` to be included as part of `py_library`.
+@@ -78,11 +78,12 @@
+         src = "{}/__init__.py".format(out)
+         ret.append(src)
+ 
+-        copy_file(
++        write_init(
+             # For the target name, use a number instead of trying to convert an output
+             # path into a valid label.
+             name = "_cp_{}_namespace".format(i),
+-            src = _TEMPLATE,
++            template = _TEMPLATE,
++            substitutions = {},
+             out = src,
+             **kwargs
+         )
+diff --git a/python/private/pypi/BUILD.bazel b/python/private/pypi/BUILD.bazel
+--- a/python/private/pypi/BUILD.bazel
++++ b/python/private/pypi/BUILD.bazel
+@@ -229,7 +229,7 @@
+ bzl_library(
+     name = "namespace_pkgs",
+     srcs = ["namespace_pkgs.bzl"],
+-    deps = ["@bazel_skylib//rules:copy_file"],
++    deps = ["@bazel_skylib//rules:expand_template"],
+ )
+ 
+ bzl_library(
+diff --git a/tests/pypi/namespace_pkgs/namespace_pkgs_tests.bzl b/tests/pypi/namespace_pkgs/namespace_pkgs_tests.bzl
+--- a/tests/pypi/namespace_pkgs/namespace_pkgs_tests.bzl
++++ b/tests/pypi/namespace_pkgs/namespace_pkgs_tests.bzl
+@@ -167,33 +167,36 @@
+         "nested/root/foo/buu/__init__.py",
+         "nested/root/foo/buu/bii.py",
+     ]
+-    copy_file_calls = []
++    write_init_calls = []
+     template = Label("//python/private/pypi:namespace_pkg_tmpl.py")
+ 
+     got = create_inits(
+         srcs = srcs,
+         root = "nested/root",
+-        copy_file = lambda **kwargs: copy_file_calls.append(kwargs),
++        write_init = lambda **kwargs: write_init_calls.append(kwargs),
+     )
+     env.expect.that_collection(got).contains_exactly([
+         call["out"]
+-        for call in copy_file_calls
++        for call in write_init_calls
+     ])
+-    env.expect.that_collection(copy_file_calls).contains_exactly([
++    env.expect.that_collection(write_init_calls).contains_exactly([
+         {
+             "name": "_cp_0_namespace",
+             "out": "nested/root/foo/__init__.py",
+-            "src": template,
++            "substitutions": {},
++            "template": template,
+         },
+         {
+             "name": "_cp_1_namespace",
+             "out": "nested/root/foo/bar/__init__.py",
+-            "src": template,
++            "substitutions": {},
++            "template": template,
+         },
+         {
+             "name": "_cp_2_namespace",
+             "out": "nested/root/foo/bee/__init__.py",
+-            "src": template,
++            "substitutions": {},
++            "template": template,
+         },
+     ])
+ 
+diff --git a/news/wheel-namespace-initializers.fixed.md b/news/wheel-namespace-initializers.fixed.md
+new file mode 100644
+--- /dev/null
++++ b/news/wheel-namespace-initializers.fixed.md
+@@ -0,0 +1 @@
++(pypi) Wheel namespace package initializers no longer require a shell or `cp` on the execution platform.
