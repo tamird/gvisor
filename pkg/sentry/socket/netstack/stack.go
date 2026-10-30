@@ -517,11 +517,9 @@ func (s *Stack) newVeth(ctx context.Context, linkAttrs map[uint16]nlmsg.BytesVie
 	if ifname == "" {
 		ifname = s.allocDeviceName("veth", dstNs)
 	}
-	// Linux's veth_setup uses ether_setup, which sets IFF_MULTICAST.
 	err := s.Stack.CreateNICWithOptions(id, packetsocket.New(ethernet.New(ep)), stack.NICOptions{
-		Name:      ifname,
-		Kind:      "veth",
-		Multicast: true,
+		Name: ifname,
+		Kind: "veth",
 	})
 	if err != nil {
 		s.unlockSrcAndDst(ctx, dstNs)
@@ -547,9 +545,8 @@ func (s *Stack) newVeth(ctx context.Context, linkAttrs map[uint16]nlmsg.BytesVie
 	}
 
 	err = peerStack.Stack.CreateNICWithOptions(peerID, packetsocket.New(ethernet.New(peerEP)), stack.NICOptions{
-		Name:      peerName,
-		Kind:      "veth",
-		Multicast: true,
+		Name: peerName,
+		Kind: "veth",
 	})
 	if err != nil {
 		peerEP.Close()
@@ -583,11 +580,9 @@ func (s *Stack) newBridge(ctx context.Context, linkAttrs map[uint16]nlmsg.BytesV
 	}
 	ep := stack.NewBridgeEndpoint(defaultMTU)
 	id := s.Stack.NextNICID()
-	// Linux's br_dev_setup also inherits IFF_MULTICAST from ether_setup.
 	err := s.Stack.CreateNICWithOptions(id, ep, stack.NICOptions{
-		Name:      ifname,
-		Kind:      "bridge",
-		Multicast: true,
+		Name: ifname,
+		Kind: "bridge",
 	})
 	if err != nil {
 		return syserr.TranslateNetstackError(err)
