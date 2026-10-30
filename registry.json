@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T16:55:14.197497+00:00",
+    "updatedAt": "2026-10-30T16:57:21.716977+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10138,18 +10138,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-sack-credit-accounting",
-      "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4",
+      "head": "f96afe45777d10e02b6565b76dd255f0062503ec",
       "title": "Count selectively acknowledged TCP packets on their transmit boundaries",
       "url": "https://github.com/google/gvisor/pull/15634",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T16:46:15.574347+00:00",
-      "summary": "Credit each selectively acknowledged packet at its transmit boundaries. Stock lost credit or counted it twice, including after a change in segment size.",
+      "updatedAt": "2026-10-30T16:57:21.716977+00:00",
+      "summary": "Count selectively acknowledged packets at their original transmit boundaries. Preserve RACK’s delivery history when a timeout or restore clears the SACK scoreboard. Earlier code double-counted packet credit or reported reordering on a repeated SACK.",
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
         {
-          "label": "Proposed source changes from the published PR",
+          "label": "Published amendment diff from 7d7f55233 to f96afe457",
           "url": "https://github.com/tamird/gvisor/compare/7d7f55233...f96afe457"
         },
         {
@@ -10225,18 +10225,24 @@
           "kind": "amendment",
           "outcome": "approved",
           "at": "2026-10-30T10:22:03.833397+00:00"
+        },
+        {
+          "head": "f96afe45777d10e02b6565b76dd255f0062503ec",
+          "kind": "amendment",
+          "outcome": "approved",
+          "at": "2026-10-30T16:57:21.716977+00:00"
         }
       ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "f96afe45777d10e02b6565b76dd255f0062503ec",
-        "baseHead": "7d7f552333cf0aa6fa9563577b97adbda779eff4",
-        "url": "https://github.com/tamird/gvisor/commit/f96afe457",
-        "title": "Preserve RACK observations across recovery",
-        "summary": "Linux keeps TCP_INFO.ReordSeen clear when the peer repeats an earlier SACK after timeout. The published PR reports reordering. The amendment preserves the observation until the segment is transmitted again. Packet credit still resets, and previously SACKed data can be retransmitted.",
-        "body": "A retransmission timeout clears SACK delivery credit so the sender can\nretransmit data a receiver has discarded. In #15634 it also forgets\nwhich transmissions RACK has already observed. If the peer then repeats\na previously reported range below the highest acknowledged sequence,\ngVisor can advertise reordering in TCP_INFO. Linux leaves ReordSeen\nclear on the same wire exchange [1].\n\nKeep the observation on each sent segment across timeout and restore.\nClear it after the next successful transmission of that segment. The\nscoreboard and SACK packet credit still reset. The common packetimpact\ntest fails on 7d7f55233 and passes on Linux and f96afe457 [2].\n\nThe captures show both senders retransmitting the previously reported\nthird segment after the peer stops reporting it. A genuinely newly\nreported original segment below the earlier high-water mark still sets\nReordSeen [2]. On checkpoint/restore the same repeated range sets\nreordering on 777852bfe and leaves it clear on 5107630c4. The sender\nresets and restores packet credit in both cases [3].\n\nThe TCP, RACK, SACK and packetimpact suites passed. The first job\nmisread Go test markers and omitted a fixture probe. The recovery job\nverified its saved output and ran the two restore comparisons [3].\n\nSource changes [4]. Compare the two patch series locally:\n\ngit range-diff 757d67e79..7d7f55233 757d67e79..f96afe457\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41085114274/artifacts/12991273249\n[2]: https://github.com/tamird/gvisor/actions/runs/41088743068/artifacts/12994780498\n[3]: https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763\n[4]: https://github.com/tamird/gvisor/compare/7d7f55233...f96afe457",
-        "requestedAt": "2026-10-30T16:46:15.574347+00:00"
+      "followup": {
+        "owner": "netstack owner",
+        "disposition": "Published",
+        "sourceHead": "f96afe45777d10e02b6565b76dd255f0062503ec",
+        "observedAt": "2026-10-30T16:57:21.716977+00:00",
+        "nextAction": "Follow upstream checks and maintainer review of the published amendment.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15634",
+          "https://github.com/tamird/gvisor/actions/runs/41091511027/artifacts/12994247763"
+        ]
       }
     },
     {
