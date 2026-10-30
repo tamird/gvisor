@@ -43,7 +43,8 @@ func build() error {
 	if err != nil {
 		return err
 	}
-	work, err := os.MkdirTemp("", "python-distribution-")
+	// Bazel creates the output parent even on workers without a system temporary directory.
+	work, err := os.MkdirTemp(filepath.Dir(out), "python-distribution-")
 	if err != nil {
 		return err
 	}
@@ -93,6 +94,7 @@ func build() error {
 	cmd := exec.Command(command, "--no-isolation", "--outdir", out, project)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	cmd.Env = append(os.Environ(),
+		"TMPDIR="+work,
 		// Keep setuptools from reading an undeclared ~/.pydistutils.cfg.
 		// https://github.com/pypa/setuptools/blob/72e919a8b/setuptools/_distutils/dist.py#L401-L410
 		"HOME="+work,

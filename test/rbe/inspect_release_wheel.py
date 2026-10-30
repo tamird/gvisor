@@ -47,7 +47,10 @@ def audit():
     record["failed_actions"] = [{k:s.get(k) for k in ("mnemonic","targetLabel","runner","exitCode","status")} for s in spawns if s.get("exitCode") or s.get("status")][:20]
     actions = [s for s in spawns if s.get("mnemonic")=="PythonDistribution"]
     # Only publish tool basenames and action labels. Full coordinator output can contain credentials.
-    record["missing_executables"] = missing_executables((root/"coordinator.log").read_text(errors="replace"))
+    coordinator = (root/"coordinator.log").read_text(errors="replace")
+    record["missing_executables"] = missing_executables(coordinator)
+    if "stat /tmp: no such file or directory" in coordinator:
+        record["missing_system_tmp"] = True
     record["failed_actions"] = [
         {k:s.get(k) for k in ("mnemonic", "targetLabel", "exitCode")}
         for s in spawns if s.get("exitCode") or s.get("status")
