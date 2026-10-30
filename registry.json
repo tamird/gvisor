@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T17:32:27.326543+00:00",
+    "updatedAt": "2026-10-30T17:46:38.208685+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36598,23 +36598,23 @@
       "repo": "tamird/gvisor",
       "ref": "review/tun-packet-info-standalone",
       "head": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
-      "title": "Honor packet information and preserve queued packets on empty TUN reads",
+      "title": "Preserve the TUN packet-information header on reads",
       "url": "https://github.com/tamird/gvisor/commit/5fa30581c",
-      "status": "Agent work",
-      "summary": "Linux and corrected gVisor pass all four TUN read boundaries. Stock fails all four; the full corrected gVisor suite passes 24 and skips its existing down-interface case. The review head changes only the exported TUN_PKT_STRIP comment from the tested source, addressing the sole finding of both owning analyzers. It is independent of #15449.",
-      "updatedAt": "2026-10-30T17:25:41.390690+00:00",
+      "status": "Awaiting contributor review",
+      "summary": "Linux and the standalone correction pass all four shared read boundaries; stock returned three bytes instead of EINVAL for a short header, omitted TUN_PKT_STRIP, returned one byte instead of EFAULT for an inaccessible header, and consumed a packet on a zero-byte read. The full corrected TUN suite passed 24 cases with the existing down-device skip. This is independent of #15449.",
+      "updatedAt": "2026-10-30T17:46:38.208685+00:00",
       "evidence": [
         {
-          "label": "Full syscall/control results on the identical executable and test",
+          "label": "Linux, stock and full TUN suite; final source changes only an exported-constant comment",
           "url": "https://github.com/tamird/gvisor/actions/runs/41085306145/artifacts/12994698250"
+        },
+        {
+          "label": "Both owning analyzers on the exact standalone source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41098295687/artifacts/12997308808"
         },
         {
           "label": "Two original analyzer diagnoses; identical exported-constant comment on both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41098115314"
-        },
-        {
-          "label": "Corrected source: both owner checks in progress",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41098295687"
         },
         {
           "label": "The same PI truncation/partial-copy ABI mismatch predates this PR: Linux passes, master and the PR fail identically",
@@ -36629,17 +36629,15 @@
           "url": "https://github.com/tamird/gvisor/commit/57bd4a9e5"
         }
       ],
-      "followup": {
-        "owner": "overlay_owner",
-        "sourceHead": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
-        "observedAt": "2026-10-30T17:25:41.390690+00:00",
-        "disposition": "Verify the corrected exported-constant comment",
-        "nextAction": "Read both owning analyzer results on the revised source. This is not a new contributor decision yet.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41085306145/artifacts/12994698250",
-          "https://github.com/tamird/gvisor/actions/runs/41098115314",
-          "https://github.com/tamird/gvisor/actions/runs/41098295687"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "5fa30581c58c120ca603051a3988163d1e9fc0bf",
+        "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
+        "url": "https://github.com/tamird/gvisor/commit/5fa30581c",
+        "title": "Preserve the TUN packet-information header on reads",
+        "summary": "Linux and the standalone correction pass all four shared read boundaries; stock returned three bytes instead of EINVAL for a short header, omitted TUN_PKT_STRIP, returned one byte instead of EFAULT for an inaccessible header, and consumed a packet on a zero-byte read. The full corrected TUN suite passed 24 cases with the existing down-device skip. This is independent of #15449.",
+        "body": "An IPv4 or IPv6 packet read from a TUN device with packet information\nenabled starts with a four-byte header. Linux returns EINVAL if the\nbuffer is too short for the header and EFAULT if the whole header cannot\nbe copied. If the header fits but the payload does not, the header\nreports TUN_PKT_STRIP [1]. A read of zero bytes leaves the packet queued\n[2].\n\nWrite the header before copying the packet data. This distinguishes a\npartial header fault from a short successful payload read. The flags use\nnative byte order; the protocol stays in network byte order.\n\nThe shared syscall test sends a UDP datagram through a TUN device before\neach read. It covers a three-byte buffer, a header-only buffer, an iovec\nthat faults after the first header byte, and a zero-byte read followed\nby a read of the pending packet.\n\n[1]: https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L2053\n[2]: https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/net/tun.c#L2164"
       }
     },
     {
@@ -36986,6 +36984,43 @@
         "summary": "David asked what happens on Rust 1.85, which lacks the library notice. The normal Linux CI verified the generated repository query and ran an existing crate using that compiler. A target that consumes the notice fails when it needs the absent file.",
         "body": "Rust 1.85 can still register the toolchains and compile an existing crate. The library notice first shipped in 1.86. Building a target that consumes :library_notice on 1.85 fails because the archive lacks the file. Omitting its export when the glob is empty also breaks recursive queries that traverse the alias [1].\n\n636da66ab adds one Linux CI step for 1.85. It queries the generated toolchain repository and runs an existing crate test with that toolchain [2]. The existing test still packages the notice from a current compiler.\n\n[1]: https://github.com/tamird/rules_rs/actions/runs/41093475315/artifacts/12994678505\n[2]: https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798881\n\nPosted on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:proc-forwarding-mounts",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/proc-forwarding-mounts",
+      "head": "abf9202abb9b44fe397f96e10caa4ac7e5b17dcd",
+      "title": "Read IP forwarding from the network stack",
+      "url": "https://github.com/tamird/gvisor/commit/abf9202ab",
+      "summary": "Linux and corrected gVisor read 1 through the original proc mount after enabling IPv4 or IPv6 forwarding through a second mount. Stock returned 0 in both cases. Read the network stack’s existing default, preserving host-networking write rejection. The syscall tests reuse #16745’s fixture; the production change does not depend on #16745.",
+      "evidence": [
+        {
+          "label": "Identical Linux, original and corrected two-mount cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41091066394/artifacts/12994107918"
+        },
+        {
+          "label": "Exact review source: checkpoint, procfs, and static analysis",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41092498034/artifacts/12999370245"
+        },
+        {
+          "label": "Fixture prerequisite",
+          "url": "https://github.com/google/gvisor/pull/16745"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "abf9202abb9b44fe397f96e10caa4ac7e5b17dcd",
+        "baseHead": "db2a858e8c6cceba5324a10a457327d5f23fa888",
+        "url": "https://github.com/tamird/gvisor/commit/abf9202ab",
+        "title": "Read IP forwarding from the network stack",
+        "summary": "Linux and corrected gVisor read 1 through the original proc mount after enabling IPv4 or IPv6 forwarding through a second mount. Stock returned 0 in both cases. Read the network stack’s existing default, preserving host-networking write rejection. The syscall tests reuse #16745’s fixture; the production change does not depend on #16745.",
+        "body": "Writing 1 to ipv4/ip_forward through a second proc mount left the first\nmount reporting 0. The same happened with ipv6/conf/all/forwarding.\nBoth mounts were in the same network namespace; each proc inode kept\nits own copy of the last value written.\n\nLinux stores these settings in the network namespace. Changing either\none updates the default for new interfaces and the setting on existing\ninterfaces [1, 2]. gVisor's network stack already records that default.\nRead it directly so every mount reports the setting the stack uses.\n\nThe same userspace test writes through one mount and reads through the\nother on Linux and gVisor. Keep the Go test for a stack that refuses\nthe write. Host networking still refuses these writes.\n\n[1]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/devinet.c#L2423\n[2]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv6/addrconf.c#L894"
+      },
+      "updatedAt": "2026-10-30T17:46:38.208685+00:00",
+      "status": "Awaiting contributor review"
     }
   ],
   "edges": [
@@ -40225,6 +40260,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/actions/runs/41085795250/artifacts/12991084377",
         "https://github.com/google/gvisor/pull/16264"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16745",
+      "to": "branch:proc-forwarding-mounts",
+      "reason": "Both forwarding cases use the two-mount syscall fixture in #16745.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16745",
+        "https://github.com/tamird/gvisor/commit/abf9202ab"
       ]
     }
   ],
