@@ -1259,6 +1259,19 @@ void CheckOverlayCloseDuringCopyUp(bool scheduled) {
           FuseRespond(fd, in.unique, &out, sizeof(out));
           break;
         }
+        case FUSE_STATFS: {
+          fuse_statfs_out out = {};
+          out.st.bsize = 4096;
+          out.st.frsize = 4096;
+          out.st.blocks = 1024;
+          out.st.bfree = out.st.bavail = 512;
+          out.st.files = 1024;
+          out.st.ffree = 512;
+          out.st.namelen = 255;
+          fprintf(stderr, "OVLCLOSE statfs node=%llu\n", (unsigned long long)in.nodeid);
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
         case FUSE_GETATTR: {
           fuse_attr_out out = {.attr_valid=120};
           out.attr = {.ino=in.nodeid, .mode=mode, .nlink=1};
@@ -1298,6 +1311,7 @@ void CheckOverlayCloseDuringCopyUp(bool scheduled) {
           FuseRespond(fd, in.unique);
           break;
         default:
+          fprintf(stderr, "OVLCLOSE unsupported opcode=%u\n", in.opcode);
           FuseRespond(fd, in.unique, nullptr, 0, -ENOSYS);
       }
       return true;
