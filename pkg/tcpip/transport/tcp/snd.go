@@ -1270,7 +1270,11 @@ func (s *sender) SetPipe() {
 			}
 			// SetPipe():
 			//    (b) If S1 <= HighRxt, Pipe is incremented by 1.
-			if s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt) {
+			countRepair := s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt)
+			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+				countRepair = startSeq.LessThanEq(s.FastRecovery.HighRxt) && s1.xmitCount > 1 && !s1.lost
+			}
+			if countRepair {
 				pipe++
 			}
 		}
@@ -1899,6 +1903,16 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	seg.lost = false
 
 	err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
+
+	if err == nil && s.FastRecovery.Active && s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 && seg.xmitCount > 1 && seg.payloadSize() != 0 {
+		// HighRxt is the highest byte retransmitted during recovery. The
+		// write cursor can send these repairs directly after a timeout.
+		last := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize())) - 1
+		if s.FastRecovery.HighRxt.LessThan(last) {
+			s.FastRecovery.HighRxt = last
+		}
+	}
+
 	if err == nil {
 		seg.acked = false
 		mss := seg.logicalLen()
