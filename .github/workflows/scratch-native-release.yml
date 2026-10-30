@@ -1,4 +1,4 @@
-name: Diagnose the release wheel scanner on its actual graph
+name: Verify both pip wheel repository forms and the release inventory
 on:
   push:
     branches: [qualification/release-wheel-frontend]
@@ -33,8 +33,13 @@ jobs:
       - name: Verify the release wheels with the canonical pip-hub scanner
         if: always()
         env:
-          SCANNER_SOURCE: 2d35f20b96eb7e14764eac586e8491f6b11e08a3
+          SCANNER_SOURCE: 66fc0bce0e970c7ac49eae5bd78b9b1c87c936d9
         run: bash "$RUNNER_TEMP/sdist-fixture/license.sh"
+      - name: Exercise the wheel scanner's owning package
+        if: always()
+        env:
+          SCANNER_SOURCE: 66fc0bce0e970c7ac49eae5bd78b9b1c87c936d9
+        run: bash "$RUNNER_TEMP/sdist-fixture/scanner_test.sh"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
