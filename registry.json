@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:19:54.582741+00:00",
+    "updatedAt": "2026-10-30T04:23:11.019191+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1928,8 +1928,8 @@
       "url": "https://github.com/tamird/gvisor/tree/bazel-python-release",
       "group": "release",
       "status": "branch",
-      "summary": "Contributor-reviewed Python release work remains held for the wheel-audit prerequisite #15114. The Skylib replacement ff350d4 is already upstream and the bootstrap prerequisite #15120 has merged. This record does not establish separate authorization to publish the current head.",
-      "updatedAt": "2026-10-18T06:55:48.297471+00:00",
+      "summary": "The Bazel wheel proposal depends on #15114. On an integration branch, AMD64 and ARM64 scratch workers built byte-identical wheels. The release Make target staged them without invoking Docker. Source archives have identical payloads but differing tar and gzip timestamps; reproducing the source archive remains open.",
+      "updatedAt": "2026-10-30T04:23:11.019191+00:00",
       "head": "d916fe3c16adda0472ab24d2e42ce84d91a8da29",
       "evidence": [
         {
@@ -1938,11 +1938,23 @@
         },
         {
           "label": "Landed Skylib replacement",
-          "url": "https://github.com/google/gvisor/commit/ff350d4ddae6327c71b529abd8a2df6ecd376fde"
+          "url": "https://github.com/google/gvisor/commit/ff350d4dd"
         },
         {
           "label": "Merged Python bootstrap prerequisite",
           "url": "https://github.com/google/gvisor/pull/15120"
+        },
+        {
+          "label": "Scratch wheel and source-archive qualification on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41001494828/artifacts/12953173515"
+        },
+        {
+          "label": "Docker tripwire, archive member hashes and timestamps",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41002015599/artifacts/12953818595"
+        },
+        {
+          "label": "setuptools: source distribution timestamp handling",
+          "url": "https://github.com/pypa/setuptools/issues/2133"
         }
       ]
     },
