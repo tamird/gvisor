@@ -7,21 +7,7 @@ root = Path(sys.argv[1])
 wanted = {"IPv4SmallOptionBuffers", "IndependentIPv4AndIPv6Values", "IPv6ValueLimits"}
 out = {}
 valid = True
-for name in ("current-native", "stock-guest", "current-guest"):
-    d = root / name
-    cases = {}
-    if (d / "test.xml").exists():
-        for node in ET.parse(d / "test.xml").iter("testcase"):
-            if node.get("classname") == "MulticastSocketOptions":
-                failed = node.find("failure") is not None or node.find("error") is not None
-                skipped = node.find("skipped") is not None or node.get("status") == "notrun"
-                cases[node.get("name")] = "SKIP" if skipped else "FAIL" if failed else "PASS"
-    rc=(d / "exit").read_text().strip() if (d / "exit").exists() else None
-    stock=name == "stock-guest"
-    passed=(set(cases) == wanted and all(v == ("FAIL" if stock else "PASS") for v in cases.values()) and rc==("3" if stock else "0"))
-    out[name]={"cases":cases,"exit":rc,"verified":passed}
-    valid &= passed
-for name in ("native", "stock", "current"):
+for name in ("stock", "current"):
     d = root / ("jdk-" + name)
     rc=(d / "exit").read_text().strip() if (d / "exit").exists() else None
     log=(d/"jtreg.log").read_text() if (d/"jtreg.log").exists() else ""

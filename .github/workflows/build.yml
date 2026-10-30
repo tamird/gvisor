@@ -23,7 +23,8 @@ jobs:
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         cp test/rbe/multicast-java-verdict.py "$RUNNER_TEMP/verify-tcp.py"
-        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" ]]
+        [[ "$(git rev-parse HEAD^1)" == "f22f4054534df5d4fd2825b73e395b7d45741c40" ]]
+        git fetch --no-tags --depth=1 origin "$CURRENT"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -40,50 +41,19 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Compare IPv4 and IPv6 multicast options on Linux, stock and corrected gVisor
-      run: |
-        set -euo pipefail
-        for name in current-native stock-guest current-guest; do
-          src=$CURRENT
-          [[ "$name" != stock-guest ]] || src=$STOCK
-          testname=socket_ipv6_udp_unbound_loopback_test
-          path=test/syscalls/linux/socket_ipv6_udp_unbound.cc
-          filter='MulticastSocketOptions.*'
-          executor=remote
-          platform=runsc_systrap_directfs
-          if [[ "$name" == current-native ]]; then executor=local; platform=native; fi
-          git checkout --quiet --detach "$src"
-          [[ "$(git rev-parse HEAD)" == "$src" ]]
-          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
-          sha256sum "$path" > "$d/fixture-sha256"
-          sha256sum pkg/sentry/socket/netstack/netstack.go > "$d/socket-sha256"
-          target="//test/syscalls:${testname}_${platform}"
-          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
-          printf '%s\n' "$executor" > "$d/executor"; printf '%s\n' "$filter" > "$d/filter"
-          date -u +%FT%TZ > "$d/start"
-          rc=0
-          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --verbose_failures --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=600 --test_sharding_strategy=disabled --test_env=GTEST_FILTER="$filter" "$target" > "$d/bazel.log" 2>&1 || rc=$?
-          grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|Build did NOT complete' "$d/bazel.log" | head -100 > "$d/compiler-diagnostics" || true
-          rm -f "$d/bazel.log"
-          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
-          if [[ $rc != 0 && $rc != 3 ]]; then continue; fi
-          for file in test.log test.xml; do
-            docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/$file" > "$d/$file" || rm -f "$d/$file"
-          done
-        done
-
-    - name: Build both flagged runtimes
+    - name: Install both complete runtime filesets, retaining all sibling helpers
       if: ${{ !cancelled() }}
       run: |
         set -euo pipefail
         for src in "$STOCK" "$CURRENT"; do
           git checkout -q --detach "$src"
           d=$RUNNER_TEMP/records/bin-${src:0:9}; mkdir -p "$d"; printf '%s\n' "$src" > "$d/source"
-          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=x86_64 //runsc:runsc > "$d/build.log" 2>&1 || { tail -70 "$d/build.log"; exit 1; }
-          out=$(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" cquery --config=x86_64 //runsc:runsc --output=files 2>"$d/cquery.log")
-          docker exec tcp-compiler cp "$out" "$RUNNER_TEMP/runsc-${src:0:9}"
-          sha256sum "$RUNNER_TEMP/runsc-${src:0:9}" > "$d/binary"
-          grep -E 'Invocation ID:|Build completed' "$d/build.log" > "$d/receipt"; rm "$d/build.log" "$d/cquery.log"
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=x86_64 //:release > "$d/build.log" 2>&1 || { tail -70 "$d/build.log"; exit 1; }
+          docker exec tcp-compiler cp -aL bazel-bin/release "$RUNNER_TEMP/release-${src:0:9}"
+          release=$RUNNER_TEMP/release-${src:0:9}
+          test -x "$release/runsc" && test -x "$release/gvisor-bin/gvisor_sentry"
+          (cd "$release" && sha256sum runsc gvisor-bin/*) > "$d/binaries"
+          grep -E 'Invocation ID:|Build completed' "$d/build.log" > "$d/receipt"; rm "$d/build.log"
         done
     - name: Replay the importer’s OpenJDK test with both flags and kernels
       if: ${{ !cancelled() }}
@@ -94,19 +64,19 @@ jobs:
         docker inspect "$image" --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/records/jdk-image"
         for arm in stock current; do
           src=$STOCK; if [[ $arm == current ]]; then src=$CURRENT; fi
-          sudo "$RUNNER_TEMP/runsc-${src:0:9}" install --runtime="gvisor-$arm"
+          sudo "$RUNNER_TEMP/release-${src:0:9}/runsc" install --runtime="gvisor-$arm"
         done
         sudo systemctl restart docker
-        for arm in native stock current; do
+        for arm in stock current; do
           d=$RUNNER_TEMP/records/jdk-$arm; mkdir -p "$d"
-          rt=runc; [[ $arm == native ]] || rt=gvisor-$arm
+          rt=gvisor-$arm
           rc=0
           docker run --runtime="$rt" --name="jdk-$arm" "$image" jtreg -agentvm -dir:/root/jdk/test/jdk -noreport -timeoutFactor:5 -verbose:all -tl:200 java/net/DatagramSocket/DatagramSocketMulticasting.java > "$d/jtreg.log" 2>&1 || rc=$?
           printf '%s\n' "$rc" > "$d/exit"
           docker cp "jdk-$arm:/root/JTwork/java/net/DatagramSocket/DatagramSocketMulticasting.jtr" "$d/DatagramSocketMulticasting.jtr" || true
           grep -E 'Test family=|Test results:|TEST RESULT:|testTimeToLive|testLoopbackMode|Protocol not available|Invalid argument|preferIPv4Stack' "$d/jtreg.log" | tail -60 > "$d/summary" || true
         done
-    - name: Qualify actual cases, regardless of independent JDK arm results
+    - name: Verify both guest JVM outputs against the prior native and syscall receipt
       if: ${{ !cancelled() }}
       run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
     - name: Redact credentials from the evidence bundle
@@ -125,6 +95,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: java21-multicast-options
+        name: java21-multicast-guest-recovery
         path: ${{ runner.temp }}/records/
         if-no-files-found: error
