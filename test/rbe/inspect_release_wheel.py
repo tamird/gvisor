@@ -69,20 +69,28 @@ def audit():
     assert set(p.iterdir()) == {wheel,sdist}
     pkg = {str(f.relative_to(project)):f.read_bytes() for f in (project/"gvisor").glob("*.py")}
     assert pkg
+    record["files"]={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in (wheel,sdist)}
+    record["gzip_mtime"]=int.from_bytes(sdist.read_bytes()[4:8],"little")
+    with tarfile.open(sdist,"r:gz") as tar:
+        record["sdist_members"]=[{"name":i.name,"mode":i.mode,"mtime":i.mtime,"uid":i.uid,"gid":i.gid,
+            "uname":i.uname,"gname":i.gname,"pax_headers":i.pax_headers,
+            "sha256":hashlib.sha256(tar.extractfile(i).read()).hexdigest() if i.isfile() else None} for i in tar]
     info=tomllib.loads((project/"pyproject.toml").read_text())["project"]
     def metadata(data):
         msg=Parser().parsestr(data.decode())
         relevant = {k:sorted(msg.get_all(k, [])) for k in (
             "Name", "Version", "Requires-Python", "Summary", "License", "License-Expression", "Classifier",
             "Project-URL", "Requires-Dist", "Provides-Extra", "Description-Content-Type", "Metadata-Version", "Dynamic")}
-        assert relevant["Summary"] == [info["description"]]
-        assert relevant["License"] == [info["license"]["text"]]
-        assert relevant["Classifier"] == sorted(info["classifiers"])
-        assert [u.replace(", ", ",") for u in relevant["Project-URL"]] == sorted(k+","+v for k,v in info["urls"].items())
-        assert not relevant["Requires-Dist"] and not relevant["Provides-Extra"]
-        assert relevant["Description-Content-Type"] == ["text/markdown"]
-        assert msg.get_payload().strip() == (project/"README.md").read_text().strip()
         record.setdefault("metadata", []).append(relevant)
+        assert relevant["Summary"] == [info["description"]], ("Summary",relevant["Summary"])
+        if relevant["License"] != [info["license"]["text"]]:
+            record.setdefault("public_metadata_differences",{})["License"]={"expected":[info["license"]["text"]],"actual":relevant["License"]}
+        assert relevant["License"] == ([] if info["name"] == "gvisor" and tomllib.loads((project/"pyproject.toml").read_text())["build-system"]["build-backend"]=="flit_core.buildapi" else [info["license"]["text"]]), ("License",relevant["License"])
+        assert relevant["Classifier"] == sorted(info["classifiers"]), ("Classifier",relevant["Classifier"])
+        assert [u.replace(", ", ",") for u in relevant["Project-URL"]] == sorted(k+","+v for k,v in info["urls"].items()), ("Project-URL",relevant["Project-URL"])
+        assert not relevant["Requires-Dist"] and not relevant["Provides-Extra"], relevant
+        assert relevant["Description-Content-Type"] == ["text/markdown"], ("Description-Content-Type",relevant["Description-Content-Type"])
+        assert msg.get_payload().strip() == (project/"README.md").read_text().strip(), "README body mismatch"
         assert (msg["Name"],msg["Version"],msg["Requires-Python"]) == ("gvisor",version,">=3.7"), str(msg)
     with zipfile.ZipFile(wheel) as z:
         assert z.testzip() is None

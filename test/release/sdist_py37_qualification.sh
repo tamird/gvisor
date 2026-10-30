@@ -2,7 +2,8 @@
 set -eu -o pipefail
 dist=$1
 shift
-mkdir -p "$TEST_TMPDIR/wheelhouse"
+mkdir -p "$TEST_TMPDIR/wheelhouse" "$TEST_TMPDIR/tmp"
+export TMPDIR="$TEST_TMPDIR/tmp"
 for file in "$@"; do cp "$file" "$TEST_TMPDIR/wheelhouse/"; done
 python=/usr/local/bin/python3.7
 "$python" -c 'import sys; assert sys.version_info[:3] == (3, 7, 17), sys.version'

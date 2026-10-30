@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core>=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "gvisor"
@@ -29,3 +29,6 @@ dependencies = []
 Homepage = "https://gvisor.dev"
 Bug-Tracker = "https://github.com/google/gvisor/issues"
 Repository = "https://github.com/google/gvisor"
+
+[tool.setuptools]
+packages = ["gvisor"]
