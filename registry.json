@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:01:09.436731+00:00",
+    "updatedAt": "2026-10-30T15:04:33.917505+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36124,23 +36124,37 @@
       "title": "tcp: release the port of a wildcard-bound endpoint when it is closed",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T14:48:08.576818+00:00",
+      "updatedAt": "2026-10-30T15:04:33.917505+00:00",
       "url": "https://github.com/google/gvisor/pull/16180",
       "summary": "On this contributor head, connecting a dual-stack wildcard socket to an IPv4-mapped peer leaves an IPv6 port reservation after an abortive close.",
       "evidence": [
         {
           "label": "Linux and runsc syscall receipt",
           "url": "https://github.com/tamird/gvisor/actions/runs/41067609115/artifacts/12983897637"
+        },
+        {
+          "label": "Posted review of the remaining IPv6 reservation",
+          "url": "https://github.com/google/gvisor/pull/16180#discussion_r4425055803"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "ed3f77eb2dc84b35f85083caac2acea26e682444",
-        "url": "https://github.com/google/gvisor/pull/16180",
-        "title": "Post the IPv6 wildcard rebind finding",
-        "summary": "Post this inline on pkg/tcpip/transport/tcp/endpoint.go:1243, where cleanup uses the connected family's protocol list.",
-        "body": "A dual-stack wildcard bind reserves the port for IPv4 and IPv6. Connecting to a mapped peer sets `effectiveNetProtos` to IPv4 and releases the IPv4 reservation. Cleanup then misses the remaining IPv6 reservation. Could it release the family the endpoint still owns?\n\n[This syscall test](https://github.com/tamird/gvisor/blob/1d322cb0b/test/syscalls/linux/socket_inet_loopback.cc#L263-L323) closes the connection with a reset and rebinds the same port. [Linux accepts both wildcard binds](https://app.buildbuddy.io/invocation/0df634cb-62b9-46b0-ba07-8c04ed3142f0). [On this head](https://app.buildbuddy.io/invocation/992daf38-8b09-46ad-8003-cac6bbf8e5f2), the IPv4 bind succeeds, but the IPv6-only bind returns `EADDRINUSE`.\n\nReview by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "ed3f77eb2dc84b35f85083caac2acea26e682444",
+          "outcome": "approved",
+          "at": "2026-10-30T15:04:33.917505+00:00",
+          "body": "A dual-stack wildcard bind reserves the port for IPv4 and IPv6. Connecting to a mapped peer sets `effectiveNetProtos` to IPv4 and releases the IPv4 reservation. Cleanup then misses the remaining IPv6 reservation. Could it release the family the endpoint still owns?\n\n[This syscall test](https://github.com/tamird/gvisor/blob/1d322cb0b/test/syscalls/linux/socket_inet_loopback.cc#L263-L323) closes the connection with a reset and rebinds the same port. [Linux accepts both wildcard binds](https://app.buildbuddy.io/invocation/0df634cb-62b9-46b0-ba07-8c04ed3142f0). [On this head](https://app.buildbuddy.io/invocation/992daf38-8b09-46ad-8003-cac6bbf8e5f2), the IPv4 bind succeeds, but the IPv6-only bind returns `EADDRINUSE`.\n\nReview by Codex on behalf of @tamird."
+        }
+      ],
+      "followup": {
+        "owner": "TCP owner",
+        "disposition": "Review posted",
+        "sourceHead": "ed3f77eb2dc84b35f85083caac2acea26e682444",
+        "observedAt": "2026-10-30T15:04:33.917505+00:00",
+        "nextAction": "Wait for the contributor's response to the mapped-rebind review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16180#discussion_r4425055803"
+        ]
       }
     },
     {

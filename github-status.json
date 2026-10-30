@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T15:01:09.436731+00:00",
+  "registryDate": "2026-10-30T15:04:33.917505+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -161680,14 +161680,14 @@
       "branchHead": "ed3f77eb2dc84b35f85083caac2acea26e682444",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-10-30T14:48:10.245710+00:00",
+      "mergeabilityCheckedAt": "2026-10-30T15:04:35.803893+00:00",
       "headCommittedAt": "2026-10-22T08:45:42Z",
       "headHistoryComplete": true,
       "headIntroducedAt": null,
       "headOwner": "akasakariko",
       "headRepo": "akasakariko/gvisor",
       "authorLogin": "akasakariko",
-      "updatedAt": "2026-10-22T08:52:47Z",
+      "updatedAt": "2026-10-30T15:02:16Z",
       "createdAt": "2026-10-22T08:47:33Z",
       "mergedAt": null,
       "closedAt": null,
@@ -161717,13 +161717,48 @@
         "items": []
       },
       "threads": {
-        "unresolved": 0,
-        "total": 0,
+        "unresolved": 1,
+        "total": 1,
         "complete": true
       },
       "feedback": {
         "complete": true,
-        "items": []
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVJgODw",
+            "url": "https://github.com/google/gvisor/pull/16180#pullrequestreview-5714218511",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-30T15:02:16Z",
+            "updatedAt": "2026-10-30T15:02:16Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "ed3f77eb2dc84b35f85083caac2acea26e682444"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6yBGmD",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "pkg/tcpip/transport/tcp/endpoint.go",
+            "line": 1243,
+            "id": "PRRC_kwDOB9IlXs8AAAABB8D-Ow",
+            "url": "https://github.com/google/gvisor/pull/16180#discussion_r4425055803",
+            "body": "A dual-stack wildcard bind reserves the port for IPv4 and IPv6. Connecting to a mapped peer sets `effectiveNetProtos` to IPv4 and releases the IPv4 reservation. Cleanup then misses the remaining IPv6 reservation. Could it release the family the endpoint still owns?\n\n[This syscall test](https://github.com/tamird/gvisor/blob/1d322cb0b/test/syscalls/linux/socket_inet_loopback.cc#L263-L323) closes the connection with a reset and rebinds the same port. [Linux accepts both wildcard binds](https://app.buildbuddy.io/invocation/0df634cb-62b9-46b0-ba07-8c04ed3142f0). [On this head](https://app.buildbuddy.io/invocation/992daf38-8b09-46ad-8003-cac6bbf8e5f2), the IPv4 bind succeeds, but the IPv6-only bind returns `EADDRINUSE`.\n\nReview by Codex on behalf of @tamird.",
+            "createdAt": "2026-10-30T15:02:16Z",
+            "updatedAt": "2026-10-30T15:02:16Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -161861,12 +161896,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-30T14:48:10.245840+00:00",
+      "checkedAt": "2026-10-30T15:04:35.804034+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ed3f77eb2dc84b35f85083caac2acea26e682444",
         "base": "c5ab48fa9b2d23e861cc3fd17be01b3b4338be14",
-        "checkedAt": "2026-10-30T14:48:10.245710+00:00"
+        "checkedAt": "2026-10-30T15:04:35.803893+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -247797,14 +247832,7 @@
         "since": "2026-10-30T14:48:10.245840+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-30T14:48:10.245840+00:00"
-      },
-      "contributor-review": {
-        "scope": "ed3f77eb2dc84b35f85083caac2acea26e682444",
-        "since": "2026-10-30T14:48:08.576818+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-30T14:48:08.576818+00:00"
+        "observedAt": "2026-10-30T15:04:35.804034+00:00"
       }
     },
     "pr:bazel-contrib/rules_python:4385": {
