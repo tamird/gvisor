@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T16:00:18.051356+00:00",
+    "updatedAt": "2026-10-30T16:08:10.677990+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36283,14 +36283,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "runtime",
-      "head": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+      "head": "ef55959ef13c80404a1efe7890044f9ca211f047",
       "ref": "review/vfio-device-gofer",
       "title": "Open exclusive devices only once through the device gofer",
-      "url": "https://github.com/tamird/gvisor/commit/73a709bdc",
+      "url": "https://github.com/tamird/gvisor/commit/ef55959ef",
       "status": "Published as #16743",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-10-30T15:31:32.617147+00:00",
+      "updatedAt": "2026-10-30T16:08:10.677990+00:00",
       "evidence": [
+        {
+          "label": "Apply the exact upstream Buildifier list-format diff; three values and their order are unchanged",
+          "url": "https://github.com/tamird/gvisor/compare/73a709bdc...ef55959ef"
+        },
         {
           "label": "Real Linux and both gVisor modes passed the shared Open case",
           "url": "https://github.com/tamird/gvisor/actions/runs/41077957739/artifacts/12989396172"
@@ -36311,8 +36315,8 @@
       "inactive": true,
       "followup": {
         "owner": "overlay_owner",
-        "sourceHead": "73a709bdc845f47cc85dda13925e86a80606e2ad",
-        "observedAt": "2026-10-30T15:31:32.617147+00:00",
+        "sourceHead": "ef55959ef13c80404a1efe7890044f9ca211f047",
+        "observedAt": "2026-10-30T16:08:10.677990+00:00",
         "disposition": "Approved and delivered as #16743",
         "nextAction": "Follow review, checks, and import on #16743.",
         "evidence": [
@@ -36328,12 +36332,12 @@
       "number": 16743,
       "group": "runtime",
       "ref": "review/vfio-device-gofer",
-      "head": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+      "head": "ef55959ef13c80404a1efe7890044f9ca211f047",
       "title": "Open exclusive devices only when the application opens them",
       "url": "https://github.com/google/gvisor/pull/16743",
       "status": "open",
       "summary": "Opening a VFIO group through the ordinary device gofer returned EBUSY before the guest could obtain its PCI device. Use O_PATH while walking this private device mount so opening the group calls the driver just once.",
-      "updatedAt": "2026-10-30T15:31:32.617147+00:00",
+      "updatedAt": "2026-10-30T16:08:10.677990+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -36343,6 +36347,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Apply the exact upstream Buildifier list-format diff; three values and their order are unchanged",
+          "url": "https://github.com/tamird/gvisor/compare/73a709bdc...ef55959ef"
+        },
         {
           "label": "Real Linux and both gVisor modes passed the shared Open case",
           "url": "https://github.com/tamird/gvisor/actions/runs/41077957739/artifacts/12989396172"
@@ -36515,9 +36523,9 @@
       "head": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
       "title": "Test that proc mounts share the TCP SACK setting",
       "url": "https://github.com/tamird/gvisor/commit/422d2cb0c",
-      "status": "Contributor approved; qualifying retained Go test",
+      "status": "Published as #16745",
       "summary": "After TCP SACK was disabled through the new proc mount, native Linux and current gVisor read 0 through the first mount. Restoring the old per-inode cache on the same source made that read return 1. The common syscall test is independent of the already merged #14369.",
-      "updatedAt": "2026-10-30T16:00:18.051356+00:00",
+      "updatedAt": "2026-10-30T16:08:10.677990+00:00",
       "evidence": [
         {
           "label": "Same syscall on Linux, current gVisor and the old per-mount implementation",
@@ -36551,14 +36559,59 @@
       "followup": {
         "owner": "root",
         "sourceHead": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
-        "observedAt": "2026-10-30T16:00:18.051356+00:00",
-        "disposition": "Approved to submit with redundant Go success case removed",
-        "nextAction": "Verify the retained injected-EACCES case and open the standalone PR. The shared native/guest syscall fixture is unchanged.",
+        "observedAt": "2026-10-30T16:08:10.677990+00:00",
+        "disposition": "Approved and delivered as #16745",
+        "nextAction": "Follow upstream review and CI on #16745.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/422d2cb0c",
-          "https://github.com/tamird/gvisor/actions/runs/41082945196/artifacts/12989664166"
+          "https://github.com/google/gvisor/pull/16745",
+          "https://github.com/tamird/gvisor/commit/422d2cb0c"
         ]
-      }
+      },
+      "inactive": true
+    },
+    {
+      "id": "pr:16745",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16745,
+      "group": "runtime",
+      "ref": "proc-mount-sack-owned-pidns",
+      "head": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
+      "title": "Test that proc mounts share the TCP SACK setting",
+      "url": "https://github.com/google/gvisor/pull/16745",
+      "status": "open",
+      "summary": "After TCP SACK was disabled through the new proc mount, native Linux and current gVisor read 0 through the first mount. Restoring the old per-inode cache on the same source made that read return 1. The common syscall test is independent of the already merged #14369.",
+      "updatedAt": "2026-10-30T16:08:10.677990+00:00",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
+          "at": "2026-10-30T16:00:18.051356+00:00",
+          "outcome": "approved"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Same syscall on Linux, current gVisor and the old per-mount implementation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41082945196/artifacts/12989664166"
+        },
+        {
+          "label": "Exact tested source; identical file tree to the review head",
+          "url": "https://github.com/tamird/gvisor/commit/a0f7a3a50"
+        },
+        {
+          "label": "Old per-mount implementation restored as the control",
+          "url": "https://github.com/tamird/gvisor/commit/ee94bb33b"
+        },
+        {
+          "label": "Original fix, already merged",
+          "url": "https://github.com/google/gvisor/pull/14369"
+        },
+        {
+          "label": "Remove the duplicate two-instance Go test; keep the rejected setter case",
+          "url": "https://github.com/tamird/gvisor/compare/17b24a03b...422d2cb0c"
+        }
+      ]
     }
   ],
   "edges": [
