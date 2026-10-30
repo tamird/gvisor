@@ -7,7 +7,7 @@ package(
     licenses = ["notice"],
 )
 
-exports_files(["requirements.txt", "setuptools_reproducible_sdist.patch"])
+exports_files(["requirements.txt"])
 
 bzl_library(
     name = "defs_bzl",
@@ -26,8 +26,5 @@ py_console_script_binary(
     name = "frontend",
     pkg = requirement("build"),
     script = "pyproject-build",
-    deps = [
-        requirement("setuptools"),
-        requirement("wheel"),
-    ],
+    deps = [requirement("flit-core")],
 )
