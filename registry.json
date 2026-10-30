@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T23:03:18.501222+00:00",
+    "updatedAt": "2026-10-30T23:29:29.400226+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25920,35 +25920,37 @@
       "number": 16403
     },
     {
-      "id": "branch:tcp-unread-fin-window",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16770",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/tcp-unread-fin-window",
       "head": "894bc9006ef39928d75f77d1075bc92c0472cd89",
       "title": "tcp: ACK window overruns while FIN is unread",
-      "url": "https://github.com/tamird/gvisor/commit/894bc9006",
+      "url": "https://github.com/google/gvisor/pull/16770",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
-      "summary": "The required EOF fixture #16377 merged. The rebased receiver uses the advertised window now stored by master; confirm the unchanged FIN packet traces on that base before opening the approved PR.",
-      "followup": {
-        "owner": "root",
-        "sourceHead": "894bc9006ef39928d75f77d1075bc92c0472cd89",
-        "observedAt": "2026-10-30T21:25:47.985190+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Run the closing TCP packet tests on the rebased candidate and submit the already-approved change.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/894bc9006"
-        ]
-      },
+      "status": "open",
+      "updatedAt": "2026-10-30T23:29:29.400226+00:00",
+      "summary": "With a FIN or its last data byte unread, Linux and netstack ACK a probe at the receive-window edge; both stop after the application drains the queue. All 56 netstack cases and 54 of 56 on Linux 7.0 passed. Two unchanged established-state cases expected silence and received an ACK.",
       "evidence": [
         {
+          "label": "112 Linux and netstack wire cases: all closing cases passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41138607646/artifacts/13019468374"
+        },
+        {
+          "label": "All 42 TCP package records passed",
+          "url": "https://app.buildbuddy.io/invocation/fc1cc0e5-6f00-4404-b895-8e7de7c124d5"
+        },
+        {
+          "label": "Both TCP analyzer owners passed",
+          "url": "https://app.buildbuddy.io/invocation/2227f65a-0c87-4b3e-8016-5002d1c42ced"
+        },
+        {
           "label": "Exact independently reviewed closing-window proposal",
-          "url": "https://github.com/tamird/gvisor/commit/7ae55f4cc07eb541c8d63442a343a3c2564dfd6f"
+          "url": "https://github.com/tamird/gvisor/commit/7ae55f4cc"
         },
         {
           "label": "Complete standalone source on public master",
-          "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...7ae55f4cc07eb541c8d63442a343a3c2564dfd6f"
+          "url": "https://github.com/tamird/gvisor/compare/7bffefa91...7ae55f4cc"
         },
         {
           "label": "Final wire comparison: control FAIL, corrected PASS",
@@ -25963,24 +25965,16 @@
           "url": "https://app.buildbuddy.io/invocation/96284b02-ca6c-47aa-99b3-2b0d59091519"
         },
         {
-          "label": "Download the detailed fork review packet",
-          "url": "https://tamird.github.io/gvisor/tcp-unread-fin-window-review.md"
-        },
-        {
-          "label": "Download the proposed upstream PR description",
-          "url": "https://tamird.github.io/gvisor/tcp-unread-fin-window-pr-body.md"
-        },
-        {
           "label": "Fixture landing-order prerequisite #16377",
           "url": "https://github.com/google/gvisor/pull/16377"
         },
         {
           "label": "Linux nonempty-queue end-sequence check",
-          "url": "https://github.com/torvalds/linux/commit/9ca48d616ed76b284f946667a3cb7961205c8ee3"
+          "url": "https://github.com/torvalds/linux/commit/9ca48d616"
         },
         {
           "label": "Linux FIN-only end-sequence exception",
-          "url": "https://github.com/torvalds/linux/commit/1e3bb184e94125bae7c1703472109a646d0f79d9"
+          "url": "https://github.com/torvalds/linux/commit/1e3bb184e"
         }
       ],
       "refinement": {
@@ -25990,7 +25984,16 @@
         "after": {
           "head": "894bc9006ef39928d75f77d1075bc92c0472cd89"
         }
-      }
+      },
+      "number": 16770,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
+          "outcome": "approved",
+          "at": "2026-10-30T23:29:29.400226+00:00"
+        }
+      ]
     },
     {
       "id": "branch:nft-compat-inet-autoload",
@@ -40423,12 +40426,12 @@
     },
     {
       "from": "pr:16377",
-      "to": "branch:tcp-unread-fin-window",
+      "to": "pr:16770",
       "type": "depends_on",
-      "reason": "Land the three existing EOF-consuming fixture changes first so they retain their empty-queue assumptions. The closing-window proposal is standalone on public master and has no source ancestry dependency; the cleanly merged combined tree has not been run.",
+      "reason": "The merged EOF fixtures consume FIN before testing the empty queue; #16770 covers the complementary unread-FIN behavior.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16377",
-        "https://github.com/tamird/gvisor/commit/7ae55f4cc07eb541c8d63442a343a3c2564dfd6f"
+        "https://github.com/google/gvisor/pull/16770"
       ]
     },
     {
