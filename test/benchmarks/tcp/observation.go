@@ -41,6 +41,9 @@ func observeNetstack() tcp.TCPProbeFunc {
 	type phase struct {
 		window int
 		recovery bool
+		reordered bool
+		reorderWindow time.Duration
+		atThreshold bool
 	}
 	previous := make(map[uint16]phase)
 	return func(s *tcp.TCPEndpointState) {
@@ -49,7 +52,8 @@ func observeNetstack() tcp.TCPProbeFunc {
 		}
 		now := time.Now()
 		mu.Lock()
-		current := phase{int(s.Sender.SndCwnd), s.Sender.FastRecovery.Active}
+		x := s.Sender
+		current := phase{int(x.SndCwnd), x.FastRecovery.Active, x.RACKState.Reord, x.RACKState.ReoWnd, x.SackedOut >= 3}
 		if now.Sub(last[s.ID.LocalPort]) < 10*time.Millisecond && current == previous[s.ID.LocalPort] {
 			mu.Unlock()
 			return
@@ -57,8 +61,7 @@ func observeNetstack() tcp.TCPProbeFunc {
 		last[s.ID.LocalPort] = now
 		previous[s.ID.LocalPort] = current
 		mu.Unlock()
-		x := s.Sender
-		emit(map[string]any{"stack": "netstack", "port": s.ID.LocalPort, "peer": s.ID.RemotePort, "cwnd": x.SndCwnd, "mss": x.MaxPayloadSize, "wnd": x.SndWnd, "out": x.Outstanding, "sacked": x.SackedOut, "seq_flight": uint32(x.SndNxt - x.SndUna), "una": uint32(x.SndUna), "queued": s.SndBufState.SndBufUsed, "bufsize": s.SndBufState.SndBufSize, "recovery": x.FastRecovery.Active, "rtt_us": x.RTTState.SRTT.Microseconds()})
+		emit(map[string]any{"stack": "netstack", "port": s.ID.LocalPort, "peer": s.ID.RemotePort, "cwnd": x.SndCwnd, "mss": x.MaxPayloadSize, "wnd": x.SndWnd, "out": x.Outstanding, "sacked": x.SackedOut, "seq_flight": uint32(x.SndNxt - x.SndUna), "una": uint32(x.SndUna), "queued": s.SndBufState.SndBufUsed, "bufsize": s.SndBufState.SndBufSize, "recovery": x.FastRecovery.Active, "reord": x.RACKState.Reord, "reownd_us": x.RACKState.ReoWnd.Microseconds(), "rack_rtt_us": x.RACKState.RTT.Microseconds(), "fack": uint32(x.RACKState.FACK), "rtt_us": x.RTTState.SRTT.Microseconds()})
 	}
 }
 
