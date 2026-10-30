@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T16:10:34.939505+00:00",
+    "updatedAt": "2026-10-30T16:18:46.780446+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19712,8 +19712,8 @@
       "url": "https://github.com/google/gvisor/pull/16096",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
-      "summary": "The October 25 rebase request is delivered at af38f71655e6 on public master 7bffefa9185a. Provider readback is mergeable. The IPv6 extension-header iterator keeps the approved ICMP and conntrack iterator changes while retaining the independently landed checksum and test changes. The two conflicting base-header substitutions affect code already replaced by the iterator. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nThe requested post-#16046 rebase is published at 7a48d5a71efe on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16096 at the exact qualified source. The published head, title, description and file readback match; no new source change or execution is claimed. Quoted-error delivery, conntrack lookup and NAT rewriting reuse the existing IPv6 extension-header iterator and agree on the final protocol and offset. Valid truncated quotes and first/atomic fragments remain supported; incomplete extensions and non-first fragments are rejected. Independent review accepted the failing-before evidence and the corrected 13-owner gate: 17,858 positive XML records including parents, with seven analyzer owners reporting both architectures. The final subject-only amendment has the same tree as qualified 89f154da36. This proposal is independent of the forwarding-checksum correction and the deprecation-policy PR.",
+      "updatedAt": "2026-10-30T16:18:46.780446+00:00",
+      "summary": "Replace simulated ICMPv6 control delivery with six shared UDP socket cases. Native Linux and corrected gVisor passed all six. Stock gVisor missed errors quoting destination options, first fragments and atomic fragments; the other three controls agreed. The revision removes 98 lines of Go tests.",
       "followup": {
         "owner": "work_map_current",
         "disposition": "Requested rebase delivered; follow exact-head checks and review",
@@ -19731,6 +19731,18 @@
       },
       "evidence": [
         {
+          "label": "Six matching syscall cases on Linux, stock gVisor and corrected gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41087541506/artifacts/12992652699"
+        },
+        {
+          "label": "Proposed replacement of the simulated tests",
+          "url": "https://github.com/tamird/gvisor/compare/af38f7165...9bc5517f1"
+        },
+        {
+          "label": "Source reviewed for the proposed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/9bc5517f1"
+        },
+        {
           "label": "Exact delivered and qualified source",
           "url": "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d"
         },
@@ -19743,7 +19755,17 @@
           "url": "https://github.com/tamird/gvisor/commit/7a48d5a71efe1439fcb2621e3209e26cdd78393b"
         }
       ],
-      "number": 16096
+      "number": 16096,
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "9bc5517f1f05b62025af3ae4846eaae8431bcc79",
+        "baseHead": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
+        "url": "https://github.com/tamird/gvisor/commit/9bc5517f1",
+        "title": "Replace simulated ICMPv6 control delivery with six shared UDP socket cases",
+        "summary": "Replace simulated ICMPv6 control delivery with six shared UDP socket cases. Native Linux and corrected gVisor passed all six. Stock gVisor missed errors quoting destination options, first fragments and atomic fragments; the other three controls agreed. The revision removes 98 lines of Go tests.",
+        "body": "Review the change from the published head before its amendment. The exact candidate’s Go suite and formatter must also pass before publication.\n\ngit -C ~/code/gvisor range-diff af38f7165^! 9bc5517f1^!"
+      }
     },
     {
       "id": "pr:16095",
