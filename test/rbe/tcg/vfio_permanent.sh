@@ -12,17 +12,21 @@ sha256sum -c sha256 > "$out/identity.txt"
 tar -xf runtime-libs.tar -C /
 export RUNTIME="$stage/release/runsc"
 export GVISOR_SIDECAR_BINARIES_DIR="$stage/release/gvisor-bin"
+test_case=$(cat case-name)
 status=0
-for platform in native runsc_systrap; do
+for platform in native runsc_systrap runsc_systrap_direct; do
+  wrapper=$platform
+  args=()
+  if [[ $platform = runsc_systrap_direct ]]; then wrapper=runsc_systrap; args+=(--directfs=true); fi
   exports="/work/$platform-outputs"
   mkdir -p "$exports" "/work/tmp/$platform"
   rc=0
-  TEST_TMPDIR="/work/tmp/$platform" TEST_UNDECLARED_OUTPUTS_DIR="$exports" XML_OUTPUT_FILE="$exports/test.xml" "./$platform" --add-host-vfio --setup-container="$stage/test/runner/setup_container/setup_container" > "$out/$platform.txt" 2>&1 || rc=$?
+  TEST_TMPDIR="/work/tmp/$platform" TEST_UNDECLARED_OUTPUTS_DIR="$exports" XML_OUTPUT_FILE="$exports/test.xml" "./$wrapper" "${args[@]}" --add-host-vfio --setup-container="$stage/test/runner/setup_container/setup_container" > "$out/$platform.txt" 2>&1 || rc=$?
   echo "$platform: $rc" >> "$out/verdict.txt"
   cat "$out/$platform.txt"
   if [[ $platform = runsc_systrap ]]; then
     find "$exports" -type f \( -name "*.txt" -o -name "*.log" -o -name "*.txt.*" \) -exec grep -hEi 'failed|warning|error|vfio|denied|permission' {} + 2>/dev/null | tail -70 > "$out/runtime-diagnostics.txt" || :
   fi
-  if (( rc != 0 )) || ! grep -q 'OK .*VfioPCIDeviceTest.Readiness' "$out/$platform.txt"; then status=1; fi
+  if (( rc != 0 )) || ! grep -q "OK .*VfioPCIDeviceTest.$test_case" "$out/$platform.txt"; then status=1; fi
 done
 exit "$status"
