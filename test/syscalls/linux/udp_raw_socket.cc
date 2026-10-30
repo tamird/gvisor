@@ -31,9 +31,11 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 
 #ifndef SIOCGSTAMP
 #include <linux/sockios.h>
@@ -128,6 +130,71 @@ TEST_P(UdpSocketRawTest, ReceiveWithZeroSourcePort) {
   ASSERT_EQ(ASSERT_NO_ERRNO_AND_VALUE(AddrPort(GetParam(), src)), 0);
   ASSERT_EQ(absl::string_view(received, kMessage.size()), kMessage);
 }
+
+class QuotedUdpErrorTest : public ::testing::TestWithParam<bool> {};
+
+TEST_P(QuotedUdpErrorTest, PortUnreachable) {
+  if (!ASSERT_NO_ERRNO_AND_VALUE(
+          HaveRawIPSocketCapability(AF_INET6, IPPROTO_ICMPV6))) {
+    GTEST_SKIP();
+  }
+  auto pair = ASSERT_NO_ERRNO_AND_VALUE(UDPBidirectionalBindSocketPairCreator(
+      AF_INET6, SOCK_DGRAM, IPPROTO_UDP, /*dual_stack=*/false)());
+  const auto& src = *reinterpret_cast<const sockaddr_in6*>(pair->first_addr());
+  const auto& dst = *reinterpret_cast<const sockaddr_in6*>(pair->second_addr());
+
+  // Quote an empty UDP datagram from the first socket to the second.
+  // An eight-byte Destination Options header contains six Pad1 options.
+  uint8_t options[8] = {IPPROTO_UDP, 0};
+  size_t options_len = GetParam() ? sizeof(options) : 0;
+  ip6_hdr ip = {};
+  ip.ip6_vfc = 6 << 4;
+  ip.ip6_plen = htons(options_len + sizeof(udphdr));
+  ip.ip6_nxt = GetParam() ? IPPROTO_DSTOPTS : IPPROTO_UDP;
+  ip.ip6_hlim = 64;
+  ip.ip6_src = src.sin6_addr;
+  ip.ip6_dst = dst.sin6_addr;
+  udphdr udp = {
+      .source = src.sin6_port,
+      .dest = dst.sin6_port,
+      .len = htons(sizeof(udphdr)),
+  };
+  udp.check = UDPChecksum(ip, udp, "", 0);
+  if (udp.check == 0) {
+    udp.check = 0xffff;  // A computed zero checksum is transmitted as all ones.
+  }
+
+  icmp6_hdr error = {};
+  error.icmp6_type = ICMP6_DST_UNREACH;
+  error.icmp6_code = ICMP6_DST_UNREACH_NOPORT;
+  iovec vec[] = {{&error, sizeof(error)}, {&ip, sizeof(ip)},
+                 {options, options_len}, {&udp, sizeof(udp)}};
+  sockaddr_in6 local = src;
+  local.sin6_port = 0;
+  msghdr message = {};
+  message.msg_name = &local;
+  message.msg_namelen = sizeof(local);
+  message.msg_iov = vec;
+  message.msg_iovlen = std::size(vec);
+  FileDescriptor raw =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6));
+  ASSERT_THAT(sendmsg(raw.get(), &message, 0),
+              SyscallSucceedsWithValue(sizeof(error) + sizeof(ip) +
+                                       options_len + sizeof(udp)));
+
+  pollfd pfd = {.fd = pair->first_fd(), .events = POLLERR};
+  ASSERT_THAT(RetryEINTR(poll)(&pfd, 1, 5000), SyscallSucceedsWithValue(1));
+  ASSERT_EQ(pfd.revents, POLLERR);
+  int socket_error;
+  socklen_t len = sizeof(socket_error);
+  ASSERT_THAT(getsockopt(pfd.fd, SOL_SOCKET, SO_ERROR, &socket_error, &len),
+              SyscallSucceeds());
+  EXPECT_EQ(socket_error, ECONNREFUSED);
+}
+
+INSTANTIATE_TEST_SUITE_P(Plain, QuotedUdpErrorTest, ::testing::Values(false));
+INSTANTIATE_TEST_SUITE_P(DestinationOptions, QuotedUdpErrorTest,
+                         ::testing::Values(true));
 
 INSTANTIATE_TEST_SUITE_P(AllInetTests, UdpSocketRawTest,
                          ::testing::Values(AF_INET, AF_INET6));
