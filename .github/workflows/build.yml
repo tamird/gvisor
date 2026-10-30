@@ -1,35 +1,58 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Check overlay registrations across metadata-only copy-up
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/overlay-known-size-metacopy'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      FIXED: 5ce558357cc4aafdcbaaeef19b10c3b2809ce58b
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        git fetch --no-tags --depth=3 origin "$FIXED"
+        [[ $(git rev-parse HEAD^) == "$FIXED" ]]
+        [[ "$FIXED" == "5ce558357cc4aafdcbaaeef19b10c3b2809ce58b" ]]
+
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Check metadata-only and data copy-up on the exact upstream prototype
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$FIXED"; [[ $(git rev-parse HEAD) == "$FIXED" ]]
+        out="$RUNNER_TEMP/overlay-proof/metacopy"; mkdir -p "$out"; git rev-parse HEAD >"$out/source"; rc=0
+        bazelisk --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=48 --strategy=TestRunner=local --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_sharding_strategy=disabled --test_arg=-test.v '--test_arg=-test.run=^TestMetacopyKnownSizePollLifetime$' //pkg/sentry/syscalls/linux:linux_test >"$RUNNER_TEMP/metacopy.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"; file=bazel-testlogs/pkg/sentry/syscalls/linux/linux_test/test.log
+        if [[ -s $file ]]; then grep -E -- '--- (FAIL|PASS): TestMetacopyKnownSizePollLifetime|overlay_poll_waiter_test.go:[0-9]+:|panic:' "$file" >"$out/receipt" || true; fi
+        grep -E '^ERROR:|INFO: Invocation ID:|Build (did NOT complete|completed)|[.]go:[0-9]+:[0-9]+:' "$RUNNER_TEMP/metacopy.log" | tail -12 >>"$out/receipt" || true
+        cat "$out/receipt"; [[ $rc == 0 ]]; grep -Fq 'upper metadata mode 0600; original lower retained after chmod; full write switched;' "$out/receipt"; grep -Fq -- 'PASS: TestMetacopyKnownSizePollLifetime (' "$out/receipt"; grep -Fq 'refs 1 then 0 after last removal' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: overlay-metacopy-lifetime
+        path: ${{ runner.temp }}/overlay-proof/metacopy/
+    - name: Clear temporary remote settings
+      if: always()
+      run: rm -f "$RUNNER_TEMP/overlay.bazelrc"
