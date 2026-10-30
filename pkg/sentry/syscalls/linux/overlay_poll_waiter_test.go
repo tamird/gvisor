@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/overlay"
@@ -126,6 +127,7 @@ func TestPollWaiterAfterOverlayCopyUp(t *testing.T) {
 }
 
 func TestOverlayPollCost(t *testing.T) {
+	t.Logf("SIZES file=%d pollState=%d waiter=%d", unsafe.Sizeof(vfs.FileDescription{}), unsafe.Sizeof(pollState{}), unsafe.Sizeof(waiter.Entry{}))
 	k, err := testutil.Boot()
 	if err != nil {
 		t.Fatal(err)
@@ -394,6 +396,9 @@ func TestStackedPollBinding(t *testing.T) {
 			innerFD.IncRef()
 			defer innerFD.DecRef(ctx)
 			physical := overlay.PollLowerForQualification(innerFD)
+			if !physical.SetWaiterCacheForQualification(false) {
+				t.Fatal("fresh proc did not use direct registration")
+			}
 			before := physical.ReadRefs()
 			var first vfs.FileWaiter
 			firstCh := make(chan struct{}, 1)
@@ -407,6 +412,10 @@ func TestStackedPollBinding(t *testing.T) {
 			if err := outerFD.RegisterWaiter(&second); err != nil {
 				t.Fatal(err)
 			}
+			if !physical.SetWaiterCacheForQualification(true) {
+				t.Fatal("first registration did not recover direct dispatch")
+			}
+			t.Log("cold file selected direct registration")
 			if refs := physical.ReadRefs(); refs != before+2 {
 				t.Fatalf("two forwarded registrations: refs=%d want %d", refs, before+2)
 			}

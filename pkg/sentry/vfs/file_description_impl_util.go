@@ -643,3 +643,10 @@ func (BadLockFD) UnlockPOSIX(ctx context.Context, uid fslock.UniqueID, r fslock.
 func (BadLockFD) TestPOSIX(ctx context.Context, uid fslock.UniqueID, t fslock.LockType, r fslock.LockRange) (linux.Flock, error) {
 	return linux.Flock{}, linuxerr.EBADF
 }
+
+// SetWaiterCacheForQualification returns the previous value of the transient cache.
+func (fd *FileDescription) SetWaiterCacheForQualification(value bool) bool {
+	previous := fd.directWaiters.Load()
+	fd.directWaiters.Store(value)
+	return previous
+}
