@@ -1296,3 +1296,110 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestRACKWireCredit compares an identical ACK when its delivered packets span
+// a GSO queue entry or each have an entry of their own.
+func TestRACKWireCredit(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		delivered int
+		separate  bool
+	}{
+		{"two", 2, false},
+		{"three", 3, false},
+		{"threeSeparate", 3, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			type sample struct {
+				una         seqnum.Value
+				count       int
+				rtt, window time.Duration
+				reord       bool
+			}
+			states := make(chan sample, 16)
+			c := context.NewWithOpts(t, context.Options{MTU: 1500, EnableV4: true, Clock: clock, Probe: func(state *tcp.TCPEndpointState) {
+				s := &state.Sender
+				states <- sample{s.SndUna, s.SackedOut, s.RACKState.RTT, s.RACKState.ReoWnd, s.RACKState.Reord}
+			}})
+			defer c.Cleanup()
+			c.SetGSOEnabled(true)
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+			// SACK options leave 1,000 data bytes in each on-wire packet.
+			const mss = 1036
+			c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, []byte{header.TCPOptionMSS, 4, mss >> 8, mss & 0xff, header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP})
+			peer := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+			start := c.IRS.Add(1)
+			sent := 0
+			send := func(n int) {
+				t.Helper()
+				if got, err := c.EP.Write(bytes.NewReader(make([]byte, n)), tcpip.WriteOptions{}); got != int64(n) || err != nil {
+					t.Fatalf("Write(%d) = (%d, %v)", n, got, err)
+				}
+				p := c.GetPacket()
+				defer p.Release()
+				h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+				if got, want := seqnum.Value(h.SequenceNumber()), start.Add(seqnum.Size(sent)); got != want || len(h.Payload()) != n {
+					t.Fatalf("packet = (%d,%d), want (%d,%d)", got, len(h.Payload()), want, n)
+				}
+				sent += n
+			}
+			ack := func(n int, sacks []header.SACKBlock) sample {
+				t.Helper()
+				c.SendAckWithSACK(peer, n, sacks)
+				timeout := time.After(5 * time.Second)
+				for {
+					select {
+					case s := <-states:
+						if s.una == start.Add(seqnum.Size(n)) {
+							return s
+						}
+					case <-timeout:
+						t.Fatalf("no probe after ACK for %d bytes", n)
+					}
+				}
+			}
+
+			// Establish a 100 ms RTT. Then send two packets, wait 10 ms,
+			// and send five more. The first of those five belongs to the
+			// same aggregate as some, but not all, of the SACKed packets.
+			send(1000)
+			clock.Advance(100 * time.Millisecond)
+			ack(1000, nil)
+			send(1000)
+			send(1000)
+			clock.Advance(10 * time.Millisecond)
+			if tc.separate {
+				for range 4 {
+					send(1000)
+				}
+			} else {
+				send(4000)
+			}
+			send(1000)
+			clock.Advance(100 * time.Millisecond)
+
+			// Advancing the cumulative ACK excludes classic duplicate-ACK
+			// recovery. The first hole is 10 ms older than the SACKed tail.
+			st := ack(2000, []header.SACKBlock{{Start: start.Add(seqnum.Size(sent - 1000*tc.delivered)), End: start.Add(seqnum.Size(sent))}})
+			p := c.GetPacketNonBlocking()
+			var retransmit bool
+			if p != nil {
+				defer p.Release()
+				h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+				if got, want := seqnum.Value(h.SequenceNumber()), start.Add(2000); got != want || len(h.Payload()) != 1000 {
+					t.Fatalf("unexpected outbound packet after ACK = (%d,%d), want (%d,1000)", got, len(h.Payload()), want)
+				}
+				retransmit = true
+			}
+			t.Logf("credit=%d rtt=%v window=%v reordered=%t retransmit=%t", st.count, st.rtt, st.window, st.reord, retransmit)
+			if st.rtt != 100*time.Millisecond || st.reord {
+				t.Fatalf("preconditions not met: %+v", st)
+			}
+			if got, want := retransmit, tc.delivered >= 3; got != want {
+				t.Errorf("immediate retransmission = %t, want %t", got, want)
+			}
+		})
+	}
+}
