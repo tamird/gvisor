@@ -976,11 +976,14 @@ $(RELEASE_ARTIFACTS)/%:
 	@$(call copy,//debian:gvisor-release-tar-zstd,$@)
 
 PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
-artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions into $(PYTHON_RELEASE_DEST).
-	@mkdir -p "$(PYTHON_RELEASE_DEST)"
+artifacts-python: ## Builds Python SandboxExec distributions into $(PYTHON_RELEASE_DEST).
 	@set -e; \
-	python_release_version=$$($(call wrapper,tools/make_python_release.sh version "$(RELEASE_NAME)")); \
-	$(call build_paths,//sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/",--//sandboxexec/sandbox/python:release_version="$$python_release_version")
+	version=$$(tools/make_python_release.sh version "$(RELEASE_NAME)"); \
+	$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel \
+	  --//sandboxexec/sandbox/python:release_version="$$version" //sandboxexec/sandbox/python:dist
+	@mkdir -p "$(PYTHON_RELEASE_DEST)"
+	@cp -- bazel-bin/sandboxexec/sandbox/python/dist/*.whl \
+	  bazel-bin/sandboxexec/sandbox/python/dist/*.tar.gz "$(PYTHON_RELEASE_DEST)/"
 .PHONY: artifacts-python
 
 release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)

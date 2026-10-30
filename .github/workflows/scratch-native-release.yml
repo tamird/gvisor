@@ -83,6 +83,53 @@ jobs:
             if ((rc!=0 && status==0)); then status=$rc; elif ((inspected!=0 && status==0)); then status=$inspected; fi
           done
           exit "$status"
+      - name: Build and stage the same archives using the release Make target
+        run: |
+          set -euo pipefail
+          release_tmp="$RUNNER_TEMP/make-wheel"
+          mkdir -p "$release_tmp/bin"
+          cat > "$release_tmp/bin/docker" <<'SH'
+          #!/bin/sh
+          printf 'attempted\n' >> "$DOCKER_ATTEMPT"
+          exit 83
+          SH
+          chmod +x "$release_tmp/bin/docker"
+          export DOCKER_ATTEMPT="$release_tmp/docker-attempt" DOCKER_HOST="unix://$release_tmp/no-socket" PATH="$release_tmp/bin:$PATH"
+          # Exercise the previous recipe and builder selection on the same Linux checkout.
+          git fetch --depth=1 origin 98af91078c8ef8d3402501c096ae768dfd646a28
+          for file in Makefile tools/bazel.mk; do git show 98af91078:"$file" > "$file"; done
+          rc=0
+          timeout 45 make "DOCKER_CLI_PATH=$release_tmp/bin/docker" RELEASE_NAME=release-20261029.2 artifacts-python > "$release_tmp/stock.log" 2>&1 || rc=$?
+          for file in Makefile tools/bazel.mk; do git show HEAD:"$file" > "$file"; done
+          test "$rc" -ne 0 && test -s "$DOCKER_ATTEMPT"
+          mv "$DOCKER_ATTEMPT" "$release_tmp/stock-attempt"
+          # Use one configuration that was already built above. Only the Make entry point is new.
+          rcfile="$release_tmp/bazelrc"
+          umask 077
+          cat > "$rcfile" <<'RC'
+          build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io
+          build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io
+          RC
+          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rcfile"
+          unset BUILDBUDDY_API_KEY
+          flags="--config=rbe --config=x86_64 --config=buildbuddy_remote_executor --lockfile_mode=error --host_platform=//tools/bazeldefs:rbe_linux_amd64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64 --@rules_python//python/config_settings:bootstrap_impl=native --action_env=PATH=/usr/bin:/bin"
+          rc=0
+          make "BAZEL=bazelisk --bazelrc=$rcfile" "BAZEL_OPTIONS=$flags" "PYTHON_RELEASE_DEST=$release_tmp/output" "DOCKER_CLI_PATH=$release_tmp/bin/docker" RELEASE_NAME=release-20261029.2 artifacts-python > "$release_tmp/revised.log" 2>&1 || rc=$?
+          test ! -e "$DOCKER_ATTEMPT"
+          if ((rc)); then sed -nE '/^(ERROR:|make: \*\*\*)/p' "$release_tmp/revised.log" | grep -viE "remote_header|api.key|token|secret" | tail -6; exit "$rc"; fi
+          python3 - <<'END'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])
+          expected=json.loads((p/"publication/amd64.json").read_text())["files"]
+          files={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in (p/"make-wheel/output").iterdir()}
+          built={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in Path("bazel-bin/sandboxexec/sandbox/python/dist").iterdir()}
+          assert files==built and files.keys()==expected.keys(), (files,built,expected)
+          assert all(files[n]==digest for n,digest in expected.items() if n.endswith(".whl"))
+          (p/"publication/make.json").write_text(json.dumps({"source":os.environ["GITHUB_SHA"],"status":"PASS","stock_attempted_docker":True,"revised_attempted_docker":False,"files":files,"matched_independent_build":{n:files[n]==v for n,v in expected.items()}})+"\n")
+          END
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       - name: Reconcile the two expected architecture verdicts
         if: always()
         run: |

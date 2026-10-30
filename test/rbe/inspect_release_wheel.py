@@ -89,6 +89,14 @@ def audit():
         for name,v in pkg.items():
             assert get(name)==v
         assert get("README.md") == (project/"README.md").read_bytes()
+    with tarfile.open(sdist, "r:gz") as t:
+        record["sdist_members"] = [{
+            "name": i.name, "mode": i.mode, "mtime": i.mtime,
+            "uid": i.uid, "gid": i.gid, "uname": i.uname, "gname": i.gname,
+            "pax_headers": i.pax_headers,
+            "sha256": hashlib.sha256(t.extractfile(i).read()).hexdigest() if i.isfile() else None,
+        } for i in t]
+    record["gzip_mtime"] = int.from_bytes(sdist.read_bytes()[4:8], "little")
     record["files"]={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in (wheel,sdist)}
     record["source_modules"]=sorted(pkg)
     record["status"]="PASS"
