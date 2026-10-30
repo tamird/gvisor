@@ -1,35 +1,81 @@
-name: CI
-
-"on":
+name: Check the unmodified established-ACK fixture on Linux 7.0
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fin-linux-established-parent]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packet:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CURRENT: 89a7d2beb0d553c3ffaff8b79478ffef09e09abc
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" ]]
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        if test -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --security-opt apparmor=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-    - name: build
+    - name: Establish memory available to local C++ compilers
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        docker exec tcp-compiler bash -ec 'grep MemAvailable /proc/meminfo; cat /sys/fs/cgroup/memory.max; gcc --version | head -1' | tee "$RUNNER_TEMP/records/compiler-memory.txt"
+    - name: Preflight the packet runner in the actual local TestRunner
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^1)" = "$CURRENT"
+        git diff --quiet "$CURRENT" HEAD -- pkg test/packetimpact/tests test/packetimpact/testbench
+        git diff --numstat "$CURRENT" HEAD -- test/packetimpact/runner/main.go | grep '^1[[:space:]]1[[:space:]]'
+        touch "$RUNNER_TEMP/xtables.lock"
+        printf '%s' "$GITHUB_RUN_ID" > "$RUNNER_TEMP/host-marker"
+        docker exec -e FENCE_HOST_ID="$GITHUB_RUN_ID" -e FENCE_HOST_PROBE="$RUNNER_TEMP/host-marker" -e XTABLES_LOCKFILE="$RUNNER_TEMP/xtables.lock" tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --strategy=TestRunner=local --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --nocache_test_results --test_output=all //test/rbe/fence_host_probe:check > "$RUNNER_TEMP/preflight.log" 2>&1 || { tail -55 "$RUNNER_TEMP/preflight.log"; exit 1; }
+        grep -F FENCE_HOST_OK "$RUNNER_TEMP/preflight.log"
+        printf 'Both cross-compilers; veth; writable DAD; iptables-nft; raw socket; runner marker: PASS.\n' > "$RUNNER_TEMP/records/preflight.txt"
+    - name: Test the original native fixture on the same kernel
+      run: |
+        set -euo pipefail
+        test "$(uname -r)" = "7.0.0-1017-azure"
+        git diff --exit-code "$CURRENT" HEAD -- pkg test/packetimpact/tests test/packetimpact/testbench
+        if bash test/rbe/fin-window-exec.sh wire //test/packetimpact/tests:tcp_unacc_seq_ack_native_test; then status=0; else status=$?; fi
+        python3 test/rbe/assess-original-ack.py "$RUNNER_TEMP/records" "$CURRENT" "$status"
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        sudo chown -R "$(id -u):$(id -g)" "$RUNNER_TEMP/records"
+        for d in "$RUNNER_TEMP/records"/{owners,wire}; do if [[ -f "$d/raw.jsonl" ]]; then mv "$d/raw.jsonl" "$RUNNER_TEMP/$(basename "$d")-private-bep.jsonl"; fi; done
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: established-ack-control
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
