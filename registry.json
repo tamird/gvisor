@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:04:33.917505+00:00",
+    "updatedAt": "2026-10-30T15:06:49.038409+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34037,20 +34037,20 @@
       "number": 16671,
       "repo": "google/gvisor",
       "ref": "fix/tcp-cork-flush-before-fin",
-      "head": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
+      "head": "c336db121f61914f6f2a761dc005bf4293f67e09",
       "title": "Flush corked TCP data when a FIN is queued",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T14:48:08.576818+00:00",
+      "updatedAt": "2026-10-30T15:06:49.038409+00:00",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16671",
       "summary": "Close and SHUT_WR flush a corked short write before FIN instead of waiting 200 ms.",
       "followup": {
-        "owner": "root",
-        "observedAt": "2026-10-29T14:36:47.754397+00:00",
-        "sourceHead": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
-        "disposition": "Published",
-        "nextAction": "Follow the published TCP fix on #16671.",
+        "owner": "TCP owner",
+        "disposition": "Amendment published",
+        "sourceHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
+        "observedAt": "2026-10-30T15:06:49.038409+00:00",
+        "nextAction": "Follow upstream review of the published common syscall tests.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16671"
         ]
@@ -34087,18 +34087,20 @@
         {
           "label": "Common Linux/stock/fixed syscall cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41064969008/artifacts/12983745074"
+        },
+        {
+          "label": "Published common syscall tests",
+          "url": "https://github.com/tamird/gvisor/compare/abf074390...c336db121"
         }
       ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "c336db121f61914f6f2a761dc005bf4293f67e09",
-        "baseHead": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
-        "url": "https://github.com/tamird/gvisor/commit/c336db121",
-        "title": "Add shared close and shutdown syscall tests to #16671",
-        "summary": "Publish the test-only amendment to the open PR. Both Linux and fixed runsc passed all 36 cases. Stock passed the 12 explicit-uncork controls and failed all 24 close/shutdown cases.",
-        "body": "The [amendment](https://github.com/tamird/gvisor/compare/abf074390...c336db121) adds the same C++ socket test for Linux and runsc. It establishes a still-corked control connection before the socket being closed or shut down. The peer must read the byte and EOF while the control remains unreadable. [Linux passed all 36 cases](https://app.buildbuddy.io/invocation/4bee6aad-c4b2-491d-8860-7c37ef0cbcee). [Stock runsc failed all 24 close/shutdown cases](https://app.buildbuddy.io/invocation/b6994e71-cafb-49f3-95bb-fecea944a4e0), and [the proposed fix passed all 36](https://app.buildbuddy.io/invocation/9efce7b4-debf-4638-a70d-38825a86fd83)."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "c336db121f61914f6f2a761dc005bf4293f67e09",
+          "outcome": "approved",
+          "at": "2026-10-30T15:06:49.038409+00:00"
+        }
+      ]
     },
     {
       "id": "branch:release-archives-versioned",
