@@ -17,8 +17,9 @@ try:
     stage = log.parent
     verdict = json.loads((stage / "verdict.json").read_text())
     result.update({k: verdict.get(k) for k in ("invocation", "native_exit", "capture_exit", "expected", "missing", "failures", "verified", "execution_finished_at")})
-    assert verdict["status"] == "PASS" and result["verified"] and result["native_exit"] == result["capture_exit"] == 0
-    assert not result["missing"] and not result["failures"]
+    result["harness_status"] = verdict["status"]
+    # Keep the original process exit separate from qualification/report errors.
+    assert result["native_exit"] == 0, result["native_exit"]
     wanted = {"//vdso:vdso.so", "//pkg/abi/linux:linux", "//tools/package_version:package_version"}
     events = stage / "events.jsonl"
     owners = set()
@@ -52,10 +53,15 @@ try:
             continue
         props = {p["name"]: p["value"] for p in s["platform"]["properties"]}
         image = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-        assert props["Arch"] == "arm64" and props["OSFamily"].lower() == "linux" and props["container-image"] == image, (m, lbl, props)
-        assert s["runner"] == "remote" and not any(s.get(k) for k in ("cacheHit", "remoteCacheHit", "exitCode", "status")), (m, lbl, s["runner"])
-        proof[m].append({"owner": lbl, "action": s["digest"]["hash"], "outputs": spawn_output_files(records, s)})
+        proof[m].append({"owner": lbl, "action": s["digest"]["hash"], "outputs": spawn_output_files(records, s),
+                         "arch": props.get("Arch"), "os": props.get("OSFamily"), "image": props.get("container-image"),
+                         "runner": s.get("runner"), "cached": bool(s.get("cacheHit") or s.get("remoteCacheHit")), "exit": s.get("exitCode", 0), "status": s.get("status", "")})
     assert all(proof.values()), {m: len(v) for m, v in proof.items()}
+    for expected in proof.values():
+        for p in expected:
+            assert (p["arch"], p["os"], p["image"], p["runner"], p["cached"], p["exit"], p["status"]) == ("arm64", "linux", image, "remote", False, 0, ""), (p["owner"], p["arch"], p["runner"])
+    assert verdict["status"] == "PASS" and result["verified"] and result["capture_exit"] == 0
+    assert not result["missing"] and not result["failures"]
     result["status"] = "pass"
 except Exception as exc:
     result["error"] = repr(exc)
