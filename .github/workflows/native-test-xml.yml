@@ -1,0 +1,94 @@
+name: Qualify the native Bazel test XML writer
+on:
+  push:
+    branches: [qualification/native-test-xml]
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, fetch-depth: 3, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {repository: tamird/bazel, ref: dad6e22f82a6fcb2e231a4176e32b64ac9dbdfd1, path: supplier, fetch-depth: 2, persist-credentials: false}
+      - name: Make the hosted Linux kernel allow Bazel's test sandbox
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          mkdir -p "$RUNNER_TEMP/native-xml-results"
+      - name: Build parent and observe the fallback failure
+        id: parent
+        continue-on-error: true
+        working-directory: supplier
+        run: |
+          git checkout b9d613ad6
+          bazel build --jobs=4 --embed_label=10.0.0-pre.xml-parent //src:bazel > "$RUNNER_TEMP/native-xml-results/parent-build.log" 2>&1 || { tail -50 "$RUNNER_TEMP/native-xml-results/parent-build.log"; exit 1; }
+          cp bazel-bin/src/bazel "$RUNNER_TEMP/bazel-parent"
+          python3 ../carrier/test/rbe/native-xml/probe.py parent "$RUNNER_TEMP/bazel-parent"
+      - name: Build the candidate and exercise its normal test entry point
+        id: candidate
+        continue-on-error: true
+        working-directory: supplier
+        run: |
+          git checkout dad6e22f82a6fcb2e231a4176e32b64ac9dbdfd1
+          bazel build --jobs=4 --embed_label=10.0.0-pre.xml-candidate //src:bazel > "$RUNNER_TEMP/native-xml-results/candidate-build.log" 2>&1 || { tail -50 "$RUNNER_TEMP/native-xml-results/candidate-build.log"; exit 1; }
+          cp bazel-bin/src/bazel "$RUNNER_TEMP/bazel-candidate"
+          python3 ../carrier/test/rbe/native-xml/probe.py candidate "$RUNNER_TEMP/bazel-candidate"
+      - name: Run Windows-derived data cases and wrapper-selection tests
+        id: owners
+        continue-on-error: true
+        working-directory: supplier
+        run: |
+          bazel test --jobs=4 --test_output=errors //tools/test:tw_test //src/test/java/com/google/devtools/build/lib/analysis/test:TestActionBuilderTest > "$RUNNER_TEMP/native-xml-results/owners.log" 2>&1 || { tail -50 "$RUNNER_TEMP/native-xml-results/owners.log"; exit 1; }
+          tail -12 "$RUNNER_TEMP/native-xml-results/owners.log"
+      - name: Retain allowlisted source and action outcomes before the ARM64 integration
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-xml-linux
+          path: |
+            ${{ runner.temp }}/native-xml-results/*-cases.json
+            ${{ runner.temp }}/native-xml-results/*.log
+            ${{ runner.temp }}/native-xml-results/*.spawns
+          if-no-files-found: error
+      - name: Exercise the original ARM64 package via bazel test
+        id: arm64
+        continue-on-error: true
+        working-directory: carrier
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          test -x "$RUNNER_TEMP/bazel-candidate"
+          python3 test/rbe/native-xml/arm64.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: eventfd-test-runner
+          path: carrier/repo-fetch-evidence/
+          if-no-files-found: warn
+      - name: Preserve each independent verdict
+        if: always()
+        run: |
+          echo "parent=${{ steps.parent.outcome }} candidate=${{ steps.candidate.outcome }} owners=${{ steps.owners.outcome }} arm64=${{ steps.arm64.outcome }}"
+          test "${{ steps.parent.outcome }}-${{ steps.candidate.outcome }}-${{ steps.owners.outcome }}-${{ steps.arm64.outcome }}" = success-success-success-success
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {repository: tamird/bazel, ref: dad6e22f82a6fcb2e231a4176e32b64ac9dbdfd1, persist-credentials: false}
+      - name: Build and test the actual Windows writer and its native path adapter
+        shell: pwsh
+        run: |
+          bazel --output_user_root=C:/b build --jobs=4 //tools/test:xml
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          bazel --output_user_root=C:/b test --jobs=4 --test_output=errors //tools/test:tw_test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item bazel-testlogs/tools/test/tw_test/test.xml "$env:RUNNER_TEMP/windows-test.xml"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-xml-windows
+          path: ${{ runner.temp }}/windows-test.xml
+          if-no-files-found: warn
