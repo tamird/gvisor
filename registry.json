@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T14:48:08.576818+00:00",
+    "updatedAt": "2026-10-30T14:50:08.677188+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -13,12 +13,16 @@
       "golang/tools": "none",
       "nodejs/node": "none",
       "bazelbuild/bazel-central-registry": "none",
-      "hermeticbuild/hermetic-llvm": "none"
+      "hermeticbuild/hermetic-llvm": "none",
+      "bazel-contrib/rules_python": "none",
+      "bazelbuild/bazel": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
       "bazelbuild/bazel-central-registry",
-      "hermeticbuild/hermetic-llvm"
+      "hermeticbuild/hermetic-llvm",
+      "bazel-contrib/rules_python",
+      "bazelbuild/bazel"
     ]
   },
   "groups": [
@@ -35271,12 +35275,20 @@
       "ref": "review/rules-python-namespace-inits",
       "head": "005930e18a30e580161f3674a686b05ff5392a80",
       "title": "Generate wheel namespace initializers without a shell",
-      "url": "https://github.com/tamird/gvisor/commit/005930e18",
+      "url": "https://github.com/bazel-contrib/rules_python/pull/4385",
       "group": "bazel",
-      "status": "Investigating Skylib upstream",
-      "updatedAt": "2026-10-30T10:36:22.103416+00:00",
-      "summary": "The proposed rules_python change replaces a shell copy with a Bazel template expansion. Existing namespace selection, target names and file contents are preserved.",
+      "status": "Delivered",
+      "updatedAt": "2026-10-30T14:50:08.677188+00:00",
+      "summary": "Submitted upstream in rules_python #4385. The rule expands the checked-in template into a regular file without starting a shell or cp.",
       "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/bazel-contrib/rules_python/pull/4385"
+        },
+        {
+          "label": "11 upstream cases, two generated outputs and five wheel initializers on both execution configurations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41074237338/artifacts/12985708419"
+        },
         {
           "label": "Supplier fix on actual Skylib fork",
           "url": "https://github.com/tamird/bazel-skylib/tree/proposal/native-copy-file"
@@ -35310,17 +35322,7 @@
           "at": "2026-10-30T10:22:03.833397+00:00"
         }
       ],
-      "followup": {
-        "owner": "python_supplier_review",
-        "sourceHead": "005930e18a30e580161f3674a686b05ff5392a80",
-        "observedAt": "2026-10-30T10:22:03.833397+00:00",
-        "disposition": "Pursue the provider-side fix",
-        "nextAction": "Validate the Skylib branch on Bazel 8.8.1 and Bazel’s pending native copy action; keep the rules_python workaround on hold.",
-        "evidence": [
-          "https://github.com/bazelbuild/bazel/pull/30386",
-          "https://github.com/bazelbuild/bazel-skylib/issues/604"
-        ]
-      }
+      "inactive": true
     },
     {
       "id": "pr:16726",
@@ -35935,10 +35937,14 @@
       "title": "Use Bazel’s native action for ordinary Skylib file copies",
       "url": "https://github.com/tamird/bazel-skylib/commit/b035bf6d3",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T13:19:13.082582+00:00",
-      "summary": "The Skylib proposal is on hold while we check whether rules_python can use bazel-lib’s existing shell-free copy_file action. The fork change and its compatibility comparison remain available.",
+      "status": "Superseded",
+      "updatedAt": "2026-10-30T14:50:08.677188+00:00",
+      "summary": "rules_python #4385 generates namespace initializers directly from its template. The Skylib change was not submitted.",
       "evidence": [
+        {
+          "label": "rules_python change",
+          "url": "https://github.com/bazel-contrib/rules_python/pull/4385"
+        },
         {
           "label": "Supplier fork branch",
           "url": "https://github.com/tamird/bazel-skylib/tree/proposal/native-copy-file"
@@ -35969,7 +35975,8 @@
           "url": "https://github.com/tamird/bazel-skylib/compare/5f88ea649...b035bf6d3",
           "reason": "The contributor requested the existing bazel-lib copy rule be investigated instead; the Skylib submission is on hold."
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:vfio-pci-file-poll",
@@ -36134,6 +36141,81 @@
         "title": "Post the IPv6 wildcard rebind finding",
         "summary": "Post this inline on pkg/tcpip/transport/tcp/endpoint.go:1243, where cleanup uses the connected family's protocol list.",
         "body": "A dual-stack wildcard bind reserves the port for IPv4 and IPv6. Connecting to a mapped peer sets `effectiveNetProtos` to IPv4 and releases the IPv4 reservation. Cleanup then misses the remaining IPv6 reservation. Could it release the family the endpoint still owns?\n\n[This syscall test](https://github.com/tamird/gvisor/blob/1d322cb0b/test/syscalls/linux/socket_inet_loopback.cc#L263-L323) closes the connection with a reset and rebinds the same port. [Linux accepts both wildcard binds](https://app.buildbuddy.io/invocation/0df634cb-62b9-46b0-ba07-8c04ed3142f0). [On this head](https://app.buildbuddy.io/invocation/992daf38-8b09-46ad-8003-cac6bbf8e5f2), the IPv4 bind succeeds, but the IPv6-only bind returns `EADDRINUSE`.\n\nReview by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "pr:bazel-contrib/rules_python:4385",
+      "type": "pr",
+      "repo": "bazel-contrib/rules_python",
+      "number": 4385,
+      "head": "1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
+      "title": "Generate wheel namespace initializers without a shell",
+      "url": "https://github.com/bazel-contrib/rules_python/pull/4385",
+      "group": "bazel",
+      "summary": "Submitted upstream in rules_python #4385. The rule expands the checked-in template into a regular file without starting a shell or cp.",
+      "evidence": [
+        {
+          "label": "11 upstream cases, two generated outputs and five wheel initializers on both execution configurations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41074237338/artifacts/12985708419"
+        }
+      ],
+      "ref": "pypi-namespace-template",
+      "updatedAt": "2026-10-30T14:48:40Z",
+      "status": "open"
+    },
+    {
+      "id": "pr:bazelbuild/bazel:30837",
+      "type": "pr",
+      "repo": "bazelbuild/bazel",
+      "number": 30837,
+      "head": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+      "title": "Add an opt-in native POSIX test wrapper",
+      "url": "https://github.com/bazelbuild/bazel/pull/30837",
+      "group": "bazel",
+      "summary": "Bazel’s proposed native Linux/macOS wrapper supplies the execution platform binary used by the fallback test XML change.",
+      "ref": "codex/native-posix-test-wrapper",
+      "updatedAt": "2026-09-10T16:45:32Z",
+      "status": "open"
+    },
+    {
+      "id": "branch:bazel-native-test-xml",
+      "type": "branch",
+      "repo": "tamird/bazel",
+      "ref": "research/native-test-xml",
+      "head": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
+      "title": "Generate fallback test XML with Bazel’s native POSIX wrapper",
+      "url": "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-30T14:50:08.677188+00:00",
+      "summary": "When a test produces no XML, Bazel launches a second action. With the native POSIX wrapper selected, that action can write the report on a worker without Bash, sed or cat. The POSIX and Windows wrappers share the XML writer.",
+      "evidence": [
+        {
+          "label": "Parent native wrapper",
+          "url": "https://github.com/bazelbuild/bazel/pull/30837"
+        },
+        {
+          "label": "Parent vs. proposal on Linux — both shards, reported failure and test-owned XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41062386915/artifacts/12981698577"
+        },
+        {
+          "label": "16 Windows writer and wrapper cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41062386915/artifacts/12981055185"
+        },
+        {
+          "label": "Native ARM64 gVisor eventfd_test on a scratch worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41071795282/artifacts/12986015991"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
+        "baseHead": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+        "url": "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b",
+        "title": "Generate fallback test XML with Bazel’s native POSIX wrapper",
+        "summary": "May I send the XML change to Bazel after #30837 lands?",
+        "body": "The parent wrapper can run a test without a shell but cannot generate its fallback XML. The revision reports both passing shards and a failure with exit 7, and preserves reports written by the test. The shell remains the fallback when the native wrapper is not selected."
       }
     }
   ],
@@ -39323,6 +39405,16 @@
       "reason": "The approved core uses the VFIO provider’s no-poll behavior and adapts its saved-waiter regression.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/5d7de5a80"
+      ]
+    },
+    {
+      "from": "branch:bazel-native-test-xml",
+      "to": "pr:bazelbuild/bazel:30837",
+      "type": "depends_on",
+      "reason": "The XML action uses the native POSIX wrapper introduced by #30837.",
+      "evidence": [
+        "https://github.com/bazelbuild/bazel/pull/30837",
+        "https://github.com/tamird/bazel/compare/b9d613ad6...e8f494d1b"
       ]
     }
   ],

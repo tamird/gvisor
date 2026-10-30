@@ -3,14 +3,16 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T14:48:08.576818+00:00",
+  "registryDate": "2026-10-30T14:50:08.677188+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
     "golang/tools": "none",
     "nodejs/node": "none",
     "bazelbuild/bazel-central-registry": "none",
-    "hermeticbuild/hermetic-llvm": "none"
+    "hermeticbuild/hermetic-llvm": "none",
+    "bazel-contrib/rules_python": "none",
+    "bazelbuild/bazel": "none"
   },
   "prs": [
     {
@@ -240853,6 +240855,800 @@
         },
         "description": "No matching public export was found in the complete lookup."
       }
+    },
+    {
+      "number": 4385,
+      "repo": "bazel-contrib/rules_python",
+      "title": "fix(pypi): generate namespace package initializers without a shell",
+      "url": "https://github.com/bazel-contrib/rules_python/pull/4385",
+      "status": "open",
+      "ref": "pypi-namespace-template",
+      "head": "1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
+      "base": "674ce0745dea93e54865d9cfb846510b30475969",
+      "branchHead": "1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-10-30T14:50:10.162648+00:00",
+      "headCommittedAt": "2026-10-30T14:44:15Z",
+      "headHistoryComplete": true,
+      "headIntroducedAt": null,
+      "headOwner": "tamird",
+      "headRepo": "tamird/rules_python",
+      "authorLogin": "tamird",
+      "updatedAt": "2026-10-30T14:48:40Z",
+      "createdAt": "2026-10-30T14:46:45Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": "REVIEW_REQUIRED",
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [
+        {
+          "__typename": "User",
+          "login": "rickeylev"
+        },
+        {
+          "__typename": "User",
+          "login": "aignas"
+        }
+      ],
+      "reviewRequestsComplete": true,
+      "labels": [],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": []
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOBhEMNM8AAAABhPSq-Q",
+            "url": "https://github.com/bazel-contrib/rules_python/pull/4385#issuecomment-6525594361",
+            "body": "Codex prepared this change on behalf of @tamird. Tamir chose the approach\nafter comparing it with using a declared coreutils binary. I’ll monitor\nthis PR for feedback and bring substantive revisions and proposed replies\nto Tamir for review before posting them.\n\n*This is an automatically generated agent comment.*\n",
+            "createdAt": "2026-10-30T14:47:05Z",
+            "updatedAt": "2026-10-30T14:47:05Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOBhEMNM8AAAABVJT5Xg",
+            "url": "https://github.com/bazel-contrib/rules_python/pull/4385#pullrequestreview-5714016606",
+            "body": "<!-- ccr-overview-v2 -->\n\n### 🟢 Approval recommended\n\nNo active review issues block the change removing shell and `cp` requirements from namespace initializer generation.\n\n**No open issues** 🎉\n\n<details>\n<summary><strong>What changed in this PR</strong></summary>\n\nThis PR removes the shell and `cp` requirement from wheel namespace initializer generation, allowing it to work on execution platforms without those programs.\n\n**Changes:**\n- Replace Skylib’s `copy_file` with `expand_template` using no substitutions to preserve template contents.\n- Update the rule dependency and unit-test expectations.\n- Add a release note describing the fix.\n\n| File | Description |\r\n| ---- | ----------- |\r\n| tests/​pypi/​namespace_pkgs/​namespace_pkgs_tests.bzl | Update mocked generator calls and expected template arguments. |\r\n| python/​private/​pypi/​namespace_pkgs.bzl | Generate namespace initializers with `expand_template`. |\r\n| python/​private/​pypi/​BUILD.bazel | Switch the dependency to Skylib’s `expand_template`. |\r\n| news/​wheel-namespace-initializers.fixed.md | Document removal of the shell and `cp` requirement. |\n</details>\n\n<sub>Review effort: Balanced</sub>",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-30T14:48:40Z",
+            "updatedAt": "2026-10-30T14:48:40Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "copilot-pull-request-reviewer",
+              "__typename": "Bot"
+            },
+            "commit": {
+              "oid": "1d389dd0b76fe506fc0ce36094ad6a060d52fb00"
+            }
+          }
+        ]
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 4,
+        "reportedTotal": 4,
+        "supersededContexts": [],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOBhEMNM8AAAAc5pN4uw",
+            "name": "blocks-do-not-merge",
+            "state": "SUCCESS",
+            "url": "https://github.com/bazel-contrib/rules_python/actions/runs/41074657329/job/124127508667",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "PR Metadata Checks",
+            "workflowId": "W_kwDOBhEMNM4SFnny",
+            "runNumber": 1682,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOBhEMNM8AAAAc5pN7OA",
+            "name": "block-transient-agent-files",
+            "state": "SUCCESS",
+            "url": "https://github.com/bazel-contrib/rules_python/actions/runs/41074657329/job/124127509304",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "PR Metadata Checks",
+            "workflowId": "W_kwDOBhEMNM4SFnny",
+            "runNumber": 1682,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOBhEMNM8AAAANbf-dVw",
+            "name": "buildkite/rules-python-python",
+            "state": "PENDING",
+            "url": "https://buildkite.com/bazel/rules-python-python/builds/18151",
+            "description": "Build #18151 started",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOBhEMNM8AAAANbf-Ygg",
+            "name": "docs/readthedocs.org:rules-python",
+            "state": "PENDING",
+            "url": "https://app.readthedocs.org/projects/rules-python/builds/35526157/",
+            "description": "Read the Docs build is in progress!",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          }
+        ]
+      },
+      "crossReferences": {
+        "complete": true,
+        "items": []
+      },
+      "reviewDecision": "REVIEW_REQUIRED",
+      "approvedHead": null,
+      "approvedAt": null,
+      "checkedAt": "2026-10-30T14:50:10.162716+00:00",
+      "mergeabilityObservation": {
+        "state": "MERGEABLE",
+        "head": "1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
+        "base": "674ce0745dea93e54865d9cfb846510b30475969",
+        "checkedAt": "2026-10-30T14:50:10.162648+00:00"
+      },
+      "importsComplete": true,
+      "importPolicy": "none",
+      "imports": []
+    },
+    {
+      "number": 30837,
+      "repo": "bazelbuild/bazel",
+      "title": "Add an opt-in native POSIX test wrapper",
+      "url": "https://github.com/bazelbuild/bazel/pull/30837",
+      "status": "open",
+      "ref": "codex/native-posix-test-wrapper",
+      "head": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+      "base": "4ecfa6bc4d7c792772dedd8f630e2d60cb018c06",
+      "branchHead": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-30T14:50:12.257947+00:00",
+      "headCommittedAt": "2026-08-24T05:33:52Z",
+      "headHistoryComplete": true,
+      "headIntroducedAt": null,
+      "headOwner": "dzbarsky",
+      "headRepo": "dzbarsky/bazel",
+      "authorLogin": "dzbarsky",
+      "updatedAt": "2026-09-10T16:45:32Z",
+      "createdAt": "2026-08-24T07:48:39Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": null,
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [
+        {
+          "__typename": "User",
+          "login": "aranguyen"
+        }
+      ],
+      "reviewRequestsComplete": true,
+      "labels": [
+        "team-Core",
+        "awaiting-review"
+      ],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": [
+          {
+            "__typename": "LabeledEvent",
+            "id": "LE_lADOATz7jc8AAAABN98oQc8AAAAHD1DpJg",
+            "createdAt": "2026-09-01T04:21:52Z",
+            "actor": {
+              "login": "github-actions",
+              "__typename": "Bot"
+            },
+            "label": {
+              "name": "team-Configurability"
+            }
+          },
+          {
+            "__typename": "LabeledEvent",
+            "id": "LE_lADOATz7jc8AAAABN98oQc8AAAAHD1DpTg",
+            "createdAt": "2026-09-01T04:21:52Z",
+            "actor": {
+              "login": "github-actions",
+              "__typename": "Bot"
+            },
+            "label": {
+              "name": "awaiting-review"
+            }
+          },
+          {
+            "__typename": "UnlabeledEvent",
+            "id": "UNLE_lADOATz7jc8AAAABN98oQc8AAAAHJWGfBg",
+            "createdAt": "2026-09-07T12:47:46Z",
+            "actor": {
+              "login": "meisterT",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "team-Configurability"
+            }
+          },
+          {
+            "__typename": "LabeledEvent",
+            "id": "LE_lADOATz7jc8AAAABN98oQc8AAAAHJWGfRA",
+            "createdAt": "2026-09-07T12:47:46Z",
+            "actor": {
+              "login": "meisterT",
+              "__typename": "User"
+            },
+            "label": {
+              "name": "team-Core"
+            }
+          }
+        ]
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTAyaQg",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5570861634",
+            "body": "What's the benefit of doing this?",
+            "createdAt": "2026-09-07T12:47:34Z",
+            "updatedAt": "2026-09-07T12:47:34Z",
+            "author": {
+              "login": "meisterT",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTA4SIg",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5570957858",
+            "body": "> What's the benefit of doing this?\r\n\r\nThe bash one requires certain tools be present in the executor, a requirement not satisfied by systems trying to do true hermetic execution.\r\n\r\nIt also aligns posix more closely with windows, which already uses the native binary ",
+            "createdAt": "2026-09-07T12:55:54Z",
+            "updatedAt": "2026-09-07T12:55:54Z",
+            "author": {
+              "login": "dzbarsky",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTBB1jA",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5571114380",
+            "body": "Which tools are problematic? Can we instead try to align the shell wrapper to the POSIX spec?\r\n\r\nI think if we're going to do this, we need a better cross-platform story. As this PR stands, the choice of test wrapper is AFAICT host-dependent, so cross-platform execution won't work (e.g. Bazel running on macOS with remote execution on Linux) which is a capability regression in comparison with the shell implementation.",
+            "createdAt": "2026-09-07T13:09:10Z",
+            "updatedAt": "2026-09-07T13:09:10Z",
+            "author": {
+              "login": "tjgq",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTDyaYw",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5574007395",
+            "body": "> Which tools are problematic?\r\n\r\ntest-setup.sh requires Bash and executor utilities including ps/pgrep, stat, file, and zip\r\n\r\n> Can we instead try to align the shell wrapper to the POSIX spec?\r\n\r\nWe could, but it would still require a shell and is actually a bit of a crutch, more on that below.\r\n\r\n> I think if we're going to do this, we need a better cross-platform story. As this PR stands, the choice of test wrapper is AFAICT host-dependent, so cross-platform execution won't work (e.g. Bazel running on macOS with remote execution on Linux) which is a capability regression in comparison with the shell implementation.\r\n\r\nAre you sure about this? I'm certainly no expert in this code, but what you write doesn't match my understanding of what is happening or my testing (Using [actiond](https://github.com/hermeticbuild/actiond/) on a Mac host). The wrapper dependency is configured for the test execution platform. [native_posix_test_wrapper_binary](https://github.com/bazelbuild/bazel/blob/b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699/tools/test/BUILD.tools#L159-L180) reuses the embedded binary when that platform matches the host constraints and otherwise builds the wrapper for the selected platform. This follows the host-prebuilt/source-built pattern Fabian introduced for [zipper and Windows launcher tooling in #26019](https://github.com/bazelbuild/bazel/pull/26019). Unifying this pattern is a Good Thing precisely because POSIX doesn't really help on Windows, hence my comments earlier about relying on POSIX compatibility to mask the confusion between host/exec being a crutch.\r\n\r\n",
+            "createdAt": "2026-09-07T17:35:40Z",
+            "updatedAt": "2026-09-08T13:56:42Z",
+            "author": {
+              "login": "dzbarsky",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTcz6Bw",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5600246279",
+            "body": "> Are you sure about this? I'm certainly no expert in this code, but what you write doesn't match my understanding of what is happening or my testing (Using [actiond](https://github.com/hermeticbuild/actiond/) on a Mac host). The wrapper dependency is configured for the test execution platform. [native_posix_test_wrapper_binary](https://github.com/bazelbuild/bazel/blob/b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699/tools/test/BUILD.tools#L159-L180) reuses the embedded binary when that platform matches the host constraints and otherwise builds the wrapper for the selected platform. This follows the host-prebuilt/source-built pattern Fabian introduced for [zipper and Windows launcher tooling in #26019](https://github.com/bazelbuild/bazel/pull/26019). Unifying this pattern is a Good Thing precisely because POSIX doesn't really help on Windows, hence my comments earlier about relying on POSIX compatibility to mask the confusion between host/exec being a crutch.\r\n\r\nFair enough - I didn't realize there was a fallback to compilation. But then there's a different unfortunate consequence: you can no longer run tests across platforms without setting up a cross-compilation C++ toolchain.",
+            "createdAt": "2026-09-09T10:17:42Z",
+            "updatedAt": "2026-09-09T10:17:42Z",
+            "author": {
+              "login": "tjgq",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTfWh6g",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5602910698",
+            "body": "I think getting rid of the bash (ps/stat/file/zip) dependencies on executors is a win not only for minimal containers / micro VMs, and the watchdog in `tw.cc` looks cleaner than the `ps` polling loop in `test-setup.sh`.\r\n\r\nUnfortunately, the cross-platform concern is real: a Mac user running tests against Linux RBE on a pure Java or Go project suddenly requires a exec-platform C++-toolchain just to compile the test wrapper. It will break their build unless they configured a cross-compiler.\r\n\r\n@fmeum mentioned on #19587 for zipper and the Windows launcher that might help long term: moving these tools into a dedicated module/toolchain that distributes multi-arch prebuilts (like buildozer or remote_java_tools) with source compilation only as a fallback for untiered platforms - cc @meteorcloudy.\r\n\r\nI am not thrilled by maintaining three different things (`tw.cc` for two platforms and `test-setup.sh`), but iff we have a credible plan to get rid of the shell thing completely, I could be convinced that using `test-setup.sh` is a valid fallback option in case there is no C++ toolchain available.\r\n\r\nIn any case, we should make sure we are not breaking things like coverage by a change like this.",
+            "createdAt": "2026-09-09T13:45:51Z",
+            "updatedAt": "2026-09-09T13:45:51Z",
+            "author": {
+              "login": "meisterT",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTfbUFg",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5602989078",
+            "body": "If we go through the setup for this separate module (or repos referenced by `bazel_tools`), we could drop `test-setup.sh` entirely if we assume that platforms without prebuilts are targeted by some C++ toolchain.",
+            "createdAt": "2026-09-09T13:51:19Z",
+            "updatedAt": "2026-09-09T13:51:19Z",
+            "author": {
+              "login": "fmeum",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOATz7jc8AAAABTxw7XA",
+            "url": "https://github.com/bazelbuild/bazel/pull/30837#issuecomment-5622217564",
+            "body": "I'm not a huge golang proponent but if there are concerns about C++ toolchain stuff maybe using that for easier cross compilation would solve that?",
+            "createdAt": "2026-09-10T16:45:32Z",
+            "updatedAt": "2026-09-10T16:45:32Z",
+            "author": {
+              "login": "keith",
+              "__typename": "User"
+            }
+          }
+        ]
+      },
+      "checks": {
+        "state": "SUCCESS",
+        "total": 38,
+        "reportedTotal": 39,
+        "supersededContexts": [
+          {
+            "id": "CR_kwDOATz7jc8AAAAWqwnKkQ",
+            "name": "triage",
+            "state": "SKIPPED",
+            "url": "https://github.com/bazelbuild/bazel/actions/runs/32703214256/job/97358826129",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "PR Labeler",
+            "workflowId": "W_kwDOATz7jc4DF_d2",
+            "runNumber": 7231,
+            "runAttempt": 1,
+            "purpose": "validation"
+          }
+        ],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOATz7jc8AAAAXOL-i1Q",
+            "name": "triage",
+            "state": "SUCCESS",
+            "url": "https://github.com/bazelbuild/bazel/actions/runs/33469550249/job/99736330965",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "PR Labeler",
+            "workflowId": "W_kwDOATz7jc4DF_d2",
+            "runNumber": 7323,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRqSzw",
+            "name": "buildkite/bazel-bazel-github-presubmit",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048",
+            "description": "Build #36048 passed (23 minutes, 19 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ0sjQ",
+            "name": "buildkite/bazel-bazel-github-presubmit/clang-on-ubuntu-ubuntu-24-dot-04-lts",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe24-4bf8-abbf-a27117d2ac56",
+            "description": "Passed (3 minutes, 27 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ6CLw",
+            "name": "buildkite/bazel-bazel-github-presubmit/darwin-macos",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe24-429f-bb0a-fbfd03c50eb4",
+            "description": "Passed (5 minutes, 23 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ7Vyg",
+            "name": "buildkite/bazel-bazel-github-presubmit/darwin-macos-arm64-shard-1",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe25-4582-986d-83c6ae060e7f",
+            "description": "Passed (5 minutes, 43 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ6VuQ",
+            "name": "buildkite/bazel-bazel-github-presubmit/darwin-macos-arm64-shard-2",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe25-43fc-a46b-ac33753f87a2",
+            "description": "Passed (5 minutes, 28 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ-xPA",
+            "name": "buildkite/bazel-bazel-github-presubmit/darwin-macos-arm64-shard-3",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe25-42a3-8273-557ae7d6a05b",
+            "description": "Passed (6 minutes, 59 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ4zjg",
+            "name": "buildkite/bazel-bazel-github-presubmit/darwin-macos-arm64-shard-4",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe25-4ed9-9c8c-e8c87a767042",
+            "description": "Passed (4 minutes, 53 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRAI9Q",
+            "name": "buildkite/bazel-bazel-github-presubmit/darwin-macos-arm64-shard-5",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe25-4735-b35d-7a3436cfcdd8",
+            "description": "Passed (7 minutes, 31 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ0ztg",
+            "name": "buildkite/bazel-bazel-github-presubmit/darwin-macos-arm64-shard-6",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe25-4cdc-b9cf-57254d8e638b",
+            "description": "Passed (3 minutes, 23 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQwhLA",
+            "name": "buildkite/bazel-bazel-github-presubmit/docs-on-ubuntu-ubuntu-24-dot-04-lts",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe28-4cf8-ad47-357a7dccc545",
+            "description": "Passed (1 minute, 52 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQxkgg",
+            "name": "buildkite/bazel-bazel-github-presubmit/fedora-fedora-39-openjdk-17-gcc-13-dot-1-1",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe22-42e1-879a-6288fe0415ec",
+            "description": "Passed (2 minutes, 15 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ90Rg",
+            "name": "buildkite/bazel-bazel-github-presubmit/passport-control-check-docs",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe21-4ad4-a017-e69a619f8463",
+            "description": "Passed (6 minutes, 48 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQrlXw",
+            "name": "buildkite/bazel-bazel-github-presubmit/pipeline",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-372c-4589-8cb3-42ac0400c85d",
+            "description": "Passed (51 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRHlZA",
+            "name": "buildkite/bazel-bazel-github-presubmit/rbe-on-ubuntu-ubuntu-24-dot-04-lts",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe27-43c8-9c21-cf5241d50628",
+            "description": "Passed (10 minutes, 30 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRBnCw",
+            "name": "buildkite/bazel-bazel-github-presubmit/rocky-rocky-linux-8",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe22-4012-865f-8d5d4cfbb506",
+            "description": "Passed (8 minutes, 17 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQ4T9g",
+            "name": "buildkite/bazel-bazel-github-presubmit/rocky-rocky-linux-8-arm64",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe22-4b10-8d4e-1c6b09c67b5c",
+            "description": "Passed (4 minutes, 47 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRANwQ",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-22-dot-04-lts",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe24-4f55-a4f6-fe8c28674592",
+            "description": "Passed (7 minutes, 44 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRKt_w",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-1",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe23-406a-8b21-cf109d6a1b70",
+            "description": "Passed (11 minutes, 36 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRKmxg",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-2",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe23-41af-96eb-e9101f9434f7",
+            "description": "Passed (11 minutes, 33 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRH3sA",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-3",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe23-4c1e-a330-4f52037389d8",
+            "description": "Passed (10 minutes, 36 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRNEvg",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-4",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe23-44d7-b625-c8a20056d3a0",
+            "description": "Passed (12 minutes, 26 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRKCtQ",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-5",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe23-40e0-ad96-c0d4cc7d8bfd",
+            "description": "Passed (11 minutes, 21 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRNM5Q",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-6",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe23-4c2d-8898-e8d30835150f",
+            "description": "Passed (12 minutes, 28 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRIr6g",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-7",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe24-4688-8ca7-6d355fe603e3",
+            "description": "Passed (10 minutes, 53 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRESYg",
+            "name": "buildkite/bazel-bazel-github-presubmit/ubuntu-ubuntu-24-dot-04-lts-shard-8",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe24-4221-8ee3-08f0101bcfcb",
+            "description": "Passed (9 minutes, 15 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSQzPMw",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-arm64-on-windows-windows",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe27-4a04-98e9-773333cf445b",
+            "description": "Passed (2 minutes, 53 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRPnrg",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-1",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe26-49eb-9d29-b5ee3d0fd4c0",
+            "description": "Passed (13 minutes, 20 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRLyRg",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-10",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe27-4f8b-9291-d695ffe84c21",
+            "description": "Passed (11 minutes, 59 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRGdxA",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-2",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe26-4bd5-aab0-02405203f583",
+            "description": "Passed (10 minutes, 5 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSREOSQ",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-3",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe26-4bea-87eb-c0454b2527a0",
+            "description": "Passed (9 minutes, 14 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRGZTQ",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-4",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe26-43d0-ace9-d9c8be5b73af",
+            "description": "Passed (10 minutes, 3 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRI0Rg",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-5",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe26-4110-99b9-8345b69ff573",
+            "description": "Passed (10 minutes, 55 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRqRew",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-6",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe26-4aee-a37c-7ba7a4bf5573",
+            "description": "Passed (22 minutes, 28 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRF5Ew",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-7",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe27-4ae9-8af7-4a88373601fd",
+            "description": "Passed (9 minutes, 51 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSREKRQ",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-8",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe27-4711-849c-e9d335f1f343",
+            "description": "Passed (9 minutes, 13 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOATz7jc8AAAAMSRT3pg",
+            "name": "buildkite/bazel-bazel-github-presubmit/windows-windows-shard-9",
+            "state": "SUCCESS",
+            "url": "https://buildkite.com/bazel/bazel-bazel-github-presubmit/builds/36048#01a032be-fe27-48f0-9af3-559dc51389fc",
+            "description": "Passed (14 minutes, 48 seconds)",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOATz7jc8AAAAWqwm4Ag",
+            "name": "cla/google",
+            "state": "SUCCESS",
+            "url": "https://cla.developers.google.com/about",
+            "kind": "check-run",
+            "app": "Google CLA",
+            "appSlug": "google-cla",
+            "appId": "MDM6QXBwNDIyMDI=",
+            "workflow": null,
+            "workflowId": null,
+            "runNumber": null,
+            "runAttempt": null,
+            "purpose": "validation"
+          }
+        ]
+      },
+      "crossReferences": {
+        "complete": true,
+        "items": []
+      },
+      "reviewDecision": null,
+      "approvedHead": null,
+      "approvedAt": null,
+      "checkedAt": "2026-10-30T14:50:12.258059+00:00",
+      "mergeabilityObservation": null,
+      "importsComplete": true,
+      "importPolicy": "none",
+      "imports": []
     }
   ],
   "issues": {
@@ -247010,6 +247806,40 @@
         "qualifier": null,
         "observedAt": "2026-10-30T14:48:08.576818+00:00"
       }
+    },
+    "pr:bazel-contrib/rules_python:4385": {
+      "checks-pending": {
+        "scope": "4385:1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
+        "since": "2026-10-30T14:50:10.162716+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T14:50:10.162716+00:00"
+      },
+      "maintainer-review": {
+        "scope": "1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
+        "since": "2026-10-30T14:50:10.162716+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T14:50:10.162716+00:00"
+      }
+    },
+    "pr:bazelbuild/bazel:30837": {
+      "maintainer-review": {
+        "scope": "b9d613ad6ba7e5bd73b88ca498bf3ecf7f13c699",
+        "since": "2026-10-30T14:50:12.258059+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T14:50:12.258059+00:00"
+      }
+    },
+    "branch:bazel-native-test-xml": {
+      "contributor-review": {
+        "scope": "e8f494d1b91be0333c8c2b1478fd123c2751d488",
+        "since": "2026-10-30T14:50:08.677188+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T14:50:08.677188+00:00"
+      }
     }
   },
   "limits": {
@@ -247086,6 +247916,20 @@
           "status": "not-needed",
           "numbers": []
         }
+      },
+      "bazel-contrib/rules_python": {
+        "scope": "registered-only",
+        "registeredCount": 1,
+        "openInventoryTotal": null,
+        "retainedSources": 0,
+        "retainedImports": 0
+      },
+      "bazelbuild/bazel": {
+        "scope": "registered-only",
+        "registeredCount": 1,
+        "openInventoryTotal": null,
+        "retainedSources": 0,
+        "retainedImports": 0
       }
     },
     "openInventoryTotal": 856,
