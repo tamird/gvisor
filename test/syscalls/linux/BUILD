@@ -5699,6 +5699,7 @@ cc_binary(
     srcs = ["vfio_pci_device.cc"],
     linkopts = ["-static"],
     linkstatic = 1,
+    malloc = "//test/util:errno_safe_allocator",
     deps = select_gtest() + [
         "//test/util:file_descriptor",
         "//test/util:test_main",
