@@ -1,0 +1,20 @@
+name: Read the two original downstream Bazel diagnostics
+on:
+  push:
+    branches: [qualification/gazelle-downstream-evidence]
+permissions:
+  contents: read
+jobs:
+  read:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - name: Fetch the original logs, without rerunning Bazel
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -B .github/qualification/downstream/recover.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with: {name: original-bazel-diagnostics, path: "${{ runner.temp }}/original-go-logs.json", if-no-files-found: error}
