@@ -568,6 +568,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.pipeReplayTimer("RTO")
 	s.ep.stack.Stats().TCP.Timeouts.Increment()
 	s.ep.stats.SendErrors.Timeouts.Increment()
 
@@ -1212,6 +1213,7 @@ func (s *sender) SetPipe() {
 	if !s.ep.SACKPermitted || !s.FastRecovery.Active {
 		return
 	}
+	fmt.Printf("DIAG BEGIN now_ms=%d una=%d nxt=%d high=%d cwnd=%d sacked=%d out_before=%d\n", s.ep.stack.Clock().NowMonotonic().Milliseconds(), s.SndUna, s.SndNxt, s.FastRecovery.HighRxt, s.SndCwnd, s.SackedOut, s.Outstanding)
 	pipe := 0
 	smss := seqnum.Size(s.ep.scoreboard.SMSS())
 	for s1 := s.writeList.Front(); s1 != nil && s1.payloadSize() != 0 && s.isAssignedSequenceNumber(s1); s1 = s1.Next() {
@@ -1233,6 +1235,7 @@ func (s *sender) SetPipe() {
 				break
 			}
 			if s.ep.scoreboard.IsSACKED(sb) {
+				fmt.Printf("DIAG RANGE lo=%d hi=%d lost=%t xmits=%d observed=%t credit=%d scoreboard_sacked=true scoreboard_lost=skipped a=0 b=0\n", sb.Start, sb.End, s1.lost, s1.xmitCount, s1.acked, -1)
 				continue
 			}
 
@@ -1247,11 +1250,13 @@ func (s *sender) SetPipe() {
 			// A segment RACK marked lost is not in flight either, as in
 			// Linux's tcp_packets_in_flight. IsLost alone needs SACKed data
 			// above the segment, which a tail loss never produces.
+			before := pipe
 			if !s1.lost && !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
 			// SetPipe():
 			//    (b) If S1 <= HighRxt, Pipe is incremented by 1.
+			afterA := pipe
 			countRepair := s1.sequenceNumber.LessThanEq(s.FastRecovery.HighRxt)
 			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
 				countRepair = startSeq.LessThanEq(s.FastRecovery.HighRxt) && s1.xmitCount > 1 && !s1.lost
@@ -1259,9 +1264,11 @@ func (s *sender) SetPipe() {
 			if countRepair {
 				pipe++
 			}
+			fmt.Printf("DIAG RANGE lo=%d hi=%d lost=%t xmits=%d observed=%t credit=%d scoreboard_sacked=false scoreboard_lost=%t a=%d b=%d\n", sb.Start, sb.End, s1.lost, s1.xmitCount, s1.acked, -1, s.ep.scoreboard.IsRangeLost(sb), afterA-before, pipe-afterA)
 		}
 	}
 	s.Outstanding = pipe
+	fmt.Printf("DIAG TOTAL now_ms=%d una=%d high=%d pipe=%d\n", s.ep.stack.Clock().NowMonotonic().Milliseconds(), s.SndUna, s.FastRecovery.HighRxt, pipe)
 }
 
 // shouldEnterRecovery returns true if the sender should enter fast recovery
@@ -1840,10 +1847,12 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	if err == nil && s.FastRecovery.Active && s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 && seg.xmitCount > 1 && seg.payloadSize() != 0 {
 		// HighRxt is the highest byte retransmitted during recovery. The
 		// write cursor can send these repairs directly after a timeout.
+		previous := s.FastRecovery.HighRxt
 		last := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize())) - 1
 		if s.FastRecovery.HighRxt.LessThan(last) {
 			s.FastRecovery.HighRxt = last
 		}
+		fmt.Printf("COPY TX t_ms=%d lo=%d last=%d high_before=%d high_after=%d xmits=%d\n", s.ep.stack.Clock().NowMonotonic().Milliseconds(), seg.sequenceNumber, last, previous, s.FastRecovery.HighRxt, seg.xmitCount)
 	}
 
 	// Every time a packet containing data is sent (including a
@@ -1942,4 +1951,8 @@ func (s *sender) corkTimerExpired() tcpip.Error {
 	// Drain all the segments.
 	s.sendData()
 	return nil
+}
+
+func (s *sender) pipeReplayTimer(name string) {
+	fmt.Printf("DIAG TIMER name=%s now_ms=%d una=%d high=%d cwnd=%d pipe=%d\n", name, s.ep.stack.Clock().NowMonotonic().Milliseconds(), s.SndUna, s.FastRecovery.HighRxt, s.SndCwnd, s.Outstanding)
 }
