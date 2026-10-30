@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T00:07:45.438244+00:00",
+    "updatedAt": "2026-10-30T00:11:26.175497+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50119,9 +50119,30 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T00:07:45.438244+00:00",
+      "updatedAt": "2026-10-30T00:11:26.175497+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The released rules_python 2.4.5 ZIP rule and hermetic_launcher 0.0.17 ran the unchanged rules_pkg tar writer on an empty AMD64 worker. The runtime and application occupied separate directories mapped by the manifest; deleting the interpreter mapping failed as expected. The tar matched the reference SHA-256. This uses neither a host shell nor an unreleased rules_python change, but its ZIP is 65,671,902 bytes for this writer. The equivalent split-directory test still fails with the normal Python application prototype, and this run covers one tar action on AMD64.",
+          "evidence": [
+            {
+              "label": "Relocated ZIP writer: exact output and negative control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40977676875/artifacts/12942638937"
+            },
+            {
+              "label": "Uncached empty AMD64 worker action",
+              "url": "https://app.buildbuddy.io/invocation/54077076-0b37-4d8e-be7d-79304edd160e"
+            },
+            {
+              "label": "Released zipapp with a declared native launcher",
+              "url": "https://github.com/tamird/gvisor/commit/fe8c2a8e8"
+            },
+            {
+              "label": "Earlier generic Python launcher: separate directory failure",
+              "url": "https://app.buildbuddy.io/invocation/b7e66415-96eb-4da6-92a0-d2d0aebc22b2"
+            }
+          ]
+        },
         {
           "text": "The native version reader and Debian changelog writer completed eight uncached actions on empty AMD64 and ARM64 workers. Neither executable needed an ELF interpreter. Both CPU configurations produced the same 186-byte changelog for release-20261029.0 (midnight UTC, October 29), and the same 185-byte changelog for git-9c271665f (Unix epoch). Verification followed the last execution by 1.195 seconds without manual recovery. A separate run tested the module-map helper and the compiler-rt archives that consume it; the full compiler and release graphs have not been qualified on scratch.",
           "evidence": [
@@ -50830,8 +50851,24 @@
           ]
         }
       ],
-      "nextStep": "Qualify the full compiler and release graphs on scratch. The version reader, changelog writer, module-map helper and consuming compiler-rt archives have scoped results. For static Python, test a launcher for the unmodified writers that needs no host programs and supports separate manifest directories; unstamped metadata is already on master.",
+      "nextStep": "Qualify the full compiler and release graphs on scratch. The native version reader, changelog writer, module-map helper and consuming compiler-rt archives already have scoped results. For the Python packaging tools, compare the cost of the released ZIP option against a normal launcher and qualify the chosen mode for the archive writers on both architectures.",
       "evidence": [
+        {
+          "label": "Relocated ZIP writer: exact output and negative control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40977676875/artifacts/12942638937"
+        },
+        {
+          "label": "Uncached empty AMD64 worker action",
+          "url": "https://app.buildbuddy.io/invocation/54077076-0b37-4d8e-be7d-79304edd160e"
+        },
+        {
+          "label": "Released zipapp with a declared native launcher",
+          "url": "https://github.com/tamird/gvisor/commit/fe8c2a8e8"
+        },
+        {
+          "label": "Earlier generic Python launcher: separate directory failure",
+          "url": "https://app.buildbuddy.io/invocation/b7e66415-96eb-4da6-92a0-d2d0aebc22b2"
+        },
         {
           "label": "Version reader and changelog: all eight empty-worker action verdicts",
           "url": "https://github.com/tamird/gvisor/actions/runs/40976973163/artifacts/12942293991"
