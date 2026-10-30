@@ -19,8 +19,8 @@ flags = ["bazel", "--bazelrc="+str(rc), "build", "--jobs=4", "--curses=no", "--c
          "--workspace_status_command=", "--remote_executor=grpcs://remote.buildbuddy.io", "--remote_cache=grpcs://remote.buildbuddy.io",
          "--bes_backend=grpcs://remote.buildbuddy.io", "--bes_results_url=https://app.buildbuddy.io/invocation/",
          "--remote_download_outputs=toplevel", "--extra_execution_platforms=//test/rbe/website-jekyll:scratch",
-         "--spawn_strategy=local", "--strategy=JekyllSite=remote", "--strategy=WebsiteSyscallJSON=local",
-         "--strategy=WebsiteSyscallDocs=local", "--verbose_failures", "--build_event_publish_all_actions",
+         "--spawn_strategy=sandboxed", "--strategy=JekyllSite=remote", "--strategy=WebsiteSyscallJSON=sandboxed",
+         "--strategy=WebsiteSyscallDocs=sandboxed", "--verbose_failures", "--build_event_publish_all_actions",
          "--nobuild_event_json_file_path_conversion", "--build_event_json_file="+str(p/"pair.bep")]
 try:
     cmd = flags + ["--keep_going", "//website:files", "//website:site_docker_archive", "//website:rendered_site"]
@@ -42,10 +42,16 @@ try:
     (p/"actions.json").write_text(json.dumps({"exit":result.returncode,"events":events},indent=2)+"\n")
 finally:
     rc.unlink(missing_ok=True)
+stock, fixed = {}, {}
+baseline_tar = Path("bazel-bin/website/files.tgz")
+if baseline_tar.exists():
+    with tarfile.open(baseline_tar, "r:*") as archive:
+        digests = {entry.name.removeprefix("./"): {"size": entry.size, "sha256": hashlib.sha256(archive.extractfile(entry).read()).hexdigest()} for entry in archive.getmembers() if entry.isfile()}
+    (p/"stock-digests.json").write_text(json.dumps(digests, sort_keys=True)+"\n")
+    print("Preserved", len(digests), "individual stock file digests", flush=True)
 if result.returncode:
     sys.exit(result.returncode)
-stock, fixed = {}, {}
-with tarfile.open("bazel-bin/website/files.tgz","r:*") as archive:
+with tarfile.open(baseline_tar,"r:*") as archive:
     for entry in archive.getmembers():
         if entry.isfile():
             name=entry.name.removeprefix("./")

@@ -15,6 +15,7 @@ jobs:
           persist-credentials: false
       - name: Prepare the stock source and packaged SDK
         run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           sudo apt-get -qq update
           sudo apt-get -qq install --no-install-recommends build-essential crossbuild-essential-arm64
           mkdir "$RUNNER_TEMP/website-probe"
