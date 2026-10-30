@@ -9,17 +9,6 @@ diff --git a/MODULE.bazel b/MODULE.bazel
  bazel_dep(name = "rules_cc", version = "0.2.17")
  bazel_dep(name = "toml.bzl", version = "0.4.1")
  
-diff --git a/python/private/flags.bzl b/python/private/flags.bzl
---- a/python/private/flags.bzl
-+++ b/python/private/flags.bzl
-@@ -145,6 +145,7 @@
- BootstrapImplFlag = enum(
-     SYSTEM_PYTHON = "system_python",
-     SCRIPT = "script",
-+    NATIVE = "native",
-     get_value = _bootstrap_impl_flag_get_value,
- )
- 
 diff --git a/python/private/BUILD.bazel b/python/private/BUILD.bazel
 --- a/python/private/BUILD.bazel
 +++ b/python/private/BUILD.bazel
@@ -31,24 +20,38 @@ diff --git a/python/private/BUILD.bazel b/python/private/BUILD.bazel
  load(":py_exec_tools_toolchain.bzl", "current_interpreter_executable")
  load(":py_interpreter_program.bzl", "py_interpreter_program")
  load(":sentinel_impl.bzl", "sentinel")
-@@ -1083,3 +1084,5 @@
+@@ -1034,3 +1035,8 @@
      name = "visibility",
      srcs = ["visibility.bzl"],
  )
 +
-+native_launcher_api(name = "native_launcher_api")
++native_launcher_api(
++    name = "native_launcher_api",
++    bootstrap = ":python_bootstrap_template.txt",
++)
+diff --git a/python/private/flags.bzl b/python/private/flags.bzl
+--- a/python/private/flags.bzl
++++ b/python/private/flags.bzl
+@@ -145,6 +145,7 @@
+ BootstrapImplFlag = enum(
+     SYSTEM_PYTHON = "system_python",
+     SCRIPT = "script",
++    NATIVE = "native",
+     get_value = _bootstrap_impl_flag_get_value,
+ )
+ 
 diff --git a/python/private/py_executable.bzl b/python/private/py_executable.bzl
 --- a/python/private/py_executable.bzl
 +++ b/python/private/py_executable.bzl
-@@ -215,6 +215,7 @@
-             allow_single_file = True,
-             default = "//python/private:bootstrap_cleanup",
+@@ -208,6 +208,7 @@
+         "_allowlist_function_transition": lambda: attrb.Label(
+             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
          ),
 +        "_native_launcher_api": lambda: attrb.Label(default = "//python/private:native_launcher_api"),
          "_bootstrap_impl_flag": lambda: attrb.Label(
              default = labels.BOOTSTRAP_IMPL,
              providers = [BuildSettingInfo],
-@@ -356,7 +357,7 @@
+@@ -348,7 +349,7 @@
              imports = imports,
              runtime_details = runtime_details,
              add_runfiles_root_to_sys_path = (
@@ -57,24 +60,37 @@ diff --git a/python/private/py_executable.bzl b/python/private/py_executable.bzl
              ),
              extra_deps = extra_deps,
          )
-@@ -490,6 +491,16 @@
-             runtime_details = runtime_details,
+@@ -469,9 +470,19 @@
              venv = venv,
          )
-+    elif (
-+        bootstrap_output and not is_windows and application and
-+        BootstrapImplFlag.get_value(ctx) == BootstrapImplFlag.NATIVE and
-+        is_default_bootstrap(ctx, runtime_details.effective_runtime.bootstrap_template) and
-+        ctx.attr._native_launcher_api[platform_common.ToolchainInfo].supported(ctx, runtime_details.effective_runtime, venv, executable)
-+    ):
-+        adapter = ctx.actions.declare_file(executable.basename + ".bootstrap.py", sibling = executable)
-+        create_application_launcher(ctx, application = application, output = adapter, shell_entry = False)
-+        ctx.attr._native_launcher_api[platform_common.ToolchainInfo].create(ctx, runtime_details.effective_runtime, executable, adapter)
-+        extra_runfiles = extra_runfiles.merge(ctx.runfiles([adapter]))
      elif bootstrap_output:
++        bootstrap = bootstrap_output
++        native = ctx.attr._native_launcher_api[platform_common.ToolchainInfo]
++        use_native = (
++            not is_windows and
++            BootstrapImplFlag.get_value(ctx) == BootstrapImplFlag.NATIVE and
++            native.supported(ctx, runtime_details.effective_runtime, bootstrap_output, native.bootstrap)
++        )
++        if use_native:
++            bootstrap = ctx.actions.declare_file(bootstrap_output.basename + ".bootstrap.py", sibling = bootstrap_output)
++            extra_runfiles = extra_runfiles.merge(ctx.runfiles([bootstrap]))
          _create_stage1_bootstrap(
              ctx,
-@@ -2253,6 +2264,8 @@
+-            output = bootstrap_output,
++            output = bootstrap,
+             stage2_bootstrap = stage2_bootstrap,
+             runtime_details = runtime_details,
+             is_for_zip = False,
+@@ -479,6 +490,8 @@
+             main_py = main_py,
+             venv = venv,
+         )
++        if use_native:
++            native.create(ctx, runtime_details.effective_runtime, bootstrap_output, bootstrap)
+     else:
+         # Otherwise, this should be the Windows case of launcher + zip.
+         # Double check this just to make sure.
+@@ -2237,6 +2250,8 @@
              ruleb.ToolchainType(TOOLCHAIN_TYPE),
              ruleb.ToolchainType(EXEC_TOOLS_TOOLCHAIN_TYPE, mandatory = False),
              ruleb.ToolchainType(CC_TOOLCHAIN_TYPE, mandatory = False),
@@ -87,8 +103,8 @@ diff --git a/python/private/native_launcher.bzl b/python/private/native_launcher
 new file mode 100644
 --- /dev/null
 +++ b/python/private/native_launcher.bzl
-@@ -0,0 +1,32 @@
-+"""Native launcher API for an in-build, directory-backed POSIX application.
+@@ -0,0 +1,33 @@
++"""Start the standard Python bootstrap with the declared interpreter on POSIX.
 +
 +Load the finalizer through a configured target: Bazel 8 autoloads py_binary
 +while loading foreign .bzl files, so importing it in py_executable would
@@ -97,12 +113,11 @@ new file mode 100644
 +
 +load("@hermetic_launcher//launcher:lib.bzl", "launcher")
 +
-+def _supported(ctx, runtime, venv, executable):
++def _supported(ctx, runtime, executable, bootstrap):
 +    # Only four slots are needed; the released template holds 256 bytes each.
 +    # Application-specific interpreter options belong to the existing adapter.
 +    return (
-+        runtime and runtime.interpreter and getattr(runtime, "supports_build_time_venv", False) and
-+        not venv.recreate_venv_at_runtime and
++        runtime and runtime.interpreter and runtime.bootstrap_template == bootstrap and
 +        ctx.toolchains[launcher.finalizer_toolchain_type] != None and
 +        ctx.toolchains[launcher.template_toolchain_type] != None and
 +        len(launcher.to_rlocation_path(runtime.interpreter)) <= 256 and
@@ -116,7 +131,9 @@ new file mode 100644
 +    launcher.compile_stub(ctx = ctx, embedded_args = args, transformed_args = transformed, output_file = output)
 +
 +def _native_launcher_api_impl(ctx):
-+    _ = ctx
-+    return [platform_common.ToolchainInfo(supported = _supported, create = _create)]
++    return [platform_common.ToolchainInfo(bootstrap = ctx.file.bootstrap, supported = _supported, create = _create)]
 +
-+native_launcher_api = rule(implementation = _native_launcher_api_impl)
++native_launcher_api = rule(
++    implementation = _native_launcher_api_impl,
++    attrs = {"bootstrap": attr.label(allow_single_file = True, mandatory = True)},
++)

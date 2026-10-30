@@ -1,7 +1,7 @@
 name: Exercise native package tool launchers
 on:
   push:
-    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated, qualification/rules-python-native-launcher-4183-relocated-argv]
+    branches: [qualification/rules-python-native-stock-stage1]
 permissions:
   actions: read
   contents: read
@@ -17,20 +17,22 @@ jobs:
       QUALIFICATION_LANES: build
       QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
       QUALIFICATION_CLOCK_SOURCE: calibrated
-      QUALIFICATION_TARGETS: ${{ startsWith(github.ref_name, 'qualification/rules-python-native-launcher-4183-relocated') && '//test/rbe/python_package_writers:relocated' || '//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated' }}
+      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated
       QUALIFICATION_HEADER_BASE: ''
       QUALIFICATION_COS_SHA256: ''
       QUALIFICATION_COS_GZIP_BASE64: ''
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
-      - name: Install the lock resolved by the exact no-credential graph
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Resolve the dependency lock and both execution-configured writers
         run: |
-          gh run download 40804613540 --repo "$GITHUB_REPOSITORY" --name launcher-resolution --dir "$RUNNER_TEMP/launcher-resolution"
-          cp "$RUNNER_TEMP/launcher-resolution/gvisor/gvisor/MODULE.bazel.lock" MODULE.bazel.lock
-          echo '8c79115ccdedab474c241d04425b9bd4a94269904510e6e4bd380fdfbcad45af  MODULE.bazel.lock' | sha256sum -c -
+          set -euo pipefail
+          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/preflight.bazelrc"
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config=rbe --config=x86_64 --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=native --output=jsonproto \
+            'outputs(".*/(build_tar|make_deb)$", deps(set(//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated)))' > "$RUNNER_TEMP/writers.json"
+          python3 test/rbe/python_package_writers/launcher_graph.py "$RUNNER_TEMP/writers.json" "$RUNNER_TEMP/native-graph.json"
       - name: Fetch the pinned execution log decoder
         run: |
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
@@ -51,5 +53,7 @@ jobs:
         if: always()
         with:
           name: native-launcher-evidence
-          path: ${{ runner.temp }}/native-launcher.json
+          path: |
+            ${{ runner.temp }}/native-launcher.json
+            ${{ runner.temp }}/native-graph.json
           if-no-files-found: error

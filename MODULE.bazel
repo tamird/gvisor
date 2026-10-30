@@ -37,14 +37,14 @@ bazel_dep(name = "google_benchmark", version = "1.10.0", repo_name = "com_google
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.2")
 bazel_dep(name = "rules_python", version = "2.4.5")
 
-# Exercise the common application adapter proposed in rules_python#4183.
+# Exercise the existing Python bootstrap shipped by rules_python 2.4.5.
 archive_override(
     module_name = "rules_python",
-    integrity = "sha256-hx9NQx3SUNUCs2WH9vMTAgWkspMYNrNkbAZ5h+380Lo=",
+    integrity = "sha256-BQiEAvo1avCXBk28zXCCoGEXHvOfvXSPq5Rul3X0ahY=",
     patch_strip = 1,
     patches = ["//tools:rules_python_native_launcher.patch"],
-    strip_prefix = "rules_python-7fac02f245a10a16c71e04b395d00a89c67688a2",
-    urls = ["https://github.com/bazel-contrib/rules_python/archive/7fac02f245a10a16c71e04b395d00a89c67688a2.tar.gz"],
+    strip_prefix = "rules_python-2.4.5",
+    urls = ["https://github.com/bazel-contrib/rules_python/releases/download/2.4.5/rules_python-2.4.5.tar.gz"],
 )
 bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2", repo_name = "llvm_zlib")
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")

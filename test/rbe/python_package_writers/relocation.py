@@ -56,7 +56,8 @@ with tempfile.TemporaryDirectory(dir=output.parent) as work:
     repo_dirs = sorted(p for p in runfiles.iterdir() if p.is_dir())
     assert len(repo_dirs) >= 2
     manifest = root / "names.runfiles_manifest"
-    env = {"RUNFILES_MANIFEST_FILE": str(manifest), "PATH": "/no-host-tools"}
+    env = {"RUNFILES_MANIFEST_FILE": str(manifest), "PATH": "/no-host-tools",
+           "RULES_PYTHON_ADDITIONAL_INTERPRETER_ARGS": "-X importtime"}
     product = root / "output.tar"
     # rules_pkg's real tar.bzl always supplies directory (default /), along
     # with mode, owner and mtime. Preserve the seed's existing share/ prefix.
@@ -75,6 +76,7 @@ with tempfile.TemporaryDirectory(dir=output.parent) as work:
     restored = launch([(p.name, p) for p in repo_dirs])
     if restored.returncode:
         raise RuntimeError(f"Relocated writer failed: {restored.stderr!r}")
+    assert b"import time:" in restored.stderr, restored.stderr
     assert notice(product) == notice(seed)
     archive_sha = digest(product)
     payload_sha = hashlib.sha256(notice(product)).hexdigest()
@@ -104,9 +106,11 @@ with tempfile.TemporaryDirectory(dir=output.parent) as work:
         "manifest_prefixes": [p.name for p in repo_dirs],
         "missing_prefix_exit": missing.returncode,
         "relocated_exit": restored.returncode,
+        "interpreter_importtime": b"import time:" in restored.stderr,
         "relocated_archive": archive_sha,
         "payload": payload_sha,
         "independent_roots_exit": split.returncode,
-        "independent_roots_adapter_missing_root": b"Cannot find application runfiles for " in split.stderr,
+        "independent_roots_diagnostic": split.stderr.decode(errors="replace")[-600:],
+        "independent_roots_adapter_missing_root": b"Cannot find .runfiles directory" in split.stderr,
     }
 output.write_text(json.dumps(result, sort_keys=True) + "\n")

@@ -64,6 +64,9 @@ def inspect(result):
             assert program.endswith("/" + WRITERS[key]), program
             launcher = Path(program).read_bytes()
             assert launcher[:5] == b"\x7fELF\x02" and int.from_bytes(launcher[18:20], "little") == 62
+            stage1 = Path(program + ".bootstrap.py").read_bytes()
+            assert b"python_bootstrap_template.txt" in stage1 and b"find_runfiles_root" in stage1, program
+            rec["python_bootstrap_sha256"] = digest(stage1)
             off = struct.unpack_from("<Q", launcher, 32)[0]
             size, count = struct.unpack_from("<HH", launcher, 54)
             assert all(struct.unpack_from("<I", launcher, off + i * size)[0] != 3 for i in range(count))
@@ -95,6 +98,7 @@ def inspect(result):
         writer = "b4e39567888f7f6e390260950a6cdf89bae5f2b4dda1c0b1dd4450962f5c8922"
     else:
         writer = records["PackageTar"]["executable"][1]
+    assert manifest["interpreter_importtime"] and (manifest["independent_roots_exit"] == 0 or manifest["independent_roots_adapter_missing_root"]), manifest
     assert manifest["writer"] == writer and manifest["interpreter"] == PYTHON
     assert manifest["missing_prefix_exit"] != 0 and manifest["relocated_exit"] == 0 and len(manifest["manifest_prefixes"]) >= 2
 
