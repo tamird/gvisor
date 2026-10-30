@@ -35,7 +35,6 @@ import (
 
 var (
 	goTool       = flag.String("go", "", "Go executable for resolving generated imports")
-	srcDir       = flag.String("srcdir", "", "source directory for resolving sibling imports")
 	fullPkg      = flag.String("fullpkg", "", "fully qualified output package")
 	extraImports = flag.String("imports", "", "extra imports for the output file")
 	output       = flag.String("output", "", "output file")
@@ -181,7 +180,7 @@ func main() {
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	if len(flag.Args()) == 0 {
+	if *goTool == "" || flag.NArg() == 0 {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -190,8 +189,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	outputFile := new(bytes.Buffer)
+	var outputFile bytes.Buffer
+	generate(&outputFile)
+	if err := writeSource(outputFile.Bytes()); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
 
+func generate(outputFile *bytes.Buffer) {
 	// Set the statePrefix for below, depending on the import.
 	statePrefix := ""
 	if *statePkg != "" {
@@ -512,33 +518,25 @@ func main() {
 		}
 		fmt.Fprintf(outputFile, "}\n")
 	}
-
-	if err := writeSource(outputFile.Bytes()); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }
 
 // writeSource fixes the generated imports and writes the formatted Go file.
 func writeSource(src []byte) error {
-	if *goTool != "" {
-		// goimports looks up go on PATH; os/exec rejects relative entries.
-		goPath, err := filepath.Abs(*goTool)
-		if err != nil {
-			return err
-		}
-		if err := os.Setenv("PATH", filepath.Dir(goPath)); err != nil {
-			return err
-		}
+	// Set PATH here rather than in ctx.actions.run(env=...) because we need
+	// the action's runtime working directory to build an absolute entry.
+	// goimports locates "go" via os/exec.LookPath("go"), which refuses to
+	// execute commands found via a relative PATH entry.
+	//
+	// See https://pkg.go.dev/os/exec#hdr-Executables_in_the_current_directory.
+	goPath, err := filepath.Abs(*goTool)
+	if err != nil {
+		return err
 	}
-	// Use the package directory so goimports sees the same source files as
-	// the generator when resolving names used only in state tags.
-	dir := *srcDir
-	if dir == "" {
-		dir = filepath.Dir(flag.Arg(0))
+	if err := os.Setenv("PATH", filepath.Dir(goPath)); err != nil {
+		return err
 	}
-	name := filepath.Join(dir, "state_autogen.go")
-	src, err := imports.Process(name, src, nil)
+
+	src, err = imports.Process(*output, src, nil)
 	if err != nil {
 		return err
 	}

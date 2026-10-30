@@ -5,19 +5,21 @@ load("//tools/bazeldefs:go.bzl", "go_context", "go_rule")
 
 def _go_stateify_impl(ctx):
     """Implementation for the stateify tool."""
-    go = go_context(ctx)
+    go_ctx = go_context(ctx)
     output = ctx.outputs.out
 
-    # Only the SDK's go command belongs on goimports' PATH.
-    go_tool = ctx.actions.declare_file(ctx.label.name + "_tools/go")
-    ctx.actions.symlink(output = go_tool, target_file = go.go, is_executable = True)
+    tools_path = paths.join(ctx.label.name + "_tools")
 
-    # Run the stateify command.
-    args = ["-go=%s" % go_tool.path, "-output=%s" % output.path]
-    if any([src.is_source for src in ctx.files.srcs]):
-        # Without source files, imports must be resolved alongside generated inputs.
-        srcdir = paths.join(ctx.label.workspace_root, ctx.label.package) or "."
-        args.append("-srcdir=%s" % srcdir)
+    # Use a symlink to the `go` binary to avoid exposing undeclared dependencies
+    # on other binaries in the same directory in the toolchain.
+    go_symlink = ctx.actions.declare_file(paths.join(tools_path, "go"))
+    ctx.actions.symlink(
+        output = go_symlink,
+        target_file = go_ctx.go,
+        is_executable = True,
+    )
+
+    args = ["-go=%s" % go_symlink.path, "-output=%s" % output.path]
     args.append("-fullpkg=%s" % ctx.attr.package)
     if ctx.attr._statepkg:
         args.append("-statepkg=%s" % ctx.attr._statepkg)
@@ -28,8 +30,8 @@ def _go_stateify_impl(ctx):
         args += [f.path for f in src.files.to_list()]
     ctx.actions.run(
         inputs = ctx.files.srcs,
-        tools = [go_tool, go.runfiles],
-        env = dict(go.env, GOPROXY = "off", GOTOOLCHAIN = "local", GOWORK = "off"),
+        tools = [go_symlink, go_ctx.runfiles],
+        env = go_ctx.env,
         outputs = [output],
         mnemonic = "GoStateify",
         progress_message = "Generating state library %s" % ctx.label,
