@@ -37,5 +37,18 @@ for a in d.get('action',[]):
             tree=et.fromstring(raw)
             p['suites']=[{'name':x.get('name','')[:70],'tests':x.get('tests'),'errors':x.get('errors'),'failures':x.get('failures')} for x in tree.iter('testsuite')][:10]
         report['files'].append(p)
-if not report['files']:raise SystemExit("no requested original test output")
+if not report['files']:
+    token="0000"; seen=set(); selected=[]
+    while token and token not in seen and len(seen)<55:
+        seen.add(token)
+        page=json.loads(read('GetLog',{'selector':{'invocation_id':inv},'page_token':token},4<<20))
+        raw=page.get('log',{}).get('contents','')
+        for line in re.sub(r'\x1b\[[;\d]*[A-Za-z]','',raw).replace('\r','\n').splitlines():
+            item=safe(line)
+            if item and item not in selected and len(selected)<60:selected.append(item)
+        token=page.get('nextPageToken','')
+    report['actionCount']=len(d.get('action',[]))
+    report['consolePages']=len(seen)
+    report['consoleDiagnostics']=selected
+    report['fileTypes']=[{'name':f.get('name','').rsplit('/',1)[-1][:50],'scheme':urlsplit(f.get('uri','')).scheme} for a in d.get('action',[]) for f in a.get('file',[])][:15]
 print(json.dumps(report));Path(os.environ['RUNNER_TEMP'],'overlay-race-original.json').write_text(json.dumps(report))
