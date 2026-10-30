@@ -2,9 +2,16 @@
 # Resolve them before Jekyll changes directory to generate relative Sass URLs.
 unless ARGV.fetch(2).start_with?("/")
   inputs, dest, loader, libraries, node, checks = ARGV
-  loader = File.expand_path(loader)
-  ruby = File.join(File.dirname(File.dirname(loader)), "usr/local/bin/ruby")
-  libraries = libraries.split(":").map { |path| File.expand_path(path) }.join(":")
+  sdk = File.dirname(File.dirname(loader))
+  # A local Bazel sandbox symlinks the declared SDK files into its execroot.
+  # Ruby resolves relative requires through the underlying files too. Use one
+  # spelling throughout so RubyGems and Jekyll load each feature exactly once.
+  ruby = File.realpath(File.join(sdk, "usr/local/bin/ruby"))
+  runtime = File.expand_path("../../..", File.dirname(ruby))
+  sdk_path = ->(path) { File.join(runtime, path.delete_prefix(sdk + "/")) }
+  loader = sdk_path.call(loader)
+  libraries = libraries.split(":").map(&sdk_path).join(":")
+  %w[GEM_PATH RUBYLIB].each { |key| ENV[key] = ENV.fetch(key).split(":").map(&sdk_path).join(":") }
   exec(loader, "--library-path", libraries, ruby, File.expand_path(__FILE__),
        inputs, dest, loader, libraries, node, checks)
 end

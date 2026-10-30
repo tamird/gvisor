@@ -67,6 +67,8 @@ def _site_impl(ctx):
         "--library-path",
         lib,
         root + "usr/local/bin/ruby",
+        # The bootstrap resolves SDK paths before the rendering Ruby loads its gems.
+        "--disable-gems",
         ctx.file.driver.path,
         def_args.path,
         output.path,
