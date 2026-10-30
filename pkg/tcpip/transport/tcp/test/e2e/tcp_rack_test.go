@@ -1190,7 +1190,7 @@ func TestSackedOutAfterPMTU(t *testing.T) {
 	e2e.SetStackTCPRecovery(t, c, 0)
 	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, []byte{
 		header.TCPOptionMSS, 4, byte(oldMSS / 256), byte(oldMSS % 256),
-		header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength,
+		header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP,
 	})
 	const packets = 5
 	if _, err := c.EP.Write(bytes.NewReader(make([]byte, packets*oldMSS)), tcpip.WriteOptions{}); err != nil {
