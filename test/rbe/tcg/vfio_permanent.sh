@@ -21,7 +21,7 @@ for platform in native runsc_systrap; do
   echo "$platform: $rc" >> "$out/verdict.txt"
   cat "$out/$platform.txt"
   if [[ $platform = runsc_systrap ]]; then
-    grep -hEi 'failed|warning|error|vfio' "$exports"/runsc_logs/*/*/* "$exports"/*/*.txt 2>/dev/null | tail -40 > "$out/runtime-diagnostics.txt" || :
+    find "$exports" -type f \( -name "*.txt" -o -name "*.log" -o -name "*.txt.*" \) -exec grep -hEi 'failed|warning|error|vfio|denied|permission' {} + 2>/dev/null | tail -70 > "$out/runtime-diagnostics.txt" || :
   fi
   if (( rc != 0 )) || ! grep -q 'OK .*VfioPCIDeviceTest.Readiness' "$out/$platform.txt"; then status=1; fi
 done

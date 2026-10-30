@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: 543df058c28d8bd6a842f27bd006287dfab5635f
+      PRODUCT: 53baa516391e749a3373a613b971fe3b257c3edc
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
@@ -55,24 +55,31 @@ jobs:
         carrier=$(git rev-parse HEAD)
         git checkout --quiet --detach "$PRODUCT"
         git rev-parse HEAD > "$out/product"
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=25 --remote_download_outputs=toplevel //:release //test/syscalls:vfio_pci_device_test_native //test/syscalls:vfio_pci_device_test_runsc_systrap > "$RUNNER_TEMP/product-build.log" 2>&1 || { grep -A15 -E 'ERROR:|INFO: Invocation ID:' "$RUNNER_TEMP/product-build.log" | tail -80 | tee "$out/build-receipt"; exit 1; }
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=25 --remote_download_outputs=toplevel //:release //test/runner:runner //test/runner/setup_container //test/syscalls/linux:vfio_pci_device_test //test/syscalls:vfio_pci_device_test_native //test/syscalls:vfio_pci_device_test_runsc_systrap > "$RUNNER_TEMP/product-build.log" 2>&1 || { grep -A15 -E 'ERROR:|INFO: Invocation ID:' "$RUNNER_TEMP/product-build.log" | tail -80 | tee "$out/build-receipt"; exit 1; }
         grep -E 'INFO: Invocation ID:|Build completed' "$RUNNER_TEMP/product-build.log" > "$out/build-receipt"
         docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" query --output=build 'set(//test/syscalls:vfio_pci_device_test_native //test/syscalls:vfio_pci_device_test_runsc_systrap)' > "$out/target-arguments"
-        grep -Fq -- '--add-host-vfio' "$out/target-arguments"
+        test "$(grep -Fc -- '--add-host-vfio' "$out/target-arguments")" = 2
+        test "$(grep -Fc -- 'exclusive-if-local' "$out/target-arguments")" = 2
         stage="$RUNNER_TEMP/suite"
-        mkdir -p "$stage"/{test/runner/setup_container,test/syscalls/linux,release}
-        rf=bazel-bin/test/syscalls/vfio_pci_device_test_native.runfiles/_main
-        for path in test/runner/runner test/runner/setup_container/setup_container test/syscalls/linux/vfio_pci_device_test; do
-          docker exec overlay-guest cp -L "$rf/$path" "$stage/$path"
-        done
+        mkdir -p "$stage/release"
         for platform in native runsc_systrap; do
           docker exec overlay-guest cp -L "bazel-bin/test/syscalls/vfio_pci_device_test_$platform" "$stage/$platform"
+          cp "$stage/$platform" "$out/$platform-wrapper"
+        done
+        runner=$(awk '$1=="exec"{print $2}' "$stage/native")
+        test_bin=$(awk '$1=="exec"{print $NF}' "$stage/native")
+        [[ "$runner" == test/runner/* && "$test_bin" == test/syscalls/linux/* ]]
+        setup=test/runner/setup_container/setup_container
+        for path in "$runner" "$test_bin" "$setup"; do
+          mkdir -p "$stage/$(dirname "$path")"
+          docker exec overlay-guest cp -L "bazel-bin/$path" "$stage/$path"
+          test -x "$stage/$path"
         done
         docker exec overlay-guest cp -RL --preserve=mode bazel-bin/release/. "$stage/release"
         for name in runsc gvisor-bin/gvisor_sentry gvisor-bin/checkpointgofer gvisor-bin/gvisor-sentry-prewarmer gvisor-bin/gvisor-proc-umounter gvisor-bin/runsc-fd-parking gvisor-bin/runsc-metric-server; do test -x "$stage/release/$name"; done
-        sha256sum "$stage"/{native,runsc_systrap,test/runner/runner,test/runner/setup_container/setup_container,test/syscalls/linux/vfio_pci_device_test,release/runsc,release/gvisor-bin/*} | sed "s#$stage/##" > "$stage/sha256"
+        sha256sum "$stage/$runner" "$stage/$test_bin" "$stage/$setup" "$stage"/{native,runsc_systrap,release/runsc,release/gvisor-bin/*} | sed "s#$stage/##" > "$stage/sha256"
         cp "$stage/sha256" "$out/product-hashes"
-        for path in test/runner/runner test/runner/setup_container/setup_container test/syscalls/linux/vfio_pci_device_test; do
+        for path in "$runner" "$test_bin" "$setup"; do
           docker exec overlay-guest ldd "$stage/$path" >> "$out/ldd" 2>&1 || { file "$stage/$path" | grep -Eq 'statically linked|static-pie linked'; }
         done
         if grep -q 'not found' "$out/ldd"; then cat "$out/ldd"; exit 1; fi
