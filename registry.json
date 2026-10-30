@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T21:19:57.406552+00:00",
+    "updatedAt": "2026-10-30T21:25:47.985190+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2035,18 +2035,22 @@
       }
     },
     {
-      "id": "branch:python-release-staging-isolation",
-      "type": "branch",
+      "id": "pr:16766",
+      "type": "pr",
       "group": "release",
-      "repo": "tamird/gvisor",
+      "repo": "google/gvisor",
       "ref": "research/python-release-staging-isolation",
-      "head": "6be2b030b0018a818ebfba80fe8191969aa078f6",
+      "head": "8dad7a574b6914fc2aea3609f92235af9ca7b0d3",
       "title": "Stage only the current Python release archives",
-      "url": "https://github.com/tamird/gvisor/commit/6be2b030b",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
-      "summary": "Building two tags in the same checkout placed four files in the second release and overwrote pyproject.toml. A private project and fresh setuptools source list leave just the current wheel and source archive. Both frontends preserved the tracked version; the corrected sdist retained the same 12 members even when an old manifest named the previous tarball.",
+      "url": "https://github.com/google/gvisor/pull/16766",
+      "status": "open",
+      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
+      "summary": "Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed.",
       "evidence": [
+        {
+          "label": "Remote verification for the submitted change",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41130133560/artifacts/13012378010"
+        },
         {
           "label": "Both corrected frontends and all 12 source archive members",
           "url": "https://github.com/tamird/gvisor/actions/runs/41098132210/artifacts/12997227463"
@@ -2066,10 +2070,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "1ca62a67091928c6a536a1436e5378889202f747"
+          "head": "6be2b030b0018a818ebfba80fe8191969aa078f6"
         },
         "after": {
-          "head": "6be2b030b0018a818ebfba80fe8191969aa078f6"
+          "head": "8dad7a574b6914fc2aea3609f92235af9ca7b0d3"
         }
       },
       "settledReviews": [
@@ -2080,16 +2084,7 @@
           "at": "2026-10-30T21:19:57.406552+00:00"
         }
       ],
-      "followup": {
-        "owner": "root",
-        "sourceHead": "6be2b030b0018a818ebfba80fe8191969aa078f6",
-        "observedAt": "2026-10-30T21:19:57.406552+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Restore the brace-bodied release function as requested, preserve cleanup and working directory, and qualify the all path before opening the approved change.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/6be2b030b"
-        ]
-      }
+      "number": 16766
     },
     {
       "id": "branch:bazel-clang-tidy-llvm",
@@ -25903,24 +25898,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fix/tcp-unread-fin-window",
-      "head": "7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
+      "head": "894bc9006ef39928d75f77d1075bc92c0472cd89",
       "title": "tcp: ACK window overruns while FIN is unread",
-      "url": "https://github.com/tamird/gvisor/commit/7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
+      "url": "https://github.com/tamird/gvisor/commit/894bc9006",
       "group": "runtime",
-      "status": "Contributor approved; waiting for #16377",
-      "updatedAt": "2026-10-25T19:04:28.020696+00:00",
-      "summary": "The contributor approved exact closing-window correction 7ae55f4cc07eb541c8d63442a343a3c2564dfd6f for upstream opening after #16377 lands. That fixture landing is the sole remaining delivery gate; no contributor decision remains pending. After a peer FIN, payload crossing the advertised right edge receives the current cumulative ACK while FIN or queued data remains unread. Peeking preserves the unread state. A consuming EOF read, or reading the final queued byte before a separate EOF read, ends these probe responses. The test keeps CLOSE_WAIT and observes absence of ACKs for one second. This does not generalize established-connection window handling or assume that separately delivered Linux FIN and data occupy distinct buffers.\n\nFinal remote comparison 2bcab414 tests FINOnly and DataAndFIN on native Linux and netstack. Control Linux passes both; unpatched netstack times out waiting for the first unread ACK in both, and that arm exits 3. Corrected Linux and netstack pass both, and that arm exits 0. Four target attempts produce nine positive and three failed XML records, including parents; the aggregate remains FAIL for the negative control. Earlier 96284b02 at fcd913 covers the same production behavior with the initial wire test, three focused e2e cases on AMD64 and ARM64, TCP Nogo and goimports. Both runs apply source-verified patches to the hosted qualification base; neither is a direct build of the public fork tree.\n\nLand after #16377 so its three existing closing-state fixtures consume EOF before asserting empty-queue behavior. This is a fixture landing-order requirement, not source ancestry or a code dependency. The branches merge cleanly. Combined qualification of ca4f51e3 and 7ae55f4c now passes: all 66 required XML rows on native Linux and netstack, four uncached target owners, no skips. Execution ended at 19:02:52.537 UTC and automatic verification completed at 19:02:59.245 (+6.71 seconds), with no manual collection. #16378 and receiver DSACK are separate changes. No upstream PR exists for this proposal.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
+      "summary": "The required EOF fixture #16377 merged. The rebased receiver uses the advertised window now stored by master; confirm the unchanged FIN packet traces on that base before opening the approved PR.",
       "followup": {
         "owner": "root",
-        "sourceHead": "7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
-        "observedAt": "2026-10-25T19:04:28.020696+00:00",
-        "disposition": "Exact proposal approved; sole remaining gate is #16377 fixture landing",
-        "nextAction": "Root owns upstream opening after #16377 actually lands. Preserve approval of exact 7ae55f4cc07eb541c8d63442a343a3c2564dfd6f; do not repeat the contributor question. This is fixture landing order only, not source ancestry. Keep expected control FAIL and corrected PASS distinct; the separate combined qualification now passes. Actual #16377 landing remains the sole gate.",
+        "sourceHead": "894bc9006ef39928d75f77d1075bc92c0472cd89",
+        "observedAt": "2026-10-30T21:25:47.985190+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Run the closing TCP packet tests on the rebased candidate and submit the already-approved change.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
-          "https://app.buildbuddy.io/invocation/2bcab414-3410-443c-b089-9121beeb043f",
-          "https://github.com/google/gvisor/pull/16377",
-          "https://app.buildbuddy.io/invocation/9c0aca85-ffdb-4c19-9f01-c1b07cfee0d5"
+          "https://github.com/tamird/gvisor/commit/894bc9006"
         ]
       },
       "evidence": [
@@ -25964,7 +25956,15 @@
           "label": "Linux FIN-only end-sequence exception",
           "url": "https://github.com/torvalds/linux/commit/1e3bb184e94125bae7c1703472109a646d0f79d9"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "7ae55f4cc07eb541c8d63442a343a3c2564dfd6f"
+        },
+        "after": {
+          "head": "894bc9006ef39928d75f77d1075bc92c0472cd89"
+        }
+      }
     },
     {
       "id": "branch:nft-compat-inet-autoload",
@@ -29892,7 +29892,7 @@
       "url": "https://github.com/google/gvisor/pull/16551",
       "head": "fa7daa135f0ca5de5461ac4b27f046632707e5e2",
       "status": "open",
-      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
+      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
       "links": [
         {
           "label": "Historical Nginx proposal",
@@ -29977,7 +29977,7 @@
           "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
       ],
-      "summary": "Rebased the Nginx and Redis images over the Bun image; all six patch paths retain the reviewed additions and deletions. The earlier import separately failed containerd sandbox creation."
+      "summary": "Rebased the Nginx and Redis images over the Bun image; all six patch paths retain the reviewed additions and deletions. The old import timed out in TestCrictlSanity/enableGrouping. A neighboring negative test expected the not-implemented error and passed."
     },
     {
       "id": "branch:sniffer-embed-symlink",
@@ -36968,18 +36968,22 @@
       ]
     },
     {
-      "id": "branch:cgroup-v2-effective-memory",
-      "type": "branch",
+      "id": "pr:16767",
+      "type": "pr",
       "group": "runtime",
-      "repo": "tamird/gvisor",
+      "repo": "google/gvisor",
       "ref": "proposal/cgroup-v2-effective-memory",
-      "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
+      "head": "defd36ca12bb62b3a85b0aeb51efd82c9016130d",
       "title": "Respect ancestor memory limits in cgroup v2",
-      "url": "https://github.com/tamird/gvisor/commit/c89f8f55a",
-      "status": "Agent work",
-      "updatedAt": "2026-10-30T21:19:57.406552+00:00",
-      "summary": "With a 512 MiB ancestor, a sandbox reported 15.6 GiB or 768 MiB through /proc/meminfo. Both corrected guests report 512 MiB; a 384 MiB leaf still wins.",
+      "url": "https://github.com/google/gvisor/pull/16767",
+      "status": "open",
+      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
+      "summary": "The runsc integration test creates the host cgroup hierarchy before starting a real guest. With unlimited, larger and smaller leaves under a 512 MiB parent, the guest reports 512, 512 and 384 MiB. The same native cat reports host RAM in all three cgroups; a shared Linux MemTotal assertion would test a different contract.",
       "evidence": [
+        {
+          "label": "Remote verification for the submitted change",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41130369584/job/124319403185#step:4:1"
+        },
         {
           "label": "Six guests and both complete three-case root test results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41093384824/artifacts/12994594698"
@@ -37001,15 +37005,14 @@
           "at": "2026-10-30T21:19:57.406552+00:00"
         }
       ],
-      "followup": {
-        "owner": "root",
-        "sourceHead": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
-        "observedAt": "2026-10-30T21:19:57.406552+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Check native Linux in the same host cgroups. The approved integration test starts runsc under a pod limit, then reads /proc/meminfo inside the guest. Submit if the requested audit confirms this is the correct boundary.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/c89f8f55a"
-        ]
+      "number": 16767,
+      "refinement": {
+        "before": {
+          "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161"
+        },
+        "after": {
+          "head": "defd36ca12bb62b3a85b0aeb51efd82c9016130d"
+        }
       }
     },
     {
