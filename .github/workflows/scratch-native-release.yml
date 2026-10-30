@@ -1,7 +1,7 @@
-name: Build release archives using the native ARM64 compiler
+name: Build the Python release on scratch workers
 on:
   push:
-    branches: [qualification/scratch-native-release]
+    branches: [qualification/release-wheel-scratch]
 permissions:
   contents: read
   actions: read
@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 100
     env:
-      QUALIFICATION_ARCH: arm64
       QUALIFICATION_COMMIT: ${{ github.sha }}
       QUALIFICATION_EXECUTION: remote-actions
       QUALIFICATION_LANES: build
@@ -20,7 +19,7 @@ jobs:
       QUALIFICATION_HEADER_BASE: ''
       QUALIFICATION_COS_SHA256: ''
       QUALIFICATION_COS_GZIP_BASE64: ''
-      QUALIFICATION_TARGETS: //test/release:artifacts
+      QUALIFICATION_TARGETS: //sandboxexec/sandbox/python:dist
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
@@ -54,27 +53,37 @@ jobs:
           curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bb"
-      - name: Build all six archives without accepting cached actions
-        id: native
+      - name: Build the two Python distributions on each scratch architecture
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
           BB_LOG_DECODER: ${{ runner.temp }}/bb
         run: |
-          bash test/rbe/actions.sh \
-            --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_arm64 \
-            --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
-            --bazel-option=--action_env=PATH=/usr/bin:/bin \
-            --bazel-option=--remote_download_outputs=toplevel \
-            --bazel-option=--noremote_accept_cached \
-            '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|GoLink)$=+no-remote-cache'
-      - name: Trace archives to producing actions and preserve the original build result
-        if: ${{ !cancelled() && steps.native.outcome != 'skipped' }}
-        env:
-          BB_LOG_DECODER: ${{ runner.temp }}/bb
-        run: python3 test/rbe/native_release_inventory.py
+          set -eu
+          publication="$RUNNER_TEMP/publication"
+          parent="$RUNNER_TEMP"
+          export PUBLICATION="$publication"
+          status=0
+          for arch in amd64 arm64; do
+            export QUALIFICATION_ARCH="$arch" RUNNER_TEMP="$parent/$arch"
+            mkdir -p "$RUNNER_TEMP"
+            rc=0
+            bash test/rbe/actions.sh \
+              --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_"$arch" \
+              --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_"$arch" \
+              --bazel-option=--action_env=PATH=/usr/bin:/bin \
+              --bazel-option=--remote_download_outputs=toplevel \
+              --bazel-option=--//sandboxexec/sandbox/python:release_version=2026.10.29.2 \
+              '--bazel-option=--modify_execution_info=^PythonDistribution$=+no-remote-cache' || rc=$?
+            set +e
+            python3 test/rbe/inspect_release_wheel.py
+            inspected=$?
+            set -e
+            if ((rc!=0 && status==0)); then status=$rc; elif ((inspected!=0 && status==0)); then status=$inspected; fi
+          done
+          exit "$status"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: scratch-native-release-evidence
+          name: release-wheel-scratch
           path: ${{ runner.temp }}/publication/
-          if-no-files-found: warn
+          if-no-files-found: error
