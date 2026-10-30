@@ -140,7 +140,7 @@ bzl_library(
 amd64_kvm_test(
     name = "vfio_linux_test",
     image = ":amd64_rc_guest",
-    payload = "//test/syscalls/linux:vfio_pci_device_test",
+    payload = ":vfio_native_sanity",
     tags = [],
 )
 
@@ -154,7 +154,7 @@ sh_test(
         "vfio_fixed/runsc",
         "vfio_fixed/gvisor-bin/gvisor_sentry",
         "vfio_fixed/gvisor-bin/checkpointgofer",
-        "//test/syscalls/linux:vfio_pci_device_test",
+        "vfio_pci_probe_bin",
     ],
 )
 
@@ -163,4 +163,10 @@ amd64_kvm_test(
     image = ":amd64_rc_guest",
     payload = ":vfio_arm",
     tags = [],
+)
+
+sh_test(
+    name = "vfio_native_sanity",
+    srcs = ["vfio_native_sanity.sh"],
+    data = ["vfio_pci_probe_bin"],
 )

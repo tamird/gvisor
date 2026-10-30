@@ -12,6 +12,7 @@ jobs:
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PROBE_SRC: 06acefd12df444f931f7ba737ce347b797379afa
       OSTOCK: cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd
       OFIXED: e7f2dbe3e685373a7d71190ecd0d4ba82c6a61bf
     steps:
@@ -48,6 +49,36 @@ jobs:
         set -euo pipefail
         docker pull --platform=linux/amd64 "$GNU"
         docker run --device=/dev/kvm -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Build a static probe using the actual syscall suite compiler
+      run: |
+        set -euo pipefail
+        git fetch --no-tags --depth=2 origin "$PROBE_SRC" "$OSTOCK" "$OFIXED"
+        carrier=$(git rev-parse HEAD)
+        git checkout --quiet --detach "$PROBE_SRC"
+        out="$RUNNER_TEMP/records"
+        echo "$PROBE_SRC" >"$out/probe-source"
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=24 --remote_download_outputs=toplevel //test/syscalls/linux:vfio_pci_device_test >"$RUNNER_TEMP/probe-build.log" 2>&1 || { grep -A12 'ERROR:' "$RUNNER_TEMP/probe-build.log" | tail -50; exit 1; }
+        docker exec overlay-guest cp -L bazel-bin/test/syscalls/linux/vfio_pci_device_test "$RUNNER_TEMP/vfio_pci_probe_bin"
+        file "$RUNNER_TEMP/vfio_pci_probe_bin" | tee "$out/probe-type"
+        if readelf -l "$RUNNER_TEMP/vfio_pci_probe_bin" | grep -qw INTERP; then exit 1; fi
+        sha256sum "$RUNNER_TEMP/vfio_pci_probe_bin" >"$out/probe-sha"
+        git checkout --quiet --detach "$carrier"
+        cp "$RUNNER_TEMP/vfio_pci_probe_bin" test/rbe/tcg/
+    - name: Open and poll a real Linux PCI descriptor before building either runsc
+      run: |
+        set -euo pipefail
+        out="$RUNNER_TEMP/records"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nocache_test_results --test_output=all --test_timeout=480 //test/rbe/tcg:vfio_linux_test >"$RUNNER_TEMP/preflight.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/native-exit"
+        { grep 'INFO: Invocation ID:' "$RUNNER_TEMP/preflight.log"; grep -A14 -E '^ERROR:|FAILED|qemu-system|vfio.*failed|cannot|Cannot' "$RUNNER_TEMP/preflight.log" | tail -65; } >"$out/native-receipt" || :
+        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt; do
+          name=${path##*/}
+          docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_linux_test/$path" | tail -160 >"$out/native-$name" || :
+        done
+        test "$rc" -eq 0
+        grep -q 'Native VFIO driver=' "$out/native-vfio-device.txt"
+        grep -Fq '[       OK ] VfioPCIDeviceTest.Readiness' "$out/native-console.log"
     - name: Build the stock and corrected runsc from their exact source
       run: |
         set -euo pipefail
@@ -74,7 +105,7 @@ jobs:
         docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nocache_test_results --test_output=all --test_timeout=480 "$target" >"$RUNNER_TEMP/abi.log" 2>&1 || rc=$?
         echo "$rc" >"$out/bazel-exit"
         grep -E 'INFO: Invocation ID:|ERROR:|FAILED|::|fail|VFIO|vfio|Error|Cannot|curl|qemu|wget|tcg|Build (did NOT complete|completed)' "$RUNNER_TEMP/abi.log" | tail -80 >"$out/bazel-receipt" || :
-        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt test.outputs/guest/outputs/native-gtest.txt test.outputs/guest/outputs/stock-gtest.txt test.outputs/guest/outputs/fixed-gtest.txt test.outputs/guest/outputs/stock-diagnostics.txt test.outputs/guest/outputs/fixed-diagnostics.txt; do
+        for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt test.outputs/guest/outputs/native-gtest.txt test.outputs/guest/outputs/native-irq.txt test.outputs/guest/outputs/native-irq-qualified test.outputs/guest/outputs/stock-exit test.outputs/guest/outputs/fixed-exit test.outputs/guest/outputs/stock-gtest.txt test.outputs/guest/outputs/fixed-gtest.txt test.outputs/guest/outputs/stock-diagnostics.txt test.outputs/guest/outputs/fixed-diagnostics.txt; do
           name=${path##*/}
           docker exec overlay-guest cat "bazel-testlogs/test/rbe/tcg/vfio_comparison_test/$path" | tail -150 >"$out/$name" || :
         done
