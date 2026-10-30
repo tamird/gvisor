@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T13:00:52.974373+00:00",
+    "updatedAt": "2026-10-30T13:03:39.698453+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35845,8 +35845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/13a440083",
       "group": "runtime",
       "summary": "When a handwritten callback retains the interface it received, changing the destination afterward must not change that saved value. The graph reader kept a pointer to the destination; the legacy reader returned its value.",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "status": "Published as #16741",
+      "updatedAt": "2026-10-30T13:03:39.698453+00:00",
       "refinement": {
         "before": {
           "head": "0316d4624e80996c59be12bb1c3516cd7c389e0b"
@@ -35855,17 +35855,11 @@
           "head": "13a44008304ed152babfd929a28dc2cb1ab160b5"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "13a44008304ed152babfd929a28dc2cb1ab160b5",
-        "url": "https://github.com/tamird/gvisor/commit/13a440083",
-        "title": "Snapshot ordinary LoadValue callback arguments at delivery",
-        "summary": "When a handwritten callback retains the interface it received, changing the destination afterward must not change that saved value. The graph reader kept a pointer to the destination; the legacy reader returned its value.",
-        "body": "Review the standalone shallow copy for ordinary LoadValue and its regression. The regression runs on both engines; the two owning state suites passed. The nested conversion correction in #16740 is a different change.",
-        "requestedAt": "2026-10-30T10:46:19.726076+00:00"
-      },
       "evidence": [
+        {
+          "label": "Published upstream as #16741",
+          "url": "https://github.com/google/gvisor/pull/16741"
+        },
         {
           "label": "Original callback retained the changed value",
           "url": "https://github.com/tamird/gvisor/actions/runs/41011609738/artifacts/12958111579"
@@ -35886,7 +35880,26 @@
           "label": "State round-trip investigation",
           "url": "https://github.com/google/gvisor/issues/16715"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "13a44008304ed152babfd929a28dc2cb1ab160b5",
+          "outcome": "approved",
+          "at": "2026-10-30T13:03:39.698453+00:00"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "root",
+        "sourceHead": "13a44008304ed152babfd929a28dc2cb1ab160b5",
+        "observedAt": "2026-10-30T13:03:39.698453+00:00",
+        "disposition": "Delivered as #16741",
+        "nextAction": "Follow the upstream review on #16741.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16741"
+        ]
+      }
     },
     {
       "id": "branch:skylib-native-copy",
@@ -35967,6 +35980,73 @@
           "https://github.com/tamird/gvisor/commit/5d7de5a80"
         ]
       }
+    },
+    {
+      "id": "pr:16741",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16741,
+      "title": "Snapshot ordinary LoadValue callback arguments at delivery",
+      "group": "runtime",
+      "summary": "When a handwritten callback retains the interface it received, changing the destination afterward must not change that saved value. The graph reader kept a pointer to the destination; the legacy reader returned its value.",
+      "head": "13a44008304ed152babfd929a28dc2cb1ab160b5",
+      "ref": "review/state-loadvalue-snapshot-merged",
+      "url": "https://github.com/google/gvisor/pull/16741",
+      "status": "open",
+      "updatedAt": "2026-10-30T13:03:39.698453+00:00",
+      "refinement": {
+        "before": {
+          "head": "0316d4624e80996c59be12bb1c3516cd7c389e0b"
+        },
+        "after": {
+          "head": "13a44008304ed152babfd929a28dc2cb1ab160b5"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "13a44008304ed152babfd929a28dc2cb1ab160b5",
+          "outcome": "approved",
+          "at": "2026-10-30T13:03:39.698453+00:00"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Published upstream as #16741",
+          "url": "https://github.com/google/gvisor/pull/16741"
+        },
+        {
+          "label": "Original callback retained the changed value",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41011609738/artifacts/12958111579"
+        },
+        {
+          "label": "Both state suites and the named graph/legacy callback cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41039107964/artifacts/12970325078"
+        },
+        {
+          "label": "Original review finding",
+          "url": "https://github.com/google/gvisor/pull/16620#discussion_r4416549128"
+        },
+        {
+          "label": "Previously tested source, identical tree",
+          "url": "https://github.com/tamird/gvisor/commit/0316d4624"
+        },
+        {
+          "label": "State round-trip investigation",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "13a44008304ed152babfd929a28dc2cb1ab160b5",
+        "observedAt": "2026-10-30T13:03:39.698453+00:00",
+        "disposition": "Delivered as #16741",
+        "nextAction": "Follow the upstream review on #16741.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16741"
+        ]
+      },
+      "reviewDecision": null
     }
   ],
   "edges": [
