@@ -1,0 +1,67 @@
+name: Compare PackageTar client paths
+on:
+  push:
+    branches: [qualification/package-tar-client-path]
+permissions:
+  contents: read
+jobs:
+  package:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      QUALIFICATION_ARCH: amd64
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: remote-actions
+      QUALIFICATION_LANES: build
+      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
+      QUALIFICATION_CLOCK_SOURCE: calibrated
+      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload
+      QUALIFICATION_HEADER_BASE: ''
+      QUALIFICATION_COS_SHA256: ''
+      QUALIFICATION_COS_GZIP_BASE64: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Resolve the same lock and log reader as the qualified writer
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/analysis.bazelrc"
+          bazelisk --bazelrc="$RUNNER_TEMP/analysis.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
+          curl -fsSL --retry 3 https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bb"
+      - name: Run both client paths with inherited and fixed action environments
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          base=$RUNNER_TEMP
+          for arm in inherited-a inherited-b pinned-a pinned-b; do
+            out=$base/$arm
+            mkdir -p "$out"
+            prefix=/unused-gvisor-path-$GITHUB_RUN_ID-${arm##*-}
+            test ! -e "$prefix"
+            flags=(--bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native
+                   --bazel-option=--remote_download_outputs=all --bazel-option=--remote_accept_cached
+                   --bazel-option=--nokeep_state_after_build --bazel-option=--nouse_action_cache)
+            if [[ $arm == pinned-* ]]; then flags+=(--bazel-option=--action_env=PATH=/usr/bin:/bin); fi
+            date -u +%FT%T.%NZ > "$out/started"
+            status=0
+            PATH="$prefix:$PATH" RUNNER_TEMP="$out" bash test/rbe/actions.sh "${flags[@]}" || status=$?
+            printf '%s\n' "$status" > "$out/qualification-exit"
+            date -u +%FT%T.%NZ > "$out/finished"
+          done
+      - name: Compare the actual Commands, inputs, archives and cache records
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/python_package_writers/path_comparison.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: package-tar-path
+          path: ${{ runner.temp }}/package-tar-path.json
+          if-no-files-found: error
