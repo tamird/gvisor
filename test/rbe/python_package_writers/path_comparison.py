@@ -65,10 +65,9 @@ def observe(arm, row):
     [spawn] = rows
     row.update(action=digest(spawn["digest"]), runner=spawn.get("runner"), cache_hit=spawn.get("cacheHit", False),
                worker_exit=spawn.get("exitCode", 0), metrics=spawn.get("metrics", {}))
-    [archive] = spawn["actualOutputs"]
-    row["archive"] = digest(archive["digest"])
-    if not archive["path"].endswith("/payload.tar") or row["archive"] != EXPECTED_OUTPUT:
-        raise ValueError(f"Unexpected archive {archive}")
+    row["platform"] = {prop["name"]: prop["value"] for prop in spawn["platform"]["properties"]}
+    row["archives"] = [digest(output["digest"]) for output in spawn.get("actualOutputs", [])
+                       if output["path"].endswith("/payload.tar")]
     action = get(row["action"])
     row["input_root"] = ident(one(action, 2))
     row["command"] = ident(one(action, 1))
@@ -80,6 +79,10 @@ def observe(arm, row):
     row["action_without_command_digest"] = normalized_digest(action, lambda n, _: n == 1)
     if row["runner"] not in ("remote", "remote cache hit") or row["worker_exit"] != 0:
         raise ValueError(f"Unexpected runner or exit: {row['runner']}, {row['worker_exit']}")
+    if row["platform"].get("Arch") != "amd64":
+        raise ValueError(f"Unexpected execution platform: {row['platform']}")
+    if row["archives"] != [EXPECTED_OUTPUT]:
+        raise ValueError(f"Unexpected archives: {row['archives']}")
     if row["qualification-exit"] or row["native_exit"]:
         raise ValueError("Nonzero build or qualification exit")
 
@@ -88,7 +91,7 @@ def compare(name, rows):
     first, second = rows[name + "-a"], rows[name + "-b"]
     if any("error" in row for row in (first, second)):
         raise ValueError("Incomplete arm")
-    for field in ("command_without_path", "action_without_command_digest", "input_root", "archive"):
+    for field in ("command_without_path", "action_without_command_digest", "input_root", "archives"):
         if first[field] != second[field]:
             raise ValueError(f"{field} changed")
     if name == "inherited":
@@ -111,6 +114,7 @@ def compare(name, rows):
 
 def main():
     result = {"source": os.environ["GITHUB_SHA"], "packaging_source": "59142d59bd23b8891a96af038f85959731de873d",
+              "initial_arm64_receipt": "https://github.com/tamird/gvisor/actions/runs/40993879539/artifacts/12950686847",
               "target": TARGET, "expected_archive": EXPECTED_OUTPUT, "arms": {}, "comparisons": {}}
     for arm in ARMS:
         row = result["arms"][arm] = {}

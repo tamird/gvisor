@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   package:
-    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.event.before == 'c968ec350093345b8093dda253ff036df26ca846' && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     env:
@@ -45,6 +45,8 @@ jobs:
             prefix=/unused-gvisor-path-$GITHUB_RUN_ID-${arm##*-}
             test ! -e "$prefix"
             flags=(--bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native
+                   --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_amd64
+                   --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64
                    --bazel-option=--remote_download_outputs=all --bazel-option=--remote_accept_cached
                    --bazel-option=--nokeep_state_after_build --bazel-option=--nouse_action_cache)
             if [[ $arm == pinned-* ]]; then flags+=(--bazel-option=--action_env=PATH=/usr/bin:/bin); fi
