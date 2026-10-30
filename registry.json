@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T16:57:21.716977+00:00",
+    "updatedAt": "2026-10-30T17:10:05.970966+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36837,6 +36837,35 @@
           "url": "https://github.com/google/gvisor/pull/16264"
         }
       ]
+    },
+    {
+      "id": "branch:cgroup-v2-effective-memory",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/cgroup-v2-effective-memory",
+      "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
+      "title": "Respect ancestor memory limits in cgroup v2",
+      "url": "https://github.com/tamird/gvisor/commit/c89f8f55a",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T17:10:05.970966+00:00",
+      "summary": "With a 512 MiB ancestor, a sandbox reported 15.6 GiB or 768 MiB through /proc/meminfo. Both corrected guests report 512 MiB; a 384 MiB leaf still wins.",
+      "evidence": [
+        {
+          "label": "Six guests and both complete three-case root test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41093384824/artifacts/12994594698"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161",
+        "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
+        "url": "https://github.com/tamird/gvisor/commit/c89f8f55a",
+        "title": "Respect ancestor memory limits in cgroup v2",
+        "summary": "With a 512 MiB ancestor, a sandbox reported 15.6 GiB or 768 MiB through /proc/meminfo. Both corrected guests report 512 MiB; a 384 MiB leaf still wins.",
+        "body": "A sandbox with no memory limit on its own cgroup can report the host's\nmemory in /proc/meminfo even when its pod has a much lower ceiling.\nSetting a limit on the sandbox does not help if it exceeds the pod's\nlimit. Linux enforces the parent limit on every descendant [1].\n\nUse the smallest memory.max between the sandbox and the root of its\nvisible cgroup hierarchy. With a 512 MiB ancestor, the guest now reports\n512 MiB for an unlimited leaf and for a 768 MiB leaf. A 384 MiB leaf\nstill reports 384 MiB.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/Documentation/admin-guide/cgroup-v2.rst#L545-L549"
+      }
     }
   ],
   "edges": [
