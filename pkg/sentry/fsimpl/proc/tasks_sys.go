@@ -332,26 +332,30 @@ func (*maxUserNamespacesData) Write(ctx context.Context, _ *vfs.FileDescription,
 type tcpSackData struct {
 	kernfs.DynamicBytesFile
 
-	stack inet.Stack `state:"wait"`
+	stack   inet.Stack `state:"wait"`
+	enabled *bool
 }
 
 var _ vfs.WritableDynamicBytesSource = (*tcpSackData)(nil)
 
 // Generate implements vfs.DynamicBytesSource.Generate.
 func (d *tcpSackData) Generate(ctx context.Context, buf *bytes.Buffer) error {
-	enabled, err := d.stack.TCPSACKEnabled()
-	if err != nil {
-		return err
+	if d.enabled == nil {
+		sack, err := d.stack.TCPSACKEnabled()
+		if err != nil {
+			return err
+		}
+		d.enabled = &sack
 	}
 
 	val := "0\n"
-	if enabled {
+	if *d.enabled {
 		// Technically, this is not quite compatible with Linux. Linux stores these
 		// as an integer, so if you write "2" into tcp_sack, you should get 2 back.
 		// Tough luck.
 		val = "1\n"
 	}
-	_, err = buf.WriteString(val)
+	_, err := buf.WriteString(val)
 	return err
 }
 
@@ -366,7 +370,11 @@ func (d *tcpSackData) Write(ctx context.Context, _ *vfs.FileDescription, src use
 	if err != nil || n == 0 {
 		return 0, err
 	}
-	return n, d.stack.SetTCPSACKEnabled(buf[0] != 0)
+	if d.enabled == nil {
+		d.enabled = new(bool)
+	}
+	*d.enabled = buf[0] != 0
+	return n, d.stack.SetTCPSACKEnabled(*d.enabled)
 }
 
 // tcpRecoveryData implements vfs.WritableDynamicBytesSource for
@@ -612,14 +620,23 @@ type portRange struct {
 	kernfs.DynamicBytesFile
 
 	stack inet.Stack `state:"wait"`
+
+	// start and end store the port range. We must save/restore this here,
+	// since a netstack instance is created on restore.
+	start *uint16
+	end   *uint16
 }
 
 var _ vfs.WritableDynamicBytesSource = (*portRange)(nil)
 
 // Generate implements vfs.DynamicBytesSource.Generate.
 func (pr *portRange) Generate(ctx context.Context, buf *bytes.Buffer) error {
-	start, end := pr.stack.PortRange()
-	_, err := fmt.Fprintf(buf, "%d %d\n", start, end)
+	if pr.start == nil {
+		start, end := pr.stack.PortRange()
+		pr.start = &start
+		pr.end = &end
+	}
+	_, err := fmt.Fprintf(buf, "%d %d\n", *pr.start, *pr.end)
 	return err
 }
 
@@ -644,6 +661,12 @@ func (pr *portRange) Write(ctx context.Context, _ *vfs.FileDescription, src user
 	if err := pr.stack.SetPortRange(uint16(ports[0]), uint16(ports[1])); err != nil {
 		return 0, err
 	}
+	if pr.start == nil {
+		pr.start = new(uint16)
+		pr.end = new(uint16)
+	}
+	*pr.start = uint16(ports[0])
+	*pr.end = uint16(ports[1])
 	return n, nil
 }
 
