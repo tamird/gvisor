@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T20:14:01.214446+00:00",
+    "updatedAt": "2026-10-30T20:19:07.910627+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34423,21 +34423,22 @@
       "number": 16677,
       "repo": "google/gvisor",
       "ref": "review/overlay-close-lifetime",
-      "head": "e4a78767b89adc5e806334ce41ad5d6c73109927",
+      "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
       "title": "overlay: retain the backing file selected for close",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-30T20:14:01.214446+00:00",
+      "updatedAt": "2026-10-30T20:19:07.910627+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "url": "https://github.com/google/gvisor/pull/16677",
-      "summary": "Ayush asked to drop the Go unit test and otherwise gave LGTM. The signed fork amendment changes only the test and BUILD file compared with the live PR. The guest close/fchmod evidence remains in the PR description.",
+      "summary": "Removed the Go unit test and its test-only BUILD target at Ayush’s request. Stock gVisor returned EBADF after releasing the FUSE lower handle before FLUSH. Fixed gVisor and native Linux completed both guest syscalls.",
       "followup": {
         "owner": "root",
-        "sourceHead": "e4a78767b89adc5e806334ce41ad5d6c73109927",
-        "observedAt": "2026-10-30T20:14:01.214446+00:00",
-        "disposition": "Fork amendment and reply awaiting contributor review",
-        "nextAction": "Review the signed test removal and proposed reply before updating the live PR.",
+        "sourceHead": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
+        "observedAt": "2026-10-30T20:19:07.910627+00:00",
+        "disposition": "Approved test-removal amendment and reply published",
+        "nextAction": "Follow the upstream review. A separate shared syscall coverage investigation is in progress.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16677#discussion_r4428087788",
           "https://github.com/google/gvisor/pull/16677#discussion_r4427980717",
           "https://github.com/tamird/gvisor/commit/0bb7564e8",
           "https://app.buildbuddy.io/invocation/910bfa68-aa50-49e8-9658-3a5cc5cd1a68",
@@ -34446,6 +34447,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Published reply to Ayush",
+          "url": "https://github.com/google/gvisor/pull/16677#discussion_r4428087788"
+        },
         {
           "label": "Ayush asks to remove the unit test",
           "url": "https://github.com/google/gvisor/pull/16677#discussion_r4427980717"
@@ -34497,26 +34502,21 @@
           "head": "e4a78767b89adc5e806334ce41ad5d6c73109927",
           "outcome": "approved",
           "at": "2026-10-30T10:46:19.726076+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
+          "outcome": "approved",
+          "at": "2026-10-30T20:17:05Z"
         }
       ],
       "refinement": {
         "before": {
-          "head": "4ce9994cdab4bb668a9b9059a608d165260086f7"
+          "head": "e4a78767b89adc5e806334ce41ad5d6c73109927"
         },
         "after": {
-          "head": "e4a78767b89adc5e806334ce41ad5d6c73109927"
+          "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c"
         }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "0bb7564e8121a48bcaa58ad268dd3a7ffdac691c",
-        "baseHead": "e4a78767b89adc5e806334ce41ad5d6c73109927",
-        "url": "https://github.com/tamird/gvisor/commit/0bb7564e8",
-        "title": "Drop the overlay close unit test",
-        "summary": "The live PR remains at e4a78767b. The amendment removes 128 lines of Go test and its Bazel target. The qualified production file is byte-identical. The short reviewer reply is ready if the amendment is published.",
-        "body": "Proposed reply to Ayush after publication:\n\nDropped the Go unit test and its BUILD target. The guest test remains linked in the description. On stock gVisor, close returned EBADF after the FUSE server released the lower handle before flushing it. With the reference held, close succeeded. Native Linux also completed close and fchmod successfully.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-10-30T20:14:01.214446+00:00"
       }
     },
     {
