@@ -1176,8 +1176,11 @@ func TestSackedOutAfterPMTU(t *testing.T) {
 	const (
 		linkMTU = 1500
 		pathMTU = 1200
-		oldMSS  = linkMTU - header.IPv4MinimumSize - header.TCPMinimumSize
-		newMSS  = pathMTU - header.IPv4MinimumSize - header.TCPMinimumSize
+		// The sender reserves space for the four SACK blocks negotiated at SYN.
+		advertisedMSS = linkMTU - header.IPv4MinimumSize - header.TCPMinimumSize
+		sackReserve   = 36
+		oldMSS        = advertisedMSS - sackReserve
+		newMSS        = pathMTU - header.IPv4MinimumSize - header.TCPMinimumSize - sackReserve
 	)
 	type sample struct{ mss, sacked int }
 	states := make(chan sample, 16)
@@ -1189,7 +1192,7 @@ func TestSackedOutAfterPMTU(t *testing.T) {
 	e2e.SetStackSACKPermitted(t, c, true)
 	e2e.SetStackTCPRecovery(t, c, 0)
 	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, []byte{
-		header.TCPOptionMSS, 4, byte(oldMSS / 256), byte(oldMSS % 256),
+		header.TCPOptionMSS, 4, byte(advertisedMSS / 256), byte(advertisedMSS % 256),
 		header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP,
 	})
 	const packets = 5
