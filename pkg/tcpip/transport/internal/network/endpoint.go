@@ -60,9 +60,10 @@ type Endpoint struct {
 	ipv4TTL uint8
 	// +checklocks:mu
 	ipv6HopLimit int16
-	// TODO(https://gvisor.dev/issue/6389): Use different fields for IPv4/IPv6.
 	// +checklocks:mu
 	multicastTTL uint8
+	// +checklocks:mu
+	ipv6MulticastHopLimit uint8
 	// TODO(https://gvisor.dev/issue/6389): Use different fields for IPv4/IPv6.
 	// +checklocks:mu
 	multicastAddr tcpip.Address
@@ -149,6 +150,7 @@ func (e *Endpoint) Init(s *stack.Stack, netProto tcpip.NetworkProtocolNumber, tr
 
 	// Linux defaults to TTL=1.
 	e.multicastTTL = 1
+	e.ipv6MulticastHopLimit = 1
 	e.multicastMemberships = make(map[multicastMembership]struct{})
 	e.setEndpointState(transport.DatagramEndpointStateInitial)
 }
@@ -210,8 +212,11 @@ func (e *Endpoint) SetOwner(owner tcpip.PacketOwner) {
 // +checklocksread:e.mu
 func (e *Endpoint) calculateTTL(route *stack.Route) uint8 {
 	remoteAddress := route.RemoteAddress()
-	if header.IsV4MulticastAddress(remoteAddress) || header.IsV6MulticastAddress(remoteAddress) {
+	if header.IsV4MulticastAddress(remoteAddress) {
 		return e.multicastTTL
+	}
+	if header.IsV6MulticastAddress(remoteAddress) {
+		return e.ipv6MulticastHopLimit
 	}
 
 	switch netProto := route.NetProto(); netProto {
@@ -420,9 +425,40 @@ func (e *Endpoint) hasSendSpaceRLocked() bool {
 	return e.ops.GetSendBufferSize() > e.sendBufferSizeInUse
 }
 
+// connectedMulticastRouteStale reports whether this write would reuse a
+// multicast route with a loopback setting that has since changed.
+//
+// +checklocksread:e.mu
+func (e *Endpoint) connectedMulticastRouteStale(opts tcpip.WriteOptions) bool {
+	if e.connectedRoute == nil || opts.To != nil || e.writeShutdown || opts.More {
+		return false
+	}
+	if e.effectiveNetProto == header.IPv6ProtocolNumber && opts.ControlMessages.HasIPv6PacketInfo {
+		return false // Per-packet routing ignores the cached route.
+	}
+	return !e.connectedRoute.MatchesMulticastLoop(e.multicastLoop())
+}
+
 // AcquireContextForWrite acquires a WriteContext.
 func (e *Endpoint) AcquireContextForWrite(opts tcpip.WriteOptions) (WriteContext, tcpip.Error) {
 	e.mu.RLock()
+	if e.connectedMulticastRouteStale(opts) {
+		e.mu.RUnlock()
+		e.mu.Lock()
+		if e.connectedMulticastRouteStale(opts) {
+			// The peer and source are unchanged. Replace the cached route so
+			// subsequent writes reuse the new loopback policy.
+			r := e.connectedRoute
+			replacement, err := e.stack.FindRoute(r.OutgoingNIC(), r.LocalAddress(), r.RemoteAddress(), r.NetProto(), e.multicastLoop())
+			if err != nil {
+				e.mu.Unlock()
+				return WriteContext{}, err
+			}
+			e.connectedRoute = replacement
+			r.Release()
+		}
+		e.mu.DowngradeLock()
+	}
 	defer e.mu.RUnlock()
 
 	// MSG_MORE is unimplemented. This also means that MSG_EOR is a no-op.
@@ -627,6 +663,15 @@ func (e *Endpoint) Disconnect() {
 	e.connectedRoute = nil
 }
 
+// multicastLoop selects loopback by the socket's family, including when an
+// IPv6 socket sends to an IPv4-mapped address (Linux sk_mc_loop).
+func (e *Endpoint) multicastLoop() bool {
+	if e.netProto == header.IPv6ProtocolNumber {
+		return e.ops.GetIPv6MulticastLoop()
+	}
+	return e.ops.GetMulticastLoop()
+}
+
 // connectRouteRLocked establishes a route to the specified interface or the
 // configured multicast interface if no interface is specified and the
 // specified address is a multicast address.
@@ -654,7 +699,7 @@ func (e *Endpoint) connectRouteRLocked(nicID tcpip.NICID, localAddr tcpip.Addres
 	}
 
 	// Find a route to the desired destination.
-	r, err := e.stack.FindRoute(nicID, localAddr, addr.Addr, netProto, e.ops.GetMulticastLoop())
+	r, err := e.stack.FindRoute(nicID, localAddr, addr.Addr, netProto, e.multicastLoop())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -880,9 +925,14 @@ func (e *Endpoint) SetSockOptInt(opt tcpip.SockOptInt, v int) tcpip.Error {
 			return &tcpip.ErrNotSupported{}
 		}
 
-	case tcpip.MulticastTTLOption:
+	case tcpip.MulticastTTLOption, tcpip.IPv4MulticastTTLOption, tcpip.IPv6MulticastHopLimitOption:
 		e.mu.Lock()
-		e.multicastTTL = uint8(v)
+		if opt != tcpip.IPv6MulticastHopLimitOption {
+			e.multicastTTL = uint8(v)
+		}
+		if opt != tcpip.IPv4MulticastTTLOption {
+			e.ipv6MulticastHopLimit = uint8(v)
+		}
 		e.mu.Unlock()
 
 	case tcpip.IPv4TTLOption:
@@ -930,9 +980,15 @@ func (e *Endpoint) GetSockOptInt(opt tcpip.SockOptInt) (int, tcpip.Error) {
 		e.mu.Unlock()
 		return v, nil
 
-	case tcpip.MulticastTTLOption:
+	case tcpip.MulticastTTLOption, tcpip.IPv4MulticastTTLOption:
 		e.mu.Lock()
 		v := int(e.multicastTTL)
+		e.mu.Unlock()
+		return v, nil
+
+	case tcpip.IPv6MulticastHopLimitOption:
+		e.mu.Lock()
+		v := int(e.ipv6MulticastHopLimit)
 		e.mu.Unlock()
 		return v, nil
 

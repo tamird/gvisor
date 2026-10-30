@@ -174,6 +174,10 @@ type SocketOptions struct {
 	// non-loopback interface will be looped back.
 	multicastLoopEnabled atomicbitops.Uint32
 
+	// ipv6MulticastLoopDisabled is the inverse of IPV6_MULTICAST_LOOP,
+	// which defaults to enabled.
+	ipv6MulticastLoopDisabled atomicbitops.Uint32
+
 	// receiveTOSEnabled is used to specify if the TOS ancillary message is
 	// passed with incoming packets.
 	receiveTOSEnabled atomicbitops.Uint32
@@ -380,9 +384,25 @@ func (so *SocketOptions) GetMulticastLoop() bool {
 	return so.multicastLoopEnabled.Load() != 0
 }
 
-// SetMulticastLoop sets value for IP_MULTICAST_LOOP option.
+// SetMulticastLoop sets the multicast loopback default for both families.
 func (so *SocketOptions) SetMulticastLoop(v bool) {
+	so.SetIPv4MulticastLoop(v)
+	so.SetIPv6MulticastLoop(v)
+}
+
+// SetIPv4MulticastLoop sets IP_MULTICAST_LOOP.
+func (so *SocketOptions) SetIPv4MulticastLoop(v bool) {
 	storeAtomicBool(&so.multicastLoopEnabled, v)
+}
+
+// GetIPv6MulticastLoop reports IPV6_MULTICAST_LOOP.
+func (so *SocketOptions) GetIPv6MulticastLoop() bool {
+	return so.ipv6MulticastLoopDisabled.Load() == 0
+}
+
+// SetIPv6MulticastLoop sets IPV6_MULTICAST_LOOP.
+func (so *SocketOptions) SetIPv6MulticastLoop(v bool) {
+	storeAtomicBool(&so.ipv6MulticastLoopDisabled, !v)
 }
 
 // GetReceiveTOS gets value for IP_RECVTOS option.

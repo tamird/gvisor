@@ -106,6 +106,15 @@ func (r *Route) Loop() PacketLooping {
 	return r.routeInfo.Loop
 }
 
+// MatchesMulticastLoop reports whether the route can be reused with the
+// specified multicast loopback setting. On a loopback NIC the link endpoint
+// handles loopback independently of the network-layer setting.
+func (r *Route) MatchesMulticastLoop(enabled bool) bool {
+	addr := r.RemoteAddress()
+	return !(header.IsV4MulticastAddress(addr) || header.IsV6MulticastAddress(addr)) ||
+		r.local() || (r.Loop()&PacketLoop != 0) == enabled
+}
+
 // OutgoingNIC returns the route's outgoing NIC.
 func (r *Route) OutgoingNIC() tcpip.NICID {
 	return r.outgoingNIC.id
