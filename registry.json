@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T17:20:52.276929+00:00",
+    "updatedAt": "2026-10-30T17:24:00.776380+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35504,9 +35504,9 @@
       "title": "tools/go_stateify: emit typed calls, registration, and callbacks (20/21)",
       "url": "https://github.com/google/gvisor/pull/16726",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-30T04:56:11.029169+00:00",
-      "summary": "Graph Load restores two nested tags as 22 and 22 instead of 11 and 22 on this generator revision. The same fixture and both flat controls distinguish scratch reuse from a wire-format discrepancy.",
+      "status": "merged",
+      "updatedAt": "2026-10-30T17:24:00.776380+00:00",
+      "summary": "The generator merged. Lucas’s #16747 corrects nested conversion scratch reuse in the integrated graph codec. The original inline review no longer needs a decision.",
       "evidence": [
         {
           "label": "Review location: tools/go_stateify/main.go:479",
@@ -35519,17 +35519,12 @@
         {
           "label": "Tested scratch-lifetime correction",
           "url": "https://github.com/tamird/gvisor/commit/8def2ecbb"
+        },
+        {
+          "label": "All four reproduced cases on #16747",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41095391836/artifacts/12995572588"
         }
-      ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "c6afaa53a68057de1e83c33f25c8ca94978ac0e8",
-        "url": "https://github.com/google/gvisor/pull/16726",
-        "title": "Post the inline nested-value corruption finding",
-        "summary": "Review the proposed inline comment at tools/go_stateify/main.go:479. It describes the observed values and links a tested correction.",
-        "body": "This can corrupt a nested converted value during graph Load. In the [reproducer](https://github.com/tamird/gvisor/commit/d3afb4db4), an outer value with tag 11 holds another generated holder through an interface; the inner value of the same type has tag 22. The [parent](https://app.buildbuddy.io/invocation/a06ed41b-aa64-41c9-82a7-943cc62461ed) restored 11 and 22. [This head](https://app.buildbuddy.io/invocation/8e57e151-2229-4ba5-b03d-a100a22d09d6) restored 22 twice. The legacy and non-nested controls passed.\n\nWhile the outer value is being decoded, [its scratch slot is still available](https://github.com/google/gvisor/blob/c6afaa53a/pkg/state/graph_decode_callbacks_unsafe.go#L151-L165). Could the slot stay checked out until the decode and immediate callback return? [That change](https://github.com/tamird/gvisor/commit/8def2ecbb) [restored both tags](https://app.buildbuddy.io/invocation/570143b4-9029-4cfa-b99e-02d92b2efdd2).\n\nReview by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:state-loadvalue-scratch",
@@ -36898,6 +36893,34 @@
         "title": "Respect ancestor memory limits in cgroup v2",
         "summary": "With a 512 MiB ancestor, a sandbox reported 15.6 GiB or 768 MiB through /proc/meminfo. Both corrected guests report 512 MiB; a 384 MiB leaf still wins.",
         "body": "A sandbox with no memory limit on its own cgroup can report the host's\nmemory in /proc/meminfo even when its pod has a much lower ceiling.\nSetting a limit on the sandbox does not help if it exceeds the pod's\nlimit. Linux enforces the parent limit on every descendant [1].\n\nUse the smallest memory.max between the sandbox and the root of its\nvisible cgroup hierarchy. With a 512 MiB ancestor, the guest now reports\n512 MiB for an unlimited leaf and for a 768 MiB leaf. A 384 MiB leaf\nstill reports 384 MiB.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/Documentation/admin-guide/cgroup-v2.rst#L545-L549"
+      }
+    },
+    {
+      "id": "pr:16735",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16735,
+      "ref": "pr-suspend-gc",
+      "title": "GC: Suspend Go GC during boot, checkpoint, and restore.",
+      "url": "https://github.com/google/gvisor/pull/16735",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-30T17:24:00.776380+00:00",
+      "summary": "With a 192 MiB ancestor and two unlimited descendants, the proposed boot policy set Go’s soft limit to 1 GiB. A tighter 128 MiB leaf still yielded 64 MiB.",
+      "evidence": [
+        {
+          "label": "Soft limits under three cgroup configurations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41087163852/artifacts/12991414869"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "review",
+        "head": "d7d7264b1aa53c96a653407a2c7f85ee5f531848",
+        "url": "https://github.com/google/gvisor/pull/16735",
+        "title": "Post the GC budget review",
+        "summary": "With a 192 MiB ancestor and two unlimited descendants, the proposed boot policy set Go’s soft limit to 1 GiB. A tighter 128 MiB leaf still yielded 64 MiB.",
+        "body": "@parth-opensrc, can the boot budget use the lowest visible cgroup v2\nmemory limit? On a real cgroup hierarchy with a 192 MiB grandparent and\ntwo unlimited descendants, this call set Go's soft limit to 1 GiB. If\nthe leaf instead specified 512 MiB, it set 256 MiB. The kernel ceiling\nwas still 192 MiB in both cases.\n\nThe existing cgroup reader stops at the leaf or its immediate parent.\nTaking the minimum through the mount root gave 96 MiB in both cases and\npreserved 64 MiB for a tighter 128 MiB leaf. The [same three\ncases](https://github.com/tamird/gvisor/actions/runs/41087163852/artifacts/12991414869)\nmeasured the soft limit directly; they did not induce an OOM.\n\nPosted on behalf of @tamird."
       }
     }
   ],
@@ -43032,7 +43055,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T05:07:07.633004+00:00",
+      "updatedAt": "2026-10-30T17:24:00.776380+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
         {
@@ -45776,7 +45799,7 @@
           ]
         }
       ],
-      "nextStep": "Add new reproduced graph findings to the description of #16715. Mark an item fixed after its regression passes on the revised code; update the checklist in place without routine comments.",
+      "nextStep": "Keep the four cases open in #16715 until #16747 lands. The ordinary callbacks, nested conversions, zero-sized slice capacities, and pooled scratch checks passed on its reviewed head.",
       "evidence": [
         {
           "label": "Legacy Save cleared live slice data in both orders",
@@ -46769,6 +46792,14 @@
         {
           "label": "Parth tagged: unregistered recursive slice overflows the encoder stack",
           "url": "https://github.com/google/gvisor/pull/16580#discussion_r4414484358"
+        },
+        {
+          "label": "Lucas’s integrated fix for the four cases",
+          "url": "https://github.com/google/gvisor/pull/16747"
+        },
+        {
+          "label": "Graph and wire checks on the exact PR head",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41095391836/artifacts/12995572588"
         }
       ],
       "comparisons": [
