@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T14:32:00.242729+00:00",
+    "updatedAt": "2026-10-30T14:48:08.576818+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34037,7 +34037,7 @@
       "title": "Flush corked TCP data when a FIN is queued",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-29T14:36:47.754397+00:00",
+      "updatedAt": "2026-10-30T14:48:08.576818+00:00",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16671",
       "summary": "Close and SHUT_WR flush a corked short write before FIN instead of waiting 200 ms.",
@@ -34079,8 +34079,22 @@
         {
           "label": "Published PR",
           "url": "https://github.com/google/gvisor/pull/16671"
+        },
+        {
+          "label": "Common Linux/stock/fixed syscall cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41064969008/artifacts/12983745074"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "c336db121f61914f6f2a761dc005bf4293f67e09",
+        "baseHead": "abf07439013a8d09fba58d8325ff2e00340e8b7f",
+        "url": "https://github.com/tamird/gvisor/commit/c336db121",
+        "title": "Add shared close and shutdown syscall tests to #16671",
+        "summary": "Publish the test-only amendment to the open PR. Both Linux and fixed runsc passed all 36 cases. Stock passed the 12 explicit-uncork controls and failed all 24 close/shutdown cases.",
+        "body": "The [amendment](https://github.com/tamird/gvisor/compare/abf074390...c336db121) adds the same C++ socket test for Linux and runsc. It establishes a still-corked control connection before the socket being closed or shut down. The peer must read the byte and EOF while the control remains unreadable. [Linux passed all 36 cases](https://app.buildbuddy.io/invocation/4bee6aad-c4b2-491d-8860-7c37ef0cbcee). [Stock runsc failed all 24 close/shutdown cases](https://app.buildbuddy.io/invocation/b6994e71-cafb-49f3-95bb-fecea944a4e0), and [the proposed fix passed all 36](https://app.buildbuddy.io/invocation/9efce7b4-debf-4638-a70d-38825a86fd83)."
+      }
     },
     {
       "id": "branch:release-archives-versioned",
@@ -36092,6 +36106,35 @@
         ]
       },
       "reviewDecision": null
+    },
+    {
+      "id": "pr:16180",
+      "type": "pr",
+      "number": 16180,
+      "repo": "google/gvisor",
+      "ref": "fix-wildcard-bind-port-release",
+      "head": "ed3f77eb2dc84b35f85083caac2acea26e682444",
+      "title": "tcp: release the port of a wildcard-bound endpoint when it is closed",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-30T14:48:08.576818+00:00",
+      "url": "https://github.com/google/gvisor/pull/16180",
+      "summary": "On this contributor head, connecting a dual-stack wildcard socket to an IPv4-mapped peer leaves an IPv6 port reservation after an abortive close.",
+      "evidence": [
+        {
+          "label": "Linux and runsc syscall receipt",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41067609115/artifacts/12983897637"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "ed3f77eb2dc84b35f85083caac2acea26e682444",
+        "url": "https://github.com/google/gvisor/pull/16180",
+        "title": "Post the IPv6 wildcard rebind finding",
+        "summary": "Post this inline on pkg/tcpip/transport/tcp/endpoint.go:1243, where cleanup uses the connected family's protocol list.",
+        "body": "A dual-stack wildcard bind reserves the port for IPv4 and IPv6. Connecting to a mapped peer sets `effectiveNetProtos` to IPv4 and releases the IPv4 reservation. Cleanup then misses the remaining IPv6 reservation. Could it release the family the endpoint still owns?\n\n[This syscall test](https://github.com/tamird/gvisor/blob/1d322cb0b/test/syscalls/linux/socket_inet_loopback.cc#L263-L323) closes the connection with a reset and rebinds the same port. [Linux accepts both wildcard binds](https://app.buildbuddy.io/invocation/0df634cb-62b9-46b0-ba07-8c04ed3142f0). [On this head](https://app.buildbuddy.io/invocation/992daf38-8b09-46ad-8003-cac6bbf8e5f2), the IPv4 bind succeeds, but the IPv6-only bind returns `EADDRINUSE`.\n\nReview by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
