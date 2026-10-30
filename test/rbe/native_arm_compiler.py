@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 
+from native_arm_receipt import validate
 from qualification_report import Owner, advertised_build_outputs, compact_records, spawn_output_files
 
 
@@ -16,7 +17,7 @@ try:
     log, = row.glob("invocation-*/execution.binpb")
     stage = log.parent
     verdict = json.loads((stage / "verdict.json").read_text())
-    result.update({k: verdict.get(k) for k in ("invocation", "native_exit", "capture_exit", "expected", "missing", "failures", "verified", "execution_finished_at")})
+    result.update({k: verdict.get(k) for k in ("native_exit", "capture_exit", "expected", "missing", "failures", "execution_finished_at")})
     result["harness_status"] = verdict["status"]
     decoded = root / "compiler-spawns.json"
     with decoded.open("w") as dst:
@@ -56,12 +57,7 @@ try:
         assert header[:6] == b"\x7fELF\x02\x01" and int.from_bytes(header[18:20], "little") == 183, label
         elfs[label] = {"sha256": output["sha256"], "bytes": output["bytes"], "machine": "AArch64"}
     result["elfs"] = elfs
-    assert all(proof.values()), {m: len(v) for m, v in proof.items()}
-    for expected in proof.values():
-        for p in expected:
-            assert (p["arch"], p["os"], p["image"], p["runner"], p["cached"], p["exit"], p["status"]) == ("arm64", "linux", image, "remote", False, 0, ""), (p["owner"], p["arch"], p["runner"])
-    assert verdict["status"] == "PASS" and result["verified"] and result["capture_exit"] == 0
-    assert not result["missing"] and not result["failures"]
+    validate(result)
     result["status"] = "pass"
 except Exception as exc:
     result["error"] = repr(exc)

@@ -1,0 +1,25 @@
+name: Verify the retained native ARM64 compiler bundle
+on:
+  push:
+    branches: [qualification/scratch-arm64-compiler-verdict]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Replay the original bundle and verify negative controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/12947854940/zip > "$RUNNER_TEMP/original.zip"
+          python3 test/rbe/native_arm_receipt.py "$RUNNER_TEMP/original.zip"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: verified-native-arm64-compiler-evidence
+          path: ${{ runner.temp }}/native-verdict.json
+          if-no-files-found: error
