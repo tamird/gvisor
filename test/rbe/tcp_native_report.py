@@ -32,6 +32,8 @@ def main():
     by_stage={m["stage"]:m for m in metrics}
     if [m["stage"] for m in metrics] != ["sack3","trim","loss","done"] or not by_stage.get("loss",{}).get("recovery") or by_stage.get("done",{}).get("recovery"):
         errors.append("missing peer observations of partial ACK, recovery entry and exit")
+    if [m["sacked"] for m in metrics] != [1,1,4,0]:
+        errors.append("SACK counts do not match the four recorded Linux TCP_INFO observations")
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") not in ("local","standalone") for r in results):
         errors.append("expected one uncached Linux host result")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":

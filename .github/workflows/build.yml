@@ -22,10 +22,11 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        nparent=ba1947269b1b733c8110f785961ea883fd3ed7a8; candidate=36d96889ebb91dea9c2a1a961c775e8b9da300c3; product=c5961263760382b8f4c963ad2ad3e26275e3e3bc; stock=7334cd876b68aa3c63aa442c8d6752e476833350
+        nparent=ba1947269b1b733c8110f785961ea883fd3ed7a8; candidate=8613f944ff1973f8741dbd5b995640b09af980c7; product=da50c9f56d8119f183a0fcf815ba42416a9d751b; stock=7334cd876b68aa3c63aa442c8d6752e476833350
         test "$(git rev-parse HEAD^2)" = "$candidate"
         test "$(git rev-parse "$candidate^")" = "$product"
-        test "$(git diff --name-only "$product" "$candidate")" = "pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go"
+        test "$(git diff --name-only "$product" "$candidate" | wc -l)" = 2
+        git diff --quiet "$product" "$candidate" -- . ':(exclude)pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go' ':(exclude)pkg/tcpip/transport/tcp/rack_test.go'
         git diff --quiet "$stock" "$candidate" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_native_report.py tcp_race_report.py; do
@@ -87,6 +88,10 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        unshare -Ur true
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in candidate; do
@@ -119,11 +124,46 @@ jobs:
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/$checker" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
         done
+        test "$(git rev-parse HEAD)" = "$candidate"
+        cd "$GITHUB_WORKSPACE"
+        export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/owners"
+        mkdir -p "$TCP_EVIDENCE"
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        package=//pkg/tcpip/transport/tcp:tcp_test
+        nogo=//pkg/tcpip/transport/tcp:tcp_nogo
+        tnogo=//pkg/tcpip/transport/tcp:tcp_test_nogo
+        raw="$TCP_EVIDENCE/owners.jsonl"
+        git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+        ec=0
+        bazel test --config=x86_64 --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --test_sharding_strategy=disabled --nocache_test_results --build_event_json_file_path_conversion=false "--build_event_json_file=$raw" "$package" "$nogo" "$tnogo" || ec=$?
+        test "$ec" -eq 0 || overall=1
+        git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+        python3 -B - "$RUNNER_TEMP/checker" "$TCP_EVIDENCE" "$raw" "$candidate" "$RUNNER_TEMP/replay-public" "$package" "$nogo" "$tnogo" <<'OWNERS' || overall=1
+        import sys,json
+        from pathlib import Path
+        checker,ev,raw,head,out,*labels=sys.argv[1:];sys.path.insert(0,checker)
+        import qualification_report as r
+        ev=Path(ev); (ev/"targets.txt").write_text("\n".join(labels)+"\n")
+        cap=r.capture(Path(raw),ev/"events.jsonl",Path("bazel-out"),ev/"reports")
+        (ev/"capture_exit").write_text("1" if cap["errors"] else "0")
+        ctx={k:k for k in ("commit_file","source_before","source_after","final_head","executed_arguments","native_exit","capture_exit")}
+        ctx.update(expected_source=head,command_kind="test",execution_finished_at=(ev/"finished").read_text().strip())
+        r.write_json(ev/"context.json",ctx)
+        v=r.verdict(ev/"events.jsonl",r.manifest_path(ev/"events.jsonl"),ev/"context.json",ev/"targets.txt",())
+        logs="".join((ev/row["path"]).read_text() for row in cap["reports"] if row["name"]=="test.log")
+        cases=["TestSACKBridgesRetransmittedQueueFragment","TestSACKedSplitUnitsAcrossSequenceWrap"]
+        v["matched_controls"]={name:("--- PASS: "+name in logs) for name in cases}
+        if not all(v["matched_controls"].values()) and v["status"]=="PASS": v["status"]="INCOMPLETE"
+        r.write_json(Path(out)/"owners.json",v)
+        print(v["status"],v["case_counts"],v["errors"],v["matched_controls"]);sys.exit(v["status"]!="PASS")
+        OWNERS
         python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["candidate"]
+        arms = ["candidate","owners"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         if "candidate" in verdicts:
