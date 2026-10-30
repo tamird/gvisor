@@ -33,8 +33,8 @@ jobs:
             if test -f "$file"; then cp -L "$file" "$out/$name-test.log"; fi
             printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$(git rev-parse HEAD)" "$ec" "$start" "$(date -u +%FT%TZ)" >> "$out/results.tsv"
           done <<'ARMS'
-          stock e028ad71e5f5f076095526a8f490b939e4b024dc
-          candidate cb20da070798008c30ee7ff88cd4705074cffa4d
+          stock 7e8bfc1d7f4a798c36f25d65fb43c65f2da1829b
+          candidate 04e8302fd79f1557774b6b72a5a231b390674f32
           ARMS
       - name: Verify the traces and full RACK suite
         run: |
@@ -50,7 +50,7 @@ jobs:
           import json, re, sys
           from pathlib import Path
           from datetime import datetime,timezone
-          out=Path(sys.argv[1]); expected={"stock":"e028ad71e5f5f076095526a8f490b939e4b024dc","candidate":"cb20da070798008c30ee7ff88cd4705074cffa4d"}
+          out=Path(sys.argv[1]); expected={"stock":"7e8bfc1d7f4a798c36f25d65fb43c65f2da1829b","candidate":"04e8302fd79f1557774b6b72a5a231b390674f32"}
           actual={}
           for row in (out/"results.tsv").read_text().splitlines():
               name,source,ec,start,end=row.split("\t")
@@ -66,7 +66,7 @@ jobs:
               trace_valid=sorted(obs)==["false","true"] and all([x["cumulative"] for x in rows]==[1,1,1,1,8] for rows in obs.values())
               matches=lambda rows: [x["count"] for x in rows]==[0,1,2,3,0]
               mtu=[(int(mss),int(count)) for mss,count in re.findall(r'cumulative=\d+ SACK=.* MSS=(\d+) sacked=(-?\d+)',log)]
-              mtu_valid=len(mtu)==4 and [m for m,_ in mtu]==[1460,1460,1160,1160] and ([c for _,c in mtu]==[0,1,2,0] if name=="candidate" else [c for _,c in mtu]!=[0,1,2,0])
+              mtu_valid=len(mtu)==4 and [m for m,_ in mtu]==[1424,1424,1124,1124] and ([c for _,c in mtu]==[0,1,2,0] if name=="candidate" else [c for _,c in mtu]!=[0,1,2,0])
               wire=re.search(r"SECOND_HOLE immediate=(true|false) seq=packet10 count=(-?\d+) reownd=(\S+)",log)
               wire_valid=wire is not None and (wire[1]=="true" if name=="candidate" else wire[1]=="false")
               expect_state=wire_valid and mtu_valid and trace_valid and (all(matches(rows) for rows in obs.values()) if name=="candidate" else all(not matches(rows) for rows in obs.values()) and all(rows[-1]["count"]<0 for rows in obs.values()))
@@ -78,6 +78,57 @@ jobs:
           verdict={"fixture_sha256":"97dde301efbcbb783b5aa6242f551c2a6cc8ebeb035bccf95c48737e5ca9d25c","expected":expected,"actual":actual,"missing":[k for k in expected if not actual.get(k,{}).get("observations")],"suite":{"exit":int((out/"suite-exit").read_text()),"passed":suite_pass,"failed":suite_fail},"verified":datetime.now(timezone.utc).isoformat()}
           verdict["status"]="pass" if set(actual)==set(expected) and all(v["valid"] for v in actual.values()) and verdict["suite"]["exit"]==0 and len(suite_pass)>10 and not suite_fail else "incomplete"
           (out/"verdict.json").write_text(json.dumps(verdict,indent=2)); print(json.dumps(verdict)); sys.exit(verdict["status"]!="pass")
+          PY
+      - name: Compare ordinary, far-ahead and partial-GSO SACK processing
+        if: always()
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/sacked"
+          f=pkg/tcpip/transport/tcp/rack_test.go
+          e=pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
+          git show "$GITHUB_SHA:test/rbe/sack-coverage-benchmark.fixture" > "$out/cost.fixture"
+          printf '%s  %s\n' "f037343c99bb38896cf0e7f375b0a41549318414d41600cf60c28d44b111fcaf" "$out/cost.fixture" | sha256sum -c -
+          for round in 1 2 3 4 5 6 7 8; do
+            if (( round % 2 )); then order="stock candidate"; else order="candidate stock"; fi
+            for arm in $order; do
+              case "$arm" in
+                stock) expected=7e8bfc1d7f4a798c36f25d65fb43c65f2da1829b ;;
+                candidate) expected=04e8302fd79f1557774b6b72a5a231b390674f32 ;;
+              esac
+              git restore -- "$e" "$f"
+              git checkout --quiet --detach "$expected"
+              test "$(git rev-parse HEAD)" = "$expected"
+              sed -i '/"gvisor.dev\/gvisor\/pkg\/tcpip\/faketime"/a\	"gvisor.dev/gvisor/pkg/tcpip/header"' "$f"
+              cat "$out/cost.fixture" >> "$f"
+              test "$(git diff --name-only)" = "$f"
+              ec=0
+              bazel test --jobs=4 --nocache_test_results --test_arg=-test.run=^$ --test_arg=-test.bench=^BenchmarkRACKSparseCoverage$ --test_arg=-test.benchtime=100ms --test_arg=-test.cpu=1 //pkg/tcpip/transport/tcp:tcp_test > "$out/cost-$arm-$round-bazel.log" 2>&1 || ec=$?
+              path=bazel-testlogs/pkg/tcpip/transport/tcp/tcp_test/test.log
+              if test -f "$path"; then cp -L "$path" "$out/cost-$arm-$round-test.log"; fi
+              if ((ec)); then tail -18 "$out/cost-$arm-$round-bazel.log"; exit "$ec"; fi
+            done
+          done
+          git restore -- "$e" "$f"
+          git checkout --quiet --detach 04e8302fd79f1557774b6b72a5a231b390674f32
+          bazel test --jobs=4 --test_arg=-test.v //pkg/tcpip/transport/tcp:tcp_test > "$out/package-bazel.log" 2>&1 || { tail -22 "$out/package-bazel.log"; exit 1; }
+          cp -L bazel-testlogs/pkg/tcpip/transport/tcp/tcp_test/test.log "$out/package-test.log"
+          bazel build --jobs=4 //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp:tcp_test_nogo > "$out/analysis.log" 2>&1 || { tail -22 "$out/analysis.log"; exit 1; }
+          python3 - "$out" <<'PY'
+          import json, pathlib, re, statistics, sys
+          out=pathlib.Path(sys.argv[1])
+          rows={}
+          for p in sorted(out.glob('cost-*-test.log')):
+              _,arm,r,_=p.stem.split('-')
+              for name,ns,b,alloc in re.findall(r'^BenchmarkRACKSparseCoverage/(\S+?)\s+\d+\s+([\d.]+) ns/op\s+(\d+) B/op\s+(\d+) allocs/op',p.read_text(),re.M):
+                  rows.setdefault(arm,{}).setdefault(name,[]).append([float(ns),int(b),int(alloc)])
+          assert set(rows)=={'stock','candidate'} and all(len(series)==8 for vals in rows.values() for series in vals.values()) and all(len(vals)==3 for vals in rows.values()),rows
+          pkg=(out/'package-test.log').read_text()
+          assert re.search(r'^--- PASS: TestSACKedGSOAcrossSequenceWrap',pkg,re.M) and not re.search(r'^--- FAIL:',pkg,re.M)
+          p=out/'verdict.json'
+          v=json.loads(p.read_text())
+          v.update(cost={'samples':rows,'median_ns':{arm:{key:statistics.median(x[0] for x in values) for key,values in data.items()} for arm,data in rows.items()}},package={'passed':len(re.findall(r'^--- PASS:',pkg,re.M)),'source':'04e8302fd79f1557774b6b72a5a231b390674f32'},analysis={'owners':['tcp_nogo','tcp_test_nogo'],'status':'pass'})
+          p.write_text(json.dumps(v,indent=2))
+          print(json.dumps(v['cost']['median_ns']))
           PY
       - name: Publish case records once
         if: always()

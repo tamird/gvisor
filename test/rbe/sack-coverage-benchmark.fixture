@@ -1,0 +1,48 @@
+
+
+func BenchmarkRACKSparseCoverage(b *testing.B) {
+	for _, tc := range []struct {
+		name             string
+		units, size, mss int
+		partial          bool
+	}{
+		{"ordinary-128", 128, 32, 32, false},
+		{"tail-4096", 4096, 32, 32, false},
+		{"partial-GSO-4096", 4096, 256, 32, true},
+	} {
+		b.Run(tc.name, func(b *testing.B) {
+			clock := faketime.NewManualClock()
+			ctx := newRACKTestContext(clock, 0)
+			defer ctx.cleanup()
+			s := &ctx.snd
+			s.ep.mu.Lock()
+			defer s.ep.mu.Unlock()
+			s.MaxPayloadSize = tc.mss
+			s.rc.minRTT = 100 * time.Millisecond
+			s.rtt.SRTT = 100 * time.Millisecond
+			for i := 0; i < tc.units; i++ {
+				seg := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(tc.size)), 0)
+				seg.sequenceNumber = seqnum.Value(i * tc.size)
+				seg.xmitCount = 1
+				s.writeList.PushBack(seg)
+				ctx.segs = append(ctx.segs, seg)
+			}
+			s.SndNxt = seqnum.Value(tc.units * tc.size)
+			if tc.partial {
+				// Sixty far-separated ranges cover only pieces of GSO packets.
+				for i := 0; i < 60; i++ {
+					start := seqnum.Value((tc.units-1-i*64)*tc.size + 9)
+					s.ep.scoreboard.Insert(header.SACKBlock{Start: start, End: start.Add(15)})
+				}
+			} else {
+				// One complete SACK at the end cannot suppress reordering.
+				s.ep.scoreboard.Insert(header.SACKBlock{Start: s.SndNxt - seqnum.Value(tc.size), End: s.SndNxt})
+			}
+			b.ReportAllocs()
+			for b.Loop() {
+				s.rc.updateRACKReorderWindow()
+				s.rc.detectLoss(tcpip.MonotonicTime{})
+			}
+		})
+	}
+}
