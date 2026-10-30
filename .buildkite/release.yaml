@@ -48,19 +48,20 @@ steps:
       queue: "release"
   - <<: *common
     label: ":ship: Release"
+    env:
+      PYTHON_RELEASE_DEST: artifacts/python
     if: build.branch == "master" || (build.tag != null && build.tag =~ /-staging/)
     commands:
       # Stamps the binaries below with release-<name>.
       - ./.buildkite/scripts/release/tag.sh stage
+      - make artifacts-python
       - |
         if [[ "$${BUILDKITE_TAG:-}" == release-*-staging ]]; then
           label="$${BUILDKITE_TAG%-staging}"
         else
           label="$$(tools/workspace_status.sh --label)"
         fi
-        make release-artifacts RELEASE_VERSION="$$label" BAZEL_OPTIONS=--compilation_mode=opt
-      - make artifacts-python
-      - make release RELEASE_NIGHTLY=$$RELEASE_NIGHTLY
+        make release RELEASE_VERSION="$$label" BAZEL_OPTIONS=--compilation_mode=opt RELEASE_NIGHTLY="$$RELEASE_NIGHTLY"
       - (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)
       # Pushes release-<name> to GitHub.
       - ./.buildkite/scripts/release/tag.sh publish
