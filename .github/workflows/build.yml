@@ -15,15 +15,16 @@ jobs:
       STOCK: d624fba03a2b3f1f9a314e54198c95460005cc15
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
+      with: {fetch-depth: 8, persist-credentials: false}
     - name: Prepare the pinned compiler coordinator and RBE workers
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        cp test/rbe/verify-oci-mem.py "$RUNNER_TEMP/verify-tcp.py"
-        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" && "$(git rev-parse HEAD^2)" == "$STOCK" ]]
+        cp test/rbe/verify-oci-direct.py "$RUNNER_TEMP/verify-tcp.py"
+        cp test/rbe/run-oci-mem.py "$RUNNER_TEMP/oci.py"
+        [[ "$(git rev-parse HEAD^1^1)" == "$CURRENT" && "$(git rev-parse HEAD^1^2)" == "$STOCK" ]]
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -38,38 +39,46 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Build each checkout and boot its guest under the real host hierarchy
+    - name: Recover the compiler failures from the original two builds
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'DIAG'
+        import base64,json,os,urllib.request
+        from pathlib import Path
+        for name,i in [('stock','859bc879-4d17-46ed-823b-dec507325c16'),('fixed','3b12b777-3801-4084-afac-d54b433945bf')]:
+            req=urllib.request.Request('https://app.buildbuddy.io/rpc/BuildBuddyService/GetEventLogChunk',json.dumps(dict(invocationId=i,minLines=100000)).encode(),{'Content-Type':'application/json','x-buildbuddy-api-key':os.environ['BB_KEY']})
+            try:
+                with urllib.request.urlopen(req,timeout=45) as response:
+                    o=json.load(response)
+                txt=base64.b64decode(o['buffer']).decode(errors='replace')
+                lines=[l for l in txt.splitlines() if 'fatal error:' in l or 'error:' in l or 'treated as errors' in l]
+                diagnostic='\n'.join(lines)[:12000]
+            except Exception as e:
+                diagnostic=type(e).__name__+': '+str(e)
+            (Path(os.environ['RUNNER_TEMP'])/'records'/('original-'+name+'.log')).write_text(diagnostic+'\n')
+        DIAG
+    - name: Run the same OCI guest on stock and corrected runsc
       run: |
         set -euo pipefail
-        cg=/sys/fs/cgroup; test "$(stat -f -c '%T' "$cg")" = cgroup2fs
-        docker exec tcp-compiler /usr/local/bin/host-docker version --format '{{.Server.Version}}' > "$RUNNER_TEMP/records/docker-version"
-        date -u +%FT%TZ > "$RUNNER_TEMP/records/start"
         for arm in stock fixed; do
           src=$STOCK; [[ $arm == stock ]] || src=$CURRENT
           git checkout --quiet --detach "$src"; [[ "$(git rev-parse HEAD)" == "$src" ]]
           rec=$RUNNER_TEMP/records/$arm; mkdir -p "$rec"
-          echo "$src" > "$rec/source"; sha256sum test/root/runsc_test.go > "$rec/test.sha256"
-          cli=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
-          opts=(--config=x86_64 --jobs=32 --spawn_strategy=remote,local --remote_download_outputs=toplevel)
+          echo "$src" > "$rec/source"
+          sha256sum test/root/runsc_test.go > "$rec/test.sha256"
           rc=0
-          "${cli[@]}" build "${opts[@]}" //runsc:runsc > "$rec/build.log" 2>&1 || rc=$?
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=x86_64 --jobs=32 --spawn_strategy=remote,local --remote_download_outputs=toplevel //runsc:runsc > "$rec/build.log" 2>&1 || rc=$?
           echo "$rc" > "$rec/build.exit"
           if [[ $rc == 0 ]]; then
             docker exec tcp-compiler cp bazel-bin/runsc/runsc_/runsc "$RUNNER_TEMP/runsc-$arm"
-            echo "{\"runtimes\":{\"runsc\":{\"path\":\"$RUNNER_TEMP/runsc-$arm\"}}}" > "$RUNNER_TEMP/docker-config-$arm.json"
-            rc=0
-            "${cli[@]}" test "${opts[@]}" --strategy=TestRunner=local --test_arg=-test.v --test_arg=-test.run='^TestNestedMemoryLimit$' --test_arg=-docker_cli=/usr/local/bin/host-docker --test_arg=-runtime=runsc --test_arg=-config_path="$RUNNER_TEMP/docker-config-$arm.json" --nocache_test_results --test_output=all //test/root:root_test > "$rec/owner.log" 2>&1 || rc=$?
-            echo "$rc" > "$rec/owner.exit"
-            if [[ $rc == 0 || $rc == 3 ]]; then
-              for f in test.xml test.log; do docker exec tcp-compiler cat "bazel-testlogs/test/root/root_test/$f" > "$rec/$f"; done
-            fi
+            docker exec tcp-compiler python3 "$RUNNER_TEMP/oci.py" "$RUNNER_TEMP/runsc-$arm" "$rec" || true
           fi
-          for file in "$rec"/{build,owner}.log; do
-            if [[ -f "$file" ]]; then grep -A3 -E 'Invocation ID:|^ERROR:|An error occurred|^FAIL:|MemTotal|runsc:|cannot ' "$file" | head -100 > "${file%.log}.diagnostics" || true; rm "$file"; fi
-          done
+          grep -E 'Invocation ID:|fatal error:|error:|^ERROR:' "$rec/build.log" | head -60 > "$rec/build.diagnostics" || true
+          rm "$rec/build.log"
         done
         date -u +%FT%TZ > "$RUNNER_TEMP/records/end"
-    - name: Reconcile stock failures, fixed results, source identity and guest launches
+    - name: Reconcile all six guest results
       if: always()
       run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
     - name: Exclude credentials from the evidence bundle
@@ -88,6 +97,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: nested-memory-limit
+        name: oci-memtotal-direct
         path: ${{ runner.temp }}/records/
         if-no-files-found: error
