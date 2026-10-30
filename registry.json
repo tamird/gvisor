@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:33:56.242748+00:00",
+    "updatedAt": "2026-10-30T04:40:42.488176+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38262,7 +38262,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-30T02:58:38.945196+00:00",
+      "updatedAt": "2026-10-30T04:40:42.488176+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -40071,6 +40071,19 @@
               "url": "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5"
             }
           ]
+        },
+        {
+          "text": "With Linux and gVisor sharing the bottleneck, stock gVisor reported a negative SackedOut count in 1,667 of 1,775 sender samples (minimum −30). This covered Reno and CUBIC, each with both connection start orders. The count measures accounting errors; it does not establish their effect on throughput. The matched stock and corrected trials test that question.",
+          "evidence": [
+            {
+              "label": "Original stock sender samples, one trial per configuration",
+              "url": "https://github.com/tamird/gvisor/actions/runs/40969183478/artifacts/12941955162"
+            },
+            {
+              "label": "Matched stock and corrected bottleneck trials",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41003061729"
+            }
+          ]
         }
       ],
       "nextStep": "Compare #16081 and #16495 after a second timeout. For a locally refused first write, distinguish retrying unsent data, probing the peer’s window and retransmitting data already in flight. Qualify those transitions before proposing the change upstream.",
@@ -41125,7 +41138,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-29T23:51:50.493908+00:00",
+      "updatedAt": "2026-10-30T04:40:42.488176+00:00",
       "summary": "Parth leads the graph codec. The graph preserves the tested shared maps, slice aliases and saver self-pointers. Neither legacy slice prototype is suitable for submission. Issue #16715 tracks the open map callback, recursive type, LoadValue and encoder scratch findings, with reproducers and the revisions they exercised.",
       "findings": [
         {
@@ -43806,6 +43819,19 @@
             {
               "label": "Current decoder PR",
               "url": "https://github.com/google/gvisor/pull/16584"
+            }
+          ]
+        },
+        {
+          "text": "The Nginx checkpoint comparison measures the legacy encoder and decoder before and after the upstream format-dispatch change. It does not measure the graph encoder or decoder.",
+          "evidence": [
+            {
+              "label": "Benchmark protocol and original run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41003868303"
+            },
+            {
+              "label": "Upstream format dispatch",
+              "url": "https://github.com/google/gvisor/commit/aa5305e99"
             }
           ]
         }
