@@ -287,7 +287,7 @@ func TestOverlayLowerPollLifetime(t *testing.T) {
 	if got := original.ReadRefs(); got < before {
 		t.Errorf("old lower no longer alive with two registrations: got %d, original %d", got, before)
 	}
-	upper, upCh := register(ofd)
+	upperState, upCh := register(ofd)
 	k.HostNamePoller.Notify()
 	for _, ch := range []chan struct{}{firstCh, secondCh} {
 		select {
@@ -305,7 +305,7 @@ func TestOverlayLowerPollLifetime(t *testing.T) {
 	if got := original.ReadRefs(); got < before {
 		t.Errorf("original lower lost with one waiter left: refs %d, want >=%d", got, before)
 	}
-	releaseState(task, upper)
+	releaseState(task, upperState)
 	k.HostNamePoller.Notify()
 	select {
 	case <-secondCh:
