@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T18:30:15.668722+00:00",
+    "updatedAt": "2026-10-30T18:51:08.912815+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37104,6 +37104,42 @@
           "url": "https://github.com/tamird/gvisor/commit/08a25f981"
         }
       ]
+    },
+    {
+      "id": "branch:rules-distroless-debian-layer",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/gvisor",
+      "ref": "qualification/deb-layer-supplier",
+      "head": "eac484f5550f043fa23b1fd983d4963b09348d17",
+      "title": "Remove Bash from ordinary Debian image layers in rules_distroless",
+      "url": "https://github.com/tamird/gvisor/blob/eac484f55/test/rbe/rules-distroless-deb-layer.patch",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T18:51:08.912815+00:00",
+      "summary": "Upstream candidate against bazel-contrib/rules_distroless at 15f9fc8d3. The linked patch is the supplier change, archived on gVisor’s qualification branch. It keeps gzip streams unchanged and runs the registered zstd directly for uncompressed, xz, zstd and lzma tar inputs. The merged-/usr path is unchanged.",
+      "evidence": [
+        {
+          "label": "Supplier patch",
+          "url": "https://github.com/tamird/gvisor/blob/eac484f55/test/rbe/rules-distroless-deb-layer.patch"
+        },
+        {
+          "label": "All 10 supplier tests passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41109292097/artifacts/13001643598"
+        },
+        {
+          "label": "AMD64 and ARM64 package layer bytes on scratch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41107074427/artifacts/13000859718"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "eac484f5550f043fa23b1fd983d4963b09348d17",
+        "url": "https://github.com/tamird/gvisor/commit/eac484f55",
+        "title": "Send the Debian layer fix to rules_distroless",
+        "summary": "The ordinary layer action needs Bash today. The proposed upstream fix uses the compressor already supplied by its Bazel toolchain. The “Supplier patch” evidence link opens the complete change.",
+        "body": "A worker with the registered zstd tool but no Bash cannot convert a\nDebian package into an image layer. Run zstd directly for ordinary\nlayers and forward existing gzip archives unchanged.\n\nThe reference gzip bytes match for raw tar, gzip, xz, zstd and lzma\ninputs. The merged-/usr rewrite continues to use its existing rule."
+      }
     }
   ],
   "edges": [
@@ -43248,7 +43284,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T17:24:00.776380+00:00",
+      "updatedAt": "2026-10-30T18:51:08.912815+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
         {
@@ -45992,7 +46028,7 @@
           ]
         }
       ],
-      "nextStep": "Keep the four cases open in #16715 until #16747 lands. The ordinary callbacks, nested conversions, zero-sized slice capacities, and pooled scratch checks passed on its reviewed head.",
+      "nextStep": "Compare one index entry per live graph range against the 512-byte bucket index on both sparse slices and the 20,000-node graph. Verify alias identity and wire sizes before interpreting timing. Keep the four separately reproduced correctness cases open in #16715 until #16747 lands.",
       "evidence": [
         {
           "label": "Legacy Save cleared live slice data in both orders",
@@ -46993,6 +47029,10 @@
         {
           "label": "Graph and wire checks on the exact PR head",
           "url": "https://github.com/tamird/gvisor/actions/runs/41095391836/artifacts/12995572588"
+        },
+        {
+          "label": "Paired range-index experiment; same graph mode and two-order alias checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41110148739"
         }
       ],
       "comparisons": [
@@ -52647,7 +52687,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T18:30:15.668722+00:00",
+      "updatedAt": "2026-10-30T18:51:08.912815+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -53467,9 +53507,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41107074427/artifacts/13000859718"
             }
           ]
+        },
+        {
+          "text": "The supplier patch preserves the full gzip bytes for raw tar, gzip, xz, zstd and lzma inputs. All ten rules_distroless tests passed. The separate merged-/usr archive rewrite keeps its existing shell rule. The upstream submission is awaiting contributor review.",
+          "evidence": [
+            {
+              "label": "Supplier patch",
+              "url": "https://github.com/tamird/gvisor/blob/eac484f55/test/rbe/rules-distroless-deb-layer.patch"
+            },
+            {
+              "label": "All 10 supplier tests passed",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41109292097/artifacts/13001643598"
+            },
+            {
+              "label": "AMD64 and ARM64 package layer bytes on scratch",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41107074427/artifacts/13000859718"
+            }
+          ]
         }
       ],
-      "nextStep": "Check whether rules_distroless can reuse an existing archive rule, and qualify the other supported input formats before proposing the change upstream. Independently compare all rendered files and run the serving image in the complete Jekyll site build.",
+      "nextStep": "Send the Debian layer patch upstream if approved. Compare the complete Jekyll output and serve it, keeping its ordinary build prerequisites separate from the site renderer on the scratch worker.",
       "evidence": [
         {
           "label": "Skylib supplier proposal for shell-free native file copies",
