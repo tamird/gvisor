@@ -1,35 +1,57 @@
-name: CI
-
-"on":
+name: Verify pinned artifact license audits
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/license-audit-rebase]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the product and prepare the receipt
+        run: |
+          set -eu
+          out="$RUNNER_TEMP/license-proof"
+          mkdir -p "$out"
+          cp .github/qualification/license-audit/provenance.py "$RUNNER_TEMP/provenance.py"
+          git rev-parse HEAD > "$out/fixture"
+          git checkout --quiet --detach HEAD^
+          test "$(git rev-parse HEAD)" = ce676f0d3346881fc09b11523fc6aabcc3084486
+          git rev-parse HEAD > "$out/source"
+          date -u --iso-8601=seconds > "$out/started"
+      - name: Run the owning Bazel suite
+        run: |
+          out="$RUNNER_TEMP/license-proof"
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          rc=0
+          bazelisk test --nocache_test_results --test_output=errors //tools/licensecheck:licensecheck_test > "$RUNNER_TEMP/bazel.log" 2>&1 || rc=$?
+          echo "$rc" > "$out/bazel.exit"
+          sed -nE '/^(ERROR|FAIL)|licensecheck_test |Executed [0-9]/p' "$RUNNER_TEMP/bazel.log" | tail -18 > "$out/test-summary"
+          testlog=$(bazelisk info bazel-testlogs 2>/dev/null)/tools/licensecheck/licensecheck_test/test.xml
+          if test -f "$testlog"; then cp "$testlog" "$out/owning-test.xml"; fi
+      - name: Verify the actual fork archive pins and upstream notices
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rc=0
+          python3 "$RUNNER_TEMP/provenance.py" || rc=$?
+          echo "$rc" > "$RUNNER_TEMP/license-proof/provenance.exit"
+      - name: Record original outcomes
+        run: |
+          out="$RUNNER_TEMP/license-proof"
+          date -u --iso-8601=seconds > "$out/finished"
+          jq -n --arg source "$(cat "$out/source")" --arg fixture "$(cat "$out/fixture")" \
+            --argjson test_exit "$(cat "$out/bazel.exit")" --argjson provenance_exit "$(cat "$out/provenance.exit")" \
+            '{source:$source,fixture:$fixture,target:"//tools/licensecheck:licensecheck_test",test_exit:$test_exit,provenance_exit:$provenance_exit}' > "$out/result.json"
+          jq -e '.test_exit == 0 and .provenance_exit == 0' "$out/result.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: pinned-artifact-license-audit
+          path: ${{ runner.temp }}/license-proof
+          if-no-files-found: error
