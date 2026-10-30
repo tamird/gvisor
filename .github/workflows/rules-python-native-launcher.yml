@@ -1,7 +1,7 @@
 name: Exercise native package tool launchers
 on:
   push:
-    branches: [qualification/rules-python-native-stock-stage1]
+    branches: [qualification/rules-python-native-stock-stage1-arm]
 permissions:
   actions: read
   contents: read
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      QUALIFICATION_ARCH: amd64
+      QUALIFICATION_ARCH: arm64
       QUALIFICATION_COMMIT: ${{ github.sha }}
       QUALIFICATION_EXECUTION: remote-actions
       QUALIFICATION_LANES: build
@@ -30,7 +30,7 @@ jobs:
           export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/preflight.bazelrc"
           bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
-          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config=rbe --config=x86_64 --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=native --output=jsonproto \
+          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config=rbe-arm64 --config=aarch64 --host_platform=//tools/bazeldefs:rbe_linux_arm64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=native --output=jsonproto \
             'outputs(".*/(build_tar|make_deb)$", deps(set(//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated)))' > "$RUNNER_TEMP/writers.json"
           python3 test/rbe/python_package_writers/launcher_graph.py "$RUNNER_TEMP/writers.json" "$RUNNER_TEMP/native-graph.json"
       - name: Fetch the pinned execution log decoder
@@ -43,6 +43,8 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           bash test/rbe/actions.sh \
+            --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_arm64 \
+            --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
             --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native \
             --bazel-option=--remote_download_outputs=all \
             '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|RelocatedPythonWriter)$=+no-remote-cache'
