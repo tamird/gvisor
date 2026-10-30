@@ -1,0 +1,40 @@
+name: Check Gazelle override scope when gVisor is a dependency
+on:
+  push:
+    branches: [qualification/gazelle-downstream-root]
+permissions: {contents: read}
+jobs:
+  probe:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: stock, persist-credentials: false, ref: 85d46891e97cf43c1e30935dc56f77b2ec5a5bf7}
+      - name: Compare one downstream Bazel module on stock and candidate
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          export CPPLINT_RC="$RUNNER_TEMP/consumer.bazelrc"
+          trap 'rm -f "$CPPLINT_RC"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$CPPLINT_RC"
+          unset BUILDBUDDY_API_KEY
+          mkdir -p "$RUNNER_TEMP/publication"
+          status=0
+          for variant in stock carrier; do
+            mkdir -p "$RUNNER_TEMP/$variant"
+            (cd "$variant" && RUNNER_TEMP="$RUNNER_TEMP/$variant" PROBE_CASE="$variant" python3 -B ../carrier/.github/qualification/downstream/downstream.py) || status=1
+            cp "$RUNNER_TEMP/$variant/result.json" "$RUNNER_TEMP/publication/$variant.json" || status=1
+          done
+          exit "$status"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with: {name: downstream-go-overrides, path: "${{ runner.temp }}/publication/", if-no-files-found: error}
