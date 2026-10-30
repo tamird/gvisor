@@ -7,11 +7,11 @@ permissions:
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
+        with: {fetch-depth: 8, persist-credentials: false}
       - name: Run the actual Linux and sentry socket cases
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -23,7 +23,7 @@ jobs:
           cp test/rbe/cork-syscall-result.py "$RUNNER_TEMP/verify-cork.py"
           stock=c65b3b5f8f5560421298cbfb36928b3c232ae54a
           proposed=4f06bbb67a8e45dbf89c036ae937607dc3561d50
-          [[ "$(git rev-parse HEAD^1)" == "$proposed" && "$(git rev-parse HEAD^2)" == "$stock" ]]
+          [[ "$(git rev-parse HEAD^1^1)" == "$proposed" && "$(git rev-parse HEAD^1^2)" == "$stock" ]]
           printf 'module(name="cork_platform")\n' > "$RUNNER_TEMP/cork-platform/MODULE.bazel"
           printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/cork-platform/BUILD"
           rc=$RUNNER_TEMP/cork.bazelrc
@@ -35,6 +35,18 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
+          # The pinned GNU execution image is Ubuntu 22.04. coral_crosstool
+          # embeds the coordinator's GCC major in its builtin include roots.
+          # Exercise one action that actually failed with the Ubuntu 24 host.
+          git checkout --quiet --detach "$stock"
+          gcc -dumpfullversion > "$receipt/coordinator-gcc"
+          [[ "$(gcc -dumpversion)" == 11 ]]
+          bazel --bazelrc="$rc" aquery --config=x86_64 'mnemonic("CppCompile",//test/util:logging)' > "$receipt/compile-action" 2> "$receipt/aquery.log"
+          grep -Eq 'Execution platform: .*//:gnu' "$receipt/compile-action"
+          preflight=0
+          bazel --bazelrc="$rc" build --config=x86_64 --verbose_failures //test/util:logging > "$receipt/compile.log" 2>&1 || preflight=$?
+          printf '%s\n' "$preflight" > "$receipt/compile-exit"
+          [[ "$preflight" == 0 ]]
           for arm in linux stock proposed; do
             d="$receipt/$arm"
             mkdir -p "$d"
@@ -49,7 +61,7 @@ jobs:
             printf '%s\n' "$target" > "$d/target"
             sha256sum test/syscalls/linux/socket_ip_tcp_generic.cc > "$d/fixture-sha256"
             date -u +%FT%TZ > "$d/started"
-            args=(test --config=x86_64 --jobs=64 --test_sharding_strategy=disabled --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --test_output=all --test_timeout=450 '--test_env=GTEST_FILTER=*TCPCorkFlushOnClose/*:*TCPCorkFlushOnShutdown/*:*TCPCork/*' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' "--build_event_json_file=$RUNNER_TEMP/$arm-bep.jsonl" "$target")
+            args=(test --verbose_failures --config=x86_64 --jobs=64 --test_sharding_strategy=disabled --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --test_output=all --test_timeout=450 '--test_env=GTEST_FILTER=*TCPCorkFlushOnClose/*:*TCPCorkFlushOnShutdown/*:*TCPCork/*' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' "--build_event_json_file=$RUNNER_TEMP/$arm-bep.jsonl" "$target")
             printf '%s\n' "${args[@]}" > "$d/arguments"
             code=0
             bazel --bazelrc="$rc" "${args[@]}" > "$d/bazel.log" 2>&1 || code=$?
