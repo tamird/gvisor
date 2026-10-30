@@ -30,6 +30,7 @@
 #include <poll.h>
 #include <sched.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -56,6 +57,7 @@
 #include "test/util/file_descriptor.h"
 #include "test/util/linux_capability_util.h"
 #include "test/util/logging.h"
+#include "test/util/memory_util.h"
 #include "test/util/multiprocess_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
@@ -527,6 +529,75 @@ PosixErrorOr<TunTapInterface> OpenAndAttachTunTap(const std::string& dev_name,
 
   return TunTapInterface{.fd = std::move(fd), .link = std::move(link)};
 }
+
+void CheckTUNPayloadFault(bool no_pi) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
+  const auto tun = ASSERT_NO_ERRNO_AND_VALUE(OpenAndAttachTunTap(
+      kTunName, kTapIPAddr, false /* tap */, no_pi));
+  ASSERT_THAT(fcntl(tun.fd.get(), F_SETFL, O_NONBLOCK), SyscallSucceeds());
+  const auto sender =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP));
+  const sockaddr_in remote = {.sin_family = AF_INET,
+                              .sin_port = htons(42),
+                              .sin_addr = {.s_addr = kTapPeerIPAddr}};
+  auto send_packet = [&] {
+    ASSERT_THAT(sendto(sender.get(), "data", 4, 0, AsSockAddr(&remote),
+                       sizeof(remote)),
+                SyscallSucceedsWithValue(4));
+    pollfd ready = {tun.fd.get(), POLLIN, 0};
+    ASSERT_THAT(RetryEINTR(poll)(&ready, 1, 5000), SyscallSucceedsWithValue(1));
+    ASSERT_NE(ready.revents & POLLIN, 0);
+  };
+
+  // Establish the exact size/protocol of the packet using a writable control.
+  ASSERT_NO_FATAL_FAILURE(send_packet());
+  tun_pi pi = {};
+  char bytes[128] = {};
+  iovec iov[] = {{.iov_base = &pi, .iov_len = sizeof(pi)},
+                 {.iov_base = bytes, .iov_len = sizeof(bytes)}};
+  const ssize_t control = readv(tun.fd.get(), iov + no_pi, 2 - no_pi);
+  const size_t header = no_pi ? 0 : sizeof(pi);
+  ASSERT_EQ(control, static_cast<ssize_t>(header + sizeof(iphdr) + 8 + 4));
+  ASSERT_EQ(static_cast<unsigned char>(bytes[0]) >> 4, 4);
+  ASSERT_EQ(bytes[9], IPPROTO_UDP);
+  ASSERT_EQ(memcmp(bytes + sizeof(iphdr) + 8, "data", 4), 0);
+  if (!no_pi) {
+    ASSERT_EQ(pi.proto, htons(ETH_P_IP));
+  }
+
+  auto blocked = ASSERT_NO_ERRNO_AND_VALUE(
+      MmapAnon(kPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE));
+  memset(blocked.ptr(), 0xa5, kPageSize);
+  ASSERT_THAT(mprotect(blocked.ptr(), kPageSize, PROT_NONE), SyscallSucceeds());
+  pi = {};
+  iov[1] = {.iov_base = blocked.ptr(), .iov_len = control - header};
+  ASSERT_NO_FATAL_FAILURE(send_packet());
+  errno = 0;
+  const ssize_t count = readv(tun.fd.get(), iov + no_pi, 2 - no_pi);
+  const int error = count < 0 ? errno : 0;
+  ASSERT_THAT(mprotect(blocked.ptr(), kPageSize, PROT_READ), SyscallSucceeds());
+  const auto* sentinel = static_cast<const unsigned char*>(blocked.ptr());
+  for (size_t i = 0; i < iov[1].iov_len; ++i) {
+    ASSERT_EQ(sentinel[i], 0xa5) << i;
+  }
+  if (!no_pi) {
+    EXPECT_EQ(pi.flags, 0);
+    EXPECT_EQ(pi.proto, htons(ETH_P_IP));
+  }
+  errno = 0;
+  const ssize_t next = read(tun.fd.get(), bytes, sizeof(bytes));
+  const int next_error = next < 0 ? errno : 0;
+  std::cout << "TUN_PAYLOAD_OBS no_pi=" << no_pi << " control=" << control
+            << " fault=" << count << " errno=" << error << " proto="
+            << ntohs(pi.proto) << " untouched=" << iov[1].iov_len
+            << " next=" << next << " next_errno=" << next_error << std::endl;
+  EXPECT_EQ(next, -1);
+  EXPECT_EQ(next_error, EAGAIN);
+}
+
+TEST_F(TuntapTest, PayloadFaultPI) { CheckTUNPayloadFault(false); }
+
+TEST_F(TuntapTest, PayloadFaultNoPI) { CheckTUNPayloadFault(true); }
 
 // This test sets up a TAP device and pings kernel by sending ICMP echo request.
 //
