@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
+from xml.etree import ElementTree
 
 
 ORIGINAL = {
@@ -29,7 +30,7 @@ def write_json(path, payload):
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
-def resolve(uri, cache):
+def resolve(uri, name, cache):
     parsed = urlsplit(uri)
     match = re.fullmatch(r"/blobs/([a-f0-9]{64})/(\d+)", parsed.path)
     if (not match or parsed.scheme != "bytestream" or parsed.netloc != "remote.buildbuddy.io"
@@ -39,7 +40,8 @@ def resolve(uri, cache):
     size = int(length)
     if size > MAX_BLOB:
         raise ValueError(f"report exceeds recovery limit: {size}")
-    dest = cache / digest
+    dest = cache / digest / name
+    dest.parent.mkdir(exist_ok=True)
     if not dest.exists():
         req = Request("https://app.buildbuddy.io/api/v1/GetFile", json.dumps({"uri": uri}).encode(), {
             "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"],
@@ -97,7 +99,7 @@ def main():
                     for item in event.get("testResult", {}).get("testActionOutput", ()):
                         if item.get("name") not in ("test.log", "test.xml"):
                             continue
-                        source, rec = resolve(item["uri"], cache)
+                        source, rec = resolve(item["uri"], item["name"], cache)
                         total += rec["bytes"]
                         if total > MAX_SUM:
                             raise ValueError("recovery size limit exceeded")
@@ -116,9 +118,16 @@ def main():
             for log in (out / "original").rglob("test.log"):
                 for disposition, case in re.findall(r"--- (PASS|FAIL|SKIP): (TestRACK[^\s]+)", log.read_text(errors="replace")):
                     selected.append([disposition, case])
+            xml_cases = []
+            for xml in (out / "original").rglob("test.xml"):
+                for case in ElementTree.parse(xml).getroot().iter("testcase"):
+                    name = case.attrib.get("name", "")
+                    if name.startswith("TestRACK"):
+                        status = "FAIL" if case.find("failure") is not None or case.find("error") is not None else "SKIP" if case.find("skipped") is not None else "PASS"
+                        xml_cases.append([status, name])
             summary["arms"][arm] = {"original_receipt": manifest["events"], "original_capture_exit": int((orig / "capture-exit").read_text()),
                                     "resolved": refs, "recovery_capture_exit": cap.returncode, "verifier_exit": proc.returncode,
-                                    "selected_cases": selected,
+                                    "selected_cases": selected, "xml_cases": xml_cases,
                                     **{k: v[k] for k in ("source", "status", "native_exit", "executed", "missing", "skips", "case_counts",
                                                          "execution_finished_at", "verdict_available_at","errors")}}
         except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as ex:
