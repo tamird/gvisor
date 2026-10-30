@@ -1229,6 +1229,123 @@ TEST_F(FuseCheckpointTest, SentRequestMultipleCheckpoints) {
   EXPECT_EQ(client->Wait(), 0);
 }
 
+void CheckOverlayCloseDuringCopyUp(bool scheduled) {
+  FileDescriptor dev = ASSERT_NO_ERRNO_AND_VALUE(Open("/dev/fuse", O_RDWR));
+  auto lower = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto upper = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto work = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto merged = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto fuse_mount = ASSERT_NO_ERRNO_AND_VALUE(Mount(
+      "fuse", lower.path(), "fuse", MS_NODEV | MS_NOSUID,
+      absl::StrFormat("fd=%d,user_id=%d,group_id=%d,rootmode=40000", dev.get(),
+                      getuid(), getgid()), MNT_DETACH));
+  ASSERT_NO_FATAL_FAILURE(FuseInit(dev.get()));
+  const FileDescriptor stop = ASSERT_NO_ERRNO_AND_VALUE(NewEventFD(0, 0));
+  ScopedThread server([&, fd = dev.release()] {
+    uint64_t fh = 0;
+    std::vector<uint64_t> released;
+    RunFuseServer(fd, stop.get(), [&](int fd, const fuse_in_header& in) {
+      const uint32_t mode = in.nodeid == 1 ? S_IFDIR | 0755 : S_IFREG | 0644;
+      const char* payload = reinterpret_cast<const char*>(&in + 1);
+      switch (in.opcode) {
+        case FUSE_LOOKUP: {
+          if (std::string(payload) != "observed") {
+            FuseRespond(fd, in.unique, nullptr, 0, -ENOENT);
+            break;
+          }
+          fuse_entry_out out = {.nodeid=2, .generation=1, .entry_valid=120,
+                                .attr_valid=120};
+          out.attr = {.ino=2, .mode=S_IFREG | 0644, .nlink=1};
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
+        case FUSE_GETATTR: {
+          fuse_attr_out out = {.attr_valid=120};
+          out.attr = {.ino=in.nodeid, .mode=mode, .nlink=1};
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
+        case FUSE_OPEN: {
+          fuse_open_out out = {.fh=++fh};
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          fprintf(stderr, "OVLCLOSE open fh=%llu\n", (unsigned long long)fh);
+          break;
+        }
+        case FUSE_RELEASE: {
+          uint64_t id = reinterpret_cast<const fuse_release_in*>(payload)->fh;
+          released.push_back(id);
+          fprintf(stderr, "OVLCLOSE release fh=%llu\n", (unsigned long long)id);
+          FuseRespond(fd, in.unique);
+          break;
+        }
+        case FUSE_FLUSH: {
+          uint64_t id = reinterpret_cast<const fuse_flush_in*>(payload)->fh;
+          bool valid = std::find(released.begin(), released.end(), id) == released.end();
+          fprintf(stderr, "OVLCLOSE flush fh=%llu valid=%d\n", (unsigned long long)id, valid);
+          FuseRespond(fd, in.unique, nullptr, 0, valid ? 0 : -EBADF);
+          break;
+        }
+        case FUSE_LISTXATTR: {
+          fuse_getxattr_out out = {};
+          FuseRespond(fd, in.unique, &out, sizeof(out));
+          break;
+        }
+        case FUSE_GETXATTR:
+          FuseRespond(fd, in.unique, nullptr, 0, -ENODATA);
+          break;
+        case FUSE_READ:
+        case FUSE_ACCESS:
+          FuseRespond(fd, in.unique);
+          break;
+        default:
+          FuseRespond(fd, in.unique, nullptr, 0, -ENOSYS);
+      }
+      return true;
+    });
+  });
+  Cleanup stop_server([&] {
+    const uint64_t one = 1;
+    EXPECT_THAT(write(stop.get(), &one, sizeof(one)), SyscallSucceedsWithValue(sizeof(one)));
+  });
+  auto ovl = ASSERT_NO_ERRNO_AND_VALUE(Mount(
+      "overlay", merged.path(), "overlay", 0,
+      absl::StrFormat("lowerdir=%s,upperdir=%s,workdir=%s", lower.path(), upper.path(), work.path()),
+      MNT_DETACH));
+  FileDescriptor original = ASSERT_NO_ERRNO_AND_VALUE(
+      Open(JoinPath(merged.path(), "observed"), O_RDONLY));
+  FileDescriptor duplicate(dup(original.get()));
+  ASSERT_GE(duplicate.get(), 0);
+  if (scheduled && IsRunningOnGvisor()) {
+    ASSERT_THAT(ioctl(duplicate.get(), 0x7fe70001, 0), SyscallSucceedsWithValue(0));
+  }
+  const int fd = original.release();
+  int close_error = 0;
+  ScopedThread closer([&] {
+    if (close(fd) == -1) close_error = errno;
+  });
+  // The plain execution closes on the lower file while the duplicate holds
+  // the same overlay open description. The scheduled one overlaps both calls.
+  if (!scheduled) closer.Join();
+  ASSERT_THAT(fchmod(duplicate.get(), 0600), SyscallSucceeds());
+  if (scheduled) closer.Join();
+  struct stat st = {};
+  ASSERT_THAT(stat(JoinPath(upper.path(), "observed").c_str(), &st), SyscallSucceeds());
+  EXPECT_EQ(st.st_mode & 0777, 0600);
+  fprintf(stderr, "OVLCLOSE scheduled=%d close_errno=%d upper_mode=%o\n", scheduled, close_error, st.st_mode & 0777);
+  if (scheduled && IsRunningOnGvisor()) {
+    // Bits 0-2 prove that close selected this fd, chmod completed, and
+    // the cache's selected backing changed before the lower call entered.
+    // Bit 3 identifies a zero refcount immediately before that call.
+    int stages = ioctl(duplicate.get(), 0x7fe70002, 0);
+    fprintf(stderr, "OVLCLOSE gate_stages=%d\n", stages);
+    EXPECT_EQ(stages & 7, 7);
+  }
+  EXPECT_EQ(close_error, 0);
+}
+
+TEST(FuseTest, OverlayClosePlain) { CheckOverlayCloseDuringCopyUp(false); }
+TEST(FuseTest, OverlayCloseScheduled) { CheckOverlayCloseDuringCopyUp(true); }
+
 }  // namespace
 }  // namespace testing
 }  // namespace gvisor

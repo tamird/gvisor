@@ -26,6 +26,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/usermem"
 	"gvisor.dev/gvisor/pkg/waiter"
+	"sync/atomic"
 )
 
 func (d *dentry) isRegularFile() bool {
@@ -112,6 +113,12 @@ func (fd *regularFileFD) Release(ctx context.Context) {
 	fd.cachedFD = nil
 }
 
+var targetForTest atomic.Pointer[regularFileFD]
+var switchedForTest = make(chan struct{})
+var releasedForTest = make(chan struct{})
+var closeSelectedForTest = make(chan struct{})
+var chmodFinishedForTest = make(chan struct{})
+
 // OnClose implements vfs.FileDescriptionImpl.OnClose.
 func (fd *regularFileFD) OnClose(ctx context.Context) error {
 	// Linux doesn't define ovl_file_operations.flush at all (i.e. its
@@ -129,7 +136,25 @@ func (fd *regularFileFD) OnClose(ctx context.Context) error {
 		fd.cachedFlags = statusFlags
 	}
 	wrappedFD := fd.cachedFD
+	marked := !fd.copiedUp && targetForTest.Load() == fd
 	fd.mu.Unlock()
+	if marked {
+		select {
+		case <-closeSelectedForTest:
+		default:
+			close(closeSelectedForTest)
+			<-chmodFinishedForTest
+			fd.mu.Lock()
+			changed := fd.copiedUp && fd.cachedFD != wrappedFD
+			fd.mu.Unlock()
+			if changed {
+				close(switchedForTest)
+			}
+			if wrappedFD.ReadRefs() == 0 {
+				close(releasedForTest)
+			}
+		}
+	}
 	return wrappedFD.OnClose(ctx)
 }
 
@@ -170,6 +195,10 @@ func (fd *regularFileFD) Allocate(ctx context.Context, mode, offset, length uint
 
 // SetStat implements vfs.FileDescriptionImpl.SetStat.
 func (fd *regularFileFD) SetStat(ctx context.Context, opts vfs.SetStatOptions) error {
+	if targetForTest.Load() == fd {
+		<-closeSelectedForTest
+		defer close(chmodFinishedForTest)
+	}
 	d := fd.dentry()
 	mode := linux.FileMode(d.mode.Load())
 	if err := vfs.CheckSetStat(ctx, auth.CredentialsFromContext(ctx), &opts, mode, d.accessACL.Load(), auth.KUID(d.uid.Load()), auth.KGID(d.gid.Load())); err != nil {
@@ -385,6 +414,22 @@ func (fd *regularFileFD) Sync(ctx context.Context, opts vfs.SyncOptions) error {
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.
 func (fd *regularFileFD) Ioctl(ctx context.Context, uio usermem.IO, sysno uintptr, args arch.SyscallArguments) (uintptr, error) {
+	switch args[1].Uint() {
+	case 0x7fe70001:
+		targetForTest.Store(fd)
+		return 0, nil
+	case 0x7fe70002:
+		var bits uintptr
+		for i, ch := range []chan struct{}{closeSelectedForTest, chmodFinishedForTest, switchedForTest, releasedForTest} {
+			select {
+			case <-ch:
+				bits |= 1 << i
+			default:
+			}
+		}
+		return bits, nil
+	}
+
 	wrappedFD, err := fd.getCurrentFD(ctx)
 	if err != nil {
 		return 0, err
