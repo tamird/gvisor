@@ -25,6 +25,10 @@ import (
 )
 
 func TestNetipValues(t *testing.T) {
+	runWithBothEngines(t, testNetipValues)
+}
+
+func testNetipValues(t *testing.T) {
 	addresses := []netip.Addr{
 		{},
 		netip.IPv4Unspecified(),
