@@ -411,25 +411,27 @@ func getMemoryLimit(path string) (string, error) {
 
 // MemoryLimit returns the memory limit.
 func (c *cgroupV2) MemoryLimit() (uint64, error) {
-	limStr, err := getMemoryLimit(c.MakePath(""))
-	if err != nil {
-		return 0, err
-	}
-	// In cgroupv2+systemd, limits are set in the parent slice rather
-	// than the leaf node. Check the parent to see if this is the case.
-	if limStr == maxLimitStr {
-		parentLimStr, err := getMemoryLimit(filepath.Dir(c.MakePath("")))
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
+	root := filepath.Clean(c.Mountpoint)
+	limit := uint64(math.MaxUint64)
+	for path := c.MakePath(""); ; path = filepath.Dir(path) {
+		value, err := getMemoryLimit(path)
+		if err != nil {
+			if path == root && errors.Is(err, os.ErrNotExist) {
+				return limit, nil
+			}
 			return 0, err
 		}
-		if parentLimStr != "" {
-			limStr = parentLimStr
+		if value != maxLimitStr {
+			n, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			limit = min(limit, n)
 		}
-		if limStr == maxLimitStr {
-			return math.MaxUint64, nil
+		if path == root || path == filepath.Dir(path) {
+			return limit, nil
 		}
 	}
-	return strconv.ParseUint(limStr, 10, 64)
 }
 
 // MakePath builds a path to the given controller.
