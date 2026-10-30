@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T21:25:47.985190+00:00",
+    "updatedAt": "2026-10-30T22:31:33.400371+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29892,7 +29892,7 @@
       "url": "https://github.com/google/gvisor/pull/16551",
       "head": "fa7daa135f0ca5de5461ac4b27f046632707e5e2",
       "status": "open",
-      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
+      "updatedAt": "2026-10-30T22:31:33.400371+00:00",
       "links": [
         {
           "label": "Historical Nginx proposal",
@@ -29937,6 +29937,30 @@
       ],
       "evidence": [
         {
+          "label": "Rebased image changes",
+          "url": "https://github.com/tamird/gvisor/commit/fa7daa135"
+        },
+        {
+          "label": "Old import, attempt 1: TestHomeDir/enableGrouping/sub-container timed out",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52865#01a184b4-4dc6-4c73-a4b1-1bd2ad0402c6"
+        },
+        {
+          "label": "Old import, attempt 2: TestMountOverSymlinks/disableGrouping timed out",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52865#01a184c4-de80-4c3b-8887-7b085538c1c9"
+        },
+        {
+          "label": "Old import, attempt 3: TestCrictlSanity/enableGrouping timed out",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52865#01a184ca-b354-4a1d-853d-0cffd8820b68"
+        },
+        {
+          "label": "Unrelated import timed out in TestCrictlSanity/disableGrouping",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52866#01a184b6-6287-4034-839d-c590fa999b75"
+        },
+        {
+          "label": "Master 89a7d2beb passed the containerd 2.1.7 target",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53166#01a18ea4-b8d1-4aa4-9b6a-39742200e78a"
+        },
+        {
           "label": "Open upstream PR",
           "url": "https://github.com/google/gvisor/pull/16551"
         },
@@ -29977,7 +30001,7 @@
           "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
       ],
-      "summary": "Rebased the Nginx and Redis images over the Bun image; all six patch paths retain the reviewed additions and deletions. The old import timed out in TestCrictlSanity/enableGrouping. A neighboring negative test expected the not-implemented error and passed."
+      "summary": "The Nginx and Redis image changes were rebased over the Bun image. On the old import, three containerd 2.1.7 attempts timed out creating a sandbox in three different tests. The intentional unimplemented case passed. An unrelated NVIDIA import reproduced the timeout with grouping disabled. Current master passed the same target. The logs do not identify what exhausted the deadline."
     },
     {
       "id": "branch:sniffer-embed-symlink",
@@ -37492,6 +37516,63 @@
           "url": "https://app.buildbuddy.io/invocation/1cada729-e81f-4bc8-9c4b-13a7ec6f5b26"
         }
       ]
+    },
+    {
+      "id": "branch:unix-listener-readiness",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/unix-listener-readiness-current",
+      "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
+      "title": "Watch bound Unix sockets only when they listen",
+      "url": "https://github.com/tamird/gvisor/commit/a2d366673",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T22:31:33.400371+00:00",
+      "summary": "Binding a connected Unix socket to a pathname repeated an epoll read edge for the same unread byte. Calling listen then set SO_ACCEPTCONN to 1. Linux and corrected gVisor keep the socket connected to its peer for both stream and sequenced-packet sockets.",
+      "evidence": [
+        {
+          "label": "Review branch on top of #16739",
+          "url": "https://github.com/tamird/gvisor/tree/research/unix-listener-readiness-current"
+        },
+        {
+          "label": "One-commit source difference",
+          "url": "https://github.com/tamird/gvisor/compare/ed3929b26...a2d366673"
+        },
+        {
+          "label": "Prerequisite #16739 removes a waiter after failed host registration",
+          "url": "https://github.com/google/gvisor/pull/16739"
+        },
+        {
+          "label": "Linux passed BindConnectedSocket and EpollBindListenWaitAccept for both socket types",
+          "url": "https://app.buildbuddy.io/invocation/3256a304-a0f0-4473-8cd4-1337ba2c486f"
+        },
+        {
+          "label": "Stock gVisor repeated the unread edge and set SO_ACCEPTCONN to 1 for both types",
+          "url": "https://app.buildbuddy.io/invocation/2a66c070-0940-4129-a984-3ce7ac7b0430"
+        },
+        {
+          "label": "Corrected gVisor passed both socket cases and both listener controls",
+          "url": "https://app.buildbuddy.io/invocation/718d047e-f898-4ee9-b221-866f3422bc3b"
+        },
+        {
+          "label": "Three-lane receipt, exact sources, test XML and owner checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41130369584/artifacts/13013172048"
+        },
+        {
+          "label": "Linux restored EINVAL for listen on an already-connected socket",
+          "url": "https://github.com/torvalds/linux/commit/f0d9c3ffc"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a2d36667326189d023f1a2746121dec505a2ef2f",
+        "baseHead": "ed3929b263bf591c62d7d5e4a41b9d83cb929d2b",
+        "url": "https://github.com/tamird/gvisor/commit/a2d366673",
+        "title": "Watch bound Unix sockets only when they listen",
+        "summary": "Review a2d366673 for upstream submission after #16739.",
+        "body": "Binding one end of a Unix socketpair to a pathname registered the\nnew host socket with epoll. If the peer had already sent a byte, the\nbind could report a second edge for that same unread byte. Calling\nlisten on the connected endpoint could also make SO_ACCEPTCONN report\nthat it was a listener [1].\n\nRegister the host socket when the endpoint starts listening, and\nremove the registration when it stops. A connected socketpair then\nuses its peer for readiness even after it acquires a pathname.\n\nThe shared syscall test covers stream and sequenced-packet sockets.\nLinux and corrected gVisor report one edge for the unread byte and\nkeep SO_ACCEPTCONN clear. The existing listener test still accepts a\nconnection [2][3]. The new test accepts either EINVAL or success\nfrom listen because some Linux kernels returned success without\nturning the socket into a listener [4].\n\nThis change builds on #16739.\n\n[1]: https://app.buildbuddy.io/invocation/2a66c070-0940-4129-a984-3ce7ac7b0430\n[2]: https://app.buildbuddy.io/invocation/3256a304-a0f0-4473-8cd4-1337ba2c486f\n[3]: https://app.buildbuddy.io/invocation/718d047e-f898-4ee9-b221-866f3422bc3b\n[4]: https://github.com/torvalds/linux/commit/f0d9c3ffc"
+      }
     }
   ],
   "edges": [
@@ -40750,6 +40831,16 @@
       "type": "depends_on",
       "reason": "The native Buildkite job uses the same Bazelisk hook and Make environment override as the source-lint jobs.",
       "evidence": "https://github.com/tamird/gvisor/commit/eafcb8392"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16739",
+      "to": "branch:unix-listener-readiness",
+      "reason": "The proposal builds on #16739’s waiter rollback and keeps the registration and readiness provider under the same endpoint lock.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16739",
+        "https://github.com/tamird/gvisor/compare/ed3929b26...a2d366673"
+      ]
     }
   ],
   "investigations": [
