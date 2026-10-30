@@ -135,7 +135,9 @@ args=mounts(base,helpers=((str(auth_path),"/auth/release.bazelrc"),))
 args=args[:-1]+["--volume",f"{receipt}:/receipt",args[-1]]
 # The direct action is a qualification control, not a proposed product test rule.
 target="//pkg/sentry/fsimpl/eventfd:eventfd_test";control="//pkg/sentry/fsimpl/eventfd:scratch_eventfd"
-common=["--workspace_status_command=","--config=aarch64","--config=rbe-arm64","--jobs=32","--noremote_local_fallback","--spawn_strategy=remote","--repository_cache=/repository-cache","--lockfile_mode=update","--repo_env=PATH=/usr/local/bin:/usr/bin:/bin","--host_platform=//tools/bazeldefs:rbe_linux_arm64","--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64","--remote_download_outputs=toplevel","--remote_download_regex=.*pkg/sentry/fsimpl/eventfd/.*"]
+# Bazel 8 propagated gVisor's Starlark build options into exec configurations.
+# Its declared Go bootstrap interpreter must remain selected for tool builds.
+common=["--noincompatible_exclude_starlark_flags_from_exec_config","--workspace_status_command=","--config=aarch64","--config=rbe-arm64","--jobs=32","--noremote_local_fallback","--spawn_strategy=remote","--repository_cache=/repository-cache","--lockfile_mode=update","--repo_env=PATH=/usr/local/bin:/usr/bin:/bin","--host_platform=//tools/bazeldefs:rbe_linux_arm64","--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64","--remote_download_outputs=toplevel","--remote_download_regex=.*pkg/sentry/fsimpl/eventfd/.*"]
 client_prefix=args+startup("8.8.1")+["--bazelrc=/auth/release.bazelrc"]
 redact=lambda txt:txt.replace(secret,"[redacted]")
 decoder=staging/"bb";cmd("curl","-fsSL","--retry","3","-o",decoder,"https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64")
