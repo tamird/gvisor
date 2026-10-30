@@ -1,7 +1,7 @@
-name: Trace TCP selective acknowledgment accounting
+name: Verify the TCP selective acknowledgment amendment
 on:
   push:
-    branches: [qualification/tcp-sack-cost-current]
+    branches: [qualification/tcp-sack-review]
 permissions:
   contents: read
 jobs:
@@ -12,64 +12,52 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 4
-      - name: Check the actual RACK packet suite and focused owner
+      - name: Compare stock, candidate, and analyzer records
         run: |
-          set -uo pipefail
+          set -eu
           out="$RUNNER_TEMP/sacked"
           mkdir -p "$out"
-          git checkout --quiet --detach 6531c453abfa602866d9713a72aaf5ccb3b692a5 || exit 1
-          test "$(git rev-parse HEAD)" = 6531c453abfa602866d9713a72aaf5ccb3b692a5 || exit 1
-          test "$(git rev-parse HEAD^)" = da50c9f56d8119f183a0fcf815ba42416a9d751b || exit 1
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          run_tests() {
+            arm="$1"; head="$2"; shift 2
+            git checkout --quiet --detach "$head"
+            test "$(git rev-parse HEAD)" = "$head"
+            test "$(git rev-parse HEAD^)" = 757d67e79ca401d6d662c470d6470d13f9e23a45
+            git diff --quiet
+            git rev-parse HEAD > "$out/$arm-source"
+            date -u +%FT%TZ > "$out/$arm-start"
+            rc=0
+            bazel test --jobs=4 --test_sharding_strategy=disabled --nocache_test_results --test_arg=-test.v --test_output=errors "$@" > "$out/$arm-bazel.log" 2>&1 || rc=$?
+            date -u +%FT%TZ > "$out/$arm-finish"
+            echo "$rc" > "$out/$arm-exit"
+            tree="pkg/tcpip/transport/tcp"
+            for path in "$tree/test/e2e/tcp_rack_test" "$tree/tcp_test"; do
+              if [[ $arm = stock && $path = "$tree/tcp_test" ]]; then continue; fi
+              for ext in log xml; do
+                if [[ -f bazel-testlogs/$path/test.$ext ]]; then cp -L "bazel-testlogs/$path/test.$ext" "$out/$arm-$(basename "$path").$ext"; fi
+              done
+            done
+            tail -16 "$out/$arm-bazel.log"
+          }
+          e2e=//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
+          run_tests stock 574c0fe105112432c1a2785d978064685064b105 '--test_arg=-test.run=^(TestSACKPacketCredit|TestSackedOutAfterPMTU)$' "$e2e"
+          run_tests candidate 8a3d1a53448caae65a60f090f1d60fa3d9f548e9 "$e2e" //pkg/tcpip/transport/tcp:tcp_test
           rc=0
-          date -u +%FT%TZ > "$out/suite-start"
-          bazel test --jobs=4 --test_arg=-test.v --test_output=errors //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp:tcp_test > "$out/suite-bazel.log" 2>&1 || rc=$?
-          date -u +%FT%TZ > "$out/suite-end"
-          echo "$rc" > "$out/suite-exit"
-          for path in pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test pkg/tcpip/transport/tcp/tcp_test; do
-            for kind in log xml; do
-              if test -f "bazel-testlogs/$path/test.$kind"; then cp -L "bazel-testlogs/$path/test.$kind" "$out/$(basename "$path").$kind"; fi
+          bazel test --jobs=4 --build_tag_filters= --test_tag_filters= --test_sharding_strategy=disabled --nocache_test_results --test_output=errors --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp:tcp_test_nogo > "$out/nogo.log" 2>&1 || rc=$?
+          for label in tcp_nogo tcp_test_nogo; do
+            for ext in xml log; do
+              f="bazel-testlogs/pkg/tcpip/transport/tcp/$label/test.$ext"
+              if [[ -f "$f" ]]; then cp -L "$f" "$out/$label.$ext"; fi
             done
           done
-          tail -16 "$out/suite-bazel.log"
-          exit "$rc"
-      - name: Check both analyzer owners
-        if: always()
-        run: |
-          set -uo pipefail
-          out="$RUNNER_TEMP/sacked"
-          test "$(git rev-parse HEAD)" = 6531c453abfa602866d9713a72aaf5ccb3b692a5 || exit 1
-          rc=0
-          bazel build --jobs=4 //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp:tcp_test_nogo > "$out/analysis.log" 2>&1 || rc=$?
-          echo "$rc" > "$out/analysis-exit"
-          tail -12 "$out/analysis.log"
-          exit "$rc"
-      - name: Compare eight interleaved stock and corrected ACK-walk samples
-        if: always()
-        run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/sacked"
-          for round in 1 2 3 4 5 6 7 8; do
-            if ((round%2)); then order="stock candidate"; else order="candidate stock"; fi
-            for arm in $order; do
-              if [[ "$arm" == stock ]]; then expected=014b6ccbcd9f0784a0e46803c8ac331290c1efdd; else expected=6531c453abfa602866d9713a72aaf5ccb3b692a5; fi
-              git checkout --quiet --detach "$expected"
-              test "$(git rev-parse HEAD)" = "$expected"
-              if test -f "$out/compile-failed-$arm"; then continue; fi
-              rc=0
-              bazel test --jobs=4 --nocache_test_results --test_arg=-test.run='^TestWireCreditSegmentSize$' --test_arg=-test.v --test_arg=-test.bench='^BenchmarkRACKSparseCoverage$' --test_arg=-test.benchtime=100ms --test_arg=-test.cpu=1 //pkg/tcpip/transport/tcp:tcp_test > "$out/cost-$arm-$round-bazel.log" 2>&1 || rc=$?
-              printf '%s\t%s\t%s\t%s\n' "$arm" "$round" "$expected" "$rc" >> "$out/cost-exits.tsv"
-              if ((rc)); then cp "$out/cost-$arm-$round-bazel.log" "$out/compile-failed-$arm"; tail -15 "$out/compile-failed-$arm"; continue; fi
-              cp -L bazel-testlogs/pkg/tcpip/transport/tcp/tcp_test/test.log "$out/cost-$arm-$round-test.log"
-            done
-          done
-      - name: Reconcile all expected targets and timings
-        if: always()
-        run: |
-          set -euo pipefail
-          git show "$GITHUB_SHA:test/rbe/sack_review_cost.py" > "$RUNNER_TEMP/sack_review_cost.py"
-          python3 "$RUNNER_TEMP/sack_review_cost.py" "$RUNNER_TEMP/sacked" da50c9f56d8119f183a0fcf815ba42416a9d751b 014b6ccbcd9f0784a0e46803c8ac331290c1efdd 6531c453abfa602866d9713a72aaf5ccb3b692a5
+          echo "$rc" > "$out/nogo-exit"
+          git rev-parse HEAD > "$out/final-head"
+          git status --porcelain --untracked-files=no > "$out/final-modifications"
+          tail -16 "$out/nogo.log"
+          git show "$GITHUB_SHA:test/rbe/sack_review_final.py" > "$RUNNER_TEMP/sack-review.py"
+          python3 -B "$RUNNER_TEMP/sack-review.py" "$out" 574c0fe105112432c1a2785d978064685064b105 8a3d1a53448caae65a60f090f1d60fa3d9f548e9
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: sack-packet-cost
+          name: tcp-sack-review
           path: ${{ runner.temp }}/sacked
