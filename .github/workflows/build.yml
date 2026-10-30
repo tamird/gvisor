@@ -1,35 +1,198 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Check overlay close ownership and Unix waiter rollback
+on: workflow_dispatch
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/overlay-close-review'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      USTOCK: b8c35ae5dd5f7bd3cea6568f36ea0d1486a255a8
+      UFIXED: ed3929b263bf591c62d7d5e4a41b9d83cb929d2b
+      OSTOCK: 217f882fc330ceb22beab8c8844748cf84cfbdc7
+      OFIXED: 93ec325506a6949101d339c54237c0c6e8b7c231
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        git fetch --no-tags --depth=2 origin "$USTOCK" "$UFIXED" "$OSTOCK" "$OFIXED" b48730b3b4491e4c9bb99acf9d9dd4a332f5a20c 699298e6761f645cc469aaf106e25e143232f919 b2d2cb2fdf4f48f37a8ad984f2e5d41c69c65262
+        git show b48730b3b4491e4c9bb99acf9d9dd4a332f5a20c:test/rbe/recover_rack_receipts.py >"$RUNNER_TEMP/replay.py"
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Reverify original joint RACK test reports
+      if: ${{ !cancelled() }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        gh run download 41010892540 --repo tamird/gvisor --name rack-ack-and-16659 --dir "$RUNNER_TEMP/original-joint"
+        python3 -B "$RUNNER_TEMP/replay.py" joint "$RUNNER_TEMP/original-joint" "$RUNNER_TEMP/receipts-joint"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: rack-joint-verified
+        path: ${{ runner.temp }}/receipts-joint
+        if-no-files-found: warn
+    - name: Reverify original primary RACK test reports
+      if: ${{ !cancelled() }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        gh run download 41009307713 --repo tamird/gvisor --name rack-ack-boundary --dir "$RUNNER_TEMP/original-primary"
+        python3 -B "$RUNNER_TEMP/replay.py" primary "$RUNNER_TEMP/original-primary" "$RUNNER_TEMP/receipts-primary"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: rack-primary-verified
+        path: ${{ runner.temp }}/receipts-primary
+        if-no-files-found: warn
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Exercise ostock
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$OSTOCK"; out="$RUNNER_TEMP/proof-ostock"; mkdir -p "$out"; git rev-parse HEAD >"$out/source"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=240 --test_sharding_strategy=disabled //test/syscalls:fuse_test_runsc_systrap_directfs >"$RUNNER_TEMP/exec-ostock.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"
+        docker exec overlay-guest cat bazel-testlogs/test/syscalls/fuse_test_runsc_systrap_directfs/test.log >"$RUNNER_TEMP/test-ostock.log" 2>/dev/null || true
+        pattern='OVLCLOSE |--- (FAIL|PASS): TestFailedHostWaiterRegistration|failed registration received|existing registration did not receive|ERROR:|[.](cc|go):[0-9]+(:[0-9]+)?:|^[[:space:]]*(Value of:|Actual:|Expected:|Which is:)|FuseTest[./]OverlayClose|operation not permitted|invalid argument|No such file|timed out|INFO: Invocation ID:|Build (did NOT complete|completed)|[[:space:]]DATA RACE'
+        grep -E "$pattern" "$RUNNER_TEMP/test-ostock.log" | tail -85 >"$out/receipt" || true
+        grep -E "$pattern" "$RUNNER_TEMP/exec-ostock.log" | tail -45 >>"$out/receipt" || true
+        cat "$out/receipt"
+        [[ $rc == 3 ]]; grep -q 'scheduled=0 close_errno=0 upper_mode=600' "$out/receipt"; grep -q 'scheduled=1 close_errno=9 upper_mode=600' "$out/receipt"; grep -q 'flush fh=.*valid=0' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: witness-ostock
+        path: ${{ runner.temp }}/proof-ostock
+        if-no-files-found: warn
+    - name: Exercise ofixed
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$OFIXED"; out="$RUNNER_TEMP/proof-ofixed"; mkdir -p "$out"; git rev-parse HEAD >"$out/source"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=240 --test_sharding_strategy=disabled //test/syscalls:fuse_test_runsc_systrap_directfs >"$RUNNER_TEMP/exec-ofixed.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"
+        docker exec overlay-guest cat bazel-testlogs/test/syscalls/fuse_test_runsc_systrap_directfs/test.log >"$RUNNER_TEMP/test-ofixed.log" 2>/dev/null || true
+        pattern='OVLCLOSE |--- (FAIL|PASS): TestFailedHostWaiterRegistration|failed registration received|existing registration did not receive|ERROR:|[.](cc|go):[0-9]+(:[0-9]+)?:|^[[:space:]]*(Value of:|Actual:|Expected:|Which is:)|FuseTest[./]OverlayClose|operation not permitted|invalid argument|No such file|timed out|INFO: Invocation ID:|Build (did NOT complete|completed)|[[:space:]]DATA RACE'
+        grep -E "$pattern" "$RUNNER_TEMP/test-ofixed.log" | tail -85 >"$out/receipt" || true
+        grep -E "$pattern" "$RUNNER_TEMP/exec-ofixed.log" | tail -45 >>"$out/receipt" || true
+        cat "$out/receipt"
+        [[ $rc == 0 ]]; grep -q 'scheduled=0 close_errno=0 upper_mode=600' "$out/receipt"; grep -q 'scheduled=1 close_errno=0 upper_mode=600' "$out/receipt"; [[ $(grep -c 'flush fh=.*valid=1' "$out/receipt") -ge 2 ]]; ! grep -q 'flush fh=.*valid=0' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: witness-ofixed
+        path: ${{ runner.temp }}/proof-ofixed
+        if-no-files-found: warn
+    - name: Exercise ustock
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$USTOCK"; out="$RUNNER_TEMP/proof-ustock"; mkdir -p "$out"; git rev-parse HEAD >"$out/source"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=120 --test_arg=-test.v --test_arg=-test.run=^TestFailedHostWaiterRegistration$ //pkg/sentry/socket/unix/transport:transport_test >"$RUNNER_TEMP/exec-ustock.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"
+        docker exec overlay-guest cat bazel-testlogs/pkg/sentry/socket/unix/transport/transport_test/test.log >"$RUNNER_TEMP/test-ustock.log" 2>/dev/null || true
+        pattern='OVLCLOSE |--- (FAIL|PASS): TestFailedHostWaiterRegistration|failed registration received|existing registration did not receive|ERROR:|[.](cc|go):[0-9]+(:[0-9]+)?:|^[[:space:]]*(Value of:|Actual:|Expected:|Which is:)|FuseTest[./]OverlayClose|operation not permitted|invalid argument|No such file|timed out|INFO: Invocation ID:|Build (did NOT complete|completed)|[[:space:]]DATA RACE'
+        grep -E "$pattern" "$RUNNER_TEMP/test-ustock.log" | tail -85 >"$out/receipt" || true
+        grep -E "$pattern" "$RUNNER_TEMP/exec-ustock.log" | tail -45 >>"$out/receipt" || true
+        cat "$out/receipt"
+        [[ $rc == 3 ]]; grep -q 'failed registration received a notification' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: witness-ustock
+        path: ${{ runner.temp }}/proof-ustock
+        if-no-files-found: warn
+    - name: Exercise ufixed
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$UFIXED"; out="$RUNNER_TEMP/proof-ufixed"; mkdir -p "$out"; git rev-parse HEAD >"$out/source"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=120 --test_arg=-test.v //pkg/sentry/socket/unix/transport:transport_test >"$RUNNER_TEMP/exec-ufixed.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"
+        docker exec overlay-guest cat bazel-testlogs/pkg/sentry/socket/unix/transport/transport_test/test.log >"$RUNNER_TEMP/test-ufixed.log" 2>/dev/null || true
+        pattern='OVLCLOSE |--- (FAIL|PASS): TestFailedHostWaiterRegistration|failed registration received|existing registration did not receive|ERROR:|[.](cc|go):[0-9]+(:[0-9]+)?:|^[[:space:]]*(Value of:|Actual:|Expected:|Which is:)|FuseTest[./]OverlayClose|operation not permitted|invalid argument|No such file|timed out|INFO: Invocation ID:|Build (did NOT complete|completed)|[[:space:]]DATA RACE'
+        grep -E "$pattern" "$RUNNER_TEMP/test-ufixed.log" | tail -85 >"$out/receipt" || true
+        grep -E "$pattern" "$RUNNER_TEMP/exec-ufixed.log" | tail -45 >>"$out/receipt" || true
+        cat "$out/receipt"
+        [[ $rc == 0 ]]; grep -q -- '--- PASS: TestFailedHostWaiterRegistration' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: witness-ufixed
+        path: ${{ runner.temp }}/proof-ufixed
+        if-no-files-found: warn
+    - name: Exercise urace
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$UFIXED"; out="$RUNNER_TEMP/proof-urace"; mkdir -p "$out"; git rev-parse HEAD >"$out/source"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --config=race --test_timeout=120 --test_arg=-test.v --test_arg=-test.run=^TestFailedHostWaiterRegistration$ //pkg/sentry/socket/unix/transport:transport_test >"$RUNNER_TEMP/exec-urace.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"
+        docker exec overlay-guest cat bazel-testlogs/pkg/sentry/socket/unix/transport/transport_test/test.log >"$RUNNER_TEMP/test-urace.log" 2>/dev/null || true
+        pattern='OVLCLOSE |--- (FAIL|PASS): TestFailedHostWaiterRegistration|failed registration received|existing registration did not receive|ERROR:|[.](cc|go):[0-9]+(:[0-9]+)?:|^[[:space:]]*(Value of:|Actual:|Expected:|Which is:)|FuseTest[./]OverlayClose|operation not permitted|invalid argument|No such file|timed out|INFO: Invocation ID:|Build (did NOT complete|completed)|[[:space:]]DATA RACE'
+        grep -E "$pattern" "$RUNNER_TEMP/test-urace.log" | tail -85 >"$out/receipt" || true
+        grep -E "$pattern" "$RUNNER_TEMP/exec-urace.log" | tail -45 >>"$out/receipt" || true
+        cat "$out/receipt"
+        [[ $rc == 0 ]]; grep -q -- '--- PASS: TestFailedHostWaiterRegistration' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: witness-urace
+        path: ${{ runner.temp }}/proof-urace
+        if-no-files-found: warn
+    - name: Observe the same close and chmod on native Linux
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$OFIXED"; out="$RUNNER_TEMP/proof-native"; mkdir -p "$out"
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=32 --remote_download_outputs=toplevel //test/syscalls/linux:fuse_test >"$RUNNER_TEMP/native-build.log" 2>&1 || { grep -E '^ERROR:' "$RUNNER_TEMP/native-build.log" | tail; exit 1; }
+        docker exec overlay-guest cp bazel-bin/test/syscalls/linux/fuse_test "$RUNNER_TEMP/native-fuse"; sudo chmod +x "$RUNNER_TEMP/native-fuse"
+        test -e /dev/fuse || sudo modprobe fuse || true
+        test -e /dev/fuse || sudo mknod /dev/fuse c 10 229
+        uname -sr >"$out/kernel"
+        rc=0
+        sudo unshare --mount --propagation private bash -euo pipefail -c 'if ! mountpoint -q /sys/fs/fuse/connections; then mount -t fusectl fusectl /sys/fs/fuse/connections; fi; exec timeout 90s "$1" --gtest_filter=FuseTest.OverlayClose*' _ "$RUNNER_TEMP/native-fuse" >"$RUNNER_TEMP/native.log" 2>&1 || rc=$?
+        echo "$rc" >"$out/exit"
+        grep -E 'OVLCLOSE |FuseTest.OverlayClose|Failure|Operation not|Invalid argument|No such file|Actual:|Expected:|Which is:|Value of:' "$RUNNER_TEMP/native.log" >"$out/receipt" || true; cat "$out/receipt"; [[ $rc == 0 ]]; grep -q 'scheduled=1 close_errno=0 upper_mode=600' "$out/receipt"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: witness-native
+        path: ${{ runner.temp }}/proof-native
+        if-no-files-found: warn
