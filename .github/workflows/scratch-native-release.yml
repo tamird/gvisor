@@ -83,6 +83,8 @@ jobs:
           for lane in ["gnu","scratch"]:
               val=json.loads((d/f"current-{lane}.json").read_text())
               assert val["status"]=="PASS", val
+          a,b=[json.loads((d/f"current-{lane}.json").read_text()) for lane in ["gnu","scratch"]]
+          assert a["files"]==b["files"]
           PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()

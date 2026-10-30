@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import sys
 import tarfile
+import zipfile
 
 lane=sys.argv[1]
 data,out=map(Path,sys.argv[2:])
@@ -33,12 +34,24 @@ try:
     dist=Path("bazel-bin/sandboxexec/sandbox/python/dist")
     files={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(dist.iterdir())}
     entry["files"]=files
-    assert set(files.values())=={
-        "45abbeef0911c688909a3f84ba17f9ca6f409866fad3546f3aa230eee5217ae9",
-        "863afdff6305bfd5d635755f35613f63b9ee9b88d68ac7517f6e314201944ba8"}
+    assert len(files)==2
+    wheel,=dist.glob("*.whl")
     archive,=dist.glob("*.tar.gz")
+    project=Path("sandboxexec/sandbox/python")
+    pkg={f.relative_to(project).as_posix(): f.read_bytes() for f in sorted((project/"gvisor").glob("*.py"))}
+    with zipfile.ZipFile(wheel) as z:
+        assert all(z.read(name)==raw for name,raw in pkg.items())
+        record,=[n for n in z.namelist() if n.endswith(".dist-info/RECORD")]
+        assert z.read(record) and "gvisor/sandbox.py" in z.namelist()
     with tarfile.open(archive) as f:
         assert len(f.getmembers())==13 and all(x.mtime==315532800 for x in f)
+        all_payload={**pkg,"README.md":(project/"README.md").read_bytes()}
+        prefix="gvisor-2026.10.29.2/"
+        assert all(f.extractfile(prefix+name).read()==raw for name,raw in all_payload.items())
+    entry["source_members"]=sorted(all_payload)
+    entry["sdist_members"]=13
+    entry["gzip_mtime"]=int.from_bytes(archive.read_bytes()[4:8],"little")
+    assert entry["gzip_mtime"]==315532800
     entry["status"]="PASS"
 finally:
     (out/f"current-{lane}.json").write_text(json.dumps(entry,indent=2)+"\n")
