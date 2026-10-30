@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T16:21:10.046705+00:00",
+    "updatedAt": "2026-10-30T16:28:53.467944+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36628,21 +36628,31 @@
       "number": 16745,
       "group": "runtime",
       "ref": "proc-mount-sack-owned-pidns",
-      "head": "333a395dddeb532ee7097eed6d393b0c7576d472",
-      "title": "Test that proc mounts share the TCP SACK setting",
+      "head": "db2a858e8c6cceba5324a10a457327d5f23fa888",
+      "title": "Test that proc mounts share TCP SACK and the local port range",
       "url": "https://github.com/google/gvisor/pull/16745",
       "status": "open",
       "summary": "Write ip_local_port_range through a fresh proc mount and read it through the original one. Linux and current gVisor saw 40000–50001; with the historical per-inode cache gVisor still read 16000–65535. Reusing the SACK syscall fixture removes a 37-line Go test and fake stack. All 56 proc package cases passed without skips.",
-      "updatedAt": "2026-10-30T16:21:10.046705+00:00",
+      "updatedAt": "2026-10-30T16:28:53.467944+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
           "head": "422d2cb0c0846d7fc1eecef51bfdc26a0070f9f1",
           "at": "2026-10-30T16:00:18.051356+00:00",
           "outcome": "approved"
+        },
+        {
+          "kind": "amendment",
+          "head": "e856af92539d129681bc049fc3571058c1dd91e5",
+          "at": "2026-10-30T16:28:53.467944+00:00",
+          "outcome": "approved"
         }
       ],
       "evidence": [
+        {
+          "label": "Approved port-range amendment published with the identical tested tree",
+          "url": "https://github.com/tamird/gvisor/commit/db2a858e8"
+        },
         {
           "label": "Native, gVisor, and identical test against both original inode caches; 56 Go cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41087929478/artifacts/12992014384"
@@ -36671,17 +36681,7 @@
           "label": "Remove the duplicate two-instance Go test; keep the rejected setter case",
           "url": "https://github.com/tamird/gvisor/compare/17b24a03b...422d2cb0c"
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "e856af92539d129681bc049fc3571058c1dd91e5",
-        "baseHead": "333a395dddeb532ee7097eed6d393b0c7576d472",
-        "url": "https://github.com/tamird/gvisor/commit/e856af925",
-        "title": "Test that proc mounts share the local port range",
-        "summary": "Write ip_local_port_range through a fresh proc mount and read it through the original one. Linux and current gVisor saw 40000–50001; with the historical per-inode cache gVisor still read 16000–65535. Reusing the SACK syscall fixture removes a 37-line Go test and fake stack. All 56 proc package cases passed without skips.",
-        "body": "Review the additional port-range coverage for #16745. The same two mount cases ran natively and in gVisor. The old caches also left SACK enabled after the second mount disabled it. The existing rejected-write test remains in Go.\n\ngit -C ~/code/gvisor diff 333a395dd e856af925 -- pkg/sentry/fsimpl/proc/tasks_sys_test.go test/syscalls/linux/proc_net.cc"
-      }
+      ]
     },
     {
       "id": "pr:16746",
