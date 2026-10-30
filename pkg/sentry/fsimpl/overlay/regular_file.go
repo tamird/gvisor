@@ -57,6 +57,23 @@ type regularFileFD struct {
 	copiedUp    bool
 	cachedFD    *vfs.FileDescription
 	cachedFlags uint32
+
+	// lowerPoll records waiters registered before this open file switches
+	// to its upper layer. It is unused on an immutable lower or an upper.
+	// +checklocks:mu
+	lowerPoll *lowerPollState
+}
+
+// +stateify savable
+type lowerPollState struct {
+	// first avoids allocating a map for one waiter. others is needed only
+	// for overlapping registrations on the same open description.
+	first  *waiter.Entry
+	others map[*waiter.Entry]struct{}
+
+	// file receives the lower file's reference when cachedFD switches to
+	// the upper while first or others are still registered.
+	file *vfs.FileDescription
 }
 
 func (fd *regularFileFD) getCurrentFD(ctx context.Context) (*vfs.FileDescription, error) {
@@ -93,7 +110,12 @@ func (fd *regularFileFD) currentFDLocked(ctx context.Context) (*vfs.FileDescript
 				return nil, err
 			}
 		}
-		fd.cachedFD.DecRef(ctx)
+		if p := fd.lowerPoll; p != nil && (p.first != nil || len(p.others) != 0) {
+			p.file = fd.cachedFD
+		} else {
+			fd.lowerPoll = nil
+			fd.cachedFD.DecRef(ctx)
+		}
 		fd.copiedUp = true
 		fd.cachedFD = upperFD
 		fd.cachedFlags = statusFlags
@@ -256,14 +278,51 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 		log.Warningf("overlay.regularFileFD.EventRegister: currentFDLocked failed: %v", err)
 		wrappedFD = fd.cachedFD
 	}
-	return wrappedFD.EventRegister(e)
+	if err := wrappedFD.EventRegister(e); err != nil {
+		return err
+	}
+	if !fd.copiedUp && fd.filesystem().opts.UpperRoot.Ok() {
+		if fd.lowerPoll == nil {
+			fd.lowerPoll = &lowerPollState{}
+		}
+		p := fd.lowerPoll
+		if p.first == nil {
+			p.first = e
+		} else {
+			if p.others == nil {
+				p.others = make(map[*waiter.Entry]struct{})
+			}
+			p.others[e] = struct{}{}
+		}
+	}
+	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 	fd.mu.Lock()
-	defer fd.mu.Unlock()
-	fd.cachedFD.EventUnregister(e)
+	target := fd.cachedFD
+	var release *vfs.FileDescription
+	if p := fd.lowerPoll; p != nil {
+		old := p.first == e
+		if old {
+			p.first = nil
+		} else if _, old = p.others[e]; old {
+			delete(p.others, e)
+		}
+		if old && p.file != nil {
+			target = p.file
+			if p.first == nil && len(p.others) == 0 {
+				release = p.file
+				fd.lowerPoll = nil
+			}
+		}
+	}
+	target.EventUnregister(e)
+	fd.mu.Unlock()
+	if release != nil {
+		release.DecRef(context.Background())
+	}
 }
 
 // Epollable implements FileDescriptionImpl.Epollable.
