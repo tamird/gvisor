@@ -45,6 +45,13 @@ for soname in ("ld-linux-x86-64.so.2", "libc.so.6", "libm.so.6", "libz.so.1",
         add_file(src)
 add_file("/lib64/ld-linux-x86-64.so.2")
 add_file("/etc/ssl/certs/ca-certificates.crt")
+# Bazel's repository extractor needs the coordinator's UTF-8 character tables
+# for the Go archive's Þfoo.go and Þmain.go. These are runtime data only.
+locale = Path("/usr/lib/locale/C.utf8")
+assert (locale / "LC_CTYPE").is_file()
+for table in locale.rglob("*"):
+    if table.is_file():
+        add_file(table)
 jvm_extra = []
 for trust in (Path("/etc/ssl/certs/java/cacerts"), Path(os.environ.get("JAVA_HOME", "/usr/lib/jvm/default-java")) / "lib/security/cacerts"):
     if trust.is_file():
@@ -69,7 +76,7 @@ lock = gzip.decompress((tree / "test/rbe/repo_fetch_lock.gz").read_bytes())
 assert digest(lock) == LOCK
 outcomes = {}
 def mounts(base, normal=False, helpers=()):
-    args = ["docker", "run", "--rm", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--read-only", "--tmpfs", "/tmp:rw,exec,mode=1777", "--user", f"{os.getuid()}:{os.getgid()}", "--workdir", "/work", "--env", "PATH=/usr/local/bin:/usr/bin:/bin", "--env", "HOME=/home/runner"]
+    args = ["docker", "run", "--rm", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--read-only", "--tmpfs", "/tmp:rw,exec,mode=1777", "--user", f"{os.getuid()}:{os.getgid()}", "--workdir", "/work", "--env", "LC_ALL=C.UTF-8", "--env", "LANG=C.UTF-8", "--env", "PATH=/usr/local/bin:/usr/bin:/bin", "--env", "HOME=/home/runner"]
     for local, dest in (("work", "/work"), ("output", "/output"), ("repository-cache", "/repository-cache"), ("home", "/home/runner")):
         args += ["--volume", f"{base/local}:{dest}"]
     for src, dest in helpers:
