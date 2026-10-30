@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <errno.h>
 #include <fcntl.h>
 #include <linux/vfio.h>
+#include <poll.h>
 #include <stdlib.h>
+#include <sys/epoll.h>
 #include <sys/ioctl.h>
 
 #include "gmock/gmock.h"
@@ -26,7 +29,7 @@ namespace gvisor {
 namespace testing {
 namespace {
 
-TEST(VfioPCIDeviceTest, Open) {
+TEST(VfioPCIDeviceTest, Readiness) {
   const char* group_path = getenv("TEST_VFIO_GROUP");
   const char* device_name = getenv("TEST_VFIO_DEVICE");
   ASSERT_NE(group_path, nullptr);
@@ -47,6 +50,18 @@ TEST(VfioPCIDeviceTest, Open) {
   ASSERT_THAT(ioctl(device.get(), VFIO_DEVICE_GET_INFO, &info),
               SyscallSucceeds());
   ASSERT_NE(info.flags & VFIO_DEVICE_FLAGS_PCI, 0);
+
+  constexpr short ready = POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM;
+  struct pollfd pfd = {device.get(), ready | POLLPRI, 0};
+  EXPECT_THAT(poll(&pfd, 1, 0), SyscallSucceedsWithValue(1));
+  EXPECT_EQ(pfd.revents, ready);
+
+  const FileDescriptor epoll(epoll_create1(EPOLL_CLOEXEC));
+  ASSERT_THAT(epoll.get(), SyscallSucceeds());
+  struct epoll_event event = {};
+  event.events = EPOLLIN | EPOLLOUT;
+  EXPECT_THAT(epoll_ctl(epoll.get(), EPOLL_CTL_ADD, device.get(), &event),
+              SyscallFailsWithErrno(EPERM));
 }
 
 }  // namespace

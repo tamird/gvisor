@@ -193,10 +193,6 @@ func (fd *tpuFD) getPciDeviceFd(t *kernel.Task, arg hostarch.Addr) (uintptr, err
 	// MemoryTypeWriteBack is consistent with legacy behavior, but not clearly
 	// correct; drivers/vfio/pci/vfio_pci_core.c:vfio_pci_core_mmap() uses
 	// pgprot_noncached(), which would correspond to our MemoryTypeUncached.
-	if err := fdnotifier.AddFD(int32(hostFD), &fd.queue); err != nil {
-		unix.Close(int(hostFD))
-		return 0, err
-	}
 	// See drivers/vfio/group.c:vfio_device_open_file(), the PCI device
 	// is accessed for both reads and writes.
 	vd := t.Kernel().VFS().NewAnonVirtualDentry("[vfio-device]")
@@ -205,7 +201,6 @@ func (fd *tpuFD) getPciDeviceFd(t *kernel.Task, arg hostarch.Addr) (uintptr, err
 		UseDentryMetadata: true,
 		SpecialFile:       true,
 	}); err != nil {
-		fdnotifier.RemoveFD(int32(hostFD))
 		unix.Close(int(hostFD))
 		return 0, err
 	}
