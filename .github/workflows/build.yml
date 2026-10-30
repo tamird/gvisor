@@ -57,7 +57,7 @@ jobs:
         git checkout --quiet --detach "$PROBE_SRC"
         out="$RUNNER_TEMP/records"
         echo "$PROBE_SRC" >"$out/probe-source"
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=24 --remote_download_outputs=toplevel //test/syscalls/linux:vfio_pci_device_test >"$RUNNER_TEMP/probe-build.log" 2>&1 || { grep -A12 'ERROR:' "$RUNNER_TEMP/probe-build.log" | tail -50; exit 1; }
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" build --config=x86_64 -c opt --jobs=24 --linkopt=-fuse-ld=bfd --linkopt=-Wl,--no-gc-sections --remote_download_outputs=toplevel //test/syscalls/linux:vfio_pci_device_test >"$RUNNER_TEMP/probe-build.log" 2>&1 || { grep -A12 -E 'ERROR:|INFO: Invocation ID:' "$RUNNER_TEMP/probe-build.log" | tail -60 | tee "$out/probe-receipt"; exit 1; }
         docker exec overlay-guest cp -L bazel-bin/test/syscalls/linux/vfio_pci_device_test "$RUNNER_TEMP/vfio_pci_probe_bin"
         file "$RUNNER_TEMP/vfio_pci_probe_bin" | tee "$out/probe-type"
         if readelf -l "$RUNNER_TEMP/vfio_pci_probe_bin" | grep -qw INTERP; then exit 1; fi
@@ -69,7 +69,7 @@ jobs:
         set -euo pipefail
         out="$RUNNER_TEMP/records"
         rc=0
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nocache_test_results --test_output=all --test_timeout=480 //test/rbe/tcg:vfio_linux_test >"$RUNNER_TEMP/preflight.log" 2>&1 || rc=$?
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nozip_undeclared_test_outputs --nocache_test_results --test_output=all --test_timeout=480 //test/rbe/tcg:vfio_linux_test >"$RUNNER_TEMP/preflight.log" 2>&1 || rc=$?
         echo "$rc" >"$out/native-exit"
         { grep 'INFO: Invocation ID:' "$RUNNER_TEMP/preflight.log"; grep -A14 -E '^ERROR:|FAILED|qemu-system|vfio.*failed|cannot|Cannot' "$RUNNER_TEMP/preflight.log" | tail -65; } >"$out/native-receipt" || :
         for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt; do
@@ -102,7 +102,7 @@ jobs:
         out="$RUNNER_TEMP/records"
         target=//test/rbe/tcg:vfio_comparison_test
         rc=0
-        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nocache_test_results --test_output=all --test_timeout=480 "$target" >"$RUNNER_TEMP/abi.log" 2>&1 || rc=$?
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=28 --remote_download_outputs=toplevel --strategy=TestRunner=local --nozip_undeclared_test_outputs --nocache_test_results --test_output=all --test_timeout=480 "$target" >"$RUNNER_TEMP/abi.log" 2>&1 || rc=$?
         echo "$rc" >"$out/bazel-exit"
         grep -E 'INFO: Invocation ID:|ERROR:|FAILED|::|fail|VFIO|vfio|Error|Cannot|curl|qemu|wget|tcg|Build (did NOT complete|completed)' "$RUNNER_TEMP/abi.log" | tail -80 >"$out/bazel-receipt" || :
         for path in test.log test.outputs/console.log test.outputs/guest/vfio-device.txt test.outputs/guest/outputs/native-gtest.txt test.outputs/guest/outputs/native-irq.txt test.outputs/guest/outputs/native-irq-qualified test.outputs/guest/outputs/stock-exit test.outputs/guest/outputs/fixed-exit test.outputs/guest/outputs/stock-gtest.txt test.outputs/guest/outputs/fixed-gtest.txt test.outputs/guest/outputs/stock-diagnostics.txt test.outputs/guest/outputs/fixed-diagnostics.txt; do
