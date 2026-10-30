@@ -57,6 +57,11 @@ type regularFileFD struct {
 	copiedUp    bool
 	cachedFD    *vfs.FileDescription
 	cachedFlags uint32
+
+	// lowerWaiters keep the file that accepted each registration alive until
+	// poll releases it. A writable upper can replace cachedFD in that interval.
+	// +checklocks:mu
+	lowerWaiters map[*waiter.Entry]*vfs.FileDescription
 }
 
 func (fd *regularFileFD) getCurrentFD(ctx context.Context) (*vfs.FileDescription, error) {
@@ -256,14 +261,31 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 		log.Warningf("overlay.regularFileFD.EventRegister: currentFDLocked failed: %v", err)
 		wrappedFD = fd.cachedFD
 	}
-	return wrappedFD.EventRegister(e)
+	if err := wrappedFD.EventRegister(e); err != nil {
+		return err
+	}
+	if !fd.copiedUp && fd.filesystem().opts.UpperRoot.Ok() {
+		if fd.lowerWaiters == nil {
+			fd.lowerWaiters = make(map[*waiter.Entry]*vfs.FileDescription)
+		}
+		wrappedFD.IncRef()
+		fd.lowerWaiters[e] = wrappedFD
+	}
+	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 	fd.mu.Lock()
-	defer fd.mu.Unlock()
+	if lower := fd.lowerWaiters[e]; lower != nil {
+		delete(fd.lowerWaiters, e)
+		fd.mu.Unlock()
+		lower.EventUnregister(e)
+		lower.DecRef(context.Background())
+		return
+	}
 	fd.cachedFD.EventUnregister(e)
+	fd.mu.Unlock()
 }
 
 // Epollable implements FileDescriptionImpl.Epollable.
