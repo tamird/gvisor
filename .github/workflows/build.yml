@@ -1,12 +1,12 @@
-name: Align the competing TCP bulk senders after local listener readiness
+name: Compare CUBIC recovery accounting on synchronized pair B
 on:
   push:
-    branches: [qualification/tcp-start-ready-competition]
+    branches: [qualification/tcp-pipe-cubic-b]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-start-ready-competition'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-pipe-cubic-b'
     runs-on: ubuntu-24.04
     timeout-minutes: 70
     steps:
@@ -25,12 +25,12 @@ jobs:
         if: always()
         run: |
           mkdir -p "$RUNNER_TEMP/tcp-public"
-          cp test/benchmarks/tcp/startup-protocol.md "$RUNNER_TEMP/tcp-public/"
+          cp test/benchmarks/tcp/pipe-link-protocol.md "$RUNNER_TEMP/tcp-public/"
           python3 test/benchmarks/tcp/startup-result.py
       - name: Publish allowlisted evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-start-ready-competition
+          name: tcp-pipe-cubic-b
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error

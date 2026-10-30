@@ -98,6 +98,34 @@ def summary(case,wire,client,server,lane):
     if case.split("/")[-2] == "measured":
         samples=[json.loads(l) for l in contents(prefix(case)+"-"+lane+"-samples.jsonl").splitlines()]
         samples=[r for r in samples if r["port"]==port]
+    left, right = v["passed"][case]["overlap_us"]
+    during = [i for i,t in enumerate(times) if left <= t < right]
+    acknowledgments = [i for i,p in enumerate(txack) if left <= p[0] < right]
+    returned = [p for p in rxack if left <= p[0] < right]
+    new = [i for i in during if highs[i] > (highs[i-1] if i else 0)]
+    endpoints = [left, *(times[i] for i in new), right]
+    gap, stop, start = max((b-a,b,a) for a,b in zip(endpoints,endpoints[1:]))
+    inside = [s for s in samples if left <= s["ns"]/1000 < right]
+    occupancy = dict(samples=len(inside))
+    if lane == "netstack" and inside:
+        occupancy.update(
+            cwnd_packets=pct([s["cwnd"] for s in inside]),
+            outstanding_packets=pct([s["out"] for s in inside]),
+            recovery=sum(s["recovery"] for s in inside),
+            recovery_and_out_gt_cwnd=sum(s["recovery"] and s["out"]>s["cwnd"] for s in inside),
+            application_backlog=sum(s["queued"]>s["seq_flight"] for s in inside),
+            peer_window_spare_packets=pct([(s["wnd"]-s["seq_flight"])/s["mss"] for s in inside]),
+        )
+    d["receiver_interval_wire"] = dict(
+        overlap_us=[left,right], new_packets=len(new), data_packets=len(during),
+        new_sequence_bytes=sum(highs[i]-(highs[i-1] if i else 0) for i in new),
+        repair_only_packets=len(during)-len(new), biggest_no_new_us=[start,stop,gap],
+        forward_definite_drops=sum(i in loss for i in during),
+        return_ack_definite_drops=sum(i in rloss for i in acknowledgments),
+        return_acks=len(returned),
+        return_ack_advance=(rel(returned[-1][4])-rel(returned[0][4])) if returned else None,
+        samples=occupancy,
+    )
     if samples and "reownd_us" in samples[0]:
         d["window_us"]=pct([r["reownd_us"] for r in samples])
         d["reordered_samples"]=sum(r["reord"] for r in samples)

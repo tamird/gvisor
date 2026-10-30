@@ -105,14 +105,14 @@ def trial(root, mode, case):
         full_flow = [v for v in rows if v["stack"] == stack and v["port"] == r[0]["port"]]
         dest.write_text("".join(json.dumps(v)+"\n" for v in full_flow))
     g,l=rates["netstack"],rates["linux"]
-    return dict(overlap_seconds=B-A,mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])],sockets=sockets)
+    return dict(overlap_seconds=B-A,overlap_us=[round(A*1e6),round(B*1e6)],mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])],sockets=sockets)
 
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
 destination=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
 destination.mkdir(exist_ok=True)
 heads=(destination/"source-heads").read_text().splitlines() if (destination/"source-heads").exists() else []
 verdict={"heads":heads,"baseline":heads[0] if heads else None,"harness":os.environ["GITHUB_SHA"],"passed":{},"failures":{},"missing":[]}
-expected=[(arm,cc) for arm in ("a-amended","b-amended") for cc in ("reno","cubic")]
+expected=[(arm,"cubic") for arm in ("b-combined","b-with15432")]
 for arm,cc in expected:
     experiment=cc+"-netstack"
     name=arm+"/measured/"+experiment

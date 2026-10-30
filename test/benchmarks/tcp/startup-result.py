@@ -12,12 +12,8 @@ root = Path(os.environ['RUNNER_TEMP'])/'tcp-public'
 original = Path(os.environ['RUNNER_TEMP'])/'qualification/current-shared'
 verdict = json.loads((root/'verdict.json').read_text())
 episodes = json.loads((root/'episodes.json').read_text())
-old = {
-  'a-amended/measured/reno-netstack': [30.34,33.28],
-  'a-amended/measured/cubic-netstack': [28.86,31.99],
-  'b-amended/measured/reno-netstack': [24.92,28.95],
-  'b-amended/measured/cubic-netstack': [31.15,34.03],
-}
+sources = dict(zip(("b-combined","b-with15432"),verdict["heads"][:2]))
+expected = {arm+"/measured/cubic-netstack" for arm in sources}
 result = dict(heads=verdict['heads'], driver=verdict['driver'], missing=verdict['missing'],
               failures=verdict['failures'], rows={}, finished_at=datetime.now(timezone.utc).isoformat())
 
@@ -50,8 +46,8 @@ for key,v in verdict['passed'].items():
     files=['client.1.pcap','client2.1.pcap','server.1.pcap','client.1-capture.txt','client2.1-capture.txt','server.1-capture.txt']
     for role in ['primary','secondary']:
         files.extend(role+'/'+f for f in ['receiver.json','flow-phases.tsv','flow-settings.txt','iperf-attempts.tsv'])
-    row=dict(source=verdict['heads'][1], exit=v['exit'], share=v['netstack_share_bounds'],
-             old_share_pct=old[key], mbps=v['mbps_bounds'], overlap=v['overlap_seconds'],
+    row=dict(source=sources[arm], exit=v['exit'], share=v['netstack_share_bounds'],
+             original_b_share_pct=[0.43,1.34], mbps=v['mbps_bounds'], overlap=v['overlap_seconds'],
              starts={},raw_inputs={}, clocks={}, attempts={},diagnostics=[], flows={})
     result['rows'][key]=row
     for name in files:
@@ -79,7 +75,7 @@ for key,v in verdict['passed'].items():
                 continue
             row['starts'][side+'/'+tap]=dict(data_port=port,connections=parts)
             starts[side,tap]=parts[port]['first_bulk']
-        row['flows'][side]={k:episodes['cases'][key][side].get(k) for k in ['in_order','forward','reverse','first_drops','epoch_sack_to_retransmit_us']}
+        row['flows'][side]={k:episodes['cases'][key][side].get(k) for k in ['in_order','forward','reverse','first_drops','epoch_sack_to_retransmit_us','receiver_interval_wire']}
     deltas={}
     for tap in ['sender','receiver']:
         if ('netstack',tap) not in starts or ('linux',tap) not in starts:continue
@@ -90,4 +86,4 @@ for key,v in verdict['passed'].items():
     row['matched']=not row['diagnostics'] and v['exit']==0 and len(deltas)==2
     print(key,row['first_bulk_gvisor_minus_linux_us'],row['matched'],row['share'],row['diagnostics'])
 (root/'startup-verdict.json').write_text(json.dumps(result,indent=2)+'\n')
-assert set(result['rows'])==set(old) and not result['missing'] and not result['failures'] and result['driver']['status']==0
+assert set(result['rows'])==expected and not result['missing'] and not result['failures'] and result['driver']['status']==0
