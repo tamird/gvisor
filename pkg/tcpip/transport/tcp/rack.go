@@ -365,6 +365,8 @@ func (rc *rackControl) updateRACKReorderWindow() {
 	if srtt < rc.ReoWnd {
 		rc.ReoWnd = srtt
 	}
+	// Diagnostic for a FIFO-only path, never a default for real connections.
+	rc.ReoWnd = 0
 }
 
 func (rc *rackControl) exitRecovery() {
