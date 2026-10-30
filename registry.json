@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:18:06.119315+00:00",
+    "updatedAt": "2026-10-30T04:19:54.582741+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10041,34 +10041,94 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-sack-credit-accounting",
-      "head": "933263e71c97b0ae7bd0cb04489b2399fe4523f1",
+      "head": "b909bc6898663235442ae8be2ff97607115d39d8",
       "title": "Preserve selective ACK credit through recovery",
       "url": "https://github.com/google/gvisor/pull/15634",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 933263e71c97 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed. Remote validation passed with 512 positive records and one known skip; the separate restore-waiter fixture also passed its focused 50-run check. That fixture remains an independent proposal.\n\nPreserved earlier source record:\n\nThe user-approved independent change is published as PR #15634 at 89ff1b319 after a source-preserving rebase. Contributor approval is fulfilled. Current CI, maintainer review and mergeability are tracked from GitHub; the previously retained source and before/after evidence remain applicable to their recorded scope.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-30T04:19:54.582741+00:00",
+      "summary": "TCP can report negative selectively acknowledged packets after recovery. The proposed amendment counts transmitted packets across partial ACKs, GSO queue splits, a path MTU change, timeouts and checkpoint restore. The independent flight estimate is in #14101.",
       "followup": {
-        "disposition": "Conflict resolved and validated; awaiting maintainer review/import",
         "owner": "work_map_current",
-        "nextAction": "Follow current-head CI and the existing maintainer review/import process. Preserve prior review requests and dependent holds; no duplicate rebase or reviewer reminder.",
-        "sourceHead": "933263e71c97b0ae7bd0cb04489b2399fe4523f1",
-        "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
+        "disposition": "Qualified amendment; contributor review",
+        "sourceHead": "b909bc6898663235442ae8be2ff97607115d39d8",
+        "observedAt": "2026-10-30T04:19:54.582741+00:00",
+        "nextAction": "Publish the reviewed replacement to #15634 only after contributor approval. Other PRs about the flight estimate and RACK delivery are independently reviewable.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15634",
-          "https://github.com/tamird/gvisor/commit/933263e71c97b0ae7bd0cb04489b2399fe4523f1"
-        ],
-        "reviewDecision": null,
-        "observedAt": "2026-10-22T00:33:19.689675+00:00"
+          "https://github.com/tamird/gvisor/commit/7d7f55233",
+          "https://github.com/tamird/gvisor/actions/runs/41001085658/artifacts/12954091545"
+        ]
       },
       "number": 15634,
       "reviewDecision": null,
       "evidence": [
         {
+          "label": "Review fork: 7d7f55233",
+          "url": "https://github.com/tamird/gvisor/commit/7d7f55233"
+        },
+        {
+          "label": "Published source being replaced: b909bc689",
+          "url": "https://github.com/tamird/gvisor/commit/b909bc689"
+        },
+        {
+          "label": "Exact stock, candidate and both Nogo tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41001085658/artifacts/12954091545"
+        },
+        {
+          "label": "Matched Linux, stock and prototype packet counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40993662609/artifacts/12949958196"
+        },
+        {
+          "label": "Corrected same four packet counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40995772154/artifacts/12951391345"
+        },
+        {
+          "label": "Cross-split/package and repair-timing controls; 79 cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40996472066/artifacts/12952002021"
+        },
+        {
+          "label": "Checkpoint through a real socket",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40996828397/artifacts/12951757104"
+        },
+        {
+          "label": "Path MTU: native Linux packets and TCP_INFO",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40991952786/artifacts/12949399355"
+        },
+        {
+          "label": "Separate Outstanding fix; no prerequisite",
+          "url": "https://github.com/google/gvisor/pull/14101"
+        },
+        {
+          "label": "Eight paired sparse-window ACK benchmarks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40997495310/artifacts/12951717490"
+        },
+        {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/933263e71c97b0ae7bd0cb04489b2399fe4523f1"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
+          "head": "b909bc6898663235442ae8be2ff97607115d39d8"
+        },
+        "after": {
+          "base": "757d67e79ca401d6d662c470d6470d13f9e23a45",
+          "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "7d7f552333cf0aa6fa9563577b97adbda779eff4",
+        "baseHead": "b909bc6898663235442ae8be2ff97607115d39d8",
+        "url": "https://github.com/tamird/gvisor/commit/7d7f55233",
+        "title": "Count TCP SACKed packets on their transmit boundaries",
+        "summary": "Linux counts 1, 1, 4, 0 where stock counts 0, 0, 0, −3. Each selectively acknowledged packet now has one owner even when recovery splits its queue entry.",
+        "body": "Review this replacement for the existing unapproved #15634. Normal and gated analyzer results are linked alongside the real wire/checkpoint cases and the single-CPU sparse-window benchstat. #14101 covers the separate Outstanding flight estimate; it is not a prerequisite.",
+        "requestedAt": "2026-10-30T04:19:54.582741+00:00"
+      }
     },
     {
       "id": "pr:15618",
@@ -34902,7 +34962,7 @@
       "url": "https://github.com/tamird/gvisor/commit/215b93439",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-30T02:31:21.542178+00:00",
+      "updatedAt": "2026-10-30T04:19:54.582741+00:00",
       "summary": "On mutable overlay, copying up a file can redirect a canceled poll waiter’s unregister operation to a different backing file. The old proc file can still wake that waiter; retaining the original file passes the cancellation case. The read-only overlay control passes. Check lifetime, checkpoint behavior and cost before proposing the change.",
       "evidence": [
         {
@@ -34912,6 +34972,22 @@
         {
           "label": "Candidate: retaining original registration prevents this notification",
           "url": "https://app.buildbuddy.io/invocation/438a0677-8207-42af-9d27-109fcfe7380e"
+        },
+        {
+          "label": "Checkpoint: stock failed after pre-save; the optimized prototype restored and woke only direct proc.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40992423939/artifacts/12952421943"
+        },
+        {
+          "label": "Owning Nogo analyzer passed on d762dbd75",
+          "url": "https://app.buildbuddy.io/invocation/9cfb2002-f93c-44e6-9c6b-89df684a1e77"
+        },
+        {
+          "label": "Two-waiter retention and release",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40999199130/artifacts/12952671675"
+        },
+        {
+          "label": "Eight simultaneous waiters: tmpfs +134% and proc +69%; caller-owned binding under investigation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40999199130/artifacts/12952333337"
         }
       ]
     },
