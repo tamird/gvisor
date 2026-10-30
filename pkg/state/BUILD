@@ -100,6 +100,7 @@ go_library(
     deps = [
         "//pkg/gohacks",
         "//pkg/state/wire",
+        "@com_github_google_btree//:go_default_library",
     ],
 )
 

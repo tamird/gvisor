@@ -19,18 +19,85 @@ import (
 	"reflect"
 	"slices"
 	"unsafe"
+
+	"github.com/google/btree"
 )
+
+// wideIndex supplements the small-object hash chains. One tree indexes the
+// occupied small bucket numbers; the other holds wide roots by exclusive end.
+type wideIndex struct {
+	blocks  *btree.BTreeG[uintptr]
+	objects *btree.BTreeG[wideRange]
+	active  bool
+}
+
+type wideRange struct {
+	end uintptr
+	obj int32
+}
+
+// A wide range would need more than 32 of the 512-byte hash buckets.
+func wideBlocks(first, last uintptr) bool { return last-first >= 32 }
+
+// wideIndex returns the ordered indexes for wide queries. Until the first
+// wide range is encountered, small objects need only their usual hash chains.
+func (es *graphEncodeState) wideIndex() *wideIndex {
+	if es.wide == nil {
+		es.wide = &wideIndex{
+			blocks:  btree.NewG(16, cmp.Less[uintptr]),
+			objects: btree.NewG(16, func(a, b wideRange) bool { return a.end < b.end }),
+		}
+	}
+	w := es.wide
+	if !w.active {
+		for _, s := range es.blocks.slots {
+			if s.key != 0 {
+				w.blocks.ReplaceOrInsert(s.key - 1)
+			}
+		}
+		w.active = true
+	}
+	return w
+}
 
 // index adds the object to the object index.
 func (es *graphEncodeState) index(obj int32) {
 	o := es.obj(obj)
-	for b := o.addr >> blockShift; b <= (o.end-1)>>blockShift; b++ {
+	first, last := o.addr>>blockShift, (o.end-1)>>blockShift
+	if wideBlocks(first, last) {
+		es.wideIndex().objects.ReplaceOrInsert(wideRange{end: o.end, obj: obj})
+		return
+	}
+	for b := first; b <= last; b++ {
 		head, ok := es.blocks.get(b)
 		if !ok {
 			head = -1
+			if w := es.wide; w != nil && w.active {
+				w.blocks.ReplaceOrInsert(b)
+			}
 		}
 		es.blockEntries = append(es.blockEntries, blockEntry{addr: o.addr, end: o.end, obj: obj, next: head})
 		es.blocks.set(b, int32(len(es.blockEntries)-1))
+	}
+}
+
+// queryBlock appends the live objects in bucket b overlapping [addr, end).
+func (es *graphEncodeState) queryBlock(b, addr, end uintptr) {
+	e, ok := es.blocks.get(b)
+	if !ok {
+		return
+	}
+	for ; e >= 0; e = es.blockEntries[e].next {
+		be := &es.blockEntries[e]
+		if be.addr >= end || addr >= be.end {
+			continue
+		}
+		o := es.obj(be.obj)
+		if o.parent >= 0 || o.dead || o.stamp == es.stamp {
+			continue
+		}
+		o.stamp = es.stamp
+		es.queryResult = append(es.queryResult, be.obj)
 	}
 }
 
@@ -45,23 +112,33 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 		es.stamp = 1
 	}
 	es.queryResult = es.queryResult[:0]
-	for b := addr >> blockShift; b <= (end-1)>>blockShift; b++ {
-		e, ok := es.blocks.get(b)
-		if !ok {
-			continue
-		}
-		for ; e >= 0; e = es.blockEntries[e].next {
-			be := &es.blockEntries[e]
-			if be.addr >= end || addr >= be.end {
-				continue
+	first, last := addr>>blockShift, (end-1)>>blockShift
+	if wideBlocks(first, last) {
+		// Visit only occupied small buckets, regardless of slice capacity.
+		es.wideIndex().blocks.AscendGreaterOrEqual(first, func(b uintptr) bool {
+			if b > last {
+				return false
 			}
-			o := es.obj(be.obj)
-			if o.parent >= 0 || o.dead || o.stamp == es.stamp {
-				continue
-			}
-			o.stamp = es.stamp
-			es.queryResult = append(es.queryResult, be.obj)
+			es.queryBlock(b, addr, end)
+			return true
+		})
+	} else {
+		for b := first; b <= last; b++ {
+			es.queryBlock(b, addr, end)
 		}
+	}
+	if w := es.wide; w != nil && w.objects.Len() != 0 {
+		// Live roots do not overlap: their starts and ends sort identically.
+		w.objects.AscendGreaterOrEqual(wideRange{end: addr + 1}, func(r wideRange) bool {
+			o := es.obj(r.obj)
+			if o.addr >= end {
+				return false
+			}
+			if !o.dead {
+				es.queryResult = append(es.queryResult, r.obj)
+			}
+			return true
+		})
 	}
 	return es.queryResult
 }
@@ -300,6 +377,9 @@ func (es *graphEncodeState) checkInterior(obj int32, off uintptr, ti *typeInfo, 
 // parent, part of parent.
 func (es *graphEncodeState) absorb(parent, obj int32) {
 	p, o := es.obj(parent), es.obj(obj)
+	if wideBlocks(o.addr>>blockShift, (o.end-1)>>blockShift) {
+		es.wide.objects.Delete(wideRange{end: o.end})
+	}
 	off := o.addr - p.addr
 	o.parent = parent
 	o.parentOff = off

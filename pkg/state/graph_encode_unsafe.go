@@ -258,6 +258,7 @@ type graphEncodeState struct {
 	maps map[unsafe.Pointer]int32
 	// blocks maps blocks of memory to the objects that intersect them.
 	blocks       addrMap
+	wide         *wideIndex
 	blockEntries []blockEntry
 	stamp        uint32
 	queryResult  []int32
@@ -437,6 +438,7 @@ func (es *graphEncodeState) release() {
 	if cap(es.out.b)+cap(es.final.b)+cap(es.binaryBuf) > maxPooledBytes ||
 		len(es.byAddr.slots)+len(es.blocks.slots) > maxPooledSlots ||
 		cap(es.blockEntries)+cap(es.queue) > maxPooledSlots ||
+		(es.wide != nil && es.wide.objects.Len() > maxPooledSlots) ||
 		cap(es.refs)+cap(es.segRefs) > maxPooledSlots {
 		return
 	}
@@ -448,6 +450,11 @@ func (es *graphEncodeState) release() {
 	es.byAddr.reset()
 	clear(es.maps)
 	es.blocks.reset()
+	if w := es.wide; w != nil && w.active {
+		w.blocks.Clear(true)
+		w.objects.Clear(true)
+		w.active = false
+	}
 	es.blockEntries = es.blockEntries[:0]
 	es.stamp = 0
 	es.queryResult = es.queryResult[:0]
