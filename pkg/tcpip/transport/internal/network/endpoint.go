@@ -425,40 +425,9 @@ func (e *Endpoint) hasSendSpaceRLocked() bool {
 	return e.ops.GetSendBufferSize() > e.sendBufferSizeInUse
 }
 
-// connectedMulticastRouteStale reports whether this write would reuse a
-// multicast route with a loopback setting that has since changed.
-//
-// +checklocksread:e.mu
-func (e *Endpoint) connectedMulticastRouteStale(opts tcpip.WriteOptions) bool {
-	if e.connectedRoute == nil || opts.To != nil || e.writeShutdown || opts.More {
-		return false
-	}
-	if e.effectiveNetProto == header.IPv6ProtocolNumber && opts.ControlMessages.HasIPv6PacketInfo {
-		return false // Per-packet routing ignores the cached route.
-	}
-	return !e.connectedRoute.MatchesMulticastLoop(e.multicastLoop())
-}
-
 // AcquireContextForWrite acquires a WriteContext.
 func (e *Endpoint) AcquireContextForWrite(opts tcpip.WriteOptions) (WriteContext, tcpip.Error) {
 	e.mu.RLock()
-	if e.connectedMulticastRouteStale(opts) {
-		e.mu.RUnlock()
-		e.mu.Lock()
-		if e.connectedMulticastRouteStale(opts) {
-			// The peer and source are unchanged. Replace the cached route so
-			// subsequent writes reuse the new loopback policy.
-			r := e.connectedRoute
-			replacement, err := e.stack.FindRoute(r.OutgoingNIC(), r.LocalAddress(), r.RemoteAddress(), r.NetProto(), e.multicastLoop())
-			if err != nil {
-				e.mu.Unlock()
-				return WriteContext{}, err
-			}
-			e.connectedRoute = replacement
-			r.Release()
-		}
-		e.mu.DowngradeLock()
-	}
 	defer e.mu.RUnlock()
 
 	// MSG_MORE is unimplemented. This also means that MSG_EOR is a no-op.
@@ -661,6 +630,19 @@ func (e *Endpoint) Disconnect() {
 
 	e.connectedRoute.Release()
 	e.connectedRoute = nil
+}
+
+// OnMulticastLoopChanged updates a connected route without changing the peer
+// or reselecting the outgoing interface. Read the option under the lock so
+// concurrent setters apply the latest value regardless of notification order.
+//
+// +checklocksexclude:e.mu
+func (e *Endpoint) OnMulticastLoopChanged() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.connectedRoute != nil {
+		e.connectedRoute = e.connectedRoute.WithMulticastLoop(e.multicastLoop())
+	}
 }
 
 // multicastLoop selects loopback by the socket's family, including when an

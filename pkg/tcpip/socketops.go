@@ -37,6 +37,9 @@ type SocketOptionsHandler interface {
 	// Note that v will be the inverse of TCP_NODELAY option.
 	OnDelayOptionSet(v bool)
 
+	// OnMulticastLoopChanged is invoked when a multicast loopback option is set.
+	OnMulticastLoopChanged()
+
 	// OnCorkOptionSet is invoked when TCP_CORK is set for an endpoint.
 	OnCorkOptionSet(v bool)
 
@@ -86,6 +89,9 @@ func (*DefaultSocketOptionsHandler) OnKeepAliveSet(bool) {}
 
 // OnDelayOptionSet implements SocketOptionsHandler.OnDelayOptionSet.
 func (*DefaultSocketOptionsHandler) OnDelayOptionSet(bool) {}
+
+// OnMulticastLoopChanged implements SocketOptionsHandler.OnMulticastLoopChanged.
+func (*DefaultSocketOptionsHandler) OnMulticastLoopChanged() {}
 
 // OnCorkOptionSet implements SocketOptionsHandler.OnCorkOptionSet.
 func (*DefaultSocketOptionsHandler) OnCorkOptionSet(bool) {}
@@ -386,13 +392,15 @@ func (so *SocketOptions) GetMulticastLoop() bool {
 
 // SetMulticastLoop sets the multicast loopback default for both families.
 func (so *SocketOptions) SetMulticastLoop(v bool) {
-	so.SetIPv4MulticastLoop(v)
-	so.SetIPv6MulticastLoop(v)
+	storeAtomicBool(&so.multicastLoopEnabled, v)
+	storeAtomicBool(&so.ipv6MulticastLoopDisabled, !v)
+	so.notifyMulticastLoopChanged()
 }
 
 // SetIPv4MulticastLoop sets IP_MULTICAST_LOOP.
 func (so *SocketOptions) SetIPv4MulticastLoop(v bool) {
 	storeAtomicBool(&so.multicastLoopEnabled, v)
+	so.notifyMulticastLoopChanged()
 }
 
 // GetIPv6MulticastLoop reports IPV6_MULTICAST_LOOP.
@@ -403,6 +411,13 @@ func (so *SocketOptions) GetIPv6MulticastLoop() bool {
 // SetIPv6MulticastLoop sets IPV6_MULTICAST_LOOP.
 func (so *SocketOptions) SetIPv6MulticastLoop(v bool) {
 	storeAtomicBool(&so.ipv6MulticastLoopDisabled, !v)
+	so.notifyMulticastLoopChanged()
+}
+
+func (so *SocketOptions) notifyMulticastLoopChanged() {
+	if so.handler != nil {
+		so.handler.OnMulticastLoopChanged()
+	}
 }
 
 // GetReceiveTOS gets value for IP_RECVTOS option.

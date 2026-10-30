@@ -106,13 +106,30 @@ func (r *Route) Loop() PacketLooping {
 	return r.routeInfo.Loop
 }
 
-// MatchesMulticastLoop reports whether the route can be reused with the
-// specified multicast loopback setting. On a loopback NIC the link endpoint
-// handles loopback independently of the network-layer setting.
-func (r *Route) MatchesMulticastLoop(enabled bool) bool {
+// WithMulticastLoop transfers the caller's reference to a route with the
+// requested multicast loopback policy. Other writers may still hold the old
+// route. Both routes use the same local address reference and next hop.
+func (r *Route) WithMulticastLoop(enabled bool) *Route {
 	addr := r.RemoteAddress()
-	return !(header.IsV4MulticastAddress(addr) || header.IsV6MulticastAddress(addr)) ||
-		r.local() || (r.Loop()&PacketLoop != 0) == enabled
+	if !(header.IsV4MulticastAddress(addr) || header.IsV6MulticastAddress(addr)) ||
+		r.local() || (r.Loop()&PacketLoop != 0) == enabled {
+		return r
+	}
+
+	info := r.routeInfo
+	info.Loop ^= PacketLoop
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return &Route{
+		routeInfo:            info,
+		localAddressNIC:      r.localAddressNIC,
+		localAddressEndpoint: r.localAddressEndpoint,
+		remoteLinkAddress:    r.remoteLinkAddress,
+		outgoingNIC:          r.outgoingNIC,
+		linkRes:              r.linkRes,
+		neighborEntry:        r.neighborEntry,
+		mtu:                  r.mtu,
+	}
 }
 
 // OutgoingNIC returns the route's outgoing NIC.

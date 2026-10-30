@@ -1,4 +1,4 @@
-name: Check the host-backed multicast socket option
+name: Check multicast option changes with a write in flight
 on:
   push:
     branches: [qualification/java21-multicast-options]
@@ -11,9 +11,9 @@ jobs:
     timeout-minutes: 150
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      CURRENT: 4724a5fcd92228f319166b0d2451311b2dc958c2
-      PRODUCT: 4724a5fcd92228f319166b0d2451311b2dc958c2
-      STOCK: 8bc8614c8736aa045abf94ef7463fb3850218191
+      CURRENT: 84a27ee4e533d63e177273f237dc84516bbab33b
+      PRODUCT: 84a27ee4e533d63e177273f237dc84516bbab33b
+      WITH_FLAGS: 5364cde42b47d3ac8ac0d25eada09dcf6d6475a9
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 5, persist-credentials: false}
@@ -24,7 +24,7 @@ jobs:
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         cp test/rbe/multicast-java-verdict.py "$RUNNER_TEMP/verify-tcp.py"
-        [[ "$(git rev-parse HEAD^1)" == "905977a8db538ba4d94f705d6d787aa821a89e69" ]]
+        [[ "$(git rev-parse HEAD^1)" == "7b0cf9126aba4ceea45fb7d58cbb416c015c8be8" ]]
         git fetch --no-tags --depth=2 origin "$CURRENT"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
@@ -35,7 +35,7 @@ jobs:
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } > "$RUNNER_TEMP/tcp.bazelrc"
         unset BUILDBUDDY_API_KEY
-        git fetch --no-tags --depth=1 origin "$STOCK"
+        git fetch --no-tags --depth=1 origin $WITH_FLAGS
         sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         docker pull --platform=linux/amd64 "$GNU"
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
@@ -45,7 +45,7 @@ jobs:
     - name: Build the two original runtime configurations and the actual test executables
       run: |
         set -euo pipefail
-        for src in "$STOCK" "$CURRENT"; do
+        for src in $WITH_FLAGS "$CURRENT"; do
           git checkout --quiet --detach "$src"
           [[ "$(git rev-parse HEAD)" == "$src" ]]
           d=$RUNNER_TEMP/records/bin-${src:0:9}; mkdir -p "$d"
@@ -66,8 +66,9 @@ jobs:
           docker exec tcp-compiler cp "bazel-bin/test/syscalls/linux/$target" "$RUNNER_TEMP/syscall-bins/$target"
           sha256sum "$RUNNER_TEMP/syscall-bins/$target" >> "$RUNNER_TEMP/records/syscall-sha256"
         done
-        sudo "$RUNNER_TEMP/release-${STOCK:0:9}/runsc" install --runtime=gvisor-stock -- --network=host
-        sudo "$RUNNER_TEMP/release-${CURRENT:0:9}/runsc" install --runtime=gvisor-current -- --network=host
+        sudo "$RUNNER_TEMP/release-${CURRENT:0:9}/runsc" install --runtime=gvisor-current
+        sudo "$RUNNER_TEMP/release-${CURRENT:0:9}/runsc" install --runtime=gvisor-host -- --network=host
+        sudo "$RUNNER_TEMP/release-${WITH_FLAGS:0:9}/runsc" install --runtime=gvisor-jdk
         sudo systemctl restart docker
         docker start tcp-compiler
         docker exec tcp-compiler uname -m
@@ -75,7 +76,7 @@ jobs:
       if: ${{ !cancelled() }}
       run: |
         set -euo pipefail
-        for name in wire-stock wire-current options-stock options-current; do
+        for name in wire-host wire-current options-host options-current; do
           arm=${name##*-}; rt=gvisor-$arm; [[ $arm != native ]] || rt=runc
           binary=socket_ipv4_udp_unbound_external_networking_test; filter='*ConnectedMappedMulticast*'
           if [[ $name == options-* ]]; then binary=socket_ipv6_udp_unbound_loopback_test; filter='MulticastSocketOptions.*'; fi
@@ -90,18 +91,30 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: multicast-hostinet-cases
+        name: multicast-option-change-syscalls
         path: |
           ${{ runner.temp }}/records/wire-*/
           ${{ runner.temp }}/records/options-*/
         if-no-files-found: warn
+    - name: Run the importer's OpenJDK test on the final source
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        image=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/java21_x86_64@sha256:c5a1419701eea132bc82193018a09a91296a8d9e96492495a72dd84040e0bb47
+        d=$RUNNER_TEMP/records/jdk-current; mkdir -p "$d"
+        docker pull "$image"
+        docker inspect "$image" --format '{{json .RepoDigests}}' > "$d/image"
+        rc=0
+        docker run --runtime=gvisor-jdk --name=jdk-current "$image" jtreg -agentvm -dir:/root/jdk/test/jdk -noreport -timeoutFactor:5 -verbose:all -tl:200 java/net/DatagramSocket/DatagramSocketMulticasting.java > "$d/jtreg.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$d/exit"
+        docker cp jdk-current:/root/JTwork/java/net/DatagramSocket/DatagramSocketMulticasting.jtr "$d/DatagramSocketMulticasting.jtr" || true
     - name: Run the owning package tests and source analyzers on the standalone revision
       if: ${{ !cancelled() }}
       run: |
         set -euo pipefail
         git checkout --quiet --detach "$PRODUCT"
         d=$RUNNER_TEMP/records/owners; mkdir -p "$d"; printf '%s\n' "$PRODUCT" > "$d/source"
-        targets=(//pkg/sentry/socket/netstack:netstack_test //pkg/tcpip/transport/internal/network:network_test //pkg/tcpip/transport:datagram_test //pkg/sentry/socket/netstack:netstack_nogo //pkg/tcpip:tcpip_nogo //pkg/tcpip/stack:stack_nogo //pkg/tcpip/transport/internal/network:network_nogo //pkg/tcpip/transport/tcp:tcp_nogo //pkg/sentry/socket/hostinet:hostinet_nogo)
+        targets=(//pkg/sentry/socket/netstack:netstack_test //pkg/tcpip/transport/internal/network:network_test //pkg/tcpip/transport:datagram_test //pkg/sentry/socket/netstack:netstack_nogo //pkg/tcpip:tcpip_nogo //pkg/tcpip/stack:stack_nogo //pkg/tcpip/transport/internal/network:network_nogo //pkg/tcpip/transport/tcp:tcp_nogo //pkg/sentry/socket/hostinet:hostinet_nogo //pkg/tcpip/transport/raw:raw_nogo //pkg/tcpip/transport/icmp:icmp_nogo //pkg/tcpip/transport/udp:udp_nogo)
         printf '%s\n' "${targets[@]}" > "$d/targets"
         rc=0
         docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=8 --local_resources=cpu=2 --strategy=GoStaticAnalysis=local --strategy=GoStandardLibraryAnalysis=local --keep_going --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' "--build_event_json_file=$d/tests.bep" --nobuild_event_json_file_path_conversion "${targets[@]}" > "$d/build.log" 2>&1 || rc=$?
@@ -122,7 +135,19 @@ jobs:
         (d/'results.json').write_text(json.dumps(summaries,indent=2))
         p.unlink()
         PY
-    - name: Verify host option, connected delivery and all nine owning labels
+    - name: Verify the old and new writes reach the link with their own loop policy
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$PRODUCT"
+        d=$RUNNER_TEMP/records/owners; mkdir -p "$d"
+        rc=0
+        docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --test_arg=-test.run=^TestMulticastLoopInFlightWrite$ --test_arg=-test.v --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //pkg/tcpip/transport/internal/network:network_test > "$d/writer-build.log" 2>&1 || rc=$?
+        docker exec tcp-compiler cat bazel-testlogs/pkg/tcpip/transport/internal/network/network_test/test.log > "$d/writer.log" || true
+        tail -35 "$d/writer-build.log" > "$d/writer-summary"
+        rm -f "$d/writer-build.log"
+        printf '%s\n' "$rc" > "$d/writer-exit"
+    - name: Verify all five socket cases, both JVM modes, the active writer, and each owner
       if: ${{ !cancelled() }}
       run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
     - name: Redact credentials from the evidence bundle
@@ -141,6 +166,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: multicast-hostinet
+        name: multicast-option-change-and-writer
         path: ${{ runner.temp }}/records/
         if-no-files-found: error
