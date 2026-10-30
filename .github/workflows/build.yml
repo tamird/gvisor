@@ -1,35 +1,94 @@
-name: CI
-
-"on":
+name: Measure the GC soft limit under a real cgroup v2 ancestor
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/gc-ancestor-budget-local]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CURRENT: f6310f08dad4edbde042828e20090d1079e93967
+      FIXED: 96f87f902f8b2fb3383b5609aa93ad5b896563f1
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        cp test/rbe/verify-gc-cgroup.py "$RUNNER_TEMP/verify-gc.py"
+        [[ "$(git rev-parse HEAD^)" == "$FIXED" && "$(git rev-parse HEAD^^)" == "$CURRENT" && "$(git rev-parse HEAD~3)" == 9d3e6518a0a467c6575390cb6a61ff134024d243 ]]
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        cg="/sys/fs/cgroup/gvisor-gc-${GITHUB_RUN_ID}"
+        test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
+        grep -qw memory /sys/fs/cgroup/cgroup.subtree_control
+        sudo mkdir "$cg"
+        printf '%s\n' 201326592 | sudo tee "$cg/memory.max"
+        printf '%s\n' +memory | sudo tee "$cg/cgroup.subtree_control"
+        sudo mkdir "$cg/open"
+        printf '%s\n' +memory | sudo tee "$cg/open/cgroup.subtree_control"
+        sudo mkdir "$cg/open/unbounded" "$cg/open/large" "$cg/open/small"
+        printf '%s\n' 536870912 | sudo tee "$cg/open/large/memory.max"
+        printf '%s\n' 134217728 | sudo tee "$cg/open/small/memory.max"
+        for sub in . open open/unbounded open/large open/small; do printf '%s %s\n' "$sub" "$(cat "$cg/$sub/memory.max")"; done > "$RUNNER_TEMP/records/kernel-limits.txt"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root -v "$cg:/gvisor-gc-review:ro" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+    - name: Measure the unchanged test against both implementations
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        for name in original corrected; do
+          src=$CURRENT; [[ $name == original ]] || src=$FIXED
+          git checkout --quiet --detach "$src"
+          [[ "$(git rev-parse HEAD)" == "$src" ]]
+          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
+          echo "$src" > "$d/source"
+          sha256sum runsc/cgroup/cgroup_v2_test.go > "$d/fixture-sha256"
+          date -u +%FT%TZ > "$d/start"
+          rc=0
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=32 --spawn_strategy=remote,local --strategy=TestRunner=local --nocache_test_results --test_env=GC_PROBE_HIERARCHY=/gvisor-gc-review --test_arg=-test.v --test_arg=-test.run='^TestAncestorMemoryBudget$' --test_output=all //runsc/cgroup:cgroup_test > "$d/bazel.log" 2>&1 || rc=$?
+          grep -A2 -E 'Invocation ID:|ERROR:|error:|FAILED' "$d/bazel.log" | head -100 > "$d/diagnostics" || true
+          rm -f "$d/bazel.log"
+          echo "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
+          if [[ $rc == 0 || $rc == 3 ]]; then
+            for f in test.log test.xml; do docker exec tcp-compiler cat "bazel-testlogs/runsc/cgroup/cgroup_test/$f" > "$d/$f"; done
+          fi
+        done
+    - name: Reconcile the three native cgroup cases on both sources
+      if: always()
+      run: python3 "$RUNNER_TEMP/verify-gc.py" "$RUNNER_TEMP/records"
+    - name: Exclude credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: gc-ancestor-budget
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
