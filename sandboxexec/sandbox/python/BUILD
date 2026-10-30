@@ -30,6 +30,7 @@ string_flag(
 
 python_distribution(
     name = "dist",
+    visibility = ["//test/release:__pkg__"],
     srcs = ["README.md"] + glob(["gvisor/*.py"]),
     pyproject = "pyproject.toml",
     version = ":release_version",
