@@ -80,31 +80,29 @@ func newNotifier() (*notifier, error) {
 //
 // +checklocks:n.mu
 func (n *notifier) waitFD(fd int32, fi *fdInfo, mask waiter.EventMask) error {
-	if !fi.waiting && mask == 0 {
+	if err := setHostMask(n.epFD, fd, fi.waiting, mask); err != nil {
+		return err
+	}
+	fi.waiting = mask != 0
+	return nil
+}
+
+// setHostMask programs the host epoll descriptor without modifying fdInfo.
+func setHostMask(epFD int, fd int32, waiting bool, mask waiter.EventMask) error {
+	if mask == 0 {
+		if waiting {
+			unix.EpollCtl(epFD, unix.EPOLL_CTL_DEL, int(fd), nil)
+		}
 		return nil
 	}
-
-	e := unix.EpollEvent{
+	op := unix.EPOLL_CTL_ADD
+	if waiting {
+		op = unix.EPOLL_CTL_MOD
+	}
+	return unix.EpollCtl(epFD, op, int(fd), &unix.EpollEvent{
 		Events: mask.ToLinux() | unix.EPOLLET,
 		Fd:     fd,
-	}
-
-	switch {
-	case !fi.waiting && mask != 0:
-		if err := unix.EpollCtl(n.epFD, unix.EPOLL_CTL_ADD, int(fd), &e); err != nil {
-			return err
-		}
-		fi.waiting = true
-	case fi.waiting && mask == 0:
-		unix.EpollCtl(n.epFD, unix.EPOLL_CTL_DEL, int(fd), nil)
-		fi.waiting = false
-	case fi.waiting && mask != 0:
-		if err := unix.EpollCtl(n.epFD, unix.EPOLL_CTL_MOD, int(fd), &e); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	})
 }
 
 // addFD adds an FD to the list of FDs observed by n.
@@ -144,6 +142,29 @@ func (n *notifier) updateFD(fd int32) error {
 		return n.waitFD(fd, fi, fi.queue.Events())
 	}
 
+	return nil
+}
+
+// updateMask changes the entry's mask in the queue registered for fd.
+// As with updateFD, callers must not hold that queue's mutex.
+//
+// +checklocksexclude:n.mu
+func (n *notifier) updateMask(fd int32, e *waiter.Entry, mask waiter.EventMask) error {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	fi, ok := n.fdMap[fd]
+	if !ok {
+		return unix.ENOENT
+	}
+	wasWaiting := fi.waiting
+	var newMask waiter.EventMask
+	if err := fi.queue.UpdateHostMask(e, mask, func(aggregate waiter.EventMask) error {
+		newMask = aggregate
+		return setHostMask(n.epFD, fd, wasWaiting, aggregate)
+	}); err != nil {
+		return err
+	}
+	fi.waiting = newMask != 0
 	return nil
 }
 
@@ -248,6 +269,12 @@ func AddFD(fd int32, queue *waiter.Queue) error {
 // UpdateFD updates the set of events the fd needs to be notified on.
 func UpdateFD(fd int32) error {
 	return shared.notifier.updateFD(fd)
+}
+
+// UpdateMask changes a registered entry's mask in the queue passed to AddFD.
+// If the host rejects the new mask, the entry retains its original mask.
+func UpdateMask(fd int32, e *waiter.Entry, mask waiter.EventMask) error {
+	return shared.notifier.updateMask(fd, e, mask)
 }
 
 // RemoveFD removes an FD from the list of observed FDs.
