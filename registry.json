@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:23:11.019191+00:00",
+    "updatedAt": "2026-10-30T04:33:56.242748+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34974,7 +34974,7 @@
       "url": "https://github.com/tamird/gvisor/commit/215b93439",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-30T04:19:54.582741+00:00",
+      "updatedAt": "2026-10-30T04:33:56.242748+00:00",
       "summary": "On mutable overlay, copying up a file can redirect a canceled poll waiter’s unregister operation to a different backing file. The old proc file can still wake that waiter; retaining the original file passes the cancellation case. The read-only overlay control passes. Check lifetime, checkpoint behavior and cost before proposing the change.",
       "evidence": [
         {
@@ -35000,6 +35000,18 @@
         {
           "label": "Eight simultaneous waiters: tmpfs +134% and proc +69%; caller-owned binding under investigation",
           "url": "https://github.com/tamird/gvisor/actions/runs/40999199130/artifacts/12952333337"
+        },
+        {
+          "label": "Direct-path prototype: cold registration and both nested copy-up orders passed",
+          "url": "https://app.buildbuddy.io/invocation/37f34ba2-2bf8-41a6-b312-3fe6ec513233"
+        },
+        {
+          "label": "Direct path: eight tmpfs and proc waits cost 9.77 ns (+35.0%) and 8.1 ns (+2.4%) more",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41001975310/artifacts/12953992715"
+        },
+        {
+          "label": "Direct path: FileDescription remains 112 B and waiter.Entry remains 40 B; transient pollState grows from 48 to 56 B",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41001975310/artifacts/12954265851"
         }
       ]
     },
@@ -35033,6 +35045,50 @@
         "title": "Preserve signaling NaNs in legacy checkpoints",
         "summary": "Saving or restoring float32 and complex64 could quiet a signaling NaN. Preserve its bits through defined float types and map values, including complex values whose other component is infinite.",
         "body": "Review the change for submission. Both state suites and all 36 bit probes ran on native ARM64. The focused regression and the AMD64 and ARM64 package analyzers passed. Finite float and complex arrays kept the same allocation counts and bytes per operation as the preceding candidate."
+      }
+    },
+    {
+      "id": "branch:rules-python-namespace-inits",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rules-python-namespace-inits",
+      "head": "005930e18a30e580161f3674a686b05ff5392a80",
+      "title": "Generate wheel namespace initializers without a shell",
+      "url": "https://github.com/tamird/gvisor/commit/005930e18",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-30T04:33:56.242748+00:00",
+      "summary": "The proposed rules_python change replaces a shell copy with a Bazel template expansion. Existing namespace selection, target names and file contents are preserved.",
+      "evidence": [
+        {
+          "label": "Supplier patch against bfbcc014d",
+          "url": "https://github.com/tamird/gvisor/blob/005930e18/test/rbe/supplier-namespace/namespace-initializers.patch"
+        },
+        {
+          "label": "rules_python upstream parent",
+          "url": "https://github.com/bazel-contrib/rules_python/commit/bfbcc014d"
+        },
+        {
+          "label": "Original namespace implementation",
+          "url": "https://github.com/bazel-contrib/rules_python/commit/dce512024"
+        },
+        {
+          "label": "All 11 supplier cases; five real setuptools initializers on both configurations are regular files with the template’s bytes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41003165653/artifacts/12953489734"
+        },
+        {
+          "label": "Both gVisor release frontend builds on shell-free workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41001494828/artifacts/12953173515"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "005930e18a30e580161f3674a686b05ff5392a80",
+        "url": "https://github.com/tamird/gvisor/commit/005930e18",
+        "title": "Submit the initializer change to rules_python",
+        "summary": "Review the supplier patch, including its upstream tests and release note.",
+        "body": "Approve creating a public rules_python fork and submitting the reviewed change upstream, with the separate disclosure comment that the supplier requires."
       }
     }
   ],
