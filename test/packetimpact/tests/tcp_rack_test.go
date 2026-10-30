@@ -54,6 +54,7 @@ func createSACKConnection(t *testing.T) (testbench.DUT, testbench.TCPIPv4, int32
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeSACKPermittedOption(opts[optsOff:])
+	optsOff += header.EncodeMSSOption(1000, opts[optsOff:])
 
 	conn.ConnectWithOptions(t, opts[:optsOff])
 	acceptFd, _ := dut.Accept(t, listenFd)
@@ -434,4 +435,57 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 	if info.CaState != linux.TCP_CA_Recovery {
 		t.Fatalf("expected connection to be in fast recovery, want: %v got: %v", linux.TCP_CA_Recovery, info.CaState)
 	}
+}
+
+func TestLinuxSACKRecoverySplit(t *testing.T) {
+	dut, conn, fd, mss := createSACKConnection(t)
+	dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("reno"))
+	base := *conn.RemoteSeqNum(t)
+	unit := seqnum.Size(mss)
+	const packets = 8
+	data := make([]byte, packets*mss)
+	if n := dut.Send(t, fd, data, 0); n != int32(len(data)) {
+		t.Fatalf("send=%d, want %d", n, len(data))
+	}
+	for received := 0; received < len(data); {
+		frame, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(base.Add(seqnum.Size(received))))}, &testbench.Payload{}, time.Second)
+		if err != nil {
+			t.Fatalf("original bytes at %d: %v", received, err)
+		}
+		payload := frame[len(frame)-1].(*testbench.Payload)
+		if len(payload.Bytes) == 0 || received+len(payload.Bytes) > len(data) {
+			t.Fatalf("initial payload at %d: %d", received, len(payload.Bytes))
+		}
+		received += len(payload.Bytes)
+	}
+	b := func(start, end int) header.SACKBlock {
+		return header.SACKBlock{Start: base.Add(seqnum.Size(start) * unit), End: base.Add(seqnum.Size(end) * unit)}
+	}
+	initAck := dut.GetSockOptTCPInfo(t, fd).BytesAcked
+	process := func(stage string, cum int, blocks []header.SACKBlock, accept func(linux.TCPInfo) bool) linux.TCPInfo {
+		t.Helper()
+		tcp := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(base.Add(seqnum.Size(cum))))}
+		if len(blocks) > 0 {
+			opt := make([]byte, 40)
+			opt[0], opt[1] = header.TCPOptionNOP, header.TCPOptionNOP
+			n := header.EncodeSACKBlocks(blocks, opt[2:])
+			tcp.Options = opt[:n+2]
+		}
+		conn.Send(t, tcp)
+		deadline := time.Now().Add(time.Second)
+		for {
+			info := dut.GetSockOptTCPInfo(t, fd)
+			if accept(info) {
+				t.Logf("SPLIT stage=%s count=%d recovery=%t", stage, info.Sacked, info.CaState == 3)
+				return info
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("%s: SACKed=%d CAState=%d unacked=%d acked=%d", stage, info.Sacked, info.CaState, info.Unacked, info.BytesAcked-initAck)
+			}
+		}
+	}
+	process("sack3", 0, []header.SACKBlock{b(2, 3)}, func(i linux.TCPInfo) bool { return i.Sacked != 0 })
+	process("trim", 100, []header.SACKBlock{b(2, 3)}, func(i linux.TCPInfo) bool { return i.BytesAcked >= initAck+100 })
+	process("loss", 100, []header.SACKBlock{b(5, 8), b(2, 3)}, func(i linux.TCPInfo) bool { return i.Sacked >= 3 && i.CaState == 3 })
+	process("done", packets*mss, nil, func(i linux.TCPInfo) bool { return i.Unacked == 0 })
 }

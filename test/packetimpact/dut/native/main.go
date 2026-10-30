@@ -59,6 +59,15 @@ func (n *native) Bootstrap(ctx context.Context) (testbench.DUTInfo, func() error
 		return testbench.DUTInfo{}, nil, fmt.Errorf("failed to enable icmp sockets: %w", err)
 	}
 
+	// Run the matching legacy SACK recovery path in the DUT's own namespace.
+	if err := os.WriteFile("/proc/sys/net/ipv4/tcp_recovery", []byte("0"), 0); err != nil {
+		return testbench.DUTInfo{}, nil, fmt.Errorf("set tcp_recovery: %w", err)
+	}
+	value, err := os.ReadFile("/proc/sys/net/ipv4/tcp_recovery")
+	if err != nil || string(value) != "0\n" {
+		return testbench.DUTInfo{}, nil, fmt.Errorf("verify tcp_recovery: got %q, error %v", value, err)
+	}
+
 	// Find the posix_server binary.
 	path, err := testutil.FindFile(linux.PosixServerPath)
 	if err != nil {
