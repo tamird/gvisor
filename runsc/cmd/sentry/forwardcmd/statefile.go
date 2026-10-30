@@ -246,7 +246,7 @@ func writeOutputFile(outPath string, inStat *unix.Stat_t, writeFn func(*os.File)
 			if !hasParent {
 				lookupDir = "."
 			}
-			nextDirFD, err := openatEINTR(dirFD, lookupDir, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+			nextDirFD, err := openatEINTR(dirFD, lookupDir, unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
 			if err != nil {
 				return fmt.Errorf("error resolving output: %w", err)
 			}
