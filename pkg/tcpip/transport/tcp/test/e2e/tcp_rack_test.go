@@ -1225,3 +1225,39 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestRACKTLPTwoToOneWire records which PTO emits a copy of the last segment
+// when a cumulative ACK reduces the flight from two segments to one.
+func TestRACKTLPTwoToOneWire(t *testing.T) {
+	ic := newIdleRACKConn(t)
+	ic.send(t, 1)
+	ic.send(t, 2)
+	ic.clock.Advance(ic.srtt)
+	rto, srtt := ic.ack(t, 2*maxPayload)
+	multi := 2 * srtt
+	single := multi + 200*time.Millisecond
+	if !(0 < multi && multi < rto && rto < single) {
+		t.Fatalf("deadlines not distinct: multi=%v rto=%v single=%v", multi, rto, single)
+	}
+	var elapsed time.Duration
+	for _, deadline := range []time.Duration{multi - time.Nanosecond, multi, rto - time.Nanosecond, rto, single - time.Nanosecond, single} {
+		ic.clock.Advance(deadline - elapsed)
+		elapsed = deadline
+		ic.c.Stack().Pause()
+		ic.c.Stack().Resume()
+		packet := ic.c.GetPacketNonBlocking()
+		if packet == nil {
+			t.Logf("PTO_WIRE elapsed_ns=%d empty", elapsed.Nanoseconds())
+			continue
+		}
+		defer packet.Release()
+		ip := header.IPv4(packet.AsSlice())
+		seg := header.TCP(ip.Payload())
+		if got, want := seg.SequenceNumber(), uint32(ic.c.IRS.Add(1 + seqnum.Size(2*maxPayload))); got != want || !bytes.Equal(seg.Payload(), ic.data[2*maxPayload:]) {
+			t.Fatalf("unexpected packet sequence=%d want=%d payload=%x", got, want, seg.Payload())
+		}
+		t.Logf("PTO_REPAIR elapsed_ns=%d multi_ns=%d rto_ns=%d single_ns=%d offset=%d bytes=%d packet=%x", elapsed.Nanoseconds(), multi.Nanoseconds(), rto.Nanoseconds(), single.Nanoseconds(), 2*maxPayload, len(seg.Payload()), packet.AsSlice())
+		return
+	}
+	t.Fatal("tail was never retransmitted")
+}
