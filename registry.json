@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+    "updatedAt": "2026-10-30T13:00:10.813642+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32182,7 +32182,7 @@
       "url": "https://github.com/tamird/gvisor/commit/82f0e4f38",
       "group": "runtime",
       "status": "Contributor approved; waiting for provider prerequisites",
-      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "updatedAt": "2026-10-30T13:00:10.813642+00:00",
       "summary": "A rejected MOD leaves the original watch registered. A rearm with the same mask still polls for readiness; changing its mask needs no extra waiter allocation. Stable overlay backing keeps its poll support.",
       "evidence": [
         {
@@ -32276,6 +32276,10 @@
         {
           "label": "Earlier revision: Corrected VFS race run",
           "url": "https://app.buildbuddy.io/invocation/8219bdeb-c390-415b-8466-c9d6e4a6d084"
+        },
+        {
+          "label": "Merged ADD fixture (satisfied)",
+          "url": "https://github.com/google/gvisor/pull/16513"
         }
       ],
       "refinement": {
@@ -32304,9 +32308,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "82f0e4f38f65529f18851f196504957874ec56fa",
-        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "observedAt": "2026-10-30T13:00:10.813642+00:00",
         "disposition": "Final two commits approved",
-        "nextAction": "Integrate and submit the two reviewed commits after the waiter and file-provider changes are ready. The separate provider prerequisites retain their own review scopes.",
+        "nextAction": "Submit the approved two commits after the stable waiter/host notifier, plugin, VFIO, FUSE, gofer, and Unix provider changes. #16739 fixes rejected peer registration; bound host sockets still need correct error propagation. Remove the old overlay method when installing the approved stable replacement; do not publish a blanket rejection.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/3ded0a3d6...82f0e4f38",
           "https://github.com/google/gvisor/pull/16739",
@@ -34599,20 +34603,56 @@
       "id": "branch:gofer-character-device-restore",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/gofer-character-device-restore",
-      "head": "64758ff8b5b9c25a780afc75f830260c68b58bbb",
-      "title": "Restore polling on gofer character devices",
-      "url": "https://github.com/tamird/gvisor/commit/64758ff8b",
+      "ref": "review/gofer-restore-device-watches",
+      "head": "047b8258423a32fec329b7000a7f97b3591fafde",
+      "title": "Restore gofer character-device polling across checkpoints",
+      "url": "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-29T20:08:11.241282+00:00",
-      "summary": "Open includes character devices in the host notifier, while restore only includes pipes and sockets. Test one watched host character device before and after checkpoint in both gofer modes.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T13:00:10.813642+00:00",
+      "summary": "After checkpoint, a new epoll watch on an open /dev/random file returned EPERM in both gofer modes. Reconnect the character device and reject restore when a saved wait queue has no host descriptor.",
       "evidence": [
+        {
+          "label": "Combined contributor diff",
+          "url": "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584"
+        },
+        {
+          "label": "First change: reconnect the character device",
+          "url": "https://github.com/tamird/gvisor/commit/7bb52411e"
+        },
+        {
+          "label": "Second change: reject missing donor for a saved queue",
+          "url": "https://github.com/tamird/gvisor/commit/047b82584"
+        },
+        {
+          "label": "Fresh-watch and missing-donor controls, original Linux and both gofer modes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40958565392/artifacts/12934308229"
+        },
         {
           "label": "Unmodified restore path",
           "url": "https://github.com/google/gvisor/blob/e82a0e179/pkg/sentry/fsimpl/gofer/save_restore.go#L503"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "047b8258423a32fec329b7000a7f97b3591fafde",
+        "url": "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584",
+        "title": "Restore gofer character-device polling across checkpoints",
+        "summary": "After checkpoint, a new epoll watch on an open /dev/random file returned EPERM in both gofer modes. Reconnect the character device and reject restore when a saved wait queue has no host descriptor.",
+        "body": "Review these two changes together for a standalone PR. A fresh watch returned tag 33 after restore on Linux and both corrected gVisor modes. A separate control omitted the host descriptor: the fixed restore failed with a path only if a waiter was saved. A watch already present can report a queued event on stock.",
+        "baseHead": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd"
+      },
+      "refinement": {
+        "before": {
+          "base": "e82a0e179198f72260185166fb2be5336abee8b2",
+          "head": "d971b7abc867da47292289eba8792aa62775df0c"
+        },
+        "after": {
+          "base": "cabf43bcb2e224a84b7d2ddd44ecabdf7f9f15cd",
+          "head": "047b8258423a32fec329b7000a7f97b3591fafde"
+        }
+      }
     },
     {
       "id": "pr:16697",
@@ -35872,6 +35912,50 @@
         {
           "label": "Compatibility and copy qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/41040732572"
+        }
+      ]
+    },
+    {
+      "id": "branch:vfio-pci-file-poll",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "runtime",
+      "ref": "review/vfio-pci-poll-abi",
+      "head": "5d7de5a80e2acbfabc4954c1175ef40259008444",
+      "title": "Match Linux polling on VFIO PCI device files",
+      "url": "https://github.com/tamird/gvisor/commit/5d7de5a80",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-30T13:00:10.813642+00:00",
+      "summary": "Stock admitted an epoll watch on a PCI descriptor and left a restored waiter linked after removal. Match Linux’s no-poll file operations and preserve deletion of old checkpoint watches.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "5d7de5a80e2acbfabc4954c1175ef40259008444",
+        "url": "https://github.com/tamird/gvisor/commit/5d7de5a80",
+        "title": "Match Linux polling on VFIO PCI device files",
+        "summary": "Stock admitted an epoll watch on a PCI descriptor and left a restored waiter linked after removal. Match Linux’s no-poll file operations and preserve deletion of old checkpoint watches.",
+        "body": "Review this independent VFIO correction. The stock package failed both regressions; normal, race, and both owning analyzers passed. The Linux control used /dev/null as another file with no poll operation. Physical VFIO hardware was not exercised."
+      },
+      "evidence": [
+        {
+          "label": "Review the VFIO ABI change",
+          "url": "https://github.com/tamird/gvisor/commit/5d7de5a80"
+        },
+        {
+          "label": "Both stock failures",
+          "url": "https://app.buildbuddy.io/invocation/7d38c79a-e171-4692-bca7-b7098f31d8ae"
+        },
+        {
+          "label": "Corrected VFIO package",
+          "url": "https://app.buildbuddy.io/invocation/a31d1027-4436-449b-a952-f2b26aa0f7cb"
+        },
+        {
+          "label": "Corrected race tests",
+          "url": "https://app.buildbuddy.io/invocation/9be1f578-75f2-4176-9dd4-776c84dc8ee9"
+        },
+        {
+          "label": "Both standalone analyzer owners",
+          "url": "https://app.buildbuddy.io/invocation/a8186399-51e3-4342-8251-428d349e2259"
         }
       ]
     }
@@ -38809,15 +38893,6 @@
       "evidence": "https://github.com/google/gvisor/pull/16551"
     },
     {
-      "from": "pr:16513",
-      "to": "branch:epoll-modify-preserve",
-      "type": "depends_on",
-      "reason": "Uses the failed-registration test fixture from the EPOLL_CTL_ADD change.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/16513"
-      ]
-    },
-    {
       "from": "pr:16403",
       "to": "branch:tcp-dsack-above-gap",
       "type": "depends_on",
@@ -38981,9 +39056,10 @@
       "type": "depends_on",
       "from": "branch:gofer-character-device-restore",
       "to": "branch:epoll-modify-preserve",
-      "reason": "Restores the host wait queue for a previously watched character device.",
+      "reason": "Keep the queue attached to a reopened character device and reject restore if a saved queue has no host descriptor.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/64758ff8b"
+        "https://github.com/tamird/gvisor/compare/cabf43bcb...047b82584",
+        "https://github.com/tamird/gvisor/actions/runs/40958565392/artifacts/12934308229"
       ]
     },
     {
@@ -39061,6 +39137,15 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16728",
         "https://github.com/google/gvisor/pull/16740"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:vfio-pci-file-poll",
+      "to": "branch:epoll-modify-preserve",
+      "reason": "The approved core uses the VFIO provider’s no-poll behavior and adapts its saved-waiter regression.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/5d7de5a80"
       ]
     }
   ],
