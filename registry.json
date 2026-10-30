@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T15:44:50.173444+00:00",
+    "updatedAt": "2026-10-30T15:45:54.706075+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36440,11 +36440,11 @@
       "repo": "tamird/gvisor",
       "ref": "proposal/socket-netfilter-fib-boundaries",
       "head": "632655077dd22ba059b970f211c3cf2a59dd2ac9",
-      "title": "Test FIB register and flag validation through netlink",
+      "title": "Test FIB register and flag checks over netlink",
       "url": "https://github.com/tamird/gvisor/compare/1398e3d66...632655077",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-10-30T15:44:50.173444+00:00",
+      "updatedAt": "2026-10-30T15:45:54.706075+00:00",
       "summary": "Use one socket program to check the register and flag policy from #16264. Linux and current gVisor passed all three cases. Pre-fix gVisor accepted both malformed requests and the valid boundary.",
       "contributorReview": {
         "status": "pending",
@@ -36452,7 +36452,7 @@
         "head": "632655077dd22ba059b970f211c3cf2a59dd2ac9",
         "baseHead": "1398e3d66dd10492c6c7ba72c1dfdc3e438ee0d7",
         "url": "https://github.com/tamird/gvisor/compare/1398e3d66...632655077",
-        "title": "Test FIB register and flag validation through netlink",
+        "title": "Test FIB register and flag checks over netlink",
         "summary": "Use one socket program to check the register and flag policy from #16264. Linux and current gVisor passed all three cases. Pre-fix gVisor accepted both malformed requests and the valid boundary.",
         "body": "Exercise the FIB destination register and flag validation added in #16264 through the existing nftables netlink table. A register that would truncate to NFT_REG_1 must return ERANGE. An unsupported flag must return EINVAL. The highest valid 32-bit register must succeed.\n\nAll three cases passed on native Linux and on gVisor at 1398e3d66. On dd6f043ac, gVisor accepted both malformed requests. The highest valid register succeeded on all three systems [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41081538440/artifacts/12989932992",
         "requestedAt": "2026-10-30T15:44:50.173444+00:00"
