@@ -26,8 +26,11 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <iostream>
 #include <ostream>
+#include <system_error>
+#include <vector>
 
 #include "test/util/file_descriptor.h"
 #include "test/util/fs_util.h"
@@ -91,6 +94,40 @@ PosixError EnableAtime() {
   return NoError();
 }
 
+// RunSyscallTest forwards Bazel's test arguments before the test binary.
+PosixError RunSyscallTest(int argc, char** argv) {
+  char* runner = getenv("GVISOR_SYSCALL_TEST_RUNNER");
+  char* test = getenv("GVISOR_SYSCALL_TEST_BINARY");
+  if (runner == nullptr || test == nullptr) {
+    return PosixError(EINVAL, "missing syscall test or runner");
+  }
+
+  // The sandbox may write outputs under a different UID.
+  if (const char* dir = getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir && *dir) {
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+    if (ec) {
+      return PosixError(ec.value(), "creating undeclared outputs directory");
+    }
+    std::filesystem::permissions(dir, std::filesystem::perms::all,
+                                 std::filesystem::perm_options::add, ec);
+    if (ec) {
+      return PosixError(ec.value(), "setting undeclared outputs permissions");
+    }
+  }
+  if (argc > 0 && strcmp(argv[0], "--require-atime") == 0) {
+    RETURN_IF_ERRNO(EnableAtime());
+    --argc;
+    ++argv;
+  }
+  std::vector<char*> args = {runner};
+  args.insert(args.end(), argv, argv + argc);
+  args.push_back(test);
+  args.push_back(nullptr);
+  execv(runner, args.data());
+  return PosixError(errno, "executing syscall runner");
+}
+
 // SetupContainer sets up the networking settings in the current container.
 PosixError SetupContainer() {
   const PosixErrorOr<bool> have_net_admin = HaveCapability(CAP_NET_ADMIN);
@@ -131,6 +168,7 @@ PosixError SetupContainer() {
 }  // namespace gvisor
 
 using ::gvisor::testing::EnableAtime;
+using ::gvisor::testing::RunSyscallTest;
 using ::gvisor::testing::SetContents;
 using ::gvisor::testing::SetupContainer;
 
@@ -140,10 +178,15 @@ using ::gvisor::testing::SetupContainer;
 //   ./setup_container test_binary [arguments forwarded to test_binary...]
 //   ./setup_container --limit-ephemeral-ports test_binary [arguments...]
 //   ./setup_container --require-atime runner [arguments forwarded to runner...]
+//   ./setup_container --syscall-test [--require-atime] [runner arguments...]
 int main(int argc, char* argv[], char* envp[]) {
   if (argc < 2) {
     std::cerr << "Must provide arguments to exec." << std::endl;
     return 2;
+  }
+  if (strcmp(argv[1], "--syscall-test") == 0) {
+    std::cerr << RunSyscallTest(argc - 2, argv + 2) << std::endl;
+    return 1;
   }
   int command = 1;
   if (strcmp(argv[1], "--require-atime") == 0) {
