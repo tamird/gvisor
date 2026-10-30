@@ -32,15 +32,15 @@ jobs:
           test "$(jq -r .arms.candidate.native_exit "$out/original-verdict.json")" = 0
           test "$(jq -r .arms.stock.native_exit "$out/original-verdict.json")" = 3
           git show "$GITHUB_SHA:test/rbe/sack_review_final.py" > "$RUNNER_TEMP/sack-review.py"
-          git checkout --quiet --detach 8a3d1a53448caae65a60f090f1d60fa3d9f548e9
-          test "$(git rev-parse HEAD)" = 8a3d1a53448caae65a60f090f1d60fa3d9f548e9
+          git checkout --quiet --detach 7d7f552333cf0aa6fa9563577b97adbda779eff4
+          test "$(git rev-parse HEAD)" = 7d7f552333cf0aa6fa9563577b97adbda779eff4
           git diff --quiet
       - name: Preflight actual Linux sandbox support
         run: |
           set -euo pipefail
           if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
           unshare --user --map-root-user true
-      - name: Run only both requested Nogo tests
+      - name: Run exact packet suites and both Nogo tests
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -60,10 +60,23 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
-          test "$(git rev-parse HEAD)" = 8a3d1a53448caae65a60f090f1d60fa3d9f548e9
+          test "$(git rev-parse HEAD)" = 7d7f552333cf0aa6fa9563577b97adbda779eff4
+          echo "7d7f552333cf0aa6fa9563577b97adbda779eff4" > "$out/candidate-source"
+          date -u +%FT%T.%3NZ > "$out/candidate-start"
+          code=0
+          bazel --bazelrc="$rc" test --config=x86_64 --jobs=4 --test_sharding_strategy=disabled --nocache_test_results --test_arg=-test.v --test_output=errors //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp:tcp_test > "$out/candidate-bazel.log" 2>&1 || code=$?
+          date -u +%FT%T.%3NZ > "$out/candidate-finish"
+          echo "$code" > "$out/candidate-exit"
+          for path in pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test pkg/tcpip/transport/tcp/tcp_test; do
+            for ext in xml log; do
+              dest="$out/candidate-$(basename "$path").$ext"
+              rm -f "$dest"
+              if [[ -f bazel-testlogs/$path/test.$ext ]]; then cp -L "bazel-testlogs/$path/test.$ext" "$dest"; fi
+            done
+          done
           code=0
           bazel --bazelrc="$rc" test --config=x86_64 --jobs=4 --build_tag_filters= --test_tag_filters= --test_sharding_strategy=disabled --nocache_test_results --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --test_output=errors //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp:tcp_test_nogo > "$out/nogo.log" 2>&1 || code=$?
-          date -u +%FT%TZ > "$out/analyzers-execution-finish"
+          date -u +%FT%T.%3NZ > "$out/analyzers-execution-finish"
           echo "$code" > "$out/nogo-exit"
           for label in tcp_nogo tcp_test_nogo; do
             for ext in xml log; do
@@ -74,7 +87,7 @@ jobs:
           git rev-parse HEAD > "$out/final-head"
           git status --porcelain --untracked-files=no > "$out/final-modifications"
           tail -18 "$out/nogo.log"
-          python3 -B "$RUNNER_TEMP/sack-review.py" "$out" 574c0fe105112432c1a2785d978064685064b105 8a3d1a53448caae65a60f090f1d60fa3d9f548e9
+          python3 -B "$RUNNER_TEMP/sack-review.py" "$out" 574c0fe105112432c1a2785d978064685064b105 7d7f552333cf0aa6fa9563577b97adbda779eff4
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
