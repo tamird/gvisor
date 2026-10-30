@@ -54,7 +54,7 @@ jobs:
           curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bb"
-      - name: Build all six release archives with the native ARM64 compiler
+      - name: Build all six archives without accepting cached actions
         id: native
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -64,7 +64,7 @@ jobs:
             --bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_arm64 \
             --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
             --bazel-option=--remote_download_outputs=toplevel \
-            --bazel-option=--remote_accept_cached \
+            --bazel-option=--noremote_accept_cached \
             '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|GoLink)$=+no-remote-cache'
       - name: Trace archives to producing actions and preserve the original build result
         if: ${{ !cancelled() && steps.native.outcome != 'skipped' }}

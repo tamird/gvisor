@@ -128,7 +128,21 @@ def audit(report):
     assert len(links) >= 2 and all(l["class"] == "scratch-arm64" for l in links)
     assert all(len(c["identified_runsc_link_indices"]) == 1 for c in report["closures"].values())
     assert len({c["identified_runsc_link_indices"][0] for c in report["closures"].values()}) == 2
-    report["status"] = "inventory-verified"
+    # A successful release can be mostly cache hits. This run must
+    # independently execute every recorded action on the ARM64 worker.
+    totals = Counter()
+    for classes in report["all_spawns"].values():
+        totals.update(classes)
+    report["physical_execution"] = dict(totals)
+    assert totals == {"scratch-arm64": len(spawns)}, totals
+    for name, c in report["closures"].items():
+        arch = name.split("/artifacts/")[1].split("/")[0]
+        output_prefix = {"amd64": "bazel-out/k8-", "arm64": "bazel-out/aarch64-"}[arch]
+        index, = c["identified_runsc_link_indices"]
+        link, = (l for l in links if l["index"] == index)
+        executable, = link["outputs"]
+        assert executable.startswith(output_prefix), (name, executable)
+    report["status"] = "cold-native-verified"
 
 
 report = {"source": SOURCE, "status": "incomplete"}
