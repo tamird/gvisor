@@ -57,6 +57,27 @@ type regularFileFD struct {
 	copiedUp    bool
 	cachedFD    *vfs.FileDescription
 	cachedFlags uint32
+
+	// lower tracks registrations made before this FD switches backing files.
+	// +checklocks:mu
+	lower *lowerRegistrations
+}
+
+// +stateify savable
+type lowerRegistrations struct {
+	count int
+	// file takes ownership of the cache's reference when the file is copied up.
+	file *vfs.FileDescription
+}
+
+// upperWaiter identifies a registration made after the switch while the lower
+// file still has registrations. The backing must quiesce callbacks before the
+// entry's original listener is restored.
+//
+// +stateify savable
+type upperWaiter struct {
+	waiter.EventListener
+	overlay *regularFileFD
 }
 
 func (fd *regularFileFD) getCurrentFD(ctx context.Context) (*vfs.FileDescription, error) {
@@ -93,7 +114,12 @@ func (fd *regularFileFD) currentFDLocked(ctx context.Context) (*vfs.FileDescript
 				return nil, err
 			}
 		}
-		fd.cachedFD.DecRef(ctx)
+		if fd.lower != nil && fd.lower.count != 0 {
+			fd.lower.file = fd.cachedFD
+		} else {
+			fd.cachedFD.DecRef(ctx)
+			fd.lower = nil
+		}
 		fd.copiedUp = true
 		fd.cachedFD = upperFD
 		fd.cachedFlags = statusFlags
@@ -256,14 +282,75 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 		log.Warningf("overlay.regularFileFD.EventRegister: currentFDLocked failed: %v", err)
 		wrappedFD = fd.cachedFD
 	}
-	return wrappedFD.EventRegister(e)
+	if !fd.copiedUp {
+		if err := wrappedFD.EventRegister(e); err != nil {
+			return err
+		}
+		if fd.filesystem().opts.UpperRoot.Ok() {
+			if fd.lower == nil {
+				fd.lower = &lowerRegistrations{}
+			}
+			fd.lower.count++
+		}
+		return nil
+	}
+	if fd.lower == nil {
+		return wrappedFD.EventRegister(e)
+	}
+	w := &upperWaiter{EventListener: e.Listener(), overlay: fd}
+	e.Init(w, e.Mask())
+	if err := wrappedFD.EventRegister(e); err != nil {
+		e.Init(w.EventListener, e.Mask())
+		return err
+	}
+	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
 	fd.mu.Lock()
-	defer fd.mu.Unlock()
-	fd.cachedFD.EventUnregister(e)
+	drop := fd.unregisterWaiterLocked(e)
+	fd.mu.Unlock()
+	if drop != nil {
+		drop.DecRef(context.Background())
+	}
+}
+
+// unregisterWaiterLocked returns the last lower-file reference on removal.
+//
+// +checklocks:fd.mu
+func (fd *regularFileFD) unregisterWaiterLocked(e *waiter.Entry) *vfs.FileDescription {
+	if fd.copiedUp {
+		for listener := e.Listener(); ; {
+			w, ok := listener.(*upperWaiter)
+			if !ok {
+				break
+			}
+			if w.overlay == fd {
+				fd.cachedFD.EventUnregister(e)
+				e.Init(w.EventListener, e.Mask())
+				return nil
+			}
+			listener = w.EventListener
+		}
+	}
+	lower := fd.lower
+	if lower == nil {
+		fd.cachedFD.EventUnregister(e)
+		return nil
+	}
+	if lower.file == nil {
+		fd.cachedFD.EventUnregister(e)
+		lower.count--
+		return nil
+	}
+	lower.file.EventUnregister(e)
+	lower.count--
+	if lower.count != 0 {
+		return nil
+	}
+	fd.lower = nil
+	return lower.file
 }
 
 // Epollable implements FileDescriptionImpl.Epollable.
