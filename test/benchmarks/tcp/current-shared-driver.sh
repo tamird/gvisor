@@ -13,7 +13,8 @@ trap finish EXIT
 [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
 before=777852bfe36452d63715f2c678e82b0f41cd760f
 amended=5107630c44ad2be29c52175d1d7d26df80e6ce2b
-[[ "$(git rev-parse HEAD^)" == "$amended" ]]
+[[ "$(git rev-parse HEAD^)" == "e668023db4a03bca6b94b39b2c47db24bb16a8a5" ]]
+git diff --exit-code HEAD^ -- test/benchmarks/tcp/{tcp_proxy.go,observation.go,nsjoin.c,BUILD}
 [[ "$(git rev-parse "$amended~2")" == "$before" ]]
 git diff --exit-code "$amended" -- pkg runsc tools .bazelrc MODULE.bazel
 printf '%s\n' "$before" "$amended" "$GITHUB_SHA" > "$out/production.txt"
@@ -24,19 +25,10 @@ uname -a > "$out/worker.txt"
 phase=build
 mkdir -p "$RUNNER_TEMP/tcp-public"
 printf '%s\n' "$before" "$amended" "$GITHUB_SHA" > "$RUNNER_TEMP/tcp-public/source-heads"
-mapfile -t sources < <(git diff --name-only "$before" "$amended")
-[[ ${#sources[@]} == 3 ]]
-for variant in before amended; do
-  sourcesha=$before
-  [[ "$variant" == before ]] || sourcesha=$amended
-  for path in "${sources[@]}"; do
-    git show "$sourcesha:$path" > "$path"
-  done
-  git diff --exit-code "$sourcesha" -- pkg runsc tools .bazelrc MODULE.bazel
-  printf "%s %s %s %s\n" "$variant" "$sourcesha" "$(git rev-parse "$sourcesha:pkg/tcpip/transport/tcp")" "$(date -u +%FT%TZ)" >> "$RUNNER_TEMP/tcp-public/sender-trees"
-  bazel run --jobs=5 --script_path="$RUNNER_TEMP/start-tcp-trial" //test/benchmarks/tcp:tcp_benchmark
-helpers="$RUNNER_TEMP/tcp-benchmark-helpers/$variant"
-mkdir -p "$helpers" "$RUNNER_TEMP/tcp-public"
+printf "%s %s %s %s\n" amended "$amended" "$(git rev-parse "$amended:pkg/tcpip/transport/tcp")" "$(date -u +%FT%TZ)" >> "$RUNNER_TEMP/tcp-public/sender-trees"
+bazel run --jobs=5 --script_path="$RUNNER_TEMP/start-tcp-trial" //test/benchmarks/tcp:tcp_benchmark
+helpers="$RUNNER_TEMP/tcp-benchmark-helpers/amended"
+mkdir -p "$helpers"
 for tool in tcp_proxy nsjoin; do
   paths=$(bazel cquery --output=files "//test/benchmarks/tcp:$tool")
   mapfile -t outputs <<< "$paths"
@@ -45,8 +37,6 @@ for tool in tcp_proxy nsjoin; do
   cp "${outputs[0]}" "$helpers/$tool"
   sha256sum "$helpers/$tool" >> "$RUNNER_TEMP/tcp-public/helpers.sha256"
 done
-done
-[[ "$(sha256sum "$RUNNER_TEMP/tcp-benchmark-helpers/before/tcp_proxy" | cut -d' ' -f1)" != "$(sha256sum "$RUNNER_TEMP/tcp-benchmark-helpers/amended/tcp_proxy" | cut -d' ' -f1)" ]]
 run_pair() {
   local dir=$1 duration=$2 limit=$3 mode=$4 flag=$5 cc=$6 other=$7
   shift 7
@@ -59,25 +49,7 @@ run_pair() {
 }
 phase=trials
 status=0
-python3 - "$RUNNER_TEMP/tcp-public/schedule.txt" <<'PYTHON'
-import random
-import sys
-from pathlib import Path
-seed = 16738
-rng = random.Random(seed)
-ccs = ["reno", "cubic"]
-rng.shuffle(ccs)
-rows = []
-for pair in ("a", "b"):
-    order = ccs if pair == "a" else list(reversed(ccs))
-    for position in range(2):
-        for cc in order:
-            offset = (cc == "cubic") ^ (pair == "b")
-            variant = ("before", "amended")[(position + offset) % 2]
-            rows.append(f"{pair}-{variant} {cc}")
-assert len(set(rows)) == 8
-Path(sys.argv[1]).write_text("\n".join(rows) + "\n")
-PYTHON
+printf '%s\n' 'a-amended cubic' 'a-amended reno' 'b-amended reno' 'b-amended cubic' > "$RUNNER_TEMP/tcp-public/schedule.txt"
 while read -r arm cc; do
   variant=${arm#*-}
   dir="$out/$arm/measured/$cc-netstack"

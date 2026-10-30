@@ -721,6 +721,7 @@ run_flow() {
   flow_label=
   client_command=(${client_args})
   server_command=(${server_args})
+  local start_gate="\$TCP_BENCHMARK_OUTPUT_DIR"
   if [[ -n "${second_client}" ]]; then
     export TCP_BENCHMARK_OUTPUT_DIR="\$TCP_BENCHMARK_OUTPUT_DIR/\$flow"
     flow_label="flow=\$flow/"
@@ -833,6 +834,30 @@ run_flow() {
   ${nsjoin_binary} "\$flow_netns" "\${client_command[@]}" &
   client_pid=\$!
 
+  if [[ -n "${second_client}" ]]; then
+    # Both inbound proxy sockets are ordinary Linux listeners. Inspect their
+    # state without making a connection that could consume iperf's control socket.
+    local listening=""
+    for _ in {1..500}; do
+      listening=\$(${nsjoin_binary} "\$flow_netns" ss -H -ltn "sport = :\$flow_proxy_port")
+      if [[ -n \$listening ]]; then break; fi
+      kill -0 "\$client_pid" || return 1
+      sleep 0.01
+    done
+    [[ -n \$listening ]] || { echo "\$flow: proxy listener did not become ready" >&2; return 1; }
+    record_flow_phase proxy-listener-ready
+    touch "\$start_gate/\$flow-ready"
+    for _ in {1..1000}; do
+      if [[ -e "\$start_gate/primary-ready" && -e "\$start_gate/secondary-ready" ]]; then break; fi
+      sleep 0.005
+    done
+    [[ -e "\$start_gate/primary-ready" && -e "\$start_gate/secondary-ready" ]] || {
+      echo "\$flow: companion listener did not become ready" >&2
+      return 1
+    }
+    record_flow_phase both-proxies-ready
+  fi
+
   # Show traffic information for the original uninstrumented native mode.
   if [[ -z "${second_client}" ]] && ! ${latency_probe} && ! ${client} && ! ${server}; then
     ${nsjoin_binary} /tmp/client.netns ping -c 100 -i 0.001 -W 1 ${server_addr} >&2 || true
@@ -848,9 +873,14 @@ run_flow() {
   # exchange, while leaving the requested measurement interval unchanged.
   run_client() {
     local connect_deadline=\$((SECONDS + 30)) result
+    local attempt=0 begin
+    printf 'attempt\tbegin\tend\tresult\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-attempts.tsv"
     while true; do
+      attempt=\$((attempt + 1))
+      begin=\$(date +%s.%N)
       result=0
       "\$@" > "\$results_file" 2>&1 || result=\$?
+      printf '%s\t%s\t%s\t%s\n' "\$attempt" "\$begin" "\$(date +%s.%N)" "\$result" >> "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-attempts.tsv"
       if grep -Eq "connect failed|unable to connect" "\$results_file" && (( SECONDS < connect_deadline )); then
         sleep 0.1
         continue

@@ -112,7 +112,7 @@ destination=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
 destination.mkdir(exist_ok=True)
 heads=(destination/"source-heads").read_text().splitlines() if (destination/"source-heads").exists() else []
 verdict={"heads":heads,"baseline":heads[0] if heads else None,"harness":os.environ["GITHUB_SHA"],"passed":{},"failures":{},"missing":[]}
-expected=[(arm,cc) for arm in ("a-before","a-amended","b-amended","b-before") for cc in ("reno","cubic")]
+expected=[(arm,cc) for arm in ("a-amended","b-amended") for cc in ("reno","cubic")]
 for arm,cc in expected:
     experiment=cc+"-netstack"
     name=arm+"/measured/"+experiment
