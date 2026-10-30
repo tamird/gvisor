@@ -168,3 +168,34 @@ func BenchmarkSetPipeWorkload(b *testing.B) {
 		}
 	}
 }
+
+// SACK ranges can start and end inside a GSO packet. The FIN belongs to
+// the last payload packet, even when that packet has exactly one MSS of data.
+func TestSACKedGSOAcrossSequenceWrap(t *testing.T) {
+	start := seqnum.Value(0xfffffff0)
+	block := func(first, last int) header.SACKBlock {
+		return header.SACKBlock{Start: start.Add(seqnum.Size(first)), End: start.Add(seqnum.Size(last))}
+	}
+	for _, tc := range []struct {
+		name string
+		ends [][2]int
+		want int
+		full bool
+	}{
+		{"two_partial_edges", [][2]int{{2, 29}}, 1, false},
+		{"two_disjoint", [][2]int{{0, 10}, {12, 31}}, 2, false},
+		{"missing_FIN", [][2]int{{0, 30}}, 2, false},
+		{"complete", [][2]int{{0, 31}}, 3, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewSACKScoreboard(10, start)
+			for _, e := range tc.ends {
+				s.Insert(block(e[0], e[1]))
+			}
+			got, full := s.coveredGSO(block(0, 31), 10, 3, 0)
+			if got != tc.want || full != tc.full {
+				t.Errorf("coverage=(%d,%t), want (%d,%t)", got, full, tc.want, tc.full)
+			}
+		})
+	}
+}

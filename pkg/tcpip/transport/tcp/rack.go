@@ -381,14 +381,14 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 	}
 	// Three SACKed packets eliminate the reordering allowance if the
 	// peer has never reordered data. Count them during the loss scan.
-	countSACKs := rc.ReoWnd > 0 && !rc.Reord && !rc.snd.ep.scoreboard.Empty()
+	countSACKs := rc.ReoWnd > 0 && !rc.Reord && rc.snd.ep.scoreboard.Sacked() >= nDupAckThreshold
 	var sacked int
 	var windowPreventedLoss bool
 	for seg := rc.snd.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
 		var covered bool
 		if countSACKs {
 			var n int
-			n, covered = rc.snd.sackCoverage(seg)
+			n, covered = rc.snd.sackCoverage(seg, nDupAckThreshold-sacked)
 			sacked += n
 			if sacked >= nDupAckThreshold {
 				timeout = max(0, timeout-rc.ReoWnd)

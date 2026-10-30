@@ -258,7 +258,7 @@ type TCPSenderState struct {
 	Outstanding int
 
 	// SackedOut is the number of packets currently covered by selective ACKs.
-	// A probe computes it from the sender’s live scoreboard.
+	// A probe computes it from the sender's live scoreboard.
 	SackedOut int `state:"nosave"`
 
 	// SndWnd is the send window size in bytes.

@@ -1213,9 +1213,9 @@ func (s *sender) isAssignedSequenceNumber(seg *segment) bool {
 // +checklocks:s.ep.mu
 func (s *sender) sackedPackets() int {
 	var n int
-	if !s.ep.scoreboard.Empty() {
-		for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-			count, _ := s.sackCoverage(seg)
+	if last, ok := s.ep.scoreboard.ranges.Max(); ok {
+		for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(last.End); seg = seg.Next() {
+			count, _ := s.sackCoverage(seg, 0)
 			n += count
 		}
 	}
@@ -1223,10 +1223,11 @@ func (s *sender) sackedPackets() int {
 }
 
 // sackCoverage returns the number of complete packets covered by the
-// scoreboard and whether the entire segment is covered.
+// scoreboard and whether the entire segment is covered. A positive limit
+// stops counting as soon as it is reached.
 //
 // +checklocks:s.ep.mu
-func (s *sender) sackCoverage(seg *segment) (int, bool) {
+func (s *sender) sackCoverage(seg *segment, limit int) (int, bool) {
 	block := seg.sackBlock()
 	mss := s.MaxPayloadSize
 	if seg.payloadSize() <= mss {
@@ -1235,7 +1236,7 @@ func (s *sender) sackCoverage(seg *segment) (int, bool) {
 		}
 		return 0, false
 	}
-	return s.ep.scoreboard.coveredGSO(block, seqnum.Size(mss), s.pCount(seg, mss))
+	return s.ep.scoreboard.coveredGSO(block, seqnum.Size(mss), s.pCount(seg, mss), limit)
 }
 
 // SetPipe implements the SetPipe() function described in RFC6675. Netstack

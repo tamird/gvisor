@@ -169,7 +169,7 @@ func (s *SACKScoreboard) IsSACKED(r header.SACKBlock) bool {
 // coveredGSO counts complete packet units in a segment spanning multiple
 // MSSes. Each stored SACK range contributes only whole packets, including
 // the shorter final packet if its last byte is covered.
-func (s *SACKScoreboard) coveredGSO(seg header.SACKBlock, mss seqnum.Size, packets int) (n int, full bool) {
+func (s *SACKScoreboard) coveredGSO(seg header.SACKBlock, mss seqnum.Size, packets, limit int) (n int, full bool) {
 	last := header.SACKBlock{Start: seg.End - 1}
 	s.ranges.DescendLessOrEqual(last, func(r header.SACKBlock) bool {
 		if r.End.LessThanEq(seg.Start) {
@@ -190,7 +190,7 @@ func (s *SACKScoreboard) coveredGSO(seg header.SACKBlock, mss seqnum.Size, packe
 			end = min(packets-1, int(seg.Start.Size(r.End)/mss))
 		}
 		n += max(0, end-first)
-		return seg.Start.LessThan(r.Start)
+		return seg.Start.LessThan(r.Start) && (limit == 0 || n < limit)
 	})
 	return n, full
 }
