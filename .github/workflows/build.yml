@@ -1,11 +1,13 @@
-name: Check the Linux persist probe and restored TCP race cases
+name: Measure the native Linux SACK count across PMTU retransmission
 on:
+  push:
+    branches: [qualification/tcp-sack-pmtu-linux]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-persist-clock-race-native'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-pmtu-linux'
     runs-on: ubuntu-24.04
     timeout-minutes: 100
     steps:
@@ -20,13 +22,10 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        native=854fbab7e2bfe20ba04fafa613c135b08af0eff3; nparent=8f9e31eddd9c72048f13bf807f333ec6e33a64f4; race=12bdd02c2061dea8d6a252db59bd5d4b11e99e5f; rparent=5edf5d13c7a6749df466add29d8811260edb4cda
-        test "$(git rev-parse HEAD^1)" = "$race"
+        native=fa4ec055ca3f8008e21d15f06d51b83e5ed47f45; nparent=ba1947269b1b733c8110f785961ea883fd3ed7a8
         test "$(git rev-parse HEAD^2)" = "$native"
-        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$native" "$race"
         test "$(git rev-parse "$native^")" = "$nparent"
-        test "$(git rev-parse "$race^")" = "$rparent"
-        git diff --quiet "$nparent" "$native" -- . ':(exclude)test/packetimpact/tests/tcp_zero_window_probe_test.go'
+        git diff --quiet "$nparent" "$native" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)test/packetimpact/testbench/layers.go'
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_native_report.py tcp_race_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -121,12 +120,10 @@ jobs:
         PYCHECK
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in linux tcp-race; do
+        for arm in linux; do
           case "$arm" in
-            linux) source=$native; parent=$nparent; label=//test/packetimpact/tests:tcp_zero_window_probe_native_test
-                   checker=tcp_native_report.py; options=(--test_filter=TestPersistWithWrites --test_timeout=240);;
-            tcp-race) source=$race; parent=$rparent; label=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
-                      checker=tcp_race_report.py; options=(--config=race --test_arg=-test.v --test_filter='^TestRestoreSendTimer$' --test_timeout=300);;
+            linux) source=$native; parent=$nparent; label=//test/packetimpact/tests:tcp_rack_native_test
+                   checker=tcp_native_report.py; options=(--test_filter=TestLinuxSACKCountAfterPMTU --test_timeout=240);;
           esac
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
@@ -153,7 +150,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["linux","tcp-race"]
+        arms = ["linux"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["status"] == "PASS" and v.get("verified",True) for v in verdicts.values()) else "FAIL"}
@@ -166,6 +163,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-persist-race-recovery
+        name: tcp-native-sack-pmtu
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error

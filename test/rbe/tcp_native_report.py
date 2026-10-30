@@ -23,12 +23,18 @@ def main():
     for row in captured["reports"]:
         if row["name"] == "test.log":
             log = (out / row["path"]).read_text()
-            for extra, writes, rto, first in re.findall(r"TCP-NATIVE-PERSIST extra=(true|false) writes=(\d+) rto_us=(\d+) first_us=(\d+)", log):
-                metrics.append(dict(extra=extra=="true", writes=int(writes), rto_us=int(rto), first_us=int(first)))
+            for stage,mss,sacked,unacked,lost,retrans in re.findall(r"LINUX-PMTU stage=(\w+) mss=(\d+) sacked=(\d+) unacked=(\d+) lost=(\d+) retrans=(\d+)",log):
+                metrics.append(dict(stage=stage, MSS=int(mss), sacked=int(sacked), unacked=int(unacked), lost=int(lost),retrans=int(retrans)))
+            for old,new,size,sacked in re.findall(r"LINUX-WIRE pre_mss=(\d+) post_mss=(\d+) hole_bytes=(\d+) sacked=(\d+)",log):
+                metrics.append(dict(stage="wire",first_mss=int(old),new_mss=int(new),hole_bytes=int(size),sacked=int(sacked)))
     results = [e["testResult"] for line in events.read_text().splitlines() if "testResult" in (e := json.loads(line))]
     invocation = next((e["started"]["uuid"] for line in events.read_text().splitlines() if "started" in (e := json.loads(line))), None)
-    if ([m["extra"] for m in metrics] != [False, True] or metrics[0]["writes"] != 1 or metrics[1]["writes"] < 2):
-        errors.append("missing verified single/repeated write probes")
+    by_stage={m["stage"]:m for m in metrics}
+    if set(by_stage) != {"ack1","sack3","pmtu","done","wire"} or len(metrics)!=5:
+        errors.append("missing native kernel packet/PMTU observations")
+    else:
+        assert by_stage["ack1"]["sacked"]==0 and by_stage["sack3"]["sacked"]==1 and by_stage["done"]["sacked"]==0
+        assert by_stage["wire"]["hole_bytes"]==by_stage["pmtu"]["MSS"] < by_stage["sack3"]["MSS"]
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") not in ("local","standalone") for r in results):
         errors.append("expected one uncached Linux host result")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
