@@ -1,35 +1,90 @@
-name: CI
-
-"on":
+name: Compare the real release archives with completed compiler actions
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/staged-archive-pair]
+permissions: {contents: read, actions: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
+    env:
+      SOURCE: a5627c7311e6acaed4179f3ebd6a0694661336d9
+      BASE: eafcb8392effca7769ef6e220d24feaadb3bdf17
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Bind the same action inputs and recover the existing checker result
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^) == "$SOURCE" && $(git rev-parse "$SOURCE^") == "$BASE" ]]
+        cp .github/qualification/stagedcheck.py "$RUNNER_TEMP/stagedcheck.py"
+        mkdir -p "$RUNNER_TEMP/cache" "$RUNNER_TEMP/gnu" "$RUNNER_TEMP/receipts" "$RUNNER_TEMP/evidence"
+        gh api repos/tamird/gvisor/actions/artifacts/12940116829/zip > "$RUNNER_TEMP/checker.zip"
+        printf '%s  %s\n' 67cabc48d71f7fe0b6a10df90bc567d114ae00c9666074df4a6c63bd489e27f7 "$RUNNER_TEMP/checker.zip" | sha256sum --check
+        unzip -p "$RUNNER_TEMP/checker.zip" checker.json > "$RUNNER_TEMP/evidence/checker.json"
+        grep -q '^MemAvailable:' /proc/meminfo
+        docker pull --platform=linux/amd64 "$GNU"
+        printf 'module(name="stage_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+        printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=stage_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@stage_gnu//:gnu' 'build --extra_execution_platforms=@stage_gnu//:gnu' 'build --config=x86_64' 'build --nostamp' 'build --remote_download_outputs=toplevel'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/staged.bazelrc"
+    - name: Package and identify the stock executables
+      env:
+        REV: eafcb8392effca7769ef6e220d24feaadb3bdf17
+      run: &archive |
+        set -euo pipefail
+        git checkout --quiet --detach "$REV"
+        [[ $(git rev-parse HEAD) == "$REV" ]]
+        dir="$RUNNER_TEMP/receipts/$REV"
+        mkdir -p "$dir" "$RUNNER_TEMP/$REV"
+        printf '%s\n' "$REV" > "$dir/source.txt"
+        code=0
+        docker run --rm --entrypoint /bin/bash --user root -w "$PWD" -v "$PWD:$PWD" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$RUNNER_TEMP/cache:/root/.cache" "$GNU" -c '
+          set -euo pipefail
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
+          work=$1 rev=$2 rc=0
+          bazel --bazelrc="$work/staged.bazelrc" build -c opt --keep_going --strategy=PackageTar=standalone //debian:gvisor-release-tar-bz2 //debian:gvisor-release-tar-zstd || rc=$?
+          for suffix in tar.bz2 tar.zstd; do
+            path="bazel-bin/debian/gvisor.$suffix"
+            if [[ -s "$path" ]]; then cp -L "$path" "$work/$rev/gvisor.$rev.$suffix"; fi
+          done
+          exit "$rc"
+        ' _ "$RUNNER_TEMP" "$REV" || code=$?
+        printf '%s\n' "$code" > "$dir/native-exit.txt"
+        for suffix in tar.bz2 tar.zstd; do
+          f="$RUNNER_TEMP/$REV/gvisor.$REV.$suffix"
+          if [[ -s "$f" ]]; then python3 "$RUNNER_TEMP/stagedcheck.py" archive "$dir" "$f"; fi
+        done
+        date -u '+%FT%TZ' > "$dir/finished.txt"
+        [[ $code == 0 && -s "$dir/gvisor.$REV.tar.bz2.json" && -s "$dir/gvisor.$REV.tar.zstd.json" ]]
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with: {name: staged-stock-members, path: '${{ runner.temp }}/receipts/eafcb8392effca7769ef6e220d24feaadb3bdf17', if-no-files-found: warn}
+    - name: Package and identify the proposed executables
+      if: ${{ !cancelled() }}
+      env:
+        REV: a5627c7311e6acaed4179f3ebd6a0694661336d9
+      run: *archive
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with: {name: staged-proposed-members, path: '${{ runner.temp }}/receipts/a5627c7311e6acaed4179f3ebd6a0694661336d9', if-no-files-found: warn}
+    - name: Compare the four archives and check the actual staged stream
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+        set -euo pipefail
+        cp "$RUNNER_TEMP/receipts/"*"/"*.json "$RUNNER_TEMP/evidence/"
+        python3 "$RUNNER_TEMP/stagedcheck.py" compare "$RUNNER_TEMP/evidence"
+        bzip2 -dc "$RUNNER_TEMP/$SOURCE/gvisor.$SOURCE.tar.bz2" | gzip -1 | bazelisk --bazelrc="$RUNNER_TEMP/staged.bazelrc" run //tools/stagedcheck
+        date -u '+%FT%TZ' > "$RUNNER_TEMP/evidence/archives-finished.txt"
+    - if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with: {name: staged-pair, path: '${{ runner.temp }}/evidence', if-no-files-found: warn}
+    - if: always()
+      run: rm -f "$RUNNER_TEMP/staged.bazelrc"
