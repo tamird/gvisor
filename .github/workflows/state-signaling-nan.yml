@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
+        with: {fetch-depth: 6, persist-credentials: false}
       - name: Exercise ARM64 checkpointing and the owning split-architecture analyzers
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}

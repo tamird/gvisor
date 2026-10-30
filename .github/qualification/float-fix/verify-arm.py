@@ -4,10 +4,11 @@ import json
 import os
 from pathlib import Path
 import re
+from statistics import median
 import subprocess
 
 tmp = Path(os.environ["RUNNER_TEMP"])
-source = "0e2d23ed2e6d60a724e0da199bed111050a094c5"
+source = "1e9e13978115bcd98a58f6b568c34217ee7dcc35"
 tests = {"//pkg/state:state_test", "//pkg/state/tests:tests_test"}
 owners = {
     "//pkg/state:state": ("pkg/state/encode.go", "pkg/state/decode.go", "pkg/state/types.go"),
@@ -53,21 +54,25 @@ def capture(stage, labels, row):
             traces.append({"label": label, "runner": runner, "arch": platform.get("Arch"), "image": platform.get("container-image"),
                            "exit": code, "hit": action.get("cacheHit", False), "action": action.get("digest")})
         if stage == "nogo" and action.get("mnemonic") == "GoStaticAnalysis" and label in owners and "check" in args:
+            package = next(a.removeprefix("-package=") for a in args if a.startswith("-package="))
             checks.append({"label": label, "arch": next((a.split("=", 1)[1] for a in args if a.startswith("-GOARCH=")), None),
                            "sources": [path for path in owners[label] if any(a.endswith(path) for a in args)],
-                           "archive": next((a for a in args if a.startswith("-archive=")), None), "runner": runner, "exit": code})
+                           "archive": next((a for a in args if a.startswith(f"-archive={package}=")), None), "runner": runner, "exit": code})
     if stage == "runtime":
         row["suite"] = json.loads((tmp / "results/fix.json").read_text())
         assert row["suite"]["qualified"] and len(row["suite"]["bits"]) == 36, row["suite"].get("nan_diagnostics")
     else:
         markers = row["filtered"] = {}
-        for label in sorted(labels):
+        for label in sorted(analyzers):
             package, name = label[2:].split(":")
-            contents = (Path("bazel-testlogs") / package / name / "test.log").read_text()
+            contents = (tmp / "testlogs" / package / name / "test.log").read_text()
             if row["targets"].get(label) != "PASSED":
                 row.setdefault("test_diagnostics", {})[label] = contents[-1200:]
             markers[label] = sorted(re.findall(r"(amd64|arm64)\.\.\.PASS", contents))
         assert all(archs == ["amd64", "arm64"] for archs in markers.values()), markers
+        focused = (tmp / "testlogs/pkg/state/tests/tests_test/test.log").read_text()
+        row["amd64_signaling_nan"] = "--- PASS: TestSignalingNaN" in focused
+        assert row["amd64_signaling_nan"]
         verified = {(c["label"], c["arch"]) for c in checks if c["exit"] == 0 and c["archive"] and len(c["sources"]) == len(owners[c["label"]])}
         assert verified == {(label, arch) for label in owners for arch in ("amd64", "arm64")}, checks
     expected_arch = "arm64" if stage == "runtime" else "amd64"
@@ -77,7 +82,7 @@ def capture(stage, labels, row):
     assert row["exit"] == 0 and row["targets"] == dict.fromkeys(labels, "PASSED"), row["targets"]
 
 
-for stage, labels in (("runtime", tests), ("nogo", analyzers)):
+for stage, labels in (("runtime", tests), ("nogo", analyzers | {"//pkg/state/tests:tests_test"})):
     row = receipt["stages"][stage] = {"expected": sorted(labels)}
     try:
         capture(stage, labels, row)
@@ -87,7 +92,28 @@ for stage, labels in (("runtime", tests), ("nogo", analyzers)):
 if (tmp / "native-actions.txt").exists():
     receipt["preflight_execution_platforms"] = sorted(set(re.findall(
         r"^  Execution platform: (.+)$", (tmp / "native-actions.txt").read_text(), re.M)))
-receipt["qualification_diagnostic"] = "https://github.com/tamird/gvisor/actions/runs/40999583492"
+receipt["diagnostic_runs"] = [40999583492, 41000054047]
+try:
+    benchmarks = receipt["finite_arrays"] = {}
+    for block, group in enumerate(("previous", "candidate", "candidate", "previous"), 1):
+        row = benchmarks.setdefault(group, {})
+        assert int((tmp / f"bench{block}.exit").read_text()) == 0
+        matches = re.findall(r"^BenchmarkLegacyScalarArray/(\S+)-\d+\s+\d+\s+([\d.]+) ns/op\s+(\d+) B/op\s+(\d+) allocs/op",
+                             (tmp / f"bench{block}.txt").read_text(), re.M)
+        assert len(matches) == 16, (block, len(matches))
+        for name, runtime, mem, allocs in matches:
+            row.setdefault(name, []).append((float(runtime), int(mem), int(allocs)))
+    for group in benchmarks:
+        assert len(benchmarks[group]) == 4
+        for name, values in benchmarks[group].items():
+            assert len(values) == 8
+            benchmarks[group][name] = {"samples": len(values), "median_ns": median(v[0] for v in values),
+                                       "bytes": sorted({v[1] for v in values}), "allocs": sorted({v[2] for v in values})}
+    for name, result in benchmarks["previous"].items():
+        for field in ("bytes", "allocs"):
+            assert result[field] == benchmarks["candidate"][name][field], (name, field)
+except Exception as error:
+    receipt["errors"].append(f"finite arrays: {type(error).__name__}: {error}"[:1100])
 receipt["qualified"] = not receipt["errors"]
 receipt["verified"] = datetime.now(timezone.utc).isoformat()
 (tmp / "results/arm.json").write_text(json.dumps(receipt, indent=2) + "\n")

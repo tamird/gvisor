@@ -16,6 +16,7 @@ package state
 
 import (
 	"encoding"
+	"math"
 	"reflect"
 	"slices"
 	"time"
@@ -33,6 +34,12 @@ func scalarStorage[T ~float32 | ~complex64](p *T, t reflect.Type) reflect.Value 
 func readNaN[T ~float32 | ~complex64](v reflect.Value) (bits T) {
 	scalarStorage(&bits, v.Type()).Set(v)
 	return bits
+}
+
+// hasNaNComponent includes NaNs paired with an infinity, which cmplx.IsNaN
+// classifies as an infinity.
+func hasNaNComponent(c wire.Complex64) bool {
+	return math.IsNaN(float64(real(c))) || math.IsNaN(float64(imag(c)))
 }
 
 // typeEntry is an entry in the typeDatabase.

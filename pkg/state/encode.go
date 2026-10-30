@@ -717,7 +717,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		*dest = wire.Float64(obj.Float())
 	case reflect.Complex64:
 		c := wire.Complex64(obj.Complex())
-		if c != c {
+		if hasNaNComponent(c) {
 			c = readNaN[wire.Complex64](obj)
 		}
 		*dest = &c // Needs alloc.

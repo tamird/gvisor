@@ -143,14 +143,14 @@ func TestSignalingNaN(t *testing.T) {
 	}
 
 	type coefficient complex64
-	m := map[int]coefficient{0: coefficient(complex(math.Float32frombits(negative), math.Float32frombits(positive)))}
-	var out map[int]coefficient
-	roundTrip(&m, &out)
-	z := out[0]
-	if got, want := math.Float32bits(real(z)), negative; got != want {
-		t.Errorf("real: got %#08x, want %#08x", got, want)
-	}
-	if got, want := math.Float32bits(imag(z)), positive; got != want {
-		t.Errorf("imaginary: got %#08x, want %#08x", got, want)
+	const positiveInf, negativeInf uint32 = 0x7f800000, 0xff800000
+	for _, want := range [][2]uint32{{negative, positive}, {negative, positiveInf}, {negativeInf, positive}} {
+		m := map[int]coefficient{0: coefficient(complex(math.Float32frombits(want[0]), math.Float32frombits(want[1])))}
+		var out map[int]coefficient
+		roundTrip(&m, &out)
+		z := out[0]
+		if got := [2]uint32{math.Float32bits(real(z)), math.Float32bits(imag(z))}; got != want {
+			t.Errorf("complex bits: got %#08x, want %#08x", got, want)
+		}
 	}
 }

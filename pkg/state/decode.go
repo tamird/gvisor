@@ -565,7 +565,7 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 			Failf("floating point number truncated from %v to %v", float64(x), obj.Float())
 		}
 	case *wire.Complex64:
-		if *x != *x && obj.Kind() == reflect.Complex64 {
+		if hasNaNComponent(*x) && obj.Kind() == reflect.Complex64 {
 			obj.Set(scalarStorage(x, obj.Type()))
 		} else {
 			obj.SetComplex(complex128(*x))

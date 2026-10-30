@@ -1,7 +1,8 @@
 #!/bin/bash
 set -eu -o pipefail
-product=0e2d23ed2e6d60a724e0da199bed111050a094c5
-git merge-base --is-ancestor "$product" HEAD
+product=1e9e13978115bcd98a58f6b568c34217ee7dcc35
+git fetch --quiet --depth=1 origin refs/heads/review/state-signaling-nan
+test "$(git rev-parse FETCH_HEAD)" = "$product"
 git diff --exit-code "$product" HEAD -- pkg/state
 cp -R .github/qualification/float-fix "$RUNNER_TEMP/fixture"
 git checkout --quiet --detach "$product"
@@ -77,9 +78,30 @@ bazelisk --bazelrc="$rc" test --config=x86_64 -c opt "${common[@]}" \
   --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed \
   --strategy=GoStandardLibraryAnalysis=sandboxed --strategy=GoStaticAnalysis=sandboxed \
   '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis|StaticAnalysis)$=+no-remote-cache,^TestRunner$=+no-remote-cache' \
+  --test_filter='^TestSignalingNaN$' --test_arg=-test.v \
   --output_groups=+nogo_findings --execution_log_compact_file="$RUNNER_TEMP/nogo.binpb" \
   --build_event_json_file="$RUNNER_TEMP/nogo.jsonl" \
-  //pkg/state:state_nogo //pkg/state/wire:wire_nogo //pkg/state/tests:tests_test_nogo \
+  //pkg/state:state_nogo //pkg/state/wire:wire_nogo //pkg/state/tests:tests_test_nogo //pkg/state/tests:tests_test \
   2>&1 | tee "$RUNNER_TEMP/nogo.log" || rc_nogo=${PIPESTATUS[0]}
 echo "$rc_nogo" > "$RUNNER_TEMP/nogo.exit"
+for test in pkg/state/state_nogo pkg/state/wire/wire_nogo pkg/state/tests/tests_test_nogo pkg/state/tests/tests_test; do
+  mkdir -p "$RUNNER_TEMP/testlogs/$test"
+  if [[ -f bazel-testlogs/$test/test.log ]]; then cp "bazel-testlogs/$test/test.log" "$RUNNER_TEMP/testlogs/$test/test.log"; fi
+done
+previous=0e2d23ed2e6d60a724e0da199bed111050a094c5
+block=0
+testfile=pkg/state/tests/float_test.go
+for head in "$previous" "$product" "$product" "$previous"; do
+  block=$((block + 1))
+  git restore -- "$testfile"
+  git checkout --quiet --detach "$head"
+  cat "$RUNNER_TEMP/fixture/benchmark.txt" >> "$testfile"
+  bench_rc=0
+  bazelisk --bazelrc="$rc" run --config=x86_64 //pkg/state/tests:tests_test -- \
+    -test.run='^$' -test.bench='^BenchmarkLegacyScalarArray$' -test.benchmem -test.benchtime=100ms -test.count=4 \
+    > "$RUNNER_TEMP/bench$block.txt" || bench_rc=$?
+  echo "$bench_rc" > "$RUNNER_TEMP/bench$block.exit"
+done
+git restore -- "$testfile"
+git checkout --quiet --detach "$product"
 python3 -B "$RUNNER_TEMP/fixture/verify-arm.py"
