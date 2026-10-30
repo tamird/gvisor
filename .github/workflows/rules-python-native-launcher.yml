@@ -1,7 +1,7 @@
 name: Exercise native package tool launchers
 on:
   push:
-    branches: [qualification/rules-python-native-launcher-4183, qualification/rules-python-native-launcher-4183-relocated, qualification/rules-python-native-launcher-4183-relocated-public-zip-lock]
+    branches: [qualification/released-zip-archive-writers]
 permissions:
   actions: read
   contents: read
@@ -11,13 +11,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      QUALIFICATION_ARCH: amd64
       QUALIFICATION_COMMIT: ${{ github.sha }}
       QUALIFICATION_EXECUTION: remote-actions
       QUALIFICATION_LANES: build
       QUALIFICATION_LOCAL_TEST_REQUIREMENTS: namespace
       QUALIFICATION_CLOCK_SOURCE: calibrated
-      QUALIFICATION_TARGETS: ${{ startsWith(github.ref_name, 'qualification/rules-python-native-launcher-4183-relocated') && '//test/rbe/python_package_writers:relocated' || '//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package //test/rbe/python_package_writers:relocated' }}
+      QUALIFICATION_TARGETS: //test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package
       QUALIFICATION_HEADER_BASE: ''
       QUALIFICATION_COS_SHA256: ''
       QUALIFICATION_COS_GZIP_BASE64: ''
@@ -30,28 +29,51 @@ jobs:
           export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           printf '%s\n' 'build:buildbuddy_remote_executor --define=writer_graph=true' > "$RUNNER_TEMP/preflight.bazelrc"
           bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" mod graph --lockfile_mode=update --depth=1 --output=json > "$RUNNER_TEMP/graph.json"
-          bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config=rbe --config=x86_64 --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=script --output=jsonproto \
-            //test/rbe/python_package_writers:relocated > "$RUNNER_TEMP/zip-graph.json"
+          for cfg in "rbe x86_64" "rbe-arm64 aarch64"; do
+            read -r ex cpu <<< "$cfg"
+            bazelisk --bazelrc="$RUNNER_TEMP/preflight.bazelrc" aquery --config="$ex" --config="$cpu" --lockfile_mode=update --@rules_python//python/config_settings:bootstrap_impl=script --output=jsonproto \
+              'mnemonic("PackageTar|MakeDeb", deps(set(//test/rbe/python_package_writers:payload //test/rbe/python_package_writers:package)))' > "$RUNNER_TEMP/zip-graph-$cpu.json"
+            python3 - "$RUNNER_TEMP/zip-graph-$cpu.json" <<'PYTHON'
+          import json,sys
+          graph=json.load(open(sys.argv[1]))
+          cmds={a["mnemonic"]:a["arguments"][0].rsplit("/",1)[-1] for a in graph["actions"]}
+          assert cmds == {"PackageTar":"tar_native","MakeDeb":"deb_native"}, cmds
+          PYTHON
+          done
           test -s MODULE.bazel.lock
       - name: Fetch the pinned execution log decoder
         run: |
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Build the original package writers and the manifest control
+      - name: Run the selected writers on the two real empty workers
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
-          bash test/rbe/actions.sh \
-            --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=script \
-            --bazel-option=--remote_download_outputs=all \
-            '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|RelocatedPythonWriter)$=+no-remote-cache'
-      - name: Compare the actual Linux worker outputs
-        if: always()
-        run: python3 test/rbe/python_package_writers/native_evidence.py
+          set +e
+          set -u
+          root_temp=$RUNNER_TEMP
+          export BB=$root_temp/bb
+          result=0
+          for arch in amd64 arm64; do
+            export QUALIFICATION_ARCH=$arch RUNNER_TEMP="$root_temp/$arch"
+            mkdir -p "$RUNNER_TEMP"
+            native=0
+            bash test/rbe/actions.sh \
+              --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=script \
+              --bazel-option=--remote_download_outputs=all \
+              '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache' || native=$?
+            python3 test/rbe/python_package_writers/package_zip_report.py || result=1
+            if ((native != 0)); then result=1; fi
+          done
+          exit "$result"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-launcher-evidence
-          path: ${{ runner.temp }}/native-launcher.json
+          name: package-zip-verdicts
+          path: |
+            ${{ runner.temp }}/amd64/writers.json
+            ${{ runner.temp }}/arm64/writers.json
+            ${{ runner.temp }}/amd64/physical.binpb
+            ${{ runner.temp }}/arm64/physical.binpb
           if-no-files-found: error

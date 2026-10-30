@@ -61,3 +61,16 @@ relocated_writer(
     script = "relocation.py",
     writer = ":tar_native",
 )
+
+py_zipapp_binary(
+    name = "deb_archive",
+    binary = "@rules_pkg//pkg/private/deb:make_deb",
+    executable = False,
+)
+
+native_zipapp(
+    name = "deb_native",
+    archive = ":deb_archive",
+)
+
+exports_files(["select-writers.patch"])
