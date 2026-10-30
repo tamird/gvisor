@@ -16,6 +16,10 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <pthread.h>
+#include <poll.h>
+#include <sched.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -28,6 +32,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <chrono>
+#include <string>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -36,6 +42,8 @@
 #include "test/util/epoll_util.h"
 #include "test/util/eventfd_util.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/fs_util.h"
+#include "test/util/mount_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
 #include "test/util/signal_util.h"
@@ -59,6 +67,137 @@ constexpr uint64_t kMagicConstant = 0x0102030405060708;
 int test_epoll_pwait2(int fd, struct epoll_event* events, int maxevents,
                       const struct timespec* timeout, const sigset_t* sigset) {
   return syscall(SYS_epoll_pwait2, fd, events, maxevents, timeout, sigset);
+}
+
+TEST(EpollTest, OverlayAsyncRegistration) {
+  ASSERT_TRUE(IsRunningOnGvisor());
+  DisableSave setup;
+  sigset_t signals;
+  sigemptyset(&signals);
+  sigaddset(&signals, SIGUSR1);
+  sigaddset(&signals, SIGUSR2);
+  auto block = ASSERT_NO_ERRNO_AND_VALUE(ScopedSignalMask(SIG_BLOCK, signals));
+  auto root = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto tmp = ASSERT_NO_ERRNO_AND_VALUE(Mount("tmpfs", root.path(), "tmpfs", 0, "", 0));
+  auto upper = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto merged = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto work = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto mount = ASSERT_NO_ERRNO_AND_VALUE(Mount("overlay", merged.path(), "overlay", 0,
+       "lowerdir=/proc/sys/kernel,upperdir=" + upper.path() + ",workdir=" + work.path(), 0));
+  const std::string hostname = merged.path() + "/hostname";
+  auto file = ASSERT_NO_ERRNO_AND_VALUE(Open(hostname, O_RDONLY));
+  auto peer = ASSERT_NO_ERRNO_AND_VALUE(Open("/proc/sys/kernel/hostname", O_RDONLY));
+  auto enable = [](int fd, int signo) {
+    ASSERT_THAT(fcntl(fd, F_SETOWN, getpid()), SyscallSucceeds());
+    ASSERT_THAT(fcntl(fd, F_SETSIG, signo), SyscallSucceeds());
+    ASSERT_THAT(fcntl(fd, F_SETFL, O_ASYNC), SyscallSucceeds());
+  };
+  auto receive = [](int signo, int fd) {
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, signo);
+    siginfo_t info = {};
+    const struct timespec timeout = {2, 0};
+    ASSERT_THAT(sigtimedwait(&set, &info, &timeout), SyscallSucceedsWithValue(signo));
+    EXPECT_EQ(info.si_fd, fd);
+  };
+  auto quiet = [] {
+    sigset_t set; sigemptyset(&set); sigaddset(&set,SIGUSR1);
+    struct timespec zero = {};
+    siginfo_t info = {};
+    int res = sigtimedwait(&set, &info, &zero);
+    if (res == SIGUSR1) fprintf(stderr, "OVERLAY_ASYNC_STALE: released lower signaled fd %d\n", info.si_fd);
+    EXPECT_THAT(res, SyscallFailsWithErrno(EAGAIN));
+  };
+  enable(file.get(), SIGUSR1);
+  enable(peer.get(), SIGUSR2);
+  ASSERT_THAT(sethostname("before", 6), SyscallSucceeds());
+  receive(SIGUSR1,file.get()); receive(SIGUSR2,peer.get());
+  if (IsRunningWithSaveRestore()) {setup.reset(); MaybeSave();}
+  DisableSave copying;
+  ASSERT_THAT(sethostname("lower", 5), SyscallSucceeds());
+  receive(SIGUSR1,file.get()); receive(SIGUSR2,peer.get());
+  ASSERT_THAT(fchmod(file.get(), 0600), SyscallSucceeds());
+  {
+    auto writer = ASSERT_NO_ERRNO_AND_VALUE(Open(hostname, O_WRONLY));
+    const std::string content = "upper";
+    ASSERT_THAT(pwrite(writer.get(), content.data(), content.size(), 0),
+                SyscallSucceedsWithValue(content.size()));
+  }
+  struct pollfd force = {file.get(), POLLPRI, 0};
+  ASSERT_THAT(poll(&force, 1, 0), SyscallSucceedsWithValue(0));
+  const std::string copied = ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname));
+  fprintf(stderr,"OVERLAY_ASYNC_READY: both signal FDs armed; overlay switched to upper\n");
+  if (IsRunningWithSaveRestore()) {copying.reset(); MaybeSave();}
+  DisableSave restored;
+  ASSERT_THAT(sethostname("restored", 8), SyscallSucceeds());
+  receive(SIGUSR1,file.get()); receive(SIGUSR2,peer.get());
+  ASSERT_THAT(fcntl(file.get(), F_SETFL, 0), SyscallSucceeds());
+  ASSERT_THAT(sethostname("released", 8), SyscallSucceeds());
+  receive(SIGUSR2,peer.get()); quiet();
+  ASSERT_THAT(fcntl(file.get(), F_SETFL, O_ASYNC), SyscallSucceeds());
+  ASSERT_THAT(sethostname("reused", 6), SyscallSucceeds());
+  receive(SIGUSR2,peer.get()); quiet();
+  ASSERT_THAT(fcntl(file.get(), F_SETFL, 0), SyscallSucceeds());
+  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname)), copied);
+  fprintf(stderr,"OVERLAY_ASYNC_FINISHED: checkpoint=%d; original registration delivered, rearmed upper stayed quiet, direct peer remained live\n",IsRunningWithSaveRestore());
+}
+
+TEST(EpollTest, OverlayBlockedPollCheckpoint) {
+  ASSERT_TRUE(IsRunningOnGvisor());
+  ASSERT_TRUE(IsRunningWithSaveRestore());
+  DisableSave setup;
+  auto root = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  auto tmp = ASSERT_NO_ERRNO_AND_VALUE(Mount("tmpfs", root.path(), "tmpfs", 0, "", 0));
+  auto upper = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto merged = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto work = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDirIn(root.path()));
+  auto overlay = ASSERT_NO_ERRNO_AND_VALUE(Mount("overlay", merged.path(), "overlay", 0,
+      "lowerdir=/proc/sys/kernel,upperdir=" + upper.path() + ",workdir=" + work.path(), 0));
+  const std::string hostname = merged.path() + "/hostname";
+  auto fd = ASSERT_NO_ERRNO_AND_VALUE(Open(hostname, O_RDONLY));
+  auto real = ASSERT_NO_ERRNO_AND_VALUE(Open("/proc/sys/kernel/hostname", O_RDONLY));
+  const pid_t child = fork();
+  ASSERT_GE(child, 0);
+  if (child == 0) {
+    struct pollfd fds[] = {{fd.get(), POLLPRI, 0}, {real.get(), POLLPRI, 0}};
+    int ready;
+    do { ready = poll(fds, 2, 90000); } while (ready == -1 && errno == EINTR);
+    if (ready != 1 || fds[0].revents != 0 || fds[1].revents != (POLLPRI | POLLERR)) {
+      fprintf(stderr, "OVERLAY_POLL_CHILD: ready=%d mutable=%hd direct=%hd errno=%d\n", ready, fds[0].revents, fds[1].revents, errno);
+      _exit(3);
+    }
+    _exit(0);
+  }
+  Cleanup reap([&] { kill(child, SIGKILL); while (waitpid(child, nullptr, 0) < 0 && errno == EINTR) {} });
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(15);
+  const std::string procstat = "/proc/" + std::to_string(child) + "/stat";
+  for (;;) {
+    const auto stat = ASSERT_NO_ERRNO_AND_VALUE(GetContents(procstat));
+    const auto comm = stat.rfind(") ");
+    ASSERT_NE(comm, std::string::npos);
+    if (stat[comm + 2] == 'S') break;
+    ASSERT_LT(std::chrono::steady_clock::now(), deadline) << stat;
+    sched_yield();
+  }
+  // The child's only blocking operation is poll. It holds both registrations.
+  ASSERT_THAT(fchmod(fd.get(), 0600), SyscallSucceeds());
+  struct pollfd force = {fd.get(), POLLPRI, 0};
+  ASSERT_THAT(poll(&force, 1, 0), SyscallSucceedsWithValue(0));
+  const std::string copied = ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname));
+  fprintf(stderr, "OVERLAY_POLL_READY: child asleep, shared open file has adopted upper\n");
+  setup.reset();
+  MaybeSave();
+  DisableSave restored;
+  ASSERT_THAT(sethostname("restored", 8), SyscallSucceeds());
+  int status;
+  ASSERT_THAT(waitpid(child, &status, 0), SyscallSucceedsWithValue(child));
+  reap.Release();
+  ASSERT_TRUE(WIFEXITED(status)) << status;
+  ASSERT_EQ(WEXITSTATUS(status), 0);
+  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents(hostname)), copied);
+  EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/sys/kernel/hostname")), "restored\n");
+  fprintf(stderr, "OVERLAY_POLL_RESTORED: child woke only for direct proc and copied value unchanged\n");
 }
 
 TEST(EpollTest, AllWritable) {
