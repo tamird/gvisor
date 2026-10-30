@@ -1,0 +1,37 @@
+diff --git a/MODULE.bazel b/MODULE.bazel
+index a03eb49a..652aeaa6 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -5,6 +5,7 @@ module(
+ )
+ 
+ bazel_dep(name = "bazel_features", version = "1.21.0")
++bazel_dep(name = "bazel_lib", version = "3.2.2")
+ bazel_dep(name = "bazel_skylib", version = "1.8.2")
+ bazel_dep(name = "package_metadata", version = "0.0.7")
+ bazel_dep(name = "platforms", version = "0.0.11")
+diff --git a/python/private/pypi/BUILD.bazel b/python/private/pypi/BUILD.bazel
+index 149074dd..4a21a408 100644
+--- a/python/private/pypi/BUILD.bazel
++++ b/python/private/pypi/BUILD.bazel
+@@ -229,7 +229,7 @@ bzl_library(
+ bzl_library(
+     name = "namespace_pkgs",
+     srcs = ["namespace_pkgs.bzl"],
+-    deps = ["@bazel_skylib//rules:copy_file"],
++    deps = ["@bazel_lib//lib:copy_file"],
+ )
+ 
+ bzl_library(
+diff --git a/python/private/pypi/namespace_pkgs.bzl b/python/private/pypi/namespace_pkgs.bzl
+index be6244ef..7e013c18 100644
+--- a/python/private/pypi/namespace_pkgs.bzl
++++ b/python/private/pypi/namespace_pkgs.bzl
+@@ -1,6 +1,6 @@
+ """Utilities to get where we should write namespace pkg paths."""
+ 
+-load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
++load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+ 
+ _ext = struct(
+     py = ".py",

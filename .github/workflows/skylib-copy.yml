@@ -1,75 +1,26 @@
-name: Qualify Bazel's native copy in Skylib
+name: Compare wheel namespace copies on stock Bazel
 on:
   push:
-    branches: [qualification/skylib-native-copy]
+    branches: [qualification/rules-python-bazel-lib-copy]
 permissions:
   contents: read
 jobs:
-  copy:
+  compare:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: consumer, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: bazelbuild/bazel-skylib, ref: 5f88ea649f9d4aaf2bec78c0426fc38b3dcc11d7, path: skylib, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: bazel-contrib/rules_python, ref: bfbcc014dd0be8763c467040eebd19baf926735b, path: rules_python, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: thesayyn/bazel, ref: e95f22a1dbb439a8f502e89d6cf988db7a7e2067, path: bazel-src, persist-credentials: false}
-      - name: Apply the conditional Skylib fix
-        working-directory: skylib
-        run: |
-          mkdir -p "$RUNNER_TEMP/skylib-copy-receipt"
-          git apply --check ../consumer/test/rbe/supplier-namespace/skylib-copy.patch
-          git apply ../consumer/test/rbe/supplier-namespace/skylib-copy.patch
-          git apply --unidiff-zero MODULE.bazel-remove-override.patch
-          git diff --check
-      - name: Exercise Bazel 8.8.1 and the documented shell fallback
-        id: released
-        continue-on-error: true
-        env: {USE_BAZEL_VERSION: 8.8.1}
-        run: python3 consumer/test/rbe/supplier-namespace/skylib-copy-qualify.py released "$(command -v bazelisk || command -v bazel)"
-      - name: Build Bazel PR 30386 at its exact source
-        id: build
-        continue-on-error: true
-        working-directory: bazel-src
-        run: |
-          set -o pipefail
-          d="$RUNNER_TEMP/skylib-copy-receipt"
-          date -u +%FT%TZ > "$d/bootstrap-started"
-          git rev-parse HEAD > "$d/bazel-source"
-          df -h . > "$d/space-before"
-          rc=0
-          bazel build --jobs=4 --embed_label=copy-e95f22a1d //src:bazel > "$d/bootstrap.log" 2>&1 || rc=$?
-          echo "$rc" > "$d/bootstrap-exit"
-          date -u +%FT%TZ > "$d/bootstrap-ended"
-          tail -20 "$d/bootstrap.log"
-          exit "$rc"
-      - name: Exercise the native action with an empty command search path
-        id: native
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        run: python3 consumer/test/rbe/supplier-namespace/skylib-copy-qualify.py native "$GITHUB_WORKSPACE/bazel-src/bazel-bin/src/bazel"
-      - name: Collect exact results
-        if: always()
+        with: {repository: bazel-contrib/rules_python, ref: 674ce0745dea93e54865d9cfb846510b30475969, path: supplier, persist-credentials: false}
+      - name: Run the supplier's real namespace generator and replay its declared action
         env:
-          RELEASED: ${{ steps.released.outcome }}
-          NATIVE: ${{ steps.native.outcome }}
-          BOOTSTRAP: ${{ steps.build.outcome }}
-        run: |
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          p=Path(os.environ["RUNNER_TEMP"])/"skylib-copy-receipt"; p.mkdir(exist_ok=True)
-          v={k:os.getenv(k) for k in ("RELEASED","BOOTSTRAP","NATIVE","GITHUB_SHA")}
-          (p/"verdict.json").write_text(json.dumps(v)+"\n")
-          if any(v[k]!="success" for k in ("RELEASED","BOOTSTRAP","NATIVE")): raise SystemExit(1)
-          PY
+          USE_BAZEL_VERSION: 8.8.1
+        run: python3 consumer/test/rbe/supplier-namespace/compare_copy.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: skylib-copy-verdict
-          path: ${{ runner.temp }}/skylib-copy-receipt/
+          name: namespace-copy-comparison
+          path: ${{ runner.temp }}/copy-results/
           if-no-files-found: error
