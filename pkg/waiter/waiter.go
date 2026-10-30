@@ -168,6 +168,10 @@ func (e *Entry) SetQueuedMask(q *Queue, mask EventMask) {
 	q.mu.Unlock()
 }
 
+// Listener returns the entry's current notification destination. As with Init,
+// callers must serialize listener changes with registration and notification.
+func (e *Entry) Listener() EventListener { return e.eventListener }
+
 // Mask returns the entry mask.
 func (e *Entry) Mask() EventMask {
 	return e.mask

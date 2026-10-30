@@ -245,6 +245,17 @@ func (fd *regularFileFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return wrappedFD.Readiness(mask)
 }
 
+// A lowerWaiter retains the file that accepted an entry until unregistration.
+// Mutable overlays can be stacked. Each wrapper owns its immediate backing and
+// forwards notifications to the listener installed by the layer above it.
+//
+// +stateify savable
+type lowerWaiter struct {
+	waiter.EventListener
+	overlay *regularFileFD
+	backing *vfs.FileDescription
+}
+
 // EventRegister implements waiter.Waitable.EventRegister.
 func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 	fd.mu.Lock()
@@ -256,11 +267,37 @@ func (fd *regularFileFD) EventRegister(e *waiter.Entry) error {
 		log.Warningf("overlay.regularFileFD.EventRegister: currentFDLocked failed: %v", err)
 		wrappedFD = fd.cachedFD
 	}
-	return wrappedFD.EventRegister(e)
+	if fd.copiedUp || !fd.filesystem().opts.UpperRoot.Ok() {
+		return wrappedFD.EventRegister(e)
+	}
+	w := &lowerWaiter{EventListener: e.Listener(), overlay: fd, backing: wrappedFD}
+	wrappedFD.IncRef()
+	e.Init(w, e.Mask())
+	if err := wrappedFD.EventRegister(e); err != nil {
+		e.Init(w.EventListener, e.Mask())
+		wrappedFD.DecRef(context.Background())
+		return err
+	}
+	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
 func (fd *regularFileFD) EventUnregister(e *waiter.Entry) {
+	for listener := e.Listener(); ; {
+		w, ok := listener.(*lowerWaiter)
+		if !ok {
+			break
+		}
+		if w.overlay == fd {
+			// Unregister through the same backing. Any inner overlay removes
+			// its own wrapper before we restore the original listener.
+			w.backing.EventUnregister(e)
+			e.Init(w.EventListener, e.Mask())
+			w.backing.DecRef(context.Background())
+			return
+		}
+		listener = w.EventListener
+	}
 	fd.mu.Lock()
 	defer fd.mu.Unlock()
 	fd.cachedFD.EventUnregister(e)
