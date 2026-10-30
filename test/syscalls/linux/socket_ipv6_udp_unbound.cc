@@ -64,9 +64,10 @@ TEST(MulticastSocketOptions, IPv4SmallOptionBuffers) {
 
 TEST(MulticastSocketOptions, IndependentIPv4AndIPv6Values) {
   auto fd = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET6, SOCK_DGRAM, 0));
-  for (auto [ipv4, ipv6, v6_value] :
-       {std::array<int, 3>{IP_MULTICAST_TTL, IPV6_MULTICAST_HOPS, 0},
-        std::array<int, 3>{IP_MULTICAST_LOOP, IPV6_MULTICAST_LOOP, 0}}) {
+  constexpr int v6_value = 0;
+  for (auto [ipv4, ipv6] :
+       {std::array<int, 2>{IP_MULTICAST_TTL, IPV6_MULTICAST_HOPS},
+        std::array<int, 2>{IP_MULTICAST_LOOP, IPV6_MULTICAST_LOOP}}) {
     SCOPED_TRACE(ipv6);
     int value = -1;
     socklen_t len = sizeof(value);

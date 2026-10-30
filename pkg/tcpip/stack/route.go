@@ -112,7 +112,7 @@ func (r *Route) Loop() PacketLooping {
 func (r *Route) MatchesMulticastLoop(enabled bool) bool {
 	addr := r.RemoteAddress()
 	return !(header.IsV4MulticastAddress(addr) || header.IsV6MulticastAddress(addr)) ||
-		r.outgoingNIC.IsLoopback() || (r.Loop()&PacketLoop != 0) == enabled
+		r.local() || (r.Loop()&PacketLoop != 0) == enabled
 }
 
 // OutgoingNIC returns the route's outgoing NIC.

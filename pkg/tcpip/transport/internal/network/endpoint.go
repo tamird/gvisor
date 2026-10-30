@@ -425,9 +425,40 @@ func (e *Endpoint) hasSendSpaceRLocked() bool {
 	return e.ops.GetSendBufferSize() > e.sendBufferSizeInUse
 }
 
+// connectedMulticastRouteStale reports whether this write would reuse a
+// multicast route with a loopback setting that has since changed.
+//
+// +checklocksread:e.mu
+func (e *Endpoint) connectedMulticastRouteStale(opts tcpip.WriteOptions) bool {
+	if e.connectedRoute == nil || opts.To != nil || e.writeShutdown || opts.More {
+		return false
+	}
+	if e.effectiveNetProto == header.IPv6ProtocolNumber && opts.ControlMessages.HasIPv6PacketInfo {
+		return false // Per-packet routing ignores the cached route.
+	}
+	return !e.connectedRoute.MatchesMulticastLoop(e.multicastLoop())
+}
+
 // AcquireContextForWrite acquires a WriteContext.
 func (e *Endpoint) AcquireContextForWrite(opts tcpip.WriteOptions) (WriteContext, tcpip.Error) {
 	e.mu.RLock()
+	if e.connectedMulticastRouteStale(opts) {
+		e.mu.RUnlock()
+		e.mu.Lock()
+		if e.connectedMulticastRouteStale(opts) {
+			// The peer and source are unchanged. Replace the cached route so
+			// subsequent writes reuse the new loopback policy.
+			r := e.connectedRoute
+			replacement, err := e.stack.FindRoute(r.OutgoingNIC(), r.LocalAddress(), r.RemoteAddress(), r.NetProto(), e.multicastLoop())
+			if err != nil {
+				e.mu.Unlock()
+				return WriteContext{}, err
+			}
+			e.connectedRoute = replacement
+			r.Release()
+		}
+		e.mu.DowngradeLock()
+	}
 	defer e.mu.RUnlock()
 
 	// MSG_MORE is unimplemented. This also means that MSG_EOR is a no-op.
@@ -456,14 +487,15 @@ func (e *Endpoint) AcquireContextForWrite(opts tcpip.WriteOptions) (WriteContext
 			return WriteContext{}, &tcpip.ErrDestinationRequired{}
 		}
 
-		// A connected multicast route may have been created before the
-		// caller changed its multicast loopback option.
-		if !ipv6PktInfoValid && route.MatchesMulticastLoop(e.multicastLoop()) {
+		if !ipv6PktInfoValid {
 			route.Acquire()
 			break
 		}
 
-		// The packet info or multicast loopback option requires a new route.
+		// We are connected and the caller did not specify the destination but
+		// we have an IPv6 packet info structure which may change our local
+		// interface/address used to send the packet so we need to construct
+		// a new route instead of using the connected route.
 		//
 		// Construct a destination matching the remote the endpoint is connected
 		// to.
