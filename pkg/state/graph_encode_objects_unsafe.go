@@ -16,12 +16,33 @@ package state
 
 import (
 	"cmp"
+	"encoding/json"
+	"fmt"
+	"math/bits"
 	"reflect"
 	"slices"
 	"unsafe"
 
 	"github.com/google/btree"
 )
+
+// rangeProbe counts operations on the dense qualification fixture.
+type rangeProbe struct {
+	QueryWidthLog2                                                                                     [64]uint64
+	TotalQueries, WideQueries, ObjectsWhenWideFirstSeen, SeedSlots, SeedKeys                           uint64
+	SmallObjectsRegistered, WideObjectsRegistered, WideChildrenAbsorbed, MaxWideObjects                uint64
+	SmallKeysAdded, BucketsVisitedByWideQuery, ChainEntries, SmallLiveHits                             uint64
+	NarrowQueriesOfWideTree, WideQueriesOfWideTree, WideTreeVisits, WideRootHits, WideRootsHitByNarrow uint64
+}
+
+func (es *graphEncodeState) reportRangeProbe() {
+	data, err := json.Marshal(es.rangeProbe)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("GRAPH_INDEX_COUNTS %s\n", data)
+	es.rangeProbe = rangeProbe{}
+}
 
 // wideIndex supplements the small-object hash chains. One tree indexes the
 // occupied small bucket numbers; the other holds wide roots by exclusive end.
@@ -50,8 +71,11 @@ func (es *graphEncodeState) wideIndex() *wideIndex {
 	}
 	w := es.wide
 	if !w.active {
+		es.rangeProbe.ObjectsWhenWideFirstSeen = uint64(es.objs.n)
+		es.rangeProbe.SeedSlots = uint64(len(es.blocks.slots))
 		for _, s := range es.blocks.slots {
 			if s.key != 0 {
+				es.rangeProbe.SeedKeys++
 				w.blocks.ReplaceOrInsert(s.key - 1)
 			}
 		}
@@ -65,14 +89,19 @@ func (es *graphEncodeState) index(obj int32) {
 	o := es.obj(obj)
 	first, last := o.addr>>blockShift, (o.end-1)>>blockShift
 	if wideBlocks(first, last) {
-		es.wideIndex().objects.ReplaceOrInsert(wideRange{end: o.end, obj: obj})
+		es.rangeProbe.WideObjectsRegistered++
+		w := es.wideIndex()
+		w.objects.ReplaceOrInsert(wideRange{end: o.end, obj: obj})
+		es.rangeProbe.MaxWideObjects = max(es.rangeProbe.MaxWideObjects, uint64(w.objects.Len()))
 		return
 	}
+	es.rangeProbe.SmallObjectsRegistered++
 	for b := first; b <= last; b++ {
 		head, ok := es.blocks.get(b)
 		if !ok {
 			head = -1
 			if w := es.wide; w != nil && w.active {
+				es.rangeProbe.SmallKeysAdded++
 				w.blocks.ReplaceOrInsert(b)
 			}
 		}
@@ -88,6 +117,7 @@ func (es *graphEncodeState) queryBlock(b, addr, end uintptr) {
 		return
 	}
 	for ; e >= 0; e = es.blockEntries[e].next {
+		es.rangeProbe.ChainEntries++
 		be := &es.blockEntries[e]
 		if be.addr >= end || addr >= be.end {
 			continue
@@ -96,6 +126,7 @@ func (es *graphEncodeState) queryBlock(b, addr, end uintptr) {
 		if o.parent >= 0 || o.dead || o.stamp == es.stamp {
 			continue
 		}
+		es.rangeProbe.SmallLiveHits++
 		o.stamp = es.stamp
 		es.queryResult = append(es.queryResult, be.obj)
 	}
@@ -113,12 +144,16 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 	}
 	es.queryResult = es.queryResult[:0]
 	first, last := addr>>blockShift, (end-1)>>blockShift
+	es.rangeProbe.TotalQueries++
+	es.rangeProbe.QueryWidthLog2[bits.Len64(uint64(last-first+1))-1]++
 	if wideBlocks(first, last) {
+		es.rangeProbe.WideQueries++
 		// Visit only occupied small buckets, regardless of slice capacity.
 		es.wideIndex().blocks.AscendGreaterOrEqual(first, func(b uintptr) bool {
 			if b > last {
 				return false
 			}
+			es.rangeProbe.BucketsVisitedByWideQuery++
 			es.queryBlock(b, addr, end)
 			return true
 		})
@@ -128,13 +163,23 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 		}
 	}
 	if w := es.wide; w != nil && w.objects.Len() != 0 {
+		if wideBlocks(first, last) {
+			es.rangeProbe.WideQueriesOfWideTree++
+		} else {
+			es.rangeProbe.NarrowQueriesOfWideTree++
+		}
 		// Live roots do not overlap: their starts and ends sort identically.
 		w.objects.AscendGreaterOrEqual(wideRange{end: addr + 1}, func(r wideRange) bool {
+			es.rangeProbe.WideTreeVisits++
 			o := es.obj(r.obj)
 			if o.addr >= end {
 				return false
 			}
 			if !o.dead {
+				es.rangeProbe.WideRootHits++
+				if !wideBlocks(first, last) {
+					es.rangeProbe.WideRootsHitByNarrow++
+				}
 				es.queryResult = append(es.queryResult, r.obj)
 			}
 			return true
@@ -378,6 +423,7 @@ func (es *graphEncodeState) checkInterior(obj int32, off uintptr, ti *typeInfo, 
 func (es *graphEncodeState) absorb(parent, obj int32) {
 	p, o := es.obj(parent), es.obj(obj)
 	if wideBlocks(o.addr>>blockShift, (o.end-1)>>blockShift) {
+		es.rangeProbe.WideChildrenAbsorbed++
 		es.wide.objects.Delete(wideRange{end: o.end})
 	}
 	off := o.addr - p.addr

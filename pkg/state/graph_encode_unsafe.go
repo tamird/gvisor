@@ -239,7 +239,8 @@ type traversalKey struct {
 
 // graphEncodeState is the state of Save.
 type graphEncodeState struct {
-	ctx context.Context
+	rangeProbe rangeProbe
+	ctx        context.Context
 
 	// out holds the encodings of objects.
 	out encBuf
@@ -435,6 +436,7 @@ const maxPooledSlots = 1 << 18
 
 // release returns es to graphEncodeStatePool, if it is not too large.
 func (es *graphEncodeState) release() {
+	es.reportRangeProbe()
 	if cap(es.out.b)+cap(es.final.b)+cap(es.binaryBuf) > maxPooledBytes ||
 		len(es.byAddr.slots)+len(es.blocks.slots) > maxPooledSlots ||
 		cap(es.blockEntries)+cap(es.queue) > maxPooledSlots ||
