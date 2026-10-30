@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:55:24.525379+00:00",
+    "updatedAt": "2026-10-30T04:56:11.029169+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35125,7 +35125,7 @@
       "url": "https://github.com/google/gvisor/pull/16726",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T04:55:24.525379+00:00",
+      "updatedAt": "2026-10-30T04:56:11.029169+00:00",
       "summary": "Graph Load restores two nested tags as 22 and 22 instead of 11 and 22 on this generator revision. The same fixture and both flat controls distinguish scratch reuse from a wire-format discrepancy.",
       "evidence": [
         {
@@ -35148,7 +35148,7 @@
         "url": "https://github.com/google/gvisor/pull/16726",
         "title": "Post the inline nested-value corruption finding",
         "summary": "Review the proposed inline comment at tools/go_stateify/main.go:479. It describes the observed values and links a tested correction.",
-        "body": "@parth-opensrc, this can corrupt a nested converted value during graph Load. In the [reproducer](https://github.com/tamird/gvisor/commit/d3afb4db4), an outer value with tag 11 holds another generated holder through an interface; the inner value of the same type has tag 22. The [parent](https://app.buildbuddy.io/invocation/a06ed41b-aa64-41c9-82a7-943cc62461ed) restored 11 and 22. [This head](https://app.buildbuddy.io/invocation/8e57e151-2229-4ba5-b03d-a100a22d09d6) restored 22 twice. The legacy and non-nested controls passed.\n\nWhile the outer value is being decoded, [its scratch slot is still available](https://github.com/google/gvisor/blob/c6afaa53a/pkg/state/graph_decode_callbacks_unsafe.go#L151-L165). Could the slot stay checked out until the decode and immediate callback return? [That change](https://github.com/tamird/gvisor/commit/8def2ecbb) [restored both tags](https://app.buildbuddy.io/invocation/570143b4-9029-4cfa-b99e-02d92b2efdd2).\n\nReview by Codex on behalf of @tamird."
+        "body": "This can corrupt a nested converted value during graph Load. In the [reproducer](https://github.com/tamird/gvisor/commit/d3afb4db4), an outer value with tag 11 holds another generated holder through an interface; the inner value of the same type has tag 22. The [parent](https://app.buildbuddy.io/invocation/a06ed41b-aa64-41c9-82a7-943cc62461ed) restored 11 and 22. [This head](https://app.buildbuddy.io/invocation/8e57e151-2229-4ba5-b03d-a100a22d09d6) restored 22 twice. The legacy and non-nested controls passed.\n\nWhile the outer value is being decoded, [its scratch slot is still available](https://github.com/google/gvisor/blob/c6afaa53a/pkg/state/graph_decode_callbacks_unsafe.go#L151-L165). Could the slot stay checked out until the decode and immediate callback return? [That change](https://github.com/tamird/gvisor/commit/8def2ecbb) [restored both tags](https://app.buildbuddy.io/invocation/570143b4-9029-4cfa-b99e-02d92b2efdd2).\n\nReview by Codex on behalf of @tamird."
       }
     }
   ],
