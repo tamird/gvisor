@@ -27,6 +27,7 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$CPPLINT_RC"
           unset BUILDBUDDY_API_KEY
+          PYTHONPATH=carrier/.github/qualification/downstream python3 -B -c 'from check import rows; from consumer import verify'
           mkdir -p "$RUNNER_TEMP/publication"
           status=0
           for variant in stock carrier; do
