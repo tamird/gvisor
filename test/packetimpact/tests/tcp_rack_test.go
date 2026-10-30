@@ -54,6 +54,7 @@ func createSACKConnection(t *testing.T) (testbench.DUT, testbench.TCPIPv4, int32
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeSACKPermittedOption(opts[optsOff:])
+	optsOff += header.EncodeMSSOption(1460, opts[optsOff:])
 
 	conn.ConnectWithOptions(t, opts[:optsOff])
 	acceptFd, _ := dut.Accept(t, listenFd)
@@ -434,4 +435,82 @@ func TestRACKWithLostRetransmission(t *testing.T) {
 	if info.CaState != linux.TCP_CA_Recovery {
 		t.Fatalf("expected connection to be in fast recovery, want: %v got: %v", linux.TCP_CA_Recovery, info.CaState)
 	}
+}
+
+// TestLinuxSACKCountAfterPMTU reports a TCP_INFO sample before and after
+// changing the PMTU while an old, full-size packet remains SACKed.
+func TestLinuxSACKCountAfterPMTU(t *testing.T) {
+	const pathMTU = 1200
+	dut, conn, fd, originalMSS := createSACKConnection(t)
+	dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+	dut.SetSockOptInt(t, fd, unix.IPPROTO_IP, unix.IP_MTU_DISCOVER, unix.IP_PMTUDISC_DO)
+	if originalMSS <= pathMTU {
+		t.Fatalf("initial MSS %d will not discriminate a drop to MTU %d", originalMSS, pathMTU)
+	}
+	base := *conn.RemoteSeqNum(t)
+	size := seqnum.Size(originalMSS)
+	data := make([]byte, originalMSS)
+	var quote []byte
+	for i := 0; i != 5; i++ {
+		dut.Send(t, fd, data, 0)
+		seq := base.Add(seqnum.Size(i) * size)
+		frame, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seq))}, &testbench.Payload{Bytes: data}, time.Second)
+		if err != nil {
+			t.Fatalf("receive segment %d: %v", i+1, err)
+		}
+		if i == 1 {
+			layers := frame[1:]
+			body, err := layers.ToBytes()
+			if err != nil {
+				t.Fatalf("encode original IPv4 segment: %v", err)
+			}
+			quote = body[:int(header.IPv4(body).HeaderLength())+8]
+		}
+	}
+	wait := func(stage string, condition func(linux.TCPInfo) bool) linux.TCPInfo {
+		t.Helper()
+		deadline := time.Now().Add(time.Second)
+		for {
+			info := dut.GetSockOptTCPInfo(t, fd)
+			if condition(info) {
+				t.Logf("LINUX-PMTU stage=%s mss=%d sacked=%d unacked=%d lost=%d retrans=%d", stage, info.SndMss, info.Sacked, info.Unacked, info.Lost, info.Retrans)
+				return info
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("%s: mss=%d sacked=%d unacked=%d lost=%d", stage, info.SndMss, info.Sacked, info.Unacked, info.Lost)
+			}
+		}
+	}
+	ack := func(n int, sack bool) {
+		t.Helper()
+		tcp := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(base.Add(seqnum.Size(n) * size)))}
+		if sack {
+			opts := make([]byte, 12)
+			opts[0], opts[1] = header.TCPOptionNOP, header.TCPOptionNOP
+			count := header.EncodeSACKBlocks([]header.SACKBlock{{Start: base.Add(2 * size), End: base.Add(3 * size)}}, opts[2:])
+			tcp.Options = opts[:2+count]
+		}
+		conn.Send(t, tcp)
+	}
+	ack(1, false)
+	wait("ack1", func(i linux.TCPInfo) bool { return i.Unacked == 4 && i.Sacked == 0 })
+	ack(1, true)
+	wait("sack3", func(i linux.TCPInfo) bool { return i.Sacked == 1 })
+	frame := conn.CreateFrame(t, nil)
+	frame[len(frame)-1] = &testbench.ICMPv4{Type: testbench.ICMPv4Type(header.ICMPv4DstUnreachable), Code: testbench.ICMPv4Code(header.ICMPv4FragmentationNeeded), NextHopMTU: testbench.Uint16(pathMTU), Payload: quote}
+	conn.SendFrameStateless(t, frame)
+	info := wait("pmtu", func(i linux.TCPInfo) bool { return int(i.SndMss) < originalMSS })
+	// An earlier full-sized repair may already have been queued by RACK.
+	// Match the repaired hole by sequence number and its new payload length.
+	retrans, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(base.Add(size)))}, &testbench.Payload{Bytes: data[:info.SndMss]}, time.Second)
+	if err != nil {
+		t.Fatalf("no new-sized retransmission of the hole after reducing PMTU: %v", err)
+	}
+	p := retrans[len(retrans)-1].(*testbench.Payload)
+	t.Logf("LINUX-WIRE pre_mss=%d post_mss=%d hole_bytes=%d sacked=%d", originalMSS, info.SndMss, len(p.Bytes), info.Sacked)
+	if int(info.SndMss) != len(p.Bytes) {
+		t.Fatalf("repaired payload %d differs from current MSS %d", len(p.Bytes), info.SndMss)
+	}
+	ack(5, false)
+	wait("done", func(i linux.TCPInfo) bool { return i.Unacked == 0 && i.Sacked == 0 })
 }

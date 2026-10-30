@@ -951,13 +951,14 @@ func (l *ICMPv6) merge(other Layer) error {
 // ICMPv4 can construct and match an ICMPv4 encapsulation.
 type ICMPv4 struct {
 	LayerBase
-	Type     *header.ICMPv4Type
-	Code     *header.ICMPv4Code
-	Checksum *uint16
-	Ident    *uint16 // Only in Echo Request/Reply.
-	Sequence *uint16 // Only in Echo Request/Reply.
-	Pointer  *uint8  // Only in Parameter Problem.
-	Payload  []byte
+	Type       *header.ICMPv4Type
+	Code       *header.ICMPv4Code
+	Checksum   *uint16
+	Ident      *uint16 // Only in Echo Request/Reply.
+	Sequence   *uint16 // Only in Echo Request/Reply.
+	Pointer    *uint8  // Only in Parameter Problem.
+	NextHopMTU *uint16 // Only in Fragmentation Needed.
+	Payload    []byte
 }
 
 func (l *ICMPv4) String() string {
@@ -997,6 +998,10 @@ func (l *ICMPv4) ToBytes() ([]byte, error) {
 		}
 		if l.Sequence != nil {
 			h.SetSequence(*l.Sequence)
+		}
+	case header.ICMPv4DstUnreachable:
+		if h.Code() == header.ICMPv4FragmentationNeeded && l.NextHopMTU != nil {
+			h.SetMTU(*l.NextHopMTU)
 		}
 	case header.ICMPv4ParamProblem:
 		if l.Pointer != nil {
