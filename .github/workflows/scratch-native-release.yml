@@ -1,7 +1,7 @@
 name: Verify the setuptools release wheel override
 on:
   push:
-    branches: [qualification/release-sdist-repro]
+    branches: [qualification/release-wheel-frontend]
 permissions:
   contents: read
   actions: read
@@ -22,7 +22,7 @@ jobs:
       QUALIFICATION_TARGETS: //sandboxexec/sandbox/python:dist
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 4}
+        with: {persist-credentials: false, fetch-depth: 0}
       - name: Recover the dependency lock from the successful release build
         env:
           GH_TOKEN: ${{ github.token }}
@@ -45,17 +45,17 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           rc=0
-          bash "$RUNNER_TEMP/sdist-fixture/run.sh" canonical 89716091b46369f5a86808954de5162b45ab18d3 || rc=$?
+          bash "$RUNNER_TEMP/sdist-fixture/run.sh" canonical ba488ce1b6e6e02cc368dcb4538dcb786713ffc9 || rc=$?
           mkdir -p "$RUNNER_TEMP/publication/canonical"
           echo "$rc" > "$RUNNER_TEMP/publication/canonical/stage.exit"
       - name: Resolve the clean product source with its declared rules_python
         run: |
           out="$RUNNER_TEMP/publication"
-          git checkout --quiet --detach 997c27aa46247c11bd69c4d09f3589cc22010d17
+          git checkout --quiet --detach 378a719ac38bf5d2fa98c99eb980152a819e3114
           git rev-parse HEAD > "$out/product.source"
           git rev-parse HEAD^{tree} > "$out/product.tree"
           git rev-parse HEAD:tools/python_distribution/setuptools_reproducible_sdist.patch > "$out/product.patch"
-          git rev-parse 89716091b46369f5a86808954de5162b45ab18d3:tools/python_distribution/setuptools_reproducible_sdist.patch | cmp - "$out/product.patch"
+          git rev-parse ba488ce1b6e6e02cc368dcb4538dcb786713ffc9:tools/python_distribution/setuptools_reproducible_sdist.patch | cmp - "$out/product.patch"
           export USE_BAZEL_VERSION
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           rc=0
@@ -69,6 +69,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: release-sdist-repro
+          name: release-wheel-frontend
           path: ${{ runner.temp }}/publication/
           if-no-files-found: error

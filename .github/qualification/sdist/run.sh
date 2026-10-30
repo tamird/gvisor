@@ -30,7 +30,7 @@ for arch in amd64 arm64; do
   args=(
     "--bazel-option=--host_platform=//tools/bazeldefs:rbe_linux_$arch"
     "--bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_$arch"
-    --bazel-option=--@rules_python//python/config_settings:bootstrap_impl=native
+    --bazel-option=--config=static-python
     --bazel-option=--action_env=PATH=/usr/bin:/bin
     --bazel-option=--remote_download_outputs=toplevel
     --bazel-option=--//sandboxexec/sandbox/python:release_version=2026.10.29.2
