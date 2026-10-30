@@ -1,35 +1,86 @@
-name: CI
-
-"on":
+name: Measure the PTO after acknowledging one of two segments
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/pto-flight-transition]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  probe:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Compare the same ACK and final tail packet on three sources
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = 8147e9ad3c95c67a0a9dd560f37aff9d7842f861
+        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/focused"
+        platform=$RUNNER_TEMP/focused_platform
+        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/focused.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=focused_platform=$platform" \
+            'build --host_platform=@focused_platform//:ubuntu' \
+            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        mkdir -p "$RUNNER_TEMP/review-results"
+        cp .github/qualification/pto-transition/plan.json "$RUNNER_TEMP/review-results/"
+        cp .github/qualification/pto-transition/result.py "$RUNNER_TEMP/"
+        tailtest=//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
+        root="$RUNNER_TEMP/review-results"
+        for arm in parent head corrected; do
+          src=$(jq -r --arg arm "$arm" '.[$arm].head' "$root/plan.json")
+          git checkout --detach "$src"
+          filter='^TestRACKTLPTwoToOneWire$'
+          if [[ $arm != parent ]]; then
+            filter='^(TestRACKTLPTwoToOneWire|TestRACKTLPNotLaterThanRTO|TestRACKTLPNotLaterThanOldestRTO|TestRACKTLPOneRTOAfterAck)$'
+          fi
+          start=$(date -u +%FT%TZ)
+          code=0
+          bazelisk --bazelrc="$rc" test --config=x86_64 --test_filter="$filter" --test_arg=-test.v \
+            --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' \
+            --nocache_test_results --build_event_json_file="$root/$arm.bep" "$tailtest" > "$RUNNER_TEMP/$arm.bazel" 2>&1 || code=$?
+          tail -12 "$RUNNER_TEMP/$arm.bazel"
+          test ! -f bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test/test.log || cp bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test/test.log "$root/$arm.log"
+          python3 -B "$RUNNER_TEMP/result.py" "$arm" "$code" "$(git rev-parse HEAD)" "$start"
+        done
+        python3 -B "$RUNNER_TEMP/result.py" finish
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: pto-flight-transition
+        path: |
+          ${{ runner.temp }}/review-results/*.log
+          ${{ runner.temp }}/review-results/*.json
+        if-no-files-found: error
