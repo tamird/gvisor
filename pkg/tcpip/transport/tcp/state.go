@@ -477,3 +477,11 @@ type TCPEndpointState struct {
 	// Sender holds state related to the TCP Sender for the endpoint.
 	Sender TCPSenderState
 }
+
+// SetQualificationSACKProbe installs a test observer after endpoint restore.
+// It is used only by the fork trace; the observer is never checkpoint state.
+func (e *Endpoint) SetQualificationSACKProbe(fn TCPProbeFunc) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.probe = fn
+}
