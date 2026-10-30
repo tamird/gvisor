@@ -71,6 +71,8 @@ with (staging / "root.tar").open("wb") as f, tarfile.open(fileobj=f, mode="w") a
     tf.add(root, arcname=".")
 cmd("docker", "import", staging / "root.tar", "repo-fetch:local")
 archive = staging / "source.tar"
+# Fetch the fixed input itself instead of relying on the carrier's clone depth.
+cmd("git", "fetch", "--no-tags", "--depth=1", "https://github.com/tamird/gvisor.git", SOURCE)
 cmd("git", "archive", "-o", archive, SOURCE)
 lock = gzip.decompress((tree / "test/rbe/repo_fetch_lock.gz").read_bytes())
 assert digest(lock) == LOCK
