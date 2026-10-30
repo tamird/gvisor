@@ -1,4 +1,4 @@
-name: Verify both pip wheel repository forms and the release inventory
+name: Verify the fixed release wheel graph and canonical inventory
 on:
   push:
     branches: [qualification/release-wheel-frontend]
@@ -33,13 +33,18 @@ jobs:
       - name: Verify the release wheels with the canonical pip-hub scanner
         if: always()
         env:
-          SCANNER_SOURCE: 66fc0bce0e970c7ac49eae5bd78b9b1c87c936d9
+          SCANNER_SOURCE: 83e100f6fb642971e52eae554d2cf193fb2f56fd
         run: bash "$RUNNER_TEMP/sdist-fixture/license.sh"
       - name: Exercise the wheel scanner's owning package
         if: always()
         env:
-          SCANNER_SOURCE: 66fc0bce0e970c7ac49eae5bd78b9b1c87c936d9
+          SCANNER_SOURCE: 83e100f6fb642971e52eae554d2cf193fb2f56fd
         run: bash "$RUNNER_TEMP/sdist-fixture/scanner_test.sh"
+      - name: Verify unchanged release bytes on the declared worker platforms
+        if: always()
+        env:
+          CURRENT_PRODUCT: b5bd72431940ce903fe7521e2498811d8420f750
+        run: bash "$RUNNER_TEMP/sdist-fixture/verify_selected.sh"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
