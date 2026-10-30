@@ -1,0 +1,49 @@
+diff --git a/setuptools/_distutils/archive_util.py b/setuptools/_distutils/archive_util.py
+--- a/setuptools/_distutils/archive_util.py
++++ b/setuptools/_distutils/archive_util.py
+@@ -102,7 +102,12 @@
+     uid = _get_uid(owner)
+     gid = _get_gid(group)
+ 
++    timestamp = os.environ.get("SOURCE_DATE_EPOCH")
++    epoch = int(timestamp) if timestamp else None
++
+     def _set_uid_gid(tarinfo):
++        if epoch is not None:
++            tarinfo.mtime = min(tarinfo.mtime, epoch)
+         if gid is not None:
+             tarinfo.gid = gid
+             tarinfo.gname = group
+@@ -111,10 +116,16 @@
+             tarinfo.uname = owner
+         return tarinfo
+ 
+-    with tarfile.open(  # type: ignore[call-overload] # Dynamic mode
+-        archive_name, f'w|{tar_compression[compress]}'
+-    ) as tar:
+-        tar.add(base_dir, filter=_set_uid_gid)
++    with contextlib.ExitStack() as stack:
++        compression = tar_compression[compress]
++        stream = None
++        if compress == "gzip" and epoch is not None:
++            import gzip
++
++            stream = stack.enter_context(gzip.GzipFile(archive_name, "wb", mtime=epoch))
++            compression = ""
++        with tarfile.open(archive_name, f'w|{compression}', fileobj=stream) as tar:
++            tar.add(base_dir, filter=_set_uid_gid)
+ 
+     return archive_name
+ 
+diff --git a/setuptools-84.0.0.dist-info/RECORD b/setuptools-84.0.0.dist-info/RECORD
+--- a/setuptools-84.0.0.dist-info/RECORD
++++ b/setuptools-84.0.0.dist-info/RECORD
+@@ -51,7 +51,7 @@
+ setuptools/_distutils/_macos_compat.py,sha256=JzUGhF4E5yIITHbUaPobZEWjGHdrrcNV63z86S4RjBc,239
+ setuptools/_distutils/_modified.py,sha256=zVjI-LZ9JYUQ8t24mquJMHFPxnF8SUKnJqsp9J4htmM,3195
+ setuptools/_distutils/_msvccompiler.py,sha256=9PSfSHxvJnHnQL6Sqz4Xcz7iaBIT62p6BheQzGsSlwo,335
+-setuptools/_distutils/archive_util.py,sha256=if2Ia8pjKPYvGsavqE9XqKLNk6n4zXvC8yNnrRFdlx0,8677
++setuptools/_distutils/archive_util.py,sha256=-zLfVKw2zlPYvPAFvjJoxReHmSTPEEX2ZBXespSCZR8,9122
+ setuptools/_distutils/ccompiler.py,sha256=N85Dg6YQ_JgaoindNduW9mfCjIcpe96viTqNXjUlvzw,1094
+ setuptools/_distutils/cmd.py,sha256=Etm4nql0dLDBu3sNYa0USke-hK_pbCXO7Ml-z9hnkbk,21487
+ setuptools/_distutils/core.py,sha256=IvT4r992TDtkGJdr89WTDfs9yKxfFRo1Me6Pjpt7Wys,9086

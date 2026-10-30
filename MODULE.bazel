@@ -78,6 +78,13 @@ python.defaults(python_version = PYTHON_VERSION)
 python.toolchain(python_version = PYTHON_VERSION)
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+# Remove the wheel patch when setuptools honors SOURCE_DATE_EPOCH in sdists.
+# https://github.com/pypa/setuptools/issues/2133
+pip.override(
+    file = "setuptools-84.0.0-py3-none-any.whl",
+    patch_strip = 1,
+    patches = ["//tools/python_distribution:setuptools_reproducible_sdist.patch"],
+)
 pip.parse(
     # Reject source archives instead of building wheels during dependency fetching.
     # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L520-L550

@@ -7,7 +7,10 @@ package(
     licenses = ["notice"],
 )
 
-exports_files(["requirements.txt"])
+exports_files([
+    "requirements.txt",
+    "setuptools_reproducible_sdist.patch",
+])
 
 bzl_library(
     name = "defs_bzl",
