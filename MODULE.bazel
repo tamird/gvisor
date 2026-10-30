@@ -131,6 +131,14 @@ http_archive(
 )
 
 http_archive(
+    name = "protoc_check_static_python_arm64",
+    build_file = "//test/rbe/protoc_check:python.BUILD",
+    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+http_archive(
     name = "protoc_check_incompatible",
     build_file_content = "exports_files([\"bin/protoc\"])\n",
     sha256 = "121f6c7afe1d4d0e3ea6aab9432038599250134cbf4474cb1167d2c7decd4278",

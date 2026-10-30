@@ -78,7 +78,7 @@ build:rbe-common --noremote_accept_cached
 # A scratch worker has no /tmp; its action working directory is writable.
 build:rbe-common --action_env=TMPDIR=.
 build:rbe-common --host_action_env=TMPDIR=.
-build:rbe-common --extra_toolchains=//test/rbe/protoc_check:static_python
+build:rbe-common --extra_toolchains=//test/rbe/protoc_check:static_python,//test/rbe/protoc_check:static_python_arm64
 build:rbe-common --modify_execution_info=^GoToolchainBinaryBuild$=+no-remote-cache
 build:rbe-common --@io_bazel_rules_go//go/config:experimental_use_sh_toolchain
 build:rbe-common --extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash,//test/rbe/go_bootstrap:linux_arm64_ash
