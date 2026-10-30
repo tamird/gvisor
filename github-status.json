@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-30T11:44:08.686827+00:00",
-  "registryDate": "2026-10-30T15:06:49.038409+00:00",
+  "registryDate": "2026-10-30T15:24:53.079022+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -247804,6 +247804,24 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-30T14:50:12.258059+00:00"
+      }
+    },
+    "branch:vfio-device-gofer-open": {
+      "contributor-review": {
+        "scope": "73a709bdc845f47cc85dda13925e86a80606e2ad",
+        "since": "2026-10-30T15:06:49.038409+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T15:06:49.038409+00:00"
+      }
+    },
+    "branch:vfio-pci-file-poll": {
+      "contributor-review": {
+        "scope": "1801418f9a170d7fe78c5b92141f8e8c9e166d4a",
+        "since": "2026-10-30T15:06:49.038409+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-30T15:06:49.038409+00:00"
       }
     }
   },
