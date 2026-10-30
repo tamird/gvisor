@@ -392,3 +392,40 @@ func TestStatefileOutputRespectsUmask(t *testing.T) {
 		t.Errorf("existing output mode = %#o, want preserved %#o", got, want)
 	}
 }
+
+func TestStatefileOutputParentSymlink(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		indirect bool
+	}{{"argument", false}, {"link_target", true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			child := filepath.Join(dir, "other", "child")
+			if err := os.MkdirAll(child, 0755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(child, filepath.Join(dir, "link")); err != nil {
+				t.Fatal(err)
+			}
+			img := filepath.Join(dir, "checkpoint")
+			raw := writeSyntheticStatefile(t, img, map[string]string{"k": "v"}, []byte("payload"))
+			// Following link before .. makes this name other/checkpoint.
+			output := dir + "/link/../checkpoint"
+			if tc.indirect {
+				output = filepath.Join(dir, "output")
+				if err := os.Symlink("link/../checkpoint", output); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if b, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+output, img).CombinedOutput(); err != nil {
+				t.Fatalf("statefile: %v: %s", err, b)
+			}
+			if got, err := os.ReadFile(img); err != nil || !bytes.Equal(got, raw) {
+				t.Errorf("checkpoint changed: got %q, read error %v", got, err)
+			}
+			if got, err := os.ReadFile(filepath.Join(dir, "other", "checkpoint")); err != nil || string(got) != "v\n" {
+				t.Errorf("output = %q, %v; want v followed by newline", got, err)
+			}
+		})
+	}
+}
