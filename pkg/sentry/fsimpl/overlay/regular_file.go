@@ -112,6 +112,9 @@ func (fd *regularFileFD) Release(ctx context.Context) {
 	fd.cachedFD = nil
 }
 
+var closeSelectedForTest = make(chan struct{})
+var chmodFinishedForTest = make(chan struct{})
+
 // OnClose implements vfs.FileDescriptionImpl.OnClose.
 func (fd *regularFileFD) OnClose(ctx context.Context) error {
 	// Linux doesn't define ovl_file_operations.flush at all (i.e. its
@@ -129,7 +132,16 @@ func (fd *regularFileFD) OnClose(ctx context.Context) error {
 		fd.cachedFlags = statusFlags
 	}
 	wrappedFD := fd.cachedFD
+	marked := !fd.copiedUp && fd.vfsfd.StatusFlags()&(linux.O_NOATIME|linux.O_NONBLOCK) == linux.O_NOATIME|linux.O_NONBLOCK
 	fd.mu.Unlock()
+	if marked {
+		select {
+		case <-closeSelectedForTest:
+		default:
+			close(closeSelectedForTest)
+			<-chmodFinishedForTest
+		}
+	}
 	return wrappedFD.OnClose(ctx)
 }
 
@@ -170,6 +182,10 @@ func (fd *regularFileFD) Allocate(ctx context.Context, mode, offset, length uint
 
 // SetStat implements vfs.FileDescriptionImpl.SetStat.
 func (fd *regularFileFD) SetStat(ctx context.Context, opts vfs.SetStatOptions) error {
+	if fd.vfsfd.StatusFlags()&(linux.O_NOATIME|linux.O_NONBLOCK) == linux.O_NOATIME|linux.O_NONBLOCK {
+		<-closeSelectedForTest
+		defer close(chmodFinishedForTest)
+	}
 	d := fd.dentry()
 	mode := linux.FileMode(d.mode.Load())
 	if err := vfs.CheckSetStat(ctx, auth.CredentialsFromContext(ctx), &opts, mode, d.accessACL.Load(), auth.KUID(d.uid.Load()), auth.KGID(d.gid.Load())); err != nil {
