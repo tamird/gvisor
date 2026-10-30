@@ -1,35 +1,100 @@
-name: CI
-
-"on":
+name: Verify TUN packet reads directly on master
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tun-pi-master-standalone]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tun-pi-master-standalone'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      OSTOCK: 13969a0fd2f1347a25e2b20e4e36e64787dcab15
+      OFIXED: e539b6e86e21b645f9d8a100e71235c1541477ab
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        git fetch --no-tags --depth=2 origin "$OSTOCK" "$OFIXED"
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Compare the shared four-boundary case on Linux, master, and independent correction
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        for arm in stock fix; do
+          src=$OSTOCK; [[ $arm == stock ]] || src=$OFIXED
+          git checkout --quiet --detach "$src"
+          out="$RUNNER_TEMP/tun-info/$arm"; mkdir -p "$out"
+          git rev-parse HEAD HEAD^ > "$out/source"
+          tests=(tuntap_test_runsc_systrap_directfs)
+          [[ $arm == fix ]] || tests+=(tuntap_test_native)
+          labels=(); for t in "${tests[@]}"; do labels+=("//test/syscalls:$t"); done
+          rc=0
+          docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=32 --keep_going --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=300 --test_sharding_strategy=disabled --test_env=GTEST_FILTER=TuntapTest.ReadPacketInfoHeader "${labels[@]}" >"$RUNNER_TEMP/tun-$arm.log" 2>&1 || rc=$?
+          echo "$rc" > "$out/exit"
+          for t in "${tests[@]}"; do
+            docker exec overlay-guest cat "bazel-testlogs/test/syscalls/$t/test.log" | grep -E 'TuntapTest[.]ReadPacketInfoHeader|tuntap.cc:[0-9]+|Value of:|Which is:|Expected:|Actual:|errno|pi[.]flags|TUN_PKT_STRIP|skipped|CAP_NET_ADMIN|Failed|Success' | head -110 > "$out/$t.receipt" || :
+          done
+          grep -E 'INFO: Invocation ID:|ERROR:|failed to|Build (did NOT complete|completed)|FAILED|PASSED|FAIL:' "$RUNNER_TEMP/tun-$arm.log" | tail -100 >"$out/bazel.receipt" || :
+        done
+    - name: Verify each arm actually ran the case
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        cd "$RUNNER_TEMP/tun-info"
+        for f in stock/tuntap_test_native.receipt stock/tuntap_test_runsc_systrap_directfs.receipt fix/tuntap_test_runsc_systrap_directfs.receipt; do
+          test -s "$f"
+          grep -Eq '\[ *(FAILED|OK) *\] TuntapTest.ReadPacketInfoHeader' "$f"
+          ! grep -qE '\[ *SKIPPED *\] TuntapTest.ReadPacketInfoHeader' "$f"
+        done
+        grep -Eq '\[ *OK *\] TuntapTest.ReadPacketInfoHeader' stock/tuntap_test_native.receipt
+        grep -Eq '\[ *FAILED *\] TuntapTest.ReadPacketInfoHeader' stock/tuntap_test_runsc_systrap_directfs.receipt
+        grep -Fq 'Actual: 3 (of type long)' stock/tuntap_test_runsc_systrap_directfs.receipt
+        grep -Fq 'Actual: 1 (of type long)' stock/tuntap_test_runsc_systrap_directfs.receipt
+        grep -Eq '\[ *OK *\] TuntapTest.ReadPacketInfoHeader' fix/tuntap_test_runsc_systrap_directfs.receipt
+        test "$(cat fix/exit)" = 0
+    - name: Run the complete corrected TUN syscall and owner analyzers
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$OFIXED"
+        out="$RUNNER_TEMP/tun-info/fix"
+        rc=0
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" overlay-guest bazel --bazelrc="$RUNNER_TEMP/overlay.bazelrc" test --config=x86_64 -c opt --jobs=24 --keep_going --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=300 --test_sharding_strategy=disabled //test/syscalls:tuntap_test_runsc_systrap_directfs //pkg/sentry/devices/tundev:tundev_nogo //pkg/tcpip/link/tun:tun_nogo > "$RUNNER_TEMP/tun-suite.log" 2>&1 || rc=$?
+        echo "$rc" > "$out/full-exit"
+        grep -E '(INFO: Invocation ID:|ERROR:|FAIL|PASSED|SKIPPED|WARN:|\[ *OK *\]|tests from|Build (completed|did NOT complete))' "$RUNNER_TEMP/tun-suite.log" | tail -160 > "$out/full-receipt" || :
+        test "$rc" = 0
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: tun-pi-master-standalone
+        path: ${{ runner.temp }}/tun-info
+        if-no-files-found: error
