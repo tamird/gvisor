@@ -1,0 +1,50 @@
+{
+  "current-native": {
+    "source": "fcdd222d0d71f18a59f7e3853cb7f5adab18777f",
+    "target": "//test/syscalls:udp_raw_socket_test_native",
+    "exit": 0,
+    "fixture-sha256": "bef3fd51e8280572cf4c49ba68584711a0fd162348d366bcdfffae920ebffb0f  test/syscalls/linux/udp_raw_socket.cc",
+    "cases": {
+      "Plain/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "DestinationOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ]
+    }
+  },
+  "current-guest": {
+    "source": "fcdd222d0d71f18a59f7e3853cb7f5adab18777f",
+    "target": "//test/syscalls:udp_raw_socket_test_runsc_ptrace",
+    "exit": 0,
+    "fixture-sha256": "bef3fd51e8280572cf4c49ba68584711a0fd162348d366bcdfffae920ebffb0f  test/syscalls/linux/udp_raw_socket.cc",
+    "cases": {
+      "Plain/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "DestinationOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ]
+    }
+  },
+  "stock-guest": {
+    "source": "7f9d613f7cb5464d67ca0abd0e67b4c5bb0d5e80",
+    "target": "//test/syscalls:udp_raw_socket_test_runsc_ptrace",
+    "exit": 3,
+    "fixture-sha256": "bef3fd51e8280572cf4c49ba68584711a0fd162348d366bcdfffae920ebffb0f  test/syscalls/linux/udp_raw_socket.cc",
+    "cases": {
+      "Plain/QuotedUdpErrorTest.PortUnreachable/0": [
+        "PASS",
+        ""
+      ],
+      "DestinationOptions/QuotedUdpErrorTest.PortUnreachable/0": [
+        "FAIL",
+        "poll"
+      ]
+    }
+  }
+}
