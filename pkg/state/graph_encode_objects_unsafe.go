@@ -29,6 +29,10 @@ type wideIndex struct {
 	blocks  *btree.BTreeG[uintptr]
 	objects *btree.BTreeG[wideRange]
 	active  bool
+	// probes counts the bucket work spent on wide queries before indexing
+	// occupied buckets. low and high bound the wide roots.
+	probes    uintptr
+	low, high uintptr
 }
 
 type wideRange struct {
@@ -36,28 +40,38 @@ type wideRange struct {
 	obj int32
 }
 
-// A wide range would need more than 32 of the 512-byte hash buckets.
-func wideBlocks(first, last uintptr) bool { return last-first >= 32 }
+// maxNarrowBlocks bounds the number of buckets visited directly.
+const maxNarrowBlocks = 32
 
-// wideIndex returns the ordered indexes for wide queries. Until the first
-// wide range is encountered, small objects need only their usual hash chains.
+func wideBlocks(first, last uintptr) bool { return last-first >= maxNarrowBlocks }
+
+// wideIndex returns search state for wide ranges. A graph containing only
+// small objects needs only the ordinary hash chains.
 func (es *graphEncodeState) wideIndex() *wideIndex {
 	if es.wide == nil {
-		es.wide = &wideIndex{
-			blocks:  btree.NewG(16, cmp.Less[uintptr]),
-			objects: btree.NewG(16, func(a, b wideRange) bool { return a.end < b.end }),
+		es.wide = &wideIndex{objects: btree.NewG(16, func(a, b wideRange) bool { return a.end < b.end })}
+	}
+	return es.wide
+}
+
+// indexSmallBlocks builds the occupied-bucket index from actual entries. A
+// pooled hash table can have far more slots than the current graph has keys.
+func (es *graphEncodeState) indexSmallBlocks(w *wideIndex) {
+	if w.blocks == nil {
+		w.blocks = btree.NewG(16, cmp.Less[uintptr])
+	}
+	// Each indexed object contributes one entry per bucket.
+	prev := int32(-1)
+	for _, be := range es.blockEntries {
+		if be.obj == prev {
+			continue
+		}
+		prev = be.obj
+		for b, last := be.addr>>blockShift, (be.end-1)>>blockShift; b <= last; b++ {
+			w.blocks.ReplaceOrInsert(b)
 		}
 	}
-	w := es.wide
-	if !w.active {
-		for _, s := range es.blocks.slots {
-			if s.key != 0 {
-				w.blocks.ReplaceOrInsert(s.key - 1)
-			}
-		}
-		w.active = true
-	}
-	return w
+	w.active = true
 }
 
 // index adds the object to the object index.
@@ -65,7 +79,13 @@ func (es *graphEncodeState) index(obj int32) {
 	o := es.obj(obj)
 	first, last := o.addr>>blockShift, (o.end-1)>>blockShift
 	if wideBlocks(first, last) {
-		es.wideIndex().objects.ReplaceOrInsert(wideRange{end: o.end, obj: obj})
+		w := es.wideIndex()
+		if w.objects.Len() == 0 {
+			w.low, w.high = o.addr, o.end
+		} else {
+			w.low, w.high = min(w.low, o.addr), max(w.high, o.end)
+		}
+		w.objects.ReplaceOrInsert(wideRange{end: o.end, obj: obj})
 		return
 	}
 	for b := first; b <= last; b++ {
@@ -88,16 +108,53 @@ func (es *graphEncodeState) queryBlock(b, addr, end uintptr) {
 		return
 	}
 	for ; e >= 0; e = es.blockEntries[e].next {
-		be := &es.blockEntries[e]
-		if be.addr >= end || addr >= be.end {
-			continue
+		es.queryEntry(&es.blockEntries[e], addr, end)
+	}
+}
+
+// queryEntry appends a live overlapping object at most once per query.
+func (es *graphEncodeState) queryEntry(be *blockEntry, addr, end uintptr) {
+	if be.addr >= end || addr >= be.end {
+		return
+	}
+	o := es.obj(be.obj)
+	if o.parent >= 0 || o.dead || o.stamp == es.stamp {
+		return
+	}
+	o.stamp = es.stamp
+	es.queryResult = append(es.queryResult, be.obj)
+}
+
+// queryWide visits occupied small buckets. Building and maintaining their
+// ordered index is unnecessary when wide queries are rare or the graph is
+// small; scan at most the lesser of the bucket width and the existing entries
+// until repeated scans have done a full index's worth of work.
+func (es *graphEncodeState) queryWide(first, last, addr, end uintptr) {
+	w := es.wideIndex()
+	entries := uintptr(len(es.blockEntries))
+	if !w.active && entries > maxNarrowBlocks && w.probes >= entries {
+		es.indexSmallBlocks(w)
+	}
+	if w.active {
+		w.blocks.AscendGreaterOrEqual(first, func(b uintptr) bool {
+			if b > last {
+				return false
+			}
+			es.queryBlock(b, addr, end)
+			return true
+		})
+		return
+	}
+	buckets := last - first + 1
+	w.probes += min(buckets, entries)
+	if buckets <= entries {
+		for b := first; b <= last; b++ {
+			es.queryBlock(b, addr, end)
 		}
-		o := es.obj(be.obj)
-		if o.parent >= 0 || o.dead || o.stamp == es.stamp {
-			continue
+	} else {
+		for i := range es.blockEntries {
+			es.queryEntry(&es.blockEntries[i], addr, end)
 		}
-		o.stamp = es.stamp
-		es.queryResult = append(es.queryResult, be.obj)
 	}
 }
 
@@ -114,20 +171,13 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 	es.queryResult = es.queryResult[:0]
 	first, last := addr>>blockShift, (end-1)>>blockShift
 	if wideBlocks(first, last) {
-		// Visit only occupied small buckets, regardless of slice capacity.
-		es.wideIndex().blocks.AscendGreaterOrEqual(first, func(b uintptr) bool {
-			if b > last {
-				return false
-			}
-			es.queryBlock(b, addr, end)
-			return true
-		})
+		es.queryWide(first, last, addr, end)
 	} else {
 		for b := first; b <= last; b++ {
 			es.queryBlock(b, addr, end)
 		}
 	}
-	if w := es.wide; w != nil && w.objects.Len() != 0 {
+	if w := es.wide; w != nil && addr < w.high && w.low < end {
 		// Live roots do not overlap: their starts and ends sort identically.
 		w.objects.AscendGreaterOrEqual(wideRange{end: addr + 1}, func(r wideRange) bool {
 			o := es.obj(r.obj)
@@ -379,6 +429,9 @@ func (es *graphEncodeState) absorb(parent, obj int32) {
 	p, o := es.obj(parent), es.obj(obj)
 	if wideBlocks(o.addr>>blockShift, (o.end-1)>>blockShift) {
 		es.wide.objects.Delete(wideRange{end: o.end})
+		if es.wide.objects.Len() == 0 {
+			es.wide.high = 0
+		}
 	}
 	off := o.addr - p.addr
 	o.parent = parent

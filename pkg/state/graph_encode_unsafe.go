@@ -450,10 +450,13 @@ func (es *graphEncodeState) release() {
 	es.byAddr.reset()
 	clear(es.maps)
 	es.blocks.reset()
-	if w := es.wide; w != nil && w.active {
-		w.blocks.Clear(true)
+	if w := es.wide; w != nil {
+		if w.active {
+			w.blocks.Clear(true)
+			w.active = false
+		}
 		w.objects.Clear(true)
-		w.active = false
+		w.probes, w.low, w.high = 0, 0, 0
 	}
 	es.blockEntries = es.blockEntries[:0]
 	es.stamp = 0
