@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from qualification_report import Owner, advertised_build_outputs, compact_records, spawn_output_files
 
@@ -37,6 +37,8 @@ def audit(report):
         subprocess.run([os.environ["BB_LOG_DECODER"], "print", f"--compact_execution_log={stage.parent / 'execution.binpb'}", "--raw=true", "--sort=false"], stdout=decoded, check=True)
     events = [json.loads(s) for s in stage.read_text().splitlines()]
     report["invocation"], = [e["started"]["uuid"] for e in events if "started" in e]
+    report["bazel_started"], = [e["started"].get("startTime") for e in events if "started" in e]
+    report["bazel_finished"], = [e["finished"].get("finishTime") for e in events if "finished" in e]
     if verdict["native_exit"] or verdict["status"] != "PASS":
         _, partial = compact_records(ROOT / "spawns.json")
         report["failed_actions"] = [{"owner": p.get("targetLabel"), "mnemonic": p.get("mnemonic"), "exit": p.get("exitCode", 0), "runner": p.get("runner")} for p in partial if p.get("exitCode") or p.get("status")]
@@ -54,6 +56,7 @@ def audit(report):
     paths = defaultdict(set)
     by_mnemonic = defaultdict(Counter)
     links = []
+    packages = report["packages"] = []
     for i, s in enumerate(spawns):
         category = classify(s)
         by_mnemonic[s.get("mnemonic", "<unknown>")][category] += 1
@@ -63,6 +66,14 @@ def audit(report):
         output_files = spawn_output_files(records, s)
         for path, meta in output_files.items():
             paths[(path, meta["sha256"])].add(i)
+        if s.get("mnemonic") in {"PackageTar", "MakeDeb"}:
+            packages.append({
+                "owner": s["targetLabel"], "mnemonic": s["mnemonic"], "class": category,
+                "action": s.get("digest"), "outputs": output_files, "exit": s.get("exitCode", 0),
+                "start": s.get("metrics", {}).get("startTime"),
+                "path": [var["value"] for var in s.get("envVars", []) if var["name"] == "PATH"],
+                "compression": [arg for arg in s.get("args", []) if arg.startswith(("--compressor=", "--compression="))],
+            })
         if s.get("mnemonic") == "GoLink" and s.get("targetLabel", "").startswith("//runsc:"):
             links.append({"index": i, "label": s["targetLabel"], "class": category,
                           "outputs": output_files, "digest": s.get("digest")})
@@ -125,16 +136,45 @@ def audit(report):
     # This is an evidence inventory, not a reclassification of the parent
     # wrapper or an all-scratch pass when cached/missing provenance remains.
     assert not report["missing"] and not report["failures"] and report["capture_exit"] == 0
-    assert len(links) >= 2 and all(l["class"] == "scratch-arm64" for l in links)
+    assert len(links) >= 2 and all(l["class"] in {"scratch-arm64", "cache"} for l in links)
     assert all(len(c["identified_runsc_link_indices"]) == 1 for c in report["closures"].values())
     assert len({c["identified_runsc_link_indices"][0] for c in report["closures"].values()}) == 2
-    # A successful release can be mostly cache hits. This run must
-    # independently execute every recorded action on the ARM64 worker.
+    # Only package actions require a fresh execution in this comparison.
     totals = Counter()
     for classes in report["all_spawns"].values():
         totals.update(classes)
     report["physical_execution"] = dict(totals)
-    assert totals == {"scratch-arm64": len(spawns)}, totals
+    assert set(totals) <= {"scratch-arm64", "cache"}, totals
+    assert packages and all(p["class"] == "scratch-arm64" and p["exit"] == 0 for p in packages)
+    assert all(p["path"] == ["/usr/bin:/bin"] for p in packages if p["mnemonic"] == "PackageTar"), packages
+    for owner, compression in {
+        "//debian:debian-data": "--compression=gz",
+        "//debian:gvisor-release-tar-bz2": "--compression=bz2",
+        "//debian:gvisor-release-tar-zstd": "bin/tools/zstd/compressor",
+    }.items():
+        variants = [p for p in packages if p["owner"] == owner]
+        assert len(variants) == 2 and all(
+            len(p["compression"]) == 1 and compression in p["compression"][0] for p in variants
+        ), (owner, variants)
+    for output in report["expected_outputs"]:
+        name = output["name"]
+        archive = Path(name)
+        if not archive.is_file():
+            archive = Path("bazel-bin/test/release/artifacts") / name.split("/artifacts/")[1]
+        producers = [p for p in packages for value in p["outputs"].values() if value["sha256"] == output["sha256"]]
+        assert len(producers) == 1, (name, producers)
+        with archive.open("rb") as produced:
+            assert hashlib.file_digest(produced, "sha256").hexdigest() == output["sha256"], name
+        if archive.suffix == ".deb":
+            ar_members = subprocess.check_output(["ar", "t", archive], text=True).splitlines()
+            assert "data.tar.gz" in ar_members, ar_members
+            listing = subprocess.check_output(["dpkg-deb", "--contents", archive], text=True)
+            members = [line.split(maxsplit=5)[-1] for line in listing.splitlines()]
+        else:
+            members = subprocess.check_output(["tar", "-tf", archive], text=True).splitlines()
+        runsc = [member for member in members if PurePosixPath(member).name == "runsc"]
+        assert len(runsc) == 1, (name, runsc)
+        output.update(producer=producers[0]["owner"], runsc=runsc[0])
     for name, c in report["closures"].items():
         arch = name.split("/artifacts/")[1].split("/")[0]
         output_prefix = {"amd64": "bazel-out/k8-", "arm64": "bazel-out/aarch64-"}[arch]
@@ -142,7 +182,7 @@ def audit(report):
         link, = (l for l in links if l["index"] == index)
         executable, = link["outputs"]
         assert executable.startswith(output_prefix), (name, executable)
-    report["status"] = "cold-native-verified"
+    report["status"] = "release-path-verified"
 
 
 report = {"source": SOURCE, "status": "incomplete"}

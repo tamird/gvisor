@@ -1,7 +1,7 @@
-name: Build release archives using the native ARM64 compiler
+name: Verify the release package writers with a pinned worker PATH
 on:
   push:
-    branches: [qualification/scratch-native-release]
+    branches: [qualification/release-archives-path]
 permissions:
   contents: read
   actions: read
@@ -54,7 +54,13 @@ jobs:
           curl -fsSL --retry 2 --max-time 120 https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bb"
-      - name: Build all six archives without accepting cached actions
+      - name: Ensure the archive reader can decode zstd
+        run: |
+          if ! command -v zstd >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y zstd
+          fi
+      - name: Build all six archives with fresh package writer actions
         id: native
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -65,8 +71,8 @@ jobs:
             --bazel-option=--extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64 \
             --bazel-option=--action_env=PATH=/usr/bin:/bin \
             --bazel-option=--remote_download_outputs=toplevel \
-            --bazel-option=--noremote_accept_cached \
-            '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb|GoLink)$=+no-remote-cache'
+            --bazel-option=--remote_accept_cached \
+            '--bazel-option=--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache'
       - name: Trace archives to producing actions and preserve the original build result
         if: ${{ !cancelled() && steps.native.outcome != 'skipped' }}
         env:
@@ -75,6 +81,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: scratch-native-release-evidence
+          name: release-archives-path-evidence
           path: ${{ runner.temp }}/publication/
           if-no-files-found: warn
