@@ -26,5 +26,6 @@ for lane in gnu scratch; do
     "$RUNNER_TEMP/bb" print --compact_execution_log="$data/execution.binpb" --raw=true --sort=false >"$data/spawns"
   fi
   python3 -B "$RUNNER_TEMP/sdist-fixture/current_result.py" "$lane" "$data" "$out" || :
+  if [[ $status == 0 ]]; then python3 -B "$RUNNER_TEMP/sdist-fixture/metadata.py" "$lane"; fi
 done
 test "$(cat "$out/current-gnu.exit")" = 0 && test "$(cat "$out/current-scratch.exit")" = 0
