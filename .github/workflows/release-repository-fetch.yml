@@ -1,0 +1,26 @@
+name: Run a Sentry eventfd test on the shell-free coordinator and executor
+on:
+  push:
+    branches: [qualification/release-repository-fetch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 92
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify the two direct eventfd cases against the original Go link
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/release_repository_probe.py
+      - name: Preserve allowlisted action provenance
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: eventfd-direct-case-control
+          path: repo-fetch-evidence/
+          if-no-files-found: error
