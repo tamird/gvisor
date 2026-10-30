@@ -738,3 +738,42 @@ func TestAbsorbedSupersededReferencesPruned(t *testing.T) {
 		}
 	})
 }
+
+func TestReviewGeneratedValues(t *testing.T) {
+	for _, tc := range []struct{name string; graph bool}{
+		{"legacy", false}, {"graph", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := state.GraphEngineEnabled()
+			state.EnableGraphEngine(tc.graph)
+			defer state.EnableGraphEngine(prev)
+			for _, nested := range []bool{false, true} {
+				name := "flat"
+				in := &reviewHolder{v: reviewConverted{tag:11}}
+				if nested {
+					name = "nested"
+					in.v.next = reviewHolder{v:reviewConverted{tag:22}}
+				}
+				t.Run(name, func(t *testing.T) {
+					out := loadBytes[reviewHolder](t, saveBytes(t, in))
+					var inner uint64
+					if nested {
+						h, ok := out.v.next.(reviewHolder)
+						if !ok { t.Fatalf("inner has type %T", out.v.next) }
+						inner = h.v.tag
+					}
+					t.Logf("fixture=%s engine=%s outer=%d inner=%d",name,tc.name,out.v.tag,inner)
+					if out.v.tag != 11 || nested && inner != 22 { t.Errorf("restored outer,inner=(%d,%d), want (%d,%d)",out.v.tag,inner,in.v.tag,22) }
+				})
+			}
+			if !tc.graph {
+				t.Run("order",func(t *testing.T) {
+					in := &reviewOrdered{counter:11}
+					out := loadBytes[reviewOrdered](t,saveBytes(t,in))
+					t.Logf("fixture=order engine=legacy input=%d restored=%d",in.counter,out.counter)
+					if in.counter != 22 || out.counter != in.counter { t.Errorf("restored %d, source after beforeSave %d, want both 22",out.counter,in.counter) }
+				})
+			}
+		})
+	}
+}

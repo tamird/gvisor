@@ -573,3 +573,33 @@ type gBytesRoot struct {
 	n   int64
 	s   string
 }
+
+// +stateify savable
+type reviewConverted struct {
+	tag uint64
+	next any
+}
+
+// +stateify savable
+type reviewHolder struct {
+	v reviewConverted `state:".(reviewConverted)"`
+}
+
+func (h *reviewHolder) saveV() reviewConverted { return h.v }
+func (h *reviewHolder) loadV(_ context.Context, v reviewConverted) { h.v = v }
+
+// +stateify savable
+type reviewStamp struct {
+	counter *uint64 `state:"nosave"`
+}
+
+func (s *reviewStamp) beforeSave() { *s.counter = 22 }
+
+// +stateify savable
+type reviewOrdered struct {
+	counter uint64
+	stamp uint64 `state:".(reviewStamp)"`
+}
+
+func (o *reviewOrdered) saveStamp() reviewStamp { return reviewStamp{counter: &o.counter} }
+func (o *reviewOrdered) loadStamp(context.Context, reviewStamp) {}
