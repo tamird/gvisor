@@ -199,16 +199,18 @@ func resolveOutputPath(outPath string) (targetPath string, directOpen bool, err 
 		if base == "." || base == ".." || base == string(filepath.Separator) {
 			return cur, true, nil
 		}
-		// Resolve symlinks before simplifying .., as the kernel does.
+		// Resolve the parent as the kernel would: in link/../file, ..
+		// applies to the link's target. Cleaning a relative path before
+		// resolving symlinks in the working directory is unsafe too.
 		dir, _ := filepath.Split(cur)
-		if dir == "" {
-			dir = "."
+		if !filepath.IsAbs(dir) {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return "", false, err
+			}
+			dir = cwd + string(filepath.Separator) + dir
 		}
-		dir, err := filepath.EvalSymlinks(dir)
-		if err != nil {
-			return "", false, err
-		}
-		realDir, err := filepath.Abs(dir)
+		realDir, err := filepath.EvalSymlinks(dir)
 		if err != nil {
 			return "", false, err
 		}
