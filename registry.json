@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T04:46:20.780605+00:00",
+    "updatedAt": "2026-10-30T04:49:47.743640+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37416,14 +37416,13 @@
       "evidence": "https://github.com/tamird/gvisor/commit/c8ac4368c94fae12e844bf1b4364d78c5e1636f2"
     },
     {
-      "from": "branch:portforward-stock-images",
+      "from": "pr:16551",
       "to": "branch:rules-img-redis-benchmark-upstream",
       "type": "depends_on",
-      "reason": "The benchmark reuses the basic Redis image declaration submitted in #16551. Its separate contributor approval and earlier runtime evidence are unchanged.",
+      "reason": "The benchmark reuses the Redis image declared by #16551. Submit the approved benchmark image after that PR merges.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16551",
-        "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
-        "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
+        "https://github.com/tamird/gvisor/commit/2b507a7ba"
       ]
     },
     {
