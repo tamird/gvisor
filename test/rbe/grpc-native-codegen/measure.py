@@ -9,7 +9,7 @@ import subprocess
 
 tmp = Path(os.environ["RUNNER_TEMP"])
 records = tmp / "grpc-receipt"
-bazel = ["docker", "exec", "grpc-compiler", "bazel", f"--bazelrc={tmp}/grpc.bazelrc"]
+bazel = ["bazelisk", f"--bazelrc={tmp}/grpc.bazelrc"]
 services = {
     "//pkg/shim/v1/taskserver:_task_server_cc_grpc_proto_grpc_codegen": "pkg/shim/v1/taskserver/task_server",
     "//test/packetimpact/proto:_posix_server_cc_grpc_proto_grpc_codegen": "test/packetimpact/proto/posix_server",
@@ -17,7 +17,8 @@ services = {
 wrapper = "@@grpc+//src/compiler:grpc_cpp_plugin"
 base = "aa767e4c43d011121271551fe24da501a56f729d"
 options = [
-    "--config=x86_64", "--jobs=28", "--nostamp", "--workspace_status_command=", "--remote_download_outputs=toplevel",
+    "--platforms=//tools/bazeldefs:linux_amd64", "--extra_toolchains=@local_config_cc_toolchains//:all", "--jobs=3", "--noremote_accept_cached",
+    "--host_cxxopt=-std=c++17", "--cxxopt=-std=c++17", "--nostamp", "--workspace_status_command=", "--remote_download_outputs=toplevel",
     "--host_cxxopt=-O0", "--cxxopt=-O0", "--features=fully_static_link", "--host_features=fully_static_link", "--nostart_end_lib",
     "--features=-supports_start_end_lib", "--host_features=-supports_start_end_lib",
     "--linkopt=-static", "--host_linkopt=-static",
@@ -28,6 +29,7 @@ options = [
 ]
 source_hashes = {"old": "818441ccf239979a820926bd517ba9a2fa9b77e805943baa411edc5e5b3bd4de",
                  "native": "6d4b18be32f4e20ec268877d55a2259551f9617dd64f911976da69b34a35f38c"}
+host_module = b'\nhost_cc = use_extension("@rules_cc//cc:extensions.bzl", "cc_configure_extension")\nuse_repo(host_cc, "local_config_cc_toolchains")\n'
 sha = lambda content: hashlib.sha256(content).hexdigest()
 def now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -64,9 +66,15 @@ def execute(name, command, stdout=None):
     # No environment, rc file, raw argv outside of the two explicitly selected action types, or unfiltered setup logs.
     def scrub(line):
         return re.sub(r'(?i)(?:key|authorization|token)[=:][^\s]+', 'REDACTED', line)[:1800]
-    rows = [scrub(l) for l in raw.splitlines() if
-            (l.startswith("ERROR:") or "no such file" in l.lower() or "/bin/bash" in l or 'exec: "/bin/bash"' in l or "Invocation ID:" in l or "fatal error:" in l)]
-    data = dict(start=start, finish=now(), exit=process.returncode, evidence=rows[:22])
+    def diagnostic(line):
+        lowered = line.lower()
+        return ("invocation id:" in lowered or line.startswith("ERROR:") or
+                any(word in lowered for word in
+                    ("error:", "failed to", "cannot ", "undefined reference", "relocation ",
+                     "multiple definition", "no such file", "could not", "collect2:", "/usr/bin/ld",
+                     "/bin/bash", "killed", "out of memory", "unrecognized option", "not found")))
+    rows = [scrub(line) for line in raw.splitlines() if diagnostic(line)]
+    data = dict(start=start, finish=now(), exit=process.returncode, evidence=rows[:70])
     write(name+"-run", data)
     print(name, process.returncode, rows[:3], flush=True)
     return data
@@ -75,6 +83,36 @@ def label(raw):
     if raw.startswith("@@//") or raw.startswith("@//"):
         return raw.lstrip("@")
     return "@@" + raw.lstrip("@") if raw.startswith("@") else raw
+
+def require_host_link_plan(flags, targets):
+    query = 'mnemonic("CppLink", deps(set(' + " ".join(targets) + ')))'
+    path = tmp / "link-plan.json"
+    with path.open("w") as out:
+        rc = execute("native-link-plan", bazel+["aquery",*flags,"--include_param_files","--output=jsonproto",query],out)
+    assert not rc["exit"], "could not inspect configured compiler actions"
+    graph = json.loads(path.read_bytes())
+    names = {t["id"]:label(t["label"]) for t in graph["targets"]}
+    expected = {"@@grpc+//src/compiler:grpc_cpp_plugin_native", "@@protobuf+//:protoc",
+                "@@protobuf+//src/google/protobuf/compiler:protoc_minimal",
+                "@@protobuf+//upb_generator/minitable:protoc-gen-upb_minitable_stage0"}
+    rows = []
+    for action in graph["actions"]:
+        owner = names[action["targetId"]]
+        if owner not in expected:
+            continue
+        argv = action["arguments"]
+        params = [v for f in action.get("paramFiles",[]) for v in f["arguments"]]
+        args = [*argv,*params]
+        rows.append(dict(owner=owner, executable=argv[0], worker=action["executionPlatform"],
+                         flags=[v for v in args if v=="-static" or "fuse-ld" in v or "gc-sections" in v or "start-lib" in v], archives=sum(v.endswith(".a") for v in args)))
+    write("four-link-actions",rows)
+    assert {r["owner"] for r in rows}==expected, rows
+    for r in rows:
+        f=r["flags"]
+        assert r["executable"]=="/usr/bin/gcc",r
+        assert "-static" in f and [v for v in f if v.startswith("-fuse-ld=")][-1]=="-fuse-ld=bfd",r
+        assert [v for v in f if "gc-sections" in v][-1]=="-Wl,--no-gc-sections",r
+        assert r["archives"] and not any("start-lib" in v for v in f),r
 
 def lane(name):
     bare = name != "ordinary"
@@ -103,31 +141,49 @@ def lane(name):
         assert a["executionPlatform"].endswith(":"+expected), (name,a)
     for a in generated:
         assert a["mnemonic"]=="Action" and any(x.startswith("--plugin=") and x.endswith("grpc_cpp_plugin_"+("native" if native else "binary")) for x in a["arguments"]),a
-    grpc_source = subprocess.check_output(["docker","exec","grpc-compiler","bash","-c",'cat "$(bazel info output_base 2>/dev/null)/external/grpc+/bazel/cc_grpc_library.bzl"'])
+    output_base = subprocess.check_output(bazel+["info","output_base"],text=True).strip()
+    grpc_source = (Path(output_base)/"external/grpc+/bazel/cc_grpc_library.bzl").read_bytes()
     digest = sha(grpc_source)
     assert digest == source_hashes["native" if native else "old"],digest
+    if native:
+        require_host_link_plan(flags, targets)
     events = tmp / (name+"-events.json")
     outcome = execute(name, bazel+["build", *flags, "--execution_log_json_file="+str(events), *targets])
-    if outcome["exit"] and any("killed signal terminated program cc1plus" in t.lower() for t in outcome["evidence"]):
-        # Retain the remote compilation failure. The identical coordinator image
-        # has a separate memory budget, as in the qualified protobuf fallback.
-        events = tmp / (name+"-fallback-events.json")
-        outcome = execute(name+"-compile-fallback", bazel+["build",*flags,"--jobs=3","--strategy=CppCompile=local","--noremote_upload_local_results","--execution_log_json_file="+str(events),*targets])
     selected = []
+    companion_links = []
     if events.is_file():
         for s in spawns(events):
             owner = label(s.get("targetLabel",""))
+            if s.get("mnemonic")=="CppLink" and owner in ("@@grpc+//src/compiler:grpc_cpp_plugin_native","@@protobuf+//:protoc"):
+                companion_links.append({k:s.get(k) for k in ("targetLabel","runner","cacheHit","exitCode","status","listedOutputs")})
             if owner in [*targets,wrapper] and s.get("mnemonic") in ["Genrule","Action"]:
                 selected.append({k:s.get(k) for k in ("targetLabel","mnemonic","commandArgs","platform","runner","cacheHit","remoteCacheHit","exitCode","status","listedOutputs","actualOutputs")})
     write(name+"-executions",selected)
+    write(name+"-hosted-links",companion_links)
     hashes = {}
     if outcome["exit"]==0:
         paths = [f"{stem}.grpc.pb.{ext}" for stem in services.values() for ext in ["h","cc"]]
         for path in paths:
-            contents = subprocess.check_output(["docker","exec","grpc-compiler","cat","bazel-bin/"+path])
+            contents = (Path("bazel-bin") / path).read_bytes()
             assert contents and b"grpc" in contents,path
             hashes[path]={"size":len(contents),"sha256":sha(contents)}
     write(name+"-outputs",hashes)
+    if native and outcome["exit"] == 0:
+        # The real generator executed on an empty rootfs. Keep independent ELF
+        # interpreter/dynamic dependency properties of both actual command paths.
+        root = Path(subprocess.check_output(bazel+["info","execution_root"],text=True).strip())
+        paths = [generated[0]["arguments"][0], next(v.split("=",2)[2] for v in generated[0]["arguments"] if v.startswith("--plugin="))]
+        info = {}
+        for path in paths:
+            tool = root / path
+            if not tool.is_file():
+                info[path] = {"elf_inspection":"missing local tool output", "ran_on":"scratch, see original execution"}
+                continue
+            library = subprocess.check_output(["readelf","-dW",tool],text=True)
+            segments = subprocess.check_output(["readelf","-lW",tool],text=True)
+            info[path] = dict(sha256=sha(tool.read_bytes()), contains_interp="INTERP" in segments, contains_needed="(NEEDED)" in library)
+            assert not info[path]["contains_interp"] and not info[path]["contains_needed"], info[path]
+        write("native-executables", info)
     if name == "stock-scratch":
         assert outcome["exit"] and any("grpc_cpp_plugin" in t for t in outcome["evidence"]),outcome
         assert any("/bin/bash" in t and any(v in t.lower() for v in ["not found","no such file","could not start","failed to start"]) for t in outcome["evidence"]),outcome
@@ -154,8 +210,8 @@ def main():
     original = Path("MODULE.bazel").read_bytes()
     assert subprocess.check_output(["git","show",base+":MODULE.bazel"])==original
     try:
-        for name in ["stock-scratch","ordinary","native"]:
-            Path("MODULE.bazel").write_bytes(original)
+        for name in ["native","ordinary","stock-scratch"]:
+            Path("MODULE.bazel").write_bytes(original + host_module)
             if name=="stock-scratch":
                 with Path("MODULE.bazel").open("ab") as m:
                     m.write(b'\nsingle_version_override(module_name="grpc", patches=["//test/rbe/grpc-native-codegen:stock-worker.patch"], patch_strip=1)\n')
@@ -166,6 +222,9 @@ def main():
                 result["lanes"][name]=lane(name)
             except Exception as exc:
                 result["errors"][name]=str(exc)[:3600]
+                if name=="native":
+                    result["unexecuted"]=["ordinary","stock-scratch"]
+                    break
             write("progress",result)
         if not result["errors"]:
             assert result["lanes"]["ordinary"]["outputs"]==result["lanes"]["native"]["outputs"]

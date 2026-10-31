@@ -1,95 +1,61 @@
-name: Read the two original gRPC prerequisite linker errors
+name: Compare two real gVisor C++ gRPC generators
 on:
   push:
     branches: [qualification/grpc-native-codegen]
-permissions: {}
+permissions:
+  contents: read
 jobs:
-  errors:
+  compare:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 4
+    timeout-minutes: 145
+    env:
+      USE_BAZEL_VERSION: 8.8.1
+      CC: /usr/bin/gcc
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      MINIMAL: mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef
     steps:
-    - name: Recover only the first terminal linker diagnostic from each invocation
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 6, persist-credentials: false}
+    - name: Prepare the previously qualified compiler coordinator and execution platforms
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      shell: python
       run: |
-        import base64, datetime, http.client, json, os, pathlib, re
-        key = os.environ.pop("BUILDBUDDY_API_KEY")
-        ids = ["30e12d9f-c7cd-4303-bb42-f3a1d98f2bb9","aadad49f-9c73-4169-a2a3-2ae2472bd6b4"]
-        def request(path, data, contents=False):
-            conn = http.client.HTTPSConnection("app.buildbuddy.io", timeout=15)
-            conn.request("POST", path, json.dumps(data).encode(), {"Content-Type":"application/json","x-buildbuddy-api-key":key})
-            res = conn.getresponse()
-            status, raw = res.status, res.read()
-            conn.close()
-            if status != 200:
-                raise ValueError("HTTP "+str(status))
-            return raw if contents else json.loads(raw)
-        def lines(uid):
-            args = {"selector":{"invocation_id":uid}}
-            raw = ""
-            try:
-                for _ in range(64):
-                    res = request("/api/v1/GetLog",args)
-                    raw += res["log"]["contents"]
-                    tok = res.get("nextPageToken",res.get("next_page_token"))
-                    if not tok:
-                        return raw
-                    args["page_token"]=tok
-                raise ValueError("pagination bound")
-            except (KeyError,ValueError):
-                res=request("/rpc/BuildBuddyService/GetEventLogChunk",{"invocationId":uid,"minLines":100000})
-                return base64.b64decode(res["buffer"]).decode(errors="replace")
-        def link_stderr(uid):
-            response=request("/rpc/BuildBuddyService/GetInvocation",{"lookup":{"invocationId":uid}})
-            refs=[]
-            for inv in response.get("invocation",[]):
-                if inv.get("invocationId")!=uid:
-                    continue
-                for event in inv.get("event",[]):
-                    action=event.get("buildEvent",{}).get("action",{})
-                    if action.get("success") or action.get("type")!="CppLink":
-                        continue
-                    stderr=action.get("stderr",{})
-                    if "contents" in stderr:
-                        refs.append(base64.b64decode(stderr["contents"]).decode(errors="replace"))
-                    uri=stderr.get("uri","")
-                    if uri.startswith(("bytestream://remote.buildbuddy.io/","bytestream://cache.buildbuddy.io/")):
-                        refs.append(request("/api/v1/GetFile",{"uri":uri},contents=True).decode(errors="replace"))
-            return "\n".join(refs)
-        result={}
-        for uid in ids:
-            try:
-                action=""
-                try:
-                    action=link_stderr(uid)
-                except (ValueError,KeyError):
-                    pass
-                s = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]','',action+'\n'+lines(uid)).splitlines()
-                primary = re.compile(r'undefined reference|multiple definition|cannot find|cannot open|unrecogni[sz]ed option|unknown (option|argument)|unsupported (option|relocation)|file format not recognized|bad value|cannot be used|failed to set dynamic|relocation .*against|final link failed|ld terminated|not permitted|error adding symbols',re.I)
-                linker=re.compile(r'(?:^|[/\s])(?:[a-zA-Z0-9_]+-)*(?:ld(?:[.](?:bfd|gold|lld))?|lld-link|collect2):')
-                # Some ld diagnostics have no "error" word. Look at all linker-
-                # authored lines except secondary exit messages and warnings.
-                meaningful = [x.strip() for x in s if linker.search(x) and not re.search(r'ld returned [0-9]+ exit status|\bwarning:',x,re.I)]
-                matches = [x.strip() for x in s if primary.search(x)] or meaningful
-                if not matches:
-                    raise ValueError("only generic collect2 exit retained; no specific linker diagnostic")
-                msg = matches[0]
-                # No full log, flags, URLs, environment or action headers leave the job.
-                if key in msg or re.search(r'(?i)token|authorization|api[-_]key|https?://',msg):
-                    raise ValueError("filtered private diagnostic")
-                result[uid]=re.sub(r'/[^ ]*/execroot/[^ /]+/', '<execroot>/',msg)[:700]
-            except Exception as err:
-                result[uid]={"unavailable":str(err)[:90]}
-        result["finishedAt"]=datetime.datetime.now(datetime.timezone.utc).isoformat()
-        path=pathlib.Path(os.environ["RUNNER_TEMP"])/"grpc-link-errors.json"
-        path.write_text(json.dumps(result,indent=2)+"\n")
-        print(json.dumps(result))
-        raise SystemExit(any(isinstance(v,dict) for v in result.values()))
+        set -euo pipefail
+        d="$RUNNER_TEMP/grpc-receipt"
+        mkdir -p "$d" "$RUNNER_TEMP/grpc-workers"
+        printf '{"status":"INCOMPLETE","reason":"no final verifier result"}\n' > "$d/verdict.json"
+        git merge-base --is-ancestor aa767e4c43d011121271551fe24da501a56f729d HEAD
+        cat > "$RUNNER_TEMP/grpc-workers/MODULE.bazel" <<'EOF'
+        module(name = "grpc_workers")
+        EOF
+        cat > "$RUNNER_TEMP/grpc-workers/BUILD" <<EOF
+        package(default_visibility=["//visibility:public"])
+        constraint_setting(name="contents")
+        constraint_value(name="empty",constraint_setting=":contents")
+        platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","EstimatedMemory":"4GB","container-image":"docker://$GNU"})
+        platform(name="scratch",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux",":empty"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://$MINIMAL"})
+        EOF
+        umask 077
+        test -n "$BUILDBUDDY_API_KEY"
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=local' 'build --noremote_local_fallback'
+          printf '%s\n' "build --inject_repository=grpc_workers=$RUNNER_TEMP/grpc-workers" 'build --extra_execution_platforms=@grpc_workers//:gnu,@grpc_workers//:scratch' 'build --host_platform=@grpc_workers//:gnu'
+          printf '%s\n' 'build --strategy=Action=remote' 'build --strategy=Genrule=remote' 'build --noremote_upload_local_results'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/grpc.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        umask 022
+        gcc -dumpfullversion > "$d/coordinator-gcc"
+        ld.bfd --version | head -1 > "$d/coordinator-linker"
+    - name: Run the stock and corrected configured gVisor actions
+      timeout-minutes: 135
+      run: |
+        python3 test/rbe/grpc-native-codegen/measure.py
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: original-grpc-link-errors
-        path: ${{ runner.temp }}/grpc-link-errors.json
+        name: grpc-native-codegen
+        path: ${{ runner.temp }}/grpc-receipt/
         if-no-files-found: error
