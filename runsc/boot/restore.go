@@ -279,7 +279,7 @@ type restorer struct {
 
 // restoreSubcontainer restores a subcontainer.
 // It returns whether this started the kernel.
-func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l *Loader, cid string, stdioFDs, goferFDs, goferFilestoreFDs []*fd.FD, devGoferFD *fd.FD, goferMountConfs []specutils.GoferMountConf) (bool, error) {
+func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l *Loader, cid string, stdioFDs, goferFDs, goferFilestoreFDs []*fd.FD, devGoferFD *fd.FD, goferMountConfs []specutils.GoferMountConf, cgroupLimit uint64) (bool, error) {
 	containerName := r.registerContainer(l, spec, cid)
 	info := &containerInfo{
 		cid:               cid,
@@ -292,7 +292,7 @@ func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l 
 		goferFilestoreFDs: goferFilestoreFDs,
 		goferMountConfs:   goferMountConfs,
 	}
-	return r.restoreContainerInfo(l, info)
+	return r.restoreContainerInfo(l, info, cgroupLimit)
 }
 
 // registerContainer registers container cid. A container without a name gets
@@ -324,7 +324,7 @@ func (r *restorer) registerContainer(l *Loader, spec *specs.Spec, cid string) st
 
 // restoreContainerInfo restores a container.
 // It returns whether this started the kernel.
-func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) (bool, error) {
+func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo, cgroupLimit uint64) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -351,7 +351,7 @@ func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) (bool, e
 
 	if len(r.containers) == r.totalContainers {
 		// Trigger the restore if this is the last container.
-		if err := r.restore(l); err != nil {
+		if err := r.restore(l, cgroupLimit); err != nil {
 			return false, err
 		}
 		return true, nil
@@ -370,9 +370,9 @@ func (r *restoreMounts) String() string {
 	return fmt.Sprintf("fdmap: %#v, mfmap: %v, fsCheckpointedMfs: %v", r.fdmap, r.mfmap, r.fsCheckpointedMfs)
 }
 
-func (r *restorer) restore(l *Loader) error {
+func (r *restorer) restore(l *Loader, cgroupLimit uint64) error {
 	log.Infof("Starting to restore %d containers", len(r.containers))
-	gcSuspension := state.SuspendGCForRestore(r.metadata)
+	gcSuspension := state.SuspendGCForRestore(r.metadata, cgroupLimit)
 	gcCleanup := cleanup.Make(gcSuspension.End)
 	defer gcCleanup.Clean()
 

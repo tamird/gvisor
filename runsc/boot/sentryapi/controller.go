@@ -49,6 +49,9 @@ const ContMgrStartSubcontainer = "containerManager.StartSubcontainer"
 
 // StartArgs contains arguments to the Start method.
 type StartArgs struct {
+	// RestoreCgroupLimit is the current sandbox cgroup memory ceiling on a restore request.
+	RestoreCgroupLimit uint64
+
 	// Spec is the spec of the container to start.
 	Spec *specs.Spec
 
@@ -112,6 +115,9 @@ const ContMgrRestore = "containerManager.Restore"
 
 // RestoreOpts contains options related to restoring a container's file system.
 type RestoreOpts struct {
+	// CgroupLimit is the current sandbox cgroup memory ceiling, or zero if unavailable.
+	CgroupLimit uint64
+
 	// FilePayload contains, in order:
 	// 1. checkpoint state file.
 	// 2. optional checkpoint pages metadata file.

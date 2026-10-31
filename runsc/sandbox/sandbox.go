@@ -605,6 +605,22 @@ func (d DirectIO) String() string {
 	panic(fmt.Sprintf("invalid direct I/O mode %d", d))
 }
 
+// restoreCgroupLimit reads the sandbox's current memory ceiling immediately
+// before a restore request. A zero result prevents suspending GC when the
+// host limit is unknown.
+func (s *Sandbox) restoreCgroupLimit() uint64 {
+	cg := s.CgroupJSON.Cgroup
+	if cg == nil {
+		return 0
+	}
+	limit, err := cg.MemoryLimit()
+	if err != nil {
+		log.Warningf("Reading cgroup memory limit for restore: %v", err)
+		return 0
+	}
+	return limit
+}
+
 // Restore sends the restore call for a container in the sandbox.
 func (s *Sandbox) Restore(conf *config.Config, spec *specs.Spec, cid string, imagePath string, directIO DirectIO, background bool, networkArgs *sentryapi.CreateLinksAndRoutesArgs) error {
 	waitRegisteredMetrics := s.fetchRegisteredMetrics()
@@ -682,6 +698,7 @@ func (s *Sandbox) Restore(conf *config.Config, spec *specs.Spec, cid string, ima
 	}
 
 	// Restore the container and start the root container.
+	opt.CgroupLimit = s.restoreCgroupLimit()
 	var reply sentryapi.RestoreReply
 	if err := conn.Call(sentryapi.ContMgrRestore, &opt, &reply); err != nil {
 		if opt.UseCheckpointGofer {
@@ -840,6 +857,7 @@ func (s *Sandbox) RestoreSubcontainer(spec *specs.Spec, conf *config.Config, cid
 		GoferMountConfs:      goferMountConf,
 		FilePayload:          payload,
 	}
+	args.RestoreCgroupLimit = s.restoreCgroupLimit()
 	var reply sentryapi.RestoreReply
 	if err := s.call(sentryapi.ContMgrRestoreSubcontainer, &args, &reply); err != nil {
 		return fmt.Errorf("starting sub-container %v: %w", spec.Process.Args, err)

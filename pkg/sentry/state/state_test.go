@@ -40,23 +40,26 @@ func TestSuspendGCForRestore(t *testing.T) {
 
 	const defaultLimit = int64(1 << 30)
 	for _, tc := range []struct {
-		name     string
-		totalMem uint64
-		metadata map[string]string
-		want     int64
+		name        string
+		totalMem    uint64
+		cgroupLimit uint64
+		metadata    map[string]string
+		want        int64
 	}{
-		{name: "unlimitedDefault", want: defaultLimit},
-		{name: "malformedMetadataIgnored", totalMem: 200 << 20, metadata: map[string]string{metadataMemoryFileUsedBytesKey: "bad"}, want: 100 << 20},
+		{name: "unavailableCurrentLimit", want: math.MaxInt64},
+		{name: "unlimitedDefault", cgroupLimit: garbage.NoMemoryLimit, want: defaultLimit},
+		{name: "malformedMetadataIgnored", totalMem: 200 << 20, cgroupLimit: garbage.NoMemoryLimit, metadata: map[string]string{metadataMemoryFileUsedBytesKey: "bad"}, want: 100 << 20},
 		{
-			name:     "subtractsSavedMemoryFileBytes",
-			totalMem: 200 << 20,
-			metadata: map[string]string{metadataMemoryFileUsedBytesKey: strconv.FormatUint(80<<20, 10)},
-			want:     60 << 20,
+			name:        "subtractsSavedMemoryFileBytes",
+			totalMem:    2 << 30,
+			cgroupLimit: 200 << 20,
+			metadata:    map[string]string{metadataMemoryFileUsedBytesKey: strconv.FormatUint(80<<20, 10)},
+			want:        60 << 20,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			usage.MaximumTotalMemoryBytes = tc.totalMem
-			s := SuspendGCForRestore(tc.metadata)
+			s := SuspendGCForRestore(tc.metadata, tc.cgroupLimit)
 			defer s.End()
 			if got := debug.SetMemoryLimit(-1 /* limit */); got != tc.want {
 				t.Fatalf("MemoryLimit = %d, want %d", got, tc.want)

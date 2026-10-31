@@ -495,7 +495,7 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 		return fmt.Errorf("checkpoint taken with no-root-container=%t cannot be restored with no-root-container=%t", saved, cm.l.noRootContainer.enabled)
 	}
 	timer.Reached("restorer initialized")
-	reply.KernelStarted, err = cm.restorer.restoreContainerInfo(cm.l, &cm.l.root)
+	reply.KernelStarted, err = cm.restorer.restoreContainerInfo(cm.l, &cm.l.root, o.CgroupLimit)
 	return err
 }
 
@@ -697,7 +697,7 @@ func (cm *containerManager) RestoreSubcontainer(args *sentryapi.StartArgs, reply
 		return fmt.Errorf("error dup'ing gofer files: %w", err)
 	}
 
-	reply.KernelStarted, err = cm.restorer.restoreSubcontainer(args.Spec, args.Conf, cm.l, args.CID, stdios, goferFDs, goferFilestoreFDs, devGoferFD, args.GoferMountConfs)
+	reply.KernelStarted, err = cm.restorer.restoreSubcontainer(args.Spec, args.Conf, cm.l, args.CID, stdios, goferFDs, goferFilestoreFDs, devGoferFD, args.GoferMountConfs, args.RestoreCgroupLimit)
 	if err != nil {
 		log.Debugf("containerManager.RestoreSubcontainer failed, cid: %s, args: %+v, err: %v", args.CID, args, err)
 		return err
