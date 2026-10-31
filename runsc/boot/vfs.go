@@ -66,10 +66,55 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/usage"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/timing"
+	"gvisor.dev/gvisor/pkg/usermem"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
+
+// applyTCPBufferSysctls configures the root network namespace before the first
+// application socket is created. Use a private proc mount: the container can
+// omit /proc, mount it read-only, or mount some other filesystem there.
+func applyTCPBufferSysctls(k *kernel.Kernel, network config.NetworkType, sysctls map[string]string) error {
+	var procMount *vfs.Mount
+	for key, value := range sysctls {
+		name := strings.ReplaceAll(key, ".", "/")
+		switch name {
+		case "net/ipv4/tcp_rmem", "net/ipv4/tcp_wmem":
+		default:
+			continue
+		}
+		if network != config.NetworkSandbox && network != config.NetworkNone {
+			return fmt.Errorf("%s requires a private netstack", key)
+		}
+		ctx := k.SupervisorContext()
+		creds := auth.CredentialsFromContext(ctx)
+		if procMount == nil {
+			var err error
+			procMount, err = k.VFS().MountDisconnected(ctx, creds, "", proc.Name, &vfs.MountOptions{})
+			if err != nil {
+				return fmt.Errorf("mounting proc: %w", err)
+			}
+			defer procMount.DecRef(ctx)
+		}
+		root := vfs.MakeVirtualDentry(procMount, procMount.Root())
+		fd, err := k.VFS().OpenAt(ctx, creds, &vfs.PathOperation{
+			Root: root, Start: root, Path: fspath.Parse("sys/" + name),
+		}, &vfs.OpenOptions{Flags: linux.O_WRONLY})
+		if err != nil {
+			return fmt.Errorf("opening %s: %w", key, err)
+		}
+		n, err := fd.Write(ctx, usermem.BytesIOSequence([]byte(value)), vfs.WriteOptions{})
+		fd.DecRef(ctx)
+		if err != nil {
+			return fmt.Errorf("setting %s to %q: %w", key, value, err)
+		}
+		if n != int64(len(value)) {
+			return fmt.Errorf("setting %s: consumed %d of %d bytes", key, n, len(value))
+		}
+	}
+	return nil
+}
 
 // tmpfs has some extra supported options that we must pass through.
 var tmpfsAllowedData = []string{"mode", "size", "uid", "gid", "huge"}

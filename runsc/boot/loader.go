@@ -961,6 +961,12 @@ func New(args Args) (*Loader, error) {
 	}
 	args.StartupTimer.Reached("filesystems registered")
 
+	if args.Spec.Linux != nil {
+		if err := applyTCPBufferSysctls(l.k, args.Conf.Network, args.Spec.Linux.Sysctl); err != nil {
+			return nil, fmt.Errorf("configuring TCP buffers: %w", err)
+		}
+	}
+
 	// Turn on packet logging if enabled.
 	if args.Conf.LogPackets {
 		log.Infof("Packet logging enabled")
