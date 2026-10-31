@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T10:28:33.920382+00:00",
+    "updatedAt": "2026-10-31T10:37:26.392655+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28347,23 +28347,53 @@
       "url": "https://github.com/google/gvisor/issues/16393",
       "group": "runtime",
       "status": "Agent investigation",
-      "summary": "With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. The original FreeBSD failure has not been reproduced.",
+      "summary": "With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
       "updatedAt": "2026-10-27T15:15:10+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-27T15:15:10+00:00",
-        "disposition": "Synthetic stall verified on the published fix",
-        "nextAction": "Follow #16495 through review and compare recovery on the existing shared queue with competing flows. Keep the reporter’s synthetic transfer separate from the original FreeBSD incident.",
+        "observedAt": "2026-10-31T10:37:26.392655+00:00",
+        "disposition": "Reno burst reproduced; FreeBSD configuration and SACK timer isolated",
+        "nextAction": "Verify the full M003 transfer on both senders with the same #16495 fix. Compare equal 480-byte writes and two successive partial ACKs on native Linux and gVisor before proposing a SACK change.",
         "evidence": [
+          "https://github.com/google/gvisor/issues/16670",
+          "https://github.com/tailscale/tailscale/blob/1a28f170f/wgengine/netstack/netstack.go#L413-L422",
+          "https://github.com/tamird/gvisor/actions/runs/41164948780/artifacts/13028962198",
+          "https://github.com/tamird/gvisor/actions/runs/41191724183/artifacts/13039706167",
+          "https://github.com/tamird/gvisor/actions/runs/41193721121",
           "https://github.com/google/gvisor/issues/16393#issuecomment-6445217353",
           "https://app.buildbuddy.io/invocation/160cb22c-1aef-4ac9-bd60-257943e69c13",
           "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838",
           "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335",
           "https://github.com/tamird/gvisor/commit/3e6e7d0eb8dd6f18ceb0bea98341e5a2c3594883",
-          "https://github.com/tamird/gvisor/commit/845b402744714ba61067f0617e7d6d30479e624f"
+          "https://github.com/tamird/gvisor/commit/845b402744714ba61067f0617e7d6d30479e624f",
+          "https://github.com/tamird/gvisor/actions/runs/41192834457/artifacts/13039847737"
         ]
       },
       "evidence": [
+        {
+          "label": "Reno and FreeBSD configurations, fixes and review order",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Tailscale disabled RACK by default after 1.104.4",
+          "url": "https://github.com/tailscale/tailscale/blob/1a28f170f/wgengine/netstack/netstack.go#L413-L422"
+        },
+        {
+          "label": "FreeBSD settings: stock and independent fixes on the Tailscale 1.80.0 pin",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41164948780/artifacts/13028962198"
+        },
+        {
+          "label": "Linux wire controls: a partial SACK and a full-packet SACK produce different timers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41191724183/artifacts/13039706167"
+        },
+        {
+          "label": "SACK candidate agreed on both packet choices; exact-byte comparison failed (536 vs 500 bytes per original write)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41192834457/artifacts/13039847737"
+        },
+        {
+          "label": "Original M003 transfers with a shared #16495 repair and different SACK handling",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41193721121"
+        },
         {
           "label": "Results reported to the author of the reproducer",
           "url": "https://github.com/google/gvisor/issues/16393#issuecomment-6445217353"
