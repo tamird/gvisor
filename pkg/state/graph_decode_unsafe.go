@@ -141,17 +141,41 @@ const (
 	maxDecodeTotalBytes  = 4 << 30 // 4 GiB total allocated object bytes per Load
 )
 
+// ClearStudy records the two frames restored by the checkpointfile benchmark.
+// Only the serial measurement process enables it.
+var ClearStudy struct {
+	Enabled, UsedOnly bool
+	Count             int
+	Used, Capacity    [2]uintptr
+}
+
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
 	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
 		return
 	}
-	clear(ds.types[:cap(ds.types)])
-	clear(ds.typeNames[:cap(ds.typeNames)])
-	clear(ds.objs[:cap(ds.objs)])
-	clear(ds.cbs[:cap(ds.cbs)])
-	clear(ds.targets[:cap(ds.targets)])
+	if ClearStudy.Enabled {
+		i := ClearStudy.Count
+		ClearStudy.Count++
+		if i < len(ClearStudy.Used) {
+			ClearStudy.Used[i] = uintptr(len(ds.types))*unsafe.Sizeof(ds.types[0]) + uintptr(len(ds.typeNames))*unsafe.Sizeof(ds.typeNames[0]) + uintptr(len(ds.objs))*unsafe.Sizeof(ds.objs[0]) + uintptr(len(ds.cbs))*unsafe.Sizeof(ds.cbs[0]) + uintptr(len(ds.targets))*unsafe.Sizeof(ds.targets[0])
+			ClearStudy.Capacity[i] = uintptr(cap(ds.types))*unsafe.Sizeof(ds.types[0]) + uintptr(cap(ds.typeNames))*unsafe.Sizeof(ds.typeNames[0]) + uintptr(cap(ds.objs))*unsafe.Sizeof(ds.objs[0]) + uintptr(cap(ds.cbs))*unsafe.Sizeof(ds.cbs[0]) + uintptr(cap(ds.targets))*unsafe.Sizeof(ds.targets[0])
+		}
+	}
+	if ClearStudy.UsedOnly {
+		clear(ds.types)
+		clear(ds.typeNames)
+		clear(ds.objs)
+		clear(ds.cbs)
+		clear(ds.targets)
+	} else {
+		clear(ds.types[:cap(ds.types)])
+		clear(ds.typeNames[:cap(ds.typeNames)])
+		clear(ds.objs[:cap(ds.objs)])
+		clear(ds.cbs[:cap(ds.cbs)])
+		clear(ds.targets[:cap(ds.targets)])
+	}
 	*ds = graphDecodeState{
 		types:      ds.types[:0],
 		typeNames:  ds.typeNames[:0],

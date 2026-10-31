@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -705,4 +706,74 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
+}
+
+func BenchmarkStreamCapture(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires one runsc checkpoint")
+	}
+	dir, ok := os.LookupEnv("STREAM_DIR")
+	if !ok {
+		b.Fatal("missing STREAM_DIR")
+	}
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	data, _, names, mounts := checkpointNginx(context.Background(), b, machine)
+	spec, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
+	if err != nil {
+		b.Fatal(err)
+	}
+	for name, contents := range map[string][]byte{checkpointfiles.StateFileName: data, checkpointSpecName: spec} {
+		if err := os.WriteFile(filepath.Join(dir, name), contents, 0600); err != nil {
+			b.Fatal(err)
+		}
+	}
+	fmt.Printf("STREAM-CAPTURE bytes=%d digest=%x\n", len(data), sha256.Sum256(data))
+}
+
+func BenchmarkRestoreClear(b *testing.B) {
+	if b.N != 1 || !state.GraphEngineEnabled() {
+		b.Fatal("expected one graph trial")
+	}
+	dir, ok := os.LookupEnv("STREAM_DIR")
+	if !ok {
+		b.Fatal("missing STREAM_DIR")
+	}
+	mode, ok := os.LookupEnv("CLEAR_MODE")
+	if !ok || mode != "capacity" && mode != "used" {
+		b.Fatalf("invalid CLEAR_MODE %q", mode)
+	}
+	data, _, names, mounts, err := readCheckpointDir(dir)
+	if err != nil {
+		b.Fatal(err)
+	}
+	digest := sha256.Sum256(data)
+	base := restoreContext(b, names, mounts)
+	sys, err := systrap.New(platform.Options{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	plat := stubPlatform{sys}
+	for pass := 0; pass < 3; pass++ {
+		func() {
+			ctx, cleanup := withHostFDs(b, base, names)
+			defer cleanup()
+			state.ClearStudy.Enabled, state.ClearStudy.UsedOnly, state.ClearStudy.Count = true, mode == "used", 0
+			cpu := processCPU(b)
+			start := time.Now()
+			k, err := loadKernel(ctx, plat, data, true)
+			wall := time.Since(start)
+			cpu = processCPU(b) - cpu
+			if err != nil || k == nil {
+				b.Fatalf("loadKernel: %v", err)
+			}
+			if state.ClearStudy.Count != 2 {
+				b.Fatalf("got %d graph releases, want 2", state.ClearStudy.Count)
+			}
+			fmt.Printf("RESTORE-CLEAR pass=%d mode=%s digest=%x wall=%d cpu=%d featuresUsed=%d featuresCap=%d kernelUsed=%d kernelCap=%d\n", pass, mode, digest, wall.Nanoseconds(), cpu.Nanoseconds(), state.ClearStudy.Used[0], state.ClearStudy.Capacity[0], state.ClearStudy.Used[1], state.ClearStudy.Capacity[1])
+		}()
+	}
 }
