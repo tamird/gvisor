@@ -1,0 +1,15 @@
+Expose the Bzlmod repository map used by the Gazelle launcher. The generated
+file belongs to Gazelle's module extension; importing it directly in gVisor
+makes bazel mod tidy remove that import.
+
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -144 +144,8 @@
+ )
++
++# Repository declarations for tools that run Gazelle directly with -bzlmod.
++alias(
++    name = "go_repository_config",
++    actual = "@bazel_gazelle_go_repository_config//:WORKSPACE",
++    visibility = ["//visibility:public"],
++)

@@ -12,12 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Collect the first-party inputs which the two native lint actions declare."""
+"""Collect the first-party inputs which the native lint actions declare."""
+
+load(":gazelle.bzl", "GAZELLE_PACKAGES")
 
 def _lint_sources(ctx):
+    packages = {p: True for p in GAZELLE_PACKAGES}
+    ancestors = {"": True}
+    for package in GAZELLE_PACKAGES:
+        parts = package.split("/")
+        for i in range(1, len(parts)):
+            ancestors["/".join(parts[:i])] = True
     root = ctx.path(ctx.attr.root).dirname
-    pending = [(root, "")]
-    groups = {"buildifier": [], "buildifier_config": [], "cpplint": [], "cpplint_config": []}
+    pending = [(root, "", False)]
+    groups = {"buildifier": [], "buildifier_config": [], "cpplint": [], "cpplint_config": [], "gazelle": []}
 
     # A native glob stops at each subpackage; it also cannot discover a source
     # not named by any target. Visit one level per pass (Starlark has no while
@@ -27,18 +35,28 @@ def _lint_sources(ctx):
             break
         level = pending
         pending = []
-        for directory, prefix in level:
+        for directory, prefix, inside in level:
             entries = directory.readdir(watch = "yes")
             if prefix and any([p.basename in (".git", ".hg", ".svn", "MODULE.bazel", "REPO.bazel", "WORKSPACE", "WORKSPACE.bazel") for p in entries]):
                 continue
             for p in entries:
                 name = p.basename
                 path = prefix + name
-                if name in (".git", ".hg", ".svn", "__pycache__", "node_modules") or path in ("external", "repo", ".cache/clangd") or not p.exists or p.realpath != p:
+                if name in (".git", ".hg", ".svn", "__pycache__", "node_modules") or path in ("external", "repo", ".cache/clangd") or not p.exists:
+                    continue
+                link = p.realpath != p
+                if link and (not inside or p.is_dir):
                     continue
                 if p.is_dir:
-                    pending.append((p, path + "/"))
-                elif name in ("BUILD", "BUILD.bazel") or name.endswith(".bzl") or path in ("MODULE.bazel", "WORKSPACE", "WORKSPACE.bazel"):
+                    pending.append((p, path + "/", inside or path in packages))
+                    continue
+                # Gazelle examines directory entries (including data for go:embed)
+                # and applies BUILD directives inherited from parent directories.
+                if inside or (name in ("BUILD", "BUILD.bazel") and prefix.rstrip("/") in ancestors) or path in (".bazelignore", "MODULE.bazel", "REPO.bazel", "WORKSPACE", "WORKSPACE.bazel", "go.mod"):
+                    groups["gazelle"].append(path)
+                if link:
+                    continue
+                if name in ("BUILD", "BUILD.bazel") or name.endswith(".bzl") or path in ("MODULE.bazel", "WORKSPACE", "WORKSPACE.bazel"):
                     groups["buildifier"].append(path)
                 elif path == ".buildifier.json":
                     groups["buildifier_config"].append(path)
@@ -56,11 +74,14 @@ def _lint_sources(ctx):
     ctx.file("ROOT", "")
     build = ['exports_files(["ROOT"])']
     groups = {name: sorted(paths) for name, paths in groups.items()}
+    projected = {}
     for name, paths in groups.items():
         files = []
         for path in paths:
             dst = "ROOT.d/" + path
-            ctx.symlink(root.get_child(path), dst)
+            if path not in projected:
+                ctx.symlink(root.get_child(path), dst)
+                projected[path] = True
             files.append(dst)
         build.append('filegroup(name = %r, srcs = %r, visibility = ["//visibility:public"])' % (name, files))
     ctx.file("BUILD.bazel", "\n".join(build) + "\n")
