@@ -28,7 +28,22 @@ if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("exe
 runner_exit = int((out/"runner_exit").read_text())
 if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
-observations = []
+import re
+observations = [line[line.index("TLP_EPISODE "):].strip() for line in logs.splitlines() if "TLP_EPISODE " in line]
+if arm!="suites":
+    parsed={}
+    for line in observations:
+        m=re.fullmatch(r"TLP_EPISODE (pending|earlier|later|hole) offset=(\d+) elapsed_ms=(\d+) timeouts=(\d+) state=(\d+) sack=(\d+) tlp=(\d+)",line)
+        if m: parsed[m[1]]=tuple(map(int,m.groups()[1:]))
+    if len(observations)!=4 or len(parsed)!=4: why.append("missing one or more packet observations")
+    for k,(off,ms,rto,state,sack,tlp) in parsed.items():
+        expect_rto = (arm=="master" and k=="earlier") or (arm!="master" and k=="pending") or (arm=="published" and k in ("earlier","later"))
+        if off!=(20 if k=="pending" else 30): why.append(f"{k}: wrong retransmitted offset {off}")
+        if k=="hole":
+            if arm=="fixed" and state==0: why.append("outstanding SACK lost the disorder state")
+            continue
+        if bool(rto)!=expect_rto or (ms>=1000)!=expect_rto:
+            why.append(f"{k}: expected timeout {expect_rto}, got {rto} after {ms}ms")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
