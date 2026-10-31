@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("pkg/sentry/platform/systrap/sysmsg|pkg/gohacks|test/rbe/empty_worker")) or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoImports" or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("^//runsc/boot/filter:|^//pkg/sentry/platform/systrap:systrap$")) or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoImports" or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -144,27 +144,31 @@ try:
     source(os.environ["CORRECTED"])
     results["original_arm64_bundle"]={"id":13061034514,"run":41251597684,"sha256":"ee045dc1a9159920c85f29387e501ea019b26b3f67727b06de23306819b37a13"}
     opts=["--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain","--extra_toolchains=//test/rbe/go_bootstrap:linux_arm64_ash"]
-    # The compile action also produces a private implementation archive.
-    opts.append(r"--remote_download_regex=(^|/)pkg/sentry/platform/systrap/sysmsg/sysmsg\.a$")
-    result,actions=invoke("consumer","arm64",[pkg+"sysmsg"],opts)
+    owner="//runsc/boot/filter:filter"
+    opts.extend(["--compilation_mode=fastbuild",r"--remote_download_regex=(.*/)?runsc/boot/filter/filter[.][ax]$"])
+    result,actions=invoke("consumer","arm64",[owner],opts)
     failures=[a for a in actions if a.get("exitCode") or a.get("status")]
-    result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status")} for a in failures]
-    result["generator_counts"]={}
-    for kind in ("GoStateify","GoImports","ProtocAuthenticityCheck"):
-        runs=[a for a in actions if a["mnemonic"]==kind]
-        result["generator_counts"][kind]={"actions":len(runs),"succeeded":sum(not (a.get("status") or a.get("exitCode")) for a in runs),"failed":sum(bool(a.get("status") or a.get("exitCode")) for a in runs)}
-    result["prior_consumer"]={"artifact":13061104668,"run":41252057046,"sha256":"6c6960be1ea9343d48f2131af40da435d268464bfe5d63ec954519b044a4eef6"}
-
+    result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action")} for a in failures]
+    result["original_sysmsg_bytes"]={"run":41253543881,"artifact":13062207201}
+    kind="PrecompileSeccomp"
+    result["precompilers"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","cacheHit","exitCode","status","outputs")} for a in actions if a["mnemonic"]==kind]
     if result["native_exit"]==0:
-        compiled=[a for a in actions if a["label"]==pkg+"sysmsg" and a["mnemonic"]=="GoCompilePkg"]
-        archive,=[o for a in compiled for o in a["outputs"] if o["path"].endswith("/sysmsg.a")]
+        compiled,=[a for a in actions if a["label"]==owner and a["mnemonic"]=="GoCompilePkg"]
+        gen,=[a for a in actions if a["label"]=="//runsc/boot/filter:filter_precompiled" and a["mnemonic"]==kind]
+        assert "filter_precompiled_gen_stubbed_bin" in gen["executable"],gen["executable"]
+        for a in (compiled,gen):
+            props={p["name"]:p["value"] for p in a["platform"]["properties"]}
+            assert props["Arch"]=="arm64" and props["container-image"]==image and not a.get("exitCode") and not a.get("status")
+        archive,=[o for o in compiled["outputs"] if o["path"].endswith("/filter.a")]
+        result["owner_archive"]=archive
+        result["owner_action"]={k:compiled.get(k) for k in ("runner","cacheHit","platform","executable","action")}
+        save()
         exec_root=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
         assert exec_root.is_absolute()
         data=(exec_root/archive["path"]).read_bytes()
-        assert data and len(data)==int(archive["digest"]["sizeBytes"]) and sha(data)==archive["digest"]["hash"]
-        result["owner_archive"]=archive
-        result["owner_action"]=[{k:a.get(k) for k in ("runner","cacheHit","platform","executable")} for a in compiled]
-        results["verdict"]="CONSUMER_BUILT"
+        assert len(data)==int(archive["digest"]["sizeBytes"]) and sha(data)==archive["digest"]["hash"]
+        result["materialized_archive"]={"bytes":len(data),"sha256":sha(data)}
+        results["verdict"]="FASTBUILD_FILTER_BUILT"
     elif any(remote(a,image) for a in failures):
         results["verdict"]="MEASURED_WORKER_FAILURE"
     else:
@@ -174,4 +178,4 @@ except Exception as e:
 finally:
     results["verified"]=now();save()
     print(results["verdict"],results.get("error",""),flush=True)
-sys.exit(results["verdict"] not in ("CONSUMER_BUILT","MEASURED_WORKER_FAILURE"))
+sys.exit(results["verdict"] not in ("FASTBUILD_FILTER_BUILT","MEASURED_WORKER_FAILURE"))
