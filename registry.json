@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T19:28:31.992+00:00",
+    "updatedAt": "2026-10-31T19:36:28.936+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40688,6 +40688,56 @@
         "summary": "Open this standalone lock-annotation PR against gVisor?",
         "body": "Completing a request removes its endpoint tuple from the forwarder and\nclears its reference to that forwarder. The request mutex protects the\nreference. The forwarder mutex protects the map shared by all requests.\n\nAnnotate both fields so the checker catches either missing lock. Document\nwhen to finish reading the SYN packet before Complete releases it.\n\nThe checker diagnosed both unlocked accesses on AMD64 and ARM64 [1].\nThe existing forwarder tests passed, including their three ECN cases [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41233276131/artifacts/13054317942\n[2]: https://github.com/tamird/gvisor/actions/runs/41234335902/artifacts/13055236437"
       }
+    },
+    {
+      "id": "branch:tcp-cookie-window-packets",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposals/tcp-cookie-window-packets",
+      "head": "52c3ca8600e7b1e0bf7b3e40932e65387925fad6",
+      "title": "Test the send window after a SYN cookie handshake",
+      "url": "https://github.com/tamird/gvisor/commit/52c3ca860",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T19:36:28.936+00:00",
+      "summary": "Linux and gVisor sent 128 bytes after a timestamped cookie handshake and 16 without timestamps. Both held the next byte until the peer ACKed. This covers the peer window on the wire and removes the overlapping Go assertion; the clock and listener-resize checks remain.",
+      "evidence": [
+        {
+          "label": "Permanent packet test",
+          "url": "https://github.com/tamird/gvisor/commit/52c3ca860"
+        },
+        {
+          "label": "69 cases with no skips on Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41234502573/artifacts/13054584787"
+        },
+        {
+          "label": "Window-scale fix (#16784)",
+          "url": "https://github.com/google/gvisor/pull/16784"
+        },
+        {
+          "label": "Queue-boundary fixture",
+          "url": "https://github.com/tamird/gvisor/commit/e62e48e9a"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "0c05ee19673fde085e1543315c65839f086eb7aa"
+        },
+        "after": {
+          "head": "52c3ca8600e7b1e0bf7b3e40932e65387925fad6"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "52c3ca8600e7b1e0bf7b3e40932e65387925fad6",
+        "baseHead": "6316929fac62357ded49788855298576264fe4f6",
+        "url": "https://github.com/tamird/gvisor/commit/52c3ca860",
+        "title": "Test the send window after a SYN cookie handshake",
+        "requestedAt": "2026-10-31T19:36:28.936+00:00",
+        "summary": "Open the peer-window test after #16784 and the handshake fixture land?",
+        "body": "Fill a listener's SYN queue, then offer a window of 16 with a shift of\nthree. With timestamps, the server can send 128 bytes before its next\nACK; without timestamps it must stop at 16. In both cases a queued byte\nmust wait for the ACK that reopens the window.\n\nShare the existing handshake test's queue-boundary detection. Keep the\nmanual clock and listener-buffer resize checks in the endpoint test;\nthe packet test covers the peer's send window on Linux and gVisor."
+      }
     }
   ],
   "edges": [
@@ -44021,6 +44071,20 @@
       "type": "includes",
       "reason": "The contributor-approved window-scale change was submitted in #16784.",
       "evidence": "https://github.com/google/gvisor/pull/16784"
+    },
+    {
+      "from": "pr:16784",
+      "to": "branch:tcp-cookie-window-packets",
+      "type": "depends_on",
+      "reason": "The production change restores the negotiated peer window.",
+      "evidence": "https://github.com/tamird/gvisor/commit/52c3ca860"
+    },
+    {
+      "from": "branch:tcp-cookie-handshake-boundary",
+      "to": "branch:tcp-cookie-window-packets",
+      "type": "depends_on",
+      "reason": "Both packet tests share the check for when the listener begins using SYN cookies.",
+      "evidence": "https://github.com/tamird/gvisor/commit/52c3ca860"
     }
   ],
   "investigations": [
