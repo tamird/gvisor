@@ -1,35 +1,43 @@
-name: CI
-
-"on":
+name: Qualify the repository lint entry point and external consumer
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/lint-registered-scratch-python]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  lint:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: source, ref: 2c8da48c7c6f4c367fbdec6a98d99558eeb73dcb, persist-credentials: false}
+      - name: Select the RBE worker platforms
+        run: |
+          mkdir "$RUNNER_TEMP/cpplint_qualification"
+          cp carrier/.github/qualification/lint-pilot/platform.BUILD "$RUNNER_TEMP/cpplint_qualification/BUILD.bazel"
+          echo 'module(name="cpplint_qualification")' > "$RUNNER_TEMP/cpplint_qualification/MODULE.bazel"
+      - name: Check declared inputs and actual remote outcomes
+        working-directory: source
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          export CPPLINT_RC="$RUNNER_TEMP/cpplint.bazelrc"
+          umask 077
+          trap 'rm -f "$CPPLINT_RC"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$CPPLINT_RC"
+          unset BUILDBUDDY_API_KEY
+          python3 -B ../carrier/.github/qualification/lint-pilot/check.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-lint-pilot
+          path: ${{ runner.temp }}/native-lint-pilot.json
+          if-no-files-found: error
