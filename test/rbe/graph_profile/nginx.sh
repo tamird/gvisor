@@ -1,0 +1,69 @@
+#!/bin/bash
+set -euo pipefail
+if [[ ${1:-} != --private-mount ]]; then
+  exec unshare --mount --propagation private -- "$0" --private-mount "$@"
+fi
+shift
+[[ $# == 2 && $EUID == 0 && $(uname -m) == x86_64 ]]
+binary=$(realpath "$1")
+archive=$(realpath "$2")
+release=$(cd release && pwd)
+test -x "$release/runsc"
+export GVISOR_SIDECAR_BINARIES_DIR="$release/gvisor-bin"
+test -x "$GVISOR_SIDECAR_BINARIES_DIR/gvisor_sentry"
+dir=$(mktemp -d /tmp/gvisor-docker-XXXXXX)
+export DOCKER_HOST="unix://$dir/docker.sock"
+python3 - "$dir" "$release/runsc" <<'PY'
+import json, pathlib, sys
+d, binary = sys.argv[1:]
+opts = {"hosts":["unix://"+d+"/docker.sock"],"data-root":d+"/data","exec-root":d+"/exec","pidfile":d+"/docker.pid","storage-driver":"overlay2","exec-opts":["native.cgroupdriver=cgroupfs"],"default-runtime":"runsc","experimental":True,"runtimes":{"runsc":{"path":binary,"runtimeArgs":["--shared-root="+d,"--platform=systrap","--debug=false"]}}}
+pathlib.Path(d,"daemon.json").write_text(json.dumps(opts))
+PY
+dockerd --config-file "$dir/daemon.json" > "$dir/dockerd.log" 2>&1 &
+daemon=$!
+trap 'kill "$daemon" 2>/dev/null || true; wait "$daemon" 2>/dev/null || true' EXIT
+for i in $(seq 1 180); do
+  if docker info > /dev/null 2>&1; then break; fi
+  if ! kill -0 "$daemon" 2>/dev/null; then tail -20 "$dir/dockerd.log"; exit 1; fi
+  sleep 1
+done
+docker info --format 'restore-phases docker={{.ServerVersion}} experimental={{.ExperimentalBuild}}'
+docker load -i "$archive"
+tag=gvisor.dev/images/benchmarks/nginx:latest
+[[ $(docker image inspect --format '{{.Id}}' "$tag") == sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5 ]]
+test -d "$dir/exec/containerd/daemon"
+mkdir -p /run/containerd
+mount --bind "$dir/exec/containerd/daemon" /run/containerd
+export RUNTIME=runsc
+export GO_TEST_WRAP=0 GOMAXPROCS=1
+unset XML_OUTPUT_FILE
+cpu=$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')
+out=$TEST_UNDECLARED_OUTPUTS_DIR
+mkdir -p "$dir/captured" "$out"
+flags=(-test-checkpoint=true -runtime=runsc "-config_path=$dir/daemon.json" -test.cpu=1)
+export CHECKPOINT_CAPTURE_DIR="$dir/captured"
+taskset -c "$cpu" "$binary" -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^EncodeStatefile$' -test.benchtime=1x "${flags[@]}" > "$dir/capture.log" 2>&1 || { tail -22 "$dir/capture.log"; exit 1; }
+unset CHECKPOINT_CAPTURE_DIR
+(cd "$dir/captured"; sha256sum *.img spec.json; wc -c *.img spec.json) > "$out/input.txt"
+sha256sum "$release/runsc" "$release/gvisor-bin/gvisor_sentry" "$binary" > "$out/binaries.txt"
+flags+=("-checkpoint-dir=$dir/captured")
+taskset -c "$cpu" "$binary" -test.v -test.run='^TestCheckpointFileRoundTrip$' "${flags[@]}" > "$dir/check.log" 2>&1 || { tail -16 "$dir/check.log"; exit 1; }
+grep -E -- 'verified input graph header:|State file sizes:|--- PASS: TestCheckpointFileRoundTrip' "$dir/check.log" > "$out/roundtrip.txt"
+grep -q 'verified input graph header: kernel=true' "$out/roundtrip.txt"
+grep -q -- '--- PASS: TestCheckpointFileRoundTrip' "$out/roundtrip.txt"
+for direction in Decode Encode; do
+  for role in ordinary1 ordinary2 ordinary3 cpu alloc; do
+    stem=$direction-$role
+    opts=()
+    duration=2s
+    case $role in
+      cpu) duration=3s; opts+=("-test.cpuprofile=$out/$stem.pprof");;
+      alloc) duration=16x; opts+=("-test.memprofile=$out/$stem.pprof" -test.memprofilerate=1);;
+    esac
+    GVISOR_PROFILE_RECEIPT="$out/$stem-reloads" taskset -c "$cpu" "$binary" -test.v=false -test.run='^$' "-test.bench=^BenchmarkCheckpointFile$/^${direction}Statefile$" -test.benchmem "-test.benchtime=$duration" "${flags[@]}" "${opts[@]}" > "$dir/$stem.log" 2>&1 || { tail -18 "$dir/$stem.log"; exit 1; }
+    grep -E '^BenchmarkCheckpointFile/.*Statefile(-[0-9]+)?[[:space:]]' "$dir/$stem.log" > "$out/$stem.bench"
+    grep -qx PASS "$dir/$stem.log"
+    if [[ $direction == Encode ]]; then test -s "$out/$stem-reloads"; fi
+    if [[ $role == cpu || $role == alloc ]]; then test -s "$out/$stem.pprof"; fi
+  done
+done

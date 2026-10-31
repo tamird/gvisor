@@ -24,7 +24,9 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -56,6 +58,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot"
@@ -172,8 +175,8 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		// suffix is appended to the sub-benchmark names.
 		suffix string
 		// statefile is true if the state file is written and read
-		// as runsc does: through statefile.NewWriter with runsc's
-		// default metadata, and directly from statefile.NewReader.
+		// like the input checkpoint: through statefile.NewWriter with its
+		// metadata, and directly from statefile.NewReader.
 		// Otherwise, the encoding is written to a counting writer
 		// and read through a bufio.Reader.
 		statefile bool
@@ -210,6 +213,22 @@ func BenchmarkCheckpointFile(b *testing.B) {
 			b.ReportAllocs()
 			var cpu time.Duration
 			var encodedBytes int64
+			var encoded bytes.Buffer
+			var metadata map[string]string
+			if mode.statefile {
+				var err error
+				metadata, err = statefile.MetadataUnsafe(bytes.NewReader(stateFile))
+				if err != nil {
+					b.Fatalf("reading checkpoint metadata: %v", err)
+				}
+				// NewWriter supplies its own internal metadata.
+				for key := range metadata {
+					if strings.HasPrefix(key, "_") {
+						delete(metadata, key)
+					}
+				}
+				encoded.Grow(len(stateFile))
+			}
 			b.ResetTimer()
 			b.StopTimer()
 			for i := 0; i < b.N; i++ {
@@ -222,19 +241,45 @@ func BenchmarkCheckpointFile(b *testing.B) {
 					if err != nil {
 						b.Fatal(err)
 					}
+					if mode.statefile {
+						encoded.Reset()
+						cpu += cpuTime(b, func() error {
+							return saveKernel(ctx, &encoded, k, metadata)
+						})
+						return
+					}
 					w := &countingWriter{}
 					cpu += cpuTime(b, func() error {
-						if !mode.statefile {
-							_, err := state.Save(ctx, w, k)
-							return err
-						}
-						return saveKernel(ctx, w, k)
+						_, err := state.Save(ctx, w, k)
+						return err
 					})
 					encodedBytes = w.n
 				}()
 			}
 			b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
-			b.ReportMetric(float64(encodedBytes), "encoded-kernel-B")
+			if mode.statefile {
+				// Check the last measured output outside the benchmark timer.
+				ctx, cleanup := withHostFDs(b, ctx, names)
+				defer cleanup()
+				if _, err := loadKernel(ctx, plat, encoded.Bytes(), true); err != nil {
+					b.Fatalf("loading encoded state file: %v", err)
+				}
+				if path := os.Getenv("GVISOR_PROFILE_RECEIPT"); path != "" {
+					f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+					if err != nil {
+						b.Fatal(err)
+					}
+					if _, err := fmt.Fprintf(f, "%d %x\n", encoded.Len(), sha256.Sum256(encoded.Bytes())); err != nil {
+						b.Fatal(err)
+					}
+					if err := f.Close(); err != nil {
+						b.Fatal(err)
+					}
+				}
+				b.ReportMetric(float64(encoded.Len()), "encoded-state-file-B")
+			} else {
+				b.ReportMetric(float64(encodedBytes), "encoded-kernel-B")
+			}
 		})
 	}
 }
@@ -299,6 +344,27 @@ func TestCheckpointFileRoundTrip(t *testing.T) {
 		t.Fatalf("failed to create platform: %v", err)
 	}
 	plat := stubPlatform{sys}
+	if !state.GraphEngineEnabled() {
+		t.Fatal("graph is not default")
+	}
+	for _, kernelHeader := range []bool{false, true} {
+		r, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(stateFile)), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if kernelHeader {
+			var fs cpuid.FeatureSet
+			if _, err := state.Load(context.Background(), r, &fs); err != nil {
+				t.Fatal(err)
+			}
+		}
+		header, err := state.ReadHeaderMode(&wire.Reader{Reader: r})
+		if err != nil || !header.Object || !header.Graph {
+			t.Fatalf("graph header kernel=%t: %+v %v", kernelHeader, header, err)
+		}
+		r.Close()
+		t.Logf("verified input graph header: kernel=%t", kernelHeader)
+	}
 	data := stateFile
 	var sizes []int
 	for i := 0; i < 3; i++ {
@@ -380,6 +446,15 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 			b.Fatalf("failed to stat checkpoint file: %v", err)
 		}
 		sizes[e.Name()] = fi.Size()
+		if dest, ok := os.LookupEnv("CHECKPOINT_CAPTURE_DIR"); ok {
+			data, err := os.ReadFile(filepath.Join(dir, e.Name()))
+			if err != nil {
+				b.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(dest, e.Name()), data, 0600); err != nil {
+				b.Fatal(err)
+			}
+		}
 	}
 	if _, ok := sizes[checkpointfiles.StateFileName]; !ok {
 		b.Fatalf("no %s in %s", checkpointfiles.StateFileName, dir)
@@ -387,6 +462,15 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	stateFile, err = os.ReadFile(filepath.Join(dir, checkpointfiles.StateFileName))
 	if err != nil {
 		b.Fatalf("failed to read state file: %v", err)
+	}
+	if dest, ok := os.LookupEnv("CHECKPOINT_CAPTURE_DIR"); ok {
+		spec, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
+		if err != nil {
+			b.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dest, checkpointSpecName), spec, 0600); err != nil {
+			b.Fatal(err)
+		}
 	}
 	return stateFile, sizes, names, mounts
 }
@@ -556,19 +640,18 @@ func loadKernel(ctx context.Context, plat platform.Platform, data []byte, direct
 }
 
 // saveKernel encodes the CPUID feature set and the kernel to w through
-// statefile.NewWriter, with the metadata of runsc checkpoint's defaults, as
-// Kernel.SaveTo does.
-func saveKernel(ctx context.Context, w io.Writer, k *kernel.Kernel) error {
-	wc, err := statefile.NewWriter(w, nil, statefile.CompressionLevelDefault.ToMetadata())
+// statefile.NewWriter using the input checkpoint's metadata.
+func saveKernel(ctx context.Context, w io.Writer, k *kernel.Kernel, metadata map[string]string) error {
+	wc, err := statefile.NewWriter(w, nil, metadata)
 	if err != nil {
 		return fmt.Errorf("statefile.NewWriter: %w", err)
 	}
 	fs := k.FeatureSet()
 	if _, err := state.Save(ctx, wc, &fs); err != nil {
-		return fmt.Errorf("saving the CPUID feature set: %w", err)
+		return errors.Join(fmt.Errorf("saving the CPUID feature set: %w", err), wc.Close())
 	}
 	if _, err := state.Save(ctx, wc, k); err != nil {
-		return fmt.Errorf("saving the kernel: %w", err)
+		return errors.Join(fmt.Errorf("saving the kernel: %w", err), wc.Close())
 	}
 	return wc.Close()
 }
