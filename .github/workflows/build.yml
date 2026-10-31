@@ -1,35 +1,156 @@
-name: CI
-
-"on":
+name: Check AF_PACKET header boundaries and report captured forwarding measurements
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/packet-network-header-boundaries]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CURRENT: 068b81a60d863dae370617fb35b4a944871a7a73
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        cp test/rbe/packet-verifier.py "$RUNNER_TEMP/verify-tcp.py"
+        cp test/rbe/packet-matrix.json "$RUNNER_TEMP/records/matrix.json"
+        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" ]]
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --cap-add NET_RAW -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       with:
-          name: runsc
-          path: bin/
+        ref: 0cd3edb6cb054149a36d53c35a1055e851b145b5
+        path: .benchstat-tool
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Summarize the original forwarding measurements with pinned benchstat
+      id: forward_bench
+      continue-on-error: true
+      working-directory: .benchstat-tool
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        out="$RUNNER_TEMP/records/performance"
+        mkdir -p "$out"
+        printf 'FAIL\n' > "$out/verdict"
+        python3 - <<'PYEND'
+        from pathlib import Path
+        import hashlib, io, json, os, subprocess, zipfile
+        b=subprocess.check_output(['gh','api','repos/tamird/gvisor/actions/artifacts/13041728253/zip'])
+        assert hashlib.sha256(b).hexdigest()=='3987e8c210852075cd0695999a8bb986a2d5f805f5b6bc4a1d88ab2500554043'
+        out=Path(os.environ['RUNNER_TEMP'])/'records/performance'
+        with zipfile.ZipFile(io.BytesIO(b)) as z:
+            v=json.loads(z.read('verdict.json'))
+            assert len(v['expected'])==18 and set(v['expected'])==set(v['executed']) and not v['failures'] and not v['missing']
+            for arm in ('control','fixed'):
+                lines=[]
+                for i in range(1,9):
+                    k=f'{arm}-{i}'
+                    assert v['arms'][k]['verified']
+                    samples=[line for line in z.read(k+'/test.log').decode().splitlines() if line.startswith('BenchmarkTCPForwardCopy/') and 'ns/op' in line]
+                    assert len(samples)==3
+                    lines.extend(samples)
+                (out/(arm+'.bench')).write_text('\n'.join(lines)+'\n')
+        PYEND
+        mkdir -p "$RUNNER_TEMP/gnu"
+        GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+        printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+        printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+        test -n "$BUILDBUDDY_API_KEY"
+        rc=$RUNNER_TEMP/epoll.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        test "$(git rev-parse HEAD^)" = "2b51abee8530385431b7225198fdd5cd65e78696"
+        target=@org_golang_x_perf//cmd/benchstat
+        opts=(--config=x86_64 -c opt --jobs=12 --remote_download_outputs=toplevel)
+        bazel --bazelrc="$rc" build "${opts[@]}" "$target" > "$RUNNER_TEMP/build.log" 2>&1 || { grep -E '^(ERROR:|INFO: Streaming)' "$RUNNER_TEMP/build.log" | head -8; exit 1; }
+        bazel --bazelrc="$rc" cquery "${opts[@]}" --output=files "$target" > "$RUNNER_TEMP/selected"
+        mapfile -t bin < <(while IFS= read -r path; do if [[ -f $path && -x $path ]]; then echo "$PWD/$path"; fi; done < "$RUNNER_TEMP/selected")
+        test "${#bin[@]}" -eq 1
+        (cd "$out"; "${bin[0]}" stock=control.bench metadata=fixed.bench >benchstat.txt)
+        for metric in sec/op B/op allocs/op; do grep -Fq "$metric" "$out/benchstat.txt"; done
+        grep -q 'n=8' "$out/benchstat.txt"
+        printf 'PASS\n' > "$out/verdict"
+    - name: Record each native and guest action independently
+      run: |
+        set -euo pipefail
+        for name in raw-native cooked-native raw-guest cooked-guest; do
+          src=$CURRENT
+          testname=packet_socket_raw_test; suite=RawPacketTest; path=test/syscalls/linux/packet_socket_raw.cc
+          if [[ $name == cooked-* ]]; then testname=packet_socket_dgram_test; suite=CookedPacketTest; path=test/syscalls/linux/packet_socket_dgram.cc; fi
+          filter="AllInetTests/$suite.Receive/*"
+          executor=remote; platform=runsc_ptrace
+          if [[ $name == *-native ]]; then executor=local; platform=native; fi
+          git checkout --quiet --detach "$src"
+          [[ "$(git rev-parse HEAD)" == "$src" ]]
+          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
+          sha256sum "$path" > "$d/fixture-sha256"
+          target="//test/syscalls:${testname}_${platform}"
+          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
+          printf '%s\n' "$executor" > "$d/executor"; printf '%s\n' "$filter" > "$d/filter"
+          date -u +%FT%TZ > "$d/start"
+          rc=0
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --verbose_failures --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=450 --test_sharding_strategy=disabled --test_env=GTEST_FILTER="$filter" "$target" > "$d/bazel.log" 2>&1 || rc=$?
+          grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|Build did NOT complete' "$d/bazel.log" | head -100 > "$d/compiler-diagnostics" || true
+          rm -f "$d/bazel.log"
+          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
+          if [[ $rc != 0 && $rc != 3 ]]; then continue; fi
+          for file in test.log test.xml; do
+            docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/$file" > "$d/$file" || rm -f "$d/$file"
+          done
+        done
+    - name: Verify both protocol variants for raw and cooked packets on Linux and gVisor
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
+    - name: Require the benchmark summary
+      if: ${{ !cancelled() && steps.forward_bench.outcome != 'success' }}
+      run: exit 1
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: packet-network-header-boundaries
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
