@@ -49,24 +49,27 @@ func (q *segmentQueue) empty() bool {
 //
 // +checklocksexclude:q.mu
 func (q *segmentQueue) enqueue(s *segment) bool {
-	bufSz := q.ep.ops.GetReceiveBufferSize()
-	used := q.ep.receiveMemUsed()
-
 	q.mu.Lock()
 	defer q.mu.Unlock()
-
-	// Allow zero sized segments (ACK/FIN/RSTs etc even if the segment queue
-	// is currently full).
-	allow := (used <= bufSz || s.payloadSize() == 0) && !q.frozen
-
-	if allow {
-		s.IncRef()
-		q.list.PushBack(s)
-		// Set the owner now that the endpoint owns the segment.
-		s.setOwner(q.ep, recvQ)
+	if q.frozen {
+		return false
 	}
 
-	return allow
+	if over := q.ep.receiveMemUsed() - q.ep.ops.GetReceiveBufferSize(); over > 0 {
+		if s.payloadSize() != 0 {
+			return false
+		}
+		// The peer must be able to ACK data sent in the other direction.
+		// If the application shrank its buffers below current usage, let
+		// one control packet through an otherwise empty backlog.
+		if over > q.ep.ops.GetSendBufferSize() {
+			return false
+		}
+	}
+	s.IncRef()
+	q.list.PushBack(s)
+	s.setOwner(q.ep, recvQ)
+	return true
 }
 
 // dequeue removes and returns the next segment from queue, if one exists.

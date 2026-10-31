@@ -25,6 +25,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <climits>
 #include <cstring>
@@ -54,6 +55,56 @@ constexpr int kPositiveTimeoutMs = 60 * 1000;
 
 // The amount of time to wait for something unexpected to not occur.
 constexpr int kNegativeTimeoutMs = 3 * 1000;
+
+TEST_P(TCPSocketPairTest, WriteAfterShrinkingFullReceiveBuffer) {
+  auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
+  const int writer = sockets->first_fd();
+  const int peer = sockets->second_fd();
+  constexpr int large = 128 * 1024;
+  constexpr int small = 4096;
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_RCVBUF, &large, sizeof(large)),
+              SyscallSucceeds());
+  constexpr int pending = 64 * 1024;
+  std::vector<char> data(pending, 'p');
+  ASSERT_THAT(WriteFd(peer, data.data(), data.size()), SyscallSucceedsWithValue(pending));
+  int unread = 0;
+  const absl::Time deadline = absl::Now() + absl::Seconds(5);
+  while (absl::Now() < deadline) {
+    ASSERT_THAT(ioctl(writer, FIONREAD, &unread), SyscallSucceeds());
+    if (unread == pending) break;
+    absl::SleepFor(absl::Milliseconds(1));
+  }
+  ASSERT_EQ(unread, pending);
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_RCVBUF, &small, sizeof(small)),
+              SyscallSucceeds());
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_SNDBUF, &small, sizeof(small)),
+              SyscallSucceeds());
+  int rcv = 0, snd = 0;
+  socklen_t len = sizeof(int);
+  ASSERT_THAT(getsockopt(writer, SOL_SOCKET, SO_RCVBUF, &rcv, &len), SyscallSucceeds());
+  ASSERT_THAT(getsockopt(writer, SOL_SOCKET, SO_SNDBUF, &snd, &len), SyscallSucceeds());
+  ASSERT_GT(unread, rcv + snd);
+  // Progress in this direction requires ACKs at writer while all of the
+  // original data remains unread there.
+  const struct timeval timeout = {2, 0};
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)),
+              SyscallSucceeds());
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)),
+              SyscallSucceeds());
+  constexpr int chunk = 8192;
+  std::vector<char> received(chunk);
+  for (int i = 0; i < 32; ++i) {
+    std::fill(data.begin(), data.begin() + chunk, static_cast<char>(i));
+    ASSERT_THAT(WriteFd(writer, data.data(), chunk), SyscallSucceedsWithValue(chunk));
+    ASSERT_THAT(ReadFd(peer, received.data(), chunk), SyscallSucceedsWithValue(chunk));
+    ASSERT_TRUE(std::equal(received.begin(), received.end(), data.begin()));
+  }
+  ASSERT_THAT(shutdown(writer, SHUT_WR), SyscallSucceeds());
+  char byte;
+  ASSERT_THAT(RetryEINTR(recv)(peer, &byte, 1, 0), SyscallSucceedsWithValue(0));
+  ASSERT_THAT(ioctl(writer, FIONREAD, &unread), SyscallSucceeds());
+  EXPECT_EQ(unread, pending);
+}
 
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
