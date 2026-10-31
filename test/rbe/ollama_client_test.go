@@ -20,12 +20,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os/exec"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"gvisor.dev/gvisor/pkg/test/dockerutil"
 )
 
 // TestOllamaClientImage checks the actual packaged client without an Ollama
@@ -57,13 +56,12 @@ func TestOllamaClientImage(t *testing.T) {
 		}
 	}))
 	defer server.Close()
-	ctx := t.Context()
-	container := dockerutil.MakeNativeContainer(ctx, t)
-	defer container.CleanUp(ctx)
-	output, err := container.Run(ctx, dockerutil.RunOpts{
-		Image:       "gpu/ollama/client",
-		NetworkMode: "host",
-	}, "httpclient", "--url="+server.URL+"/probe", "--method=POST", "--header=X-Client: bazel", "--post_base64="+base64.StdEncoding.EncodeToString([]byte("declared client")), "--strip_prefix=data:")
+	run := func(args ...string) (string, error) {
+		opts := []string{"run", "--rm", "--pull=never", "--runtime=runc", "--network=host", "gvisor.dev/images/gpu/ollama/client:latest"}
+		output, err := exec.CommandContext(t.Context(), "docker", append(opts, args...)...).CombinedOutput()
+		return string(output), err
+	}
+	output, err := run("httpclient", "--url="+server.URL+"/probe", "--method=POST", "--header=X-Client: bazel", "--post_base64="+base64.StdEncoding.EncodeToString([]byte("declared client")), "--strip_prefix=data:")
 	if err != nil {
 		t.Fatalf("packaged client: %v\n%s", err, output)
 	}
@@ -90,13 +88,8 @@ func TestOllamaClientImage(t *testing.T) {
 	}
 
 	t.Run("system_certificates", func(t *testing.T) {
-		container := dockerutil.MakeNativeContainer(ctx, t)
-		defer container.CleanUp(ctx)
 		// Use the shipped trust bundle without mounting or injecting a test CA.
-		output, err := container.Run(ctx, dockerutil.RunOpts{
-			Image:       "gpu/ollama/client",
-			NetworkMode: "host",
-		}, "httpclient", "--url=https://gvisor.dev/", "--timeout=30s")
+		output, err := run("httpclient", "--url=https://gvisor.dev/", "--timeout=30s")
 		if err != nil {
 			t.Fatalf("HTTPS with packaged CA trust: %v\n%s", err, output)
 		}

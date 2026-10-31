@@ -1,4 +1,4 @@
-name: Qualify the official Go helper images
+name: Exercise the retained Go helper images
 on:
   push:
     branches: [qualification/official-go-images]
@@ -68,6 +68,8 @@ jobs:
           grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
       - name: Load and exercise ollama on x86_64
         if: always() && steps.setup.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: bash "$RUNNER_TEMP/qualify-images.sh" ollama x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.setup.outcome == 'success'
@@ -77,6 +79,8 @@ jobs:
           if-no-files-found: error
       - name: Load and exercise profile on x86_64
         if: always() && steps.setup.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: bash "$RUNNER_TEMP/qualify-images.sh" profile x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.setup.outcome == 'success'
@@ -86,6 +90,8 @@ jobs:
           if-no-files-found: error
       - name: Load and exercise ollama on aarch64
         if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: bash "$RUNNER_TEMP/qualify-images.sh" ollama aarch64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
@@ -95,6 +101,8 @@ jobs:
           if-no-files-found: error
       - name: Load and exercise profile on aarch64
         if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: bash "$RUNNER_TEMP/qualify-images.sh" profile aarch64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'

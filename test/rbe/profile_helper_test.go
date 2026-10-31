@@ -22,13 +22,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types/mount"
 	"golang.org/x/sys/unix"
-	"gvisor.dev/gvisor/pkg/test/dockerutil"
 )
 
 // TestProfileHelperImage exercises the packaged program and the coreutils
@@ -36,15 +35,31 @@ import (
 func TestProfileHelperImage(t *testing.T) {
 	ctx := t.Context()
 	root := t.TempDir()
-	opts := dockerutil.RunOpts{
-		Image:  "benchmarks/profile-helper",
-		Mounts: []mount.Mount{{Type: mount.TypeBind, Source: root, Target: "/profiles"}},
-	}
 	run := func(args ...string) (string, error) {
-		container := dockerutil.MakeNativeContainer(ctx, t)
-		defer container.CleanUp(ctx)
-		return container.Run(ctx, opts, args...)
+		opts := []string{"run", "--rm", "--pull=never", "--runtime=runc", "--mount", "type=bind,source=" + root + ",target=/profiles", "gvisor.dev/images/benchmarks/profile-helper:latest"}
+		output, err := exec.CommandContext(ctx, "docker", append(opts, args...)...).CombinedOutput()
+		return string(output), err
 	}
+	t.Run("containerd_flags", func(t *testing.T) {
+		path := filepath.Join(root, "config.toml")
+		const initial = "[runsc_config]\nprofiling = \"off\"\n[next]\nunrelated = true\n"
+		if err := os.WriteFile(path, []byte(initial), 0600); err != nil {
+			t.Fatal(err)
+		}
+		for _, step := range []struct{ op, want string }{
+			{"set-containerd-flag", "profiling = \"on\""},
+			{"remove-containerd-flag", "[runsc_config]\n[next]"},
+		} {
+			out, err := run("profilehelper", "--operation="+step.op, "--containerd-config=/profiles/config.toml", "--containerd-section=runsc_config", "--flag=profiling", "--value=on")
+			if err != nil {
+				t.Fatalf("%s: %v: %s", step.op, err, out)
+			}
+			cfg, err := os.ReadFile(path)
+			if err != nil || !strings.Contains(string(cfg), step.want) || !strings.Contains(string(cfg), "unrelated = true") {
+				t.Fatalf("%s content %q, read error %v", step.op, cfg, err)
+			}
+		}
+	})
 	for _, args := range [][]string{
 		{"mkdir", "-p", "/profiles/work/data"},
 		{"chmod", "0700", "/profiles/work/data"},
