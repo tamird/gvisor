@@ -46,6 +46,10 @@ def arm(which, arch, mod_resolved):
     key = which + "-" + arch
     targets = [target + name for name in units[which]]
     flags = [*arches[arch], "--noremote_accept_cached","--jobs=12","--remote_download_outputs=all"]
+    if which != "candidate":
+        # Skylib marks its shell-based copy no-remote. Exercise that action
+        # on a Linux client without cp in the action's search path.
+        flags += ["--strategy=CopyFile=local", "--action_env=PATH=/no-host-utilities"]
     bep=temp / (key+".bep")
     started=time.time()
     rc, log, invocation=run([*baz, "build", *flags, "--keep_going", "--build_event_json_file="+str(bep), *targets],key)
@@ -57,17 +61,21 @@ def arm(which, arch, mod_resolved):
     def state(name): return next((v for k,v in complete.items() if k.endswith("//:"+name)),None)
     data["target_results"]={name:state(name) for name in units[which]}
     if which != "candidate":
-        errors = [s.strip() for s in log.splitlines() if ("No such file or directory" in s or "not found" in s or "no such file" in s.lower()) and ("/bin/bash" in s or "/bin/sh" in s)]
-        data["missing_shell"] = [s[:400] for s in errors[:2]]
-        if rc and errors and all(state(name) is False for name in units[which]): data["status"]="pass"
+        errors = [s.strip() for s in log.splitlines() if "cp: " in s and ("command not found" in s.lower() or "not found" in s.lower())]
+        data["client_missing_cp"] = [s[:400] for s in errors[:2]]
+        graph=subprocess.check_output([*baz,"aquery",*flags,"mnemonic('CopyFile', set("+" ".join(targets)+"))","--output=text","--include_commandline"],text=True)
+        data["copy_actions"]=[s.strip() for s in graph.splitlines() if "Mnemonic: CopyFile" in s]
+        if rc and errors and len(data["copy_actions"])==len(targets) and all(state(name) is False for name in units[which]): data["status"]="pass"
         else: print("Stock failure did not match expected signature:",key, data["target_results"], flush=True)
     elif not rc and all(state(name) is True for name in units[which]):
+        proof, _, _ = run([*baz,"build",*flags,"--action_env=PATH=/no-host-utilities",targets[0]],key+"-no-cp")
+        data["header_without_client_utilities_exit"]=proof
         paths=subprocess.check_output([*baz,"cquery",*flags,targets[0],"--output=files"],text=True).strip().splitlines()
         assert len(paths)==1, paths
         data["header_sha256"]=sha(Path(paths[0]))
         graph=subprocess.check_output([*baz,"aquery",*flags,"outputs('ares_config[.]h', deps("+targets[1]+"))","--output=text"],text=True)
         data["actions"]=[s.strip() for s in graph.splitlines() if "Mnemonic:" in s]
-        if data["header_sha256"]=="8d30eb7faf4f0b819153c476f01669a72754548e121659c73928378d12d37ea2" and any("Symlink" in s for s in data["actions"]) and not any("CopyFile" in s for s in data["actions"]): data["status"]="pass"
+        if not proof and data["header_sha256"]=="8d30eb7faf4f0b819153c476f01669a72754548e121659c73928378d12d37ea2" and any("Symlink" in s for s in data["actions"]) and not any("CopyFile" in s for s in data["actions"]): data["status"]="pass"
     print(key, data["status"], "bazel",rc, invocation or "", flush=True)
     verdict()
 def main():
@@ -86,7 +94,7 @@ def main():
         versions=re.findall(r'c-ares@([^\s#()]+)',full)
         selected=sorted(set(versions))
         print("Resolved for",which, selected, flush=True)
-        assert selected and (version in selected if version else any(s.startswith("1.19.1") for s in selected)), full
+        assert selected and (version in selected if version else selected == ["1.34.5.bcr.2"]), full
         for arch in (arches if which=="candidate" else ["amd64"]): arm(which,arch,selected)
 verdict()
 try:
