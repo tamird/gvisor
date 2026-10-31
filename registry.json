@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T04:46:15.204222+00:00",
+    "updatedAt": "2026-10-31T05:05:53.443908+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20418,30 +20418,44 @@
       "id": "branch:rules-img-hackbench-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-hackbench-image-audited",
-      "head": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
+      "ref": "review/official-hackbench-image",
+      "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
       "title": "Build the hackbench image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
+      "url": "https://github.com/tamird/gvisor/compare/8a84b240f...07d32506a",
       "group": "bazel",
-      "status": "Contributor approved; awaiting prerequisites",
-      "updatedAt": "2026-10-21T17:06:49.278563+00:00",
-      "summary": "The final signed proposal 8e1dc1ed builds pinned rt-tests 2.2 hackbench with the static C toolchain and the shared GNU runtime. The contributor approved this exact revision; delivery follows the approved native-Go image foundation and its recorded prerequisites. Both-architecture image construction, actual AMD64 Make reloads, both existing native-runc benchmark cases and the GNU profile-helper fixture are accepted. The shared extraction refactor preserves the complete 32-entry profile-helper filesystem and runtime configuration against cc4 on both architectures; archive byte hashes differ.\n\nThe 245-entry catalog preserves all 244 foundation entries and adds the audited rt_tests record. Canonical retention and full Verify passed using the exact source archive/COPYING audit; unseeded Fetch remains a preserved failure because its kernel.org archive resolver is unsupported. This is manual audit retention, not fresh automatic classification. The formatter failure is also retained. No comparative performance, ARM runtime, systrap or GPU claim is made.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T05:05:53.443908+00:00",
+      "summary": "Hackbench now builds directly from pinned rt-tests 2.2 on upstream. Its standalone image removes the shared GNU extraction used by the approved 8e1dc1ed0 proposal. Removing the duplicate ELF saved 497,289 compressed bytes on AMD64 and 383,553 on ARM64. The executable, mode, image configuration and base layers match the standalone runtime checks. The Go benchmark still needs a named result for each workload and payload architecture.",
       "followup": {
-        "owner": "root",
-        "disposition": "Exact proposal approved; prerequisite landing hold",
-        "sourceHead": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
-        "observedAt": "2026-10-21T17:06:49.278563+00:00",
-        "nextAction": "Open the reviewed 8e1dc1ed proposal after its native-Go image foundation and inherited image/license prerequisites land. Do not request the same contributor review again.",
+        "owner": "Build images",
+        "disposition": "Qualify the standalone benchmark consumer",
+        "sourceHead": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
+        "observedAt": "2026-10-31T05:05:53.443908+00:00",
+        "nextAction": "Verify both Go benchmark cases against each payload architecture on the existing Linux job. The earlier approval covers the shared-base proposal 8e1dc1ed0.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
-          "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd",
-          "https://app.buildbuddy.io/invocation/ce077af2-fedf-4968-90ba-046013679088"
+          "https://github.com/tamird/gvisor/actions/runs/41167754027"
         ]
       },
       "evidence": [
         {
+          "label": "AMD64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13030608502"
+        },
+        {
+          "label": "ARM64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13031037082"
+        },
+        {
+          "label": "Original ELF duplication in each image",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41169904030/artifacts/13030187952"
+        },
+        {
+          "label": "Standalone layer correction",
+          "url": "https://github.com/tamird/gvisor/compare/4be56fbed..07d32506a"
+        },
+        {
           "label": "Published source and description",
-          "url": "https://github.com/tamird/gvisor/commit/3c5d84337f4bfecaa366cd71b28cd985385d4118"
+          "url": "https://github.com/tamird/gvisor/commit/3c5d84337"
         },
         {
           "label": "Accepted image/runtime qualification",
@@ -20449,9 +20463,27 @@
         },
         {
           "label": "Final audited proposal and description",
-          "url": "https://github.com/tamird/gvisor/commit/8e1dc1ed07d594d9703abd8be1f681fe3ef559e3"
+          "url": "https://github.com/tamird/gvisor/commit/8e1dc1ed0"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
+          "outcome": "approved",
+          "at": "2026-10-21T17:06:49.278563+00:00"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "base": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
+          "head": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3"
+        },
+        "after": {
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+          "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e"
+        }
+      }
     },
     {
       "id": "pr:16101",
@@ -20533,14 +20565,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/standalone-hey-image",
-      "head": "d063c47347266f5f419dbbaf8dd75fa3c200fb96",
+      "head": "bcc567c6c701c9c99e74993bb3769eb9f070bc3b",
       "title": "Build the Hey benchmark image from the pinned executable",
-      "url": "https://github.com/tamird/gvisor/compare/8a84b240f...d063c4734",
+      "url": "https://github.com/tamird/gvisor/compare/8a84b240f...bcc567c6c",
       "group": "bazel",
       "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T03:16:50.067941+00:00",
-      "summary": "The benchmark image now contains just the pinned Hey v0.1.5 executable at /bin/hey. The normal Make target loaded the image on both architectures. Each ran 12 HTTP and 12 HTTPS requests through the benchmark’s own command and parsers. Compressed layers fell from 38.4 to 4.2 MB on AMD64 and from 34.8 to 3.7 MB on ARM64 under QEMU. Hey disables TLS certificate verification.",
+      "updatedAt": "2026-10-31T05:05:53.443908+00:00",
+      "summary": "The image contains one static Hey v0.1.5 executable. Both Make targets loaded the image. On both architectures its benchmark command and parsers handled 12 HTTP and 12 HTTPS requests. Hey disables TLS certificate verification. Compressed layers fell from 38.4 to 4.1 MB on AMD64 and from 34.8 to 3.7 MB on emulated ARM64.",
       "evidence": [
+        {
+          "label": "One-line layer change since d063c4734",
+          "url": "https://github.com/tamird/gvisor/compare/d063c4734..bcc567c6c"
+        },
+        {
+          "label": "AMD64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13030608502"
+        },
+        {
+          "label": "ARM64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13031037082"
+        },
         {
           "label": "AMD64 Make load, image size and benchmark requests",
           "url": "https://github.com/tamird/gvisor/actions/runs/41162901582/artifacts/13027488383"
@@ -20556,25 +20600,29 @@
         {
           "label": "Previously approved shared-base proposal",
           "url": "https://github.com/tamird/gvisor/commit/f53b01d2d"
+        },
+        {
+          "label": "Earlier change from shared image to standalone source",
+          "url": "https://github.com/tamird/gvisor/compare/f53b01d2d..d063c4734"
         }
       ],
       "refinement": {
         "before": {
-          "base": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
-          "head": "f53b01d2d2e44874003448cea423f8f1e422f173"
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+          "head": "d063c47347266f5f419dbbaf8dd75fa3c200fb96"
         },
         "after": {
           "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
-          "head": "d063c47347266f5f419dbbaf8dd75fa3c200fb96"
+          "head": "bcc567c6c701c9c99e74993bb3769eb9f070bc3b"
         }
       },
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "d063c47347266f5f419dbbaf8dd75fa3c200fb96",
-        "url": "https://github.com/tamird/gvisor/compare/8a84b240f...d063c4734",
+        "head": "bcc567c6c701c9c99e74993bb3769eb9f070bc3b",
+        "url": "https://github.com/tamird/gvisor/compare/8a84b240f...bcc567c6c",
         "title": "Open the standalone Hey image PR",
-        "summary": "The earlier approved proposal depended on a shared base image. This revision builds directly on upstream and ships one static binary. Both Make loads and runtime checks passed. The canonical catalog verified all 221 entries, and two Fetch runs reproduced only the Hey record.",
+        "summary": "The image contains one static Hey v0.1.5 executable. Both Make targets loaded the image. On both architectures its benchmark command and parsers handled 12 HTTP and 12 HTTPS requests. Hey disables TLS certificate verification. Compressed layers fell from 38.4 to 4.1 MB on AMD64 and from 34.8 to 3.7 MB on emulated ARM64.",
         "baseHead": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
       },
       "settledReviews": [
@@ -38272,14 +38320,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/official-ollama-go-image",
-      "head": "6537e6b29651e967485041625f9f31b047f55c69",
+      "head": "5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1",
       "title": "Assemble the Ollama client on the pinned Alpine image",
-      "url": "https://github.com/tamird/gvisor/commit/6537e6b29",
+      "url": "https://github.com/tamird/gvisor/compare/8a84b240f...5bb68f84c",
       "group": "rbe",
       "status": "Contributor review requested",
-      "summary": "Bazel packages the static Go client with the pinned Alpine CA store. HTTPS and streaming responses passed on both architectures. The compressed images are 380 kB and 305 kB larger than the deployed AMD64 and ARM64 images.",
-      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "summary": "The static Go client uses the pinned Alpine CA store. HTTPS and streaming responses passed on AMD64 and emulated ARM64. Removing Bazel runfiles leaves the executable and base intact. The final compressed images are 380 kB larger than deployed on AMD64 and 306 kB larger on ARM64.",
+      "updatedAt": "2026-10-31T05:05:53.443908+00:00",
       "evidence": [
+        {
+          "label": "One-line layer change since 6537e6b29",
+          "url": "https://github.com/tamird/gvisor/compare/6537e6b29..5bb68f84c"
+        },
+        {
+          "label": "AMD64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13030608502"
+        },
+        {
+          "label": "ARM64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13031037082"
+        },
         {
           "label": "AMD64 runtime",
           "url": "https://github.com/tamird/gvisor/actions/runs/41161696380/artifacts/13027039200"
@@ -38291,24 +38351,29 @@
         {
           "label": "Original Make builds and Docker loads",
           "url": "https://github.com/tamird/gvisor/actions/runs/41160841136"
+        },
+        {
+          "label": "Earlier change from shared image to standalone source",
+          "url": "https://github.com/tamird/gvisor/compare/4094323ff..6537e6b29"
         }
       ],
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "6537e6b29651e967485041625f9f31b047f55c69",
-        "url": "https://github.com/tamird/gvisor/commit/6537e6b29",
+        "head": "5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1",
+        "url": "https://github.com/tamird/gvisor/compare/8a84b240f...5bb68f84c",
         "title": "Open the Ollama image PR",
-        "summary": "Bazel packages the static Go client with the pinned Alpine CA store. HTTPS and streaming responses passed on both architectures. The compressed images are 380 kB and 305 kB larger than the deployed AMD64 and ARM64 images."
+        "summary": "The static Go client uses the pinned Alpine CA store. HTTPS and streaming responses passed on AMD64 and emulated ARM64. Removing Bazel runfiles leaves the executable and base intact. The final compressed images are 380 kB larger than deployed on AMD64 and 306 kB larger on ARM64.",
+        "baseHead": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
       },
       "refinement": {
         "before": {
-          "head": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
-          "base": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+          "head": "6537e6b29651e967485041625f9f31b047f55c69"
         },
         "after": {
-          "head": "6537e6b29651e967485041625f9f31b047f55c69",
-          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+          "head": "5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1"
         }
       }
     },
@@ -38317,14 +38382,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/official-profile-go-image",
-      "head": "ffe9e097c2056607ddf38df209dca26cf6078009",
+      "head": "a859c3ac9ee743d5c84164099be277080951a274",
       "title": "Assemble the profiling helper on Ubuntu 22.04",
-      "url": "https://github.com/tamird/gvisor/commit/ffe9e097c",
+      "url": "https://github.com/tamird/gvisor/compare/8a84b240f...a859c3ac9",
       "group": "rbe",
       "status": "Contributor review requested",
-      "summary": "Ubuntu supplies the GNU tools that the DaemonSet invokes, including rm --one-file-system. Mount-boundary deletion, containerd config edits and streaming passed on both architectures. The compressed images are 731 kB and 713 kB smaller than the deployed AMD64 and ARM64 images.",
-      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "summary": "Ubuntu 22.04 supplies the GNU tools the DaemonSet uses, including rm --one-file-system. Mount-boundary deletion, containerd configuration edits and streaming passed on both architectures. Removing Bazel runfiles leaves the helper and Ubuntu base intact. The final compressed images are 731 kB smaller than deployed on AMD64 and 714 kB smaller on ARM64.",
+      "updatedAt": "2026-10-31T05:05:53.443908+00:00",
       "evidence": [
+        {
+          "label": "One-line layer change since ffe9e097c",
+          "url": "https://github.com/tamird/gvisor/compare/ffe9e097c..a859c3ac9"
+        },
+        {
+          "label": "AMD64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13030608502"
+        },
+        {
+          "label": "ARM64 final archive, executable hashes, modes and image configuration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13031037082"
+        },
         {
           "label": "AMD64 runtime",
           "url": "https://github.com/tamird/gvisor/actions/runs/41161696380/artifacts/13027047661"
@@ -38336,24 +38413,29 @@
         {
           "label": "Original Make builds and Docker loads",
           "url": "https://github.com/tamird/gvisor/actions/runs/41160841136"
+        },
+        {
+          "label": "Earlier change from shared image to standalone source",
+          "url": "https://github.com/tamird/gvisor/compare/4094323ff..ffe9e097c"
         }
       ],
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "ffe9e097c2056607ddf38df209dca26cf6078009",
-        "url": "https://github.com/tamird/gvisor/commit/ffe9e097c",
+        "head": "a859c3ac9ee743d5c84164099be277080951a274",
+        "url": "https://github.com/tamird/gvisor/compare/8a84b240f...a859c3ac9",
         "title": "Open the profiling image PR",
-        "summary": "Ubuntu supplies the GNU tools that the DaemonSet invokes, including rm --one-file-system. Mount-boundary deletion, containerd config edits and streaming passed on both architectures. The compressed images are 731 kB and 713 kB smaller than the deployed AMD64 and ARM64 images."
+        "summary": "Ubuntu 22.04 supplies the GNU tools the DaemonSet uses, including rm --one-file-system. Mount-boundary deletion, containerd configuration edits and streaming passed on both architectures. Removing Bazel runfiles leaves the helper and Ubuntu base intact. The final compressed images are 731 kB smaller than deployed on AMD64 and 714 kB smaller on ARM64.",
+        "baseHead": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
       },
       "refinement": {
         "before": {
-          "head": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
-          "base": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+          "head": "ffe9e097c2056607ddf38df209dca26cf6078009"
         },
         "after": {
-          "head": "ffe9e097c2056607ddf38df209dca26cf6078009",
-          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+          "head": "a859c3ac9ee743d5c84164099be277080951a274"
         }
       }
     },
@@ -40537,13 +40619,6 @@
       ]
     },
     {
-      "from": "branch:native-go-images",
-      "to": "branch:rules-img-hackbench-image",
-      "type": "depends_on",
-      "reason": "Hackbench reuses the declared APT machinery and shared lean GNU runtime introduced by the native Go image proposal. Its extraction refactor preserves the qualified helper filesystem.",
-      "evidence": "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
-    },
-    {
       "from": "pr:15814",
       "to": "branch:diagnostics/state-integrated-array-proposal",
       "type": "depends_on",
@@ -40560,11 +40635,11 @@
       "evidence": "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f"
     },
     {
-      "from": "branch:rules-img-hackbench-image",
+      "from": "branch:native-go-images",
       "to": "branch:rules-img-wrk2-image",
       "type": "depends_on",
-      "reason": "The wrk2 change reuses the shared package extraction introduced by the hackbench proposal and its inherited declared runtime foundation.",
-      "evidence": "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6"
+      "reason": "The approved wrk2 source f258c589b uses the original shared GNU runtime and the extraction in its exact parent 8e1dc1ed0. The independently built Hackbench image 07d32506a does not provide those rules.",
+      "evidence": "https://github.com/tamird/gvisor/commit/f258c589b"
     },
     {
       "from": "pr:16168",
@@ -54245,7 +54320,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T02:12:16.708374+00:00",
+      "updatedAt": "2026-10-31T05:05:53.443908+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -55136,6 +55211,27 @@
             {
               "label": "Complete archive and action comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/41150603904/artifacts/13022154932"
+            }
+          ]
+        },
+        {
+          "text": "Twelve distinct ELF binaries from two official releases across AMD64 and ARM64 had redacted Go IDs and the same GNU build ID, 498919aff001d8366249403a2544fba2d833084f. rules_go 0.65.0 can stamp content-derived IDs and is already in #16593. A sentry ID could distinguish unnamed checkpoints. Sidecars are separate binaries and still need a common release label.",
+          "evidence": [
+            {
+              "label": "Build IDs read from 12 released ELF binaries",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41170208891/artifacts/13031275132"
+            },
+            {
+              "label": "Streaming content IDs in rules_go",
+              "url": "https://github.com/bazel-contrib/rules_go/commit/96d434444"
+            },
+            {
+              "label": "Existing rules_go update",
+              "url": "https://github.com/google/gvisor/pull/16593"
+            },
+            {
+              "label": "Repeated build and changed sentry control on actual gVisor",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41170744769"
             }
           ]
         }
