@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T16:37:26.194794+00:00",
+    "updatedAt": "2026-10-31T16:57:06.135+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1970,19 +1970,43 @@
       "id": "branch:builder-without-cross-compilers",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "builder-without-cross-compilers",
+      "ref": "research/llvm-builder-native-packages",
       "title": "Remove builder cross-compilers",
-      "url": "https://github.com/tamird/gvisor/tree/builder-without-cross-compilers",
+      "url": "https://github.com/tamird/gvisor/tree/research/llvm-builder-native-packages",
       "group": "bazel",
-      "status": "branch",
-      "summary": "Remove both Ubuntu cross-compiler packages once the declared LLVM compiler replaces them. The Dockerfile is the only path in the compiler revision that still names these packages; the reduced builder still needs qualification.",
+      "status": "Contributor review requested",
+      "summary": "After the declared LLVM toolchain lands, remove the two Ubuntu cross-compiler packages from the builder. The reduced AMD64 image retained native GCC and produced the ARM64 ELF and both architectures’ systrap binaries and offset tables.",
       "evidence": [
         {
           "label": "Declared compiler successor",
           "url": "https://github.com/tamird/gvisor/commit/0afd5b37e"
+        },
+        {
+          "label": "Two-line builder change",
+          "url": "https://github.com/tamird/gvisor/commit/c8bde107b"
+        },
+        {
+          "label": "AMD64 builder, foreign-tool absence and both systrap outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41221686598/artifacts/13049958048"
+        },
+        {
+          "label": "Earlier native runsc built in the reduced Ubuntu image",
+          "url": "https://github.com/tamird/gvisor/actions/runs/36261274265/artifacts/10912408612"
         }
       ],
-      "updatedAt": "2026-10-31T16:37:26.194794+00:00"
+      "updatedAt": "2026-10-31T16:57:06.135+00:00",
+      "head": "c8bde107ba5507498fec6a91501942be21157f25",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c8bde107ba5507498fec6a91501942be21157f25",
+        "baseHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
+        "url": "https://github.com/tamird/gvisor/commit/c8bde107b",
+        "title": "Drop Ubuntu cross compilers from the builder",
+        "requestedAt": "2026-10-31T16:57:06.135+00:00",
+        "summary": "Approve opening this two-line change after the declared LLVM toolchain lands. The original ARM smoke and systrap builds use its target tools. Native build-essential stays in the image.",
+        "body": "The ARM smoke build introduced crossbuild-essential-arm64 in\n8de562b79. The systrap offset and binary generators added the AMD64\ncross compiler in e41e5bd3b. The declared LLVM toolchain now supplies\nthe compiler, linker, nm, and objcopy for these builds.\n\nDrop both Ubuntu cross-compiler packages. Keep build-essential for\nnative Make builds. In the rebuilt AMD64 image, the ARM64 ELF and both\nsets of systrap outputs built with no AArch64 GNU tools installed [1].\nThe earlier reduced image also built native runsc [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41221686598/artifacts/13049958048\n[2]: https://github.com/tamird/gvisor/actions/runs/36261274265/artifacts/10912408612"
+      }
     },
     {
       "id": "branch:platform-only-architecture",
