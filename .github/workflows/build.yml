@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 135
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      CURRENT: 1a2f2fd5500485145331a4e9d32c33819b843305
+      CURRENT: 2ba32b6a868a9df136ca2509a0cf7ca3b3672ac2
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 12, persist-credentials: false}
@@ -38,7 +38,7 @@ jobs:
         git show "$GITHUB_SHA:test/rbe/unit_matrix.py" > "$RUNNER_TEMP/checker/unit_matrix.py"
         if test -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
         docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --security-opt apparmor=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker run --init -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --security-opt apparmor=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
         # The hosted bazelisk command is an npm shim. The compiler image has no

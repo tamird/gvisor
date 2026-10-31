@@ -33,16 +33,19 @@ mkdir -p "$work" "$pub/$arm"
 "$RUNNER_TEMP/bazel-$USE_BAZEL_VERSION" --version > "$work/version"
 grep -Fx "bazel $expected" "$work/version"
 if [[ $arm == linux ]]; then
-    "$RUNNER_TEMP/bazel-$USE_BAZEL_VERSION" --bazelrc="$rc" test --config=x86_64 --strategy=TestRunner=local --jobs=3 --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --nocache_test_results --test_output=all //test/rbe/fence_host_probe:check > "$work/preflight.log" 2>&1 || { tail -40 "$work/preflight.log"; exit 2; }
+    "$RUNNER_TEMP/bazel-$USE_BAZEL_VERSION" --batch --bazelrc="$rc" test --config=x86_64 --strategy=TestRunner=local --jobs=3 --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --nocache_test_results --test_output=all //test/rbe/fence_host_probe:check > "$work/preflight.log" 2>&1 || { tail -40 "$work/preflight.log"; exit 2; }
     grep -F FENCE_HOST_OK "$work/preflight.log" > "$pub/$arm/preflight"
 fi
-flags=(--config=x86_64 --jobs=3 --strategy=CppCompile=linux-sandbox,local --strategy=CppLink=linux-sandbox,local --strategy=TestRunner=local --local_test_jobs=1 --test_env=XTABLES_LOCKFILE --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --define=gvisor_test_clock_source=calibrated --nocache_test_results --test_sharding_strategy=disabled --test_timeout=350 --test_output=errors --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' "--test_filter=$filter" --build_event_json_file_path_conversion=false "--build_event_json_file=$work/raw.bep")
+# The unchanged 8.3.1 source writes goimports.sh without a shebang.
+# Its native linux-sandbox launcher calls execvp (including its shell fallback);
+# the remote executor passes ENOEXEC straight through.
+flags=(--config=x86_64 --strategy=GoImports=linux-sandbox --jobs=3 --strategy=CppCompile=linux-sandbox,local --strategy=CppLink=linux-sandbox,local --strategy=TestRunner=local --local_test_jobs=1 --test_env=XTABLES_LOCKFILE --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --define=gvisor_test_clock_source=calibrated --nocache_test_results --test_sharding_strategy=disabled --test_timeout=350 --test_output=errors --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' "--test_filter=$filter" --build_event_json_file_path_conversion=false "--build_event_json_file=$work/raw.bep")
 if [[ $arm != linux ]]; then flags+=(--test_arg=-test.v); fi
 git cat-file commit HEAD > "$work/commit_file"
 git status --porcelain --untracked-files=no > "$work/source_before"; test ! -s "$work/source_before"
 printf '%s\n' test "${flags[@]}" "$label" > "$work/executed_arguments"
 code=0
-"$RUNNER_TEMP/bazel-$USE_BAZEL_VERSION" --bazelrc="$rc" test "${flags[@]}" "$label" > "$work/bazel.log" 2>&1 || code=$?
+"$RUNNER_TEMP/bazel-$USE_BAZEL_VERSION" --batch --bazelrc="$rc" test "${flags[@]}" "$label" > "$work/bazel.log" 2>&1 || code=$?
 date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$work/finished"
 printf '%s\n' "$code" > "$work/native_exit"
 git status --porcelain --untracked-files=no > "$work/source_after"
