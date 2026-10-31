@@ -30,6 +30,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sync"
 )
 
 const (
@@ -51,15 +52,30 @@ func parseIDName(name string) (int32, bool) {
 // FilesystemType is the factory class for procfs.
 //
 // +stateify savable
-type FilesystemType struct{}
+type FilesystemType struct {
+	bootMu sync.Mutex `state:"nosave"`
+
+	// bootID is shared by all proc mounts of this virtual kernel.
+	// +checklocks:bootMu
+	bootID string
+}
+
+func (ft *FilesystemType) getBootID() string {
+	ft.bootMu.Lock()
+	defer ft.bootMu.Unlock()
+	if ft.bootID == "" {
+		ft.bootID = randUUID()
+	}
+	return ft.bootID
+}
 
 // Name implements vfs.FilesystemType.Name.
-func (FilesystemType) Name() string {
+func (*FilesystemType) Name() string {
 	return Name
 }
 
 // Release implements vfs.FilesystemType.Release.
-func (FilesystemType) Release(ctx context.Context) {}
+func (*FilesystemType) Release(ctx context.Context) {}
 
 // +stateify savable
 type filesystem struct {
@@ -78,7 +94,7 @@ func (fs *filesystem) StatFSAt(ctx context.Context, rp *vfs.ResolvingPath) (linu
 }
 
 // GetFilesystem implements vfs.FilesystemType.GetFilesystem.
-func (ft FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.VirtualFilesystem, creds *auth.Credentials, source string, opts vfs.GetFilesystemOptions) (*vfs.Filesystem, *vfs.Dentry, error) {
+func (ft *FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.VirtualFilesystem, creds *auth.Credentials, source string, opts vfs.GetFilesystemOptions) (*vfs.Filesystem, *vfs.Dentry, error) {
 	k := kernel.KernelFromContext(ctx)
 	if k == nil {
 		return nil, nil, fmt.Errorf("procfs requires a kernel")
@@ -108,7 +124,7 @@ func (ft FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.VirtualF
 	}
 	procfs.MaxCachedDentries = maxCachedDentries
 	procfs.NoNegativeDentries = true
-	procfs.VFSFilesystem().Init(vfsObj, &ft, procfs)
+	procfs.VFSFilesystem().Init(vfsObj, ft, procfs)
 
 	var internalData *InternalData
 	if opts.InternalData == nil {

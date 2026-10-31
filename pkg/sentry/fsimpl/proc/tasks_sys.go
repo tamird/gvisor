@@ -50,6 +50,7 @@ const (
 
 // newSysDir returns the dentry corresponding to /proc/sys directory.
 func (fs *filesystem) newSysDir(ctx context.Context, root *auth.Credentials, k *kernel.Kernel) kernfs.Inode {
+	ft := fs.VFSFilesystem().FilesystemType().(*FilesystemType)
 	return fs.newStaticDir(ctx, root, map[string]kernfs.Inode{
 		"kernel": fs.newStaticDir(ctx, root, map[string]kernfs.Inode{
 			"cap_last_cap":       fs.newInode(ctx, root, 0444, newStaticFile(fmt.Sprintf("%d\n", linux.CAP_LAST_CAP))),
@@ -60,7 +61,7 @@ func (fs *filesystem) newSysDir(ctx context.Context, root *auth.Credentials, k *
 			"pid_max":            fs.newInode(ctx, root, 0644, newStaticFile(fmt.Sprintf("%d\n", kernel.TasksLimit))),
 			"randomize_va_space": fs.newInode(ctx, root, 0644, newStaticFile("2\n")),
 			"random": fs.newStaticDir(ctx, root, map[string]kernfs.Inode{
-				"boot_id": fs.newInode(ctx, root, 0444, newStaticFile(randUUID())),
+				"boot_id": fs.newInode(ctx, root, 0444, newStaticFile(ft.getBootID())),
 				"uuid":    fs.newInode(ctx, root, 0444, &uuidData{}),
 			}),
 			"sem":    fs.newInode(ctx, root, 0444, newStaticFile(fmt.Sprintf("%d\t%d\t%d\t%d\n", linux.SEMMSL, linux.SEMMNS, linux.SEMOPM, linux.SEMMNI))),
