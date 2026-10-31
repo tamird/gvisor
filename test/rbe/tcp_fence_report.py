@@ -23,7 +23,7 @@ def main() -> int:
     for report in captured["reports"]:
         if report["name"] == "test.log":
             for line in (out / report["path"]).read_text().splitlines():
-                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE|FLOW) [a-zA-Z0-9_.= -]+", line):
+                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE|FLOW|TIMING) [a-zA-Z0-9_.= -]+", line):
                     observations.append(line)
                 elif re.search(r"tcp_rack_test.go:\d+:|Operation not permitted|operation not permitted|failed to bootstrap|failed to disable DAD|read-only file system|No such file or directory|unknown failure:", line):
                     diagnostics.append(line[:650])
@@ -37,6 +37,13 @@ def main() -> int:
     if sorted(x for x in observations if x.startswith("FENCE_DONE")) != [f"FENCE_DONE mode={mode}" for mode in modes]:
         errors.append("both live socket cases must complete")
     for mode in modes:
+        timing = [re.fullmatch(rf"FENCE_TIMING mode={mode} delay_us=(\d+) window_us=(\d+) elapsed_us=(\d+) rto_us=(\d+)", l) for l in observations if l.startswith(f"FENCE_TIMING mode={mode} ")]
+        if len(timing) != 1 or not timing[0]:
+            errors.append(f"{mode}: missing timing window")
+        else:
+            delay, window, elapsed, rto = map(int, timing[0].groups())
+            if min(delay, window) <= 0 or not (delay + window <= elapsed < 3 * rto / 4):
+                errors.append(f"{mode}: observation was outside its pre-timeout window")
         for phase in ("before_timeout", "first_timeout", "before_feedback", "after_ack"):
             if not any(s.startswith(f"FENCE_STATE mode={mode} phase={phase} ") for s in observations):
                 errors.append(f"{mode}: missing TCP_INFO at {phase}")
@@ -69,7 +76,7 @@ def main() -> int:
         mss=[int(m[1]) for l in observations if (m:=re.fullmatch(r"FENCE_STATE mode=sack_repair phase=before_feedback .* mss=(\d+)",l))]
         seq=(flows[0]+2*mss[0]) % (1<<32) if len(flows)==len(mss)==1 else None
         samples=[(int(m[1]),int(m[2])) for l in trace if (m:=re.fullmatch(rf"update seq={seq} ack=\d+ xmits=2 rtt_us=(\d+) min_us=(\d+) state=\d+",l))]
-        if len(samples)!=1 or not (samples[0][0]>=samples[0][1]>0):
+        if len(samples)!=1 or not (samples[0][0]>samples[0][1]>0):
             errors.append("no unambiguous RTT sample from the SACKed retransmission")
         verdict["sack_rtt_and_minimum_us"] = samples
     verdict["rack_decisions"] = trace

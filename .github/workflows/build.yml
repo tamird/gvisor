@@ -21,8 +21,8 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        stock_probe=16040ae66cbb76f4b5bddabe714bdb955c49c9aa
-        strict_probe=21c8333931f9e39da715b86ceb784caa930020db
+        stock_probe=62209526b9160c18eee1e4c23a7d693125bb11e8
+        strict_probe=d8203c2a066d4f84d8c11990348b1ba32a35b38e
         stock_parent=ecef89159aa14d8f51d5b85d73ee7fdc1449be6c
         guard_parent=7d4f369ccb544ebadd1d4e4b536ad73e4a0d3133
         git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$stock_probe" "$strict_probe" "$stock_parent" "$guard_parent"
