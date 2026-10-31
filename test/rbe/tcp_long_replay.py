@@ -26,13 +26,15 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-observations = [line.strip() for line in logs.splitlines() if "page loader still holds a reference after reporting EIO" in line]
+observations = [line.strip() for line in logs.splitlines() if "second file: got" in line]
 if arm == "stock":
     failures = {name for failed in verdict["failures"] for name in failed.get("cases", [])}
-    if runner_exit != 1 or verdict["native_exit"] != 3 or verdict["bep_finish"]["exitCode"]["code"] != 3 or verdict["status"] != "FAIL" or failures != {"pgalloc/TestAsyncLoadShortRead"} or len(observations)!=1:
-        why.append("expected only the page reference assertion with Bazel TESTS_FAILED")
+    if runner_exit != 1 or verdict["native_exit"] != 3 or verdict["bep_finish"]["exitCode"]["code"] != 3 or verdict["status"] != "FAIL" or failures != {"pgalloc/TestAsyncLoadShortRead", "pgalloc/TestAsyncLoadShortRead/next_file"} or len(observations)!=1 or "failed to register MemoryFile" not in observations[0] or "file already closed, want I/O error" not in observations[0]:
+        why.append("expected only the second file returning the closed-reader error instead of the read error")
 elif verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
+if arm == "package" and (verdict["case_counts"].get("passed", 0) < 70 or verdict["case_counts"].get("skipped", 0)):
+    why.append("missing package cases or a skipped case")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
