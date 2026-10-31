@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T11:10:39.713303+00:00",
+    "updatedAt": "2026-10-31T11:16:58.406418+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39295,6 +39295,78 @@
         "title": "Open the governance generator PR",
         "summary": "Bazel starts a shell just to invoke the Go program that generates CODEOWNERS and MAINTAINERS.md. With the Go program as the action executable, both files build without Bash and match the checked-in files on AMD64 and ARM64."
       }
+    },
+    {
+      "id": "branch:gsutil-direct",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/gsutil-direct",
+      "head": "afec4f94434e7823df2e62181fd99e4f38fb3928",
+      "title": "Run the gsutil benchmark with Google’s released CLI image",
+      "url": "https://github.com/tamird/gvisor/commit/afec4f944",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T11:16:58.406418+00:00",
+      "summary": "Both shipped ARM64 benchmark commands failed because gsutil 5.31 rejects the installed Python 3.12. Google’s pinned image completed the single and sliced RootFS commands on native ARM64 and AMD64 under both runc and released runsc. Each transfer synced 50 MiB from the benchmark bucket and matched its CRC32C. The AMD64 runsc slice created four component trackers. The 10 GiB Kubernetes benchmark and restricted clusters were outside this check. Removing the Dockerfile retires the local Make image context and its mirror publication.",
+      "refinement": {
+        "before": {
+          "base": "25172e526f45929759a44e174e617c320df1ad58",
+          "head": "4be4807591e3b5d798788eaa74183189ce72dd7f"
+        },
+        "after": {
+          "base": "25172e526f45929759a44e174e617c320df1ad58",
+          "head": "afec4f94434e7823df2e62181fd99e4f38fb3928"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "afec4f94434e7823df2e62181fd99e4f38fb3928",
+        "url": "https://github.com/tamird/gvisor/commit/afec4f944",
+        "title": "Use the official GSUtil image in the Kubernetes benchmark",
+        "summary": "Open the two-file change to use Google’s pinned multi-platform image directly and retire the project’s GSUtil image build. The benchmark uses gsutil 5.38 on both architectures. A cluster restricted to a local registry must make the pinned digest available there."
+      },
+      "followup": {
+        "owner": "Build and release",
+        "disposition": "Contributor review requested",
+        "observedAt": "2026-10-31T11:16:58.406418+00:00",
+        "sourceHead": "afec4f94434e7823df2e62181fd99e4f38fb3928",
+        "nextAction": "Open the two-file change to use Google’s pinned multi-platform image directly and retire the project’s GSUtil image build. The benchmark uses gsutil 5.38 on both architectures. A cluster restricted to a local registry must make the pinned digest available there.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/25172e526...afec4f944",
+          "https://github.com/tamird/gvisor/compare/4be480759..afec4f944",
+          "https://github.com/tamird/gvisor/actions/runs/41195317931/artifacts/13040222257",
+          "https://github.com/tamird/gvisor/actions/runs/41195317931/artifacts/13040466475",
+          "https://github.com/tamird/gvisor/actions/runs/41196068262/artifacts/13041350837",
+          "https://github.com/tamird/gvisor/actions/runs/41194118881/artifacts/13040565557"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Complete two-file change",
+          "url": "https://github.com/tamird/gvisor/compare/25172e526...afec4f944"
+        },
+        {
+          "label": "Move from the first Bazel image wrapper to the direct pin",
+          "url": "https://github.com/tamird/gvisor/compare/4be480759..afec4f944"
+        },
+        {
+          "label": "Native ARM64 stock Python failure and corrected runc and runsc transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41195317931/artifacts/13040222257"
+        },
+        {
+          "label": "Native AMD64 stock and corrected runc transfers, and the actual Go pod command",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41195317931/artifacts/13040466475"
+        },
+        {
+          "label": "Native AMD64 runsc and four observed download components",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41196068262/artifacts/13041350837"
+        },
+        {
+          "label": "Original deployed CLI versions and first Bazel image prototype",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41194118881/artifacts/13040565557"
+        }
+      ]
     }
   ],
   "edges": [
