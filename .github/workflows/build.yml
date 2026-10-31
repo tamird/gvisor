@@ -11,8 +11,8 @@ jobs:
     timeout-minutes: 145
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      CURRENT: a2a76817d2d66f2956059b464d2eadbb036078f9
-      BASE: 8a84b240f0f85882e3aacb5b550476fe09e11e25
+      CURRENT: 17743ad331a3b327054e2cc66fb355bb2097471e
+      BASE: a2a76817d2d66f2956059b464d2eadbb036078f9
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 8, persist-credentials: false}
@@ -62,6 +62,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: native-nogo-cost-and-consumer
+        name: native-nogo-objdump-inputs
         path: ${{ runner.temp }}/records/
         if-no-files-found: error

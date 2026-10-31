@@ -1,155 +1,93 @@
-"""Compare both Nogo policies on one Linux machine, using Bazel's own spawns."""
+"""Reuse the Bazel-built objdump; collect one package action's real input digests."""
+import hashlib,json,os,re,subprocess as sp,traceback
 from pathlib import Path
-from xml.etree import ElementTree
-import hashlib
-import json
-import os
-import re
-import subprocess as sp
+from collections import Counter,defaultdict
 
-tmp = Path(os.environ['RUNNER_TEMP'])
-records = tmp / 'records'
-source = {'stock': os.environ['BASE'], 'fixed': os.environ['CURRENT']}
-bazel = ['docker','exec','tcp-compiler','bazel','--bazelrc='+str(tmp/'tcp.bazelrc')]
-container = ['docker','exec','tcp-compiler']
-roles = {'bundle','check','filter','render'}
-expected = 'fmt.Fprintf format %d has arg "hello world!" of wrong type string'
-library = '//tools/nogo/sanity:sanity_nogo'
-renderer = '//pkg/goid:goid_asm_render'
-tests = ['//tools/nogo/sanity:sanity_test','//pkg/goid:goid_test']
-flags = ['--config=x86_64','--noremote_upload_local_results','--incompatible_modify_execution_info_additive',
-         '--strategy=GoStdlib=linux-sandbox','--strategy=GoStdlibList=linux-sandbox',
-         '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=+no-remote-cache,^GoStdlib(List)?$=+no-remote-cache',
-         '--remote_download_outputs=toplevel','--jobs=3']
-errors = []
-output_paths = set()
-assembly = {}
-
-def log_json(p):
-    decoder = json.JSONDecoder()
-    with p.open() as src:
-        buf = ''
+tmp=Path(os.environ['RUNNER_TEMP']); rec=tmp/'records'
+docker=['docker','exec','tcp-compiler']
+bazel=docker+['bazel','--bazelrc='+str(tmp/'tcp.bazelrc')]
+def save(name,v): (rec/name).write_text(json.dumps(v,indent=2)+'\n')
+def parse(f):
+    dec=json.JSONDecoder()
+    with f.open() as file:
+        buf=''
         while True:
-            chunk = src.read(131072)
-            buf += chunk
-            while buf.lstrip():
-                buf = buf.lstrip()
-                try:
-                    row,pos = decoder.raw_decode(buf)
+            chunk=file.read(131072);buf+=chunk
+            while (buf:=buf.lstrip()):
+                try:v,pos=dec.raw_decode(buf)
                 except ValueError:
-                    if not chunk:
-                        raise
+                    if not chunk: raise
                     break
-                yield row
-                buf = buf[pos:]
-            if not chunk:
-                return
-
-def save(p, obj):
-    p.write_text(json.dumps(obj,indent=2)+'\n')
-
-def selected(spawn):
-    m = spawn.get('mnemonic')
-    args = spawn.get('commandArgs',[])
-    label = spawn.get('targetLabel','').partition('//')[2]
-    if m == 'GoStandardLibraryAnalysis' and label == 'tools/nogo:stdlib' and 'bundle' in args:
-        return 'bundle'
-    if m == 'GoStaticAnalysis':
-        for op,owner in [('check','tools/nogo/sanity:sanity'),('filter','tools/nogo/sanity:sanity_nogo'),('render','pkg/goid:goid_asm_render')]:
-            if label == owner and op in args:
-                return op
-    return None
-
-def checkout(arm):
-    sha = source[arm]
-    sp.run(['git','checkout','--quiet','--detach',sha],check=True)
-    assert sp.check_output(['git','rev-parse','HEAD'],text=True).strip()==sha
-    return sha
-
-def run(arm, label, test=False, control=False, measured=False):
-    sha = checkout(arm)
-    d = records/label; d.mkdir()
-    (d/'source').write_text(sha+'\n')
-    strategy = 'linux-sandbox' if arm=='fixed' or control else 'local'
-    opts = flags + [f'--strategy={m}={strategy}' for m in ('GoStandardLibraryAnalysis','GoStaticAnalysis')]
-    types = ['//tools/nogo:stdlib'] if control else [library,renderer]
-    if test:
-        opts += ['--strategy=TestRunner=local','--test_output=all','--nocache_test_results','--test_arg=-test.v']
-        types = tests + [renderer]
-    if measured:
-        opts += ['--jobs=1']
-        # Invalidate only the four measured action kinds, leaving all compilers,
-        # repository data and other cached work on this worker intact.
-        assert output_paths
-        for path in output_paths:
-            assert path.startswith('bazel-out/') and '..' not in Path(path).parts
-        execroot=sp.check_output(bazel+['info','execution_root'],text=True).strip().splitlines()[-1]
-        assert '/execroot/' in execroot,execroot
-        clean = "import os,sys; [os.unlink(p) for p in sys.argv[1:] if os.path.lexists(p)]"
-        sp.run(container+['python3','-c',clean,*sorted(execroot+'/'+p for p in output_paths)],check=True)
-    execlog = tmp/(label+'.spawns.json')
-    bep = tmp/(label+'.bep.json')
-    logfile = tmp/(label+'.log')
-    with logfile.open('w') as out:
-        rc = sp.run(bazel+['test' if test else 'build',*opts,'--execution_log_json_file='+str(execlog),'--build_event_json_file='+str(bep),*types],stdout=out,stderr=sp.STDOUT).returncode
-    raw = logfile.read_text(errors='replace')
-    extracts = [l for l in raw.splitlines() if any(k in l for k in ('Invocation ID:','Streaming build results','ERROR:','Spawn strategy','usable spawn','viable strategy','PASS','FAILED','processes:','Build completed successfully','Analyzing Go Standard Library'))]
-    (d/'diagnostics.txt').write_text('\n'.join(extracts[:40]+raw.splitlines()[-25:])+'\n')
-    rows = []
-    all_nogo = []
-    if execlog.is_file():
-        for spawn in log_json(execlog):
-            if spawn.get('mnemonic') not in ('GoStaticAnalysis','GoStandardLibraryAnalysis'): continue
-            role = selected(spawn)
-            row = {k:spawn[k] for k in ('targetLabel','mnemonic','runner','cacheHit','exitCode','status','metrics','listedOutputs','actualOutputs') if k in spawn}
-            row['role']=role
-            args=spawn.get('commandArgs',[])
-            row['subcommand']=[a for a in args if a in roles]
-            row['tool']=args[0] if args else None
-            if role:
-                rows.append(row)
-                for p in row['listedOutputs']:
-                    output_paths.add(p)
-            all_nogo.append(row)
-    save(d/'original-nogo-spawns.json',all_nogo)
-    if control:
-        assert rc!=0 and ('strategy' in raw.lower() or 'sandbox' in raw.lower()) and ('no usable spawn strategy' in raw.lower() or 'can execute' in raw.lower() or 'available strategy' in raw.lower() or ('GoStandardLibraryAnalysis' in raw and 'linux-sandbox' in raw)), raw[-1900:]
-        return
-    assert rc==0,(label,rc,extracts[-8:])
-    assert {r['role'] for r in rows}==roles,(label,[(r['targetLabel'],r['subcommand']) for r in all_nogo])
-    assert all(r.get('runner')==strategy and not r.get('cacheHit',False) and r.get('exitCode',0)==0 for r in rows), (label,[(r['role'],r.get('runner'),r.get('cacheHit')) for r in rows])
-    if test:
-        for tgt in tests:
-            prefix=tgt[2:].replace(':','/')
-            for ext in ('xml','log'):
-                dst=d/(tgt.split(':')[-1]+'.'+ext)
-                dst.write_bytes(sp.check_output(container+['cat','bazel-testlogs/'+prefix+'/test.'+ext]))
-            xml = ElementTree.parse(d/(tgt.split(':')[-1]+'.xml'))
-            assert not any(xml.findall('.//'+tag) for tag in ('failure','error','skipped')), (tgt, ElementTree.tostring(xml.getroot()))
-        assert expected in (d/'sanity_test.log').read_text() and 'PASS' in (d/'sanity_test.log').read_text()
-        asm=sp.check_output(container+['cat','bazel-bin/pkg/goid/goid_asm_impl.s'])
-        assert hashlib.sha256(asm).hexdigest() == 'ad803313492eefd0d410ffa437554255564b90602353646d608dc07e8f008cfd', asm
-        (d/'goid_asm_impl.s').write_bytes(asm); assembly[arm]=hashlib.sha256(asm).hexdigest()
-
-def main():
-    # Prior raw receipts already prove the rejection and both action strategies.
-    # This build warms this worker, verifies the generated bytes and runs the
-    # consumer verbosely; rules_go's non-verbose XML has no case records.
-    run('fixed','warm-fixed',test=True)
-    log = (records/'warm-fixed'/'goid_test.log').read_text()
-    assert '--- PASS: TestUniquenessAndConsistency' in log, log
-    # The first worker runs above warm repository setup and tool/SDK inputs.
-    # Measure each source twice, reversing order in the second pair.
-    for i,arm in enumerate(('stock','fixed','fixed','stock')):
-        try:
-            run(arm,f'measure-{i+1}-{arm}',measured=True)
-        except Exception as exc:
-            errors.append([f'measure-{i+1}-{arm}',str(exc)])
-
+                yield v
+                buf=buf[pos:]
+            if not chunk: return
+def result_inputs(spawn):
+    files={}
+    for f in spawn.get('inputs',[]):
+        n=f['path'];assert n not in files,n;files[n]=f
+    digest={}
+    part=defaultdict(Counter)
+    for n,x in files.items():
+        dig=x.get('digest',{});size=int(dig.get('sizeBytes',0));h=dig.get('hash')
+        if h:
+            if h in digest: assert digest[h]==size,h
+            digest[h]=size
+        g=('target standard library' if '/stdlib_/' in n or n.endswith('/stdlib_') else
+           'SDK sources' if '/src/' in n and n.startswith('external/') else
+           'SDK tools' if '/pkg/tool/' in n or n.endswith('/bin/go') else
+           'SDK headers' if '/pkg/include/' in n else
+           'materialized objdump' if n.endswith('/nogo_materialized/objdump') else 'other')
+        part[g].update({'paths':1,'bytes':size,'missing_digest':not bool(h)})
+    return files,{'paths':len(files),'paths_with_digest':sum(bool(x.get('digest',{}).get('hash')) for x in files.values()),'bytes_by_path':sum(int(x.get('digest',{}).get('sizeBytes',0)) for x in files.values()),'unique_digests':len(digest),'bytes_by_unique_digest':sum(digest.values()),'groups':dict(part)}
+def run(mode,strategy):
+    full=tmp/(mode+'.spawns.json');raw=tmp/(mode+'.log')
+    args=['test','--config=x86_64','--noremote_upload_local_results','--incompatible_modify_execution_info_additive',
+         '--strategy=GoStdlib=linux-sandbox','--strategy=GoStdlibList=linux-sandbox',
+         '--modify_execution_info=^GoStaticAnalysis$=+no-remote-cache,^GoStdlib(List)?$=+no-remote-cache',
+         '--remote_download_outputs=toplevel','--jobs=1','--strategy=GoStaticAnalysis='+strategy,
+         '--strategy=GoStandardLibraryAnalysis=local','--strategy=TestRunner=local','--nocache_test_results',
+         '--test_output=all','--define=nogo_probe='+mode,'--execution_log_json_file='+str(full),'//tools/nogo/sanity:sanity_test']
+    with raw.open('w') as out:
+        rc=sp.run(bazel+args,stdout=out,stderr=sp.STDOUT).returncode
+    log=raw.read_text(errors='replace')
+    (rec/(mode+'-diagnostics.txt')).write_text('\n'.join(l for l in log.splitlines()
+        if any(k in l for k in ['NOGO-','ERROR:','FAILED','error','Invocation ID:','format %d','PASS','error running','no such file','Error in','FAIL:']))+'\n')
+    if rc: raise ValueError((mode,rc,log[-1500:]))
+    assert 'fmt.Fprintf format %d has arg "hello world!" of wrong type string' in log,mode
+    traces=re.findall(r'NOGO-OBJDUMP mode='+mode+r' duration_ms=(\d+)',log)
+    assert len(traces)==2,(mode,traces,log[-1000:])
+    rows=[]
+    for a in parse(full):
+        if a.get('targetLabel')!='//tools/nogo/sanity:sanity' or 'check' not in a.get('commandArgs',[]):continue
+        assert a.get('runner')==strategy and not a.get('cacheHit',False),a.get('runner')
+        outs=a.get('actualOutputs',[]);arch=a['listedOutputs'][0].split('/')[1].split('-')[0]
+        files,stats=result_inputs(a)
+        assert stats['paths']>5 and stats['paths_with_digest'] and stats['bytes_by_path']>1000,stats
+        save(mode+'-'+arch+'-inputs.json',list(files.values()))
+        rows.append({'arch':arch,'runner':a.get('runner'),'cacheHit':a.get('cacheHit',False),'metrics':a['metrics'],'inputs':stats,'outputs':outs})
+    assert len(rows)==2,(mode,len(rows))
+    record={'mode':mode,'uncached_spawns':rows,'objdump_process_ms':list(map(int,traces)),'expected_finding':True}
+    if mode=='warm':
+        cachepaths=set(re.findall(r'NOGO-CACHED-OBJDUMP (\S+)',log))
+        assert cachepaths and all('/.checkescape-gocache/' in x and x.startswith('/') for x in cachepaths),cachepaths
+        digests={sp.check_output(docker+['sha256sum',n],text=True).split()[0] for n in cachepaths}
+        assert len(digests)==1,digests
+        target='test/rbe/nogo_materialized/objdump'
+        assert Path(target).read_text().startswith('Replaced on the Linux runner')
+        sp.run(docker+['cp','--',sorted(cachepaths)[0],target],check=True)
+        assert Path(target).read_bytes()[:4]==b'\x7fELF' and hashlib.sha256(Path(target).read_bytes()).hexdigest() in digests
+        record['original_sdk_tool_sha256']=digests.pop()
+    return record
+rows=[]
 try:
-    main()
-except Exception as exc:
-    errors.append(['comparison',repr(exc)])
-save(records/'verdict.json',{'status':'FAIL' if errors else 'PASS','sources':source,'assembly_sha256':assembly,'errors':errors})
-print((records/'verdict.json').read_text())
-raise SystemExit(bool(errors))
+    source=sp.check_output(['git','rev-parse','HEAD'],text=True).strip()
+    assert source==os.environ['CURRENT'],source
+    for mode,strategy in [('warm','local'),('local','local'),('sandbox','linux-sandbox'),('direct','linux-sandbox'),('lean','linux-sandbox')]:
+        rows.append(run(mode,strategy)); save('measurements.json',rows)
+    gs={r['mode']:r['uncached_spawns'][0]['inputs']['groups'] for r in rows}
+    assert gs['local']['SDK sources']['paths']>500 and gs['sandbox']['SDK sources']['paths']>500,gs
+    assert gs['direct']['SDK sources']['paths']>500 and 'SDK sources' not in gs['lean'],gs
+    save('verdict.json',{'status':'PASS','source':source,'scopes':[r['mode'] for r in rows],'consumer':'required native printf finding on both architecture configurations'})
+except BaseException:
+    save('verdict.json',{'status':'FAIL','complete_scopes':[r['mode'] for r in rows],'trace':traceback.format_exc()})
+    raise
