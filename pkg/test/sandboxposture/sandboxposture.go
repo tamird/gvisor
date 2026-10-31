@@ -1144,6 +1144,20 @@ func parseLimits(s string) (map[string]string, error) {
 // `runsc` uses.
 var ignoredEnvRegExp = regexp.MustCompile(`^(RUNSC_(START|REEXEC)_TIME_NANOS=\d+|GVISOR_ENFORCE_RELEASE=.*)$`)
 
+const glibcTunablesPrefix = "GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.malloc.arena_max="
+const glibcTunables = glibcTunablesPrefix + "<8*launcher-cpus>"
+
+// IsSentryGlibcTunables reports whether entry contains exactly the two tunables
+// set by runsc. The launcher's CPU affinity can differ from the observer's.
+func IsSentryGlibcTunables(entry string) bool {
+	s, ok := strings.CutPrefix(entry, glibcTunablesPrefix)
+	if !ok {
+		return false
+	}
+	n, err := strconv.Atoi(s)
+	return err == nil && n > 0 && n%8 == 0 && s == strconv.Itoa(n)
+}
+
 const envGOMAXPROCSPrefix = "GOMAXPROCS="
 
 // EnvGOMAXPROCSFromCPUNum is the normalized `Attrs.Environ` entry for
@@ -1202,6 +1216,14 @@ func collectAttrs(p, ref *proc, status, refStatus map[string]string, userNS stri
 		}
 		if cpuNum != "" && e == envGOMAXPROCSPrefix+cpuNum {
 			e = EnvGOMAXPROCSFromCPUNum
+		}
+		if strings.HasPrefix(e, glibcTunablesPrefix) {
+			if IsSentryGlibcTunables(e) {
+				e = glibcTunables
+			} else {
+				// Distinguish a literal placeholder from a normalized value.
+				e = strconv.Quote(e)
+			}
 		}
 		a.Environ = append(a.Environ, e)
 	}
