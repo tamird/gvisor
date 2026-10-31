@@ -6,13 +6,12 @@ one opt-in writing command, `bazel run //tools/lint:format`. These are
 proposed interfaces. A temporary `make lint` alias can call Bazel but
 should own no policy.
 
-On the [working branch](https://github.com/tamird/gvisor/commit/378946ccd),
-the check runs Buildifier and cpplint independently. On an
-[AMD64 scratch worker](https://app.buildbuddy.io/invocation/1c7ef0fa-8529-4c89-9410-71be0a31c57a)
-they checked 617 Bazel files and 485 C++ files using the registered
-tools. A [new C++ file with a bad include](https://app.buildbuddy.io/invocation/c118d0f9-150a-44dc-8c5b-d3c177052d09)
-failed cpplint. These results cover running the checks; bootstrapping
-all their tools on scratch is still open.
+The [proposed amendment to #16663](https://github.com/tamird/gvisor/commit/1d96ea04c)
+runs Buildifier and cpplint as separate actions on a shared list of source
+files. [Both scratch worker architectures](https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680)
+checked all 485 C++ files with the registered Python. The [formatter check](https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547)
+added malformed BUILD and .bzl files in a new package, confirmed the
+check rejected them, fixed them from a subdirectory, and reran the check.
 
 | Check | Where it belongs |
 | --- | --- |
@@ -111,10 +110,14 @@ the ordinary gVisor root and an external root that explicitly applied the
 overrides both got the patched protobuf source. A plain consumer and a
 gVisor build with dev dependencies disabled both got the upstream source
 that reads the executable at startup. [Removing that read was intentional](https://github.com/google/gvisor/commit/dba564686).
-The comparison verified source contents; both attempts to compile
-`waiter` stopped during Go toolchain setup. Keep production Go overrides
-out of the lint migration. Proving that gVisor builds as a dependency
-requires a separate fix.
+A consuming root that explicitly adopts gVisor’s Go overrides built
+`@gvisor//pkg/gvisordetect` on [unmodified gVisor](https://github.com/tamird/gvisor/actions/runs/41220013696/artifacts/13050115599)
+and [the lint amendment](https://github.com/tamird/gvisor/actions/runs/41220624411/artifacts/13049921773).
+The Go archive and export data matched byte for byte. The amendment
+kept the patched protobuf source and added none of its three lint
+repositories to the consumer’s gVisor mapping or registry lock. A root
+that doesn't adopt that dependency policy still encounters the existing
+Gazelle restriction. Changing that policy is separate from source lint.
 
 ## Migration order
 

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T16:22:00.007454+00:00",
+    "updatedAt": "2026-10-31T16:37:26.194794+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1813,7 +1813,7 @@
       "summary": "The source conflict is repaired at e22d4ffb69. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. The GNU amendment remains delivered; the independent musl follow-up keeps its own evidence and scope.\n\nEarlier source-specific record:\n\nThe contributor-approved GNU replacement is published on #15153 at 85c742f25. This revision preserves the approved implementation and applies buildifier attribute ordering. Both ordinary GNU static consumers passed on 7d549676b, and the 203-record license audit remains bound to identical license inputs. No GNU runtime traffic is claimed. The contributor decision is complete; current public checks and the two existing maintainer requests are reported by the provider snapshot. The separate musl candidate ccae8886e has target-specific GNU and musl evidence but remains agent work pending full compiler-consumer proof.\n\nPreserved earlier amendment record:\n\nThe public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-31T16:22:00.007454+00:00",
+      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
       "followup": {
         "disposition": "Equivalent conflict repair published; existing review requirements retained",
         "owner": "root",
@@ -1832,7 +1832,7 @@
         "observedAt": "2026-10-27T18:54:54+00:00",
         "providerHead": "e22d4ffb69d6f40ab3eb498435d918789da14fdb"
       },
-      "head": "e22d4ffb69d6f40ab3eb498435d918789da14fdb",
+      "head": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
       "refinement": {
         "before": {
           "head": "a3818d1793b919df1feeeb1c028cc40158754a7e"
@@ -1905,6 +1905,10 @@
         {
           "label": "Matched allocator comparison, seccomp unchanged",
           "url": "https://github.com/tamird/gvisor/actions/runs/41219191400"
+        },
+        {
+          "label": "Unmodified parent built both binaries and hit the same seccomp startup failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41217449718/artifacts/13049805793"
         }
       ]
     },
@@ -1971,7 +1975,14 @@
       "url": "https://github.com/tamird/gvisor/tree/builder-without-cross-compilers",
       "group": "bazel",
       "status": "branch",
-      "summary": "Builder package cleanup after the hermetic toolchain migration."
+      "summary": "Remove both Ubuntu cross-compiler packages once the declared LLVM compiler replaces them. The Dockerfile is the only path in the compiler revision that still names these packages; the reduced builder still needs qualification.",
+      "evidence": [
+        {
+          "label": "Declared compiler successor",
+          "url": "https://github.com/tamird/gvisor/commit/0afd5b37e"
+        }
+      ],
+      "updatedAt": "2026-10-31T16:37:26.194794+00:00"
     },
     {
       "id": "branch:platform-only-architecture",
@@ -33685,14 +33696,14 @@
       "id": "branch:bazel-cpplint",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/shared-lint-wildcard-aliases",
-      "head": "91bd3fb040db565b5cf94756959e48c6c6450d24",
+      "ref": "research/shared-lint-workspace-format",
+      "head": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
       "title": "Run Buildifier and cpplint on declared repository inputs",
-      "url": "https://github.com/tamird/gvisor/commit/91bd3fb04",
+      "url": "https://github.com/tamird/gvisor/commit/1d96ea04c",
       "group": "analysis",
-      "summary": "One source inventory discovers new BUILD and C++ files across package boundaries. Both checks run as Bazel actions, without per-package hooks or a shell. The standalone extraction includes no packaging or compiler changes.",
-      "updatedAt": "2026-10-31T16:22:00.007454+00:00",
-      "status": "Agent work",
+      "summary": "Included in the proposed amendment to #16663. Both checks share a repository file list; review and delivery are tracked on the PR.",
+      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
+      "status": "superseded",
       "evidence": [
         {
           "label": "Standalone lint prerequisite",
@@ -33737,27 +33748,35 @@
         {
           "label": "485 files on each scratch worker with registered Python; crossed target CPUs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680"
+        },
+        {
+          "label": "Proposed on #16663",
+          "url": "https://github.com/google/gvisor/pull/16663"
+        },
+        {
+          "label": "Check and formatter agreement",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547"
         }
       ],
       "refinement": {
         "before": {
-          "head": "c464adaff29390ff280a13a7d7fb13938f8934cc"
+          "head": "91bd3fb040db565b5cf94756959e48c6c6450d24"
         },
         "after": {
-          "head": "91bd3fb040db565b5cf94756959e48c6c6450d24"
+          "head": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
+          "base": "aa767e4c43d011121271551fe24da501a56f729d"
         }
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "91bd3fb040db565b5cf94756959e48c6c6450d24",
-        "observedAt": "2026-10-31T16:22:00.007454+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Use the same source list for Buildifier check and fix: the current check rejects a new BUILD.bazel that the formatter skips. Verify reject, format and recheck before updating #16663.",
+        "sourceHead": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
+        "observedAt": "2026-10-31T16:37:26.194794+00:00",
+        "disposition": "Included in #16663 amendment",
+        "nextAction": "Review and deliver the combined amendment on #16663.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/91bd3fb04",
-          "https://github.com/tamird/gvisor/actions/runs/41217794897/artifacts/13047923822",
-          "https://github.com/tamird/gvisor/actions/runs/41218704000/artifacts/13048449141",
-          "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680"
+          "https://github.com/google/gvisor/pull/16663",
+          "https://github.com/tamird/gvisor/commit/1d96ea04c",
+          "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547"
         ]
       }
     },
@@ -34344,27 +34363,59 @@
         {
           "label": "Hostile parent config ignored during fix",
           "url": "https://app.buildbuddy.io/invocation/62200a1b-dc1c-4b09-973f-be9b28cf9962"
+        },
+        {
+          "label": "Exact-source check, format, recheck, exclusions and error propagation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547"
+        },
+        {
+          "label": "New amendment",
+          "url": "https://github.com/tamird/gvisor/commit/1d96ea04c"
+        },
+        {
+          "label": "Registered Python on two scratch worker architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680"
+        },
+        {
+          "label": "External root aliases and explicit target controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41218704000/artifacts/13048449141"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-10-29T15:46:52.917812+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Hold the amendment. Prove a shared scratch-safe source inventory, upstream tool selection and a downstream module build before asking for review again.",
+        "observedAt": "2026-10-31T16:37:26.194794+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Publish the amendment once reviewed. The remaining lints have their own migration steps.",
         "evidence": [
-          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
+          "https://github.com/tamird/gvisor/commit/1d96ea04c",
+          "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547",
+          "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680",
+          "https://github.com/tamird/gvisor/actions/runs/41218704000/artifacts/13048449141",
+          "https://github.com/tamird/gvisor/actions/runs/41217794897/artifacts/13047923822"
         ]
       },
       "refinement": {
         "before": {
-          "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+          "head": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+          "base": "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
         },
         "after": {
-          "head": "6946292a2275252009256d882c44900419ff0934"
+          "head": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
+          "base": "aa767e4c43d011121271551fe24da501a56f729d"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
+        "head": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
+        "url": "https://github.com/tamird/gvisor/commit/1d96ea04c",
+        "title": "Run Buildifier and cpplint on declared repository inputs",
+        "summary": "One Bazel target runs two separately cached checks. Both see new first-party files without a per-package hook. The format command fixes the files Buildifier reports.",
+        "body": "The worker actions take their tools and inputs from Bazel. The format command repairs new files from a subdirectory and forwards tool failures. On Linux the pinned Bazel client itself still invokes Bash for bazel run.\n\ngit range-diff --creation-factor=999 1dac5af96^! 1d96ea04c^!"
       }
     },
     {
@@ -40266,11 +40317,14 @@
       "evidence": "https://github.com/tamird/gvisor/tree/hermetic-bpf"
     },
     {
-      "from": "branch:hermetic-toolchains",
+      "from": "branch:hermetic-compiler-review",
       "to": "branch:builder-without-cross-compilers",
       "type": "depends_on",
-      "reason": "Prepared on the combined hermetic toolchain migration.",
-      "evidence": "https://github.com/tamird/gvisor/tree/builder-without-cross-compilers"
+      "reason": "The declared LLVM compiler and sysroots replace the Ubuntu cross-compilers. Qualify the builder without the packages on this successor.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/0afd5b37e",
+        "https://github.com/tamird/gvisor/commit/af8d0d3b3"
+      ]
     },
     {
       "from": "branch:hermetic-toolchains",
@@ -43112,11 +43166,11 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:bazel-cpplint",
+      "from": "pr:16663",
       "to": "branch:package-clang-format",
-      "reason": "Add formatting tests to the package targets that own each C and C++ source.",
+      "reason": "Uses the shared repository source inventory proposed in #16663.",
       "evidence": [
-        "https://github.com/tamird/gvisor/compare/4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e...e2b20441891e30cb1ef6a4b8b674dcae6010284e"
+        "https://github.com/tamird/gvisor/commit/1d96ea04c"
       ]
     },
     {
@@ -43448,12 +43502,12 @@
       ]
     },
     {
-      "from": "branch:bazel-cpplint",
+      "from": "pr:16663",
       "to": "branch:native-gazelle-check",
       "type": "depends_on",
-      "reason": "Both checks use the same first-party source inventory and //tools/lint package.",
+      "reason": "Uses the shared repository source inventory proposed in #16663.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/de64c6b62"
+        "https://github.com/tamird/gvisor/commit/1d96ea04c"
       ]
     }
   ],
@@ -55967,7 +56021,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T08:59:48.476203+00:00",
+      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -56993,6 +57047,23 @@
             {
               "label": "Three link actions and linked identities",
               "url": "https://github.com/tamird/gvisor/actions/runs/41170744769/artifacts/13031552377"
+            }
+          ]
+        },
+        {
+          "text": "The governance generator can run natively; the two freshness tests generated by write_source_files still launch Bash and host diff. The supplier’s open proposal declares diff but retains the shell. Its separate design for a build-time check must leave the updater runnable when files differ.",
+          "evidence": [
+            {
+              "label": "Current supplier comparison script",
+              "url": "https://github.com/bazel-contrib/bazel-lib/blob/83635d00a/lib/private/diff_test_tmpl.sh"
+            },
+            {
+              "label": "Declared diff proposal",
+              "url": "https://github.com/bazel-contrib/bazel-lib/pull/1056"
+            },
+            {
+              "label": "Build-time freshness design",
+              "url": "https://github.com/bazel-contrib/bazel-lib/issues/993"
             }
           ]
         }
@@ -58289,7 +58360,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T16:22:00.007454+00:00",
+      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
@@ -58412,9 +58483,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680"
             }
           ]
+        },
+        {
+          "text": "The workspace formatter repairs the same new BUILD and .bzl files that the read-only check rejects. Formatting works from a subdirectory and a second pass leaves both files untouched. The action and the launcher need no shell; the pinned Bazel client still invokes Bash to start bazel run on Linux.",
+          "evidence": [
+            {
+              "label": "Eight outcomes and captured Bazel client execution request",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the shared file list for both Buildifier check and format, including new packages. Keep the existing Gazelle downstream restriction separate.",
+      "nextStep": "Review the two-tool implementation on #16663. Qualify remaining lints separately. Downstream builds also need existing Gazelle repository overrides supplied by the consuming root.",
       "evidence": [
         {
           "label": "Gazelle: qualified proposal",
@@ -58447,6 +58527,10 @@
         {
           "label": "Malformed file rejected by native action",
           "url": "https://app.buildbuddy.io/invocation/f5b006bf-2c5b-4fef-b3b9-f120a2f7d204"
+        },
+        {
+          "label": "Current upstream as a Go library dependency with consuming-root overrides",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41220013696/artifacts/13050115599"
         }
       ]
     },
