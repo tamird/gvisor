@@ -475,6 +475,14 @@ func (es *graphEncodeState) coverSliceInArray(obj int32, off uintptr, elem *type
 // ptrTarget returns the target for a pointer to a value of type ti at addr.
 func (es *graphEncodeState) ptrTarget(p unsafe.Pointer, ti *typeInfo) int32 {
 	addr := uintptr(p)
+	if es.indexStudy != nil {
+		size := ti.size
+		if size != 0 {
+			es.indexStudy.span(addr, addr+size, idxPointee)
+		} else if p != zeroSizedPtr() {
+			es.indexStudy.span(addr, addr+1, idxZeroAnchor)
+		}
+	}
 	if tid := es.lookup(addr, ti); tid >= 0 {
 		return tid
 	}
@@ -530,6 +538,15 @@ func (es *graphEncodeState) sliceTarget(dataPtr unsafe.Pointer, elem *typeInfo, 
 	data := uintptr(dataPtr)
 	esz := elem.size
 	end := data + capacity*esz
+	if c := es.indexStudy; c != nil {
+		c.views++
+		if length < capacity {
+			c.short++
+		}
+		liveEnd := data + length*esz
+		c.span(data, liveEnd, idxSliceLive)
+		c.span(liveEnd, end, idxSliceTail)
+	}
 	tid := es.lookup(data, elem)
 	if tid >= 0 && es.target(tid).obj >= 0 {
 		// Fast path: the slice is within the object of an existing target.

@@ -57,12 +57,13 @@ const (
 // mapped, renamed, and unlinked files in tmpfs, host bind mounts, and overlay
 // root filesystems.
 type stateWorkload struct {
-	controlDir string
-	scratchDir string
-	hostDir    string
-	rootfsDir  string
-	hops       int
-	worker     bool
+	udpCount, udpBytes int
+	controlDir         string
+	scratchDir         string
+	hostDir            string
+	rootfsDir          string
+	hops               int
+	worker             bool
 }
 
 // Name implements subcommands.Command.Name.
@@ -80,6 +81,8 @@ func (*stateWorkload) Usage() string {
 
 // SetFlags implements subcommands.Command.SetFlags.
 func (w *stateWorkload) SetFlags(f *flag.FlagSet) {
+	f.IntVar(&w.udpCount, "udp-count", 1, "number of queued UDP packets")
+	f.IntVar(&w.udpBytes, "udp-bytes", 512, "payload size of each UDP packet")
 	f.StringVar(&w.controlDir, "control-dir", "", "shared host directory for phase handshakes")
 	f.StringVar(&w.scratchDir, "scratch-dir", "/scratch", "in-Sentry tmpfs directory for stateful filesystem objects")
 	f.StringVar(&w.hostDir, "host-dir", "", "if set, a host bind mount directory to exercise")
@@ -410,6 +413,9 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		return w.failf("net.ListenPacket udp: %v", err)
 	}
 	defer udpServer.Close()
+	if err := udpServer.(*net.UDPConn).SetReadBuffer(384 << 10); err != nil {
+		return w.failf("UDP receive buffer: %v", err)
+	}
 	udpClient, err := net.Dial("udp", udpServer.LocalAddr().String())
 	if err != nil {
 		return w.failf("net.Dial udp: %v", err)
@@ -521,9 +527,11 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		if _, err := tcpServer.Write(wantTCP); err != nil {
 			return w.failf("hop %d tcpServer.Write: %v", hop, err)
 		}
-		wantUDP := deterministicPattern("udp-inflight", hop, 512)
-		if _, err := udpClient.Write(wantUDP); err != nil {
-			return w.failf("hop %d udpClient.Write: %v", hop, err)
+		udpPacket := func(i int) []byte { return deterministicPattern(fmt.Sprintf("udp-%d", i), hop, w.udpBytes) }
+		for i := 0; i < w.udpCount; i++ {
+			if n, err := udpClient.Write(udpPacket(i)); err != nil || n != w.udpBytes {
+				return w.failf("UDP write %d: n=%d err=%v", i, n, err)
+			}
 		}
 		wantUDS := deterministicPattern("uds-inflight", hop, 1024)
 		if _, err := udsServer.Write(wantUDS); err != nil {
@@ -710,12 +718,14 @@ func (w *stateWorkload) Execute(ctx context.Context, f *flag.FlagSet, args ...an
 		if err := udpServer.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
 			return w.failf("hop %d udpServer.SetReadDeadline: %v", hop, err)
 		}
-		gotUDP := make([]byte, 1024)
-		un, _, err := udpServer.ReadFrom(gotUDP)
-		if err != nil || !bytes.Equal(gotUDP[:un], wantUDP) {
-			return w.failf("hop %d ReadFrom udpServer got (n=%d, err=%v)", hop, un, err)
+		gotUDP := make([]byte, w.udpBytes+1)
+		for i := 0; i < w.udpCount; i++ {
+			n, _, err := udpServer.ReadFrom(gotUDP)
+			if err != nil || !bytes.Equal(gotUDP[:n], udpPacket(i)) {
+				return w.failf("UDP read %d: n=%d err=%v", i, n, err)
+			}
 		}
-
+		w.logf("UDP restored count=%d bytes=%d", w.udpCount, w.udpBytes)
 		// Drain and verify in-flight Unix stream payload + fresh UDS dial.
 		gotUDS := make([]byte, len(wantUDS))
 		if _, err := io.ReadFull(udsClient, gotUDS); err != nil || !bytes.Equal(gotUDS, wantUDS) {

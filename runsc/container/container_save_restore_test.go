@@ -2533,6 +2533,10 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 		"--host-dir=" + hostMountPoint,
 		fmt.Sprintf("--hops=%d", len(hops)),
 	}
+	if profile, ok := os.LookupEnv("STATE_UDP_STUDY"); ok {
+		count, size := map[string]int{"empty": 0, "short": 12, "large": 12}[profile], map[string]int{"empty": 64, "short": 64, "large": 8192}[profile]
+		args = append(args, fmt.Sprintf("--udp-count=%d", count), fmt.Sprintf("--udp-bytes=%d", size))
+	}
 	if rootOverlay {
 		args = append(args, "--rootfs-dir="+workloadRootfsDir)
 	}
@@ -2553,6 +2557,9 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 	)
 
 	baseConf := *conf
+	if profile, ok := os.LookupEnv("STATE_UDP_STUDY"); ok {
+		baseConf.DebugLog += "." + profile
+	}
 	if err := baseConf.Overlay2.Set(overlay); err != nil {
 		t.Fatalf("Overlay2.Set(%q): %v", overlay, err)
 	}
@@ -2693,6 +2700,9 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 	if got, err := os.ReadFile(filepath.Join(probeDir, "log")); err != nil || string(got) != wantLog.String() {
 		t.Errorf("host bind mount log = (%q, %v), want %q", got, err, wantLog.String())
 	}
+	if _, ok := os.LookupEnv("STATE_UDP_STUDY"); ok {
+		t.Log(readWorkloadLog())
+	}
 	last := len(hops) - 1
 	for _, name := range []string{
 		fmt.Sprintf("renamed-%d", last),
@@ -2804,6 +2814,18 @@ func TestCheckpointRestoreCrossEngineChained(t *testing.T) {
 					},
 				})
 			})
+		})
+	}
+}
+
+// TestGraphUDPIndex reuses the live graph save/restore workload with only the UDP queue varied.
+func TestGraphUDPIndex(t *testing.T) {
+	conf := testutil.TestConfig(t)
+	conf.Platform = "systrap"
+	for _, profile := range []string{"empty", "short", "large"} {
+		t.Run(profile, func(t *testing.T) {
+			t.Setenv("STATE_UDP_STUDY", profile)
+			runActiveWorkloadChain(t, conf, "none", config.StateEngineGraph, []workloadHopSpec{{saveEngine: config.StateEngineGraph, restoreEngine: config.StateEngineGraph, compression: statefile.CompressionLevelNone}})
 		})
 	}
 }

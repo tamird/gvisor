@@ -39,14 +39,15 @@ func CollectStats(enable bool) {
 }
 
 type graphStats struct {
-	used    bool
-	enabled bool
-	objects int
-	bytes   int
-	elapsed int64
-	byType  map[*typeInfo]*statEntry
-	stack   []*typeInfo
-	last    int64
+	indexCensus string
+	used        bool
+	enabled     bool
+	objects     int
+	bytes       int
+	elapsed     int64
+	byType      map[*typeInfo]*statEntry
+	stack       []*typeInfo
+	last        int64
 }
 
 func (s *graphStats) init() {
@@ -80,6 +81,9 @@ func (s *graphStats) done() {
 
 func (s *graphStats) String() string {
 	summary := fmt.Sprintf("%d objects, %d bytes, %v", s.objects, s.bytes, time.Duration(s.elapsed))
+	if s.indexCensus != "" {
+		summary += " INDEX_CENSUS=" + s.indexCensus
+	}
 	if len(s.byType) == 0 {
 		return summary
 	}

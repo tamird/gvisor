@@ -488,6 +488,10 @@ func saveGraph(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 	}
 	es := newGraphEncodeState(ctx, ti.elem)
 	defer es.release()
+	if ti.elem.typ.Name() == "Kernel" && ti.elem.typ.PkgPath() == "gvisor.dev/gvisor/pkg/sentry/kernel" {
+		es.indexStudy = &indexCensus{byBlock: make(map[uintptr]uint8)}
+		defer func() { es.indexStudy = nil }()
+	}
 	es.stats.used = true
 	es.stats.enabled = collectStats.Load()
 	out := &es.final
@@ -498,6 +502,9 @@ func saveGraph(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 		}
 		es.save(e.data, ti.elem, out)
 	})
+	if es.indexStudy != nil && err == nil {
+		es.stats.indexCensus = es.indexStudy.report(es, es.stats.objects, len(out.b))
+	}
 	es.stats.bytes = len(out.b)
 	es.stats.elapsed = gohacks.Nanotime() - start
 	if err != nil {
