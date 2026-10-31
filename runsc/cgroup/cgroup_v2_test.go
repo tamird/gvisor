@@ -17,10 +17,13 @@ package cgroup
 import (
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"testing"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/gccontrol"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
@@ -754,5 +757,50 @@ func TestOwnsCPULimit(t *testing.T) {
 	cg.Own = []string{"/sys/fs/cgroup/parent/leaf"}
 	if !OwnsCPULimit(cg) {
 		t.Errorf("OwnsCPULimit() = false for a cgroup created by Install")
+	}
+}
+
+func TestVisibleCgroupGCBudget(t *testing.T) {
+	const mount = "/gc-budget"
+	var stat unix.Statfs_t
+	if err := unix.Statfs(mount, &stat); err != nil || stat.Type != unix.CGROUP2_SUPER_MAGIC {
+		t.Fatalf("fixture is not a cgroup v2 mount: type=%#x err=%v", stat.Type, err)
+	}
+	for _, tc := range []struct {
+		name, path, leaf string
+		want             uint64
+	}{
+		{"parent", "pod/finite", "2147483648", 512 << 20},
+		{"grandparent", "pod/middle/unlimited", "max", 512 << 20},
+		{"leaf", "pod/small", "268435456", 256 << 20},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := cgroupV2{Mountpoint: mount, Path: tc.path}
+			leaf, err := getMemoryLimit(c.MakePath(""))
+			if err != nil || leaf != tc.leaf {
+				t.Fatalf("kernel memory.max = %q, want %q: %v", leaf, tc.leaf, err)
+			}
+			pod, err := getMemoryLimit(filepath.Join(mount, "pod"))
+			if err != nil || pod != "536870912" {
+				t.Fatalf("kernel pod memory.max = %q, want 536870912: %v", pod, err)
+			}
+			limit, err := c.MemoryLimit()
+			if err != nil {
+				t.Fatal(err)
+			}
+			s := gccontrol.Suspend(limit, 0)
+			if s == nil {
+				t.Fatal("GC suspension did not start")
+			}
+			defer s.End()
+			heap := debug.SetMemoryLimit(-1)
+			t.Logf("BUDGET parent=%s leaf=%s reported=%d heap=%d", pod, leaf, limit, heap)
+			if got, want := limit, tc.want; got != want {
+				t.Errorf("runsc memory limit = %d, want %d", got, want)
+			}
+			if got, want := heap, int64(tc.want/2); got != want {
+				t.Errorf("Go heap budget = %d, want %d", got, want)
+			}
+		})
 	}
 }
