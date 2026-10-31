@@ -659,23 +659,15 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// the data we transmit.
 	s.Outstanding = 0
 
-	// Expunge all SACK information as per https://tools.ietf.org/html/rfc6675#section-5.1
-	//
-	//  In order to avoid memory deadlocks, the TCP receiver is allowed to
-	//  discard data that has already been selectively acknowledged. As a
-	//  result, [RFC2018] suggests that a TCP sender SHOULD expunge the SACK
-	//  information gathered from a receiver upon a retransmission timeout
-	//  (RTO) "since the timeout might indicate that the data receiver has
-	//  reneged." Additionally, a TCP sender MUST "ignore prior SACK
-	//  information in determining which data to retransmit."
-	//
-	// NOTE: We take the stricter interpretation and just expunge all
-	// information as we lack more rigorous checks to validate if the SACK
-	// information is usable after an RTO.
-	s.ep.scoreboard.Reset()
-	s.SackedOut = 0
-	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-		seg.sackCredit = 0
+	// The peer may discard selectively acknowledged data. If its cumulative
+	// ACK stopped at a byte it had already reported, retransmit those bytes
+	// too. Otherwise the outstanding hole does not invalidate later SACKs.
+	if s.ep.scoreboard.IsSACKED(header.SACKBlock{Start: s.SndUna, End: s.SndUna.Add(1)}) {
+		s.ep.scoreboard.Reset()
+		s.SackedOut = 0
+		for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+			seg.sackCredit = 0
+		}
 	}
 	s.updateWriteNext(s.writeList.Front())
 
@@ -1586,6 +1578,37 @@ func (s *sender) inRecovery() bool {
 	return false
 }
 
+// ackStopsInSACKedPacket reports whether the peer previously reported the
+// transmitted packet containing its next unacknowledged byte. Consult the
+// queue before this ACK trims it: a SACK of just the unacknowledged suffix
+// does not mean that the peer reported the whole packet.
+//
+// +checklocks:s.ep.mu
+func (s *sender) ackStopsInSACKedPacket(ack seqnum.Value) bool {
+	if s.ep.scoreboard.Empty() {
+		return false
+	}
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+		p := seg.sackPackets()
+		if p.count == 0 {
+			continue
+		}
+		if ack.LessThan(p.block.Start) {
+			break
+		}
+		if !ack.LessThan(p.block.End) {
+			continue
+		}
+		start := p.block.Start.Add(p.block.Start.Size(ack) / p.mss * p.mss)
+		end := start.Add(min(p.mss, start.Size(p.block.End)))
+		if start.LessThan(s.SndUna) {
+			start = s.SndUna
+		}
+		return s.ep.scoreboard.IsSACKED(header.SACKBlock{Start: start, End: end})
+	}
+	return false
+}
+
 // handleRcvdSegment is called when a segment is received; it is responsible for
 // updating the send-related state.
 // +checklocks:s.ep.mu
@@ -1722,11 +1745,22 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			}
 		}
 
-		if s.shouldSchedulePTO() {
+		switch {
+		case s.SndWnd != 0 && s.ep.SACKPermitted && s.ackStopsInSACKedPacket(ack):
+			// An advancing ACK stopped inside a packet previously SACKed.
+			// Give an ACK covering that byte time to arrive before treating
+			// the earlier SACK as invalid. See tcp_check_sack_reneging:
+			// https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L2247-L2258
+			s.rtt.Lock()
+			grace := max(s.rtt.TCPRTTState.SRTT/2, 10*time.Millisecond)
+			s.rtt.Unlock()
+			s.probeTimer.disable()
+			s.resendTimer.enable(min(grace, s.RTO))
+		case s.shouldSchedulePTO():
 			// Schedule PTO upon receiving an ACK that cumulatively acknowledges data.
 			// See https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.5.1.
 			s.schedulePTO()
-		} else {
+		default:
 			// When an ack is received we must rearm the timer.
 			// RFC 6298 5.3
 			s.probeTimer.disable()
