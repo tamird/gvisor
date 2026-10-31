@@ -15,10 +15,14 @@
 package gvisor2pcap_test
 
 import (
+	"bytes"
+	"encoding/binary"
+	"io"
 	"os"
 	"os/exec"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -198,5 +202,59 @@ func testBinary(t *testing.T, inputPath, outDir string) {
 		if len(line) > 0 && !allowedErrors.MatchString(line) {
 			t.Errorf("unexpected error output: %q", line)
 		}
+	}
+}
+
+// TestCaptureNetworkBoundary is a qualification fixture for packet views. A
+// virtio header and an Ethernet header both precede the unparsed IP datagram.
+func TestCaptureNetworkBoundary(t *testing.T) {
+	datagram := []byte{0x45, 0, 0, 20, 0, 0, 0, 0, 64, 253, 0, 0, 192, 0, 2, 1, 192, 0, 2, 2}
+	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{ReserveHeaderBytes: 24, Payload: buffer.MakeWithData(datagram)})
+	defer pkt.DecRef()
+	pkt.LinkHeader().Push(14)
+	pkt.VirtioNetHeader().Push(10)
+	link := pkt.LinkHeader().Slice()
+	prior := sniffer.LogPackets.Load()
+	defer sniffer.LogPackets.Store(prior)
+	sniffer.LogPackets.Store(0)
+	var out bytes.Buffer
+	endpoint, err := sniffer.NewWithWriter(nil, &out, 65535)
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint.DumpPacket(sniffer.DirectionRecv, header.IPv4ProtocolNumber, pkt, nil)
+	// The 24-byte file and 16-byte packet headers precede the captured bytes.
+	wire := out.Bytes()
+	if len(wire) < 40 || !bytes.Equal(wire[40:], datagram) || binary.LittleEndian.Uint32(wire[32:36]) != uint32(len(datagram)) || binary.LittleEndian.Uint32(wire[36:40]) != uint32(len(datagram)) {
+		t.Fatalf("unexpected capture: %x", wire)
+	}
+	if &pkt.LinkHeader().Slice()[0] != &link[0] {
+		t.Fatal("packet capture replaced the borrowed Ethernet header")
+	}
+}
+
+func BenchmarkBinaryCapture(b *testing.B) {
+	prior := sniffer.LogPackets.Load()
+	defer sniffer.LogPackets.Store(prior)
+	sniffer.LogPackets.Store(0)
+	endpoint, err := sniffer.NewWithWriter(nil, io.Discard, 65535)
+	if err != nil {
+		b.Fatal(err)
+	}
+	for _, n := range []int{64, 1500, 9000} {
+		b.Run(strconv.Itoa(n), func(b *testing.B) {
+			pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buffer.MakeWithData(make([]byte, 24+n))})
+			defer pkt.DecRef()
+			if _, ok := pkt.VirtioNetHeader().Consume(10); !ok {
+				b.Fatal("missing virtio header")
+			}
+			if _, ok := pkt.LinkHeader().Consume(14); !ok {
+				b.Fatal("missing Ethernet header")
+			}
+			b.ReportAllocs()
+			for b.Loop() {
+				endpoint.DumpPacket(sniffer.DirectionRecv, header.IPv4ProtocolNumber, pkt, nil)
+			}
+		})
 	}
 }
