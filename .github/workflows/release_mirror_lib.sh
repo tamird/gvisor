@@ -20,9 +20,8 @@
 
 declare -r RELEASES_URL="https://storage.googleapis.com/gvisor/releases"
 
-# Architecture directory names for raw artifacts. These are derived by
-# tools/make_release.sh from `file` output, and are also what
-# g3doc/user_guide/install.md tells users to plug in from `uname -m`.
+# //debian:release-artifacts uses the architecture names from `uname -m`,
+# as documented in g3doc/user_guide/install.md.
 declare -ra ARCHS=(x86_64 aarch64)
 
 # Raw artifacts to mirror, each with a sibling .sha512.
