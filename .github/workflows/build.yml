@@ -1,35 +1,89 @@
-name: CI
-
-"on":
+name: Replay actual iperf3 sender output through the Go benchmark reporter
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/iperf-reported-rate]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ORIGINAL: 309a60834cbe1e7c02f7763f98548b51a16d49ab
+      CORRECTED: 1d9470464fa30721e30cf5164f07e6583e7f8571
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Preserve the exact sender capture and test across both checkouts
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^1) == "$ORIGINAL" && $(git rev-parse HEAD^2) == "$CORRECTED" ]]
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        cp test/rbe/iperf-report/* "$RUNNER_TEMP/"
+        [[ "$(sha256sum "$RUNNER_TEMP/capture.json" | cut -d' ' -f1)" == 52e81a2861f6e6a17e21476dca73c6687440846164b48b3c70655cc59d80d7ee ]]
+    - name: Prepare the matching compiler and remote execution platform
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+        set -euo pipefail
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name iperf-compiler --entrypoint /bin/bash --user root --cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$RUNNER_TEMP/records:/proof" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec iperf-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec iperf-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - name: Replay both uncached Go benchmark reporters
+      run: |
+        set -euo pipefail
+        for arm in ORIGINAL CORRECTED; do
+          git checkout --quiet --detach "${!arm}"
+          d="$RUNNER_TEMP/records/$arm"; mkdir -p "$d"
+          git rev-parse HEAD > "$d/source"
+          want=1024; if [[ "$arm" == CORRECTED ]]; then want=0; fi
+          python3 "$RUNNER_TEMP/replay.py" "$want" "$RUNNER_TEMP/capture.json"
+          rc=0
+          docker exec iperf-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --test_filter=TestLinuxIperfReport --test_arg=-test.v --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //test/benchmarks/tools:tools_test > "$RUNNER_TEMP/$arm.log" 2>&1 || rc=$?
+          echo "$rc" > "$d/exit"
+          grep -E 'Invocation ID:|ERROR:|FAILED' "$RUNNER_TEMP/$arm.log" | head -20 > "$d/diagnostics" || true
+          docker exec iperf-compiler cat bazel-testlogs/test/benchmarks/tools/tools_test/test.log > "$d/test.log" || true
+          git restore -- test/benchmarks/tools/iperf_test.go
+        done
+    - name: Reconcile both emitted metrics
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/records"
+        for s in 'ORIGINAL 1024' 'CORRECTED 0'; do
+          read -r a v <<< "$s"
+          [[ $(cat "$d/$a/exit") == 0 ]]
+          grep -F "go_bytes_per_iteration=$v measured_Bps=" "$d/$a/test.log"
+        done
+        echo 'PASS: same measured sender metric; automatic Go MB/s removed.' > "$d/VERDICT"
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: iperf-go-metric-replay
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
