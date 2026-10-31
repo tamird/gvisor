@@ -9740,14 +9740,13 @@ func TestTimestampSynCookies(t *testing.T) {
 	// Shrinking the listener buffer must not change the units advertised
 	// to a peer whose handshake is in progress.
 	ep.SocketOptions().SetReceiveBufferSize(16<<10, true /* notify */)
-	const peerWindowField = 2
 	tcpOpts := synOpts[:12]
 	header.EncodeTSOption(420, offered.TSVal, tcpOpts[2:])
 	c.SendPacket(nil, &context.Headers{
 		SrcPort: context.TestPort,
 		DstPort: context.StackPort,
 		Flags:   header.TCPFlagAck,
-		RcvWnd:  peerWindowField,
+		RcvWnd:  512,
 		SeqNum:  iss + 1,
 		AckNum:  c.IRS + 1,
 		TCPOpts: tcpOpts,
@@ -9776,18 +9775,13 @@ func TestTimestampSynCookies(t *testing.T) {
 	// Advance the clock again so that we expect the next TSVal to change.
 	const elapsed = time.Second
 	clock.Advance(elapsed)
-	// Queue one more byte than the peer advertised in its final ACK.
-	const peerWindow = peerWindowField << peerShift
-	if _, err := c.EP.Write(bytes.NewReader(make([]byte, peerWindow+1)), tcpip.WriteOptions{}); err != nil {
+	if _, err := c.EP.Write(bytes.NewReader([]byte{1}), tcpip.WriteOptions{}); err != nil {
 		t.Fatalf("Write failed: %s", err)
 	}
 
 	p := c.GetPacket()
 	defer p.Release()
 	dataHdr := header.TCP(header.IPv4(p.AsSlice()).Payload())
-	if got, want := len(dataHdr.Payload()), peerWindow; got != want {
-		t.Errorf("sent %d bytes within the peer's window, want %d", got, want)
-	}
 	if got, limit := int64(dataHdr.WindowSize())<<offered.WS, c.EP.SocketOptions().GetReceiveBufferSize(); got > limit {
 		t.Errorf("advertised a %d-byte window to the peer with a %d-byte receive buffer", got, limit)
 	}

@@ -31,6 +31,40 @@ func init() {
 	testbench.Initialize(flag.CommandLine)
 }
 
+func sendSYN(t *testing.T, dut *testbench.DUT, toListener testbench.TCP, options []byte) (*testbench.TCPIPv4, header.TCPSynOptions) {
+	t.Helper()
+	conn := dut.Net.NewTCPIPv4(t, toListener, testbench.TCP{SrcPort: toListener.DstPort})
+	t.Cleanup(func() { conn.Close(t) })
+	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: options})
+	reply, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second)
+	if err != nil {
+		t.Fatalf("waiting for SYN-ACK: %v", err)
+	}
+	return &conn, header.ParseSynOptions(reply.Options, true /* isAck */)
+}
+
+// fillSYNQueue returns a stateful connection and the first one using a cookie.
+// The SYNs must offer SACK without timestamps: like gVisor, Linux omits SACK
+// from a cookie SYN-ACK when the peer hasn't offered timestamps:
+// https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L7232-L7239
+func fillSYNQueue(t *testing.T, dut *testbench.DUT, toListener testbench.TCP, options []byte) (*testbench.TCPIPv4, *testbench.TCPIPv4) {
+	t.Helper()
+	stateful, first := sendSYN(t, dut, toListener, options)
+	if !first.SACKPermitted || (header.ParseSynOptions(options, false /* isAck */).WS >= 0 && first.WS < 0) {
+		t.Fatalf("first SYN-ACK did not negotiate the offered options: %+v", first)
+	}
+	// Keep each SYN outstanding. Linux and gVisor can save different
+	// numbers of half-open connections for the same listen backlog.
+	for range 16 {
+		conn, reply := sendSYN(t, dut, toListener, options)
+		if !reply.SACKPermitted {
+			return stateful, conn
+		}
+	}
+	t.Fatal("listener never switched to SYN cookies")
+	return nil, nil
+}
+
 // TestTCPSynCookie checks which final handshake flags a listener accepts
 // for a saved SYN and for a SYN cookie.
 func TestTCPSynCookie(t *testing.T) {
@@ -57,42 +91,10 @@ func TestTCPSynCookie(t *testing.T) {
 			listenFD, remotePort := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1 /* backlog */)
 			defer dut.Close(t, listenFD)
 
-			// Offer SACK without timestamps. Like gVisor, Linux omits SACK
-			// from a cookie SYN-ACK when the peer hasn't offered timestamps:
-			// https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L7232-L7239
 			var options [4]byte
 			n := header.EncodeSACKPermittedOption(options[:])
 			header.AddTCPOptionPadding(options[:], n)
-			synACK := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}
-			sendSYN := func() (*testbench.TCPIPv4, bool) {
-				t.Helper()
-				conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &remotePort}, testbench.TCP{SrcPort: &remotePort})
-				t.Cleanup(func() { conn.Close(t) })
-				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: options[:]})
-				reply, err := conn.Expect(t, synACK, time.Second)
-				if err != nil {
-					t.Fatalf("waiting for SYN-ACK: %v", err)
-				}
-				return &conn, header.ParseSynOptions(reply.Options, true /* isAck */).SACKPermitted
-			}
-
-			withoutSynCookieConn, sack := sendSYN()
-			if !sack {
-				t.Fatal("first SYN-ACK did not negotiate SACK on an empty queue")
-			}
-			// Keep each SYN outstanding. Linux and gVisor can save different
-			// numbers of half-open connections for the same listen backlog.
-			var withSynCookieConn *testbench.TCPIPv4
-			for range 16 {
-				conn, sack := sendSYN()
-				if !sack {
-					withSynCookieConn = conn
-					break
-				}
-			}
-			if withSynCookieConn == nil {
-				t.Fatal("listener never switched to SYN cookies")
-			}
+			withoutSynCookieConn, withSynCookieConn := fillSYNQueue(t, &dut, testbench.TCP{DstPort: &remotePort}, options[:])
 
 			for _, c := range []struct {
 				desc             string
@@ -103,7 +105,7 @@ func TestTCPSynCookie(t *testing.T) {
 				{desc: "with syncookies", conn: withSynCookieConn, expectRetransmit: false},
 			} {
 				t.Run(c.desc, func(t *testing.T) {
-					retransmit := synACK
+					retransmit := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}
 					retransmit.SeqNum = testbench.Uint32(uint32(*c.conn.RemoteSeqNum(t) - 1))
 					got, err := c.conn.Expect(t, retransmit, 2*time.Second)
 					if c.expectRetransmit && err != nil {
@@ -155,6 +157,78 @@ func TestTCPSynCookie(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+func TestSynCookieWindowScale(t *testing.T) {
+	for _, timestamps := range []bool{false, true} {
+		t.Run(fmt.Sprintf("timestamps=%t", timestamps), func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listenFD, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1 /* backlog */)
+			t.Cleanup(func() { dut.Close(t, listenFD) })
+
+			const peerShift = 3
+			const windowField = 16
+			toListener := testbench.TCP{DstPort: &port, WindowSize: testbench.Uint16(windowField)}
+			var options [header.TCPOptionsMaximumSize]byte
+			n := header.EncodeSACKPermittedOption(options[:])
+			n += header.EncodeWSOption(peerShift, options[n:])
+			fillSYNQueue(t, &dut, toListener, options[:n+header.AddTCPOptionPadding(options[:], n)])
+			if timestamps {
+				n += header.EncodeTSOption(1, 0, options[n:])
+			}
+			n += header.AddTCPOptionPadding(options[:], n)
+			conn, opts := sendSYN(t, &dut, toListener, options[:n])
+			wantWindow := windowField
+			ack := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), WindowSize: testbench.Uint16(windowField)}
+			if timestamps {
+				if !opts.TS || opts.TSEcr != 1 {
+					t.Fatalf("cookie SYN-ACK options = %+v, want echoed TSVal 1", opts)
+				}
+				if opts.WS < 0 {
+					t.Errorf("timestamped cookie SYN-ACK omitted window scaling: %+v", opts)
+				}
+				var ts [12]byte
+				n := header.EncodeTSOption(2, opts.TSVal, ts[:])
+				header.AddTCPOptionPadding(ts[:], n)
+				ack.Options = ts[:]
+				wantWindow <<= peerShift
+			} else if opts.WS != -1 || opts.TS || opts.SACKPermitted {
+				t.Fatalf("cookie without timestamps retained unsupported options: %+v", opts)
+			}
+			conn.Send(t, ack)
+			dut.PollOne(t, listenFD, unix.POLLIN, time.Second)
+			fd, _ := dut.Accept(t, listenFD)
+			t.Cleanup(func() { dut.Close(t, fd) })
+			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+
+			// One byte beyond the advertised scaled window must remain
+			// queued until our cumulative ACK opens the window again.
+			data := make([]byte, wantWindow+1)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			// Fill the window first: Linux need not split a queued sub-MSS
+			// write that is one byte larger than this tiny window.
+			if got := dut.Send(t, fd, data[:wantWindow], 0); got != int32(wantWindow) {
+				t.Fatalf("send accepted %d bytes, want %d", got, wantWindow)
+			}
+			if _, err := conn.ExpectNextData(t, &testbench.TCP{}, &testbench.Payload{Bytes: data[:wantWindow]}, time.Second); err != nil {
+				t.Fatalf("expected %d bytes before the first ACK: %v", wantWindow, err)
+			}
+			tail := &testbench.Payload{Bytes: data[wantWindow:]}
+			if got := dut.Send(t, fd, tail.Bytes, 0); got != 1 {
+				t.Fatalf("send accepted %d tail bytes, want 1", got)
+			}
+			if _, err := conn.ExpectData(t, &testbench.TCP{}, tail, 100*time.Millisecond); err == nil {
+				t.Fatal("data beyond the advertised window arrived before an ACK")
+			}
+			conn.Send(t, ack)
+			if _, err := conn.ExpectNextData(t, &testbench.TCP{}, tail, time.Second); err != nil {
+				t.Fatalf("queued byte did not arrive after window reopened: %v", err)
+			}
+			conn.Send(t, ack)
 		})
 	}
 }
