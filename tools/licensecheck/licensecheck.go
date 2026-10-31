@@ -87,6 +87,7 @@ const (
 	bsd2        License = "BSD-2-Clause"
 	bsd3        License = "BSD-3-Clause"
 	bsd4        License = "BSD-4-Clause"
+	ccBY4       License = "CC-BY-4.0"
 	cc0         License = "CC0-1.0"
 	gpl2        License = "GPL-2.0-only"
 	gpl3        License = "GPL-3.0-only"
@@ -108,6 +109,7 @@ var knownLicenses = map[License]bool{
 	bsd2:        true,
 	bsd3:        true,
 	bsd4:        true,
+	ccBY4:       true,
 	cc0:         true,
 	gpl2:        true,
 	gpl3:        true,

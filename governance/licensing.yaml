@@ -44,6 +44,18 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: jekyll_gem_autoprefixer_rails
+    license:
+      - BSD-3-Clause
+      - CC-BY-4.0
+      - ISC
+      - MIT
+    exception_rationale: >-
+      Autoprefixer embeds the CC-BY-4.0 browser support tables from
+      caniuse-lite 1.0.30001109 in vendor/autoprefixer.js. The bundled
+      source-map code, Electron mapping and wrapper also use BSD-3-Clause,
+      ISC and MIT. The renderer runs this JavaScript to generate CSS.
+      The serving image contains the resulting stylesheet.
   - dependency: llvm-raw
     license:
       - Apache-2.0 WITH LLVM-exception

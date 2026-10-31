@@ -923,7 +923,9 @@ go_deps.gazelle_override(
     path = "k8s.io/apimachinery",
 )
 
-# Jekyll plugins absent from the published runtime are consumed as local gem archives.
+# This is the build-time Jekyll 4.0.0 image, including Ruby 2.7.1, Alpine
+# packages and their installed gems. The serving image uses only the rendered
+# site, the server and its CA bundle.
 img_pull(
     name = "jekyll_runtime",
     dev_dependency = True,
@@ -934,6 +936,7 @@ img_pull(
     repository = "jekyll/jekyll",
 )
 
+# Jekyll plugins absent from the published runtime are consumed as local gem archives.
 http_file(
     name = "jekyll_gem_autoprefixer_rails",
     dev_dependency = True,
