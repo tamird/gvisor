@@ -1,0 +1,48 @@
+{
+  "ociDigest": "sha256:fa979718aac3528a2c127eedf1e4f721ac07aed5c22bd5ea493e6ab7b8eca9a1",
+  "imageConfig": [
+    "RUBY_VERSION=2.7.1",
+    "JEKYLL_VERSION=4.0.0",
+    "JEKYLL_DOCKER_COMMIT=374fd647f34c36fa2c333195a54b35217e29be4d"
+  ],
+  "sources": [
+    {
+      "component": "Ruby",
+      "url": "https://raw.githubusercontent.com/ruby/ruby/a0c7c23c9cec0d0ffcba012279cd652d28ad5bf3/COPYING",
+      "bytes": 2427,
+      "sha256": "967586d538a28955ec2541910cf63c5ac345fcdea94bfb1f1705a1f6eb36bcbb"
+    },
+    {
+      "component": "Ruby BSD alternative",
+      "url": "https://raw.githubusercontent.com/ruby/ruby/a0c7c23c9cec0d0ffcba012279cd652d28ad5bf3/BSDL",
+      "bytes": 1282,
+      "sha256": "a5e3042dacb53eebda91f3b1caefbfec8307711df8c4ed1ed20e4e97c43307a4"
+    },
+    {
+      "component": "Ruby third-party notices",
+      "url": "https://raw.githubusercontent.com/ruby/ruby/a0c7c23c9cec0d0ffcba012279cd652d28ad5bf3/LEGAL",
+      "bytes": 39209,
+      "sha256": "b09ca195d2de08f0aacfa8793d0af62d7681c304b3ef714b75813721823295a6"
+    },
+    {
+      "component": "Node upstream bundled notices",
+      "url": "https://raw.githubusercontent.com/nodejs/node/31d3b6d9cbf6f533e7990fa1b7f82976bc384c64/LICENSE",
+      "bytes": 77127,
+      "sha256": "950bbc741dc021489c47683e34e7637e9b96fb4a1f430b2f77a744130516e293"
+    },
+    {
+      "component": "Jekyll",
+      "url": "https://raw.githubusercontent.com/jekyll/jekyll/65adc8dbed4b767ce0d5108ed8a24205a5608d47/LICENSE",
+      "bytes": 1117,
+      "sha256": "23faadc7a63066f316baeec36058a7ee1d791dd5273976eea69718d362bd7db4",
+      "sdkMember": "usr/gem/gems/jekyll-4.0.0/LICENSE",
+      "matchesSdkMember": true
+    },
+    {
+      "component": "Jekyll Docker recipe",
+      "url": "https://raw.githubusercontent.com/jekyll/docker/374fd647f/COPYING",
+      "bytes": 737,
+      "sha256": "a7bd3d66b97a9419cbf5f9a1596df8abb863befd2d152944aed568b83457bed2"
+    }
+  ]
+}

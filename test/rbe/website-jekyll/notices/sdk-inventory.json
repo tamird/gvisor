@@ -1,0 +1,3188 @@
+{
+  "image": "sha256:fa979718aac3528a2c127eedf1e4f721ac07aed5c22bd5ea493e6ab7b8eca9a1",
+  "config": "sha256:cc663fbe96829ed80878b561bbe0871a31d748e721b512f02a8cb29d75d19346",
+  "arch": "amd64",
+  "created": "2020-05-15T18:54:49.533537301Z",
+  "env": [
+    "RUBY_VERSION=2.7.1",
+    "JEKYLL_VERSION=4.0.0",
+    "JEKYLL_DOCKER_COMMIT=374fd647f34c36fa2c333195a54b35217e29be4d"
+  ],
+  "selectionPathCount": 11044,
+  "apk": [
+    {
+      "name": "musl",
+      "version": "1.1.24-r2",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "lib/ld-musl-x86_64.so.1",
+        "lib/libc.musl-x86_64.so.1"
+      ]
+    },
+    {
+      "name": "libcrypto1.1",
+      "version": "1.1.1g-r0",
+      "license": "OpenSSL",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libcrypto.so.1.1",
+        "usr/lib/engines-1.1/afalg.so",
+        "usr/lib/engines-1.1/capi.so",
+        "usr/lib/engines-1.1/padlock.so",
+        "usr/lib/libcrypto.so.1.1"
+      ]
+    },
+    {
+      "name": "libssl1.1",
+      "version": "1.1.1g-r0",
+      "license": "OpenSSL",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libssl.so.1.1",
+        "usr/lib/libssl.so.1.1"
+      ]
+    },
+    {
+      "name": "libtls-standalone",
+      "version": "2.9.1-r0",
+      "license": "ISC",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libtls-standalone.so.1",
+        "usr/lib/libtls-standalone.so.1.0.0"
+      ]
+    },
+    {
+      "name": "zlib",
+      "version": "1.2.11-r3",
+      "license": "Zlib",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libz.so.1",
+        "lib/libz.so.1.2.11"
+      ]
+    },
+    {
+      "name": "gmp",
+      "version": "6.1.2-r1",
+      "license": "LGPL-3.0",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgmp.so.10",
+        "usr/lib/libgmp.so.10.3.2"
+      ]
+    },
+    {
+      "name": "libgcc",
+      "version": "9.2.0-r4",
+      "license": "GPL LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgcc_s.so.1"
+      ]
+    },
+    {
+      "name": "libstdc++",
+      "version": "9.2.0-r4",
+      "license": "GPL LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libstdc++.so.6",
+        "usr/lib/libstdc++.so.6.0.27"
+      ]
+    },
+    {
+      "name": "libgmpxx",
+      "version": "6.1.2-r1",
+      "license": "LGPL-3.0",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgmpxx.so.4",
+        "usr/lib/libgmpxx.so.4.5.2"
+      ]
+    },
+    {
+      "name": "gmp-dev",
+      "version": "6.1.2-r1",
+      "license": "LGPL-3.0",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgmp.so",
+        "usr/lib/libgmpxx.so"
+      ]
+    },
+    {
+      "name": "pkgconf",
+      "version": "1.6.3-r0",
+      "license": "ISC",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpkgconf.so.3",
+        "usr/lib/libpkgconf.so.3.0.0"
+      ]
+    },
+    {
+      "name": "gdbm",
+      "version": "1.13-r1",
+      "license": "GPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgdbm.so.4",
+        "usr/lib/libgdbm.so.4.0.0",
+        "usr/lib/libgdbm_compat.so.4",
+        "usr/lib/libgdbm_compat.so.4.0.0"
+      ]
+    },
+    {
+      "name": "libffi",
+      "version": "3.2.1-r6",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libffi.so.6",
+        "usr/lib/libffi.so.6.0.4"
+      ]
+    },
+    {
+      "name": "readline",
+      "version": "8.0.1-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libreadline.so.8",
+        "usr/lib/libreadline.so.8.0"
+      ]
+    },
+    {
+      "name": "libintl",
+      "version": "0.20.1-r2",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libintl.so.8",
+        "usr/lib/libintl.so.8.1.6"
+      ]
+    },
+    {
+      "name": "libffi-dev",
+      "version": "3.2.1-r6",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libffi.so"
+      ]
+    },
+    {
+      "name": "zlib-dev",
+      "version": "1.2.11-r3",
+      "license": "Zlib",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libz.so"
+      ]
+    },
+    {
+      "name": "libproc",
+      "version": "3.3.16-r0",
+      "license": "GPL-2.0 LGPL-2.1+",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libprocps.so.8",
+        "lib/libprocps.so.8.0.2"
+      ]
+    },
+    {
+      "name": "yaml",
+      "version": "0.2.2-r1",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libyaml-0.so.2",
+        "usr/lib/libyaml-0.so.2.0.6"
+      ]
+    },
+    {
+      "name": "yaml-dev",
+      "version": "0.2.2-r1",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libyaml.so"
+      ]
+    },
+    {
+      "name": "ncurses-libs",
+      "version": "6.1_p20200118-r4",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libformw.so.6",
+        "usr/lib/libformw.so.6.1",
+        "usr/lib/libmenuw.so.6",
+        "usr/lib/libmenuw.so.6.1",
+        "usr/lib/libncursesw.so.6",
+        "usr/lib/libncursesw.so.6.1",
+        "usr/lib/libpanelw.so.6",
+        "usr/lib/libpanelw.so.6.1"
+      ]
+    },
+    {
+      "name": "binutils",
+      "version": "2.33.1-r0",
+      "license": "GPL-2.0 GPL-3.0-or-later LGPL-2.0 BSD",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libbfd-2.33.1.so",
+        "usr/lib/libopcodes-2.33.1.so"
+      ]
+    },
+    {
+      "name": "libmagic",
+      "version": "5.37-r1",
+      "license": "BSD-2-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libmagic.so.1",
+        "usr/lib/libmagic.so.1.0.0"
+      ]
+    },
+    {
+      "name": "isl",
+      "version": "0.18-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libisl.so.15",
+        "usr/lib/libisl.so.15.3.0"
+      ]
+    },
+    {
+      "name": "libgomp",
+      "version": "9.2.0-r4",
+      "license": "GPL LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgomp.so.1",
+        "usr/lib/libgomp.so.1.0.0"
+      ]
+    },
+    {
+      "name": "libatomic",
+      "version": "9.2.0-r4",
+      "license": "GPL LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libatomic.so.1",
+        "usr/lib/libatomic.so.1.2.0"
+      ]
+    },
+    {
+      "name": "mpfr4",
+      "version": "4.0.2-r1",
+      "license": "GPL LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libmpfr.so.6",
+        "usr/lib/libmpfr.so.6.0.2"
+      ]
+    },
+    {
+      "name": "mpc1",
+      "version": "1.1.0-r1",
+      "license": "LGPL-3.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libmpc.so.3",
+        "usr/lib/libmpc.so.3.1.0"
+      ]
+    },
+    {
+      "name": "gcc",
+      "version": "9.2.0-r4",
+      "license": "GPL LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/gcc/x86_64-alpine-linux-musl/9.2.0/plugin/libcc1plugin.so",
+        "usr/lib/gcc/x86_64-alpine-linux-musl/9.2.0/plugin/libcc1plugin.so.0",
+        "usr/lib/gcc/x86_64-alpine-linux-musl/9.2.0/plugin/libcc1plugin.so.0.0.0",
+        "usr/lib/gcc/x86_64-alpine-linux-musl/9.2.0/plugin/libcp1plugin.so",
+        "usr/lib/gcc/x86_64-alpine-linux-musl/9.2.0/plugin/libcp1plugin.so.0",
+        "usr/lib/gcc/x86_64-alpine-linux-musl/9.2.0/plugin/libcp1plugin.so.0.0.0",
+        "usr/lib/libatomic.so",
+        "usr/lib/libcc1.so",
+        "usr/lib/libcc1.so.0",
+        "usr/lib/libcc1.so.0.0.0",
+        "usr/lib/libgcc_s.so",
+        "usr/lib/libgomp.so",
+        "usr/lib/libitm.so",
+        "usr/lib/libitm.so.1",
+        "usr/lib/libitm.so.1.0.0"
+      ]
+    },
+    {
+      "name": "musl-dev",
+      "version": "1.1.24-r2",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libc.so"
+      ]
+    },
+    {
+      "name": "g++",
+      "version": "9.2.0-r4",
+      "license": "GPL LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libstdc++.so"
+      ]
+    },
+    {
+      "name": "libacl",
+      "version": "2.2.53-r0",
+      "license": "LGPL-2.1-or-later AND GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libacl.so.1",
+        "lib/libacl.so.1.1.2253"
+      ]
+    },
+    {
+      "name": "libbz2",
+      "version": "1.0.8-r1",
+      "license": "bzip2-1.0.6",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libbz2.so.1",
+        "usr/lib/libbz2.so.1.0.8"
+      ]
+    },
+    {
+      "name": "expat",
+      "version": "2.2.9-r1",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libexpat.so.1",
+        "usr/lib/libexpat.so.1.6.11"
+      ]
+    },
+    {
+      "name": "lz4-libs",
+      "version": "1.9.2-r0",
+      "license": "BSD-2-Clause GPL-2.0-only",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/liblz4.so.1",
+        "usr/lib/liblz4.so.1.9.2"
+      ]
+    },
+    {
+      "name": "xz-libs",
+      "version": "5.2.4-r0",
+      "license": "GPL-2.0-or-later Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/liblzma.so.5",
+        "usr/lib/liblzma.so.5.2.4"
+      ]
+    },
+    {
+      "name": "zstd-libs",
+      "version": "1.4.4-r1",
+      "license": "BSD-3-Clause GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libzstd.so.1",
+        "usr/lib/libzstd.so.1.4.4"
+      ]
+    },
+    {
+      "name": "libarchive",
+      "version": "3.4.2-r0",
+      "license": "BSD-2-Clause AND BSD-3-Clause AND Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libarchive.so.13",
+        "usr/lib/libarchive.so.13.4.2"
+      ]
+    },
+    {
+      "name": "nghttp2-libs",
+      "version": "1.40.0-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libnghttp2.so.14",
+        "usr/lib/libnghttp2.so.14.19.0"
+      ]
+    },
+    {
+      "name": "libcurl",
+      "version": "7.67.0-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libcurl.so.4",
+        "usr/lib/libcurl.so.4.6.0"
+      ]
+    },
+    {
+      "name": "rhash-libs",
+      "version": "1.3.9-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/librhash.so.0"
+      ]
+    },
+    {
+      "name": "libuv",
+      "version": "1.34.0-r0",
+      "license": "MIT AND ISC",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libuv.so.1",
+        "usr/lib/libuv.so.1.0.0"
+      ]
+    },
+    {
+      "name": "libxau",
+      "version": "1.0.9-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libXau.so.6",
+        "usr/lib/libXau.so.6.0.0"
+      ]
+    },
+    {
+      "name": "libbsd",
+      "version": "0.10.0-r0",
+      "license": "BSD",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libbsd.so.0",
+        "usr/lib/libbsd.so.0.10.0"
+      ]
+    },
+    {
+      "name": "libxdmcp",
+      "version": "1.1.3-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libXdmcp.so.6",
+        "usr/lib/libXdmcp.so.6.0.0"
+      ]
+    },
+    {
+      "name": "libxcb",
+      "version": "1.13.1-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libxcb-composite.so.0",
+        "usr/lib/libxcb-composite.so.0.0.0",
+        "usr/lib/libxcb-damage.so.0",
+        "usr/lib/libxcb-damage.so.0.0.0",
+        "usr/lib/libxcb-dpms.so.0",
+        "usr/lib/libxcb-dpms.so.0.0.0",
+        "usr/lib/libxcb-dri2.so.0",
+        "usr/lib/libxcb-dri2.so.0.0.0",
+        "usr/lib/libxcb-dri3.so.0",
+        "usr/lib/libxcb-dri3.so.0.0.0",
+        "usr/lib/libxcb-glx.so.0",
+        "usr/lib/libxcb-glx.so.0.0.0",
+        "usr/lib/libxcb-present.so.0",
+        "usr/lib/libxcb-present.so.0.0.0",
+        "usr/lib/libxcb-randr.so.0",
+        "usr/lib/libxcb-randr.so.0.1.0",
+        "usr/lib/libxcb-record.so.0",
+        "usr/lib/libxcb-record.so.0.0.0",
+        "usr/lib/libxcb-render.so.0",
+        "usr/lib/libxcb-render.so.0.0.0",
+        "usr/lib/libxcb-res.so.0",
+        "usr/lib/libxcb-res.so.0.0.0",
+        "usr/lib/libxcb-screensaver.so.0",
+        "usr/lib/libxcb-screensaver.so.0.0.0",
+        "usr/lib/libxcb-shape.so.0",
+        "usr/lib/libxcb-shape.so.0.0.0",
+        "usr/lib/libxcb-shm.so.0",
+        "usr/lib/libxcb-shm.so.0.0.0",
+        "usr/lib/libxcb-sync.so.1",
+        "usr/lib/libxcb-sync.so.1.0.0",
+        "usr/lib/libxcb-xf86dri.so.0",
+        "usr/lib/libxcb-xf86dri.so.0.0.0",
+        "usr/lib/libxcb-xfixes.so.0",
+        "usr/lib/libxcb-xfixes.so.0.0.0",
+        "usr/lib/libxcb-xinerama.so.0",
+        "usr/lib/libxcb-xinerama.so.0.0.0",
+        "usr/lib/libxcb-xinput.so.0",
+        "usr/lib/libxcb-xinput.so.0.1.0",
+        "usr/lib/libxcb-xkb.so.1",
+        "usr/lib/libxcb-xkb.so.1.0.0",
+        "usr/lib/libxcb-xtest.so.0",
+        "usr/lib/libxcb-xtest.so.0.0.0",
+        "usr/lib/libxcb-xv.so.0",
+        "usr/lib/libxcb-xv.so.0.0.0",
+        "usr/lib/libxcb-xvmc.so.0",
+        "usr/lib/libxcb-xvmc.so.0.0.0",
+        "usr/lib/libxcb.so.1",
+        "usr/lib/libxcb.so.1.1.0"
+      ]
+    },
+    {
+      "name": "libx11",
+      "version": "1.6.9-r0",
+      "license": "custom:XFREE86",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libX11-xcb.so.1",
+        "usr/lib/libX11-xcb.so.1.0.0",
+        "usr/lib/libX11.so.6",
+        "usr/lib/libX11.so.6.3.0"
+      ]
+    },
+    {
+      "name": "libxext",
+      "version": "1.3.4-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libXext.so.6",
+        "usr/lib/libXext.so.6.4.0"
+      ]
+    },
+    {
+      "name": "libpng",
+      "version": "1.6.37-r1",
+      "license": "Libpng",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpng16.so.16",
+        "usr/lib/libpng16.so.16.37.0"
+      ]
+    },
+    {
+      "name": "freetype",
+      "version": "2.10.1-r0",
+      "license": "FTL GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libfreetype.so.6",
+        "usr/lib/libfreetype.so.6.17.1"
+      ]
+    },
+    {
+      "name": "libuuid",
+      "version": "2.34-r1",
+      "license": "GPL-2.0 GPL-2.0-or-later LGPL-2.0-or-later BSD Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libuuid.so.1",
+        "lib/libuuid.so.1.3.0"
+      ]
+    },
+    {
+      "name": "fontconfig",
+      "version": "2.13.1-r2",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libfontconfig.so.1",
+        "usr/lib/libfontconfig.so.1.12.0"
+      ]
+    },
+    {
+      "name": "lcms2",
+      "version": "2.9-r1",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/liblcms2.so.2",
+        "usr/lib/liblcms2.so.2.0.8"
+      ]
+    },
+    {
+      "name": "libltdl",
+      "version": "2.4.6-r7",
+      "license": "LGPL-2.0+",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libltdl.so",
+        "usr/lib/libltdl.so.7",
+        "usr/lib/libltdl.so.7.3.1"
+      ]
+    },
+    {
+      "name": "libxml2",
+      "version": "2.9.10-r3",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libxml2.so.2",
+        "usr/lib/libxml2.so.2.9.10"
+      ]
+    },
+    {
+      "name": "imagemagick-libs",
+      "version": "7.0.9.7-r0",
+      "license": "ImageMagick",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libMagickCore-7.Q16HDRI.so.7",
+        "usr/lib/libMagickCore-7.Q16HDRI.so.7.0.0",
+        "usr/lib/libMagickWand-7.Q16HDRI.so.7",
+        "usr/lib/libMagickWand-7.Q16HDRI.so.7.0.0"
+      ]
+    },
+    {
+      "name": "imagemagick-c++",
+      "version": "7.0.9.7-r0",
+      "license": "ImageMagick",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libMagick++-7.Q16HDRI.so.4",
+        "usr/lib/libMagick++-7.Q16HDRI.so.4.0.0"
+      ]
+    },
+    {
+      "name": "imagemagick-dev",
+      "version": "7.0.9.7-r0",
+      "license": "ImageMagick",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libMagick++-7.Q16HDRI.so",
+        "usr/lib/libMagickCore-7.Q16HDRI.so",
+        "usr/lib/libMagickWand-7.Q16HDRI.so"
+      ]
+    },
+    {
+      "name": "xz-dev",
+      "version": "5.2.4-r0",
+      "license": "GPL-2.0-or-later Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/liblzma.so"
+      ]
+    },
+    {
+      "name": "libxml2-dev",
+      "version": "2.9.10-r3",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libxml2.so"
+      ]
+    },
+    {
+      "name": "libgpg-error",
+      "version": "1.36-r2",
+      "license": "GPL-2.0-or-later LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgpg-error.so.0",
+        "usr/lib/libgpg-error.so.0.27.0"
+      ]
+    },
+    {
+      "name": "libgcrypt",
+      "version": "1.8.5-r0",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgcrypt.so.20",
+        "usr/lib/libgcrypt.so.20.2.5"
+      ]
+    },
+    {
+      "name": "libxslt",
+      "version": "1.1.34-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libexslt.so.0",
+        "usr/lib/libexslt.so.0.8.20",
+        "usr/lib/libxslt.so.1",
+        "usr/lib/libxslt.so.1.1.34"
+      ]
+    },
+    {
+      "name": "libxslt-dev",
+      "version": "1.1.34-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libexslt.so",
+        "usr/lib/libxslt.so"
+      ]
+    },
+    {
+      "name": "libhistory",
+      "version": "8.0.1-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libhistory.so.8",
+        "usr/lib/libhistory.so.8.0"
+      ]
+    },
+    {
+      "name": "ncurses-dev",
+      "version": "6.1_p20200118-r4",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libcurses.so",
+        "usr/lib/libcursesw.so",
+        "usr/lib/libform.so",
+        "usr/lib/libformw.so",
+        "usr/lib/libmenu.so",
+        "usr/lib/libmenuw.so",
+        "usr/lib/libncurses++.so",
+        "usr/lib/libncurses.so",
+        "usr/lib/libncursesw.so",
+        "usr/lib/libpanel.so",
+        "usr/lib/libpanelw.so"
+      ]
+    },
+    {
+      "name": "readline-dev",
+      "version": "8.0.1-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libhistory.so",
+        "usr/lib/libreadline.so"
+      ]
+    },
+    {
+      "name": "sqlite-libs",
+      "version": "3.30.1-r2",
+      "license": "Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libsqlite3.so.0",
+        "usr/lib/libsqlite3.so.0.8.6"
+      ]
+    },
+    {
+      "name": "sqlite-dev",
+      "version": "3.30.1-r2",
+      "license": "Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libsqlite3.so"
+      ]
+    },
+    {
+      "name": "fftw-double-libs",
+      "version": "3.3.8-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libfftw3.so.3",
+        "usr/lib/libfftw3.so.3.5.8",
+        "usr/lib/libfftw3_threads.so.3",
+        "usr/lib/libfftw3_threads.so.3.5.8"
+      ]
+    },
+    {
+      "name": "fftw-long-double-libs",
+      "version": "3.3.8-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libfftw3l.so.3",
+        "usr/lib/libfftw3l.so.3.5.8",
+        "usr/lib/libfftw3l_threads.so.3",
+        "usr/lib/libfftw3l_threads.so.3.5.8"
+      ]
+    },
+    {
+      "name": "fftw-single-libs",
+      "version": "3.3.8-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libfftw3f.so.3",
+        "usr/lib/libfftw3f.so.3.5.8",
+        "usr/lib/libfftw3f_threads.so.3",
+        "usr/lib/libfftw3f_threads.so.3.5.8"
+      ]
+    },
+    {
+      "name": "fftw-dev",
+      "version": "3.3.8-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libfftw3.so",
+        "usr/lib/libfftw3_threads.so",
+        "usr/lib/libfftw3f.so",
+        "usr/lib/libfftw3f_threads.so",
+        "usr/lib/libfftw3l.so",
+        "usr/lib/libfftw3l_threads.so"
+      ]
+    },
+    {
+      "name": "python3",
+      "version": "3.8.2-r0",
+      "license": "PSF-2.0",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpython3.8.so.1.0",
+        "usr/lib/libpython3.so",
+        "usr/lib/python3.8/lib-dynload/_asyncio.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_bisect.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_blake2.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_bz2.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_codecs_cn.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_codecs_hk.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_codecs_iso2022.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_codecs_jp.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_codecs_kr.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_codecs_tw.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_contextvars.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_crypt.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_csv.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_ctypes.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_ctypes_test.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_curses.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_curses_panel.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_datetime.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_dbm.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_decimal.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_elementtree.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_gdbm.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_hashlib.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_heapq.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_json.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_lsprof.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_lzma.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_md5.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_multibytecodec.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_multiprocessing.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_opcode.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_pickle.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_posixshmem.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_posixsubprocess.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_queue.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_random.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_sha1.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_sha256.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_sha3.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_sha512.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_socket.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_sqlite3.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_ssl.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_statistics.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_struct.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_testbuffer.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_testcapi.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_testimportmultiple.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_testinternalcapi.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_testmultiphase.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_xxsubinterpreters.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/_xxtestfuzz.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/array.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/audioop.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/binascii.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/cmath.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/fcntl.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/grp.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/math.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/mmap.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/ossaudiodev.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/parser.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/pyexpat.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/readline.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/resource.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/select.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/spwd.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/syslog.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/termios.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/unicodedata.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/xxlimited.cpython-38-x86_64-linux-gnu.so",
+        "usr/lib/python3.8/lib-dynload/zlib.cpython-38-x86_64-linux-gnu.so"
+      ]
+    },
+    {
+      "name": "gettext-asprintf",
+      "version": "0.20.1-r2",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libasprintf.so.0",
+        "usr/lib/libasprintf.so.0.0.0"
+      ]
+    },
+    {
+      "name": "libunistring",
+      "version": "0.9.10-r0",
+      "license": "GPL-2.0+ OR LGPL-3.0+",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libunistring.so.2",
+        "usr/lib/libunistring.so.2.1.0"
+      ]
+    },
+    {
+      "name": "gettext-libs",
+      "version": "0.20.1-r2",
+      "license": "GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgettextpo.so.0",
+        "usr/lib/libgettextpo.so.0.5.5",
+        "usr/lib/libtextstyle.so.0",
+        "usr/lib/libtextstyle.so.0.0.0"
+      ]
+    },
+    {
+      "name": "gettext",
+      "version": "0.20.1-r2",
+      "license": "GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgettextlib-0.20.1.so",
+        "usr/lib/libgettextsrc-0.20.1.so"
+      ]
+    },
+    {
+      "name": "gettext-dev",
+      "version": "0.20.1-r2",
+      "license": "GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libasprintf.so",
+        "usr/lib/libgettextlib.so",
+        "usr/lib/libgettextpo.so",
+        "usr/lib/libgettextsrc.so",
+        "usr/lib/libintl.so",
+        "usr/lib/libtextstyle.so"
+      ]
+    },
+    {
+      "name": "bzip2-dev",
+      "version": "1.0.8-r1",
+      "license": "bzip2-1.0.6",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libbz2.so"
+      ]
+    },
+    {
+      "name": "libblkid",
+      "version": "2.34-r1",
+      "license": "GPL-2.0 GPL-2.0-or-later LGPL-2.0-or-later BSD Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libblkid.so.1",
+        "lib/libblkid.so.1.1.0"
+      ]
+    },
+    {
+      "name": "libmount",
+      "version": "2.34-r1",
+      "license": "GPL-2.0 GPL-2.0-or-later LGPL-2.0-or-later BSD Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libmount.so.1",
+        "lib/libmount.so.1.1.0"
+      ]
+    },
+    {
+      "name": "pcre",
+      "version": "8.43-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpcre.so.1",
+        "usr/lib/libpcre.so.1.2.11",
+        "usr/lib/libpcreposix.so.0",
+        "usr/lib/libpcreposix.so.0.0.6"
+      ]
+    },
+    {
+      "name": "glib",
+      "version": "2.62.6-r0",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgio-2.0.so.0",
+        "usr/lib/libgio-2.0.so.0.6200.6",
+        "usr/lib/libglib-2.0.so.0",
+        "usr/lib/libglib-2.0.so.0.6200.6",
+        "usr/lib/libgmodule-2.0.so.0",
+        "usr/lib/libgmodule-2.0.so.0.6200.6",
+        "usr/lib/libgobject-2.0.so.0",
+        "usr/lib/libgobject-2.0.so.0.6200.6",
+        "usr/lib/libgthread-2.0.so.0",
+        "usr/lib/libgthread-2.0.so.0.6200.6"
+      ]
+    },
+    {
+      "name": "libpcre16",
+      "version": "8.43-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpcre16.so.0",
+        "usr/lib/libpcre16.so.0.2.11"
+      ]
+    },
+    {
+      "name": "libpcre32",
+      "version": "8.43-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpcre32.so.0",
+        "usr/lib/libpcre32.so.0.0.11"
+      ]
+    },
+    {
+      "name": "libpcrecpp",
+      "version": "8.43-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpcrecpp.so.0",
+        "usr/lib/libpcrecpp.so.0.0.1"
+      ]
+    },
+    {
+      "name": "pcre-dev",
+      "version": "8.43-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpcre.so",
+        "usr/lib/libpcre16.so",
+        "usr/lib/libpcre32.so",
+        "usr/lib/libpcrecpp.so",
+        "usr/lib/libpcreposix.so"
+      ]
+    },
+    {
+      "name": "libfdisk",
+      "version": "2.34-r1",
+      "license": "GPL-2.0 GPL-2.0-or-later LGPL-2.0-or-later BSD Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libfdisk.so.1",
+        "lib/libfdisk.so.1.1.0"
+      ]
+    },
+    {
+      "name": "libsmartcols",
+      "version": "2.34-r1",
+      "license": "GPL-2.0 GPL-2.0-or-later LGPL-2.0-or-later BSD Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libsmartcols.so.1",
+        "lib/libsmartcols.so.1.1.0"
+      ]
+    },
+    {
+      "name": "util-linux-dev",
+      "version": "2.34-r1",
+      "license": "GPL-2.0 GPL-2.0-or-later LGPL-2.0-or-later BSD Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libblkid.so",
+        "usr/lib/libfdisk.so",
+        "usr/lib/libmount.so",
+        "usr/lib/libsmartcols.so",
+        "usr/lib/libuuid.so"
+      ]
+    },
+    {
+      "name": "glib-dev",
+      "version": "2.62.6-r0",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgio-2.0.so",
+        "usr/lib/libglib-2.0.so",
+        "usr/lib/libgmodule-2.0.so",
+        "usr/lib/libgobject-2.0.so",
+        "usr/lib/libgthread-2.0.so"
+      ]
+    },
+    {
+      "name": "libjpeg-turbo",
+      "version": "2.0.4-r0",
+      "license": "BSD-3-Clause IJG Zlib",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libjpeg.so.8",
+        "usr/lib/libjpeg.so.8.2.2",
+        "usr/lib/libturbojpeg.so.0",
+        "usr/lib/libturbojpeg.so.0.2.0"
+      ]
+    },
+    {
+      "name": "libjpeg-turbo-dev",
+      "version": "2.0.4-r0",
+      "license": "BSD-3-Clause IJG Zlib",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libjpeg.so",
+        "usr/lib/libturbojpeg.so"
+      ]
+    },
+    {
+      "name": "tiff",
+      "version": "4.1.0-r0",
+      "license": "libtiff",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libtiff.so.5",
+        "usr/lib/libtiff.so.5.5.0"
+      ]
+    },
+    {
+      "name": "libtiffxx",
+      "version": "4.1.0-r0",
+      "license": "libtiff",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libtiffxx.so.5",
+        "usr/lib/libtiffxx.so.5.5.0"
+      ]
+    },
+    {
+      "name": "tiff-dev",
+      "version": "4.1.0-r0",
+      "license": "libtiff",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libtiff.so",
+        "usr/lib/libtiffxx.so"
+      ]
+    },
+    {
+      "name": "lcms2-dev",
+      "version": "2.9-r1",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/liblcms2.so"
+      ]
+    },
+    {
+      "name": "libexif",
+      "version": "0.6.21-r3",
+      "license": "LGPL-2.0+",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libexif.so.12",
+        "usr/lib/libexif.so.12.3.3"
+      ]
+    },
+    {
+      "name": "libexif-dev",
+      "version": "0.6.21-r3",
+      "license": "LGPL-2.0+",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libexif.so"
+      ]
+    },
+    {
+      "name": "x265-libs",
+      "version": "3.2.1-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libx265.so.179"
+      ]
+    },
+    {
+      "name": "x265-dev",
+      "version": "3.2.1-r0",
+      "license": "GPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libx265.so"
+      ]
+    },
+    {
+      "name": "libde265",
+      "version": "1.0.3-r0",
+      "license": "LGPL-3.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libde265.so.0",
+        "usr/lib/libde265.so.0.0.10"
+      ]
+    },
+    {
+      "name": "libde265-dev",
+      "version": "1.0.3-r0",
+      "license": "LGPL-3.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libde265.so"
+      ]
+    },
+    {
+      "name": "libheif",
+      "version": "1.6.0-r0",
+      "license": "LGPL-3.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libheif.so.1",
+        "usr/lib/libheif.so.1.6.0"
+      ]
+    },
+    {
+      "name": "libheif-dev",
+      "version": "1.6.0-r0",
+      "license": "LGPL-3.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libheif.so"
+      ]
+    },
+    {
+      "name": "libpng-dev",
+      "version": "1.6.37-r1",
+      "license": "Libpng",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpng.so",
+        "usr/lib/libpng16.so"
+      ]
+    },
+    {
+      "name": "libwebp",
+      "version": "1.0.3-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libwebp.so.7",
+        "usr/lib/libwebp.so.7.0.5",
+        "usr/lib/libwebpdecoder.so.3",
+        "usr/lib/libwebpdecoder.so.3.0.5",
+        "usr/lib/libwebpdemux.so.2",
+        "usr/lib/libwebpdemux.so.2.0.6",
+        "usr/lib/libwebpmux.so.3",
+        "usr/lib/libwebpmux.so.3.0.4"
+      ]
+    },
+    {
+      "name": "libwebp-dev",
+      "version": "1.0.3-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libwebp.so",
+        "usr/lib/libwebpdecoder.so",
+        "usr/lib/libwebpdemux.so",
+        "usr/lib/libwebpmux.so"
+      ]
+    },
+    {
+      "name": "orc",
+      "version": "0.4.31-r0",
+      "license": "BSD-2-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/liborc-0.4.so.0",
+        "usr/lib/liborc-0.4.so.0.31.0"
+      ]
+    },
+    {
+      "name": "orc-dev",
+      "version": "0.4.31-r0",
+      "license": "BSD-2-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/liborc-0.4.so"
+      ]
+    },
+    {
+      "name": "giflib",
+      "version": "5.2.1-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libgif.so.7",
+        "usr/lib/libgif.so.7.2.0"
+      ]
+    },
+    {
+      "name": "vips",
+      "version": "8.8.4-r0",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libvips-cpp.so.42",
+        "usr/lib/libvips-cpp.so.42.11.3",
+        "usr/lib/libvips.so.42",
+        "usr/lib/libvips.so.42.11.3"
+      ]
+    },
+    {
+      "name": "vips-dev",
+      "version": "8.8.4-r0",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libvips-cpp.so",
+        "usr/lib/libvips.so"
+      ]
+    },
+    {
+      "name": "pcre2",
+      "version": "10.34-r1",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpcre2-8.so.0",
+        "usr/lib/libpcre2-8.so.0.9.0",
+        "usr/lib/libpcre2-posix.so.2",
+        "usr/lib/libpcre2-posix.so.2.0.3"
+      ]
+    },
+    {
+      "name": "libressl3.0-libcrypto",
+      "version": "3.0.2-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libcrypto.so.45",
+        "lib/libcrypto.so.45.0.5",
+        "usr/lib/libcrypto.so.45",
+        "usr/lib/libcrypto.so.45.0.5"
+      ]
+    },
+    {
+      "name": "libressl3.0-libssl",
+      "version": "3.0.2-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libssl.so.47",
+        "lib/libssl.so.47.0.6",
+        "usr/lib/libssl.so.47",
+        "usr/lib/libssl.so.47.0.6"
+      ]
+    },
+    {
+      "name": "libressl3.0-libtls",
+      "version": "3.0.2-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libtls.so.19",
+        "lib/libtls.so.19.0.7",
+        "usr/lib/libtls.so.19",
+        "usr/lib/libtls.so.19.0.7"
+      ]
+    },
+    {
+      "name": "c-ares",
+      "version": "1.15.0-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libcares.so.2",
+        "usr/lib/libcares.so.2.3.0"
+      ]
+    },
+    {
+      "name": "nodejs",
+      "version": "12.15.0-r1",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/bin/node"
+      ]
+    },
+    {
+      "name": "p11-kit",
+      "version": "0.23.18.1-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libp11-kit.so.0",
+        "usr/lib/libp11-kit.so.0.3.0"
+      ]
+    },
+    {
+      "name": "libtasn1",
+      "version": "4.15.0-r0",
+      "license": "GPL-3.0 LGPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libtasn1.so.6",
+        "usr/lib/libtasn1.so.6.5.7"
+      ]
+    },
+    {
+      "name": "p11-kit-trust",
+      "version": "0.23.18.1-r0",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/pkcs11/p11-kit-trust.so"
+      ]
+    },
+    {
+      "name": "nspr",
+      "version": "4.24-r0",
+      "license": "GPL-3.0-only AND LGPL-2.1-only AND LGPL-3.0-only AND MPL-2.0",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libnspr4.so",
+        "usr/lib/libplc4.so",
+        "usr/lib/libplds4.so"
+      ]
+    },
+    {
+      "name": "nss",
+      "version": "3.48-r0",
+      "license": "MPL GPL",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libfreebl3.so",
+        "usr/lib/libfreebl3.so.48",
+        "usr/lib/libgtestutil.so",
+        "usr/lib/libgtestutil.so.48",
+        "usr/lib/libnss3.so",
+        "usr/lib/libnss3.so.48",
+        "usr/lib/libnssckbi-testlib.so",
+        "usr/lib/libnssckbi-testlib.so.48",
+        "usr/lib/libnssckbi.so",
+        "usr/lib/libnssckbi.so.48",
+        "usr/lib/libnssdbm3.so",
+        "usr/lib/libnssdbm3.so.48",
+        "usr/lib/libnssutil3.so",
+        "usr/lib/libnssutil3.so.48",
+        "usr/lib/libpkcs11testmodule.so",
+        "usr/lib/libpkcs11testmodule.so.48",
+        "usr/lib/libsmime3.so",
+        "usr/lib/libsmime3.so.48",
+        "usr/lib/libsoftokn3.so",
+        "usr/lib/libsoftokn3.so.48",
+        "usr/lib/libssl3.so",
+        "usr/lib/libssl3.so.48"
+      ]
+    },
+    {
+      "name": "libxcomposite",
+      "version": "0.4.5-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libXcomposite.so.1",
+        "usr/lib/libXcomposite.so.1.0.0"
+      ]
+    },
+    {
+      "name": "libxi",
+      "version": "1.7.10-r0",
+      "license": "MIT AND X11",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libXi.so.6",
+        "usr/lib/libXi.so.6.1.0"
+      ]
+    },
+    {
+      "name": "libxrender",
+      "version": "0.9.10-r3",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libXrender.so.1",
+        "usr/lib/libXrender.so.1.3.0"
+      ]
+    },
+    {
+      "name": "libxtst",
+      "version": "1.2.3-r3",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libXtst.so.6",
+        "usr/lib/libXtst.so.6.1.0"
+      ]
+    },
+    {
+      "name": "alsa-lib",
+      "version": "1.2.1.2-r0",
+      "license": "LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libasound.so.2",
+        "usr/lib/libasound.so.2.0.0",
+        "usr/lib/libatopology.so.2",
+        "usr/lib/libatopology.so.2.0.0"
+      ]
+    },
+    {
+      "name": "libcom_err",
+      "version": "1.45.5-r0",
+      "license": "GPL-2.0-or-later AND LGPL-2.0-or-later AND BSD-3-Clause AND MIT",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libcom_err.so.2",
+        "lib/libcom_err.so.2.1"
+      ]
+    },
+    {
+      "name": "keyutils-libs",
+      "version": "1.6.1-r0",
+      "license": "GPL-2.0-or-later LGPL-2.0-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libkeyutils.so.1",
+        "lib/libkeyutils.so.1.9"
+      ]
+    },
+    {
+      "name": "libverto",
+      "version": "0.3.1-r1",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libverto.so.1",
+        "usr/lib/libverto.so.1.0.0"
+      ]
+    },
+    {
+      "name": "krb5-libs",
+      "version": "1.17.1-r0",
+      "license": "MIT",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/krb5/plugins/kdb/db2.so",
+        "usr/lib/krb5/plugins/preauth/otp.so",
+        "usr/lib/krb5/plugins/preauth/spake.so",
+        "usr/lib/krb5/plugins/preauth/test.so",
+        "usr/lib/krb5/plugins/tls/k5tls.so",
+        "usr/lib/libgssapi_krb5.so.2",
+        "usr/lib/libgssapi_krb5.so.2.2",
+        "usr/lib/libgssrpc.so.4",
+        "usr/lib/libgssrpc.so.4.2",
+        "usr/lib/libk5crypto.so.3",
+        "usr/lib/libk5crypto.so.3.1",
+        "usr/lib/libkadm5clnt_mit.so.11",
+        "usr/lib/libkadm5clnt_mit.so.11.0",
+        "usr/lib/libkadm5srv_mit.so.11",
+        "usr/lib/libkadm5srv_mit.so.11.0",
+        "usr/lib/libkdb5.so.9",
+        "usr/lib/libkdb5.so.9.0",
+        "usr/lib/libkrad.so.0",
+        "usr/lib/libkrad.so.0.0",
+        "usr/lib/libkrb5.so.3",
+        "usr/lib/libkrb5.so.3.3",
+        "usr/lib/libkrb5support.so.0",
+        "usr/lib/libkrb5support.so.0.1"
+      ]
+    },
+    {
+      "name": "pcsc-lite-libs",
+      "version": "1.8.25-r2",
+      "license": "Custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libpcsclite.so",
+        "usr/lib/libpcsclite.so.1",
+        "usr/lib/libpcsclite.so.1.0.0",
+        "usr/lib/libpcscspy.so.0",
+        "usr/lib/libpcscspy.so.0.0.0"
+      ]
+    },
+    {
+      "name": "liblksctp",
+      "version": "1.0.18-r1",
+      "license": "GPL-2.0-only AND LGPL-2.1-or-later",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/libsctp.so.1",
+        "usr/lib/libsctp.so.1.0.17",
+        "usr/lib/lksctp-tools/libwithsctp.so",
+        "usr/lib/lksctp-tools/libwithsctp.so.1",
+        "usr/lib/lksctp-tools/libwithsctp.so.1.0.17"
+      ]
+    },
+    {
+      "name": "openjdk8-jre-base",
+      "version": "8.242.08-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/jli/libjli.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libattach.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libawt.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libawt_headless.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libdt_socket.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libhprof.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libinstrument.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libj2gss.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libj2krb5.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libj2pcsc.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libj2pkcs11.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libj2sctp.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjaas_unix.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjava.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjava_crw_demo.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjavajpeg.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjavalcms.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjdwp.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjsdt.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjsig.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjsound.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libmanagement.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libmlib_image.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libnet.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libnio.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libnpt.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libsunec.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libunpack.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libverify.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libzip.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/server/libjsig.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/server/libjvm.so",
+        "usr/lib/jvm/java-1.8-openjdk/lib/amd64/jli/libjli.so"
+      ]
+    },
+    {
+      "name": "openjdk8-jre",
+      "version": "8.242.08-r0",
+      "license": "custom",
+      "origin": null,
+      "selectedFiles": [
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libawt_xawt.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libfontmanager.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjawt.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libjsoundalsa.so",
+        "usr/lib/jvm/java-1.8-openjdk/jre/lib/amd64/libsplashscreen.so"
+      ]
+    },
+    {
+      "name": "linux-pam",
+      "version": "1.3.1-r1",
+      "license": "BSD-3-Clause",
+      "origin": null,
+      "selectedFiles": [
+        "lib/libpam.so.0",
+        "lib/libpam.so.0.84.2",
+        "lib/libpam_misc.so.0",
+        "lib/libpam_misc.so.0.82.1",
+        "lib/libpamc.so.0",
+        "lib/libpamc.so.0.82.1",
+        "lib/security/pam_access.so",
+        "lib/security/pam_debug.so",
+        "lib/security/pam_deny.so",
+        "lib/security/pam_echo.so",
+        "lib/security/pam_env.so",
+        "lib/security/pam_exec.so",
+        "lib/security/pam_faildelay.so",
+        "lib/security/pam_filter.so",
+        "lib/security/pam_ftp.so",
+        "lib/security/pam_group.so",
+        "lib/security/pam_issue.so",
+        "lib/security/pam_keyinit.so",
+        "lib/security/pam_lastlog.so",
+        "lib/security/pam_limits.so",
+        "lib/security/pam_listfile.so",
+        "lib/security/pam_localuser.so",
+        "lib/security/pam_loginuid.so",
+        "lib/security/pam_mail.so",
+        "lib/security/pam_mkhomedir.so",
+        "lib/security/pam_motd.so",
+        "lib/security/pam_namespace.so",
+        "lib/security/pam_nologin.so",
+        "lib/security/pam_permit.so",
+        "lib/security/pam_pwhistory.so",
+        "lib/security/pam_rootok.so",
+        "lib/security/pam_securetty.so",
+        "lib/security/pam_shells.so",
+        "lib/security/pam_stress.so",
+        "lib/security/pam_succeed_if.so",
+        "lib/security/pam_tally.so",
+        "lib/security/pam_tally2.so",
+        "lib/security/pam_time.so",
+        "lib/security/pam_timestamp.so",
+        "lib/security/pam_umask.so",
+        "lib/security/pam_unix.so",
+        "lib/security/pam_warn.so",
+        "lib/security/pam_wheel.so",
+        "lib/security/pam_xauth.so"
+      ]
+    },
+    {
+      "name": "tzdata",
+      "version": "2020a-r0",
+      "license": "Public-Domain",
+      "origin": null,
+      "selectedFiles": [
+        "usr/share/zoneinfo/America/Chicago"
+      ]
+    }
+  ],
+  "gems": [
+    {
+      "spec": "usr/gem/gems/RedCloth-4.3.2/redcloth.gemspec",
+      "name": "redcloth",
+      "declaredLicenseFields": [
+        "s.license = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/colorator-1.1.0/colorator.gemspec",
+      "name": "colorator",
+      "declaredLicenseFields": [
+        "spec.licenses    = [\"MIT\"]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/commonmarker-0.21.0/commonmarker.gemspec",
+      "name": "commonmarker",
+      "declaredLicenseFields": [
+        "s.license = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/em-websocket-0.5.1/em-websocket.gemspec",
+      "name": "em-websocket",
+      "declaredLicenseFields": [],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/ethon-0.12.0/ethon.gemspec",
+      "name": "ethon",
+      "declaredLicenseFields": [
+        "s.license = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/ffi-1.12.2/ffi.gemspec",
+      "name": "ffi",
+      "declaredLicenseFields": [
+        "s.license = 'BSD-3-Clause'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/html-pipeline-2.12.3/html-pipeline.gemspec",
+      "name": "html-pipeline",
+      "declaredLicenseFields": [
+        "gem.license       = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/http_parser.rb-0.6.0/http_parser.rb.gemspec",
+      "name": "http_parser.rb",
+      "declaredLicenseFields": [
+        "s.license = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/jekyll-commonmark-1.3.1/jekyll-commonmark.gemspec",
+      "name": "jekyll-commonmark",
+      "declaredLicenseFields": [
+        "spec.licenses      = [\"MIT\"]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/jekyll-paginate-1.1.0/jekyll-paginate.gemspec",
+      "name": "jekyll-paginate",
+      "declaredLicenseFields": [
+        "spec.license       = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/mercenary-0.3.6/mercenary.gemspec",
+      "name": "mercenary",
+      "declaredLicenseFields": [
+        "spec.license       = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/mini_portile2-2.4.0/mini_portile2.gemspec",
+      "name": "mini_portile2",
+      "declaredLicenseFields": [
+        "spec.licenses      = ['MIT']"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/public_suffix-4.0.5/public_suffix.gemspec",
+      "name": "public_suffix",
+      "declaredLicenseFields": [
+        "s.licenses    = [\"MIT\"]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/rack-2.2.2/rack.gemspec",
+      "name": "rack",
+      "declaredLicenseFields": [
+        "s.license = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/rainbow-3.0.0/rainbow.gemspec",
+      "name": "rainbow",
+      "declaredLicenseFields": [
+        "spec.license               = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/rb-fsevent-0.10.4/rb-fsevent.gemspec",
+      "name": "rb-fsevent",
+      "declaredLicenseFields": [
+        "s.license     = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/rb-inotify-0.10.1/rb-inotify.gemspec",
+      "name": "rb-inotify",
+      "declaredLicenseFields": [
+        "spec.licenses    = ['MIT']"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/rouge-3.19.0/rouge.gemspec",
+      "name": "rouge",
+      "declaredLicenseFields": [
+        "s.licenses = ['MIT', 'BSD-2-Clause']"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/ruby-enum-0.8.0/ruby-enum.gemspec",
+      "name": "ruby-enum",
+      "declaredLicenseFields": [
+        "s.licenses = ['MIT']"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/safe_yaml-1.0.5/safe_yaml.gemspec",
+      "name": "safe_yaml",
+      "declaredLicenseFields": [
+        "gem.license       = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/sassc-2.3.0/sassc.gemspec",
+      "name": "sassc",
+      "declaredLicenseFields": [
+        "spec.license       = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/terminal-table-1.8.0/terminal-table.gemspec",
+      "name": "terminal-table",
+      "declaredLicenseFields": [
+        "spec.license       = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/thread_safe-0.3.6/thread_safe.gemspec",
+      "name": "thread_safe",
+      "declaredLicenseFields": [
+        "gem.license       = \"Apache-2.0\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/typhoeus-1.4.0/typhoeus.gemspec",
+      "name": "typhoeus",
+      "declaredLicenseFields": [
+        "s.license = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/tzinfo-1.2.7/tzinfo.gemspec",
+      "name": "tzinfo",
+      "declaredLicenseFields": [
+        "s.license = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/gems/yell-2.2.2/yell.gemspec",
+      "name": "yell",
+      "declaredLicenseFields": [
+        "spec.license       = 'MIT'"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/RedCloth-4.3.2.gemspec",
+      "name": "RedCloth-4.3.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/RedCloth-4.3.2/COPYING": "097710c772dbe28b0789744a9158538883d1cb9108064b70e567d85bfd8f4c4b"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/activesupport-5.2.4.2.gemspec",
+      "name": "activesupport-5.2.4.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/activesupport-6.0.3.gemspec",
+      "name": "activesupport-6.0.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/addressable-2.7.0.gemspec",
+      "name": "addressable-2.7.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Apache-2.0\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/addressable-2.7.0/LICENSE.txt": "b04c8850fdf64d17233f0acbe4eb632f03bd663094233c949bdbe788858bb841"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/coffee-script-2.4.1.gemspec",
+      "name": "coffee-script-2.4.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/coffee-script-2.4.1/LICENSE": "28d89fe2a19775516507d2e48812d2f212858732fbf411e4d93031a0d0f75ba4"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/coffee-script-source-1.12.2.gemspec",
+      "name": "coffee-script-source-1.12.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/colorator-1.1.0.gemspec",
+      "name": "colorator-1.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/colorator-1.1.0/LICENSE": "487606626e95c937d9747cc1f95c909b7be310bd4fbdff6a1b46a28f48c4f65b"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/commonmarker-0.21.0.gemspec",
+      "name": "commonmarker-0.21.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/commonmarker-0.21.0/LICENSE.txt": "1d47889eaca2a6c9ef977745d678ffef73b5abe982c0a650a5615fd120981a94"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/concurrent-ruby-1.1.6.gemspec",
+      "name": "concurrent-ruby-1.1.6",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/concurrent-ruby-1.1.6/LICENSE.md": "929c49e71d18b942fa02c2238b5824f9e7ee2443bfd5c6965926344154c9c61b"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/em-websocket-0.5.1.gemspec",
+      "name": "em-websocket-0.5.1",
+      "declaredLicenseFields": [],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/ethon-0.12.0.gemspec",
+      "name": "ethon-0.12.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/ethon-0.12.0/LICENSE": "f37ab78aadd42046b9ba6be1db09ed673fd41ef080966096c83d19b2ab0dc2e7"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/eventmachine-1.2.7.gemspec",
+      "name": "eventmachine-1.2.7",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze, \"GPL-2.0\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/eventmachine-1.2.7/LICENSE": "4dc8a4bc39abbc8989df81b6f6fb7b9a1b515e9bc36b118859be7740ae7cab7a"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/execjs-2.7.0.gemspec",
+      "name": "execjs-2.7.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/extras-0.3.0.gemspec",
+      "name": "extras-0.3.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/extras-0.3.0/LICENSE": "1848a951be9b578d9ab5176bdb9b583a985ae499684a99505796422387d08344"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/fastimage-2.1.7.gemspec",
+      "name": "fastimage-2.1.7",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/ffi-1.12.2.gemspec",
+      "name": "ffi-1.12.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-3-Clause\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/ffi-1.12.2/COPYING": "27c69b029b6269e126f73c9f7b077fb432f5694aeeaff6341511f6e0125fa04a",
+        "usr/gem/gems/ffi-1.12.2/LICENSE": "bb343aa812eaaddbaf97814edaf86977b18d3cc5ced3122d43bddf96cf0443dd",
+        "usr/gem/gems/ffi-1.12.2/LICENSE.SPECS": "19811daba7c403768b93cad47abae8afa8bf34a027478aedaf63903672272e0c",
+        "usr/gem/gems/ffi-1.12.2/ext/ffi_c/libffi/LICENSE": "25d56871423a870487edee68000ef66b1a7ec44a7ab84838ceeb3ce07f734b74",
+        "usr/gem/gems/ffi-1.12.2/ext/ffi_c/libffi/LICENSE-BUILDTOOLS": "e67978cd18816c0cb7d29aaaacde7b7447402c2fb321a051698890a8eaedda94"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/forwardable-extended-2.6.0.gemspec",
+      "name": "forwardable-extended-2.6.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/forwardable-extended-2.6.0/LICENSE": "1848a951be9b578d9ab5176bdb9b583a985ae499684a99505796422387d08344"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/gemoji-3.0.1.gemspec",
+      "name": "gemoji-3.0.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/html-pipeline-2.12.3.gemspec",
+      "name": "html-pipeline-2.12.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/html-pipeline-2.12.3/LICENSE": "8404b63823c9ed518827766724092d8c81e4ee009f7fa7270c49ffdf192714b7"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/html-proofer-3.15.3.gemspec",
+      "name": "html-proofer-3.15.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/http_parser.rb-0.6.0.gemspec",
+      "name": "http_parser.rb-0.6.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/http_parser.rb-0.6.0/LICENSE-MIT": "baec922a852a7ae74ac08cd030968cd6665d8a519eb1f7d4a8f7d90bc48ea82f",
+        "usr/gem/gems/http_parser.rb-0.6.0/ext/ruby_http_parser/vendor/http-parser-java/LICENSE-MIT": "6926db6772da02fdd2474693b7f74aa8918f66d801f05ce5c2e15ce94296274f",
+        "usr/gem/gems/http_parser.rb-0.6.0/ext/ruby_http_parser/vendor/http-parser/LICENSE-MIT": "2996a1c43ee757f9c997a829d82bdd584052323e73cf02ff8126c6fbd95c2d87"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/i18n-0.9.5.gemspec",
+      "name": "i18n-0.9.5",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/i18n-1.8.2.gemspec",
+      "name": "i18n-1.8.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-3.8.7.gemspec",
+      "name": "jekyll-3.8.7",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/jekyll-3.8.7/LICENSE": "b59b741409f92c1e1764d85ce05dcf3dfdc7cfa56c74136ea94c0aeb53d9906b",
+        "usr/gem/gems/jekyll-3.8.7/lib/theme_template/LICENSE.txt.erb": "2b8277995a40552d97aa10e25c5333d7f27992c98ff5efd239c571e223a4e1e1"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-4.0.0.gemspec",
+      "name": "jekyll-4.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/jekyll-4.0.0/LICENSE": "23faadc7a63066f316baeec36058a7ee1d791dd5273976eea69718d362bd7db4",
+        "usr/gem/gems/jekyll-4.0.0/lib/theme_template/LICENSE.txt.erb": "2b8277995a40552d97aa10e25c5333d7f27992c98ff5efd239c571e223a4e1e1"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-assets-3.0.12.gemspec",
+      "name": "jekyll-assets-3.0.12",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/jekyll-assets-3.0.12/LICENSE": "43bd8f62cc879abb348e75146fb84536b88cdb657a6d0ddf1e2efb9dcc7b0f9c"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-coffeescript-2.0.0.gemspec",
+      "name": "jekyll-coffeescript-2.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-commonmark-1.3.1.gemspec",
+      "name": "jekyll-commonmark-1.3.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/jekyll-commonmark-1.3.1/LICENSE": "8e68619435e1d1d917f6008c7cbb410202990bfba3882510c177d664574248e3"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-compose-0.12.0.gemspec",
+      "name": "jekyll-compose-0.12.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-mentions-1.6.0.gemspec",
+      "name": "jekyll-mentions-1.6.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-paginate-1.1.0.gemspec",
+      "name": "jekyll-paginate-1.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/jekyll-paginate-1.1.0/LICENSE.txt": "4ef26ab61656136385f5413c4b785801490e74c33abdb8a279f35dc519cffe51"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-reload-1.0.1.gemspec",
+      "name": "jekyll-reload-1.0.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Apache-2.0\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/jekyll-reload-1.0.1/LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-sanity-1.6.0.gemspec",
+      "name": "jekyll-sanity-1.6.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-sass-converter-1.5.2.gemspec",
+      "name": "jekyll-sass-converter-1.5.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-sass-converter-2.1.0.gemspec",
+      "name": "jekyll-sass-converter-2.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jekyll-watch-2.2.1.gemspec",
+      "name": "jekyll-watch-2.2.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/jemoji-0.12.0.gemspec",
+      "name": "jemoji-0.12.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/kramdown-1.17.0.gemspec",
+      "name": "kramdown-1.17.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/kramdown-1.17.0/COPYING": "cc29f6a800189c6a0fa61756f52e3d4f0c13dc533a00705482998660f5b36f54"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/kramdown-2.2.1.gemspec",
+      "name": "kramdown-2.2.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/kramdown-2.2.1/COPYING": "cc29f6a800189c6a0fa61756f52e3d4f0c13dc533a00705482998660f5b36f54"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/kramdown-parser-gfm-1.1.0.gemspec",
+      "name": "kramdown-parser-gfm-1.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/kramdown-parser-gfm-1.1.0/COPYING": "0da09ed40e65a3088a1f3e74d982b4e62ba9a9eb0b27acd96ad1452cb8ba4cfb"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/liquid-4.0.3.gemspec",
+      "name": "liquid-4.0.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/liquid-4.0.3/LICENSE": "ad80c6dbb62645bf11badb91b01c8a7ed4fa74315c429dcd10665c80eb4208aa"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/liquid-tag-parser-1.9.0.gemspec",
+      "name": "liquid-tag-parser-1.9.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/listen-3.2.1.gemspec",
+      "name": "listen-3.2.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/listen-3.2.1/LICENSE.txt": "ee8797e9fe23f5109b6d403a11d53617d28a619937279e6cbade8be30739e6f4"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/mercenary-0.3.6.gemspec",
+      "name": "mercenary-0.3.6",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/mercenary-0.3.6/LICENSE.txt": "7ea0db8e08c1350169fe97712fe612994827bb747f90c9f19cc0b27bff67dd12"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/mini_portile2-2.4.0.gemspec",
+      "name": "mini_portile2-2.4.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/mini_portile2-2.4.0/LICENSE.txt": "e586e65f625235f0629273170a613c2cf1c78884c69c2e9e9e72f1283d80c413"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/nokogiri-1.10.9.gemspec",
+      "name": "nokogiri-1.10.9",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/nokogiri-1.10.9/LICENSE-DEPENDENCIES.md": "6c46d69174b09b011a1a06fa957f2fc71cc15d35dfbbbeecbc1b564a7fd67fba",
+        "usr/gem/gems/nokogiri-1.10.9/LICENSE.md": "67147c9d09680d6501802daed4c57f99d9de1d2b920d1ba602ef7c683a2e9a94"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/nokogumbo-2.0.2.gemspec",
+      "name": "nokogumbo-2.0.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Apache-2.0\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/nokogumbo-2.0.2/LICENSE.txt": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/parallel-1.19.1.gemspec",
+      "name": "parallel-1.19.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/pathutil-0.16.2.gemspec",
+      "name": "pathutil-0.16.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/pathutil-0.16.2/LICENSE": "bf5152845ebe8fb29638e1e02f9b6b70f0b8cfa8f58c1ad3844912933e64879a"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/public_suffix-4.0.5.gemspec",
+      "name": "public_suffix-4.0.5",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/public_suffix-4.0.5/LICENSE.txt": "4934a2f6cacf2c385743635efce1bd1a763f84922a32d2ae27f414ac14fdd1d6"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/rack-2.2.2.gemspec",
+      "name": "rack-2.2.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/rainbow-3.0.0.gemspec",
+      "name": "rainbow-3.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/rainbow-3.0.0/LICENSE": "a02553249a5fd0a57263ebc80bdd2cd366f5db751cac99587bee775c3c968a5b"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/rb-fsevent-0.10.4.gemspec",
+      "name": "rb-fsevent-0.10.4",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/rb-fsevent-0.10.4/LICENSE.txt": "0f424ef8584179cad10a12cd5afb9ca6903e2091a18c93e32970ec3a5cab371a",
+        "usr/gem/gems/rb-fsevent-0.10.4/ext/LICENSE": "be3d7abd4d97d55c007061d6e06bd08c29fc683d223e8953ca2ba8815d100e28"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/rb-inotify-0.10.1.gemspec",
+      "name": "rb-inotify-0.10.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/rb-inotify-0.10.1/LICENSE.md": "a25acbadab800fd49a418350ef31bbed47fbbde2d51c9fe6300838bf069ab220"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/rouge-3.19.0.gemspec",
+      "name": "rouge-3.19.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze, \"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/rouge-3.19.0/LICENSE": "11eb6e375bd9c32e501ad21a01a626ef3d30a3474a99ffcc94d82c6f2e672c40"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/ruby-enum-0.8.0.gemspec",
+      "name": "ruby-enum-0.8.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/ruby-enum-0.8.0/LICENSE.md": "9018078a1e07057ce50206edf7cf8fb284a2be118470834adb993f380c888f4c"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/safe_yaml-1.0.5.gemspec",
+      "name": "safe_yaml-1.0.5",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/safe_yaml-1.0.5/LICENSE.txt": "f70c44d73e81d65ee49636cb718c8fac5d1f14fcdd113185ca4f4a4067c66e3c"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/sass-3.7.4.gemspec",
+      "name": "sass-3.7.4",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/sass-listen-4.0.0.gemspec",
+      "name": "sass-listen-4.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/sass-listen-4.0.0/LICENSE.txt": "ee8797e9fe23f5109b6d403a11d53617d28a619937279e6cbade8be30739e6f4"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/sassc-2.3.0.gemspec",
+      "name": "sassc-2.3.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/sassc-2.3.0/LICENSE.txt": "3ff5593a1286c1fbc81d652fc0c001e86acf379ad11b3fe32f9f4ea518c77aaa"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/sprockets-4.0.0.gemspec",
+      "name": "sprockets-4.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/terminal-table-1.8.0.gemspec",
+      "name": "terminal-table-1.8.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/terminal-table-1.8.0/LICENSE.txt": "bf861e68fdee7e182e62703675d5bc44479e6954d8f623cb5a62fc66c84c2131"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/thread_safe-0.3.6.gemspec",
+      "name": "thread_safe-0.3.6",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Apache-2.0\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/thread_safe-0.3.6/LICENSE": "042d343525cba5b1592784ce3e77bacc843b9d1d559c12d33417b5c49e2990d0"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/typhoeus-1.4.0.gemspec",
+      "name": "typhoeus-1.4.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/typhoeus-1.4.0/LICENSE": "aefaebae0e8f60d82cfe45f0f3ef0f3c7a62d40ffc409560b504f985081da0ff"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/tzinfo-1.2.7.gemspec",
+      "name": "tzinfo-1.2.7",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/tzinfo-1.2.7/LICENSE": "cf4a8cd728a3ff972bd4d802f5c86347afb27ace5f0d796687ac6382b89cd051"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/unicode-display_width-1.7.0.gemspec",
+      "name": "unicode-display_width-1.7.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/gem/specifications/yell-2.2.2.gemspec",
+      "name": "yell-2.2.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/gem/gems/yell-2.2.2/LICENSE.txt": "33c1a24a4a0ce67a15143a55f81308b874baf1f795df8ae3be149f47a9a03f17"
+      }
+    },
+    {
+      "spec": "usr/gem/specifications/zeitwerk-2.3.0.gemspec",
+      "name": "zeitwerk-2.3.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/bundler.gemspec",
+      "name": "bundler",
+      "declaredLicenseFields": [
+        "s.license     = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/net-telnet-0.2.0/net-telnet.gemspec",
+      "name": "net-telnet",
+      "declaredLicenseFields": [
+        "s.licenses = [\"ruby\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/power_assert-1.1.7/power_assert.gemspec",
+      "name": "power_assert",
+      "declaredLicenseFields": [
+        "s.licenses = [\"2-clause BSDL\".freeze, \"Ruby's\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/rake-13.0.1/rake.gemspec",
+      "name": "rake",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/bundler/bundler.gemspec",
+      "name": "bundler",
+      "declaredLicenseFields": [
+        "s.license     = \"MIT\""
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/rubygems-update.gemspec",
+      "name": "rubygems-update",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\", \"MIT\"]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/test/rubygems/specifications/bar-0.0.2.gemspec",
+      "name": "bar-0.0.2",
+      "declaredLicenseFields": [],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/test/rubygems/specifications/foo-0.0.1-x86-mswin32.gemspec",
+      "name": "foo-0.0.1-x86-mswin32",
+      "declaredLicenseFields": [],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/gems/xmlrpc-0.3.0/xmlrpc.gemspec",
+      "name": "xmlrpc",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/bundler-2.1.4.gemspec",
+      "name": "bundler-2.1.4",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/LICENSE.md": "674519b7bc2d5bffef3b53f52ca2c4234777169a65b33f140111f98c748f822c",
+        "usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/lib/bundler/templates/newgem/LICENSE.txt.tt": "b587390e87dc1a8a3ee5bba7c5841b9b2c0c51521ba09ccd862863d45fdd3a1d"
+      }
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/benchmark-0.1.0.gemspec",
+      "name": "benchmark-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/bigdecimal-2.0.0.gemspec",
+      "name": "bigdecimal-2.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"ruby\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/bundler-2.1.4.gemspec",
+      "name": "bundler-2.1.4",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/LICENSE.md": "674519b7bc2d5bffef3b53f52ca2c4234777169a65b33f140111f98c748f822c",
+        "usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/lib/bundler/templates/newgem/LICENSE.txt.tt": "b587390e87dc1a8a3ee5bba7c5841b9b2c0c51521ba09ccd862863d45fdd3a1d"
+      }
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/cgi-0.1.0.gemspec",
+      "name": "cgi-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/csv-3.1.2.gemspec",
+      "name": "csv-3.1.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/date-3.0.0.gemspec",
+      "name": "date-3.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/dbm-1.1.0.gemspec",
+      "name": "dbm-1.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/delegate-0.1.0.gemspec",
+      "name": "delegate-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/did_you_mean-1.4.0.gemspec",
+      "name": "did_you_mean-1.4.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/etc-1.1.0.gemspec",
+      "name": "etc-1.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/fcntl-1.0.0.gemspec",
+      "name": "fcntl-1.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/fiddle-1.0.0.gemspec",
+      "name": "fiddle-1.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/fileutils-1.4.1.gemspec",
+      "name": "fileutils-1.4.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/forwardable-1.3.1.gemspec",
+      "name": "forwardable-1.3.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/gdbm-2.1.0.gemspec",
+      "name": "gdbm-2.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/getoptlong-0.1.0.gemspec",
+      "name": "getoptlong-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/io-console-0.5.6.gemspec",
+      "name": "io-console-0.5.6",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/ipaddr-1.2.2.gemspec",
+      "name": "ipaddr-1.2.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/irb-1.2.3.gemspec",
+      "name": "irb-1.2.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/json-2.3.0.gemspec",
+      "name": "json-2.3.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/logger-1.4.2.gemspec",
+      "name": "logger-1.4.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/matrix-0.2.0.gemspec",
+      "name": "matrix-0.2.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/mutex_m-0.1.0.gemspec",
+      "name": "mutex_m-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/net-pop-0.1.0.gemspec",
+      "name": "net-pop-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/net-smtp-0.1.0.gemspec",
+      "name": "net-smtp-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/observer-0.1.0.gemspec",
+      "name": "observer-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/open3-0.1.0.gemspec",
+      "name": "open3-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/openssl-2.1.2.gemspec",
+      "name": "openssl-2.1.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/ostruct-0.2.0.gemspec",
+      "name": "ostruct-0.2.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/prime-0.1.1.gemspec",
+      "name": "prime-0.1.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/pstore-0.1.0.gemspec",
+      "name": "pstore-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/psych-3.1.0.gemspec",
+      "name": "psych-3.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/racc-1.4.16.gemspec",
+      "name": "racc-1.4.16",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/rdoc-6.2.1.gemspec",
+      "name": "rdoc-6.2.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/readline-0.0.2.gemspec",
+      "name": "readline-0.0.2",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby license\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/readline-ext-0.1.0.gemspec",
+      "name": "readline-ext-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/reline-0.1.3.gemspec",
+      "name": "reline-0.1.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby License\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/rexml-3.2.3.gemspec",
+      "name": "rexml-3.2.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/rss-0.2.8.gemspec",
+      "name": "rss-0.2.8",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/sdbm-1.0.0.gemspec",
+      "name": "sdbm-1.0.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/singleton-0.1.0.gemspec",
+      "name": "singleton-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/stringio-0.1.0.gemspec",
+      "name": "stringio-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/strscan-1.0.3.gemspec",
+      "name": "strscan-1.0.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/timeout-0.1.0.gemspec",
+      "name": "timeout-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/tracer-0.1.0.gemspec",
+      "name": "tracer-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/uri-0.10.0.gemspec",
+      "name": "uri-0.10.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/webrick-1.6.0.gemspec",
+      "name": "webrick-1.6.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/yaml-0.1.0.gemspec",
+      "name": "yaml-0.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/default/zlib-1.1.0.gemspec",
+      "name": "zlib-1.1.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"BSD-2-Clause\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/minitest-5.13.0.gemspec",
+      "name": "minitest-5.13.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/net-telnet-0.2.0.gemspec",
+      "name": "net-telnet-0.2.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"ruby\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/local/lib/ruby/gems/2.7.0/gems/net-telnet-0.2.0/LICENSE.txt": "5572bf03c3c8c4770e8153038f5f54faad9c3db9900864a7c82a19de4434d74b"
+      }
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/power_assert-1.1.7.gemspec",
+      "name": "power_assert-1.1.7",
+      "declaredLicenseFields": [
+        "s.licenses = [\"2-clause BSDL\".freeze, \"Ruby's\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/local/lib/ruby/gems/2.7.0/gems/power_assert-1.1.7/COPYING": "245c18c292dfcc2cb0aa68d27756ae660a71e8120801b092fa4663e1b8b696cc"
+      }
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/rake-13.0.1.gemspec",
+      "name": "rake-13.0.1",
+      "declaredLicenseFields": [
+        "s.licenses = [\"MIT\".freeze]"
+      ],
+      "containedNotices": {}
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/rubygems-update-3.1.3.gemspec",
+      "name": "rubygems-update-3.1.3",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze, \"MIT\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/LICENSE.txt": "a47865226d6998fc4da794f7fbfd11c3c21aa64e258b131a867eec8a2908438c",
+        "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/bundler/LICENSE.md": "674519b7bc2d5bffef3b53f52ca2c4234777169a65b33f140111f98c748f822c",
+        "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/bundler/lib/bundler/templates/newgem/LICENSE.txt.tt": "b587390e87dc1a8a3ee5bba7c5841b9b2c0c51521ba09ccd862863d45fdd3a1d"
+      }
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/test-unit-3.3.4.gemspec",
+      "name": "test-unit-3.3.4",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze, \"PSFL\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/local/lib/ruby/gems/2.7.0/gems/test-unit-3.3.4/COPYING": "f5b8fd0cce37a13dcc927ce98f78a194a8b904a9bfc7c536a785a64f1c48e1e8"
+      }
+    },
+    {
+      "spec": "usr/local/lib/ruby/gems/2.7.0/specifications/xmlrpc-0.3.0.gemspec",
+      "name": "xmlrpc-0.3.0",
+      "declaredLicenseFields": [
+        "s.licenses = [\"Ruby\".freeze]"
+      ],
+      "containedNotices": {
+        "usr/local/lib/ruby/gems/2.7.0/gems/xmlrpc-0.3.0/LICENSE.txt": "5572bf03c3c8c4770e8153038f5f54faad9c3db9900864a7c82a19de4434d74b"
+      }
+    }
+  ],
+  "rubyAndOtherNonAPKFiles": 8975,
+  "noticeDigests": {
+    "usr/local/lib/ruby/2.7.0/bundler/templates/newgem/LICENSE.txt.tt": "b587390e87dc1a8a3ee5bba7c5841b9b2c0c51521ba09ccd862863d45fdd3a1d",
+    "usr/local/lib/ruby/gems/2.7.0/gems/net-telnet-0.2.0/LICENSE.txt": "5572bf03c3c8c4770e8153038f5f54faad9c3db9900864a7c82a19de4434d74b",
+    "usr/local/lib/ruby/gems/2.7.0/gems/power_assert-1.1.7/COPYING": "245c18c292dfcc2cb0aa68d27756ae660a71e8120801b092fa4663e1b8b696cc",
+    "usr/local/lib/ruby/gems/2.7.0/gems/test-unit-3.3.4/COPYING": "f5b8fd0cce37a13dcc927ce98f78a194a8b904a9bfc7c536a785a64f1c48e1e8",
+    "usr/local/lib/ruby/gems/2.7.0/gems/xmlrpc-0.3.0/LICENSE.txt": "5572bf03c3c8c4770e8153038f5f54faad9c3db9900864a7c82a19de4434d74b",
+    "usr/gem/gems/RedCloth-4.3.2/COPYING": "097710c772dbe28b0789744a9158538883d1cb9108064b70e567d85bfd8f4c4b",
+    "usr/gem/gems/addressable-2.7.0/LICENSE.txt": "b04c8850fdf64d17233f0acbe4eb632f03bd663094233c949bdbe788858bb841",
+    "usr/gem/gems/coffee-script-2.4.1/LICENSE": "28d89fe2a19775516507d2e48812d2f212858732fbf411e4d93031a0d0f75ba4",
+    "usr/gem/gems/colorator-1.1.0/LICENSE": "487606626e95c937d9747cc1f95c909b7be310bd4fbdff6a1b46a28f48c4f65b",
+    "usr/gem/gems/commonmarker-0.21.0/LICENSE.txt": "1d47889eaca2a6c9ef977745d678ffef73b5abe982c0a650a5615fd120981a94",
+    "usr/gem/gems/concurrent-ruby-1.1.6/LICENSE.md": "929c49e71d18b942fa02c2238b5824f9e7ee2443bfd5c6965926344154c9c61b",
+    "usr/gem/gems/ethon-0.12.0/LICENSE": "f37ab78aadd42046b9ba6be1db09ed673fd41ef080966096c83d19b2ab0dc2e7",
+    "usr/gem/gems/eventmachine-1.2.7/LICENSE": "4dc8a4bc39abbc8989df81b6f6fb7b9a1b515e9bc36b118859be7740ae7cab7a",
+    "usr/gem/gems/extras-0.3.0/LICENSE": "1848a951be9b578d9ab5176bdb9b583a985ae499684a99505796422387d08344",
+    "usr/gem/gems/ffi-1.12.2/COPYING": "27c69b029b6269e126f73c9f7b077fb432f5694aeeaff6341511f6e0125fa04a",
+    "usr/gem/gems/ffi-1.12.2/LICENSE": "bb343aa812eaaddbaf97814edaf86977b18d3cc5ced3122d43bddf96cf0443dd",
+    "usr/gem/gems/ffi-1.12.2/LICENSE.SPECS": "19811daba7c403768b93cad47abae8afa8bf34a027478aedaf63903672272e0c",
+    "usr/gem/gems/ffi-1.12.2/ext/ffi_c/libffi/LICENSE": "25d56871423a870487edee68000ef66b1a7ec44a7ab84838ceeb3ce07f734b74",
+    "usr/gem/gems/ffi-1.12.2/ext/ffi_c/libffi/LICENSE-BUILDTOOLS": "e67978cd18816c0cb7d29aaaacde7b7447402c2fb321a051698890a8eaedda94",
+    "usr/gem/gems/forwardable-extended-2.6.0/LICENSE": "1848a951be9b578d9ab5176bdb9b583a985ae499684a99505796422387d08344",
+    "usr/gem/gems/html-pipeline-2.12.3/LICENSE": "8404b63823c9ed518827766724092d8c81e4ee009f7fa7270c49ffdf192714b7",
+    "usr/gem/gems/http_parser.rb-0.6.0/LICENSE-MIT": "baec922a852a7ae74ac08cd030968cd6665d8a519eb1f7d4a8f7d90bc48ea82f",
+    "usr/gem/gems/http_parser.rb-0.6.0/ext/ruby_http_parser/vendor/http-parser-java/LICENSE-MIT": "6926db6772da02fdd2474693b7f74aa8918f66d801f05ce5c2e15ce94296274f",
+    "usr/gem/gems/http_parser.rb-0.6.0/ext/ruby_http_parser/vendor/http-parser/LICENSE-MIT": "2996a1c43ee757f9c997a829d82bdd584052323e73cf02ff8126c6fbd95c2d87",
+    "usr/gem/gems/jekyll-3.8.7/LICENSE": "b59b741409f92c1e1764d85ce05dcf3dfdc7cfa56c74136ea94c0aeb53d9906b",
+    "usr/gem/gems/jekyll-3.8.7/lib/theme_template/LICENSE.txt.erb": "2b8277995a40552d97aa10e25c5333d7f27992c98ff5efd239c571e223a4e1e1",
+    "usr/gem/gems/jekyll-4.0.0/LICENSE": "23faadc7a63066f316baeec36058a7ee1d791dd5273976eea69718d362bd7db4",
+    "usr/gem/gems/jekyll-4.0.0/lib/theme_template/LICENSE.txt.erb": "2b8277995a40552d97aa10e25c5333d7f27992c98ff5efd239c571e223a4e1e1",
+    "usr/gem/gems/jekyll-assets-3.0.12/LICENSE": "43bd8f62cc879abb348e75146fb84536b88cdb657a6d0ddf1e2efb9dcc7b0f9c",
+    "usr/gem/gems/jekyll-commonmark-1.3.1/LICENSE": "8e68619435e1d1d917f6008c7cbb410202990bfba3882510c177d664574248e3",
+    "usr/gem/gems/jekyll-paginate-1.1.0/LICENSE.txt": "4ef26ab61656136385f5413c4b785801490e74c33abdb8a279f35dc519cffe51",
+    "usr/gem/gems/jekyll-reload-1.0.1/LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "usr/gem/gems/kramdown-1.17.0/COPYING": "cc29f6a800189c6a0fa61756f52e3d4f0c13dc533a00705482998660f5b36f54",
+    "usr/gem/gems/kramdown-2.2.1/COPYING": "cc29f6a800189c6a0fa61756f52e3d4f0c13dc533a00705482998660f5b36f54",
+    "usr/gem/gems/kramdown-parser-gfm-1.1.0/COPYING": "0da09ed40e65a3088a1f3e74d982b4e62ba9a9eb0b27acd96ad1452cb8ba4cfb",
+    "usr/gem/gems/liquid-4.0.3/LICENSE": "ad80c6dbb62645bf11badb91b01c8a7ed4fa74315c429dcd10665c80eb4208aa",
+    "usr/gem/gems/listen-3.2.1/LICENSE.txt": "ee8797e9fe23f5109b6d403a11d53617d28a619937279e6cbade8be30739e6f4",
+    "usr/gem/gems/mercenary-0.3.6/LICENSE.txt": "7ea0db8e08c1350169fe97712fe612994827bb747f90c9f19cc0b27bff67dd12",
+    "usr/gem/gems/mini_portile2-2.4.0/LICENSE.txt": "e586e65f625235f0629273170a613c2cf1c78884c69c2e9e9e72f1283d80c413",
+    "usr/gem/gems/nokogiri-1.10.9/LICENSE-DEPENDENCIES.md": "6c46d69174b09b011a1a06fa957f2fc71cc15d35dfbbbeecbc1b564a7fd67fba",
+    "usr/gem/gems/nokogiri-1.10.9/LICENSE.md": "67147c9d09680d6501802daed4c57f99d9de1d2b920d1ba602ef7c683a2e9a94",
+    "usr/gem/gems/nokogumbo-2.0.2/LICENSE.txt": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "usr/gem/gems/pathutil-0.16.2/LICENSE": "bf5152845ebe8fb29638e1e02f9b6b70f0b8cfa8f58c1ad3844912933e64879a",
+    "usr/gem/gems/public_suffix-4.0.5/LICENSE.txt": "4934a2f6cacf2c385743635efce1bd1a763f84922a32d2ae27f414ac14fdd1d6",
+    "usr/gem/gems/rainbow-3.0.0/LICENSE": "a02553249a5fd0a57263ebc80bdd2cd366f5db751cac99587bee775c3c968a5b",
+    "usr/gem/gems/rb-fsevent-0.10.4/LICENSE.txt": "0f424ef8584179cad10a12cd5afb9ca6903e2091a18c93e32970ec3a5cab371a",
+    "usr/gem/gems/rb-fsevent-0.10.4/ext/LICENSE": "be3d7abd4d97d55c007061d6e06bd08c29fc683d223e8953ca2ba8815d100e28",
+    "usr/gem/gems/rb-inotify-0.10.1/LICENSE.md": "a25acbadab800fd49a418350ef31bbed47fbbde2d51c9fe6300838bf069ab220",
+    "usr/gem/gems/rouge-3.19.0/LICENSE": "11eb6e375bd9c32e501ad21a01a626ef3d30a3474a99ffcc94d82c6f2e672c40",
+    "usr/gem/gems/ruby-enum-0.8.0/LICENSE.md": "9018078a1e07057ce50206edf7cf8fb284a2be118470834adb993f380c888f4c",
+    "usr/gem/gems/safe_yaml-1.0.5/LICENSE.txt": "f70c44d73e81d65ee49636cb718c8fac5d1f14fcdd113185ca4f4a4067c66e3c",
+    "usr/gem/gems/sass-listen-4.0.0/LICENSE.txt": "ee8797e9fe23f5109b6d403a11d53617d28a619937279e6cbade8be30739e6f4",
+    "usr/gem/gems/sassc-2.3.0/LICENSE.txt": "3ff5593a1286c1fbc81d652fc0c001e86acf379ad11b3fe32f9f4ea518c77aaa",
+    "usr/gem/gems/terminal-table-1.8.0/LICENSE.txt": "bf861e68fdee7e182e62703675d5bc44479e6954d8f623cb5a62fc66c84c2131",
+    "usr/gem/gems/thread_safe-0.3.6/LICENSE": "042d343525cba5b1592784ce3e77bacc843b9d1d559c12d33417b5c49e2990d0",
+    "usr/gem/gems/typhoeus-1.4.0/LICENSE": "aefaebae0e8f60d82cfe45f0f3ef0f3c7a62d40ffc409560b504f985081da0ff",
+    "usr/gem/gems/tzinfo-1.2.7/LICENSE": "cf4a8cd728a3ff972bd4d802f5c86347afb27ace5f0d796687ac6382b89cd051",
+    "usr/gem/gems/yell-2.2.2/LICENSE.txt": "33c1a24a4a0ce67a15143a55f81308b874baf1f795df8ae3be149f47a9a03f17",
+    "usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/LICENSE.md": "674519b7bc2d5bffef3b53f52ca2c4234777169a65b33f140111f98c748f822c",
+    "usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/lib/bundler/templates/newgem/LICENSE.txt.tt": "b587390e87dc1a8a3ee5bba7c5841b9b2c0c51521ba09ccd862863d45fdd3a1d",
+    "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/LICENSE.txt": "a47865226d6998fc4da794f7fbfd11c3c21aa64e258b131a867eec8a2908438c",
+    "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/bundler/LICENSE.md": "674519b7bc2d5bffef3b53f52ca2c4234777169a65b33f140111f98c748f822c",
+    "usr/local/lib/ruby/gems/2.7.0/gems/rubygems-update-3.1.3/bundler/lib/bundler/templates/newgem/LICENSE.txt.tt": "b587390e87dc1a8a3ee5bba7c5841b9b2c0c51521ba09ccd862863d45fdd3a1d",
+    "usr/local/lib/ruby/site_ruby/2.7.0/bundler/templates/newgem/LICENSE.txt.tt": "b587390e87dc1a8a3ee5bba7c5841b9b2c0c51521ba09ccd862863d45fdd3a1d"
+  }
+}

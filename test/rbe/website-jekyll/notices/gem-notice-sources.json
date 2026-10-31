@@ -1,0 +1,79 @@
+[
+  {
+    "name": "autoprefixer-rails",
+    "repo": "ai/autoprefixer-rails",
+    "sourceCommit": "c5c84340527150e4b1aa3e32e44d3e037d560248",
+    "sourceNotice": "https://raw.githubusercontent.com/ai/autoprefixer-rails/c5c84340527150e4b1aa3e32e44d3e037d560248/LICENSE",
+    "sourceNoticeSHA256": "c4630ac8b89cb317ac5bdd60ac5e4e185eab9bd5151a0c7b3afa41aa83d7ec9b",
+    "packagedNotice": true,
+    "gem": {
+      "gem_uri": "https://rubygems.org/gems/autoprefixer-rails-9.8.6.5.gem",
+      "sha256": "15b036f5fac8d1b0439bec7881cf1322ba86474c81d93e02be42741b476770ea",
+      "version": "9.8.6.5"
+    },
+    "gemFiles": 33,
+    "vendor": [
+      "vendor/autoprefixer.js"
+    ]
+  },
+  {
+    "name": "jekyll-autoprefixer",
+    "repo": "vwochnik/jekyll-autoprefixer",
+    "sourceCommit": "1095859fcf8cecca924fc5647ee10495e7d7b993",
+    "sourceNotice": "https://raw.githubusercontent.com/vwochnik/jekyll-autoprefixer/1095859fcf8cecca924fc5647ee10495e7d7b993/LICENSE.md",
+    "sourceNoticeSHA256": "6c8cdb5ef530fb0cbb73b18742e90e739f228be98df99174ed55e5acdc3a9e06",
+    "packagedNotice": true,
+    "gem": {
+      "gem_uri": "https://rubygems.org/gems/jekyll-autoprefixer-1.0.2.gem",
+      "sha256": "7aee7ef80ea1cce9f33fbff979189e19867c3677b26c96b24a2a874410d3fe27",
+      "version": "1.0.2"
+    },
+    "gemFiles": 8,
+    "vendor": []
+  },
+  {
+    "name": "jekyll-feed",
+    "repo": "jekyll/jekyll-feed",
+    "sourceCommit": "9cda8c4e4940cc6947f1525b23461d06b1caaa1c",
+    "sourceNotice": "https://raw.githubusercontent.com/jekyll/jekyll-feed/9cda8c4e4940cc6947f1525b23461d06b1caaa1c/LICENSE.txt",
+    "sourceNoticeSHA256": "0d21048a8e0993198c94817dabb28f08a2be6e34c07fd3d8bdfdc12579f1b00b",
+    "packagedNotice": true,
+    "gem": {
+      "gem_uri": "https://rubygems.org/gems/jekyll-feed-0.13.0.gem",
+      "sha256": "3906c7d7365f6a15c42d86caa5d75fb72ece7c36a068b346e581a206e7b6a8d3",
+      "version": "0.13.0"
+    },
+    "gemFiles": 41,
+    "vendor": []
+  },
+  {
+    "name": "jekyll-relative-links",
+    "repo": "benbalter/jekyll-relative-links",
+    "sourceCommit": "493d6333b56058fb1ca812712fe7cff42cc33b22",
+    "sourceNotice": "https://raw.githubusercontent.com/benbalter/jekyll-relative-links/493d6333b56058fb1ca812712fe7cff42cc33b22/LICENSE.md",
+    "sourceNoticeSHA256": "abb5c27df270e4bb12ce4570dd6c84e8ec64318184da1cac01ddfd47ce443bb9",
+    "packagedNotice": false,
+    "gem": {
+      "gem_uri": "https://rubygems.org/gems/jekyll-relative-links-0.6.1.gem",
+      "sha256": "d11301f57b39e94b6c04fff2a3b145fe2f6a27be631a403e2542fa2e1548dd6d",
+      "version": "0.6.1"
+    },
+    "gemFiles": 4,
+    "vendor": []
+  },
+  {
+    "name": "jekyll-sitemap",
+    "repo": "jekyll/jekyll-sitemap",
+    "sourceCommit": "6f1e772109f0641dba5f9d0cc8a667e5e05d7029",
+    "sourceNotice": "https://raw.githubusercontent.com/jekyll/jekyll-sitemap/6f1e772109f0641dba5f9d0cc8a667e5e05d7029/LICENSE.md",
+    "sourceNoticeSHA256": "d6c3105f4e2dc100377d70a3eecd35c24278fa555770ea50a32bb6c7ac1aa8fc",
+    "packagedNotice": true,
+    "gem": {
+      "gem_uri": "https://rubygems.org/gems/jekyll-sitemap-1.4.0.gem",
+      "sha256": "0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218",
+      "version": "1.4.0"
+    },
+    "gemFiles": 61,
+    "vendor": []
+  }
+]

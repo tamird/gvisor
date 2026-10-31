@@ -1,0 +1,32 @@
+name: Check the website renderer's dependency notices
+on:
+  push:
+    branches: [qualification/website-jekyll-sdk]
+permissions:
+  contents: read
+jobs:
+  notices:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Enable the normal Linux Bazel sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Verify five pinned notices and their failure controls
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 test/rbe/website-jekyll/notice_audit.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: website-source-notices
+          path: |
+            ${{ runner.temp }}/website-notices/result.json
+            ${{ runner.temp }}/website-notices/*.log
+            test/rbe/website-jekyll/notices/*.json
+          if-no-files-found: error

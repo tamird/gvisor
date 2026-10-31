@@ -1,0 +1,488 @@
+[
+  {
+    "name": "autoprefixer",
+    "modules": 75,
+    "best": {
+      "version": "9.8.6",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-XrvP4VVHdRBCdX1S3WXVD8+RyG9qeb1D5Sn1DeLiG2xfSpzellk5k54xbUERJ3M5DggQxes39UGOTP8CFrEGbg==",
+      "tarball": "https://registry.npmjs.org/autoprefixer/-/autoprefixer-9.8.6.tgz",
+      "moduleMatches": {
+        "3": "lib/autoprefixer.js",
+        "5": "lib/browsers.js",
+        "66": "lib/old-value.js"
+      },
+      "notices": {
+        "LICENSE": "c4630ac8b89cb317ac5bdd60ac5e4e185eab9bd5151a0c7b3afa41aa83d7ec9b"
+      }
+    },
+    "comparison": [
+      {
+        "version": "9.8.6",
+        "matches": 3,
+        "license": "MIT"
+      },
+      {
+        "version": "9.8.5",
+        "matches": 1,
+        "license": "MIT"
+      },
+      {
+        "version": "9.8.4",
+        "matches": 1,
+        "license": "MIT"
+      },
+      {
+        "version": "9.8.3",
+        "matches": 1,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "base64-js",
+    "modules": 1,
+    "best": {
+      "version": "1.3.1",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-mLQ4i2QO1ytvGWFWmcngKO//JXAQueZvwEKtjgQFM4jIK0kU+ytMfplL8j+n5mspOfjHwoAg+9yhb7BwAHm36g==",
+      "tarball": "https://registry.npmjs.org/base64-js/-/base64-js-1.3.1.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "5b37224c080cdcc97c871ada971c224e9926370fe74f11b539aa1cf9f3b1aca1"
+      }
+    },
+    "comparison": [
+      {
+        "version": "1.3.1",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "1.3.0",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "1.2.3",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "browserslist",
+    "modules": 3,
+    "best": {
+      "version": "4.13.0",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-MINatJ5ZNrLnQ6blGvePd/QOz9Xtu+Ne+x29iQSCHfkU5BugKVJwZKn/iiL8UbpIpa3JhviKjz+XxMo0m2caFQ==",
+      "tarball": "https://registry.npmjs.org/browserslist/-/browserslist-4.13.0.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "f25bf9bf3ae8984bcd43bf7fb8f78e7eec8d577081fb8d0989cfa7c67ecebb8e"
+      }
+    },
+    "comparison": [
+      {
+        "version": "4.13.0",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "4.12.2",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "4.12.1",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "buffer",
+    "modules": 1,
+    "best": {
+      "version": "5.6.0",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-/gDYp/UtU0eA1ys8bOs9J6a+E/KWIY+DZ+Q2WESNUA0jFRsJOc0SNUO6xJ5SGA1xueg3NL65W6s+NY5l9cunuw==",
+      "tarball": "https://registry.npmjs.org/buffer/-/buffer-5.6.0.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "06bafa45fdad2579ba0e43b0c9b2c6290287c99c4203c300254a462b38a307f6"
+      }
+    },
+    "comparison": [
+      {
+        "version": "5.6.0",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "5.5.0",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "2.8.3",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "caniuse-lite",
+    "modules": 557,
+    "best": {
+      "version": "1.0.30001109",
+      "declaredLicense": "CC-BY-4.0",
+      "integrity": "sha512-4JIXRodHzdS3HdK8nSgIqXYLExOvG+D2/EenSvcub2Kp3QEADjo2v2oUn5g0n0D+UNwG9BtwKOyGcSq2qvQXvQ==",
+      "tarball": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001109.tgz",
+      "moduleMatches": {
+        "636": "dist/unpacker/features.js"
+      },
+      "notices": {
+        "LICENSE": "fd3a263fe19ed8faa9068b43abaebafc02c77897b0c6fc09abc04bb592e5f16e"
+      }
+    },
+    "comparison": [
+      {
+        "version": "1.0.30001109",
+        "matches": 1,
+        "license": "CC-BY-4.0"
+      },
+      {
+        "version": "1.0.30001107",
+        "matches": 1,
+        "license": "CC-BY-4.0"
+      },
+      {
+        "version": "1.0.30001106",
+        "matches": 1,
+        "license": "CC-BY-4.0"
+      }
+    ]
+  },
+  {
+    "name": "electron-to-chromium",
+    "modules": 1,
+    "best": {
+      "version": "1.3.514",
+      "declaredLicense": "ISC",
+      "integrity": "sha512-8vb8zKIeGlZigeDzNWWthmGeLzo5CC43Lc+CZshMs7UXFVMPNLtXJGa/txedpu3OJFrXXVheBwp9PqOJJlHQ8w==",
+      "tarball": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.514.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "25ba5c59dad3e0dd8f9540beaa0f0a86a10e3aec35af5fdc8e88c5f6a5c0d8c6"
+      }
+    },
+    "comparison": [
+      {
+        "version": "1.3.514",
+        "matches": 0,
+        "license": "ISC"
+      },
+      {
+        "version": "1.3.513",
+        "matches": 0,
+        "license": "ISC"
+      },
+      {
+        "version": "1.3.512",
+        "matches": 0,
+        "license": "ISC"
+      }
+    ]
+  },
+  {
+    "name": "ieee754",
+    "modules": 1,
+    "best": {
+      "version": "1.1.13",
+      "declaredLicense": "BSD-3-Clause",
+      "integrity": "sha512-4vf7I2LYV/HaWerSo3XmlMkp5eZ83i+/CDluXi/IGTs/O1sejBNhTtnxzmRZfvOUqj7lZjqHkeTvpgSFDlWZTg==",
+      "tarball": "https://registry.npmjs.org/ieee754/-/ieee754-1.1.13.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "18d45466ba3253deae04667e267a91ea8de8548f18c1125264d1c9db28194cc1"
+      }
+    },
+    "comparison": [
+      {
+        "version": "1.1.13",
+        "matches": 0,
+        "license": "BSD-3-Clause"
+      },
+      {
+        "version": "1.1.12",
+        "matches": 0,
+        "license": "BSD-3-Clause"
+      },
+      {
+        "version": "1.1.11",
+        "matches": 0,
+        "license": "BSD-3-Clause"
+      }
+    ]
+  },
+  {
+    "name": "node-releases",
+    "modules": 2,
+    "best": {
+      "version": "1.1.58",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-NxBudgVKiRh/2aPWMgPR7bPTX0VPmGx5QBwCtdHitnqFE5/O8DeBXuIMH1nwNnw/aMo6AjOrpsHzfY3UbUJ7yg==",
+      "tarball": "https://registry.npmjs.org/node-releases/-/node-releases-1.1.58.tgz",
+      "moduleMatches": {
+        "641": "data/processed/envs.json",
+        "642": "data/release-schedule/release-schedule.json"
+      },
+      "notices": {
+        "LICENSE": "3706296ed611888111ceccc1dff4712844dea4bde0b185c82d718c3b69895abe"
+      }
+    },
+    "comparison": [
+      {
+        "version": "1.1.58",
+        "matches": 2,
+        "license": "MIT"
+      },
+      {
+        "version": "1.1.60",
+        "matches": 1,
+        "license": "MIT"
+      },
+      {
+        "version": "1.1.59",
+        "matches": 1,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "normalize-range",
+    "modules": 1,
+    "best": {
+      "version": "0.1.2",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==",
+      "tarball": "https://registry.npmjs.org/normalize-range/-/normalize-range-0.1.2.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "license": "0b61ac8491c66669491fdb328200203822b91d2a0461f5cd898fe0944ea97e41"
+      }
+    },
+    "comparison": [
+      {
+        "version": "0.1.2",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "0.1.1",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "0.1.0",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "num2fraction",
+    "modules": 1,
+    "best": {
+      "version": "1.2.2",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-Y1wZESM7VUThYY+4W+X4ySH2maqcA+p7UR+w8VWNWVAd6lwuXXWz/w/Cz43J/dI2I+PS6wD5N+bJUF+gjWvIqg==",
+      "tarball": "https://registry.npmjs.org/num2fraction/-/num2fraction-1.2.2.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "65155820306c6f73fe67358bf14c2e1eb24e29e9d0cad280b8f0f7be3319e434"
+      }
+    },
+    "comparison": [
+      {
+        "version": "1.2.2",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "1.2.1",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "1.2.0",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "path-browserify",
+    "modules": 1,
+    "best": {
+      "version": "1.0.1",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==",
+      "tarball": "https://registry.npmjs.org/path-browserify/-/path-browserify-1.0.1.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "a22b9d5763f574e5db347c30acc0b33eaf4846767c03d2e27d012e864e79a824"
+      }
+    },
+    "comparison": [
+      {
+        "version": "1.0.1",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "0.0.1",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "1.0.0",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "postcss",
+    "modules": 24,
+    "best": {
+      "version": "7.0.32",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-03eXong5NLnNCD05xscnGKGDZ98CyzoqPSMjOe6SuoQY7Z2hIj0Ld1g/O/UQRuOle2aRtiIRDg9tDcTGAkLfKw==",
+      "tarball": "https://registry.npmjs.org/postcss/-/postcss-7.0.32.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "c4630ac8b89cb317ac5bdd60ac5e4e185eab9bd5151a0c7b3afa41aa83d7ec9b"
+      }
+    },
+    "comparison": [
+      {
+        "version": "7.0.32",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "7.0.31",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "7.0.30",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "postcss-value-parser",
+    "modules": 5,
+    "best": {
+      "version": "4.1.0",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-97DXOFbQJhk71ne5/Mt6cOu6yxsSfM0QGQyl0L25Gca4yGWEGJaig7l7gbCX623VqTBNGLRLaVUCnNkcedlRSQ==",
+      "tarball": "https://registry.npmjs.org/postcss-value-parser/-/postcss-value-parser-4.1.0.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "3687447039151857a6ba378db062172c7f33d4aa70a615c87a43a9c50e990485"
+      }
+    },
+    "comparison": [
+      {
+        "version": "4.1.0",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "4.0.3",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "4.0.2",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "process",
+    "modules": 1,
+    "best": {
+      "version": "0.11.10",
+      "declaredLicense": "MIT",
+      "integrity": "sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==",
+      "tarball": "https://registry.npmjs.org/process/-/process-0.11.10.tgz",
+      "moduleMatches": {},
+      "notices": {
+        "LICENSE": "59a400d04c5078579acc27ddd6452c1bdf763f9506e01364700935fbb1a7c91b"
+      }
+    },
+    "comparison": [
+      {
+        "version": "0.11.10",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "0.11.9",
+        "matches": 0,
+        "license": "MIT"
+      },
+      {
+        "version": "0.11.8",
+        "matches": 0,
+        "license": "MIT"
+      }
+    ]
+  },
+  {
+    "name": "source-map",
+    "modules": 11,
+    "best": {
+      "version": "0.6.1",
+      "declaredLicense": "BSD-3-Clause",
+      "integrity": "sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==",
+      "tarball": "https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz",
+      "moduleMatches": {
+        "686": "source-map.js"
+      },
+      "notices": {
+        "LICENSE": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd"
+      }
+    },
+    "comparison": [
+      {
+        "version": "0.6.1",
+        "matches": 1,
+        "license": "BSD-3-Clause"
+      },
+      {
+        "version": "0.7.2",
+        "matches": 1,
+        "license": "BSD-3-Clause"
+      },
+      {
+        "version": "0.7.1",
+        "matches": 1,
+        "license": "BSD-3-Clause"
+      },
+      {
+        "version": "0.7.3",
+        "matches": 0,
+        "license": "BSD-3-Clause"
+      }
+    ]
+  }
+]
