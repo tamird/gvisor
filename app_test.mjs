@@ -493,6 +493,20 @@ test('outgoing reviews return to the agent when the public head changes', () => 
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
 });
 
+test('settling either of two reviews on one PR leaves the other pending', () => {
+  const context = client(), node = attentionNode();
+  const first = { kind: 'review', status: 'pending', head: node.github.head, body: 'Restore reads an old limit' };
+  const second = { ...first, body: 'Boot ignores a constrained ancestor' };
+  node.contributorReview = first; node.additionalReviews = [second]; context.nodeInput = node;
+  for (const [settled, pending] of [[first, second], [second, first]]) {
+    node.settledReviews = [settled];
+    assert.equal(vm.runInContext('contributorDecision(nodeInput).body', context), pending.body);
+    assert.equal(vm.runInContext('pendingDecisions(nodeInput).length', context), 1);
+  }
+  node.settledReviews = [first, second];
+  assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
+});
+
 test('settled decisions are not requested again, but new code or a distinct comment can be', () => {
   const context = client(), node = attentionNode();
   context.nodeInput = node;

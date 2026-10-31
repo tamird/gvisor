@@ -567,6 +567,17 @@ class WorkStatesTest(unittest.TestCase):
         node["contributorReview"]["head"] = "d" * 40
         self.assertIn("contributor-review", record_states([pr], registry, {}, now)["pr:1"])
 
+    def test_settling_either_inline_review_keeps_the_other_pending(self):
+        pr = original()
+        restore = {"kind": "review", "status": "pending", "head": pr["head"], "body": "Restore"}
+        boot = {**restore, "body": "Boot"}
+        node = {"id": "pr:1", "type": "pr", "contributorReview": restore, "additionalReviews": [boot]}
+        registry = {"meta": {"repo": "google/gvisor", "updatedAt": "2026-10-30T00:00:00Z"}, "nodes": [node]}
+        for settled in [[restore], [boot], [restore, boot]]:
+            node["settledReviews"] = settled
+            states = record_states([pr], registry, {}, registry["meta"]["updatedAt"])
+            self.assertEqual("contributor-review" in states.get("pr:1", {}), len(settled) == 1)
+
     def test_outgoing_decisions_use_registry_clock_and_do_not_replace_public_review(self):
         pr = original(reviewDecision="CHANGES_REQUESTED")
         node = {"id": "pr:1", "type": "pr", "contributorReview": {

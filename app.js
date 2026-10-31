@@ -927,20 +927,23 @@ function commitLinkMatches(repo, head, url) {
   const prefix = `https://github.com/${repo}/commit/`;
   return typeof head === "string" && (url === prefix + head || url === prefix + head.slice(0, 9));
 }
-function contributorDecision(node) {
-  const decision = node.contributorReview;
-  return decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
+function pendingDecisions(node) {
+  const decisions = node.contributorReview ? [node.contributorReview] : [];
+  return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
     || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
-    || node.type === "pr" && decision.kind === "review" && !providerClosed(node)) ? decision : null;
+    || node.type === "pr" && decision.kind === "review" && !providerClosed(node)));
 }
-function contributorDecisionHeadChanged(node) {
-  const decision = contributorDecision(node);
+function contributorDecision(node) {
+  const pending = pendingDecisions(node);
+  return pending.find(decision => decision.head === node.github?.head) || pending[0] || null;
+}
+function contributorDecisionHeadChanged(node, decision = contributorDecision(node)) {
   const head = decision?.kind === "amendment" ? decision.baseHead : decision?.head;
   return Boolean(node.github?.head && head && head !== node.github.head);
 }
-function contributorDecisionNeedsRefresh(node) {
-  return ["amendment", "review"].includes(contributorDecision(node)?.kind) && contributorDecisionHeadChanged(node);
+function contributorDecisionNeedsRefresh(node, decision = contributorDecision(node)) {
+  return ["amendment", "review"].includes(decision?.kind) && contributorDecisionHeadChanged(node, decision);
 }
 function humanAction(node) {
   const action = node.humanAction;
@@ -953,7 +956,10 @@ function contributorDecisionURL(node, reason = "author-proposal") {
   return url.href;
 }
 function stateLabel(node, state) {
-  if (state === "contributor-review") return contributorDecision(node)?.title || STATE_LABELS[state];
+  if (state === "contributor-review") {
+    const count = pendingDecisions(node).length;
+    return count > 1 ? `${count} separate review decisions` : contributorDecision(node)?.title || STATE_LABELS[state];
+  }
   if (state === "changes-requested" && contributorChanges(node)) return "Contributor changes requested";
   if (state === "failing") return failureSources(node).map(item => item.failureLabel).join("; ") || STATE_LABELS[state];
   return STATE_LABELS[state];
@@ -967,7 +973,7 @@ function appendStates(parent, node, detail = false) {
     const qualifier = state === "failing" || (state === "importing" && !detail) ? "" : record.qualifier;
     const text = `${stateLabel(node, state)} ${age(record)}${qualifier ? " · " + qualifier : ""}`;
     const failures = state === "failing" ? failureSources(node) : [];
-    const decision = state === "contributor-review" ? node.contributorReview : state === "changes-requested" ? contributorChanges(node) : null;
+    const decision = state === "contributor-review" ? contributorDecision(node) : state === "changes-requested" ? contributorChanges(node) : null;
     const url = failures[0]?.url || decision?.url;
     const item = url ? link(text, url, `work-state ${state}`) : element("span", `work-state ${state}`, text);
     item.title = stateTitle(state, record) + (record.qualifier ? " " + record.qualifier : "");
@@ -1440,13 +1446,14 @@ function drawDetails() {
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
-  const decision = contributorDecision(node);
-  if (decision && (states(node)["contributor-review"] || contributorDecisionNeedsRefresh(node))) {
+  for (const decision of pendingDecisions(node)) {
+    const changed = contributorDecisionNeedsRefresh(node, decision);
+    if (!states(node)["contributor-review"] && !changed) continue;
     const section = element("section", "detail-section contributor-decision");
-    section.append(element("h3", "", contributorDecisionNeedsRefresh(node) ? "Check the new PR head" : decision.title || "Contributor decision requested"));
+    section.append(element("h3", "", changed ? "Check the new PR head" : decision.title || "Contributor decision requested"));
     if (decision.summary) section.append(element("p", "", decision.summary));
     if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
-    if (contributorDecisionHeadChanged(node))
+    if (changed)
       section.append(element("p", "", `The published head has changed from ${decision.baseHead || decision.head} to ${node.github.head}. Reconcile this recorded decision with the new source before acting.`));
     if (decision.body) {
       section.append(element("div", "decision-body", decision.body));
@@ -1763,8 +1770,10 @@ function validateRegistry(candidate) {
         || ![action.title, action.summary, action.body].every(value => typeof value === "string" && value.trim())
         || !safeURL(action.url) || !safeURL(action.policyURL) || node.contributorReview !== undefined))
       throw new Error("Invalid human-only action");
-    const decision = node.contributorReview;
-    if (decision !== undefined) {
+    if (node.additionalReviews !== undefined && (!Array.isArray(node.additionalReviews) || node.type !== "pr" || action ||
+        node.additionalReviews.some(review => review?.kind !== "review"))) throw new Error("Invalid additional review");
+    const decisions = node.contributorReview === undefined ? [] : [node.contributorReview];
+    for (const decision of decisions.concat(node.additionalReviews || [])) {
       const proposal = node.type === "branch" && proposalRepo && /^[a-f0-9]{40}$/.test(decision?.head)
         && (commitLinkMatches(proposalRepo, decision.head, decision.url)
           || /^[a-f0-9]{40}$/.test(decision.baseHead)
@@ -1776,7 +1785,9 @@ function validateRegistry(candidate) {
         && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
       const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision?.kind)
         && (node.type === "issue" && decision.head === undefined || /^[a-f0-9]{40}$/.test(decision.head))
-        && (decision.url === node.url || decision.url?.startsWith(node.url + "#"))
+        && (decision.url === node.url || decision.url?.startsWith(node.url + "#") ||
+          decision.kind === "review" && decision.url?.startsWith(node.url + "/files#diff-") &&
+            /^[a-f0-9]{64}[LR][1-9]\d*$/.test(decision.url.slice((node.url + "/files#diff-").length)))
         && typeof decision.title === "string" && decision.title.trim()
         && typeof decision.summary === "string" && decision.summary.trim()
         && typeof decision.body === "string" && decision.body.trim();
@@ -1786,7 +1797,7 @@ function validateRegistry(candidate) {
           || decision.title !== undefined && typeof decision.title !== "string") throw new Error("Invalid contributor decision");
     }
     const changes = node.contributorChangesRequested;
-    if (changes !== undefined && (!changes || node.type !== "branch" || decision !== undefined ||
+    if (changes !== undefined && (!changes || node.type !== "branch" || node.contributorReview !== undefined ||
         !/^[a-f0-9]{40}$/.test(changes.head) || !proposalRepo || !commitLinkMatches(proposalRepo, changes.head, changes.url)))
       throw new Error("Invalid contributor changes request");
     const patch = node.approvedPatch;

@@ -492,24 +492,27 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         # Only the task owner records actual pending contributor decisions.
         # An explicit PR amendment keeps its candidate scope separate from the
         # published head, as replies and reviews do from GitHub approval.
-        decision = node.get("contributorReview")
-        attached = decision and (node["type"] == "pr" and decision.get("kind") == "amendment"
-                                 or node["type"] in {"pr", "issue"} and decision.get("kind") in {"reply", "review"})
+        decisions = [node["contributorReview"]] if "contributorReview" in node else []
+        decisions.extend(node.get("additionalReviews", []))
+        attached = any(node["type"] == "pr" and decision.get("kind") == "amendment"
+                       or node["type"] in {"pr", "issue"} and decision.get("kind") in {"reply", "review"}
+                       for decision in decisions)
         if not attached and (node["type"] != "branch" or node["id"] in closed
                              or (node.get("repo"), node.get("ref")) in promoted):
             continue
         pr = published.get(node["id"])
-        settled = decision and any(
-            item["kind"] == decision.get("kind") and item.get("head") == decision.get("head")
-            and (item["kind"] not in {"reply", "review"} or item.get("body") == decision.get("body"))
-            for item in node.get("settledReviews", [])
-        )
-        if decision and decision["status"] == "pending" and not settled:
-            base = decision.get("baseHead", decision.get("head"))
-            source_changed = (pr and decision.get("kind") in {"amendment", "review"}
-                              and (pr["status"] in {"closed", "merged"} or pr.get("head") and pr["head"] != base))
-            if not source_changed:
-                states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision.get("head", decision.get("url"))}
+        for decision in decisions:
+            settled = any(
+                item["kind"] == decision.get("kind") and item.get("head") == decision.get("head")
+                and (item["kind"] not in {"reply", "review"} or item.get("body") == decision.get("body"))
+                for item in node.get("settledReviews", [])
+            )
+            if decision["status"] == "pending" and not settled:
+                base = decision.get("baseHead", decision.get("head"))
+                source_changed = (pr and decision.get("kind") in {"amendment", "review"}
+                                  and (pr["status"] in {"closed", "merged"} or pr.get("head") and pr["head"] != base))
+                if not source_changed:
+                    states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision.get("head", decision.get("url"))}
         changes = node.get("contributorChangesRequested")
         if changes and node.get("head") == changes["head"]:
             states.setdefault(node["id"], {})["changes-requested"] = {

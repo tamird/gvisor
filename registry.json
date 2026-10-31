@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T03:48:15.816585+00:00",
+    "updatedAt": "2026-10-31T04:05:33.896659+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37182,9 +37182,29 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
-      "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
+      "updatedAt": "2026-10-31T04:05:33.896659+00:00",
+      "summary": "Two posting decisions remain independent. One concerns the Go memory limit selected at boot under a constrained ancestor. The other covers restore after a cgroup resize and its OOM-counter test. Each draft is shown separately below.",
       "evidence": [
+        {
+          "label": "Boot review: nested 512 MiB and 256 MiB controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885"
+        },
+        {
+          "label": "Boot-time limit passed to Suspend",
+          "url": "https://github.com/google/gvisor/blob/7eccf7436/runsc/cmd/sentry/sentrycmd/boot.go#L367"
+        },
+        {
+          "label": "Tightest-limit reader correction",
+          "url": "https://github.com/tamird/gvisor/compare/70142be46...b7368696a"
+        },
+        {
+          "label": "Restore review: current suspension call",
+          "url": "https://github.com/google/gvisor/blob/7eccf7436/pkg/sentry/state/state.go#L271"
+        },
+        {
+          "label": "Restore test: reading the events file",
+          "url": "https://github.com/google/gvisor/blob/7eccf7436/runsc/container/container_save_restore_test.go#L2940"
+        },
         {
           "label": "Latest revision changes only the GC ownership comment",
           "url": "https://github.com/google/gvisor/compare/dba98301b...7eccf7436"
@@ -37222,12 +37242,23 @@
         "status": "pending",
         "kind": "review",
         "head": "7eccf74364d9d4cf13668a17c3ede7b9eebfe9f3",
-        "url": "https://github.com/google/gvisor/pull/16735",
-        "title": "Post the GC budget review",
-        "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
-        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit on 9d3e6518a](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird.\n\nOn `pkg/sentry/state/state.go`, at the call to `gccontrol.Suspend` in `SuspendGCForRestore`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? `MaximumTotalMemoryBytes` is set when the sandbox is created. On `9d3e6518a`, I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91). A [candidate that reads the current limit](https://github.com/tamird/gvisor/commit/18b3427c1) restored [both copies](https://github.com/tamird/gvisor/actions/runs/41152797282/artifacts/13023434512) under the 200 MiB ceiling. The limit selection is unchanged at `7eccf7436`. Both [10,000-file saves](https://github.com/tamird/gvisor/actions/runs/41153967310/artifacts/13024262603) succeeded under that same ceiling, but the resized sandbox again selected a 1,024 MiB Go soft limit while the sandbox created at 200 MiB selected 100 MiB.\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
+        "url": "https://github.com/google/gvisor/pull/16735/files#diff-90e781a80cf5f39deaf2f50f0040406c0b5237af8a8db5ce25a9ad4017091fb3R271",
+        "title": "Post the restore OOM and test-counter review",
+        "summary": "After a sandbox was resized from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel recorded an OOM kill. The test also reads a cgroup directory while discarding the error. Posting these two comments requires its own approval.",
+        "body": "On `pkg/sentry/state/state.go`, at the call to `gccontrol.Suspend` in `SuspendGCForRestore`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? `MaximumTotalMemoryBytes` is set when the sandbox is created. On `9d3e6518a`, I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91). A [candidate that reads the current limit](https://github.com/tamird/gvisor/commit/18b3427c1) restored [both copies](https://github.com/tamird/gvisor/actions/runs/41152797282/artifacts/13023434512) under the 200 MiB ceiling. The limit selection is unchanged at `7eccf7436`. Both [10,000-file saves](https://github.com/tamird/gvisor/actions/runs/41153967310/artifacts/13024262603) succeeded under that same ceiling, but the resized sandbox again selected a 1,024 MiB Go soft limit while the sandbox created at 200 MiB selected 100 MiB.\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
       },
-      "head": "7eccf74364d9d4cf13668a17c3ede7b9eebfe9f3"
+      "head": "7eccf74364d9d4cf13668a17c3ede7b9eebfe9f3",
+      "additionalReviews": [
+        {
+          "status": "pending",
+          "kind": "review",
+          "head": "7eccf74364d9d4cf13668a17c3ede7b9eebfe9f3",
+          "url": "https://github.com/google/gvisor/pull/16735/files#diff-4a63c582bfe39ff0651f5f25907be2de2f9702f6df1e6f2748ef495ab507c4e6R367",
+          "title": "Post the nested memory.max boot review",
+          "summary": "With a 512 MiB parent and a 2 GiB child, boot set Go’s soft limit to 1 GiB; using the tighter cgroup limit set it to 256 MiB. A 256 MiB child gave 128 MiB either way. This draft asks about the boot calculation only.",
+          "body": "@parth-opensrc, `b.totalMem` can be larger than the cgroup limit Linux enforces. On this head I set a parent’s `memory.max` to 512 MiB and its child’s to 2 GiB. The [cgroup reader](https://github.com/google/gvisor/blob/7eccf7436/runsc/cgroup/cgroup_v2.go#L413) returned 2 GiB, and `Suspend` set Go’s soft memory limit to 1 GiB. It did the same with two unlimited levels below the 512 MiB parent. A 256 MiB child correctly got a 128 MiB Go limit.\n\nCould we use the tightest visible `memory.max` before relying on this value to suspend GC? With that change the first two cases both got a 256 MiB Go limit and the control was unchanged. [Results from a real cgroup-v2 hierarchy](https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885). These measure the limit passed to Go; no workload was driven to OOM.\n\nPosted by Codex on behalf of @tamird."
+        }
+      ]
     },
     {
       "id": "pr:hermeticbuild/rules_rs:333",
@@ -38167,9 +38198,13 @@
       "url": "https://github.com/tamird/gvisor/commit/a2a76817d",
       "group": "rbe",
       "status": "Agent work",
-      "updatedAt": "2026-10-31T03:48:15.816585+00:00",
-      "summary": "All four Nogo operations ran uncached in a Linux sandbox on both target architectures. The sanity package took 0.097–0.116 seconds locally and 4.716–4.827 seconds sandboxed on the same non-FUSE worker. The filter actions took about 0.04 seconds either way. The cause of the package slowdown remains under investigation.",
+      "updatedAt": "2026-10-31T04:05:33.896659+00:00",
+      "summary": "On AMD64, go tool objdump consumed 4.86–4.89 seconds of the 4.95-second sandboxed package check. The identical prebuilt SDK tool ran in 2 milliseconds and brought the action down to 0.060–0.066 seconds with all SDK inputs still present. Both target architectures produced unchanged facts and findings.",
       "evidence": [
+        {
+          "label": "Five-arm control: prebuilt objdump, sandbox cost and declared inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41165748432/artifacts/13028867522"
+        },
         {
           "label": "Same-worker local and sandbox ABBA timings",
           "url": "https://github.com/tamird/gvisor/actions/runs/41164057153/artifacts/13028461355"
@@ -38194,12 +38229,12 @@
       "followup": {
         "owner": "Build analysis",
         "sourceHead": "a2a76817d2d66f2956059b464d2eadbb036078f9",
-        "observedAt": "2026-10-31T03:48:15.816585+00:00",
-        "disposition": "Measure the sandbox cost before proposing a change",
-        "nextAction": "Check whether checkescape recompiles the Go SDK objdump tool in each fresh sandbox and how much of the observed cost that explains.",
+        "observedAt": "2026-10-31T04:05:33.896659+00:00",
+        "disposition": "Measured recompilation of the SDK tool in a fresh sandbox",
+        "nextAction": "Expose the prebuilt objdump through rules_go #4535 and check which executable the real Nogo action selects on its execution platform.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41164057153/artifacts/13028461355",
-          "https://github.com/tamird/gvisor/actions/runs/41165748432"
+          "https://github.com/tamird/gvisor/actions/runs/41165748432/artifacts/13028867522",
+          "https://github.com/bazel-contrib/rules_go/issues/4535"
         ]
       }
     },
