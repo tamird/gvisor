@@ -55,9 +55,12 @@ type SACKScoreboard struct {
 	// initialMSS bounds the wire units that may remain in the queue
 	// after a path MTU reduction. The sender never raises its MSS.
 	initialMSS uint16
-	maxSACKED  seqnum.Value
-	sacked     seqnum.Size                     `state:"nosave"`
-	ranges     *btree.BTreeG[header.SACKBlock] `state:"nosave"`
+	// headPacketSACKed remembers the first unacknowledged packet across
+	// cumulative ACKs that remove its prefix from ranges.
+	headPacketSACKed bool `state:"nosave"`
+	maxSACKED        seqnum.Value
+	sacked           seqnum.Size                     `state:"nosave"`
+	ranges           *btree.BTreeG[header.SACKBlock] `state:"nosave"`
 }
 
 // NewSACKScoreboard returns a new SACK Scoreboard.
@@ -72,6 +75,7 @@ func NewSACKScoreboard(smss uint16, iss seqnum.Value) *SACKScoreboard {
 
 // Reset erases all known range information from the SACK scoreboard.
 func (s *SACKScoreboard) Reset() {
+	s.headPacketSACKed = false
 	s.ranges = btree.NewG[header.SACKBlock](defaultBtreeDegree, sackBlockLess)
 	s.sacked = 0
 }

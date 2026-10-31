@@ -1576,6 +1576,37 @@ func (s *sender) inRecovery() bool {
 	return false
 }
 
+// updateSACKedHead records whether the peer reported the whole transmitted
+// packet at SndUna. A cumulative ACK can trim that packet across several
+// calls. Once Delete drops the acknowledged prefix from the scoreboard, the
+// remaining bytes cannot distinguish a whole-packet SACK from a suffix SACK.
+//
+// +checklocks:s.ep.mu
+func (s *sender) updateSACKedHead(previousUNA seqnum.Value) bool {
+	scoreboard := s.ep.scoreboard
+	if !scoreboard.Empty() {
+		for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+			p := seg.sackPackets()
+			if p.count == 0 {
+				// A queue split may put the packet's last byte in the next entry.
+				continue
+			}
+			if s.SndUna.InRange(p.block.Start, p.block.End) {
+				start := p.block.Start.Add(p.block.Start.Size(s.SndUna) / p.mss * p.mss)
+				end := start.Add(min(p.mss, start.Size(p.block.End)))
+				if start.LessThan(previousUNA) {
+					return scoreboard.headPacketSACKed
+				}
+				scoreboard.headPacketSACKed = scoreboard.IsSACKED(header.SACKBlock{Start: start, End: end})
+				return scoreboard.headPacketSACKed
+			}
+			break
+		}
+	}
+	scoreboard.headPacketSACKed = false
+	return false
+}
+
 // handleRcvdSegment is called when a segment is received; it is responsible for
 // updating the send-related state.
 // +checklocks:s.ep.mu
@@ -1712,17 +1743,13 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			}
 		}
 
-		if s.shouldSchedulePTO() {
-			// Schedule PTO upon receiving an ACK that cumulatively acknowledges data.
-			// See https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.5.1.
+		scheduleProbe := s.shouldSchedulePTO()
+		if scheduleProbe {
+			// Schedule before retiring data: the PTO depends on the outstanding packet count.
 			s.schedulePTO()
-		} else {
-			// When an ack is received we must rearm the timer.
-			// RFC 6298 5.3
-			s.probeTimer.disable()
-			s.resendTimer.enable(s.RTO)
 		}
 
+		previousUNA := s.SndUna
 		// Remove all acknowledged data from the write list.
 		acked := s.SndUna.Size(ack)
 		s.SndUna = ack
@@ -1767,6 +1794,20 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			s.SackedOut -= int(seg.sackCredit)
 			seg.DecRef()
 			ackLeft -= datalen
+		}
+
+		if !scheduleProbe {
+			timeout := s.RTO
+			if s.ep.SACKPermitted && s.updateSACKedHead(previousUNA) && s.SndWnd != 0 {
+				// The cumulative ACK stopped inside a packet the peer had already
+				// reported receiving. Give a later ACK half an RTT to clear the
+				// ambiguity before resending, as in Linux tcp_check_sack_reneging.
+				s.rtt.Lock()
+				timeout = min(timeout, max(s.rtt.TCPRTTState.SRTT/2, 10*time.Millisecond))
+				s.rtt.Unlock()
+			}
+			s.probeTimer.disable()
+			s.resendTimer.enable(timeout)
 		}
 
 		// Clear SACK information for all acked data.
