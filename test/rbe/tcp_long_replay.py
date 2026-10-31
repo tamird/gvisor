@@ -23,12 +23,13 @@ def main():
     for row in captured["reports"]:
         if row["name"] == "test.log":
             log = (out / row["path"]).read_text()
-            for extra, writes, rto, first in re.findall(r"TCP-NATIVE-PERSIST extra=(true|false) writes=(\d+) rto_us=(\d+) first_us=(\d+)", log):
-                metrics.append(dict(extra=extra=="true", writes=int(writes), rto_us=int(rto), first_us=int(first)))
+            for kind, flags in re.findall(r"TIMEWAIT-PROBE kind=(reopen|synack|old-fin) flags=(\d+)", log):
+                metrics.append((kind,int(flags)))
     results = [e["testResult"] for line in events.read_text().splitlines() if "testResult" in (e := json.loads(line))]
     invocation = next((e["started"]["uuid"] for line in events.read_text().splitlines() if "started" in (e := json.loads(line))), None)
-    if ([m["extra"] for m in metrics] != [False, True] or metrics[0]["writes"] != 1 or metrics[1]["writes"] < 2):
-        errors.append("missing verified single/repeated write probes")
+    expected = {"linux": {"synack": 16, "old-fin": 16}, "proposed": {"synack": 4, "old-fin": 4, "reopen": 18}, "fixed": {"synack": 16, "old-fin": 16, "reopen": 18}}[arm]
+    if len(metrics) != len(expected) or dict(metrics) != expected:
+        errors.append("Unexpected or missing TCP flags: " + repr(metrics))
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
         errors.append("expected one uncached remote result")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
