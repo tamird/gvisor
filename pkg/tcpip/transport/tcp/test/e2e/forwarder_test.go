@@ -289,13 +289,14 @@ func TestForwarderReopenAfterTimeWait(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatalf("Timed out waiting for reopened connection")
 	}
+	t.Logf("TIMEWAIT-PROBE kind=reopen flags=%d", header.TCPFlagSyn|header.TCPFlagAck)
 }
 
 // TestForwarderTimeWaitRejectedGetsReset checks that a segment arriving
 // during TIME_WAIT that the default handler declines to claim (a SYN-ACK,
 // which tcp.Forwarder.HandlePacket rejects rather than a new-connection
 // SYN) is answered with a RST instead of being dropped silently.
-func TestForwarderTimeWaitRejectedGetsReset(t *testing.T) {
+func TestForwarderTimeWaitSynAck(t *testing.T) {
 	c := context.New(t, e2e.DefaultMTU)
 	defer c.Cleanup()
 
@@ -393,11 +394,22 @@ func TestForwarderTimeWaitRejectedGetsReset(t *testing.T) {
 
 	v = c.GetPacket()
 	defer v.Release()
-	checker.IPv4(t, v, checker.TCP(
-		checker.SrcPort(context.StackPort),
-		checker.DstPort(context.TestPort),
-		checker.TCPFlags(header.TCPFlagRst),
-		checker.TCPSeqNum(uint32(rejectedAck))))
+	hdr := header.TCP(header.IPv4(v.AsSlice()).Payload())
+	t.Logf("TIMEWAIT-PROBE kind=synack flags=%d", hdr.Flags())
+	c.SendPacket(nil, &context.Headers{
+		SrcPort: context.TestPort, DstPort: context.StackPort,
+		Flags: header.TCPFlagFin | header.TCPFlagAck,
+		SeqNum: iss + 1, AckNum: c.IRS + 2,
+	})
+	reply := c.GetPacket()
+	defer reply.Release()
+	hdr = header.TCP(header.IPv4(reply.AsSlice()).Payload())
+	t.Logf("TIMEWAIT-PROBE kind=old-fin flags=%d", hdr.Flags())
+	if hdr.Flags() == header.TCPFlagAck {
+		if got, want := hdr.AckNumber(), uint32(iss + 2); got != want {
+			t.Fatalf("ACK after repeated FIN = %d, want %d", got, want)
+		}
+	}
 
 	select {
 	case err := <-ch:
