@@ -1,35 +1,72 @@
-name: CI
-
-"on":
+name: Summarize the existing three-reader restore measurements
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/restore-readers-benchstat]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
-      with:
-          name: runsc
-          path: bin/runsc
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Build the pinned benchstat and report the original restore measurements
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/restore-report"
+          mkdir -p "$out"
+          printf 'FAIL\n' > "$out/verdict"
+          python3 - <<'PYEND'
+          from pathlib import Path
+          import hashlib, io, json, os, subprocess, zipfile
+          b=subprocess.check_output(['gh','api','repos/tamird/gvisor/actions/artifacts/13037505941/zip'])
+          assert hashlib.sha256(b).hexdigest()=='9cbfe8b6a7226b0d2c9c0f055f3dfdaa7dfdec976f927a7105e1dc5eafa7a456'
+          out=Path(os.environ['RUNNER_TEMP'])/'restore-report'
+          with zipfile.ZipFile(io.BytesIO(b)) as z:
+              summary=json.loads(z.read('summary.json')); rows=json.loads(z.read('samples.json'))
+              assert summary['source']=='d3066814d48a526561ab14dd6cd9c820182a79cf' and summary['base']=='63d3761ddffe329a13d142d91dd61cceeec76fcd'
+              assert summary['result']=='PASS' and len(rows)==len(set(summary['expected']))==108
+              for mode in ('control','willneed','buffer'):
+                  name=mode+'.bench'
+                  raw=z.read(name).decode().splitlines()
+                  assert raw==['BenchmarkRestore/%s 1 %.3f kernel-ms/op %.3f cli-ms/op' % (r['condition'],r['kernel_load_ms'],r['restore_cli_ms']) for r in rows if r['mode']==mode]
+                  (out/name).write_bytes(z.read(name))
+          PYEND
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/epoll.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=remote' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          test "$(git rev-parse HEAD^)" = "2b51abee8530385431b7225198fdd5cd65e78696"
+          target=@org_golang_x_perf//cmd/benchstat
+          opts=(--config=x86_64 -c opt --jobs=12 --remote_download_outputs=toplevel)
+          bazel --bazelrc="$rc" build "${opts[@]}" "$target" > "$RUNNER_TEMP/build.log" 2>&1 || { grep -E '^(ERROR:|INFO: Streaming)' "$RUNNER_TEMP/build.log" | head -8; exit 1; }
+          bazel --bazelrc="$rc" cquery "${opts[@]}" --output=files "$target" > "$RUNNER_TEMP/selected"
+          mapfile -t bin < <(while IFS= read -r path; do if [[ -f $path && -x $path ]]; then echo "$PWD/$path"; fi; done < "$RUNNER_TEMP/selected")
+          test "${#bin[@]}" -eq 1
+          (cd "$out"; "${bin[0]}" direct=control.bench advice=willneed.bench buffer=buffer.bench >benchstat.txt)
+          for metric in kernel-ms/op cli-ms/op; do grep -Fq "$metric" "$out/benchstat.txt"; done
+          grep -q 'n=18' "$out/benchstat.txt"
+          printf 'PASS\n' > "$out/verdict"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: restore-three-readers-benchstat
+          path: ${{ runner.temp }}/restore-report
+          if-no-files-found: error
