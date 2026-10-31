@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T07:43:28.154963+00:00",
+    "updatedAt": "2026-10-31T08:10:45.007273+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1965,10 +1965,30 @@
       "url": "https://github.com/tamird/gvisor/commit/b5bd72431",
       "group": "release",
       "status": "Agent work",
-      "summary": "The contributor requested a smaller solution for Python packaging and the selected-wheel license scan. Reassess what existing supplier rules cover and whether gVisor needs the scanner amendment. The remote receipts below describe the prior implementation.\n\nBuild SandboxExec’s wheel and source archive with the declared Python tools. The same bytes installed on CPython 3.7 and built on GNU and on AMD64 and ARM64 scratch workers.",
-      "updatedAt": "2026-10-30T16:55:14.197497+00:00",
+      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.",
+      "updatedAt": "2026-10-31T08:10:45.007273+00:00",
       "head": "b5bd72431940ce903fe7521e2498811d8420f750",
       "evidence": [
+        {
+          "label": "Both release frontends and Python 3.7.17 installations, with stock and Hatchling diagnostics",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41183200050/artifacts/13035474364"
+        },
+        {
+          "label": "Exact Flit settings used in both production release frontends",
+          "url": "https://github.com/tamird/gvisor/blob/3a7695ba3/test/rbe/python_release_isolation/flit.toml"
+        },
+        {
+          "label": "uv native build requires the uv_build backend declared in pyproject",
+          "url": "https://github.com/astral-sh/uv/blob/329bf9448/crates/uv-build-backend/src/metadata.rs#L258-L310"
+        },
+        {
+          "label": "uv_build minimum supported Python version",
+          "url": "https://pypi.org/project/uv-build/#meta-information"
+        },
+        {
+          "label": "Flit normalizes owner and mode and accepts SOURCE_DATE_EPOCH for tar member times",
+          "url": "https://github.com/pypa/flit/blob/1c8141722/flit_core/flit_core/sdist.py#L18-L34"
+        },
         {
           "label": "Release action b5bd72431",
           "url": "https://github.com/tamird/gvisor/commit/b5bd72431"
@@ -2051,7 +2071,7 @@
         "disposition": "Contributor requested a smaller design",
         "sourceHead": "b5bd72431940ce903fe7521e2498811d8420f750",
         "observedAt": "2026-10-30T16:55:14.197497+00:00",
-        "nextAction": "Find the smallest supplier-backed solution or withdraw the release proposal. Keep the prior b5bd72431 and d67495aac unpublished and respect the maintainer hold on #15114.",
+        "nextAction": "Keep the large release action and scanner amendment off review, preserve the #15114 hold, and keep #16766’s staging fix independent. The Flit comparison supports a small packaging change. A builder-free Bazel action selecting and invoking the frontend remains unqualified.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b5bd72431",
           "https://github.com/tamird/gvisor/compare/e9289d0a2...d67495aac",
@@ -50279,11 +50299,20 @@
     {
       "id": "investigation:state-reflection-profiles",
       "title": "pkg/state: reflection CPU and allocation profiles",
-      "status": "active",
+      "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T07:41:09.360196+00:00",
-      "summary": "Do not ship map-slot reuse at 8b644d999. On the same Nginx checkpoint it cut allocations from 3,535 to 3,091 (12.56%) but reduced allocated bytes by only 0.30%. Wall time rose 2.50% and CPU time rose 2.54% (both p = .038).\n\nOn a 161,174-byte Nginx capture, median graph Save took 1.655 ms and Load took 1.092 ms across three ordinary runs. All ten checks passed and the final output was reloaded. The earlier controlled comparisons remain below.\n\nThe completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. Single measured-Load allocation reductions are observed, alongside increased initialization allocation counts. The adoption fixture uses Save-only setup, but ControlMessageDecoding performs an untimed validation Load before measurement; its row is not a first-use layout cost. Each timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and single measured-Load cost checks. The control-message observation uses 96 more bytes with the same 102 allocations after an untimed validation Load; it is not a first-use layout cost. Initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single measured-load observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.\n\nThe byte-reader comparison is independently closed. On the deterministic synthetic pointer/slice graph through the real uncompressed statefile reader, twelve fixed balanced pairs show no detected time benefit (median 766,202.5 to 760,387 ns, p=.198), 16 additional bytes per operation and unchanged 4,953 allocations per operation. All twenty-six native processes exited successfully, with twenty-four measured rows; the original parent failure and XML reporter errors remain recorded. These saved measurements were authenticated without rerunning benchmarks. This is not a whole-kernel restore or fresh-sentry startup measurement. The byte-reader revision remains unpromoted.\n\nThe decoded-frame architecture uses one parser and generated restoration methods. Both stable-block and inline candidates remain unadopted. The simpler contiguous revision passes correctness and its fixed comparison: large synthetic Load is 19.00% faster with 36.85% fewer allocated bytes, while control-message timing has no detected change. Executable file sizes are unchanged. Independent review is complete. The completed 24-operation whole-restore comparison does not establish an overall speedup. Subsequent profiling and the unsuccessful type-description sharing experiment are recorded in the design investigation; no successor has been adopted.",
+      "updatedAt": "2026-10-31T08:10:45.007273+00:00",
+      "summary": "Do not ship the first-slab growth change at 9e5c7cf65. On a real Nginx checkpoint, Save allocated 6.47% fewer bytes but made 1,543 allocations versus 1,531. Wall and CPU time were statistically unchanged (p = .161). Warmed large and alternating tiny/large saves slowed 1.75% and 2.13%. At the 129th entry the candidate retained 279 slots and the control retained 151. Both graph suites and round trips passed.\n\nDo not ship map-slot reuse at 8b644d999. On the same Nginx checkpoint it cut allocations from 3,535 to 3,091 (12.56%) but reduced allocated bytes by only 0.30%. Wall time rose 2.50% and CPU time rose 2.54% (both p = .038).\n\nOn a 161,174-byte Nginx capture, median graph Save took 1.655 ms and Load took 1.092 ms across three ordinary runs. All ten checks passed and the final output was reloaded. The earlier controlled comparisons remain below.\n\nThe completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. Single measured-Load allocation reductions are observed, alongside increased initialization allocation counts. The adoption fixture uses Save-only setup, but ControlMessageDecoding performs an untimed validation Load before measurement; its row is not a first-use layout cost. Each timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and single measured-Load cost checks. The control-message observation uses 96 more bytes with the same 102 allocations after an untimed validation Load; it is not a first-use layout cost. Initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single measured-load observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.\n\nThe byte-reader comparison is independently closed. On the deterministic synthetic pointer/slice graph through the real uncompressed statefile reader, twelve fixed balanced pairs show no detected time benefit (median 766,202.5 to 760,387 ns, p=.198), 16 additional bytes per operation and unchanged 4,953 allocations per operation. All twenty-six native processes exited successfully, with twenty-four measured rows; the original parent failure and XML reporter errors remain recorded. These saved measurements were authenticated without rerunning benchmarks. This is not a whole-kernel restore or fresh-sentry startup measurement. The byte-reader revision remains unpromoted.\n\nThe decoded-frame architecture uses one parser and generated restoration methods. Both stable-block and inline candidates remain unadopted. The simpler contiguous revision passes correctness and its fixed comparison: large synthetic Load is 19.00% faster with 36.85% fewer allocated bytes, while control-message timing has no detected change. Executable file sizes are unchanged. Independent review is complete. The completed 24-operation whole-restore comparison does not establish an overall speedup. Subsequent profiling and the unsuccessful type-description sharing experiment are recorded in the design investigation; no successor has been adopted.",
       "findings": [
+        {
+          "text": "Do not ship the first-slab growth change at 9e5c7cf65. On a real Nginx checkpoint, Save allocated 6.47% fewer bytes but made 1,543 allocations versus 1,531. Wall and CPU time were statistically unchanged (p = .161). Warmed large and alternating tiny/large saves slowed 1.75% and 2.13%. At the 129th entry the candidate retained 279 slots and the control retained 151. Both graph suites and round trips passed.",
+          "evidence": [
+            {
+              "label": "64 paired Save measurements and retained graph index capacities",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41181696102/artifacts/13035239613"
+            }
+          ]
+        },
         {
           "text": "The decoder reused temporary map slots without changing the restored hook result. The paired Nginx measurement found higher CPU cost and elapsed time. The experiment did not establish a cause for the slowdown.",
           "evidence": [
@@ -50933,8 +50962,12 @@
           ]
         }
       ],
-      "nextStep": "Measure first-slab growth during graph Save on the same Nginx checkpoint. It accounted for 15.3% of allocated bytes in the original Save profile.",
+      "nextStep": "Both profile-guided experiments are concluded. Retain the original profiles and measured workload tradeoffs for future comparisons.",
       "evidence": [
+        {
+          "label": "64 paired Save measurements and retained graph index capacities",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41181696102/artifacts/13035239613"
+        },
         {
           "label": "Eight paired Nginx loads, named-hook readback and benchstat",
           "url": "https://github.com/tamird/gvisor/actions/runs/41181031423/artifacts/13035405940"
@@ -54722,9 +54755,34 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T07:43:28.154963+00:00",
+      "updatedAt": "2026-10-31T08:10:45.007273+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The declared LLVM toolchain compiled and linked sentry-prewarmer, procumounter and fdparking on native AMD64 and ARM64 workers containing only /hello. All six installed ELFs matched their cold link outputs and had no dynamic interpreter or dynamic section. The registry toolchain could not launch its module-map generator. The generator fix alone reached the linker but failed to find pthread and dl. The passing source also omitted those libunwind-only defaults when static C++ runtimes were disabled and used TMPDIR=. The six signed release files in the separate comparison used a shell-equipped worker.",
+          "evidence": [
+            {
+              "label": "Three cold native compiles and links per architecture, with ELF and digest checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41181782834/artifacts/13035731072"
+            },
+            {
+              "label": "AMD64 sidecar build on /hello only",
+              "url": "https://app.buildbuddy.io/invocation/10f5d742-92f0-40c8-b3ea-56000da9802f"
+            },
+            {
+              "label": "ARM64 sidecar build on /hello only",
+              "url": "https://app.buildbuddy.io/invocation/d688cc1d-d377-484a-8de3-d018fb8ea047"
+            },
+            {
+              "label": "Make the LLVM module-map generator executable on scratch",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+            },
+            {
+              "label": "Qualification patch omitting libunwind-only system libraries",
+              "url": "https://github.com/tamird/gvisor/blob/1adf13461/tools/qualification-linux-libraries.patch"
+            }
+          ]
+        },
         {
           "text": "All six release files built and signed on a shell-equipped worker with no installed compiler. The original uncached prewarmer compile and link used the declared toolchain’s Clang and ld.lld. The same release has yet to be built on an empty worker.",
           "evidence": [
@@ -55688,6 +55746,26 @@
       ],
       "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
       "evidence": [
+        {
+          "label": "Three cold native compiles and links per architecture, with ELF and digest checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41181782834/artifacts/13035731072"
+        },
+        {
+          "label": "AMD64 sidecar build on /hello only",
+          "url": "https://app.buildbuddy.io/invocation/10f5d742-92f0-40c8-b3ea-56000da9802f"
+        },
+        {
+          "label": "ARM64 sidecar build on /hello only",
+          "url": "https://app.buildbuddy.io/invocation/d688cc1d-d377-484a-8de3-d018fb8ea047"
+        },
+        {
+          "label": "Make the LLVM module-map generator executable on scratch",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        },
+        {
+          "label": "Qualification patch omitting libunwind-only system libraries",
+          "url": "https://github.com/tamird/gvisor/blob/1adf13461/tools/qualification-linux-libraries.patch"
+        },
         {
           "label": "Six signed files on the shell-equipped release worker; cold Clang and LLD action readback",
           "url": "https://github.com/tamird/gvisor/actions/runs/41181562756/artifacts/13035475625"
