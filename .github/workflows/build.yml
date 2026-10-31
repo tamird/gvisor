@@ -1,35 +1,51 @@
-name: CI
-
-"on":
+name: Build the two governance files on workers without a shell
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/governance-generator-scratch]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      BASE: 25172e526f45929759a44e174e617c320df1ad58
+      SOURCE: 08f421859113f25ca84aef7a0f5f9f457db35e95
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Configure declared execution platforms and the compact-log reader
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^1) == "$SOURCE" && $(git rev-parse HEAD^^) == "$BASE" ]]
+        cp test/rbe/governance_scratch.py "$RUNNER_TEMP/"
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        echo "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" >> "$GITHUB_ENV"
+        curl --retry 3 -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+        echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
+        chmod 0755 "$RUNNER_TEMP/bb"
+        plat=$RUNNER_TEMP/governance-workers
+        mkdir -p "$plat"
+        printf 'module(name="governance_workers")\n' > "$plat/MODULE.bazel"
+        for arch in amd64 arm64; do
+          cpu=x86_64; [[ "$arch" == amd64 ]] || cpu=aarch64
+          printf 'platform(name="%s",constraint_values=["@platforms//cpu:%s","@platforms//os:linux"],exec_properties={"Arch":"%s","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"},visibility=["//visibility:public"])\n' "$arch" "$cpu" "$arch" >> "$plat/BUILD"
+        done
+        umask 077
+        {
+          printf '%s\n' "build --inject_repository=governance_workers=$plat" 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/governance.bazelrc"
+    - name: Compare stock and direct actions on AMD64 and ARM64
+      run: python3 "$RUNNER_TEMP/governance_scratch.py"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: governance-generator
+        path: ${{ runner.temp }}/governance-receipts/*.json
+        if-no-files-found: error
