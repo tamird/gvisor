@@ -1,35 +1,120 @@
-name: CI
-
-"on":
+name: Check host FD notifier startup
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdnotifier-startup]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
+      PRODUCT: ff062297311a053e968fc6cdf2b7e98f09854232
+      STOCK_TREE: 6a92ca6e6d0cc17456920c57505ee91334209f8d
+      FIX_TREE: 000b6ff7d4e8c9635befbb6a241748a598e68bfe
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 4, persist-credentials: false}
+    - name: Exhaust the sentry FD table before checkpoint and registration
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/results"/{stock,fix}
+        platform=$RUNNER_TEMP/focused_platform
+        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/focused.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=focused_platform=$platform" \
+            'build --host_platform=@focused_platform//:ubuntu' \
+            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        cp test/rbe/{fd_startup_verdict,qualification_report,unit_matrix}.py "$RUNNER_TEMP/"
+        git checkout --quiet --detach "$PRODUCT"
+        notifier=//pkg/fdnotifier:fdnotifier_test
+        eventfd=//pkg/sentry/fsimpl/eventfd:eventfd_test
+        for lane in stock fix owners; do
+          dir=$RUNNER_TEMP/results/$lane
+          mkdir -p "$dir"
+          revision=$PRODUCT
+          [[ $lane != stock ]] || revision=$BASE
+          git restore --source="$revision" --staged --worktree -- pkg/fdnotifier/fdnotifier.go
+          git diff --exit-code
+          git write-tree > "$dir/tree"
+          flags=(--config=x86_64 --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --nocache_test_results)
+          case $lane in
+            stock) targets=("$notifier"); flags+=(--test_arg=-test.v);;
+            fix) targets=("$notifier" "$eventfd"); flags+=(--test_arg=-test.v);;
+            owners) targets=(//pkg/fdnotifier:fdnotifier_nogo //pkg/fdnotifier:fdnotifier_test_nogo); flags+=(--output_groups=default,nogo_findings);;
+          esac
+          code=0
+          bazelisk --bazelrc="$rc" test "${flags[@]}" "${targets[@]}" > "$RUNNER_TEMP/$lane.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$dir/rc"
+          printf '%s\n' "${targets[@]}" > "$dir/expected"
+          grep -E 'ERROR:|Invocation ID:|^//pkg/|Build did NOT' "$RUNNER_TEMP/$lane.log" | tail -12 > "$dir/diagnostics" || true
+          for target in "${targets[@]}"; do
+            path=${target#//}
+            name=${target##*:}
+            testpath=bazel-testlogs/${path/:/\/}
+            for ext in xml log; do
+              if [[ -f $testpath/test.$ext ]]; then cp "$testpath/test.$ext" "$dir/$name.$ext"; fi
+            done
+            if [[ $lane == owners ]]; then
+              for arch in amd64 arm64; do
+                f="bazel-bin/pkg/fdnotifier/$name.$arch.findings"
+                if [[ -f $f ]]; then sha256sum "$f" > "$dir/$name.$arch.sha256"; fi
+              done
+            fi
+          done
+        done
+        date -u +%FT%T.%NZ > "$RUNNER_TEMP/results/end"
+        python3 "$RUNNER_TEMP/fd_startup_verdict.py" "$RUNNER_TEMP/results"
+    - name: Redact credentials from the evidence bundle
+      id: redact
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"results").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.redact.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: fdnotifier-startup
+        path: ${{ runner.temp }}/results/verdict.json
+        if-no-files-found: error
