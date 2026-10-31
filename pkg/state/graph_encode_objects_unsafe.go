@@ -21,6 +21,8 @@ import (
 	"unsafe"
 )
 
+var windowRootSteps, windowBucketSteps uint64
+
 // index adds the object to the object index.
 func (es *graphEncodeState) index(obj int32) {
 	es.indexFrom(obj, es.obj(obj).addr>>blockShift)
@@ -56,6 +58,7 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 			continue
 		}
 		for ; e >= 0; e = es.blockEntries[e].next {
+			windowBucketSteps++
 			be := &es.blockEntries[e]
 			if be.addr >= end || addr >= be.end {
 				continue
@@ -75,6 +78,7 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 func (es *graphEncodeState) root(obj int32) (int32, uintptr) {
 	var off uintptr
 	for es.obj(obj).parent >= 0 {
+		windowRootSteps++
 		off += es.obj(obj).parentOff
 		obj = es.obj(obj).parent
 	}
@@ -531,6 +535,7 @@ func (es *graphEncodeState) ptrTarget(p unsafe.Pointer, ti *typeInfo) int32 {
 // overlap another object. Its existing targets, chunks, and coverage stay valid.
 func (es *graphEncodeState) extendArray(obj int32, count, end uintptr) bool {
 	o := es.obj(obj)
+	es.windowAttempts++
 	if len(es.query(o.end, end)) != 0 {
 		return false
 	}
@@ -539,11 +544,14 @@ func (es *graphEncodeState) extendArray(obj int32, count, end uintptr) bool {
 	lastBlock := (o.end - 1) >> blockShift
 	if o.end&(1<<blockShift-1) != 0 {
 		e, _ := es.blocks.get(lastBlock)
+		windowBucketSteps++
 		for es.blockEntries[e].obj != obj {
+			windowBucketSteps++
 			e = es.blockEntries[e].next
 		}
 		es.blockEntries[e].end = end
 	}
+	es.windowExtensions++
 	o.n, o.end = count, end
 	es.indexFrom(obj, lastBlock+1)
 	return true
