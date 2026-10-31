@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-31T10:33:11.933574+00:00",
-  "registryDate": "2026-10-31T12:24:07.551168+00:00",
+  "registryDate": "2026-10-31T12:43:37.962461+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -258897,6 +258897,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-31T12:12:41.296093+00:00"
+      }
+    },
+    "branch:proc-sandbox-boot-id": {
+      "contributor-review": {
+        "scope": "4ff4f3d6a33db001cc080e44e81604427b7b9784",
+        "since": "2026-10-31T12:43:37.962461+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-31T12:43:37.962461+00:00"
       }
     }
   },

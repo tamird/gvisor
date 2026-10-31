@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T12:24:07.551168+00:00",
+    "updatedAt": "2026-10-31T12:43:37.962461+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39581,6 +39581,48 @@
         "observedAt": "2026-10-31T12:24:07.551168+00:00",
         "nextAction": "Move Python packaging into the publisher’s existing versioned release path or reuse its tag filter. The trial repeated the tag exclusions in Buildkite; its original cases and actual tagged archives remain valid evidence."
       }
+    },
+    {
+      "id": "branch:proc-sandbox-boot-id",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "review/proc-sandbox-boot-id",
+      "head": "4ff4f3d6a33db001cc080e44e81604427b7b9784",
+      "title": "Share the proc boot ID across mounts",
+      "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a",
+      "updatedAt": "2026-10-31T12:43:37.962461+00:00",
+      "status": "Contributor review requested",
+      "summary": "A proc mount in a child PID namespace saw a different boot ID on gVisor. Store one ID per registered proc filesystem type. First-mount initialization preserves zero-valued pointer registrations used by an independent Sentry embedder. The shared syscall test and a live checkpoint with a newly mounted proc both passed.",
+      "evidence": [
+        {
+          "label": "All three syscall arms, checkpoint restore, release build, proc package and both Nogo owners",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
+        },
+        {
+          "label": "Single product commit on 25172e526",
+          "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a"
+        },
+        {
+          "label": "External Sentry registers the zero-valued proc filesystem pointer",
+          "url": "https://github.com/xgo-dev/sandbox/blob/a531c1065/sentry/fs_linux.go#L195-L200"
+        },
+        {
+          "label": "Linux boot ID and random UUID interfaces",
+          "url": "https://github.com/torvalds/linux/blob/adc218676/drivers/char/random.c#L1624-L1655"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "4ff4f3d6a33db001cc080e44e81604427b7b9784",
+        "baseHead": "25172e526f45929759a44e174e617c320df1ad58",
+        "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a",
+        "title": "Share the proc boot ID across mounts",
+        "requestedAt": "2026-10-31T12:43:37.962461+00:00",
+        "summary": "Decide whether to open the standalone sandbox boot ID fix. A zero-valued *proc.FilesystemType remains usable. The saved type now holds state and must be registered by pointer. The historical lazy-directory experiment is a separate investigation.",
+        "body": "Linux returns the same /proc/sys/kernel/random/boot_id from a new proc\nmount, including in a child PID namespace [1]. gVisor generated a UUID\nfor every mount. Store one ID on the proc filesystem type registered\nwith the sandbox. Initializing it under a mutex lets existing\nzero-valued pointer registrations create their first mount concurrently.\nEach mount keeps its own inode, and random/uuid still changes on every\nread.\n\nMountTest.UserNamespaceProcMount passed on Linux, failed because the IDs\ndiffered on 25172e526, and passed with this change. A guest read the\nsame ID on two restored mounts and a third mount created after restore.\nAll 12 reads of random/uuid were distinct. The proc package and both\nNogo targets passed [2].\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/drivers/char/random.c#L1624-L1655\n[2]: https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
+      }
     }
   ],
   "edges": [
@@ -57681,9 +57723,9 @@
     {
       "id": "investigation:proc-boot-identity",
       "title": "Proc boot IDs across mounts and checkpoint restores",
-      "status": "active",
+      "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T11:56:47.694302+00:00",
+      "updatedAt": "2026-10-31T12:43:37.962461+00:00",
       "summary": "Restoring one checkpoint twice before the first guest read produced the same boot ID per proc mount on 085e111d7 and different IDs on both mounts on efad71b8c. Both sources preserved IDs the guest had already read. Separately, both sources assigned different boot IDs to different mounts in one sandbox. Native Linux shared one ID.",
       "findings": [
         {
@@ -57704,7 +57746,7 @@
           ]
         },
         {
-          "text": "Independent candidate 4ff4f3d6a stores one boot ID on the sandbox’s registered proc filesystem type. The systrap guest saw the original ID on two mounts after restore and on a new third mount it created after restore. All 12 reads of random/uuid returned distinct values.",
+          "text": "MountTest.UserNamespaceProcMount passed on native Linux, failed the boot ID equality assertion on stock 25172e526, and passed on 4ff4f3d6a. None skipped. A systrap guest read its original boot ID on both restored mounts and on a third mount created after restore. All 12 reads of random/uuid were distinct. The proc package and both Nogo targets passed.",
           "evidence": [
             {
               "label": "Native Linux comparison across two proc mounts",
@@ -57715,13 +57757,13 @@
               "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a"
             },
             {
-              "label": "Current-source systrap restore and mount comparison",
-              "url": "https://github.com/tamird/gvisor/actions/runs/41196058784"
+              "label": "All three syscall arms, checkpoint restore, release build, proc package and both Nogo owners",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
             }
           ]
         }
       ],
-      "nextStep": "Finish the current named Linux, stock and corrected mount syscall comparison and proc analysis. If directory creation becomes lazy, allocating the shared ID when mounting proc would preserve it across restores before the first read.",
+      "nextStep": "Review 4ff4f3d6a on its separate proposal card. If #16610 should preserve IDs on restores of an unread checkpoint, initialize the shared ID when mounting proc and leave directory creation lazy.",
       "evidence": [
         {
           "label": "Two independent restores on each historical source, before and after the first read",
@@ -57730,6 +57772,10 @@
         {
           "label": "Native Linux comparison across two proc mounts",
           "url": "https://github.com/tamird/gvisor/actions/runs/41187625838/artifacts/13037987317"
+        },
+        {
+          "label": "All three syscall arms, checkpoint restore, release build, proc package and both Nogo owners",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
         }
       ]
     }
