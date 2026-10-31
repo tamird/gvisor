@@ -1,90 +1,77 @@
-"""Build the actual runsc sidecars and verify their compiler/linker records on the empty worker."""
-import hashlib
-import json
-import os
+"""Qualify the freestanding runtime opt-out with the supplier's own e2e module."""
+import json, os, subprocess, sys, time
+import xml.etree.ElementTree as ET
 from pathlib import Path
-import re
-import struct
-import subprocess
 
-ROOT = Path(os.environ['RUNNER_TEMP'])
-OUT = ROOT / 'sidecar-evidence'
-OUT.mkdir(exist_ok=True)
-IMAGE = 'docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef'
-PROGRAMS = {'fdparking': 'runsc-fd-parking', 'prewarmer': 'gvisor-sentry-prewarmer', 'procumounter': 'gvisor-proc-umounter'}
-TARGETS = [f'//runsc/{p}:{p}_binary' for p in PROGRAMS]
-def properties(row):
-    return {p['name']:p['value'] for p in row.get('platform',{}).get('properties',[])}
-def indexed_rows(path):
-    if not path.exists():
-        return []
-    decoded = subprocess.run([str(ROOT/'bb'), 'print', '--compact_execution_log='+str(path)], stdout=subprocess.PIPE, check=True)
-    jq = subprocess.run(['jq','-c','select((.targetLabel // "") | startswith("//runsc/") or startswith("@@//runsc/")) , select((.exitCode // 0) != 0 or (.status // "") != "") | {targetLabel,mnemonic,runner,cacheHit,exitCode,status,digest,platform,tool:.commandArgs[0],actualOutputs,listedOutputs}'], input=decoded.stdout,stdout=subprocess.PIPE,check=True)
-    return [json.loads(line) for line in jq.stdout.splitlines()]
-def run(arch,phase):
-    config={'amd64':'x86_64','arm64':'aarch64'}[arch]
-    folder=OUT/f'{arch}-{phase}';folder.mkdir()
-    log=ROOT/f'{arch}-{phase}.binpb';bep=ROOT/f'{arch}-{phase}.jsonl';txt=ROOT/f'{arch}-{phase}.log'
-    args=['bazel','--bazelrc='+str(ROOT/'sidecar.bazelrc'),'build','--config='+config,'--jobs=36','--remote_download_outputs=toplevel','--color=no','--curses=no','--host_platform=//test/rbe/native_sidecars:'+arch,'--extra_execution_platforms=//test/rbe/native_sidecars:'+arch,'--execution_log_compact_file='+str(log),'--build_event_json_file='+str(bep),'--nobuild_event_json_file_path_conversion',*TARGETS]
-    with txt.open('w') as f:
-        status=subprocess.run(args,stdout=f,stderr=subprocess.STDOUT).returncode
-    text=txt.read_text(errors='replace')
-    details=[s[:550] for s in text.splitlines() if 'api-key' not in s.lower() and re.search(r'ERROR:|error:|No such file|No such target|failed to start|exec format|unable to find library|Could not find|interpreter',s,re.I)]
-    events=[json.loads(l) for l in bep.read_text().splitlines()] if bep.exists() else []
-    record={'phase':phase,'arch':arch,'exit':status,'source':os.environ['GITHUB_SHA'],'target':TARGETS,'invocation':next((e['started']['uuid'] for e in events if 'started' in e),None),'errors':details[-16:]}
-    print(arch,phase,'native Bazel exit',status,'https://app.buildbuddy.io/invocation/'+str(record['invocation']),flush=True)
-    print('\n'.join(record['errors']),flush=True)
-    try:
-        rows=indexed_rows(log)
-        record['failed_actions']=[{k:v for k,v in r.items() if k!='actualOutputs'} for r in rows if r.get('exitCode') or r.get('status')]
-        if not status:
-            results={}
-            for pkg,name in PROGRAMS.items():
-                file=Path('bazel-bin/runsc')/pkg/name;b=file.read_bytes()
-                assert b[:6]==b'\x7fELF\x02\x01',file
-                machine=struct.unpack_from('<H',b,18)[0];assert machine=={'amd64':62,'arm64':183}[arch]
-                phoff=struct.unpack_from('<Q',b,32)[0];size,n=struct.unpack_from('<HH',b,54);types=[struct.unpack_from('<I',b,phoff+i*size)[0] for i in range(n)]
-                assert 3 not in types and 2 not in types and (pkg=="fdparking" or len(b)<=4096),(name,types,len(b))
-                digest=hashlib.sha256(b).hexdigest();ops={}
-                for m in ('CppCompile','CppLink'):
-                    match=[x for x in rows if x.get('mnemonic')==m and '/runsc/'+pkg+':' in x['targetLabel']]
-                    assert len(match)==1,(pkg,m,[x['targetLabel'] for x in match])
-                    x=match[0];props=properties(x)
-                    assert x['runner']=='remote' and not x['cacheHit'] and not x['exitCode'] and props['Arch']==arch and props['container-image']==IMAGE,(m,name,x['runner'],x['cacheHit'],props)
-                    if m=='CppLink':
-                        assert any(o.get('digest',{}).get('hash')==digest for o in x['actualOutputs']),(m,name)
-                    ops[m]={'tool':x['tool'],'digest':x['digest']['hash'],'cacheHit':False,'platform':props}
-                results[name]={'bytes':len(b),'sha256':digest,'machine':machine,'elf_program_types':types,'actions':ops}
-            record['ELFs']=results
-        record['verified']=status==0
-    except Exception as err:
-        record['verified']=False
-        record['verification_error']=str(err)[:600]
-        print('Evidence verification:',record['verification_error'],flush=True)
-    finally:
-        (folder/'result.json').write_text(json.dumps(record,indent=2)+'\n')
-    return record
-def override(names):
-    p=Path('MODULE.bazel');s=original
-    before='patches = ["//tools:llvm-linux-header-default.patch"],'
-    assert s.count(before)==1
-    p.write_text(s.replace(before,'patches = ['+', '.join('"//tools:'+x+'"' for x in ['llvm-linux-header-default.patch',*names])+'],'))
-original=Path('MODULE.bazel').read_text()
-results=[]
-for arch in ['amd64','arm64']:
-    Path('MODULE.bazel').write_text(original)
-    x=run(arch,'registry');results.append(x)
-    if not x['exit']:
-        continue
-    errors=' '.join(x['errors']).lower()
-    if 'module-map-generator' in errors:
-        override(['qualification-module-map-musl.patch'])
-        x=run(arch,'module-map');results.append(x)
-        patches=['qualification-module-map-musl.patch']
-    else:
-        patches=[]
-    if x['exit'] and ('-lpthread' in ' '.join(x['errors']) or '-ldl' in ' '.join(x['errors'])):
-        override([*patches,'qualification-linux-libraries.patch'])
-        x=run(arch,'supplier-link');results.append(x)
-Path('MODULE.bazel').write_text(original)
-assert all(any(r.get('verified') and r['arch']==a for r in results) for a in ['amd64','arm64'])
+ROOT=Path.cwd()
+APP=ROOT/'e2e/rules_cc'
+D=Path(os.environ['RUNNER_TEMP'])/'sidecar-evidence';D.mkdir(exist_ok=True)
+TMP=Path(os.environ['RUNNER_TEMP'])
+RC=TMP/'sidecar.bazelrc'
+SOURCE=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+REL='toolchain/args/linux/BUILD.bazel'
+FILE=ROOT/REL
+ORIGINAL=subprocess.check_output(['git','show','HEAD^:'+REL])
+CORRECTED=FILE.read_bytes()
+BINARY='//:freestanding_link_test'
+HOSTED='//:cxx_shared_library_test'
+ENV=dict(os.environ)
+ENV['USE_BAZEL_VERSION']=(ROOT/'.bazelversion').read_text().strip()
+status={}
+def invoke(kind,args,out,err):
+    start=time.time()
+    with out.open('wb') as stdout,err.open('wb') as stderr:
+        p=subprocess.run(['bazel',f'--bazelrc={RC}',kind,*args],env=ENV,cwd=APP,stdout=stdout,stderr=stderr)
+    text=err.read_text(errors='replace')
+    signals=[s[-950:] for s in text.splitlines() if any(k in s.lower() for k in ['error:', 'unable to find library','invocation id','failed to fetch','unknown option','failed to build','executed out of','no tests were found'])]
+    return {'exit':p.returncode,'seconds':round(time.time()-start,1),'diagnostics':signals[-15:]}
+def result(tag,kind,args):
+    out=TMP/(tag+'.out');err=TMP/(tag+'.err');record=invoke(kind,args,out,err);status[tag]=record
+    print(tag,json.dumps(record),flush=True);(D/'result.json').write_text(json.dumps({'source':SOURCE,**status},indent=2)+'\n');return out,err,record
+def suite(tag,labels):
+    bep=TMP/(tag+'.bep')
+    common=['--platforms=@llvm//platforms:linux_x86_64','--jobs=110','--strategy=TestRunner=local','--remote_download_outputs=toplevel','--cache_test_results=no','--nobuild_event_json_file_path_conversion','--build_event_json_file='+str(bep),'--test_output=errors','--keep_going',*labels]
+    out,err,rec=result(tag,'test',common)
+    cases=[]
+    for line in bep.read_text().splitlines() if bep.exists() else []:
+        event=json.loads(line);ident=event.get('id',{})
+        if 'testSummary' in ident:
+            t=event['testSummary'];cases.append({'label':ident['testSummary']['label'],'status':t.get('overallStatus'),'totalRuns':t.get('totalRunCount')})
+        if 'testResult' in ident:
+            art=next((x for x in event['testResult'].get('testActionOutput',[]) if x['name']=='test.xml'),None)
+            if art and art.get('uri','').startswith('file://'):
+                f=Path(art['uri'][7:])
+                if f.exists():
+                    xml=ET.parse(f);cases.append({'xmlFor':ident['testResult']['label'],'cases':[{'name':c.get('name'),'skipped':c.find('skipped') is not None,'failed':any(c.find(k) is not None for k in ('failure','error'))} for c in xml.findall('.//testcase')]})
+    rec['tests']=cases
+    return rec
+def flags(tag,platform,targets):
+    expression='mnemonic("CppLink", deps(set('+ ' '.join(targets)+')))'
+    out,err,rec=result(tag,'aquery',['--platforms='+platform,'--include_param_files','--noinclude_artifacts','--output=jsonproto',expression])
+    if rec['exit']:return
+    graph=json.loads(out.read_text());labels={t['id']:t['label'] for t in graph.get('targets',[])};rows=[]
+    for action in graph.get('actions',[]):
+        lbl=labels.get(action['targetId'],'');args=action.get('arguments',[])+[v for p in action.get('paramFiles',[]) for v in p['arguments']]
+        if lbl.rpartition(':')[2] in ('freestanding_link_test','cxx_shared_library_test') or 'libunwind.shared' in lbl:
+            row={'target':lbl,'tool':args[0], 'pthread':'-lpthread' in args,'dl':'-ldl' in args,'libcSearch':[a[-160:] for a in args if a.startswith('-L') and ('glibc' in a or 'musl' in a)]}
+            if row not in rows:rows.append(row)
+    rec['actions']=rows
+    print(tag+' harvested:',json.dumps(rows),flush=True)
+try:
+    FILE.write_bytes(ORIGINAL)
+    control=suite('stock',[BINARY]);control['expectedFailure']=control['exit']!=0 and all(any('unable to find library '+lib in line for line in control['diagnostics']) for lib in ('-lpthread','-ldl'))
+    FILE.write_bytes(CORRECTED)
+    fixed=suite('corrected',[BINARY,HOSTED])
+    for name,platform in [('gnu','@llvm//platforms:linux_x86_64'),('musl','@llvm//platforms:linux_x86_64_musl')]:
+        flags(name,platform,[BINARY,HOSTED,'@llvm//runtimes/libunwind:libunwind.shared'] if name=='gnu' else [BINARY])
+    print(json.dumps(status),flush=True)
+finally:
+    FILE.write_bytes(CORRECTED)
+    (D/'result.json').write_text(json.dumps({'source':SOURCE,**status},indent=2)+'\n')
+assert control['expectedFailure'] and fixed['exit']==0 and all(any(x.get('label')==label and x.get('status')=='PASSED' for x in fixed['tests']) for label in (BINARY,HOSTED)),status
+for name in ['gnu','musl']:
+    rows=status[name].get('actions',[])
+    assert any(x['target'].endswith(':freestanding_link_test') and not x['pthread'] and not x['dl'] and x['libcSearch'] for x in rows),(name,rows)
+rows=status['gnu']['actions']
+assert any(x['target'].endswith(':cxx_shared_library_test') and x['pthread'] and x['dl'] for x in rows),rows
+assert any('libunwind.shared' in x['target'] and x['pthread'] and x['dl'] for x in rows),rows

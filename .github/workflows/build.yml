@@ -1,4 +1,4 @@
-name: Verify the freestanding runsc sidecars on empty workers
+name: Verify toolchain libraries on freestanding and hosted Linux links
 on:
   push:
     branches: [qualification/native-sidecars-empty-worker]
@@ -12,16 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
-      - name: Pin Bazel and the compact action log reader
-        run: |
-          set -eu
-          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-          echo "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" >> "$GITHUB_ENV"
-          command -v bazel
-          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
-          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Compile and link all three installed executables on each empty worker
+      - name: Check out the reviewed Linux link rule and its real e2e test
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/hermetic-llvm
+          ref: 321ef8af9d59c2cce56e5f777bd1d7fc4859aac9
+          fetch-depth: 2
+          path: llvm
+          persist-credentials: false
+      - name: Compare the freestanding link and verify hosted and bootstrap defaults
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -29,15 +28,16 @@ jobs:
           test -n "$BUILDBUDDY_API_KEY"
           umask 077
           {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/sidecar.bazelrc"
           unset BUILDBUDDY_API_KEY
-          python3 test/rbe/native_sidecars/run.py
+          cd llvm
+          python3 ../test/rbe/native_sidecars/run.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-sidecars
+          name: linux-unwind-link
           path: ${{ runner.temp }}/sidecar-evidence
           if-no-files-found: error
