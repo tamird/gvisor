@@ -33,6 +33,8 @@ if arm == "stock":
         why.append("expected only the page reference assertion with Bazel TESTS_FAILED")
 elif verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
+if arm == "race" and ("--config=race" not in (out / "executed_arguments").read_text().splitlines() or verdict["case_counts"].get("passed", 0) < 69):
+    why.append("race configuration or package coverage missing")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
