@@ -21,10 +21,10 @@ import (
 	"unsafe"
 )
 
-// index adds the object to the object index.
-func (es *graphEncodeState) index(obj int32) {
+// index adds the object to the index from firstBlock through its end.
+func (es *graphEncodeState) index(obj int32, firstBlock uintptr) {
 	o := es.obj(obj)
-	for b := o.addr >> blockShift; b <= (o.end-1)>>blockShift; b++ {
+	for b := firstBlock; b <= (o.end-1)>>blockShift; b++ {
 		head, ok := es.blocks.get(b)
 		if !ok {
 			head = -1
@@ -373,7 +373,7 @@ func (es *graphEncodeState) newContainer(base unsafe.Pointer, end uintptr, ti *t
 	for _, c := range ov {
 		es.absorb(obj, c)
 	}
-	es.index(obj)
+	es.index(obj, uintptr(base)>>blockShift)
 	return obj
 }
 
@@ -522,6 +522,28 @@ func (es *graphEncodeState) ptrTarget(p unsafe.Pointer, ti *typeInfo) int32 {
 	return tid
 }
 
+// extendArray extends a live array in place when the new suffix doesn't
+// overlap another object. Its existing targets, chunks, and coverage stay valid.
+func (es *graphEncodeState) extendArray(obj int32, count, end uintptr) bool {
+	o := es.obj(obj)
+	if len(es.query(o.end, end)) != 0 {
+		return false
+	}
+	// The index caches each object's end. Only its former last block can
+	// be queried at an address past its old end.
+	lastBlock := (o.end - 1) >> blockShift
+	if o.end&(1<<blockShift-1) != 0 {
+		e, _ := es.blocks.get(lastBlock)
+		for es.blockEntries[e].obj != obj {
+			e = es.blockEntries[e].next
+		}
+		es.blockEntries[e].end = end
+	}
+	o.n, o.end = count, end
+	es.index(obj, lastBlock+1)
+	return true
+}
+
 // sliceTarget returns the target for the data of a slice of elements of type
 // elem, and ensures that its elements are encoded.
 //
@@ -535,8 +557,13 @@ func (es *graphEncodeState) sliceTarget(dataPtr unsafe.Pointer, elem *typeInfo, 
 		// Fast path: the slice is within the object of an existing target.
 		r, off := es.root(es.target(tid).obj)
 		off += es.target(tid).off
-		if o := es.obj(r); o.addr+off+capacity*esz <= o.end {
+		o := es.obj(r)
+		if o.addr+off+capacity*esz <= o.end {
 			es.coverSliceInArray(r, off, elem, length, capacity)
+			return tid
+		}
+		if off == 0 && o.isArray && o.ti == elem && es.extendArray(r, capacity, end) {
+			es.cover(r, 0, length)
 			return tid
 		}
 	}

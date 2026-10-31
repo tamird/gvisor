@@ -179,6 +179,33 @@ func TestRandomGraphs(t *testing.T) {
 	})
 }
 
+// TestGrowingSliceWindows checks that a growing prefix still finds interior
+// views and merges a previously separate window when the prefix reaches it.
+func TestGrowingSliceWindows(t *testing.T) {
+	runWithBothEngines(t, func(t *testing.T) {
+		skipUnlessSliceWindows(t)
+		backing := make([]byte, 2048)
+		for i := range backing {
+			backing[i] = byte(i)
+		}
+		saved := [][]byte{
+			backing[:1:2], backing[:9:10], backing[8:10:10],
+			backing[1500:1510:1520], backing[:1000:1200], backing[1100:1110:1120],
+			backing[:],
+		}
+		got := *loadBytes[[][]byte](t, saveBytes(t, &saved))
+		if len(got) != len(saved) {
+			t.Fatalf("restored %d windows, want %d", len(got), len(saved))
+		}
+		full := got[len(got)-1]
+		for i, offset := range []int{0, 0, 8, 1500, 0, 1100, 0} {
+			if !bytes.Equal(got[i], saved[i]) || cap(got[i]) != cap(saved[i]) || &got[i][0] != &full[offset] {
+				t.Errorf("window %d: incorrect contents, capacity, or backing offset", i)
+			}
+		}
+	})
+}
+
 // TestSharedSliceWindows tests graph save/load.
 func TestSharedSliceWindows(t *testing.T) {
 	runWithBothEngines(t, func(t *testing.T) {
