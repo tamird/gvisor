@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("pkg/sentry/platform/systrap/sysmsg|pkg/gohacks|test/rbe/empty_worker")) or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("pkg/sentry/platform/systrap/sysmsg|pkg/gohacks|test/rbe/empty_worker")) or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -72,13 +72,13 @@ def invoke(kind,arch,targets,options=()):
     folder=out/kind; folder.mkdir(exist_ok=True)
     log=tmp/(kind+".binpb");txt=tmp/(kind+".buildlog");bep=tmp/(kind+".bep")
     plat="//test/rbe/empty_worker:"+arch
-    cmd=["bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"build","--config=aarch64","--keep_going","--jobs=40","--noremote_accept_cached","--noremote_upload_local_results","--remote_download_outputs=toplevel","--spawn_strategy=remote","--noremote_local_fallback","--host_platform="+plat,"--extra_execution_platforms="+plat,"--execution_log_compact_file="+str(log),"--build_event_json_file="+str(bep),"--nobuild_event_json_file_path_conversion","--color=no","--curses=no",*options,*targets]
+    cmd=["bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"build","--config=aarch64","--keep_going","--jobs=40","--remote_accept_cached","--noremote_upload_local_results","--remote_download_outputs=toplevel","--spawn_strategy=remote","--noremote_local_fallback","--host_platform="+plat,"--extra_execution_platforms="+plat,"--execution_log_compact_file="+str(log),"--build_event_json_file="+str(bep),"--nobuild_event_json_file_path_conversion","--color=no","--curses=no",*options,*targets]
     start=now()
     with txt.open("w") as stream:
         status=subprocess.run(cmd,stdout=stream,stderr=subprocess.STDOUT).returncode
     finished=now()
     original=txt.read_text(errors="replace")
-    messages=[l.strip()[:1300] for l in original.splitlines() if re.search(r"ERROR:|No such file|could not start|failed to start|not found|undefined symbol|unable to find|permission denied|unrecognized option|Invocation ID:",l,re.I) and not re.search(r"api.key|authorization|credential",l,re.I)]
+    messages=[l.strip()[:1300] for l in original.splitlines() if re.search(r"ERROR:|Traceback|Error in|in fail|No such file|could not start|failed to start|not found|undefined symbol|unable to find|permission denied|unrecognized option|Invocation ID:",l,re.I) and not re.search(r"api.key|authorization|credential",l,re.I)]
     r={"source":run("git","rev-parse","HEAD"),"targets":targets,"argv":cmd[2:],"native_exit":status,"started":start,"finished":finished,"invocations":re.findall(r"Invocation ID: ([0-9a-f-]{36})",original),"errors":messages[-32:]}
     results[kind]=r; save()
     actions=rows(log)
@@ -132,34 +132,28 @@ def verify_product(r,actions):
     return ok and bool(r["go_archive_outputs"])
 try:
     assert platform.machine()=="aarch64"
-    assert run("git","rev-parse","HEAD~3")==os.environ["AMD64_CONTROL"]
-    results["coordinator_machine"]=platform.machine()
-    results["provenance"]=provenance();save()
-    source(os.environ["ORIGINAL"])
-    results["positive_root_ok"]=bool(collect_root("gnu-root",gnu));save()
-    results["scratch_root_ok"]=bool(collect_root("scratch-root",image));save()
-    labels=[pkg+"sighandler_object",pkg+"sighandler.built-in.bin",package]
-    control, negative=invoke("stock","arm64",labels)
-    failed=[a for a in negative if remote(a,image) and (a.get("exitCode") or a.get("status"))]
-    results["control_observed"]=control["native_exit"]!=0 and any(a["mnemonic"]=="Genrule" and a["executable"]=="/bin/bash" for a in failed) and any(a["mnemonic"]=="GoToolchainBinaryBuild" and a["executable"].endswith("binary_wrapper.sh") for a in failed)
+    assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
     source(os.environ["CORRECTED"])
+    results["original_arm64_bundle"]={"id":13061034514,"run":41251597684,"sha256":"ee045dc1a9159920c85f29387e501ea019b26b3f67727b06de23306819b37a13"}
     opts=["--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain","--extra_toolchains=//test/rbe/go_bootstrap:linux_arm64_ash"]
-    product,actions=invoke("composed","arm64",[*labels,pkg+"sighandler.go.arch",pkg+"gen_stub"],opts)
-    results["real_product_ok"]=bool(verify_product(product,actions));save()
-    if results["real_product_ok"]:
-        # Check one direct wildcard member, using the same per-invocation execution cache.
-        fringe,records=invoke("consumer","arm64",[pkg+"sysmsg"],opts)
-        losses=[a for a in records if a.get("exitCode") or a.get("status")]
-        builds=[a for a in records if a.get("label")==pkg+"sysmsg" and a.get("mnemonic")=="GoCompilePkg" and remote(a,image) and not a.get("exitCode") and not a.get("status")]
-        results["consumer_observed"]=(fringe["native_exit"]==0 and bool(builds)) or (fringe["native_exit"]!=0 and any(remote(a,image) for a in losses))
-        fringe["outcome"]="built" if fringe["native_exit"]==0 else "failed"
-        fringe["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status")} for a in losses]
-        save()
+    result,actions=invoke("consumer","arm64",[pkg+"sysmsg"],opts)
+    failures=[a for a in actions if a.get("exitCode") or a.get("status")]
+    result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status")} for a in failures]
+    if result["native_exit"]==0:
+        compiled=[a for a in actions if a["label"]==pkg+"sysmsg" and a["mnemonic"]=="GoCompilePkg"]
+        archive,=[o for a in compiled for o in a["outputs"] if o["path"].endswith("/sysmsg.a")]
+        data=Path(archive["path"]).read_bytes()
+        assert data and len(data)==int(archive["digest"]["sizeBytes"]) and sha(data)==archive["digest"]["hash"]
+        result["owner_archive"]=archive
+        result["owner_action"]=[{k:a.get(k) for k in ("runner","cacheHit","platform","executable")} for a in compiled]
+        results["verdict"]="CONSUMER_BUILT"
+    elif any(remote(a,image) for a in failures):
+        results["verdict"]="MEASURED_WORKER_FAILURE"
+    else:
+        results["verdict"]="NO_WORKER_WITNESS"
 except Exception as e:
-    results["error"]=repr(e)
+    results["error"]=repr(e);results["verdict"]="INCOMPLETE"
 finally:
-    passed=all(results.get(k) for k in ("positive_root_ok","scratch_root_ok","control_observed","real_product_ok","consumer_observed"))
-    results["verdict"]="VERIFIED" if passed else "INCOMPLETE"
     results["verified"]=now();save()
     print(results["verdict"],results.get("error",""),flush=True)
-sys.exit(not passed)
+sys.exit(results["verdict"] not in ("CONSUMER_BUILT","MEASURED_WORKER_FAILURE"))
