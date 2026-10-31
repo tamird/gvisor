@@ -1,3 +1,4 @@
+load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
@@ -87,4 +88,18 @@ image_outputs(
         "@platforms//cpu:x86_64": "@benchmark_alpine_amd64",
     }),
     image_name = "benchmarks/alpine",
+)
+
+image_manifest(
+    name = "gsutil",
+    base = "@benchmark_google_cloud_cli",
+    cmd = ["/bin/bash"],
+    entrypoint = [],
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "gsutil",
+    image = ":gsutil",
+    image_name = "benchmarks/gsutil",
 )

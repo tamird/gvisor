@@ -312,6 +312,19 @@ img_pull(
     tag = "1.4.3",
 )
 
+img_pull(
+    name = "benchmark_google_cloud_cli",
+    digest = "sha256:d3f74bb21280869467e4e901c66280d4610e0bda81bab1cd7d9c112ccd1d2276",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registry = "gcr.io",
+    repository = "google.com/cloudsdktool/google-cloud-cli",
+    tag = "591.0.0-stable",
+)
+
 ### Toolchains
 register_toolchains("//:cc_toolchain_k8")
 
