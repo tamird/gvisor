@@ -1,35 +1,48 @@
-name: CI
-
-"on":
+name: Check statefile output directory permissions
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/statefile-output-unprivileged]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 6
+      - name: Preflight actual Linux sandbox support
+        run: |
+          set -euo pipefail
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare --user --map-root-user true
+      - name: Compare master, the open PR, and the one-line fix
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/sacked"
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/epoll.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=linux-sandbox' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          git show "$GITHUB_SHA:test/rbe/rack_ack_run.sh" > "$RUNNER_TEMP/run.sh"
+          source "$RUNNER_TEMP/run.sh"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: statefile-output-unprivileged
+          path: ${{ runner.temp }}/rack-results
+          if-no-files-found: error
