@@ -277,7 +277,7 @@ func (t *Timekeeper) SetClocks(c sentrytime.Clocks, params *VDSOParamPage) {
 // update samples the backing clocks and writes the new parameters to the VDSO
 // parameter page.
 //
-// Preconditions: updateMu must be held
+// +checklocks:t.updateMu
 func (t *Timekeeper) update(parked bool) {
 	// Call Update within a Write block to prevent the VDSO from using the old
 	// params between Update and Write.
