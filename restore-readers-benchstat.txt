@@ -1,0 +1,11 @@
+             │    direct    │               advice                │                buffer                │
+             │ kernel-ms/op │ kernel-ms/op  vs base               │ kernel-ms/op  vs base                │
+Restore/warm     449.9 ± 5%     448.3 ± 4%       ~ (p=0.696 n=18)     449.8 ± 2%        ~ (p=0.650 n=18)
+Restore/cold     777.3 ± 4%     751.0 ± 3%       ~ (p=0.091 n=18)     450.5 ± 3%  -42.04% (p=0.000 n=18)
+geomean          591.4          580.3       -1.88%                    450.2       -23.88%
+
+             │   direct   │              advice               │               buffer               │
+             │ cli-ms/op  │ cli-ms/op   vs base               │ cli-ms/op   vs base                │
+Restore/warm   485.6 ± 4%   484.9 ± 3%       ~ (p=0.913 n=18)   489.2 ± 2%        ~ (p=0.293 n=18)
+Restore/cold   809.4 ± 4%   784.1 ± 2%       ~ (p=0.091 n=18)   489.2 ± 3%  -39.56% (p=0.000 n=18)
+geomean        626.9        616.6       -1.65%                  489.2       -21.96%

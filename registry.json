@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T09:04:24.431841+00:00",
+    "updatedAt": "2026-10-31T09:14:33.369481+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39115,6 +39115,47 @@
         "title": "Link Linux libunwind’s system libraries only when the C++ runtimes are enabled",
         "summary": "Send the LLVM change upstream. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries."
       }
+    },
+    {
+      "id": "pr:16472",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16472,
+      "ref": "state-readahead",
+      "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
+      "title": "Read local state files ahead of kernel decode",
+      "url": "https://github.com/google/gvisor/pull/16472",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-31T09:14:33.369481+00:00",
+      "summary": "On one four-CPU worker, buffering cut cold kernel load by 41% in matched rounds; WILLNEED cut it by 3%. With files warm, the buffered restore command was 2.2% slower in paired rounds. The Nginx quota sweep remains open.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
+        "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6431225649",
+        "title": "Post the cold and warm restore measurements on #16472",
+        "summary": "On one four-CPU worker, buffering cut cold kernel load by 41% in matched rounds; WILLNEED cut it by 3%. With files warm, the buffered restore command was 2.2% slower in paired rounds. The Nginx quota sweep remains open.",
+        "body": "@EtiennePerot, @milantracy: I tried `POSIX_FADV_WILLNEED` on the local\nstate file with the existing reader. On a cold checkpoint it saved about\n3% of kernel load time in paired rounds; buffering saved 41%. Here are\nthe cold rows from [benchstat][1] (milliseconds, 18 restores per column):\n\n```\n             │    direct    │               advice                │                buffer                │\n             │ kernel-ms/op │ kernel-ms/op  vs base               │ kernel-ms/op  vs base                │\nRestore/cold     777.3 ± 4%     751.0 ± 3%       ~ (p=0.091 n=18)     450.5 ± 3%  -42.04% (p=0.000 n=18)\n\n             │   direct   │              advice               │               buffer               │\n             │ cli-ms/op  │ cli-ms/op   vs base               │ cli-ms/op   vs base                │\nRestore/cold   809.4 ± 4%   784.1 ± 2%       ~ (p=0.091 n=18)   489.2 ± 3%  -39.56% (p=0.000 n=18)\n```\n\nWith all three input files **warm**, benchstat didn't distinguish the\nreaders. Comparing buffered with direct *within each round*, though,\nthe restore command was slower in 15 of 18 rounds: median +2.2%\n(95% interval +0.3% to +5.0%). The kernel-load difference was less\nclear: +1.3% (−0.6% to +4.9%). This is consistent with the hot CLI\nregression in the PR; it doesn't establish a hot kernel-load regression.\n\nThe [108 restores][2] used the [same executable][3] on one 4-vCPU\nLinux worker, in balanced order, with a 12.2 MiB state file and a\n513 MiB pages file. CLI time ends when the background restore command\nreturns. Memory and pipe contents were checked afterward. This wasn't a\nlistening Nginx checkpoint or a CPU-quota sweep, so the measurements\ndon't pick a buffer count for those configurations.\n\nPosted on behalf of @tamird.\n\n[1]: https://tamird.github.io/gvisor/restore-readers-benchstat.txt\n[2]: https://github.com/tamird/gvisor/actions/runs/41186223756/artifacts/13037505941\n[3]: https://github.com/tamird/gvisor/commit/d3066814d"
+      },
+      "evidence": [
+        {
+          "label": "Proposed reply to the readahead discussion",
+          "url": "https://tamird.github.io/gvisor/restore-readers-review.md"
+        },
+        {
+          "label": "All 108 restores, input residency and guest digests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41186223756/artifacts/13037505941"
+        },
+        {
+          "label": "Benchstat on the three original measurement files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41187633151/artifacts/13038175234"
+        },
+        {
+          "label": "Three readers on the same PR source",
+          "url": "https://github.com/tamird/gvisor/commit/d3066814d"
+        }
+      ]
     }
   ],
   "edges": [
