@@ -1,4 +1,4 @@
-name: Exercise the native Hackbench image and both benchmark modes
+name: Qualify the standalone iperf image and remaining Go benchmark consumers
 on:
   push:
     branches: [qualification/official-go-images]
@@ -7,11 +7,11 @@ permissions:
 jobs:
   images:
     runs-on: ubuntu-22.04
-    timeout-minutes: 145
+    timeout-minutes: 185
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 6
+          fetch-depth: 12
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -46,7 +46,7 @@ jobs:
           build --remote_download_outputs=toplevel
           build --noshow_progress
           RC
-          git show "$GITHUB_SHA:test/rbe/hackbench-image.sh" > "$RUNNER_TEMP/qualify-images.sh"
+          for name in iperf-image-runtime iperf-go-consumers iperf-catalog; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
       - name: Install the Linux ARM64 binfmt interpreter
         id: qemu
         run: |
@@ -57,27 +57,75 @@ jobs:
           fi
           grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
           grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
-      - name: Qualify Hackbench on x86_64
+      - name: Load iperf and transfer as UID 65532 on x86_64
+        id: image_x86_64
         if: always() && steps.setup.outcome == 'success'
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: bash "$RUNNER_TEMP/qualify-images.sh" x86_64
+        run: bash "$RUNNER_TEMP/iperf-image-runtime.sh" x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.setup.outcome == 'success'
+        if: always() && steps.image_x86_64.outcome != 'skipped'
         with:
-          name: hackbench-x86_64
-          path: ${{ runner.temp }}/hackbench-results/x86_64
+          name: image-x86_64
+          path: ${{ runner.temp }}/iperf-results/image-x86_64
           if-no-files-found: error
-      - name: Qualify Hackbench on aarch64
+      - name: Load iperf and transfer as UID 65532 on aarch64
+        id: image_aarch64
         if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: bash "$RUNNER_TEMP/qualify-images.sh" aarch64
+        run: bash "$RUNNER_TEMP/iperf-image-runtime.sh" aarch64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        if: always() && steps.image_aarch64.outcome != 'skipped'
         with:
-          name: hackbench-aarch64
-          path: ${{ runner.temp }}/hackbench-results/aarch64
+          name: image-aarch64
+          path: ${{ runner.temp }}/iperf-results/image-aarch64
+          if-no-files-found: error
+      - name: Verify exact released iperf and OpenSSL source licenses
+        id: catalog
+        if: always() && steps.setup.outcome == 'success'
+        run: bash "$RUNNER_TEMP/iperf-catalog.sh" catalog
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.catalog.outcome != 'skipped'
+        with:
+          name: catalog
+          path: ${{ runner.temp }}/iperf-results/catalog
+          if-no-files-found: error
+      - name: hackbench Go benchmark on the x86_64 image
+        id: hackbench_x86_64
+        if: always() && steps.setup.outcome == 'success'
+        run: bash "$RUNNER_TEMP/iperf-go-consumers.sh" hackbench x86_64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.hackbench_x86_64.outcome != 'skipped'
+        with:
+          name: hackbench-go-x86_64
+          path: ${{ runner.temp }}/iperf-results/hackbench-go-x86_64
+          if-no-files-found: error
+      - name: iperf Go benchmark on the x86_64 image
+        id: iperf_x86_64
+        if: always() && steps.image_x86_64.outcome == 'success'
+        run: bash "$RUNNER_TEMP/iperf-go-consumers.sh" iperf x86_64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.iperf_x86_64.outcome != 'skipped'
+        with:
+          name: iperf-go-x86_64
+          path: ${{ runner.temp }}/iperf-results/iperf-go-x86_64
+          if-no-files-found: error
+      - name: hackbench Go benchmark on the aarch64 image
+        id: hackbench_aarch64
+        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        run: bash "$RUNNER_TEMP/iperf-go-consumers.sh" hackbench aarch64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.hackbench_aarch64.outcome != 'skipped'
+        with:
+          name: hackbench-go-aarch64
+          path: ${{ runner.temp }}/iperf-results/hackbench-go-aarch64
+          if-no-files-found: error
+      - name: iperf Go benchmark on the aarch64 image
+        id: iperf_aarch64
+        if: always() && steps.image_aarch64.outcome == 'success'
+        run: bash "$RUNNER_TEMP/iperf-go-consumers.sh" iperf aarch64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.iperf_aarch64.outcome != 'skipped'
+        with:
+          name: iperf-go-aarch64
+          path: ${{ runner.temp }}/iperf-results/iperf-go-aarch64
           if-no-files-found: error
       - name: Remove the remote action credential
         if: always()
