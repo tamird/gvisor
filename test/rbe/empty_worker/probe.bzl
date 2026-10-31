@@ -7,6 +7,7 @@ set -u
 out=$1
 {
     echo "kernel_root"
+    printf 'machine %s\\n' "$("$2" uname -m)"
     if [ -f /hello ]; then
         value=$("$2" sha256sum /hello) || exit 1
         printf 'hello-sha %s\\n' "${value%% *}"
@@ -34,5 +35,5 @@ out=$1
 
 observed_root = rule(
     implementation = _observed_root_impl,
-    attrs = {"_tool": attr.label(default = "@bootstrap_busybox//:payload/usr/bin/busybox", allow_single_file = True, cfg = "exec")},
+    attrs = {"_tool": attr.label(default = "@bootstrap_busybox_arm64//:payload/usr/bin/busybox", allow_single_file = True, cfg = "exec")},
 )
