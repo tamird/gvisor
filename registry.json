@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T10:37:26.392655+00:00",
+    "updatedAt": "2026-10-31T10:47:48.265303+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42439,8 +42439,8 @@
       ]
     },
     {
-      "from": "branch:bazel-native-test-xml",
-      "to": "pr:bazelbuild/bazel:30837",
+      "from": "pr:bazelbuild/bazel:30837",
+      "to": "branch:bazel-native-test-xml",
       "type": "depends_on",
       "reason": "The XML action uses the native POSIX wrapper introduced by #30837.",
       "evidence": [
@@ -42471,8 +42471,8 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:socket-netfilter-fib-boundaries",
-      "to": "pr:16264",
+      "from": "pr:16264",
+      "to": "branch:socket-netfilter-fib-boundaries",
       "reason": "The syscall tests exercise the FIB policies added by this merged PR.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16264",
