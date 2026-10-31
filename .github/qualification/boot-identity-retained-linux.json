@@ -1,0 +1,23 @@
+{
+  "expected": [
+    "native mounts"
+  ],
+  "executed": [
+    "native mounts"
+  ],
+  "skips": [],
+  "source": "b707a01b9d0ccc1228a7bd95bf1000f9e9dbb745",
+  "observations": {
+    "native mounts": {
+      "same_boot_across_mounts": true,
+      "repeated_boot_stable": true,
+      "distinct_random_uuids": true,
+      "distinct_proc_mounts": true
+    }
+  },
+  "failures": [],
+  "status": "PASS",
+  "execution_finished_at": "2026-10-31T09:25:23.387310+00:00",
+  "missing": [],
+  "verdict_available_at": "2026-10-31T09:25:23.387330+00:00"
+}

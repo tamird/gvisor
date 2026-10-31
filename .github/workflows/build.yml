@@ -1,35 +1,134 @@
-name: CI
-
-"on":
+name: Compare proc boot identity across mounts and restored copies
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/proc-boot-identity]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/proc-boot-identity'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 79
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      SOURCE: 61b89ded0c7a17980d4b9625b95777695403f958
+      BASE: b707a01b9d0ccc1228a7bd95bf1000f9e9dbb745
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^1) == "$SOURCE" ]]
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      timeout-minutes: 8
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+
+    - name: Verify both source trees before running the same guest
+      run: |
+        set -eu
+        cp .github/qualification/boot-identity-*.py "$RUNNER_TEMP/"
+        mkdir -p "$RUNNER_TEMP/boot-identity-results"
+        cp .github/qualification/boot-identity-retained-linux.json "$RUNNER_TEMP/boot-identity-results/linux-retained.json"
+        export GIT_INDEX_FILE="$RUNNER_TEMP/identity.idx"
+        for arm in stock lazy; do
+          if [[ $arm == stock ]]; then source="$BASE"; tree="ce97b72b9434abed1ce1c293fcaaba4650f8d0a9"; upstream="085e111d76a452db5a269f71a6692984813eb415"; else source="$SOURCE"; tree="055f3498fc3e014ebb8fef89f9f5024a7c6ef031"; upstream="efad71b8ceaefc1061e9a720e81de3f42cd858fd"; fi
+          git read-tree "$source"
+          git update-index --force-remove test/rbe/boot_identity/BUILD test/rbe/boot_identity/guest.go
+          test "$(git write-tree)" = "$tree"
+          echo "Source $arm: $source, upstream $upstream, verified tree $tree"
+        done
+        git diff --exit-code "$BASE" "$SOURCE" -- test/rbe/boot_identity
+    - name: Materialize the previously qualified stock release and original probe
+      id: stock_build
+      if: ${{ !cancelled() }}
+      timeout-minutes: 25
+      run: |
+        set -eu
+        git checkout --quiet --detach "$BASE"
+        test "$(git rev-parse HEAD)" = "$BASE"
+        SOURCE="$BASE" ARM=stock python3 "$RUNNER_TEMP/boot-identity-build.py" build amd64
+    - name: Restore the original stock checkpoint twice before its first guest read
+      if: ${{ !cancelled() && steps.stock_build.outcome == 'success' }}
+      timeout-minutes: 7
+      run: |
+        sudo env RUNNER_TEMP="$RUNNER_TEMP" SOURCE="$BASE" python3 "$RUNNER_TEMP/boot-identity-measure.py" stock
+    - name: Materialize the previously qualified lazy release and original probe
+      id: lazy_build
+      if: ${{ !cancelled() }}
+      timeout-minutes: 25
+      run: |
+        set -eu
+        git checkout --quiet --detach "$SOURCE"
+        test "$(git rev-parse HEAD)" = "$SOURCE"
+        SOURCE="$SOURCE" ARM=lazy python3 "$RUNNER_TEMP/boot-identity-build.py" build amd64
+    - name: Restore the original lazy checkpoint twice before its first guest read
+      if: ${{ !cancelled() && steps.lazy_build.outcome == 'success' }}
+      timeout-minutes: 7
+      run: |
+        sudo env RUNNER_TEMP="$RUNNER_TEMP" SOURCE="$SOURCE" python3 "$RUNNER_TEMP/boot-identity-measure.py" lazy
+    - name: Reconcile the observed restorations and inherited Linux control
+      if: always()
+      run: |
+        python3 - <<'VERDICT'
+        from datetime import datetime, timezone
+        import hashlib,json,os
+        from pathlib import Path
+        d=Path(os.environ["RUNNER_TEMP"])/"boot-identity-results"
+        d.mkdir(exist_ok=True)
+        src={"stock":"085e111d76a452db5a269f71a6692984813eb415","lazy":"efad71b8ceaefc1061e9a720e81de3f42cd858fd"}
+        expected=["first restore","second restore","live read","read before restore"]
+        r={"products":src,"expected":list(src),"missing":[],"failures":[],"skips":[],"comparisons":{},
+           "retained_native":{"run":"41187625838","artifact":"13037987317","rerun":False,"sha256":"e88569c7a655b0d5bb637ee2a5d46e8ea3d1c1b99a59ce410db34c843b096991"}}
+        raw=(d/"linux-retained.json").read_bytes()
+        assert hashlib.sha256(raw).hexdigest()==r["retained_native"]["sha256"] and json.loads(raw)["status"]=="PASS"
+        for arm in src:
+            p=d/(arm+".json")
+            if not p.exists():
+                r["missing"].append(arm)
+                continue
+            x=json.loads(p.read_text())
+            build=json.loads((d/(arm+"-build.json")).read_text())
+            if (x["status"]!="PASS" or x["executed"]!=expected or x["missing"] or x["skips"]
+                or build["source"]!=x["source"] or build["result"]!="PASS" or x.get("previously_read_ids_restored") is not True):
+                r["failures"].append(arm)
+                continue
+            r["comparisons"][arm]={"mount_ids_equal_across_two_restores":x["same_for_each_mount_across_two_unread_restores"],
+                "boot_ids_equal_between_mounts":{k:v["same_boot_across_mounts"] for k,v in x["observations"].items()},
+                "previously_read_ids_restored":True,"original_checkpoint_bytes":x["original_checkpoint_bytes"],
+                "execution_finished_at":x["execution_finished_at"],"fixture_source":x["source"]}
+        r["status"]="FAIL" if r["failures"] or r["missing"] else "PASS"
+        r["verdict_available_at"]=datetime.now(timezone.utc).isoformat()
+        (d/"summary.json").write_text(json.dumps(r,indent=2)+"\n")
+        print(json.dumps(r))
+        if r["status"]!="PASS": raise SystemExit(1)
+        VERDICT
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always()
+      with:
+        name: proc-boot-identity-restores
+        path: ${{ runner.temp }}/boot-identity-results
+        if-no-files-found: error
