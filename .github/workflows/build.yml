@@ -1,35 +1,83 @@
-name: CI
-
-"on":
+name: Validate shared-slice array growth
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-window-growth-checked]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  windows:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      SOURCE: 3c24bf9e1bc4b88cfd92bebbc0c52e6ef2a10354
+      STOCK: e0040f3cea1f9dd72e7a9c870ada37e34f8a45f4
+      MUTANT: 2f4d5e8c432f0344a5fba2e28cbd8971b4ef4eba
+      COUNTERS: 0e4863e0aeadfd9e48cc3f5fa550cca364e8b6a7
+      NGINX: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        [[ "$(git rev-parse HEAD^1)" == "$COUNTERS" && "$(git rev-parse HEAD^1^)" == "$SOURCE" && "$(git rev-parse HEAD^2)" == "$STOCK" ]]
+        git diff --exit-code "$SOURCE" "$COUNTERS" -- pkg/state/graph_decode_callbacks_test.go
+        git diff --exit-code "$SOURCE" "$STOCK" -- pkg/state/graph_decode_callbacks_test.go
+        for f in window_qualification.sh window_report.py qualification_report.py unit_matrix.py; do
+          cp "test/rbe/$f" "$RUNNER_TEMP/$f"
+        done
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"4GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+    - name: Restore checked stock results from the preceding run
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        gh api repos/tamird/gvisor/actions/artifacts/13026076601/zip > "$RUNNER_TEMP/prior.zip"
+        echo "8bdac91c70de37b39e3d053071ace18f426b0ad38499a8121411f7fcf2e7268e  $RUNNER_TEMP/prior.zip" | sha256sum -c -
+        unzip -q "$RUNNER_TEMP/prior.zip" 'stock/*' -d "$RUNNER_TEMP/records"
+    - name: Run the corrected graph tests
+      run: bash "$RUNNER_TEMP/window_qualification.sh" units
+    - name: Count extension opportunities in a four-worker Nginx checkpoint
+      if: ${{ !cancelled() }}
+      run: bash "$RUNNER_TEMP/window_qualification.sh" nginx
+    - name: Verify tests, samples, wire interoperability and the actual kernel
+      if: ${{ !cancelled() }}
+      run: python3 -B "$RUNNER_TEMP/window_report.py" "$RUNNER_TEMP/records"
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: shared-window-growth
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
