@@ -26,32 +26,22 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
-    why.append("package did not pass or no cases were executed")
-if arm in ('native', 'netstack'):
-    observations = [line[line.index("COOKIE_WS"):].strip() for line in logs.splitlines() if "COOKIE_WS " in line]
-    if arm in ("native", "netstack"):
-        for ts, expected in (("true", 128), ("false", 16)):
-            matches = [line for line in observations if f"timestamps={ts} " in line and f"window_field=16 initial_bytes={expected} want_bytes={expected}" in line]
-            if len(matches) != 1:
-                why.append(f"expected one {ts=} observation of {expected} received bytes, found {len(matches)}")
-else:
-    observations = [line[line.index("COOKIE_"):].strip() for line in logs.splitlines() if "COOKIE_" in line]
-    flags = ("10", "18", "12", "11", "14", "04")
-    if arm == "stock-native":
-        want = {"COOKIE_WAIVED flags=" + flag for flag in flags}
-        if sorted(observations) != sorted(want):
-            why.append("expected one ignored SYN-ACK retransmission for each final ACK flag")
-    else:
-        for flag in flags:
-            bounds = [line for line in observations if line.startswith("COOKIE_BOUNDARY flags=" + flag + " syn=")]
-            if len(bounds) != 1 or not 2 <= int(bounds[0].split("syn=")[1]) <= 17:
-                why.append("missing or invalid cookie queue boundary for " + flag)
-            for value in ("true","false"):
-                if observations.count(f"COOKIE_RETRANSMITTED flags={flag} expected={value} observed={value}") != 1:
-                    why.append("missing retransmission measurement for " + flag + ":" + value)
-        if len(observations) != 18:
-            why.append("expected six queue boundaries and twelve retransmission assertions")
+import re
+observations=[l[l.index("TLP_WIRE "):].strip() for l in logs.splitlines() if "TLP_WIRE " in l]
+expected={"DuplicateACK":False,"MatchingDSACK":False,"NoDuplicate":True,"UnrelatedDSACK":True,"WindowUpdate":True}
+seen={}
+for line in observations:
+    m=re.fullmatch(r"TLP_WIRE (\w+) before=(\d+) after=(\d+) ca=(\d+) unacked=(\d+)",line)
+    if m:
+        name=m[1]; before,after,ca,unacked=map(int,m.groups()[1:])
+        seen[name]=ca
+        if name not in expected or (after<before)!=expected[name] or (arm=="fixed-native" and unacked==0):why.append(f"{name}: thresholds or flight disagree with trace")
+if set(seen)!=set(expected) or len(observations)!=5:why.append("did not execute every expected wire trace")
+failed=[name for name,loss in expected.items() if loss and seen.get(name)!=0]
+if arm=="stock-netstack":
+    if sorted(failed)!=sorted(n for n in expected if expected[n]) or any(seen.get(n)!=3 for n in failed) or verdict["status"]!="FAIL" or not runner_exit or logs.count("congestion state after probe repaired the loss")!=3:
+        why.append("published PR did not reproduce three stale recovery states")
+elif failed or verdict["status"]!="PASS" or runner_exit or verdict["case_counts"].get("passed",0)==0:why.append("wire regression did not pass")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
