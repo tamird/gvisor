@@ -14,6 +14,7 @@ bazel_dep(name = "rules_img", version = "0.3.23")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
+bazel_dep(name = "with_cfg.bzl", version = "1.0.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
@@ -61,20 +62,11 @@ single_version_override(
 )
 
 ### LLVM
-# TODO: try using "llvm-raw" from BCR
+# Reuse the toolchain supplier's source libraries for the NVIDIA AST parser.
+llvm_source = use_extension("@llvm//extensions:llvm.bzl", "llvm")
+use_repo(llvm_source, "llvm-project")
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-http_archive(
-    name = "llvm-raw",
-    build_file_content = "# empty",
-    sha256 = "e8ece380fdb57dc6f8e42df9db872a1ade5056c5379075e3e2f99c89200aea69",
-    strip_prefix = "llvm-project-cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f",
-    urls = ["https://github.com/llvm/llvm-project/archive/{commit}.tar.gz".format(commit = "cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f")],
-)
-
-llvm_configure = use_repo_rule("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
-
-llvm_configure(name = "llvm-project")
 
 http_archive(
     name = "kythe_release",
@@ -90,23 +82,11 @@ python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
-### Crosstool
-coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
-use_repo(coral_crosstool_extension, "coral_crosstool")
-
-crosstool = use_extension("//tools/bazeldefs:extensions/crosstool.bzl", "crosstool_extension")
-use_repo(crosstool, "crosstool")
-
 ### Linux headers
 # Select current UAPI declarations independently of libc and test platforms.
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
 kernel_headers.configure(default_version = "6.18")
 use_repo(kernel_headers, "kernel_headers")
-
-### zlib-ng
-# TODO: try using "zlib-ng" from BCR
-llvm_zlib = use_extension("//tools/bazeldefs:extensions/llvm_zlib.bzl", "llvm_zlib_extension")
-use_repo(llvm_zlib, "llvm_zlib")
 
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
@@ -354,9 +334,7 @@ img_pull(
 )
 
 ### Toolchains
-register_toolchains("//:cc_toolchain_k8")
-
-register_toolchains("//:cc_toolchain_aarch64")
+register_toolchains("@llvm//toolchain:all")
 
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
