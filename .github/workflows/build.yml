@@ -1,35 +1,32 @@
-name: CI
-
-"on":
+name: Check repository lint wildcard selection
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/shared-lint-wildcards]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      OLD: c464adaff29390ff280a13a7d7fb13938f8934cc
+      FIXED: 91bd3fb040db565b5cf94756959e48c6c6450d24
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 6, persist-credentials: false}
+    - name: Compare both root aliases with and without developer dependencies
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        [[ "$(git rev-parse HEAD^1)" = "$FIXED" && "$(git rev-parse HEAD^2)" = "$OLD" ]]
+        [[ "$(git rev-parse "$FIXED^")" = "$BASE" && "$(git rev-parse "$OLD^")" = "$BASE" ]]
+        git diff --exit-code "$OLD" "$FIXED" -- . ':(exclude)BUILD'
+        cp .github/qualification/lint-source/wildcard.py "$RUNNER_TEMP/wildcard.py"
+        python3 -B "$RUNNER_TEMP/wildcard.py"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: shared-lint-wildcards
+        path: ${{ runner.temp }}/shared-lint-wildcards/
+        if-no-files-found: error
