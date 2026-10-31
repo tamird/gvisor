@@ -141,9 +141,15 @@ const (
 	maxDecodeTotalBytes  = 4 << 30 // 4 GiB total allocated object bytes per Load
 )
 
+var StudyDecodeTables func([5]int, [5]int)
+
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
+	if StudyDecodeTables != nil {
+		StudyDecodeTables([5]int{len(ds.types), len(ds.typeNames), len(ds.objs), len(ds.cbs), len(ds.targets)}, [5]int{cap(ds.types), cap(ds.typeNames), cap(ds.objs), cap(ds.cbs), cap(ds.targets)})
+	}
+
 	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
 		return
 	}
