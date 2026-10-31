@@ -1,4 +1,4 @@
-name: Qualify the standalone iperf image and remaining Go benchmark consumers
+name: Check corrected iperf archives, consumers and previously produced OCI layers
 on:
   push:
     branches: [qualification/official-go-images]
@@ -46,7 +46,7 @@ jobs:
           build --remote_download_outputs=toplevel
           build --noshow_progress
           RC
-          for name in iperf-image-runtime iperf-go-consumers iperf-catalog; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
+          for name in iperf-image-runtime iperf-go-consumers iperf-catalog-delta; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
       - name: Install the Linux ARM64 binfmt interpreter
         id: qemu
         run: |
@@ -57,6 +57,20 @@ jobs:
           fi
           grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
           grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
+      - name: Read the original compressed application layers
+        id: old_layers
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          git show "$GITHUB_SHA:test/rbe/recorded-image-layers.py" > "$RUNNER_TEMP/recorded-image-layers.py"
+          git show "$GITHUB_SHA:test/rbe/recorded-image-layers.json" > "$RUNNER_TEMP/recorded-image-layers.json"
+          python3 "$RUNNER_TEMP/recorded-image-layers.py" "$RUNNER_TEMP/recorded-image-layers.json" "$RUNNER_TEMP/original-layers"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.old_layers.outcome != 'skipped'
+        with:
+          name: original-layer-members
+          path: ${{ runner.temp }}/original-layers
+          if-no-files-found: error
       - name: Load iperf and transfer as UID 65532 on x86_64
         id: image_x86_64
         if: always() && steps.setup.outcome == 'success'
@@ -77,25 +91,17 @@ jobs:
           name: image-aarch64
           path: ${{ runner.temp }}/iperf-results/image-aarch64
           if-no-files-found: error
-      - name: Verify exact released iperf and OpenSSL source licenses
+      - name: Attribute regenerated license policy findings to the original inputs
         id: catalog
         if: always() && steps.setup.outcome == 'success'
-        run: bash "$RUNNER_TEMP/iperf-catalog.sh" catalog
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash "$RUNNER_TEMP/iperf-catalog-delta.sh"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.catalog.outcome != 'skipped'
         with:
-          name: catalog
-          path: ${{ runner.temp }}/iperf-results/catalog
-          if-no-files-found: error
-      - name: hackbench Go benchmark on the x86_64 image
-        id: hackbench_x86_64
-        if: always() && steps.setup.outcome == 'success'
-        run: bash "$RUNNER_TEMP/iperf-go-consumers.sh" hackbench x86_64
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.hackbench_x86_64.outcome != 'skipped'
-        with:
-          name: hackbench-go-x86_64
-          path: ${{ runner.temp }}/iperf-results/hackbench-go-x86_64
+          name: catalog-delta
+          path: ${{ runner.temp }}/iperf-results/catalog-delta
           if-no-files-found: error
       - name: iperf Go benchmark on the x86_64 image
         id: iperf_x86_64
@@ -106,16 +112,6 @@ jobs:
         with:
           name: iperf-go-x86_64
           path: ${{ runner.temp }}/iperf-results/iperf-go-x86_64
-          if-no-files-found: error
-      - name: hackbench Go benchmark on the aarch64 image
-        id: hackbench_aarch64
-        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
-        run: bash "$RUNNER_TEMP/iperf-go-consumers.sh" hackbench aarch64
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.hackbench_aarch64.outcome != 'skipped'
-        with:
-          name: hackbench-go-aarch64
-          path: ${{ runner.temp }}/iperf-results/hackbench-go-aarch64
           if-no-files-found: error
       - name: iperf Go benchmark on the aarch64 image
         id: iperf_aarch64

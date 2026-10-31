@@ -12,7 +12,7 @@ if [[ "$name" == hackbench ]]; then
   member=$(tar -tf "$archive" | grep -Ex '(\./)?images/benchmarks/hackbench/image.tar')
   tar -xOf "$archive" "$member" >"$work/image.tar"; docker load --input "$work/image.tar"; image=gvisor.dev/images/benchmarks/hackbench:latest
 else
-  product=a8c4ea4999c5b6f9de7570286c1a5a3fa85ac0c0; target=//test/benchmarks/network:iperf_test; bench='^BenchmarkIperf'
+  product=e61da06dc253bd3a62c6583f3350520d305d07c5; target=//test/benchmarks/network:iperf_test; bench='^BenchmarkIperf'
   git checkout -q --detach "$product"; image=gvisor.dev/images/benchmarks/iperf:latest
   docker tag "gvisor.dev/images/benchmarks/iperf:$cpu" "$image"
 fi

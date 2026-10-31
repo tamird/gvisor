@@ -2,7 +2,7 @@ set -euo pipefail
 arm=$1
 case "$arm" in x86_64) cpu=amd64;; aarch64) cpu=arm64;; *) exit 2;; esac
 r="$RUNNER_TEMP/iperf-results/image-$arm"; mkdir -p "$r"; exec > >(tee "$r/coordinator.log") 2>&1
-prod=a8c4ea4999c5b6f9de7570286c1a5a3fa85ac0c0
+prod=e61da06dc253bd3a62c6583f3350520d305d07c5
 git checkout -q --detach "$prod"; git rev-parse HEAD >"$r/product"; grep -Fx "$prod" "$r/product"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 export MAKEFLAGS=DOCKER_BUILD=false

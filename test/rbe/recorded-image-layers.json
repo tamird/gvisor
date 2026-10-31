@@ -1,0 +1,50 @@
+{
+  "hackbench-aarch64": {
+    "digest": "830fdb23d818f947ca744d78d1ee335202e1271208dc74085bac2254defb60c5",
+    "size": 771403,
+    "source": "4be56fbed6ca78d3574908bb6ece9072dc1c040f",
+    "producer": "f8103834-99f5-4a15-a0d3-7d6be4b5d8d4"
+  },
+  "hackbench-x86_64": {
+    "digest": "f10998dc22c05fee7f4b202b53a3585ddf89548ba25c9ca480479461976af2fe",
+    "size": 996575,
+    "source": "4be56fbed6ca78d3574908bb6ece9072dc1c040f",
+    "producer": "63361588-f684-4460-8e86-e888d7a57999"
+  },
+  "hey-aarch64": {
+    "digest": "db98df82eae4510a11e3d459a184791d8f3d806dfd5fd57ce591ea58d47edcf4",
+    "size": 3696395,
+    "source": "d063c47347266f5f419dbbaf8dd75fa3c200fb96",
+    "producer": "3741671e-b7a4-4ebb-9140-096ce1beccdf"
+  },
+  "hey-x86_64": {
+    "digest": "ff29843b52402f5a959e2614ad9a209d0dc2bb093a892543c7f3b2fc7eb407c0",
+    "size": 4152980,
+    "source": "d063c47347266f5f419dbbaf8dd75fa3c200fb96",
+    "producer": "341746c8-988f-4dfe-8cca-93141adaf824"
+  },
+  "profile-x86_64": {
+    "digest": "b474476026ae9e8cd02c3945714fa06774a9710e8998fcf6b933f06fe3ddc3fc",
+    "size": 1155743,
+    "source": "6dd2bf31bde7cea6e0006856b634e4df64f5c3f2",
+    "producer": "e00dc478-44ca-4b97-89e0-4b40481ebd16"
+  },
+  "ollama-aarch64": {
+    "digest": "0f8ff18cc8f4957cee2323a09956e81e336cbd0a98bcf23832a3cc4389c75e4a",
+    "size": 2909803,
+    "source": "1c5d0f089116d91c34262a4b63ebfc9fa7653e91",
+    "producer": "b990aa86-61fb-4854-8b71-272cac5507e9"
+  },
+  "profile-aarch64": {
+    "digest": "5f297d8c21261ef23b7d8c92957da2ce42cc1d8c4a53f710b5b0c4406bee98c1",
+    "size": 1046437,
+    "source": "6dd2bf31bde7cea6e0006856b634e4df64f5c3f2",
+    "producer": "7d25c1b9-8d0d-435b-b5da-79193b635940"
+  },
+  "ollama-x86_64": {
+    "digest": "df3f1e3f4858c4217a0ee77864ba8fcf852662181abf05c75f765b5c724ef7f3",
+    "size": 3256008,
+    "source": "1c5d0f089116d91c34262a4b63ebfc9fa7653e91",
+    "producer": "0722b900-dcce-4bcb-9847-cfcc2427c491"
+  }
+}
