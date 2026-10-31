@@ -1,4 +1,4 @@
-name: Verify checkpoint page faults after mixed read completions
+name: Verify checkpoint saves across a full pages file
 on:
   workflow_dispatch:
 permissions:
@@ -6,7 +6,7 @@ permissions:
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-second-file'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-writer-source'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -21,7 +21,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "b056cadfdf1e6299deb5d6de4e826c37e5b50380"
+        test "$(git rev-parse HEAD^1)" = "3de283b100456651783ca8646ffc308a29b5c798"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -87,8 +87,8 @@ jobs:
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in stock fixed; do
           case $arm in
-            stock) source=f6696f978ffbf0382731ca29055d53ec72469681; parent=e5f665c154a409aeb0adbcbacf9760214537f38a ;;
-            fixed) source=436500c1fb73c82a38ec6338c63a196ab8e7cdf7; parent=f6696f978ffbf0382731ca29055d53ec72469681 ;;
+            stock) source=53333e0ff46c3d43a4869f2cb7de1cbd2163f08c; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
+            fixed) source=6d7e3fd60bec83dcb1ad130bda0800db8f637987; parent=53333e0ff46c3d43a4869f2cb7de1cbd2163f08c ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -106,7 +106,7 @@ jobs:
           code=0
           opts=()
           labels=(//pkg/sentry/pgalloc:pgalloc_test)
-          opts+=(--bazel-option=--test_filter=^TestAsyncRestoreSecondFile --bazel-option=--test_arg=-test.v)
+          opts+=(--bazel-option=--test_filter=^TestPageSaveFailureAcrossFiles --bazel-option=--test_arg=-test.v)
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
@@ -135,6 +135,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: checkpoint-second-file-verdict
+        name: checkpoint-writer-source-verdict
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error

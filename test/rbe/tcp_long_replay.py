@@ -26,12 +26,12 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-observations = [line.strip() for line in logs.splitlines() if "second file after first completed:" in line]
+observations = [line.strip() for line in logs.splitlines() if "checkpoint error after second file:" in line]
 if arm == "stock":
     failures = {name for failed in verdict["failures"] for name in failed.get("cases", [])}
-    if runner_exit != 1 or verdict["native_exit"] != 3 or verdict["bep_finish"]["exitCode"]["code"] != 3 or verdict["status"] != "FAIL" or failures != {"pgalloc/TestAsyncRestoreSecondFile", "pgalloc/TestAsyncRestoreSecondFile/truncated"} or len(observations)!=1 or "invalid server file handle" not in observations[0] or "want I/O error" not in observations[0] or "--- PASS: TestAsyncRestoreSecondFile/intact" not in logs:
+    if runner_exit != 1 or verdict["native_exit"] != 3 or verdict["bep_finish"]["exitCode"]["code"] != 3 or verdict["status"] != "FAIL" or failures != {"pgalloc/TestPageSaveFailureAcrossFiles", "pgalloc/TestPageSaveFailureAcrossFiles/full"} or len(observations)!=1 or "invalid server file handle" not in observations[0] or "want no space left on device" not in observations[0] or "--- PASS: TestPageSaveFailureAcrossFiles/complete" not in logs:
         why.append("expected only the closed RPC handle on the truncated second file, and a passing intact control")
-elif verdict["status"] != "PASS" or runner_exit != 0 or not all("--- PASS: TestAsyncRestoreSecondFile/" + case in logs for case in ("truncated", "intact")):
+elif verdict["status"] != "PASS" or runner_exit != 0 or not all("--- PASS: TestPageSaveFailureAcrossFiles/" + case in logs for case in ("full", "complete")):
     why.append("package did not pass or no cases were executed")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
