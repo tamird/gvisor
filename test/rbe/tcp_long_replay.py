@@ -26,17 +26,11 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-observations = [line.split("REFS ",1)[-1] for line in logs.splitlines() if "REFS mode=" in line]
-if arm in ("stock", "fixed"):
-    for mode in ("shortRead", "failedWait"):
-        for page in (0,1):
-            expected = arm == "fixed" or (mode == "shortRead" and page == 1)
-            row = f"mode={mode} page={page} unique={str(expected).lower()}"
-            if observations.count(row) != 1:
-                why.append("missing exact ownership observation: " + row)
+observations = [line.strip() for line in logs.splitlines() if "page loader still holds a reference after reporting EIO" in line]
 if arm == "stock":
-    if runner_exit != 3 or verdict["status"] != "FAIL" or "restore retained its reference" not in logs:
-        why.append("expected real retained reference failure")
+    failures = {name for failed in verdict["failures"] for name in failed.get("cases", [])}
+    if runner_exit != 1 or verdict["native_exit"] != 3 or verdict["bep_finish"]["exitCode"]["code"] != 3 or verdict["status"] != "FAIL" or failures != {"pgalloc/TestAsyncLoadShortRead"} or len(observations)!=1:
+        why.append("expected only the page reference assertion with Bazel TESTS_FAILED")
 elif verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
