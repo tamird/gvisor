@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T04:05:33.896659+00:00",
+    "updatedAt": "2026-10-31T04:14:00.984316+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38446,6 +38446,40 @@
           "https://github.com/tamird/gvisor/actions/runs/41165176587/artifacts/13029430513"
         ]
       }
+    },
+    {
+      "id": "issue:15865",
+      "type": "issue",
+      "repo": "google/gvisor",
+      "number": 15865,
+      "title": "Loopback TCP panic after restoring a GKE pod snapshot",
+      "url": "https://github.com/google/gvisor/issues/15865",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-31T04:14:00.984316+00:00",
+      "summary": "The July source and August release differ in how checkpointing waits for TIME_WAIT timer callbacks. The GKE build revision and whether failures reuse a client port are still unknown.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "url": "https://github.com/google/gvisor/issues/15865",
+        "title": "Reply about the GKE build and source ports",
+        "summary": "Ask which revision was deployed in GKE and whether the other post-restore crashes shared a client port. The available checkpoint and loopback evidence narrows both questions.",
+        "body": "@SecretSun, I wouldn’t change `--allow-connected-on-save` for the 127.0.0.1:8081 connection. In [the July source you identified](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/transport/tcp/endpoint_state.go#L48-L67), TCP only marks a connection for termination if the route lacks save/restore support. The [loopback device advertises that support](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/link/loopback/loopback.go#L83-L85).\n\nThere is a relevant difference between the two public releases in your report. A TIME_WAIT timer can remove a connection from the demuxer. The July checkpoint code didn’t wait for those timer callbacks; [2337c1f9f](https://github.com/google/gvisor/commit/2337c1f9f) made it wait before serializing the kernel. Your August 31 OSS reproduction already includes that fix. We don’t know whether your GKE build includes it, or which map was being written in the panic. Can someone on the GKE side confirm whether that build has the timer change?\n\nFor the nil endpoint, do any of the other crashes from the same checkpoint reuse client port 43425, or another recurring source port? [Lookup tries an exact connection before the listener](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108), so destination port 8081 alone doesn’t tell us which entry returned nil. That distinction could explain why many connections to the same listener succeed between crashes.\n\nPosted by Codex on behalf of @tamird."
+      },
+      "evidence": [
+        {
+          "label": "July TCP checkpoint handling",
+          "url": "https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/transport/tcp/endpoint_state.go#L48-L67"
+        },
+        {
+          "label": "Wait for TIME_WAIT callbacks before saving",
+          "url": "https://github.com/google/gvisor/commit/2337c1f9f"
+        },
+        {
+          "label": "July exact-tuple demultiplexer lookup",
+          "url": "https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108"
+        }
+      ]
     }
   ],
   "edges": [

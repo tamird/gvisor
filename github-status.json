@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-31T03:07:00.849864+00:00",
-  "registryDate": "2026-10-31T04:05:33.896659+00:00",
+  "registryDate": "2026-10-31T04:14:00.984316+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -250895,6 +250895,31 @@
         }
       ],
       "olderComments": false
+    },
+    "issue:15865": {
+      "githubState": "open",
+      "githubStateReason": null,
+      "githubURL": "https://github.com/google/gvisor/issues/15865",
+      "closedAt": null,
+      "updatedAt": "2026-10-20T06:55:28Z",
+      "checkedAt": "2026-10-31T04:14:01.430382+00:00",
+      "comments": [
+        {
+          "url": "https://github.com/google/gvisor/issues/15865#issuecomment-6285243531",
+          "updatedAt": "2026-10-20T06:55:28Z",
+          "author": {
+            "login": "SecretSun"
+          }
+        },
+        {
+          "url": "https://github.com/google/gvisor/issues/15865#issuecomment-6214307005",
+          "updatedAt": "2026-10-16T11:15:58Z",
+          "author": {
+            "login": "SecretSun"
+          }
+        }
+      ],
+      "olderComments": false
     }
   },
   "reviewPRs": [
@@ -257215,6 +257240,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-31T03:31:48.340156+00:00"
+      }
+    },
+    "issue:15865": {
+      "contributor-review": {
+        "scope": "https://github.com/google/gvisor/issues/15865",
+        "since": "2026-10-31T04:14:00.984316+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-31T04:14:00.984316+00:00"
       }
     }
   },
