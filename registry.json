@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T14:29:35.288450+00:00",
+    "updatedAt": "2026-10-31T15:01:47.524265+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4499,15 +4499,23 @@
       "id": "branch:hermetic-compiler-review",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/llvm-compiler-syscall-noexcept",
+      "ref": "review/llvm-compiler-current",
       "title": "Use declared LLVM C and C++ toolchains",
-      "url": "https://github.com/tamird/gvisor/commit/467779e0f",
+      "url": "https://github.com/tamird/gvisor/commit/0afd5b37e",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler needs two noexcept declarations for Clang’s syscall-test build, not the allocator behavior change in #15368. With -Werror the unmodified allocator fails at those two definitions; adding just the declarations passes. The two changes merge in either order.\n\nThe compiler revision is on the historical qualification branch. Applying it on current master still requires integrating the plugin build, Go rule changes and the license catalog. The earlier compiler approval is retained for the version reviewed. No new decision is requested until the current composition is ready.\n\nThe compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051. The static-link fix (#16669), header selection (#16236), and Benchmark exports (#16313) have merged. The original qualification stack also included #15368. Its delivery stack keeps the four other Go declarations at their upstream settings.",
-      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
-      "head": "467779e0fdf846ea354c8bf545a8a264c14677f2",
+      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. Both architectures are under qualification.",
+      "updatedAt": "2026-10-31T14:56:41.741127+00:00",
+      "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
       "evidence": [
+        {
+          "label": "Compiler binaries and analyzers on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41211996909"
+        },
+        {
+          "label": "Catalog comparison on parent and compiler revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446"
+        },
         {
           "label": "Actual Clang compile: 0 / 1 / 0 for stock, strict stock, strict corrected",
           "url": "https://github.com/tamird/gvisor/actions/runs/41209242009/artifacts/13045388964"
@@ -4543,10 +4551,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603"
+          "head": "467779e0fdf846ea354c8bf545a8a264c14677f2"
         },
         "after": {
-          "head": "467779e0fdf846ea354c8bf545a8a264c14677f2"
+          "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce"
         }
       },
       "settledReviews": [
@@ -4559,13 +4567,13 @@
       ],
       "followup": {
         "owner": "Compiler integration",
-        "sourceHead": "467779e0fdf846ea354c8bf545a8a264c14677f2",
-        "disposition": "Reconcile with current master",
-        "observedAt": "2026-10-31T14:29:35.288450+00:00",
-        "nextAction": "Preserve the current libbpf BCR and Linux header choices, adapt the musl plugin and Go rules, regenerate the license catalog, and qualify the integrated source. The GNU plugin, source-enumeration and license changes are still prerequisites.",
+        "sourceHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
+        "disposition": "Qualify current compiler",
+        "observedAt": "2026-10-31T14:56:41.741127+00:00",
+        "nextAction": "Verify AMD64 and ARM64 compiler outputs and analyzers and the AMD64 musl plugin. Retain the GNU plugin and existing license prerequisites; request review of the changed source once the exact results are in.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41209242009/artifacts/13045388964",
-          "https://github.com/google/gvisor/pull/15368"
+          "https://github.com/tamird/gvisor/actions/runs/41211996909",
+          "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446"
         ]
       }
     },
@@ -39866,6 +39874,40 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41200454123/artifacts/13042397154"
         }
       ]
+    },
+    {
+      "id": "branch:timekeeper-updater-locks",
+      "type": "branch",
+      "group": "analysis",
+      "repo": "tamird/gvisor",
+      "ref": "research/timekeeper-updater-locks",
+      "head": "5bb344423d08a2319d4f908b2bcc39e70b96e24b",
+      "title": "Check the mutexes required by the timekeeper updater",
+      "url": "https://github.com/tamird/gvisor/commit/5bb344423",
+      "updatedAt": "2026-10-31T15:01:47.524265+00:00",
+      "status": "Contributor review requested",
+      "summary": "Three annotations let Nogo verify the existing clock lifecycle and vDSO update locks. Starting and stopping the updater before acquiring the lifecycle mutex each produced the expected diagnostic on both architectures. Runtime locking and the restore sequence are unchanged.",
+      "evidence": [
+        {
+          "label": "AMD64 and ARM64: guarded and deliberately unguarded calls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41211762229/artifacts/13047135779"
+        },
+        {
+          "label": "Periodic update without the vDSO mutex",
+          "url": "https://github.com/tamird/gvisor/blob/8270bcdf6/.github/qualification/timekeeper-reconciliation.json"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "5bb344423d08a2319d4f908b2bcc39e70b96e24b",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/5bb344423",
+        "title": "Check the mutexes required by the timekeeper updater",
+        "requestedAt": "2026-10-31T15:01:47.524265+00:00",
+        "summary": "Open the three-line timekeeper annotation PR.",
+        "body": "Starting or stopping the clock updater publishes or tears down its timer\nand stop channel. Require the lifecycle mutex at both calls. Require the\nupdate mutex when publishing clock samples through the vDSO page."
+      }
     }
   ],
   "edges": [
@@ -56890,9 +56932,22 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
+      "updatedAt": "2026-10-31T14:56:41.741127+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "The timekeeper starts and stops its update goroutine under its lifecycle mutex. Nogo accepted the normal callers on AMD64 and ARM64. Moving start in Resume and stop in Destroy just before locking produced both expected diagnostics on each architecture. These annotations enforce the existing protocol without changing the runtime code.",
+          "evidence": [
+            {
+              "label": "Three timekeeper mutex annotations",
+              "url": "https://github.com/tamird/gvisor/commit/5bb344423"
+            },
+            {
+              "label": "Both architectures: guarded and deliberately unguarded callers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41211762229/artifacts/13047135779"
+            }
+          ]
+        },
         {
           "text": "Timekeeper.update reuses the vDSO write buffer under updateMu. The annotation passes Nogo on AMD64 and ARM64; moving the periodic call past Unlock produces one distinct missing-lock diagnostic, printed four times on each architecture. The original wrapper rejected those repeats. Replaying the same logs confirmed the result without another Bazel run. The change documents existing locking; it does not fix a production race.",
           "evidence": [
@@ -56984,8 +57039,12 @@
           ]
         }
       ],
-      "nextStep": "Follow the overlay close fix (#16677) and cache mutex annotations (#16682) through review. Investigate poll registration lifetime separately.",
+      "nextStep": "Review the three timekeeper annotations together. Follow the overlay close and cache-lock changes through upstream review.",
       "evidence": [
+        {
+          "label": "Timekeeper updater: all four lock diagnostics verified",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41211762229/artifacts/13047135779"
+        },
         {
           "label": "Verified epoll registration contract",
           "url": "https://github.com/google/gvisor/pull/16505"
@@ -57942,20 +58001,32 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
+      "updatedAt": "2026-10-31T14:56:41.741127+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
         {
-          "text": "Gazelle checked all 218 approved packages with declared tools and sources, including in a chroot with no network or host executables. Missing imports, inherited BUILD directives and ignore files changed the result. The prototype still needs to preserve error diagnostics for a direct Bazel caller and prevent a root-only check from entering downstream product builds.",
+          "text": "Gazelle checks the 218 selected packages with declared inputs and no host tools. All 16 direct checks passed: a stale rule prints a diff, a malformed BUILD file prints its parse error, and an unexpected exit status still fails the build. An external project built a gVisor resource. Its Go library and full root wildcard hit the same existing Go module override on both revisions. With those overrides masked for diagnosis, the rules-only root wildcard (:all) omitted Gazelle; explicitly selecting it entered toolchain setup.",
           "evidence": [
+            {
+              "label": "Gazelle change on the shared lint inventory",
+              "url": "https://github.com/tamird/gvisor/compare/3c2172c05...0eb8eca5b"
+            },
+            {
+              "label": "16 direct checks and original Gazelle diagnostics",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41211321121/artifacts/13046890088"
+            },
+            {
+              "label": "External consumer before and after the change",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41211749632/artifacts/13045764820"
+            },
+            {
+              "label": "Isolated root wildcard versus explicit Gazelle",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41212248364/artifacts/13047155634"
+            },
             {
               "label": "Thirteen clean, dirty, and isolation checks",
               "url": "https://github.com/tamird/gvisor/actions/runs/41209965714/artifacts/13045323699"
-            },
-            {
-              "label": "Gazelle prototype",
-              "url": "https://github.com/tamird/gvisor/commit/e697c10eb"
             }
           ]
         },
@@ -58042,7 +58113,7 @@
           ]
         }
       ],
-      "nextStep": "Keep Buildifier and cpplint on the shared input inventory. For Gazelle, test downstream builds and direct diagnostics for both a bad BUILD and a missing dependency before requesting review.",
+      "nextStep": "Exclude file symlinks that lead outside the checkout before proposing the Gazelle action. Its declared gazelle.status is also visible to a file-inclusive root wildcard (:*); preserve the root entry point without expanding what downstream builds select. Keep gVisor’s production Go overrides separate.",
       "evidence": [
         {
           "label": "Design and qualification controls",

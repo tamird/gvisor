@@ -18,6 +18,7 @@ all their tools on scratch is still open.
 | --- | --- |
 | Buildifier, goimports, clang-format | Independent source actions. The format command uses the same files, tools, configs and options as the checks. |
 | cpplint, codespell | Read-only source actions with their declared Python interpreter, package-local lint configs and spelling dictionary. No automatic spelling edits. |
+| Gazelle | Check generated Go rules with [`bazel build //:gazelle_check`](https://github.com/tamird/gvisor/compare/3c2172c05...0eb8eca5b). A stale rule should print the proposed diff; a malformed BUILD file should print Gazelle’s parse error. Keep the packages and flags shared with `gazelle_fix` so applying the fix clears the check. |
 | Nogo, clang-tidy | On actual Go and C/C++ targets. A list of files cannot supply build tags, generated headers or target flags. |
 | GitHub workflows | Keep the [existing actionlint test](https://github.com/google/gvisor/blob/0fa6803f2/BUILD#L138-L163) and its project configuration. |
 
