@@ -789,3 +789,63 @@ func TestMain(m *testing.M) {
 	fdnotifier.Resume()
 	os.Exit(m.Run())
 }
+
+func BenchmarkGraphSlabShapes(b *testing.B) {
+	mkRoot := func(n int) []*uint64 {
+		values := make([]uint64, n)
+		root := make([]*uint64, n)
+		for i := range root {
+			values[i] = uint64(i + 1)
+			root[i] = &values[i]
+		}
+		root[n-1] = root[0]
+		return root
+	}
+	tiny, many := mkRoot(3), mkRoot(16385)
+	for _, shape := range []struct {
+		name  string
+		roots [][]*uint64
+	}{
+		{"Tiny", [][]*uint64{tiny}},
+		{"Many", [][]*uint64{many}},
+		{"Alternating", [][]*uint64{tiny, many}},
+	} {
+		b.Run(shape.name, func(b *testing.B) {
+			ctx := b.Context()
+			var encoded bytes.Buffer
+			check := func(root []*uint64) {
+				var got []*uint64
+				if _, err := state.Load(ctx, bytes.NewReader(encoded.Bytes()), &got); err != nil {
+					b.Fatal(err)
+				}
+				if len(got) != len(root) || got[0] != got[len(got)-1] {
+					b.Fatalf("restored length or endpoint alias differs for %d pointers", len(root))
+				}
+				for i, p := range got {
+					if p == nil || *p != *root[i] {
+						b.Fatalf("wrong restored value at %d", i)
+					}
+				}
+			}
+			for _, root := range shape.roots {
+				encoded.Reset()
+				if _, err := state.Save(ctx, &encoded, &root); err != nil {
+					b.Fatal(err)
+				}
+				check(root)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				encoded.Reset()
+				root := &shape.roots[i%len(shape.roots)]
+				if _, err := state.Save(ctx, &encoded, root); err != nil {
+					b.Fatal(err)
+				}
+			}
+			b.StopTimer()
+			check(shape.roots[(b.N-1)%len(shape.roots)])
+			b.ReportMetric(float64(encoded.Len()), "last-wire-B")
+		})
+	}
+}

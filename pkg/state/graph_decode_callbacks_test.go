@@ -1372,3 +1372,69 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 	}
 	t.Fatal("pooled graphEncodeState retained user allocation across GC")
 }
+
+// TestChunkedScratchReuse exercises each boundary used by encoder object and
+// pointer metadata, including reusing retained slabs after a larger graph.
+func TestChunkedScratchReuse(t *testing.T) {
+	var c chunked[*int]
+	for _, n := range []int{1, 129, 1025, 8193, 3, 1024} {
+		values := make([]int, n)
+		for i := range values {
+			slot := c.add()
+			if *slot != nil {
+				t.Fatalf("add at %d/%d returned a stale pointer", i, n)
+			}
+			*slot = &values[i]
+		}
+		for i := range values {
+			if *c.at(i) != &values[i] {
+				t.Fatalf("at(%d) returned the wrong slot in %d entries", i, n)
+			}
+		}
+		c.reset()
+		for _, slab := range c.chunks {
+			for _, p := range slab[:cap(slab)] {
+				if p != nil {
+					t.Fatalf("reset retained a pointer from %d entries", n)
+				}
+			}
+		}
+	}
+}
+
+func TestSlabCapacityReceipt(t *testing.T) {
+	var objs chunked[encObject]
+	var targets chunked[encTarget]
+	type counts struct{ chunks, slots int }
+	count := func() (counts, counts) {
+		o, x := counts{chunks: len(objs.chunks)}, counts{chunks: len(targets.chunks)}
+		for _, s := range objs.chunks {
+			o.slots += cap(s)
+		}
+		for _, s := range targets.chunks {
+			x.slots += cap(s)
+		}
+		return o, x
+	}
+	for _, n := range []int{3, 127, 128, 129, 1023, 1024, 1025, 16385, 3} {
+		for i := 0; i < n; i++ {
+			o := objs.add()
+			x := targets.add()
+			if o.n != 0 || x.obj != 0 {
+				t.Fatalf("uncleared entry %d/%d", i, n)
+			}
+			o.n, x.obj = uintptr(i+1), int32(i+1)
+		}
+		for i := 0; i < n; i++ {
+			if objs.at(i).n != uintptr(i+1) || targets.at(i).obj != int32(i+1) {
+				t.Fatalf("incorrect lookup %d/%d", i, n)
+			}
+		}
+		o, x := count()
+		objs.reset()
+		targets.reset()
+		ro, rx := count()
+		t.Logf("SLAB-CAP used=%d objects=%d,%d targets=%d,%d retained-objects=%d,%d retained-targets=%d,%d",
+			n, o.chunks, o.slots, x.chunks, x.slots, ro.chunks, ro.slots, rx.chunks, rx.slots)
+	}
+}
