@@ -1,35 +1,240 @@
-name: CI
-
-"on":
+name: Repair a lost retransmission during interrupted TCP recovery
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-interrupted-rack-repair]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-interrupted-rack-repair'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 8
+        persist-credentials: false
+    - name: Check the repaired sender and its original recovery boundary
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        base=b7d9ced514fd9ea5d4159b36b42ae16a22dbe634
+        product=2314ad161b272fba66066ff49420c4fc0bb942aa
+        probe=59e9b5fdce019fde8231ffc652036b20aa543f95
+        previous=f93a6c8a6f0b47d55b911716511823d314828533
+        control=341228ee492e2e6ba9316196bef3b8676b973d8f
+        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$previous" "$control" "$probe"
+        original=c607e3371af36c26f5c089cc2ea747cfbcbaf9f7
+        transfer=f52b88716fea721b25dd8ce33b27b61bbf9a9929
+        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$original" "$transfer"
+        parent_of() { git cat-file -p "$1" | sed -n '/^$/q;s/^parent //p'; }
+        test "$(parent_of "$control")" = "$base"
+        test "$(parent_of "$product")" = "$base"
+        test "$(parent_of "$probe")" = "$product"
+        git diff --quiet "$control" "$product" -- . ':(exclude)pkg/tcpip/transport/tcp/rack.go' ':(exclude)pkg/tcpip/transport/tcp/snd.go'
+        git diff --quiet "$base" "$control" -- . ':(exclude)pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go'
+        git diff --quiet "$probe" "$product" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)pkg/tcpip/transport/tcp/rack.go'
+        git diff --quiet "$previous" "$probe" -- test/packetimpact/tests/tcp_rack_test.go
+        test "$(parent_of "$original")" = "$product"
+        test "$(parent_of "$transfer")" = "$product"
+        git diff --quiet "$product" "$original" -- . ':(exclude)pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go'
+        git diff --quiet "$base" "$original" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
+        git diff --quiet "$product" "$transfer" -- . ':(exclude)test/rbe/m003'
+        mkdir -p "$RUNNER_TEMP/checker"
+        for file in qualify.sh unit_matrix.py qualification_report.py tcp_fence_report.py guard_outcome.py m003_report.py; do
+          cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
+        done
+        python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        case "$1" in
+          test)
+            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
+            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
+            status=0
+            bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
+            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
+            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
+            exit "$status"
+            ;;
+        esac
+        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        test -x /sbin/iptables-nft
+        test -x /sbin/ip6tables-nft
+        test -x /usr/bin/x86_64-linux-gnu-gcc
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"compiler installation"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        export FENCE_HOST_ID=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT FENCE_HOST_PROBE=$RUNNER_TEMP/host-marker
+        export XTABLES_LOCKFILE=$RUNNER_TEMP/fence-xtables.lock
+        touch "$XTABLES_LOCKFILE"
+        printf '%s' "$FENCE_HOST_ID" > "$FENCE_HOST_PROBE"
+        probe_raw=$RUNNER_TEMP/host-probe.jsonl
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"Bazel host compiler/namespace test"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        bazelisk --bazelrc="$rc" test --nocache_test_results --zip_undeclared_test_outputs --test_output=all --strategy=TestRunner=local \
+          --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --build_event_json_file="$probe_raw" \
+          //test/rbe/fence_host_probe:check
+        python3 - "$probe_raw" "$RUNNER_TEMP/replay-public/preflight.json" <<'PYCHECK'
+        import json, sys
+        from pathlib import Path
+        events = [json.loads(row) for row in Path(sys.argv[1]).read_text().splitlines()]
+        results = [e["testResult"] for e in events if "testResult" in e]
+        assert len(results) == 1, results
+        result = results[0]
+        assert result["status"] == "PASSED" and not result.get("cachedLocally"), result
+        assert result["executionInfo"]["strategy"] in ("local", "standalone"), result["executionInfo"]
+        assert not result["executionInfo"].get("cachedRemotely"), result["executionInfo"]
+        Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
+        print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
+        PYCHECK
+        # Both native architectures have already passed this analyzer preflight
+        # under these flags. The listener builds only the facts it actually uses.
+        proved=01811d57c4a1a18ef002fe92956669b43799f466
+        git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$proved"
+        for source in "$probe" "$control" "$product"; do
+          git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
+        done
+        cat > "$RUNNER_TEMP/replay-public/build-preflight.json" <<'PROOF'
+        {"status":"REUSED","target":"//tools/nogo:stdlib","amd64":"d9bdc880-d554-41ae-b6b8-fc618bd00b9e","arm64":"6fe91843-025a-4f50-8376-44c94e7f54bb","workflowRun":40927688302}
+        PROOF
+        overall=0
+        mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
+        for arm in fixed fence control original; do
+          args=()
+          label=//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
+          case $arm in
+            fixed) source="$probe"; parent="$product"; label=//test/packetimpact/tests:tcp_rack_netstack_test ;;
+            fence) source="$product"; parent="$base" ;;
+            original) source="$original"; parent="$product"; args+=(--test_filter='^TestRTOInterruptsSACKRecovery$') ;;
+            control) source="$control"; parent="$base"; args+=(--test_filter='^TestRTOInterruptsSACKRecovery$') ;;
+          esac
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          test "$(parent_of HEAD)" = "$parent"
+          export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
+          mkdir -p "$TCP_EVIDENCE" test/rbe
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+          test ! -s "$TCP_EVIDENCE/source_before"
+          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+          raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
+          uname -r > "$TCP_EVIDENCE/kernel"
+          code=0
+          bazel test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
+            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
+            --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
+            --nocache_test_results --zip_undeclared_test_outputs --test_output=all "--build_event_json_file=$raw" \
+            --build_event_json_file_path_conversion=false "${args[@]}" "$label" || code=$?
+          printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+          python3 -B "$RUNNER_TEMP/checker/tcp_fence_report.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
+        done
+        mkdir -p "$RUNNER_TEMP/replay-public/m003"
+        printf '%s\n' '{"status":"NOT_RUN","reason":"pending focused wire and fence gate"}' > "$RUNNER_TEMP/replay-public/m003/gate.json"
+        python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
+        import json, sys
+        from pathlib import Path
+        root = Path(sys.argv[1])
+        arms = ["fixed","fence","control","original"]
+        verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
+        missing = [a for a in arms if a not in verdicts]
+        result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["expectation_met"] for v in verdicts.values()) else "FAIL"}
+        (root / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
+        print(result)
+        sys.exit(result["status"] != "PASS")
+        PYRESULT
+        test "$overall" = 0
+        mkdir -p "$RUNNER_TEMP/m003-source"
+        printf '%s\n' '{"status":"PASS","reason":"all four focused comparisons matched"}' > "$RUNNER_TEMP/replay-public/m003/gate.json"
+        archive="$RUNNER_TEMP/m003-source.zip"
+        curl -fsSL --retry 3 -o "$archive" https://github.com/user-attachments/files/34000273/gvisor-16393-reproducer-final.zip
+        python3 - "$archive" "$RUNNER_TEMP/m003-source" "$RUNNER_TEMP/replay-public/m003/preflight.json" <<'PYPIN'
+        from pathlib import Path
+        from zipfile import ZipFile
+        import hashlib, json, sys
+        archive, dest, receipt = map(Path, sys.argv[1:])
+        archive_sha = hashlib.sha256(archive.read_bytes()).hexdigest()
+        assert archive_sha == '3c348dc00359607416c236e7a56fb7e0ea87da4efeec79a377a1020a8b622a24'
+        with ZipFile(archive) as inputs:
+            program = inputs.read('main.go')
+        source_sha = hashlib.sha256(program).hexdigest()
+        assert source_sha == '82cb123ff35d3ed82775d80ae000bab853c7a21a0d8ad698955ed180e2132b72'
+        (dest/'main.go').write_bytes(program)
+        (dest/'MODULE.bazel').write_text('module(name="m003_source")\n')
+        (dest/'BUILD').write_text('exports_files(["main.go"])\n')
+        receipt.write_text(json.dumps({'status':'PASS','archive_sha256':archive_sha,'main_go_sha256':source_sha})+'\n')
+        PYPIN
+        git checkout --quiet --detach "$transfer"
+        test "$(git rev-parse HEAD)" = "$transfer"
+        export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/m003"
+        mkdir -p "$TCP_EVIDENCE"
+        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+        test ! -s "$TCP_EVIDENCE/source_before"
+        git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+        raw="$RUNNER_TEMP/m003.raw.jsonl"
+        label=//test/rbe/m003:m003_test
+        code=0
+        bazel test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox --jobs=4 \
+          --inject_repository="m003_source=$RUNNER_TEMP/m003-source" --test_sharding_strategy=disabled \
+          --nocache_test_results --zip_undeclared_test_outputs --test_output=all "--build_event_json_file=$raw" \
+          --build_event_json_file_path_conversion=false "$label" || code=$?
+        printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+        git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+        python3 -B "$RUNNER_TEMP/checker/m003_report.py" "$TCP_EVIDENCE" "$transfer" "$product" "$label" "$raw" "$RUNNER_TEMP/replay-public/m003"
+    - name: Save only the typed results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: tcp-interrupted-rack-repair
+        path: ${{ runner.temp }}/replay-public/
+        if-no-files-found: error
