@@ -144,6 +144,8 @@ try:
     source(os.environ["CORRECTED"])
     results["original_arm64_bundle"]={"id":13061034514,"run":41251597684,"sha256":"ee045dc1a9159920c85f29387e501ea019b26b3f67727b06de23306819b37a13"}
     opts=["--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain","--extra_toolchains=//test/rbe/go_bootstrap:linux_arm64_ash"]
+    # The compile action also produces a private implementation archive.
+    opts.append(r"--remote_download_regex=(^|/)pkg/sentry/platform/systrap/sysmsg/sysmsg\.a$")
     result,actions=invoke("consumer","arm64",[pkg+"sysmsg"],opts)
     failures=[a for a in actions if a.get("exitCode") or a.get("status")]
     result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status")} for a in failures]
@@ -156,7 +158,9 @@ try:
     if result["native_exit"]==0:
         compiled=[a for a in actions if a["label"]==pkg+"sysmsg" and a["mnemonic"]=="GoCompilePkg"]
         archive,=[o for a in compiled for o in a["outputs"] if o["path"].endswith("/sysmsg.a")]
-        data=Path(archive["path"]).read_bytes()
+        exec_root=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
+        assert exec_root.is_absolute()
+        data=(exec_root/archive["path"]).read_bytes()
         assert data and len(data)==int(archive["digest"]["sizeBytes"]) and sha(data)==archive["digest"]["hash"]
         result["owner_archive"]=archive
         result["owner_action"]=[{k:a.get(k) for k in ("runner","cacheHit","platform","executable")} for a in compiled]
