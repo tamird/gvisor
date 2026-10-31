@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T09:14:33.369481+00:00",
+    "updatedAt": "2026-10-31T09:25:43.398169+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28110,7 +28110,7 @@
       "group": "runtime",
       "status": "draft",
       "summary": "The published draft waits for a second retransmission timeout after a fresh SACK. Linux, the parent and the fork amendment retry the missing segment within 80 ms. All four wait after an unchanged SACK. The amendment keeps the original recovery boundary and completed the reporter’s five burst-loss transfers.",
-      "updatedAt": "2026-10-31T09:04:24.431841+00:00",
+      "updatedAt": "2026-10-31T09:25:43.398169+00:00",
       "refinement": {
         "before": {
           "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
@@ -28136,7 +28136,8 @@
           "https://github.com/tamird/gvisor/commit/b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
           "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335",
           "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838",
-          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144"
+          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144",
+          "https://github.com/tamird/gvisor/actions/runs/41187779725/artifacts/13037538424"
         ]
       },
       "evidence": [
@@ -28147,6 +28148,10 @@
         {
           "label": "Fresh and repeated SACKs, original recovery boundary and six original reporter transfers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41186013306/artifacts/13037271126"
+        },
+        {
+          "label": "Four wire captures. Linux, stock and the amendment each send one copy of segment 8 after SACK 9 and none after extension, stale or duplicate feedback. The draft sends none throughout.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41187779725/artifacts/13037538424"
         },
         {
           "label": "Three test-comment lines distinguish the reviewed source from the tested commit",
