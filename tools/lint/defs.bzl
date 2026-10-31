@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Use the supplier's Python executable and main as declared action inputs."""
+"""Helpers for running the source linters."""
 
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_python//python:py_executable_info.bzl", "PyExecutableInfo")
 load("@rules_python//python:py_runtime_info.bzl", "PyRuntimeInfo")
 
@@ -32,3 +34,23 @@ python_inputs = rule(
     implementation = _python_inputs,
     attrs = {"tool": attr.label(mandatory = True, providers = [PyExecutableInfo, PyRuntimeInfo])},
 )
+
+def workspace_formatters(**formatters):
+    """Expose each formatter alone and all of them through :format.
+
+    Args:
+      **formatters: Named commands with a tool, its workspace-relative arguments,
+        and any additional files needed before it can run.
+    """
+    all_args = []
+    all_data = []
+    for name, formatter in formatters.items():
+        target = "format_" + name
+        argfile = target + ".json"
+        write_file(name = target + "_args", out = argfile, content = [json.encode(formatter["args"])])
+        args = ["$(rlocationpath %s)" % formatter["tool"], "$(rlocationpath :%s)" % argfile]
+        data = [formatter["tool"], ":" + argfile] + formatter["data"]
+        native_binary(name = target, src = ":workspace_command", args = args, data = data)
+        all_args.extend(args)
+        all_data.extend(data)
+    native_binary(name = "format", src = ":workspace_command", args = all_args, data = all_data)

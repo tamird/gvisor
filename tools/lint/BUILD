@@ -1,8 +1,9 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@lint_inputs//:inputs.bzl", "INPUTS")
 load("//tools:defs.bzl", "go_binary")
-load(":defs.bzl", "python_inputs")
+load(":defs.bzl", "python_inputs", "workspace_formatters")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -25,18 +26,39 @@ BUILDIFIER_FLAGS = [
     "--warnings=-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto",
 ]
 
+# The LLVM multicall driver selects clang-format from argv[0].
+native_binary(
+    name = "clang_format_tool",
+    src = "@llvm//tools:clang-format",
+    out = "bin/clang-format",
+)
+
 go_binary(
-    name = "format",
+    name = "workspace_command",
     srcs = ["workspace_command.go"],
-    args = ["$(rlocationpath %s)" % BUILDIFIER_TOOL] + BUILDIFIER_FLAGS + [
-        "--config=" + (".buildifier.json" if INPUTS["buildifier_config"] else "off"),
-        "--mode=fix",
-        "--lint=fix",
-        "--",
-    ] + [shell.quote(p.replace("$", "$$")) for p in INPUTS["buildifier"]],
-    data = [BUILDIFIER_TOOL],
     pure = True,
     deps = ["@io_bazel_rules_go//go/runfiles"],
+)
+
+workspace_formatters(
+    buildifier = dict(
+        args = BUILDIFIER_FLAGS + [
+            "--config=" + (".buildifier.json" if INPUTS["buildifier_config"] else "off"),
+            "--mode=fix",
+            "--lint=fix",
+            "--",
+        ] + INPUTS["buildifier"],
+        data = [],
+        tool = BUILDIFIER_TOOL,
+    ),
+    clang = dict(
+        args = [
+            "-i",
+            "--",
+        ] + ["./" + p for p in INPUTS["cc"]],
+        data = ["@lint_inputs//:ROOT.d/.clang-format"],
+        tool = ":clang_format_tool",
+    ),
 )
 
 run_binary(
@@ -55,6 +77,25 @@ run_binary(
     mnemonic = "BuildifierCheck",
     stdout = "buildifier.report",
     tool = BUILDIFIER_TOOL,
+)
+
+run_binary(
+    name = "clang_format",
+    srcs = [
+        "@lint_inputs//:ROOT",
+        # Require the root style: without it clang-format silently uses LLVM style.
+        "@lint_inputs//:ROOT.d/.clang-format",
+        "@lint_inputs//:cc",
+        "@lint_inputs//:clang_format_config",
+    ],
+    args = [
+        "--dry-run",
+        "--Werror",
+        "--",
+    ] + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["cc"]],
+    mnemonic = "ClangFormatCheck",
+    stdout = "clang_format.report",
+    tool = ":clang_format_tool",
 )
 
 python_inputs(
@@ -79,7 +120,7 @@ run_binary(
     name = "cpplint",
     srcs = [
         "@lint_inputs//:ROOT",
-        "@lint_inputs//:cpplint",
+        "@lint_inputs//:cc",
         "@lint_inputs//:cpplint_config",
     ],
     args = [
@@ -88,7 +129,7 @@ run_binary(
         "--quiet",
         "--repository=" + ROOT,
         "--filter=-,+build/include_order,+build/c++11",
-    ] + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["cpplint"]],
+    ] + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in INPUTS["cc"]],
     mnemonic = "Cpplint",
     stdout = "cpplint.report",
     tool = ":python_interpreter",
@@ -102,6 +143,7 @@ filegroup(
     name = "check",
     srcs = [
         ":buildifier",
+        ":clang_format",
         ":cpplint",
     ],
 )
