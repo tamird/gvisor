@@ -1,0 +1,66 @@
+name: Qualify maintainer import reminders
+on:
+  push:
+    branches: [qualification/work-map-maintainer-import-roster]
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Verify browser, planner and public snapshot
+        env:
+          PRODUCTION_SHA: c906182ec69026c29de043c6576d74c1a48e8170
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set +e
+          set -uo pipefail
+          mkdir -p results
+          node --test --test-reporter=tap app_test.mjs >results/browser.tap 2>&1; b=$?
+          python3 -m unittest discover -p '*_test.py' >results/planner.log 2>&1; p=$?
+          node metadata-preflight.mjs . >results/preflight.json; m=$?
+          python3 - "$b" "$p" "$m" <<'PY'
+          import json, os, re, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from reapproval import reminder_plan
+
+          def load(file):
+              return json.loads(Path(file).read_bytes())
+
+          pr = next(row for row in load("github-status.json")["prs"] if row["number"] == 16551)
+          node = next(row for row in load("registry.json")["nodes"] if row["id"] == "pr:16551")
+          plan = reminder_plan(pr, node, datetime(2026, 11, 2, 18, tzinfo=timezone.utc),
+                               "tamird", frozenset(pr["maintainerReviewers"]))
+          browser = Path("results/browser.tap").read_text()
+          browser_count = re.search(r"^# tests (\d+)$", browser, re.M)
+          planner = Path("results/planner.log").read_text()
+          planner_count = re.search(r"^Ran (\d+) tests", planner, re.M)
+          results = {
+              "source": os.environ["GITHUB_SHA"], "productionSource": os.environ["PRODUCTION_SHA"],
+              "exitCodes": dict(zip(("browser", "planner", "snapshot"), map(int, sys.argv[1:]), strict=True)),
+              "browserTests": int(browser_count[1]) if browser_count else 0,
+              "plannerTests": int(planner_count[1]) if planner_count else 0,
+              "disposition": pr["publicImportDisposition"]["action"],
+              "reminder": {key:plan.get(key) for key in ("head","action","approvers","status","reason")},
+              "verifiedAt":datetime.now(timezone.utc).isoformat(),
+          }
+          passed = (not any(results["exitCodes"].values()) and results["browserTests"] and
+                    results["plannerTests"] and results["disposition"] == "maintainer-import-label" and
+                    plan.get("status") == "due" and plan.get("action") == "restore-import-label" and
+                    plan.get("approvers") == ["kerumeto"])
+          results["verdict"] = "PASS" if passed else "FAIL"
+          print(json.dumps(results))
+          Path("results/verdict.json").write_text(json.dumps(results, indent=2))
+          sys.exit(0 if passed else 1)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: work-map-qualification
+          path: results
+          if-no-files-found: error
