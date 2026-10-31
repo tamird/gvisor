@@ -1,35 +1,163 @@
-name: CI
-
-"on":
+name: Finish the two remaining netip rebase comparisons
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/netip-cache-two-case]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  owner:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
+    env:
+      CURRENT: 6c48739a92438e54d1223a17f1806259d50cba17
+      CONTROL: 7317e2f45ed1410ff688ebaaf9c0e4ff1c7ce6e9
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Prepare the two-source check
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -eu
+        [[ "$(git rev-parse HEAD^)" == "$CURRENT" && "$(git rev-parse HEAD^^)" == "$CONTROL" ]]
+        mkdir -p "$RUNNER_TEMP/records"
+        cp test/rbe/netip-two-case.py "$RUNNER_TEMP/verify.py"
+        git diff "$CONTROL" "$CURRENT" -- pkg/tcpip/transport/tcp/test/e2e/tcp_migration_test.go > "$RUNNER_TEMP/records/fixture.diff"
+        git checkout --quiet --detach "$CURRENT"
+    - name: Repeat only the observed TCP restore leaf on both exact sources
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        ARCH=amd64
+        CPU=x86_64
+        if test "$ARCH" = arm64; then CPU=aarch64; fi
+        mkdir -p "$RUNNER_TEMP/catalog_platform_$ARCH"
+        platform=$RUNNER_TEMP/catalog_platform_$ARCH
+        printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<BUILD
+        platform(
+          name = "ubuntu",
+          constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
+          exec_properties = {
+              "Arch": "$ARCH",
+              "OSFamily": "linux",
+              "workload-isolation-type": "oci",
+              "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+          },
+          visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/catalog-$ARCH.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+        printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+          'build --remote_cache=grpcs://remote.buildbuddy.io' \
+          'build --bes_backend=grpcs://remote.buildbuddy.io' \
+          'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+          'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+          'build --remote_accept_cached' \
+          "build --inject_repository=catalog_platform=$platform" \
+          'build --host_platform=@catalog_platform//:ubuntu' \
+          'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
+          "build --platforms=//tools/bazeldefs:linux_$ARCH"
+        printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        for run in parent candidate; do
+          src=$CURRENT; [[ $run != parent ]] || src=$CONTROL
+          git checkout --quiet --detach "$src"
+          d=$RUNNER_TEMP/records/$run; mkdir -p "$d"
+          printf '%s\n' "$src" > "$d/source"
+          [[ "$(git rev-parse HEAD)" == "$src" ]]
+          git show HEAD:pkg/tcpip/transport/tcp/rcv.go | sed -n '/Handle FIN or FIN-ACK/,/case StateFinWait1/p' > "$d/fin-receiver"
+          rc_bazel=0
+          bazel --bazelrc="$rc" test --jobs=48 --nocache_test_results --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 '--test_filter=^TestRestoreListenWithPreexistingConnection$/^CloseWaitProbeConnection$/^ReversedOrder$' --test_arg=-test.count=96 --test_arg=-test.v --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //pkg/tcpip/transport/tcp/test/e2e:tcp_test > "$RUNNER_TEMP/$run.log" 2>&1 || rc_bazel=$?
+          echo "$rc_bazel" > "$d/exit"
+          grep -A4 -E 'Invocation ID:|ERROR:|FAILED' "$RUNNER_TEMP/$run.log" | head -80 > "$d/diagnostics" || true
+          for f in test.log test.xml; do cp "bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_test/$f" "$d/$f" || true; done
+        done
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: ${{ !cancelled() }}
       with:
-          name: runsc
-          path: bin/
+        name: netip-restore-trials
+        path: ${{ runner.temp }}/records/*/test.xml
+        if-no-files-found: warn
+    - name: Run just the Sentry route owner with the proven GNU and native analyzer strategy
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$CURRENT"
+        ARCH=amd64; CPU=x86_64
+        mkdir -p "$RUNNER_TEMP/gnu_route_platform"
+        platform=$RUNNER_TEMP/gnu_route_platform
+        printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<BUILD
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "$ARCH",
+                "OSFamily": "linux",
+                "workload-isolation-type": "firecracker",
+                "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/gnu-route.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=catalog_platform=$platform" \
+            'build --host_platform=@catalog_platform//:ubuntu' \
+            'build --extra_execution_platforms=@catalog_platform//:ubuntu' \
+            "build --platforms=//tools/bazeldefs:linux_$ARCH"
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+
+
+
+        d=$RUNNER_TEMP/records/route; mkdir -p "$d"
+        echo "$CURRENT" > "$d/source"
+        docker pull "$GNU" >/dev/null
+        docker run -d --name route-compiler --entrypoint /bin/bash --user root --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity' > /dev/null
+        rc_bazel=0
+        docker exec route-compiler bazel --bazelrc="$rc" test --config=x86_64 --jobs=4 --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --nocache_test_results --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //pkg/sentry/socket/netstack:netstack_test > "$RUNNER_TEMP/route.log" 2>&1 || rc_bazel=$?
+        echo "$rc_bazel" > "$d/exit"
+        grep -A5 -E 'Invocation ID:|ERROR:|FAILED' "$RUNNER_TEMP/route.log" | head -100 > "$d/diagnostics" || true
+        for f in test.log test.xml; do docker exec route-compiler cat "bazel-testlogs/pkg/sentry/socket/netstack/netstack_test/$f" > "$d/$f" || true; done
+    - name: Verify independent test and parent results
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/verify.py" "$RUNNER_TEMP/records"
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: netip-missing-evidence
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
