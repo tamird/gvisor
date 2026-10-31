@@ -1,35 +1,122 @@
-name: CI
-
-"on":
+name: Validate the retransmission timer against five Linux packet traces
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-sack-equal-wire]
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-equal-wire'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 8
+        persist-credentials: false
+    - name: Compare the corrected gVisor wire behavior with Linux
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = 48f80e00b4d71ba37920048d0e23a0a1ca8c0c4a
+        test "$(git rev-parse HEAD^1^1)" = 256b16866af2509ec40842751db1663bdb66c71b
+        cp test/rbe/case_records.py "$RUNNER_TEMP/case_records.py"
+        cp test/rbe/tcp_repair_sources.json "$RUNNER_TEMP/tcp-heads.json"
+        cp test/rbe/tcp_repair_driver.py "$RUNNER_TEMP/driver.py"
+        cp test/rbe/tcp_repair_wire.py "$RUNNER_TEMP/wire.py"
+        cp test/rbe/tcp_repair_positive.py "$RUNNER_TEMP/positive.py"
+        cp test/rbe/tcp_repair_decode.py "$RUNNER_TEMP/wire_decode.py"
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        export FIFO_RC=$rc
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        test -x /sbin/iptables-nft
+        test -x /sbin/ip6tables-nft
+        test -x /usr/bin/x86_64-linux-gnu-gcc
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"compiler installation"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        export FENCE_HOST_ID=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT FENCE_HOST_PROBE=$RUNNER_TEMP/host-marker
+        export XTABLES_LOCKFILE=$RUNNER_TEMP/fence-xtables.lock
+        touch "$XTABLES_LOCKFILE"
+        printf '%s' "$FENCE_HOST_ID" > "$FENCE_HOST_PROBE"
+        probe_raw=$RUNNER_TEMP/host-probe.jsonl
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"Bazel host compiler/namespace test"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        bazelisk --bazelrc="$rc" test --nocache_test_results --test_output=all --strategy=TestRunner=local \
+          --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --build_event_json_file="$probe_raw" \
+          //test/rbe/fence_host_probe:check
+        python3 - "$probe_raw" "$RUNNER_TEMP/replay-public/preflight.json" <<'PYCHECK'
+        import json, sys
+        from pathlib import Path
+        events = [json.loads(row) for row in Path(sys.argv[1]).read_text().splitlines()]
+        results = [e["testResult"] for e in events if "testResult" in e]
+        assert len(results) == 1, results
+        result = results[0]
+        assert result["status"] == "PASSED" and not result.get("cachedLocally"), result
+        assert result["executionInfo"]["strategy"] in ("local", "standalone"), result["executionInfo"]
+        assert not result["executionInfo"].get("cachedRemotely"), result["executionInfo"]
+        Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
+        print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
+        PYCHECK
+        out="$RUNNER_TEMP/replay-public"
+        uname -r > "$out/kernel"
+        cat /proc/sys/net/ipv4/tcp_recovery > "$out/linux-tcp-recovery"
+        python3 "$RUNNER_TEMP/driver.py"
+    - name: Return the actual case results, original exits and packet captures
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: tcp-sack-equal-wire
+        path: |
+          ${{ runner.temp }}/replay-public/*.json
+          ${{ runner.temp }}/replay-public/kernel
+          ${{ runner.temp }}/replay-public/linux-tcp-recovery
+          ${{ runner.temp }}/replay-public/*/*.json
+          ${{ runner.temp }}/replay-public/*/*.pcap
+          ${{ runner.temp }}/replay-public/*/test.log
+          ${{ runner.temp }}/replay-public/*/source
+          ${{ runner.temp }}/replay-public/*/exit
+        if-no-files-found: error
