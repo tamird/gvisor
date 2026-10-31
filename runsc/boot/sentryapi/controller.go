@@ -112,6 +112,9 @@ const ContMgrRestore = "containerManager.Restore"
 
 // RestoreOpts contains options related to restoring a container's file system.
 type RestoreOpts struct {
+	// MemoryLimit is the host memory bound at restore, or zero if unknown.
+	MemoryLimit uint64
+
 	// FilePayload contains, in order:
 	// 1. checkpoint state file.
 	// 2. optional checkpoint pages metadata file.

@@ -418,9 +418,10 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 	timer.Reached("got restore readers")
 
 	cm.restorer = &restorer{
-		cm:         cm,
-		background: o.Background,
-		timer:      timer,
+		memoryLimit: o.MemoryLimit,
+		cm:          cm,
+		background:  o.Background,
+		timer:       timer,
 	}
 
 	// Create the main MemoryFile.
