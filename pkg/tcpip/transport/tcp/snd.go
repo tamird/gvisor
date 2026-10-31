@@ -166,6 +166,7 @@ type sender struct {
 	// spuriousRecovery indicates whether the sender entered recovery
 	// spuriously as described in RFC3522 Section 3.2.
 	spuriousRecovery bool
+	sackRecoveryInterrupted bool
 
 	// retransmitTS is the timestamp at which the sender sends retransmitted
 	// segment after entering an RTO for the first time as described in
@@ -536,7 +537,10 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	//     After a retransmit timeout, record the highest sequence number
 	//     transmitted in the variable recover, and exit the fast recovery
 	//     procedure if applicable.
-	s.FastRecovery.Last = s.SndNxt - 1
+	if !s.sackRecoveryInterrupted {
+		s.FastRecovery.Last = s.SndNxt - 1
+		s.sackRecoveryInterrupted = s.FastRecovery.Active && s.ep.SACKPermitted
+	}
 
 	if s.FastRecovery.Active {
 		// We were attempting fast recovery but were not successful.
@@ -1492,7 +1496,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		if (ack-1).InRange(s.SndUna, s.SndNxt) && s.FastRecovery.Last.LessThan(ack) {
 			s.leaveRecovery()
 		}
-	} else {
+	} else if !s.sackRecoveryInterrupted {
 		// Detect loss by counting the duplicates and enter recovery.
 		fastRetransmit = s.detectLoss(rcvdSeg)
 	}
@@ -1616,6 +1620,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		if !s.FastRecovery.Active {
 			s.cc.Update(originalOutstanding-s.Outstanding, bestRTT)
 			if s.FastRecovery.Last.LessThan(s.SndUna) {
+				s.sackRecoveryInterrupted = false
 				s.state = tcpip.Open
 				// Update RACK when we are exiting fast or RTO
 				// recovery as described in the RFC
@@ -1660,7 +1665,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// After the reorder window is calculated, detect any loss by checking
 		// if the time elapsed after the segments are sent is greater than the
 		// reorder window.
-		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active {
+		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active && !s.sackRecoveryInterrupted {
 			// If any segment is marked as lost by
 			// RACK, enter recovery and retransmit
 			// the lost segments.

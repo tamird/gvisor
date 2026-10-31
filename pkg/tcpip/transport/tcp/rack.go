@@ -399,7 +399,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	}
 
 	fastRetransmit := false
-	if !rc.snd.FastRecovery.Active {
+	if !rc.snd.FastRecovery.Active && !rc.snd.sackRecoveryInterrupted {
 		rc.snd.cc.HandleLossDetected()
 		rc.snd.enterRecovery()
 		fastRetransmit = true
