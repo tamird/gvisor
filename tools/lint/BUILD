@@ -2,6 +2,7 @@ load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@lint_inputs//:inputs.bzl", "INPUTS")
 load("//tools:defs.bzl", "go_binary")
+load("//tools:gazelle.bzl", "GAZELLE_FLAGS", "GAZELLE_PACKAGES")
 load(":defs.bzl", "python_inputs")
 
 package(
@@ -55,6 +56,30 @@ run_binary(
     mnemonic = "BuildifierCheck",
     stdout = "buildifier.report",
     tool = BUILDIFIER_TOOL,
+)
+
+# Use the same Bzlmod repository map as the Gazelle fixer.
+run_binary(
+    name = "gazelle_check",
+    srcs = [
+        "@bazel_gazelle//:go_repository_config",
+        "@lint_inputs//:ROOT",
+        "@lint_inputs//:gazelle",
+    ],
+    args = [
+        "update",
+        "-mode=diff",
+        "-bzlmod",
+        "-repo_config=$(execpath @bazel_gazelle//:go_repository_config)",
+        "-repo_root=" + ROOT,
+    ] + GAZELLE_FLAGS + [ROOT + "/" + pkg for pkg in GAZELLE_PACKAGES],
+    # Capturing the exit status leaves both diagnostic streams on the console.
+    # run_binary otherwise accepts a nonzero status when exit_code_out is set.
+    exit_code_out = "gazelle.status",
+    fail_on = range(1, 256),
+    mnemonic = "GazelleCheck",
+    tags = ["manual"],
+    tool = "@bazel_gazelle//cmd/gazelle",
 )
 
 python_inputs(

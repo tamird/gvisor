@@ -4,6 +4,13 @@ See //:gazelle_check. Each entry is a single package; subpackages are not
 included.
 """
 
+# Gazelle indexes go_library rules by importpath, which unmigrated BUILD files
+# omit, so resolve gvisor.dev/gvisor imports by path instead (-index=none).
+GAZELLE_FLAGS = [
+    "-index=none",
+    "-r=false",
+]
+
 GAZELLE_PACKAGES = [
     "pkg/abi",
     "pkg/abi/attestation",

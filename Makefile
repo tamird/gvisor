@@ -210,7 +210,7 @@ governance-check: ## Checks that the files derived from governance data are in s
 .PHONY: governance-check
 
 gazelle-check: ## Checks that the BUILD files of the packages in tools/gazelle.bzl match gazelle output.
-	@$(call wrapper,$(BAZEL) run $(BASE_OPTIONS) $(BAZEL_OPTIONS) //:gazelle_check)
+	@$(call wrapper,$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) //:gazelle_check)
 .PHONY: gazelle-check
 
 gazelle-fix: ## Rewrites the BUILD files of the packages in tools/gazelle.bzl to match gazelle output.
