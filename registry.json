@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T16:57:06.135+00:00",
+    "updatedAt": "2026-10-31T17:39:47.195+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23738,20 +23738,20 @@
       "id": "branch:tcp-cookie-window-scale",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "tcp-cookie-window-scale",
-      "head": "888d2415fee5f8e197e78c7365cbc09da8a2fc89",
+      "ref": "research/tcp-cookie-window-scale-current",
+      "head": "df25b25c88d3b7dd52957039bd228fa63a1679d7",
       "title": "Preserve window scaling on SYN-cookie connections",
-      "url": "https://github.com/tamird/gvisor/commit/888d2415fee5f8e197e78c7365cbc09da8a2fc89",
+      "url": "https://github.com/tamird/gvisor/tree/research/tcp-cookie-window-scale-current",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
-      "summary": "Contributor approved; delivery assigned. Deliver the approved 888d2415 proposal with the real SACK #16336 dependency retained.\n\nPreserved proposal and evidence:\n\nCurrent 888d2415 corrects the existing timestamp-enabled window expectations; production behavior is unchanged from bc6dbee5. The prior 1a7c8ddb run passed both packet owners but exposed two stale SACK expectations of no window scale. Independent source review 934442b7 confirms the fixed fixture uses a 1 MiB receive buffer with auto-tuning disabled: scale 5 and post-handshake advertised window 0x4000. No-timestamp controls remain unchanged. The current 3b233bd0 qualification selects all four existing forced-cookie e2e suites and their analyzers, the TCP package unit/analyzer, and both packet backends: 12 owners, unfiltered. Qualification 3b233bd0 passed all 12 uncached local owners: 567 positive XML records, no failures or skips, and both CPU reports for each of five analyzers. Linux and netstack both deliver 16 bytes without timestamps and 128 with timestamps. The timestamp-enabled cases recover peer scale 3 and advertise scale 7; no-timestamp controls do not negotiate scaling. Independent retained peer 2aeaa38e verifies native/report/source joins; producer availability was 0.415668 seconds and authenticated consumer availability 7.131561 seconds after native completion. The contributor has approved exact 888d2415 for publication; the SACK prerequisite remains #16336.\n\nPreserved before-controls and earlier run:\n\nSeparate fork-only window-scaling change on the SACK proposal 8757001b. Current bc6dbee5 differs from 0d37a944 only by the formatting correction. Corrected before-only controls 5fe782b1 verify both Linux cases (16 bytes without timestamps, 128 with timestamps) and netstack without timestamps (16 bytes); netstack with timestamps alone fails, advertising no window scale and delivering 16 rather than 128 bytes. Three leaves pass and one fails; the six XML records include two parents. Native FAIL is preserved and independent retained peer 55e7f87e confirms the evidence. Producer verdict was available after 0.298466 seconds and the authenticated consumer after 9.934822 seconds. The original fixture failure remains retained. Initial fixed-product run fbfb71cb stopped before tests on formatting; the subsequent eight-owner run used qualification source 985ed45d in 1a7c8ddb and exposed the stale expectations corrected above.",
+      "updatedAt": "2026-10-31T17:39:47.195+00:00",
+      "summary": "The contributor approved this SYN-cookie window-scale change. Its SACK prerequisite #16336 landed in 247a7b4fa. At refreshed head df25b25c8, 493 TCP cases and five analyzers passed. No packet tests executed in that job because its compiler worker lacked GLIBC_2.38 and both GNU cross-compilers. The packet tests are running on the qualified GNU platform. Earlier wire controls isolated the timestamp case: gVisor offered no window scale and delivered 16 bytes where Linux delivered 128.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "888d2415fee5f8e197e78c7365cbc09da8a2fc89",
         "observedAt": "2026-10-24T11:22:37.878012+00:00",
         "disposition": "Contributor approved; delivery assigned",
-        "nextAction": "Deliver the approved 888d2415 proposal with the real SACK #16336 dependency retained."
+        "nextAction": "Publish the approved change after the Linux and gVisor packet checks on the qualified GNU platform."
       },
       "evidence": [
         {
@@ -23769,6 +23769,22 @@
         {
           "label": "Qualified 12-owner fixed-product result; 567 positive records",
           "url": "https://app.buildbuddy.io/invocation/3b233bd0-e273-45a7-a79a-fa625e9fa53c"
+        },
+        {
+          "label": "Merged SACK prerequisite",
+          "url": "https://github.com/google/gvisor/commit/247a7b4fa"
+        },
+        {
+          "label": "Current window-scale change",
+          "url": "https://github.com/tamird/gvisor/commit/df25b25c8"
+        },
+        {
+          "label": "493 cases and five analyzers; original packet build failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41222296281/artifacts/13050955716"
+        },
+        {
+          "label": "Recovery of the two packet checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41223629069"
         }
       ]
     },
@@ -40228,6 +40244,91 @@
         "summary": "When an eventfd import failed at the sentry descriptor limit, the VFS still counted the abandoned file. The fix releases that file and leaves the donated descriptor open for its caller.",
         "body": "NewFromHost creates a VFS file before registering the donated host FD.\nIf registration fails, this leaves the file counted in fs/file-nr and\nholds a reference to the anonymous mount.\n\nTransfer the host FD after registration succeeds so that dropping the\nVFS file on error leaves the caller responsible for the host FD."
       }
+    },
+    {
+      "id": "branch:checkpoint-page-read-error",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "checkpoint-page-read-error",
+      "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+      "title": "Release async checkpoint reads on error",
+      "url": "https://github.com/tamird/gvisor/tree/checkpoint-page-read-error",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T17:39:47.195+00:00",
+      "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The race test did not execute because runtime/cgo failed to build.",
+      "evidence": [
+        {
+          "label": "Proposed source and permanent three-page test",
+          "url": "https://github.com/tamird/gvisor/commit/3adb1aa3b"
+        },
+        {
+          "label": "Stock blocked MapInternal caller",
+          "url": "https://app.buildbuddy.io/invocation/cd1192b7-336c-45c0-ac9d-3a36a0237674"
+        },
+        {
+          "label": "Stock short-read and reader-wide failure cases retain a reference",
+          "url": "https://app.buildbuddy.io/invocation/611ca9f7-ec64-4e86-bff7-4f4547f9db3d"
+        },
+        {
+          "label": "74 corrected package and diagnostic cases",
+          "url": "https://app.buildbuddy.io/invocation/b556a045-b302-4e5d-9d3a-cb61afbd19ff"
+        },
+        {
+          "label": "Exact stock failure, 69 corrected cases, two analyzers and missing race run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41225245512/artifacts/13051463182"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/3adb1aa3b",
+        "title": "Release async checkpoint reads on error",
+        "requestedAt": "2026-10-31T17:39:47.195+00:00",
+        "summary": "Approve opening the tested cleanup for tasks and page references stranded by a checkpoint read failure.",
+        "body": "When a checkpoint read fails, the loader can report EIO while a task\nstill waits in MapInternal or a background read still holds a page\nreference [1][2].\n\nAfter stopping I/O, clear the in-flight markers, deliver previously\nqueued notifications, and drop the loader’s temporary references\noutside its locks. The three-page regression uses a truncated pages\nfile. It fails on the parent and passes with the fix [3].\n\n[1]: https://app.buildbuddy.io/invocation/cd1192b7-336c-45c0-ac9d-3a36a0237674\n[2]: https://app.buildbuddy.io/invocation/611ca9f7-ec64-4e86-bff7-4f4547f9db3d\n[3]: https://github.com/tamird/gvisor/actions/runs/41225245512/artifacts/13051463182"
+      }
+    },
+    {
+      "id": "branch:sentry-cgo-arena-limit",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/sentry-cgo-arena-limit",
+      "head": "c5a4f9fb9024c882b4d291ab9710a5dce637e0cf",
+      "url": "https://github.com/tamird/gvisor/tree/research/sentry-cgo-arena-limit",
+      "title": "Set the glibc arena limit before Sentry startup",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T17:39:47.195+00:00",
+      "summary": "After seccomp, glibc tried to open the host CPU list to size its malloc arenas. All eight stock GNU plugin sandboxes were killed there; all eight configured sandboxes exchanged data on the same two-way TCP workload. The limit follows launch-time CPU affinity. The control never started successfully, so these runs provide no startup-cost comparison. The pure/cgo environment check is still running.",
+      "evidence": [
+        {
+          "label": "Revised source with posture expectations",
+          "url": "https://github.com/tamird/gvisor/commit/c5a4f9fb9"
+        },
+        {
+          "label": "Symbolized glibc failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41218606094/artifacts/13049226211"
+        },
+        {
+          "label": "Original and fixed plugin traffic",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41219191400/artifacts/13050471603"
+        },
+        {
+          "label": "Same syscall on the earlier compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41220392800/artifacts/13049931379"
+        },
+        {
+          "label": "Ten current posture cases; root target blocked compiling protobuf",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41223050720/artifacts/13051312105"
+        },
+        {
+          "label": "Real pure/cgo root environment check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41220920008"
+        }
+      ]
     }
   ],
   "edges": [
@@ -46426,8 +46527,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T16:22:00.007454+00:00",
-      "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. The four round-trip regressions tracked in #16715 are fixed on master (#16747). The open question is whether the graph encoder’s range index costs enough time or memory on a real workload to justify changing it.",
+      "updatedAt": "2026-10-31T17:39:47.195+00:00",
+      "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints.",
       "findings": [
         {
           "text": "Saving 2,048 slices with the same base address took 56.540 ms narrowest-first versus 0.052 ms widest-first. Extending the backing array in place removed all 4,192,256 parent traversals; the final five-sample medians were 0.076 ms and 0.053 ms. Both orders wrote 8,119 bytes and retained alias identity. One four-worker Nginx checkpoint contained no eligible extensions.",
@@ -49269,6 +49370,15 @@
             {
               "label": "Matched wire output",
               "url": "https://github.com/tamird/gvisor/actions/runs/41218349306/artifacts/13049500025"
+            }
+          ]
+        },
+        {
+          "text": "Clearing only used decoder entries did not improve restore time across 96 real kernel restores from one 161,587-byte four-worker Nginx checkpoint. Warm passes used 312 bytes of the pointer table’s 319,432-byte capacity. In 16 alternating matched pairs, median wall time increased by 2.72%, 14.35%, and 5.42% on the first, second, and third passes. Keep the current decoder. The complete verdict was available 5.21 seconds after execution finished, with no manual recovery.",
+          "evidence": [
+            {
+              "label": "All 96 restores, capacity and paired timings",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41223475050/artifacts/13050961268"
             }
           ]
         }
