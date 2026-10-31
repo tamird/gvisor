@@ -424,15 +424,7 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 	defer s.ep.mu.Unlock()
 	s.ep.SACKPermitted = true
 	s.ep.scoreboard = NewSACKScoreboard(1000, 0)
-	first := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(1000)), 0)
-	first.sequenceNumber, first.gsoStart, first.gsoMSS, first.xmitCount = 2000, 2000, 1000, 1
-	s.MaxPayloadSize = 500
-	first.acked, first.lost = true, true
-	s.writeList.PushBack(first)
-	s.splitSeg(first, 300)
-	middle := first.Next()
-	s.splitSeg(middle, 400)
-	last := middle.Next()
+	first, middle, last := splitSACKProbePacket(s, clock, header.SACKBlock{Start: 2300, End: 2700})
 	ctx.segs = append(ctx.segs, first, middle, last)
 	for _, seg := range ctx.segs {
 		if !seg.acked || !seg.lost || seg.flags&header.TCPFlagPsh != 0 {
@@ -441,7 +433,6 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 	}
 	// The middle fragment has since been transmitted separately. The last
 	// fragment still owns the original transmitted unit [2000,3000).
-	middle.gsoStart, middle.gsoMSS, middle.truncatedTail = 2300, 400, false
 	apply := func(block header.SACKBlock) {
 		merged := s.ep.scoreboard.Insert(block)
 		block.End = s.ep.scoreboard.creditEnd(block.End, merged.End)
@@ -454,5 +445,98 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 	apply(header.SACKBlock{Start: 2000, End: 2100})
 	if last.sackCredit != 1 {
 		t.Fatalf("last fragment lost its fully SACKed original unit: %d", last.sackCredit)
+	}
+}
+
+// splitSACKProbePacket splits [2000,3000) and records a separate transmission
+// of the middle fragment, as sendSegment does after a successful retry.
+//
+// +checklocks:s.ep.mu
+func splitSACKProbePacket(s *sender, clock tcpip.Clock, retry header.SACKBlock) (*segment, *segment, *segment) {
+	first := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(1000)), 0)
+	first.sequenceNumber, first.gsoStart, first.gsoMSS, first.xmitCount = 2000, 2000, 1000, 1
+	s.MaxPayloadSize = 500
+	first.acked, first.lost = true, true
+	s.writeList.PushBack(first)
+	s.splitSeg(first, int(first.sequenceNumber.Size(retry.Start)))
+	middle := first.Next()
+	s.splitSeg(middle, int(retry.Start.Size(retry.End)))
+	last := middle.Next()
+	middle.gsoStart, middle.gsoMSS, middle.truncatedTail = retry.Start, uint16(retry.Start.Size(retry.End)), false
+	return first, middle, last
+}
+
+func TestSACKRenegingAcrossOverlappingTransmissions(t *testing.T) {
+	const (
+		retry = 400 * time.Millisecond
+		grace = 60 * time.Millisecond
+	)
+	type deadline struct {
+		ack   seqnum.Value
+		after time.Duration
+	}
+	middle := header.SACKBlock{Start: 2300, End: 2700}
+	whole := header.SACKBlock{Start: 2000, End: 3000}
+	for _, tc := range []struct {
+		name                    string
+		retransmitted, reported header.SACKBlock
+		deadlines               []deadline
+	}{
+		{"Original", middle, whole, []deadline{{2100, grace}, {2400, grace}, {2750, grace}}},
+		{"RetryAndTail", middle, header.SACKBlock{Start: 2300, End: 2800}, []deadline{{2100, retry}, {2400, grace}, {2750, retry}}},
+		// Only the last one-byte queue entry owns the original packet.
+		{"LastByte", header.SACKBlock{Start: 2499, End: 2999}, whole, []deadline{{2000, grace}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			ctx := newRACKTestContext(clock, 0)
+			defer ctx.cleanup()
+			s := &ctx.snd
+			s.ep.mu.Lock()
+			defer s.ep.mu.Unlock()
+			s.ep.SACKPermitted = true
+			s.ep.scoreboard = NewSACKScoreboard(1000, 0)
+			s.ep.snd = s
+			s.ep.sndQueueInfo.sndQueueMu.Lock()
+			s.ep.sndQueueInfo.TCPSndBufState.AutoTuneSndBufDisabled.Store(1)
+			s.ep.sndQueueInfo.SndBufUsed = 1001
+			s.ep.sndQueueInfo.sndQueueMu.Unlock()
+			s.cc = newRenoCC(s)
+			s.SndCwnd, s.Ssthresh, s.Outstanding = 10, 20, 2
+			s.SndUna, s.SndNxt, s.RTTMeasureSeqNum, s.SndWnd = 1999, 3000, 3000, 4096
+			s.RTO = retry
+			s.rtt.Lock()
+			s.rtt.TCPRTTState.SRTT = 2 * grace
+			s.rtt.Unlock()
+			s.resendTimer.init(clock, func() {})
+			defer s.resendTimer.cleanup()
+			bridge := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(1)), 0)
+			bridge.sequenceNumber, bridge.xmitCount = 1999, 1
+			s.writeList.PushBack(bridge)
+			splitSACKProbePacket(s, clock, tc.retransmitted)
+			defer func() {
+				for seg := s.writeList.Front(); seg != nil; seg = s.writeList.Front() {
+					s.writeList.Remove(seg)
+					seg.DecRef()
+				}
+			}()
+			ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+			defer ack.DecRef()
+			ack.window = s.SndWnd
+			ack.flags = header.TCPFlagAck
+			ack.ackNumber = s.SndUna
+			ack.parsedOptions.SACKBlocks = []header.SACKBlock{tc.reported}
+			s.handleRcvdSegment(ack)
+			ack.parsedOptions.SACKBlocks = nil
+			for _, d := range tc.deadlines {
+				una := d.ack
+				ack.ackNumber = una
+				s.handleRcvdSegment(ack)
+				got, want := s.resendTimer.target.Sub(clock.NowMonotonic()), d.after
+				if got != want {
+					t.Errorf("ACK %d scheduled retransmission after %v, want %v", una, got, want)
+				}
+			}
+		})
 	}
 }
