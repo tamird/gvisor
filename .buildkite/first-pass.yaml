@@ -52,9 +52,11 @@ steps:
   - <<: *common
     <<: *source_test_presubmit
     label: ":world_map: Build runsc and pkg (AMD64)"
+    env:
+      DOCKER_BUILD: "false"
     commands:
-      - "make build TARGETS=//pkg/..."
-      - "make build OPTIONS='--build_tag_filters=-network_plugins' TARGETS='//runsc/...'"
+      - bazel build //pkg/...
+      - bazel build --build_tag_filters=-network_plugins //runsc/...
 
   - <<: *common
     <<: *source_test
