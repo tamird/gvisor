@@ -1806,11 +1806,12 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// After the reorder window is calculated, detect any loss by checking
 		// if the time elapsed after the segments are sent is greater than the
 		// reorder window.
-		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && s.enterRACKRecovery() {
+		numLost := s.rc.detectLoss(rcvdSeg.rcvdTime)
+		if numLost > 0 && s.enterRACKRecovery() {
 			fastRetransmit = true
 		}
 
-		if s.FastRecovery.Active {
+		if s.FastRecovery.Active || (s.sackRecoveryInterrupted && numLost > 0) {
 			s.rc.DoRecovery(nil, fastRetransmit)
 		}
 	}
