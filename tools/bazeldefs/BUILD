@@ -35,7 +35,6 @@ bzl_library(
     deps = [
         ":defs_bzl",
         ":go_static_bzl",
-        "@with_cfg.bzl//:with_cfg",
     ],
 )
 
