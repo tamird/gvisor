@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T11:56:47.694302+00:00",
+    "updatedAt": "2026-10-31T12:01:55.716021+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33298,8 +33298,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a5afdee618840c9211d989c775afda8280be484b",
       "group": "release",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "Approved for submission after the generated Go source selection lands.",
+      "updatedAt": "2026-10-31T12:01:55.716021+00:00",
+      "summary": "The GitHub push workflow builds the AMD64 release on its hosted runner. With the exact target-architecture selection from #16753, native AMD64 and ARM64 runners built and re-downloaded all eight binaries with Docker stopped. Both archives matched the original paths and ZIP modes and contained the expected static ELFs. Without #16753, each build requested the other architecture’s unavailable compiler. The qualification spelled out top-level output downloads. The existing approval remains scoped to a5afdee61 after #16753.",
       "evidence": [
         {
           "label": "Direct Ubuntu build and release artifact",
@@ -33308,6 +33308,26 @@
         {
           "label": "Published upstream layout",
           "url": "https://github.com/google/gvisor/actions/runs/40803813239"
+        },
+        {
+          "label": "Original master artifact with all eight release paths",
+          "url": "https://github.com/google/gvisor/actions/runs/41194870621/artifacts/13040222266"
+        },
+        {
+          "label": "Native AMD64 receipt with Docker stopped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41198457424/artifacts/13040854873"
+        },
+        {
+          "label": "Native ARM64 receipt with Docker stopped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41198457424/artifacts/13041577662"
+        },
+        {
+          "label": "Without #16753 each architecture requested the opposite compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41198176938"
+        },
+        {
+          "label": "Only workflow wording and explicit download mode differed in this proof",
+          "url": "https://github.com/tamird/gvisor/compare/a5afdee61..c7a99450c"
         }
       ],
       "settledReviews": [
