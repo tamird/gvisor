@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T00:38:48.282173+00:00",
+    "updatedAt": "2026-10-31T00:53:29.082073+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37078,8 +37078,8 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T22:42:48.683812+00:00",
-      "summary": "Under a 192 MiB cgroup ceiling, the updated boot policy set Go’s soft limit to 1 GiB or 256 MiB, depending on the leaf. With #16767 both were 96 MiB. A tighter leaf stayed at 64 MiB.",
+      "updatedAt": "2026-10-31T00:53:29.082073+00:00",
+      "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
       "evidence": [
         {
           "label": "Actual Go memory limits on the current PR and with #16767",
@@ -37088,6 +37088,14 @@
         {
           "label": "Ancestor memory-limit fix",
           "url": "https://github.com/google/gvisor/pull/16767"
+        },
+        {
+          "label": "Matched 200 MiB restores and kernel OOM counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576"
+        },
+        {
+          "label": "Restore reproducer",
+          "url": "https://github.com/tamird/gvisor/commit/9099adb91"
         }
       ],
       "contributorReview": {
@@ -37096,8 +37104,8 @@
         "head": "9d3e6518a0a467c6575390cb6a61ff134024d243",
         "url": "https://github.com/google/gvisor/pull/16735",
         "title": "Post the GC budget review",
-        "summary": "Under a 192 MiB cgroup ceiling, the updated boot policy set Go’s soft limit to 1 GiB or 256 MiB, depending on the leaf. With #16767 both were 96 MiB. A tighter leaf stayed at 64 MiB.",
-        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit set by this revision](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird."
+        "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
+        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit set by this revision](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird.\n\nRestore findings for the same head:\n\nOn `pkg/sentry/state/state.go`, at the call to `garbage.Suspend`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? `MaximumTotalMemoryBytes` is set when the sandbox is created. I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91).\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
       }
     },
     {
