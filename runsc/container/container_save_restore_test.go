@@ -2526,6 +2526,25 @@ func TestRestoreCgroupResize(t *testing.T) {
 			_ = cont.Destroy()
 		}
 	}()
+	// Let image construction run outside the destination's 200 MiB ceiling.
+	// The built checkpoint retains the original OCI spec for both restores.
+	sourceCG := probe.MakePath("")
+	if err := os.WriteFile(filepath.Join(sourceCG, "memory.max"), []byte("2147483648"), 0); err != nil {
+		t.Fatalf("raising source cgroup limit: %v", err)
+	}
+	sourceLimit, err := os.ReadFile(filepath.Join(sourceCG, "memory.max"))
+	if err != nil || strings.TrimSpace(string(sourceLimit)) != "2147483648" {
+		t.Fatalf("source memory.max = %q, err=%v", sourceLimit, err)
+	}
+	t.Logf("GCRESIZE source_ceiling=%s", strings.TrimSpace(string(sourceLimit)))
+	logSourceEvents := func(phase string) {
+		if events, err := os.ReadFile(filepath.Join(sourceCG, "memory.events")); err == nil {
+			t.Logf("GCRESIZE source_events_%s=%s", phase, strings.ReplaceAll(strings.TrimSpace(string(events)), "\n", ","))
+		} else {
+			t.Logf("GCRESIZE source_events_%s_read_error=%v", phase, err)
+		}
+	}
+	logSourceEvents("before")
 	if err := cont.Start(conf); err != nil {
 		t.Fatalf("starting container: %v", err)
 	}
@@ -2533,7 +2552,11 @@ func TestRestoreCgroupResize(t *testing.T) {
 		t.Fatalf("waiting for init process: %v", err)
 	}
 
-	// Populate 50,000 zero-byte files in /tmpfs (~82 MiB live Sentry Go heap).
+	filesPerLevel := os.Getenv("GCRESIZE_FILES_PER_LEVEL")
+	if filesPerLevel != "1000" && filesPerLevel != "40" {
+		t.Fatalf("invalid source file count per level %q", filesPerLevel)
+	}
+	t.Logf("GCRESIZE files_per_level=%s", filesPerLevel)
 	execFile, err := os.Open(testAppPath)
 	if err != nil {
 		t.Fatalf("Open(%q): %v", testAppPath, err)
@@ -2544,7 +2567,7 @@ func TestRestoreCgroupResize(t *testing.T) {
 			"fsTreeCreate",
 			"--target-dir=/tmpfs",
 			"--depth=50",
-			"--file-per-level=1000",
+			"--file-per-level=" + filesPerLevel,
 			"--file-size=0",
 		},
 		FilePayload: controlapi.NewFilePayload(map[int]*os.File{
@@ -2565,8 +2588,10 @@ func TestRestoreCgroupResize(t *testing.T) {
 	if err := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{
 		Compression: statefile.CompressionLevelFlateBestSpeed,
 	}); err != nil {
+		logSourceEvents("after")
 		t.Fatalf("checkpointing container: %v", err)
 	}
+	logSourceEvents("after")
 	if _, err := cont.Wait(); err != nil {
 		t.Fatalf("waiting after checkpoint: %v", err)
 	}
@@ -2598,8 +2623,12 @@ func TestRestoreCgroupResize(t *testing.T) {
 			destResources.Memory = &destMem
 			destArgs := args
 			destArgs.Spec = &dest
-			logDir := t.TempDir()
-			conf.DebugLog = filepath.Join(logDir, "runsc.%COMMAND%.%TIMESTAMP%.txt")
+			logDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+			if logDir == "" {
+				t.Fatal("missing Bazel test outputs directory")
+			}
+			logPattern := "dest-" + arm.name + "."
+			conf.DebugLog = filepath.Join(logDir, logPattern+"%COMMAND%.%TIMESTAMP%.txt")
 			cont2, err := New(conf, destArgs)
 			if err != nil {
 				t.Fatalf("creating restore destination: %v", err)
@@ -2635,7 +2664,7 @@ func TestRestoreCgroupResize(t *testing.T) {
 			restoreErr := cont2.Restore(conf, imageDir, sandbox.DirectIOOff, false, nil)
 			t.Logf("GCRESIZE restore_ms=%d success=%t err=%v", time.Since(start).Milliseconds(), restoreErr == nil, restoreErr)
 			t.Logf("GCRESIZE events_after=%s", strings.ReplaceAll(read(filepath.Join(cg, "memory.events")), "\n", ","))
-			logs, err := filepath.Glob(filepath.Join(logDir, "*.txt"))
+			logs, err := filepath.Glob(filepath.Join(logDir, logPattern+"*.txt"))
 			if err != nil {
 				t.Fatal(err)
 			}
