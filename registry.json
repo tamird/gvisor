@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T05:05:53.443908+00:00",
+    "updatedAt": "2026-10-31T05:21:08.349820+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20423,20 +20423,22 @@
       "title": "Build the hackbench image from pinned source",
       "url": "https://github.com/tamird/gvisor/compare/8a84b240f...07d32506a",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T05:05:53.443908+00:00",
-      "summary": "Hackbench now builds directly from pinned rt-tests 2.2 on upstream. Its standalone image removes the shared GNU extraction used by the approved 8e1dc1ed0 proposal. Removing the duplicate ELF saved 497,289 compressed bytes on AMD64 and 383,553 on ARM64. The executable, mode, image configuration and base layers match the standalone runtime checks. The Go benchmark still needs a named result for each workload and payload architecture.",
-      "followup": {
-        "owner": "Build images",
-        "disposition": "Qualify the standalone benchmark consumer",
-        "sourceHead": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
-        "observedAt": "2026-10-31T05:05:53.443908+00:00",
-        "nextAction": "Verify both Go benchmark cases against each payload architecture on the existing Linux job. The earlier approval covers the shared-base proposal 8e1dc1ed0.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41167754027"
-        ]
-      },
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T05:21:08.349820+00:00",
+      "summary": "Hackbench now builds from pinned rt-tests 2.2 on the Alpine base that supplies sleep for the benchmark. The Go harness completed pipe/thread and socket/process on AMD64 and on emulated ARM64. Removing a duplicate executable saved 497,289 and 383,553 compressed bytes respectively. All 221 catalog entries verified. The kernel.org rt-tests entry was checked against its archive and retained on both Fetch runs.",
       "evidence": [
+        {
+          "label": "Two actual Go benchmark cases on AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41167754027/artifacts/13031004364"
+        },
+        {
+          "label": "Two actual Go benchmark cases on emulated ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41167754027/artifacts/13031530593"
+        },
+        {
+          "label": "221 catalog entries and two rt-tests retention checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41165248877/artifacts/13029430564"
+        },
         {
           "label": "AMD64 final archive, executable hashes, modes and image configuration",
           "url": "https://github.com/tamird/gvisor/actions/runs/41170494970/artifacts/13030608502"
@@ -20483,6 +20485,15 @@
           "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
           "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e"
         }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+        "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
+        "url": "https://github.com/tamird/gvisor/compare/8a84b240f...07d32506a",
+        "title": "Open standalone Hackbench on Alpine",
+        "summary": "You approved the earlier shared-GNU-base proposal 8e1dc1ed0. This revision removes its APT extraction and prerequisite stack. Both measured workloads ran on each architecture. The two final image archives preserve the executable, license, Alpine layers and configuration."
       }
     },
     {
