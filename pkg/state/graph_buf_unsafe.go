@@ -169,11 +169,6 @@ func (d *decBuf) uvarint() uint64 {
 			return uint64(v)
 		}
 	}
-	return d.uvarintSlow()
-}
-
-// uvarintSlow handles multi-byte values and truncated input.
-func (d *decBuf) uvarintSlow() uint64 {
 	v, n := binary.Uvarint(d.b[d.pos:])
 	if n <= 0 {
 		if n == 0 {
