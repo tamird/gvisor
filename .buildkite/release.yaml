@@ -56,7 +56,8 @@ steps:
         if [[ "$${BUILDKITE_TAG:-}" == release-*-staging ]]; then
           label="$${BUILDKITE_TAG%-staging}"
         else
-          label="$$(tools/workspace_status.sh --label)"
+          # Untagged master and nightly packages use the nearest release.
+          label="$$(git describe --always --tags --exclude 'release-*-staging' --abbrev=12 --dirty)"
         fi
         make release-artifacts RELEASE_VERSION="$$label" BAZEL_OPTIONS=--compilation_mode=opt
       - make artifacts-python
