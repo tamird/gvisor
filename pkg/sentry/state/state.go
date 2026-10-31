@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -264,5 +265,7 @@ func SuspendGCForRestore(metadata map[string]string) *garbage.Suspension {
 	if v, err := strconv.ParseUint(metadata[metadataMemoryFileUsedBytesKey], 10 /* base */, 64 /* bitSize */); err == nil {
 		savedMemoryFileBytes = v
 	}
-	return garbage.Suspend(totalMemoryLimit(), savedMemoryFileBytes)
+	suspension := garbage.Suspend(totalMemoryLimit(), savedMemoryFileBytes)
+	log.Infof("GCRESIZE soft=%d startup=%d saved=%d handle=%t", debug.SetMemoryLimit(-1), totalMemoryLimit(), savedMemoryFileBytes, suspension != nil)
+	return suspension
 }

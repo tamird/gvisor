@@ -1,35 +1,96 @@
-name: CI
-
-"on":
+name: Measure the real Sentry GC budget after runsc update
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/gc-resize-restore]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      SOURCE: 9d3e6518a0a467c6575390cb6a61ff134024d243
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        cp test/rbe/verify-gc-resize.py "$RUNNER_TEMP/verify-gc.py"
+        [[ "$(git rev-parse HEAD^)" == "$SOURCE" ]]
+        git rev-parse HEAD > "$RUNNER_TEMP/records/fixture-source"
+        git rev-parse HEAD^ > "$RUNNER_TEMP/records/product-source"
+        sha256sum runsc/container/container_save_restore_test.go pkg/sentry/state/state.go > "$RUNNER_TEMP/records/fixture-hashes"
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
+        docker exec tcp-compiler bash -euc '
+          test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
+          grep -qw memory /sys/fs/cgroup/cgroup.subtree_control
+          cg=/sys/fs/cgroup/gvisor-resize-preflight-$$
+          mkdir "$cg"
+          p=""
+          cleanup() { [[ -z $p ]] || { kill "$p" 2>/dev/null || :; wait "$p" 2>/dev/null || :; }; rmdir "$cg"; }
+          trap cleanup EXIT
+          sleep 90 & p=$!
+          echo "$p" > "$cg/cgroup.procs"
+          grep -Fxq "0::/${cg##*/}" "/proc/$p/cgroup"
+          for n in 2147483648 209715200; do
+            echo "$n" > "$cg/memory.max"
+            test "$(cat "$cg/memory.max")" = "$n"
+            echo "kernel memory.max=$n"
+          done
+          cat "$cg/memory.events"
+          unshare -U -r true
+          echo namespace=ok
+        ' > "$RUNNER_TEMP/records/kernel-preflight.txt"
+    - name: Measure both destinations using the same checkpoint on the Linux runner
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        d=$RUNNER_TEMP/records; date -u +%FT%TZ > "$d/start"; rc=0
+        docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=32 --spawn_strategy=remote,local --strategy=TestRunner=local --test_sharding_strategy=disabled --nocache_test_results --test_timeout=900 --test_arg=-test.v --test_arg=-test.run='^TestRestoreCgroupResize$' --test_output=all //runsc/container:container_test > "$RUNNER_TEMP/build.log" 2>&1 || rc=$?
+        echo "$rc" > "$d/bazel-exit"; date -u +%FT%TZ > "$d/end"
+        grep -A4 -E 'Invocation ID:|ERROR:|error:|failed|FAIL|SKIP|GCRESIZE' "$RUNNER_TEMP/build.log" | tail -220 > "$d/build-diagnostics" || true
+        for f in test.log test.xml; do
+          docker exec tcp-compiler cat "bazel-testlogs/runsc/container/container_test/$f" > "$d/$f" || true
+        done
+        if ! grep -q 'GCRESIZE events_after=' "$d/test.log"; then
+          tail -160 "$RUNNER_TEMP/build.log" >> "$d/build-diagnostics"
+        fi
+    - name: Reconcile kernel and Sentry observations
+      if: always()
+      run: python3 "$RUNNER_TEMP/verify-gc.py" "$RUNNER_TEMP/records"
+    - name: Exclude credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: gc-resize-restore
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
