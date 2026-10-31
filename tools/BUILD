@@ -76,6 +76,8 @@ exports_files([
     "build_cover.sh",
     "go-allow-internal.patch",
     "llvm-linux-header-default.patch",
+    "qualification-linux-libraries.patch",
+    "qualification-module-map-musl.patch",
 ])
 
 py_test(
