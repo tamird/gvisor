@@ -487,8 +487,11 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 	cm.restorer.checkpointedSpecs = specs
 
 	checkpointVersion := cm.restorer.metadata[VersionKey]
-	currentVersion := version.Version()
-	if checkpointVersion != currentVersion {
+	if cm.l.checkpointVersionErr != nil {
+		return fmt.Errorf("identifying checkpoint consumer: %w", cm.l.checkpointVersionErr)
+	}
+	currentVersion := cm.l.checkpointVersion
+	if checkpointVersion == "" || checkpointVersion != currentVersion {
 		return fmt.Errorf("runsc version does not match across checkpoint restore, checkpoint: %v current: %v", checkpointVersion, currentVersion)
 	}
 	if saved := cm.restorer.metadata[noRootContainerKey] == "true"; saved != cm.l.noRootContainer.enabled {

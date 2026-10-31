@@ -20,11 +20,34 @@
 // import loops.
 package version
 
-// version is the version string.
-// It is initialized by the runsc main() function.
-var version = "VERSION_MISSING"
+// development is a display label, not an assertion that two binaries match.
+const development = "(devel)"
+
+// The linker sets buildLabel from Bazel's --embed_label and version from
+// STABLE_VERSION for callers using their own workspace status command.
+var buildLabel, version string
 
 // Version returns the version string.
 func Version() string {
-	return version
+	if version != "" {
+		return version
+	}
+	if buildLabel != "" {
+		return buildLabel
+	}
+	return development
+}
+
+// Matches reports whether label identifies this build. Two unstamped binaries
+// do not establish compatibility merely by having the same missing version.
+func Matches(label string) bool {
+	switch label {
+	case "", development, "VERSION_MISSING":
+		return false
+	case "0.0.0":
+		// A custom status command may explicitly select this legacy label.
+		return version == label
+	default:
+		return label == Version()
+	}
 }

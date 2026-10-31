@@ -983,7 +983,17 @@ $(RELEASE_KEY):
 	gpg --batch $(GPG_TEST_OPTIONS) --export-secret-keys --no-default-keyring --secret-keyring $$T > $@; \
 	rc=$$?; rm -f $$T $$C; exit $$rc
 
-$(RELEASE_ARTIFACTS)/%:
+# Use one caller-supplied identity for both sets of release binaries and packages.
+release-artifacts: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
+release-artifacts: ## Build the release archives for both architectures with RELEASE_VERSION.
+	@case "$$GVISOR_RELEASE_LABEL" in ''|0.0.0|VERSION_MISSING|*[!A-Za-z0-9._+-]*) echo "invalid RELEASE_VERSION" >&2; exit 1;; esac; \
+	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac; \
+	for arch in x86_64 aarch64; do \
+		$(MAKE) BAZEL_OPTIONS="$(BAZEL_OPTIONS) --config=$$arch --config=release_version --embed_label=$$GVISOR_RELEASE_LABEL" "$(RELEASE_ARTIFACTS)/$$arch" || exit $$?; \
+	done
+.PHONY: release-artifacts force-release-artifacts
+
+$(RELEASE_ARTIFACTS)/%: $(if $(GVISOR_RELEASE_LABEL),force-release-artifacts)
 	@mkdir -p $@
 	@$(call copy,//debian:debian,$@)
 	@$(call copy,//debian:gvisor-release-tar-bz2,$@)
