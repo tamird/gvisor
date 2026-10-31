@@ -1,81 +1,46 @@
-name: Validate both graph readers and deferred decoding
+name: Report retained state samples with benchstat
 on:
   push:
-    branches: [qualification/state-window-growth-interop]
+    branches: [qualification/state-window-benchstat]
 permissions:
-  contents: read
   actions: read
+  contents: read
 jobs:
-  windows:
+  compare:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 165
-    env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      SOURCE: 0a1e7fbbf4064d33fc3e1c2ddf272b3373e12ec6
-      STOCK_SHIFT: 4354fa70e8236da17a5f45aac3c018b8fb5f875e
-      STOCK: e0040f3cea1f9dd72e7a9c870ada37e34f8a45f4
-      MUTANT: 2f4d5e8c432f0344a5fba2e28cbd8971b4ef4eba
-      COUNTERS: 0e4863e0aeadfd9e48cc3f5fa550cca364e8b6a7
-      NGINX: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+    timeout-minutes: 8
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
-    - name: Prepare the pinned compiler coordinator and RBE workers
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        set -euo pipefail
-        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        [[ "$(git rev-parse HEAD^1)" == "$SOURCE" && "$(git rev-parse HEAD^2)" == "$STOCK_SHIFT" && "$(git rev-parse HEAD^2^)" == "$STOCK" ]]
-        git diff --exit-code "$SOURCE" "$STOCK_SHIFT" -- pkg/state/graph_decode_callbacks_test.go
-        git diff --exit-code "$STOCK" "$STOCK_SHIFT" -- pkg/state/graph_encode_objects_unsafe.go
-        for f in window_qualification.sh window_report.py qualification_report.py unit_matrix.py; do
-          cp "test/rbe/$f" "$RUNNER_TEMP/$f"
-        done
-        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"4GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/tcp.bazelrc"
-        unset BUILDBUDDY_API_KEY
-        docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
-        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-
-    - name: Restore checked stock results from the preceding run
+    - name: Reconcile the retained timing samples
       env:
         GH_TOKEN: ${{ github.token }}
+      working-directory: ${{ runner.temp }}
       run: |
-        set -euo pipefail
-        gh api repos/tamird/gvisor/actions/artifacts/13026076601/zip > "$RUNNER_TEMP/prior.zip"
-        echo "8bdac91c70de37b39e3d053071ace18f426b0ad38499a8121411f7fcf2e7268e  $RUNNER_TEMP/prior.zip" | sha256sum -c -
-        unzip -q "$RUNNER_TEMP/prior.zip" 'stock/*' -d "$RUNNER_TEMP/records"
-    - name: Run the corrected graph tests
-      run: bash "$RUNNER_TEMP/window_qualification.sh" units
-    - name: Verify both readers, both package targets and the original two-pass case
-      if: ${{ !cancelled() }}
-      run: python3 -B "$RUNNER_TEMP/window_report.py" "$RUNNER_TEMP/records"
-    - name: Redact credentials from the evidence bundle
-      if: always()
-      env:
-        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        python3 - <<'PY'
+        import hashlib, io, json, pathlib, re, subprocess, zipfile
+        sources = [
+            ('stock', 13024129668, 'e6d89729059310205237d4f9d79ded1dcc0d5fea01f01bfe5fe466e11b43350f', 'base/test.log'),
+            ('updated', 13026721647, '99901f8f991204bbd83dc8a44a2ba60835282c472a84a6d2b82c858a88f24faf', 'full/state.test.log'),
+        ]
+        out = pathlib.Path('report')
+        out.mkdir()
+        for label, artifact, digest, name in sources:
+            blob = subprocess.check_output(['gh', 'api', f'repos/tamird/gvisor/actions/artifacts/{artifact}/zip'])
+            assert hashlib.sha256(blob).hexdigest() == digest
+            with zipfile.ZipFile(io.BytesIO(blob)) as z:
+                log = z.read(name).decode()
+            rows = re.findall(r'WINDOW-SAVE n=2048 order=(wide|narrow) sample=(\d+) save_ns=(\d+) bytes=(\d+)', log)
+            assert sorted((o,int(i)) for o,i,t,b in rows) == [(o,i) for o in ('narrow','wide') for i in range(6)]
+            assert {int(b) for o,i,t,b in rows} == {8119}
+            (out/label).write_text(''.join(f'BenchmarkSharedSliceSave/order={o} 1 {t} ns/op\n' for o,i,t,b in rows if i != '0'))
+        (out/'sources.json').write_text(json.dumps(sources))
+        PY
+    - name: Calculate benchstat from the two original samples
+      working-directory: ${{ runner.temp }}/report
       run: |
-        python3 - <<'PYTHON'
-        import os
-        from pathlib import Path
-        key=os.environ["BB_KEY"].encode()
-        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
-            if f.is_file() and key and key in (data:=f.read_bytes()):
-                f.write_bytes(data.replace(key,b"[REDACTED]"))
-        PYTHON
+        go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e stock updated | tee benchstat.txt
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always()
       with:
-        name: shared-window-compatibility
-        path: ${{ runner.temp }}/records/
+        name: shared-window-benchstat
+        path: ${{ runner.temp }}/report
         if-no-files-found: error
