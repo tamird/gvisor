@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"golang.org/x/sys/unix"
-
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/sentry/contexttest"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
@@ -105,7 +104,7 @@ func TestEventFDStat(t *testing.T) {
 func TestNewFromHostRegistrationFailure(t *testing.T) {
 	// The descriptor limit and the notifier's first registration are process-wide.
 	const probe = "GVISOR_EVENTFD_REGISTRATION_FAILURE"
-	if os.Getenv(probe) == "" {
+	if _, ok := os.LookupEnv(probe); !ok {
 		cmd := exec.Command(os.Args[0], "-test.run=^TestNewFromHostRegistrationFailure$")
 		cmd.Env = append(os.Environ(), probe+"=1")
 		if out, err := cmd.CombinedOutput(); err != nil {
@@ -126,7 +125,7 @@ func TestNewFromHostRegistrationFailure(t *testing.T) {
 	}
 	defer unix.Close(hostfd)
 
-	before := vfsObj.NumFiles()
+	want := vfsObj.NumFiles()
 	var limit unix.Rlimit
 	if err := unix.Getrlimit(unix.RLIMIT_NOFILE, &limit); err != nil {
 		t.Fatal(err)
@@ -144,7 +143,7 @@ func TestNewFromHostRegistrationFailure(t *testing.T) {
 	if _, err := unix.FcntlInt(uintptr(hostfd), unix.F_GETFD, 0); err != nil {
 		t.Errorf("caller lost host fd after failed import: %v", err)
 	}
-	if got := vfsObj.NumFiles(); got != before {
-		t.Errorf("live files after failed import = %d, want %d", got, before)
+	if got := vfsObj.NumFiles(); got != want {
+		t.Errorf("live files after failed import = %d, want %d", got, want)
 	}
 }

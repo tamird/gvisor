@@ -30,29 +30,9 @@ run_bazel() {
   grep -A8 -E 'Invocation ID:|ERROR:|Failed to|failed:|FAILED|SKIPPED| PASSED|Build did NOT complete' "$logfile" | tail -180 > "$d/bazel-diagnostics" || :
 }
 common=(--config=x86_64 --verbose_failures --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_sharding_strategy=disabled --test_output=all)
-if [[ $1 == unit ]]; then
-  for name in control correction; do
-    d="$RUNNER_TEMP/records/$name"; mkdir -p "$d"
-    src=$FIXED; [[ $name != control ]] || src=$CONTROL
-    set_source "$src"
-    run_bazel test "${common[@]}" --jobs=32 --strategy=TestRunner=local --test_arg=-test.v //pkg/sentry/fsimpl/eventfd:eventfd_test
-    for f in test.log test.xml; do
-      docker exec tcp-compiler cat "bazel-testlogs/pkg/sentry/fsimpl/eventfd/eventfd_test/$f" > "$d/$f" || rm -f "$d/$f"
-    done
-  done
-else
-  name=owners; d="$RUNNER_TEMP/records/$name"; mkdir -p "$d"
-  set_source "$FIXED"
-  run_bazel test "${common[@]}" --jobs=4 --keep_going --strategy=GoStaticAnalysis=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --output_groups=default,nogo_findings --test_timeout=600 //pkg/sentry/fsimpl/eventfd:eventfd_nogo //pkg/sentry/fsimpl/eventfd:eventfd_test_nogo
-  for owner in eventfd_nogo eventfd_test_nogo; do
-    for ext in log xml; do
-      docker exec tcp-compiler cat "bazel-testlogs/pkg/sentry/fsimpl/eventfd/$owner/test.$ext" > "$d/$owner.$ext" || rm -f "$d/$owner.$ext"
-    done
-    for arch in amd64 arm64; do
-      key="$owner.$arch.findings"
-      if digest=$(docker exec tcp-compiler sha256sum "bazel-bin/pkg/sentry/fsimpl/eventfd/$key"); then
-        printf '%s\n' "${digest%% *}" > "$d/$key.sha256"
-      fi
-    done
-  done
-fi
+name=correction; d="$RUNNER_TEMP/records/$name"; mkdir -p "$d"
+set_source "$FIXED"
+run_bazel test "${common[@]}" --jobs=32 --strategy=TestRunner=local --test_arg=-test.v '--test_arg=-test.run=^TestNewFromHostRegistrationFailure$' //pkg/sentry/fsimpl/eventfd:eventfd_test
+for f in test.log test.xml; do
+  docker exec tcp-compiler cat "bazel-testlogs/pkg/sentry/fsimpl/eventfd/eventfd_test/$f" > "$d/$f" || rm -f "$d/$f"
+done

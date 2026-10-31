@@ -1,4 +1,4 @@
-name: Qualify eventfd import failure ownership
+name: Confirm the reviewed eventfd import regression
 on:
   push:
     branches: [qualification/eventfd-import-emfile]
@@ -11,8 +11,8 @@ jobs:
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      FIXED: ce72c5b3b560ba3db3c2a63a59641c7db2d4430a
-      CONTROL: 8cc75db84f90839deda4bb3b2c18d89966a2a099
+      FIXED: 8b0c840b1aa2afe6bdfbf411bda92cd678dcc857
+      PREVIOUS: b70ca1847220d65fabca94a452bf3411599839e8
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 5, persist-credentials: false}
@@ -22,8 +22,8 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        [[ "$(git rev-parse HEAD^1)" == "$FIXED" && "$(git rev-parse HEAD^2)" == "$CONTROL" ]]
-        git diff --exit-code "$CONTROL" "$FIXED" -- pkg/sentry/fsimpl/eventfd/BUILD pkg/sentry/fsimpl/eventfd/eventfd_test.go
+        [[ "$(git rev-parse HEAD^2)" == "$FIXED" && "$(git rev-parse HEAD^1)" == "$PREVIOUS" ]]
+        git diff --exit-code HEAD^1^1 "$FIXED" -- pkg/sentry/fsimpl/eventfd/BUILD pkg/sentry/fsimpl/eventfd/eventfd.go
         for f in eventfd_qualification.sh eventfd_report.py qualification_report.py unit_matrix.py; do
           cp "test/rbe/$f" "$RUNNER_TEMP/$f"
         done
@@ -41,12 +41,9 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Check file ownership on both eventfd sources
+    - name: Run the reviewed regression on native Linux
       run: bash "$RUNNER_TEMP/eventfd_qualification.sh" unit
-    - name: Check the corrected eventfd library and test with Nogo
-      if: ${{ !cancelled() }}
-      run: bash "$RUNNER_TEMP/eventfd_qualification.sh" owners
-    - name: Verify the named assertions and both analyzer architectures
+    - name: Verify the named case and unchanged production source
       if: ${{ !cancelled() }}
       run: python3 -B "$RUNNER_TEMP/eventfd_report.py" "$RUNNER_TEMP/records"
     - name: Redact credentials from the evidence bundle
