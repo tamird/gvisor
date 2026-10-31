@@ -19,6 +19,10 @@ startup --host_jvm_args=-Dbazel.DigestFunction=SHA256
 # Python interpreter to bootstrap it.
 build --@rules_python//python/config_settings:bootstrap_impl=script
 
+# Use the static Linux runtime for packaging workers without an ELF loader.
+build:static-python --@rules_python//python/config_settings:python_version=3.11.18
+build:static-python --@rules_python//python/config_settings:py_linux_libc=musl
+
 # Build with C++17.
 # com_google_protobuf is compiled with a few warnings.
 build --cxxopt=-std=c++17 --cxxopt=-Wno-error=maybe-uninitialized
