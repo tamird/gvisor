@@ -1,60 +1,27 @@
-name: Validate missing graph encoding wire and race controls
+name: Recover two original graph race test reports
 on:
   push:
-    branches: [qualification/state-graph-emission-controls]
+    branches: [qualification/state-graph-emission-race-receipt]
 permissions:
   contents: read
   actions: read
 jobs:
-  assembly:
-    if: github.repository == 'tamird/gvisor'
+  originals:
     runs-on: ubuntu-24.04
-    timeout-minutes: 165
-    env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      BASE: aa767e4c43d011121271551fe24da501a56f729d
-      STOCK: e0183e612ccecf603a7f934b708963433168197c
-      CANDIDATE: 4a5b36d237b708e305807985d5c65470251fcfd2
-      PRODUCT: 49e5b3d5d8488a6a7bf0590caacbdeff9798a25f
-      NGINX: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+    timeout-minutes: 100
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 9, persist-credentials: false}
-    - name: Prepare the pinned compiler coordinator and RBE workers
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        set -euo pipefail
-        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        git merge-base --is-ancestor "$CANDIDATE" HEAD
-        git merge-base --is-ancestor "$STOCK" HEAD
-        [[ "$(git rev-parse "$CANDIDATE^")" == "$PRODUCT" && "$(git rev-parse "$PRODUCT^")" == "$BASE" && "$(git rev-parse "$STOCK^")" == "$BASE" ]]
-        git diff --exit-code "$CANDIDATE" HEAD -- pkg test/benchmarks
-        for f in window_qualification.sh window_report.py qualification_report.py unit_matrix.py identify.py verify.py; do
-          cp "test/rbe/$f" "$RUNNER_TEMP/$f"
-        done
-        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"4GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/tcp.bazelrc"
-        unset BUILDBUDDY_API_KEY
-        docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
-        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-
-    - name: Check identical public graph wire and record verbose race cases
-      run: bash "$RUNNER_TEMP/window_qualification.sh" nginx
-    - name: Check the original stock fingerprint and all race results
-      if: always()
-      run: python3 -B "$RUNNER_TEMP/window_report.py" "$RUNNER_TEMP/records"
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always()
-      with:
-        name: graph-emission-controls
-        path: ${{ runner.temp }}/records/verdict.json
-        if-no-files-found: error
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 3
+      - name: Read original state race reports
+        id: joint
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 -B test/rbe/graph_race_receipt.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: graph-race-original
+          path: ${{ runner.temp }}/graph-race-original.json
+          if-no-files-found: error
