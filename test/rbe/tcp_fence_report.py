@@ -22,7 +22,7 @@ def main() -> int:
     for report in captured["reports"]:
         if report["name"] == "test.log":
             for line in (out / report["path"]).read_text().splitlines():
-                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE|CONFIG|UNDO) [a-zA-Z0-9_.= -]+", line):
+                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE|CONFIG|COUNT) [a-zA-Z0-9_.= -]+", line):
                     observations.append(line)
                 elif re.search(r"tcp_rack_test.go:\d+:|Operation not permitted|operation not permitted|failed to bootstrap|failed to disable DAD|read-only file system|No such file or directory|unknown failure:", line):
                     diagnostics.append(line[:650])
@@ -32,23 +32,32 @@ def main() -> int:
     errors = []
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") not in ("local","standalone") for r in results):
         errors.append("expected one uncached test on the hosted Linux machine")
-    modes = ("cumulative", "sack_third")
+    modes = ("repeat_ack", "sack_repair")
     if sorted(x for x in observations if x.startswith("FENCE_DONE")) != [f"FENCE_DONE mode={mode}" for mode in modes]:
         errors.append("both live socket cases must complete")
     for mode in modes:
-        for phase in ("before_timeout", "first_timeout", "after_ack"):
+        for phase in ("before_timeout", "first_timeout", "before_feedback", "after_ack"):
             if not any(s.startswith(f"FENCE_STATE mode={mode} phase={phase} ") for s in observations):
                 errors.append(f"{mode}: missing TCP_INFO at {phase}")
         if not any(s.startswith(f"FENCE_WIRE mode={mode} phase=first_timeout offset=0 ") for s in observations):
             errors.append(f"{mode}: did not observe the first segment retransmitted")
+        for phase in ("discarded_repair", "later_repair"):
+            if not any(s.startswith(f"FENCE_WIRE mode={mode} phase={phase} ") for s in observations):
+                errors.append(f"{mode}: missing actual {phase}")
+        if sum(s.startswith(f"FENCE_ACK mode={mode} ") for s in observations) != 2:
+            errors.append(f"{mode}: expected both partial ACKs")
         if not any(s.startswith(f"FENCE_ACK mode={mode} ") for s in observations):
             errors.append(f"{mode}: no partial acknowledgment")
     if [s for s in observations if s.startswith("FENCE_CONFIG")] != [f"FENCE_CONFIG tcp_frto={arm[-1]}"]:
-        errors.append("missing kernel setting readback")
+        errors.append("kernel F-RTO setting not verified")
     for mode in modes:
-        for phase in ("before_timeout", "first_timeout", "after_ack"):
-            if sum(s.startswith(f"FENCE_UNDO mode={mode} phase={phase} spurious=") for s in observations) != 1:
-                errors.append(f"no unique TCPSpuriousRTOs counter for {mode}/{phase}")
+        phases = [s.split(" phase=",1)[1].split()[0] for s in observations if s.startswith(f"FENCE_STATE mode={mode} ")]
+        want = ["before_timeout","first_timeout","before_feedback","after_ack"]
+        if phases not in (want, want+["later_retry"]):
+            errors.append(f"incomplete TCP_INFO sequence for {mode}: {phases}")
+        for phase in phases:
+            if len([s for s in observations if s.startswith(f"FENCE_COUNT mode={mode} phase={phase} ")]) != 1:
+                errors.append(f"missing Linux counters: {mode}/{phase}")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
         errors.append("qualifier failed")
     if errors and verdict["status"] == "PASS":

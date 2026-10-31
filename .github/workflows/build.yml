@@ -1,12 +1,12 @@
-name: Determine whether Linux F-RTO accounts for the post-timeout SACK
+name: Identify what accelerates retransmission of an already repaired segment
 on:
   push:
-    branches: [qualification/tcp-first-rto-frto]
+    branches: [qualification/tcp-lost-repair-counters]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-first-rto-frto'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-lost-repair-counters'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -21,9 +21,9 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        source=5f2eed3f0139ae87f208a7b951aa565cddd1eb92
-        parent=15711c0b514c9a4b517596143db420c242cef174
-        test "$(git rev-parse HEAD^1)" = "e2971f58f64c1fac846c8d80e34bfc237116ddbf"
+        source=d9d31bbb36656e95abe97896b0c140a362ec8c22
+        parent=45cef2f3ba0df0814adbaf8e2cfaa40a4a9ee4df
+        test "$(git rev-parse HEAD^1)" = "f858f139914cc591511b0b85a7e1a1879fb0b8c6"
         git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source" "$parent"
         parent_of() { git cat-file -p "$1" | sed -n '/^$/q;s/^parent //p'; }
         test "$(parent_of "$source")" = "$parent"
@@ -175,6 +175,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-first-rto-frto
+        name: tcp-lost-repair-counters
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
