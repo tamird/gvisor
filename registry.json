@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T10:56:25.783115+00:00",
+    "updatedAt": "2026-10-31T11:10:39.713303+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28351,10 +28351,11 @@
       "updatedAt": "2026-10-27T15:15:10+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-31T10:56:25.783115+00:00",
+        "observedAt": "2026-10-31T11:10:39.713303+00:00",
         "disposition": "Reporter’s burst needs no extra SACK retention; a separate recovery-timer comparison found one mismatch",
-        "nextAction": "Check the timer-only change against all seven Linux captures, including two ACKs that trim the same packet. Keep timeout SACK retention out of the proposal.",
+        "nextAction": "Test whether a Linux receiver under buffer pressure discards data it already acknowledged, and whether an earlier retransmission then helps a transfer finish. Check segmentation offload separately. Keep the existing timeout scoreboard reset.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41194692496/artifacts/13040800952",
           "https://github.com/tamird/gvisor/actions/runs/41193862284/artifacts/13039967594",
           "https://github.com/tamird/gvisor/actions/runs/41193721121/artifacts/13039749043",
           "https://github.com/google/gvisor/issues/16670",
@@ -28375,6 +28376,10 @@
         {
           "label": "Reno and FreeBSD configurations, fixes and review order",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "The revised timer matched all seven Linux sender traces, including consecutive partial ACKs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41194692496/artifacts/13040800952"
         },
         {
           "label": "Identical Linux and gVisor inputs: a second partial ACK triggered an early 239-byte retransmission only on the prototype",
