@@ -86,11 +86,6 @@ def _nogo_stdlib_impl(ctx):
         env = go_ctx.env,
         mnemonic = "GoStandardLibraryAnalysis",
         progress_message = "Analyzing Go Standard Library",
-        # Since these actions are generally I/O bound, reading source files,
-        # facts, binaries and serializing results, disable sandboxing. This can
-        # be enabled without any issues for correctness, but we want to avoid
-        # paying the FUSE penalty.
-        execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
             "bundle",
             "-findings=%s" % findings_file.path,
@@ -338,8 +333,6 @@ def _nogo_aspect_impl(target, ctx):
         env = go_ctx.env,
         mnemonic = "GoStaticAnalysis",
         progress_message = "Analyzing %s" % target.label,
-        # See above.
-        execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
             "check",
             "-findings=%s" % findings_file.path,
@@ -421,8 +414,6 @@ def _nogo_test_impl(ctx):
             executable = ctx.files._nogo[0],
             mnemonic = "GoStaticAnalysis",
             progress_message = "Generating %s" % ctx.label,
-            # See above.
-            execution_requirements = {"no-sandbox": "1"},
             arguments = ["filter"] +
                         ["-config=%s" % f.path for f in config_srcs] +
                         ["-output=%s" % findings.path] +
@@ -519,8 +510,6 @@ def _nogo_facts_render_impl(ctx):
         env = go_ctx.env,
         mnemonic = "GoStaticAnalysis",
         progress_message = "Generating %s" % ctx.label,
-        # See above.
-        execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
             "render",
             "-template=%s" % ctx.files.template[0].path,
