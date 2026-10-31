@@ -36,5 +36,5 @@ void errno_safe_free(void* p) {
 
 void* operator new(size_t size) { return errno_safe_malloc(size); }
 void* operator new[](size_t size) { return errno_safe_malloc(size); }
-void operator delete(void* p) { errno_safe_free(p); }
-void operator delete[](void* p) { errno_safe_free(p); }
+void operator delete(void* p) noexcept { errno_safe_free(p); }
+void operator delete[](void* p) noexcept { errno_safe_free(p); }

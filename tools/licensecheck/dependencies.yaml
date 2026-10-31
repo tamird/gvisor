@@ -648,10 +648,12 @@
   license: Apache-2.0
 - dependency: github.com/moby/sys/symlink
   version: v0.3.0
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: cafbe42351600ca9b363e220722f66d96f6e71f4
   sha256: c0036c97c9b7b7a246468165a968fedd974691161b083f1e7e99bafc58e57451
-  license: Apache-2.0
+  license:
+    - Apache-2.0
+    - BSD-3-Clause
 - dependency: github.com/moby/sys/user
   version: v0.4.0
   retrieved: "2026-08-27"
@@ -690,10 +692,12 @@
   license: BSD-3-Clause
 - dependency: github.com/opencontainers/go-digest
   version: v1.0.0
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: ea51bea511f75cfa3ef6098cc253c5c3609b037a
   sha256: 615efb31ff6cd71035b8aa38c3659d8b4da46f3cd92ac807cb50449adfe37c86
-  license: Apache-2.0
+  license:
+    - Apache-2.0
+    - CC-BY-SA-4.0
 - dependency: github.com/opencontainers/image-spec
   version: v1.1.1
   retrieved: "2026-08-27"
@@ -1030,10 +1034,12 @@
   license: BSD-3-Clause
 - dependency: gopkg.in/yaml.v2
   version: v2.4.0
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: ""
   sha256: ede49e27c4cca6cdd2ec719aed8ea4d363710cceb3d411e7a786fbdec0d391fd
-  license: Apache-2.0
+  license:
+    - Apache-2.0
+    - MIT
 - dependency: gopkg.in/yaml.v3
   version: v3.0.1
   retrieved: "2026-08-27"
@@ -1053,10 +1059,12 @@
     - MPL-2.0
 - dependency: honnef.co/go/tools
   version: v0.5.1
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: 56172d41b117cc2c2f99f65fe0a790c8d7d7ea66
   sha256: d728ff392fc5b6f676a30c36e9d0a5b85f6f2e06b4ebbb121c27d965cbdffa11
-  license: MIT
+  license:
+    - BSD-3-Clause
+    - MIT
 - dependency: k8s.io/api
   version: v0.32.3
   retrieved: "2026-08-27"
@@ -1128,14 +1136,17 @@
   commit: 39e71f9391895169b05ccd62cbb1956ae5322ff3
   sha256: 64d421959bba30cb3bcdd1e57a01b8ef2f12b93db3d1ab4a34fe5f4d2ca78aa4
   license: MIT
-- dependency: llvm-raw
-  version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
-  retrieved: "2026-09-30"
-  commit: cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f
-  sha256: e8ece380fdb57dc6f8e42df9db872a1ade5056c5379075e3e2f99c89200aea69
+- dependency: llvm-project
+  version: https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-23.1.2-r1/llvm-project-23.1.2.src.tar.zst
+  retrieved: "2026-10-23"
+  commit: ""
+  sha256: 271da53a2feb0cb221a9276a14268a3b76ad802c7fc8fb1098291a43b06e4c56
   license:
     - Apache-2.0 WITH LLVM-exception
+    - BSD-3-Clause
+    - CC0-1.0
     - NCSA
+    - Spencer-94
 - dependency: nlohmann_json
   version: https://github.com/nlohmann/json/releases/download/v3.12.0/include.zip
   retrieved: "2026-09-10"
@@ -1251,6 +1262,12 @@
     - Apache-2.0
     - BSD-3-Clause
     - MIT
+- dependency: with_cfg.bzl
+  version: https://github.com/fmeum/with_cfg.bzl/releases/download/v1.0.0/with_cfg.bzl-v1.0.0.tar.gz
+  retrieved: "2026-10-02"
+  commit: a33b1b2d2fd38f5884643d37d1c54c5d280d583c
+  sha256: 79815b22f8de722a25bb90ccdc209c145c44983f6d7cd7deb6d87b2b35d821fa
+  license: Apache-2.0
 - dependency: xds
   version: https://github.com/cncf/xds/archive/ee656c7534f5d7dc23d44dd611689568f72017a6.tar.gz
   retrieved: "2026-08-27"
