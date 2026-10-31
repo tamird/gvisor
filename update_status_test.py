@@ -1259,6 +1259,12 @@ class ReapprovalReminderTest(unittest.TestCase):
             return updater.reminder_plan(pr, node, now, "tamird", frozenset({"etienneperot"}))
 
         self.assertEqual(plan({})["action"], "restore-import-label")
+        # A listed maintainer may only be a CONTRIBUTOR on GitHub (#16551).
+        fresh = pr["feedback"]["items"][-1]
+        with mock.patch.dict(fresh, {"authorAssociation": "CONTRIBUTOR"}):
+            self.assertEqual(plan({})["action"], "restore-import-label")
+            nonmember = updater.reminder_plan(pr, {}, now, "tamird", frozenset())
+            self.assertNotEqual(nonmember.get("action"), "restore-import-label")
         with mock.patch.dict(pr, {"githubReviewDecision": "REVIEW_REQUIRED"}):
             self.assertEqual(plan({})["action"], "restore-import-label")
         with mock.patch.dict(pr, {"githubReviewDecision": "CHANGES_REQUESTED"}):

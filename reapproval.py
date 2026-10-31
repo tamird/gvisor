@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
-from work_states import approved_patch, effective_approval, landed_patch, public_import_disposition
+from work_states import approved_patch, effective_approval, landed_patch, public_import_disposition, with_maintainer_reviewers
 
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
@@ -58,6 +58,7 @@ def import_author_block(pr: dict, node: dict) -> str | None:
 def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                   maintainers: frozenset[str]) -> dict:
     """Plan either an exact amendment review or a verified missing import trigger."""
+    pr = with_maintainer_reviewers(pr, maintainers)
     result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head"),
               "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))}
 

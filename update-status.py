@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from reapproval import maintainer_logins, reminder_plan
-from work_states import FAILURES, check_purpose, check_states, effective_approval, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies
+from work_states import FAILURES, check_purpose, check_states, effective_approval, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -808,6 +808,7 @@ def reapproval_reminders(post: bool = False) -> None:
         if pr.get("repo") != "google/gvisor" or pr.get("status") != "open":
             continue
         node = nodes.get((pr["repo"], pr["number"]), {})
+        pr = with_maintainer_reviewers(pr, maintainers)
         disposition = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
         if disposition["action"]:
             print(json.dumps({"publicImportHandoff": {"number": pr["number"], "url": pr["url"],
@@ -958,8 +959,11 @@ def main() -> None:
         if not (previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER):
             previous = {}
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
+    maintainers = fetch_maintainers()
     for repo, policy in policies.items():
         records, fresh, prior, inventory = collect_repository(repo, policy, previous)
+        if repo == "google/gvisor":
+            records = [with_maintainer_reviewers(pr, maintainers) for pr in records]
         # Keep observed human feedback actionable even if a later repository or
         # snapshot validation fails. This log is not a published observation.
         for record in reviewer_handoff(records, previous):

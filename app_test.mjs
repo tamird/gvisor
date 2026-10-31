@@ -1366,6 +1366,19 @@ test('owned branch work routes to the agent without inventing a contributor deci
   }
 });
 
+test('the current project roster recognizes maintainers GitHub calls contributors', () => {
+  const context = client(), { github: pr } = attentionNode();
+  const review = { kind: 'review', state: 'APPROVED', author: { __typename: 'User', login: 'kerumeto' },
+    authorAssociation: 'CONTRIBUTOR', commit: { oid: pr.head }, submittedAt: '2026-10-30T23:48:48Z' };
+  Object.assign(pr, { reviewsComplete: true, reviewRequestsComplete: true, headHistoryComplete: true,
+    headCommittedAt: '2026-10-30T21:04:07Z', headIntroducedAt: '2026-10-30T21:05:11Z',
+    feedback: { items: [review] }, maintainerReviewers: ['kerumeto'] });
+  context.pr = pr;
+  assert.equal(vm.runInContext('currentHeadApproval(pr)', context), true);
+  pr.maintainerReviewers = [];
+  assert.equal(vm.runInContext('currentHeadApproval(pr)', context), false);
+});
+
 test('attention uses current approvals and import associations without inventing import failures', () => {
   const node = attentionNode(), imported = attentionImport(node);
   imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false; imported.status = 'closed'; node.github.imports = [imported];
