@@ -148,15 +148,7 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	// only passed to l immediately: generated StateLoadValue methods copy
 	// them. Values passed later, or whose decoding ran code that may keep
 	// their address, keep their storage.
-	p := ds.valueScratch[ti]
-	if p == nil {
-		p = reflect.New(ti.typ).UnsafePointer()
-	} else {
-		delete(ds.valueScratch, ti)
-		if ti.partial {
-			reflect.NewAt(ti.typ, p).Elem().SetZero()
-		}
-	}
+	p := ds.takeValueScratch(ti)
 	hooks, deferred, refs := ds.hooks, ds.deferred, ds.refs
 	ds.lastRef = -1
 	keepZero := ds.keepZero
@@ -188,10 +180,7 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	reusable := ds.hooks == hooks
 	ds.runCallback(&cb)
 	if reusable {
-		if ds.valueScratch == nil {
-			ds.valueScratch = make(map[*typeInfo]unsafe.Pointer)
-		}
-		ds.valueScratch[ti] = p
+		ds.putValueScratch(ti, p)
 	}
 }
 
