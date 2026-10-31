@@ -21,6 +21,8 @@ import (
 	"unsafe"
 )
 
+var windowRootSteps, windowBucketSteps uint64
+
 // index adds the object to the object index.
 func (es *graphEncodeState) index(obj int32) {
 	o := es.obj(obj)
@@ -51,6 +53,7 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 			continue
 		}
 		for ; e >= 0; e = es.blockEntries[e].next {
+			windowBucketSteps++
 			be := &es.blockEntries[e]
 			if be.addr >= end || addr >= be.end {
 				continue
@@ -70,6 +73,7 @@ func (es *graphEncodeState) query(addr, end uintptr) []int32 {
 func (es *graphEncodeState) root(obj int32) (int32, uintptr) {
 	var off uintptr
 	for es.obj(obj).parent >= 0 {
+		windowRootSteps++
 		off += es.obj(obj).parentOff
 		obj = es.obj(obj).parent
 	}

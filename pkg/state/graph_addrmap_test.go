@@ -167,3 +167,7 @@ func TestAddrMap(t *testing.T) {
 		t.Fatalf("get(0) = %d, %t, want 7, true", got, ok)
 	}
 }
+
+func init() {
+	readWindowVisits = func() (uint64, uint64) { return windowRootSteps, windowBucketSteps }
+}
