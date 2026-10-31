@@ -332,11 +332,11 @@ func (i *Inotify) nextWatchIDLocked() int32 {
 	return i.nextWatchMinusOne
 }
 
-// AddWatch constructs a new inotify watch and adds it to the target. It
-// returns the watch descriptor returned by inotify_add_watch(2).
+// AddWatch returns the watch descriptor for target. It returns EEXIST if
+// IN_MASK_CREATE requests a new watch and this instance already watches target.
 //
 // The caller must hold a reference on target.
-func (i *Inotify) AddWatch(target *Dentry, mask uint32) int32 {
+func (i *Inotify) AddWatch(target *Dentry, mask uint32) (int32, error) {
 	// Note: Locking this inotify instance protects the result returned by
 	// Lookup() below. With the lock held, we know for sure the lookup result
 	// won't become stale because it's impossible for *this* instance to
@@ -347,6 +347,9 @@ func (i *Inotify) AddWatch(target *Dentry, mask uint32) int32 {
 	ws := target.Watches()
 	// Does the target already have a watch from this inotify instance?
 	if existing := ws.Lookup(i.id); existing != nil {
+		if mask&linux.IN_MASK_CREATE != 0 {
+			return 0, linuxerr.EEXIST
+		}
 		newmask := mask
 		if mask&linux.IN_MASK_ADD != 0 {
 			// "Add (OR) events to watch mask for this pathname if it already
@@ -354,12 +357,12 @@ func (i *Inotify) AddWatch(target *Dentry, mask uint32) int32 {
 			newmask |= existing.mask.Load()
 		}
 		existing.mask.Store(newmask)
-		return existing.wd
+		return existing.wd, nil
 	}
 
 	// No existing watch, create a new watch.
-	w := i.newWatchLocked(target, ws, mask)
-	return w.wd
+	w := i.newWatchLocked(target, ws, mask&^linux.IN_MASK_CREATE)
+	return w.wd, nil
 }
 
 // RmWatch looks up an inotify watch for the given 'wd' and configures the
