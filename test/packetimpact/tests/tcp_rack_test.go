@@ -99,8 +99,8 @@ func sendAndReceive(t *testing.T, dut testbench.DUT, conn testbench.TCPIPv4, num
 }
 
 // TestFirstTimeout observes partial ACKs after the first timeout from Open.
-func TestFirstTimeout(t *testing.T) {
-	for _, mode := range []string{"cumulative", "sack_third"} {
+func TestLostTimeoutRepair(t *testing.T) {
+	for _, mode := range []string{"repeat_ack", "sack_repair"} {
 		t.Run(mode, func(t *testing.T) {
 			dut, conn, fd, mss := createSACKConnection(t)
 			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("reno"))
@@ -153,15 +153,31 @@ func TestFirstTimeout(t *testing.T) {
 			if got, want := loss.CaState, uint8(linux.TCP_CA_Loss); got != want {
 				t.Fatalf("state on first-byte retransmission = %d, want Loss (%d)", got, want)
 			}
-			if mode == "cumulative" {
+			ack(mss, -1, -1)
+			packet("discarded_repair", mss, mss, time.Second)
+			packet("later_repair", 2*mss, mss, time.Second)
+			// Both original copies went unacknowledged. The peer discards the
+			// retransmission of segment 2 and receives the retransmission of 3.
+			// Only the SACK case tells the sender that 3 was received.
+			repair := observe("before_feedback")
+			if got, want := repair.CaState, uint8(linux.TCP_CA_Loss); got != want {
+				t.Fatalf("state before feedback = %d, want Loss (%d)", got, want)
+			}
+			// Give the later retransmission a plausible RTT even on loopback.
+			// Without timestamps its ACK is otherwise ambiguous to RACK.
+			delay := time.Duration(repair.RTT) * time.Microsecond
+			if delay >= time.Duration(repair.RTO)*time.Microsecond/8 {
+				t.Fatalf("RTT too close to the retransmission deadline: %+v", repair)
+			}
+			time.Sleep(delay)
+			if mode == "repeat_ack" {
 				ack(mss, -1, -1)
 			} else {
-				// Deliver segment 3 out of order while segment 2 is missing.
 				ack(mss, 2*mss, 3*mss)
 			}
 			// Wait for an impossible sequence so ListenForFrame records every
 			// repair. End this observation well before another RTO is due.
-			rto := time.Duration(loss.RTO) * time.Microsecond
+			rto := time.Duration(repair.RTO) * time.Microsecond
 			window := min(80*time.Millisecond, rto/4)
 			if window < time.Millisecond {
 				t.Fatalf("unusable RTO: %v", rto)
@@ -174,6 +190,7 @@ func TestFirstTimeout(t *testing.T) {
 			if found {
 				t.Fatal("received unsent sequence")
 			}
+			early := false
 			for _, frame := range frames {
 				if len(frame) != 4 {
 					continue
@@ -187,6 +204,9 @@ func TestFirstTimeout(t *testing.T) {
 					continue
 				}
 				off := uint32(*tcp.SeqNum) - uint32(base)
+				if off == uint32(mss) {
+					early = true
+				}
 				if off < uint32(flight*mss) {
 					fmt.Printf("FENCE_WIRE mode=%s phase=after_ack offset=%d bytes=%d\n", mode, off, len(payload.Bytes))
 				}
@@ -195,7 +215,11 @@ func TestFirstTimeout(t *testing.T) {
 			if elapsed := time.Since(start); elapsed >= rto {
 				t.Fatalf("observation lasted %v, reached next timeout %v", elapsed, rto)
 			}
-			fmt.Printf("FENCE_DONE mode=%s\n", mode)
+			if !early {
+				packet("later_retry", mss, mss, 4*time.Second)
+				observe("later_retry")
+			}
+			fmt.Printf("FENCE_DONE mode=%s\\n", mode)
 		})
 	}
 }
