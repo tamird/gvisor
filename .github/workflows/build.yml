@@ -1,35 +1,61 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Reconcile the current LLVM source catalog
+on: workflow_dispatch
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  catalog:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/llvm-current-catalog'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    env:
+      BASE: b171d8325fb955966efc07d65fde3d150ee4f859
+      PRODUCT: 7e64ec593b1d0fa627744b93fd07bc3454022c82
+      MAKEFLAGS: DOCKER_BUILD=false
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 8
+        persist-credentials: false
+    - name: Generate both catalogs and verify the new one
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        [[ "$(git rev-parse HEAD^)" == "$PRODUCT" && "$(git rev-parse HEAD^^)" == "$BASE" ]]
+        out="$RUNNER_TEMP/catalog"
+        mkdir -p "$out"
+        for stage in base product; do
+          rev="$BASE"; if [[ "$stage" == product ]]; then rev="$PRODUCT"; fi
+          git checkout --detach -q "$rev"
+          git show -s --format='%H %T %P' >> "$out/sources.txt"
+          cp tools/licensecheck/dependencies.yaml "$out/$stage-input.yaml"
+          set +e
+          bazelisk run //tools/licensecheck/main:licensecheck -- --mode=fetch > "$out/$stage-fetch.log" 2>&1
+          rc=$?
+          set -e
+          echo "$rc" > "$out/$stage-fetch.exit"
+          cp tools/licensecheck/dependencies.yaml "$out/$stage.yaml"
+          tail -3 "$out/$stage-fetch.log"
+          set +e
+          bazelisk run //tools/licensecheck/main:licensecheck -- --mode=verify > "$out/$stage-verify.log" 2>&1
+          rc=$?
+          set -e
+          echo "$rc" > "$out/$stage-verify.exit"
+          tail -10 "$out/$stage-verify.log"
+          git restore -- tools/licensecheck/dependencies.yaml
+        done
+        # Repeating Fetch from its own materialized output must be a no-op.
+        cp "$out/product.yaml" tools/licensecheck/dependencies.yaml
+        bazelisk run //tools/licensecheck/main:licensecheck -- --mode=fetch > "$out/product-repeat.log" 2>&1 || { tail -30 "$out/product-repeat.log"; exit 1; }
+        cmp "$out/product.yaml" tools/licensecheck/dependencies.yaml
+        test "$(cat "$out/base-fetch.exit")" = 0
+        test "$(cat "$out/product-fetch.exit")" = 0
+        test "$(cat "$out/product-verify.exit")" = 0
+        sha256sum "$out/base.yaml" "$out/product.yaml" | tee "$out/hashes.txt"
+        echo PASS > "$out/verdict"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: current-llvm-canonical-catalog
+        path: ${{ runner.temp }}/catalog
+        if-no-files-found: error
