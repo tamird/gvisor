@@ -1,0 +1,195 @@
+"""Compare the workspace and declared-input Gazelle checks on the Linux runner."""
+
+import ast
+import hashlib
+import json
+import os
+import re
+import shutil
+import sys
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+work = Path(os.environ["RUNNER_TEMP"])
+bundle = work / "gazelle-qualification"
+bundle.mkdir()
+source = os.environ["SOURCE"]
+base = os.environ["BASE"]
+cases = ["warning", "malformed", "unexpected_exit", "downstream_product", "downstream_wildcard", "master_clean", "candidate_clean", "scratch_clean", "workspace_missing", "declared_missing", "scratch_missing", "workspace_directive", "declared_directive", "scratch_directive", "bazelignore", "repo_ignore", "restored_clean", "public_alias"]
+records = {}
+result = dict(source=source, base=base, expected=cases, results=records, status="INCOMPLETE")
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+def save():
+    result["missing"] = [name for name in cases if name not in records]
+    (bundle / "verdict.json").write_text(json.dumps(result, indent=2) + "\n")
+
+def command(args):
+    return subprocess.check_output(args, text=True).strip()
+
+def sanitized(text):
+    return re.sub(r"(?i)((?:api-key|api.token|authorization)[:=]\s*)[^\s]+", r"\1[removed]", text)
+
+def run(name, args, *, bad=False, contains=(), patch=None):
+    proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    text = proc.stdout
+    # Only retain the diagnostic lines relevant to this comparison; flags in a
+    # full Bazel transcript can include the RBE authorization header.
+    lines = [x for x in text.splitlines() if any(k in x for k in ("ERROR:", "gazelle_probe.go", "pkg/fspath", "from_ancestor", "app.buildbuddy.io/invocation/", "undeclared", "no such", "ErrDiff", "error:", "forbidden", "override", "visibility", "dev_dependency", "could not resolve", "extension", "unknown directive:", "syntax error"))]
+    (bundle / (name + ".log")).write_text(sanitized("\n".join(lines[-40:])) + "\n")
+    lines = text
+    if patch is not None and patch.exists():
+        diff = patch.read_text()
+        (bundle / (name + ".patch")).write_text(diff)
+        lines += diff
+    hits = {key: key in lines for key in contains}
+    ok = (proc.returncode != 0 if bad else proc.returncode == 0) and all(hits.values())
+    records[name] = dict(exit=proc.returncode, expected_failure=bad, matched=hits, success=ok, finished_at=now())
+    save()
+    if not ok:
+        raise RuntimeError(f"{name}: exit={proc.returncode}, hits={hits}; see filtered diagnostic")
+    return lines
+
+def actual_packages():
+    s = Path("tools/gazelle.bzl").read_text()
+    node, = [a for a in ast.parse(s).body if isinstance(a, ast.Assign)]
+    return ast.literal_eval(node.value)
+
+target = "//:gazelle_check"
+def native(name, **kwargs):
+    return run(name, ["bazel", "build", "--remote_download_outputs=all", target], **kwargs)
+
+def query():
+    data = command(["bazel", "aquery", "--output=jsonproto", "--include_commandline", "--include_artifacts", 'mnemonic("GazelleCheck", //:gazelle_check)'])
+    return json.loads(data)
+
+def replay(name, **kwargs):
+    graph = query()
+    action, = graph["actions"]
+    argv = action["arguments"]
+    paths = {str(i["id"]): i for i in graph["pathFragments"]}
+    def path(i):
+        f = paths[str(i)]
+        return path(f["parentId"]) / f["label"] if f.get("parentId") not in (None, 0, "0") else Path(f["label"])
+    files = {str(a["id"]): path(a["pathFragmentId"]) for a in graph["artifacts"]}
+    sets = {str(s["id"]): s for s in graph["depSetOfFiles"]}
+    seen = set()
+    deps = set()
+    def walk(i):
+        if (key := str(i)) in seen:
+            return
+        seen.add(key)
+        group = sets[key]
+        deps.update(files[str(x)] for x in group.get("directArtifactIds", []))
+        for child in group.get("transitiveDepSetIds", []):
+            walk(child)
+    for i in action["inputDepSetIds"]:
+        walk(i)
+    def argument(flag):
+        value, = [x[len(flag)+1:] for x in argv if x.startswith(flag+"=")]
+        return Path(value)
+    root = argument("-repo_root")
+    config = argument("-repo_config")
+    patch = Path(argv[argv.index("--exit-code-out") + 1])
+    tool = Path(argv[argv.index("--") + 1])
+    launcher = Path(argv[0])
+    expected = [str(root / pkg) for pkg in actual_packages()]
+    assert argv[-len(expected):] == expected and len(expected) == 218
+    assert "-index=none" in argv and "-r=false" in argv and "-bzlmod" in argv
+    assert config in deps and tool in deps and launcher in deps, (str(config), str(tool))
+    declared = [f for f in sorted(deps) if f.is_relative_to(root) or f in (config, tool, launcher)]
+    assert root / "go.mod" in declared and root / "BUILD" in declared
+    if name != "scratch_clean":
+        assert root / "pkg/bits/gazelle_probe.go" in declared
+    if name == "scratch_directive":
+        assert root / "pkg/BUILD" in declared
+    execroot = Path(command(["bazel", "info", "execution_root"]))
+    jail = work / (name + "-root")
+    jail.mkdir()
+    for f in declared:
+        dest = jail / f
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(execroot / f, dest)
+    (jail / tool).chmod(0o755)
+    (jail / launcher).chmod(0o755)
+    assert root / ".bazelignore" in declared
+    (jail / patch).parent.mkdir(exist_ok=True, parents=True)
+    assert not (jail / "bin").exists() and not (jail / "usr").exists()
+    metadata = dict(files=len(declared), packages=len(expected), gazelle=str(tool), repository_config=str(config), config_sha256=hashlib.sha256((jail / config).read_bytes()).hexdigest(), root=str(root))
+    (bundle / (name + "-inputs.json")).write_text(json.dumps(metadata,indent=2)+"\n")
+    previous = json.loads((work / "prior" / "scratch_clean-inputs.json").read_text())
+    metadata["previous_config_sha256"] = previous["config_sha256"]
+    return run(name, ["sudo", "/usr/bin/env", "-i", "PATH=/no-host-tools", "/usr/bin/unshare", "--net", "/usr/sbin/chroot", jail, *argv], **kwargs)
+
+def main():
+    assert command(["git","rev-parse","HEAD"]) == source
+    result["tree"] = command(["git","rev-parse","HEAD^{tree}"])
+    prior=json.loads((work/"retained"/"verdict.json").read_text())
+    assert prior["source"] == source
+    for key,row in prior["results"].items():
+        if key.startswith("downstream_"): continue
+        assert row["success"]
+        records[key]=dict(row,artifact=row.get("artifact",13046890088))
+    assert len(records)==16
+    for f in (work/"retained").iterdir():
+        if f.name.startswith(("declared_missing","scratch_clean","malformed","warning")): shutil.copyfile(f,bundle/f.name)
+    # Use an independent root module rather than assuming all dev dependencies
+    # and root-only overrides remain visible to downstream packages.
+    source_root = Path.cwd()
+    consumer = work / "gazelle-downstream"
+    consumer.mkdir()
+    (consumer / "BUILD").write_text("")
+    (consumer / "MODULE.bazel").write_text('module(name = "gazelle_downstream")\nbazel_dep(name = "gvisor", version = "0.0.1")\nlocal_path_override(module_name = "gvisor", path = "%s")\n' % source_root)
+    shutil.copyfile(".bazelversion", consumer / ".bazelversion")
+    # Isolate this target from unrelated root developer targets in the
+    # wildcard, preserving the real Bazel expansion and the license product.
+    labels = command(["bazel", "query", "//:all"]).splitlines()
+    assert "//:license" in labels
+    relatives = ["-@gvisor" + label for label in labels if label.startswith("//") and label not in ("//:license", "//:gazelle_check")]
+    config = ["--ignore_dev_dependency", "--platforms=@lint_platform//:ubuntu", "--override_module=gvisor="+str(source_root)]
+    probes = {
+        "downstream_product":["@gvisor//pkg/abi/linux/errno:errno"],
+        "downstream_wildcard":["--nobuild","@gvisor//:all"],
+        "downstream_filtered_wildcard":["--", "@gvisor//:all",*relatives],
+        "downstream_filter_control":["--nobuild", "@gvisor//:gazelle_check"],
+        "downstream_license":["@gvisor//:license"],
+        "downstream_static_c":["@gvisor//images/benchmarks/syscallbench:syscallbench"],
+        "downstream_benchmark_resources":["@gvisor//test/kubernetes/benchmarks/resources:all"],
+        "downstream_consumer_mapping":["--nobuild","@gvisor//pkg/sentry:internal"],
+    }
+    # Also exercise the consuming Bazel client against products outside the
+    # root package without requiring the transitive Go policy of //tools:defs.
+    cases.extend(k for k in probes if k not in cases)
+    os.chdir(consumer)
+    def sample(key,cmd):
+        try:
+            run(key,["bazel","build",*config,*cmd],bad=(key=="downstream_filter_control"))
+        except RuntimeError:
+            pass
+    for key, cmd in probes.items():
+        sample(key,cmd)
+    os.chdir(source_root)
+    if not all(records[k]["success"] for k in probes):
+        baseline = work / "gazelle-parent"
+        subprocess.run(["git", "worktree", "add", "--detach", str(baseline), source + "^"],check=True)
+        mf=consumer/"MODULE.bazel"; mf.write_text(mf.read_text().replace(str(source_root), str(baseline)))
+        config[-1]="--override_module=gvisor="+str(baseline)
+        os.chdir(consumer)
+        for key, cmd in probes.items():
+            if not records[key]["success"]: sample(key+"_parent",cmd)
+        raise RuntimeError("downstream qualification incomplete; see candidate and parent diagnostics")
+    result["status"]="PASS"
+
+save()
+try:
+    main()
+except BaseException as err:
+    result["error"] = sanitized(str(err))
+    result["status"]="FAIL"
+    raise
+finally:
+    result["finished_at"]=now()
+    save()
