@@ -500,3 +500,70 @@ func TestRACKRepeatedSACKAfterRTO(t *testing.T) {
 	}
 	ack(3, first.Add(seqnum.Size(mss)), block(2))
 }
+
+// TestSACKReneging distinguishes a receiver that reported a whole packet and
+// then stopped acknowledging it from one that only reported the packet's tail.
+func TestSACKReneging(t *testing.T) {
+	const (
+		peerRTT    = 150 * time.Millisecond
+		packetSize = 480
+	)
+	for _, tc := range []struct {
+		name         string
+		sackedOffset int
+		wantEarly    bool
+	}{
+		{name: "WholePacket", sackedOffset: 0, wantEarly: true},
+		{name: "OnlySuffix", sackedOffset: packetSize / 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dut, conn, fd, maxPayload := createSACKConnectionWithPeerRTT(t, peerRTT)
+			if got, want := maxPayload, packetSize; got < want {
+				t.Fatalf("send MSS = %d, want at least %d", got, want)
+			}
+			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+			// Establish an RTT large enough to distinguish half an RTT from the RTO.
+			for range 4 {
+				sendAndReceive(t, dut, conn, 1, fd, packetSize, false)
+				time.Sleep(peerRTT)
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+			}
+
+			rtt, rto := getRTTAndRTO(t, dut, fd)
+			if rtt <= 0 || rto <= rtt {
+				t.Fatalf("RTT %v and RTO %v do not distinguish the two deadlines", rtt, rto)
+			}
+			window := (rtt/2 + rto) / 2
+			first := *conn.RemoteSeqNum(t)
+			second := first.Add(packetSize)
+			end := second.Add(packetSize)
+			sendAndReceive(t, dut, conn, 2, fd, packetSize, false)
+			time.Sleep(peerRTT)
+			var opts [40]byte
+			n := header.EncodeNOP(opts[:])
+			n += header.EncodeNOP(opts[n:])
+			n += header.EncodeSACKBlocks([]header.SACKBlock{{Start: second.Add(seqnum.Size(tc.sackedOffset)), End: end}}, opts[n:])
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(first)), Options: opts[:n]})
+
+			// Both peers now ACK the same bytes in two steps. Only the first
+			// peer had reported receiving the whole packet before these ACKs.
+			mid := second.Add(packetSize / 2)
+			ack := mid.Add(1)
+			for _, seq := range []seqnum.Value{mid, ack} {
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seq))})
+			}
+			segment := &testbench.TCP{SeqNum: testbench.Uint32(uint32(ack))}
+			remaining := &testbench.Payload{Bytes: make([]byte, ack.Size(end))}
+			_, err := conn.ExpectData(t, segment, remaining, window)
+			if got, want := err == nil, tc.wantEarly; got != want {
+				t.Fatalf("retransmission within %v = %t, want %t (RTT %v, RTO %v)", window, got, want, rtt, rto)
+			}
+			if !tc.wantEarly {
+				if _, err := conn.ExpectData(t, segment, remaining, 2*rto); err != nil {
+					t.Fatalf("waiting for the ordinary retransmission: %v", err)
+				}
+			}
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(end))})
+		})
+	}
+}
