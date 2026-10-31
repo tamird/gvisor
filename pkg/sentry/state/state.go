@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -268,5 +269,8 @@ func SuspendGCForRestore(metadata map[string]string) *gccontrol.Suspension {
 	if v, err := strconv.ParseUint(metadata[metadataMemoryFileUsedBytesKey], 10 /* base */, 64 /* bitSize */); err == nil {
 		savedMemoryFileBytes = v
 	}
-	return gccontrol.Suspend(totalMemoryLimit(), savedMemoryFileBytes)
+	total := totalMemoryLimit()
+	gc := gccontrol.Suspend(total, savedMemoryFileBytes)
+	log.Infof("GC_RESTORE_OBS total=%d memfile=%d go_limit=%d suspended=%t", total, savedMemoryFileBytes, debug.SetMemoryLimit(-1), gc != nil)
+	return gc
 }
