@@ -1,35 +1,91 @@
-name: CI
-
-"on":
+name: Qualify the release target from a source archive
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-release-archives-bcr]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    env:
+      PRODUCT: ebceb0d817702f80e780113ab16581344cf32659
+      IMAGE: docker.io/library/ubuntu@sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Set the evidence directory
+        run: |
+          echo "RELEASE_TEMP=$RUNNER_TEMP/native-release" >> "$GITHUB_ENV"
+          echo "RESULT=$RUNNER_TEMP/native-release/results" >> "$GITHUB_ENV"
+      - name: Identify the product and prepare an isolated signing key
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/nativehandoff'
+          mkdir -p "$RESULT" "$RELEASE_TEMP/platform" "$RELEASE_TEMP/no-docker" "$RELEASE_TEMP/gpg"
+          chmod 0700 "$RELEASE_TEMP/gpg"
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends dpkg-sig apt-utils
+          bazelisk version
+          GNUPGHOME="$RELEASE_TEMP/gpg" gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key 'Disposable release test <release@example.invalid>' rsa2048 sign 1d
+          GNUPGHOME="$RELEASE_TEMP/gpg" gpg --batch --export-secret-keys > "$RELEASE_TEMP/key"
+          chmod 0600 "$RELEASE_TEMP/key"
+          cat > "$RELEASE_TEMP/no-docker/docker" <<'SH'
+          #!/bin/sh
+          touch "$RELEASE_TEMP/docker-attempt"
+          exit 59
+          SH
+          chmod +x "$RELEASE_TEMP/no-docker/docker"
+          printf 'module(name="release_platform")\n' > "$RELEASE_TEMP/platform/MODULE.bazel"
+          cat > "$RELEASE_TEMP/platform/BUILD" <<EOF
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"firecracker", "EstimatedMemory":"6GB", "container-image":"docker://$IMAGE"},
+              visibility = ["//visibility:public"],
+          )
+          EOF
+          cat >> "$RELEASE_TEMP/platform/BUILD" <<'EOF'
+          genrule(
+              name = "without_compiler",
+              outs = ["tool-absent.txt"],
+              cmd = "for tool in cc gcc clang clang++ ld x86_64-linux-gnu-gcc aarch64-linux-gnu-gcc; do if command -v $$tool; then exit 1; fi; done; echo absent > $@",
+              visibility = ["//visibility:public"],
+          )
+          EOF
+      - name: Build and sign directly; reject an incomplete set
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          rc="$RELEASE_TEMP/private.bazelrc"
+          trap 'rm -f -- "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --jobs=64' "build --inject_repository=release_platform=$RELEASE_TEMP/platform" 'build --host_platform=@release_platform//:gnu' 'build --extra_execution_platforms=@release_platform//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          export PATH="$RELEASE_TEMP/no-docker:$PATH" DOCKER_HOST="unix://$RELEASE_TEMP/no-socket" GNUPGHOME="$RELEASE_TEMP/gpg"
+          mkdir "$RELEASE_TEMP/source" "$RELEASE_TEMP/stock"
+          git archive "$PRODUCT^1" | tar -x -C "$RELEASE_TEMP/stock"
+          git archive "$PRODUCT" | tar -x -C "$RELEASE_TEMP/source"
+          cd "$RELEASE_TEMP/source"
+          test ! -e tools/workspace_status.sh
+          if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then exit 1; fi
+          trap 'date -u +%FT%T.%3NZ > "$RESULT/execution-finished"' EXIT
+          python3 "$GITHUB_WORKSPACE/test/rbe/nativehandoff/compiler.py"
+          bash "$GITHUB_WORKSPACE/test/rbe/nativehandoff/probe.sh"
+      - name: Write one verdict
+        if: ${{ always() }}
+        run: |
+          cd "$RELEASE_TEMP/source"
+          python3 "$GITHUB_WORKSPACE/test/rbe/nativehandoff/verdict.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ always() }}
+        with:
+          name: llvm-release-archives-bcr
+          path: ${{ runner.temp }}/native-release/results
