@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T13:42:29.262086+00:00",
+    "updatedAt": "2026-10-31T13:55:39.956262+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10722,8 +10722,8 @@
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15647",
       "status": "open",
-      "updatedAt": "2026-10-29T13:29:38.654210+00:00",
-      "summary": "Published the clock compatibility rebase. The recovered AMD64 suites passed 174 cases; ARM64 passed 176 records. The two final native AMD64 analyzer receipts were verified without redownloading the individual reports.",
+      "updatedAt": "2026-10-31T13:55:39.956262+00:00",
+      "summary": "Master moved clock creation earlier to warm up the vDSO before resume. The proposed rebase selects the configured clock there and preserves the warm-up.",
       "number": 15647,
       "reviewDecision": null,
       "evidence": [
@@ -10739,7 +10739,24 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/1258537f7870ff8882318a40ce26634782b41dc7"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Clock owner",
+        "disposition": "Checking conflict repair",
+        "sourceHead": "a1e81990e7b88a144b9650063e790d7c6f00003d",
+        "observedAt": "2026-10-31T13:55:39.956262+00:00",
+        "nextAction": "Verify monotonic and boot-time clocks before and after restore in calibrated and reference modes. Request contributor review once the four results are in.",
+        "evidence": [
+          {
+            "label": "Clock-selection conflict repair",
+            "url": "https://github.com/tamird/gvisor/commit/80bbb7478"
+          },
+          {
+            "label": "Both clock sources across live restore",
+            "url": "https://github.com/tamird/gvisor/actions/runs/41207688872"
+          }
+        ]
+      }
     },
     {
       "id": "branch:nvproxy-declared-sources",
@@ -36999,9 +37016,9 @@
       "title": "tcp: release the port of a wildcard-bound endpoint when it is closed",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T13:42:29.262086+00:00",
+      "updatedAt": "2026-10-31T13:55:39.956262+00:00",
       "url": "https://github.com/google/gvisor/pull/16180",
-      "summary": "The author fixed the port reservation leak and added the shared IPv4/mapped syscall regression. The remaining action is upstream approval to run fork CI.",
+      "summary": "Approved and imported. The dual-stack port regression passed across 43 restores on the approved head. That test establishes reuse after a connected close; it does not cover closing a socket that never connected or two sockets sharing a reservation.",
       "evidence": [
         {
           "label": "Linux and runsc syscall receipt",
@@ -51085,9 +51102,22 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T13:27:19.063035+00:00",
-      "summary": "Pooling child IDs cut allocations per Nginx checkpoint Save from 1,528 to 1,078, but allocated 0.74% more bytes in every pair. Wall time was 1.499 vs 1.497 ms and CPU time was 1.513 vs 1.512 ms (both p=.645, eight pairs). Large and alternating pointer graphs used 3.90% more bytes. The change will not be proposed.",
+      "updatedAt": "2026-10-31T13:55:39.956262+00:00",
+      "summary": "Neither experiment improved Nginx checkpoint time. Pooling child IDs reduced Save allocations from 1,528 to 1,078 but increased allocated bytes in every pair. Splitting the varint reader left Load allocations and the compiled call sites unchanged.",
       "findings": [
+        {
+          "text": "Splitting the graph decoder’s varint reader left all seven calls in the compiled hot path out of line. Across eight paired Nginx restores, Load took 1.083 vs 1.085 ms, CPU took 1.093 vs 1.098 ms, and allocations stayed at 3,537 per operation.",
+          "evidence": [
+            {
+              "label": "Eight paired Nginx restores and linked decoder disassembly",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41206009656/artifacts/13045595084"
+            },
+            {
+              "label": "Measured decoder change",
+              "url": "https://github.com/tamird/gvisor/commit/8a6389d17"
+            }
+          ]
+        },
         {
           "text": "Pooling child IDs cut allocations per Nginx checkpoint Save from 1,528 to 1,078, but allocated 0.74% more bytes in every pair. Wall time was 1.499 vs 1.497 ms and CPU time was 1.513 vs 1.512 ms (both p=.645, eight pairs). Large and alternating pointer graphs used 3.90% more bytes. The change will not be proposed.",
           "evidence": [
@@ -51759,8 +51789,16 @@
           ]
         }
       ],
-      "nextStep": "Retain the results alongside the slab and map experiments. Use the recorded decoder CPU profile to assess whether its varint read path warrants a separate experiment.",
+      "nextStep": "Both experiments are concluded; neither needs contributor review or an upstream change.",
       "evidence": [
+        {
+          "label": "Eight paired Nginx restores and linked decoder disassembly",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41206009656/artifacts/13045595084"
+        },
+        {
+          "label": "Measured decoder change",
+          "url": "https://github.com/tamird/gvisor/commit/8a6389d17"
+        },
         {
           "label": "Paired Nginx checkpoint measurements and graph controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41203438025/artifacts/13043472922"
