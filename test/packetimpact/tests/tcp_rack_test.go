@@ -107,6 +107,7 @@ func TestLostTimeoutRepair(t *testing.T) {
 			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
 			sendAndReceive(t, dut, conn, 4, fd, mss, true)
 			base := *conn.RemoteSeqNum(t)
+			fmt.Printf("FENCE_FLOW mode=%s base=%d\n", mode, uint32(base))
 			seq := func(off int) seqnum.Value { return base.Add(seqnum.Size(off)) }
 			observe := func(at string) linux.TCPInfo {
 				info := dut.GetSockOptTCPInfo(t, fd)
@@ -163,11 +164,11 @@ func TestLostTimeoutRepair(t *testing.T) {
 			if got, want := repair.CaState, uint8(linux.TCP_CA_Loss); got != want {
 				t.Fatalf("state before feedback = %d, want Loss (%d)", got, want)
 			}
-			// Give the later retransmission a plausible RTT even on loopback.
-			// Without timestamps its ACK is otherwise ambiguous to RACK.
-			delay := time.Duration(repair.RTT) * time.Microsecond
-			if delay >= time.Duration(repair.RTO)*time.Microsecond/8 {
-				t.Fatalf("RTT too close to the retransmission deadline: %+v", repair)
+			// The short-delay SACK reached gVisor before its minimum RTT.
+			// Hold this one past that minimum; check the sample in the sender.
+			const delay = 80 * time.Millisecond
+			if delay >= time.Duration(repair.RTO)*time.Microsecond/3 {
+				t.Fatalf("insufficient time before the retransmission deadline: %+v", repair)
 			}
 			time.Sleep(delay)
 			if mode == "repeat_ack" {
@@ -219,7 +220,7 @@ func TestLostTimeoutRepair(t *testing.T) {
 				packet("later_retry", mss, mss, 4*time.Second)
 				observe("later_retry")
 			}
-			fmt.Printf("FENCE_DONE mode=%s\\n", mode)
+			fmt.Printf("FENCE_DONE mode=%s\n", mode)
 		})
 	}
 }
