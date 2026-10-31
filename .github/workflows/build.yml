@@ -1,7 +1,7 @@
-name: Recover the completed LLVM parser invocation
+name: Read the coverage Starlark traceback
 on:
   push:
-    branches: [qualification/llvm-original-parser-receipt]
+    branches: [qualification/coverage-starlark-diagnosis]
 permissions:
   contents: read
 jobs:
@@ -16,10 +16,10 @@ jobs:
         env:
           PRODUCT: 0afd5b37e31824e0299c44235ef4cb58af0358ce
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/parser_receipt.py
+        run: python3 test/rbe/coverage_trace.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: original-parser-receipt
-          path: ${{ runner.temp }}/parser-receipt
+          name: original-coverage-diagnosis
+          path: ${{ runner.temp }}/package-trace
           if-no-files-found: error
