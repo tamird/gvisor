@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T15:53:13.605957+00:00",
+    "updatedAt": "2026-10-31T16:03:25.373275+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1889,6 +1889,10 @@
         {
           "label": "Published context-only conflict repair",
           "url": "https://github.com/tamird/gvisor/commit/e22d4ffb69d6f40ab3eb498435d918789da14fdb"
+        },
+        {
+          "label": "Fatal syscall: host openat of /sys/devices/system/cpu/online; caller under investigation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41216933979/artifacts/13048672597"
         }
       ]
     },
@@ -40063,8 +40067,8 @@
       "url": "https://github.com/tamird/gvisor/commit/ff0622973",
       "group": "runtime",
       "summary": "With the sentry at its file descriptor limit, pausing unused host notifications panicked. A failed first registration also poisoned later attempts after the limit was restored. Independent Linux processes reproduced both failures; both fixed cases and the existing eventfd consumers pass.",
-      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
-      "status": "Agent work",
+      "updatedAt": "2026-10-31T16:03:25.373275+00:00",
+      "status": "Contributor review requested",
       "evidence": [
         {
           "label": "Stock: cold Pause and retried AddFD both fail",
@@ -40075,21 +40079,54 @@
           "url": "https://app.buildbuddy.io/invocation/46cfaaeb-0a5d-4d9f-9793-295ec2e8216a"
         },
         {
-          "label": "Original receipt: analyzer targets pass, architecture artifacts missing",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41215783485/artifacts/13048276945"
+          "label": "Complete verdict: runtime and AMD64/ARM64 analyzer findings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41217199370/artifacts/13047977795"
         }
       ],
-      "followup": {
-        "owner": "root",
-        "sourceHead": "ff062297311a053e968fc6cdf2b7e98f09854232",
-        "observedAt": "2026-10-31T15:53:13.605957+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Recover the four architecture-specific analyzer reports before requesting contributor review.",
-        "evidence": [
-          "https://app.buildbuddy.io/invocation/7c2fd860-3c8e-4cdf-8d5f-92f56138ca4d",
-          "https://app.buildbuddy.io/invocation/46cfaaeb-0a5d-4d9f-9793-295ec2e8216a",
-          "https://github.com/tamird/gvisor/actions/runs/41215783485/artifacts/13048276945"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "ff062297311a053e968fc6cdf2b7e98f09854232",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/ff0622973",
+        "title": "Start the host FD notifier on the first registration",
+        "requestedAt": "2026-10-31T16:03:25.373275+00:00",
+        "summary": "With the sentry at its file descriptor limit, pausing unused host notifications panicked. A failed first registration also poisoned later attempts after the limit was restored. Independent Linux processes reproduced both failures; both fixed cases and the existing eventfd consumers pass.",
+        "body": "Checkpointing pauses host notifications even if no files are being\nwatched. Pause allocated an epoll FD and dereferenced a nil notifier\nif the sentry had reached its descriptor limit. A failed allocation\nalso made every later registration return EMFILE, even after a file\ndescriptor became available.\n\nGive the notification lock process lifetime. Create the epoll FD\nunder the registration lock when adding the first file, leaving the\nnotifier ready to retry if creation fails."
+      }
+    },
+    {
+      "id": "branch:eventfd-import-failure",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/eventfd-import-failure",
+      "title": "Release the eventfd file after a failed host import",
+      "url": "https://github.com/tamird/gvisor/commit/8b0c840b1",
+      "group": "runtime",
+      "summary": "When an eventfd import failed at the sentry descriptor limit, the VFS still counted the abandoned file. The fix releases that file and leaves the donated descriptor open for its caller.",
+      "evidence": [
+        {
+          "label": "Stock reproduction, corrected package cases and four architecture analyzer outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41216104690/artifacts/13048386561"
+        },
+        {
+          "label": "Final test: object count and caller ownership",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41217378308/artifacts/13048817706"
+        }
+      ],
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T16:03:25.373275+00:00",
+      "head": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/8b0c840b1",
+        "title": "Release the eventfd file after a failed host import",
+        "requestedAt": "2026-10-31T16:03:25.373275+00:00",
+        "summary": "When an eventfd import failed at the sentry descriptor limit, the VFS still counted the abandoned file. The fix releases that file and leaves the donated descriptor open for its caller.",
+        "body": "NewFromHost creates a VFS file before registering the donated host FD.\nIf registration fails, this leaves the file counted in fs/file-nr and\nholds a reference to the anonymous mount.\n\nTransfer the host FD after registration succeeds so that dropping the\nVFS file on error leaves the caller responsible for the host FD."
       }
     }
   ],
