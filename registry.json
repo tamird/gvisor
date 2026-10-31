@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T06:29:18.760429+00:00",
+    "updatedAt": "2026-10-31T07:13:54.078255+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34572,15 +34572,27 @@
       "id": "branch:release-archives-versioned",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/release-archives-builder",
-      "head": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
-      "title": "Build and sign release artifacts with one version",
-      "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...99a5c82ef",
+      "ref": "proposal/release-archives-after-version",
+      "head": "2c0b9071a31bcb5bd2562e16fe1ede94fe3b67e3",
+      "title": "Stage both release architectures with one Bazel target",
+      "url": "https://github.com/tamird/gvisor/commit/2c0b9071a",
       "group": "release",
       "status": "Agent work",
-      "updatedAt": "2026-10-31T06:29:18.760429+00:00",
-      "summary": "The review at 99a5c82ef bundled six native archives and signing with the raw release identity for checkpoint compatibility. Reconcile that part with the sentry identity experiment before asking for review again. STABLE_VERSION still supplies display and package versions while the integrated six-archive target is being checked.",
+      "updatedAt": "2026-10-31T07:13:54.078255+00:00",
+      "summary": "Build the two Debian packages and four tarballs with //debian:release-artifacts. The signing path selects each architecture from its staged paths and rejects an incomplete set. All six were built and signed on the earlier GNU toolchain source. The separate version change supplies the release label.",
       "evidence": [
+        {
+          "label": "Single staging change on the version prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/2c0b9071a"
+        },
+        {
+          "label": "Six archives and signatures from the earlier GNU build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41175683641/artifacts/13033387866"
+        },
+        {
+          "label": "Separate version prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/a303ec933"
+        },
         {
           "label": "Earlier review scope at 99a5c82ef",
           "url": "https://github.com/tamird/gvisor/compare/ac7b4e0fd...99a5c82ef"
@@ -34640,21 +34652,24 @@
       ],
       "refinement": {
         "before": {
-          "head": "4472e47b6880807aaf781f9c1e85b3d43ac5d3e0"
+          "head": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
+          "base": "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
         },
         "after": {
-          "head": "99a5c82ef96f1b5e7de108e2cd55affba8766f34"
+          "base": "a303ec9336e4844e589cd35c891301856369038a",
+          "head": "2c0b9071a31bcb5bd2562e16fe1ede94fe3b67e3"
         }
       },
       "followup": {
         "owner": "Build and release",
-        "sourceHead": "99a5c82ef96f1b5e7de108e2cd55affba8766f34",
-        "observedAt": "2026-10-31T06:29:18.760429+00:00",
-        "disposition": "Revise the checkpoint identity before contributor review",
-        "nextAction": "Verify the six-archive target using the explicitly supplied Bazel label or the linked sentry for checkpoint compatibility. Preserve packaging and signing evidence for this revision.",
+        "sourceHead": "2c0b9071a31bcb5bd2562e16fe1ede94fe3b67e3",
+        "observedAt": "2026-10-31T07:13:54.078255+00:00",
+        "disposition": "Verify the remaining qualification before contributor review",
+        "nextAction": "Reconcile the compiler-free worker run before requesting contributor review. The earlier GNU build and signatures are established; they do not demonstrate that the compiler is declared.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/ac7b4e0fd...99a5c82ef",
-          "https://github.com/tamird/gvisor/actions/runs/41175683641"
+          "https://github.com/tamird/gvisor/commit/2c0b9071a",
+          "https://github.com/tamird/gvisor/actions/runs/41175683641/artifacts/13033387866",
+          "https://github.com/tamird/gvisor/commit/a303ec933"
         ]
       }
     },
@@ -38601,15 +38616,39 @@
       "id": "branch:staged-release-tag",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/staged-release-tag-native-version",
-      "head": "8529bfdd3776d087b9d705df0c5232a8337113ab",
-      "title": "Build staged releases with the verified tag",
-      "url": "https://github.com/tamird/gvisor/compare/316da5996...8529bfdd3",
+      "ref": "proposal/source-export-checkpoint-version",
+      "head": "a303ec9336e4844e589cd35c891301856369038a",
+      "title": "Build source exports without a Git version stamp",
+      "url": "https://github.com/tamird/gvisor/commit/a303ec933",
       "group": "rbe",
       "status": "Agent work",
-      "summary": "The review at 8529bfdd3 retained Git-derived identity for unnamed checkpoints. Reconcile the staged-tag change with the explicit label or linked sentry identity before asking for review again. STABLE_VERSION still supplies display and package versions while the integrated six-archive target is being checked.",
-      "updatedAt": "2026-10-31T06:29:18.760429+00:00",
+      "summary": "Two stock Sentries built from different sources both displayed 0.0.0; the second restored and ran the first guest. Without an explicit release label the revised reader checks the linked Sentry’s Go build ID. An old unnamed checkpoint has only 0.0.0: even a rebuild of matching source cannot establish its identity from that checkpoint. A checkpoint written by the old code with a named release did restore under the new reader carrying that release label. A matching label permits an attempted restore; it does not make incompatible kernel state readable. Ordinary builds display (devel) and produce Debian version 0~devel.",
+      "updatedAt": "2026-10-31T07:13:54.078255+00:00",
       "evidence": [
+        {
+          "label": "Standalone change on the rules_go prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/a303ec933"
+        },
+        {
+          "label": "Seven linked Sentries, four checkpoint images, six restore attempts (native AMD64)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177018262/artifacts/13034556253"
+        },
+        {
+          "label": "Ten version and package checks (ARM64 CLI under QEMU)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41174679549/artifacts/13033187323"
+        },
+        {
+          "label": "Graph restore, exact saved metadata and both owning analyzers (earlier runtime source)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41175238248"
+        },
+        {
+          "label": "32 paired starts and boot timelines",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41173948272/artifacts/13031802684"
+        },
+        {
+          "label": "rules_go supplies distinct linked IDs",
+          "url": "https://github.com/google/gvisor/pull/16593"
+        },
         {
           "label": "Earlier review scope at 8529bfdd3",
           "url": "https://github.com/tamird/gvisor/compare/316da5996...8529bfdd3"
@@ -38637,23 +38676,25 @@
       ],
       "refinement": {
         "before": {
-          "base": "0bbcbf9de7626fcecba97f37723dce80b435d73d",
-          "head": "49c59fcc0063fa0e98d2b383947e4c238be0f21a"
+          "head": "8529bfdd3776d087b9d705df0c5232a8337113ab",
+          "base": "316da599641e292eeda46053079afef1bc5bb4ef"
         },
         "after": {
-          "base": "316da599641e292eeda46053079afef1bc5bb4ef",
-          "head": "8529bfdd3776d087b9d705df0c5232a8337113ab"
+          "base": "5de94c6a122c68dd02a20543a6413c5e37b1a65a",
+          "head": "a303ec9336e4844e589cd35c891301856369038a"
         }
       },
       "followup": {
         "owner": "Build and release",
-        "sourceHead": "8529bfdd3776d087b9d705df0c5232a8337113ab",
-        "observedAt": "2026-10-31T06:29:18.760429+00:00",
-        "disposition": "Revise the checkpoint identity before contributor review",
-        "nextAction": "Verify the six-archive target using the explicitly supplied Bazel label or the linked sentry for checkpoint compatibility. Preserve packaging and signing evidence for this revision.",
+        "sourceHead": "a303ec9336e4844e589cd35c891301856369038a",
+        "observedAt": "2026-10-31T07:13:54.078255+00:00",
+        "disposition": "Verify the remaining qualification before contributor review",
+        "nextAction": "Finish the owning boot/container analysis for both target architectures, then request contributor review of this change once. It needs per-binary Go build IDs from #16593, not the six-archive staging change.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/316da5996...8529bfdd3",
-          "https://github.com/tamird/gvisor/actions/runs/41175683641"
+          "https://github.com/tamird/gvisor/commit/a303ec933",
+          "https://github.com/tamird/gvisor/actions/runs/41177018262/artifacts/13034556253",
+          "https://github.com/tamird/gvisor/actions/runs/41174679549/artifacts/13033187323",
+          "https://github.com/tamird/gvisor/actions/runs/41175238248"
         ]
       }
     },
@@ -41889,9 +41930,13 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:declared-release-version",
+      "from": "branch:staged-release-tag",
       "to": "branch:release-archives-versioned",
-      "reason": "Both split configurations consume the caller-supplied release identity."
+      "reason": "The staging change is based on the explicit release/version proposal and forwards its release label.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/a303ec933",
+        "https://github.com/tamird/gvisor/commit/2c0b9071a"
+      ]
     },
     {
       "type": "depends_on",
@@ -42105,12 +42150,12 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:package-version-status",
+      "from": "pr:16593",
       "to": "branch:staged-release-tag",
-      "reason": "The staged release selects the verified tag in the native package writer. This parent is patch-identical to the first commit in the existing release archive review.",
+      "reason": "The unnamed checkpoint path needs distinct linked Go build IDs, provided by the rules_go update. The version writer is part of this proposal.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/316da5996",
-        "https://github.com/tamird/gvisor/commit/dd0c5f16a"
+        "https://github.com/google/gvisor/pull/16593",
+        "https://github.com/tamird/gvisor/commit/a303ec933"
       ]
     }
   ],
