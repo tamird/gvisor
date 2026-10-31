@@ -28,22 +28,30 @@ if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("exe
 runner_exit = int((out/"runner_exit").read_text())
 if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
-observations = [line[line.index("COOKIE_"):].strip() for line in logs.splitlines() if "COOKIE_" in line]
-flags = ("10", "18", "12", "11", "14", "04")
-if arm == "stock-native":
-    want = {"COOKIE_WAIVED flags=" + flag for flag in flags}
-    if sorted(observations) != sorted(want):
-        why.append("expected one ignored SYN-ACK retransmission for each final ACK flag")
+if arm in ('native', 'netstack'):
+    observations = [line[line.index("COOKIE_WS"):].strip() for line in logs.splitlines() if "COOKIE_WS " in line]
+    if arm in ("native", "netstack"):
+        for ts, expected in (("true", 128), ("false", 16)):
+            matches = [line for line in observations if f"timestamps={ts} " in line and f"window_field=16 initial_bytes={expected} want_bytes={expected}" in line]
+            if len(matches) != 1:
+                why.append(f"expected one {ts=} observation of {expected} received bytes, found {len(matches)}")
 else:
-    for flag in flags:
-        bounds = [line for line in observations if line.startswith("COOKIE_BOUNDARY flags=" + flag + " syn=")]
-        if len(bounds) != 1 or not 2 <= int(bounds[0].split("syn=")[1]) <= 17:
-            why.append("missing or invalid cookie queue boundary for " + flag)
-        for value in ("true","false"):
-            if observations.count(f"COOKIE_RETRANSMITTED flags={flag} expected={value} observed={value}") != 1:
-                why.append("missing retransmission measurement for " + flag + ":" + value)
-    if len(observations) != 18:
-        why.append("expected six queue boundaries and twelve retransmission assertions")
+    observations = [line[line.index("COOKIE_"):].strip() for line in logs.splitlines() if "COOKIE_" in line]
+    flags = ("10", "18", "12", "11", "14", "04")
+    if arm == "stock-native":
+        want = {"COOKIE_WAIVED flags=" + flag for flag in flags}
+        if sorted(observations) != sorted(want):
+            why.append("expected one ignored SYN-ACK retransmission for each final ACK flag")
+    else:
+        for flag in flags:
+            bounds = [line for line in observations if line.startswith("COOKIE_BOUNDARY flags=" + flag + " syn=")]
+            if len(bounds) != 1 or not 2 <= int(bounds[0].split("syn=")[1]) <= 17:
+                why.append("missing or invalid cookie queue boundary for " + flag)
+            for value in ("true","false"):
+                if observations.count(f"COOKIE_RETRANSMITTED flags={flag} expected={value} observed={value}") != 1:
+                    why.append("missing retransmission measurement for " + flag + ":" + value)
+        if len(observations) != 18:
+            why.append("expected six queue boundaries and twelve retransmission assertions")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)

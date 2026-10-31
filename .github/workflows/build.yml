@@ -1,13 +1,13 @@
-name: Verify the SYN-cookie handshake paths on Linux and gVisor
+name: Verify TCP cookie handshakes and negotiated windows with the GNU toolchain
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-boundary'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-gnu-wire'
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 110
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
@@ -20,24 +20,26 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "7e837edccdcfdacb911ef57ebd93dbc57c2128bb"
+        test "$(git rev-parse HEAD^1)" = "290114471c92acf570e41be0d6be8fdda2402f90"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
         done
         python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
         platform=$RUNNER_TEMP/fifo_platform
-        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        printf '%s\n' 'module(name="tcp_gnu")' > "$platform/MODULE.bazel"
         cat > "$platform/BUILD" <<'BUILD'
         platform(
-            name = "ubuntu",
+            name = "gnu",
             constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
             exec_properties = {
                 "Arch": "amd64",
                 "OSFamily": "linux",
-                "workload-isolation-type": "oci",
-                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+                "workload-isolation-type": "firecracker",
+                "EstimatedMemory": "4GB",
+                "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
             },
             visibility = ["//visibility:public"],
         )
@@ -54,15 +56,28 @@ jobs:
             'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
             'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
             'build --remote_accept_cached' \
-            "build --inject_repository=fifo_platform=$platform" \
-            'build --host_platform=@fifo_platform//:ubuntu' \
-            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            "build --inject_repository=tcp_gnu=$platform" \
+            'build --host_platform=@tcp_gnu//:gnu' \
+            'build --extra_execution_platforms=@tcp_gnu//:gnu' \
             'build --platforms=//tools/bazeldefs:linux_amd64'
           printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } > "$rc"
         unset BUILDBUDDY_API_KEY
         printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        # Configure Bazel's host toolchain against the same compiler and libc
+        # available to build actions. Tests still select the Firecracker image
+        # with iptables through their target's execution properties.
+        export TCP_BAZEL_ROOT="$HOME/.cache/bazel/_bazel_runner"
+        mkdir -p "$TCP_BAZEL_ROOT"
+        docker pull --platform linux/amd64 "$GNU"
+        docker run -d --name tcp-gnu --entrypoint /bin/bash --user "$(id -u):$(id -g)" \
+          -e "HOME=$HOME" -e "USER=$USER" -v "$HOME/.cache/bazel:$HOME/.cache/bazel" \
+          -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+          -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-gnu x86_64-linux-gnu-gcc -dumpfullversion
+        docker exec tcp-gnu aarch64-linux-gnu-gcc -dumpfullversion
+        docker exec tcp-gnu bazel --version
         export FIFO_RC=$rc
         mkdir -p "$RUNNER_TEMP/fifo-bin"
         cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
@@ -72,20 +87,21 @@ jobs:
             # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
             printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
             status=0
-            bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
+            docker exec tcp-gnu bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@" || status=$?
             printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
             date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
             exit "$status"
             ;;
         esac
-        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        exec docker exec tcp-gnu bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@"
         SH
         chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in stock-native fixed-native fixed-netstack; do
+        for arm in native netstack stock-native fixed-native fixed-netstack; do
           case $arm in
+            native|netstack) source=249a997c7478cc4bdb21cc248ccb554ed8aba71b; parent=df25b25c88d3b7dd52957039bd228fa63a1679d7 ;;
             stock-native) source=8b385d7316941e0e4eacc58276ef072b4410803f; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
             fixed-native|fixed-netstack) source=619758d82036e4647928c485d6cf36c333f81cce; parent=e40d5fe9cdb59a09f5136d9a0761257d8db1a6d1 ;;
           esac
@@ -120,7 +136,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["stock-native","fixed-native","fixed-netstack"]
+        arms = ["native","netstack","stock-native","fixed-native","fixed-netstack"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -133,6 +149,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: cookie-boundary-verdicts
+        name: cookie-wire-verdicts
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
