@@ -237,12 +237,12 @@ def go_context(ctx, goos = None, goarch = None, attr = None):
         gotags = go_ctx.mode.tags,
         lang_version = "go" + go_ctx.sdk.version,  # go_ctx.sdk.version excludes the go prefix.
         nogo_args = nogo_args,
-        # Go builds tools such as objdump on demand, including assembly sources
-        # that need the SDK's pkg/include headers.
+        # goimports invokes go list, so it still needs the selected SDK.
         runfiles = depset(
             [go_ctx.sdk.go],
             transitive = [go_ctx.sdk.srcs, go_ctx.sdk.headers, go_ctx.sdk.tools, go_ctx.stdlib.libs],
         ),
+        stdlib_libs = go_ctx.stdlib.libs,
         stdlib_srcs = go_ctx.sdk.srcs,
         stdlib_mod = stdlib_mod,
     )

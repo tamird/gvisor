@@ -32,6 +32,9 @@ var (
 	// Go location.
 	Go string
 
+	// Objdump disassembles Go archives. If unset, use go tool objdump.
+	Objdump string
+
 	// GOOS defines the GOOS for analysis.
 	GOOS string
 
@@ -74,6 +77,7 @@ var (
 
 func init() {
 	flag.StringVar(&Go, "go", "go", "command used to invoke 'go tool'")
+	flag.StringVar(&Objdump, "objdump", "", "objdump executable from the Go SDK")
 	flag.StringVar(&GOOS, "GOOS", runtime.GOOS, "GOOS for analysis")
 	flag.StringVar(&GOARCH, "GOARCH", runtime.GOARCH, "GOARCH for analysis")
 	flag.StringVar(&GOVERSION, "GOVERSION", "", "GOVERSION for analysis")

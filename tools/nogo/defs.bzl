@@ -81,7 +81,7 @@ def _nogo_stdlib_impl(ctx):
         # sources in the inputs.
         inputs = inputs + stdlib_srcs,
         outputs = [facts_file, findings_file],
-        tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
+        tools = depset(ctx.files._nogo + [ctx.executable._objdump], transitive = [go_ctx.stdlib_libs]),
         executable = ctx.files._nogo[0],
         env = go_ctx.env,
         mnemonic = "GoStandardLibraryAnalysis",
@@ -92,6 +92,7 @@ def _nogo_stdlib_impl(ctx):
         # paying the FUSE penalty.
         execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
+            "-objdump=%s" % ctx.executable._objdump.path,
             "bundle",
             "-findings=%s" % findings_file.path,
             "-facts=%s" % facts_file.path,
@@ -117,6 +118,11 @@ nogo_stdlib = go_rule(
     attrs = {
         "_nogo": attr.label(
             default = "//tools/nogo:nogo_tool",
+            cfg = "exec",
+        ),
+        "_objdump": attr.label(
+            default = "//tools/nogo:objdump",
+            executable = True,
             cfg = "exec",
         ),
         "_target": attr.label(
@@ -171,7 +177,6 @@ def _nogo_config(ctx, deps, attr = None):
     nogo_target_info = ctx.attr._target[NogoTargetInfo]
     go_ctx = go_context(ctx, goos = nogo_target_info.goos, goarch = nogo_target_info.goarch, attr = attr)
     args = go_ctx.nogo_args + [
-        "-go=%s" % go_ctx.go.path,
         "-GOOS=%s" % go_ctx.goos,
         "-GOARCH=%s" % go_ctx.goarch,
         "-tags=%s" % (",".join(go_ctx.gotags)),
@@ -333,7 +338,7 @@ def _nogo_aspect_impl(target, ctx):
     ctx.actions.run(
         inputs = inputs + srcs,
         outputs = [findings_file, facts_file],
-        tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
+        tools = depset(ctx.files._nogo + [ctx.executable._objdump], transitive = [go_ctx.stdlib_libs]),
         executable = ctx.files._nogo[0],
         env = go_ctx.env,
         mnemonic = "GoStaticAnalysis",
@@ -341,6 +346,7 @@ def _nogo_aspect_impl(target, ctx):
         # See above.
         execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
+            "-objdump=%s" % ctx.executable._objdump.path,
             "check",
             "-findings=%s" % findings_file.path,
             "-facts=%s" % facts_file.path,
@@ -380,6 +386,11 @@ nogo_aspect = go_rule(
     attrs = {
         "_nogo": attr.label(
             default = "//tools/nogo:nogo_tool",
+            cfg = "exec",
+        ),
+        "_objdump": attr.label(
+            default = "//tools/nogo:objdump",
+            executable = True,
             cfg = "exec",
         ),
         "_target": attr.label(
@@ -514,7 +525,7 @@ def _nogo_facts_render_impl(ctx):
     ctx.actions.run(
         inputs = inputs + ctx.files.srcs + ctx.files.template,
         outputs = [ctx.outputs.output],
-        tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
+        tools = depset(ctx.files._nogo, transitive = [go_ctx.stdlib_libs]),
         executable = ctx.files._nogo[0],
         env = go_ctx.env,
         mnemonic = "GoStaticAnalysis",
