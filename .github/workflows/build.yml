@@ -14,7 +14,7 @@ jobs:
       MINIMAL: mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 2, persist-credentials: false}
+      with: {fetch-depth: 3, persist-credentials: false}
     - name: Prepare the previously qualified compiler coordinator and execution platforms
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -23,7 +23,7 @@ jobs:
         d="$RUNNER_TEMP/grpc-receipt"
         mkdir -p "$d" "$RUNNER_TEMP/grpc-workers"
         printf '{"status":"INCOMPLETE","reason":"no final verifier result"}\n' > "$d/verdict.json"
-        test "$(git rev-parse HEAD^)" = aa767e4c43d011121271551fe24da501a56f729d
+        test "$(git rev-parse HEAD~2)" = aa767e4c43d011121271551fe24da501a56f729d
         cat > "$RUNNER_TEMP/grpc-workers/MODULE.bazel" <<'EOF'
         module(name = "grpc_workers")
         EOF
@@ -31,7 +31,7 @@ jobs:
         package(default_visibility=["//visibility:public"])
         constraint_setting(name="contents")
         constraint_value(name="empty",constraint_setting=":contents")
-        platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://$GNU"})
+        platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","EstimatedMemory":"4GB","container-image":"docker://$GNU"})
         platform(name="scratch",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux",":empty"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://$MINIMAL"})
         EOF
         umask 077

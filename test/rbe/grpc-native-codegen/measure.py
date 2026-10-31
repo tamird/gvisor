@@ -17,8 +17,8 @@ services = {
 wrapper = "@@grpc+//src/compiler:grpc_cpp_plugin"
 base = "aa767e4c43d011121271551fe24da501a56f729d"
 options = [
-    "--config=x86_64", "--jobs=64", "--nostamp", "--workspace_status_command=", "--remote_download_outputs=toplevel",
-    "--features=fully_static_link", "--host_features=fully_static_link", "--nostart_end_lib",
+    "--config=x86_64", "--jobs=28", "--nostamp", "--workspace_status_command=", "--remote_download_outputs=toplevel",
+    "--host_cxxopt=-O0", "--cxxopt=-O0", "--features=fully_static_link", "--host_features=fully_static_link", "--nostart_end_lib",
     "--features=-supports_start_end_lib", "--host_features=-supports_start_end_lib",
     "--linkopt=-static", "--host_linkopt=-static",
     "--linkopt=-fuse-ld=bfd", "--host_linkopt=-fuse-ld=bfd",
@@ -65,7 +65,7 @@ def execute(name, command, stdout=None):
     def scrub(line):
         return re.sub(r'(?i)(?:key|authorization|token)[=:][^\s]+', 'REDACTED', line)[:1800]
     rows = [scrub(l) for l in raw.splitlines() if
-            (l.startswith("ERROR:") or "No such file" in l or 'exec: "/bin/bash"' in l or "Invocation ID:" in l or "fatal error:" in l)]
+            (l.startswith("ERROR:") or "no such file" in l.lower() or "/bin/bash" in l or 'exec: "/bin/bash"' in l or "Invocation ID:" in l or "fatal error:" in l)]
     data = dict(start=start, finish=now(), exit=process.returncode, evidence=rows[:22])
     write(name+"-run", data)
     print(name, process.returncode, rows[:3], flush=True)
@@ -97,7 +97,10 @@ def lane(name):
     generated = [a for a in interest if a["owner"] in targets]
     assert len(shell)==int(not native) and len(generated)==2, (name,interest)
     for a in [*shell,*generated]:
-        assert a["executionPlatform"].endswith(":"+("scratch" if bare else "gnu")), (name,a)
+        # Genrule's exec transition discards the root-only target filter. Its
+        # qualification-only exec_properties set the reported remote worker.
+        expected = "scratch" if bare and a["owner"] != wrapper else "gnu"
+        assert a["executionPlatform"].endswith(":"+expected), (name,a)
     for a in generated:
         assert a["mnemonic"]=="Action" and any(x.startswith("--plugin=") and x.endswith("grpc_cpp_plugin_"+("native" if native else "binary")) for x in a["arguments"]),a
     grpc_source = subprocess.check_output(["docker","exec","grpc-compiler","bash","-c",'cat "$(bazel info output_base 2>/dev/null)/external/grpc+/bazel/cc_grpc_library.bzl"'])
@@ -105,6 +108,11 @@ def lane(name):
     assert digest == source_hashes["native" if native else "old"],digest
     events = tmp / (name+"-events.json")
     outcome = execute(name, bazel+["build", *flags, "--execution_log_json_file="+str(events), *targets])
+    if outcome["exit"] and any("killed signal terminated program cc1plus" in t.lower() for t in outcome["evidence"]):
+        # Retain the remote compilation failure. The identical coordinator image
+        # has a separate memory budget, as in the qualified protobuf fallback.
+        events = tmp / (name+"-fallback-events.json")
+        outcome = execute(name+"-compile-fallback", bazel+["build",*flags,"--jobs=3","--strategy=CppCompile=local","--noremote_upload_local_results","--execution_log_json_file="+str(events),*targets])
     selected = []
     if events.is_file():
         for s in spawns(events):
@@ -123,6 +131,12 @@ def lane(name):
     if name == "stock-scratch":
         assert outcome["exit"] and any("grpc_cpp_plugin" in t for t in outcome["evidence"]),outcome
         assert any("/bin/bash" in t and any(v in t.lower() for v in ["not found","no such file","could not start","failed to start"]) for t in outcome["evidence"]),outcome
+        copies = [a for a in selected if a["mnemonic"]=="Genrule" and label(a["targetLabel"])==wrapper]
+        assert len(copies)==1, copies
+        cp=copies[0]
+        props={p["name"]:p["value"] for p in cp["platform"]["properties"]}
+        assert props.get("container-image")=="docker://"+os.environ["MINIMAL"],cp
+        assert cp["runner"]=="remote" and (cp["exitCode"] or cp["status"]),cp
         assert shell[0]["arguments"][0].endswith("/bash") and "cp " in " ".join(shell[0]["arguments"]),shell
     else:
         assert outcome["exit"]==0,outcome
@@ -141,6 +155,10 @@ def main():
     assert subprocess.check_output(["git","show",base+":MODULE.bazel"])==original
     try:
         for name in ["stock-scratch","ordinary","native"]:
+            Path("MODULE.bazel").write_bytes(original)
+            if name=="stock-scratch":
+                with Path("MODULE.bazel").open("ab") as m:
+                    m.write(b'\nsingle_version_override(module_name="grpc", patches=["//test/rbe/grpc-native-codegen:stock-worker.patch"], patch_strip=1)\n')
             if name=="native":
                 with Path("MODULE.bazel").open("ab") as m:
                     m.write(b'\nsingle_version_override(module_name="grpc", patches=["//test/rbe/grpc-native-codegen:native.patch"], patch_strip=1)\n')

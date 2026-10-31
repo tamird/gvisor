@@ -1,0 +1,14 @@
+--- a/bazel/grpc_build_system.bzl
++++ b/bazel/grpc_build_system.bzl
+@@ -222,6 +222,11 @@
+         outs = [name + "_binary"],
+         cmd = "cp $< $@",
+         executable = True,
++        # Qualification only: run the unmodified copy command on the empty worker.
++        exec_properties = {
++            "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
++            "workload-isolation-type": "oci",
++        } if name == "grpc_cpp_plugin" else {},
+     )
+ 
+ def grpc_internal_proto_library(
