@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_binary", "go_cov")
+load("//tools:defs.bzl", "go_binary", "go_cov", "version_x_defs")
 load("//tools:deps.bzl", "deps_test")
 
 package(
@@ -12,7 +12,7 @@ go_binary(
     noasan = True,
     pure = True,
     visibility = ["//visibility:public"],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = version_x_defs(),
     deps = [
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
@@ -30,7 +30,7 @@ go_binary(
         "//:__pkg__",
         "//debian:__pkg__",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = version_x_defs(),
     deps = [
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
@@ -82,7 +82,7 @@ go_binary(
     static = True,
     tags = ["network_plugins"],
     visibility = ["//visibility:public"],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = version_x_defs(),
     deps = [
         "//pkg/sentry/socket/plugin/stack",
         "//runsc/cli",

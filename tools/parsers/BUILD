@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_binary", "go_library", "go_test")
+load("//tools:defs.bzl", "go_binary", "go_library", "go_test", "version_x_defs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -39,7 +39,7 @@ go_binary(
         "version.go",
     ],
     nogo = False,
-    x_defs = {"main.version": "{STABLE_VERSION}"},
+    x_defs = version_x_defs("main.version"),
     deps = [
         ":parsers",
         "//runsc/flag",

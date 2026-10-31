@@ -16,7 +16,7 @@
 
 # Makes the release tag appear on GitHub only after the artifacts are uploaded.
 #
-#   stage    adds release-<name> to the local checkout, before the build.
+#   stage    adds release-<name> to the local checkout and prints it for the build.
 #   publish  pushes release-<name> to GitHub, after the upload.
 #
 # Both do nothing unless BUILDKITE_TAG is a staging tag.
@@ -44,6 +44,11 @@ if [[ "${staging_tag}" != release-*-staging ]]; then
   exit 0
 fi
 declare -r tag="${staging_tag%-staging}"
+# Only names produced by tools/tag_release.sh are valid inputs to Make.
+if ! [[ "${tag}" =~ ^release-20[0-9]{6}\.[0-9]+$ ]]; then
+  echo "error: invalid release tag: ${tag}" >&2
+  exit 1
+fi
 
 # The object "${tag}" names in the remote; empty if it does not exist.
 published_object() {
@@ -67,12 +72,12 @@ case "$1" in
   stage)
     git fetch --no-tags --force "${repo_url}" \
       "refs/tags/${staging_tag}:${staged_ref}"
-    git tag -d "${staging_tag}" || true
+    git tag -d "${staging_tag}" >&2 || true
     if [[ "$(git rev-parse "${staged_ref}^{}")" != "$(git rev-parse HEAD)" ]]; then
       echo "error: ${staging_tag} does not name the commit being built." >&2
       exit 1
     fi
-    git tag -f "${tag}" "${staged_ref}^{}"
+    git tag -f "${tag}" "${staged_ref}^{}" >&2
     # Fail now rather than after the build. The same object means a retry.
     declare -r published="$(published_object)"
     if [[ -n "${published}" && "${published}" != "$(git rev-parse "${staged_ref}")" ]]; then
@@ -82,6 +87,7 @@ case "$1" in
       delete_staging_tag
       exit 1
     fi
+    printf '%s\n' "${tag}"
     ;;
 
   publish)

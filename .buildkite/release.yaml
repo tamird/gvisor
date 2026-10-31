@@ -50,10 +50,14 @@ steps:
     label: ":ship: Release"
     if: build.branch == "master" || (build.tag != null && build.tag =~ /-staging/)
     commands:
-      # Stamps the binaries below with release-<name>.
-      - ./.buildkite/scripts/release/tag.sh stage
-      - "make BAZEL_OPTIONS='--config=x86_64 --compilation_mode=opt' artifacts/x86_64"
-      - "make BAZEL_OPTIONS='--config=aarch64 --compilation_mode=opt' artifacts/aarch64"
+      - |
+        tag=$$(./.buildkite/scripts/release/tag.sh stage)
+        if [[ -n "$$tag" ]]; then
+          export BAZEL_OPTIONS="$${BAZEL_OPTIONS:-} --config=staged_release --embed_label=$$tag"
+        fi
+        for arch in x86_64 aarch64; do
+          make "BAZEL_OPTIONS=$${BAZEL_OPTIONS:-} --config=$$arch --compilation_mode=opt" "artifacts/$$arch"
+        done
       - make artifacts-python
       - make release RELEASE_NIGHTLY=$$RELEASE_NIGHTLY
       - (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)

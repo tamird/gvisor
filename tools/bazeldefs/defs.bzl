@@ -21,6 +21,13 @@ more_shards = 4
 most_shards = 8
 version = "//tools/bazeldefs:version"
 
+def version_x_defs(symbol = "gvisor.dev/gvisor/runsc/version.version"):
+    """Link the staged release tag or the workspace version into symbol."""
+    return select({
+        "//tools/bazeldefs:staged_release": {symbol: "{BUILD_EMBED_LABEL}"},
+        "//conditions:default": {symbol: "{STABLE_VERSION}"},
+    })
+
 def short_path(path):
     return path
 

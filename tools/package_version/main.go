@@ -22,21 +22,25 @@ import (
 )
 
 func main() {
+	if len(os.Args) != 3 {
+		log.Fatal("usage: package_version STATUS_KEY OUTPUT")
+	}
+	key, output := os.Args[1], os.Args[2]
 	status, err := os.ReadFile(os.Getenv("BAZEL_STABLE_STATUS_FILE"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for line := range strings.SplitSeq(string(status), "\n") {
-		version, ok := strings.CutPrefix(line, "STABLE_VERSION ")
+		version, ok := strings.CutPrefix(line, key+" ")
 		if !ok {
 			continue
 		}
 		// A Debian version starts at the first digit in the revision or tag.
 		version = strings.TrimLeftFunc(version, func(r rune) bool { return r < '0' || r > '9' })
-		if err := os.WriteFile(os.Args[1], []byte(version+"\n"), 0o644); err != nil {
+		if err := os.WriteFile(output, []byte(version+"\n"), 0o644); err != nil {
 			log.Fatal(err)
 		}
 		return
 	}
-	log.Fatal("stable workspace status has no STABLE_VERSION")
+	log.Fatalf("stable workspace status has no %s", key)
 }
