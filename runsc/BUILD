@@ -152,7 +152,6 @@ go_test(
     name = "version_test",
     size = "small",
     srcs = ["version_test.go"],
-    args = ["-runsc=$(rootpath :runsc)"],
     data = [":runsc"],
     deps = ["//pkg/test/testutil"],
 )
