@@ -1,0 +1,153 @@
+diff --git a/go/def.bzl b/go/def.bzl
+index f811b702f6..d2e01ff162 100644
+--- a/go/def.bzl
++++ b/go/def.bzl
+@@ -61,6 +61,7 @@ load(
+ load(
+     "//go/private/rules:sdk.bzl",
+     _go_sdk = "go_sdk",
++    _go_sdk_tool = "go_sdk_tool",
+ )
+ load(
+     "//go/private/rules:source.bzl",
+@@ -146,6 +147,7 @@ go_context = _go_context
+ go_rule = _go_rule
+ gomock = _gomock
+ go_sdk = _go_sdk
++go_sdk_tool = _go_sdk_tool
+ go_tool_library = _go_tool_library
+ go_toolchain = _go_toolchain
+ nogo = _nogo
+diff --git a/go/private/rules/BUILD.bazel b/go/private/rules/BUILD.bazel
+index 23e7c1663a..77988b3969 100644
+--- a/go/private/rules/BUILD.bazel
++++ b/go/private/rules/BUILD.bazel
+@@ -99,7 +99,10 @@ bzl_library(
+     name = "sdk",
+     srcs = ["sdk.bzl"],
+     visibility = ["//go:__subpackages__"],
+-    deps = ["//go/private:providers"],
++    deps = [
++        "//go/private:common",
++        "//go/private:providers",
++    ],
+ )
+ 
+ bzl_library(
+diff --git a/go/private/rules/sdk.bzl b/go/private/rules/sdk.bzl
+index 5c6617624d..c8b3f6dc54 100644
+--- a/go/private/rules/sdk.bzl
++++ b/go/private/rules/sdk.bzl
+@@ -12,6 +12,7 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
++load("//go/private:common.bzl", "GO_TOOLCHAIN_LABEL", "SUPPORTS_PATH_MAPPING_REQUIREMENT")
+ load(
+     "//go/private:providers.bzl",
+     "GoSDK",
+@@ -119,6 +120,60 @@ go_sdk = rule(
+     provides = [GoSDK],
+ )
+ 
++def _dirname(file):
++    return file.dirname
++
++def _go_sdk_tool_impl(ctx):
++    toolchain = ctx.toolchains[GO_TOOLCHAIN_LABEL]
++    sdk = toolchain.sdk
++    name = ctx.attr.tool
++    if not name or "/" in name or "\\" in name or name in [".", ".."]:
++        fail("tool must be a command name in the Go SDK")
++    suffix = ".exe" if toolchain.default_goos == "windows" else ""
++    out = ctx.actions.declare_file(ctx.label.name + suffix)
++    if (toolchain.default_goos, toolchain.default_goarch) == (sdk.goos, sdk.goarch):
++        path = "%s/pkg/tool/%s_%s/%s%s" % (sdk.root_file.dirname, sdk.goos, sdk.goarch, name, suffix)
++        for tool in sdk.tools.to_list():
++            if tool.path == path:
++                ctx.actions.symlink(output = out, target_file = tool, is_executable = True)
++                return [DefaultInfo(executable = out)]
++
++    args = ctx.actions.args()
++    args.add("sdktool")
++    args.add_all("-sdk", [sdk.root_file], map_each = _dirname, expand_directories = False)
++    args.add("-out", out)
++    args.add(name)
++    ctx.actions.run(
++        executable = toolchain._builder,
++        arguments = [args],
++        inputs = depset([sdk.go, sdk.root_file], transitive = [sdk.headers, sdk.srcs, sdk.tools, sdk.libs]),
++        outputs = [out],
++        env = {
++            "CGO_ENABLED": "0",
++            "GO111MODULE": "off",
++            "GOARCH": toolchain.default_goarch,
++            "GOENV": "off",
++            "GOEXPERIMENT": sdk.experiments,
++            "GOOS": toolchain.default_goos,
++            "GOTELEMETRY": "off",
++            "GOTOOLCHAIN": "local",
++        },
++        mnemonic = "GoSDKTool",
++        toolchain = GO_TOOLCHAIN_LABEL,
++        execution_requirements = SUPPORTS_PATH_MAPPING_REQUIREMENT,
++    )
++    return [DefaultInfo(executable = out)]
++
++go_sdk_tool = rule(
++    _go_sdk_tool_impl,
++    doc = "Provides a Go SDK command as an executable. Use it in the exec configuration to run it in a build action.",
++    attrs = {
++        "tool": attr.string(mandatory = True, doc = "Command name under the Go SDK's cmd directory, such as objdump."),
++    },
++    executable = True,
++    toolchains = [GO_TOOLCHAIN_LABEL],
++)
++
+ def _package_list_impl(ctx):
+     _build_package_list(ctx, ctx.files.srcs, ctx.file.root_file, ctx.outputs.out)
+     return [DefaultInfo(files = depset([ctx.outputs.out]))]
+diff --git a/go/tools/builders/builder.go b/go/tools/builders/builder.go
+index fdeda2d38a..9a1b220297 100644
+--- a/go/tools/builders/builder.go
++++ b/go/tools/builders/builder.go
+@@ -61,6 +61,8 @@ func main() {
+ 		action = link
+ 	case "gennogomain":
+ 		action = genNogoMain
++	case "sdktool":
++		action = sdkTool
+ 	case "stdlib":
+ 		action = stdlib
+ 	case "stdliblist":
+diff --git a/go/tools/builders/stdlib.go b/go/tools/builders/stdlib.go
+index fa9c01c038..09503f05e2 100644
+--- a/go/tools/builders/stdlib.go
++++ b/go/tools/builders/stdlib.go
+@@ -161,3 +161,26 @@ You may need to use the flags --cpu=x64_windows --compiler=mingw-gcc.`)
+ 	}
+ 	return nil
+ }
++
++// sdkTool builds a command, including its cmd/internal dependencies, from the SDK.
++func sdkTool(args []string) error {
++	flags := flag.NewFlagSet("sdktool", flag.ExitOnError)
++	goenv := envFlags(flags)
++	out := flags.String("out", "", "Path to the executable")
++	if err := flags.Parse(args); err != nil {
++		return err
++	}
++	goenv.goroot = abs(goenv.sdk)
++	if err := goenv.checkFlagsAndSetGoroot(); err != nil {
++		return err
++	}
++	cache, cleanup, err := goenv.workDir()
++	if err != nil {
++		return err
++	}
++	defer cleanup()
++	if err := os.Setenv("GOCACHE", abs(cache)); err != nil {
++		return err
++	}
++	return goenv.runCommand(goenv.goCmd("build", "-trimpath", "-ldflags=-buildid=", "-o", *out, "cmd/"+flags.Arg(0)))
++}

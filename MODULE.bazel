@@ -42,6 +42,7 @@ single_version_override(
         "//tools:rules_go_symbols.patch",
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
+        "//tools:rules_go_sdk_tool_qualification.patch",
     ],
     version = "0.63.0",
 )
