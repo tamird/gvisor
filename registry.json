@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T05:38:06.411946+00:00",
+    "updatedAt": "2026-10-31T05:54:27.572486+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38682,6 +38682,45 @@
         "body": "May I open the Unix datagram wakeup fix? Connect attaches host notifications to the waiting endpoint queue before replacing its old peer. The final revision adds a comment explaining the queue selection. The measured code and shared syscall test are unchanged.",
         "requestedAt": "2026-10-31T04:41:52.055360+00:00"
       }
+    },
+    {
+      "id": "branch:rules-go-sdk-tool",
+      "type": "branch",
+      "repo": "tamird/rules_go",
+      "ref": "feat/go-sdk-tool",
+      "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+      "title": "Provide executable targets for Go SDK tools",
+      "url": "https://github.com/tamird/rules_go/commit/aec31ccc8",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery.",
+      "updatedAt": "2026-10-31T05:54:27.572486+00:00",
+      "evidence": [
+        {
+          "label": "Upstream issue",
+          "url": "https://github.com/bazel-contrib/rules_go/issues/4535"
+        },
+        {
+          "label": "Existing SDK command and 507 presubmit passes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41168531535/artifacts/13031497606"
+        },
+        {
+          "label": "Original timeout passed in isolation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41173644014/artifacts/13032631641"
+        },
+        {
+          "label": "Shared objdump in the gVisor build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41166982711/artifacts/13029633072"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+        "url": "https://github.com/tamird/rules_go/commit/aec31ccc8",
+        "title": "Provide executable targets for Go SDK tools",
+        "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery."
+      }
     }
   ],
   "edges": [
@@ -44848,7 +44887,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T05:38:06.411946+00:00",
+      "updatedAt": "2026-10-31T05:54:27.572486+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. The four round-trip regressions tracked in #16715 are fixed on master (#16747). The open question is whether the graph encoder’s range index costs enough time or memory on a real workload to justify changing it.",
       "findings": [
         {
@@ -47646,9 +47685,26 @@
               "url": "https://github.com/tamird/gvisor/commit/8def2ecbb"
             }
           ]
+        },
+        {
+          "text": "Graph is now the default encoder for pkg/state and runsc. The four earlier correctness reports are closed. The open index experiment varies a UDP queue in the upstream multi-subsystem restore workload and counts kernel index buckets. Its instrumented timings are not performance measurements.",
+          "evidence": [
+            {
+              "label": "Default encoder switch",
+              "url": "https://github.com/google/gvisor/commit/6e6276344"
+            },
+            {
+              "label": "Live workload and census",
+              "url": "https://github.com/tamird/gvisor/commit/764fe5062"
+            },
+            {
+              "label": "Native Linux run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41174104080"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare the overlap-index costs on representative checkpoints. The repeated-slice worst case is reproducible; the four-worker Nginx Save did not exercise it. The four correctness cases in #16715 were addressed by merged #16747.",
+      "nextStep": "Measure the fraction of occupied 512-byte graph index buckets used only by spare slice capacity in live kernel checkpoints with unread UDP datagrams. Compare an empty control with 12 × 64-byte and 12 × 8-KiB datagrams, and require the restored guest to read every queued payload before interpreting the counts.",
       "evidence": [
         {
           "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
@@ -54331,7 +54387,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T05:38:06.411946+00:00",
+      "updatedAt": "2026-10-31T05:54:27.572486+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -55247,28 +55303,37 @@
           ]
         },
         {
-          "text": "The candidate removes tools/workspace_status.sh and the Buildkite test tag. Untagged publishing keeps its git describe step outside Bazel. A source export without .git built the launcher, metric server, Debian version and CLI test in ordinary and release modes. The first verifier stopped on a bare PASS before the runtime checks. The revision passes the launcher path as a named test flag so Go can report the executed case.",
+          "text": "A Linux source export with no .git directory passed all 18 release checks. Ordinary runsc reports (devel) and its Debian package sorts as 0~devel. A publisher-supplied release-20990101.7 produced package version 20990101.7. The version test, strict and optional sidecar checks, and both Buildkite publisher paths executed.",
           "evidence": [
             {
-              "label": "Source and publication boundary",
-              "url": "https://github.com/tamird/gvisor/commit/0045d37bc"
+              "label": "Product source",
+              "url": "https://github.com/tamird/gvisor/commit/11b4f8938"
             },
             {
-              "label": "Original two-mode build and incomplete runtime verdict",
-              "url": "https://github.com/tamird/gvisor/actions/runs/41172760311/artifacts/13031404695"
+              "label": "18-check verdict and both version-test logs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41173872253/artifacts/13031678174"
+            }
+          ]
+        },
+        {
+          "text": "With the rules_go update, two sentries linked from different source bytes accepted the same unnamed checkpoint. With the file identity check, the matching sentry resumed and ran a guest command; the changed sentry and an older unnamed checkpoint were rejected. The wrapper failed only when removing its pinned null-netns after recording all four outcomes. On one warm Linux/AMD64 worker the paired change from process launch to guest output was +0.73 ms (95% interval −0.53 to +1.57 ms, 32 pairs).",
+          "evidence": [
+            {
+              "label": "Four native restore outcomes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41171557571/artifacts/13031587570"
             },
             {
-              "label": "Named version test and sidecar qualification",
-              "url": "https://github.com/tamird/gvisor/actions/runs/41173319216"
+              "label": "32 pairs and the guest boot timelines",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41173948272/artifacts/13031802684"
             },
             {
-              "label": "Same and different sentries on native Linux",
-              "url": "https://github.com/tamird/gvisor/actions/runs/41171557571"
+              "label": "Three link actions and linked identities",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41170744769/artifacts/13031552377"
             }
           ]
         }
       ],
-      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Qualify named and development builds without Git. For development checkpoints, verify a real restore with the same sentry, rejection with a different one, and startup cost before requesting review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
+      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
       "evidence": [
         {
           "label": "Skylib supplier proposal for shell-free native file copies",
