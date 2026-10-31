@@ -1704,11 +1704,22 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			}
 		}
 
-		if s.shouldSchedulePTO() {
+		switch {
+		case s.SndWnd != 0 && s.ep.SACKPermitted && s.ep.scoreboard.IsSACKED(header.SACKBlock{Start: ack, End: ack.Add(1)}):
+			// An advancing ACK stopped at a byte the peer reported receiving.
+			// Give an ACK covering that byte time to arrive before treating
+			// the earlier SACK as invalid. See tcp_check_sack_reneging:
+			// https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L2247-L2258
+			s.rtt.Lock()
+			grace := max(s.rtt.TCPRTTState.SRTT/2, 10*time.Millisecond)
+			s.rtt.Unlock()
+			s.probeTimer.disable()
+			s.resendTimer.enable(min(grace, s.RTO))
+		case s.shouldSchedulePTO():
 			// Schedule PTO upon receiving an ACK that cumulatively acknowledges data.
 			// See https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.5.1.
 			s.schedulePTO()
-		} else {
+		default:
 			// When an ack is received we must rearm the timer.
 			// RFC 6298 5.3
 			s.probeTimer.disable()
