@@ -1,4 +1,4 @@
-name: Check the corrected wrk2 workload and diagnose the original iperf ARM fault
+name: Exercise the packaged iperf3 client and server on two native Linux machines
 on:
   push:
     branches: [qualification/official-go-images]
@@ -7,7 +7,9 @@ permissions:
 jobs:
   images:
     runs-on: ubuntu-22.04
-    timeout-minutes: 150
+    timeout-minutes: 105
+    outputs:
+      arm_archive: ${{ steps.publish.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -46,135 +48,126 @@ jobs:
           build --remote_download_outputs=toplevel
           build --noshow_progress
           RC
-          for name in wrk2-image-check wrk2-source-check iperf-go-consumers iperf-catalog-delta; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
-      - name: Install the Linux ARM64 binfmt interpreter
-        id: qemu
+          for name in iperf-ubuntu-image iperf-ubuntu-transfer iperf-ubuntu-go wrk2-new-catalog; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
+      - name: Build and inspect the iperf3 image for arm64
+        id: armimage
+        if: always() && steps.setup.outcome == 'success'
+        timeout-minutes: 35
         run: |
-          if [[ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
-            sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends qemu-user-static binfmt-support
-            sudo update-binfmts --enable qemu-aarch64
-          fi
-          grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
-          grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
-      - name: Build the image and run the HTTP client on amd64
-        id: amd64
-        if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 44
-        run: bash "$RUNNER_TEMP/wrk2-image-check.sh" x86_64
+          bash "$RUNNER_TEMP/iperf-ubuntu-image.sh" aarch64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.amd64.outcome != 'skipped'
+        if: always() && steps.armimage.outcome != 'skipped'
         with:
-          name: wrk2-x86_64
-          path: ${{ runner.temp }}/wrk2/x86_64
+          name: armimage
+          path: ${{ runner.temp }}/iperf-jammy/arm64/build
           if-no-files-found: error
-      - name: Build the image and run the HTTP client on arm64
-        id: arm64
-        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
-        timeout-minutes: 44
-        run: bash "$RUNNER_TEMP/wrk2-image-check.sh" aarch64
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.arm64.outcome != 'skipped'
+      - name: Preserve the exact ARM64 archive for the native machine
+        id: publish
+        if: always() && steps.armimage.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: wrk2-aarch64
-          path: ${{ runner.temp }}/wrk2/aarch64
+          name: arm64-image
+          path: ${{ runner.temp }}/iperf-jammy/arm64/oci
+          compression-level: 0
           if-no-files-found: error
-      - name: Fetch fresh wrk2 notices with the actual SPDX prerequisite
-        id: catalog
+      - name: Build and inspect the iperf3 image for amd64
+        id: x86image
         if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 28
+        timeout-minutes: 35
+        run: |
+          bash "$RUNNER_TEMP/iperf-ubuntu-image.sh" x86_64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.x86image.outcome != 'skipped'
+        with:
+          name: x86image
+          path: ${{ runner.temp }}/iperf-jammy/amd64/build
+          if-no-files-found: error
+      - name: Run both benchmark endpoints as UID 65532 on AMD64
+        id: x86transfer
+        if: always() && steps.x86image.outcome == 'success'
+        timeout-minutes: 3
+        run: |
+          bash "$RUNNER_TEMP/iperf-ubuntu-transfer.sh" amd64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.x86transfer.outcome != 'skipped'
+        with:
+          name: x86transfer
+          path: ${{ runner.temp }}/iperf-jammy/amd64/transfer
+          if-no-files-found: error
+      - name: Check the held SPDX proposal and freshly fetch the four wrk2 notices
+        id: notices
+        if: always() && steps.setup.outcome == 'success'
+        timeout-minutes: 29
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          bash "$RUNNER_TEMP/wrk2-source-check.sh"
+          bash "$RUNNER_TEMP/wrk2-new-catalog.sh"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.catalog.outcome != 'skipped'
+        if: always() && steps.notices.outcome != 'skipped'
         with:
-          name: catalog-receipt
+          name: notices
           path: ${{ runner.temp }}/wrk2/licenses
           if-no-files-found: error
-      - name: Retrieve the original AMD64 iperf context without rebuilding it
-        id: x86archive
-        if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 4
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      - name: Execute eight parsed iperf3 Go benchmark cases on AMD64
+        id: x86go
+        if: always() && steps.x86transfer.outcome == 'success'
+        timeout-minutes: 45
         run: |
-          set -euo pipefail
-          git show "$GITHUB_SHA:test/rbe/iperf-recover-context.py" >"$RUNNER_TEMP/iperf-recover.py"
-          python3 "$RUNNER_TEMP/iperf-recover.py" "$RUNNER_TEMP/iperf-original-amd64" e13472b6-773d-4ccc-be22-8deda24ad330 62
-          docker load -i "$RUNNER_TEMP/iperf-original-image.tar"
-          tag=gvisor.dev/images/benchmarks/iperf
-          test "$(docker image inspect "$tag:latest" --format '{{.Architecture}}')" = amd64
-          docker tag "$tag:latest" "$tag:amd64"
+          bash "$RUNNER_TEMP/iperf-ubuntu-go.sh" iperf x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.x86archive.outcome != 'skipped'
+        if: always() && steps.x86go.outcome != 'skipped'
         with:
-          name: x86archive-receipt
-          path: ${{ runner.temp }}/iperf-original-amd64
-          if-no-files-found: error
-      - name: Run the eight real Go network benchmarks on native AMD64
-        id: iperfconsumer
-        if: always() && steps.x86archive.outcome == 'success'
-        timeout-minutes: 50
-        run: |
-          bash "$RUNNER_TEMP/iperf-go-consumers.sh" iperf x86_64
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.iperfconsumer.outcome != 'skipped'
-        with:
-          name: iperfconsumer-receipt
+          name: x86go
           path: ${{ runner.temp }}/iperf-results/iperf-go-x86_64
           if-no-files-found: error
-      - name: Compare remaining full catalog changes to their no-iperf baseline
-        id: iperfcatalog
-        if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 22
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          bash "$RUNNER_TEMP/iperf-catalog-delta.sh"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.iperfcatalog.outcome != 'skipped'
-        with:
-          name: iperfcatalog-receipt
-          path: ${{ runner.temp }}/iperf-results/catalog-delta
-          if-no-files-found: error
   arm:
+    needs: images
+    if: always() && needs.images.outputs.arm_archive != ''
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 12
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 1
-      - name: Reuse the original ARM ELF and prove its contents again
-        id: armarchive
-        if: always() && success()
-        timeout-minutes: 4
+          fetch-depth: 6
+      - id: fetch
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: arm64-image
+          path: ${{ runner.temp }}/iperf-jammy/arm64/oci
+      - name: Run both endpoints as UID 65532 on genuine native ARM64
+        id: armtransfer
+        if: always() && steps.fetch.outcome == 'success'
+        timeout-minutes: 3
+        run: |
+          bash test/rbe/iperf-ubuntu-transfer.sh arm64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.armtransfer.outcome != 'skipped'
+        with:
+          name: armtransfer
+          path: ${{ runner.temp }}/iperf-jammy/arm64/transfer
+          if-no-files-found: error
+      - name: Set up the native Bazel coordinator
+        id: setup
+        if: always() && steps.armtransfer.outcome == 'success'
+        uses: bazel-contrib/setup-bazel@083175551ceeceebc757ebee2127fde78840ca77
+      - name: Execute the eight parsed iperf3 Go benchmark cases on native ARM64
+        id: armgo
+        if: always() && steps.armtransfer.outcome == 'success' && steps.setup.outcome == 'success'
+        timeout-minutes: 55
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
-          git show "$GITHUB_SHA:test/rbe/iperf-recover-context.py" >"$RUNNER_TEMP/iperf-recover.py"
-          python3 "$RUNNER_TEMP/iperf-recover.py" "$RUNNER_TEMP/iperf-original-arm64" a755857a-c2d8-465d-8b4c-13c7f5da31f7 183
-          docker load -i "$RUNNER_TEMP/iperf-original-image.tar"
-          tag=gvisor.dev/images/benchmarks/iperf
-          test "$(docker image inspect "$tag:latest" --format '{{.Architecture}}')" = arm64
-          docker tag "$tag:latest" "$tag:arm64"
+          git show "$GITHUB_SHA:test/rbe/iperf-ubuntu-go.sh" >"$RUNNER_TEMP/iperf-ubuntu-go.sh"
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          umask 077
+          printf 'build --remote_cache=grpcs://remote.buildbuddy.io\nbuild --bes_backend=grpcs://remote.buildbuddy.io\nbuild --bes_results_url=https://app.buildbuddy.io/invocation/\nbuild --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\nbuild --noremote_upload_local_results\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >"$RUNNER_TEMP/images.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          command -v bazel
+          bash "$RUNNER_TEMP/iperf-ubuntu-go.sh" iperf aarch64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.armarchive.outcome != 'skipped'
+        if: always() && steps.armgo.outcome != 'skipped'
         with:
-          name: armarchive-receipt
-          path: ${{ runner.temp }}/iperf-original-arm64
-          if-no-files-found: error
-      - name: Identify the trap in the original native ARM client
-        id: trap
-        if: always() && steps.armarchive.outcome == 'success'
-        timeout-minutes: 6
-        run: |
-          bash test/rbe/iperf-arm-debug.sh
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.trap.outcome != 'skipped'
-        with:
-          name: trap-receipt
-          path: ${{ runner.temp }}/iperf-diagnostic
+          name: armgo
+          path: ${{ runner.temp }}/iperf-results/iperf-go-aarch64
           if-no-files-found: error
