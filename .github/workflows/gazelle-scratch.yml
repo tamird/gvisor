@@ -1,0 +1,54 @@
+name: Verify declared Gazelle inputs on Linux
+on:
+  push:
+    branches: [qualification/gazelle-scratch-aa767e4c4]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  candidate:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SOURCE: 8eb9549f5820c30805bc52e3e1d708921e63461c
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: source, ref: '${{ env.SOURCE }}', fetch-depth: 2, persist-credentials: false}
+      - name: Run the canonical lint driver
+        working-directory: source
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          cp ../carrier/.github/qualification/lint-source/gazelle.py "$RUNNER_TEMP/gazelle.py"
+          p=$RUNNER_TEMP/lint_platform
+          mkdir "$p" "$RUNNER_TEMP/bin" "$RUNNER_TEMP/formatter-private"
+          echo 'module(name="lint_platform")' > "$p/MODULE.bazel"
+          cat > "$p/BUILD" <<'BUILD'
+          platform(name="ubuntu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],
+                   exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"}, visibility=["//visibility:public"])
+          BUILD
+          rc=$RUNNER_TEMP/lint.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=lint_platform=$p" 'build --host_platform=@lint_platform//:ubuntu' 'build --extra_execution_platforms=@lint_platform//:ubuntu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          bazel_binary=$(command -v bazel)
+          printf '#!/bin/sh\nexec "%s" --bazelrc="%s" "$@"\n' "$bazel_binary" "$rc" > "$RUNNER_TEMP/bin/bazel"
+          chmod +x "$RUNNER_TEMP/bin/bazel"
+          export PATH="$RUNNER_TEMP/bin:$PATH" LINT_CACHE_DIR="$RUNNER_TEMP/formatter-private" PYTHONDONTWRITEBYTECODE=1
+          python3 "$RUNNER_TEMP/gazelle.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: gazelle-qualification
+          path: ${{ runner.temp }}/gazelle-qualification/
+          if-no-files-found: error
