@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import re
 import sys
+import zipfile
 
 import qualification_report as reporting
 
@@ -22,7 +23,7 @@ def main() -> int:
     for report in captured["reports"]:
         if report["name"] == "test.log":
             for line in (out / report["path"]).read_text().splitlines():
-                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE) [a-zA-Z0-9_.= -]+", line):
+                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE|FLOW) [a-zA-Z0-9_.= -]+", line):
                     observations.append(line)
                 elif re.search(r"tcp_rack_test.go:\d+:|Operation not permitted|operation not permitted|failed to bootstrap|failed to disable DAD|read-only file system|No such file or directory|unknown failure:", line):
                     diagnostics.append(line[:650])
@@ -50,6 +51,20 @@ def main() -> int:
             errors.append(f"{mode}: no partial acknowledgment")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
         errors.append("qualifier failed")
+    zip_path = Path("bazel-testlogs/test/packetimpact/tests/tcp_rack_netstack_test/test.outputs/outputs.zip")
+    trace = []
+    if zip_path.exists():
+        with zipfile.ZipFile(zip_path) as z:
+            for f in z.namelist():
+                if not f.endswith(".log"):
+                    continue
+                for line in z.read(f).decode(errors="replace").splitlines():
+                    m = re.search(r"REPAIR_TRACE ([a-z]+ [A-Za-z0-9_ =-]+)$",line)
+                    if m:
+                        trace.append(m[1])
+    if not any(line.startswith("update ") for line in trace) or not any(line.startswith("detect ") for line in trace):
+        errors.append("missing RACK retransmission delivery or ordering diagnostics")
+    verdict["rack_decisions"] = trace
     if errors and verdict["status"] == "PASS":
         verdict["status"] = "INCOMPLETE"
     verdict["errors"].extend(errors)
