@@ -1,35 +1,28 @@
-name: CI
-
-"on":
+name: Check the Buildkite release launcher
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/release-launcher-boundary]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SOURCE: d58d385a80301b9b65f05614dbc437e970afd8e3
+      CONTROL: 2c0b9071a31bcb5bd2562e16fe1ede94fe3b67e3
+      HOOK_REV: eafcb8392effca7769ef6e220d24feaadb3bdf17
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Read the original staging steps and approved Buildkite prerequisite
+        run: git fetch --no-tags --depth=1 origin "$CONTROL" "$HOOK_REV"
+      - name: Exercise the two release jobs with Bazel absent from PATH
+        run: python3 test/rbe/release_launcher_probe.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: release-launcher
+          path: ${{ runner.temp }}/release-launcher/verdict.json
+          if-no-files-found: error
