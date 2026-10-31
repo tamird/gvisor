@@ -1,0 +1,8 @@
+# Expose the upstream iperf license text for images that carry the executable.
+
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -143 +143,3 @@
+ # NOTE: The t_auth test is disabled for now to avoid dealing with runfiles in a C binary.
++
++exports_files(["LICENSE"])
