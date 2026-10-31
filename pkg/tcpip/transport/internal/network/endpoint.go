@@ -914,9 +914,6 @@ func (e *Endpoint) SetSockOptInt(opt tcpip.SockOptInt, v int) tcpip.Error {
 		nic := tcpip.NICID(v)
 		// Zero clears the multicast selection without changing device binding.
 		if nic != 0 {
-			if bound := tcpip.NICID(e.ops.GetBindToDevice()); bound != 0 && bound != nic {
-				return &tcpip.ErrInvalidEndpointState{}
-			}
 			if info := e.Info(); info.BindNICID != 0 && info.BindNICID != nic {
 				return &tcpip.ErrInvalidEndpointState{}
 			}
