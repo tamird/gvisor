@@ -225,7 +225,8 @@ func newProcInternalData(conf *config.Config, spec *specs.Spec, containerName st
 // all containers and triggers the full sandbox restore after the last
 // container is restored.
 type restorer struct {
-	mu sync.Mutex
+	memoryLimit uint64
+	mu          sync.Mutex
 
 	// totalContainers is the number of containers expected to be restored in
 	// the sandbox. Sandbox restore can only happen, after all containers have
@@ -375,7 +376,7 @@ func (r *restorer) restore(l *Loader) error {
 	// Using cleanup to end gcSuspension on failure.
 	// On success the ownership is transferred to l.startupGC
 	// and cleanup is cancelled.
-	gcSuspension := state.SuspendGCForRestore(r.metadata)
+	gcSuspension := state.SuspendGCForRestore(r.memoryLimit, r.metadata)
 	gcCleanup := cleanup.Make(gcSuspension.End)
 	defer gcCleanup.Clean()
 

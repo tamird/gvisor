@@ -263,10 +263,10 @@ func totalMemoryLimit() uint64 {
 }
 
 // SuspendGCForRestore suspends GC for a checkpoint restore.
-func SuspendGCForRestore(metadata map[string]string) *gccontrol.Suspension {
+func SuspendGCForRestore(total uint64, metadata map[string]string) *gccontrol.Suspension {
 	var savedMemoryFileBytes uint64
 	if v, err := strconv.ParseUint(metadata[metadataMemoryFileUsedBytesKey], 10 /* base */, 64 /* bitSize */); err == nil {
 		savedMemoryFileBytes = v
 	}
-	return gccontrol.Suspend(totalMemoryLimit(), savedMemoryFileBytes)
+	return gccontrol.Suspend(total, savedMemoryFileBytes)
 }

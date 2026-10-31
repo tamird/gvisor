@@ -56,7 +56,7 @@ func TestSuspendGCForRestore(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			usage.MaximumTotalMemoryBytes = tc.totalMem
-			s := SuspendGCForRestore(tc.metadata)
+			s := SuspendGCForRestore(totalMemoryLimit(), tc.metadata)
 			defer s.End()
 			if got := debug.SetMemoryLimit(-1 /* limit */); got != tc.want {
 				t.Fatalf("MemoryLimit = %d, want %d", got, tc.want)

@@ -605,6 +605,26 @@ func (d DirectIO) String() string {
 	panic(fmt.Sprintf("invalid direct I/O mode %d", d))
 }
 
+// restoreMemoryLimit reads the current cgroup limit because an OCI update can
+// change it between creating the sandbox and restoring it. If the bound is
+// unknown, leave GC enabled.
+func (s *Sandbox) restoreMemoryLimit() uint64 {
+	if s.CgroupJSON.Cgroup == nil {
+		return 0
+	}
+	host, err := hostos.TotalSystemMemory()
+	if err != nil {
+		log.Warningf("Reading host memory limit for restore: %v", err)
+		return 0
+	}
+	limit, err := s.CgroupJSON.Cgroup.MemoryLimit()
+	if err != nil {
+		log.Warningf("Reading cgroup memory limit for restore: %v", err)
+		return 0
+	}
+	return min(host, limit)
+}
+
 // Restore sends the restore call for a container in the sandbox.
 func (s *Sandbox) Restore(conf *config.Config, spec *specs.Spec, cid string, imagePath string, directIO DirectIO, background bool, networkArgs *sentryapi.CreateLinksAndRoutesArgs) error {
 	waitRegisteredMetrics := s.fetchRegisteredMetrics()
@@ -683,6 +703,7 @@ func (s *Sandbox) Restore(conf *config.Config, spec *specs.Spec, cid string, ima
 
 	// Restore the container and start the root container.
 	var reply sentryapi.RestoreReply
+	opt.MemoryLimit = s.restoreMemoryLimit()
 	if err := conn.Call(sentryapi.ContMgrRestore, &opt, &reply); err != nil {
 		if opt.UseCheckpointGofer {
 			if target := getGCSURIFromImagePath(imagePath); target != "" {
