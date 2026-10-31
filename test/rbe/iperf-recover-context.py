@@ -38,6 +38,6 @@ with tarfile.open(fileobj=io.BytesIO(image),mode='r:*') as img:
                 files[name]=tar.extractfile(f).read()
 assert set(files)=={'usr/bin/iperf3',*expected} and dirs['tmp']==0o1777
 for path,d in expected.items(): assert hashlib.sha256(files[path]).hexdigest()==d
-exe=files['usr/bin/iperf3'];assert exe.startswith(b'\x7fELF') and int.from_bytes(exe[18:20],'little')==183
-(r/'arm64-archive.json').write_text(json.dumps({'invocation':inv,'contextSha256':digest,'contextBytes':n,'imageSha256':hashlib.sha256(image).hexdigest(),'binarySha256':hashlib.sha256(exe).hexdigest(),'binaryBytes':len(exe),'notices':expected,'tmpMode':oct(dirs['tmp'])},indent=2)+'\n')
+exe=files['usr/bin/iperf3'];assert exe.startswith(b'\x7fELF') and int.from_bytes(exe[18:20],'little')==int(sys.argv[3])
+(r/'original-archive.json').write_text(json.dumps({'invocation':inv,'contextSha256':digest,'contextBytes':n,'imageSha256':hashlib.sha256(image).hexdigest(),'binarySha256':hashlib.sha256(exe).hexdigest(),'binaryBytes':len(exe),'notices':expected,'tmpMode':oct(dirs['tmp'])},indent=2)+'\n')
 print('Recovered',n,'context bytes and',len(exe),'executable bytes')

@@ -1,6 +1,6 @@
 set -euo pipefail
 r="$RUNNER_TEMP/wrk2/licenses"; mkdir -p "$r"; exec > >(tee "$r/coordinator.log") 2>&1
-git checkout -q --detach 46c4aab9a3cc572b0554bb60b5e9d6080b4c1aca
+git checkout -q --detach 91ee0c01fa37bdc81ed3a05050e07ffe11a03c1b
 git rev-parse HEAD >"$r/source"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 export MAKEFLAGS=DOCKER_BUILD=false

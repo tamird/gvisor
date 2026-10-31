@@ -4,7 +4,7 @@ case "$arm" in x86_64) arch=amd64;; aarch64) arch=arm64;; *) exit 2;; esac
 r="$RUNNER_TEMP/wrk2/$arm"
 mkdir -p "$r"
 exec > >(tee "$r/coordinator.log") 2>&1
-git checkout -q --detach 46c4aab9a3cc572b0554bb60b5e9d6080b4c1aca
+git checkout -q --detach 106d6799384d037b2bd6359463603c5752a24a56
 git rev-parse HEAD >"$r/source"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 export MAKEFLAGS=DOCKER_BUILD=false
