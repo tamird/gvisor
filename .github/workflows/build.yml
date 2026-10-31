@@ -1,7 +1,7 @@
-name: Check OCI TCP buffer settings on a live netstack
+name: Check OCI TCP buffer isolation and startup cost
 on:
   push:
-    branches: [qualification/tcp-oci-buffer-startup-fix]
+    branches: [qualification/tcp-oci-scope-startup]
 permissions:
   contents: read
 jobs:
@@ -22,7 +22,7 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        [[ "$(git rev-parse HEAD)" == "$CURRENT" && "$(git rev-parse HEAD^)" == "f126156a9edf119d335fd4ea5c57fbbfd8d3eb20" && "$(git rev-parse HEAD^^^)" == "$BASE" ]]
+        [[ "$(git rev-parse HEAD)" == "$CURRENT" && "$(git rev-parse HEAD^)" == "00b93731cac1a8616cb99992d05a83cd2e62d570" && "$(git rev-parse HEAD~4)" == "$BASE" ]]
         git checkout --quiet --detach "$CURRENT"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
@@ -45,17 +45,19 @@ jobs:
         git rev-parse HEAD > "$d/source"
         git diff --exit-code HEAD^ HEAD -- runsc/container/container_test.go test/rbe/tcp_oci_buffers.py
         git diff --name-only "$BASE" HEAD > "$d/source-files"
+        native_rc=0
+        python3 test/rbe/tcp_oci_native.py > "$d/native.json" 2> "$d/native.log" || native_rc=$?
+        printf '%s\n' "$native_rc" > "$d/native-exit"
         date -u +%FT%TZ > "$d/start"
         rc=0
-        docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=20 --local_resources=cpu=1 --noremote_upload_local_results --strategy=GoStaticAnalysis=local --strategy=GoStandardLibraryAnalysis=local --test_filter='^TestTCPBufferOCIAndGuestWrite$' --test_arg=-test.v --test_timeout=300 --test_sharding_strategy=disabled --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //runsc/container:container_test > "$RUNNER_TEMP/bazel.log" 2>&1 || rc=$?
+        docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=20 --local_resources=cpu=1 --noremote_upload_local_results --strategy=GoStaticAnalysis=local --strategy=GoStandardLibraryAnalysis=local --test_filter='^TestTCPBufferIsolation$' --test_arg=-test.v --test_timeout=600 --test_sharding_strategy=disabled --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //runsc/container:container_test > "$RUNNER_TEMP/bazel.log" 2>&1 || rc=$?
         date -u +%FT%TZ > "$d/end"
         printf '%s\n' "$rc" > "$d/exit"
         grep -E 'Invocation ID:|ERROR:|FAILED|Build did NOT' "$RUNNER_TEMP/bazel.log" | tail -30 > "$d/diagnostics" || true
         for f in test.log test.xml; do
           docker exec tcp-compiler cat "bazel-testlogs/runsc/container/container_test/$f" > "$d/$f" || rm -f "$d/$f"
         done
-        python3 test/rbe/tcp_oci_buffers.py "$d" "$CURRENT"
-        python3 -c 'import json,sys; assert json.load(open(sys.argv[1]))["verdict"] == "OCI_APPLIED"' "$d/verdict.json"
+        python3 test/rbe/tcp_oci_scope.py "$d" "$CURRENT"
     - name: Redact credentials from the evidence bundle
       if: always()
       env:
@@ -72,6 +74,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-oci-buffer-settings
+        name: tcp-oci-scope-and-startup
         path: ${{ runner.temp }}/records/
         if-no-files-found: error

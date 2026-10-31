@@ -6673,3 +6673,100 @@ show("GUEST_WRITE")
 		})
 	}
 }
+
+// TestTCPBufferIsolation is a qualification fixture for the OCI runtime.
+func TestTCPBufferIsolation(t *testing.T) {
+	const setting = "8192 524288 268435456"
+	conf := testutil.TestConfig(t)
+	conf.Platform = "systrap"
+	start := func(t *testing.T, network config.NetworkType, sysctls map[string]string) (time.Duration, *Container) {
+		t.Helper()
+		conf.Network = network
+		spec := testutil.NewSpecWithArgs("sleep", "infinity")
+		spec.Linux = &specs.Linux{Sysctl: sysctls}
+		_, bundle, cleanup, err := testutil.SetupContainer(spec, conf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(cleanup)
+		args := Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundle}
+		now := time.Now()
+		c, err := New(conf, args)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { c.Destroy() })
+		if err := c.Start(conf); err != nil {
+			t.Fatal(err)
+		}
+		return time.Since(now), c
+	}
+	t.Run("one_direction", func(t *testing.T) {
+		observe := func(t *testing.T, settings map[string]string) []string {
+			t.Helper()
+			_, c := start(t, config.NetworkNone, settings)
+			out, err := executeCombinedOutput(conf, c, nil, "/usr/bin/python3", "-c", `import socket
+for name in ("tcp_rmem", "tcp_wmem"):
+    with open("/proc/sys/net/ipv4/" + name) as f:
+        print(*f.read().split())
+with socket.socket() as s:
+    print(s.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF), s.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))`)
+			if err != nil {
+				t.Fatalf("%s: %v", out, err)
+			}
+			fields := strings.Fields(string(out))
+			if got, want := len(fields), 8; got != want {
+				t.Fatalf("read %q, got %d fields, want %d", out, got, want)
+			}
+			return fields
+		}
+		base := observe(t, nil)
+		got := observe(t, map[string]string{"net.ipv4.tcp_rmem": "8192 524288"})
+		want := slices.Clone(base)
+		want[0], want[1], want[6] = "8192", "524288", "524288"
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+		t.Logf("PARTIAL base=%v actual=%v", base, got)
+	})
+	t.Run("shared_network", func(t *testing.T) {
+		// Request the worker's existing value so even an erroneous write would be a no-op.
+		name := "/proc/sys/net/ipv4/tcp_rmem"
+		before, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conf.Network = config.NetworkHost
+		spec := testutil.NewSpecWithArgs("true")
+		spec.Linux = &specs.Linux{}
+		if err := run(spec, conf); err != nil {
+			t.Fatalf("identical host-network control without the sysctl: %v", err)
+		}
+		spec.Linux.Sysctl = map[string]string{"net.ipv4.tcp_rmem": strings.TrimSpace(string(before))}
+		if err := run(spec, conf); err == nil {
+			t.Fatal("accepted a TCP buffer setting for the shared network")
+		} else {
+			t.Logf("SHARED rejected: %v", err)
+		}
+		after, err := os.ReadFile(name)
+		if err != nil || !bytes.Equal(before, after) {
+			t.Fatalf("host sysctl was %q, now %q: %v", before, after, err)
+		}
+	})
+	t.Run("startup", func(t *testing.T) {
+		settings := map[string]string{"net.ipv4.tcp_rmem": setting, "net.ipv4.tcp_wmem": setting}
+		for i := -1; i < 16; i++ {
+			for j := range 2 {
+				configured := (i+j)%2 == 0
+				t.Run(fmt.Sprintf("pair_%d_%t", i, configured), func(t *testing.T) {
+					var opts map[string]string
+					if configured {
+						opts = settings
+					}
+					elapsed, _ := start(t, config.NetworkNone, opts)
+					t.Logf("STARTUP pair=%d configured=%t ns=%d", i, configured, elapsed.Nanoseconds())
+				})
+			}
+		}
+	})
+}
