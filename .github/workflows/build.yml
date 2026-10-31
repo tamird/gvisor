@@ -1,35 +1,120 @@
-name: CI
-
-"on":
+name: Compare actual iperf transfer accounting and aggregate output
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/iperf-transfer-report]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PEER: ba675225290a8da4a5d1468219a40fda74fc1b05
+      MIGRATION: 309a60834cbe1e7c02f7763f98548b51a16d49ab
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Verify both exact source parents and retain the probe
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        [[ "$(git rev-parse HEAD^1)" == "$PEER" && "$(git rev-parse HEAD^2)" == "$MIGRATION" ]]
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        cp test/rbe/iperf-metrics/*.py "$RUNNER_TEMP/"
+        git diff "$PEER" "$MIGRATION" -- test/benchmarks/tools/iperf.go > "$RUNNER_TEMP/records/parser.diff"
+        git show "$PEER":images/moby/Dockerfile.x86_64 | sed -n '1,7p' > "$RUNNER_TEMP/records/peer-source"
+        git show "$MIGRATION":MODULE.bazel | grep -F 'name = "iperf"' > "$RUNNER_TEMP/records/migration-source"
+    - name: Capture the Jammy and Moby iperf2 client and receiver independently
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+        set -uo pipefail
+        run_probe() {
+          local flavor=$1 img=$2 install=$3
+          local d=$RUNNER_TEMP/records/$flavor
+          mkdir -p "$d"
+          if docker pull --platform=linux/amd64 "mirror.gcr.io/library/$img" > "$d/image.log" 2>&1; then
+            img=mirror.gcr.io/library/$img
+          elif ! docker pull --platform=linux/amd64 "docker.io/library/$img" >> "$d/image.log" 2>&1; then return 1; fi
+          docker image inspect "$img" --format '{{json .RepoDigests}}' > "$d/image-digests"
+          docker run -d --name "$flavor" --entrypoint /bin/sh --cap-add SYS_NICE -v "$RUNNER_TEMP/records:/proof" -v "$RUNNER_TEMP/measure.py:/measure.py:ro" "$img" -c 'sleep 3600' > /dev/null || return 1
+          docker exec "$flavor" sh -ec "$install" > "$d/setup.log" 2>&1 || return 1
+          docker exec "$flavor" python3 /measure.py 2 iperf "$flavor" > "$d/measurement.log" 2>&1
+        }
+        run_probe jammy-iperf2 ubuntu:jammy 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 iperf' || true
+        run_probe ding-iperf2 docker:29.8.1-dind 'apk add --no-cache python3 iperf' || true
+    - name: Prepare the matching compiler and remote execution platform
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name iperf-compiler --entrypoint /bin/bash --user root --cap-add NET_ADMIN --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$RUNNER_TEMP/records:/proof" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec iperf-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec iperf-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - name: Exercise the original parser on actual iperf2 output
+      run: |
+        set -euo pipefail
+        d=$RUNNER_TEMP/records/go-parser-2; mkdir -p "$d"
+        git checkout -q --detach "$PEER"
+        python3 "$RUNNER_TEMP/record.py" "$RUNNER_TEMP/records" 2 || { echo no-data > "$d/exit"; exit 0; }
+        rc=0
+        docker exec iperf-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --test_filter=TestActualLinuxIperfOutput --test_arg=-test.v --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //test/benchmarks/tools:tools_test > "$RUNNER_TEMP/parser-build.log" 2>&1 || rc=$?
+        echo "$rc" > "$d/exit"
+        grep -A4 -E 'Invocation ID:|ERROR:|FAILED' "$RUNNER_TEMP/parser-build.log" | head -80 > "$d/diagnostics" || true
+        docker exec iperf-compiler cat bazel-testlogs/test/benchmarks/tools/tools_test/test.log > "$d/test.log" || true
+        git restore -- test/benchmarks/tools/iperf_test.go
+    - name: Build and run the actual approved BCR iperf3 executable
+      run: |
+        set -euo pipefail
+        d=$RUNNER_TEMP/records/approved-iperf3; mkdir -p "$d"
+        git checkout -q --detach "$MIGRATION"
+        rc=0
+        docker exec iperf-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=x86_64 --remote_download_outputs=toplevel --jobs=48 @iperf//:iperf3 > "$RUNNER_TEMP/iperf-build.log" 2>&1 || rc=$?
+        echo "$rc" > "$d/build-exit"
+        grep -A5 -E 'Invocation ID:|ERROR:|FAILED' "$RUNNER_TEMP/iperf-build.log" | head -100 > "$d/diagnostics" || true
+        [[ $rc == 0 ]] || exit 0
+        exe=$(docker exec iperf-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" cquery --config=x86_64 @iperf//:iperf3 --output=files 2>"$RUNNER_TEMP/iperf-cquery.log" | grep '/iperf3$')
+        printf '%s\n' "$exe" > "$d/bazel-file"
+        docker exec iperf-compiler sha256sum "$exe" > "$d/sha256"
+        docker exec iperf-compiler python3 "$RUNNER_TEMP/measure.py" 3 "$GITHUB_WORKSPACE/$exe" approved-iperf3 > "$d/measurement.log" 2>&1
+    - name: Confirm the migration's JSON parser on the actual BCR output
+      run: |
+        set -euo pipefail
+        d=$RUNNER_TEMP/records/go-parser-3; mkdir -p "$d"
+        python3 "$RUNNER_TEMP/record.py" "$RUNNER_TEMP/records" 3 || { echo no-data > "$d/exit"; exit 0; }
+        rc=0
+        docker exec iperf-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --test_filter=TestActualLinuxIperfOutput --test_arg=-test.v --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //test/benchmarks/tools:tools_test > "$RUNNER_TEMP/parser3-build.log" 2>&1 || rc=$?
+        echo "$rc" > "$d/exit"
+        grep -A4 -E 'Invocation ID:|ERROR:|FAILED' "$RUNNER_TEMP/parser3-build.log" | head -80 > "$d/diagnostics" || true
+        docker exec iperf-compiler cat bazel-testlogs/test/benchmarks/tools/tools_test/test.log > "$d/test.log" || true
+    - name: Check actual stream, receiver and Go parser results
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/final.py" "$RUNNER_TEMP/records"
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: iperf-transfer-evidence
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
