@@ -12,12 +12,12 @@ expected = {'linux', 'release-20260721.0'}
 xml = d/'test.xml'
 counts = xml_cases(xml) if xml.is_file() else {'passed':0, 'failed':0, 'skipped':0}
 log = (d/'test.log').read_text() if (d/'test.log').is_file() else ''
-rows = [json.loads(line[7:]) for line in log.splitlines() if line.startswith('RESULT ')]
+rows = [json.loads(line.split('RESULT ',1)[1]) for line in log.splitlines() if 'RESULT {' in line]
 actual = {r['lane'] for r in rows}
 rc = int((d/'exit').read_text())
 ok = (source == os.environ['GITHUB_SHA'] and rc == 0 and actual == expected and
       len(rows) == 2 and counts['passed'] > 0 and counts['failed'] == counts['skipped'] == 0
-      and all(r['ports'] == [43425,43426,8081] and r['steps'] == ['go1','go2','passed','ready1','ready2']
+      and all(r['ports'] == [43425,43426,8081] and r['steps'] == ['TCP_PEER_READY:1','TCP_PEER_READY:2','TCP_PEER_PASSED']
               and len(r['checkpoints']) == (0 if r['lane'] == 'linux' else 2) and all(n>0 for n in r['checkpoints'])
               for r in rows))
 report = dict(verdict='PASSED' if ok else 'FAIL_OR_INCOMPLETE', source=source,

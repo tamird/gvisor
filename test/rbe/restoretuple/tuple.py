@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
+import signal
 import socket
 import struct
 import subprocess
@@ -18,11 +18,11 @@ SERVER = ('127.0.0.1', 8081)
 SOURCE = ('127.0.0.1', 43425)
 
 
-def wait_for(path, timeout=60):
+def wait_for(logpath, marker, timeout=60):
     end = time.monotonic() + timeout
-    while not path.exists():
+    while marker not in logpath.read_text():
         if time.monotonic() >= end:
-            raise TimeoutError(path)
+            raise TimeoutError(marker)
         time.sleep(0.02)
 
 
@@ -52,7 +52,8 @@ def disconnect(client, server):
     server.close()
 
 
-def peer(d):
+def peer():
+    signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGUSR1})
     with socket.socket() as listener:
         listener.settimeout(8)
         listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -66,8 +67,8 @@ def peer(d):
             exchange(client, accepted, b'before' + bytes([step]))
             queued = connect(SOURCE[1] + 1)
             queued.sendall(bytes([step]))
-            (d / f'ready{step}').touch()
-            wait_for(d / f'go{step}', timeout=180)
+            print(f"TCP_PEER_READY:{step}", flush=True)
+            assert signal.sigwait({signal.SIGUSR1}) == signal.SIGUSR1
             exchange(client, accepted, b'after' + bytes([step]))
             second, addr = listener.accept()
             assert addr == (SOURCE[0], SOURCE[1] + 1), addr
@@ -82,11 +83,7 @@ def peer(d):
             with accepted:
                 assert addr == SOURCE
                 exchange(last, accepted, b'final')
-    (d / 'passed').touch()
-
-
-def read_evidence(d):
-    return sorted(p.name for p in d.iterdir() if p.name in ('passed','ready1','go1','ready2','go2'))
+    print('TCP_PEER_PASSED', flush=True)
 
 
 def verify(runsc):
@@ -95,12 +92,10 @@ def verify(runsc):
         def exercise(self, in_guest):
             with tempfile.TemporaryDirectory(dir=os.environ['TEST_TMPDIR']) as tmp:
                 root = Path(tmp)
-                control = root / 'control'
-                control.mkdir()
-                shutil.copyfile(__file__, control / 'peer.py')
                 cid = 'tcp-tuple'
                 checkpoints = []
-                with (root / 'log').open('w+') as log:
+                logpath = root / 'log'
+                with logpath.open('a+') as log:
                     def invoke(*args, check=True):
                         return subprocess.run([runsc, '--root=' + str(root/'state'), '--platform=systrap',
                                                '--network=none', '--ignore-cgroups=true', *map(str,args)],
@@ -111,17 +106,15 @@ def verify(runsc):
                             (root / 'config.json').write_text(json.dumps({
                                 'ociVersion':'1.0.2',
                                 'root':{'path':'/', 'readonly':True},
-                                'process':{'args':['/usr/bin/python3','-B','/control/peer.py','peer','/control'],
+                                'process':{'args':['/usr/bin/python3','-B','-c',Path(__file__).read_text(),'peer'],
                                            'cwd':'/','env':['PATH=/usr/bin:/bin'],'user':{'uid':0,'gid':0}},
-                                'mounts':[{'type':'bind','destination':'/control','source':str(control),
-                                           'options':['rbind','rw']}],
                                 'linux':{'namespaces':[{'type':t} for t in ('mount','pid','ipc','uts','network')]}}))
                             invoke('create','--bundle',root,cid)
                             invoke('start',cid)
                         else:
-                            proc = subprocess.Popen([sys.executable,__file__,'peer',str(control)],stdout=log,stderr=log)
+                            proc = subprocess.Popen([sys.executable,__file__,'peer'],stdout=log,stderr=log)
                         for step in (1, 2):
-                            wait_for(control / f'ready{step}')
+                            wait_for(logpath, f'TCP_PEER_READY:{step}')
                             if in_guest:
                                 shot = root / f'snapshot{step}'
                                 shot.mkdir()
@@ -131,17 +124,19 @@ def verify(runsc):
                                 invoke('delete','--force',cid)
                                 invoke('restore','--detach','--bundle',root,'--image-path',shot,cid)
                                 checkpoints.append(size)
-                            (control / f'go{step}').touch()
-                        wait_for(control/'passed')
+                                invoke('kill',cid,'USR1')
+                            else:
+                                proc.send_signal(signal.SIGUSR1)
+                        wait_for(logpath,'TCP_PEER_PASSED')
                         if proc:
                             self.assertEqual(proc.wait(timeout=5),0)
                         self.assertEqual(len(checkpoints),2 if in_guest else 0)
                         print('RESULT',json.dumps({'lane': 'release-20260721.0' if in_guest else 'linux',
-                            'checkpoints':checkpoints,'ports':[43425,43426,8081],'steps':read_evidence(control)}),flush=True)
+                            'checkpoints':checkpoints,'ports':[43425,43426,8081],'steps':[line for line in logpath.read_text().splitlines() if line.startswith('TCP_PEER_')]}),flush=True)
                     except BaseException:
                         log.flush()
                         log.seek(0)
-                        print('markers:',read_evidence(control),'output:',log.read()[-4500:],flush=True)
+                        print('peer output:',log.read()[-4500:],flush=True)
                         raise
                     finally:
                         if in_guest:
@@ -167,7 +162,7 @@ def verify(runsc):
 if __name__ == '__main__':
     if sys.argv[1] == 'peer':
         try:
-            peer(Path(sys.argv[2]))
+            peer()
         except BaseException:
             traceback.print_exc()
             raise
