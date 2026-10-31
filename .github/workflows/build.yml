@@ -1,35 +1,27 @@
-name: CI
-
-"on":
+name: Qualify the Bazel 8.9 directory-watch backport
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/bazel-8-dirwatch-backport]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {repository: tamird/bazel, ref: 01c3a89b0c045a13f5a437b7fd0300ef749d064e, path: supplier, fetch-depth: 2, persist-credentials: false}
+      - name: Allow the standard Linux Bazel test sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Run original supplier cases and discover newly added and deleted packages
+        timeout-minutes: 125
+        run: python3 carrier/test/rbe/dirwatch/check.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: bazel-dirwatch
+          path: ${{ runner.temp }}/dirwatch-report
+          if-no-files-found: error
