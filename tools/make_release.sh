@@ -14,8 +14,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Print the tags whose versioned directories contain Python distributions.
+versioned_tags() {
+  local tag
+  for tag in "$@"; do
+    # LINT.IfChange
+    if [[ "$tag" == "buildkite-test-branch" ]]; then
+      continue
+    fi
+    # LINT.ThenChange(../.buildkite/hooks/pre-command)
+    # A staging tag names a release that is still being built.
+    if [[ "$tag" == release-*-staging ]]; then
+      continue
+    fi
+    printf '%s\n' "${tag}"
+  done
+}
+
+if [[ "$#" == 1 && "$1" == build-python ]]; then
+  if [[ "${NIGHTLY:-false}" != true ]]; then
+    tags=$(git tag --points-at HEAD) || exit 1
+    if [[ -n "$(versioned_tags ${tags})" ]]; then
+      exec make artifacts-python
+    fi
+  fi
+  exit 0
+fi
+
 if [[ "$#" -le 2 ]]; then
-  echo "usage: $0 <private-key> <root> <binaries & packages...>"
+  echo "usage: $0 build-python | <private-key> <root> <binaries & packages...>"
   echo "The environment variable NIGHTLY may be set to control"
   echo "whether the nightly packages are produced or not."
   exit 1
@@ -101,16 +128,7 @@ else
   if ! [[ -z "${tags}" ]]; then
     # Note that a given commit can match any number of tags. We have to iterate
     # through all possible tags and produce associated artifacts.
-    for tag in ${tags}; do
-      # LINT.IfChange
-      if [[ "$tag" == "buildkite-test-branch" ]]; then
-        continue
-      fi
-      # LINT.ThenChange(../.buildkite/hooks/pre-command)
-      # A staging tag names a release that is still being built.
-      if [[ "$tag" == release-*-staging ]]; then
-        continue
-      fi
+    for tag in $(versioned_tags ${tags}); do
       name=$(echo "${tag}" | cut -d'-' -f2)
       base=$(echo "${name}" | cut -d'.' -f1)
       # Install the "specific" release. This is the latest release with the
