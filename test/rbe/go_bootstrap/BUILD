@@ -1,15 +1,5 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
-load("@go_host_compatible_sdk_label//:defs.bzl", "HOST_COMPATIBLE_SDK")
 load(":defs.bzl", "shell_toolchain")
-
-filegroup(
-    name = "helpers",
-    srcs = [
-        HOST_COMPATIBLE_SDK.same_package_label("builder"),
-        HOST_COMPATIBLE_SDK.same_package_label("pack.exe"),
-    ],
-    visibility = ["//visibility:public"],
-)
 
 # The executable name selects BusyBox's ash applet; stage it without a shell.
 native_binary(
