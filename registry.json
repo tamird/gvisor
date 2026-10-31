@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T02:15:52.472834+00:00",
+    "updatedAt": "2026-10-31T02:25:28.288627+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38081,6 +38081,45 @@
           "url": "https://app.buildbuddy.io/invocation/ce7a164f-84b4-4792-8f4e-7d910af0fcf2"
         }
       ]
+    },
+    {
+      "id": "branch:state-grow-shared-slices",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/state-grow-shared-slices",
+      "head": "64b2f7547dadf8769a5ce66e6475cd8dba6b181f",
+      "title": "Extend shared slice backing arrays without a chain of parents",
+      "url": "https://github.com/tamird/gvisor/commit/64b2f7547",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "When narrow slices are visited before wider slices with the same base address, every new width creates another parent to traverse. Extending the existing array removed all 4,192,256 traversals in a 2,048-window checkpoint. The four-worker Nginx sample had no such slices.",
+      "updatedAt": "2026-10-31T02:25:28.288627+00:00",
+      "evidence": [
+        {
+          "label": "Original traversal order and parent-link counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41156339306/artifacts/13024129668"
+        },
+        {
+          "label": "Four-worker Nginx checkpoint, operation counts and alias control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41157636743/artifacts/13026048097"
+        },
+        {
+          "label": "Final interoperability, alias and deferred callback checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41159570245/artifacts/13026721647"
+        },
+        {
+          "label": "Benchstat from the two retained sample sets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41160349524/artifacts/13027120317"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "64b2f7547dadf8769a5ce66e6475cd8dba6b181f",
+        "url": "https://github.com/tamird/gvisor/commit/64b2f7547",
+        "title": "Open the graph encoder slice-growth PR",
+        "summary": "When narrow slices are visited before wider slices with the same base address, every new width creates another parent to traverse. Extending the existing array removed all 4,192,256 traversals in a 2,048-window checkpoint. The four-worker Nginx sample had no such slices."
+      }
     }
   ],
   "edges": [
@@ -44251,15 +44290,23 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
+      "updatedAt": "2026-10-31T02:25:28.288627+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
         {
-          "text": "Saving 2,048 slices with one backing address took 56.54 ms narrowest-first and 0.052 ms widest-first. Both graph checkpoints used 8,119 bytes and restored the same capacities, contents and aliasing. The slow order followed 4,192,256 parent links. Its frequency in real kernel checkpoints is not yet known.",
+          "text": "Saving 2,048 slices with the same base address took 56.540 ms narrowest-first versus 0.052 ms widest-first. Extending the backing array in place removed all 4,192,256 parent traversals; the final five-sample medians were 0.076 ms and 0.053 ms. Both orders wrote 8,119 bytes and retained alias identity. One four-worker Nginx checkpoint contained no eligible extensions.",
           "evidence": [
             {
-              "label": "Five warm samples per order and independent counters",
+              "label": "Original traversal order and parent-link counts",
               "url": "https://github.com/tamird/gvisor/actions/runs/41156339306/artifacts/13024129668"
+            },
+            {
+              "label": "Four-worker Nginx checkpoint, operation counts and alias control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41157636743/artifacts/13026048097"
+            },
+            {
+              "label": "Final interoperability, alias and deferred callback checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41159570245/artifacts/13026721647"
             }
           ]
         },
@@ -47043,7 +47090,7 @@
           ]
         }
       ],
-      "nextStep": "Compare one index entry per live graph range against the 512-byte bucket index on both sparse slices and the 20,000-node graph. Verify alias identity and wire sizes before interpreting timing. Keep the four separately reproduced correctness cases open in #16715 until #16747 lands.",
+      "nextStep": "Compare the overlap-index costs on representative checkpoints. The repeated-slice worst case is reproducible; the four-worker Nginx Save did not exercise it. The four correctness cases in #16715 were addressed by merged #16747.",
       "evidence": [
         {
           "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
