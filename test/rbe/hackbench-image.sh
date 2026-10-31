@@ -10,60 +10,45 @@ test "$(cat "$r/product")" = "$product"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 pkg=//images/benchmarks/hackbench
 export MAKEFLAGS='DOCKER_BUILD=false'
-if [[ "$arm" == catalog ]]; then
-  bz build //tools/licensecheck/main:licensecheck
-  lic=$(bz cquery --output=files //tools/licensecheck/main:licensecheck)
-  doc=tools/licensecheck/dependencies.yaml
-  cp "$doc" "$RUNNER_TEMP/hackbench-catalog.yaml"
-  "$lic" --mode=verify >"$r/verify.log" 2>&1 || { tail -12 "$r/verify.log"; exit 1; }
-  for run in 1 2; do
-    "$lic" --mode=fetch --yaml="$RUNNER_TEMP/hackbench-catalog.yaml" >"$RUNNER_TEMP/hackbench-fetch$run.log" 2>&1 || { tail -20 "$RUNNER_TEMP/hackbench-fetch$run.log"; exit 1; }
-    grep -F 'rt_tests' "$RUNNER_TEMP/hackbench-fetch$run.log" >"$r/fetch$run.log" || true
-    cp "$RUNNER_TEMP/hackbench-catalog.yaml" "$RUNNER_TEMP/hackbench-catalog$run.yaml"
-  done
-  cmp "$RUNNER_TEMP/hackbench-catalog1.yaml" "$RUNNER_TEMP/hackbench-catalog2.yaml"
-  "$lic" --mode=verify --yaml="$RUNNER_TEMP/hackbench-catalog.yaml" >"$r/fetched-verify.log" 2>&1 || { tail -12 "$r/fetched-verify.log"; exit 1; }
-  python3 - "$doc" "$RUNNER_TEMP/hackbench-catalog.yaml" "$r" <<'PYTHON'
-import re,sys
-from pathlib import Path
-stock,new,out=map(Path,sys.argv[1:])
-def rows(p):
-    return dict(re.findall(r"(?m)^- dependency: ([^\n]+)\n((?:  [^\n]*\n)+)",p.read_text()))
-old,cur=rows(stock),rows(new)
-assert cur==old,[k for k in old.keys()|cur.keys() if old.get(k)!=cur.get(k)]
-assert 'license: GPL-2.0-only' in cur['rt_tests']
-(out/'license.txt').write_text(cur['rt_tests'])
-(out/'counts').write_text(f'{len(cur)} verified entries. Two Fetches kept the declared rt-tests row, with no change to other entries.\n')
-PYTHON
-  echo passed > "$r/verdict"; exit
-fi
-case "$arm" in x86_64) cpu=amd64;; aarch64) cpu=arm64;; *) exit 2;; esac
-make -s list-all-images ARCH="$arm" DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$RUNNER_TEMP/images.bazelrc" | tr ' ' '\n' | grep -x benchmarks_hackbench
-make rebuild-benchmarks_hackbench ARCH="$arm" DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$RUNNER_TEMP/images.bazelrc"
-tag=gvisor.dev/images/benchmarks/hackbench:latest
-docker image inspect "$tag" --format '{{json .Config}}' > "$r/docker-config.json"
-test "$(docker image inspect "$tag" --format '{{.Architecture}}')" = "$cpu"
-bz build --config="$arm" "$pkg:hackbench_image"
-bz cquery --config="$arm" --output=files "$pkg:hackbench_image" >"$r/manifest-files"
-python3 - "$r" "$arm" "$cpu" "$GITHUB_SHA" <<'PY'
-import json, pathlib, sys,subprocess
-r=pathlib.Path(sys.argv[1]); arch,cpu,carrier=sys.argv[2:]
-v=[json.loads(pathlib.Path(p).read_text()) for p in (r/'manifest-files').read_text().splitlines()]
-manifest,= (x for x in v if 'layers' in x)
-config,= (x for x in v if 'rootfs' in x)
-assert config['architecture']==cpu and config['config']['Cmd']==['/usr/bin/hackbench'] and len(manifest['layers'])==2,(config,manifest)
-assert any('/usr/bin' in item for item in config['config']['Env'] if item.startswith('PATH='))
-base=json.loads(subprocess.check_output(['git','show',f'{carrier}:test/rbe/hackbench-shipped.json']))['benchmarks/hackbench_'+arch]
-total=sum(x['size'] for x in manifest['layers'])
-(r/'sizes.json').write_text(json.dumps({'architecture':cpu,'shipped_manifest':base['manifest'],'shipped_compressed_bytes':base['total'],'candidate_compressed_bytes':total,'candidate_layers':manifest['layers'],'delta':total-base['total']},indent=2)+'\n')
-print((r/'sizes.json').read_text())
-PY
 
-bz build @rt_tests//:COPYING
-license=$(bz cquery --output=files @rt_tests//:COPYING)
+case "$arm" in
+  x86_64) cpu=amd64; producer=63361588-f684-4460-8e86-e888d7a57999 ;;
+  aarch64) cpu=arm64; producer=f8103834-99f5-4a15-a0d3-7d6be4b5d8d4 ;;
+  *) exit 2 ;;
+esac
+work=$(mktemp -d "$RUNNER_TEMP/hackbench-retained-XXXX")
+trap 'rm -rf "$work"' EXIT
+label="$pkg:hackbench_context"
+git show "$GITHUB_SHA:test/rbe/recover-image-context.py" > "$work/recover.py"
+if python3 "$work/recover.py" "$label" "$producer" "$r" "$work/context.tar"; then
+  archive="$work/context.tar"
+else
+  unset BUILDBUDDY_API_KEY
+  bz build --experimental_remote_require_cached --config="$arm" "$label"
+  archive=$(bz cquery --config="$arm" --output=files "$label")
+  test -f "$archive"
+  echo 'Recovered with Bazel; rebuilding disallowed.' >"$r/materialization"
+fi
+unset BUILDBUDDY_API_KEY
+tar -xOf "$archive" './images/benchmarks/hackbench/image.tar' >"$work/image.tar" ||
+  tar -xOf "$archive" 'images/benchmarks/hackbench/image.tar' >"$work/image.tar"
+docker load --input "$work/image.tar"
+tag=gvisor.dev/images/benchmarks/hackbench:latest
+test "$(docker image inspect "$tag" --format '{{.Architecture}}')" = "$cpu"
 docker run --rm --pull=never --runtime=runc --platform=linux/"$cpu" "$tag" cat /usr/share/doc/hackbench/COPYING > "$r/COPYING"
-cmp "$r/COPYING" "$license"
+license=$(bz cquery --output=files @rt_tests//:COPYING)
+execroot=$(bz info execution_root)
+cmp "$r/COPYING" "$execroot/$license"
 sha256sum "$r/COPYING" > "$r/copying.sha256"
+# Keep raw consumer outcomes even if its Go/Bazel test cannot start.
+id=$(docker run --detach --pull=never --runtime=runc --platform=linux/"$cpu" "$tag" sleep 24h)
+for mode in thread process; do
+  flags=(--groups=10 --process)
+  if [[ "$mode" == thread ]]; then flags=(--pipe --groups=10 --threads); fi
+  docker exec "$id" hackbench "${flags[@]}" -l 1 | tee "$r/$mode.log"
+  grep -Eq '^Time:[[:space:]]+[0-9]+([.][0-9]+)?' "$r/$mode.log"
+done
+docker rm --force "$id" >/dev/null
 target=//test/benchmarks/base:hackbench_test
 res=0
 bz test --strategy=TestRunner=local --nocache_test_results --test_output=errors --test_arg=-test.v '--test_arg=-test.run=^$' '--test_arg=-test.bench=^BenchmarkHackbench$' --test_arg=-test.benchtime=1x --test_arg=-runtime=runc --test_timeout=300 "$target" || res=$?

@@ -59,6 +59,8 @@ jobs:
           grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
       - name: Qualify Hackbench on x86_64
         if: always() && steps.setup.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: bash "$RUNNER_TEMP/qualify-images.sh" x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.setup.outcome == 'success'
@@ -68,6 +70,8 @@ jobs:
           if-no-files-found: error
       - name: Qualify Hackbench on aarch64
         if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: bash "$RUNNER_TEMP/qualify-images.sh" aarch64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
