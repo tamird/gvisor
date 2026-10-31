@@ -1854,7 +1854,14 @@ func (apfl *AsyncPagesFileLoad) main() {
 	var wakeups []*aplWaiter
 	var decRefs []aplFileRange
 
-	dropDelayedDecRefs := func() {
+	// A later completion in the same batch can fail after a successful read
+	// has removed its waiters from unloaded. Deliver those wakeups even if
+	// this is the last batch.
+	finishCompletions := func() {
+		for _, w := range wakeups {
+			w.wakeup.Notify(1)
+		}
+		wakeups = wakeups[:0]
 		if len(decRefs) != 0 {
 			for _, fr := range decRefs {
 				fr.amfl.f.DecRef(fr.FileRange)
@@ -1862,7 +1869,7 @@ func (apfl *AsyncPagesFileLoad) main() {
 			decRefs = decRefs[:0]
 		}
 	}
-	defer dropDelayedDecRefs()
+	defer finishCompletions()
 
 	// Don't start timing until we have pages to load.
 	apfl.lfStatus.Wait()
@@ -2138,11 +2145,7 @@ func (apfl *AsyncPagesFileLoad) main() {
 		}
 		apfl.mu.Unlock()
 		apfl.amflsMu.Unlock()
-		for _, w := range wakeups {
-			w.wakeup.Notify(1)
-		}
-		wakeups = wakeups[:0]
-		dropDelayedDecRefs()
+		finishCompletions()
 	}
 }
 
