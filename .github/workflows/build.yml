@@ -47,6 +47,17 @@ jobs:
           build --noshow_progress
           RC
           for name in wrk2-image-check wrk2-source-check wrk2-go-check; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
+      - name: Read the existing iperf producer status
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          git show "$GITHUB_SHA:test/rbe/iperf-producer-status.py" >"$RUNNER_TEMP/iperf-producer-status.py"
+          python3 "$RUNNER_TEMP/iperf-producer-status.py" >"$RUNNER_TEMP/iperf-producer-status.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: original-iperf-producer-status
+          path: ${{ runner.temp }}/iperf-producer-status.json
+          if-no-files-found: error
       - name: Install the Linux ARM64 binfmt interpreter
         id: qemu
         run: |
