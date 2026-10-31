@@ -1,4 +1,4 @@
-name: Verify corrected runtime files in four OCI images
+name: Qualify native wrk2 generators, image workloads and release notices
 on:
   push:
     branches: [qualification/official-go-images]
@@ -7,7 +7,7 @@ permissions:
 jobs:
   images:
     runs-on: ubuntu-22.04
-    timeout-minutes: 100
+    timeout-minutes: 135
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -46,29 +46,60 @@ jobs:
           build --remote_download_outputs=toplevel
           build --noshow_progress
           RC
-          for name in clean-layers.sh verify-image-runtime-files.py clean-layer-expectations.json; do
-            git show "$GITHUB_SHA:test/rbe/$name" > "$RUNNER_TEMP/$name"
-          done
-      - name: Compare the four real archives on x86_64
-        id: layers_x86_64
+          for name in wrk2-image-check wrk2-source-check wrk2-go-check; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
+      - name: Install the Linux ARM64 binfmt interpreter
+        id: qemu
+        run: |
+          if [[ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends qemu-user-static binfmt-support
+            sudo update-binfmts --enable qemu-aarch64
+          fi
+          grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
+          grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
+      - name: Build the image and run the HTTP client on amd64
+        id: amd64
         if: always() && steps.setup.outcome == 'success'
-        run: bash "$RUNNER_TEMP/clean-layers.sh" x86_64
+        timeout-minutes: 44
+        run: bash "$RUNNER_TEMP/wrk2-image-check.sh" x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.layers_x86_64.outcome != 'skipped'
+        if: always() && steps.amd64.outcome != 'skipped'
         with:
-          name: oci-clean-x86_64
-          path: ${{ runner.temp }}/oci-clean-x86_64
+          name: wrk2-x86_64
+          path: ${{ runner.temp }}/wrk2/x86_64
           if-no-files-found: error
-      - name: Compare the four real archives on aarch64
-        id: layers_aarch64
+      - name: Build the image and run the HTTP client on arm64
+        id: arm64
+        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        timeout-minutes: 44
+        run: bash "$RUNNER_TEMP/wrk2-image-check.sh" aarch64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.arm64.outcome != 'skipped'
+        with:
+          name: wrk2-aarch64
+          path: ${{ runner.temp }}/wrk2/aarch64
+          if-no-files-found: error
+      - name: Run the Kubernetes pod command and parse its latency distribution
+        id: consumer
+        if: always() && steps.amd64.outcome == 'success'
+        timeout-minutes: 35
+        run: bash "$RUNNER_TEMP/wrk2-go-check.sh"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.consumer.outcome != 'skipped'
+        with:
+          name: wrk2-consumer
+          path: ${{ runner.temp }}/wrk2/consumer
+          if-no-files-found: error
+      - name: Regenerate the four new source notices and verify the full catalog
+        id: licenses
         if: always() && steps.setup.outcome == 'success'
-        run: bash "$RUNNER_TEMP/clean-layers.sh" aarch64
+        timeout-minutes: 25
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash "$RUNNER_TEMP/wrk2-source-check.sh"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.layers_aarch64.outcome != 'skipped'
+        if: always() && steps.licenses.outcome != 'skipped'
         with:
-          name: oci-clean-aarch64
-          path: ${{ runner.temp }}/oci-clean-aarch64
+          name: wrk2-licenses
+          path: ${{ runner.temp }}/wrk2/licenses
           if-no-files-found: error
-      - name: Remove the remote action credential
-        if: always()
-        run: rm -f "$RUNNER_TEMP/images.bazelrc"
