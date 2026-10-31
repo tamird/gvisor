@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T09:29:02.218795+00:00",
+    "updatedAt": "2026-10-31T09:57:32.031579+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39178,6 +39178,37 @@
           "url": "https://github.com/tamird/gvisor/commit/d3066814d"
         }
       ]
+    },
+    {
+      "id": "branch:governance-generator",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/governance-generator",
+      "head": "08f421859113f25ca84aef7a0f5f9f457db35e95",
+      "title": "Run the governance generator directly",
+      "url": "https://github.com/tamird/gvisor/commit/08f421859",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "summary": "Bazel starts a shell just to invoke the Go program that generates CODEOWNERS and MAINTAINERS.md. With the Go program as the action executable, both files build without Bash and match the checked-in files on AMD64 and ARM64.",
+      "updatedAt": "2026-10-31T09:57:32.031579+00:00",
+      "evidence": [
+        {
+          "label": "Proposed commit",
+          "url": "https://github.com/tamird/gvisor/commit/08f421859"
+        },
+        {
+          "label": "Eight remote actions: both files with and without Bash on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41190257988/artifacts/13038786888"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "08f421859113f25ca84aef7a0f5f9f457db35e95",
+        "url": "https://github.com/tamird/gvisor/commit/08f421859",
+        "title": "Open the governance generator PR",
+        "summary": "Bazel starts a shell just to invoke the Go program that generates CODEOWNERS and MAINTAINERS.md. With the Go program as the action executable, both files build without Bash and match the checked-in files on AMD64 and ARM64."
+      }
     }
   ],
   "edges": [
