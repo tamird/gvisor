@@ -1,0 +1,18 @@
+FROM ubuntu:bionic@sha256:152dc042452c496007f07ca9127571cb9c29697f42acbfad72324b2bb2e43c98
+
+WORKDIR /root
+COPY . .
+
+RUN apt-get update && apt-get install -y \
+    iputils-ping iproute2 iptables
+
+# Add nonprivileged regular user named "nonroot".
+RUN groupadd --gid 1337 nonroot && \
+    useradd --uid 1338 --gid 1337 \
+        --create-home \
+        --shell $(which bash) \
+        --password '' \
+        nonroot
+
+# Copy host_connect to /home/nonroot so that "nonroot" can execute it.
+RUN cp host_connect /home/nonroot/host_connect

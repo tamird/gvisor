@@ -31,7 +31,7 @@ The continuous integration system can either take fine-grained dependencies on
 single images via individual `load` targets, or pull all images via a single
 `load-all-test-images` invocation.
 
-## Go image helpers
+## Image helpers
 
 Bazel builds the CUDA sample runners and Ollama HTTP client with the repository
 Go SDK and CGO disabled, and packages them with the image sources in
@@ -41,6 +41,10 @@ the image cache. The selected architecture controls both the helper binaries and
 the Docker build.
 
 Docker still builds the separate ASCII image converter using `golang:1.25`.
+
+Bazel builds the nine C helpers in `basic/integrationtest` for the selected
+Linux architecture. Docker installs the network tools required by the tests
+on the pinned Ubuntu Bionic base.
 
 ## Adding new images
 
