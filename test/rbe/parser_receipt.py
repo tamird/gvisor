@@ -1,4 +1,5 @@
-"""Read original parser results by source; never rerun Bazel or export raw logs."""
+"""Recover the real .o and classify all failures in the bounded compilation."""
+import hashlib
 import json
 import os
 import re
@@ -7,148 +8,70 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 
-carrier = "e5621f9a6ce9e5ea1a706f2fdc1f53c82cd1c89d"
-product = os.environ["PRODUCT"]
-label = "//tools/nvidia_driver_differ:driver_ast_parser"
+from parser_receipt_common import call, get, label, logs, pages, product
+
+iid = "da0ec3e0-44ec-47bf-8ee7-79e086bb94bf"
+old = "41d0faaf-0ed2-474b-93d7-6f9745ae03f4"
+digest = "3aed290e7e6fba7d4bc3be56479288d8ac3ac91a1a18f36fafdbb37355e0b4b9"
 dest = Path(os.environ["RUNNER_TEMP"]) / "parser-receipt"
 dest.mkdir(exist_ok=True)
-report = {"originalCarrier": carrier, "product": product, "target": label,
-          "invocations": [], "lookup": {}, "evidenceStatus": "NO MATCH"}
+report = {"source": product, "invocation": iid, "original": old, "digest": digest}
 
 def save():
-    (dest / "original.json").write_text(json.dumps(report, indent=2) + "\n")
-
-def call(method, **args):
-    url = "https://app.buildbuddy.io/" + (
-        "rpc/BuildBuddyService/" if method in ("SearchInvocation", "GetExecution") else "api/v1/") + method
-    request = urllib.request.Request(url, data=json.dumps(args).encode(), headers={
-        "Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
-    with urllib.request.urlopen(request, timeout=50) as response:
-        return json.load(response)
-
-def pages(method, **args):
-    seen = set()
-    while len(seen) < 250:
-        record = call(method, **args)
-        yield record
-        token = record.get("nextPageToken") or record.get("next_page_token")
-        if not token:
-            return
-        if token in seen:
-            raise ValueError("duplicate page")
-        seen.add(token)
-        args["page_token"] = token
-    raise ValueError("page limit")
-
-def get(row, *fields):
-    return {k: row[k] for k in fields if k in row}
-
-def execution(iid):
-    # This service reports remote executions only. A local TdGenerate won't
-    # appear here; the absence of a row isn't evidence of its success/failure.
-    rows = call("GetExecution", executionLookup={"invocationId": iid}).get("execution", [])
-    classes, failures, latest = Counter(), Counter(), []
-    for r in rows:
-        m = r.get("actionMnemonic", "?")
-        classes[m] += 1
-        status = r.get("status", {}).get("code", 0)
-        ret = r.get("exitCode", 0)
-        if status or ret:
-            failures[f"{m} RPC {status} exit {ret}"] += 1
-        meta = r.get("executedActionMetadata", {})
-        finish = meta.get("workerCompletedTimestamp") or meta.get("executionCompletedTimestamp") or ""
-        if finish and isinstance(finish, str):
-            latest.append((finish, m, r.get("targetLabel", "")[:150], status, ret))
-    return {"count": len(rows), "mnemonics": classes, "failures": failures,
-            "lastRemoteCompletions": sorted(latest)[-8:]}
-
-def logs(iid):
-    counts = Counter()
-    clues = []
-    signatures = ("Resource Exhausted", "Killed signal terminated", "signal: killed", "No space left on device",
-                  "Out of memory", "Maximum heap size", "The operation was canceled", "Received interrupt",
-                  "Interrupted", "FAILED: Build did NOT complete", "ERROR: Build did NOT complete",
-                  "Build completed successfully", "RISCVTargetParserDef.inc", "remote cache hit",
-                  "connection reset", "Lost connection", "No such file or directory", "Timed out", "TIMEOUT")
-    for r in pages("GetLog", selector={"invocation_id": iid}):
-        for line in r.get("log", {}).get("contents", "").splitlines():
-            for marker in signatures:
-                if marker in line:
-                    counts[marker] += 1
-            # Allowlisted scalar details, no raw commands, headers or URLs.
-            for pat in (r"Elapsed time: [0-9.]+s, Critical Path: [0-9.]+s",
-                        r"[0-9]+ processes: [0-9a-z ,.]+", r"\(Exit [0-9]+\)",
-                        r"bazel-out/[a-zA-Z0-9_.-]+/bin/tools/nvidia_driver_differ/driver_ast_parser"):
-                m = re.search(pat, line)
-                if m and m[0] not in clues and len(clues) < 30:
-                    clues.append(m[0])
-    return {"counts": counts, "details": clues}
+    (dest / "original-object.json").write_text(json.dumps(report, indent=2) + "\n")
 
 save()
-found = {}
-for sha in (carrier, product):
-    try:
-        records = [v for r in pages("GetInvocation", selector={"commit_sha": sha})
-                   for v in r.get("invocation", ())]
-    except Exception as exc:
-        report["lookup"][sha] = repr(exc)[:110]
+for inv in (old, iid):
+    rr = call("GetExecution", executionLookup={"invocationId": inv, "targetLabel": label},
+              inlineExecuteResponse=True).get("execution", [])
+    records = report[inv] = []
+    for r in rr:
+        if r.get("actionDigest", {}).get("hash") != digest:
+            continue
+        resp = r.get("executeResponse", {})
+        a = resp.get("result", {})
+        row = {"status": r.get("status", {}).get("code", 0), "exit": r.get("exitCode", 0),
+               "linkType": r.get("invocationLinkType", "UNSPECIFIED"), "stage": r.get("stage"),
+               "responseStatus": resp.get("status", {}).get("code", 0), "hasResult": bool(a),
+               "responseExit": a.get("exitCode", 0), "outputs": []}
+        records.append(row)
+        for f in a.get("outputFiles", []):
+            if not re.fullmatch(r"bazel-out/[^/]+/bin/tools/nvidia_driver_differ/_objs/driver_ast_parser/driver_ast_parser(?:\.pic)?\.o", f.get("path", "")):
+                continue
+            h, n = f["digest"]["hash"], int(f["digest"]["sizeBytes"])
+            uri = f"bytestream://remote.buildbuddy.io/blobs/{h}/{n}"
+            req = urllib.request.Request("https://app.buildbuddy.io/api/v1/GetFile",
+                data=json.dumps({"uri": uri}).encode(),headers={"Content-Type":"application/json",
+                "x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
+            try:
+                with urllib.request.urlopen(req, timeout=45) as response:
+                    raw = response.read(n + 1)
+            except urllib.error.HTTPError as exc:
+                row["unavailableObject"] = {"sha256": h, "http": exc.code}
+                continue
+            assert len(raw) == n and hashlib.sha256(raw).hexdigest() == h
+            assert raw[:6] == b"\x7fELF\x02\x01" and raw[16:20] == b"\x01\x00\x3e\x00"
+            row["outputs"].append({"path": f["path"], "length": n, "sha256": h,
+                                   "ELF": "AMD64 relocatable", "actualBytesVerified": True})
         save()
-        continue
-    report["lookup"][sha] = len(records)
-    for v in records:
-        if v.get("pattern") != label or v.get("command") != "build":
-            continue
-        # The unmodified product was built by multiple carriers. Stay strictly
-        # within the original GitHub job's 16:58--21:59 UTC window.
-        start = int(v.get("createdAtUsec") or v.get("created_at_usec") or 0)
-        if start and not (1793465880 <= start // 1_000_000 <= 1793483940):
-            continue
-        if not start and sha != carrier:
-            continue
-        iid = v["id"].get("invocationId") or v["id"].get("invocation_id")
-        if iid:
-            found[iid] = v
-    save()
-if not found:
-    try:
-        search = call("SearchInvocation", query={"repoUrl": "https://github.com/tamird/gvisor",
-            "pattern": label, "command": "build", "updatedAfter": "2026-10-31T16:58:00Z",
-            "updatedBefore": "2026-10-31T22:10:00Z"}, count=20)
-        options = search.get("invocation", [])
-        report["lookup"]["patternSearchCount"] = len(options)
-        for v in options:
-            # Require the exact carrier branch or one of the expected SHAs.
-            if v.get("commitSha") in (carrier, product) or v.get("branchName") == "qualification/llvm-current-parser-tablegen":
-                found[v["invocationId"]] = v
-    except Exception as exc:
-        report["lookup"]["patternSearchError"] = repr(exc)[:110]
-    save()
-for iid, v in found.items():
-    row = {"invocation": iid, "metadata": get(v, "success", "createdAtUsec", "updatedAtUsec",
-            "created_at_usec", "updated_at_usec", "durationUsec", "commitSha", "commit_sha", "repoUrl",
-            "pattern", "actionCount", "bazelExitCode", "invocationStatus")}
-    report["invocations"].append(row)
-    errors = {}
-    for op, fn in (
-        ("targets", lambda: [get(t, "label", "status", "timing", "ruleType")
-         for r in pages("GetTarget", selector={"invocation_id": iid, "label": label})
-         for t in r.get("target", ()) if t.get("label") == label]),
-        ("outputs", lambda: [get(f, "name", "hash", "sizeBytes")
-         for r in pages("GetAction", selector={"invocation_id": iid, "target_label": label})
-         for t in r.get("action", ()) for f in t.get("file", ())
-         if f.get("name", "").endswith("driver_ast_parser")]),
-        ("logs", lambda: logs(iid)),
-        ("remote", lambda: execution(iid)),
-    ):
-        try:
-            row[op] = fn()
-        except Exception as exc:
-            errors[op] = repr(exc)[:110]
-        save()
-    if errors:
-        row["lookupErrors"] = errors
-if found:
-    report["evidenceStatus"] = "ORIGINAL INVOCATION RECOVERED"
+
+rr = call("GetExecution", executionLookup={"invocationId": iid}).get("execution", [])
+bad = [r for r in rr if r.get("status", {}).get("code") or r.get("exitCode")]
+report["remoteExecutionCount"] = len(rr)
+report["unsuccessfulRemoteMnemonics"] = Counter(r.get("actionMnemonic", "?") for r in bad)
+report["unsuccessful"] = [{"mnemonic": r.get("actionMnemonic"), "output": r.get("primaryOutputPath"),
+    "label": r.get("targetLabel"), "linkType": r.get("invocationLinkType", "UNSPECIFIED"),
+    "rpcCode": r.get("status", {}).get("code", 0), "exit": r.get("exitCode", 0)} for r in bad[:40]]
 save()
-print(report["evidenceStatus"], len(found))
-raise SystemExit(not found)
+errors = report["originalBazelFailure"] = []
+for p in pages("GetLog", selector={"invocation_id": iid}):
+    for line in p.get("log", {}).get("contents", "").splitlines():
+        if not ("ERROR:" in line and ("failed:" in line or "error executing" in line)):
+            continue
+        # Capture only Bazel's action description and numeric exit, never the argv.
+        m = re.search(r"BUILD(?:\.bazel)?:\d+:\d+: ([\w.,:/\-+@()\[\] =]{1,650}?) failed: \(Exit (\d+)\)", line)
+        if m and len(errors) < 8:
+            errors.append([m[1], int(m[2])])
+report["verifiedObject"] = any(r["outputs"] for r in report[iid])
+save()
+print("original Bazel failing actions", errors, "actual .o", report["verifiedObject"])
