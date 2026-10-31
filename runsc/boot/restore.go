@@ -225,6 +225,8 @@ func newProcInternalData(conf *config.Config, spec *specs.Spec, containerName st
 // all containers and triggers the full sandbox restore after the last
 // container is restored.
 type restorer struct {
+	trialKernelNS int64
+
 	mu sync.Mutex
 
 	// totalContainers is the number of containers expected to be restored in
@@ -552,6 +554,7 @@ func (r *restorer) restore(l *Loader) error {
 	// Load the state.
 	clocks := time.NewCalibratedClocks(shouldEnableClockMonotonicRaw(l.root.spec, l.root.conf))
 	r.timer.Reached("loading kernel")
+	trialStart := time2.Now()
 	if r.extractRootFsMode {
 		if err := l.k.ExtractRootfsUpperLayer(ctx, r.stateFile, r.asyncMFLoader, nil, clocks, r.rootFsOutputTar); err != nil {
 			return fmt.Errorf("failed to extract rootfs upper layer: %w", err)
@@ -566,6 +569,7 @@ func (r *restorer) restore(l *Loader) error {
 	if err := r.stateFile.Verify(); err != nil {
 		return fmt.Errorf("statefile integrity check failed: %w", err)
 	}
+	r.trialKernelNS = time2.Since(trialStart).Nanoseconds()
 	r.timer.Reached("kernel loaded")
 	if oldNvidiaDriverVersion.Major() > 0 && !l.k.NvidiaDriverVersion.Equals(oldNvidiaDriverVersion) {
 		return fmt.Errorf("nvidia driver version changed during restore: was %v, now %v", oldNvidiaDriverVersion, l.k.NvidiaDriverVersion)

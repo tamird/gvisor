@@ -499,7 +499,12 @@ func (cm *containerManager) Restore(o *sentryapi.RestoreOpts, reply *sentryapi.R
 		return fmt.Errorf("checkpoint taken with no-root-container=%t cannot be restored with no-root-container=%t", saved, cm.l.noRootContainer.enabled)
 	}
 	timer.Reached("restorer initialized")
-	reply.KernelStarted, err = cm.restorer.restoreContainerInfo(cm.l, &cm.l.root)
+	r := cm.restorer
+	reply.KernelStarted, err = r.restoreContainerInfo(cm.l, &cm.l.root)
+	if err == nil && reply.KernelStarted && o.TrialReader != "" {
+		reply.TrialReader = o.TrialReader
+		reply.TrialKernelNS = r.trialKernelNS
+	}
 	return err
 }
 
@@ -534,7 +539,10 @@ func getRestoreReadersForLocalCheckpointFiles(o *sentryapi.RestoreOpts, cpus int
 	if stat.Size == 0 {
 		return nil, nil, nil, fmt.Errorf("statefile cannot be empty")
 	}
-	if stat.Mode&unix.S_IFMT == unix.S_IFREG {
+	if o.TrialReader == "buffer" && stat.Mode&unix.S_IFMT != unix.S_IFREG {
+		return nil, nil, nil, fmt.Errorf("buffered trial did not receive a regular file")
+	}
+	if stat.Mode&unix.S_IFMT == unix.S_IFREG && (o.TrialReader == "buffer" || o.TrialReader == "") {
 		// Read the state file ahead of kernel decode, so that decode waits for
 		// the host file less often. The buffer holds the whole file, up to
 		// localStateFileMaxBufBytes. The reads use file offsets, so only a

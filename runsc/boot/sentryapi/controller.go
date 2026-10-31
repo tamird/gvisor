@@ -112,6 +112,8 @@ const ContMgrRestore = "containerManager.Restore"
 
 // RestoreOpts contains options related to restoring a container's file system.
 type RestoreOpts struct {
+	TrialReader string
+
 	// FilePayload contains, in order:
 	// 1. checkpoint state file.
 	// 2. optional checkpoint pages metadata file.
@@ -136,6 +138,9 @@ type RestoreOpts struct {
 
 // RestoreReply is the reply of ContMgrRestore and ContMgrRestoreSubcontainer.
 type RestoreReply struct {
+	TrialReader string
+	TrialKernelNS int64
+
 	// KernelStarted is set when the call restored the last container, which
 	// starts the kernel.
 	KernelStarted bool
