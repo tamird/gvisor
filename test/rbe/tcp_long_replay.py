@@ -26,14 +26,17 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-observations = [line.split(".go:", 1)[-1].strip() for line in logs.splitlines() if "page read completions:" in line or "loader finished with" in line or "MapInternal stayed blocked" in line]
+observations = [line.split("REFS ",1)[-1] for line in logs.splitlines() if "REFS mode=" in line]
 if arm in ("stock", "fixed"):
-    for expected in ("page read completions: 4096, 4096", "page read completions: 4096, 0", "loader finished with <nil>", "loader finished with I/O error"):
-        if sum(expected in line for line in observations) != 1:
-            why.append("missing original observation: " + expected)
+    for mode in ("shortRead", "failedWait"):
+        for page in (0,1):
+            expected = arm == "fixed" or (mode == "shortRead" and page == 1)
+            row = f"mode={mode} page={page} unique={str(expected).lower()}"
+            if observations.count(row) != 1:
+                why.append("missing exact ownership observation: " + row)
 if arm == "stock":
-    if runner_exit != 3 or verdict["status"] != "FAIL" or "MapInternal stayed blocked after the page read and loader both finished" not in logs or "--- PASS: TestAsyncLoadCompletionBatch/intact" not in logs or "--- FAIL: TestAsyncLoadCompletionBatch/truncated" not in logs:
-        why.append("did not reproduce only the intended blocked waiter with the intact control passing")
+    if runner_exit != 3 or verdict["status"] != "FAIL" or "restore retained its reference" not in logs:
+        why.append("expected real retained reference failure")
 elif verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),

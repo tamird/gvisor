@@ -5,7 +5,7 @@ permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-batch-wakeup'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-aborted-reads'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -20,7 +20,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "7e837edccdcfdacb911ef57ebd93dbc57c2128bb"
+        test "$(git rev-parse HEAD^1)" = "044ebde60490d3c49d5770fcbf4931afbe9a5a3e"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -84,10 +84,10 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in stock fixed package analyzers; do
+        for arm in stock fixed wakeups package analyzers; do
           case $arm in
-            stock) source=e734aa067e340dd5840c4b4492918096052f12fd; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
-            *) source=33f8ec45927de8039e1edfc56277dcbee205d55c; parent=e734aa067e340dd5840c4b4492918096052f12fd ;;
+            stock) source=896bb88aa8bb7e2cd0bf676376c3f3d4bc5cbb59; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
+            *) source=205dbcc472c86b8cc7b3940cdefeb753df24372a; parent=146607b9ce2c8278641aed203158a276bde56798 ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -105,7 +105,8 @@ jobs:
           code=0
           opts=()
           case $arm in
-            stock|fixed) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--test_filter=^TestAsyncLoadCompletionBatch --bazel-option=--test_arg=-test.v) ;;
+            stock|fixed) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--test_filter=^TestAsyncLoadReleasesBackgroundReads --bazel-option=--test_arg=-test.v) ;;
+            wakeups) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--test_filter=^TestAsyncLoadCompletionBatch --bazel-option=--test_arg=-test.v) ;;
             package) labels=(//pkg/sentry/pgalloc:pgalloc_test) ;;
             analyzers) labels=(//pkg/sentry/pgalloc:pgalloc_nogo //pkg/sentry/pgalloc:pgalloc_test_nogo) ;;
           esac
@@ -124,7 +125,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["stock","fixed","package","analyzers"]
+        arms = ["stock","fixed","wakeups","package","analyzers"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -137,6 +138,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: pgalloc-batch-verdicts
+        name: pgalloc-aborted-read-verdicts
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
