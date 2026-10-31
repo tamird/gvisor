@@ -107,6 +107,7 @@ func TestLostTimeoutRepair(t *testing.T) {
 			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
 			sendAndReceive(t, dut, conn, 4, fd, mss, true)
 			base := *conn.RemoteSeqNum(t)
+			fmt.Printf("FENCE_FLOW mode=%s base=%d\n", mode, uint32(base))
 			seq := func(off int) seqnum.Value { return base.Add(seqnum.Size(off)) }
 			observe := func(at string) linux.TCPInfo {
 				info := dut.GetSockOptTCPInfo(t, fd)
@@ -219,7 +220,7 @@ func TestLostTimeoutRepair(t *testing.T) {
 				packet("later_retry", mss, mss, 4*time.Second)
 				observe("later_retry")
 			}
-			fmt.Printf("FENCE_DONE mode=%s\\n", mode)
+			fmt.Printf("FENCE_DONE mode=%s\n", mode)
 		})
 	}
 }
