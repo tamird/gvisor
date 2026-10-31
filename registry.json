@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T03:05:31.618066+00:00",
+    "updatedAt": "2026-10-31T03:16:50.067941+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20532,42 +20532,57 @@
       "id": "branch:rules-img-hey",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-hey",
-      "head": "f53b01d2d2e44874003448cea423f8f1e422f173",
-      "title": "Build the hey image from pinned Go source",
-      "url": "https://github.com/tamird/gvisor/commit/f53b01d2d2e44874003448cea423f8f1e422f173",
+      "ref": "review/standalone-hey-image",
+      "head": "d063c47347266f5f419dbbaf8dd75fa3c200fb96",
+      "title": "Build the Hey benchmark image from the pinned executable",
+      "url": "https://github.com/tamird/gvisor/compare/8a84b240f...d063c4734",
       "group": "bazel",
-      "status": "Contributor approved; awaiting prerequisites",
-      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
-      "summary": "The final proposal builds pinned hey v0.1.5 with the repository Go toolchain and shared lean image base. Both CPU archive binaries match their declared outputs and static ELF architecture. The actual AMD64 Make reload preserved image identity; existing parser checks and twelve HTTP plus twelve HTTPS responses passed with both Nogo architectures. HTTPS exercises request behavior, not certificate trust: upstream hey disables verification. Full canonical Fetch/Verify adds only the hey record to the unchanged 244-entry foundation catalog. Earlier visibility and lint failures remain preserved. The final single commit retains the exact qualified production files and generated catalog.\n\nThe user reviewed and approved exact f53b01d2. Open after the recorded image/license prerequisites land; no repeated contributor request is needed.",
-      "followup": {
-        "owner": "node_tls_sni",
-        "disposition": "Contributor approved; awaiting prerequisites",
-        "sourceHead": "f53b01d2d2e44874003448cea423f8f1e422f173",
-        "observedAt": "2026-10-21T18:16:40.279706+00:00",
-        "nextAction": "Deliver the approved exact proposal after the recorded prerequisites land; preserve approval across verified mechanical refreshes.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/f53b01d2d2e44874003448cea423f8f1e422f173",
-          "https://app.buildbuddy.io/invocation/3434ef66-59df-4d0d-88d2-d7c8b1cebfb6"
-        ],
-        "reviewedHead": "f53b01d2d2e44874003448cea423f8f1e422f173"
-      },
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T03:16:50.067941+00:00",
+      "summary": "The benchmark image now contains just the pinned Hey v0.1.5 executable at /bin/hey. The normal Make target loaded the image on both architectures. Each ran 12 HTTP and 12 HTTPS requests through the benchmark’s own command and parsers. Compressed layers fell from 38.4 to 4.2 MB on AMD64 and from 34.8 to 3.7 MB on ARM64 under QEMU. Hey disables TLS certificate verification.",
       "evidence": [
         {
-          "label": "Current published implementation",
-          "url": "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c"
+          "label": "AMD64 Make load, image size and benchmark requests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41162901582/artifacts/13027488383"
         },
         {
-          "label": "Current unchanged fixture runtime qualification",
-          "url": "https://app.buildbuddy.io/invocation/3434ef66-59df-4d0d-88d2-d7c8b1cebfb6"
+          "label": "ARM64 Make load, image size and emulated benchmark requests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41162901582/artifacts/13028033067"
         },
         {
-          "label": "Canonical catalog qualification",
-          "url": "https://app.buildbuddy.io/invocation/543a9b91-1c0d-4fc5-aeb3-7cb25218b583"
+          "label": "Pinned Hey license and two catalog regenerations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41162901582/artifacts/13027229134"
         },
         {
-          "label": "Final contributor-review commit",
-          "url": "https://github.com/tamird/gvisor/commit/f53b01d2d2e44874003448cea423f8f1e422f173"
+          "label": "Previously approved shared-base proposal",
+          "url": "https://github.com/tamird/gvisor/commit/f53b01d2d"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "base": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
+          "head": "f53b01d2d2e44874003448cea423f8f1e422f173"
+        },
+        "after": {
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
+          "head": "d063c47347266f5f419dbbaf8dd75fa3c200fb96"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d063c47347266f5f419dbbaf8dd75fa3c200fb96",
+        "url": "https://github.com/tamird/gvisor/compare/8a84b240f...d063c4734",
+        "title": "Open the standalone Hey image PR",
+        "summary": "The earlier approved proposal depended on a shared base image. This revision builds directly on upstream and ships one static binary. Both Make loads and runtime checks passed. The canonical catalog verified all 221 entries, and two Fetch runs reproduced only the Hey record.",
+        "baseHead": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "f53b01d2d2e44874003448cea423f8f1e422f173",
+          "outcome": "approved",
+          "at": "2026-10-21T18:16:40.279706+00:00"
         }
       ]
     },
@@ -40266,13 +40281,6 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/15814"
       ]
-    },
-    {
-      "from": "branch:native-go-images",
-      "to": "branch:rules-img-hey",
-      "type": "depends_on",
-      "reason": "The implementation reuses this existing image foundation and its shared build/runtime interfaces.",
-      "evidence": "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c"
     },
     {
       "from": "branch:native-go-images",
