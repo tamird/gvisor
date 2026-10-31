@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T14:15:49.730261+00:00",
+    "updatedAt": "2026-10-31T14:29:35.288450+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4499,15 +4499,19 @@
       "id": "branch:hermetic-compiler-review",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/llvm-spdx-toolchain",
+      "ref": "review/llvm-compiler-syscall-noexcept",
       "title": "Use declared LLVM C and C++ toolchains",
-      "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2",
+      "url": "https://github.com/tamird/gvisor/commit/467779e0f",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "summary": "The compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051. The static-link fix (#16669), header selection (#16236), and Benchmark exports (#16313) have merged. The remaining upstream prerequisites are #15153, #15368, #15146 and #16249. Its delivery stack keeps the four other Go declarations at their upstream settings.",
-      "updatedAt": "2026-10-31T01:17:56.603458+00:00",
-      "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
+      "status": "Agent work",
+      "summary": "The compiler needs two noexcept declarations for Clang’s syscall-test build, not the allocator behavior change in #15368. With -Werror the unmodified allocator fails at those two definitions; adding just the declarations passes. The two changes merge in either order.\n\nThe compiler revision is on the historical qualification branch. Applying it on current master still requires integrating the plugin build, Go rule changes and the license catalog. The earlier compiler approval is retained for the version reviewed. No new decision is requested until the current composition is ready.\n\nThe compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051. The static-link fix (#16669), header selection (#16236), and Benchmark exports (#16313) have merged. The original qualification stack also included #15368. Its delivery stack keeps the four other Go declarations at their upstream settings.",
+      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
+      "head": "467779e0fdf846ea354c8bf545a8a264c14677f2",
       "evidence": [
+        {
+          "label": "Actual Clang compile: 0 / 1 / 0 for stock, strict stock, strict corrected",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41209242009/artifacts/13045388964"
+        },
         {
           "label": "Canonical 206-record catalog, two fetches and five upstream notices",
           "url": "https://github.com/tamird/gvisor/actions/runs/40964802913"
@@ -4539,10 +4543,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
+          "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603"
         },
         "after": {
-          "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603"
+          "head": "467779e0fdf846ea354c8bf545a8a264c14677f2"
         }
       },
       "settledReviews": [
@@ -4554,11 +4558,15 @@
         }
       ],
       "followup": {
-        "owner": "release_owner",
-        "sourceHead": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
-        "observedAt": "2026-10-29T22:32:40.423771+00:00",
-        "disposition": "Approved after prerequisites",
-        "nextAction": "Open after source enumeration, SPDX verification and the reviewed compiler/static-linking prerequisites land."
+        "owner": "Compiler integration",
+        "sourceHead": "467779e0fdf846ea354c8bf545a8a264c14677f2",
+        "disposition": "Reconcile with current master",
+        "observedAt": "2026-10-31T14:29:35.288450+00:00",
+        "nextAction": "Preserve the current libbpf BCR and Linux header choices, adapt the musl plugin and Go rules, regenerate the license catalog, and qualify the integrated source. The GNU plugin, source-enumeration and license changes are still prerequisites.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41209242009/artifacts/13045388964",
+          "https://github.com/google/gvisor/pull/15368"
+        ]
       }
     },
     {
@@ -22936,17 +22944,17 @@
       "title": "Build profiling utilities from source",
       "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
-      "summary": "Profile helper 1ef50322e5 is distinct GNU Coreutils work. It uses GNU mkdir, chmod and rm --one-file-system to protect nested mounts, and shares the existing Coreutils build with timeout. It has no BusyBox applet requirement. Its prior approval and exact-source qualification remain recorded; the withdrawal of local BusyBox is not a rejection of these GNU semantics.\n\nThe current commit still has the broad e12 parent, so root must reconcile its actual GNU/compiler and image inputs independently before delivery. The e12 BusyBox composition is not an active shipment prerequisite or authorization. Existing pinned GNU packages supply a separate route; no new extracted source, runtime result or upstream-ready claim is made here.\n\nHistorical source-specific GNU helper record:\n\nThe contributor explicitly approved 1ef50322e. Both-CPU static outputs and native AMD64 host helper checks remain accepted; delivery retains shared utilities/compiler/image/license prerequisites.\n\nEarlier source-specific record:\n\nBuild GNU mkdir, chmod, rm and timeout with the existing declared Coreutils producer and package the profiling helper in scratch. The image transition selects the target CPU for Go and Coreutils. Both CPU image/static-output gates and native AMD64 host filesystem, helper configuration and stream checks passed. Exact timeout and complete PIDFD archive equality permits retained PIDFD runtime reuse. GNU rm --one-file-system preserves nested-mount protection. No Kubernetes or native ARM execution is claimed. Root has requested contributor review of final1ef503; earlier failed preparations and the one reporting-count correction remain retained.",
+      "status": "Superseded",
+      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
+      "summary": "The official Ubuntu profiling-helper proposal supersedes this GNU Coreutils source build. Ubuntu supplies mkdir, chmod and rm --one-file-system, which the DaemonSet uses to avoid crossing nested mounts. The replacement checks that boundary on both architectures.\n\nThe approved source-built version produced static tools for AMD64 and ARM64. Its native AMD64 checks exercised the filesystem, helper configuration and output stream. No Kubernetes or native ARM execution was claimed for that version.",
       "followup": {
         "owner": "root",
         "sourceHead": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
-        "observedAt": "2026-10-26T00:14:10.948933+00:00",
-        "disposition": "GNU-only helper approval retained; actual dependency extraction is agent work",
-        "nextAction": "Preserve approved GNU Coreutils behavior, especially rm --one-file-system. Reconcile its current GNU/compiler/image inputs separately from withdrawn e12 BusyBox before delivery, retaining existing exact-source evidence and no-Kubernetes/no-native-ARM limits.",
+        "observedAt": "2026-10-31T14:29:35.288450+00:00",
+        "disposition": "Superseded by the official Ubuntu image",
+        "nextAction": "No action on this source-built version. The active proposal is the official profiling-helper image.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
+          "https://github.com/tamird/gvisor/compare/8a84b240f...a859c3ac9"
         ]
       },
       "refinement": {
@@ -22958,6 +22966,10 @@
         }
       },
       "links": [
+        {
+          "label": "Active profiling-helper proposal",
+          "url": "https://github.com/tamird/gvisor/compare/8a84b240f...a859c3ac9"
+        },
         {
           "label": "Qualified native host and both-CPU output evidence",
           "url": "https://app.buildbuddy.io/invocation/0f8f16a2-8bec-4175-86ef-e30d18b0c161"
@@ -40726,11 +40738,11 @@
     {
       "from": "pr:15368",
       "to": "branch:hermetic-compiler-review",
-      "type": "depends_on",
-      "reason": "The refreshed composition now includes the complete approved allocator behavior correction and tests, replacing the older declaration-only subset.",
+      "type": "includes",
+      "reason": "Historical qualification included the allocator change. The compiler now carries only its two noexcept declarations; the allocator behavior and tests can land independently.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/fd0194dbcd3b64e2cc5ffb31c32c24698ca54390",
-        "https://github.com/tamird/gvisor/commit/dc22a991fd2d4676951c34a0f83e72fc352e23e1"
+        "https://github.com/tamird/gvisor/actions/runs/41209242009/artifacts/13045388964",
+        "https://github.com/tamird/gvisor/commit/467779e0f"
       ]
     },
     {
@@ -46031,7 +46043,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T06:14:46.578114+00:00",
+      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. The four round-trip regressions tracked in #16715 are fixed on master (#16747). The open question is whether the graph encoder’s range index costs enough time or memory on a real workload to justify changing it.",
       "findings": [
         {
@@ -48861,7 +48873,7 @@
           ]
         }
       ],
-      "nextStep": "Profile default graph Save and Load CPU and allocations on an actual checkpoint without the census instrumentation. Track that result under the state reflection profiles investigation.",
+      "nextStep": "The Nginx Save/Load profiles and both follow-up experiments are complete; see the state reflection profiles investigation. Review new graph codec changes against the measured checkpoint and round-trip controls as they arrive. No action is requested on the pooling or varint experiments.",
       "evidence": [
         {
           "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
@@ -56878,9 +56890,26 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T17:29:11.211836+00:00",
+      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "Timekeeper.update reuses the vDSO write buffer under updateMu. The annotation passes Nogo on AMD64 and ARM64; moving the periodic call past Unlock produces one distinct missing-lock diagnostic, printed four times on each architecture. The original wrapper rejected those repeats. Replaying the same logs confirmed the result without another Bazel run. The change documents existing locking; it does not fix a production race.",
+          "evidence": [
+            {
+              "label": "Reconciled receipt from the original logs",
+              "url": "https://github.com/tamird/gvisor/blob/8270bcdf6/.github/qualification/timekeeper-reconciliation.json"
+            },
+            {
+              "label": "Both normal and intentionally unlocked analyzer runs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41208308900/artifacts/13046255289"
+            },
+            {
+              "label": "Lock annotation",
+              "url": "https://github.com/tamird/gvisor/commit/630c779cf"
+            }
+          ]
+        },
         {
           "text": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex. Removing the existing EventUnregister lock produces a missing-lock diagnostic on each architecture.",
           "evidence": [
@@ -57913,20 +57942,20 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T14:07:19.589286+00:00",
+      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
         {
-          "text": "The same Gazelle check already passes with host Bazel on GitHub. The two Buildkite jobs still use the builder. The supplier test disables sandboxing and reads the checkout; the active experiment is whether a single action can check all selected packages, including a newly added Go import, with declared files and no shell.",
+          "text": "Gazelle checked all 218 approved packages with declared tools and sources, including in a chroot with no network or host executables. Missing imports, inherited BUILD directives and ignore files changed the result. The prototype still needs to preserve error diagnostics for a direct Bazel caller and prevent a root-only check from entering downstream product builds.",
           "evidence": [
             {
-              "label": "Current master’s host Bazel run",
-              "url": "https://github.com/google/gvisor/actions/runs/41194870700/job/124518915173"
+              "label": "Thirteen clean, dirty, and isolation checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41209965714/artifacts/13045323699"
             },
             {
-              "label": "Gazelle supplier test rule",
-              "url": "https://github.com/bazel-contrib/bazel-gazelle/blob/b66b19ce4/def.bzl#L246"
+              "label": "Gazelle prototype",
+              "url": "https://github.com/tamird/gvisor/commit/e697c10eb"
             }
           ]
         },
@@ -58013,7 +58042,7 @@
           ]
         }
       ],
-      "nextStep": "Keep #16663 at its published head until the supplier label, declared Python, developer fix command and license audit are ready. The downstream Gazelle error is a separate problem.",
+      "nextStep": "Keep Buildifier and cpplint on the shared input inventory. For Gazelle, test downstream builds and direct diagnostics for both a bad BUILD and a missing dependency before requesting review.",
       "evidence": [
         {
           "label": "Design and qualification controls",
