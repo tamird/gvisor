@@ -1,12 +1,12 @@
-name: Compare the first TCP timeout from Open on Linux and gVisor
+name: Determine whether Linux F-RTO accounts for the post-timeout SACK
 on:
   push:
-    branches: [qualification/tcp-first-rto-from-open]
+    branches: [qualification/tcp-first-rto-frto]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-first-rto-from-open'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-first-rto-frto'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -14,27 +14,20 @@ jobs:
       with:
         fetch-depth: 8
         persist-credentials: false
-    - name: Observe the same two packet inputs on Linux and netstack
+    - name: Run the same two Linux sockets with F-RTO enabled and disabled
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        stock=15711c0b514c9a4b517596143db420c242cef174
-        stock_parent=05bcbbe6e12c1307c19358cdffe536320b47479d
-        pr16081=334f6e240b58a15878ad4c9e633ab331e2cf6819
-        pr16495=2191793758e23f53449ddc285210f4b808e8365e
-        test "$(git rev-parse HEAD^1)" = "d8fa7a11f08a70cf8a6a89e96fda6d1c5718b865"
-        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$stock_parent" "$stock" "$pr16081" "$pr16495"
+        source=5f2eed3f0139ae87f208a7b951aa565cddd1eb92
+        parent=15711c0b514c9a4b517596143db420c242cef174
+        test "$(git rev-parse HEAD^1)" = "e2971f58f64c1fac846c8d80e34bfc237116ddbf"
+        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source" "$parent"
         parent_of() { git cat-file -p "$1" | sed -n '/^$/q;s/^parent //p'; }
-        test "$(parent_of "$stock")" = "$stock_parent"
-        git cat-file -e "$stock_parent^{commit}"
-        git diff --quiet "$stock_parent" "$stock" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go'
-        for source in "$pr16081" "$pr16495"; do
-          test "$(parent_of "$source")" = "$stock"
-          git diff --quiet "$stock" "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
-        done
+        test "$(parent_of "$source")" = "$parent"
+        git diff --quiet "$parent" "$source" -- . ':(exclude)test/packetimpact/dut/native/main.go' ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)test/packetimpact/runner/main.go'
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_fence_report.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -131,23 +124,15 @@ jobs:
         # under these flags. The listener builds only the facts it actually uses.
         proved=01811d57c4a1a18ef002fe92956669b43799f466
         git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$proved"
-        for source in "$stock" "$pr16081" "$pr16495"; do
-          git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
-        done
+        git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
         cat > "$RUNNER_TEMP/replay-public/build-preflight.json" <<'PROOF'
         {"status":"REUSED","target":"//tools/nogo:stdlib","amd64":"d9bdc880-d554-41ae-b6b8-fc618bd00b9e","arm64":"6fe91843-025a-4f50-8376-44c94e7f54bb","workflowRun":40927688302}
         PROOF
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in linux stock pr16081 pr16495; do
-          variant=netstack
-          case $arm in
-            linux|stock) source="$stock"; parent="$stock_parent" ;;
-            pr16081) source="$pr16081"; parent="$stock" ;;
-            pr16495) source="$pr16495"; parent="$stock" ;;
-          esac
-          if [[ $arm == linux ]]; then variant=native; fi
-          label=//test/packetimpact/tests:tcp_rack_${variant}_test
+        for arm in frto2 frto0; do
+          frto=${arm#frto}
+          label=//test/packetimpact/tests:tcp_rack_native_test
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(parent_of HEAD)" = "$parent"
@@ -161,7 +146,7 @@ jobs:
           uname -r > "$TCP_EVIDENCE/kernel"
           code=0
           bazel test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
-            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
+            --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 "--test_env=FENCE_FRTO=$frto" --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
             --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
             --nocache_test_results --test_output=all "--build_event_json_file=$raw" \
             --build_event_json_file_path_conversion=false "$label" || code=$?
@@ -170,14 +155,14 @@ jobs:
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/tcp_fence_report.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
           # If the common target cannot compile, repeating three builds cannot add measurements.
-          if [[ $arm == linux && ! -s "$raw" ]]; then break; fi
-          if [[ $arm == linux && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
+          if [[ $arm == frto2 && ! -s "$raw" ]]; then break; fi
+          if [[ $arm == frto2 && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
         done
         python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["linux","stock","pr16081","pr16495"]
+        arms = ["frto2","frto0"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["status"] == "PASS" for v in verdicts.values()) else "FAIL"}
@@ -190,6 +175,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-first-rto-from-open
+        name: tcp-first-rto-frto
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
