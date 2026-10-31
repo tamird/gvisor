@@ -2815,6 +2815,14 @@ func TestCheckpointRestoreCrossEngineChained(t *testing.T) {
 // large Sentry Go heap inside a limited host memory cgroup falls back to GC
 // instead of triggering a host cgroup OOM kill.
 func TestRestoreCgroupMemoryLimit(t *testing.T) {
+	restoreWithMemoryLimit(t, false)
+}
+
+func TestRestoreCgroupMemoryLimitAfterUpdate(t *testing.T) {
+	restoreWithMemoryLimit(t, true)
+}
+
+func restoreWithMemoryLimit(t *testing.T, resize bool) {
 	if !cgroup.IsOnlyV2() {
 		t.Skip("cgroup v2 required")
 	}
@@ -2834,11 +2842,11 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 		}
 		t.Fatalf("probe.Install(): %v", err)
 	}
-	if _, err := os.Stat(probe.MakePath("memory.max")); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(probe.MakePath(""), "memory.max")); os.IsNotExist(err) {
 		_ = probe.Uninstall()
 		t.Skip("cgroup v2 memory controller unavailable")
 	}
-	_, swapErr := os.Stat(probe.MakePath("memory.swap.max"))
+	_, swapErr := os.Stat(filepath.Join(probe.MakePath(""), "memory.swap.max"))
 	if err := probe.Uninstall(); err != nil {
 		t.Fatalf("probe.Uninstall(): %v", err)
 	}
@@ -2855,10 +2863,32 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 	spec, conf := sleepSpecConf(t)
 	conf.Overlay2.Set("none")
 	conf.Strace = false
+	logDir := t.TempDir()
+	conf.DebugLog = filepath.Join(logDir, "%TIMESTAMP%.%COMMAND%.txt")
+	t.Cleanup(func() {
+		files, err := os.ReadDir(logDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
+			data, err := os.ReadFile(filepath.Join(logDir, file.Name()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, line := range strings.Split(string(data), "\n") {
+				if _, s, ok := strings.Cut(line, "GC_RESTORE_OBS "); ok {
+					t.Logf("budget %s", s)
+				}
+			}
+		}
+	})
 	spec.Mounts = []specs.Mount{{Type: "tmpfs", Destination: "/tmpfs"}}
 	spec.Linux = &specs.Linux{
 		CgroupsPath: cgPath,
-		Resources:   &specs.LinuxResources{Memory: memRes},
+		Resources:   &specs.LinuxResources{Memory: &specs.LinuxMemory{Limit: new(int64(2 << 30))}},
 	}
 
 	_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
@@ -2920,7 +2950,8 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 	if err := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{
 		Compression: statefile.CompressionLevelFlateBestSpeed,
 	}); err != nil {
-		t.Fatalf("checkpointing container: %v", err)
+		events, readErr := os.ReadFile(filepath.Join(probe.MakePath(""), "memory.events"))
+		t.Fatalf("checkpointing container: %v (memory.events %q; read error %v)", err, events, readErr)
 	}
 	if _, err := cont.Wait(); err != nil {
 		t.Fatalf("waiting after checkpoint: %v", err)
@@ -2930,14 +2961,45 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 	}
 	cont = nil
 
+	spec.Linux.Resources = &specs.LinuxResources{Memory: memRes}
+	if resize {
+		initial := int64(2 << 30)
+		spec.Linux.Resources = &specs.LinuxResources{Memory: &specs.LinuxMemory{Limit: &initial}}
+	}
 	cont2, err := New(conf, args)
 	if err != nil {
 		t.Fatalf("creating restored container: %v", err)
 	}
 	defer cont2.Destroy()
+	readLimit := func(stage string, want int64) {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join(probe.MakePath(""), "memory.max"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.TrimSpace(string(data)); got != strconv.FormatInt(want, 10) {
+			t.Fatalf("%s: memory.max=%s want=%d", stage, got, want)
+		}
+		t.Logf("%s memory.max=%d", stage, want)
+	}
+	if resize {
+		readLimit("created", 2<<30)
+		if err := cont2.Update(conf, &specs.LinuxResources{Memory: memRes}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	readLimit("restore", memLimit)
+	defer func() {
+		events, err := os.ReadFile(filepath.Join(probe.MakePath(""), "memory.events"))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		t.Logf("limits %s", strings.ReplaceAll(strings.TrimSpace(string(events)), "\n", ";"))
+	}()
 
 	if err := cont2.Restore(conf, imageDir, sandbox.DirectIOOff, false /* background */, nil /* networkArgs */); err != nil {
-		events, _ := os.ReadFile(probe.MakePath("memory.events"))
+		events, _ := os.ReadFile(filepath.Join(probe.MakePath(""), "memory.events"))
 		t.Fatalf("restoring container under %d MiB cgroup limit: %v\nmemory.events:\n%s", memLimit>>20, err, events)
 	}
 	if err := waitForProcessCount(cont2, 1); err != nil {
