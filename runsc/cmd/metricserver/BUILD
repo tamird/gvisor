@@ -1,3 +1,4 @@
+load("//runsc/version:defs.bzl", "VERSION_X_DEFS")
 load("//tools:defs.bzl", "go_binary")
 
 package(
@@ -15,7 +16,7 @@ go_binary(
     visibility = [
         "//:sandbox",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = VERSION_X_DEFS,
     deps = [
         "//pkg/log",
         "//runsc/cmd/metricserver/metricservercmd",
