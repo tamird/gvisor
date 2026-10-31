@@ -954,3 +954,10 @@ archive_override(
     strip_prefix = "rules_shell-aa4ad1622a8f755f38cae724ef3abc63aed171c3",
     urls = ["https://github.com/bazel-contrib/rules_shell/archive/aa4ad1622a8f755f38cae724ef3abc63aed171c3.tar.gz"],
 )
+
+# The same 35.1 validator backport qualified against both native compilers.
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//test/rbe/empty_worker:protoc-declared-shell.patch"],
+)
