@@ -497,8 +497,10 @@ func TestSACKRenegingAcrossOverlappingTransmissions(t *testing.T) {
 			s.ep.SACKPermitted = true
 			s.ep.scoreboard = NewSACKScoreboard(1000, 0)
 			s.ep.snd = s
+			s.ep.sndQueueInfo.sndQueueMu.Lock()
 			s.ep.sndQueueInfo.TCPSndBufState.AutoTuneSndBufDisabled.Store(1)
 			s.ep.sndQueueInfo.SndBufUsed = 1001
+			s.ep.sndQueueInfo.sndQueueMu.Unlock()
 			s.cc = newRenoCC(s)
 			s.SndCwnd, s.Ssthresh, s.Outstanding = 10, 20, 2
 			s.SndUna, s.SndNxt, s.RTTMeasureSeqNum, s.SndWnd = 1999, 3000, 3000, 4096
