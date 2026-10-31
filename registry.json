@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T18:05:07.150+00:00",
+    "updatedAt": "2026-10-31T18:40:13.891+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40418,6 +40418,67 @@
         "summary": "Open this PR after the parent checkpoint page-read fix lands?",
         "body": "When the checkpoint gofer fails to read a truncated pages file, a\nlater memory file can report an invalid server handle instead of the\noriginal I/O error [1].\n\nCheck the saved read error before registering the next destination.\nThe existing file-list mutex serializes registration with Close.\n\nThe permanent regression uses the same loader for two memory files.\nThe parent reports a closed reader on the second file. The corrected\nloader returns EIO on both. All 70 package cases and both analyzer\ntargets passed [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41226335084/artifacts/13052195243\n[2]: https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306"
       }
+    },
+    {
+      "id": "branch:aio-short-submit",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "aio-short-submit",
+      "head": "1b27c4020492a36a499db03f9bbf7cbff116d7e9",
+      "title": "Submit the rest of a short Linux AIO batch",
+      "url": "https://github.com/tamird/gvisor/tree/aio-short-submit",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T18:40:13.891+00:00",
+      "summary": "Linux accepted a read and rejected a write in the same batch. LinuxQueue.Wait discarded the unsubmitted write and returned success. The fix resubmits the remainder and returns EBADF. The original failed the regression. All 17 corrected package cases and both Nogo targets passed.",
+      "evidence": [
+        {
+          "label": "Standalone source and regression",
+          "url": "https://github.com/tamird/gvisor/commit/1b27c4020"
+        },
+        {
+          "label": "Original lost write, 17 corrected cases and both Nogo targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41229910484/artifacts/13052629039"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "1b27c4020492a36a499db03f9bbf7cbff116d7e9",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/1b27c4020",
+        "title": "Submit the rest of a short Linux AIO batch",
+        "requestedAt": "2026-10-31T18:40:13.891+00:00",
+        "summary": "Open this standalone PR against gVisor?",
+        "body": "io_submit returns the number of requests it accepted. If a later\nrequest fails, a positive return hides that error. LinuxQueue discarded\nthe entire batch, so a caller waiting for the remaining completions\ncould block forever.\n\nAdvance by the accepted count and submit the remaining requests before\nwaiting. If the next request fails, return its error to the caller.\n\nThe regression exercises a real short submission on Linux. The original\nqueue returned success and the fixed queue reported EBADF [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41229910484/artifacts/13052629039"
+      }
+    },
+    {
+      "id": "branch:checkpoint-page-write-error",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "checkpoint-page-write-error",
+      "head": "04c66b4d86260991e49c97c7461a04f5f479c823",
+      "title": "Preserve checkpoint write errors across memory files",
+      "url": "https://github.com/tamird/gvisor/tree/checkpoint-page-write-error",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T18:40:13.891+00:00",
+      "summary": "After the checkpoint writer runs out of disk space, registering a second memory file can hide ENOSPC behind an invalid server file handle. The two-file gofer test reproduced this. Exact-source and kernel-caller qualification is in progress.",
+      "evidence": [
+        {
+          "label": "Writer source and permanent regression",
+          "url": "https://github.com/tamird/gvisor/commit/04c66b4d8"
+        },
+        {
+          "label": "Two-file disk-full gofer comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41228518403/artifacts/13052313832"
+        },
+        {
+          "label": "Exact source and kernel caller qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41229161788"
+        }
+      ]
     }
   ],
   "edges": [
