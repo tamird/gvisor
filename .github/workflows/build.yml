@@ -6,7 +6,7 @@ permissions:
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-checkpoint-final'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-second-file'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -14,20 +14,6 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Reconcile the original mixed-read evidence without repeating the tests
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        set -euo pipefail
-        cd "$RUNNER_TEMP"
-        mkdir -p replay-public
-        for spec in first-results:13050912194 refs-results:13051172517; do
-          dir=${spec%:*}; id=${spec#*:}
-          mkdir -p "$dir"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "$dir.zip"
-          unzip -q "$dir.zip" -d "$dir"
-        done
-        python3 -B "$GITHUB_WORKSPACE/test/rbe/reconcile_page_reads.py" "$RUNNER_TEMP" > replay-public/originals.json
     - name: Verify checkpoint package tests and analyzers
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -35,7 +21,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "b3ad70a5250d4f6d99e678ab83963b1248705e4b"
+        test "$(git rev-parse HEAD^1)" = "b056cadfdf1e6299deb5d6de4e826c37e5b50380"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -99,10 +85,10 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in stock package race analyzers; do
+        for arm in stock fixed; do
           case $arm in
-            stock) source=e5f665c154a409aeb0adbcbacf9760214537f38a; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
-            *) source=3adb1aa3b346842b1ac4bc6778c538828b0f12fb; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
+            stock) source=f6696f978ffbf0382731ca29055d53ec72469681; parent=e5f665c154a409aeb0adbcbacf9760214537f38a ;;
+            fixed) source=436500c1fb73c82a38ec6338c63a196ab8e7cdf7; parent=f6696f978ffbf0382731ca29055d53ec72469681 ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -119,12 +105,8 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
           opts=()
-          case $arm in
-            stock) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--test_filter=^TestAsyncLoadShortRead --bazel-option=--test_arg=-test.v) ;;
-            race) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--config=race) ;;
-            package) labels=(//pkg/sentry/pgalloc:pgalloc_test) ;;
-            analyzers) labels=(//pkg/sentry/pgalloc:pgalloc_nogo //pkg/sentry/pgalloc:pgalloc_test_nogo) ;;
-          esac
+          labels=(//pkg/sentry/pgalloc:pgalloc_test)
+          opts+=(--bazel-option=--test_filter=^TestAsyncRestoreSecondFile --bazel-option=--test_arg=-test.v)
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
@@ -140,7 +122,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["stock","package","race","analyzers"]
+        arms = ["stock","fixed"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -153,6 +135,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: checkpoint-page-read-verdict
+        name: checkpoint-second-file-verdict
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
