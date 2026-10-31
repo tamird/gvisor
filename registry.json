@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T12:53:25.918789+00:00",
+    "updatedAt": "2026-10-31T13:00:43.140376+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39553,14 +39553,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/python-versioned-releases",
-      "head": "aff7e546bfbcd67d5a87e8054f54fb2a1b935e9e",
+      "head": "a11061ec1abab5beb2c6fa2e8c91f5df0ece0c0e",
       "title": "Build Python archives only for versioned releases",
-      "url": "https://github.com/tamird/gvisor/compare/aa767e4c4...aff7e546b",
+      "url": "https://github.com/tamird/gvisor/compare/aa767e4c4...a11061ec1",
       "group": "release",
       "status": "Agent work",
-      "summary": "The Buildkite release job invokes the project builder for Python even when its publisher excludes the wheel and sdist. Check the local tag after release staging. Skip Python packaging on untagged master and nightly jobs, and keep it on tagged releases, including reruns. The AMD64 release coordinator produces both Python archives once for all architectures. The separate image and binary builds retain their current commands.",
-      "updatedAt": "2026-10-31T12:24:07.551168+00:00",
+      "summary": "A publisher preparation mode shares the upload tag filter with Buildkite. Six unversioned jobs skipped the builder, four versioned jobs built once, and all ten produced the same raw release paths as stock. The tagged Linux builder produced both Python distributions. Tagged releases still require the Docker packaging environment.",
+      "updatedAt": "2026-10-31T13:00:43.140376+00:00",
       "evidence": [
+        {
+          "label": "12 Linux cases: ten stock/candidate file layouts, a visible Git error and a real versioned wheel and sdist",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41201562605/artifacts/13042672676"
+        },
         {
           "label": "Six ineligible jobs skip the builder; two valid tags retain packaging; real tagged Make produces the versioned wheel and sdist",
           "url": "https://github.com/tamird/gvisor/actions/runs/41199789012/artifacts/13042465891"
@@ -39576,10 +39580,18 @@
       ],
       "followup": {
         "owner": "release_owner",
-        "sourceHead": "aff7e546bfbcd67d5a87e8054f54fb2a1b935e9e",
-        "disposition": "Consolidate the release tag policy",
-        "observedAt": "2026-10-31T12:24:07.551168+00:00",
-        "nextAction": "Move Python packaging into the publisher’s existing versioned release path or reuse its tag filter. The trial repeated the tag exclusions in Buildkite; its original cases and actual tagged archives remain valid evidence."
+        "sourceHead": "a11061ec1abab5beb2c6fa2e8c91f5df0ece0c0e",
+        "disposition": "Hold the release eligibility change",
+        "observedAt": "2026-10-31T13:00:43.140376+00:00",
+        "nextAction": "Keep both eligibility trials off contributor review. The package exposes a Bazel library and test. Integrate a declared wheel and source archive in the versioned publishing path once a suitable producer exists."
+      },
+      "refinement": {
+        "before": {
+          "head": "aff7e546bfbcd67d5a87e8054f54fb2a1b935e9e"
+        },
+        "after": {
+          "head": "a11061ec1abab5beb2c6fa2e8c91f5df0ece0c0e"
+        }
       }
     },
     {
