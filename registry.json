@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T01:23:33.649647+00:00",
+    "updatedAt": "2026-10-31T01:30:53.551127+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33939,13 +33939,13 @@
       "updatedAt": "2026-10-29T13:07:09.135795+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
+        "observedAt": "2026-10-31T01:30:53.551127+00:00",
         "sourceHead": "0aa163b78df385b88491955a5627c0d585c63123",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow maintainer review, checks and import on #16665.",
+        "disposition": "Agent validating conflict repair",
+        "nextAction": "Compare both checkpoint suites and three mount-permission cases after adapting the fix to PeekFilesystem.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16665",
-          "https://github.com/tamird/gvisor/commit/0aa163b78df385b88491955a5627c0d585c63123"
+          "https://github.com/tamird/gvisor/commit/5c7696351",
+          "https://github.com/tamird/gvisor/actions/runs/41155572605"
         ]
       }
     },
@@ -37918,6 +37918,38 @@
         "summary": "Linux keeps the TIME_WAIT endpoint after an unexpected SYN-ACK and ACKs the repeated old FIN. The proposed forwarder resets both. A bare SYN still reopens the connection with the narrower guard.",
         "body": "Could we keep the TIME_WAIT endpoint for this SYN-ACK? With these packet fields, Linux ACKs the SYN-ACK with the old connection’s sequence numbers. Repeating that connection’s last FIN gets the same ACK. On this head both packets get RSTs: the forwarder rejects the SYN-ACK, but by then the old endpoint is already gone.\n\nRestricting TIME_WAIT reuse to a SYN without ACK or RST keeps both ACKs and still accepts a genuine reopening SYN. Here are the [packet traces](https://github.com/tamird/gvisor/actions/runs/41153077876/artifacts/13024367271), the [tested guard](https://github.com/tamird/gvisor/compare/9a707824b...2bc369a8a), and [the corresponding Linux check](https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_minisocks.c#L253)."
       }
+    },
+    {
+      "id": "branch:fdnotifier-epoll-registration",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "runtime",
+      "ref": "review/fdnotifier-epoll-registration",
+      "head": "7ab597c1c75ab15ae9634ee493e3fd1457bc162a",
+      "title": "Identify fdnotifier events by registration",
+      "url": "https://github.com/tamird/gvisor/commit/7ab597c1c",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T01:30:53.551127+00:00",
+      "summary": "If an epoll event has already been returned when the registration is removed, dispatch by file descriptor can wake its replacement. A registration ID lets the notifier discard the old event without losing a current one.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "7ab597c1c75ab15ae9634ee493e3fd1457bc162a",
+        "url": "https://github.com/tamird/gvisor/commit/7ab597c1c",
+        "title": "Identify fdnotifier events by registration",
+        "summary": "If an epoll event has already been returned when the registration is removed, dispatch by file descriptor can wake its replacement. A registration ID lets the notifier discard the old event without losing a current one.",
+        "body": "On Linux AMD64, both descriptor reuse and same-file rearming notified the wrong waiter on stock. Both passed with the change, including a current event delivered after MOD. Nogo passed on AMD64 and ARM64. https://github.com/tamird/gvisor/actions/runs/41154990705/artifacts/13024579132"
+      },
+      "evidence": [
+        {
+          "label": "Both stock failures and both corrected controls; analyzer check and verdict timestamps",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41154990705/artifacts/13024579132"
+        },
+        {
+          "label": "Control using the same real epoll tests",
+          "url": "https://github.com/tamird/gvisor/commit/3c7d2b027"
+        }
+      ]
     }
   ],
   "edges": [
