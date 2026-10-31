@@ -20,7 +20,7 @@ docker cp diagnostic-client:/usr/bin/iperf3 "$RUNNER_TEMP/iperf3"
 chmod a+rx "$RUNNER_TEMP/iperf3"; sha256sum "$RUNNER_TEMP/iperf3" >"$r/executable"
 grep -F a378a7268f67bcb6f4c789ec71fabe475d12df235e2279d0a02c7d74a3cba17c "$r/executable"
 args=(-nx -batch -ex 'set debuginfod enabled off' -ex 'set pagination off')
-analysis=(-ex 'info program' -ex 'p $_siginfo.si_signo' -ex 'bt 20' -ex 'x/13i $pc-20' -ex 'info symbol $pc' -ex 'info registers pc lr sp')
+analysis=(-ex 'info program' -ex 'p $_siginfo.si_signo' -ex 'bt 20' -ex 'x/13i $pc-20' -ex 'info symbol $pc' -ex 'info registers pc x30 sp')
 shopt -s nullglob
 cores=("$work"/iperf-core.*)
 if (( ${#cores[@]} )); then
