@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T19:51:53.969+00:00",
+    "updatedAt": "2026-10-31T23:25:30.345592+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56679,9 +56679,68 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T19:04:25.739+00:00",
+      "updatedAt": "2026-10-31T23:25:30.345592+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The ARM64 worker then built the inputs of the actual sysmsg Go library, which embeds the signal stub. The first attempt exposed a missing generated-file attribute in the qualification branch. Restoring that line from the existing systrap proposal let analysis complete. Ninety stateify commands ran, but their ninety goimports shell launchers could not start /bin/sh. Protobuf’s compiler validator also could not start /bin/bash. The library archive was not produced.",
+          "evidence": [
+            {
+              "label": "Full ARM64 consumer results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41252057046/artifacts/13061104668"
+            },
+            {
+              "label": "Generated-file input in the existing systrap change",
+              "url": "https://github.com/tamird/gvisor/commit/6a54750c6"
+            },
+            {
+              "label": "Format stateify output without a shell",
+              "url": "https://github.com/tamird/gvisor/commit/cd92efa5f"
+            },
+            {
+              "label": "Run the Protobuf validator with a declared shell",
+              "url": "https://github.com/tamird/protobuf/commit/ba1ffbd2d"
+            }
+          ]
+        },
+        {
+          "text": "On the published scratch image, native AMD64 and ARM64 workers had no /bin, /usr or /tmp. Each built the production gohacks archive and compiled and linked the systrap signal stub using the declared Go and LLVM tools. All twelve selected actions on each architecture ran uncached. The embedded bytes matched the linked ELF section: 5,440 bytes and ten exported offsets on AMD64, 4,864 bytes and eleven on ARM64. The unchanged source could not launch the Go bootstrap wrapper or the four Bash compile genrules. Repository fetching ran on Ubuntu.",
+          "evidence": [
+            {
+              "label": "AMD64 original outputs and reconciliation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41238540967/artifacts/13056457271"
+            },
+            {
+              "label": "ARM64 filesystem, stock and native product receipts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41251597684/artifacts/13061034514"
+            },
+            {
+              "label": "Original ARM64 compile and link",
+              "url": "https://app.buildbuddy.io/invocation/0c7e95c8-5cc9-4a87-a389-37bdc63a56fa"
+            }
+          ]
+        },
+        {
+          "text": "The separate Ubuntu-worker //runsc/... build stopped first at the cgroup test’s local tag. With that fix applied, both target architectures reached coverage generation, whose build_cover.sh calls undeclared curl. The proposed native coverage replacement then failed before execution on both architectures: its configuration wrapper and the static Go binary wrapper called one another recursively.",
+          "evidence": [
+            {
+              "label": "Original cgroup rule",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41231932306/artifacts/13055965081"
+            },
+            {
+              "label": "Coverage actions and missing curl",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41235961062/artifacts/13056805632"
+            },
+            {
+              "label": "Both package-loading failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41251517470/artifacts/13061556582"
+            },
+            {
+              "label": "Recovered original Starlark tracebacks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41251917513"
+            }
+          ]
+        },
         {
           "text": "gVisor already selects Protobuf’s static release compilers. On an AMD64 worker containing only /hello, the current upstream version check still failed to start /bin/bash after its upstream removal of grep and cat. Using the declared shell from rules_shell #64, the real AMD64 and ARM64 compilers each produced the same libprotoc 35.1 version file on their native empty worker. A deliberate mismatch failed under the strict policy and reported both versions under the permissive policy. Legacy toolchain mode ran zero validation actions. The fork change needs a release containing rules_shell #64. The earlier AMD64 experiment used a separate Python checker.",
           "evidence": [
@@ -57743,7 +57802,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
+      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage. Apply the existing shell-free stateify and declared Protobuf-validator changes to the same ARM64 sysmsg library; its Go archive is still unverified on scratch.",
       "evidence": [
         {
           "label": "Three cold native compiles and links per architecture, with ELF and digest checks",
@@ -58603,10 +58662,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-31T13:42:29.262086+00:00",
+      "updatedAt": "2026-10-31T23:25:30.345592+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
+        {
+          "text": "With a 4 KiB receive budget and the worker paused, master admitted 257 pure ACKs and charged 161,396 bytes. The prototype admitted 14 and charged 8,792 bytes. The separate duplex socket test is checking whether the tighter bound preserves progress.",
+          "evidence": [
+            {
+              "label": "Original queue measurements",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41251617494/artifacts/13061711247"
+            },
+            {
+              "label": "Duplex syscall check",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41252306219"
+            }
+          ]
+        },
         {
           "text": "Five timestamped lossy transfers on one warm connection per build took 4.737–5.964 s stock (21–27 timeouts each); #15432 alone took 0.602–0.614 s (one), #16081 0.530–0.544 s (one), and #16495 0.785–0.815 s (two). This isolates each recovery change on the same master, without establishing which works best on other paths.",
           "evidence": [
