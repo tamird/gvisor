@@ -414,6 +414,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 // +checklocks:rc.snd.ep.mu
 func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 	snd := rc.snd
+	snd.SetPipe()
 	if fastRetransmit {
 		snd.resendSegment()
 	}
