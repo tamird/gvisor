@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T08:59:48.476203+00:00",
+    "updatedAt": "2026-10-31T09:04:24.431841+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28109,33 +28109,53 @@
       "url": "https://github.com/google/gvisor/pull/16495",
       "group": "runtime",
       "status": "draft",
-      "summary": "Linux and the parent retry a lost SACK repair within 80 ms when the peer supplies a fresh SACK. The published change instead waits for the retransmission timeout to back off from 400 to 800 ms. All three waited when the peer repeated the same SACK. The earlier reporter workload and wire regression remain recorded below.",
-      "updatedAt": "2026-10-31T08:29:06.907584+00:00",
+      "summary": "The published draft waits for a second retransmission timeout after a fresh SACK. Linux, the parent and the fork amendment retry the missing segment within 80 ms. All four wait after an unchanged SACK. The amendment keeps the original recovery boundary and completed the reporter’s five burst-loss transfers.",
+      "updatedAt": "2026-10-31T09:04:24.431841+00:00",
       "refinement": {
         "before": {
-          "head": "c31f03115fab5a3522a5acb6312393a7067f9f0f"
+          "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
+          "head": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634"
         },
         "after": {
-          "head": "1a1e9569dc8e7152c98028b7cb78fe6f574e102b"
+          "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
+          "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f"
         }
       },
       "followup": {
-        "owner": "root",
+        "owner": "tamird",
         "sourceHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
-        "observedAt": "2026-10-31T08:29:06.907584+00:00",
-        "disposition": "Draft under revision",
-        "nextAction": "Preserve the original interrupted-recovery fix and restore prompt repair on fresh SACK progress. Qualify the revision against the repeated-SACK control.",
+        "observedAt": "2026-10-31T09:04:24.431841+00:00",
+        "disposition": "Tested amendment awaiting contributor review",
+        "nextAction": "Decide whether to publish 5fd5532c1 on the existing draft.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/5fd5532c1",
+          "https://github.com/tamird/gvisor/actions/runs/41186013306/artifacts/13037271126",
+          "https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229",
           "https://github.com/google/gvisor/pull/16495",
           "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
           "https://github.com/tamird/gvisor/commit/b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
           "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335",
           "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838",
-          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144",
-          "https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229"
+          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144"
         ]
       },
       "evidence": [
+        {
+          "label": "Fork amendment for the published draft",
+          "url": "https://github.com/tamird/gvisor/commit/5fd5532c1"
+        },
+        {
+          "label": "Fresh and repeated SACKs, original recovery boundary and six original reporter transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41186013306/artifacts/13037271126"
+        },
+        {
+          "label": "Three test-comment lines distinguish the reviewed source from the tested commit",
+          "url": "https://github.com/tamird/gvisor/compare/2314ad161..5fd5532c1"
+        },
+        {
+          "label": "Separate two-block SACK case fails on both senders",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41184881866/artifacts/13036109284"
+        },
         {
           "label": "Native Linux, parent and published head after fresh and repeated SACKs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229"
@@ -28187,7 +28207,17 @@
           "url": "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335"
         }
       ],
-      "number": 16495
+      "number": 16495,
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f",
+        "baseHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
+        "url": "https://github.com/tamird/gvisor/commit/5fd5532c1",
+        "title": "Retry a lost repair during timeout recovery",
+        "summary": "Decide whether to add 5fd5532c1 to the existing draft. It restores prompt retransmission on a fresh SACK and preserves the original recovery boundary.",
+        "body": "RACK can detect that a retransmission was lost while TCP is still\nrecovering from a timeout. Replace that packet without starting another\ncongestion event or charging its place in the window twice.\n\nOn the published draft, SACKing segment 4 left segment 3 waiting for\nanother timeout. Linux and the parent retried segment 3 within 80 ms\n[1]. The amendment does the same while keeping the congestion window and\nslow-start threshold at two packets. Repeating the previous SACK waits\nfor the timeout [2].\n\nThe new manual-clock test fails only while waiting for segment 3 on the\npublished sender. On the amendment, 20 RACK cases passed and the\nexisting DSACK case skipped. The original recovery test also passed\nunchanged. The original reporter verified all 524,288 bytes in the\nno-loss control and each of five runs dropping first copies 101–124.\nEach loss run took one timeout and completed in 0.648–0.778 seconds\n[2]. The reviewed commit changes three test-comment lines from the\ntested source [3].\n\ngit range-diff 990581308..b7d9ced51 990581308..5fd5532c1\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229\n[2]: https://github.com/tamird/gvisor/actions/runs/41186013306/artifacts/13037271126\n[3]: https://github.com/tamird/gvisor/compare/2314ad161..5fd5532c1"
+      }
     },
     {
       "id": "pr:16499",
