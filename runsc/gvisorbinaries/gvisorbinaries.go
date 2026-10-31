@@ -94,9 +94,6 @@ const (
 	enforceReleaseTestonlySkip = "TESTONLY_SKIP"
 )
 
-// Special release name used in CI that is also ignored.
-const buildkiteTestVersion = "buildkite-test-branch-dirty"
-
 // cutSkip returns the expected release embedded in `val` (env var).
 func cutSkip(val, prefix string) (string, bool) {
 	if val == prefix {
@@ -144,13 +141,13 @@ func WithEnforceRelease(envv []string) []string {
 // match this binary's build label.
 // See `gvisorbinaries` top-level package comment for full semantics.
 func VerifyMatchingRelease(b *Binary) {
-	val := os.Getenv(enforceReleaseEnv)
+	val, present := os.LookupEnv(enforceReleaseEnv)
 	got := version.Version()
 	var who string
 	if b != nil {
 		who = fmt.Sprintf(" in sidecar %q", b.Name)
 	}
-	if val == "" {
+	if !present {
 		if b != nil {
 			log.Warningf("Release match check not enforced%s (did you start this sidecar binary manually?); this build is %q.", who, got)
 		}
@@ -162,7 +159,7 @@ func VerifyMatchingRelease(b *Binary) {
 		want, skip = wantTest, true
 	}
 	if !skip {
-		if got != val {
+		if !version.Matches(val) {
 			errMsg := fmt.Sprintf("this binary's build label %q%s does not match the expected release %q; all gVisor binaries must come from the same release (fix your gVisor installation deployment, or disable enforcement with `--sidecar-release-enforcement-policy=...` at your own risk)", got, who, val)
 			log.Warningf("Release check: %s.", errMsg)
 			panic(errMsg)
@@ -177,16 +174,13 @@ func VerifyMatchingRelease(b *Binary) {
 	if b == nil {
 		return
 	}
-	if got == buildkiteTestVersion {
-		log.Infof("Sidecar release match check not enforced%s; this build is %q.", who, got)
-		return
-	}
 	var msg string
 	info := testOnly
-	switch want {
-	case "":
+	switch {
+	case want == "" || want == got && !version.Matches(want):
 		msg = fmt.Sprintf("Sidecar release match check not enforced%s; this build is %q.", who, got)
-	case got:
+		info = info || want == got
+	case version.Matches(want):
 		msg = fmt.Sprintf("Sidecar release match check not enforced%s; build label %q matches the expected release.", who, got)
 		info = true
 	default:

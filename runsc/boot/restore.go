@@ -861,7 +861,7 @@ func tscOffsetFromSnapshot(baseCycle, baseFreq, baseRealtime, curCycle, curRealt
 // checkpoint. A release label can identify compatible builds; without one,
 // require the same linked sentry. Read the note before the sandbox drops /proc.
 func checkpointVersion() (string, error) {
-	if v := version.Version(); v != "" && v != "VERSION_MISSING" {
+	if v := version.Version(); version.Matches(v) {
 		return v, nil
 	}
 	f, err := elf.Open("/proc/self/exe")
