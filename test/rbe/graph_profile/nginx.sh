@@ -4,9 +4,10 @@ if [[ ${1:-} != --private-mount ]]; then
   exec unshare --mount --propagation private -- "$0" --private-mount "$@"
 fi
 shift
-[[ $# == 2 && $EUID == 0 && $(uname -m) == x86_64 ]]
+[[ $# == 3 && $EUID == 0 && $(uname -m) == x86_64 ]]
 binary=$(realpath "$1")
-archive=$(realpath "$2")
+treatment=$(realpath "$2")
+archive=$(realpath "$3")
 release=$(cd release && pwd)
 test -x "$release/runsc"
 export GVISOR_SIDECAR_BINARIES_DIR="$release/gvisor-bin"
@@ -45,25 +46,37 @@ export CHECKPOINT_CAPTURE_DIR="$dir/captured"
 taskset -c "$cpu" "$binary" -test.run='^$' -test.bench='^BenchmarkCheckpointFile$/^EncodeStatefile$' -test.benchtime=1x "${flags[@]}" > "$dir/capture.log" 2>&1 || { tail -22 "$dir/capture.log"; exit 1; }
 unset CHECKPOINT_CAPTURE_DIR
 (cd "$dir/captured"; sha256sum *.img spec.json; wc -c *.img spec.json) > "$out/input.txt"
-sha256sum "$release/runsc" "$release/gvisor-bin/gvisor_sentry" "$binary" > "$out/binaries.txt"
+sha256sum "$release/runsc" "$release/gvisor-bin/gvisor_sentry" "$binary" "$treatment" > "$out/binaries.txt"
 flags+=("-checkpoint-dir=$dir/captured")
-taskset -c "$cpu" "$binary" -test.v -test.run='^TestCheckpointFileRoundTrip$' "${flags[@]}" > "$dir/check.log" 2>&1 || { tail -16 "$dir/check.log"; exit 1; }
-grep -E -- 'verified input graph header:|State file sizes:|--- PASS: TestCheckpointFileRoundTrip' "$dir/check.log" > "$out/roundtrip.txt"
-grep -q 'verified input graph header: kernel=true' "$out/roundtrip.txt"
-grep -q -- '--- PASS: TestCheckpointFileRoundTrip' "$out/roundtrip.txt"
-for direction in Decode Encode; do
-  for role in ordinary1 ordinary2 ordinary3 cpu alloc; do
-    stem=$direction-$role
-    opts=()
-    duration=2s
-    case $role in
-      cpu) duration=3s; opts+=("-test.cpuprofile=$out/$stem.pprof");;
-      alloc) duration=16x; opts+=("-test.memprofile=$out/$stem.pprof" -test.memprofilerate=1);;
-    esac
-    GVISOR_PROFILE_RECEIPT="$out/$stem-reloads" taskset -c "$cpu" "$binary" -test.v=false -test.run='^$' "-test.bench=^BenchmarkCheckpointFile$/^${direction}Statefile$" -test.benchmem "-test.benchtime=$duration" "${flags[@]}" "${opts[@]}" > "$dir/$stem.log" 2>&1 || { tail -18 "$dir/$stem.log"; exit 1; }
-    grep -E '^BenchmarkCheckpointFile/.*Statefile(-[0-9]+)?[[:space:]]' "$dir/$stem.log" > "$out/$stem.bench"
-    grep -qx PASS "$dir/$stem.log"
-    if [[ $direction == Encode ]]; then test -s "$out/$stem-reloads"; fi
-    if [[ $role == cpu || $role == alloc ]]; then test -s "$out/$stem.pprof"; fi
+for arm in control candidate; do
+  exe=$binary
+  [[ $arm == control ]] || exe=$treatment
+  taskset -c "$cpu" "$exe" -test.v -test.run='^TestCheckpointFileRoundTrip$' "${flags[@]}" > "$dir/$arm.check" 2>&1 || { tail -18 "$dir/$arm.check"; exit 1; }
+  grep -E -- 'verified input graph header:|State file sizes:|--- PASS: TestCheckpointFileRoundTrip' "$dir/$arm.check" > "$out/$arm-roundtrip.txt"
+  grep -q 'verified input graph header: kernel=true' "$out/$arm-roundtrip.txt"
+  grep -q -- '--- PASS: TestCheckpointFileRoundTrip' "$out/$arm-roundtrip.txt"
+done
+for pair in {1..8}; do
+  arms=(control candidate)
+  if (( pair % 2 == 0 )); then arms=(candidate control); fi
+  for arm in "${arms[@]}"; do
+    exe=$binary
+    [[ $arm == control ]] || exe=$treatment
+    for shape in Nginx Tiny Many Alternating; do
+      stem=$pair-$arm-$shape
+      if [[ $shape == Nginx ]]; then
+        bench='^BenchmarkCheckpointFile$/^EncodeStatefile$'
+        duration=2s
+      else
+        bench="^BenchmarkGraphSlabShapes$/^$shape$"
+        case $shape in Tiny) duration=10000x;; Many) duration=80x;; Alternating) duration=160x;; esac
+      fi
+      GVISOR_PROFILE_RECEIPT="$out/$stem-reloads" taskset -c "$cpu" "$exe" -test.run='^$' "-test.bench=$bench" "-test.benchtime=$duration" -test.benchmem "${flags[@]}" > "$dir/$stem.log" 2>&1 || { tail -18 "$dir/$stem.log"; exit 1; }
+      grep -E '^Benchmark(CheckpointFile/EncodeStatefile|GraphSlabShapes/(Tiny|Many|Alternating))(-[0-9]+)?[[:space:]]' "$dir/$stem.log" > "$out/$stem.bench"
+      grep -qx PASS "$dir/$stem.log"
+      if [[ $shape == Nginx ]]; then test -s "$out/$stem-reloads"; fi
+    done
+    echo "$pair $arm" >> "$out/order.txt"
   done
 done
+(cd "$dir/captured"; sha256sum -c <(head -4 "$out/input.txt")) > "$out/input-after.txt"

@@ -5,13 +5,15 @@ sh_test(
     size = "large",
     srcs = ["nginx.sh"],
     args = [
-        "$(rootpath //test/benchmarks/checkpointfile:checkpointfile_test)",
+        "$(rootpath :control.bin)",
+        "$(rootpath :candidate.bin)",
         "$(rootpath :nginx.tar)",
     ],
     data = [
         ":nginx.tar",
         "//:release",
-        "//test/benchmarks/checkpointfile:checkpointfile_test",
+        ":candidate.bin",
+        ":control.bin",
     ],
     exec_properties = {
         "test.Arch": "amd64",

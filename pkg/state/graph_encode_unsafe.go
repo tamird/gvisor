@@ -355,22 +355,13 @@ func setHints(root *typeInfo, bytes, targets int) {
 	root.hintTargets.Store(int32(min(targets, maxPooledBytes/64)))
 }
 
-// Use smaller slabs for the first 1024 entries, which avoids repeatedly
-// copying those entries as the first slab grows. Larger graphs use full
-// slabs to amortize allocations. The first small slab grows on demand.
-const (
-	chunkedShift    = 10
-	smallChunkShift = 7
-	smallChunkCount = 1 << (chunkedShift - smallChunkShift)
-)
-
-// chunkIndex returns the slab and offset for entry i.
-func chunkIndex(i int) (int, int) {
-	if i < 1<<chunkedShift {
-		return i >> smallChunkShift, i & (1<<smallChunkShift - 1)
-	}
-	return (i >> chunkedShift) + smallChunkCount - 1, i & (1<<chunkedShift - 1)
-}
+// chunkedShift is the log2 of the number of elements (1024) per slab in
+// chunked[T]. It sizes the encoder's internal metadata slabs (objs and targets)
+// and is unrelated to blockShift (which buckets target virtual addresses).
+// 1024 elements (~128 KiB for encObject, ~48 KiB for encTarget) amortizes slab
+// allocations on large checkpoints while letting chunks[0] grow incrementally
+// for small graphs.
+const chunkedShift = 10
 
 // chunked is an append-only array that is not copied as it grows.
 type chunked[T any] struct {
@@ -383,7 +374,7 @@ type chunked[T any] struct {
 func (c *chunked[T]) add() *T {
 	i := c.n
 	c.n++
-	if i < 1<<smallChunkShift {
+	if i < 1<<chunkedShift {
 		// The first chunk grows as needed, for small graphs.
 		if len(c.chunks) == 0 {
 			c.chunks = append(c.chunks, nil)
@@ -392,21 +383,15 @@ func (c *chunked[T]) add() *T {
 		c.chunks[0] = append(c.chunks[0], zero)
 		return &c.chunks[0][i]
 	}
-	j, off := chunkIndex(i)
-	if j == len(c.chunks) {
-		size := 1 << chunkedShift
-		if j < smallChunkCount {
-			size = 1 << smallChunkShift
-		}
-		c.chunks = append(c.chunks, make([]T, size))
+	if i>>chunkedShift == len(c.chunks) {
+		c.chunks = append(c.chunks, make([]T, 1<<chunkedShift))
 	}
-	return &c.chunks[j][off]
+	return &c.chunks[i>>chunkedShift][i&(1<<chunkedShift-1)]
 }
 
 // at returns a pointer to element i.
 func (c *chunked[T]) at(i int) *T {
-	j, off := chunkIndex(i)
-	return &c.chunks[j][off]
+	return &c.chunks[i>>chunkedShift][i&(1<<chunkedShift-1)]
 }
 
 func (es *graphEncodeState) obj(i int32) *encObject {
@@ -417,8 +402,7 @@ func (es *graphEncodeState) target(i int32) *encTarget {
 	return es.targets.at(int(i))
 }
 
-// Keep at most 8192 addressable slots, including the initial small slabs.
-const maxPooledChunks = 8 + smallChunkCount - 1
+const maxPooledChunks = 8
 
 // reset clears all elements before returning the owning state to sync.Pool.
 func (c *chunked[T]) reset() {
@@ -438,7 +422,7 @@ func (c *chunked[T]) reset() {
 		// encObject.x, and encTarget.ptr) do not pin the saved object graph in
 		// memory while pooled, and so reused slab slots start zeroed.
 		clear(c.chunks[i][:end])
-		n -= end
+		n -= 1 << chunkedShift
 	}
 	if len(c.chunks) > 0 {
 		c.chunks[0] = c.chunks[0][:0]
