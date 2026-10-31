@@ -76,7 +76,7 @@ def lane(name, rev):
     cmd = ["bazelisk", "--bazelrc="+str(rcfile), "build", "--jobs=3", "--spawn_strategy=local",
            "--noremote_local_fallback","--noremote_upload_local_results","--noremote_accept_cached",
            "--host_cxxopt=-std=c++17","--cxxopt=-std=c++17","--features=fully_static_link","--host_features=fully_static_link",
-           "--host_linkopt=-static","--nostamp", "--@protobuf//bazel/toolchains:prefer_prebuilt_protoc=false",
+           "--host_linkopt=-static","--host_linkopt=-fuse-ld=bfd","--host_linkopt=-Wl,--no-gc-sections","--nostamp", "--@protobuf//bazel/toolchains:prefer_prebuilt_protoc=false",
            "--execution_log_json_file="+str(execlog)]
     if fixed:
         cmd += ["--strategy=GenUpbStage1=remote","--remote_download_outputs=toplevel"]
@@ -87,6 +87,12 @@ def lane(name, rev):
     errors = [l for l in raw.splitlines() if "ERROR:" in l or "error:" in l or "fatal:" in l]
     (dst/"diagnostics.txt").write_text("\n".join((errors[:30]+raw.splitlines()[-49:]))+"\n")
     result={"source":rev,"bazel_exit":proc.returncode,"kind":"native local Linux" if not fixed else "remote shell-free AMD64","actions":{},"outputs":{}}
+    # Record which static GNU linker and flags this coordinator actually used.
+    linker_flags = []
+    for params in (consumer/"bazel-out").glob("**/external/protobuf+/upb_generator/*/protoc-gen-*_stage0-0.params"):
+        opts = params.read_text(errors="replace").splitlines()
+        linker_flags.append({"params":params.name,"flags":[v for v in opts if "fuse-ld" in v or "gc-sections" in v or v=="-static"]})
+    (dst/"linker-flags.json").write_text(json.dumps(linker_flags,indent=2)+"\n")
     # Capture the original six spawns and files before interpreting the exercise.
     capture = []
     if execlog.is_file():
