@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T13:55:39.956262+00:00",
+    "updatedAt": "2026-10-31T14:07:19.589286+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10717,16 +10717,24 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "time-reference-clock",
-      "head": "a1e81990e7b88a144b9650063e790d7c6f00003d",
+      "head": "80bbb7478312a10e7335a5475c9683a76d5c17d6",
       "title": "Add an explicit host-reference clock source",
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15647",
       "status": "open",
-      "updatedAt": "2026-10-31T13:55:39.956262+00:00",
-      "summary": "Master moved clock creation earlier to warm up the vDSO before resume. The proposed rebase selects the configured clock there and preserves the warm-up.",
+      "updatedAt": "2026-10-31T14:07:19.589286+00:00",
+      "summary": "Rebased onto master’s vDSO warm-up. All added and removed lines match the approved patch. The syscall and vDSO clocks stayed monotonic across live restores in both reference and calibrated modes.",
       "number": 15647,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "All four clock and restore results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41207688872/artifacts/13045676583"
+        },
+        {
+          "label": "Published clock rebase",
+          "url": "https://github.com/tamird/gvisor/commit/80bbb7478"
+        },
         {
           "label": "Both fresh AMD64 analyzer results",
           "url": "https://app.buildbuddy.io/invocation/5c295470-527d-5a5b-b1c8-41fb15c245d6"
@@ -10741,19 +10749,19 @@
         }
       ],
       "followup": {
-        "owner": "Clock owner",
-        "disposition": "Checking conflict repair",
-        "sourceHead": "a1e81990e7b88a144b9650063e790d7c6f00003d",
-        "observedAt": "2026-10-31T13:55:39.956262+00:00",
-        "nextAction": "Verify monotonic and boot-time clocks before and after restore in calibrated and reference modes. Request contributor review once the four results are in.",
+        "owner": "PR reviewers",
+        "disposition": "Rebased; conflict resolved",
+        "sourceHead": "80bbb7478312a10e7335a5475c9683a76d5c17d6",
+        "observedAt": "2026-10-31T14:07:19.589286+00:00",
+        "nextAction": "Await existing requested reviewers. No new contributor decision.",
         "evidence": [
           {
-            "label": "Clock-selection conflict repair",
-            "url": "https://github.com/tamird/gvisor/commit/80bbb7478"
+            "label": "All four clock and restore results",
+            "url": "https://github.com/tamird/gvisor/actions/runs/41207688872/artifacts/13045676583"
           },
           {
-            "label": "Both clock sources across live restore",
-            "url": "https://github.com/tamird/gvisor/actions/runs/41207688872"
+            "label": "Published clock rebase",
+            "url": "https://github.com/tamird/gvisor/commit/80bbb7478"
           }
         ]
       }
@@ -37016,10 +37024,14 @@
       "title": "tcp: release the port of a wildcard-bound endpoint when it is closed",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T13:55:39.956262+00:00",
+      "updatedAt": "2026-10-31T14:07:19.589286+00:00",
       "url": "https://github.com/google/gvisor/pull/16180",
       "summary": "Approved and imported. The dual-stack port regression passed across 43 restores on the approved head. That test establishes reuse after a connected close; it does not cover closing a socket that never connected or two sockets sharing a reservation.",
       "evidence": [
+        {
+          "label": "Raw ARM64 bind/close benchstat (32 pairs)",
+          "url": "https://github.com/google/gvisor/pull/16180#issuecomment-6544309647"
+        },
         {
           "label": "Linux and runsc syscall receipt",
           "url": "https://github.com/tamird/gvisor/actions/runs/41067609115/artifacts/12983897637"
@@ -57886,10 +57898,23 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-29T17:59:00.125903+00:00",
+      "updatedAt": "2026-10-31T14:07:19.589286+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
+        {
+          "text": "The same Gazelle check already passes with host Bazel on GitHub. The two Buildkite jobs still use the builder. The supplier test disables sandboxing and reads the checkout; the active experiment is whether a single action can check all selected packages, including a newly added Go import, with declared files and no shell.",
+          "evidence": [
+            {
+              "label": "Current master’s host Bazel run",
+              "url": "https://github.com/google/gvisor/actions/runs/41194870700/job/124518915173"
+            },
+            {
+              "label": "Gazelle supplier test rule",
+              "url": "https://github.com/bazel-contrib/bazel-gazelle/blob/b66b19ce4/def.bzl#L246"
+            }
+          ]
+        },
         {
           "text": "The existing Buildifier toolchain can supply its native executable to build actions. A nine-line supplier rule change keeps the interactive CLI intact. The selected 8.5.1 binary checked 617 files and rejected a malformed 618th on empty AMD64 and ARM64 workers. The supplier’s 10.1.0 binary and both existing CLI tests passed on ARM64.",
           "evidence": [
