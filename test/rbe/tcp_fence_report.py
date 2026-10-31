@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import re
 import sys
+import zipfile
 
 import qualification_report as reporting
 
@@ -22,7 +23,7 @@ def main() -> int:
     for report in captured["reports"]:
         if report["name"] == "test.log":
             for line in (out / report["path"]).read_text().splitlines():
-                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE) [a-zA-Z0-9_.= -]+", line):
+                if re.fullmatch(r"FENCE_(?:ACK|WIRE|STATE|DONE|FLOW) [a-zA-Z0-9_.= -]+", line):
                     observations.append(line)
                 elif re.search(r"tcp_rack_test.go:\d+:|Operation not permitted|operation not permitted|failed to bootstrap|failed to disable DAD|read-only file system|No such file or directory|unknown failure:", line):
                     diagnostics.append(line[:650])
@@ -50,6 +51,28 @@ def main() -> int:
             errors.append(f"{mode}: no partial acknowledgment")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
         errors.append("qualifier failed")
+    zip_path = Path("bazel-testlogs/test/packetimpact/tests/tcp_rack_netstack_test/test.outputs/outputs.zip")
+    trace = []
+    if arm != "linux" and zip_path.exists():
+        with zipfile.ZipFile(zip_path) as z:
+            for f in z.namelist():
+                if not f.endswith(".log"):
+                    continue
+                for line in z.read(f).decode(errors="replace").splitlines():
+                    m = re.search(r"REPAIR_TRACE ([a-z]+ [A-Za-z0-9_ =-]+)$",line)
+                    if m:
+                        trace.append(m[1])
+    if arm != "linux" and (not any(line.startswith("update ") for line in trace) or not any(line.startswith("detect ") for line in trace)):
+        errors.append("missing RACK retransmission delivery or ordering diagnostics")
+    if arm != "linux":
+        flows=[int(m[1]) for l in observations if (m:=re.fullmatch(r"FENCE_FLOW mode=sack_repair base=(\d+)",l))]
+        mss=[int(m[1]) for l in observations if (m:=re.fullmatch(r"FENCE_STATE mode=sack_repair phase=before_feedback .* mss=(\d+)",l))]
+        seq=(flows[0]+2*mss[0]) % (1<<32) if len(flows)==len(mss)==1 else None
+        samples=[(int(m[1]),int(m[2])) for l in trace if (m:=re.fullmatch(rf"update seq={seq} ack=\d+ xmits=2 rtt_us=(\d+) min_us=(\d+) state=\d+",l))]
+        if len(samples)!=1 or not (samples[0][0]>=samples[0][1]>0):
+            errors.append("no unambiguous RTT sample from the SACKed retransmission")
+        verdict["sack_rtt_and_minimum_us"] = samples
+    verdict["rack_decisions"] = trace
     if errors and verdict["status"] == "PASS":
         verdict["status"] = "INCOMPLETE"
     verdict["errors"].extend(errors)
