@@ -354,9 +354,11 @@ Older-source imports, approval-gated checks and internal-only failures retain
 their distinct scopes. Do not repeat notifications for an owner already acting
 on the same evidence, or publish an empty update merely to acknowledge a sweep.
 
-An assigned top-level comment can be recorded in the existing PR `followup` as
-`actionableComment: {head, commentId, url}`, with its assigned `owner`. The exact
-head and comment ID/URL must match the complete public feedback snapshot before
+Record an assigned top-level comment in the existing PR `followup` as
+`actionableComment: {head, commentId, url}`, with its assigned `owner`. For a
+submitted review body, add `kind: "review"` and use the review’s ID and URL.
+Dismissed or empty reviews clear from the assignment. The exact head, ID and
+URL must match the complete public feedback snapshot before
 it appears under **Review feedback to address**. It also prevents the **Waiting
 for merge** label while the assignment remains active, without changing
 GitHub's approval. No comment text or follow-up prose creates this assignment. Remove

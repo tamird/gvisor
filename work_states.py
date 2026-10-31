@@ -196,6 +196,15 @@ def effective_approval(pr: dict, *, require_aggregate: bool = True,
     return max(approvals, key=lambda item: item["submittedAt"], default=None)
 
 
+def matches_feedback_assignment(pr: dict, item: dict, assignment: dict) -> bool:
+    """Match a manually assigned top-level message to the observed PR and head."""
+    kind = assignment.get("kind", "comment")
+    return (assignment.get("head") == pr["head"] and item.get("kind") == kind
+            and (kind == "comment" or kind == "review" and item.get("state") in {
+                "COMMENTED", "CHANGES_REQUESTED", "APPROVED"} and bool(item.get("body", "").strip()))
+            and item.get("id") == assignment.get("commentId") and item.get("url") == assignment.get("url"))
+
+
 def review_decision(pr: dict) -> str | None:
     decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
     if decision != "APPROVED":

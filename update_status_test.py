@@ -679,8 +679,15 @@ class CollectorHistoryTest(unittest.TestCase):
             outstanding = updater.reviewer_handoff([pr], continued)
             resumed = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": outstanding}
             self.assertIn("top-review", [item["id"] for item in updater.reviewer_handoff([pr], resumed)])
-            pr["feedback"]["items"][-1]["state"] = "DISMISSED"
+            review = pr["feedback"]["items"][-1]
+            review["url"] = pr["url"] + "#pullrequestreview-1"
+            self.registry["nodes"][0]["followup"]["actionableComment"] = {
+                "kind": "review", "head": pr["head"], "commentId": review["id"], "url": review["url"]}
+            assigned = next(item for item in updater.reviewer_handoff([pr], resumed) if item["id"] == review["id"])
+            self.assertTrue(assigned["assigned"] and assigned["awaitingAuthor"])
+            review["state"] = "DISMISSED"
             self.assertNotIn("top-review", [item["id"] for item in updater.reviewer_handoff([pr], resumed)])
+            del self.registry["nodes"][0]["followup"]["actionableComment"]
             pr["feedback"]["items"].pop()
             comment["author"] = {"login": "bot", "__typename": "Bot"}
             self.assertEqual(updater.reviewer_handoff([pr], previous), [])

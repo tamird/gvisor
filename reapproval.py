@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
-from work_states import approved_patch, effective_approval, landed_patch, public_import_disposition, with_maintainer_reviewers
+from work_states import approved_patch, effective_approval, landed_patch, matches_feedback_assignment, public_import_disposition, with_maintainer_reviewers
 
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
@@ -37,9 +37,7 @@ def import_author_block(pr: dict, node: dict) -> str | None:
     if pr.get("threads", {}).get("complete") is not True or pr["threads"].get("unresolved"):
         return "unresolved-or-incomplete-author-threads"
     comment = node.get("followup", {}).get("actionableComment", {})
-    if (comment.get("head") == pr["head"] and any(item.get("kind") == "comment"
-            and item.get("id") == comment.get("commentId") and item.get("url") == comment.get("url")
-            for item in pr.get("feedback", {}).get("items", []))):
+    if any(matches_feedback_assignment(pr, item, comment) for item in pr.get("feedback", {}).get("items", [])):
         return "registered-current-author-action"
     if node.get("releaseWait", {}).get("head") == pr["head"]:
         return "registered-current-release-wait"

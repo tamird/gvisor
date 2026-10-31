@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from reapproval import maintainer_logins, reminder_plan
-from work_states import FAILURES, check_purpose, check_states, effective_approval, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, with_maintainer_reviewers
+from work_states import FAILURES, check_purpose, check_states, effective_approval, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -233,8 +233,7 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
             elif item["kind"] == "review" and item.get("state") == "DISMISSED":
                 continue
             assignment = followup.get("actionableComment", {})
-            assigned = (item["kind"] == "comment" and assignment.get("head") == pr["head"]
-                        and assignment.get("commentId") == item["id"] and assignment.get("url") == item["url"])
+            assigned = matches_feedback_assignment(pr, item, assignment)
             if assigned:
                 awaiting_author = True
             elif triaged:

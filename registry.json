@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T17:39:47.195+00:00",
+    "updatedAt": "2026-10-31T17:52:38.404+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31484,7 +31484,7 @@
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-28T14:25:13.716904+00:00",
+      "updatedAt": "2026-10-31T17:52:38.404+00:00",
       "summary": "The first ambiguous ACK for a retransmitted tail probe reduced stock Reno’s congestion window from 20 packets to 3 in all five controlled traces. Linux and the fix agree in all five cases, including a peer sequence advance with an unchanged advertised window width. This measures ACK handling, not throughput.",
       "evidence": [
         {
@@ -31513,19 +31513,26 @@
         }
       ],
       "followup": {
-        "owner": "lock_contract",
+        "owner": "tcp_split_owner",
         "sourceHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
-        "observedAt": "2026-10-28T14:25:13.716904+00:00",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow maintainer review, checks and import on #16596.",
+        "observedAt": "2026-10-31T17:34:52Z",
+        "disposition": "Standalone review under investigation",
+        "nextAction": "Check the reported post-probe congestion state and the next loss-probe timer against the reviewer’s two packet sequences.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16596",
           "https://github.com/tamird/gvisor/commit/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
           "https://app.buildbuddy.io/invocation/d5c1faba-3fe7-4752-9d41-9ebd21dff862",
           "https://app.buildbuddy.io/invocation/dea215a4-78bb-4acb-804b-54583419d20a",
           "https://app.buildbuddy.io/invocation/df6869ae-9333-48b7-8304-41995b1754e4",
-          "https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019"
-        ]
+          "https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019",
+          "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574"
+        ],
+        "actionableComment": {
+          "kind": "review",
+          "head": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+          "commentId": "PRR_kwDOB9IlXs8AAAABVS52Ng",
+          "url": "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574"
+        }
       }
     },
     {

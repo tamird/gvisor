@@ -945,6 +945,19 @@ test('assigned top-level feedback blocks merge attention without rewriting appro
   }
 });
 
+test('assign a standalone review body without a review decision or inline thread', () => {
+  const node = assignedCommentNode(), pr = node.github;
+  const item = pr.feedback.items[0], assignment = node.followup.actionableComment;
+  pr.reviewDecision = pr.githubReviewDecision = null;
+  Object.assign(item, { kind: 'review', state: 'COMMENTED', id: 'review-1', url: `${node.url}#pullrequestreview-12` });
+  Object.assign(assignment, { kind: item.kind, commentId: item.id, url: item.url });
+  assert.ok(idsFor(node).includes('author-feedback'));
+  item.state = 'DISMISSED';
+  assert.ok(!idsFor(node).includes('author-feedback'));
+  item.state = 'COMMENTED'; item.body = '';
+  assert.ok(!idsFor(node).includes('author-feedback'));
+});
+
 test('actionable comment assignments require an owner and exact PR evidence', () => {
   for (const mutate of [null,
     node => { node.followup.actionableComment = null; },

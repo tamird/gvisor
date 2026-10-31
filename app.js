@@ -331,8 +331,10 @@ function actionableComment(node) {
   const record = node.followup?.actionableComment, pr = node.github;
   if (!record || !pr || pr.status !== "open" || pr.revisionChanged
       || record.head !== pr.head || pr.feedback?.complete !== true) return null;
-  return pr.feedback.items.find(item => item.kind === "comment"
-    && item.id === record.commentId && item.url === record.url) || null;
+  const kind = record.kind ?? "comment";
+  return pr.feedback.items.find(item => item.kind === kind && item.id === record.commentId && item.url === record.url
+    && (kind === "comment" || kind === "review" && ["COMMENTED", "CHANGES_REQUESTED", "APPROVED"].includes(item.state)
+      && item.body?.trim())) || null;
 }
 function releaseWait(node) {
   const wait = node?.releaseWait, pr = node?.github;
@@ -492,7 +494,7 @@ function attentionReasons(node, owner) {
   const newWaitComment = node.releaseWait?.head === pr.head && pr.feedback?.items?.findLast(item => (item.kind === "comment" || item.kind === "review" && item.state !== "APPROVED" && item.body?.trim())
     && item.author?.login !== owner && Date.parse(item.updatedAt || item.createdAt) > Date.parse(node.releaseWait.confirmedAt));
   if (review.author) feedback.push("A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
-  if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level comment: ${comment.url}. GitHub's review decision is unchanged.`);
+  if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level ${comment.kind}: ${comment.url}. GitHub's review decision is unchanged.`);
   if (newWaitComment) feedback.push(`Triage the comment posted after the release hold was agreed: ${newWaitComment.url}. Reconfirm the hold if it still applies.`);
   if (feedback.length) add("author-feedback", feedback.join(" "));
   if (landed) {
@@ -1748,10 +1750,12 @@ function validateRegistry(candidate) {
           || item.replacement !== undefined && (item.reason !== "author-conflicts"
             || !candidate.nodes.some(other => other.id === item.replacement && other.type === "pr" && other.repo === node.repo && other.id !== node.id)))))
       throw new Error("Invalid attention disposition");
-    const comment = node.followup?.actionableComment, commentPrefix = `${node.url}#issuecomment-`;
+    const comment = node.followup?.actionableComment;
+    const commentPrefix = `${node.url}#${comment?.kind === "review" ? "pullrequestreview" : "issuecomment"}-`;
     if (comment !== undefined && (!comment || node.type !== "pr"
         || typeof node.followup.owner !== "string" || !node.followup.owner.trim()
         || !/^[a-f0-9]{40}$/.test(comment.head)
+        || (comment.kind !== undefined && !["comment", "review"].includes(comment.kind))
         || typeof comment.commentId !== "string" || !comment.commentId.trim()
         || typeof comment.url !== "string" || !comment.url.startsWith(commentPrefix)
         || !/^[1-9]\d*$/.test(comment.url.slice(commentPrefix.length))))
