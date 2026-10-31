@@ -102,7 +102,11 @@ type encObject struct {
 	hasCov bool
 	hasCh  bool
 
-	// x holds the state of arrays and of objects that absorbed others.
+	// childStart and childEnd bound this object's range of absorbed IDs in
+	// graphEncodeState.children.
+	childStart, childEnd int32
+
+	// x holds extra ranges and chunks for arrays.
 	x *objExtra
 
 	// stamp deduplicates query results.
@@ -111,10 +115,8 @@ type encObject struct {
 	final int32
 }
 
-// objExtra is the state of arrays and of objects that absorbed others.
+// objExtra holds ranges and chunks that do not fit inline in encObject.
 type objExtra struct {
-	// children are the objects absorbed by this object.
-	children []int32
 	// covered are the non-overlapping, non-adjacent element index ranges of
 	// arrays that are encoded or queued, sorted by ascending start index.
 	covered []elemRange
@@ -129,11 +131,8 @@ func (o *encObject) extra() *objExtra {
 	return o.x
 }
 
-func (o *encObject) childList() []int32 {
-	if o.x == nil {
-		return nil
-	}
-	return o.x.children
+func (es *graphEncodeState) childList(o *encObject) []int32 {
+	return es.children[o.childStart:o.childEnd]
 }
 
 // coveredList returns the covered elements of the array o. The result is only
@@ -293,10 +292,10 @@ type graphEncodeState struct {
 
 	mapSlots map[*typeInfo]mapSlots
 
-	// coverBuf and absorbBuf are scratch slices reused across cover and
-	// newContainer calls.
-	coverBuf  []elemRange
-	absorbBuf []int32
+	// children holds each container's absorbed object IDs in discovery order.
+	children []int32
+	// coverBuf is scratch for cover.
+	coverBuf []elemRange
 	// tmpRange and tmpChunk are 1-element arrays sliced via [:] in coveredList
 	// and chunkList to return a 1-element slice for inline single-range arrays
 	// (o.cov / o.ch) without heap allocation or taking a slice into movable
@@ -437,7 +436,8 @@ func (es *graphEncodeState) release() {
 	if cap(es.out.b)+cap(es.final.b)+cap(es.binaryBuf) > maxPooledBytes ||
 		len(es.byAddr.slots)+len(es.blocks.slots) > maxPooledSlots ||
 		cap(es.blockEntries)+cap(es.queue) > maxPooledSlots ||
-		cap(es.refs)+cap(es.segRefs) > maxPooledSlots {
+		cap(es.refs)+cap(es.segRefs) > maxPooledSlots ||
+		cap(es.children) > maxPooledSlots {
 		return
 	}
 	es.ctx = nil
@@ -472,7 +472,7 @@ func (es *graphEncodeState) release() {
 	es.types.reset()
 	es.binaryBuf = es.binaryBuf[:0]
 	es.coverBuf = es.coverBuf[:0]
-	es.absorbBuf = es.absorbBuf[:0]
+	es.children = es.children[:0]
 	for _, sc := range es.mapSlots {
 		sc.k.SetZero()
 		sc.e.SetZero()

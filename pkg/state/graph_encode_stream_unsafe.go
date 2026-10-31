@@ -75,7 +75,7 @@ func (es *graphEncodeState) arrayChunks(obj int32, shift uintptr, out []chunk) [
 		ch.end += shift
 		out = append(out, ch)
 	}
-	for _, c := range o.childList() {
+	for _, c := range es.childList(o) {
 		if co := es.obj(c); co.isArray && co.ti == o.ti && co.parentOff%o.ti.size == 0 {
 			out = es.arrayChunks(c, shift+co.parentOff/o.ti.size, out)
 		}
