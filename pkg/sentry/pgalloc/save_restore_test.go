@@ -19,6 +19,7 @@ package pgalloc
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"os"
 	"testing"
@@ -28,6 +29,9 @@ import (
 	"gvisor.dev/gvisor/pkg/memutil"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
+	"gvisor.dev/gvisor/pkg/sentry/state/stateipc"
+	"gvisor.dev/gvisor/pkg/unet"
+	"gvisor.dev/gvisor/pkg/urpc"
 )
 
 func newSaveTestMemoryFile(t *testing.T, diskBacked bool) *MemoryFile {
@@ -318,6 +322,87 @@ func BenchmarkSaveToCommittedZeroPages(b *testing.B) {
 				b.StopTimer()
 				f.DecRef(fr)
 				f.Destroy()
+			}
+		})
+	}
+}
+
+// pageWriteServer gives the checkpoint gofer ordinary Linux file descriptors.
+type pageWriteServer struct{}
+
+func (pageWriteServer) Destroy()                                     {}
+func (pageWriteServer) OpenRead(string) (stateio.AsyncReader, error) { return nil, os.ErrPermission }
+func (pageWriteServer) OpenWrite(path string) (stateio.AsyncWriter, error) {
+	file, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return nil, err
+	}
+	return stateio.NewIOWriter(file, uint64(hostarch.PageSize), 1, 1), nil
+}
+
+func TestPageSaveFailureAcrossFiles(t *testing.T) {
+	for _, tc := range []struct {
+		name, path string
+		want       error
+	}{
+		{"complete", "/dev/null", nil}, {"full", "/dev/full", unix.ENOSPC},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server, err := stateipc.NewAsyncFileServer(pageWriteServer{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			usrv := urpc.NewServer()
+			usrv.Register(server)
+			clientSock, serverSock, err := unet.SocketPair(false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			usrv.StartHandling(serverSock)
+			t.Cleanup(func() { usrv.Stop(0) })
+			client, err := stateipc.NewAsyncFileClient(urpc.NewClient(clientSock))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer client.DecRef()
+			writer, err := client.OpenWrite(tc.path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			done := make(chan struct{})
+			var writerErr error
+			saver, err := StartAsyncPagesFileSave(writer, func(err error) { writerErr = err; close(done) })
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() { saver.MemoryFilesDone(); <-done }()
+			saveFile := func() error {
+				src := newSaveTestMemoryFile(t, false)
+				fr := allocateSaveTestPages(t, src)
+				for i := range 4 {
+					pwritePage(t, src, fr, i, 1)
+				}
+				return src.SaveTo(t.Context(), io.Discard, &SaveOpts{PagesFile: saver})
+			}
+			if err := saveFile(); err != nil {
+				t.Fatal(err)
+			}
+			if tc.want != nil {
+				<-done
+				if !errors.Is(writerErr, tc.want) {
+					t.Fatalf("initial page write: got %v, want %v", writerErr, tc.want)
+				}
+			}
+			// The kernel reports a synchronous SaveTo error before the
+			// asynchronous write error when it saves private memory files.
+			got := saveFile()
+			saver.MemoryFilesDone()
+			<-done
+			if got == nil {
+				got = writerErr
+			}
+			if !errors.Is(got, tc.want) {
+				t.Errorf("checkpoint error after second file: got %v, want %v", got, tc.want)
 			}
 		})
 	}
