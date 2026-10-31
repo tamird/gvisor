@@ -1,35 +1,38 @@
-name: CI
-
-"on":
+name: Match the original nine GNU call frames to their build inputs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tldk-native-frame-symbols]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  symbolize:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Resolve the measured CFI frames without a build or runtime replay
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa
+          mkdir -p "$RUNNER_TEMP/receipt"
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          docker pull "$image" >/dev/null
+          docker run --rm --entrypoint=dpkg-query "$image" -W libc6 libc6-dev > "$RUNNER_TEMP/receipt/libc-version.txt"
+          for p in /usr/lib/x86_64-linux-gnu/libc.a /usr/x86_64-linux-gnu/lib/libc.a; do
+            if docker run --rm --entrypoint=test "$image" -f "$p"; then
+              case "$p" in /usr/lib/*) tag=native;; *) tag=cross;; esac
+              docker run --rm --entrypoint=cat "$image" "$p" > "$RUNNER_TEMP/qualified-$tag-libc.a"
+            fi
+          done
+          if ! /usr/bin/python3 -c 'import elftools' 2>/dev/null; then sudo apt-get -qq install -y python3-pyelftools; fi
+          /usr/bin/python3 test/rbe/tldk_original/native-frame-proof.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: original-tldk-native-stack
+          path: ${{ runner.temp }}/receipt
