@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T09:25:43.398169+00:00",
+    "updatedAt": "2026-10-31T09:29:02.218795+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38723,9 +38723,9 @@
       "title": "Build source exports without a Git version stamp",
       "url": "https://github.com/tamird/gvisor/commit/a303ec933",
       "group": "rbe",
-      "status": "Agent work",
+      "status": "Contributor review requested",
       "summary": "Two stock Sentries built from different sources both displayed 0.0.0; the second restored and ran the first guest. Without an explicit release label the revised reader checks the linked Sentry’s Go build ID. An old unnamed checkpoint has only 0.0.0: even a rebuild of matching source cannot establish its identity from that checkpoint. A checkpoint written by the old code with a named release did restore under the new reader carrying that release label. A matching label permits an attempted restore; it does not make incompatible kernel state readable. Ordinary builds display (devel) and produce Debian version 0~devel.",
-      "updatedAt": "2026-10-31T07:13:54.078255+00:00",
+      "updatedAt": "2026-10-31T09:29:02.218795+00:00",
       "evidence": [
         {
           "label": "Standalone change on the rules_go prerequisite",
@@ -38736,12 +38736,20 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41177018262/artifacts/13034556253"
         },
         {
+          "label": "Final boot analyzer passed both ARM64 and AMD64 findings",
+          "url": "https://app.buildbuddy.io/invocation/19a4c88c-05a2-4ab1-8f8c-3397234bfb82"
+        },
+        {
+          "label": "Original results, including the redundant ARM64 reporter that could not execute on the AMD64 worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41180272657/artifacts/13037961695"
+        },
+        {
           "label": "Ten version and package checks (ARM64 CLI under QEMU)",
           "url": "https://github.com/tamird/gvisor/actions/runs/41174679549/artifacts/13033187323"
         },
         {
-          "label": "Graph restore, exact saved metadata and both owning analyzers (earlier runtime source)",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41175238248"
+          "label": "Both shipped ELFs, graph restore, metadata and both owners’ findings on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41175238248/artifacts/13036999740"
         },
         {
           "label": "32 paired starts and boot timelines",
@@ -38789,15 +38797,24 @@
       "followup": {
         "owner": "Build and release",
         "sourceHead": "a303ec9336e4844e589cd35c891301856369038a",
-        "observedAt": "2026-10-31T07:13:54.078255+00:00",
-        "disposition": "Verify the remaining qualification before contributor review",
-        "nextAction": "Finish the owning boot/container analysis for both target architectures, then request contributor review of this change once. It needs per-binary Go build IDs from #16593, not the six-archive staging change.",
+        "observedAt": "2026-10-31T09:29:02.218795+00:00",
+        "disposition": "Contributor review of the explicit release-label and linked-ID policy",
+        "nextAction": "Review this change for submission after #16593. Archive staging is independent.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a303ec933",
           "https://github.com/tamird/gvisor/actions/runs/41177018262/artifacts/13034556253",
           "https://github.com/tamird/gvisor/actions/runs/41174679549/artifacts/13033187323",
-          "https://github.com/tamird/gvisor/actions/runs/41175238248"
+          "https://github.com/tamird/gvisor/actions/runs/41175238248/artifacts/13036999740",
+          "https://github.com/tamird/gvisor/actions/runs/41180272657/artifacts/13037961695"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "a303ec9336e4844e589cd35c891301856369038a",
+        "url": "https://github.com/tamird/gvisor/commit/a303ec933",
+        "title": "Open the source-export version and checkpoint change after #16593",
+        "summary": "Two stock Sentries built from different sources both displayed 0.0.0; the second restored and ran the first guest. Without an explicit release label the revised reader checks the linked Sentry’s Go build ID. An old unnamed checkpoint has only 0.0.0: even a rebuild of matching source cannot establish its identity from that checkpoint. A checkpoint written by the old code with a named release did restore under the new reader carrying that release label. A matching label permits an attempted restore; it does not make incompatible kernel state readable. Ordinary builds display (devel) and produce Debian version 0~devel."
       }
     },
     {
