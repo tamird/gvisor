@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T07:13:54.078255+00:00",
+    "updatedAt": "2026-10-31T07:18:55.041730+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20683,8 +20683,8 @@
       "url": "https://github.com/tamird/gvisor/commit/1d9470464",
       "group": "bazel",
       "status": "Contributor review",
-      "updatedAt": "2026-10-31T06:29:18.760429+00:00",
-      "summary": "An independent runtime repair is under investigation. On native ARM64 the static iperf3 client transferred 5.61 GiB before trapping while cancelling its sender thread. The Ubuntu-based client and server completed a native AMD64 transfer of 3,610,509,312 bytes. The ARM64 archive is built. The separate two-line Go reporting decision below still applies to its original source.\n\nRemove Go’s MB/s figure, which is calculated from the requested byte count. iperf’s JSON reports the actual bytes and sender bandwidth; both versions reported 130,910.85 B/s from the same transfer. The image migration was approved; the two-line benchmark refinement is the only change awaiting review.",
+      "updatedAt": "2026-10-31T07:18:55.041730+00:00",
+      "summary": "Remove Go’s MB/s figure, which was calculated from the requested byte count. The iperf3 JSON already reports measured sender bandwidth. This decision covers only those two lines. The standalone Ubuntu runtime proposal includes the identical Go source and has its own review.",
       "followup": {
         "owner": "hostinet_delivery",
         "disposition": "Review only the two-line benchmark refinement",
@@ -20708,6 +20708,10 @@
         "reviewedHead": "51d411a3ff1211e342c0ee977c0492b9037e79d1"
       },
       "evidence": [
+        {
+          "label": "Standalone runtime on current master carries the identical Go code",
+          "url": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea"
+        },
         {
           "label": "Eight original AMD64 benchmark reports using the static iperf3 image",
           "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13033670970"
@@ -20812,25 +20816,58 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/standalone-wrk2-image",
-      "head": "3fbd95b13b4b2fbae349c1202e68e4d45df8fd69",
+      "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
       "title": "Build the wrk2 image from pinned source",
-      "url": "https://github.com/tamird/gvisor/compare/6e6276344...3fbd95b13",
+      "url": "https://github.com/tamird/gvisor/compare/6e6276344...5bb80cbb9",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T06:29:18.760429+00:00",
-      "summary": "The pinned source included zlib.h without using zlib. The standalone image now omits that header, Bazel dependency, catalog row and notice. Three sources remain. The predecessor passed its native AMD64 and emulated ARM64 workloads after correcting getopt_long. The revised image and three-record Fetch and Verify are running with the current master classifier.",
+      "status": "Contributor review",
+      "updatedAt": "2026-10-31T07:18:55.041730+00:00",
+      "summary": "Build wrk2 and LuaJIT from pinned sources on Ubuntu Jammy. Use the upstream ARM option-parser fix and the OpenSSL module’s public license file. The four installed notices cover three sources. The full 223-record catalog verifies on the current classifier.",
       "followup": {
         "owner": "Build and release",
-        "sourceHead": "3fbd95b13b4b2fbae349c1202e68e4d45df8fd69",
-        "reviewedHead": "f258c589bea8fff7c4ef4163241227252b7299bc",
-        "observedAt": "2026-10-31T06:14:46.578114+00:00",
-        "disposition": "Qualify the reduced dependency set",
-        "nextAction": "Verify the two image payloads, Kubernetes consumer and fresh catalog using the current master license classifier.",
+        "sourceHead": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
+        "observedAt": "2026-10-31T07:18:55.041730+00:00",
+        "disposition": "Review the two new commits",
+        "nextAction": "Open the license-filename preparation first, then the standalone image once that lands.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/106d67993"
+          "https://github.com/tamird/gvisor/compare/6e6276344...dbb96525c",
+          "https://github.com/tamird/gvisor/compare/dbb96525c...5bb80cbb9",
+          "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033988266"
         ]
       },
       "evidence": [
+        {
+          "label": "Previously approved shared-runtime revision",
+          "url": "https://github.com/tamird/gvisor/commit/f258c589b"
+        },
+        {
+          "label": "1. Recognize COPYRIGHT after the existing notice filenames",
+          "url": "https://github.com/tamird/gvisor/compare/6e6276344...dbb96525c"
+        },
+        {
+          "label": "2. Build and ship the standalone wrk2 client",
+          "url": "https://github.com/tamird/gvisor/compare/dbb96525c...5bb80cbb9"
+        },
+        {
+          "label": "Native AMD64 client completed 584 HTTPS requests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034082572"
+        },
+        {
+          "label": "ARM64 client under QEMU completed 576 HTTPS requests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034476469"
+        },
+        {
+          "label": "Fresh Fetch and full Verify on the stock classifier",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033988266"
+        },
+        {
+          "label": "Kubernetes pod command and latency parser",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41176614088/artifacts/13033448265"
+        },
+        {
+          "label": "Both consumers resolved the public OpenSSL notice",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033808570"
+        },
         {
           "label": "Remove the unused zlib input and share the Ubuntu base label",
           "url": "https://github.com/tamird/gvisor/compare/106d67993..3fbd95b13"
@@ -20842,10 +20879,6 @@
         {
           "label": "Workload, explicit dependency and fresh catalog checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41176614088"
-        },
-        {
-          "label": "Recognize COPYRIGHT as the last fallback source filename",
-          "url": "https://github.com/tamird/gvisor/compare/6e6276344...dbb96525c"
         },
         {
           "label": "Standalone image and workload",
@@ -20919,8 +20952,17 @@
         },
         "after": {
           "base": "6e6276344dce3728a09a8271c8360269e7d881a4",
-          "head": "3fbd95b13b4b2fbae349c1202e68e4d45df8fd69"
+          "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4"
         }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "6e6276344dce3728a09a8271c8360269e7d881a4",
+        "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
+        "url": "https://github.com/tamird/gvisor/compare/6e6276344...5bb80cbb9",
+        "title": "Review the standalone wrk2 image and its license lookup",
+        "summary": "The approved f258c589b used a shared libc layer and shell-driven Lua generators. This revision uses Ubuntu Jammy and declared Bazel tools, fixes ARM option parsing and removes unused zlib. A two-line preparation recognizes LuaJIT’s COPYRIGHT notice. Review those changes."
       }
     },
     {
@@ -38887,6 +38929,77 @@
         "title": "Provide executable targets for Go SDK tools",
         "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery."
       }
+    },
+    {
+      "id": "branch:standalone-iperf-runtime",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/standalone-iperf-image",
+      "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
+      "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T07:18:55.041730+00:00",
+      "url": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
+      "summary": "The fully static ARM64 sender trapped while cancelling its network thread after transferring data. Both endpoints now use the published Ubuntu C runtime. Native AMD64 and ARM64 completed forward and four-way reverse transfers. iperf2 and iperf3 use incompatible protocols. Both endpoints move together.",
+      "followup": {
+        "owner": "Build and release",
+        "sourceHead": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
+        "observedAt": "2026-10-31T07:18:55.041730+00:00",
+        "disposition": "Collect the eight native ARM64 Go cases",
+        "nextAction": "Verify the normal Go benchmark on the ARM64 machine. The earlier runner lacked the x86 cross-compiler required for the second vDSO.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
+          "https://github.com/tamird/gvisor/actions/runs/41177931871",
+          "https://github.com/tamird/gvisor/actions/runs/41175040549/artifacts/13033728082"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "4be95c2fafab8da9703de07e7a0cd8258c737e3e"
+        },
+        "after": {
+          "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Native ARM64 client originally trapped during pthread cancellation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032063746"
+        },
+        {
+          "label": "Native ARM64 forward and four-way reverse transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208"
+        },
+        {
+          "label": "Native AMD64 forward and four-way reverse transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034640222"
+        },
+        {
+          "label": "Eight native AMD64 Go benchmark cases on the prior Jammy image",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41175040549/artifacts/13033172472"
+        },
+        {
+          "label": "ARM64 application-layer contents and size",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033946880"
+        },
+        {
+          "label": "AMD64 application-layer contents and size",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034585756"
+        },
+        {
+          "label": "The BCR iperf and OpenSSL source notices",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032936423"
+        },
+        {
+          "label": "The two Go metrics lines are independently reviewable",
+          "url": "https://github.com/tamird/gvisor/compare/309a60834...1d9470464"
+        },
+        {
+          "label": "The shared public OpenSSL source label",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033808570"
+        }
+      ]
     }
   ],
   "edges": [
@@ -40844,13 +40957,6 @@
       ]
     },
     {
-      "from": "branch:native-go-images",
-      "to": "branch:rules-img-iperf-image",
-      "type": "depends_on",
-      "reason": "The independent BCR image reuses the approved native-Go image foundation at 4094323; the unused hackbench dependency has been removed.",
-      "evidence": "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f"
-    },
-    {
       "from": "pr:16168",
       "to": "branch:rules-img-integration-test-image",
       "type": "depends_on",
@@ -42157,6 +42263,20 @@
         "https://github.com/google/gvisor/pull/16593",
         "https://github.com/tamird/gvisor/commit/a303ec933"
       ]
+    },
+    {
+      "from": "pr:15146",
+      "to": "branch:standalone-iperf-runtime",
+      "type": "depends_on",
+      "reason": "The pinned iperf3 source notice includes BSD-3-Clause-LBNL and HPND, which the current scanner does not recognize. The review hold on the scanner remains in force.",
+      "evidence": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032936423"
+    },
+    {
+      "from": "branch:rules-img-iperf-image",
+      "to": "branch:standalone-iperf-runtime",
+      "type": "depends_on",
+      "reason": "The proposed tree carries the same two reporting lines as the separately pending metric review. It no longer needs the old native-Go image foundation.",
+      "evidence": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea"
     }
   ],
   "investigations": [
@@ -50146,11 +50266,20 @@
     {
       "id": "investigation:state-reflection-profiles",
       "title": "pkg/state: reflection CPU and allocation profiles",
-      "status": "concluded",
+      "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-18T01:29:46.373540+00:00",
-      "summary": "The recorded profiling and fixed comparisons are complete. Their mixed and negative results remain below; the subsequent decoded-frame qualification and architecture experiments continue in the separate state design investigation. This profiling record has no pending execution or contributor decision.\n\nThe completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. Single measured-Load allocation reductions are observed, alongside increased initialization allocation counts. The adoption fixture uses Save-only setup, but ControlMessageDecoding performs an untimed validation Load before measurement; its row is not a first-use layout cost. Each timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and single measured-Load cost checks. The control-message observation uses 96 more bytes with the same 102 allocations after an untimed validation Load; it is not a first-use layout cost. Initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single measured-load observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.\n\nThe byte-reader comparison is independently closed. On the deterministic synthetic pointer/slice graph through the real uncompressed statefile reader, twelve fixed balanced pairs show no detected time benefit (median 766,202.5 to 760,387 ns, p=.198), 16 additional bytes per operation and unchanged 4,953 allocations per operation. All twenty-six native processes exited successfully, with twenty-four measured rows; the original parent failure and XML reporter errors remain recorded. These saved measurements were authenticated without rerunning benchmarks. This is not a whole-kernel restore or fresh-sentry startup measurement. The byte-reader revision remains unpromoted.\n\nThe decoded-frame architecture uses one parser and generated restoration methods. Both stable-block and inline candidates remain unadopted. The simpler contiguous revision passes correctness and its fixed comparison: large synthetic Load is 19.00% faster with 36.85% fewer allocated bytes, while control-message timing has no detected change. Executable file sizes are unchanged. Independent review is complete. The completed 24-operation whole-restore comparison does not establish an overall speedup. Subsequent profiling and the unsuccessful type-description sharing experiment are recorded in the design investigation; no successor has been adopted.",
+      "updatedAt": "2026-10-31T07:18:55.041730+00:00",
+      "summary": "On a 161,174-byte Nginx capture, median graph Save took 1.655 ms and Load took 1.092 ms across three ordinary runs. All ten checks passed and the final output was reloaded. The earlier controlled comparisons remain below.\n\nThe completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. Single measured-Load allocation reductions are observed, alongside increased initialization allocation counts. The adoption fixture uses Save-only setup, but ControlMessageDecoding performs an untimed validation Load before measurement; its row is not a first-use layout cost. Each timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and single measured-Load cost checks. The control-message observation uses 96 more bytes with the same 102 allocations after an untimed validation Load; it is not a first-use layout cost. Initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single measured-load observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.\n\nThe byte-reader comparison is independently closed. On the deterministic synthetic pointer/slice graph through the real uncompressed statefile reader, twelve fixed balanced pairs show no detected time benefit (median 766,202.5 to 760,387 ns, p=.198), 16 additional bytes per operation and unchanged 4,953 allocations per operation. All twenty-six native processes exited successfully, with twenty-four measured rows; the original parent failure and XML reporter errors remain recorded. These saved measurements were authenticated without rerunning benchmarks. This is not a whole-kernel restore or fresh-sentry startup measurement. The byte-reader revision remains unpromoted.\n\nThe decoded-frame architecture uses one parser and generated restoration methods. Both stable-block and inline candidates remain unadopted. The simpler contiguous revision passes correctness and its fixed comparison: large synthetic Load is 19.00% faster with 36.85% fewer allocated bytes, while control-message timing has no detected change. Executable file sizes are unchanged. Independent review is complete. The completed 24-operation whole-restore comparison does not establish an overall speedup. Subsequent profiling and the unsuccessful type-description sharing experiment are recorded in the design investigation; no successor has been adopted.",
       "findings": [
+        {
+          "text": "Save allocated 3.25 MB in 1,520 allocations and Load allocated 1.324 MB in 3,535. Within graph-scoped reflect.New during Load, 67.0% were restored objects and 22.3% were temporary map slots.",
+          "evidence": [
+            {
+              "label": "Nginx graph profile and reloaded output",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41176273193/artifacts/13034331212"
+            }
+          ]
+        },
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
           "evidence": [
@@ -50782,8 +50911,12 @@
           ]
         }
       ],
-      "nextStep": "Use these completed measurements to inform the continuing state design investigation. Preserve each source, control, failed attempt and measurement limitation; no profiling rerun or contributor decision is pending here.",
+      "nextStep": "Compare temporary map-slot reuse against the same Nginx capture on the ordinary graph codec.",
       "evidence": [
+        {
+          "label": "Default graph Nginx Save and Load profiles, ten checks passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41176273193/artifacts/13034331212"
+        },
         {
           "label": "Qualified shared-struct source",
           "url": "https://github.com/tamird/gvisor/commit/2831e4a8e2a3a1ddf231287c7746a57e7311e4d6"
