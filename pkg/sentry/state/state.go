@@ -19,6 +19,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime/debug"
+	"runtime/metrics"
 	"strconv"
 	"time"
 
@@ -172,6 +174,10 @@ func (opts *SaveOpts) Save(ctx context.Context, k *kernel.Kernel, w *watchdog.Wa
 	// non-resuming save the sandbox is exiting, so delay re-enabling GC unless
 	// save failed.
 	gcSuspension := garbage.Suspend(totalMemoryLimit(), memoryFileBytes)
+	soft := debug.SetMemoryLimit(-1)
+	samples := []metrics.Sample{{Name: "/memory/classes/total:bytes"}, {Name: "/memory/classes/heap/released:bytes"}, {Name: "/gc/cycles/total:gc-cycles"}}
+	metrics.Read(samples)
+	log.Infof("GCSAVE soft=%d startup=%d mf=%d handle=%t go_total=%d go_released=%d gc_cycles=%d", soft, totalMemoryLimit(), memoryFileBytes, gcSuspension != nil, samples[0].Value.Uint64(), samples[1].Value.Uint64(), samples[2].Value.Uint64())
 	defer func() {
 		finishSaveGCSuspension(gcSuspension, opts.Resume, err)
 	}()

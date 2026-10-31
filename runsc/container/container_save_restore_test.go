@@ -2592,3 +2592,182 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 		t.Fatalf("verifying restored /tmpfs failed: ws=%v, err=%v", ws, err)
 	}
 }
+
+// TestCheckpointCgroupResize measures the real save budget with a common graph
+// and current kernel limit, changing only the cgroup limit at Sentry startup.
+func TestCheckpointCgroupResize(t *testing.T) {
+	perLevel := os.Getenv("GCSAVE_FILES_PER_LEVEL")
+	if perLevel != "1000" && perLevel != "200" {
+		t.Fatalf("unexpected file count per level %q", perLevel)
+	}
+	for _, arm := range []struct {
+		name  string
+		limit int64
+	}{{"born_low", 200 << 20}, {"lowered", 2 << 30}} {
+		t.Run(arm.name, func(t *testing.T) { checkpointCgroupResize(t, arm.limit, perLevel) })
+	}
+}
+
+func checkpointCgroupResize(t *testing.T, initial int64, perLevel string) {
+	if !cgroup.IsOnlyV2() {
+		t.Skip("cgroup v2 required")
+	}
+	testAppPath, err := testutil.FindFile("test/cmd/test_app/test_app")
+	if err != nil {
+		t.Fatalf("FindFile(test_app): %v", err)
+	}
+
+	cgPath := "/" + testutil.RandomID("gvisor-test-cg")
+	probe, err := cgroup.NewFromPath(cgPath, false /* useSystemd */)
+	if err != nil {
+		t.Skipf("cgroup v2 unavailable: %v", err)
+	}
+	if err := probe.Install(&specs.LinuxResources{}); err != nil {
+		if errors.Is(err, os.ErrPermission) || errors.Is(err, unix.EROFS) || errors.Is(err, unix.EBUSY) {
+			t.Skipf("writable cgroup v2 hierarchy unavailable: %v", err)
+		}
+		t.Fatalf("probe.Install(): %v", err)
+	}
+	cg := probe.MakePath("")
+	read := func(path string) string {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("reading %s: %v", path, err)
+		}
+		return strings.TrimSpace(string(b))
+	}
+	_ = read(filepath.Join(cg, "memory.max"))
+	_, swapErr := os.Stat(filepath.Join(cg, "memory.swap.max"))
+	if swapErr != nil && !errors.Is(swapErr, os.ErrNotExist) {
+		t.Fatal(swapErr)
+	}
+	if err := probe.Uninstall(); err != nil {
+		t.Fatal(err)
+	}
+	const final int64 = 200 << 20
+	memRes := &specs.LinuxMemory{Limit: &initial}
+	if swapErr == nil {
+		memRes.Swap = &initial
+	}
+	spec, conf := sleepSpecConf(t)
+	conf.Overlay2.Set("none")
+	conf.Strace = false
+	spec.Mounts = []specs.Mount{{Type: "tmpfs", Destination: "/tmpfs"}}
+	spec.Linux = &specs.Linux{
+		CgroupsPath: cgPath,
+		Resources:   &specs.LinuxResources{Memory: memRes},
+	}
+
+	logDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if logDir == "" {
+		t.Fatal("missing Bazel undeclared outputs")
+	}
+	logPattern := "save-" + t.Name()[strings.LastIndex(t.Name(), "/")+1:] + "."
+	conf.DebugLog = filepath.Join(logDir, logPattern+"%COMMAND%.%TIMESTAMP%.txt")
+	_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
+	if err != nil {
+		t.Fatalf("SetupContainer: %v", err)
+	}
+	defer cleanup()
+
+	args := Args{
+		ID:        testutil.RandomContainerID(),
+		Spec:      spec,
+		BundleDir: bundleDir,
+	}
+	cont, err := New(conf, args)
+	if err != nil {
+		t.Fatalf("creating container: %v", err)
+	}
+	defer cont.Destroy()
+	if err := cont.Start(conf); err != nil {
+		t.Fatal(err)
+	}
+	if err := waitForProcessCount(cont, 1); err != nil {
+		t.Fatal(err)
+	}
+	pid := cont.SandboxPid()
+	membership := read(fmt.Sprintf("/proc/%d/cgroup", pid))
+	max := func() string { return read(filepath.Join(cg, "memory.max")) }
+	if want := "0::" + cgPath; membership != want {
+		t.Fatalf("Sentry PID %d is in %q, want %q", pid, membership, want)
+	}
+	initialActual := max()
+	if initialActual != strconv.FormatInt(initial, 10) {
+		t.Fatalf("initial memory.max=%s, want %d", initialActual, initial)
+	}
+	limit := final
+	update := &specs.LinuxMemory{Limit: &limit}
+	if swapErr == nil {
+		update.Swap = &limit
+	}
+	if err := cont.Update(conf, &specs.LinuxResources{Memory: update}); err != nil {
+		t.Fatal(err)
+	}
+	if val := max(); val != strconv.FormatInt(final, 10) {
+		t.Fatalf("updated memory.max=%s, want %d", val, final)
+	}
+	t.Logf("GCSAVE kernel initial=%s final=%s pid=%d membership=%s per_level=%s", initialActual, max(), pid, membership, perLevel)
+	sample := func(phase string) {
+		t.Logf("GCSAVE phase=%s memory=%s events=%s", phase, read(filepath.Join(cg, "memory.current")),
+			strings.ReplaceAll(read(filepath.Join(cg, "memory.events")), "\n", ","))
+	}
+	sample("before_population")
+	execFile, err := os.Open(testAppPath)
+	if err != nil {
+		t.Fatalf("Open(%q): %v", testAppPath, err)
+	}
+	ws, err := cont.executeSync(conf, &controlapi.ExecArgs{
+		Argv: []string{
+			"test_app",
+			"fsTreeCreate",
+			"--target-dir=/tmpfs",
+			"--depth=50",
+			"--file-per-level=" + perLevel,
+			"--file-size=0",
+		},
+		FilePayload: controlapi.NewFilePayload(map[int]*os.File{
+			0: os.Stdin,
+			1: os.Stdout,
+			2: os.Stderr,
+		}, execFile),
+	})
+	execFile.Close()
+	t.Logf("GCSAVE population success=%t ws=%v err=%v", err == nil && ws.Exited() && ws.ExitStatus() == 0, ws, err)
+	sample("after_population")
+	if err != nil || !ws.Exited() || ws.ExitStatus() != 0 {
+		return
+	}
+	imageDir := t.TempDir()
+	if err := os.Chmod(imageDir, 0777); err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	saveErr := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelFlateBestSpeed})
+	sample("after_checkpoint")
+	size := int64(-1)
+	f, imageErr := os.Stat(filepath.Join(imageDir, checkpointfiles.StateFileName))
+	if imageErr == nil {
+		size = f.Size()
+	}
+	t.Logf("GCSAVE checkpoint success=%t image_bytes=%d elapsed_ms=%d err=%v image_err=%v", saveErr == nil, size, time.Since(start).Milliseconds(), saveErr, imageErr)
+	logs, err := filepath.Glob(filepath.Join(logDir, logPattern+"*.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range logs {
+		for _, line := range strings.Split(read(file), "\n") {
+			if strings.Contains(line, "GCSAVE soft=") {
+				t.Log(line)
+			}
+		}
+	}
+	if saveErr == nil {
+		if size <= 0 {
+			t.Fatal("checkpoint produced no state file")
+		}
+		if _, err := cont.Wait(); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
