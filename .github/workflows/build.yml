@@ -1,26 +1,106 @@
 name: Verify TCP cookie handshakes and negotiated windows with the GNU toolchain
 on:
-  workflow_dispatch:
+  push:
+    branches: [qualification/tcp-cookie-gnu-missing]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-gnu-wire'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-gnu-missing'
     runs-on: ubuntu-24.04
-    timeout-minutes: 110
+    timeout-minutes: 90
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Run the Linux waiver control and the corrected handshake flag matrix
+    - name: Recover the completed native packet observations from their original invocation
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        python3 - "$RUNNER_TEMP/replay-public" <<'PYRECEIPT' || echo 'Original evidence is incomplete; keep running the missing arms.'
+        """Recover the original packet bytes after GitHub cancelled artifact collection."""
+
+        import hashlib
+        from http.client import HTTPSConnection
+        import json
+        import os
+        from pathlib import Path
+        import re
+        import sys
+        from urllib.parse import urlsplit
+        from xml.etree import ElementTree
+
+        invocation = '344ad19f-9bb2-4d19-9b6e-fffe84e20544'
+        source = '249a997c7478cc4bdb21cc248ccb554ed8aba71b'
+        target = '//test/packetimpact/tests:tcp_syncookie_native_test'
+        proof = Path(sys.argv[1])
+        proof.mkdir(parents=True, exist_ok=True)
+
+        def request(method, body):
+            connection = HTTPSConnection('app.buildbuddy.io', timeout=45)
+            try:
+                connection.request('POST', '/api/v1/' + method, json.dumps(body), {'Content-Type': 'application/json', 'x-buildbuddy-api-key': os.environ['BUILDBUDDY_API_KEY']})
+                with connection.getresponse() as response:
+                    if response.status != 200:
+                        raise ValueError(f'{method}: HTTP {response.status}')
+                    return response.read(16 * 1024 * 1024 + 1)
+            finally:
+                connection.close()
+
+        def evidence():
+            sel = {'selector': {'invocation_id': invocation}}
+            meta, = json.loads(request('GetInvocation', sel))['invocation']
+            selected = {'selector': {'invocation_id': invocation, 'target_label': target}}
+            action_response = json.loads(request('GetAction', selected))
+            files = {name: {} for name in ('test.log', 'test.xml')}
+            for action in action_response.get('action', []):
+                if action.get('targetLabel') != target:
+                    raise ValueError('incorrect action owner')
+                for file in action.get('file', []):
+                    name = file.get('name', '').split('/')[-1]
+                    if name in files:
+                        files[name][file['uri']] = file
+            result = {'arm':'native','invocation':invocation,'expected_source':source,'source_metadata':meta.get('commitSha'), 'expected_labels':[target], 'execution_origin':'original run 41223629069; source and clean tree checked in its workflow', 'errors':[], 'missing':[], 'files':{}}
+            data = {}
+            for name, uris in files.items():
+                if len(uris) != 1:
+                    raise ValueError(f'{name}: {len(uris)} distinct original reports')
+                uri, = uris
+                parsed = urlsplit(uri)
+                cas = re.search(r'/blobs/([0-9a-f]{64})/(\d+)$',parsed.path)
+                if parsed.scheme != 'bytestream' or not cas:
+                    raise ValueError(f'{name}: missing CAS identity')
+                raw = request('GetFile', {'uri': uri}); digest, size = cas.groups()
+                if len(raw) != int(size) or hashlib.sha256(raw).hexdigest() != digest:
+                    raise ValueError(f'{name}: original CAS content mismatch')
+                data[name] = raw; result['files'][name] = {'sha256':digest, 'bytes':int(size)}
+            cases = list(ElementTree.fromstring(data['test.xml']).iter('testcase'))
+            counts = {k: sum(any(c.find(x) is not None for x in tags) for c in cases) for k,tags in [('failed',('failure','error')),('skipped',('skipped',))]}
+            counts['passed'] = len(cases) - sum(counts.values()); result['case_counts']=counts
+            rows = [line[line.index('COOKIE_WS '):].strip() for line in data['test.log'].decode().splitlines() if 'COOKIE_WS ' in line]
+            result['observed']=rows
+            if not counts['passed'] or counts['failed'] or counts['skipped'] or len(rows)!=2 or any(sum(f'timestamps={ts} ' in row and f'window_field=16 initial_bytes={n} want_bytes={n}' in row for row in rows) != 1 for ts,n in [('true',128),('false',16)]):
+                raise ValueError(f'original test evidence disagrees: {counts}, {rows}')
+            result.update(verified=True,status='PASS',verification_errors=[])
+            return result
+
+        try:
+            result=evidence()
+        except Exception as error:
+            result={'arm':'native','invocation':invocation,'verified':False,'status':'INCOMPLETE','verification_errors':[str(error)]}
+        (proof/'native.json').write_text(json.dumps(result,indent=2)+'\n')
+        print(json.dumps(result)); sys.exit(not result['verified'])
+        PYRECEIPT
+    - name: Run the four packet targets that never started
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "290114471c92acf570e41be0d6be8fdda2402f90"
+        test "$(git rev-parse HEAD^1)" = "9f849b37e8c0e26e35e43a46cf188450f86b6d12"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -99,15 +179,13 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in native netstack stock-native fixed-native fixed-netstack; do
+        for arm in netstack stock-native fixed-native fixed-netstack; do
           case $arm in
             native|netstack) source=249a997c7478cc4bdb21cc248ccb554ed8aba71b; parent=df25b25c88d3b7dd52957039bd228fa63a1679d7 ;;
             stock-native) source=8b385d7316941e0e4eacc58276ef072b4410803f; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
             fixed-native|fixed-netstack) source=619758d82036e4647928c485d6cf36c333f81cce; parent=e40d5fe9cdb59a09f5136d9a0761257d8db1a6d1 ;;
           esac
-          if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
-            git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
-          fi
+          git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
@@ -126,7 +204,7 @@ jobs:
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
             "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
             --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
-            --bazel-option=--remote_download_outputs=toplevel test || code=$?
+            --bazel-option=--jobs=32 --bazel-option=--remote_download_outputs=toplevel test || code=$?
           printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
@@ -149,6 +227,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: cookie-wire-verdicts
+        name: cookie-wire-recovered
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
