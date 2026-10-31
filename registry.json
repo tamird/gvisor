@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T11:16:58.406418+00:00",
+    "updatedAt": "2026-10-31T11:24:59.817331+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28348,12 +28348,12 @@
       "group": "runtime",
       "status": "Agent investigation",
       "summary": "With the public recovery fix, Reno finished all four burst-loss transfers in 0.653–0.782 s. On its parent Reno stalled three times at 134,684 of 524,288 bytes (35-second deadline); the fourth transfer finished in 2.092 s. CUBIC completed all four on each source (0.288–0.325 s) and all four no-loss controls passed. These are the same reporter-supplied program and worker, with the four combinations run in balanced order. A separate replay on the FreeBSD router’s Tailscale 1.80.0 gVisor pin also stalled with RACK on and completed with RACK off. The review guide records which configuration each fix was tested on.",
-      "updatedAt": "2026-10-27T15:15:10+00:00",
+      "updatedAt": "2026-10-31T11:24:59.817331+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-31T11:10:39.713303+00:00",
+        "observedAt": "2026-10-31T11:24:59.817331+00:00",
         "disposition": "Reporter’s burst needs no extra SACK retention; a separate recovery-timer comparison found one mismatch",
-        "nextAction": "Test whether a Linux receiver under buffer pressure discards data it already acknowledged, and whether an earlier retransmission then helps a transfer finish. Check segmentation offload separately. Keep the existing timeout scoreboard reset.",
+        "nextAction": "Compare transfer completion time with and without the earlier retransmission timer against the same Linux receiver under buffer pressure. Keep the existing SACK reset on timeout.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41194692496/artifacts/13040800952",
           "https://github.com/tamird/gvisor/actions/runs/41193862284/artifacts/13039967594",
@@ -28369,13 +28369,18 @@
           "https://github.com/tamird/gvisor/commit/3e6e7d0eb8dd6f18ceb0bea98341e5a2c3594883",
           "https://github.com/tamird/gvisor/commit/845b402744714ba61067f0617e7d6d30479e624f",
           "https://github.com/tamird/gvisor/actions/runs/41192834457/artifacts/13039847737",
-          "https://github.com/tamird/gvisor/actions/runs/41194692496"
+          "https://github.com/tamird/gvisor/actions/runs/41194692496",
+          "https://github.com/tamird/gvisor/actions/runs/41195717107/artifacts/13041122022"
         ]
       },
       "evidence": [
         {
           "label": "Reno and FreeBSD configurations, fixes and review order",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Linux needed 15 of 16 SACKed segments again after its receive buffer shrank; the control needed none",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41195717107/artifacts/13041122022"
         },
         {
           "label": "The revised timer matched all seven Linux sender traces, including consecutive partial ACKs",
@@ -39297,16 +39302,16 @@
       }
     },
     {
-      "id": "branch:gsutil-direct",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16780",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "research/gsutil-direct",
       "head": "afec4f94434e7823df2e62181fd99e4f38fb3928",
-      "title": "Run the gsutil benchmark with Google’s released CLI image",
-      "url": "https://github.com/tamird/gvisor/commit/afec4f944",
+      "title": "Run the gsutil benchmark with Google's released CLI image",
+      "url": "https://github.com/google/gvisor/pull/16780",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T11:16:58.406418+00:00",
+      "status": "open",
+      "updatedAt": "2026-10-31T11:24:59.817331+00:00",
       "summary": "Both shipped ARM64 benchmark commands failed because gsutil 5.31 rejects the installed Python 3.12. Google’s pinned image completed the single and sliced RootFS commands on native ARM64 and AMD64 under both runc and released runsc. Each transfer synced 50 MiB from the benchmark bucket and matched its CRC32C. The AMD64 runsc slice created four component trackers. The 10 GiB Kubernetes benchmark and restricted clusters were outside this check. Removing the Dockerfile retires the local Make image context and its mirror publication.",
       "refinement": {
         "before": {
@@ -39318,27 +39323,14 @@
           "head": "afec4f94434e7823df2e62181fd99e4f38fb3928"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "afec4f94434e7823df2e62181fd99e4f38fb3928",
-        "url": "https://github.com/tamird/gvisor/commit/afec4f944",
-        "title": "Use the official GSUtil image in the Kubernetes benchmark",
-        "summary": "Open the two-file change to use Google’s pinned multi-platform image directly and retire the project’s GSUtil image build. The benchmark uses gsutil 5.38 on both architectures. A cluster restricted to a local registry must make the pinned digest available there."
-      },
       "followup": {
         "owner": "Build and release",
-        "disposition": "Contributor review requested",
-        "observedAt": "2026-10-31T11:16:58.406418+00:00",
+        "disposition": "Delivered as #16780",
+        "observedAt": "2026-10-31T11:24:59.817331+00:00",
         "sourceHead": "afec4f94434e7823df2e62181fd99e4f38fb3928",
-        "nextAction": "Open the two-file change to use Google’s pinned multi-platform image directly and retire the project’s GSUtil image build. The benchmark uses gsutil 5.38 on both architectures. A cluster restricted to a local registry must make the pinned digest available there.",
+        "nextAction": "Follow maintainer review on #16780.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/25172e526...afec4f944",
-          "https://github.com/tamird/gvisor/compare/4be480759..afec4f944",
-          "https://github.com/tamird/gvisor/actions/runs/41195317931/artifacts/13040222257",
-          "https://github.com/tamird/gvisor/actions/runs/41195317931/artifacts/13040466475",
-          "https://github.com/tamird/gvisor/actions/runs/41196068262/artifacts/13041350837",
-          "https://github.com/tamird/gvisor/actions/runs/41194118881/artifacts/13040565557"
+          "https://github.com/google/gvisor/pull/16780"
         ]
       },
       "evidence": [
@@ -39365,6 +39357,16 @@
         {
           "label": "Original deployed CLI versions and first Bazel image prototype",
           "url": "https://github.com/tamird/gvisor/actions/runs/41194118881/artifacts/13040565557"
+        }
+      ],
+      "number": 16780,
+      "reviewDecision": null,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "afec4f94434e7823df2e62181fd99e4f38fb3928",
+          "outcome": "approved",
+          "at": "2026-10-31T11:24:59.817331+00:00"
         }
       ]
     }
