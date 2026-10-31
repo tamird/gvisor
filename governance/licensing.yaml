@@ -44,6 +44,17 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: iperf
+    license:
+      - BSD-3-Clause
+      - BSD-3-Clause-LBNL
+      - HPND
+      - MIT
+    exception_rationale: >-
+      Iperf3 is a standalone network benchmark, not linked into gVisor.
+      The image retains its full upstream LICENSE, including the LBNL
+      enhancement grant, bundled BSD/MIT/HPND notices and Illinois terms,
+      alongside the Apache-2.0 license for its linked OpenSSL dependency.
   - dependency: llvm-raw
     license:
       - Apache-2.0 WITH LLVM-exception

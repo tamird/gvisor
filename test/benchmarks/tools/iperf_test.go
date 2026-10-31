@@ -13,22 +13,88 @@
 // limitations under the License.
 package tools
 
-import "testing"
+import (
+	"fmt"
+	"reflect"
+	"strings"
+	"testing"
+)
 
-// TestIperf checks the Iperf parsers on sample output.
+// TestIperf checks the aggregate summary instead of an individual stream or
+// an interval, and rejects incomplete or failed iperf3 results.
 func TestIperf(t *testing.T) {
-	sampleData := `
-------------------------------------------------------------
-Client connecting to 10.138.15.215, TCP port 32779
-TCP window size: 45.0 KByte (default)
-------------------------------------------------------------
-[  3] local 10.138.15.216 port 32866 connected with 10.138.15.215 port 32779
-[ ID] Interval       Transfer     Bandwidth
-[  3]  0.0-10.0 sec  459520 KBytes  45900 KBytes/sec
-`
-	i := Iperf{}
-	bandwidth, err := i.bandwidth(sampleData)
-	if err != nil || bandwidth != 45900 {
-		t.Fatalf("failed with: %v and %f", err, bandwidth)
+	for _, tc := range []struct {
+		name      string
+		output    string
+		bandwidth float64
+		error     string
+	}{
+		{
+			name: "aggregate",
+			output: `{
+				"intervals": [{"sum": {"bits_per_second": 999}}],
+				"end": {
+					"streams": [
+						{"sender": {"bits_per_second": 1000000}},
+						{"sender": {"bits_per_second": 2000000}}
+					],
+					"sum_sent": {"bytes": 375000, "bits_per_second": 3000000},
+					"sum_received": {"bytes": 375000, "bits_per_second": 2900000}
+				}
+			}`,
+			bandwidth: 375000,
+		},
+		{
+			name:   "remote error",
+			output: `{"error": "unable to connect to server", "end": {}}`,
+			error:  "iperf3 failed: unable to connect to server",
+		},
+		{
+			name:   "missing summary",
+			output: `{"end": {"streams": [{"sender": {"bits_per_second": 1000000}}]}}`,
+			error:  "missing positive iperf3 sender summary",
+		},
+		{
+			name:   "no transfer",
+			output: `{"end": {"sum_sent": {"bytes": 0, "bits_per_second": 0}}}`,
+			error:  "missing positive iperf3 sender summary",
+		},
+		{
+			name:   "invalid JSON",
+			output: "Server listening on 5001",
+			error:  "invalid iperf3 result",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			i := Iperf{}
+			got, err := i.bandwidth(tc.output)
+			if tc.error != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.error) {
+					t.Fatalf("bandwidth() error = %v, want %q", err, tc.error)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := tc.bandwidth; got != want {
+				t.Errorf("bandwidth() = %v, want %v", got, want)
+			}
+		})
+	}
+}
+
+func TestIperfMakeCmd(t *testing.T) {
+	// --bytes is a total across streams, so parallelism must not divide it.
+	for _, parallel := range []int{0, 4, 16, 64} {
+		i := Iperf{Num: 128, Parallel: parallel}
+		got := i.MakeCmd("server", 5001)
+		want := []string{"iperf3", "--json", "--length", "128K", "--bytes", "128K", "--client", "server", "--port", "5001"}
+		if parallel > 0 {
+			want = append(want, "--parallel", fmt.Sprint(parallel))
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("MakeCmd(Parallel=%d) = %q, want %q", parallel, got, want)
+		}
 	}
 }
