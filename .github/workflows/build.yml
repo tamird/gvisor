@@ -23,11 +23,12 @@ jobs:
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
         control=98df9b8620122d8dee46bf09cae26d52eb2f1ff9
         candidate=cfb8136c5f605eeb3a3655a868ca35ccca5e0c76
-        test "$(git rev-parse HEAD^)" = "$candidate"
-        test "$(git rev-parse HEAD^^)" = "$control"
+        git merge-base --is-ancestor "$candidate" HEAD
+        test "$(git rev-parse "$candidate^")" = "$control"
         test "$(git diff --name-only "$control" "$candidate")" = pkg/tcpip/transport/tcp/snd.go
         mkdir -p "$RUNNER_TEMP/checker"
-        cp test/rbe/qualification_report.py test/rbe/m003_report.py "$RUNNER_TEMP/checker"
+        cp test/rbe/unit_matrix.py test/rbe/qualification_report.py test/rbe/m003_report.py "$RUNNER_TEMP/checker"
+        PYTHONPATH="$RUNNER_TEMP/checker" python3 -B -c 'import m003_report'
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
         platform=$RUNNER_TEMP/fifo_platform
         printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
@@ -65,6 +66,10 @@ jobs:
         } > "$rc"
         unset BUILDBUDDY_API_KEY
         export FIFO_RC=$rc
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        unshare --user --map-root-user --mount true
         mkdir -p "$RUNNER_TEMP/fifo-bin"
         cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
         #!/bin/sh
@@ -136,6 +141,8 @@ jobs:
         data={p:json.loads((out/p/'summary.json').read_text()) for p in expected if (out/p/'summary.json').is_file()}
         summary={'expected':expected,'executed':list(data),'missing':sorted(set(expected)-data.keys()),'failures':{p:r.get('errors',[]) for p,r in data.items() if r['status']!='PASS'},'qualification':{p:{'status':r['status'],'rows':[(k['name'],k.get('received_bytes'),k.get('complete'),k.get('duration_seconds')) for k in r.get('transfers',{}).get('trials',[])]} for p,r in data.items()},'verified_at':datetime.now(timezone.utc).isoformat()}
         (out/'verdict.json').write_text(json.dumps(summary,indent=2)+'\n')
+        if summary['missing'] or summary['failures']:
+            sys.exit(1)
         PYRECORD
         exit "$overall"
     - name: Save only the typed results
