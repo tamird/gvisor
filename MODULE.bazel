@@ -939,3 +939,8 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# The validation action receives a pinned static executable as a declared input.
+bootstrap_busybox = use_repo_rule("//test/rbe/empty_worker:repository.bzl", "busybox_repository")
+bootstrap_busybox(name = "bootstrap_busybox", cpu = "amd64")
+bootstrap_busybox(name = "bootstrap_busybox_arm64", cpu = "arm64")
