@@ -82,8 +82,9 @@ for pr in snapshot['prs']:
     if pr['status'] != 'open': continue
     node = nodes.get((pr.get('repo'), pr['number']), {})
     disposition = public_import_disposition(pr, node.get('approvedPatch'), node.get('landedPatch'))
-    plan = reminder_plan(pr, node, datetime.fromisoformat(snapshot['checkedAt'].replace('Z', '+00:00')), snapshot['owner'], frozenset())
-    assert plan['publicImportDisposition'] == disposition
+    reviewers = frozenset(pr.get('maintainerReviewers', []))
+    plan = reminder_plan(pr, node, datetime.fromisoformat(snapshot['checkedAt'].replace('Z', '+00:00')), snapshot['owner'], reviewers)
+    assert plan['publicImportDisposition'] == disposition, pr['url']
     rows.append([pr.get('repo'), pr['number'], disposition])
 print(json.dumps(rows))`;
   const rows = JSON.parse(execFileSync('python3', ['-c', script], {
@@ -1364,6 +1365,19 @@ test('owned branch work routes to the agent without inventing a contributor deci
     const stale = structuredClone(node); mutate(stale);
     assert.ok(!reasonsFor(stale).some(reason => reason.id === 'agent-branch-work'));
   }
+});
+
+test('the current project roster recognizes maintainers GitHub calls contributors', () => {
+  const context = client(), { github: pr } = attentionNode();
+  const review = { kind: 'review', state: 'APPROVED', author: { __typename: 'User', login: 'kerumeto' },
+    authorAssociation: 'CONTRIBUTOR', commit: { oid: pr.head }, submittedAt: '2026-10-30T23:48:48Z' };
+  Object.assign(pr, { reviewsComplete: true, reviewRequestsComplete: true, headHistoryComplete: true,
+    headCommittedAt: '2026-10-30T21:04:07Z', headIntroducedAt: '2026-10-30T21:05:11Z',
+    feedback: { items: [review] }, maintainerReviewers: ['kerumeto'] });
+  context.pr = pr;
+  assert.equal(vm.runInContext('currentHeadApproval(pr)', context), true);
+  pr.maintainerReviewers = [];
+  assert.equal(vm.runInContext('currentHeadApproval(pr)', context), false);
 });
 
 test('attention uses current approvals and import associations without inventing import failures', () => {

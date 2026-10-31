@@ -335,14 +335,23 @@ def import_trigger(pr: dict) -> dict:
             "actor": (removed.get("actor") or {}).get("login"), "eventId": removed["id"]}
 
 
+def with_maintainer_reviewers(pr: dict, maintainers: frozenset[str]) -> dict:
+    """Record which review authors appear on the project's current maintainer roster."""
+    authors = {(item.get("author") or {}).get("login", "").casefold()
+               for item in pr.get("feedback", {}).get("items", []) if item.get("kind") == "review"}
+    return {**pr, "maintainerReviewers": sorted(maintainers & authors)}
+
+
 def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict:
     """Share public export progress separately from permission to post reminders."""
     imports = import_lineage(pr, patch)
     accepted = approved_patch(pr, patch)
     active = [item for item in imports if item["status"] in {"open", "draft"}]
     scope = "exact" if imports and imports[0]["sourceHead"] == pr["head"] else "equivalent" if imports else "none"
-    approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=
-                                 frozenset({patch["reviewer"].casefold()}) if accepted else frozenset())
+    reviewers = frozenset(pr.get("maintainerReviewers", []))
+    if accepted:
+        reviewers |= {patch["reviewer"].casefold()}
+    approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=reviewers)
     binding = {"sourceHead": pr["head"], "approvedHead": patch["approvedHead"] if accepted else None,
                "currentApproval": approval is not None,
                "complete": pr.get("importsComplete") is True,

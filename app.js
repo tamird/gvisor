@@ -116,7 +116,8 @@ function currentHeadApproval(pr, patch) {
   }
   return [...latest.values()].some(item => item.author?.__typename === "User"
     && item.author.login !== (pr.authorLogin || pr.headOwner)
-    && (["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation) || item.author.login.toLowerCase() === patch?.reviewer.toLowerCase())
+    && (["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)
+      || pr.maintainerReviewers?.includes(item.author.login.toLowerCase()) || item.author.login.toLowerCase() === patch?.reviewer.toLowerCase())
     && item.state === "APPROVED" && item.commit?.oid === pr.head
     && timestamp(item.submittedAt) >= Math.max(...cutoffs));
 }
