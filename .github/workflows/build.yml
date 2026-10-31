@@ -1,4 +1,4 @@
-name: Verify a kernel checkpoint to a full pages device
+name: Complete the checkpoint writer race qualification
 on:
   workflow_dispatch:
 permissions:
@@ -6,7 +6,7 @@ permissions:
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-write-gate'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/checkpoint-writer-race'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -14,14 +14,33 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Verify checkpoint package tests and analyzers
+    - name: Preserve five verified original results
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        cd "$RUNNER_TEMP"
+        gh api repos/tamird/gvisor/actions/artifacts/13054071409/zip > original.zip
+        unzip -q original.zip -d original
+        mkdir -p replay-public
+        python3 - <<'PYVERIFY'
+        from pathlib import Path
+        import json, shutil
+        sources = {'stock': '9a5cea57b07bb1a02fbf1fc30522f8cf4e52cb96', 'package': '04c66b4d86260991e49c97c7461a04f5f479c823', 'analyzers': '04c66b4d86260991e49c97c7461a04f5f479c823', 'kernel-stock': '0454c864d6b00ad431d3241c314908691d6ee0c3', 'kernel': '0a195dc3afc5a647153c68ba038cf649a1dfd559'}
+        for arm, source in sources.items():
+            p=Path('original')/(arm+'.json')
+            v=json.loads(p.read_text())
+            assert v['arm']==arm and v['source']==source and v['verified'] and not v['verification_errors'] and not v['missing'] and not v['errors'], arm
+            shutil.copyfile(p, Path('replay-public')/p.name)
+        PYVERIFY
+    - name: Run the one remaining race suite
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "e3c737fd48b2695fa4b2c9a514ae1eb70191d55e"
+        test "$(git rev-parse HEAD^1)" = "9b27568f9b371b0b1dde5da1c091584d2be98db6"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -100,7 +119,7 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in stock package analyzers kernel-stock kernel race; do
+        for arm in race; do
           case $arm in
             stock) source=9a5cea57b07bb1a02fbf1fc30522f8cf4e52cb96; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
             kernel-stock) source=0454c864d6b00ad431d3241c314908691d6ee0c3; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
@@ -112,7 +131,8 @@ jobs:
           fi
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
-          test "$(git rev-parse HEAD^)" = "$parent"
+          # Verify the recorded parent even if the source is a shallow boundary.
+          test "$(git cat-file commit HEAD | awk 'NF == 0 {exit} $1 == "parent" {print $2}')" = "$parent"
           export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
           mkdir -p "$TCP_EVIDENCE" test/rbe
           cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
@@ -157,6 +177,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: checkpoint-writer-registration-results
+        name: checkpoint-writer-complete
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
