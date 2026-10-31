@@ -1,0 +1,216 @@
+{
+  "profile-x86_64": {
+    "architecture": "amd64",
+    "shipped_bytes": 31639476,
+    "old_layer_bytes": 1155743,
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:0626d3cc316c9fea3d4891e2ec19b8f371fe22ffb915622f6072a2ee2ca9017f",
+        "size": 29752488
+      }
+    ],
+    "old_layer_sha256": "sha256:b474476026ae9e8cd02c3945714fa06774a9710e8998fcf6b933f06fe3ddc3fc",
+    "files": {
+      "usr/bin/profilehelper": "f5a7e25f02b72d665ca7f7b26c41c8978712fd19867524a02ebf12b0b8cf4fd2"
+    },
+    "corrected": "a859c3ac9ee743d5c84164099be277080951a274",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/bash"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "profile-aarch64": {
+    "architecture": "arm64",
+    "shipped_bytes": 29444460,
+    "old_layer_bytes": 1046437,
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:771eed73ee82c7916df197c0fd7ef3ac4eedcb9a6318b10d2652948c6c4ca08f",
+        "size": 27684607
+      }
+    ],
+    "old_layer_sha256": "sha256:5f297d8c21261ef23b7d8c92957da2ce42cc1d8c4a53f710b5b0c4406bee98c1",
+    "files": {
+      "usr/bin/profilehelper": "8e1383e2494cae12d3a0a7d2733cb80e0271033af79a1558aa640ed46e389cc7"
+    },
+    "corrected": "a859c3ac9ee743d5c84164099be277080951a274",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/bash"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "ollama-x86_64": {
+    "architecture": "amd64",
+    "shipped_bytes": 6729242,
+    "old_layer_bytes": 3256008,
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:7b229517ed222597277036d94892173207d01a731ab3a88eeb1de2e963a2c788",
+        "size": 3853109
+      }
+    ],
+    "old_layer_sha256": "sha256:df3f1e3f4858c4217a0ee77864ba8fcf852662181abf05c75f765b5c724ef7f3",
+    "files": {
+      "usr/bin/httpclient": "95a9fe10f9c2289d6157e980e13e60e5e36fd1aec10f62a9dfd174cf1e911702"
+    },
+    "corrected": "5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/usr/bin/httpclient"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "/",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "ollama-aarch64": {
+    "architecture": "arm64",
+    "shipped_bytes": 6795738,
+    "old_layer_bytes": 2909803,
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:d3531b7a4f217bdc3426c57bcff84c170f086f456a39689d4a615c6d026c4be0",
+        "size": 4190488
+      }
+    ],
+    "old_layer_sha256": "sha256:0f8ff18cc8f4957cee2323a09956e81e336cbd0a98bcf23832a3cc4389c75e4a",
+    "files": {
+      "usr/bin/httpclient": "537a51043dd3877b9924ff9e1bc1cea67a0610aa40bff8254ed4ace240a8610b"
+    },
+    "corrected": "5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/usr/bin/httpclient"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "/",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "hey-x86_64": {
+    "architecture": "amd64",
+    "shipped_bytes": 38366215,
+    "old_layer_bytes": 4152980,
+    "base_layers": [],
+    "old_layer_sha256": "sha256:ff29843b52402f5a959e2614ad9a209d0dc2bb093a892543c7f3b2fc7eb407c0",
+    "files": {
+      "bin/hey": "8c7b348ec4b6cef4871db874899977c1e16cfb5ce4d6262b9cafde6544541837"
+    },
+    "corrected": "bcc567c6c701c9c99e74993bb3769eb9f070bc3b",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/hey"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/bin"
+      ]
+    }
+  },
+  "hey-aarch64": {
+    "architecture": "arm64",
+    "shipped_bytes": 34794676,
+    "old_layer_bytes": 3696395,
+    "base_layers": [],
+    "old_layer_sha256": "sha256:db98df82eae4510a11e3d459a184791d8f3d806dfd5fd57ce591ea58d47edcf4",
+    "files": {
+      "bin/hey": "06ffd888ca1b5ddbf9ca76817275cd726b65bed0a131e280b250fd7665ecb051"
+    },
+    "corrected": "bcc567c6c701c9c99e74993bb3769eb9f070bc3b",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/hey"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/bin"
+      ]
+    }
+  },
+  "hackbench-x86_64": {
+    "architecture": "amd64",
+    "shipped_bytes": 42133868,
+    "old_layer_bytes": 996575,
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:7b229517ed222597277036d94892173207d01a731ab3a88eeb1de2e963a2c788",
+        "size": 3853109
+      }
+    ],
+    "old_layer_sha256": "sha256:f10998dc22c05fee7f4b202b53a3585ddf89548ba25c9ca480479461976af2fe",
+    "files": {
+      "usr/share/doc/hackbench/COPYING": "ab15fd526bd8dd18a9e77ebc139656bf4d33e97fc7238cd11bf60e2b9b8666c6",
+      "usr/bin/hackbench": "0a2f516a0f1b2ce54c7e929ef58a17a8115b6b53a2b2ae8810aa0777d85743d4"
+    },
+    "corrected": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/usr/bin/hackbench"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "/",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  },
+  "hackbench-aarch64": {
+    "architecture": "arm64",
+    "shipped_bytes": 39086045,
+    "old_layer_bytes": 771403,
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:d3531b7a4f217bdc3426c57bcff84c170f086f456a39689d4a615c6d026c4be0",
+        "size": 4190488
+      }
+    ],
+    "old_layer_sha256": "sha256:830fdb23d818f947ca744d78d1ee335202e1271208dc74085bac2254defb60c5",
+    "files": {
+      "usr/share/doc/hackbench/COPYING": "ab15fd526bd8dd18a9e77ebc139656bf4d33e97fc7238cd11bf60e2b9b8666c6",
+      "usr/bin/hackbench": "cbf40178ec65292d66bf4c8ee65a27dccd69956a75f1f06952ee97608af09797"
+    },
+    "corrected": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/usr/bin/hackbench"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "/",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    }
+  }
+}
