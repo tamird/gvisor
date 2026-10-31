@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T04:29:49.483123+00:00",
+    "updatedAt": "2026-10-31T04:38:05.342918+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35415,9 +35415,17 @@
       "title": "Preserve negative zero across checkpoints",
       "url": "https://github.com/google/gvisor/pull/16718",
       "group": "runtime",
-      "status": "open",
+      "status": "Contributor review requested",
       "summary": "Saving a negative zero could omit it and restore a positive zero. Preserve the sign bit of floats and complex components, including primitive arrays, without changing how positive zeros are encoded.",
       "evidence": [
+        {
+          "label": "Stock and revised source: four named signed-zero cases through each engine",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41169035741/artifacts/13030606524"
+        },
+        {
+          "label": "Proposed test amendment",
+          "url": "https://github.com/tamird/gvisor/commit/1f4905b21"
+        },
         {
           "label": "Stock loses the sign in all four regression cases",
           "url": "https://app.buildbuddy.io/invocation/ea98a6e9-7d3e-4d77-857a-4f34bc285dde"
@@ -35427,7 +35435,7 @@
           "url": "https://app.buildbuddy.io/invocation/71552189-dfb1-44a7-8f20-fb6ddd954b41"
         }
       ],
-      "updatedAt": "2026-10-29T23:29:40.685248+00:00",
+      "updatedAt": "2026-10-31T04:38:05.342918+00:00",
       "number": 16718,
       "settledReviews": [
         {
@@ -35436,7 +35444,28 @@
           "outcome": "approved",
           "at": "2026-10-29T23:29:40.685248+00:00"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
+          "base": "e5b636af9ddeb2e0f2c7c4aea52b2f6ba500d8a8"
+        },
+        "after": {
+          "head": "1f4905b21f956027a76ded34b96584e00f9269f1",
+          "base": "4319e9d026b47c1768b6b1fd8711f1ec15a14bd1"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
+        "head": "1f4905b21f956027a76ded34b96584e00f9269f1",
+        "url": "https://github.com/tamird/gvisor/commit/1f4905b21",
+        "title": "Run the signed-zero regression through both checkpoint engines",
+        "summary": "The production fix is unchanged. The four cases now explicitly cover wire and graph, so changing the default engine cannot hide a wire regression.",
+        "body": "May I amend #16718 with the expanded test? On stock, all four cases failed under wire and passed under graph. All eight passed on the revised PR, and both owning suites passed. The original approval remains recorded on the published head.",
+        "requestedAt": "2026-10-31T04:38:05.342918+00:00"
+      }
     },
     {
       "id": "branch:declared-staged-release-check",
@@ -38484,6 +38513,64 @@
           "url": "https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108"
         }
       ]
+    },
+    {
+      "id": "branch:fuse-poll-before-mount",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "review/fuse-poll-before-mount",
+      "head": "26a76f4a197a1a0629407b72bc746122feeedcf0",
+      "title": "Poll a FUSE device before its first mount",
+      "url": "https://github.com/tamird/gvisor/commit/26a76f4a1",
+      "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
+      "updatedAt": "2026-10-31T04:38:05.342918+00:00",
+      "evidence": [
+        {
+          "label": "Native Linux, stock and corrected gVisor, including mounted controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41167813105/artifacts/13030461234"
+        }
+      ],
+      "status": "Contributor review requested",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "26a76f4a197a1a0629407b72bc746122feeedcf0",
+        "url": "https://github.com/tamird/gvisor/commit/26a76f4a1",
+        "title": "Open the FUSE pre-mount poll fix",
+        "summary": "The same syscall test exercised a newly opened /dev/fuse and watches installed before and after mounting. Linux and the corrected guest agreed. The missing-device skip was checked separately.",
+        "body": "May I open the FUSE pre-mount poll fix? It makes poll report POLLERR and allows EPOLL_CTL_ADD before the descriptor is attached. The shared test distinguishes an early watch from a fresh watch added after mount.",
+        "requestedAt": "2026-10-31T04:38:05.342918+00:00"
+      }
+    },
+    {
+      "id": "branch:gofer-dgram-host-writable",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "review/gofer-dgram-host-writable",
+      "head": "86114ad1b83d3871975d774cbcea966b205daff7",
+      "title": "Wake poll on a drained host Unix datagram socket",
+      "url": "https://github.com/tamird/gvisor/commit/86114ad1b",
+      "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
+      "updatedAt": "2026-10-31T04:38:05.342918+00:00",
+      "evidence": [
+        {
+          "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41166357327/artifacts/13029668642"
+        }
+      ],
+      "status": "Agent work",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "86114ad1b83d3871975d774cbcea966b205daff7",
+        "observedAt": "2026-10-31T04:38:05.342918+00:00",
+        "disposition": "Checking where the connecting endpoint should install its notification queue",
+        "nextAction": "Check whether the existing sender hook can attach the queue while preserving the old peer on failure and avoiding a late concrete-type assertion.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41166357327/artifacts/13029668642"
+        ]
+      }
     }
   ],
   "edges": [
