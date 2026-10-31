@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T12:43:37.962461+00:00",
+    "updatedAt": "2026-10-31T12:53:25.918789+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39622,6 +39622,52 @@
         "requestedAt": "2026-10-31T12:43:37.962461+00:00",
         "summary": "Decide whether to open the standalone sandbox boot ID fix. A zero-valued *proc.FilesystemType remains usable. The saved type now holds state and must be registered by pointer. The historical lazy-directory experiment is a separate investigation.",
         "body": "Linux returns the same /proc/sys/kernel/random/boot_id from a new proc\nmount, including in a child PID namespace [1]. gVisor generated a UUID\nfor every mount. Store one ID on the proc filesystem type registered\nwith the sandbox. Initializing it under a mutex lets existing\nzero-valued pointer registrations create their first mount concurrently.\nEach mount keeps its own inode, and random/uuid still changes on every\nread.\n\nMountTest.UserNamespaceProcMount passed on Linux, failed because the IDs\ndiffered on 25172e526, and passed with this change. A guest read the\nsame ID on two restored mounts and a third mount created after restore.\nAll 12 reads of random/uuid were distinct. The proc package and both\nNogo targets passed [2].\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/drivers/char/random.c#L1624-L1655\n[2]: https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
+      }
+    },
+    {
+      "id": "branch:inotify-mask-create",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "review/inotify-mask-create",
+      "head": "34d137cdad082fc28278d026400624e8c85ac58f",
+      "title": "Honor IN_MASK_CREATE when adding inotify watches",
+      "url": "https://github.com/tamird/gvisor/commit/34d137cda",
+      "updatedAt": "2026-10-31T12:53:25.918789+00:00",
+      "status": "Contributor review requested",
+      "summary": "A second create-only inotify watch silently replaced IN_OPEN with IN_MODIFY. Linux returns EEXIST and preserves the original watch, even through another hard link. Stock failed three of six shared cases; Linux and fixed gVisor passed all six. The gVisor hard-link comparison used tmpfs.",
+      "evidence": [
+        {
+          "label": "All runtime comparisons, two existing kernfs removal cases, and clang-format 23.1.1",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41200317195/artifacts/13042568051"
+        },
+        {
+          "label": "Native Linux 7.0.0-1017-azure: six cases passed",
+          "url": "https://app.buildbuddy.io/invocation/8406885d-2385-4fd2-b9c6-35f19742d3c9"
+        },
+        {
+          "label": "Stock gVisor: three failures, three controls passed",
+          "url": "https://app.buildbuddy.io/invocation/4a48349d-f412-4c0d-b40c-39f0b11d1436"
+        },
+        {
+          "label": "Fixed gVisor: six cases passed, including hard-link alias on tmpfs",
+          "url": "https://app.buildbuddy.io/invocation/0b1cbf91-131a-42f4-9799-dd15e297c956"
+        },
+        {
+          "label": "VFS and Linux syscall Nogo owners on 9148a7234 (final revision changes one comment and C++ formatting)",
+          "url": "https://app.buildbuddy.io/invocation/ff2f5463-fd6d-4e66-bf60-3f3410dfc192"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "34d137cdad082fc28278d026400624e8c85ac58f",
+        "baseHead": "25172e526f45929759a44e174e617c320df1ad58",
+        "url": "https://github.com/tamird/gvisor/commit/34d137cda",
+        "title": "Honor IN_MASK_CREATE when adding inotify watches",
+        "requestedAt": "2026-10-31T12:53:25.918789+00:00",
+        "summary": "Decide whether to open this standalone ABI fix. The independent inotify lock refactor is outside this request.",
+        "body": "A second inotify_add_watch with IN_MASK_CREATE replaced an existing\nwatch instead of returning EEXIST. A caller opening its own watch on\nthe same inotify descriptor could silently replace another caller’s\nIN_OPEN interest with IN_MODIFY.\n\nReject the request before changing the watch, even when the second path\nis a hard link to the same file. Reject unknown mask bits and the\nmutually exclusive IN_MASK_CREATE and IN_MASK_ADD flags as Linux does\n[1].\n\nNative Linux and corrected gVisor passed six shared syscall cases.\nStock gVisor accepted the second call and reported IN_MODIFY where the\ntest expected IN_OPEN. It also accepted the hard-link call and invalid\nmasks. The hard-link comparison uses tmpfs [2].\n\n[1]: https://github.com/torvalds/linux/blob/028ef9c96/fs/notify/inotify/inotify_user.c#L744\n[2]: https://github.com/tamird/gvisor/actions/runs/41200317195/artifacts/13042568051"
       }
     }
   ],
