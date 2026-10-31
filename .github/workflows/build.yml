@@ -30,6 +30,7 @@ jobs:
         test "$(parent_of "$stock_probe")" = "$stock_parent"
         test "$(parent_of "$strict_probe")" = "$guard_parent"
         git diff --quiet "$stock_probe" "$strict_probe" -- test/packetimpact/tests/tcp_rack_test.go
+        git diff --quiet "$stock_probe" "$strict_probe" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
         git diff --quiet "$stock_parent" "$stock_probe" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)pkg/tcpip/transport/tcp/rack.go'
         git diff --quiet "$guard_parent" "$strict_probe" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go' ':(exclude)pkg/tcpip/transport/tcp/rack.go'
         mkdir -p "$RUNNER_TEMP/checker"
@@ -124,16 +125,28 @@ jobs:
         Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
         print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
         PYCHECK
-        # Both native architectures have already passed this analyzer preflight
-        # under these flags. The listener builds only the facts it actually uses.
-        proved=01811d57c4a1a18ef002fe92956669b43799f466
-        git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$proved"
-        for source in "$stock_probe" "$strict_probe"; do
-          git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
+        git checkout --quiet --detach "$stock_probe"
+        test "$(git rev-parse HEAD)" = "$stock_probe"
+        # Build stdlib and analyze it from declared inputs in both target modes
+        # before compiling the listeners. Do not reuse unsandboxed std archives.
+        for arch in x86_64 aarch64; do
+          diagnostic="$RUNNER_TEMP/replay-public/build-preflight-$arch.json"
+          printf '{"status":"INCOMPLETE","configuration":"%s"}\n' "$arch" > "$diagnostic"
+          events="$RUNNER_TEMP/build-preflight-$arch.jsonl"
+          bazelisk --bazelrc="$rc" build "--config=$arch" --strip=never \
+            "--build_event_json_file=$events" //tools/nogo:stdlib
+          python3 - "$arch" "$events" "$diagnostic" <<'PYBUILD'
+        import json, sys
+        from pathlib import Path
+        records = [json.loads(row) for row in Path(sys.argv[2]).read_text().splitlines()]
+        target = "//tools/nogo:stdlib"
+        ids = [e["id"]["targetCompleted"] for e in records if e.get("completed", {}).get("success") and e["id"].get("targetCompleted", {}).get("label") == target]
+        assert len(ids) == 1, ids
+        assert any(e.get("finished", {}).get("exitCode", {}).get("name") == "SUCCESS" for e in records)
+        invocation = next(e["started"]["uuid"] for e in records if "started" in e)
+        Path(sys.argv[3]).write_text(json.dumps({"status": "PASS", "target": target, "configuration": sys.argv[1], "source": "16040ae66cbb76f4b5bddabe714bdb955c49c9aa", "invocation": invocation})+"\n")
+        PYBUILD
         done
-        cat > "$RUNNER_TEMP/replay-public/build-preflight.json" <<'PROOF'
-        {"status":"REUSED","target":"//tools/nogo:stdlib","amd64":"d9bdc880-d554-41ae-b6b8-fc618bd00b9e","arm64":"6fe91843-025a-4f50-8376-44c94e7f54bb","workflowRun":40927688302}
-        PROOF
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in stock strict; do
