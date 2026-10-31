@@ -26,9 +26,16 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
+observations = [line.split(".go:", 1)[-1].strip() for line in logs.splitlines() if "page read completions:" in line or "loader finished with" in line or "MapInternal stayed blocked" in line]
+if arm in ("stock", "fixed"):
+    for expected in ("page read completions: 4096, 4096", "page read completions: 4096, 0", "loader finished with <nil>", "loader finished with I/O error"):
+        if sum(expected in line for line in observations) != 1:
+            why.append("missing original observation: " + expected)
+if arm == "stock":
+    if runner_exit != 3 or verdict["status"] != "FAIL" or "MapInternal stayed blocked after the page read and loader both finished" not in logs or "--- PASS: TestAsyncLoadCompletionBatch/intact" not in logs or "--- FAIL: TestAsyncLoadCompletionBatch/truncated" not in logs:
+        why.append("did not reproduce only the intended blocked waiter with the intact control passing")
+elif verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
-observations = []
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
