@@ -1,35 +1,116 @@
-name: CI
-
-"on":
+name: Check inotify watch creation and instance guards
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/inotify-watch-create-and-guards]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/inotify-watch-create-and-guards'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 310
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      SOURCE: 9148a7234c33ed3b9c8329bf4a06d2ace79dc9de
+      STOCK: 884d09b503cc81c5453fa8b07c62fa9b09e7433d
+      LOCKS: b79fa85f739884e7544fb47a248640073f22d8c2
+      MISSING: ccbb6528f62585f1f348e636c70e10922bebc38d
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^1) == "$SOURCE" ]]
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root --privileged --cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+
+    - name: Check fixture identity and source parents
+      run: |
+        set -eu
+        cp .github/qualification/inotify-stages.py "$RUNNER_TEMP/"
+        test "$(git rev-parse HEAD^2)" = "$STOCK"
+        test "$(git rev-parse HEAD^3)" = "$MISSING"
+        test "$(git rev-parse "$MISSING^")" = "$LOCKS"
+        test "$(git rev-parse "$SOURCE^")" = "$(git rev-parse "$STOCK^")"
+        test "$(git rev-parse "$LOCKS^")" = "$(git rev-parse "$SOURCE^")"
+        test "$(git rev-parse "$SOURCE:test/syscalls/linux/inotify.cc")" = "$(git rev-parse "$STOCK:test/syscalls/linux/inotify.cc")"
+    - name: Canonical clang-format on the shared test
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" format
+    - name: Same six syscall cases on native Linux
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" linux
+    - name: Same six cases on stock gVisor
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" stock
+    - name: Same six cases on corrected gVisor
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" fixed
+    - name: Existing syscall cases on the separate lock refactor
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" locks
+    - name: Run both VFS caller regressions
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" kernfs
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always()
+      with:
+        name: inotify-syscalls
+        path: ${{ runner.temp }}/inotify-evidence
+        if-no-files-found: error
+    - name: Run the implementation owners on the ABI commit
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" owners
+    - name: Run the VFS owner on the standalone lock commit
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" guard
+    - name: Reject the real call after dropping the instance lock
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/inotify-stages.py" negative
+    - name: Reconcile all original stages
+      if: always()
+      run: |
+        python3 - <<'PYEND'
+        import json,os
+        from pathlib import Path
+        out=Path(os.environ['RUNNER_TEMP'])/'inotify-evidence'
+        out.mkdir(exist_ok=True)
+        names='linux stock fixed locks kernfs format owners guard negative'.split()
+        cases={k:json.loads((out/(k+'.json')).read_text()) for k in names if (out/(k+'.json')).exists()}
+        failures=[k for k in names if cases.get(k,{}).get('result')!='PASS']
+        passed_sources={k:cases[k]['source'] for k in cases}
+        rs={'result':'FAIL' if failures else 'PASS','expected':names,'sources':passed_sources,'failed_or_missing':failures}
+        (out/'result.json').write_text(json.dumps(rs,indent=2)+'\n')
+        print(rs)
+        assert not failures
+        PYEND
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always()
+      with:
+        name: inotify-create-and-guards
+        path: ${{ runner.temp }}/inotify-evidence
+        if-no-files-found: error
