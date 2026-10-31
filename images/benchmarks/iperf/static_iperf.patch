@@ -1,0 +1,18 @@
+# The benchmark image only contains iperf3 and its notices. Link its C runtime
+# and OpenSSL into the executable so the image needs no dynamic loader.
+
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -13,6 +13,8 @@
+ cc_binary(
+     name = "iperf3",
+     srcs = ["src/main.c"],
++    features = ["fully_static_link"],
++    linkopts = ["-static"],
+     visibility = ["//visibility:public"],
+     deps = [":libiperf"],
+ )
+@@ -143 +145,3 @@
+ # NOTE: The t_auth test is disabled for now to avoid dealing with runfiles in a C binary.
++
++exports_files(["LICENSE"])

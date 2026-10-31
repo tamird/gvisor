@@ -76,19 +76,19 @@ func BenchmarkIperfOneConnection(b *testing.B) {
 			defer client.CleanUp(ctx)
 			defer metricsviz.FromNamedContainerLogs(ctx, b, client, "client")
 
-			// iperf server listens on port 5001 by default.
+			// Use the same explicit port for the server and client.
 			port := 5001
 
 			// Start the server.
-			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf"}, "iperf", "-s"); err != nil {
+			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf"}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
 				b.Fatalf("failed to start server with: %v", err)
 			}
-			if out, err := server.WaitForOutput(ctx, fmt.Sprintf("Server listening on TCP port %d", port), 10*time.Second); err != nil {
+			if out, err := server.WaitForOutput(ctx, fmt.Sprintf("Server listening on %d", port), 10*time.Second); err != nil {
 				b.Fatalf("failed to wait for iperf server: %v %s", err, out)
 			}
 
 			iperf := tools.Iperf{
-				Num: b.N, // KB for the client to send.
+				Num: b.N, // Total KiB for the client to send.
 			}
 
 			// Run the client.
@@ -192,19 +192,19 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 			defer client.CleanUp(ctx)
 			defer metricsviz.FromNamedContainerLogs(ctx, b, client, "client")
 
-			// iperf server listens on port 5001 by default.
+			// Use the same explicit port for the server and client.
 			port := 5001
 
 			// Start the server.
-			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf"}, "iperf", "-s"); err != nil {
+			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf"}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
 				b.Fatalf("failed to start server with: %v", err)
 			}
-			if out, err := server.WaitForOutput(ctx, fmt.Sprintf("Server listening on TCP port %d", port), 10*time.Second); err != nil {
+			if out, err := server.WaitForOutput(ctx, fmt.Sprintf("Server listening on %d", port), 10*time.Second); err != nil {
 				b.Fatalf("failed to wait for iperf server: %v %s", err, out)
 			}
 
 			iperf := tools.Iperf{
-				Num:      b.N, // KB for the client to send.
+				Num:      b.N, // Total KiB for the client to send.
 				Parallel: bm.parallel,
 			}
 
