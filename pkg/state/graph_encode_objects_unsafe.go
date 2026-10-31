@@ -542,7 +542,6 @@ func (es *graphEncodeState) extendArray(obj int32, count, end uintptr) bool {
 		for es.blockEntries[e].obj != obj {
 			e = es.blockEntries[e].next
 		}
-		es.blockEntries[e].end = end
 	}
 	o.n, o.end = count, end
 	es.indexFrom(obj, lastBlock+1)
