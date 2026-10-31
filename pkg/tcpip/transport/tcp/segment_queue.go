@@ -49,15 +49,15 @@ func (q *segmentQueue) empty() bool {
 //
 // +checklocksexclude:q.mu
 func (q *segmentQueue) enqueue(s *segment) bool {
-	bufSz := q.ep.ops.GetReceiveBufferSize()
-	used := q.ep.receiveMemUsed()
-
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	// Allow zero sized segments (ACK/FIN/RSTs etc even if the segment queue
-	// is currently full).
-	allow := (used <= int(bufSz) || s.payloadSize() == 0) && !q.frozen
+	// When unread data fills the receive buffer, the peer still needs to
+	// acknowledge data sent in the other direction. Reserve up to the send
+	// buffer size for control traffic. If the application shrank its buffers
+	// below current usage, admit one control packet to an empty backlog.
+	over := int64(q.ep.receiveMemUsed()) - q.ep.ops.GetReceiveBufferSize()
+	allow := !q.frozen && (over <= 0 || (s.payloadSize() == 0 && (q.emptyLocked() || over <= q.ep.ops.GetSendBufferSize())))
 
 	if allow {
 		s.IncRef()
