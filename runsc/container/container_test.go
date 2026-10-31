@@ -6640,3 +6640,217 @@ func TestReadFile(t *testing.T) {
 		t.Errorf("Got %q (%d bytes), want 'inux' (4 bytes)", string(content3), len(content3))
 	}
 }
+
+func TestTCPBufferOCIAndGuestWrite(t *testing.T) {
+	const triplet = "8192 524288 268435456"
+	conf := testutil.TestConfig(t)
+	conf.Platform = "systrap"
+	conf.Network = config.NetworkSandbox
+	spec := testutil.NewSpecWithArgs("sleep", "infinity")
+	spec.Linux = &specs.Linux{Sysctl: map[string]string{
+		"net.ipv4.tcp_rmem": triplet,
+		"net.ipv4.tcp_wmem": triplet,
+	}}
+	_, bundle, cleanup, err := testutil.SetupContainer(spec, conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanup()
+	cont, err := New(conf, Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundle})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cont.Destroy()
+	if err := cont.Start(conf); err != nil {
+		t.Fatal(err)
+	}
+	const probe = `
+import pathlib, socket, sys
+files = [pathlib.Path("/proc/sys/net/ipv4/tcp_" + kind) for kind in ("rmem", "wmem")]
+def show(phase):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        print(phase, *(" ".join(p.read_text().split()) for p in files),
+              *(sock.getsockopt(socket.SOL_SOCKET, opt) for opt in (socket.SO_RCVBUF, socket.SO_SNDBUF)), sep="|")
+show("OCI")
+for path in files:
+    path.write_text(sys.argv[1])
+show("GUEST_WRITE")
+`
+	out, err := executeCombinedOutput(conf, cont, nil, "/usr/bin/python3", "-c", probe, triplet)
+	if err != nil {
+		t.Fatalf("guest probe: %v: %s", err, out)
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("guest probe output: %q", out)
+	}
+	for i, phase := range []string{"OCI", "GUEST_WRITE"} {
+		t.Run(phase, func(t *testing.T) {
+			got, want := lines[i], phase+"|"+triplet+"|"+triplet+"|524288|524288"
+			t.Logf("BUFFER_OPTION %s", got)
+			if got != want {
+				t.Errorf("got %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+// TestTCPBufferIsolation is a qualification fixture for the OCI runtime.
+func TestTCPBufferIsolation(t *testing.T) {
+	const setting = "8192 524288 268435456"
+	conf := testutil.TestConfig(t)
+	conf.Platform = "systrap"
+	start := func(t *testing.T, network config.NetworkType, sysctls map[string]string) (time.Duration, *Container) {
+		t.Helper()
+		conf.Network = network
+		spec := testutil.NewSpecWithArgs("sleep", "infinity")
+		spec.Linux = &specs.Linux{Sysctl: sysctls}
+		_, bundle, cleanup, err := testutil.SetupContainer(spec, conf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(cleanup)
+		args := Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundle}
+		now := time.Now()
+		c, err := New(conf, args)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { c.Destroy() })
+		if err := c.Start(conf); err != nil {
+			t.Fatal(err)
+		}
+		return time.Since(now), c
+	}
+	t.Run("one_direction", func(t *testing.T) {
+		observe := func(t *testing.T, settings map[string]string) []string {
+			t.Helper()
+			_, c := start(t, config.NetworkNone, settings)
+			out, err := executeCombinedOutput(conf, c, nil, "/usr/bin/python3", "-c", `import socket
+for name in ("tcp_rmem", "tcp_wmem"):
+    with open("/proc/sys/net/ipv4/" + name) as f:
+        print(*f.read().split())
+with socket.socket() as s:
+    print(s.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF), s.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))`)
+			if err != nil {
+				t.Fatalf("%s: %v", out, err)
+			}
+			fields := strings.Fields(string(out))
+			if got, want := len(fields), 8; got != want {
+				t.Fatalf("read %q, got %d fields, want %d", out, got, want)
+			}
+			return fields
+		}
+		base := observe(t, nil)
+		got := observe(t, map[string]string{"net.ipv4.tcp_rmem": "8192 524288"})
+		want := slices.Clone(base)
+		want[0], want[1], want[6] = "8192", "524288", "524288"
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+		t.Logf("PARTIAL base=%v actual=%v", base, got)
+	})
+	t.Run("shared_network", func(t *testing.T) {
+		// Request the worker's existing value so even an erroneous write would be a no-op.
+		name := "/proc/sys/net/ipv4/tcp_rmem"
+		before, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		conf.Network = config.NetworkHost
+		spec := testutil.NewSpecWithArgs("true")
+		spec.Linux = &specs.Linux{}
+		if err := run(spec, conf); err != nil {
+			t.Fatalf("identical host-network control without the sysctl: %v", err)
+		}
+		spec.Linux.Sysctl = map[string]string{"net.ipv4.tcp_rmem": strings.TrimSpace(string(before))}
+		if err := run(spec, conf); err == nil {
+			t.Fatal("accepted a TCP buffer setting for the shared network")
+		} else {
+			t.Logf("SHARED rejected: %v", err)
+		}
+		after, err := os.ReadFile(name)
+		if err != nil || !bytes.Equal(before, after) {
+			t.Fatalf("host sysctl was %q, now %q: %v", before, after, err)
+		}
+	})
+	t.Run("aliases", func(t *testing.T) {
+		_, c := start(t, config.NetworkNone, map[string]string{
+			"net/ipv4/tcp_wmem": setting, "net.ipv4.tcp_wmem": setting,
+		})
+		out, err := executeCombinedOutput(conf, c, nil, "/bin/cat", "/proc/sys/net/ipv4/tcp_wmem")
+		if err != nil || strings.Join(strings.Fields(string(out)), " ") != setting {
+			t.Fatalf("equal aliases: %q, %v", out, err)
+		}
+		spec := testutil.NewSpecWithArgs("true")
+		spec.Linux = &specs.Linux{Sysctl: map[string]string{
+			"net/ipv4/tcp_wmem": setting, "net.ipv4.tcp_wmem": "8192",
+		}}
+		if err := run(spec, conf); err == nil {
+			t.Fatal("accepted conflicting values for the same setting")
+		}
+	})
+	t.Run("restore_live_buffer", func(t *testing.T) {
+		_, c := start(t, config.NetworkNone, map[string]string{"net/ipv4/tcp_rmem": setting})
+		const update = "16384 262144 8388608"
+		const probe = `import pathlib, socket, sys
+p = pathlib.Path("/proc/sys/net/ipv4/tcp_rmem")
+if sys.argv[1]:
+    p.write_text(sys.argv[1])
+with socket.socket() as s:
+    print(*p.read_text().split(), s.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))`
+		check := func(c *Container, change, want string) {
+			t.Helper()
+			out, err := executeCombinedOutput(conf, c, nil, "/usr/bin/python3", "-c", probe, change)
+			if err != nil {
+				t.Fatalf("guest TCP probe: %v: %s", err, out)
+			}
+			if got := strings.TrimSpace(string(out)); got != want {
+				t.Fatalf("got %q, want %q", got, want)
+			}
+		}
+		check(c, "", setting+" 524288")
+		check(c, update, update+" 262144")
+		dir, err := os.MkdirTemp(testutil.TmpDir(), "tcp-buffer-restore")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { os.RemoveAll(dir) })
+		if err := os.Chmod(dir, 0777); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.Checkpoint(conf, dir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelDefault}); err != nil {
+			t.Fatal(err)
+		}
+		restored, err := New(conf, Args{ID: testutil.RandomContainerID(), Spec: c.Spec, BundleDir: c.BundleDir})
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { restored.Destroy() })
+		if err := restored.Restore(conf, dir, sandbox.DirectIOOff, false, nil); err != nil {
+			t.Fatal(err)
+		}
+		check(restored, "", update+" 262144")
+		t.Logf("RESTORED %s default=262144", update)
+	})
+
+	t.Run("startup", func(t *testing.T) {
+		settings := map[string]string{"net.ipv4.tcp_rmem": setting, "net.ipv4.tcp_wmem": setting}
+		// Exclude logging and tracing from both sides of the startup comparison.
+		conf.Debug, conf.Strace, conf.LogPackets = false, false, false
+		conf.DebugLog = ""
+		for i := -1; i < 32; i++ {
+			for j := range 2 {
+				configured := (i+j)%2 == 0
+				t.Run(fmt.Sprintf("pair_%d_%t", i, configured), func(t *testing.T) {
+					var opts map[string]string
+					if configured {
+						opts = settings
+					}
+					elapsed, _ := start(t, config.NetworkNone, opts)
+					t.Logf("STARTUP pair=%d configured=%t ns=%d", i, configured, elapsed.Nanoseconds())
+				})
+			}
+		}
+	})
+}
