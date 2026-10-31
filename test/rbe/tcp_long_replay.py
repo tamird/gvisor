@@ -35,12 +35,13 @@ if arm!="suites":
     for line in observations:
         m=re.fullmatch(r"TLP_EPISODE (pending|earlier|later|hole) offset=(\d+) elapsed_ms=(\d+) timeouts=(\d+) state=(\d+) sack=(\d+) tlp=(\d+)",line)
         if m: parsed[m[1]]=tuple(map(int,m.groups()[1:]))
+    if arm=="fixed" and logs.count("SACK_RETAINED=1")!=1: why.append("did not retain one SACKed segment")
     if len(observations)!=4 or len(parsed)!=4: why.append("missing one or more packet observations")
     for k,(off,ms,rto,state,sack,tlp) in parsed.items():
         expect_rto = (arm=="master" and k=="earlier") or (arm!="master" and k=="pending") or (arm=="published" and k in ("earlier","later"))
         if off!=(20 if k=="pending" else 30): why.append(f"{k}: wrong retransmitted offset {off}")
         if k=="hole":
-            if arm=="fixed" and state==0: why.append("outstanding SACK lost the disorder state")
+            if arm=="fixed" and (state!=4 or sack!=0 or tlp!=1 or rto or ms>=50): why.append("failed to preserve and repair separate SACK hole")
             continue
         if bool(rto)!=expect_rto or (ms>=1000)!=expect_rto:
             why.append(f"{k}: expected timeout {expect_rto}, got {rto} after {ms}ms")

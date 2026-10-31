@@ -1,12 +1,12 @@
-name: Compare TCP loss-probe timers after a repaired loss
+name: Verify the final TCP loss-probe amendment and owning analyzers
 on:
   push:
-    branches: [qualification/tcp-16596-episodes]
+    branches: [qualification/tcp-16596-owners]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-16596-episodes'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-16596-owners'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -14,14 +14,14 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Check the reviewer’s three episodes and a separate SACKed hole
+    - name: Verify the exact source and the distinct SACK-hole control
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "7e837edccdcfdacb911ef57ebd93dbc57c2128bb"
+        test "$(git rev-parse HEAD^1)" = "7e82eb3d8df7ffec6ab85bd9610b569a8fa77d33"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -85,16 +85,12 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in master published fixed suites; do
+        for arm in suites fixed; do
           case $arm in
-            master) source=c8804d9b6f9697137f968162206a2874856c913e; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
-            published) source=70cf3fc0d100645dd1625f51052b9aaffe2ffb56; parent=1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4 ;;
-            fixed) source=ad0a2a4d1bc1df3ce8b601b6817b0c20477d568d; parent=eedf6e4ad9300a321e068b2d987fd6e84f917a70 ;;
-            suites) source=eedf6e4ad9300a321e068b2d987fd6e84f917a70; parent=1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4 ;;
+            suites) source=e1a3e3de2bbeabfebfe45a0cb3c90c41add81709; parent=509ad5337346f8cbdba515cefadd542de28d6156 ;;
+            fixed) source=da305ca2a2d3edc7bd7ca4804cf31b5133e4c16e; parent=e1a3e3de2bbeabfebfe45a0cb3c90c41add81709 ;;
           esac
-          if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
-            git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
-          fi
+          git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(git rev-parse HEAD^)" = "$parent"
@@ -108,7 +104,7 @@ jobs:
           code=0
           opts=()
           case $arm in
-            suites) labels=(//pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test //pkg/tcpip/transport/tcp:tcp_nogo) ;;
+            suites) labels=(//pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test //pkg/tcpip/transport/tcp/test/e2e:tcp_test //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp:tcp_test_nogo) ;;
             *) labels=(//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test); opts+=(--test-filter=TestRACKTLPAfterTLPResponse) ;;
           esac
           selection=()
@@ -126,7 +122,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["master","published","fixed","suites"]
+        arms = ["suites","fixed"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -139,6 +135,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-16596-episodes
+        name: tcp-16596-owners
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
