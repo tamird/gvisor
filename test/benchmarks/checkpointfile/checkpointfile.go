@@ -81,6 +81,9 @@ const (
 // BenchmarkCheckpointFile reports various benchmark metrics about a
 // checkpointed kernel.
 func BenchmarkCheckpointFile(b *testing.B) {
+	previous := state.GraphEngineEnabled()
+	state.EnableGraphEngine(true)
+	defer state.EnableGraphEngine(previous)
 	ctx := context.Background()
 	var (
 		stateFile     []byte

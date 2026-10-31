@@ -18,7 +18,9 @@ import (
 	"cmp"
 	"context"
 	"encoding/binary"
+	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"slices"
 	"unsafe"
@@ -346,6 +348,8 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 		}
 	}
 
+	objectBytes := len(tables.b)
+
 	// Target table.
 	tables.uvarint(uint64(es.targets.n))
 	for i := int32(0); i < int32(es.targets.n); i++ {
@@ -376,9 +380,13 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 	w.grow(streamHeaderMaxBytes + len(es.types.buf.b) + len(tables.b) + dataMaxBytes)
 	w.uint32(streamMagic)
 	w.uint64(schemaFingerprint())
+	headerBytes := len(w.b)
 	w.uvarint(uint64(len(es.types.types)))
 	w.bytes(es.types.buf.b)
+	typeBytes := len(w.b) - headerBytes
 	w.bytes(tables.b)
+	dataStart := len(w.b)
+	var copied, subCount, subBytes, subCap, subMax int
 	var chunks []chunk
 	for i := int32(0); i < int32(es.objs.n); i++ {
 		o := es.obj(i)
@@ -393,6 +401,7 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 			w.uvarint(uint64(o.seg.len))
 		}
 		if !o.isArray {
+			copied += o.seg.len
 			w.bytes(es.out.b[o.seg.off : o.seg.off+o.seg.len])
 			continue
 		}
@@ -400,12 +409,20 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 		if inexact {
 			// Prefix the data with its length.
 			var sub encBuf
-			es.writeChunks(&sub, o, chunks)
+			copied += es.writeChunks(&sub, o, chunks)
+			subCount++
+			subBytes += len(sub.b)
+			subCap += cap(sub.b)
+			subMax = max(subMax, cap(sub.b))
 			w.uvarint(uint64(len(sub.b)))
 			w.bytes(sub.b)
 			continue
 		}
-		es.writeChunks(w, o, chunks)
+		copied += es.writeChunks(w, o, chunks)
+	}
+	if ti.typ.Name() == "Kernel" && ti.typ.PkgPath() == "gvisor.dev/gvisor/pkg/sentry/kernel" {
+		fmt.Fprintf(os.Stderr, "GRAPH-STREAM root=*kernel.Kernel magic=%08x bytes=%d cap=%d header=%d types=%d objects=%d targets=%d payload=%d staged=%d stagedcap=%d copied=%d tablescap=%d typecap=%d subcount=%d subbytes=%d subcap=%d submax=%d objectcount=%d targetcount=%d typecount=%d\n",
+			binary.LittleEndian.Uint32(w.b[:4]), len(w.b), cap(w.b), headerBytes, typeBytes, objectBytes, len(tables.b)-objectBytes, len(w.b)-dataStart, len(es.out.b), cap(es.out.b), copied, cap(tables.b), cap(es.types.buf.b), subCount, subBytes, subCap, subMax, n, es.targets.n, len(es.types.types))
 	}
 	es.stats.objects = int(n)
 	setHints(ti, len(w.b), es.targets.n)
@@ -442,7 +459,8 @@ func (es *graphEncodeState) resolveZeroTarget(addr uintptr, ti *typeInfo) (int32
 }
 
 // writeChunks writes the chunks of an array object.
-func (es *graphEncodeState) writeChunks(w *encBuf, o *encObject, chunks []chunk) {
+func (es *graphEncodeState) writeChunks(w *encBuf, o *encObject, chunks []chunk) int {
+	var copied int
 	if len(chunks) > 1 {
 		slices.SortFunc(chunks, func(a, b chunk) int { return cmp.Compare(a.start, b.start) })
 	}
@@ -456,7 +474,9 @@ func (es *graphEncodeState) writeChunks(w *encBuf, o *encObject, chunks []chunk)
 		w.uvarint(uint64(ch.end - ch.start))
 		last = ch.end
 		w.bytes(es.out.b[ch.seg.off : ch.seg.off+ch.seg.len])
+		copied += ch.seg.len
 	}
+	return copied
 }
 
 // maxStreamLength is the maximum length of an object graph.
