@@ -636,6 +636,39 @@ func TestGraphDeferredObjectDecode(t *testing.T) {
 	})
 }
 
+func TestGraphBackingArrayAsRoot(t *testing.T) {
+	var types typeTable
+	elem := types.exactIndex(typeInfoOf(reflect.TypeFor[uint8]()))
+	var data encBuf
+	data.uint32(streamMagic)
+	data.uint64(schemaFingerprint())
+	data.uvarint(uint64(len(types.types)))
+	data.bytes(types.buf.b)
+
+	// The only object is backing storage for one byte. There is no
+	// value record to decode into the caller's destination.
+	data.uvarint(1)
+	data.byte(objKindArray)
+	data.uvarint(uint64(elem))
+	data.uvarint(1)
+	data.uvarint(0)                 // No targets.
+	data.bytes([]byte{1, 0, 1, 42}) // One chunk at [0, 1), containing 42.
+
+	var printed strings.Builder
+	if err := PrintGraph(&printed, data.b, 0, false); err == nil {
+		t.Fatal("PrintGraph accepted a backing array as the root")
+	}
+	var checkpoint bytes.Buffer
+	if err := writeGraphHeader(&wire.Writer{Writer: &checkpoint}, uint64(len(data.b))); err != nil {
+		t.Fatal(err)
+	}
+	checkpoint.Write(data.b)
+	dest := uint8(7)
+	if _, err := Load(t.Context(), &checkpoint, &dest); err == nil {
+		t.Fatalf("Load accepted a backing array as the root; destination = %d", dest)
+	}
+}
+
 // TestGraphLoadNilRoot checks that Load rejects a nil root cleanly.
 func TestGraphLoadNilRoot(t *testing.T) {
 	saved := 7
