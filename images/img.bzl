@@ -9,7 +9,7 @@ def image_outputs(name, image, image_name):
 
     Args:
       name: Prefix for the archive and context target names.
-      image: The image_manifest target.
+      image: The image_manifest or image_index target.
       image_name: Stable image name relative to images/, such as basic/alpine.
     """
     image_load(
