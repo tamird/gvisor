@@ -2,7 +2,7 @@
 # depend on libc, which might use rseq itself.
 
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_library", "cc_toolchain")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_library", "cc_linker")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -26,6 +26,7 @@ genrule(
     outs = ["rseq"],
     cmd = "$(CC) " +
           "$(CC_FLAGS) " +
+          "--ld-path=$(execpath {}) ".format(cc_linker) +
           "-I. " +
           "-Wall " +
           "-Werror " +
@@ -34,6 +35,7 @@ genrule(
           "-static " +
           "-nostdlib " +
           "-ffreestanding " +
+          "-fno-stack-protector " +
           "-fno-exceptions " +
           "-o " +
           "$(location rseq) " +
@@ -43,16 +45,15 @@ genrule(
               no_match_error = "unsupported architecture",
           ) +
           "$(location rseq.cc)",
-    toolchains = [
-        cc_toolchain,
-        ":no_pie_cc_flags",
-    ],
+    toolchains = [":no_pie_cc_flags"],
+    tools = [cc_linker],
     visibility = ["//:sandbox"],
 )
 
 cc_flags_supplier(
     name = "no_pie_cc_flags",
     features = ["-pie"],
+    language = "c++",
 )
 
 cc_library(

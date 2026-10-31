@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -20,6 +20,7 @@ genrule(
     srcs = ["procumounter.c"],
     outs = ["gvisor-proc-umounter"],
     cmd = "$(CC) $(CC_FLAGS) " +
+          "--ld-path=$(execpath {}) ".format(cc_linker) +
           "-Os " +
           "-ffreestanding " +
           "-fno-sanitize=all " +
@@ -37,10 +38,8 @@ genrule(
           "$(execpath procumounter.c)",
     executable = True,
     features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
-        ":no_pie_cc_flags",
-    ],
+    toolchains = [":no_pie_cc_flags"],
+    tools = [cc_linker],
     visibility = ["//visibility:public"],
 )
 
