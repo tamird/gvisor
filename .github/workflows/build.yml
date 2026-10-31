@@ -19,7 +19,7 @@ jobs:
       NGINX: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
+      with: {fetch-depth: 9, persist-credentials: false}
     - name: Prepare the pinned compiler coordinator and RBE workers
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
