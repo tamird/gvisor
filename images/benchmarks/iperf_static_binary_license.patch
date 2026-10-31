@@ -1,0 +1,29 @@
+# The helper image has CA certificates and /tmp, but no ELF loader or shared
+# libraries. Link the target toolchain's libc and declared OpenSSL archives
+# into iperf3 so it needs no image-side C runtime. Both target builds have no
+# ELF interpreter or dynamic dependencies, and all eight native AMD64 TCP
+# benchmark cases have been exercised with this linkage.
+# Also expose the upstream license text to the image layer.
+
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -3,6 +3,8 @@
+ load("@rules_license//rules:license.bzl", "license")
+-
++
+ package(default_applicable_licenses = [":license"])
++
++exports_files(["LICENSE"])
+-
++
+ license(
+     name = "license",
+@@ -13,6 +15,8 @@
+ cc_binary(
+     name = "iperf3",
+     srcs = ["src/main.c"],
++    features = ["fully_static_link"],
++    linkopts = ["-static"],
+     visibility = ["//visibility:public"],
+     deps = [":libiperf"],
+ )
