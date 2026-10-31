@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T23:25:30.345592+00:00",
+    "updatedAt": "2026-10-31T23:42:59.271439+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4567,8 +4567,8 @@
       "url": "https://github.com/tamird/gvisor/commit/0afd5b37e",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. Both architectures are under qualification.",
-      "updatedAt": "2026-10-31T14:56:41.741127+00:00",
+      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The linked parser is still unqualified on both architectures.",
+      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
       "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
       "evidence": [
         {
@@ -4610,6 +4610,14 @@
         {
           "label": "Compare approved stack with narrowed stack (four inherited declarations)",
           "url": "https://github.com/tamird/gvisor/compare/bcb5de5b2...a6b802e4d"
+        },
+        {
+          "label": "Compiler binaries and owning checks on both target architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41211996909/artifacts/13050581240"
+        },
+        {
+          "label": "Scoped memory request: identical parser object, 82 supplier sources selected; AMD64 link still blocked",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767"
         }
       ],
       "refinement": {
@@ -4632,11 +4640,12 @@
         "owner": "Compiler integration",
         "sourceHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
         "disposition": "Qualify current compiler",
-        "observedAt": "2026-10-31T14:56:41.741127+00:00",
-        "nextAction": "Verify AMD64 and ARM64 compiler outputs and analyzers and the AMD64 musl plugin. Retain the GNU plugin and existing license prerequisites; request review of the changed source once the exact results are in.",
+        "observedAt": "2026-10-31T23:41:31.085407+00:00",
+        "nextAction": "Recover the Clang ASTWriterDecl.cpp compile that returned Unavailable during the AMD64 link request, then verify both linked parser executables. Keep the independent licensing prerequisites.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
-          "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446"
+          "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
+          "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767"
         ]
       }
     },
@@ -34002,14 +34011,14 @@
       "id": "branch:package-clang-format",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/package-clang-format",
+      "ref": "research/clang-format-shared",
       "title": "Use the declared LLVM formatter for C and C++ lint",
-      "url": "https://github.com/tamird/gvisor/commit/e2b20441891e30cb1ef6a4b8b674dcae6010284e",
-      "head": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
+      "url": "https://github.com/tamird/gvisor/commit/3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
+      "head": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
       "group": "analysis",
-      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
       "status": "Agent work",
-      "summary": "Remove the separate platform-specific wheel. Bazel checks only packages with changed inputs, and the fix command still edits only tracked sources. The LLVM formatter produced the same bytes as the wheel across all 485 current files.",
+      "summary": "Use the declared LLVM formatter in shared C and C++ lint targets. The earlier formatter matched the wheel across 485 files. Nine workspace and compatibility controls passed. Deleting a source directory broke discovery on both Bazel 8.8.1 and released 8.8.2 (Bazel #30883); Bazel 9.3 contains the fix.",
       "evidence": [
         {
           "label": "85 new or modified files compared directly; prior parity covers 400 unchanged files",
@@ -34026,16 +34035,30 @@
         {
           "label": "One damaged file reran and failed only its owner",
           "url": "https://app.buildbuddy.io/invocation/29c50833-f061-4f70-888e-542ad04f2a00"
+        },
+        {
+          "label": "Nine controls passed; directory deletion fails on both Bazel 8 releases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950"
+        },
+        {
+          "label": "Bazel invalidation bug and upstream fix",
+          "url": "https://github.com/bazelbuild/bazel/issues/30883"
+        },
+        {
+          "label": "Two uncached native formatter actions before directory deletion",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41252578192/artifacts/13060869831"
         }
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "e2b20441891e30cb1ef6a4b8b674dcae6010284e",
-        "observedAt": "2026-10-29T15:46:52.917812+00:00",
+        "sourceHead": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
+        "observedAt": "2026-10-31T23:41:31.085407+00:00",
         "disposition": "Agent work",
-        "nextAction": "Carry the verified LLVM formatter and fixtures into the shared lint targets. Rework the package-level checks before submission.",
+        "nextAction": "Use source discovery compatible with supported Bazel 8 or qualify a backport of the Bazel 9.3 fix, then repeat the directory-deletion control.",
         "evidence": [
-          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
+          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md",
+          "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950",
+          "https://github.com/bazelbuild/bazel/issues/30883"
         ]
       }
     },
@@ -34413,7 +34436,7 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier.",
+      "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier. The proposed amendment is being revised: nine workspace and compatibility controls passed. Deleting a source directory broke discovery on both Bazel 8.8.1 and released 8.8.2 (Bazel #30883); Bazel 9.3 contains the fix.",
       "evidence": [
         {
           "label": "All 614 tracked files, seven damaged-file diffs and repairs, malformed-input behavior, and CLI identity",
@@ -34490,22 +34513,32 @@
         {
           "label": "External root aliases and explicit target controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41218704000/artifacts/13048449141"
+        },
+        {
+          "label": "Nine controls passed; directory deletion fails on both Bazel 8 releases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950"
+        },
+        {
+          "label": "Bazel invalidation bug and upstream fix",
+          "url": "https://github.com/bazelbuild/bazel/issues/30883"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
+      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-10-31T16:37:26.194794+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Publish the amendment once reviewed. The remaining lints have their own migration steps.",
+        "observedAt": "2026-10-31T23:41:31.085407+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Use source discovery compatible with supported Bazel 8 or qualify a backport of the Bazel 9.3 fix, then repeat the directory-deletion control.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1d96ea04c",
           "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547",
           "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680",
           "https://github.com/tamird/gvisor/actions/runs/41218704000/artifacts/13048449141",
-          "https://github.com/tamird/gvisor/actions/runs/41217794897/artifacts/13047923822"
+          "https://github.com/tamird/gvisor/actions/runs/41217794897/artifacts/13047923822",
+          "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950",
+          "https://github.com/bazelbuild/bazel/issues/30883"
         ]
       },
       "refinement": {
@@ -34517,16 +34550,6 @@
           "head": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
           "base": "aa767e4c43d011121271551fe24da501a56f729d"
         }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "head": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
-        "url": "https://github.com/tamird/gvisor/commit/1d96ea04c",
-        "title": "Run Buildifier and cpplint on declared repository inputs",
-        "summary": "One Bazel target runs two separately cached checks. Both see new first-party files without a per-package hook. The format command fixes the files Buildifier reports.",
-        "body": "The worker actions take their tools and inputs from Bazel. The format command repairs new files from a subdirectory and forwards tool failures. On Linux the pinned Bazel client itself still invokes Bash for bazel run.\n\ngit range-diff --creation-factor=999 1dac5af96^! 1d96ea04c^!"
       }
     },
     {
@@ -56679,9 +56702,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T23:25:30.345592+00:00",
+      "updatedAt": "2026-10-31T23:42:59.271439+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The same native ARM64 scratch worker then built //pkg/sentry/platform/systrap/sysmsg:sysmsg on 060d9517a. All 90 stateify actions, the declared Protobuf shell and the Go package compiler ran uncached. The compiler recorded sysmsg.a (391,998 bytes) and Bazel exited 0. The first verifier could not reread its local archive path. Authenticated retrieval later verified the original SHA-256 and size of both sysmsg.a (391,998 bytes) and sysmsg.x (141,856 bytes), without rebuilding.",
+          "evidence": [
+            {
+              "label": "Native ARM64 consumer execution records",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41252747744/artifacts/13061881875"
+            },
+            {
+              "label": "Bazel build and package compiler",
+              "url": "https://app.buildbuddy.io/invocation/22d7398f-b1e9-461d-b762-5eba9ae33a37"
+            },
+            {
+              "label": "Verified both original outputs without rebuilding",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41253543881/artifacts/13062207201"
+            }
+          ]
+        },
         {
           "text": "The ARM64 worker then built the inputs of the actual sysmsg Go library, which embeds the signal stub. The first attempt exposed a missing generated-file attribute in the qualification branch. Restoring that line from the existing systrap proposal let analysis complete. Ninety stateify commands ran, but their ninety goimports shell launchers could not start /bin/sh. Protobuf’s compiler validator also could not start /bin/bash. The library archive was not produced.",
           "evidence": [
@@ -58662,12 +58702,12 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-31T23:25:30.345592+00:00",
+      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
         {
-          "text": "With a 4 KiB receive budget and the worker paused, master admitted 257 pure ACKs and charged 161,396 bytes. The prototype admitted 14 and charged 8,792 bytes. The separate duplex socket test is checking whether the tighter bound preserves progress.",
+          "text": "With a 4 KiB receive budget and the worker paused, master admitted 257 pure ACKs and charged 161,396 bytes. The prototype admitted 14 and charged 8,792 bytes. All 36 duplex cases transferred 1 MiB in reverse, reached EOF and preserved unread data. Linux passed 12/12; stock and prototype each failed 12/12 only at the final TIOCOUTQ check (ENOPROTOOPT). With a portable EAGAIN check, Linux, stock and prototype each passed 12/12, with no skips or missing cases.",
           "evidence": [
             {
               "label": "Original queue measurements",
@@ -58676,6 +58716,14 @@
             {
               "label": "Duplex syscall check",
               "url": "https://github.com/tamird/gvisor/actions/runs/41252306219"
+            },
+            {
+              "label": "Original 36 cases and the TIOCOUTQ failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41252306219/artifacts/13061652050"
+            },
+            {
+              "label": "36 complete cases with the portable EAGAIN control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41252897231/artifacts/13061931934"
             }
           ]
         },
