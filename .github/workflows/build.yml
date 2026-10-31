@@ -10,10 +10,10 @@ jobs:
     timeout-minutes: 135
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      CURRENT: 10b0ff00807655b4bbb93a27be5a48a6506af08d
+      CURRENT: 1a2f2fd5500485145331a4e9d32c33819b843305
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 8, persist-credentials: false}
+      with: {fetch-depth: 12, persist-credentials: false}
     - name: Prepare the pinned compiler coordinator and RBE workers
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -31,9 +31,6 @@ jobs:
         } > "$RUNNER_TEMP/tcp.bazelrc"
         unset BUILDBUDDY_API_KEY
         mkdir -p "$RUNNER_TEMP/checker" "$RUNNER_TEMP/measure-public"
-        cp "$(command -v bazelisk)" "$RUNNER_TEMP/host-bazelisk"
-        chmod 755 "$RUNNER_TEMP/host-bazelisk"
-        test -x "$RUNNER_TEMP/host-bazelisk"
         touch "$RUNNER_TEMP/xtables.lock"; printf %s "$GITHUB_RUN_ID" > "$RUNNER_TEMP/host-marker"
         git show "$GITHUB_SHA:test/rbe/timewait-qualify.sh" > "$RUNNER_TEMP/checker/run.sh"
         git show "$GITHUB_SHA:test/rbe/timewait_measure.py" > "$RUNNER_TEMP/checker/measure.py"
@@ -44,6 +41,24 @@ jobs:
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --security-opt apparmor=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
+        # The hosted bazelisk command is an npm shim. The compiler image has no
+        # Node; recover the exact released Bazel identified by each source.
+        installed=$(docker exec tcp-compiler /usr/local/bin/bazel --version)
+        for expected in 8.3.1 8.8.1; do
+          bin="$RUNNER_TEMP/bazel-$expected"
+          if [[ "$installed" == "bazel $expected" ]]; then
+            docker cp tcp-compiler:/usr/local/bin/bazel "$bin"
+          else
+            curl --retry 3 --retry-all-errors --fail --location --silent --show-error -o "$bin" "https://releases.bazel.build/$expected/release/bazel-$expected-linux-x86_64"
+          fi
+          case $expected in
+            8.3.1) sha=17247e8a84245f59d3bc633d0cfe0a840992a7760a11af1a30012d03da31604c;;
+            8.8.1) sha=5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160;;
+          esac
+          echo "$sha  $bin" | sha256sum --check
+          chmod 755 "$bin"
+          docker exec tcp-compiler "$bin" --version | grep -Fx "bazel $expected"
+        done
 
 
     - name: Establish memory available to local C++ compilers
