@@ -388,8 +388,8 @@ func (t *Timekeeper) startUpdater(params *VDSOParamPage) {
 			}
 
 			t.timer.Reset(sentrytime.ApproxUpdateInterval)
-			t.update(false)
 			t.updateMu.Unlock()
+			t.update(false)
 		}
 	}()
 }
