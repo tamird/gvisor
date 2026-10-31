@@ -736,6 +736,21 @@ func (s *Sandbox) setRestoreOptsForLocalCheckpointFiles(conf *config.Config, ima
 	if err != nil {
 		return fmt.Errorf("opening state file %q failed: %w", path.Join(imagePath, checkpointfiles.StateFileName), err)
 	}
+	// Fork-only experiment: both arms run the same executable, with the
+	// same restore code after this point. The source image is a regular file.
+	if mode, ok := os.LookupEnv("GVISOR_FADVISE_TRIAL"); ok {
+		switch mode {
+		case "willneed":
+			if err := unix.Fadvise(int(sf.Fd()), 0, 0, unix.FADV_WILLNEED); err != nil {
+				sf.Close()
+				return fmt.Errorf("advising checkpoint read: %w", err)
+			}
+		case "control":
+		default:
+			panic(mode)
+		}
+		fmt.Fprintln(os.Stderr, "FADVISE-TRIAL "+mode)
+	}
 	opt.FilePayload.Files = append(opt.FilePayload.Files, sf)
 
 	// If either the pages metadata file or pages file exist, both must exist,
