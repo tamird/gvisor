@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T19:24:37.648+00:00",
+    "updatedAt": "2026-10-31T19:28:31.992+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40641,6 +40641,52 @@
         "requestedAt": "2026-10-31T19:24:37.648+00:00",
         "summary": "Open this standalone packet-test PR against gVisor?",
         "body": "With a listen backlog of one, Linux can save more than one pending SYN.\nThe second SYN in the packet test then exercises a second stateful\nhandshake, and the test ignores its retransmitted SYN-ACK on Linux.\n\nOffer SACK without timestamps and keep the pending handshakes open\nuntil a SYN-ACK omits SACK. Check that the first connection retransmits\nits SYN-ACK and the cookie connection does not, before testing which\nACK flag combinations each accepts."
+      }
+    },
+    {
+      "id": "branch:tcp-forwarder-request-guards",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-forwarder-request-guards",
+      "head": "ca84e68c9b834aff758eb89981ccdf8aacc4c942",
+      "title": "Check both locks on TCP forwarder completion",
+      "url": "https://github.com/tamird/gvisor/tree/tcp-forwarder-request-guards",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T19:28:31.992+00:00",
+      "summary": "The request mutex protects its forwarder pointer. The forwarder mutex protects the shared map of pending tuples. The control produced exactly two diagnostics on each of AMD64 and ARM64. With the guards, the analyzer and all four forwarder tests passed, including three ECN subcases. The review head adds two lines to document when packet readers must finish.",
+      "evidence": [
+        {
+          "label": "Review commit",
+          "url": "https://github.com/tamird/gvisor/commit/ca84e68c9"
+        },
+        {
+          "label": "Only the request lifetime comment differs from the tested source",
+          "url": "https://github.com/tamird/gvisor/compare/d65202e48..ca84e68c9"
+        },
+        {
+          "label": "Two deliberately unguarded field accesses",
+          "url": "https://github.com/tamird/gvisor/blob/f3cc51dd2/pkg/tcpip/transport/tcp/forwarder.go#L126-L136"
+        },
+        {
+          "label": "Original negative and positive invocations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41233276131/artifacts/13054317942"
+        },
+        {
+          "label": "Two source locations on each architecture and seven named XML entries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41234335902/artifacts/13055236437"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "ca84e68c9b834aff758eb89981ccdf8aacc4c942",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/ca84e68c9",
+        "title": "Check both locks on TCP forwarder completion",
+        "requestedAt": "2026-10-31T19:28:31.992+00:00",
+        "summary": "Open this standalone lock-annotation PR against gVisor?",
+        "body": "Completing a request removes its endpoint tuple from the forwarder and\nclears its reference to that forwarder. The request mutex protects the\nreference. The forwarder mutex protects the map shared by all requests.\n\nAnnotate both fields so the checker catches either missing lock. Document\nwhen to finish reading the SYN packet before Complete releases it.\n\nThe checker diagnosed both unlocked accesses on AMD64 and ARM64 [1].\nThe existing forwarder tests passed, including their three ECN cases [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41233276131/artifacts/13054317942\n[2]: https://github.com/tamird/gvisor/actions/runs/41234335902/artifacts/13055236437"
       }
     }
   ],
