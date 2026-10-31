@@ -32,15 +32,20 @@ def main() -> int:
     errors = []
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") not in ("local","standalone") for r in results):
         errors.append("expected one uncached test on the hosted Linux machine")
-    modes = ("cumulative", "sack_third")
+    modes = ("repeat_ack", "sack_repair")
     if sorted(x for x in observations if x.startswith("FENCE_DONE")) != [f"FENCE_DONE mode={mode}" for mode in modes]:
         errors.append("both live socket cases must complete")
     for mode in modes:
-        for phase in ("before_timeout", "first_timeout", "after_ack"):
+        for phase in ("before_timeout", "first_timeout", "before_feedback", "after_ack"):
             if not any(s.startswith(f"FENCE_STATE mode={mode} phase={phase} ") for s in observations):
                 errors.append(f"{mode}: missing TCP_INFO at {phase}")
         if not any(s.startswith(f"FENCE_WIRE mode={mode} phase=first_timeout offset=0 ") for s in observations):
             errors.append(f"{mode}: did not observe the first segment retransmitted")
+        for phase in ("discarded_repair", "later_repair"):
+            if not any(s.startswith(f"FENCE_WIRE mode={mode} phase={phase} ") for s in observations):
+                errors.append(f"{mode}: missing actual {phase}")
+        if sum(s.startswith(f"FENCE_ACK mode={mode} ") for s in observations) != 2:
+            errors.append(f"{mode}: expected both partial ACKs")
         if not any(s.startswith(f"FENCE_ACK mode={mode} ") for s in observations):
             errors.append(f"{mode}: no partial acknowledgment")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
