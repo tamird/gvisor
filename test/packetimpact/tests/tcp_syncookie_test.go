@@ -82,10 +82,11 @@ func TestTCPSynCookie(t *testing.T) {
 			// Keep each SYN outstanding. Linux and gVisor can save different
 			// numbers of half-open connections for the same listen backlog.
 			var withSynCookieConn *testbench.TCPIPv4
-			for range 16 {
+			for i := range 16 {
 				conn, sack := sendSYN()
 				if !sack {
-					withSynCookieConn = conn
+					fmt.Printf("COOKIE_BOUNDARY flags=%02x syn=%d\n", uint8(test.flags), i+2)
+						withSynCookieConn = conn
 					break
 				}
 			}
@@ -111,6 +112,7 @@ func TestTCPSynCookie(t *testing.T) {
 					if !c.expectRetransmit && err == nil {
 						t.Fatalf("expected no retransmitted SYNACK, but got %s", got)
 					}
+					fmt.Printf("COOKIE_RETRANSMITTED flags=%02x expected=%t observed=%t\n", uint8(test.flags), c.expectRetransmit, err == nil)
 				})
 			}
 
