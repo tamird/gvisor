@@ -1,3 +1,4 @@
+load("@rules_python//python:defs.bzl", "py_test")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
 
@@ -53,4 +54,11 @@ sh_binary(
         ":tcp_proxy",
     ],
     visibility = ["//:sandbox"],
+)
+
+py_test(
+    name = "receiver_transfer",
+    srcs = ["receiver_transfer.py"],
+    data = [":tcp_proxy"],
+    tags = ["manual"],
 )
