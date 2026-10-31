@@ -24,6 +24,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -56,6 +58,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot"
@@ -705,4 +708,168 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
+}
+
+// BenchmarkStreamCapture creates the kernel once, before either measured binary runs.
+func BenchmarkStreamCapture(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires one runsc checkpoint")
+	}
+	dir := os.Getenv("STREAM_DIR")
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	data, _, names, mounts := checkpointNginx(context.Background(), b, machine)
+	spec, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
+	if err != nil {
+		b.Fatal(err)
+	}
+	for name, contents := range map[string][]byte{checkpointfiles.StateFileName: data, checkpointSpecName: spec} {
+		if err := os.WriteFile(filepath.Join(dir, name), contents, 0600); err != nil {
+			b.Fatal(err)
+		}
+	}
+	fmt.Printf("STREAM-CAPTURE bytes=%d digest=%x\n", len(data), sha256.Sum256(data))
+}
+
+// BenchmarkDecodeTableTrial replays the two original frames from one four-worker
+// checkpoint. The same worker runs both binaries against the same capture.
+func BenchmarkDecodeTableTrial(b *testing.B) {
+	if b.N != 1 || !state.GraphEngineEnabled() {
+		b.Fatal("requires one graph trial")
+	}
+	dir := os.Getenv("STREAM_DIR")
+	data, _, names, mounts, err := readCheckpointDir(dir)
+	if err != nil {
+		b.Fatal(err)
+	}
+	sr, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(data)), nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+	raw, err := io.ReadAll(sr)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if err := sr.Close(); err != nil {
+		b.Fatal(err)
+	}
+	ctx := restoreContext(b, names, mounts)
+	sys, err := systrap.New(platform.Options{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	plat := stubPlatform{sys}
+	gc := debug.SetGCPercent(-1)
+	defer debug.SetGCPercent(gc)
+	var lens, caps [5]int
+	state.StudyDecodeTables = func(l, c [5]int) { lens, caps = l, c }
+	defer func() { state.StudyDecodeTables = nil }()
+	r := bytes.NewReader(raw)
+	var fs cpuid.FeatureSet
+	if _, err := state.Load(ctx, r, &fs); err != nil {
+		b.Fatal(err)
+	}
+	small := raw[:len(raw)-r.Len()]
+	remaining := raw[len(small):]
+	tail := bytes.NewReader(remaining)
+	hdrLarge, err := state.ReadHeaderMode(&wire.Reader{Reader: tail})
+	if err != nil || !hdrLarge.Graph || hdrLarge.Length > uint64(tail.Len()) {
+		b.Fatalf("bad kernel frame: %+v %v", hdrLarge, err)
+	}
+	large := remaining[:len(remaining)-tail.Len()+int(hdrLarge.Length)]
+	if len(small) == 0 || len(large) <= len(small) {
+		b.Fatalf("bad frame lengths: %d/%d", len(small), len(large))
+	}
+	smallLens := lens
+	smallLoad := func(ctx context.Context) {
+		var fs cpuid.FeatureSet
+		r := bytes.NewReader(small)
+		_, err := state.Load(ctx, r, &fs)
+		if err != nil || r.Len() != 0 {
+			b.Fatalf("short frame: error %v remaining %d", err, r.Len())
+		}
+		runtime.KeepAlive(fs)
+	}
+	largeLoad := func(ctx context.Context) {
+		k := &kernel.Kernel{Platform: plat}
+		k.SetMemoryFile(pgalloc.MemoryFileFromContext(ctx))
+		r := bytes.NewReader(large)
+		_, err := state.Load(ctx, r, k)
+		if err != nil || r.Len() != 0 {
+			b.Fatalf("kernel frame: %v, remaining %d", err, r.Len())
+		}
+		runtime.KeepAlive(k)
+	}
+	measure := func(mode string, n int, withFiles bool, fn func(context.Context)) {
+		var wall, cpu time.Duration
+		var allocs, bytes uint64
+		state.StudyDecodeTables = nil
+		// Per-restore descriptor setup and cleanup are outside the measured load.
+		if withFiles {
+			for i := 0; i < n; i++ {
+				func() {
+					ctx, cleanup := withHostFDs(b, ctx, names)
+					defer cleanup()
+					var before, after runtime.MemStats
+					runtime.ReadMemStats(&before)
+					c := processCPU(b)
+					t := time.Now()
+					fn(ctx)
+					wall += time.Since(t)
+					cpu += processCPU(b) - c
+					runtime.ReadMemStats(&after)
+					allocs += after.Mallocs - before.Mallocs
+					bytes += after.TotalAlloc - before.TotalAlloc
+				}()
+			}
+		} else {
+			var before, after runtime.MemStats
+			runtime.ReadMemStats(&before)
+			c := processCPU(b)
+			t := time.Now()
+			for i := 0; i < n; i++ {
+				fn(ctx)
+			}
+			wall = time.Since(t)
+			cpu = processCPU(b) - c
+			runtime.ReadMemStats(&after)
+			allocs = after.Mallocs - before.Mallocs
+			bytes = after.TotalAlloc - before.TotalAlloc
+		}
+		fmt.Printf("TABLE-TRIAL mode=%s n=%d wall=%d cpu=%d allocs=%d bytes=%d digest=%x\n", mode, n, wall.Nanoseconds(), cpu.Nanoseconds(), allocs, bytes, sha256.Sum256(data))
+		state.StudyDecodeTables = func(l, c [5]int) { lens, caps = l, c }
+	}
+	measure("small_after_small", 1024, false, smallLoad)
+	func() { ctx, clean := withHostFDs(b, ctx, names); defer clean(); largeLoad(ctx) }()
+	largeLens, largeCaps := lens, caps
+	smallLoad(ctx)
+	fmt.Printf("TABLE-SIZES smallbytes=%d largebytes=%d small=%v large=%v caplarge=%v capsmall=%v\n", len(small), len(large), smallLens, largeLens, largeCaps, caps)
+	if caps != largeCaps || lens != smallLens || largeLens[2] <= 1000 || smallLens[2] >= largeLens[2] {
+		b.Fatalf("expected retained kernel tables after small graph: large=%v small=%v caplarge=%v capsmall=%v", largeLens, lens, largeCaps, caps)
+	}
+	measure("small_after_kernel", 1024, false, smallLoad)
+	measure("kernel_after_kernel", 12, true, largeLoad)
+	measure("cpuid_then_kernel", 12, true, func(ctx context.Context) { smallLoad(ctx); largeLoad(ctx) })
+	// Exercise a partial fill of the type table, without changing the frame length
+	// or fingerprint. An unknown first tag must fail; the original must then load.
+	broken := append([]byte(nil), small...)
+	scan := bytes.NewReader(broken)
+	hdr, err := state.ReadHeaderMode(&wire.Reader{Reader: scan})
+	if err != nil || !hdr.Graph {
+		b.Fatalf("bad frame header: %v", err)
+	}
+	offset := len(broken) - scan.Len() + 12
+	_, countLen := binary.Uvarint(broken[offset:])
+	if countLen <= 0 {
+		b.Fatal("missing type count")
+	}
+	broken[offset+countLen] = 0xff
+	if _, err := state.Load(ctx, bytes.NewReader(broken), &fs); err == nil || !strings.Contains(err.Error(), "invalid type tag") {
+		b.Fatalf("partial type table: %v", err)
+	}
+	smallLoad(ctx)
+	fmt.Printf("TABLE-DONE digest=%x recovered=true\n", sha256.Sum256(data))
 }
