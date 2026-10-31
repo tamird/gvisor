@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   images:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 145
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -18,6 +18,8 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
+          echo "Coordinator $(gcc -dumpfullversion), worker GCC 11"
+          test "$(gcc -dumpversion | cut -d. -f1)" = 11
           if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
           unshare --user --map-root-user true
           mkdir -p "$RUNNER_TEMP/gnu"
@@ -72,17 +74,6 @@ jobs:
         with:
           name: hackbench-aarch64
           path: ${{ runner.temp }}/hackbench-results/aarch64
-          if-no-files-found: error
-      - name: Qualify Hackbench on catalog
-        if: always() && steps.setup.outcome == 'success'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: bash "$RUNNER_TEMP/qualify-images.sh" catalog
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.setup.outcome == 'success'
-        with:
-          name: hackbench-catalog
-          path: ${{ runner.temp }}/hackbench-results/catalog
           if-no-files-found: error
       - name: Remove the remote action credential
         if: always()
