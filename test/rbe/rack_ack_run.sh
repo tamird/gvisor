@@ -8,13 +8,14 @@ done
 tcppkg=//pkg/tcpip/transport/tcp
 rack=$tcppkg/test/e2e:tcp_rack_test
 for arm in current split; do
-  case "$arm" in current) src=0ceaa881e662d62a691f658f88eba122071800b6;; split) src=3a1acb411cb9abe833fe8d6d13e1ae4ec611bb25;; esac
+  case "$arm" in current) src=0ceaa881e662d62a691f658f88eba122071800b6;; split) src=ca45eacaca5b6b939916d8bba2c2d4170ef6e21e;; esac
   git checkout --quiet --detach "$src"
   dir="$out/$arm"
   mkdir "$dir"
   git status --porcelain --untracked-files=no > "$dir/before"
   git cat-file commit HEAD > "$dir/commit"
   args=(test --config=x86_64 --jobs=4 --test_sharding_strategy=disabled --nocache_test_results --test_output=errors --build_event_publish_all_actions --nobuild_event_json_file_path_conversion --build_event_json_file="$RUNNER_TEMP/$arm.bep")
+  args+=(--strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStaticAnalysis=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --noremote_upload_local_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$')
   if [[ $arm == current ]]; then labels=(//runsc/cmd:cmd_test); else labels=(//runsc/cmd:statefile_output_test); fi
   args+=(--test_arg=-test.v '--test_arg=-test.run=^TestStatefileOutputSymlinks$')
   printf '%s\n' "${labels[@]}" > "$dir/targets"
