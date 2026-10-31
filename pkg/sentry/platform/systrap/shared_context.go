@@ -250,7 +250,6 @@ const (
 	contextPreemptTimeout = 10 * time.Millisecond
 	contextCheckupTimeout = 5 * time.Second
 	stuckContextTimeout   = 30 * time.Second
-	hostStallThreshold    = time.Second
 )
 
 var (
@@ -280,42 +279,24 @@ func (sc *sharedContext) sleepOnState(state sysmsg.ContextState) error {
 }
 
 func (sc *sharedContext) sleepOnStateWithTimeout(state sysmsg.ContextState, stuckTimeout, checkupTimeout time.Duration) error {
-	sleep := contextPreemptTimeout
-	timeout := unix.NsecToTimespec(sleep.Nanoseconds())
+	timeout := unix.NsecToTimespec(contextPreemptTimeout.Nanoseconds())
 	interruptsSent := 0
-	var now, deadline time.Time
+	deadline := time.Now().Add(stuckTimeout)
 	for sc.state() == state {
 		if sc.subprocess.dead.Load() {
 			return errDeadSubprocess
 		}
 		errno := sc.shared.SleepOnState(state, &timeout)
-		if errno == 0 && sc.state() != state {
-			return nil
-		}
-		if errno != 0 && errno != unix.ETIMEDOUT {
-			panic(fmt.Sprintf("error waiting for state: %v", errno))
-		}
-		// The clock is read only on wakeups that do not end the wait, so
-		// the stuck timeout starts at the first such wakeup.
-		prev := now
-		now = time.Now()
-		if prev.IsZero() {
-			deadline = now.Add(stuckTimeout)
-		} else if stall := now.Sub(prev) - sleep; stall > hostStallThreshold {
-			// Give the stub threads at least one checkup interval to
-			// respond once the sandbox runs again.
-			deadline = deadline.Add(stall)
-			if checkupDeadline := now.Add(checkupTimeout); checkupDeadline.After(deadline) {
-				deadline = checkupDeadline
-			}
-		}
 		if errno == 0 {
 			continue
+		}
+		if errno != unix.ETIMEDOUT {
+			panic(fmt.Sprintf("error waiting for state: %v", errno))
 		}
 		if !sc.subprocess.alive() {
 			return errDeadSubprocess
 		}
-		if interruptsSent > 0 && now.After(deadline) {
+		if interruptsSent > 0 && time.Now().After(deadline) {
 			// The context can recover between the futex timeout and here.
 			if sc.state() != state {
 				return nil
@@ -334,11 +315,10 @@ func (sc *sharedContext) sleepOnStateWithTimeout(state sysmsg.ContextState, stuc
 		if interruptsSent == 0 {
 			// Guarantee a full checkup interval if the first interrupt was
 			// sent close to the deadline.
-			if checkupDeadline := now.Add(checkupTimeout); checkupDeadline.After(deadline) {
+			if checkupDeadline := time.Now().Add(checkupTimeout); checkupDeadline.After(deadline) {
 				deadline = checkupDeadline
 			}
-			sleep = checkupTimeout
-			timeout = unix.NsecToTimespec(sleep.Nanoseconds())
+			timeout = unix.NsecToTimespec(checkupTimeout.Nanoseconds())
 		}
 		interruptsSent++
 	}

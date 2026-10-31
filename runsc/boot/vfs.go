@@ -406,9 +406,6 @@ func goferMountData(fd int, fa config.FileAccessType, conf *config.Config, suppr
 	if conf.CharacterDevicePolicy.AllowsPassthrough() {
 		opts = append(opts, "char_device_policy="+conf.CharacterDevicePolicy.String())
 	}
-	if conf.InodeNumbers == config.InodeNumbersVirtual {
-		opts = append(opts, "virtual_inode_numbers")
-	}
 	return opts
 }
 
@@ -1062,7 +1059,7 @@ func getMountNameAndOptions(spec *specs.Spec, conf *config.Config, m *mountInfo,
 		// container runtimes do. Linux and devpts default ptmxmode to 0000.
 		data = []string{"ptmxmode=0666"}
 
-	case dev.Name, devtmpfs.Name, cgroup2fs.Name:
+	case dev.Name, cgroup2fs.Name:
 		// Nothing to do.
 
 	case sentryapi.Nonefs:

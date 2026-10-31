@@ -135,7 +135,7 @@ func main() {
 		log.Fatalf("Unknown IP type: %v", addrName)
 	}
 
-	localPort, err := strconv.ParseUint(portName, 10, 16)
+	localPort, err := strconv.Atoi(portName)
 	if err != nil {
 		log.Fatalf("Unable to convert port %v: %v", portName, err)
 	}

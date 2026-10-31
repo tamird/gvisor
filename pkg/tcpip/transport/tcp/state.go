@@ -258,7 +258,7 @@ type TCPSenderState struct {
 
 	// SackedOut is the number of packets which have been selectively
 	// acked.
-	SackedOut int `state:"nosave"`
+	SackedOut int
 
 	// SndWnd is the send window size in bytes.
 	SndWnd seqnum.Size

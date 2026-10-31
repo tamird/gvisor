@@ -1,35 +1,147 @@
-name: CI
-
-"on":
+name: Check the original M003 Reno transfers with and without SACK retention
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-sack-packet-m003]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-packet-m003'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 8
+        persist-credentials: false
+    - name: Compare five fixed-loss transfers and their no-loss control
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        control=98df9b8620122d8dee46bf09cae26d52eb2f1ff9
+        candidate=cfb8136c5f605eeb3a3655a868ca35ccca5e0c76
+        test "$(git rev-parse HEAD^)" = "$candidate"
+        test "$(git rev-parse HEAD^^)" = "$control"
+        test "$(git diff --name-only "$control" "$candidate")" = pkg/tcpip/transport/tcp/snd.go
+        mkdir -p "$RUNNER_TEMP/checker"
+        cp test/rbe/qualification_report.py test/rbe/m003_report.py "$RUNNER_TEMP/checker"
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        case "$1" in
+          test)
+            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
+            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
+            status=0
+            bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
+            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
+            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
+            exit "$status"
+            ;;
+        esac
+        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        mkdir -p "$RUNNER_TEMP/replay-public" "$RUNNER_TEMP/m003-source"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"preflight"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        archive="$RUNNER_TEMP/m003-source.zip"
+        curl -fsSL --retry 3 -o "$archive" https://github.com/user-attachments/files/34000273/gvisor-16393-reproducer-final.zip
+        python3 - "$archive" "$RUNNER_TEMP/m003-source" "$RUNNER_TEMP/replay-public/preflight.json" <<'PYPIN'
+        from pathlib import Path
+        from zipfile import ZipFile
+        import hashlib, json, sys
+        archive, dest, receipt = map(Path, sys.argv[1:])
+        archive_sha = hashlib.sha256(archive.read_bytes()).hexdigest()
+        assert archive_sha == '3c348dc00359607416c236e7a56fb7e0ea87da4efeec79a377a1020a8b622a24'
+        with ZipFile(archive) as inputs:
+            program = inputs.read('main.go')
+        source_sha = hashlib.sha256(program).hexdigest()
+        assert source_sha == '82cb123ff35d3ed82775d80ae000bab853c7a21a0d8ad698955ed180e2132b72'
+        (dest/'main.go').write_bytes(program)
+        (dest/'MODULE.bazel').write_text('module(name="m003_source")\n')
+        (dest/'BUILD').write_text('exports_files(["main.go"])\n')
+        receipt.write_text(json.dumps({'status':'PASS','archive_sha256':archive_sha,'main_go_sha256':source_sha})+'\n')
+        PYPIN
+        overall=0
+        for probe in "$control" "$candidate"; do
+          if [[ "$probe" == "$control" ]]; then product=bb94bcca0259a73e8d6b6d5be325a4b5b57a9cd9; else product=40e3b8eee2f113fe673dffc3c5aa6543bbb4ed7e; fi
+          mkdir -p "$RUNNER_TEMP/replay-public/$probe"
+          git checkout --quiet --detach "$probe"
+          test "$(git rev-parse HEAD)" = "$probe"
+          export TCP_EVIDENCE="$RUNNER_TEMP/replay-private-$probe"
+          mkdir -p "$TCP_EVIDENCE"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+          test ! -s "$TCP_EVIDENCE/source_before"
+          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+          raw="$RUNNER_TEMP/$probe.jsonl"
+          label=//test/rbe/m003:m003_test
+          code=0
+          bazel test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox --jobs=4 \
+            --inject_repository="m003_source=$RUNNER_TEMP/m003-source" --test_sharding_strategy=disabled \
+            --nocache_test_results --zip_undeclared_test_outputs --test_output=all "--build_event_json_file=$raw" \
+            --build_event_json_file_path_conversion=false "$label" || code=$?
+          printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+          python3 -B "$RUNNER_TEMP/checker/m003_report.py" "$TCP_EVIDENCE" "$probe" "$product" "$label" "$raw" "$RUNNER_TEMP/replay-public/$probe" || overall=1
+        done
+        python3 - "$RUNNER_TEMP/replay-public" "$control" "$candidate" <<'PYRECORD'
+        import json, sys
+        from pathlib import Path
+        from datetime import datetime, timezone
+        out=Path(sys.argv[1]);expected=sys.argv[2:]
+        data={p:json.loads((out/p/'summary.json').read_text()) for p in expected if (out/p/'summary.json').is_file()}
+        summary={'expected':expected,'executed':list(data),'missing':sorted(set(expected)-data.keys()),'failures':{p:r.get('errors',[]) for p,r in data.items() if r['status']!='PASS'},'qualification':{p:{'status':r['status'],'rows':[(k['name'],k.get('received_bytes'),k.get('complete'),k.get('duration_seconds')) for k in r.get('transfers',{}).get('trials',[])]} for p,r in data.items()},'verified_at':datetime.now(timezone.utc).isoformat()}
+        (out/'verdict.json').write_text(json.dumps(summary,indent=2)+'\n')
+        PYRECORD
+        exit "$overall"
+    - name: Save only the typed results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: tcp-sack-packet-m003
+        path: ${{ runner.temp }}/replay-public/
+        if-no-files-found: error

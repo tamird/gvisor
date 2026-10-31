@@ -168,7 +168,6 @@ areas:
       - /runsc/boot/filter
       - /runsc/gofer/filter
       - /runsc/gofer/fs/filter
-      - /runsc/gofer/net/filter
       - /test/secbench
       - /test/secfuzz
   - name: sentry

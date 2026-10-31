@@ -40,7 +40,6 @@ go_test(
     # at some point in the future, but for now we can simply skip nogo analysis
     # on the test itself. It still applies to the core library.
     nogo = False,
-    deps = ["//pkg/state"],
 )
 
 go_test(

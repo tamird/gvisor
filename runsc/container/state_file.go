@@ -86,6 +86,9 @@ func Load(rootDir string, id FullID, opts LoadOpts) (*Container, error) {
 		}
 		return nil, fmt.Errorf("reading container metadata file %q: %w", state.statePath(), err)
 	}
+	if !opts.ReadOnly {
+		c.Saver.loaded, state.loaded = state.loaded, nil
+	}
 	c.Sandbox.SetRootDir(rootDir)
 
 	if opts.RootContainer && c.ID != c.Sandbox.ID {
@@ -105,9 +108,6 @@ func Load(rootDir string, id FullID, opts LoadOpts) (*Container, error) {
 		}
 	}
 
-	if !opts.ReadOnly {
-		c.Saver.loaded, state.loaded = state.loaded, nil
-	}
 	return c, nil
 }
 

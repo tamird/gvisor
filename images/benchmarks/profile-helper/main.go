@@ -101,7 +101,6 @@ func setContainerdFlag(remove bool) {
 			whiteSpace = lastFlagLine[:strings.Index(lastFlagLine, strings.TrimSpace(lastFlagLine))]
 		}
 		rewritten = append(rewritten, fmt.Sprintf("%s%s = %q", whiteSpace, *flagName, *flagValue))
-		addedFlag = true
 	}
 	for _, line := range lines {
 		if line == "" {
@@ -123,7 +122,7 @@ func setContainerdFlag(remove bool) {
 			}
 			isCorrectSection = false
 			rewritten = append(rewritten, line)
-			continue
+			break
 		}
 		equalIndex := strings.IndexRune(line, '=')
 		if equalIndex == -1 {

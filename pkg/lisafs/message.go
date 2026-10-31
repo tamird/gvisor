@@ -552,9 +552,7 @@ func walkStatusToString(ws WalkStatus) string {
 	case WalkComponentSymlink:
 		return "ComponentSymlink"
 	default:
-		// ws may come from an untrusted server. Do not panic, since this is used
-		// to log responses before they are validated.
-		return fmt.Sprintf("Unknown(%d)", ws)
+		panic(fmt.Sprintf("Unknown WalkStatus: %d", ws))
 	}
 }
 
@@ -1695,9 +1693,7 @@ func (g *Getdents64Req) String() string {
 	return fmt.Sprintf("Getdents64Req{DirFD: %d, Count: %d}", g.DirFD, g.Count)
 }
 
-// Dirent64 is analogous to struct linux_dirent64. DevMinor and DevMajor are
-// the device numbers of the entry's file, or zero if the server does not
-// report them.
+// Dirent64 is analogous to struct linux_dirent64.
 type Dirent64 struct {
 	Ino      primitive.Uint64
 	DevMinor primitive.Uint32

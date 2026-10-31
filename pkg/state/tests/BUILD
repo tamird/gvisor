@@ -10,7 +10,6 @@ go_library(
     srcs = [
         "array.go",
         "bench.go",
-        "graph.go",
         "integer.go",
         "load.go",
         "map.go",
@@ -33,9 +32,7 @@ go_test(
         "binary_test.go",
         "bool_test.go",
         "float_test.go",
-        "graph_test.go",
         "integer_test.go",
-        "isomorphism_test.go",
         "load_test.go",
         "map_test.go",
         "register_test.go",

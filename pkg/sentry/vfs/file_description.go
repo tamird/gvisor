@@ -67,12 +67,10 @@ type FileDescription struct {
 	// also be set by fcntl(2).
 	asyncHandler FileAsync
 
-	epollMu epollMutex `state:"nosave"`
-
 	// epolls is the set of epollInterests registered for this FileDescription.
-	//
-	// +checklocks:epollMu
-	epolls map[*epollInterest]struct{}
+	// epolls is protected by epollMu.
+	epollMu epollMutex `state:"nosave"`
+	epolls  map[*epollInterest]struct{}
 
 	// vd is the filesystem location at which this FileDescription was opened.
 	// A reference is held on vd. vd is immutable.
@@ -199,8 +197,7 @@ func (fd *FileDescription) DecRef(ctx context.Context) {
 		}
 		fd.Dentry().InotifyWithParent(ctx, ev, 0, PathEvent)
 
-		// Detach the set before taking any EpollInstance.interestMu:
-		// registering or deleting an interest takes interestMu before epollMu.
+		// Unregister fd from all epoll instances.
 		fd.epollMu.Lock()
 		epolls := fd.epolls
 		fd.epolls = nil

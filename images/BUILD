@@ -1,5 +1,4 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
-load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
 
 package(
@@ -77,13 +76,4 @@ pkg_tar(
     },
     package_dir = "images",
     strip_prefix = ".",
-)
-
-image_outputs(
-    name = "benchmark_alpine",
-    image = select({
-        "@platforms//cpu:aarch64": "@benchmark_alpine_arm64",
-        "@platforms//cpu:x86_64": "@benchmark_alpine_amd64",
-    }),
-    image_name = "benchmarks/alpine",
 )

@@ -660,14 +660,12 @@ func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomma
 	}
 
 	if conf.EnableCoreTags {
-		tag, err := coretag.Get()
+		tag, err := coretag.Enable()
 		if err != nil {
-			util.Fatalf("Cannot get Sentry core tag: %v", err)
-		}
-		if tag == 0 {
-			util.Fatalf("Core tagging is enabled, but the Sentry has no core tag. Aborting.")
+			util.Fatalf("Failed to core tag sentry: %v", err)
 		}
 		log.Infof("Core tag enabled (core tag=%d)", tag)
+		timer.Reached("core tags enabled")
 	}
 
 	// NFtables is only supported for netstack.

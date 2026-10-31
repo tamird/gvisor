@@ -15,7 +15,6 @@ bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
 bazel_dep(name = "rules_shell", version = "0.8.0")
-bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
 
 # gRPC's older minimum imports a removed Google APIs extension repository.
@@ -26,7 +25,7 @@ bazel_dep(name = "abseil-cpp", version = "20260817.0", repo_name = "com_google_a
 bazel_dep(name = "googletest", version = "1.18.0", repo_name = "com_google_googletest")
 bazel_dep(name = "google_benchmark", version = "1.10.0", repo_name = "com_google_benchmark")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.2")
-bazel_dep(name = "rules_python", version = "2.4.5")
+bazel_dep(name = "rules_python", version = "2.0.2")
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 bazel_dep(name = "protoc-gen-validate", version = "1.3.0")
 bazel_dep(name = "xds", version = "0.0.0-20251210-ee656c7")
@@ -50,13 +49,6 @@ single_version_override(
     module_name = "google_benchmark",
     patch_strip = 1,
     patches = ["//tools:benchmark-umbrella-exports.patch"],
-)
-
-# Drop the backport when the llvm module includes kernel_headers.configure.
-single_version_override(
-    module_name = "llvm",
-    patch_strip = 1,
-    patches = ["//tools:llvm-linux-header-default.patch"],
 )
 
 ### LLVM
@@ -97,9 +89,7 @@ crosstool = use_extension("//tools/bazeldefs:extensions/crosstool.bzl", "crossto
 use_repo(crosstool, "crosstool")
 
 ### Linux headers
-# Select current UAPI declarations independently of libc and test platforms.
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
-kernel_headers.configure(default_version = "6.18")
 use_repo(kernel_headers, "kernel_headers")
 
 ### zlib-ng
@@ -208,18 +198,42 @@ http_file(
 )
 
 # Statically-linked QEMU user-mode emulators.
-qemu = use_extension("@rules_qemu//qemu/extension:qemu.bzl", "qemu")
-use_repo(
-    qemu,
-    "qemu_system_toolchains",
-    "qemu_user_toolchains",
+QEMU_USER_EXPORTS = 'exports_files(["usr/bin/qemu-aarch64", "usr/bin/qemu-riscv64", "usr/bin/qemu-x86_64"])'
+
+deb_data = use_repo_rule("//tools/bazeldefs:extensions/deb_data.bzl", "deb_data")
+
+http_archive(
+    name = "qemu_user_amd64",
+    build_file_content = 'exports_files(["data.tar.xz"])',
+    sha256 = "ca6ede739327a20ae5a3498230c8a3a9a072c586e131bc6bcc1201eb1725e336",
+    type = "deb",
+    urls = [
+        "https://snapshot.debian.org/archive/debian/20260905T205002Z/pool/main/q/qemu/qemu-user_10.0.13%2Bds-0%2Bdeb13u1_amd64.deb",
+        "https://deb.debian.org/debian/pool/main/q/qemu/qemu-user_10.0.13%2Bds-0%2Bdeb13u1_amd64.deb",
+    ],
 )
 
-register_toolchains(
-    "@qemu_user_toolchains//:qemu_linux_aarch64_on_linux_x86_64",
-    "@qemu_user_toolchains//:qemu_linux_riscv64_on_linux_aarch64",
-    "@qemu_user_toolchains//:qemu_linux_riscv64_on_linux_x86_64",
-    "@qemu_user_toolchains//:qemu_linux_x86_64_on_linux_aarch64",
+deb_data(
+    name = "qemu_user_amd64_files",
+    build_file_content = QEMU_USER_EXPORTS,
+    data = "@qemu_user_amd64//:data.tar.xz",
+)
+
+http_archive(
+    name = "qemu_user_arm64",
+    build_file_content = 'exports_files(["data.tar.xz"])',
+    sha256 = "c73711af02b97cd5e2667e735d9c06890c57165517110ca4e646c95a7083158d",
+    type = "deb",
+    urls = [
+        "https://snapshot.debian.org/archive/debian/20260905T205002Z/pool/main/q/qemu/qemu-user_10.0.13%2Bds-0%2Bdeb13u1_arm64.deb",
+        "https://deb.debian.org/debian/pool/main/q/qemu/qemu-user_10.0.13%2Bds-0%2Bdeb13u1_arm64.deb",
+    ],
+)
+
+deb_data(
+    name = "qemu_user_arm64_files",
+    build_file_content = QEMU_USER_EXPORTS,
+    data = "@qemu_user_arm64//:data.tar.xz",
 )
 
 # Root certificates.
@@ -234,15 +248,6 @@ http_file(
 )
 
 ### Docker integration test images
-# LTP provides the standalone fsstress filesystem workload.
-http_archive(
-    name = "ltp",
-    build_file = "//images/basic:ltp.BUILD",
-    sha256 = "b9837481134fa6eabce91c2fba57d96695f81360468f83e11e6982584ad4d29d",
-    strip_prefix = "ltp-full-20260930",
-    urls = ["https://github.com/linux-test-project/ltp/releases/download/20260930/ltp-full-20260930.tar.xz"],
-)
-
 # Pin both architectures of the existing test distributions. Image assembly
 # uses declared layers and does not require a Docker daemon.
 img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
@@ -264,26 +269,6 @@ img_pull(
     registries = DOCKER_HUB_REGISTRIES,
     repository = "library/alpine",
     tag = "3.11.5",
-)
-
-# Both benchmark manifests come from the official alpine:3.24.3 index:
-# sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
-img_pull(
-    name = "benchmark_alpine_amd64",
-    digest = "sha256:c26612752c78b18faacd63c7d50f4592c2e7b0f25e0e20e82bd74e465c57ab0d",
-    layer_handling = "eager",
-    registries = DOCKER_HUB_REGISTRIES,
-    repository = "library/alpine",
-    tag = "3.24.3",
-)
-
-img_pull(
-    name = "benchmark_alpine_arm64",
-    digest = "sha256:e311ae748be7f56ae5cba304bc488f0786df68ee507513f654a5cc8597cffb42",
-    layer_handling = "eager",
-    registries = DOCKER_HUB_REGISTRIES,
-    repository = "library/alpine",
-    tag = "3.24.3",
 )
 
 img_pull(

@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -42,11 +43,6 @@ const (
 
 func createSACKConnection(t *testing.T) (testbench.DUT, testbench.TCPIPv4, int32, int) {
 	t.Helper()
-	return createSACKConnectionWithPeerRTT(t, 0)
-}
-
-func createSACKConnectionWithPeerRTT(t *testing.T, rtt time.Duration) (testbench.DUT, testbench.TCPIPv4, int32, int) {
-	t.Helper()
 	dut := testbench.NewDUT(t)
 	listenFd, remotePort := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
 	t.Cleanup(func() { dut.Close(t, listenFd) })
@@ -60,16 +56,7 @@ func createSACKConnectionWithPeerRTT(t *testing.T, rtt time.Duration) (testbench
 	optsOff += header.EncodeNOP(opts[optsOff:])
 	optsOff += header.EncodeSACKPermittedOption(opts[optsOff:])
 
-	if rtt == 0 {
-		conn.ConnectWithOptions(t, opts[:optsOff])
-	} else {
-		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: opts[:optsOff]})
-		if _, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second); err != nil {
-			t.Fatalf("waiting for SYN+ACK: %s", err)
-		}
-		time.Sleep(rtt)
-		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
-	}
+	conn.ConnectWithOptions(t, opts[:optsOff])
 	acceptFd, _ := dut.Accept(t, listenFd)
 	t.Cleanup(func() { dut.Close(t, acceptFd) })
 
@@ -111,392 +98,126 @@ func sendAndReceive(t *testing.T, dut testbench.DUT, conn testbench.TCPIPv4, num
 	return lastSent
 }
 
-// TestRACKTLPAllPacketsLost tests TLP when an entire flight of data is lost.
-func TestRACKTLPAllPacketsLost(t *testing.T) {
-	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
-	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
-	seqNum1 := *conn.RemoteSeqNum(t)
-
-	// Send ACK for data packets to establish RTT.
-	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
-	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
-
-	// We are not sending ACK for these packets.
-	const numPkts = 5
-	lastSent := sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
-
-	// Probe Timeout (PTO) should be two times RTT. Check that the last
-	// packet is retransmitted after probe timeout.
-	rtt, _ := getRTTAndRTO(t, dut, acceptFd)
-	pto := rtt * 2
-	// We expect the 5th packet (the last unacknowledged packet) to be
-	// retransmitted.
-	tlpProbe := testbench.Uint32(uint32(seqNum1) + uint32((numPkts-1)*payloadSize))
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: tlpProbe}, payload, time.Second); err != nil {
-		t.Fatalf("expected payload was not received: %s %v %v", err, rtt, pto)
-	}
-	diff := time.Now().Sub(lastSent)
-	if diff < pto {
-		t.Fatalf("expected payload was received before the probe timeout, got: %v, want: %v", diff, pto)
-	}
-}
-
-// TestRACKTLPLost tests TLP when there are tail losses.
-// See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.4
-func TestRACKTLPLost(t *testing.T) {
-	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
-	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
-	seqNum1 := *conn.RemoteSeqNum(t)
-
-	// Send ACK for data packets to establish RTT.
-	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
-	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
-
-	// We are not sending ACK for these packets.
-	const numPkts = 10
-	lastSent := sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
-
-	// Cumulative ACK for #[1-6] packets.
-	ackNum := seqNum1.Add(seqnum.Size(6 * payloadSize))
-	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(ackNum))})
-
-	// Probe Timeout (PTO) should be two times RTT. Check that the last
-	// packet is retransmitted after probe timeout.
-	rtt, _ := getRTTAndRTO(t, dut, acceptFd)
-	pto := rtt * 2
-	// We expect the 10th packet (the last unacknowledged packet) to be
-	// retransmitted.
-	tlpProbe := testbench.Uint32(uint32(seqNum1) + uint32((numPkts-1)*payloadSize))
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: tlpProbe}, payload, time.Second); err != nil {
-		t.Fatalf("expected payload was not received: %s", err)
-	}
-	diff := time.Now().Sub(lastSent)
-	if diff < pto {
-		t.Fatalf("expected payload was received before the probe timeout, got: %v, want: %v", diff, pto)
-	}
-}
-
-// TestRACKWithSACK tests that RACK marks the packets as lost after receiving
-// the ACK for retransmitted packets.
-// See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-8.1
-func TestRACKWithSACK(t *testing.T) {
-	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
-	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
-	seqNum1 := *conn.RemoteSeqNum(t)
-
-	// Send ACK for data packets to establish RTT.
-	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
-	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
-
-	// We are not sending ACK for these packets.
-	const numPkts = 3
-	sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
-
-	time.Sleep(simulatedRTT)
-	// SACK for #2 packet.
-	sackBlock := make([]byte, 40)
-	start := seqNum1.Add(seqnum.Size(payloadSize))
-	end := start.Add(seqnum.Size(payloadSize))
-	sbOff := 0
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
-		start, end,
-	}}, sackBlock[sbOff:])
-	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock[:sbOff]})
-
-	rtt, _ := getRTTAndRTO(t, dut, acceptFd)
-	timeout := 2 * rtt
-	// RACK marks #1 packet as lost after RTT+reorderWindow(RTT/4) and
-	// retransmits it.
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum1))}, payload, timeout); err != nil {
-		t.Fatalf("expected payload was not received: %s", err)
-	}
-
-	// RACK ignores retransmission samples shorter than its minimum RTT
-	// (RFC 8985, section 6.2). Wait longer than the warmup ACKs to leave margin
-	// for scheduling jitter in that comparison.
-	time.Sleep(2 * simulatedRTT)
-	// ACK for #1 packet.
-	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(end))})
-
-	// RACK considers transmission times of the packets to mark them lost.
-	// As the 3rd packet was sent before the retransmitted 1st packet, RACK
-	// marks it as lost and retransmits it..
-	expectedSeqNum := testbench.Uint32(uint32(seqNum1) + uint32((numPkts-1)*payloadSize))
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: expectedSeqNum}, payload, timeout); err != nil {
-		t.Fatalf("expected payload was not received: %s", err)
-	}
-}
-
-// TestRACKWithoutReorder tests that without reordering RACK will retransmit the
-// lost packets after reorder timer expires.
-func TestRACKWithoutReorder(t *testing.T) {
-	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
-	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
-	seqNum1 := *conn.RemoteSeqNum(t)
-
-	// Send ACK for data packets to establish RTT.
-	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
-	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
-
-	// We are not sending ACK for these packets.
-	const numPkts = 4
-	sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
-
-	// SACK for [3,4] packets.
-	sackBlock := make([]byte, 40)
-	start := seqNum1.Add(seqnum.Size(2 * payloadSize))
-	end := start.Add(seqnum.Size(2 * payloadSize))
-	sbOff := 0
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
-		start, end,
-	}}, sackBlock[sbOff:])
-	time.Sleep(simulatedRTT)
-	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock[:sbOff]})
-
-	// RACK marks #1 and #2 packets as lost and retransmits both after
-	// RTT + reorderWindow. The reorderWindow initially will be a small
-	// fraction of RTT.
-	rtt, _ := getRTTAndRTO(t, dut, acceptFd)
-	timeout := 2 * rtt
-	for i, sn := 0, seqNum1; i < 2; i++ {
-		if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(sn))}, payload, timeout); err != nil {
-			t.Fatalf("expected payload was not received: %s", err)
-		}
-		sn.UpdateForward(seqnum.Size(payloadSize))
-	}
-}
-
-// TestRACKWithReorder tests that RACK will retransmit segments when there is
-// reordering in the connection and reorder timer expires.
-func TestRACKWithReorder(t *testing.T) {
-	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
-	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
-	seqNum1 := *conn.RemoteSeqNum(t)
-
-	// Send ACK for data packets to establish RTT.
-	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
-	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
-
-	// Netstack's Reno halves the outstanding flight on loss. Send eight
-	// segments so recovery leaves room for the second flight of four. Its three
-	// SACKed segments exercise RACK's reordering window past the dup-ACK threshold.
-	const firstFlightPackets = 8
-	const secondFlightPackets = 4
-	sendAndReceive(t, dut, conn, firstFlightPackets, acceptFd, payloadSize, false /* sendACK */)
-
-	time.Sleep(simulatedRTT)
-	// SACK in reverse order for the connection to detect reorder.
-	var start seqnum.Value
-	var end seqnum.Value
-	for i := 0; i < firstFlightPackets-1; i++ {
-		sackBlock := make([]byte, 40)
-		sbOff := 0
-		start = seqNum1.Add(seqnum.Size((firstFlightPackets - i - 1) * payloadSize))
-		end = start.Add(seqnum.Size((i + 1) * payloadSize))
-		sbOff += header.EncodeNOP(sackBlock[sbOff:])
-		sbOff += header.EncodeNOP(sackBlock[sbOff:])
-		sbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
-			start, end,
-		}}, sackBlock[sbOff:])
-		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock[:sbOff]})
-	}
-
-	// A DSACK reports duplicate bytes actually received. Wait for the first
-	// segment to be retransmitted before reporting exactly that segment.
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum1))}, payload, time.Second); err != nil {
-		t.Fatalf("first-round retransmission was not received: %s", err)
-	}
-	// Require recovery before the DSACK, so the Open poll below cannot succeed
-	// on stale pre-ACK state. Loss would indicate a retransmission timeout.
-	beforeDSACK := dut.GetSockOptTCPInfo(t, acceptFd)
-	if got, want := beforeDSACK.CaState, uint8(linux.TCP_CA_Recovery); got != want {
-		t.Fatalf("congestion state after retransmission = %d, want %d (recovery)", got, want)
-	}
-	dsackBlock := make([]byte, 40)
-	dbOff := 0
-	start = seqNum1
-	end = start.Add(seqnum.Size(payloadSize))
-	dbOff += header.EncodeNOP(dsackBlock[dbOff:])
-	dbOff += header.EncodeNOP(dsackBlock[dbOff:])
-	dbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
-		start, end,
-	}}, dsackBlock[dbOff:])
-	conn.Send(t, testbench.TCP{
-		Flags:   testbench.TCPFlags(header.TCPFlagAck),
-		AckNum:  testbench.Uint32(uint32(seqNum1.Add(seqnum.Size(firstFlightPackets * payloadSize)))),
-		Options: dsackBlock[:dbOff],
-	})
-
-	// Wait for the DSACK to finish recovery before sending the next flight.
-	deadline := time.Now().Add(time.Second)
-	for {
-		info := dut.GetSockOptTCPInfo(t, acceptFd)
-		if info.CaState == linux.TCP_CA_Open {
-			if got, want := info.SndCwnd, uint32(secondFlightPackets); got < want {
-				t.Fatalf("congestion window = %d, want at least %d segments", got, want)
+// TestFlightFence drives two valid receiver histories on the same packet topology.
+func TestFlightFence(t *testing.T) {
+	for _, mode := range []string{"cross_sack", "old_fence"} {
+		t.Run(mode, func(t *testing.T) {
+			dut, conn, fd, mss := createSACKConnection(t)
+			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("reno"))
+			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+			sendAndReceive(t, dut, conn, 4, fd, mss, true)
+			base := *conn.RemoteSeqNum(t)
+			seq := func(off int) seqnum.Value { return base.Add(seqnum.Size(off)) }
+			observe := func(at string) linux.TCPInfo {
+				info := dut.GetSockOptTCPInfo(t, fd)
+				fmt.Printf("FENCE_STATE mode=%s phase=%s ca=%d cwnd=%d threshold=%d rto_us=%d retransmits=%d backoff=%d mss=%d\n", mode, at, info.CaState, info.SndCwnd, info.SndSsthresh, info.RTO, info.Retransmits, info.Backoff, mss)
+				return info
 			}
-			break
-		}
-		if !time.Now().Before(deadline) {
-			t.Fatal("DSACK did not complete recovery within one second")
-		}
-		time.Sleep(time.Millisecond)
+			ack := func(off, start, end int) {
+				var opts []byte
+				if start >= 0 {
+					opts = make([]byte, 40)
+					n := header.EncodeNOP(opts)
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeSACKBlocks([]header.SACKBlock{{Start: seq(start), End: seq(end)}}, opts[n:])
+					opts = opts[:n]
+				}
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seq(off))), Options: opts})
+				fmt.Printf("FENCE_ACK mode=%s cumulative=%d sack=%d-%d\n", mode, off, start, end)
+			}
+			packet := func(at string, off, size int, timeout time.Duration) {
+				t.Helper()
+				var payload testbench.Payload
+				if size > 0 {
+					payload.Bytes = make([]byte, size)
+				}
+				start := time.Now()
+				layers, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seq(off)))}, &payload, timeout)
+				if err != nil {
+					t.Fatalf("%s, offset=%d: %v", at, off, err)
+				}
+				actual := len(layers[len(layers)-1].(*testbench.Payload).Bytes)
+				fmt.Printf("FENCE_WIRE mode=%s phase=%s offset=%d bytes=%d wait_us=%d\n", mode, at, off, actual, time.Since(start).Microseconds())
+			}
+			send := func(at string, off, size int) {
+				if got, want := dut.Send(t, fd, make([]byte, size), 0), int32(size); got != want {
+					t.Fatalf("Send = %d, want %d", got, want)
+				}
+				packet(at, off, size, time.Second)
+			}
+			const guard = 3 * time.Second
+			old := 7*mss + 3
+			sendAndReceive(t, dut, conn, 7, fd, mss, false)
+			send("original_edge", old-3, 1)
+			send("original_hole", old-2, 1)
+			send("original_sacked_byte", old-1, 1)
+			time.Sleep(simulatedRTT)
+			ack(mss, 4*mss, 7*mss)
+			packet("fast_repair", mss, mss, guard)
+			if got, want := observe("fast_repair").CaState, uint8(linux.TCP_CA_Recovery); got != want {
+				t.Fatalf("first repair state=%d want recovery (%d)", got, want)
+			}
+			packet("first_timeout", mss, mss, guard)
+			if got, want := observe("first_timeout").CaState, uint8(linux.TCP_CA_Loss); got != want {
+				t.Fatalf("second repair state=%d want loss (%d)", got, want)
+			}
+			ack(2*mss, 4*mss, 7*mss)
+			// This ACK clocks another repair; leave the final three
+			// separately observed one-byte packets outstanding.
+			packet("partial_repair", 2*mss, 0, guard)
+			ack(old-3, -1, -1)
+			packet("tail_repair", old-3, 0, guard)
+			send("new_flight", old, mss)
+			started := time.Now()
+			before := observe("new_outstanding")
+			packet("second_timeout", old-3, 0, guard)
+			elapsed := time.Since(started)
+			if elapsed < time.Duration(before.RTO)*time.Microsecond/2 {
+				t.Fatalf("not an RTO witness: repair after %v, RTO=%d us", elapsed, before.RTO)
+			}
+			observe("second_timeout")
+			if mode == "cross_sack" {
+				// ACK one more byte but leave a hole at old-2. The receiver
+				// saw the final original byte and the post-timeout segment.
+				ack(old-2, old-1, old+mss)
+			} else {
+				// The receiver has filled the old hole, but lost the new data.
+				ack(old, -1, -1)
+			}
+			// TCP_INFO and a subsequent wire observation distinguish a state
+			// transition from a retransmission the peer can actually observe.
+			time.Sleep(simulatedRTT)
+			observe("after_ack")
+			if mode == "old_fence" {
+				packet("new_repair", old, 0, guard)
+			} else {
+				// Capture any response before the next RTO. The other arms
+				// need not transmit a repair just because one arm does.
+				timeout := 80 * time.Millisecond
+				frames, _ := conn.ListenForFrame(t, testbench.Layers{nil, nil, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seq(old - 2)))}, &testbench.Payload{}}, timeout)
+				n := 0
+				for _, f := range frames {
+					if len(f) != 4 {
+						continue
+					}
+					tcp, ok := f[2].(*testbench.TCP)
+					if !ok || tcp.SeqNum == nil {
+						continue
+					}
+					payload, ok := f[3].(*testbench.Payload)
+					if !ok {
+						continue
+					}
+					offset := uint32(*tcp.SeqNum) - uint32(base)
+					if offset <= uint32(old+mss) {
+						fmt.Printf("FENCE_WIRE mode=%s phase=post_sack offset=%d bytes=%d\n", mode, offset, len(payload.Bytes))
+						n++
+					}
+				}
+				fmt.Printf("FENCE_WIRE mode=%s phase=response_window seen=%d timeout_us=%d\n", mode, n, timeout.Microseconds())
+			}
+			ack(old+mss, -1, -1)
+			fmt.Printf("FENCE_DONE mode=%s\n", mode)
+		})
 	}
-
-	seqNum1.UpdateForward(seqnum.Size(firstFlightPackets * payloadSize))
-	// ExpectData tracks the end of the last matched segment, including old
-	// retransmissions. Restore the cumulative receive position before expecting
-	// new data, so queued first-flight retransmissions cannot match this flight.
-	*conn.RemoteSeqNum(t) = seqNum1
-	sendTime := time.Now()
-	sendAndReceive(t, dut, conn, secondFlightPackets, acceptFd, payloadSize, false /* sendACK */)
-
-	time.Sleep(simulatedRTT)
-	// Send SACK for [2-4] packets.
-	sackBlock := make([]byte, 40)
-	sbOff := 0
-	start = seqNum1.Add(seqnum.Size(payloadSize))
-	end = start.Add(seqnum.Size((secondFlightPackets - 1) * payloadSize))
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
-		start, end,
-	}}, sackBlock[sbOff:])
-	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock[:sbOff]})
-
-	// Expect the retransmission of #1 packet after RTT+ReorderWindow.
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum1))}, payload, time.Second); err != nil {
-		t.Fatalf("expected payload was not received: %s", err)
-	}
-	rtt, _ := getRTTAndRTO(t, dut, acceptFd)
-	diff := time.Now().Sub(sendTime)
-	if diff < rtt {
-		t.Fatalf("expected payload was received too soon, within RTT")
-	}
-}
-
-// TestRACKWithLostRetransmission tests that RACK will not enter RTO when a
-// retransmitted segment is lost and enters fast recovery.
-func TestRACKWithLostRetransmission(t *testing.T) {
-	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
-	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
-	seqNum1 := *conn.RemoteSeqNum(t)
-
-	// Send ACK for data packets to establish RTT.
-	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
-	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
-
-	// We are not sending ACK for these packets.
-	const numPkts = 5
-	sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
-
-	// SACK for [2-5] packets.
-	sackBlock := make([]byte, 40)
-	start := seqNum1.Add(seqnum.Size(payloadSize))
-	end := start.Add(seqnum.Size(4 * payloadSize))
-	sbOff := 0
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeNOP(sackBlock[sbOff:])
-	sbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
-		start, end,
-	}}, sackBlock[sbOff:])
-	time.Sleep(simulatedRTT)
-	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock[:sbOff]})
-
-	// RACK marks #1 packet as lost and retransmits it after
-	// RTT + reorderWindow. The reorderWindow is bounded between a small
-	// fraction of RTT and 1 RTT.
-	rtt, _ := getRTTAndRTO(t, dut, acceptFd)
-	timeout := 2 * rtt
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum1))}, payload, timeout); err != nil {
-		t.Fatalf("expected payload was not received: %s", err)
-	}
-
-	// Send #6 packet.
-	if got, want := dut.Send(t, acceptFd, payload.Bytes, 0), int32(len(payload.Bytes)); got != want {
-		t.Fatalf("Send #6 = %d, want %d", got, want)
-	}
-	seqNum6 := seqNum1.Add(seqnum.Size(5 * payloadSize))
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum6))}, payload, time.Second); err != nil {
-		t.Fatalf("ExpectData #6: %s", err)
-	}
-
-	// SACK for [2-6] packets.
-	sackBlock1 := make([]byte, 40)
-	start = seqNum1.Add(seqnum.Size(payloadSize))
-	end = start.Add(seqnum.Size(5 * payloadSize))
-	sbOff1 := 0
-	sbOff1 += header.EncodeNOP(sackBlock1[sbOff1:])
-	sbOff1 += header.EncodeNOP(sackBlock1[sbOff1:])
-	sbOff1 += header.EncodeSACKBlocks([]header.SACKBlock{{
-		start, end,
-	}}, sackBlock1[sbOff1:])
-	time.Sleep(simulatedRTT)
-	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock1[:sbOff1]})
-
-	// Expect re-retransmission of #1 packet without entering an RTO.
-	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum1))}, payload, timeout); err != nil {
-		t.Fatalf("expected payload was not received: %s", err)
-	}
-
-	// Check the congestion control state.
-	info := dut.GetSockOptTCPInfo(t, acceptFd)
-	if info.CaState != linux.TCP_CA_Recovery {
-		t.Fatalf("expected connection to be in fast recovery, want: %v got: %v", linux.TCP_CA_Recovery, info.CaState)
-	}
-}
-
-// A receiver may repeat a SACK after a timeout. If it names the same
-// transmission, the repeat provides no new evidence of reordering.
-func TestRACKRepeatedSACKAfterRTO(t *testing.T) {
-	const peerRTT = 150 * time.Millisecond
-	dut, conn, fd, mss := createSACKConnectionWithPeerRTT(t, peerRTT)
-	dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("cubic"))
-	for range 4 {
-		sendAndReceive(t, dut, conn, 1, fd, mss, false)
-		time.Sleep(peerRTT)
-		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
-	}
-	first := *conn.RemoteSeqNum(t)
-	sendAndReceive(t, dut, conn, 5, fd, mss, false)
-	time.Sleep(peerRTT)
-	block := func(i int) header.SACKBlock {
-		start := first.Add(seqnum.Size(i * mss))
-		return header.SACKBlock{Start: start, End: start.Add(seqnum.Size(mss))}
-	}
-	ack := func(tag byte, next seqnum.Value, blocks ...header.SACKBlock) {
-		t.Helper()
-		var options [40]byte
-		n := header.EncodeNOP(options[:])
-		n += header.EncodeNOP(options[n:])
-		n += header.EncodeSACKBlocks(blocks, options[n:])
-		conn.Send(t, testbench.TCP{
-			Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(next)), Options: options[:n],
-		}, &testbench.Payload{Bytes: []byte{tag}})
-		// Read the byte so TCP has processed this ACK before sampling TCP_INFO.
-		if got := dut.Recv(t, fd, 1, 0); len(got) != 1 || got[0] != tag {
-			t.Fatalf("recv = %v, want tag %d", got, tag)
-		}
-		if got := dut.GetSockOptTCPInfo(t, fd).ReordSeen; got != 0 {
-			t.Fatalf("ACK %d: TCP_INFO.ReordSeen = %d, want 0", tag, got)
-		}
-	}
-	ack(1, first, block(4), block(2))
-	ack(2, first, block(2))
-
-	// Fast recovery can retransmit the first segment before the RTO.
-	deadline := time.Now().Add(8 * time.Second)
-	for {
-		if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(first))}, &testbench.Payload{Bytes: make([]byte, mss)}, time.Until(deadline)); err != nil {
-			t.Fatalf("waiting for retransmission of first segment in Loss: %v", err)
-		}
-		if dut.GetSockOptTCPInfo(t, fd).CaState == linux.TCP_CA_Loss {
-			break
-		}
-	}
-	ack(3, first.Add(seqnum.Size(mss)), block(2))
 }

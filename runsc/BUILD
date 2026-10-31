@@ -20,7 +20,6 @@ go_binary(
     x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
         "//runsc/cli/maincli",
-        "//runsc/coretagprime",
         "//runsc/version",
     ],
 )
@@ -40,7 +39,6 @@ go_binary(
     deps = [
         "//pkg/sentry/socket/plugin/cgo",
         "//runsc/cli/maincli",
-        "//runsc/coretagprime",
         "//runsc/sandbox",
         "//runsc/version",
     ],
@@ -71,7 +69,6 @@ go_binary(
     x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
         "//runsc/cli/maincli",
-        "//runsc/coretagprime",
         "//runsc/version",
     ],
 )

@@ -436,7 +436,6 @@ go_test(
     srcs = [
         "fd_table_test.go",
         "kcov_test.go",
-        "kernel_idle_test.go",
         "kernel_restore_test.go",
         "pending_signals_test.go",
         "seccomp_cache_test.go",

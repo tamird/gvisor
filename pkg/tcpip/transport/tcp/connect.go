@@ -573,13 +573,19 @@ func (h *handshake) processSegments() tcpip.Error {
 func (h *handshake) start() {
 	h.startTime = h.ep.stack.Clock().NowMonotonic()
 	h.ep.amss = calculateAdvertisedMSS(h.ep.userMSS, h.ep.route)
+	var sackEnabled tcpip.TCPSACKEnabled
+	if err := h.ep.stack.TransportProtocolOption(ProtocolNumber, &sackEnabled); err != nil {
+		// If stack returned an error when checking for SACKEnabled
+		// status then just default to switching off SACK negotiation.
+		sackEnabled = false
+	}
 
 	synOpts := header.TCPSynOptions{
 		WS:            h.rcvWndScale,
 		TS:            true,
 		TSVal:         h.ep.tsValNow(),
 		TSEcr:         h.ep.recentTimestamp(),
-		SACKPermitted: h.ep.protocol.sackPermitted(),
+		SACKPermitted: bool(sackEnabled),
 		MSS:           h.ep.amss,
 	}
 
@@ -587,7 +593,7 @@ func (h *handshake) start() {
 	// send the TS/SACK option when we received the TS/SACK in the initial SYN.
 	if h.state == handshakeSynRcvd {
 		synOpts.TS = h.ep.SendTSOk
-		synOpts.SACKPermitted = synOpts.SACKPermitted && h.ep.SACKPermitted
+		synOpts.SACKPermitted = h.ep.SACKPermitted && bool(sackEnabled)
 		if h.sndWndScale < 0 {
 			// Disable window scaling if the peer did not send us
 			// the window scaling option.

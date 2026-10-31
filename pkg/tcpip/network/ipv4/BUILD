@@ -23,6 +23,7 @@ go_library(
         "//pkg/tcpip/checksum",
         "//pkg/tcpip/header",
         "//pkg/tcpip/header/parse",
+        "//pkg/tcpip/network/hash",
         "//pkg/tcpip/network/internal/fragmentation",
         "//pkg/tcpip/network/internal/ip",
         "//pkg/tcpip/network/internal/multicast",

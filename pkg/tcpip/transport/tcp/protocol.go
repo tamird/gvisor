@@ -415,22 +415,15 @@ func (p *protocol) SetOption(option tcpip.SettableTransportProtocolOption) tcpip
 	}
 }
 
-// sackPermitted reports whether the stack allows SACK negotiation.
-//
-// +checklocksexclude:p.mu
-func (p *protocol) sackPermitted() bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.sackEnabled
-}
-
 // Option implements stack.TransportProtocol.Option.
 //
 // +checklocksexclude:p.mu
 func (p *protocol) Option(option tcpip.GettableTransportProtocolOption) tcpip.Error {
 	switch v := option.(type) {
 	case *tcpip.TCPSACKEnabled:
-		*v = tcpip.TCPSACKEnabled(p.sackPermitted())
+		p.mu.RLock()
+		*v = tcpip.TCPSACKEnabled(p.sackEnabled)
+		p.mu.RUnlock()
 		return nil
 
 	case *tcpip.TCPRecovery:

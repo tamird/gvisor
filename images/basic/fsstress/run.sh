@@ -14,6 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Keep a shell parent: fsstress workers exit when their parent PID is 1,
-# which they interpret as the parent having died.
 /usr/bin/fsstress "$@"

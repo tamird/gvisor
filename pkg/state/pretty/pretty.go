@@ -219,36 +219,22 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 
 	for {
 		// Find the first object to begin generation.
-		hdr, err := state.ReadHeaderMode(&wr)
+		length, object, err := state.ReadHeader(&wr)
 		if err == io.EOF {
 			// Nothing else to do.
 			break
 		} else if err != nil {
 			return err
 		}
-		if !hdr.Object {
+		if !object {
 			graph++ // Increment the graph.
-			if hdr.Length > 0 {
-				fmt.Fprintf(w, "(%d bytes non-object data)\n", hdr.Length)
+			if length > 0 {
+				fmt.Fprintf(w, "(%d bytes non-object data)\n", length)
 				io.Copy(io.Discard, &io.LimitedReader{
 					R: r,
-					N: int64(hdr.Length),
+					N: int64(length),
 				})
 			}
-			continue
-		}
-		if hdr.Graph {
-			if hdr.Length > 4<<30 {
-				return fmt.Errorf("invalid object graph length %d", hdr.Length)
-			}
-			data := make([]byte, hdr.Length)
-			if _, err := io.ReadFull(r, data); err != nil {
-				return err
-			}
-			if err := state.PrintGraph(w, data, graph, p.html); err != nil {
-				return err
-			}
-			graph++
 			continue
 		}
 
@@ -265,7 +251,7 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 			tid     uint64 = 1
 			objects []objectAndID
 		)
-		for i := uint64(0); i < hdr.Length; {
+		for i := uint64(0); i < length; {
 			// Unmarshal either a type object or object ID.
 			encoded := wire.Load(&wr)
 			switch we := encoded.(type) {

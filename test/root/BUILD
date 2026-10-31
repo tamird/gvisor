@@ -104,7 +104,6 @@ go_test(
     deps = [
         "//pkg/cleanup",
         "//pkg/test/dockerutil",
-        "//pkg/test/testutil",
         "//runsc/config",
         "//runsc/flag",
         "//runsc/specutils",
