@@ -4,6 +4,7 @@ on:
     branches: [qualification/tailscale180-no-timestamps]
 permissions:
   contents: read
+  actions: read
 jobs:
   replay:
     if: github.repository == 'tamird/gvisor'
@@ -12,26 +13,31 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 3
+        fetch-depth: 6
         persist-credentials: false
     - name: Check historical source and run the pinned reporter
       shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/scripts"
         printf '%s\n' '{"status":"FAIL","error":"preflight or comparison did not complete"}' > "$RUNNER_TEMP/records/verdict.json"
-        cp test/rbe/tailscale180/*.py "$RUNNER_TEMP/scripts/"
-        [[ "$(git rev-parse "$GITHUB_SHA^")" == e2f328e234de10bc67b1da05b3640b6a369f9cd5 ]]
+        cp test/rbe/tailscale180/*.py test/rbe/tailscale180/parents.json "$RUNNER_TEMP/scripts/"
+        gh api repos/tamird/gvisor/actions/artifacts/13028531531/zip > "$RUNNER_TEMP/original.zip"
+        echo "ad1ec35777161f063a3637cd57f8db667c856cca30527fd824fe893b831eaf82  $RUNNER_TEMP/original.zip" | sha256sum --check
+        unset GH_TOKEN
+        git merge-base --is-ancestor e2f328e234de10bc67b1da05b3640b6a369f9cd5 "$GITHUB_SHA"
         git checkout --quiet --detach e2f328e234de10bc67b1da05b3640b6a369f9cd5
         curl -fsSL --retry 3 https://releases.bazel.build/7.1.2/release/bazel-7.1.2-linux-x86_64 -o "$RUNNER_TEMP/bazel-7.1.2"
         echo "0a96c4f0a121417e0aad666a3a3a1ef1d72de388463f9f4ddbb496b52e1a0232  $RUNNER_TEMP/bazel-7.1.2" | sha256sum --check
         chmod 0755 "$RUNNER_TEMP/bazel-7.1.2"
         curl -fsSL --retry 3 https://codeload.github.com/adios-404/netstack-rack-repro/tar.gz/ad90750cf030c4e56a83cdba8ae1d4f3c1ff75c8 -o "$RUNNER_TEMP/reporter.tar.gz"
         { uname -a; "$RUNNER_TEMP/bazel-7.1.2" --version; git rev-parse HEAD; } > "$RUNNER_TEMP/records/host.txt"
-        python3 -B "$RUNNER_TEMP/scripts/run.py"
+        python3 -B "$RUNNER_TEMP/scripts/recover.py"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tailscale180-two-stack-replay
+        name: tailscale180-matched-repair-comparison
         path: ${{ runner.temp }}/records/
         if-no-files-found: error
