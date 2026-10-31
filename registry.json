@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T03:16:50.067941+00:00",
+    "updatedAt": "2026-10-31T03:31:48.340156+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38305,20 +38305,52 @@
       "id": "branch:staged-release-tag",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/staged-release-tag",
-      "head": "49c59fcc0063fa0e98d2b383947e4c238be0f21a",
+      "ref": "research/staged-release-tag-native-version",
+      "head": "8529bfdd3776d087b9d705df0c5232a8337113ab",
       "title": "Build staged releases with the verified tag",
-      "url": "https://github.com/tamird/gvisor/commit/49c59fcc0",
+      "url": "https://github.com/tamird/gvisor/compare/316da5996...8529bfdd3",
       "group": "rbe",
-      "status": "Agent revising package version action",
-      "summary": "The release job already verifies that its tag points to its checkout. Pass that tag to Bazel during building and signing. AMD64 and ARM64 binaries and package metadata reported the supplied release; the ordinary build retained its development version. The package version genrule still reads bazel-out directly and runs host text tools. The owner is replacing that part before asking for review.",
-      "updatedAt": "2026-10-31T03:05:31.618066+00:00",
+      "status": "Contributor review requested",
+      "summary": "Buildkite verifies the release tag before it builds either architecture. The binaries, sidecars and Debian version now consume that tag. Ordinary builds retain their Git-derived version for checkpoint compatibility.",
+      "updatedAt": "2026-10-31T03:31:48.340156+00:00",
       "evidence": [
+        {
+          "label": "Four original package outputs and declared action inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41164498595/artifacts/13028154558"
+        },
+        {
+          "label": "Prior genrule cannot start on the empty execution worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41163999912/artifacts/13028455737"
+        },
         {
           "label": "Both staged releases and ordinary-build control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41160163215/artifacts/13027102542"
+        },
+        {
+          "label": "Shared package writer on the current upstream base",
+          "url": "https://github.com/tamird/gvisor/compare/8a84b240f...316da5996"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "base": "0bbcbf9de7626fcecba97f37723dce80b435d73d",
+          "head": "49c59fcc0063fa0e98d2b383947e4c238be0f21a"
+        },
+        "after": {
+          "base": "316da599641e292eeda46053079afef1bc5bb4ef",
+          "head": "8529bfdd3776d087b9d705df0c5232a8337113ab"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "316da599641e292eeda46053079afef1bc5bb4ef",
+        "head": "8529bfdd3776d087b9d705df0c5232a8337113ab",
+        "url": "https://github.com/tamird/gvisor/compare/316da5996...8529bfdd3",
+        "title": "Open the staged-tag PR after the shared package writer lands",
+        "summary": "The declared writer produced 20991231.7 on both target architectures, 20991231.8 when just the tag changed, and 20981231.4 for the ordinary Git-tagged build. The previous writer failed to start on the same empty worker.",
+        "body": "Review this final commit. Its parent is the same package writer already included in the release archive review. That writer must land first; the staged-tag change can then open independently of archive signing."
+      }
     }
   ],
   "edges": [
@@ -41588,6 +41620,16 @@
       "reason": "The Go export target and ZIP assembler are introduced by #15106.",
       "evidence": [
         "https://github.com/google/gvisor/pull/15106"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:package-version-status",
+      "to": "branch:staged-release-tag",
+      "reason": "The staged release selects the verified tag in the native package writer. This parent is patch-identical to the first commit in the existing release archive review.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/316da5996",
+        "https://github.com/tamird/gvisor/commit/dd0c5f16a"
       ]
     }
   ],
