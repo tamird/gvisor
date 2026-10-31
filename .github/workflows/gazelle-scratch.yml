@@ -1,0 +1,29 @@
+name: Verify declared Gazelle inputs on Linux
+on:
+  push:
+    branches: [qualification/gazelle-wildcard-isolation-aa767e4c4]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  candidate:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SOURCE: 0eb8eca5ba25161133cd6fb8ad5a21604e988b92
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: source, ref: '${{ env.SOURCE }}', fetch-depth: 2, persist-credentials: false}
+      - name: Check real downstream resources and isolate wildcard selection
+        working-directory: source
+        run: python3 ../carrier/.github/qualification/lint-source/gazelle.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: gazelle-qualification
+          path: ${{ runner.temp }}/gazelle-qualification/
+          if-no-files-found: error
