@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T15:01:47.524265+00:00",
+    "updatedAt": "2026-10-31T15:23:16.789097+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1813,7 +1813,7 @@
       "summary": "The source conflict is repaired at e22d4ffb69. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. The GNU amendment remains delivered; the independent musl follow-up keeps its own evidence and scope.\n\nEarlier source-specific record:\n\nThe contributor-approved GNU replacement is published on #15153 at 85c742f25. This revision preserves the approved implementation and applies buildifier attribute ordering. Both ordinary GNU static consumers passed on 7d549676b, and the 203-record license audit remains bound to identical license inputs. No GNU runtime traffic is claimed. The contributor decision is complete; current public checks and the two existing maintainer requests are reported by the provider snapshot. The separate musl candidate ccae8886e has target-specific GNU and musl evidence but remains agent work pending full compiler-consumer proof.\n\nPreserved earlier amendment record:\n\nThe public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-27T18:54:54+00:00",
+      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
       "followup": {
         "disposition": "Equivalent conflict repair published; existing review requirements retained",
         "owner": "root",
@@ -1842,6 +1842,10 @@
         }
       },
       "evidence": [
+        {
+          "label": "Same GNU binaries and socket test: native and ordinary gVisor pass; TLDK exits before the guest starts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41214352576/artifacts/13046709120"
+        },
         {
           "label": "Current published GNU amendment with buildifier ordering",
           "url": "https://github.com/tamird/gvisor/commit/85c742f25194e6198c292e099754f09549f09cdf"
@@ -39908,6 +39912,82 @@
         "summary": "Open the three-line timekeeper annotation PR.",
         "body": "Starting or stopping the clock updater publishes or tears down its timer\nand stop channel. Require the lifecycle mutex at both calls. Require the\nupdate mutex when publishing clock samples through the vDSO page."
       }
+    },
+    {
+      "id": "branch:state-graph-root",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/state-graph-root",
+      "head": "5d1cdcc112de9b8e93c8791a9318dff3fffbf7b9",
+      "title": "Reject a backing array as the root of a graph checkpoint",
+      "url": "https://github.com/tamird/gvisor/commit/5d1cdcc11",
+      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
+      "status": "Contributor review requested",
+      "summary": "A malformed checkpoint encoded a backing array containing 42 but no root value. The inspector rejected it; stock Load returned success and left the caller’s array at 7. The fix rejects that record before allocating backing storage. It does not change checkpoints produced by Save.",
+      "evidence": [
+        {
+          "label": "Original and corrected Load; 160 valid array cases and both full corrected suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41214300955/artifacts/13047731962"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "5d1cdcc112de9b8e93c8791a9318dff3fffbf7b9",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/5d1cdcc11",
+        "title": "Reject a backing array as the root of a graph checkpoint",
+        "requestedAt": "2026-10-31T15:23:16.789097+00:00",
+        "summary": "A malformed checkpoint encoded a backing array containing 42 but no root value. The inspector rejected it; stock Load returned success and left the caller’s array at 7. The fix rejects that record before allocating backing storage. It does not change checkpoints produced by Save.",
+        "body": "The first object describes the value to restore into the caller's\ndestination. A backing-array record instead allocates separate storage.\nLoad accepted a stream containing only that record and decoded its\npayload into the new allocation, leaving the caller's value unchanged.\n\nRequire a value record for the root, as PrintGraph already does."
+      }
+    },
+    {
+      "id": "branch:tcp-sack-reneging",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-sack-reneging",
+      "head": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
+      "title": "Retry promptly when a TCP ACK contradicts an earlier SACK",
+      "url": "https://github.com/tamird/gvisor/commit/3d868e9c6",
+      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
+      "status": "Contributor review requested",
+      "summary": "If a cumulative ACK stops inside a packet that the peer reported receiving in full, Linux retries sooner. A SACK for only the packet’s suffix leaves the usual timeout in place. The same distinction applies when gVisor retransmits a shorter fragment. Submit after #15634.",
+      "evidence": [
+        {
+          "label": "Linux, original and fixed packet captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41204594691/artifacts/13044207947"
+        },
+        {
+          "label": "Peer-visible whole-packet and suffix behavior with the overlapping-transmission fix",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41212748780/artifacts/13046533335"
+        },
+        {
+          "label": "Seven queue-split timer decisions and the test analyzer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41213831861/artifacts/13047103629"
+        },
+        {
+          "label": "537 TCP, RACK and SACK cases and the production analyzer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41213140054/artifacts/13046998377"
+        },
+        {
+          "label": "Reviewer guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
+        "baseHead": "f96afe45777d10e02b6565b76dd255f0062503ec",
+        "url": "https://github.com/tamird/gvisor/commit/3d868e9c6",
+        "title": "Retry promptly when a TCP ACK contradicts an earlier SACK",
+        "requestedAt": "2026-10-31T15:23:16.789097+00:00",
+        "summary": "If a cumulative ACK stops inside a packet that the peer reported receiving in full, Linux retries sooner. A SACK for only the packet’s suffix leaves the usual timeout in place. The same distinction applies when gVisor retransmits a shorter fragment. Submit after #15634.",
+        "body": "A receiver under memory pressure can discard data it previously\nreported receiving. If its cumulative ACK stops inside a packet that\nit selectively acknowledged in full, waiting for the retransmission\ntimeout can delay recovery. A SACK for only the tail of that packet\ndoes not establish the same contradiction.\n\nGive the receiver half a round trip (at least 10 ms) to advance its\nACK before retransmitting, as Linux does [1]. Keep enough of the\nreported range to distinguish a whole transmission from a suffix as\nACKs advance. Check the original packet and any shorter retransmission\nduring the existing walk that updates SACK credit.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L2247-L2256"
+      }
     }
   ],
   "edges": [
@@ -43192,6 +43272,15 @@
         "https://github.com/tamird/gvisor/actions/runs/41166982711/artifacts/13029633072",
         "https://github.com/tamird/rules_go/commit/aec31ccc8"
       ]
+    },
+    {
+      "from": "pr:15634",
+      "to": "branch:tcp-sack-reneging",
+      "type": "depends_on",
+      "reason": "Recovery uses the transmitted-packet boundaries and queue credit introduced in #15634.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/f96afe457...3d868e9c6"
+      ]
     }
   ],
   "investigations": [
@@ -46085,7 +46174,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T14:29:35.288450+00:00",
+      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. The four round-trip regressions tracked in #16715 are fixed on master (#16747). The open question is whether the graph encoder’s range index costs enough time or memory on a real workload to justify changing it.",
       "findings": [
         {
@@ -48915,7 +49004,7 @@
           ]
         }
       ],
-      "nextStep": "The Nginx Save/Load profiles and both follow-up experiments are complete; see the state reflection profiles investigation. Review new graph codec changes against the measured checkpoint and round-trip controls as they arrive. No action is requested on the pooling or varint experiments.",
+      "nextStep": "Graph checkpoints are now the default. Measure the object and target tables and temporary array buffers on a real four-worker Nginx Save before choosing an encoder change. Older wire-format results apply only to the wire engine.",
       "evidence": [
         {
           "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
@@ -58001,7 +58090,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T14:56:41.741127+00:00",
+      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
@@ -58113,8 +58202,16 @@
           ]
         }
       ],
-      "nextStep": "Exclude file symlinks that lead outside the checkout before proposing the Gazelle action. Its declared gazelle.status is also visible to a file-inclusive root wildcard (:*); preserve the root entry point without expanding what downstream builds select. Keep gVisor’s production Go overrides separate.",
+      "nextStep": "The Gazelle check now excludes source symlinks and keeps its output in //tools/lint behind the root alias. Confirm a clean Gazelle run and fix the Buildifier diagnostic before contributor review.",
       "evidence": [
+        {
+          "label": "Source symlink and action-input controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41213227359/artifacts/13046902331"
+        },
+        {
+          "label": "Gazelle drift and downstream wildcard selection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41214197177"
+        },
         {
           "label": "Design and qualification controls",
           "url": "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
