@@ -1,11 +1,12 @@
-name: Verify TCP cookie handshakes and negotiated windows with the GNU toolchain
+name: Check window scaling through real TCP cookie handshakes
 on:
-  workflow_dispatch:
+  push:
+    branches: [qualification/tcp-cookie-window-packets]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-gnu-wire'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-window-packets'
     runs-on: ubuntu-24.04
     timeout-minutes: 130
     steps:
@@ -14,7 +15,7 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Run the Linux waiver control and the corrected handshake flag matrix
+    - name: Check the Go clock test and both TCP packet suites
       timeout-minutes: 115
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -25,7 +26,7 @@ jobs:
         # before GitHub stops the step and uploads the completed measurements.
         packet_deadline=$((SECONDS + 110 * 60))
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "9f849b37e8c0e26e35e43a46cf188450f86b6d12"
+        test "$(git rev-parse HEAD^1)" = "ede9e61466662234221bcf24a59ce51201aadc5d"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -104,11 +105,10 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in native netstack stock-native fixed-native fixed-netstack; do
+        for arm in native netstack clock; do
           case $arm in
-            native|netstack) source=249a997c7478cc4bdb21cc248ccb554ed8aba71b; parent=df25b25c88d3b7dd52957039bd228fa63a1679d7 ;;
-            stock-native) source=8b385d7316941e0e4eacc58276ef072b4410803f; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
-            fixed-native|fixed-netstack) source=619758d82036e4647928c485d6cf36c333f81cce; parent=e40d5fe9cdb59a09f5136d9a0761257d8db1a6d1 ;;
+            native|netstack) source=7d8e856ba30ef0271690d13d2ddb1c07111a558a; parent=52c3ca8600e7b1e0bf7b3e40932e65387925fad6 ;;
+            clock) source=52c3ca8600e7b1e0bf7b3e40932e65387925fad6; parent=6316929fac62357ded49788855298576264fe4f6 ;;
           esac
           (( SECONDS < packet_deadline )) || break
           git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -124,7 +124,10 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
           opts=()
-          labels=("//test/packetimpact/tests:tcp_syncookie_${arm#*-}_test")
+          case $arm in
+            clock) labels=(//pkg/tcpip/transport/tcp/test/e2e:tcp_test); opts+=(--test-filter=TestTimestampSynCookies) ;;
+            *) labels=("//test/packetimpact/tests:tcp_syncookie_${arm}_test") ;;
+          esac
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           TCP_PACKET_SECONDS=$((packet_deadline - SECONDS))
@@ -150,7 +153,7 @@ jobs:
         from pathlib import Path
         root = Path(sys.argv[1])
         root.mkdir(parents=True, exist_ok=True)
-        arms = ["native","netstack","stock-native","fixed-native","fixed-netstack"]
+        arms = ["native","netstack","clock"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         failed = [arm for arm, verdict in verdicts.items() if not verdict["verified"]]
@@ -166,6 +169,6 @@ jobs:
       timeout-minutes: 5
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: cookie-wire-verdicts
+        name: cookie-window-packet-verdicts
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
