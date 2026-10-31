@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T04:14:00.984316+00:00",
+    "updatedAt": "2026-10-31T04:29:49.483123+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37182,7 +37182,7 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T04:05:33.896659+00:00",
+      "updatedAt": "2026-10-31T04:29:49.483123+00:00",
       "summary": "Two posting decisions remain independent. One concerns the Go memory limit selected at boot under a constrained ancestor. The other covers restore after a cgroup resize and its OOM-counter test. Each draft is shown separately below.",
       "evidence": [
         {
@@ -37256,7 +37256,7 @@
           "url": "https://github.com/google/gvisor/pull/16735/files#diff-4a63c582bfe39ff0651f5f25907be2de2f9702f6df1e6f2748ef495ab507c4e6R367",
           "title": "Post the nested memory.max boot review",
           "summary": "With a 512 MiB parent and a 2 GiB child, boot set Go’s soft limit to 1 GiB; using the tighter cgroup limit set it to 256 MiB. A 256 MiB child gave 128 MiB either way. This draft asks about the boot calculation only.",
-          "body": "@parth-opensrc, `b.totalMem` can be larger than the cgroup limit Linux enforces. On this head I set a parent’s `memory.max` to 512 MiB and its child’s to 2 GiB. The [cgroup reader](https://github.com/google/gvisor/blob/7eccf7436/runsc/cgroup/cgroup_v2.go#L413) returned 2 GiB, and `Suspend` set Go’s soft memory limit to 1 GiB. It did the same with two unlimited levels below the 512 MiB parent. A 256 MiB child correctly got a 128 MiB Go limit.\n\nCould we use the tightest visible `memory.max` before relying on this value to suspend GC? With that change the first two cases both got a 256 MiB Go limit and the control was unchanged. [Results from a real cgroup-v2 hierarchy](https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885). These measure the limit passed to Go; no workload was driven to OOM.\n\nPosted by Codex on behalf of @tamird."
+          "body": "@parth-opensrc, `b.totalMem` can be larger than the cgroup limit Linux enforces. On this head I set a parent’s `memory.max` to 512 MiB and its child’s to 2 GiB. The [cgroup reader](https://github.com/google/gvisor/blob/7eccf7436/runsc/cgroup/cgroup_v2.go#L413) returned 2 GiB, and `Suspend` set Go’s soft memory limit to 1 GiB. It did the same with two unlimited levels below the 512 MiB parent. A 256 MiB child correctly got a 128 MiB Go limit.\n\nCould we land [#16767](https://github.com/google/gvisor/pull/16767) before relying on this value to suspend GC? It fixes the shared cgroup reader. Taking the smallest visible limit gave the first two cases a 256 MiB Go limit and left the control unchanged. [Results from a real cgroup-v2 hierarchy](https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885). These measure the limit passed to Go; no workload was driven to OOM.\n\nPosted by Codex on behalf of @tamird."
         }
       ]
     },
@@ -38456,7 +38456,7 @@
       "url": "https://github.com/google/gvisor/issues/15865",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T04:14:00.984316+00:00",
+      "updatedAt": "2026-10-31T04:29:49.483123+00:00",
       "summary": "The July source and August release differ in how checkpointing waits for TIME_WAIT timer callbacks. The GKE build revision and whether failures reuse a client port are still unknown.",
       "contributorReview": {
         "status": "pending",
@@ -38464,9 +38464,13 @@
         "url": "https://github.com/google/gvisor/issues/15865",
         "title": "Reply about the GKE build and source ports",
         "summary": "Ask which revision was deployed in GKE and whether the other post-restore crashes shared a client port. The available checkpoint and loopback evidence narrows both questions.",
-        "body": "@SecretSun, I wouldn’t change `--allow-connected-on-save` for the 127.0.0.1:8081 connection. In [the July source you identified](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/transport/tcp/endpoint_state.go#L48-L67), TCP only marks a connection for termination if the route lacks save/restore support. The [loopback device advertises that support](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/link/loopback/loopback.go#L83-L85).\n\nThere is a relevant difference between the two public releases in your report. A TIME_WAIT timer can remove a connection from the demuxer. The July checkpoint code didn’t wait for those timer callbacks; [2337c1f9f](https://github.com/google/gvisor/commit/2337c1f9f) made it wait before serializing the kernel. Your August 31 OSS reproduction already includes that fix. We don’t know whether your GKE build includes it, or which map was being written in the panic. Can someone on the GKE side confirm whether that build has the timer change?\n\nFor the nil endpoint, do any of the other crashes from the same checkpoint reuse client port 43425, or another recurring source port? [Lookup tries an exact connection before the listener](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108), so destination port 8081 alone doesn’t tell us which entry returned nil. That distinction could explain why many connections to the same listener succeed between crashes.\n\nPosted by Codex on behalf of @tamird."
+        "body": "@SecretSun, I wouldn’t change `--allow-connected-on-save` for the 127.0.0.1:8081 connection. In [the July source you identified](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/transport/tcp/endpoint_state.go#L48-L67), TCP only marks a connection for termination if the route lacks save/restore support. The [loopback device advertises that support](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/link/loopback/loopback.go#L83-L85).\n\nI [tested the public July 21 release](https://github.com/tamird/gvisor/actions/runs/41168603665/artifacts/13030331016) without that flag. I checkpointed and restored twice with a connection from port 43425 already accepted on port 8081 and another connection still in the accept queue. Both exchanged bytes after each restore, and a fresh connection from 43425 reached the listener. That didn’t reproduce the panic.\n\nFor the checkpoint crash, a TIME_WAIT timer can remove a connection from the demuxer. July didn’t wait for those callbacks before serializing the kernel; [2337c1f9f](https://github.com/google/gvisor/commit/2337c1f9f) made it wait. The August 31 release you tested includes the fix. Can someone on the GKE side confirm whether the failing build includes it? We don’t know which map was being written.\n\nFor the nil endpoint, do the other crashes from the same checkpoint show the same client port, or a small set of recurring ports? [Lookup tries an exact connection before the listener](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108). The source ports would help distinguish a stale connection entry from a problem with the listener itself.\n\nPosted by Codex on behalf of @tamird."
       },
       "evidence": [
+        {
+          "label": "July 2026 runsc with the default flag: two loopback restores and tuple reuse",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41168603665/artifacts/13030331016"
+        },
         {
           "label": "July TCP checkpoint handling",
           "url": "https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/transport/tcp/endpoint_state.go#L48-L67"
