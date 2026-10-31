@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T13:27:19.063035+00:00",
+    "updatedAt": "2026-10-31T13:42:29.262086+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36999,7 +36999,7 @@
       "title": "tcp: release the port of a wildcard-bound endpoint when it is closed",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
+      "updatedAt": "2026-10-31T13:42:29.262086+00:00",
       "url": "https://github.com/google/gvisor/pull/16180",
       "summary": "The author fixed the port reservation leak and added the shared IPv4/mapped syscall regression. The remaining action is upstream approval to run fork CI.",
       "evidence": [
@@ -37027,12 +37027,13 @@
       ],
       "followup": {
         "owner": "TCP owner",
-        "disposition": "Author fixed the mapped-bind finding",
+        "disposition": "Author fixed the mapped-family port leak; approved and imported",
         "sourceHead": "48e209b56058f40e422daa3d5308d5c18a29a1ae",
-        "observedAt": "2026-10-31T01:23:33.649647+00:00",
-        "nextAction": "A maintainer can approve the fork workflow run.",
+        "observedAt": "2026-10-31T13:42:29.262086+00:00",
+        "nextAction": "Await merge. The shared syscall test passed on the approved head with 43 successful restores.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16180#discussion_r4425055803"
+          "https://github.com/google/gvisor/pull/16180#discussion_r4425055803",
+          "https://github.com/tamird/gvisor/actions/runs/41206203796/artifacts/13044339567"
         ]
       }
     },
@@ -39763,6 +39764,50 @@
         {
           "label": "Buildkite’s existing post-command reads test-log paths from Make.",
           "url": "https://github.com/google/gvisor/blob/aa767e4c4/.buildkite/hooks/post-command#L8-L56"
+        }
+      ]
+    },
+    {
+      "id": "branch:packet-network-header-capture",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/packet-network-header-capture",
+      "head": "42b379a957faa2baaa083e048d0bbd2f948c030a",
+      "title": "Skip the link header without copying the captured packet",
+      "url": "https://github.com/tamird/gvisor/commit/42b379a95",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "Start binary packet capture and cooked AF_PACKET delivery at the recorded network header offset. Looking up writable slices just to skip the link header can copy the shared packet. Raw sockets still see the link header. Writing binary PCAP to a discard sink took 21–33% less time across three packet sizes on AMD64.",
+      "updatedAt": "2026-10-31T13:42:29.262086+00:00",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "42b379a957faa2baaa083e048d0bbd2f948c030a",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/42b379a95",
+        "title": "Open the packet capture and cooked socket change",
+        "summary": "Start binary packet capture and cooked AF_PACKET delivery at the recorded network header offset. Looking up writable slices just to skip the link header can copy the shared packet. Raw sockets still see the link header. Writing binary PCAP to a discard sink took 21–33% less time across three packet sizes on AMD64."
+      },
+      "evidence": [
+        {
+          "label": "Benchstat: eight pairs per packet size; AMD64 analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41203598795/artifacts/13043662959"
+        },
+        {
+          "label": "Both affected analyzers ran on ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41205910290/artifacts/13043564407"
+        },
+        {
+          "label": "Packet capture and byte comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41202695672/artifacts/13043332807"
+        },
+        {
+          "label": "Four AF_PACKET cases on native Linux",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41201474985/artifacts/13042787583"
+        },
+        {
+          "label": "Four AF_PACKET cases on gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41200454123/artifacts/13042397154"
         }
       ]
     }
@@ -57371,7 +57416,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-31T02:54:52.285980+00:00",
+      "updatedAt": "2026-10-31T13:42:29.262086+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -57647,6 +57692,23 @@
             {
               "label": "OCI startup vs subsequent writes on the same guest",
               "url": "https://github.com/tamird/gvisor/actions/runs/41161385542/artifacts/13027456661"
+            }
+          ]
+        },
+        {
+          "text": "A socket on #15634 waited too long to retransmit after the receiver selectively acknowledged a whole packet and then cumulatively acknowledged only its prefix. The candidate distinguishes a whole packet from a suffix and resets that evidence on live restore. Before requesting review, reproduce the case where a later queue fragment still owns the original transmission after a middle fragment is retransmitted.",
+          "evidence": [
+            {
+              "label": "Linux, stock and fixed packet traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41204594691/artifacts/13044207947"
+            },
+            {
+              "label": "Original and fresh SACKs on one live restored socket",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41205817416/artifacts/13044324243"
+            },
+            {
+              "label": "Sender, RACK and SACK package checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41206675129"
             }
           ]
         }
