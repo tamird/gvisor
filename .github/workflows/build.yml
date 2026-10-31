@@ -1,35 +1,46 @@
-name: CI
-
-"on":
+name: Report the retained Nginx archive benchmark with benchstat
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-graph-stream-benchstat]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
-      with:
-          name: runsc
-          path: bin/runsc
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 2
+      - name: Reconcile the initial result and eight source-bound pairs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/packet-bench"
+          mkdir -p "$out"
+          gh run download 41215920686 -R tamird/gvisor -n nginx-graph-emission -D "$RUNNER_TEMP/original"
+          echo "35412b76a818f262e78646b8afafd15ce0b3d5235c2cc72663b0858ac24a7b4a  $RUNNER_TEMP/original/verdict.json" | sha256sum -c -
+          python3 -B test/rbe/graph_stream_samples.py "$RUNNER_TEMP/original/verdict.json" "$out"
+      - name: Run the project’s pinned x/perf analyzer
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/packet-bench"
+          test "$(git rev-parse HEAD^)" = 2b51abee8530385431b7225198fdd5cd65e78696
+          git checkout -q --detach 2b51abee8530385431b7225198fdd5cd65e78696
+          tgt=@org_golang_x_perf//cmd/benchstat
+          bazel build -c opt --config=x86_64 --jobs=4 "$tgt"
+          bazel cquery --config=x86_64 -c opt --output=files "$tgt" > "$RUNNER_TEMP/executables"
+          mapfile -t tools < <(while IFS= read -r f; do if test -f "$f" && test -x "$f"; then echo "$f"; fi; done < "$RUNNER_TEMP/executables")
+          test "${#tools[@]}" = 1
+          exe="$PWD/${tools[0]}"
+          sha256sum "$exe" >"$out/tool-sha256"
+          (cd "$out"; "$exe" stock.bench candidate.bench | tee benchstat.txt)
+          test "$(grep -c 'NginxSave' "$out/benchstat.txt")" -ge 6
+          echo 'v0.0.0-20260929162123-406019bb8b68' >"$out/benchstat-version"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: graph-stream-benchstat
+          path: ${{ runner.temp }}/packet-bench
