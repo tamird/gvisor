@@ -1,35 +1,54 @@
-name: CI
-
-"on":
+name: Check the governance files on a shell-free worker
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/governance-comparison-scratch]
+permissions:
+  actions: read
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.event.created
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {path: carrier, persist-credentials: false}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {ref: 08f421859113f25ca84aef7a0f5f9f457db35e95, path: source, persist-credentials: false}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {repository: bazel-contrib/bazel-lib, ref: cac2d7855949d1b222fa26888892fbbe1d31015d, path: supplier, persist-credentials: false}
+    - name: Restore the native TestRunner from the verified Linux qualification
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        gh api repos/tamird/gvisor/actions/artifacts/12982133352/zip > "$RUNNER_TEMP/native.zip"
+        echo "c2889f822f8948b2982b903abb96b3498ce1136b1a5c9d60b3f61bb09f082701  $RUNNER_TEMP/native.zip" | sha256sum -c -
+        unzip -p "$RUNNER_TEMP/native.zip" bazel-candidate > "$RUNNER_TEMP/native-bazel"
+        chmod 0755 "$RUNNER_TEMP/native-bazel"
+        curl --retry 3 -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 -o "$RUNNER_TEMP/bb"
+        echo "f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb  $RUNNER_TEMP/bb" | sha256sum -c -
+        chmod 0755 "$RUNNER_TEMP/bb"
+        plat=$RUNNER_TEMP/governance-workers
+        mkdir -p "$plat"
+        printf 'module(name="governance_workers")\n' > "$plat/MODULE.bazel"
+        for arch in amd64; do
+          cpu=x86_64; [[ "$arch" == amd64 ]] || cpu=aarch64
+          printf 'platform(name="%s",constraint_values=["@platforms//cpu:%s","@platforms//os:linux"],exec_properties={"Arch":"%s","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"},visibility=["//visibility:public"])\n' "$arch" "$cpu" "$arch" >> "$plat/BUILD"
+        done
+        umask 077
+        {
+          printf '%s\n' "build --inject_repository=governance_workers=$plat" 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/governance.bazelrc"
+    - name: Check both generated files and one stale ownership file
+      working-directory: source
+      run: python3 ../carrier/test/rbe/governance_comparison.py
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: governance-comparison
+        path: ${{ runner.temp }}/proof/governance-comparison.json
+        if-no-files-found: error
