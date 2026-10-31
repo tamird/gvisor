@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T05:21:08.349820+00:00",
+    "updatedAt": "2026-10-31T05:38:06.411946+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44848,8 +44848,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T02:25:28.288627+00:00",
-      "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
+      "updatedAt": "2026-10-31T05:38:06.411946+00:00",
+      "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. The four round-trip regressions tracked in #16715 are fixed on master (#16747). The open question is whether the graph encoder’s range index costs enough time or memory on a real workload to justify changing it.",
       "findings": [
         {
           "text": "Saving 2,048 slices with the same base address took 56.540 ms narrowest-first versus 0.052 ms widest-first. Extending the backing array in place removed all 4,192,256 parent traversals; the final five-sample medians were 0.076 ms and 0.053 ms. Both orders wrote 8,119 bytes and retained alias identity. One four-worker Nginx checkpoint contained no eligible extensions.",
@@ -54331,7 +54331,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T05:05:53.443908+00:00",
+      "updatedAt": "2026-10-31T05:38:06.411946+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -55245,9 +55245,30 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41170744769"
             }
           ]
+        },
+        {
+          "text": "The candidate removes tools/workspace_status.sh and the Buildkite test tag. Untagged publishing keeps its git describe step outside Bazel. A source export without .git built the launcher, metric server, Debian version and CLI test in ordinary and release modes. The first verifier stopped on a bare PASS before the runtime checks. The revision passes the launcher path as a named test flag so Go can report the executed case.",
+          "evidence": [
+            {
+              "label": "Source and publication boundary",
+              "url": "https://github.com/tamird/gvisor/commit/0045d37bc"
+            },
+            {
+              "label": "Original two-mode build and incomplete runtime verdict",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41172760311/artifacts/13031404695"
+            },
+            {
+              "label": "Named version test and sidecar qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41173319216"
+            },
+            {
+              "label": "Same and different sentries on native Linux",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41171557571"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Check how unlabeled development binaries can identify incompatible checkpoints before removing the workspace status script. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
+      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Qualify named and development builds without Git. For development checkpoints, verify a real restore with the same sentry, rejection with a different one, and startup cost before requesting review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
       "evidence": [
         {
           "label": "Skylib supplier proposal for shell-free native file copies",
