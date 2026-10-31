@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T01:30:53.551127+00:00",
+    "updatedAt": "2026-10-31T01:49:10.922738+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35585,7 +35585,7 @@
       "group": "bazel",
       "status": "Delivered",
       "updatedAt": "2026-10-30T14:50:08.677188+00:00",
-      "summary": "Submitted upstream in rules_python #4385. The rule expands the checked-in template into a regular file without starting a shell or cp.",
+      "summary": "Merged upstream in rules_python #4385. Use the first release containing 94858322d; 2.4.6 predates the change.",
       "evidence": [
         {
           "label": "Upstream pull request",
@@ -36524,11 +36524,11 @@
       "type": "pr",
       "repo": "bazel-contrib/rules_python",
       "number": 4385,
-      "head": "1d389dd0b76fe506fc0ce36094ad6a060d52fb00",
+      "head": "601ffc8a7f265a685353ae3f4bfb9f4d7504a05e",
       "title": "Generate wheel namespace initializers without a shell",
       "url": "https://github.com/bazel-contrib/rules_python/pull/4385",
       "group": "bazel",
-      "summary": "Submitted upstream in rules_python #4385. The rule expands the checked-in template into a regular file without starting a shell or cp.",
+      "summary": "Merged upstream as 94858322d. The generated namespace files now use a Bazel template action. Release 2.4.6 does not include the merge.",
       "evidence": [
         {
           "label": "11 upstream cases, two generated outputs and five wheel initializers on both execution configurations",
@@ -36536,8 +36536,8 @@
         }
       ],
       "ref": "pypi-namespace-template",
-      "updatedAt": "2026-10-30T14:48:40Z",
-      "status": "open"
+      "updatedAt": "2026-10-31T01:07:48Z",
+      "status": "merged"
     },
     {
       "id": "pr:bazelbuild/bazel:30837",
@@ -37114,9 +37114,13 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
+      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
       "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
       "evidence": [
+        {
+          "label": "Latest revision changes only the GC ownership comment",
+          "url": "https://github.com/google/gvisor/compare/dba98301b...7eccf7436"
+        },
         {
           "label": "Actual Go memory limits on the current PR and with #16767",
           "url": "https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034"
@@ -37149,13 +37153,13 @@
       "contributorReview": {
         "status": "pending",
         "kind": "review",
-        "head": "dba98301bc2e29cbfc67b6afe425a1697d3c6ea9",
+        "head": "7eccf74364d9d4cf13668a17c3ede7b9eebfe9f3",
         "url": "https://github.com/google/gvisor/pull/16735",
         "title": "Post the GC budget review",
         "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
-        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit on 9d3e6518a](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird.\n\nRestore findings for the same head:\n\nOn `pkg/sentry/state/state.go`, at the call to `gccontrol.Suspend`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? The measurements below are from 9d3e6518a; the renamed gccontrol still uses the same startup reading at dba98301b. `MaximumTotalMemoryBytes` is set when the sandbox is created. I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91). A [candidate that reads the current limit](https://github.com/tamird/gvisor/commit/18b3427c1) restored [both copies](https://github.com/tamird/gvisor/actions/runs/41152797282/artifacts/13023434512) under the 200 MiB ceiling. Both [10,000-file saves](https://github.com/tamird/gvisor/actions/runs/41153967310/artifacts/13024262603) succeeded under that same ceiling, but the resized sandbox again selected a 1,024 MiB Go soft limit while the sandbox created at 200 MiB selected 100 MiB.\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
+        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit on 9d3e6518a](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird.\n\nOn `pkg/sentry/state/state.go`, at the call to `gccontrol.Suspend` in `SuspendGCForRestore`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? `MaximumTotalMemoryBytes` is set when the sandbox is created. On `9d3e6518a`, I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91). A [candidate that reads the current limit](https://github.com/tamird/gvisor/commit/18b3427c1) restored [both copies](https://github.com/tamird/gvisor/actions/runs/41152797282/artifacts/13023434512) under the 200 MiB ceiling. The limit selection is unchanged at `7eccf7436`. Both [10,000-file saves](https://github.com/tamird/gvisor/actions/runs/41153967310/artifacts/13024262603) succeeded under that same ceiling, but the resized sandbox again selected a 1,024 MiB Go soft limit while the sandbox created at 200 MiB selected 100 MiB.\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
       },
-      "head": "dba98301bc2e29cbfc67b6afe425a1697d3c6ea9"
+      "head": "7eccf74364d9d4cf13668a17c3ede7b9eebfe9f3"
     },
     {
       "id": "pr:hermeticbuild/rules_rs:333",
@@ -37948,6 +37952,39 @@
         {
           "label": "Control using the same real epoll tests",
           "url": "https://github.com/tamird/gvisor/commit/3c7d2b027"
+        }
+      ]
+    },
+    {
+      "id": "pr:16445",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16445,
+      "ref": "pr-moby-bench",
+      "head": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+      "title": "Docker-in-gVisor network benchmark",
+      "url": "https://github.com/google/gvisor/pull/16445",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
+      "summary": "The nested Docker benchmark credits 128 KiB for a transfer that sends and receives 1 KiB. Use measured throughput for the topology comparison.",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+        "url": "https://github.com/google/gvisor/pull/16445",
+        "title": "Post the measured iperf review",
+        "summary": "The nested Docker benchmark credits 128 KiB for a transfer that sends and receives 1 KiB. Use measured throughput for the topology comparison.",
+        "body": "At `b.N=1`, the DING image’s iperf2 sender and receiver both report 1 KiB, but this call also prints Go’s MB/s as if 128 KiB had been transferred. That 128 KiB is the write buffer size. Go times the whole client invocation; iperf measures the transfer. Could we use the `bandwidth.bytes_per_second` metric for comparing topologies and omit the misleading MB/s? [The one- and four-stream Linux captures](https://github.com/tamird/gvisor/actions/runs/41156099116/artifacts/13025064483) include the sender and receiver reports.\n\nThe shared [iperf3 migration](https://github.com/tamird/gvisor/commit/309a60834) changes both command names and reads aggregate JSON. If this PR lands first, that migration will also need to switch DING’s servers and its container’s iperf package.\n\nPosted on behalf of @tamird."
+      },
+      "evidence": [
+        {
+          "label": "15 native transfer cases with sender and receiver byte counts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41156099116/artifacts/13025064483"
+        },
+        {
+          "label": "TCP reviewer guide",
+          "url": "https://github.com/google/gvisor/issues/16670#reviews-that-can-proceed-independently"
         }
       ]
     }
@@ -44120,9 +44157,18 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-30T19:59:57.043832+00:00",
+      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. Issue #16715 tracks failures on specific supported shapes, including two nested converted values that restore as the same value.",
       "findings": [
+        {
+          "text": "Saving 2,048 slices with one backing address took 56.54 ms narrowest-first and 0.052 ms widest-first. Both graph checkpoints used 8,119 bytes and restored the same capacities, contents and aliasing. The slow order followed 4,192,256 parent links. Its frequency in real kernel checkpoints is not yet known.",
+          "evidence": [
+            {
+              "label": "Five warm samples per order and independent counters",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41156339306/artifacts/13024129668"
+            }
+          ]
+        },
         {
           "text": "The dense graph showed why the first hybrid regressed: only 3 of 373,226 queries were wide, none visited an occupied small bucket, yet the encoder maintained 42,075 such keys. Deferring that directory removed the detectable dense slowdown (350.8 → 355.0 ms, p=.347; seven more allocations). A one-byte slice with 16 MiB capacity took 757 → 0.791 µs; with capacity one it took 956 → 970 ns. Saving 1,024 disjoint wide ranges fell from 6.569 to 1.376 ms. The same four-worker Nginx graph checkpoint showed no detectable Encode timing change (2.114 → 2.046 ms, p=.128; 16 pairs). Encode allocated 2.02% fewer bytes but performed nine more allocations. This is a fork experiment for sparse address ranges, not a demonstrated whole-kernel speedup. Both alias orders passed and all seven microbenchmark wire lengths matched.",
           "evidence": [
@@ -53586,9 +53632,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T00:38:48.282173+00:00",
+      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The selected c-ares 1.34.5.bcr.2 header actions run cp through Bash on the Bazel client: Skylib marks them no-remote. The compiler comparison tests a symlink on both architectures. Separately, rules_python merged the namespace-file fix; release 2.4.6 does not contain it.",
+          "evidence": [
+            {
+              "label": "Single-job Linux comparison (running)",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41157482164"
+            },
+            {
+              "label": "Shell-free c-ares header candidate",
+              "url": "https://github.com/tamird/bazel-central-registry/commit/4db92b750"
+            },
+            {
+              "label": "rules_python namespace fix",
+              "url": "https://github.com/bazel-contrib/rules_python/commit/94858322d"
+            }
+          ]
+        },
         {
           "text": "Making the production Go overrides development-only cleared the stock Gazelle failure in a downstream graph, but --ignore_dev_dependency then dropped the protobuf startup patch. This does not provide the needed dependency policy.",
           "evidence": [
