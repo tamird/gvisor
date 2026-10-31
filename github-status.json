@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-31T03:07:00.849864+00:00",
-  "registryDate": "2026-10-31T04:41:52.055360+00:00",
+  "registryDate": "2026-10-31T04:46:15.204222+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -257274,6 +257274,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-31T04:41:52.055360+00:00"
+      }
+    },
+    "branch:oci-tcp-buffer-settings": {
+      "contributor-review": {
+        "scope": "e290b349e0d5d5e92ed816f30599112870f5c811",
+        "since": "2026-10-31T04:46:15.204222+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-31T04:46:15.204222+00:00"
       }
     }
   },

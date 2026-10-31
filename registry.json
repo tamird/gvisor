@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T04:41:52.055360+00:00",
+    "updatedAt": "2026-10-31T04:46:15.204222+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38448,13 +38448,17 @@
       "title": "Honor OCI TCP buffer settings for private network stacks",
       "url": "https://github.com/tamird/gvisor/commit/e290b349e",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T03:48:15.816585+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T04:46:15.204222+00:00",
       "summary": "A private sandbox configured with a 256 MiB TCP buffer ceiling still reported the 4 MiB netstack default. Apply tcp_rmem and tcp_wmem before the first process starts and keep the guest’s current values across restore. All 76 named runtime checks passed with zero skips, including preservation of a guest update.",
       "evidence": [
         {
           "label": "All 76 named runtime checks, including restore",
           "url": "https://github.com/tamird/gvisor/actions/runs/41165176587/artifacts/13029430513"
+        },
+        {
+          "label": "All four AMD64 and ARM64 procfs and boot analyzer reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41167051808/artifacts/13031020224"
         },
         {
           "label": "Original operator report",
@@ -38465,15 +38469,15 @@
           "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
-      "followup": {
-        "owner": "Runtime",
-        "sourceHead": "e290b349e0d5d5e92ed816f30599112870f5c811",
-        "observedAt": "2026-10-31T03:48:15.816585+00:00",
-        "disposition": "Runtime checks passed; both architecture analyzer results pending",
-        "nextAction": "Verify the procfs and sandbox boot Nogo targets on AMD64 and ARM64 before requesting review.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41165176587/artifacts/13029430513"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e290b349e0d5d5e92ed816f30599112870f5c811",
+        "url": "https://github.com/tamird/gvisor/commit/e290b349e",
+        "title": "Open the private-stack OCI TCP buffer settings fix",
+        "summary": "A sandbox configured with a 256 MiB TCP buffer ceiling still reported 4 MiB. The correction applies tcp_rmem and tcp_wmem to a private stack before the first process starts, rejects changes to a shared stack and preserves the guest values on restore.",
+        "body": "May I open the fix for the OCI TCP buffer settings in #11837? All 76 named runtime checks passed, including a restore after the guest changed its buffers. Both owning analyzers passed on AMD64 and ARM64.",
+        "requestedAt": "2026-10-31T04:46:15.204222+00:00"
       }
     },
     {
