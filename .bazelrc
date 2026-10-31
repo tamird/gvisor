@@ -27,6 +27,9 @@ build --host_cxxopt=-std=c++17 --host_cxxopt=-Wno-error=maybe-uninitialized
 # Display the current git revision in the info block.
 build --stamp --workspace_status_command tools/workspace_status.sh
 
+# A staged release supplies --embed_label from the tag verified by Buildkite.
+build:staged_release --workspace_status_command= --//tools/bazeldefs:release_stamp
+
 build:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
 test:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
 

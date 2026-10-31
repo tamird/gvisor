@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_binary")
+load("//tools:defs.bzl", "go_binary", "version_x_defs")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -12,7 +12,7 @@ go_binary(
     visibility = [
         "//visibility:public",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = version_x_defs(),
     deps = [
         "//pkg/sentry/state/stateipc",
         "//pkg/unet",

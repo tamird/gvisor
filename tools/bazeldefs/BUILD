@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "string_flag")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -76,10 +76,23 @@ config_setting(
     ],
 )
 
+bool_flag(
+    name = "release_stamp",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "staged_release",
+    flag_values = {":release_stamp": "true"},
+)
+
 genrule(
     name = "version",
     outs = ["version.txt"],
-    cmd = "cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
+    cmd = "grep '^" + select({
+        ":staged_release": "BUILD_EMBED_LABEL",
+        "//conditions:default": "STABLE_VERSION",
+    }) + " ' bazel-out/stable-status.txt | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
     stamp = 1,
     tags = [
         "manual",
