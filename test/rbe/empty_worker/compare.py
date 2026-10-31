@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("^//runsc/boot/filter:|^//pkg/sentry/platform/systrap:systrap$")) or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoImports" or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("^//vdso:|^//runsc/boot/filter:|^//pkg/sentry/platform/systrap:systrap$")) or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoImports" or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -150,6 +150,8 @@ try:
     failures=[a for a in actions if a.get("exitCode") or a.get("status")]
     result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action")} for a in failures]
     result["original_sysmsg_bytes"]={"run":41253543881,"artifact":13062207201}
+    result["prior_filter"]={"source":"3b55c3fdad7f1a1abc7111bfa142551df898b3fe","run":41253758463,"artifact":13062502477}
+    result["vdso_actions"]=[{k:a.get(k) for k in ("label","mnemonic","runner","cacheHit","exitCode","status","action","outputs")} for a in actions if (a.get("label") or "").startswith("//vdso:")]
     kind="PrecompileSeccomp"
     result["precompilers"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","cacheHit","exitCode","status","outputs")} for a in actions if a["mnemonic"]==kind]
     if result["native_exit"]==0:
