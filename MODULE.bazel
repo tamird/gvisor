@@ -17,6 +17,7 @@ bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
+bazel_dep(name = "openssl", version = "3.3.1.bcr.1", dev_dependency = True)
 
 # gRPC's older minimum imports a removed Google APIs extension repository.
 bazel_dep(name = "envoy_api", version = "0.0.0-20260130-84e8436")
@@ -52,6 +53,13 @@ single_version_override(
     patches = ["//tools:benchmark-umbrella-exports.patch"],
 )
 
+# The wrk2 image redistributes the license of its linked TLS library.
+single_version_override(
+    module_name = "openssl",
+    patch_strip = 1,
+    patches = ["//images/benchmarks/wrk2:openssl_license.patch"],
+)
+
 # Drop the backport when the llvm module includes kernel_headers.configure.
 single_version_override(
     module_name = "llvm",
@@ -82,6 +90,28 @@ http_archive(
     urls = [
         "https://github.com/kythe/kythe/releases/download/v0.0.74/kythe-v0.0.74.tar.gz",
     ],
+)
+
+### wrk2
+# Keep the benchmark recipe's wrk2 and ARM-compatible LuaJIT revisions.
+http_archive(
+    name = "wrk2",
+    dev_dependency = True,
+    build_file = "//images/benchmarks/wrk2:wrk2.BUILD",
+    patch_args = ["-p1"],
+    patches = ["//images/benchmarks/wrk2:wrk2_luajit_arm.patch"],
+    sha256 = "40fb577303ae83bfc211855880696b6e14daf1eaea2a684fe8cf2252c735b47e",
+    strip_prefix = "wrk2-44a94c17d8e6a0bac8559b53da76848e430cb7a7",
+    urls = ["https://github.com/giltene/wrk2/archive/44a94c17d8e6a0bac8559b53da76848e430cb7a7.tar.gz"],
+)
+
+http_archive(
+    name = "luajit",
+    dev_dependency = True,
+    build_file_content = 'load("@gvisor//images/benchmarks/wrk2:luajit.bzl", "luajit_targets")\nluajit_targets(name = "luajit")\n',
+    sha256 = "a9bcd9e646e2b188e1d7e3fb594e04c61dda3b332dfd0378d41be19c1eae9d09",
+    strip_prefix = "LuaJIT-224129a8e64bfa219d35cd03055bf03952f167f6",
+    urls = ["https://github.com/LuaJIT/LuaJIT/archive/224129a8e64bfa219d35cd03055bf03952f167f6.tar.gz"],
 )
 
 ### Python
@@ -310,6 +340,20 @@ img_pull(
     registries = DOCKER_HUB_REGISTRIES,
     repository = "oven/bun",
     tag = "1.4.3",
+)
+
+# Debian-compatible benchmarks use the C runtime from the published Ubuntu image.
+img_pull(
+    name = "benchmark_ubuntu",
+    digest = "sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/ubuntu",
+    tag = "22.04",
 )
 
 ### Toolchains
