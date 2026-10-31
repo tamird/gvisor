@@ -97,10 +97,11 @@ for arm in release-x86_64 release-aarch64 nightly-x86_64; do
   date -u +%FT%T.%3NZ >"$d/start"
   output_base=$(bazel --bazelrc="$rc" info output_base)
   result=0
-  args=(build "${flags[@]}" --jobs=12 --remote_download_outputs=toplevel --nobuild_event_json_file_path_conversion "--build_event_json_file=$RUNNER_TEMP/$arm.bep" "${labels[@]}")
+  args=(build "${flags[@]}" --jobs=8 --strategy=GoStdlib=linux-sandbox --strategy=GoStdlibList=linux-sandbox --strategy=GoStandardLibraryAnalysis=linux-sandbox --strategy=GoStaticAnalysis=linux-sandbox '--modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' --noremote_upload_local_results --remote_download_outputs=toplevel --nobuild_event_json_file_path_conversion "--build_event_json_file=$RUNNER_TEMP/$arm.bep" "${labels[@]}")
   printf '%s\n' "${args[@]}" >"$d/arguments"
   bazel --bazelrc="$rc" "${args[@]}" >"$RUNNER_TEMP/$arm.log" 2>&1 || result=$?
   tail -35 "$RUNNER_TEMP/$arm.log"
+  tail -90 "$RUNNER_TEMP/$arm.log" > "$d/build-tail"
   date -u +%FT%T.%3NZ >"$d/finish"; echo "$result" >"$d/exit"
   git status --porcelain --untracked-files=no >"$d/after"
   git rev-parse HEAD >"$d/head"
