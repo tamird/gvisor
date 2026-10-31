@@ -1,11 +1,12 @@
-name: Verify TCP cookie handshakes and negotiated windows with the GNU toolchain
+name: Verify outstanding TCP tail-probe traces
 on:
-  workflow_dispatch:
+  push:
+    branches: [qualification/tcp-16596-wire-recovery]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-gnu-wire'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-16596-wire-recovery'
     runs-on: ubuntu-24.04
     timeout-minutes: 130
     steps:
@@ -14,7 +15,7 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Run the Linux waiver control and the corrected handshake flag matrix
+    - name: Check only missing tail-probe observations on the privileged packet worker
       timeout-minutes: 115
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -25,7 +26,7 @@ jobs:
         # before GitHub stops the step and uploads the completed measurements.
         packet_deadline=$((SECONDS + 110 * 60))
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "9f849b37e8c0e26e35e43a46cf188450f86b6d12"
+        test "$(git rev-parse HEAD^1)" = "ede9e61466662234221bcf24a59ce51201aadc5d"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -104,11 +105,10 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in native netstack stock-native fixed-native fixed-netstack; do
+        for arm in fixed-native fixed-netstack stock-netstack; do
           case $arm in
-            native|netstack) source=249a997c7478cc4bdb21cc248ccb554ed8aba71b; parent=df25b25c88d3b7dd52957039bd228fa63a1679d7 ;;
-            stock-native) source=8b385d7316941e0e4eacc58276ef072b4410803f; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
-            fixed-native|fixed-netstack) source=619758d82036e4647928c485d6cf36c333f81cce; parent=e40d5fe9cdb59a09f5136d9a0761257d8db1a6d1 ;;
+            fixed-*) source=79945a959a2a319ab977edf5a4482874310af873; parent=e1a3e3de2bbeabfebfe45a0cb3c90c41add81709 ;;
+            stock-*) source=998499111fa74d8e598145e70c76e0a597ac395d; parent=1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4 ;;
           esac
           (( SECONDS < packet_deadline )) || break
           git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -124,7 +124,8 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
           opts=()
-          labels=("//test/packetimpact/tests:tcp_syncookie_${arm#*-}_test")
+          labels=("//test/packetimpact/tests:tcp_rack_${arm#*-}_test")
+          opts+=(--test-filter=TestRACKTailProbeACK)
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           TCP_PACKET_SECONDS=$((packet_deadline - SECONDS))
@@ -150,7 +151,7 @@ jobs:
         from pathlib import Path
         root = Path(sys.argv[1])
         root.mkdir(parents=True, exist_ok=True)
-        arms = ["native","netstack","stock-native","fixed-native","fixed-netstack"]
+        arms = ["fixed-native", "fixed-netstack", "stock-netstack"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         failed = [arm for arm, verdict in verdicts.items() if not verdict["verified"]]
@@ -166,6 +167,6 @@ jobs:
       timeout-minutes: 5
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: cookie-wire-verdicts
+        name: tcp-tail-probe-wire-verdicts
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
