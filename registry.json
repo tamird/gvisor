@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T03:31:48.340156+00:00",
+    "updatedAt": "2026-10-31T03:48:15.816585+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38166,10 +38166,22 @@
       "title": "Allow Bazel to sandbox Nogo actions",
       "url": "https://github.com/tamird/gvisor/commit/a2a76817d",
       "group": "rbe",
-      "status": "Agent qualifying analyzer sandboxing",
-      "updatedAt": "2026-10-31T02:54:52.285980+00:00",
-      "summary": "Four Nogo actions opt out of sandboxing to avoid a FUSE penalty. Bazel removed sandboxfs before 7.0; gVisor uses 8.8.1. A forced Linux sandbox failed before standard-library analysis on master. The proposal drops the opt-outs. Remaining work: establish which actions really executed, verify the sanity finding and a rendered output, and measure local cost.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T03:48:15.816585+00:00",
+      "summary": "All four Nogo operations ran uncached in a Linux sandbox on both target architectures. The sanity package took 0.097–0.116 seconds locally and 4.716–4.827 seconds sandboxed on the same non-FUSE worker. The filter actions took about 0.04 seconds either way. The cause of the package slowdown remains under investigation.",
       "evidence": [
+        {
+          "label": "Same-worker local and sandbox ABBA timings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41164057153/artifacts/13028461355"
+        },
+        {
+          "label": "Four operations on two architectures, with the sanity finding",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41162639883/artifacts/13027658952"
+        },
+        {
+          "label": "Follow-up objdump reuse experiment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41165748432"
+        },
         {
           "label": "Original refusal before execution",
           "url": "https://github.com/tamird/gvisor/actions/runs/41160883602/artifacts/13027156108"
@@ -38178,7 +38190,18 @@
           "label": "Bazel removed sandboxfs",
           "url": "https://github.com/bazelbuild/bazel/commit/217fafe2b"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Build analysis",
+        "sourceHead": "a2a76817d2d66f2956059b464d2eadbb036078f9",
+        "observedAt": "2026-10-31T03:48:15.816585+00:00",
+        "disposition": "Measure the sandbox cost before proposing a change",
+        "nextAction": "Check whether checkescape recompiles the Go SDK objdump tool in each fresh sandbox and how much of the observed cost that explains.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41164057153/artifacts/13028461355",
+          "https://github.com/tamird/gvisor/actions/runs/41165748432"
+        ]
+      }
     },
     {
       "id": "branch:official-ollama-go-image",
@@ -38350,6 +38373,43 @@
         "title": "Open the staged-tag PR after the shared package writer lands",
         "summary": "The declared writer produced 20991231.7 on both target architectures, 20991231.8 when just the tag changed, and 20981231.4 for the ordinary Git-tagged build. The previous writer failed to start on the same empty worker.",
         "body": "Review this final commit. Its parent is the same package writer already included in the release archive review. That writer must land first; the staged-tag change can then open independently of archive signing."
+      }
+    },
+    {
+      "id": "branch:oci-tcp-buffer-settings",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/oci-tcp-buffer-settings",
+      "head": "e290b349e0d5d5e92ed816f30599112870f5c811",
+      "title": "Honor OCI TCP buffer settings for private network stacks",
+      "url": "https://github.com/tamird/gvisor/commit/e290b349e",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T03:48:15.816585+00:00",
+      "summary": "A private sandbox configured with a 256 MiB TCP buffer ceiling still reported the 4 MiB netstack default. Apply tcp_rmem and tcp_wmem before the first process starts and keep the guest’s current values across restore. All 76 named runtime checks passed with zero skips, including preservation of a guest update.",
+      "evidence": [
+        {
+          "label": "All 76 named runtime checks, including restore",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41165176587/artifacts/13029430513"
+        },
+        {
+          "label": "Original operator report",
+          "url": "https://github.com/google/gvisor/issues/11837"
+        },
+        {
+          "label": "Linux and stock controls in the TCP review guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "followup": {
+        "owner": "Runtime",
+        "sourceHead": "e290b349e0d5d5e92ed816f30599112870f5c811",
+        "observedAt": "2026-10-31T03:48:15.816585+00:00",
+        "disposition": "Runtime checks passed; both architecture analyzer results pending",
+        "nextAction": "Verify the procfs and sandbox boot Nogo targets on AMD64 and ARM64 before requesting review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41165176587/artifacts/13029430513"
+        ]
       }
     }
   ],
