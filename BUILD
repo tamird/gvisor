@@ -42,6 +42,17 @@ test_suite(
     tests = [":governance-regen_tests"],
 )
 
+# Keep developer tools out of the load graph for public targets in this package.
+alias(
+    name = "buildifier",
+    actual = "//tools/lint:buildifier",
+)
+
+alias(
+    name = "cpplint",
+    actual = "//tools/lint:cpplint",
+)
+
 release_files(
     name = "release",
     bins = [
