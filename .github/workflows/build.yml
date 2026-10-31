@@ -1,35 +1,73 @@
-name: CI
-
-"on":
+name: Report the retained Nginx decoder comparison with benchstat
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/default-graph-nginx-profile]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
-      with:
-          name: runsc
-          path: bin/runsc
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 5
+      - name: Reconcile the initial result and eight source-bound pairs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/graph-bench"
+          mkdir -p "$out"
+          gh api repos/tamird/gvisor/actions/artifacts/13034761635/zip > "$RUNNER_TEMP/input.zip"
+          echo "fd2e29d3fde2db59b579a32d157e44f354e87362f0b98b91dc2cad3060e8c01c  $RUNNER_TEMP/input.zip" | sha256sum -c -
+          python3 - "$RUNNER_TEMP/input.zip" "$out" <<'INNER'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import json,re,sys
+          src,out=map(Path,sys.argv[1:])
+          with ZipFile(src) as z:
+              v=json.loads(z.read("verdict.json"))
+              assert v["product"]=="8b644d9999a6bccfe44978057332dc74555e0672" and v["benchmark_sources"]=={"control":"95f64187b4135d0cc5c14bfd97a209944831b2ec","candidate":"826d044a152b166f751e146196c8644575cdce56"}
+              assert not v["absent_benchmarks"] and len(v["benchmarks"])==16
+              suites=["//pkg/state:state_test","//pkg/state/tests:tests_test"]
+              assert sorted(v["failures"])==sorted(x+" missing its required passing hook case" for x in suites)
+              assert all(a["exit"]==0 for a in v["actions"]) and v["actions"][2]["summaries"]==dict.fromkeys(suites,"PASSED")
+              assert v["actions"][3]["summaries"]=={"//test/rbe/graph_profile:nginx":"PASSED"}
+              for name in ("input.txt","input-after.txt","order.txt","verdict.json","binaries.txt","control-roundtrip.txt","candidate-roundtrip.txt"):
+                  (out/name).write_bytes(z.read(name))
+              for arm in ("control","candidate"):
+                  series=[z.read(f"{i}-{arm}.bench").decode().strip() for i in range(1,9)]
+                  assert all(re.fullmatch(r"BenchmarkCheckpointFile/DecodeStatefile(?:-\d+)?\s+\d+\s+\d+ ns/op.*\d+ B/op\s+\d+ allocs/op",s) for s in series)
+                  (out/(arm+".bench")).write_text("\n".join(series)+"\n")
+          INNER
+      - name: Recover or verify the named map hook cases
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          PROFILE_CANDIDATE: 826d044a152b166f751e146196c8644575cdce56
+        run: bash .github/qualification/graph-check-names.sh
+      - name: Run the project’s pinned x/perf analyzer
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/graph-bench"
+          git checkout -q --detach "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^1)" = 2b51abee8530385431b7225198fdd5cd65e78696
+          git checkout -q --detach 2b51abee8530385431b7225198fdd5cd65e78696
+          tgt=@org_golang_x_perf//cmd/benchstat
+          bazel build -c opt --config=x86_64 --jobs=4 "$tgt"
+          bazel cquery --config=x86_64 -c opt --output=files "$tgt" > "$RUNNER_TEMP/executables"
+          mapfile -t tools < <(while IFS= read -r f; do if test -f "$f" && test -x "$f"; then echo "$f"; fi; done < "$RUNNER_TEMP/executables")
+          test "${#tools[@]}" = 1
+          exe="$PWD/${tools[0]}"
+          sha256sum "$exe" >"$out/tool-sha256"
+          (cd "$out"; "$exe" control.bench candidate.bench | tee benchstat.txt)
+          test "$(grep -c 'DecodeStatefile' "$out/benchstat.txt")" -ge 6
+          echo 'v0.0.0-20260929162123-406019bb8b68' >"$out/benchstat-version"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: nginx-decoder-benchstat
+          path: ${{ runner.temp }}/graph-bench
