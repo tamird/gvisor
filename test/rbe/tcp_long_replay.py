@@ -26,21 +26,17 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-observations = [line.strip() for line in logs.splitlines() if any(m in line for m in ("saving next memory file:", "kernel checkpoint: got", "kernel checkpoint preserved errno:"))]
-if arm in ("stock", "kernel-stock"):
-    fails = {n for f in verdict["failures"] for n in f.get("cases",[])}
-    name = "pgalloc/TestSaveToAfterPageWriteError" if arm=="stock" else "kernel/TestKernelCheckpointReportsFullDevice"
-    actual = "got <nil>" if arm=="stock" else "invalid server file handle"
-    if runner_exit!=1 or verdict["native_exit"]!=3 or verdict["bep_finish"]["exitCode"]["code"]!=3 or verdict["status"]!="FAIL" or fails!={name} or len(observations)!=1 or actual not in observations[0] or "want no space left on device" not in observations[0]:
-        why.append("did not observe exactly the expected checkpoint failure")
-elif verdict["status"] != "PASS" or runner_exit!=0 or verdict["case_counts"].get("passed",0)==0 or verdict["case_counts"].get("skipped",0):
-    why.append("failed, missing or skipped qualification")
-if arm in ("package","race") and (verdict["case_counts"].get("passed",0)<68 or "--- PASS: TestSaveToAfterPageWriteError" not in logs):
-    why.append("incomplete pgalloc suite")
-if arm=="race" and "--config=race" not in (out/"executed_arguments").read_text().splitlines():
-    why.append("missing race configuration")
-if arm=="kernel" and (len(observations)!=1 or "no space left on device" not in observations[0]):
-    why.append("kernel checkpoint did not return the expected error")
+observations = sorted({line.strip() for line in logs.splitlines() if "checklocks: pkg/tcpip/transport/tcp/forwarder.go:" in line and "invalid field access," in line})
+if arm == "negative":
+    if verdict["status"]!="FAIL" or verdict["native_exit"]!=3 or runner_exit!=1 or not verdict["failures"]:
+        why.append("missing real analyzer test failure")
+    for field in ("forwarder", "inFlight"):
+        for arch in ("amd64","arm64"):
+            if not any("accessing "+field+" " in line and "ARCH="+arch+"," in line for line in observations):
+                why.append("missing " + field + " guard on " + arch)
+else:
+    if verdict["status"]!="PASS" or runner_exit or verdict["case_counts"].get("passed",0)<5 or verdict["case_counts"].get("skipped",0):
+        why.append("full forwarder suite or owning analyzer did not pass")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
