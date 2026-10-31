@@ -25,6 +25,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <climits>
 #include <cstring>
@@ -54,6 +55,61 @@ constexpr int kPositiveTimeoutMs = 60 * 1000;
 
 // The amount of time to wait for something unexpected to not occur.
 constexpr int kNegativeTimeoutMs = 3 * 1000;
+
+TEST_P(TCPSocketPairTest, WriteWithUnreadReceiveBuffer) {
+  auto pair = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
+  const int writer = pair->first_fd();
+  const int peer = pair->second_fd();
+  constexpr int small = 4096;
+  constexpr int large = 1024 * 1024;
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_RCVBUF, &small, sizeof(small)),
+              SyscallSucceeds());
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_SNDBUF, &small, sizeof(small)),
+              SyscallSucceeds());
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_SNDBUF, &large, sizeof(large)),
+              SyscallSucceeds());
+  const struct timeval timeout = {5, 0};
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)),
+              SyscallSucceeds());
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)),
+              SyscallSucceeds());
+
+  // Leave data unread at writer and more data waiting to be sent by peer.
+  // The reverse transfer needs ACKs at writer without an application read.
+  std::vector<char> pending(large, 'p');
+  const ssize_t sent = RetryEINTR(send)(peer, pending.data(), pending.size(), MSG_DONTWAIT);
+  ASSERT_GT(sent, small);
+  struct pollfd readable = {writer, POLLIN, 0};
+  ASSERT_THAT(RetryEINTR(poll)(&readable, 1, kPositiveTimeoutMs), SyscallSucceedsWithValue(1));
+  constexpr int chunk = 8192;
+  std::vector<char> data(chunk), received(chunk);
+  for (int i = 0; i < 128; ++i) {
+    std::fill(data.begin(), data.end(), static_cast<char>(i));
+    ASSERT_THAT(WriteFd(writer, data.data(), data.size()), SyscallSucceedsWithValue(chunk));
+    ASSERT_THAT(ReadFd(peer, received.data(), received.size()), SyscallSucceedsWithValue(chunk));
+    ASSERT_EQ(received, data);
+  }
+  ASSERT_THAT(shutdown(writer, SHUT_WR), SyscallSucceeds());
+  char byte;
+  ASSERT_THAT(RetryEINTR(recv)(peer, &byte, 1, 0), SyscallSucceedsWithValue(0));
+  int unread = 0;
+  ASSERT_THAT(ioctl(writer, FIONREAD, &unread), SyscallSucceeds());
+  ASSERT_GT(unread, 0);
+  ASSERT_LT(unread, sent);
+  // A peer whose receive window is still closed cannot drain this socket's
+  // send buffer. Check backpressure directly without reading from writer.
+  ssize_t extra = 0;
+  while (extra < 8 * large) {
+    const ssize_t n = RetryEINTR(send)(peer, pending.data(), pending.size(), MSG_DONTWAIT);
+    if (n < 0) {
+      ASSERT_THAT(n, SyscallFailsWithErrno(EAGAIN));
+      return;
+    }
+    ASSERT_GT(n, 0);
+    extra += n;
+  }
+  FAIL() << "peer sent another " << extra << " bytes while its data was left unread";
+}
 
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
