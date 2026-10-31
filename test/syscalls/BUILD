@@ -911,11 +911,13 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
+    external_network = True,
     test = "//test/syscalls/linux:socket_ipv4_udp_unbound_external_networking_test",
 )
 
 syscall_test(
     # TODO(b/446206378): TestJoinLeaveMulticast fails with add_hostinet.
+    external_network = True,
     test = "//test/syscalls/linux:socket_ipv6_udp_unbound_external_networking_test",
 )
 

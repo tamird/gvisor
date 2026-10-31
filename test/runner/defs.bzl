@@ -81,6 +81,7 @@ def _syscall_test(
         tags,
         debug,
         network = "none",
+        external_network = False,
         file_access = "exclusive",
         overlay = False,
         add_host_uds = False,
@@ -100,6 +101,11 @@ def _syscall_test(
         in_sandbox_cgroup = "v1",
         requires_atime = False,
         **kwargs):
+    if external_network:
+        container = True
+        if platform != "native" and network == "none":
+            network = "sandbox"
+
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
 
@@ -195,6 +201,9 @@ def _syscall_test(
         "--nftables=" + str(nftables),
         "--kvm-use-cpu-nums=" + str(kvm_use_cpu_nums),
     ]
+
+    if external_network:
+        runner_args.append("--external-network")
 
     if in_sandbox_cgroup:
         runner_args.append("--in-sandbox-cgroup=" + in_sandbox_cgroup)

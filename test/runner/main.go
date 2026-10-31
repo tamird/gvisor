@@ -59,6 +59,7 @@ var (
 	platform           = flag.String("platform", "ptrace", "platform to run on")
 	platformSupport    = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
 	network            = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
+	externalNetwork    = flag.Bool("external-network", false, "create a private addressed interface for broadcast and multicast tests")
 	useTmpfs           = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
 	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
 	fileAccess         = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
@@ -110,6 +111,16 @@ func getSetupContainerPath() string {
 		fatalf("cannot find setup_container: %v", err)
 	}
 	return setupContainer
+}
+
+// wrapInSetupContainer configures the already-owned namespaces before exec.
+func wrapInSetupContainer(cmd *exec.Cmd) {
+	cmd.Path = getSetupContainerPath()
+	args := []string{cmd.Path}
+	if *externalNetwork {
+		args = append(args, "--external-network")
+	}
+	cmd.Args = append(args, cmd.Args...)
 }
 
 func removeShardAndXMLEnvVars(env []string, tc *gtest.TestCase) []string {
@@ -245,8 +256,7 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 
 	if *container || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 		// setup_container takes in its target argv as positional arguments.
-		cmd.Path = getSetupContainerPath()
-		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
+		wrapInSetupContainer(cmd)
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER | unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
 		// Set current user/group as root inside the namespace.
 		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
@@ -557,6 +567,10 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		createCmd := exec.Command(specutils.ExePath, createArgs...)
 		createCmd.ExtraFiles = extraFiles
 		createCmd.SysProcAttr = sysProcAttr
+		if *externalNetwork {
+			createCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
+			wrapInSetupContainer(createCmd)
+		}
 		createCmd.Stdout = os.Stdout
 		createCmd.Stderr = os.Stderr
 		if err := createCmd.Run(); err != nil {
@@ -601,8 +615,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 	cmd.SysProcAttr = sysProcAttr
 	if *container || *network == "host" || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-		cmd.Path = getSetupContainerPath()
-		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
+		wrapInSetupContainer(cmd)
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -694,8 +707,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			restoreCmd.SysProcAttr = sysProcAttr
 			if *container || *network == "host" || (restoreCmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 				restoreCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-				restoreCmd.Path = getSetupContainerPath()
-				restoreCmd.Args = append([]string{restoreCmd.Path}, restoreCmd.Args...)
+				wrapInSetupContainer(restoreCmd)
 			}
 			restoreCmd.Stdout = os.Stdout
 			restoreCmd.Stderr = os.Stderr
@@ -845,6 +857,13 @@ func isWarning(line string) bool {
 
 	// Caused by properties of the host that runsc doesn't necessarily control.
 	case strings.Contains(line, "Host limit is lower than recommended"):
+	// SO_RCVBUFFORCE/SO_SNDBUFFORCE require CAP_NET_ADMIN in the initial
+	// user namespace. The isolated network fixture uses the ordinary buffer
+	// fallback; its functional tests do not require high-throughput buffers.
+	case *externalNetwork && line[0] == 'W' &&
+		(strings.Contains(line, "Failed to increase rcv buffer to ") || strings.Contains(line, "Failed to increase snd buffer to ")) &&
+		strings.Contains(line, " on SOCK_RAW on eth0. Current buffer ") &&
+		strings.HasSuffix(line, ": operation not permitted"):
 
 	// TODO(gvisor.dev/issue/11649): Systrap needs to roll back created
 	// patches for traced procs.
@@ -987,6 +1006,16 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 	// Mark the root as writeable, as some tests attempt to
 	// write to the rootfs, and expect EACCES, not EROFS.
 	spec.Root.Readonly = false
+	if *externalNetwork {
+		// Join the namespace prepared by setup_container instead of creating
+		// another empty namespace when the sandbox starts.
+		spec.Linux = &specs.Linux{
+			Namespaces: []specs.LinuxNamespace{{
+				Type: specs.NetworkNamespace,
+				Path: "/proc/self/ns/net",
+			}},
+		}
+	}
 
 	// Test spec comes with pre-defined mounts that we don't want. Reset it.
 	spec.Mounts = nil
@@ -1133,6 +1162,9 @@ func matchString(a, b string) (bool, error) {
 
 func main() {
 	flag.Parse()
+	if *externalNetwork && (!*container || (*platform != "native" && *network == "none")) {
+		fatalf("external networking requires a private container and a sandbox or host network stack")
+	}
 	if flag.NArg() != 1 {
 		fatalf("test must be provided")
 	}
