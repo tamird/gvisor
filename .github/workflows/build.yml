@@ -1,11 +1,12 @@
-name: Measure TCP sends with one or three outstanding tail packets
+name: Compare the first TCP timeout from Open on Linux and gVisor
 on:
-  workflow_dispatch:
+  push:
+    branches: [qualification/tcp-first-rto-from-open]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rto-flight-receiver-sack-run'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-first-rto-from-open'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -20,11 +21,11 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        stock=05bcbbe6e12c1307c19358cdffe536320b47479d
-        stock_parent=a98398bb3ed5648925eb5b400213a3e54a97161a
-        pr16081=82806a303b3c1c341118026da2553810f0b5a14f
-        pr16495=b7b22869ea1346e4ef0c4440e9d799acc9e479c7
-        git merge-base --is-ancestor 55d8b9320b4c8a8095b6d54a6bafeba6ce5b9722 "$GITHUB_SHA"
+        stock=15711c0b514c9a4b517596143db420c242cef174
+        stock_parent=05bcbbe6e12c1307c19358cdffe536320b47479d
+        pr16081=334f6e240b58a15878ad4c9e633ab331e2cf6819
+        pr16495=2191793758e23f53449ddc285210f4b808e8365e
+        test "$(git rev-parse HEAD^1)" = "d8fa7a11f08a70cf8a6a89e96fda6d1c5718b865"
         git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$stock_parent" "$stock" "$pr16081" "$pr16495"
         parent_of() { git cat-file -p "$1" | sed -n '/^$/q;s/^parent //p'; }
         test "$(parent_of "$stock")" = "$stock_parent"
@@ -189,6 +190,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-rto-flight-boundary
+        name: tcp-first-rto-from-open
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
