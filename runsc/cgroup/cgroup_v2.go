@@ -409,27 +409,29 @@ func getMemoryLimit(path string) (string, error) {
 	return strings.TrimSpace(limStr), nil
 }
 
-// MemoryLimit returns the memory limit.
+// MemoryLimit returns the tightest memory.max visible in the cgroup hierarchy.
 func (c *cgroupV2) MemoryLimit() (uint64, error) {
-	limStr, err := getMemoryLimit(c.MakePath(""))
-	if err != nil {
-		return 0, err
+	limit := uint64(math.MaxUint64)
+	leaf := filepath.Clean("/" + c.Path)
+	for dir := leaf; ; dir = filepath.Dir(dir) {
+		value, err := getMemoryLimit(filepath.Join(c.Mountpoint, dir))
+		if err != nil {
+			// The hierarchy root does not expose memory.max. Preserve errors
+			// reading the requested cgroup when it is not the root.
+			if !errors.Is(err, os.ErrNotExist) || (dir == leaf && dir != "/") {
+				return 0, err
+			}
+		} else if value != maxLimitStr {
+			n, err := strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			limit = min(limit, n)
+		}
+		if dir == "/" {
+			return limit, nil
+		}
 	}
-	// In cgroupv2+systemd, limits are set in the parent slice rather
-	// than the leaf node. Check the parent to see if this is the case.
-	if limStr == maxLimitStr {
-		parentLimStr, err := getMemoryLimit(filepath.Dir(c.MakePath("")))
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return 0, err
-		}
-		if parentLimStr != "" {
-			limStr = parentLimStr
-		}
-		if limStr == maxLimitStr {
-			return math.MaxUint64, nil
-		}
-	}
-	return strconv.ParseUint(limStr, 10, 64)
 }
 
 // MakePath builds a path to the given controller.
