@@ -19,11 +19,15 @@ package pgalloc
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"os"
+	"runtime"
 	"testing"
+	"time"
 
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/memutil"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
@@ -318,6 +322,202 @@ func BenchmarkSaveToCommittedZeroPages(b *testing.B) {
 				b.StopTimer()
 				f.DecRef(fr)
 				f.Destroy()
+			}
+		})
+	}
+}
+
+// pairedPageReader delivers both page reads together, successful reads first.
+// Releasing the results only after MapInternal starts makes the waiter visible
+// to the loader irrespective of goroutine scheduling.
+type pairedPageReader struct {
+	stateio.AsyncReader
+	release  chan struct{}
+	observed chan []stateio.Completion
+}
+
+func (r *pairedPageReader) Wait(cs []stateio.Completion, _ int) ([]stateio.Completion, error) {
+	cs, err := r.AsyncReader.Wait(cs, 2)
+	if err != nil {
+		return cs, err
+	}
+	if cs[0].N < cs[1].N {
+		cs[0], cs[1] = cs[1], cs[0]
+	}
+	r.observed <- cs
+	<-r.release
+	return cs, nil
+}
+
+func TestAsyncLoadCompletionBatch(t *testing.T) {
+	const page = uint64(hostarch.PageSize)
+	f := newSaveTestMemoryFile(t, false)
+	fr := allocateSaveTestPages(t, f)
+	pwritePage(t, f, fr, 0, 1)
+	pwritePage(t, f, fr, 1, 2)
+	var meta, pages bytes.Buffer
+	saved := make(chan error, 1)
+	saver, err := StartAsyncPagesFileSave(stateio.NewIOWriter(&pages, page, 1, 2), func(err error) { saved <- err })
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = f.SaveTo(context.Background(), &meta, &SaveOpts{PagesFile: saver})
+	saver.MemoryFilesDone()
+	if err := errors.Join(err, <-saved); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := pages.Len(), int(2*page); got != want {
+		t.Fatalf("checkpoint pages size: got %d, want %d", got, want)
+	}
+
+	for _, tc := range []struct {
+		name    string
+		length  int
+		wantErr error
+	}{
+		{"intact", int(2 * page), nil},
+		{"truncated", int(page), linuxerr.EIO},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dst := newSaveTestMemoryFile(t, false)
+			r := &pairedPageReader{AsyncReader: stateio.NewIOReader(bytes.NewReader(pages.Bytes()[:tc.length]), page, 1, 2), release: make(chan struct{}), observed: make(chan []stateio.Completion, 1)}
+			loaded := make(chan error, 1)
+			loader, err := StartAsyncPagesFileLoad(r, func(err error) { loaded <- err }, nil, AsyncPagesFileLoadOpts{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = dst.LoadFrom(context.Background(), bytes.NewReader(meta.Bytes()), &LoadOpts{PagesFile: loader})
+			loader.MemoryFilesDone()
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { dst.DecRef(fr) })
+			var cs []stateio.Completion
+			select {
+			case cs = <-r.observed:
+			case <-time.After(5 * time.Second):
+				t.Fatal("two reads were not submitted")
+			}
+			t.Logf("page read completions: %d, %d", cs[0].N, cs[1].N)
+			if got, want := cs[0].N, page; got != want {
+				t.Fatalf("first read: got %d, want %d", got, want)
+			}
+			if got, want := cs[1].N, uint64(tc.length)-page; got != want {
+				t.Fatalf("second read: got %d, want %d", got, want)
+			}
+			first := memmap.FileRange{Start: fr.Start, End: fr.Start + page}
+			mapped := make(chan error, 1)
+			go func() { _, err := dst.MapInternal(first, hostarch.Read); mapped <- err }()
+			var w *aplWaiter
+			for deadline := time.Now().Add(5 * time.Second); w == nil; {
+				loader.mu.Lock()
+				ul := dst.asyncPageLoad.Load().unloaded.FindSegment(first.Start)
+				if len(ul.ValuePtr().waiters) != 0 {
+					w = ul.ValuePtr().waiters[0]
+				}
+				loader.mu.Unlock()
+				if time.Now().After(deadline) {
+					t.Fatal("MapInternal did not register on the first page")
+				}
+				runtime.Gosched()
+			}
+			close(r.release)
+			if err := <-loaded; !errors.Is(err, tc.wantErr) {
+				t.Fatalf("loader: got %v, want %v", err, tc.wantErr)
+			}
+			t.Logf("loader finished with %v", tc.wantErr)
+			select {
+			case err := <-mapped:
+				if !errors.Is(err, tc.wantErr) {
+					t.Errorf("MapInternal: got %v, want %v", err, tc.wantErr)
+				}
+			case <-time.After(3 * time.Second):
+				w.wakeup.Notify(1)
+				<-mapped
+				t.Fatal("MapInternal stayed blocked after the page read and loader both finished")
+			}
+		})
+	}
+}
+
+// firstFailedReader holds the two submitted reads until the test observes
+// their references. It can fail the batch itself or report the short read first.
+type firstFailedReader struct {
+	stateio.AsyncReader
+	failWait       bool
+	ready, release chan struct{}
+}
+
+func (r *firstFailedReader) Wait(cs []stateio.Completion, _ int) ([]stateio.Completion, error) {
+	cs, err := r.AsyncReader.Wait(cs, 2)
+	if err != nil {
+		return cs, err
+	}
+	if cs[0].N > cs[1].N {
+		cs[0], cs[1] = cs[1], cs[0]
+	}
+	close(r.ready)
+	<-r.release
+	if r.failWait {
+		return nil, io.ErrUnexpectedEOF
+	}
+	return cs, nil
+}
+
+func TestAsyncLoadReleasesBackgroundReads(t *testing.T) {
+	const page = uint64(hostarch.PageSize)
+	f := newSaveTestMemoryFile(t, false)
+	fr := allocateSaveTestPages(t, f)
+	pwritePage(t, f, fr, 0, 1)
+	pwritePage(t, f, fr, 1, 2)
+	var meta, pages bytes.Buffer
+	saved := make(chan error, 1)
+	writer, err := StartAsyncPagesFileSave(stateio.NewIOWriter(&pages, page, 1, 2), func(err error) { saved <- err })
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = f.SaveTo(context.Background(), &meta, &SaveOpts{PagesFile: writer})
+	writer.MemoryFilesDone()
+	if err = errors.Join(err, <-saved); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name     string
+		failWait bool
+	}{{"shortRead", false}, {"failedWait", true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			dst := newSaveTestMemoryFile(t, false)
+			r := &firstFailedReader{AsyncReader: stateio.NewIOReader(bytes.NewReader(pages.Bytes()[:page]), page, 1, 2), failWait: tc.failWait, ready: make(chan struct{}), release: make(chan struct{})}
+			done := make(chan error, 1)
+			loader, err := StartAsyncPagesFileLoad(r, func(err error) { done <- err }, nil, AsyncPagesFileLoadOpts{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = dst.LoadFrom(context.Background(), bytes.NewReader(meta.Bytes()), &LoadOpts{PagesFile: loader})
+			loader.MemoryFilesDone()
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { dst.DecRef(fr) })
+			<-r.ready
+			var ranges [2]memmap.FileRange
+			for i := range ranges {
+				start := fr.Start + uint64(i)*page
+				ranges[i] = memmap.FileRange{Start: start, End: start + page}
+				if dst.HasUniqueRef(ranges[i]) {
+					t.Errorf("read did not hold a reference on page %d", i)
+				}
+			}
+			close(r.release)
+			if got, want := <-done, linuxerr.EIO; got != want {
+				t.Fatalf("loader: got %v, want %v", got, want)
+			}
+			for i, p := range ranges {
+				unique := dst.HasUniqueRef(p)
+				t.Logf("REFS mode=%s page=%d unique=%t", tc.name, i, unique)
+				if !unique {
+					t.Errorf("restore retained its reference on page %d after reporting EIO", i)
+				}
 			}
 		})
 	}
