@@ -492,16 +492,22 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 			continue
 		}
 
-		// Check the congestion window after entering recovery.
-		if snd.Outstanding >= snd.SndCwnd {
+		outstanding := snd.Outstanding
+		if snd.sackRecoveryInterrupted && outstanding > 0 {
+			// After an RTO, sendData charged the transmission before
+			// advancing writeNext. Replace one lost packet from that
+			// transmission without charging its replacement twice.
+			outstanding--
+		}
+		if outstanding >= snd.SndCwnd {
 			break
 		}
 
-		if sent := snd.maybeSendSegment(seg, int(snd.ep.scoreboard.SMSS()), snd.SndUna.Add(snd.SndWnd)); !sent {
+		if sent := snd.maybeSendSegment(seg, snd.MaxPayloadSize, snd.SndUna.Add(snd.SndWnd)); !sent {
 			break
 		}
 		dataSent = true
-		snd.Outstanding += snd.pCount(seg, snd.MaxPayloadSize)
+		snd.Outstanding = outstanding + snd.pCount(seg, snd.MaxPayloadSize)
 	}
 
 	snd.postXmit(dataSent, true /* shouldScheduleProbe */)
