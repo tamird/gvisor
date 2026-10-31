@@ -2459,7 +2459,7 @@ func TestCheckpointRestoreAdjustedTSC(t *testing.T) {
 // TestRestoreCgroupMemoryLimit verifies that restoring a checkpoint with a
 // large Sentry Go heap inside a limited host memory cgroup falls back to GC
 // instead of triggering a host cgroup OOM kill.
-func TestRestoreCgroupMemoryLimit(t *testing.T) {
+func TestRestoreCgroupResize(t *testing.T) {
 	if !cgroup.IsOnlyV2() {
 		t.Skip("cgroup v2 required")
 	}
@@ -2479,11 +2479,11 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 		}
 		t.Fatalf("probe.Install(): %v", err)
 	}
-	if _, err := os.Stat(probe.MakePath("memory.max")); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(probe.MakePath(""), "memory.max")); os.IsNotExist(err) {
 		_ = probe.Uninstall()
 		t.Skip("cgroup v2 memory controller unavailable")
 	}
-	_, swapErr := os.Stat(probe.MakePath("memory.swap.max"))
+	_, swapErr := os.Stat(filepath.Join(probe.MakePath(""), "memory.swap.max"))
 	if err := probe.Uninstall(); err != nil {
 		t.Fatalf("probe.Uninstall(): %v", err)
 	}
@@ -2526,6 +2526,25 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 			_ = cont.Destroy()
 		}
 	}()
+	// Let image construction run outside the destination's 200 MiB ceiling.
+	// The built checkpoint retains the original OCI spec for both restores.
+	sourceCG := probe.MakePath("")
+	if err := os.WriteFile(filepath.Join(sourceCG, "memory.max"), []byte("2147483648"), 0); err != nil {
+		t.Fatalf("raising source cgroup limit: %v", err)
+	}
+	sourceLimit, err := os.ReadFile(filepath.Join(sourceCG, "memory.max"))
+	if err != nil || strings.TrimSpace(string(sourceLimit)) != "2147483648" {
+		t.Fatalf("source memory.max = %q, err=%v", sourceLimit, err)
+	}
+	t.Logf("GCRESIZE source_ceiling=%s", strings.TrimSpace(string(sourceLimit)))
+	logSourceEvents := func(phase string) {
+		if events, err := os.ReadFile(filepath.Join(sourceCG, "memory.events")); err == nil {
+			t.Logf("GCRESIZE source_events_%s=%s", phase, strings.ReplaceAll(strings.TrimSpace(string(events)), "\n", ","))
+		} else {
+			t.Logf("GCRESIZE source_events_%s_read_error=%v", phase, err)
+		}
+	}
+	logSourceEvents("before")
 	if err := cont.Start(conf); err != nil {
 		t.Fatalf("starting container: %v", err)
 	}
@@ -2533,7 +2552,11 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 		t.Fatalf("waiting for init process: %v", err)
 	}
 
-	// Populate 50,000 zero-byte files in /tmpfs (~82 MiB live Sentry Go heap).
+	filesPerLevel := os.Getenv("GCRESIZE_FILES_PER_LEVEL")
+	if filesPerLevel != "1000" && filesPerLevel != "40" {
+		t.Fatalf("invalid source file count per level %q", filesPerLevel)
+	}
+	t.Logf("GCRESIZE files_per_level=%s", filesPerLevel)
 	execFile, err := os.Open(testAppPath)
 	if err != nil {
 		t.Fatalf("Open(%q): %v", testAppPath, err)
@@ -2544,7 +2567,7 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 			"fsTreeCreate",
 			"--target-dir=/tmpfs",
 			"--depth=50",
-			"--file-per-level=1000",
+			"--file-per-level=" + filesPerLevel,
 			"--file-size=0",
 		},
 		FilePayload: controlapi.NewFilePayload(map[int]*os.File{
@@ -2565,8 +2588,10 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 	if err := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{
 		Compression: statefile.CompressionLevelFlateBestSpeed,
 	}); err != nil {
+		logSourceEvents("after")
 		t.Fatalf("checkpointing container: %v", err)
 	}
+	logSourceEvents("after")
 	if _, err := cont.Wait(); err != nil {
 		t.Fatalf("waiting after checkpoint: %v", err)
 	}
@@ -2575,20 +2600,91 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 	}
 	cont = nil
 
-	cont2, err := New(conf, args)
-	if err != nil {
-		t.Fatalf("creating restored container: %v", err)
-	}
-	defer cont2.Destroy()
-
-	if err := cont2.Restore(conf, imageDir, sandbox.DirectIOOff, false /* background */, nil /* networkArgs */); err != nil {
-		events, _ := os.ReadFile(probe.MakePath("memory.events"))
-		t.Fatalf("restoring container under %d MiB cgroup limit: %v\nmemory.events:\n%s", memLimit>>20, err, events)
-	}
-	if err := waitForProcessCount(cont2, 1); err != nil {
-		t.Fatalf("waiting for restored init process: %v", err)
-	}
-	if ws, err := execute(conf, cont2, "/bin/sh", "-c", "test -d /tmpfs"); err != nil || ws.ExitStatus() != 0 {
-		t.Fatalf("verifying restored /tmpfs failed: ws=%v, err=%v", ws, err)
+	// Use one checkpoint image and the same final kernel limit in both arms.
+	for _, arm := range []struct {
+		name    string
+		initial int64
+	}{
+		{"born_low", memLimit},
+		{"lowered", 2 << 30},
+	} {
+		t.Run(arm.name, func(t *testing.T) {
+			// Keep the checkpointed spec and the original saved image untouched.
+			dest := *spec
+			destLinux := *spec.Linux
+			dest.Linux = &destLinux
+			destResources := *spec.Linux.Resources
+			dest.Linux.Resources = &destResources
+			destMem := *memRes
+			destMem.Limit = &arm.initial
+			if memRes.Swap != nil {
+				destMem.Swap = &arm.initial
+			}
+			destResources.Memory = &destMem
+			destArgs := args
+			destArgs.Spec = &dest
+			logDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+			if logDir == "" {
+				t.Fatal("missing Bazel test outputs directory")
+			}
+			logPattern := "dest-" + arm.name + "."
+			conf.DebugLog = filepath.Join(logDir, logPattern+"%COMMAND%.%TIMESTAMP%.txt")
+			cont2, err := New(conf, destArgs)
+			if err != nil {
+				t.Fatalf("creating restore destination: %v", err)
+			}
+			defer cont2.Destroy()
+			read := func(path string) string {
+				b, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatalf("read %s: %v", path, err)
+				}
+				return strings.TrimSpace(string(b))
+			}
+			pid := cont2.SandboxPid()
+			actual := read(fmt.Sprintf("/proc/%d/cgroup", pid))
+			if want := "0::" + cgPath; actual != want {
+				t.Fatalf("Sentry PID %d in %q, want %q", pid, actual, want)
+			}
+			cg := probe.MakePath("")
+			initial := read(filepath.Join(cg, "memory.max"))
+			if initial != strconv.FormatInt(arm.initial, 10) {
+				t.Fatalf("initial memory.max = %s, want %d", initial, arm.initial)
+			}
+			if err := cont2.Update(conf, &specs.LinuxResources{Memory: memRes}); err != nil {
+				t.Fatalf("updating destination memory limit: %v", err)
+			}
+			final := read(filepath.Join(cg, "memory.max"))
+			if final != strconv.FormatInt(memLimit, 10) {
+				t.Fatalf("updated memory.max = %s, want %d", final, memLimit)
+			}
+			t.Logf("GCRESIZE kernel initial=%s final=%s pid=%d membership=%s", initial, final, pid, actual)
+			t.Logf("GCRESIZE events_before=%s", strings.ReplaceAll(read(filepath.Join(cg, "memory.events")), "\n", ","))
+			start := time.Now()
+			restoreErr := cont2.Restore(conf, imageDir, sandbox.DirectIOOff, false, nil)
+			t.Logf("GCRESIZE restore_ms=%d success=%t err=%v", time.Since(start).Milliseconds(), restoreErr == nil, restoreErr)
+			t.Logf("GCRESIZE events_after=%s", strings.ReplaceAll(read(filepath.Join(cg, "memory.events")), "\n", ","))
+			logs, err := filepath.Glob(filepath.Join(logDir, logPattern+"*.txt"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, path := range logs {
+				for _, line := range strings.Split(read(path), "\n") {
+					if strings.Contains(line, "GCRESIZE soft=") {
+						t.Log(line)
+					}
+				}
+			}
+			if restoreErr != nil {
+				return // The verifier distinguishes a witnessed OOM from all other errors.
+			}
+			if err := waitForProcessCount(cont2, 1); err != nil {
+				t.Fatalf("waiting for restored init: %v", err)
+			}
+			if ws, err := execute(conf, cont2, "/bin/sh", "-c", "test -d /tmpfs"); err != nil || ws.ExitStatus() != 0 {
+				t.Fatalf("verifying restored /tmpfs failed: ws=%v, err=%v", ws, err)
+			}
+			t.Log("GCRESIZE guest_verified=true")
+		})
 	}
 }
