@@ -1156,6 +1156,12 @@
   commit: 2d4b4996f0bf52376704c49264164e166213159e
   sha256: dbad4a23abcca6171e47b79edc53bd6a41067a3b75f9e8b104656b459ff25046
   license: Apache-2.0
+- dependency: plugin_bsd_queue
+  version: https://raw.githubusercontent.com/alpinelinux/aports/988f183cc9d6699930c3e18ccf4a9e36010afb56/main/libc-dev/sys-queue.h
+  retrieved: "2026-09-26"
+  commit: 988f183cc9d6699930c3e18ccf4a9e36010afb56
+  sha256: c13407edd0e33be73cae72514cb234f8612e1c0e54401c9448daffd3a240158b
+  license: BSD-3-Clause
 - dependency: plugin_dpdk
   version: https://github.com/DPDK/dpdk/archive/refs/tags/v18.11.tar.gz
   retrieved: "2026-09-26"
