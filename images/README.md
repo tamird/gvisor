@@ -40,6 +40,10 @@ before computing the image hash, so changes to a helper or the SDK invalidate
 the image cache. The selected architecture controls both the helper binaries and
 the Docker build.
 
+Bazel builds the nine C helpers in `basic/integrationtest` for the selected
+Linux architecture. Docker installs the network tools required by the tests
+on the pinned Ubuntu Bionic base.
+
 Docker still builds the separate ASCII image converter using `golang:1.25`.
 
 ## Adding new images
