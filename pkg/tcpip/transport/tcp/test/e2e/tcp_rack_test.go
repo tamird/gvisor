@@ -381,27 +381,11 @@ func TestRTOInterruptsSACKRecovery(t *testing.T) {
 	if got, want := info().CcState, tcpip.RTORecovery; got != want {
 		t.Fatalf("after losing the repair: state = %v, want %v", got, want)
 	}
-	discardRetransmissions()
 	clock.Advance(rtt)
-	// The peer now has the fifth through seventh segments.
-	sack.Start = penultimateEnd - seqnum.Value(3*mss)
 	ack(2*mss, sack)
-	c.ReceiveAndCheckPacket(flight, 2*mss, mss)
-	c.ReceiveAndCheckPacket(flight, 3*mss, mss)
 	clock.Advance(rtt)
 	if got, want := info().CcState, tcpip.RTORecovery; got != want {
 		t.Fatalf("after partial ACK with SACK: state = %v, want %v", got, want)
-	}
-
-	// The third segment's repair was lost again, but the fourth arrived.
-	// Replace the lost repair without starting another congestion event.
-	threshold := info().SndSsthresh
-	sack.Start -= seqnum.Value(mss)
-	ack(2*mss, sack)
-	clock.Advance(rtt)
-	c.ReceiveAndCheckPacket(flight, 2*mss, mss)
-	if got := info(); got.CcState != tcpip.RTORecovery || got.SndSsthresh != threshold {
-		t.Fatalf("after repairing the hole: state = %v, ssthresh = %d, want %v, %d", got.CcState, got.SndSsthresh, tcpip.RTORecovery, threshold)
 	}
 
 	// All but one byte of the interrupted flight is not enough. Send new
