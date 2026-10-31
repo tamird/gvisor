@@ -79,7 +79,7 @@ config_setting(
 genrule(
     name = "version",
     outs = ["version.txt"],
-    cmd = "cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
+    cmd = "cat bazel-out/stable-status.txt | grep BUILD_EMBED_LABEL | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
     stamp = 1,
     tags = [
         "manual",

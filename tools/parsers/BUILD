@@ -39,7 +39,7 @@ go_binary(
         "version.go",
     ],
     nogo = False,
-    x_defs = {"main.version": "{STABLE_VERSION}"},
+    x_defs = {"main.version": "{BUILD_EMBED_LABEL}"},
     deps = [
         ":parsers",
         "//runsc/flag",

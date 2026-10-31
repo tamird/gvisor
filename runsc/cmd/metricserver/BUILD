@@ -15,7 +15,7 @@ go_binary(
     visibility = [
         "//:sandbox",
     ],
-    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
+    x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{BUILD_EMBED_LABEL}"},
     deps = [
         "//pkg/log",
         "//runsc/cmd/metricserver/metricservercmd",

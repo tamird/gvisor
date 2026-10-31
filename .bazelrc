@@ -24,8 +24,8 @@ build --@rules_python//python/config_settings:bootstrap_impl=script
 build --cxxopt=-std=c++17 --cxxopt=-Wno-error=maybe-uninitialized
 build --host_cxxopt=-std=c++17 --host_cxxopt=-Wno-error=maybe-uninitialized
 
-# Display the current git revision in the info block.
-build --stamp --workspace_status_command tools/workspace_status.sh
+# Embed the label supplied by the build.
+build --stamp
 
 build:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
 test:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
