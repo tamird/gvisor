@@ -118,7 +118,8 @@ type graphDecodeState struct {
 	itabCache  itabCache
 	shapeCache [128]traversalKey
 
-	// valueScratch holds unused storage for decoded values, by type.
+	// valueScratch holds storage for values loaded by Source.LoadValueTo,
+	// by type.
 	valueScratch map[*typeInfo]unsafe.Pointer
 
 	stats graphStats
@@ -139,29 +140,6 @@ const (
 	maxDecodeObjectBytes = 1 << 30 // 1 GiB per single allocated object
 	maxDecodeTotalBytes  = 4 << 30 // 4 GiB total allocated object bytes per Load
 )
-
-// takeValueScratch returns storage for one decoded value. Remove it from the
-// cache while in use since decoding another value may need the same type.
-func (ds *graphDecodeState) takeValueScratch(ti *typeInfo) unsafe.Pointer {
-	p := ds.valueScratch[ti]
-	if p == nil {
-		return reflect.New(ti.typ).UnsafePointer()
-	}
-	delete(ds.valueScratch, ti)
-	if ti.partial {
-		reflect.NewAt(ti.typ, p).Elem().SetZero()
-	}
-	return p
-}
-
-// putValueScratch returns storage to the cache after its contents are copied.
-// Callers must keep storage that a hook or deferred callback may still use.
-func (ds *graphDecodeState) putValueScratch(ti *typeInfo, p unsafe.Pointer) {
-	if ds.valueScratch == nil {
-		ds.valueScratch = make(map[*typeInfo]unsafe.Pointer)
-	}
-	ds.valueScratch[ti] = p
-}
 
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.

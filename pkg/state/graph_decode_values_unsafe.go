@@ -519,9 +519,9 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 	fresh := true
 	for i := 0; i < n; i++ {
 		if fresh {
-			kp, ep = ds.takeValueScratch(kt), ds.takeValueScratch(et)
-			k = reflect.NewAt(kt.typ, kp).Elem()
-			e = reflect.NewAt(et.typ, ep).Elem()
+			k = reflect.New(kt.typ).Elem()
+			e = reflect.New(et.typ).Elem()
+			kp, ep = k.Addr().UnsafePointer(), e.Addr().UnsafePointer()
 		} else {
 			// Decoding does not write fields that are not saved.
 			if kt.partial {
@@ -548,10 +548,6 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 			mv.SetMapIndex(k, e)
 		}
 		fresh = ds.hooks != hooks
-	}
-	if !fresh {
-		ds.putValueScratch(kt, kp)
-		ds.putValueScratch(et, ep)
 	}
 	ds.lastRef = -1
 }
