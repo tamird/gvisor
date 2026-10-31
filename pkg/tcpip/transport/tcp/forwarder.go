@@ -124,6 +124,7 @@ func (r *ForwarderRequest) ID() stack.TransportEndpointID {
 // Complete completes the request, and optionally sends a RST segment back to the
 // sender.
 func (r *ForwarderRequest) Complete(sendReset bool) {
+	f := r.forwarder
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -132,9 +133,7 @@ func (r *ForwarderRequest) Complete(sendReset bool) {
 	}
 
 	// Remove request from the forwarder.
-	r.forwarder.mu.Lock()
-	delete(r.forwarder.inFlight, r.segment.id)
-	r.forwarder.mu.Unlock()
+	delete(f.inFlight, r.segment.id)
 
 	if sendReset {
 		replyWithReset(r.forwarder.stack, r.segment, stack.DefaultTOS, tcpip.UseDefaultIPv4TTL, tcpip.UseDefaultIPv6HopLimit)
