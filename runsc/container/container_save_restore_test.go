@@ -394,10 +394,9 @@ func TestCheckpointRestore(t *testing.T) {
 	}
 }
 
-// TestCheckpointCPUFeaturesMetadata verifies that the checkpoint metadata
-// records the sandbox's CPU features, matching the CPUID FeatureSet saved in
-// the state file.
-func TestCheckpointCPUFeaturesMetadata(t *testing.T) {
+// TestCheckpointMetadata verifies that an image identifies the sentry that
+// saved it and records the CPU features saved in the kernel's state.
+func TestCheckpointMetadata(t *testing.T) {
 	for name, conf := range configs(t, true /* noOverlay */) {
 		t.Run(name, func(t *testing.T) {
 			// Use the wire engine because this test decodes cpuid.FeatureSet
@@ -448,6 +447,10 @@ func TestCheckpointCPUFeaturesMetadata(t *testing.T) {
 				t.Fatalf("error reading state file: %v", err)
 			}
 			defer r.Close()
+
+			if v := metadata["runsc_version"]; v == "" || v == "VERSION_MISSING" {
+				t.Errorf("checkpoint has no sentry identity: runsc_version=%q", v)
+			}
 
 			got, ok := metadata[sentryapi.CPUFeaturesKey]
 			if !ok {
