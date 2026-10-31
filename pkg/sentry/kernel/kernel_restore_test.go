@@ -18,13 +18,21 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
 	"runtime"
 	"testing"
 	"testing/synctest"
 	"time"
 
+	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/sentry/checkpoint"
+	"gvisor.dev/gvisor/pkg/sentry/contexttest"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
+	"gvisor.dev/gvisor/pkg/sentry/state/stateipc"
+	"gvisor.dev/gvisor/pkg/unet"
+	"gvisor.dev/gvisor/pkg/urpc"
 )
 
 func TestAsyncMFLoaderStartupError(t *testing.T) {
@@ -138,4 +146,83 @@ func TestWaitForNextCheckpoint(t *testing.T) {
 			t.Errorf("WaitForCheckpoint() = %v, want %v", got, want)
 		}
 	})
+}
+
+// fullPageServer serves /dev/full through the real checkpoint gofer protocol.
+type fullPageServer struct{}
+
+func (fullPageServer) Destroy()                                     {}
+func (fullPageServer) OpenRead(string) (stateio.AsyncReader, error) { return nil, os.ErrPermission }
+func (fullPageServer) OpenWrite(string) (stateio.AsyncWriter, error) {
+	f, err := os.OpenFile("/dev/full", os.O_WRONLY, 0)
+	if err != nil {
+		return nil, err
+	}
+	return stateio.NewIOWriter(f, uint64(hostarch.PageSize), 1, 1), nil
+}
+
+type observedPageClose struct {
+	stateio.AsyncWriter
+	done chan struct{}
+}
+
+func (w observedPageClose) Close() error {
+	err := w.AsyncWriter.Close()
+	close(w.done)
+	return err
+}
+
+// Hold the first file's metadata until its page write has failed and the
+// client has closed its handle. The next file is then saved by the real
+// kernel checkpoint loop under the same ordering as a slow metadata sink.
+type metadataAfterPageClose chan struct{}
+
+func (done metadataAfterPageClose) Write(p []byte) (int, error) { <-done; return len(p), nil }
+func (metadataAfterPageClose) Close() error                     { return nil }
+
+func TestKernelCheckpointReportsFullDevice(t *testing.T) {
+	server, err := stateipc.NewAsyncFileServer(fullPageServer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := urpc.NewServer()
+	u.Register(server)
+	cl, srv, err := unet.SocketPair(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	u.StartHandling(srv)
+	t.Cleanup(func() { u.Stop(0) })
+	client, err := stateipc.NewAsyncFileClient(urpc.NewClient(cl))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.DecRef()
+	writer, err := client.OpenWrite("pages")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := contexttest.Context(t)
+	main := pgalloc.MemoryFileFromContext(ctx)
+	priv := pgalloc.MemoryFileFromContext(contexttest.Context(t))
+	for _, f := range []*pgalloc.MemoryFile{main, priv} {
+		t.Cleanup(f.Destroy)
+		fr, err := f.Allocate(2*uint64(hostarch.PageSize), pgalloc.AllocOpts{Mode: pgalloc.AllocateUncommitted})
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { f.DecRef(fr) })
+		for page := range 2 {
+			if _, err := unix.Pwrite(f.FD(), []byte{1}, int64(fr.Start)+int64(page)*int64(hostarch.PageSize)); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	done := make(chan struct{})
+	k := Kernel{mf: main}
+	got := k.saveMemoryFiles(ctx, nil, metadataAfterPageClose(done), observedPageClose{writer, done}, map[checkpoint.ResourceID]*pgalloc.MemoryFile{{Path: "/private"}: priv}, false, true)
+	if want := unix.ENOSPC; !errors.Is(got, want) {
+		t.Fatalf("kernel checkpoint: got %v, want %v", got, want)
+	}
+	t.Logf("kernel checkpoint preserved errno: %v", got)
 }
