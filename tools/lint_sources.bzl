@@ -42,10 +42,7 @@ def _lint_sources(ctx):
             for p in entries:
                 name = p.basename
                 path = prefix + name
-                if name in (".git", ".hg", ".svn", "__pycache__", "node_modules") or path in ("external", "repo", ".cache/clangd") or not p.exists:
-                    continue
-                link = p.realpath != p
-                if link and (not inside or p.is_dir):
+                if name in (".git", ".hg", ".svn", "__pycache__", "node_modules") or path in ("external", "repo", ".cache/clangd") or not p.exists or p.realpath != p:
                     continue
                 if p.is_dir:
                     pending.append((p, path + "/", inside or path in packages))
@@ -54,8 +51,6 @@ def _lint_sources(ctx):
                 # and applies BUILD directives inherited from parent directories.
                 if inside or (name in ("BUILD", "BUILD.bazel") and prefix.rstrip("/") in ancestors) or path in (".bazelignore", "MODULE.bazel", "REPO.bazel", "WORKSPACE", "WORKSPACE.bazel", "go.mod"):
                     groups["gazelle"].append(path)
-                if link:
-                    continue
                 if name in ("BUILD", "BUILD.bazel") or name.endswith(".bzl") or path in ("MODULE.bazel", "WORKSPACE", "WORKSPACE.bazel"):
                     groups["buildifier"].append(path)
                 elif path == ".buildifier.json":
