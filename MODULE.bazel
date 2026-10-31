@@ -325,10 +325,18 @@ go_sdk.from_file(
     patches = ["//tools:go_types_memoize.patch"],
 )
 
+lint_sources = use_repo_rule("//tools:lint_sources.bzl", "lint_sources")
+
+lint_sources(
+    name = "lint_inputs",
+    dev_dependency = True,
+)
+
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
 use_repo(
     go_deps,
+    "bazel_gazelle_go_repository_config",
     "co_honnef_go_tools",
     "com_github_burntsushi_toml",
     "com_github_cenkalti_backoff",

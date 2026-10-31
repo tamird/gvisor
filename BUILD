@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
@@ -311,6 +312,32 @@ gazelle(
     name = "gazelle_check",
     args = GAZELLE_ARGS,
     mode = "diff",
+)
+
+# The source projection preserves package paths without treating their BUILD
+# files as subpackages. Use the same module repository names as gazelle_fix.
+GAZELLE_ROOT = "$(execpath @lint_inputs//:ROOT).d"
+
+run_binary(
+    name = "gazelle_diff",
+    srcs = [
+        "@bazel_gazelle_go_repository_config//:WORKSPACE",
+        "@lint_inputs//:ROOT",
+        "@lint_inputs//:gazelle",
+    ],
+    outs = ["gazelle.patch"],
+    args = [
+        "update",
+        "-mode=diff",
+        "-patch=$@",
+        "-bzlmod",
+        "-repo_config=$(execpath @bazel_gazelle_go_repository_config//:WORKSPACE)",
+        "-repo_root=" + GAZELLE_ROOT,
+        "-index=none",
+        "-r=false",
+    ] + [GAZELLE_ROOT + "/" + pkg for pkg in GAZELLE_PACKAGES],
+    mnemonic = "GazelleCheck",
+    tool = "@bazel_gazelle//cmd/gazelle",
 )
 
 gazelle(
