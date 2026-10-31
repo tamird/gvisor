@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 import sys
 
@@ -26,9 +27,16 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
-    why.append("package did not pass or no cases were executed")
-observations = []
+observations=[(str(name),int(ack),int(got),int(want)) for name,ack,got,want in re.findall(r"SPLIT_TIMER case=(\w+) ack=(\d+) got_ms=(\d+) want_ms=(\d+)",logs)]
+expected=[("Original",2100,60),("Original",2400,60),("Original",2750,60),("RetryAndTail",2100,400),("RetryAndTail",2400,60),("RetryAndTail",2750,400)]
+if [(name,ack,want) for name,ack,_,want in observations]!=expected:
+    why.append("missing or unexpected ACK and named timer observations")
+got=[x[2] for x in observations]
+if arm=="control":
+    if verdict["status"]!="FAIL" or not runner_exit or got!=[400,60,60,400,60,60]:
+        why.append("control did not expose lost original and stale retry evidence")
+elif verdict["status"]!="PASS" or runner_exit or got!=[x[2] for x in expected] or verdict["case_counts"].get("skipped",0):
+    why.append("correction did not select the expected deadlines")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)

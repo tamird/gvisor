@@ -1,11 +1,11 @@
-name: Verify TCP sender and SACK recovery suites
+name: Compare split-packet retransmission deadlines
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-reneging-owner-suites'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-reneging-overlapping-transmissions'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,14 +13,14 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Verify checkpoint package tests and analyzers
+    - name: Measure the ACK handler with and without the split-packet correction
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "09a3ca25b2e495158eb09a57b86252e341ae7bd0"
+        test "$(git rev-parse HEAD^1)" = "7e837edccdcfdacb911ef57ebd93dbc57c2128bb"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -84,9 +84,11 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in suites analyzers; do
-          source=e19dfe4de7b764ce49da0696b4e5ef9b17441bd3
-          parent=f96afe45777d10e02b6565b76dd255f0062503ec
+        for arm in control corrected; do
+          case $arm in
+            control) source=dcbcbd7172b9ce12e48354105e0ec2100da327a8; parent=e19dfe4de7b764ce49da0696b4e5ef9b17441bd3 ;;
+            corrected) source=6eb60bcbfc52571016c91acfb6275a60f593be16; parent=dcbcbd7172b9ce12e48354105e0ec2100da327a8 ;;
+          esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           fi
@@ -102,19 +104,8 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
           opts=()
-          case $arm in
-            suites)
-              labels=(//pkg/tcpip/transport/tcp:tcp_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
-                      //pkg/tcpip/transport/tcp/test/e2e:sack_scoreboard_test)
-              ;;
-            analyzers)
-              labels=(//pkg/tcpip/transport/tcp:tcp_nogo
-                      //pkg/tcpip/transport/tcp:tcp_test_nogo)
-              ;;
-          esac
+          labels=(//pkg/tcpip/transport/tcp:tcp_test)
+          opts=(--bazel-option=--test_filter=^TestSACKRenegingAcrossOverlappingTransmissions$ --bazel-option=--test_arg=-test.v)
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
@@ -130,7 +121,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["suites","analyzers"]
+        arms = ["control","corrected"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
