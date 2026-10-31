@@ -452,8 +452,8 @@ func (t *Timekeeper) stopUpdater() {
 
 // Destroy destroys the Timekeeper, freeing all associated resources.
 func (t *Timekeeper) Destroy() {
-	t.mu.Lock()
 	t.stopUpdater()
+	t.mu.Lock()
 	t.stopAfterFuncSchedulerLocked()
 	t.mu.Unlock()
 
@@ -474,10 +474,10 @@ func (t *Timekeeper) Pause() {
 // Resume restarts clock parameter updates and the AfterFunc scheduler. After
 // restore, it also lets monotonic and boot time run again; see endRestore.
 func (t *Timekeeper) Resume(params *VDSOParamPage) {
+	t.startUpdater(params)
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	t.startUpdater(params)
 	if t.restoring.Load() {
 		t.endRestore()
 	}
