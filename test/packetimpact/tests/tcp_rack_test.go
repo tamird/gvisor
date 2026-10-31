@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -166,9 +167,15 @@ func TestRACKTailProbeACK(t *testing.T) {
 				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(end)), Options: options})
 				options = nil
 			}
-			sendAndReceive(t, dut, conn, 1, fd, mss, false /* sendACK */)
+			// Leave the second segment outstanding when the ACK for the first
+			// confirms or rules out loss of the probe.
+			sendAndReceive(t, dut, conn, 2, fd, mss, false /* sendACK */)
 			after := advance(end.Add(seqnum.Size(mss)), options)
 			t.Logf("probe cwnd/ssthresh: before=%d/%d end=%d/%d beyond=%d/%d", before.SndCwnd, before.SndSsthresh, atEnd.SndCwnd, atEnd.SndSsthresh, after.SndCwnd, after.SndSsthresh)
+			if got, want := after.CaState, uint8(linux.TCP_CA_Open); tc.loss && got != want {
+				t.Errorf("congestion state after probe repaired the loss = %d, want %d", got, want)
+			}
+			fmt.Printf("TLP_WIRE %s before=%d after=%d ca=%d unacked=%d\n", tc.name, before.SndSsthresh, after.SndSsthresh, after.CaState, after.Unacked)
 			if got := after.SndSsthresh < before.SndSsthresh; got != tc.loss {
 				t.Errorf("ACK beyond probe: ssthresh changed from %d to %d, want reduction=%t", before.SndSsthresh, after.SndSsthresh, tc.loss)
 			}
