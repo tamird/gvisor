@@ -19,6 +19,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime/debug"
+	"runtime/metrics"
 	"strconv"
 	"time"
 
@@ -175,7 +177,11 @@ func (opts *SaveOpts) Save(ctx context.Context, k *kernel.Kernel, w *watchdog.Wa
 	// Suspend GC to avoid scanning the transient object graph during save. On a
 	// non-resuming save the sandbox is exiting, so delay re-enabling GC unless
 	// save failed.
-	gcSuspension := gccontrol.Suspend(totalMemoryLimit(), memoryFileBytes)
+	total := totalMemoryLimit()
+	gcSuspension := gccontrol.Suspend(total, memoryFileBytes)
+	sample := []metrics.Sample{{Name: "/gc/gogc:percent"}}
+	metrics.Read(sample)
+	log.Infof("SAVE_GC_OBS total=%d memfile=%d limit=%d gogc=%d handle=%t", total, memoryFileBytes, debug.SetMemoryLimit(-1), sample[0].Value.Uint64(), gcSuspension != nil)
 	defer func() {
 		finishSaveGCSuspension(gcSuspension, opts.Resume, err)
 	}()

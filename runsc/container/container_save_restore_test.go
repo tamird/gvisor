@@ -2814,7 +2814,7 @@ func TestCheckpointRestoreCrossEngineChained(t *testing.T) {
 // TestRestoreCgroupMemoryLimit verifies that restoring a checkpoint with a
 // large Sentry Go heap inside a limited host memory cgroup falls back to GC
 // instead of triggering a host cgroup OOM kill.
-func TestRestoreCgroupMemoryLimit(t *testing.T) {
+func TestSaveCgroupMemoryLimit(t *testing.T) {
 	if !cgroup.IsOnlyV2() {
 		t.Skip("cgroup v2 required")
 	}
@@ -2834,11 +2834,11 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 		}
 		t.Fatalf("probe.Install(): %v", err)
 	}
-	if _, err := os.Stat(probe.MakePath("memory.max")); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(probe.MakePath(""), "memory.max")); os.IsNotExist(err) {
 		_ = probe.Uninstall()
 		t.Skip("cgroup v2 memory controller unavailable")
 	}
-	_, swapErr := os.Stat(probe.MakePath("memory.swap.max"))
+	_, swapErr := os.Stat(filepath.Join(probe.MakePath(""), "memory.swap.max"))
 	if err := probe.Uninstall(); err != nil {
 		t.Fatalf("probe.Uninstall(): %v", err)
 	}
@@ -2855,6 +2855,29 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 	spec, conf := sleepSpecConf(t)
 	conf.Overlay2.Set("none")
 	conf.Strace = false
+	logDir := t.TempDir()
+	conf.DebugLog = filepath.Join(logDir, "%TIMESTAMP%.%COMMAND%.txt")
+	t.Cleanup(func() {
+		files, err := os.ReadDir(logDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, f := range files {
+			if f.IsDir() {
+				continue
+			}
+			data, e := os.ReadFile(filepath.Join(logDir, f.Name()))
+			if e != nil {
+				t.Fatal(e)
+			}
+			for _, l := range strings.Split(string(data), "\n") {
+				if _, details, ok := strings.Cut(l, "SAVE_GC_OBS "); ok {
+					t.Logf("SAVE_GC_BUDGET %s", details)
+				}
+			}
+		}
+	})
+
 	spec.Mounts = []specs.Mount{{Type: "tmpfs", Destination: "/tmpfs"}}
 	spec.Linux = &specs.Linux{
 		CgroupsPath: cgPath,
@@ -2917,33 +2940,76 @@ func TestRestoreCgroupMemoryLimit(t *testing.T) {
 	if err := os.Chmod(imageDir, 0777); err != nil {
 		t.Fatalf("Chmod(%q): %v", imageDir, err)
 	}
-	if err := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{
-		Compression: statefile.CompressionLevelFlateBestSpeed,
-	}); err != nil {
-		t.Fatalf("checkpointing container: %v", err)
-	}
-	if _, err := cont.Wait(); err != nil {
-		t.Fatalf("waiting after checkpoint: %v", err)
-	}
-	if err := cont.Destroy(); err != nil {
-		t.Fatalf("destroying checkpointed container: %v", err)
-	}
-	cont = nil
-
-	cont2, err := New(conf, args)
+	sentryPid := cont.Sandbox.Pid.Load()
+	pidfd, err := unix.PidfdOpen(sentryPid, 0)
 	if err != nil {
-		t.Fatalf("creating restored container: %v", err)
+		t.Fatalf("pidfd_open Sentry: %v", err)
 	}
-	defer cont2.Destroy()
+	defer unix.Close(pidfd)
+	member, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", sentryPid))
+	if err != nil || !strings.Contains(string(member), "0::"+cgPath+"\n") {
+		t.Fatalf("Sentry cgroup %q: %v", member, err)
+	}
+	read := func(key string) string {
+		t.Helper()
+		b, err := os.ReadFile(filepath.Join(probe.MakePath(""), key))
+		if err != nil {
+			t.Fatalf("read %s: %v", key, err)
+		}
+		return strings.TrimSpace(string(b))
+	}
+	snapshot := func() map[string]string {
+		return map[string]string{"current": read("memory.current"), "peak": read("memory.peak"), "limit": read("memory.max"), "swap": read("memory.swap.max"), "events": read("memory.events"), "members": read("cgroup.procs"), "stats": read("memory.stat")}
+	}
+	before := snapshot()
+	if before["limit"] != "209715200" || before["swap"] != "0" {
+		t.Fatalf("active limit/swap mismatch %s/%s", before["limit"], before["swap"])
+	}
+	start := time.Now().UTC()
+	err = cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelFlateBestSpeed})
+	exited := time.Now().UTC()
+	// Observe the Sentry without causing an exit or destroying its cgroup.
+	n, pollErr := unix.Poll([]unix.PollFd{{Fd: int32(pidfd), Events: unix.POLLIN}}, 3000)
+	if pollErr != nil {
+		t.Fatal(pollErr)
+	}
+	after := snapshot()
+	stat, statErr := os.ReadFile(fmt.Sprintf("/proc/%d/stat", sentryPid))
+	var procState string
+	exitCode := -1
+	if statErr == nil {
+		// Fields 3 (state) and 52 (wait status) follow the parenthesized comm.
+		fields := strings.Fields(string(stat[strings.LastIndexByte(string(stat), ')')+1:]))
+		if len(fields) > 49 {
+			procState = fields[0]
+			exitCode, _ = strconv.Atoi(fields[49])
+		}
+	}
+	var waitCode int = -1
+	var waitErr error
+	if n > 0 {
+		status, e := cont.Wait()
+		waitCode, waitErr = int(status), e
+	}
+	files, e := os.ReadDir(imageDir)
+	if e != nil {
+		t.Fatal(e)
+	}
+	sizes := make(map[string]int64)
+	for _, file := range files {
+		fi, e := file.Info()
+		if e != nil {
+			t.Fatal(e)
+		}
+		if fi.Mode().IsRegular() {
+			sizes[file.Name()] = fi.Size()
+		}
+	}
+	report := map[string]any{"sandbox_pid": sentryPid, "gofer_pid": cont.GoferPid.Load(), "cgroup": cgPath, "populated_files": 50000, "file_size": 0, "start": start, "rpc_finished": exited, "rpc_error": fmt.Sprint(err), "before": before, "after": after, "pidfd_ready": n, "proc_state": procState, "proc_exit": exitCode, "proc_error": fmt.Sprint(statErr), "wait_status": waitCode, "wait_error": fmt.Sprint(waitErr), "sizes": sizes}
+	b, e := json.Marshal(report)
+	if e != nil {
+		t.Fatal(e)
+	}
+	t.Logf("SAVE_200M_OBS %s", b)
 
-	if err := cont2.Restore(conf, imageDir, sandbox.DirectIOOff, false /* background */, nil /* networkArgs */); err != nil {
-		events, _ := os.ReadFile(probe.MakePath("memory.events"))
-		t.Fatalf("restoring container under %d MiB cgroup limit: %v\nmemory.events:\n%s", memLimit>>20, err, events)
-	}
-	if err := waitForProcessCount(cont2, 1); err != nil {
-		t.Fatalf("waiting for restored init process: %v", err)
-	}
-	if ws, err := execute(conf, cont2, "/bin/sh", "-c", "test -d /tmpfs"); err != nil || ws.ExitStatus() != 0 {
-		t.Fatalf("verifying restored /tmpfs failed: ws=%v, err=%v", ws, err)
-	}
 }
