@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+    "updatedAt": "2026-10-31T00:38:48.282173+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37817,18 +37817,17 @@
       "title": "Run the Go export assembler directly",
       "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb",
       "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "The approved #15106 invokes its ZIP writer through a shell. Compare that archive with a direct invocation through bazel_lib before asking for review.",
-      "followup": {
-        "owner": "root",
-        "sourceHead": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Agent work: archive comparison",
-        "nextAction": "Verify both action graphs and compare the complete ZIP bytes. Keep #15106 at its approved head.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41148869478"
-        ]
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T00:38:48.282173+00:00",
+      "summary": "The approved #15106 launches its ZIP assembler through Bash. A declared Bazel action calls the assembler directly and produces the identical 2,526-entry archive.",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
+        "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb",
+        "title": "Run the Go export assembler directly",
+        "summary": "The approved #15106 launches its ZIP assembler through Bash. A declared Bazel action calls the assembler directly and produces the identical 2,526-entry archive.",
+        "body": "Review the single BUILD change for submission after #15106 lands. The comparison verified both complete archives byte for byte and identified Genrule on the parent and GoExport on the proposal. https://github.com/tamird/gvisor/actions/runs/41150603904/artifacts/13022154932"
       }
     }
   ],
@@ -53466,7 +53465,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "updatedAt": "2026-10-31T00:38:48.282173+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -54325,6 +54324,15 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41148061251/artifacts/13021882555"
             }
           ]
+        },
+        {
+          "text": "The Go branch export can run its assembler directly. The parent and direct action produced the same ZIP SHA-256 across all 2,526 entries.",
+          "evidence": [
+            {
+              "label": "Complete archive and action comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41150603904/artifacts/13022154932"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Check how unlabeled development binaries can identify incompatible checkpoints before removing the workspace status script. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
@@ -55125,7 +55133,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-30T23:00:22.480244+00:00",
+      "updatedAt": "2026-10-31T00:38:48.282173+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -55420,11 +55428,16 @@
         {
           "label": "Inline review: bounding receive pressure",
           "url": "https://github.com/google/gvisor/pull/15325#discussion_r4413148598"
+        },
+        {
+          "label": "TIME_WAIT: native Linux and forwarder traces for #15019 (qualification)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41151002275"
         }
       ],
       "reviewWatch": {
         "repo": "google/gvisor",
         "numbers": [
+          15019,
           15325,
           16659,
           16660
