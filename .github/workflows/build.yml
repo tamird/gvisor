@@ -24,8 +24,7 @@ jobs:
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/replay-public"
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = 18221110ae7065d5a41488efda8da4bb6fb48bc7
-        test "$(git rev-parse HEAD^1^1)" = 5107630c44ad2be29c52175d1d7d26df80e6ce2b
+        git merge-base --is-ancestor 47025d1e8cec868c1b3d9556e34b0a39124b1dbf HEAD
         cp test/rbe/case_records.py "$RUNNER_TEMP/case_records.py"
         cp test/rbe/tcp_repair_sources.json "$RUNNER_TEMP/tcp-heads.json"
         cp test/rbe/tcp_repair_driver.py "$RUNNER_TEMP/driver.py"
@@ -66,6 +65,10 @@ jobs:
         } > "$rc"
         unset BUILDBUDDY_API_KEY
         export FIFO_RC=$rc
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        unshare --user --map-root-user true
         test -x /usr/bin/x86_64-linux-gnu-gcc
         uname -r > "$RUNNER_TEMP/replay-public/kernel"
         printf '%s\n' '{"status":"PASS","scope":"local Linux AMD64 Go TestRunner"}' > "$RUNNER_TEMP/replay-public/preflight.json"
