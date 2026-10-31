@@ -1059,6 +1059,44 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: jekyll_gem_autoprefixer_rails
+  version: https://rubygems.org/gems/autoprefixer-rails-9.8.6.5.gem
+  retrieved: "2026-10-31"
+  commit: c5c84340527150e4b1aa3e32e44d3e037d560248
+  sha256: 15b036f5fac8d1b0439bec7881cf1322ba86474c81d93e02be42741b476770ea
+  license:
+    - BSD-3-Clause
+    - CC-BY-4.0
+    - ISC
+    - MIT
+- dependency: jekyll_gem_jekyll_autoprefixer
+  version: https://rubygems.org/gems/jekyll-autoprefixer-1.0.2.gem
+  retrieved: "2026-10-31"
+  commit: 1095859fcf8cecca924fc5647ee10495e7d7b993
+  sha256: 7aee7ef80ea1cce9f33fbff979189e19867c3677b26c96b24a2a874410d3fe27
+  license: MIT
+  license_source: https://raw.githubusercontent.com/vwochnik/jekyll-autoprefixer/1095859fcf8cecca924fc5647ee10495e7d7b993/LICENSE.md
+- dependency: jekyll_gem_jekyll_feed
+  version: https://rubygems.org/gems/jekyll-feed-0.13.0.gem
+  retrieved: "2026-10-31"
+  commit: 9cda8c4e4940cc6947f1525b23461d06b1caaa1c
+  sha256: 3906c7d7365f6a15c42d86caa5d75fb72ece7c36a068b346e581a206e7b6a8d3
+  license: MIT
+  license_source: https://raw.githubusercontent.com/jekyll/jekyll-feed/9cda8c4e4940cc6947f1525b23461d06b1caaa1c/LICENSE.txt
+- dependency: jekyll_gem_jekyll_relative_links
+  version: https://rubygems.org/gems/jekyll-relative-links-0.6.1.gem
+  retrieved: "2026-10-31"
+  commit: 493d6333b56058fb1ca812712fe7cff42cc33b22
+  sha256: d11301f57b39e94b6c04fff2a3b145fe2f6a27be631a403e2542fa2e1548dd6d
+  license: MIT
+  license_source: https://raw.githubusercontent.com/benbalter/jekyll-relative-links/493d6333b56058fb1ca812712fe7cff42cc33b22/LICENSE.md
+- dependency: jekyll_gem_jekyll_sitemap
+  version: https://rubygems.org/gems/jekyll-sitemap-1.4.0.gem
+  retrieved: "2026-10-31"
+  commit: 6f1e772109f0641dba5f9d0cc8a667e5e05d7029
+  sha256: 0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218
+  license: MIT
+  license_source: https://raw.githubusercontent.com/jekyll/jekyll-sitemap/6f1e772109f0641dba5f9d0cc8a667e5e05d7029/LICENSE.md
 - dependency: k8s.io/api
   version: v0.32.3
   retrieved: "2026-08-27"
@@ -1364,6 +1402,12 @@
     - Apache-2.0
     - BSD-3-Clause
     - MIT
+- dependency: tar.bzl
+  version: https://github.com/bazel-contrib/tar.bzl/releases/download/v0.10.9/tar.bzl-v0.10.9.tar.gz
+  retrieved: "2026-10-31"
+  commit: 00abfca5723f527a2651c36d059188f702bbd392
+  sha256: 8a3b78120510962fc74b577aaaf52412537cfbc25c88a596a375bd409e66b98a
+  license: Apache-2.0
 - dependency: xds
   version: https://github.com/cncf/xds/archive/ee656c7534f5d7dc23d44dd611689568f72017a6.tar.gz
   retrieved: "2026-08-27"
