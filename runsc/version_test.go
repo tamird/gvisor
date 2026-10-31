@@ -23,8 +23,10 @@ import (
 	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
+var runscPath = flag.String("runsc", "", "path to the runsc binary in runfiles")
+
 func TestVersion(t *testing.T) {
-	runsc, err := testutil.FindFile(flag.Arg(0))
+	runsc, err := testutil.FindFile(*runscPath)
 	if err != nil {
 		t.Fatal(err)
 	}
