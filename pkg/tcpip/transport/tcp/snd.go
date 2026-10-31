@@ -1568,6 +1568,37 @@ func (s *sender) inRecovery() bool {
 	return false
 }
 
+// ackStopsInSACKedPacket reports whether the peer previously reported the
+// transmitted packet containing its next unacknowledged byte. Consult the
+// queue before this ACK trims it: a SACK of just the unacknowledged suffix
+// does not mean that the peer reported the whole packet.
+//
+// +checklocks:s.ep.mu
+func (s *sender) ackStopsInSACKedPacket(ack seqnum.Value) bool {
+	if s.ep.scoreboard.Empty() {
+		return false
+	}
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+		p := seg.sackPackets()
+		if p.count == 0 {
+			continue
+		}
+		if ack.LessThan(p.block.Start) {
+			break
+		}
+		if !ack.LessThan(p.block.End) {
+			continue
+		}
+		start := p.block.Start.Add(p.block.Start.Size(ack) / p.mss * p.mss)
+		end := start.Add(min(p.mss, start.Size(p.block.End)))
+		if start.LessThan(s.SndUna) {
+			start = s.SndUna
+		}
+		return s.ep.scoreboard.IsSACKED(header.SACKBlock{Start: start, End: end})
+	}
+	return false
+}
+
 // handleRcvdSegment is called when a segment is received; it is responsible for
 // updating the send-related state.
 // +checklocks:s.ep.mu
@@ -1705,8 +1736,8 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		}
 
 		switch {
-		case s.SndWnd != 0 && s.ep.SACKPermitted && s.ep.scoreboard.IsSACKED(header.SACKBlock{Start: ack, End: ack.Add(1)}):
-			// An advancing ACK stopped at a byte the peer reported receiving.
+		case s.SndWnd != 0 && s.ep.SACKPermitted && s.ackStopsInSACKedPacket(ack):
+			// An advancing ACK stopped inside a packet previously SACKed.
 			// Give an ACK covering that byte time to arrive before treating
 			// the earlier SACK as invalid. See tcp_check_sack_reneging:
 			// https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L2247-L2258
