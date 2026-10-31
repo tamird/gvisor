@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T02:41:05.863202+00:00",
+    "updatedAt": "2026-10-31T02:57:39.242289+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11722,9 +11722,9 @@
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd",
-      "status": "Contributor approved; awaiting prerequisites",
-      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
-      "summary": "The contributor explicitly approved the complete reviewed range 5ac1aa8e95..4094323ff5 for upstream delivery after its image and license prerequisites. The modernized rules_img/grouped-layout proposal preserves the approved lean package choices and both Go sources. Both-architecture archive checks, actual AMD64 Make/runtime tests and the complete 244-entry canonical catalog are independently accepted. The catalog has 46 APT entries; the two libcrypt manual records and existing classifier policy remain explicit prerequisites. Final 409 adds only the exact generated catalog to the qualified image/policy source. No fresh ARM runtime or same-head replay is claimed. No contributor decision is pending.\n\nRetained original proposal and qualification:\n\nThe complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
+      "status": "Superseded by independent Ollama and profiling image proposals",
+      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "summary": "The Ollama and profile helper images can each use an official base. Both standalone replacements have passed their runtime checks; see their proposal rows. Review the older shared APT base only for remaining consumers that actually depend on it.\n\nOriginal proposal:\nThe contributor explicitly approved the complete reviewed range 5ac1aa8e95..4094323ff5 for upstream delivery after its image and license prerequisites. The modernized rules_img/grouped-layout proposal preserves the approved lean package choices and both Go sources. Both-architecture archive checks, actual AMD64 Make/runtime tests and the complete 244-entry canonical catalog are independently accepted. The catalog has 46 APT entries; the two libcrypt manual records and existing classifier policy remain explicit prerequisites. Final 409 adds only the exact generated catalog to the qualified image/policy source. No fresh ARM runtime or same-head replay is claimed. No contributor decision is pending.\n\nRetained original proposal and qualification:\n\nThe complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
       "followup": {
         "owner": "node_tls_sni",
         "disposition": "Contributor approved; awaiting image and license prerequisites",
@@ -33969,17 +33969,37 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "updatedAt": "2026-10-31T02:54:52.285980+00:00",
       "followup": {
         "owner": "root",
-        "observedAt": "2026-10-31T01:30:53.551127+00:00",
+        "observedAt": "2026-10-31T02:54:52.285980+00:00",
         "sourceHead": "0aa163b78df385b88491955a5627c0d585c63123",
-        "disposition": "Agent validating conflict repair",
-        "nextAction": "Compare both checkpoint suites and three mount-permission cases after adapting the fix to PeekFilesystem.",
+        "disposition": "Contributor review requested",
+        "nextAction": "Publish the reviewed repair when authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5c7696351",
-          "https://github.com/tamird/gvisor/actions/runs/41155572605"
+          "https://github.com/tamird/gvisor/actions/runs/41160927062/artifacts/13027885690"
         ]
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "0aa163b78df385b88491955a5627c0d585c63123",
+        "head": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
+        "url": "https://github.com/tamird/gvisor/commit/5c7696351",
+        "title": "Preserve fsmount permission checks on checkpoint restore",
+        "summary": "Decide whether to update #16665. The new mount API checks permission before it consumes the configured filesystem. The revision supplies its saved read-only setting at that check.",
+        "body": "Both 41-case checkpoint suites and all three mount-permission cases on Linux and gVisor passed. No skips or missing cases. The published PR still conflicts.\n\ngit range-diff 0aa163b78^! 5c7696351^!\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41160927062/artifacts/13027885690"
+      },
+      "refinement": {
+        "before": {
+          "head": "0aa163b78df385b88491955a5627c0d585c63123",
+          "base": "f4c82a02fc3e8452463d5b58f013ba2140003f17"
+        },
+        "after": {
+          "head": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
+          "base": "0bbcbf9de7626fcecba97f37723dce80b435d73d"
+        }
       }
     },
     {
@@ -38120,6 +38140,177 @@
         "url": "https://github.com/tamird/gvisor/commit/64b2f7547",
         "title": "Open the graph encoder slice-growth PR",
         "summary": "When narrow slices are visited before wider slices with the same base address, every new width creates another parent to traverse. Extending the existing array removed all 4,192,256 traversals in a 2,048-window checkpoint. The four-worker Nginx sample had no such slices."
+      }
+    },
+    {
+      "id": "branch:nogo-sandbox-actions",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/nogo-sandbox-actions",
+      "head": "a2a76817d2d66f2956059b464d2eadbb036078f9",
+      "title": "Allow Bazel to sandbox Nogo actions",
+      "url": "https://github.com/tamird/gvisor/commit/a2a76817d",
+      "group": "rbe",
+      "status": "Agent qualifying analyzer sandboxing",
+      "updatedAt": "2026-10-31T02:54:52.285980+00:00",
+      "summary": "Four Nogo actions opt out of sandboxing to avoid a FUSE penalty. Bazel removed sandboxfs before 7.0; gVisor uses 8.8.1. A forced Linux sandbox failed before standard-library analysis on master. The proposal drops the opt-outs. Remaining work: establish which actions really executed, verify the sanity finding and a rendered output, and measure local cost.",
+      "evidence": [
+        {
+          "label": "Original refusal before execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41160883602/artifacts/13027156108"
+        },
+        {
+          "label": "Bazel removed sandboxfs",
+          "url": "https://github.com/bazelbuild/bazel/commit/217fafe2b"
+        }
+      ]
+    },
+    {
+      "id": "branch:official-ollama-go-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/official-ollama-go-image",
+      "head": "6537e6b29651e967485041625f9f31b047f55c69",
+      "title": "Assemble the Ollama client on the pinned Alpine image",
+      "url": "https://github.com/tamird/gvisor/commit/6537e6b29",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "summary": "Bazel packages the static Go client with the pinned Alpine CA store. HTTPS and streaming responses passed on both architectures. The compressed images are 380 kB and 305 kB larger than the deployed AMD64 and ARM64 images.",
+      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "evidence": [
+        {
+          "label": "AMD64 runtime",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41161696380/artifacts/13027039200"
+        },
+        {
+          "label": "ARM64 runtime under QEMU",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41161696380/artifacts/13027004598"
+        },
+        {
+          "label": "Original Make builds and Docker loads",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41160841136"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "6537e6b29651e967485041625f9f31b047f55c69",
+        "url": "https://github.com/tamird/gvisor/commit/6537e6b29",
+        "title": "Open the Ollama image PR",
+        "summary": "Bazel packages the static Go client with the pinned Alpine CA store. HTTPS and streaming responses passed on both architectures. The compressed images are 380 kB and 305 kB larger than the deployed AMD64 and ARM64 images."
+      },
+      "refinement": {
+        "before": {
+          "head": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
+          "base": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
+        },
+        "after": {
+          "head": "6537e6b29651e967485041625f9f31b047f55c69",
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+        }
+      }
+    },
+    {
+      "id": "branch:official-profile-go-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/official-profile-go-image",
+      "head": "ffe9e097c2056607ddf38df209dca26cf6078009",
+      "title": "Assemble the profiling helper on Ubuntu 22.04",
+      "url": "https://github.com/tamird/gvisor/commit/ffe9e097c",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "summary": "Ubuntu supplies the GNU tools that the DaemonSet invokes, including rm --one-file-system. Mount-boundary deletion, containerd config edits and streaming passed on both architectures. The compressed images are 731 kB and 713 kB smaller than the deployed AMD64 and ARM64 images.",
+      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "evidence": [
+        {
+          "label": "AMD64 runtime",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41161696380/artifacts/13027047661"
+        },
+        {
+          "label": "ARM64 runtime under QEMU",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41161696380/artifacts/13027019629"
+        },
+        {
+          "label": "Original Make builds and Docker loads",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41160841136"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "ffe9e097c2056607ddf38df209dca26cf6078009",
+        "url": "https://github.com/tamird/gvisor/commit/ffe9e097c",
+        "title": "Open the profiling image PR",
+        "summary": "Ubuntu supplies the GNU tools that the DaemonSet invokes, including rm --one-file-system. Mount-boundary deletion, containerd config edits and streaming passed on both architectures. The compressed images are 731 kB and 713 kB smaller than the deployed AMD64 and ARM64 images."
+      },
+      "refinement": {
+        "before": {
+          "head": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
+          "base": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
+        },
+        "after": {
+          "head": "ffe9e097c2056607ddf38df209dca26cf6078009",
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+        }
+      }
+    },
+    {
+      "id": "branch:protobuf-stage1-direct",
+      "type": "branch",
+      "repo": "tamird/protobuf",
+      "ref": "research/stage1-upb-direct",
+      "head": "a4504c5467dde4ef8ee4a075ee240c54a7da4883",
+      "title": "Run the stage-1 upb generators without Bash",
+      "url": "https://github.com/tamird/protobuf/commit/a4504c546",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "summary": "The stage-0 plugins take their inputs as protoc arguments. Six calls that used to require Bash ran remotely with just the declared compiler and plugin. All nine C sources and headers were identical to the originals.",
+      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "evidence": [
+        {
+          "label": "Action logs and output hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41161985190/artifacts/13027657016"
+        },
+        {
+          "label": "Six remote execution actions",
+          "url": "https://app.buildbuddy.io/invocation/1e1073a2-cec9-446e-a45d-2d7c5c0ed88d"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "a4504c5467dde4ef8ee4a075ee240c54a7da4883",
+        "url": "https://github.com/tamird/protobuf/commit/a4504c546",
+        "title": "Run the stage-1 upb generators without Bash",
+        "summary": "The stage-0 plugins take their inputs as protoc arguments. Six calls that used to require Bash ran remotely with just the declared compiler and plugin. All nine C sources and headers were identical to the originals."
+      }
+    },
+    {
+      "id": "branch:staged-release-tag",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/staged-release-tag",
+      "head": "49c59fcc0063fa0e98d2b383947e4c238be0f21a",
+      "title": "Build staged releases with the verified tag",
+      "url": "https://github.com/tamird/gvisor/commit/49c59fcc0",
+      "group": "rbe",
+      "status": "Contributor review requested",
+      "summary": "The release job already verifies that its tag points to its checkout. Pass that tag to Bazel during building and signing. AMD64 and ARM64 binaries and package metadata reported the supplied release; the ordinary build retained its development version.",
+      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "evidence": [
+        {
+          "label": "Both staged releases and ordinary-build control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41160163215/artifacts/13027102542"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "49c59fcc0063fa0e98d2b383947e4c238be0f21a",
+        "url": "https://github.com/tamird/gvisor/commit/49c59fcc0",
+        "title": "Build staged releases with the verified tag",
+        "summary": "The release job already verifies that its tag points to its checkout. Pass that tag to Bazel during building and signing. AMD64 and ARM64 binaries and package metadata reported the supplied release; the ordinary build retained its development version."
       }
     }
   ],
@@ -55467,7 +55658,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-31T00:38:48.282173+00:00",
+      "updatedAt": "2026-10-31T02:54:52.285980+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -55736,6 +55927,15 @@
               "url": "https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef"
             }
           ]
+        },
+        {
+          "text": "#11837: OCI requested a 256 MiB maximum for TCP receive and send buffers, but both stayed at 4 MiB on the private netstack. Guest procfs writes applied the same triples, and a fresh socket received both requested 512 KiB defaults. This run did not measure Nitro throughput.",
+          "evidence": [
+            {
+              "label": "OCI startup vs subsequent writes on the same guest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41161385542/artifacts/13027456661"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -55766,6 +55966,10 @@
         {
           "label": "TIME_WAIT: native Linux and forwarder traces for #15019 (qualification)",
           "url": "https://github.com/tamird/gvisor/actions/runs/41151002275"
+        },
+        {
+          "label": "OCI vs guest writes: procfs and actual new socket buffers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41161385542/artifacts/13027456661"
         }
       ],
       "reviewWatch": {
