@@ -26,6 +26,7 @@ build --host_cxxopt=-std=c++17 --host_cxxopt=-Wno-error=maybe-uninitialized
 
 # Release callers pass --embed_label; ordinary builds have no stamp inputs.
 build:release_version --stamp
+build:release_version --experimental_output_paths=strip
 
 build:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
 test:race --@io_bazel_rules_go//go/config:race --@io_bazel_rules_go//go/config:pure=false
