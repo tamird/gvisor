@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("//tools:defs.bzl", "bzl_library", "string_flag")
 
 package(
@@ -76,16 +77,18 @@ config_setting(
     ],
 )
 
-genrule(
+run_binary(
     name = "version",
     outs = ["version.txt"],
-    cmd = "cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2- | sed 's/^[^[:digit:]]*//g' >$@",
+    mnemonic = "PackageVersion",
+    args = ["$@"],
     stamp = 1,
     tags = [
         "manual",
         "nobuilder",
         "notap",
     ],
+    tool = "//tools/package_version",
     visibility = ["//:sandbox"],
 )
 
