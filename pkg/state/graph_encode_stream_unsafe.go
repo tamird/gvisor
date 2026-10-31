@@ -18,7 +18,9 @@ import (
 	"cmp"
 	"context"
 	"encoding/binary"
+	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"slices"
 	"unsafe"
@@ -488,6 +490,7 @@ func saveGraph(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 	}
 	es := newGraphEncodeState(ctx, ti.elem)
 	defer es.release()
+	es.windowAttempts, es.windowExtensions = 0, 0
 	es.stats.used = true
 	es.stats.enabled = collectStats.Load()
 	out := &es.final
@@ -498,6 +501,9 @@ func saveGraph(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 		}
 		es.save(e.data, ti.elem, out)
 	})
+	if ti.elem.typ.Name() == "Kernel" && ti.elem.typ.PkgPath() == "gvisor.dev/gvisor/pkg/sentry/kernel" {
+		fmt.Fprintf(os.Stderr, "WINDOW-KERNEL root=%T attempts=%d extensions=%d bytes=%d\n", rootPtr, es.windowAttempts, es.windowExtensions, len(out.b))
+	}
 	es.stats.bytes = len(out.b)
 	es.stats.elapsed = gohacks.Nanotime() - start
 	if err != nil {

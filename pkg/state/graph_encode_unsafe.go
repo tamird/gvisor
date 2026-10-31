@@ -239,6 +239,8 @@ type traversalKey struct {
 
 // graphEncodeState is the state of Save.
 type graphEncodeState struct {
+	windowAttempts, windowExtensions int
+
 	ctx context.Context
 
 	// out holds the encodings of objects.
