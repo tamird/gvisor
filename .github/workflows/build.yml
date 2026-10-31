@@ -1,35 +1,62 @@
-name: CI
-
-"on":
+name: Qualify Ubuntu builder without foreign GCC
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-builder-native-packages]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  builder:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the product and build the default image
+        timeout-minutes: 29
+        shell: bash
+        run: |
+          set -euo pipefail
+          q="$RUNNER_TEMP/builder-cross"
+          mkdir "$q"
+          cp .github/qualification/builder-cross/verify.py "$RUNNER_TEMP/builder-cross-verify.py"
+          git checkout --detach HEAD^
+          test "$(git rev-parse HEAD)" = "c8bde107ba5507498fec6a91501942be21157f25"
+          test "$(git rev-parse HEAD^)" = "0afd5b37e31824e0299c44235ef4cb58af0358ce"
+          test "$(git diff --name-only HEAD^ HEAD)" = "images/default/Dockerfile"
+          git log -1 --format='%H%n%P%n%s' > "$q/source.txt"
+          git show --format= HEAD -- images/default/Dockerfile > "$q/product.diff"
+          date --utc --iso-8601=seconds > "$q/image-start.txt"
+          df -h / > "$q/disk.txt"
+          set +e
+          docker build --progress=plain --tag gvisor-builder:checked images/default > "$q/image.log" 2>&1
+          rc=$?
+          set -e
+          echo "$rc" > "$q/image-exit.txt"
+          tail -n 25 "$q/image.log"
+          date --utc --iso-8601=seconds > "$q/image-finish.txt"
+          test "$rc" -eq 0
+          docker image inspect --format '{{.Id}} {{.Os}}/{{.Architecture}}' gvisor-builder:checked > "$q/image.txt"
+      - name: Build the ARM64 ELF and generate both systrap binaries and offset tables in that image
+        timeout-minutes: 28
+        shell: bash
+        run: |
+          set -euo pipefail
+          q="$RUNNER_TEMP/builder-cross"
+          set +e
+          docker run --rm --entrypoint /usr/bin/python3 \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/workspace \
+            -v "$GITHUB_WORKSPACE:/workspace" -v "$q:/evidence" \
+            -v "$RUNNER_TEMP/builder-cross-verify.py:/verify.py:ro" gvisor-builder:checked /verify.py
+          rc=$?
+          set -e
+          echo "$rc" > "$q/container-exit.txt"
+          if test "$rc" -ne 0 && test -f "$q/bazel.log"; then tail -n 45 "$q/bazel.log"; fi
+          exit "$rc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: reduced-builder-cross-qualification
+          path: ${{ runner.temp }}/builder-cross
+          if-no-files-found: error
