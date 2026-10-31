@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
@@ -275,13 +276,11 @@ toolchain(
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
 
-genrule(
-    name = "go_export",
+filegroup(
+    name = "go_export_srcs",
     srcs = [
-        ":gopath",
         "AUTHORS",
         "LICENSE",
-        "go.mod",
         "go.sum",
         "//runsc:go_export_sources",
         "//runsc/checkpointgofer:go_export_sources",
@@ -294,16 +293,27 @@ genrule(
         "//tools/checklocks/cmd/checklocks:go_export_sources",
         "//webhook:go_export_sources",
     ],
+)
+
+run_binary(
+    name = "go_export",
+    srcs = [
+        ":go_export_srcs",
+        ":gopath",
+        "go.mod",
+    ],
     outs = ["go_export.zip"],
-    cmd = "$(execpath //tools/go_export:assemble) --gopath $(execpath :gopath) --output $@ --go-mod $(execpath go.mod) " +
-          "$(execpath AUTHORS) $(execpath LICENSE) $(execpath go.sum) " +
-          "$(execpaths //runsc:go_export_sources) $(execpaths //runsc/checkpointgofer:go_export_sources) " +
-          "$(execpaths //runsc/cmd/metricserver:go_export_sources) $(execpaths //runsc/cmd/sentry:go_export_sources) " +
-          "$(execpath //runsc/fdparking:fdparking.c) $(execpath //runsc/prewarmer:prewarmer.c) " +
-          "$(execpath //runsc/procumounter:procumounter.c) " +
-          "$(execpaths //shim:go_export_sources) " +
-          "$(execpaths //tools/checklocks/cmd/checklocks:go_export_sources) $(execpaths //webhook:go_export_sources)",
-    tools = ["//tools/go_export:assemble"],
+    args = [
+        "--gopath",
+        "$(execpath :gopath)",
+        "--output",
+        "$@",
+        "--go-mod",
+        "$(execpath go.mod)",
+        "$(execpaths :go_export_srcs)",
+    ],
+    mnemonic = "GoExport",
+    tool = "//tools/go_export:assemble",
     visibility = ["//visibility:public"],
 )
 
