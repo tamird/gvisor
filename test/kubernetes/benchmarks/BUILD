@@ -621,3 +621,11 @@ go_test(
         "//test/kubernetes/testcluster",
     ],
 )
+
+go_test(
+    name = "gsutil_release_command_test",
+    srcs = ["gsutil_release_command_test.go"],
+    embed = [":gsutil"],
+    nogo = False,
+    deps = ["//test/kubernetes/testcluster"],
+)
