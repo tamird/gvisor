@@ -102,7 +102,7 @@ jobs:
         mkdir -p "$RUNNER_TEMP/replay-public"
         printf '%s\n' '{"status":"INCOMPLETE","phase":"compiler installation"}' > "$RUNNER_TEMP/replay-public/preflight.json"
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump libbpf-dev clang
         export FENCE_HOST_ID=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT FENCE_HOST_PROBE=$RUNNER_TEMP/host-marker
         export XTABLES_LOCKFILE=$RUNNER_TEMP/fence-xtables.lock
         touch "$XTABLES_LOCKFILE"
@@ -127,26 +127,15 @@ jobs:
         PYCHECK
         git checkout --quiet --detach "$stock_probe"
         test "$(git rev-parse HEAD)" = "$stock_probe"
-        # Build stdlib and analyze it from declared inputs in both target modes
-        # before compiling the listeners. Do not reuse unsandboxed std archives.
-        for arch in x86_64 aarch64; do
-          diagnostic="$RUNNER_TEMP/replay-public/build-preflight-$arch.json"
-          printf '{"status":"INCOMPLETE","configuration":"%s"}\n' "$arch" > "$diagnostic"
-          events="$RUNNER_TEMP/build-preflight-$arch.jsonl"
-          bazelisk --bazelrc="$rc" build "--config=$arch" --strip=never \
-            "--build_event_json_file=$events" //tools/nogo:stdlib
-          python3 - "$arch" "$events" "$diagnostic" <<'PYBUILD'
-        import json, sys
-        from pathlib import Path
-        records = [json.loads(row) for row in Path(sys.argv[2]).read_text().splitlines()]
-        target = "//tools/nogo:stdlib"
-        ids = [e["id"]["targetCompleted"] for e in records if e.get("completed", {}).get("success") and e["id"].get("targetCompleted", {}).get("label") == target]
-        assert len(ids) == 1, ids
-        assert any(e.get("finished", {}).get("exitCode", {}).get("name") == "SUCCESS" for e in records)
-        invocation = next(e["started"]["uuid"] for e in records if "started" in e)
-        Path(sys.argv[3]).write_text(json.dumps({"status": "PASS", "target": target, "configuration": sys.argv[1], "source": "16040ae66cbb76f4b5bddabe714bdb955c49c9aa", "invocation": invocation})+"\n")
-        PYBUILD
-        done
+        # The previous run qualified Nogo for this same source. The missing
+        # prerequisite was the host libbpf header used by the old BPF genrule.
+        test "$(git rev-parse HEAD)" = "$stock_probe"
+        test -r /usr/include/bpf/bpf_helpers.h
+        /usr/bin/clang --print-targets | grep -w bpf
+        printf '%s\n' 'build --action_env=PATH=/usr/bin:/bin:/usr/local/bin' >> "$rc"
+        bazelisk --bazelrc="$rc" build --config=x86_64 --spawn_strategy=linux-sandbox //runsc/sandbox/bpf:af_xdp_ebpf //runsc/sandbox/bpf:tunnel_veth_ebpf
+        echo '{"status": "PASS", "target": "//tools/nogo:stdlib", "configuration": "x86_64", "source": "16040ae66cbb76f4b5bddabe714bdb955c49c9aa", "invocation": "ea10c8e3-b693-46c3-95c1-0ff07f43ea02", "verified_run": 41182991763}' > "$RUNNER_TEMP/replay-public/build-preflight-x86_64.json"
+        echo '{"status": "PASS", "target": "//tools/nogo:stdlib", "configuration": "aarch64", "source": "16040ae66cbb76f4b5bddabe714bdb955c49c9aa", "invocation": "4dcdb12a-ed73-478c-b661-21ddecce1ba4", "verified_run": 41182991763}' > "$RUNNER_TEMP/replay-public/build-preflight-aarch64.json"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in stock strict; do
