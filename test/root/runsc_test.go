@@ -205,6 +205,72 @@ func TestCreateContainerHooksRootFS(t *testing.T) {
 	}
 }
 
+// TestSandboxAncestorMemoryLimit reads the sandbox's MemTotal when a pod and
+// its containers specify different limits. The smaller limit applies in either
+// direction, including across a cgroup with no limit of its own.
+func TestSandboxAncestorMemoryLimit(t *testing.T) {
+	if !cgroup.IsOnlyV2() {
+		t.Skip("requires cgroup v2 memory.max")
+	}
+	const podLimit = 512 << 20
+	podPath := "/" + testutil.RandomID("runsc-memory-")
+	pod, err := cgroup.NewFromPath(podPath, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := pod.Install(&specs.LinuxResources{Memory: &specs.LinuxMemory{Limit: new(int64(podLimit))}}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := pod.Uninstall(); err != nil {
+			t.Errorf("removing pod cgroup: %v", err)
+		}
+	})
+	for _, tc := range []struct {
+		name  string
+		limit *int64
+		want  int64
+	}{
+		{"larger-child", new(int64(2 << 30)), podLimit},
+		{"unlimited-child", nil, podLimit},
+		{"smaller-child", new(int64(256 << 20)), 256 << 20},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			spec := testutil.NewSpecWithArgs("/bin/grep", "^MemTotal:", "/proc/meminfo")
+			spec.Version = specs.Version
+			spec.Mounts = nil
+			spec.Linux = &specs.Linux{
+				CgroupsPath: filepath.Join(podPath, tc.name, "container"),
+				Resources:   &specs.LinuxResources{Memory: &specs.LinuxMemory{Limit: tc.limit}},
+			}
+			bundle, clean, err := testutil.SetupBundleDir(spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(clean)
+			root, clean, err := testutil.SetupRootDir()
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(clean)
+			cmd := exec.CommandContext(t.Context(), specutils.ExePath, "--root", root, "--network=none", "--overlay2=none", "run", "--bundle", bundle, testutil.RandomContainerID())
+			cmd.Stderr = os.Stderr
+			out, err := cmd.Output()
+			if err != nil {
+				t.Fatalf("running grep in sandbox: %v", err)
+			}
+			var kib int64
+			if _, err := fmt.Sscanf(string(out), "MemTotal: %d kB", &kib); err != nil {
+				t.Fatalf("reading MemTotal from %q: %v", out, err)
+			}
+			t.Logf("guest MemTotal: %d kB", kib)
+			if got, want := kib<<10, tc.want; got != want {
+				t.Errorf("guest MemTotal = %d bytes, want %d", got, want)
+			}
+		})
+	}
+}
+
 // TestSandboxCreationCPULimit checks that the sandbox cgroup keeps the creation
 // CPU limit until the application starts: either when the root container
 // starts, or (in a sandbox with no root container) when its first container
