@@ -24,10 +24,13 @@ jobs:
           printf '%s  %s\n' 7916d5664f320ca4881cff7f36a9df7c6f41d03b5923cf2a4fed3a6a02f67945 "${bundles[0]}" | sha256sum --check --strict
           tar -xzf "${bundles[0]}" -C "$RUNNER_TEMP/row"
           cp "$RUNNER_TEMP/row/MODULE.bazel.lock" MODULE.bazel.lock
-      - name: Reproduce the missing shell and build the new headers and libraries
+      - name: Recover build evidence and inspect the owning Bazel actions
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/cares_header_probe.py
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13025534182/zip > "$RUNNER_TEMP/cares-original.zip"
+          python3 test/rbe/cares_header_actions.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
