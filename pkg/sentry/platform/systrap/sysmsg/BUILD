@@ -1,5 +1,5 @@
 load("//tools:arch.bzl", "arch_genrule", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_library")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker", "cc_nm", "cc_objcopy", "go_library")
 load("build.bzl", "cc_pie_obj")
 
 package(
@@ -72,25 +72,21 @@ genrule(
         ":sysmsg_lib",
     ],
     outs = ["sighandler.built-in.bin.o"],
-    cmd = "$(LD) " +
+    cmd = "$(execpath {}) ".format(cc_linker) +
           "-pie -z noexecstack -T $(location pie.lds.S) " +
           "$(location :sysrestorer) $(location :sighandler) " +
           "$(location :syshandler) $(location :sysmsg_lib) " +
           "-o $@",
     features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
-    ],
+    tools = [cc_linker],
 )
 
 genrule(
     name = "sighandler_binary",
     srcs = [":sighandler_object"],
     outs = ["sighandler.built-in.bin"],
-    cmd = "$(OBJCOPY) -O binary $(SRCS) $@",
-    toolchains = [
-        cc_toolchain,
-    ],
+    cmd = "$(execpath {}) -O binary $(SRCS) $@".format(cc_objcopy),
+    tools = [cc_objcopy],
 )
 
 arch_genrule(
@@ -104,9 +100,11 @@ genrule(
     srcs = [":sighandler_object"],
     outs = ["sighandler.go.arch"],
     cmd = "bash -x $(location gen_offsets_go.sh) sighandler Sighandler " +
-          "$(SRCS) \"$(NM)\" > $@",
-    toolchains = [cc_toolchain],
-    tools = ["gen_offsets_go.sh"],
+          "$(SRCS) \"$(execpath {})\" > $@".format(cc_nm),
+    tools = [
+        "gen_offsets_go.sh",
+        cc_nm,
+    ],
 )
 
 arch_genrule(

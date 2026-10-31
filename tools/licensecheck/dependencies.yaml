@@ -510,6 +510,12 @@
   commit: a9779d139771f6a06fc983b18e0efd23ca30222f
   sha256: fc8cbe2239683199e677cb39f9303ae8d4a365f3c8cd8a2dcfa1f14c41bcff88
   license: BSD-3-Clause
+- dependency: github.com/google/licensecheck
+  version: v0.3.1
+  retrieved: "2026-09-30"
+  commit: 16aaea36649f556bae5a5ee972c247f58a0de1c4
+  sha256: 0df7b4ca172de6ee28c525815e21fb5c2014f1e8dbe8879d099b1e019691ca7c
+  license: BSD-3-Clause
 - dependency: github.com/google/pprof
   version: v0.0.0-20240711041743-f6c9dda6c6da
   retrieved: "2026-08-27"
@@ -688,10 +694,12 @@
   license: BSD-3-Clause
 - dependency: github.com/opencontainers/go-digest
   version: v1.0.0
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: ea51bea511f75cfa3ef6098cc253c5c3609b037a
   sha256: 615efb31ff6cd71035b8aa38c3659d8b4da46f3cd92ac807cb50449adfe37c86
-  license: Apache-2.0
+  license:
+    - Apache-2.0
+    - CC-BY-SA-4.0
 - dependency: github.com/opencontainers/image-spec
   version: v1.1.1
   retrieved: "2026-08-27"
@@ -1097,32 +1105,50 @@
   license: Apache-2.0
 - dependency: kythe_release
   version: https://github.com/kythe/kythe/releases/download/v0.0.74/kythe-v0.0.74.tar.gz
-  retrieved: "2026-08-27"
+  retrieved: "2026-09-30"
   commit: a182743b6a2315c3ffdd43ed6f008434948f2adc
   sha256: 52a9c6e8111237043b8d0b6127637f0eb8d2ba3a776e4749b036e911ec3529ce
   license:
     - Apache-2.0
-    - MIT
+    - NCSA
+- dependency: libbacktrace
+  version: https://github.com/ianlancetaylor/libbacktrace/archive/793921876c981ce49759114d7bb89bb89b2d3a2d.tar.gz
+  retrieved: "2026-09-26"
+  commit: 793921876c981ce49759114d7bb89bb89b2d3a2d
+  sha256: 858b1225351052234f7e71f0f36622fc9ad33aac947db7816d0b443ae0dd33ce
+  license: BSD-3-Clause
 - dependency: libbpf
   version: https://github.com/libbpf/libbpf/archive/refs/tags/v1.7.0.tar.gz
   retrieved: "2026-09-26"
   commit: f5dcbae736e5d7f83a35718e01be1a8e3010fa39
   sha256: 7ab5feffbf78557f626f2e3e3204788528394494715a30fc2070fcddc2051b7b
   license: BSD-2-Clause
+- dependency: libpluginstack
+  version: https://github.com/alipay/tldk/archive/cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88.tar.gz
+  retrieved: "2026-09-26"
+  commit: cec8ff773c2ee609a1fcbc389aecb4dbb4e3bb88
+  sha256: 00bc2824cbc3024c4e5514ebac7ecab6598dd60e444af9dfeece079bc5b96980
+  license:
+    - Apache-2.0
+    - BSD-3-Clause
+    - CC0-1.0
 - dependency: llvm
   version: https://github.com/hermeticbuild/hermetic-llvm/releases/download/v0.8.24/hermetic-llvm-v0.8.24.tar.gz
   retrieved: "2026-10-02"
   commit: 39e71f9391895169b05ccd62cbb1956ae5322ff3
   sha256: 64d421959bba30cb3bcdd1e57a01b8ef2f12b93db3d1ab4a34fe5f4d2ca78aa4
   license: MIT
-- dependency: llvm-raw
-  version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
-  retrieved: "2026-08-27"
-  commit: cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f
-  sha256: e8ece380fdb57dc6f8e42df9db872a1ade5056c5379075e3e2f99c89200aea69
+- dependency: llvm-project
+  version: https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-23.1.2-r1/llvm-project-23.1.2.src.tar.zst
+  retrieved: "2026-10-23"
+  commit: ""
+  sha256: 271da53a2feb0cb221a9276a14268a3b76ad802c7fc8fb1098291a43b06e4c56
   license:
     - Apache-2.0 WITH LLVM-exception
-    - MIT
+    - BSD-3-Clause
+    - CC0-1.0
+    - NCSA
+    - Spencer-94
 - dependency: ltp
   version: https://github.com/linux-test-project/ltp/releases/download/20260930/ltp-full-20260930.tar.xz
   retrieved: "2026-10-22"
@@ -1141,6 +1167,20 @@
   commit: 2d4b4996f0bf52376704c49264164e166213159e
   sha256: dbad4a23abcca6171e47b79edc53bd6a41067a3b75f9e8b104656b459ff25046
   license: Apache-2.0
+- dependency: plugin_bsd_queue
+  version: https://raw.githubusercontent.com/alpinelinux/aports/988f183cc9d6699930c3e18ccf4a9e36010afb56/main/libc-dev/sys-queue.h
+  retrieved: "2026-09-26"
+  commit: 988f183cc9d6699930c3e18ccf4a9e36010afb56
+  sha256: c13407edd0e33be73cae72514cb234f8612e1c0e54401c9448daffd3a240158b
+  license: BSD-3-Clause
+- dependency: plugin_dpdk
+  version: https://github.com/DPDK/dpdk/archive/refs/tags/v18.11.tar.gz
+  retrieved: "2026-09-26"
+  commit: 0da7f445df445630c794897347ee360d6fe6348b
+  sha256: 0026a9bc67f37f07969101bdf72fd5921169b4744f765118e5db57cace645bee
+  license:
+    - BSD-3-Clause
+    - GPL-2.0-only
 - dependency: protobuf
   version: https://github.com/protocolbuffers/protobuf/releases/download/v35.1/protobuf-35.1.bazel.tar.gz
   retrieved: "2026-10-06"
@@ -1299,6 +1339,12 @@
   commit: 77064f0caa37d0fb2232f54feb5fba275aeebbd3
   sha256: bd7124a844d0403b4b353bcea34d6c8b2ba88dc26881c26c9ee668da89b71846
   license: Apache-2.0
+- dependency: rules_foreign_cc
+  version: https://github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz
+  retrieved: "2026-09-26"
+  commit: 931cb33cf882380394a9c32dcd548259a2a0a357
+  sha256: 327b3fcacde97b9665424db2b6c37e6f8da59ecc783dc5b8683c69396f820a12
+  license: Apache-2.0
 - dependency: rules_go
   version: https://github.com/bazel-contrib/rules_go/releases/download/v0.65.0/rules_go-v0.65.0.zip
   retrieved: "2026-10-27"
@@ -1364,6 +1410,12 @@
     - Apache-2.0
     - BSD-3-Clause
     - MIT
+- dependency: with_cfg.bzl
+  version: https://github.com/fmeum/with_cfg.bzl/releases/download/v1.0.0/with_cfg.bzl-v1.0.0.tar.gz
+  retrieved: "2026-10-02"
+  commit: a33b1b2d2fd38f5884643d37d1c54c5d280d583c
+  sha256: 79815b22f8de722a25bb90ccdc209c145c44983f6d7cd7deb6d87b2b35d821fa
+  license: Apache-2.0
 - dependency: xds
   version: https://github.com/cncf/xds/archive/ee656c7534f5d7dc23d44dd611689568f72017a6.tar.gz
   retrieved: "2026-08-27"
