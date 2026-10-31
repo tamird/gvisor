@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T05:54:27.572486+00:00",
+    "updatedAt": "2026-10-31T06:14:46.578114+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -127,8 +127,8 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-27T18:54:54+00:00",
-      "summary": "The source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne’s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
+      "updatedAt": "2026-10-31T06:14:46.578114+00:00",
+      "summary": "Fork preparation on current master repaired the three test references to the removed gpl2 constant introduced by 61088c907. The full package then ran and exposed a QEMU fixture that contains only a license title. A fresh catalog also classified the example in the pinned COPYING appendix as a second license. QEMU identifies the emulator as GPL version 2. The published PR remains on its October hold.\n\nThe source conflict is repaired at afd34241a1. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s existing hold and CHANGES_REQUESTED remain.\n\nEarlier source-specific record:\n\nThe current-master equivalent rebase is published at bec06589fb on 30ace3e2a9. Independent review verified unchanged executable, test and policy bytes; the Kythe catalog hunk preserves the newly landed libbpf/LLVM entries. The provider confirms the source is mergeable. Etienne’s existing hold and CHANGES_REQUESTED remain; this is not a new approval or an internal import success.\n\nEarlier source records:\n\nThe requested post-#16046 rebase is published at 04108da6a3cf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at f7f7cd707c. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at f7f7cd707c453855ccbe5de562a27f5ad18b74c3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
       "followup": {
         "disposition": "Equivalent conflict repair published; existing review requirements retained",
         "owner": "root",
@@ -155,6 +155,22 @@
       },
       "head": "afd34241a1b7e38e196e5d173632f658b7e5defc",
       "evidence": [
+        {
+          "label": "Current-master fixture fix, kept on the fork",
+          "url": "https://github.com/tamird/gvisor/commit/fc28313d0"
+        },
+        {
+          "label": "QEMU test executed after the 3 compile errors were repaired",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41175040549/artifacts/13032454608"
+        },
+        {
+          "label": "QEMU states the emulator license and distinguishes individual files",
+          "url": "https://github.com/qemu/qemu/blob/98b060da3/LICENSE#L6-L19"
+        },
+        {
+          "label": "SPDX documents the appendix example",
+          "url": "https://spdx.org/licenses/GPL-2.0-only.html"
+        },
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/554623136dadd13e0bae2a83ccc5224609b56d5d"
@@ -20655,8 +20671,8 @@
       "url": "https://github.com/tamird/gvisor/commit/1d9470464",
       "group": "bazel",
       "status": "Contributor review",
-      "updatedAt": "2026-10-31T02:01:19.983938+00:00",
-      "summary": "Remove Go’s MB/s figure, which is calculated from the requested byte count. iperf’s JSON reports the actual bytes and sender bandwidth; both versions reported 130,910.85 B/s from the same transfer. The image migration was approved; the two-line benchmark refinement is the only change awaiting review.",
+      "updatedAt": "2026-10-31T06:14:46.578114+00:00",
+      "summary": "An independent runtime repair is under investigation. On native ARM64 the static iperf3 client transferred 5.61 GiB before trapping while cancelling its sender thread. The Ubuntu-based client and server completed a native AMD64 transfer of 3,610,509,312 bytes. The ARM64 archive is built. The separate two-line Go reporting decision below still applies to its original source.\n\nRemove Go’s MB/s figure, which is calculated from the requested byte count. iperf’s JSON reports the actual bytes and sender bandwidth; both versions reported 130,910.85 B/s from the same transfer. The image migration was approved; the two-line benchmark refinement is the only change awaiting review.",
       "followup": {
         "owner": "hostinet_delivery",
         "disposition": "Review only the two-line benchmark refinement",
@@ -20680,6 +20696,26 @@
         "reviewedHead": "51d411a3ff1211e342c0ee977c0492b9037e79d1"
       },
       "evidence": [
+        {
+          "label": "ARM64 static client trapped after payload transfer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41173754645/artifacts/13032227419"
+        },
+        {
+          "label": "Original native ARM64 cancellation unwind stack",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032063746"
+        },
+        {
+          "label": "Ubuntu-based candidate on both endpoint roles",
+          "url": "https://github.com/tamird/gvisor/commit/4be95c2fa"
+        },
+        {
+          "label": "Native AMD64 transfer on the staged image",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41175040549/artifacts/13032815389"
+        },
+        {
+          "label": "Built ARM64 Ubuntu archive and ELF dependencies",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41175040549/artifacts/13032139978"
+        },
         {
           "label": "Two-line change to the approved image migration",
           "url": "https://github.com/tamird/gvisor/compare/309a60834...1d9470464"
@@ -20755,33 +20791,54 @@
       "id": "branch:rules-img-wrk2-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-wrk2-image-audited",
-      "head": "f258c589bea8fff7c4ef4163241227252b7299bc",
+      "ref": "review/standalone-wrk2-image",
+      "head": "106d6799384d037b2bd6359463603c5752a24a56",
       "title": "Build the wrk2 image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/f258c589bea8fff7c4ef4163241227252b7299bc",
+      "url": "https://github.com/tamird/gvisor/compare/6e6276344...106d67993",
       "group": "bazel",
-      "status": "Contributor approved; awaiting prerequisites",
-      "updatedAt": "2026-10-21T23:06:42.244208+00:00",
-      "summary": "The full remote runtime gate passed on eebcf: both CPU image/binary/archive identities, runtime library closure, embedded Lua symbol, target-specific host generators, actual consumer/Nogo, Make rebuild/cache identity and native AMD64 HTTP behavior. The separate full canonical license Fetch and Verify passed with 249 entries; all 245 foundation blocks are unchanged. Independent reviews accepted both results. The packaging-only cleanup passed: each architecture retains exactly the same 35 remaining filesystem entries and executable bytes after removing five duplicate runfiles paths; ELF/license, Make and native HTTP checks also pass. Final proposal 8ba703 combines the exact qualified production files with the canonical 249-entry catalog on the approved hackbench foundation. Existing consumer and generator results are retained. The contributor approved opening after prerequisites, subject to using the original Dockerfile wording in one patch comment. That comment-only condition is complete at f258c589; all patch payloads, executable sources and catalog bytes are unchanged; no ARM execution, Kubernetes-cluster or comparative performance claim is made.\n\nPreserved earlier observations:\n\nThe assigned wrk2 migration preserves the existing pinned wrk2 and LuaJIT sources, with explicit target-specific host generators for AMD64 and ARM64. It reuses the shared runtime/package assembly, declared OpenSSL/zlib dependencies and stable Make image interface. The latest remote run stopped before compilation because the shared runtime refers to libgcc-s1 without declaring that package. The owner is preparing the narrow package declaration correction before retrying the existing both-architecture image and native HTTP checks. Earlier formatting and repository-patch failures are preserved; the current source adds only the reviewed missing Git file boundaries to the source patch. The separate canonical catalog recovery adds ordinary COPYRIGHT filename discovery to the license checker. Compilation, runtime and catalog success remain pending; no ARM execution, full Kubernetes or performance claim is made.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T06:14:46.578114+00:00",
+      "summary": "The standalone image uses the pinned Ubuntu runtime and builds the Lua generators as Bazel actions. The original ARM64 payload exited after printing usage because char could not retain getopt_long’s −1. The corrected payload served its real HTTP workload on native AMD64 and emulated ARM64. The Kubernetes Go parser also passed on AMD64. Fresh catalog checks on the four dependencies are still open.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "f258c589bea8fff7c4ef4163241227252b7299bc",
-        "observedAt": "2026-10-21T23:06:42.244208+00:00",
-        "disposition": "Contributor approved; requested comment correction delivered",
-        "nextAction": "Open the reviewed proposal after recorded image and license prerequisites land; preserve the fulfilled approval and do not request the same review again.",
+        "owner": "Build and release",
+        "sourceHead": "106d6799384d037b2bd6359463603c5752a24a56",
+        "reviewedHead": "f258c589bea8fff7c4ef4163241227252b7299bc",
+        "observedAt": "2026-10-31T06:14:46.578114+00:00",
+        "disposition": "Verify standalone source licenses",
+        "nextAction": "Compare freshly discovered records with the checked-in catalog and retain the independent classifier hold. The earlier approval applies to the shared-runtime revision.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6",
-          "https://app.buildbuddy.io/invocation/db2a0f9f-5487-4041-b6c3-5c599d0ac83c",
-          "https://github.com/tamird/gvisor/commit/41b64d63a1e494e1bd2bcc9aa97a34d52c05a9b0",
-          "https://app.buildbuddy.io/invocation/b5c32b8d-edd5-4507-82fa-22006476823f",
-          "https://app.buildbuddy.io/invocation/587e51d0-c932-4342-bc32-db15f9e5b433",
-          "https://github.com/tamird/gvisor/commit/8ba703d3a19c7c3f80bc5b82814b283cac69023c",
-          "https://app.buildbuddy.io/invocation/f47b897b-594f-4613-807e-b3b9f22cf9df",
-          "https://github.com/tamird/gvisor/commit/f258c589bea8fff7c4ef4163241227252b7299bc"
-        ],
-        "reviewedHead": "8ba703d3a19c7c3f80bc5b82814b283cac69023c"
+          "https://github.com/tamird/gvisor/commit/106d67993"
+        ]
       },
       "evidence": [
+        {
+          "label": "Recognize COPYRIGHT as the last fallback source filename",
+          "url": "https://github.com/tamird/gvisor/compare/6e6276344...dbb96525c"
+        },
+        {
+          "label": "Standalone image and workload",
+          "url": "https://github.com/tamird/gvisor/compare/dbb96525c...106d67993"
+        },
+        {
+          "label": "Original emulated ARM64 printed usage at startup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41172943631/artifacts/13031462589"
+        },
+        {
+          "label": "Corrected emulated ARM64 served 560 HTTP requests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032029191"
+        },
+        {
+          "label": "Corrected native AMD64 workload",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13031869662"
+        },
+        {
+          "label": "Kubernetes Go wrk2 workload and parser",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41172943631/artifacts/13032451914"
+        },
+        {
+          "label": "Upstream ARM option-parser repair",
+          "url": "https://github.com/giltene/wrk2/pull/110"
+        },
         {
           "label": "Current source",
           "url": "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6"
@@ -20814,7 +20871,25 @@
           "label": "Approved comment refinement",
           "url": "https://github.com/tamird/gvisor/commit/f258c589bea8fff7c4ef4163241227252b7299bc"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "f258c589bea8fff7c4ef4163241227252b7299bc",
+          "outcome": "approved",
+          "at": "2026-10-21T23:06:42.244208+00:00"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "base": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
+          "head": "f258c589bea8fff7c4ef4163241227252b7299bc"
+        },
+        "after": {
+          "base": "6e6276344dce3728a09a8271c8360269e7d881a4",
+          "head": "106d6799384d037b2bd6359463603c5752a24a56"
+        }
+      }
     },
     {
       "id": "pr:16162",
@@ -40685,13 +40760,6 @@
       "evidence": "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f"
     },
     {
-      "from": "branch:native-go-images",
-      "to": "branch:rules-img-wrk2-image",
-      "type": "depends_on",
-      "reason": "The approved wrk2 source f258c589b uses the original shared GNU runtime and the extraction in its exact parent 8e1dc1ed0. The independently built Hackbench image 07d32506a does not provide those rules.",
-      "evidence": "https://github.com/tamird/gvisor/commit/f258c589b"
-    },
-    {
       "from": "pr:16168",
       "to": "branch:rules-img-integration-test-image",
       "type": "depends_on",
@@ -41994,6 +42062,13 @@
         "https://github.com/tamird/gvisor/commit/316da5996",
         "https://github.com/tamird/gvisor/commit/dd0c5f16a"
       ]
+    },
+    {
+      "from": "pr:15146",
+      "to": "branch:rules-img-wrk2-image",
+      "type": "depends_on",
+      "reason": "The current classifier rejects the Zlib identifier already allowed by project policy. The standalone wrk2 catalog uses it for the linked zlib source.",
+      "evidence": "https://github.com/tamird/gvisor/commit/106d67993"
     }
   ],
   "investigations": [
@@ -44887,7 +44962,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T05:54:27.572486+00:00",
+      "updatedAt": "2026-10-31T06:14:46.578114+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. The four round-trip regressions tracked in #16715 are fixed on master (#16747). The open question is whether the graph encoder’s range index costs enough time or memory on a real workload to justify changing it.",
       "findings": [
         {
@@ -47702,9 +47777,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41174104080"
             }
           ]
+        },
+        {
+          "text": "In real guest checkpoints, the empty UDP receive queue used 53 of 1,127 occupied index buckets only for spare slice capacity. Twelve unread 64-byte packets used 54 of 1,162 buckets this way and twelve 8-KiB packets used 54 of 1,366. All three runs retained the same table capacity, 4,096 slots with an entry limit of 3,072. Both nonempty guests read all twelve original packets after restore.",
+          "evidence": [
+            {
+              "label": "Three checkpoint and restore cases, including empty control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41174104080/artifacts/13032189928"
+            },
+            {
+              "label": "Index census source",
+              "url": "https://github.com/tamird/gvisor/commit/764fe5062"
+            }
+          ]
         }
       ],
-      "nextStep": "Measure the fraction of occupied 512-byte graph index buckets used only by spare slice capacity in live kernel checkpoints with unread UDP datagrams. Compare an empty control with 12 × 64-byte and 12 × 8-KiB datagrams, and require the restored guest to read every queued payload before interpreting the counts.",
+      "nextStep": "Profile default graph Save and Load CPU and allocations on an actual checkpoint without the census instrumentation. Track that result under the state reflection profiles investigation.",
       "evidence": [
         {
           "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
