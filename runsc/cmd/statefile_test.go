@@ -392,3 +392,34 @@ func TestStatefileOutputRespectsUmask(t *testing.T) {
 		t.Errorf("existing output mode = %#o, want preserved %#o", got, want)
 	}
 }
+
+func TestStatefileOutputUnlistableDirectory(t *testing.T) {
+	root := t.TempDir()
+	image := filepath.Join(root, "checkpoint")
+	writeSyntheticStatefile(t, image, map[string]string{"k": "v"}, []byte("payload"))
+	dir := filepath.Join(root, "output")
+	if err := os.Mkdir(dir, 0300); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chmod(dir, 0700); err != nil {
+			t.Error(err)
+		}
+	})
+	if _, err := os.ReadDir(dir); err == nil {
+		t.Fatalf("uid %d can list a directory without read permission", os.Geteuid())
+	} else if !os.IsPermission(err) {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "metadata")
+	if output, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+path, image).CombinedOutput(); err != nil {
+		t.Fatalf("statefile failed: %v: %s", err, output)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(b), "v\n"; got != want {
+		t.Errorf("output = %q, want %q", got, want)
+	}
+}
