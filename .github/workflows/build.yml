@@ -1,7 +1,7 @@
-name: Verify native repository formatting
+name: Verify the declared clang-format and shared formatter
 on:
   push:
-    branches: [qualification/shared-lint-workspace-format]
+    branches: [qualification/clang-format-shared-native]
 permissions:
   contents: read
 jobs:
@@ -13,7 +13,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: source, ref: 1d96ea04c417f23fd7d90abb453e93163aa83c1a, fetch-depth: 2, persist-credentials: false}
+        with: {path: source, ref: 18f71cc3ab440eda53a47b290800ffc839943fcf, fetch-depth: 2, persist-credentials: false}
+      - name: Configure the two scratch workers
+        run: |
+          mkdir "$RUNNER_TEMP/cpplint_qualification"
+          cp carrier/.github/qualification/lint-pilot/platform.BUILD "$RUNNER_TEMP/cpplint_qualification/BUILD.bazel"
+          echo 'module(name="cpplint_qualification")' > "$RUNNER_TEMP/cpplint_qualification/MODULE.bazel"
       - name: Run the workspace format controls
         working-directory: source
         env:
