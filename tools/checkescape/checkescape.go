@@ -87,6 +87,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/buildssa"
@@ -706,6 +707,11 @@ func loadObjdump(binary io.Reader) (*compiledCode, error) {
 		env = append(env, "GOCACHE="+cacheDirAbs)
 		cmd.Env = env
 	}
+	mode := os.Getenv("NOGO_QUALIFY_MODE")
+	if exe := os.Getenv("NOGO_QUALIFY_BINARY"); exe != "" {
+		cmd = exec.CommandContext(ctx, exe, input.Name())
+	}
+	started := time.Now()
 	pipeOut, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get objdump stdout pipe: %w", err)
@@ -803,6 +809,25 @@ func loadObjdump(binary io.Reader) (*compiledCode, error) {
 		return nil, fmt.Errorf("error running %q: %s (%s)", cmd, err, bufErr.String())
 	}
 
+	if mode != "" {
+		fmt.Fprintf(os.Stderr, "NOGO-OBJDUMP mode=%s duration_ms=%d\n", mode, time.Since(started).Milliseconds())
+		if mode == "warm" {
+			locate := exec.CommandContext(ctx, flags.Go, "tool", "-n", "objdump")
+			locate.Env = cmd.Env
+			b, err := locate.Output()
+			if err != nil {
+				return nil, fmt.Errorf("locate cached objdump: %w", err)
+			}
+			name := strings.TrimSpace(string(b))
+			info := exec.CommandContext(ctx, flags.Go, "version", "-m", name)
+			info.Env = cmd.Env
+			b, err = info.Output()
+			if err != nil || !strings.Contains(string(b), "\tpath\tcmd/objdump") {
+				return nil, fmt.Errorf("identify cached objdump %s: %w: %s", name, err, b)
+			}
+			fmt.Fprintf(os.Stderr, "NOGO-CACHED-OBJDUMP %s\n", name)
+		}
+	}
 	return code, nil
 }
 

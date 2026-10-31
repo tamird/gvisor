@@ -325,12 +325,25 @@ def _nogo_aspect_impl(target, ctx):
     # Build the argument file, and the runner.
     facts_file = ctx.actions.declare_file(ctx.label.name + ".facts")
     findings_file = ctx.actions.declare_file(ctx.label.name + ".findings")
+    tool_inputs = go_ctx.runfiles
+    extra_tools = []
+    action_env = go_ctx.env
+    if ctx.label.package == "tools/nogo/sanity" and ctx.label.name == "sanity":
+        mode = ctx.var.get("nogo_probe", "")
+        if mode:
+            action_env = dict(go_ctx.env, NOGO_QUALIFY_MODE = mode)
+            if mode.startswith("direct") or mode.startswith("lean"):
+                tool = ctx.file._qualified_objdump
+                extra_tools.append(tool)
+                action_env["NOGO_QUALIFY_BINARY"] = tool.path
+            if mode.startswith("lean"):
+                tool_inputs = go_ctx.stdlib_libs
     ctx.actions.run(
         inputs = inputs + srcs,
         outputs = [findings_file, facts_file],
-        tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
+        tools = depset(ctx.files._nogo + extra_tools, transitive = [tool_inputs]),
         executable = ctx.files._nogo[0],
-        env = go_ctx.env,
+        env = action_env,
         mnemonic = "GoStaticAnalysis",
         progress_message = "Analyzing %s" % target.label,
         arguments = args + [
@@ -371,6 +384,8 @@ nogo_aspect = go_rule(
         "embed",
     ],
     attrs = {
+        "_qualified_objdump": attr.label(allow_single_file = True, default = "//test/rbe/nogo_materialized:objdump"),
+
         "_nogo": attr.label(
             default = "//tools/nogo:nogo_tool",
             cfg = "exec",

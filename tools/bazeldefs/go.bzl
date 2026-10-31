@@ -243,6 +243,7 @@ def go_context(ctx, goos = None, goarch = None, attr = None):
             [go_ctx.sdk.go],
             transitive = [go_ctx.sdk.srcs, go_ctx.sdk.headers, go_ctx.sdk.tools, go_ctx.stdlib.libs],
         ),
+        stdlib_libs = go_ctx.stdlib.libs,
         stdlib_srcs = go_ctx.sdk.srcs,
         stdlib_mod = stdlib_mod,
     )
