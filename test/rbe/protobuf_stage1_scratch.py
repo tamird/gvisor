@@ -53,6 +53,9 @@ def spawns(path):
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
+class LinkPreflightError(ValueError):
+    pass
+
 def lane(name, rev):
     fixed = name == "scratch"
     dst = records / name
@@ -76,10 +79,29 @@ def lane(name, rev):
     cmd = ["bazelisk", "--bazelrc="+str(rcfile), "build", "--jobs=3", "--spawn_strategy=local",
            "--noremote_local_fallback","--noremote_upload_local_results","--noremote_accept_cached",
            "--host_cxxopt=-std=c++17","--cxxopt=-std=c++17","--features=fully_static_link","--host_features=fully_static_link",
+           "--nostart_end_lib","--features=-supports_start_end_lib","--host_features=-supports_start_end_lib",
            "--host_linkopt=-static","--host_linkopt=-fuse-ld=bfd","--host_linkopt=-Wl,--no-gc-sections","--nostamp", "--@protobuf//bazel/toolchains:prefer_prebuilt_protoc=false",
            "--execution_log_json_file="+str(execlog)]
     if fixed:
         cmd += ["--strategy=GenUpbStage1=remote","--remote_download_outputs=toplevel"]
+    if not fixed:
+        aq = [v for v in cmd if not v.startswith("--execution_log_json_file=")]
+        aq[aq.index("build")] = "aquery"
+        aq += ["--include_param_files", "--output=jsonproto",
+               "mnemonic('CppLink', deps(@protobuf//upb_generator:gen_plugin_upb_proto_upb_stage1))"]
+        planned = subprocess.run(aq, cwd=consumer, capture_output=True, text=True)
+        if planned.returncode:
+            (dst/"link-plan-error.txt").write_text(planned.stderr.replace(key,"[REDACTED]")[-2000:])
+            raise LinkPreflightError("static toolchain preflight aquery failed")
+        links = []
+        for a in json.loads(planned.stdout)["actions"]:
+            argv = a.get("arguments",[]) + [v for file in a.get("paramFiles",[]) for v in file.get("arguments",[])]
+            if not any("-fuse-ld=bfd" == v for v in argv):
+                continue
+            links.append({"flags":[v for v in argv if v == "-static" or "gc-sections" in v or "start-lib" in v or "fuse-ld" in v]})
+        (dst/"link-plan.json").write_text(json.dumps(links,indent=2)+"\n")
+        if not links or any(any("start-lib" in v for v in l["flags"]) or "-static" not in l["flags"] for l in links):
+            raise LinkPreflightError("BFD preflight did not find exclusively static real-archive link commands")
     with logfile.open("w") as out:
         proc=subprocess.run(cmd+targets,cwd=consumer, stdout=out, stderr=subprocess.STDOUT)
     raw=logfile.read_text(errors="replace").replace(key,"[REDACTED]")
@@ -159,6 +181,8 @@ def main():
             captured[name]=lane(name,rev)
         except Exception as error:
             failures.append([name,str(error)])
+            if isinstance(error, LinkPreflightError):
+                break
     if failures:
         raise ValueError(failures)
     stock,fixed=captured["ordinary"],captured["scratch"]
