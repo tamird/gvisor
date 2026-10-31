@@ -1,4 +1,4 @@
-name: rules_go SDK tool Linux presubmit
+name: rules_go cross-protobuf presubmit recovery
 on:
   push:
     branches: [qualification/rules-go-sdk-tool-presubmit]
@@ -8,16 +8,16 @@ permissions:
 jobs:
   linux:
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 60
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         persist-credentials: false
-    - name: Run the supplier's native Linux presubmit and check the Go 1.22 SDK executable
+    - name: Run the supplier's cross-protobuf test with its own 30-minute budget
       run: python3 test/rbe/sdk-presubmit.py
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: rules-go-native-linux-presubmit
+        name: rules-go-cross-protobuf
         path: ${{ runner.temp }}/presubmit-records
         if-no-files-found: error

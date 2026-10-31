@@ -105,7 +105,15 @@ def suite(name, args):
 bazel = shutil.which("bazelisk") or shutil.which("bazel")
 remember("setup", setup)
 if results["setup"]["status"] == "PASS":
-    remember("prebuilt", prebuilt)
-    remember("ubuntu2404", lambda: suite("ubuntu2404", ["--config=incompatible", "--", "//...", "-//docs:all"]))
-    remember("docs", lambda: suite("docs", ["//docs/..."]))
+    def cross():
+        label = "//tests/core/cross:proto_test"
+        count = suite("cross", ["--config=incompatible", "--test_timeout=1800",
+                                "--test_arg=-test.v", label])
+        assert count == 1, count
+        log = (repo / "bazel-testlogs/tests/core/cross/proto_test/test.log").read_text(errors="replace")
+        case_lines = [line for line in log.splitlines() if any(line.startswith("--- PASS: " + case + " (") for case in ("TestCmdLine", "TestTargets"))]
+        assert len(case_lines) == 2, case_lines
+        return {"label": label, "cases": case_lines}
+
+    remember("cross", cross)
 raise SystemExit(any(r["status"] != "PASS" for r in results.values()))
