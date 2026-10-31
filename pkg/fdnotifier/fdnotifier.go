@@ -66,14 +66,10 @@ func newNotifier() (*notifier, error) {
 		return nil, err
 	}
 
-	w := &notifier{
+	return &notifier{
 		epFD:  epfd,
 		fdMap: make(map[int32]*fdInfo),
-	}
-
-	go w.waitAndNotify() // S/R-SAFE: no waiter exists during save / load.
-
-	return w, nil
+	}, nil
 }
 
 // waitFD waits on mask for fd.
@@ -185,23 +181,28 @@ func (n *notifier) waitAndNotify() error {
 			return err
 		}
 
-		notified := false
-		n.pauseMu.Lock()
-		n.mu.Lock()
-		for i := 0; i < v; i++ {
-			if fi, ok := n.fdMap[e[i].Fd]; ok {
-				fi.queue.Notify(waiter.EventMaskFromLinux(e[i].Events))
-				notified = true
-			}
-		}
-		n.mu.Unlock()
-		n.pauseMu.Unlock()
-		if notified {
+		if n.notify(e[:v]) {
 			// Let goroutines woken by Notify get a chance to run before we
 			// epoll_wait again.
 			sync.Goyield()
 		}
 	}
+}
+
+// notify dispatches a batch already returned by epollWait.
+func (n *notifier) notify(events []unix.EpollEvent) bool {
+	n.pauseMu.Lock()
+	defer n.pauseMu.Unlock()
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	notified := false
+	for _, event := range events {
+		if fi, ok := n.fdMap[event.Fd]; ok {
+			fi.queue.Notify(waiter.EventMaskFromLinux(event.Events))
+			notified = true
+		}
+	}
+	return notified
 }
 
 // pause suspends notifications until resume is called.
@@ -230,6 +231,9 @@ var shared struct {
 func ensureSharedNotifier() {
 	shared.once.Do(func() {
 		shared.notifier, shared.initErr = newNotifier()
+		if shared.initErr == nil {
+			go shared.notifier.waitAndNotify() // S/R-SAFE: no waiter exists during save / load.
+		}
 	})
 }
 
