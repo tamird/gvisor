@@ -1,7 +1,7 @@
 name: Compare the Go branch archives
 on:
   push:
-    branches: [qualification/go-export-direct]
+    branches: [qualification/go-export-direct-resume]
 permissions:
   contents: read
   actions: read
@@ -20,6 +20,7 @@ jobs:
           unshare --user --map-root-user true
       - name: Build both archives and compare their contents
         env:
+          GH_TOKEN: ${{ github.token }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail

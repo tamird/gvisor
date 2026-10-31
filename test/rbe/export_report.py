@@ -8,13 +8,14 @@ if cmd=='context':
     ctx=dict(expected_source=rest[0],commit_file='commit',source_before='before',source_after='after',final_head='head',executed_arguments='arguments',native_exit='exit',capture_exit='capture-exit',execution_finished_at=(root/'finish').read_text().strip(),command_kind='build')
     (root/'context.json').write_text(json.dumps(ctx)+'\n');sys.exit()
 if cmd=='action':
-    a,=json.loads(Path(rest[0]).read_text())['actions']
+    a, = [a for a in json.loads(Path(rest[0]).read_text()).get('actions', []) if a.get('mnemonic') == rest[1]]
     (root/'action.json').write_text(json.dumps({k:a[k] for k in ('mnemonic','arguments')})+'\n');sys.exit()
 errors=[];arms={}
 for arm in ('stock','direct'):
     d=root/arm
     try:
         v=json.loads((d/'verdict.json').read_text())
+        assert v['source']==("b61651f9371f514411dbb4fc2bd367f860204546" if arm=='stock' else "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d"),v['source']
         assert v['native_exit']==0 and not v['errors'] and not v['missing'] and v['expected_labels']==['//:go_export'],v.get('errors')
         assert (d/'verifier-exit').read_text().strip()=='0'
         entries=(d/'entries').read_text().splitlines()

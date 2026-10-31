@@ -3,11 +3,15 @@ out="$RUNNER_TEMP/rack-results"
 tools="$RUNNER_TEMP/export-verifier"
 mkdir -p "$tools" "$out"
 for f in qualification_report.py unit_matrix.py export_report.py; do git show "$GITHUB_SHA:test/rbe/$f" > "$tools/$f"; done
+gh api repos/tamird/gvisor/actions/artifacts/13022264235/zip > "$RUNNER_TEMP/stock-evidence.zip"
+echo '8f37cc0502d812fce48bf7c6952831114a77ef2553e7322d2c9c5c8096b8405d  '"$RUNNER_TEMP/stock-evidence.zip" | sha256sum --check --status
+unzip -qo "$RUNNER_TEMP/stock-evidence.zip" 'stock/*' -d "$out"
 for arm in stock direct; do
   src=b61651f9371f514411dbb4fc2bd367f860204546
   if [[ $arm == direct ]]; then src=bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d; fi
   git switch --quiet --detach "$src"
-  d="$out/$arm"; mkdir "$d"
+  d="$out/$arm"; mkdir -p "$d"
+  if [[ $arm == direct ]]; then
   git status --porcelain --untracked-files=no > "$d/before"
   git cat-file commit HEAD > "$d/commit"
   labels=(//:go_export)
@@ -34,8 +38,14 @@ for arm in stock direct; do
     sha256sum "$zip" | cut -d' ' -f1 > "$d/sha256"
     unzip -Z1 "$zip" > "$d/entries"
     unzip -tq "$zip"
-    bazel --bazelrc="$rc" aquery --config=x86_64 --output=jsonproto 'outputs("(^|/)go_export[.]zip$", //:go_export)' > "$RUNNER_TEMP/$arm.action"
-    python3 -B "$tools/export_report.py" action "$d" "$RUNNER_TEMP/$arm.action"
+  fi
+  fi
+  mnemonic=Genrule
+  if [[ $arm == direct ]]; then mnemonic=GoExport; fi
+  if [[ -f "$d/sha256" ]]; then
+    if bazel --bazelrc="$rc" aquery --config=x86_64 --include_commandline --output=jsonproto "//:go_export" > "$RUNNER_TEMP/$arm.action"; then
+      python3 -B "$tools/export_report.py" action "$d" "$RUNNER_TEMP/$arm.action" "$mnemonic" || echo "No qualifying $mnemonic action for $arm" >&2
+    fi
   fi
 done
 python3 -B "$tools/export_report.py" final "$out"
