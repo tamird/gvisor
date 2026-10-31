@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T11:42:32.247740+00:00",
+    "updatedAt": "2026-10-31T11:56:47.694302+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57583,6 +57583,61 @@
         {
           "label": "Malformed file rejected by native action",
           "url": "https://app.buildbuddy.io/invocation/f5b006bf-2c5b-4fef-b3b9-f120a2f7d204"
+        }
+      ]
+    },
+    {
+      "id": "investigation:proc-boot-identity",
+      "title": "Proc boot IDs across mounts and checkpoint restores",
+      "status": "active",
+      "owner": "MAIN (Codex)",
+      "updatedAt": "2026-10-31T11:56:47.694302+00:00",
+      "summary": "Restoring one checkpoint twice before the first guest read produced the same boot ID per proc mount on 085e111d7 and different IDs on both mounts on efad71b8c. Both sources preserved IDs the guest had already read. Separately, both sources assigned different boot IDs to different mounts in one sandbox. Native Linux shared one ID.",
+      "findings": [
+        {
+          "text": "Upstream issue #16170 links the reference patch for lazy proc and sys directories. Copybara change #16610 documents that creating kernel/random generates boot_id on first access. The historical comparison ran all eight guest samples and 28 runsc operations and observed the change on two distinct proc mounts.",
+          "evidence": [
+            {
+              "label": "Original upstream issue and reference patch",
+              "url": "https://github.com/google/gvisor/issues/16170"
+            },
+            {
+              "label": "Copybara CL 1008412490 and its initialization change",
+              "url": "https://github.com/google/gvisor/pull/16610"
+            },
+            {
+              "label": "Two independent restores on each historical source, before and after the first read",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41197574258/artifacts/13041268479"
+            }
+          ]
+        },
+        {
+          "text": "Independent candidate 4ff4f3d6a stores one boot ID on the sandbox’s registered proc filesystem type. The systrap guest saw the original ID on two mounts after restore and on a new third mount it created after restore. All 12 reads of random/uuid returned distinct values.",
+          "evidence": [
+            {
+              "label": "Native Linux comparison across two proc mounts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41187625838/artifacts/13037987317"
+            },
+            {
+              "label": "Candidate on the eager upstream source",
+              "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a"
+            },
+            {
+              "label": "Current-source systrap restore and mount comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41196058784"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Finish the current named Linux, stock and corrected mount syscall comparison and proc analysis. If directory creation becomes lazy, allocating the shared ID when mounting proc would preserve it across restores before the first read.",
+      "evidence": [
+        {
+          "label": "Two independent restores on each historical source, before and after the first read",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41197574258/artifacts/13041268479"
+        },
+        {
+          "label": "Native Linux comparison across two proc mounts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41187625838/artifacts/13037987317"
         }
       ]
     }
