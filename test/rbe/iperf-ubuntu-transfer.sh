@@ -5,7 +5,7 @@ uname -a; case "$cpu:$(uname -m)" in amd64:x86_64|arm64:aarch64);;*) exit 1;;esa
 image=gvisor.dev/images/benchmarks/iperf
 a="$RUNNER_TEMP/iperf-jammy/$cpu/oci"
 test "$(cat "$a/archive.sha256")" = "$(sha256sum "$a/image.tar" | awk '{print $1}')"
-grep -Fx 4be95c2fafab8da9703de07e7a0cd8258c737e3e "$a/product"
+grep -Fx 05f0c6feac4693941c8ccf6b8730ddf3c258a51c "$a/product"
 docker load -i "$a/image.tar"
 docker tag "$image:latest" "$image:$cpu"
 test "$(docker image inspect "$image:$cpu" --format '{{.Architecture}}')" = "$cpu"
@@ -27,3 +27,10 @@ assert 'error' not in j and min(tx,rx)>0
 (p/'verdict').write_text(f'PASS sent={tx} received={rx}\n')
 PY
 cat "$r/verdict"
+docker run --rm --network iperf-net --user 65532:65532 "$image:$cpu" iperf3 -c iperf-server -t 1 -R -P 4 --json >"$r/reverse.json"
+python3 - "$r/reverse.json" <<'PY'
+import sys,json
+j=json.load(open(sys.argv[1])); assert 'error' not in j and j['start']['test_start']['reverse'] and len(j['end']['streams'])==4
+assert min(j['end'][k]['bytes'] for k in ('sum_sent','sum_received'))>0
+PY
+date -u '+NATIVE FORWARD AND FOUR-WAY REVERSE PASSED %FT%TZ' >"$r/both-verdict"

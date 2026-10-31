@@ -3,7 +3,7 @@ arch=$1
 case "$arch" in x86_64) cpu=amd64;; aarch64) cpu=arm64;; *) exit 2;; esac
 r="$RUNNER_TEMP/iperf-jammy/$cpu/build"; mkdir -p "$r"
 exec > >(tee "$r/coordinator.log") 2>&1
-git checkout -q --detach 4be95c2fafab8da9703de07e7a0cd8258c737e3e
+git checkout -q --detach 05f0c6feac4693941c8ccf6b8730ddf3c258a51c
 git rev-parse HEAD >"$r/source"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 export MAKEFLAGS=DOCKER_BUILD=false

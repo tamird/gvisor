@@ -4,7 +4,7 @@ case "$arm" in x86_64) arch=amd64;; aarch64) arch=arm64;; *) exit 2;; esac
 r="$RUNNER_TEMP/wrk2/$arm"
 mkdir -p "$r"
 exec > >(tee "$r/coordinator.log") 2>&1
-git checkout -q --detach 3fbd95b13b4b2fbae349c1202e68e4d45df8fd69
+git checkout -q --detach 5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4
 git rev-parse HEAD >"$r/source"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 export MAKEFLAGS=DOCKER_BUILD=false
@@ -54,10 +54,11 @@ nm -A "$work/wrk2" | awk '$NF ~ /^(zlibVersion|compress2?|uncompress|inflate|def
 test ! -s "$r/zlib-symbols"
 readelf --dyn-syms -W "$work/wrk2" | grep -w luaJIT_BC_wrk >"$r/bytecode"
 grep -F 'Requesting program interpreter' "$r/elf"
+openssl req -x509 -newkey rsa:2048 -nodes -subj /CN=localhost -days 1 -keyout "$work/key.pem" -out "$work/cert.pem" >"$work/cert.log" 2>&1
 cat >"$work/serve.py" <<'PY'
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
-import sys
+import ssl,sys
 class Handler(BaseHTTPRequestHandler):
     protocol_version='HTTP/1.1'
     def do_GET(self):
@@ -68,12 +69,15 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(payload)
     def log_message(self,*args): pass
 http=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+tls.load_cert_chain(sys.argv[2],sys.argv[3])
+http.socket=tls.wrap_socket(http.socket,server_side=True)
 Path(sys.argv[1]).write_text(str(http.server_port))
 http.serve_forever()
 PY
-python3 "$work/serve.py" "$work/port" & listener=$!
+python3 "$work/serve.py" "$work/port" "$work/cert.pem" "$work/key.pem" & listener=$!
 for i in {1..20}; do [[ -s "$work/port" ]] && break; sleep 0.1; done
-timeout 75s docker run --rm --network=host --platform="linux/$arch" --pull=never "$tag" wrk2 --threads 2 --connections 2 --rate 64 --duration 12 --timeout 5 --latency "http://127.0.0.1:$(cat "$work/port")/" >"$r/workload" 2>&1
+timeout 75s docker run --rm --network=host --platform="linux/$arch" --pull=never "$tag" wrk2 --threads 2 --connections 2 --rate 64 --duration 12 --timeout 5 --latency "https://127.0.0.1:$(cat "$work/port")/" >"$r/workload" 2>&1
 grep -E ' [1-9][0-9]* requests in ' "$r/workload"
 grep -E '^ *99\.000%' "$r/workload"
 date -u '+PASS %FT%TZ' | tee "$r/verdict"

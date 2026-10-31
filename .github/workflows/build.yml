@@ -1,4 +1,4 @@
-name: Verify the standalone wrk2 image without a zlib dependency
+name: Check the public OpenSSL notice and runtime in the benchmark images
 on:
   push:
     branches: [qualification/official-go-images]
@@ -7,7 +7,9 @@ permissions:
 jobs:
   images:
     runs-on: ubuntu-22.04
-    timeout-minutes: 135
+    timeout-minutes: 150
+    outputs:
+      arm_archive: ${{ steps.publish.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -46,7 +48,7 @@ jobs:
           build --remote_download_outputs=toplevel
           build --noshow_progress
           RC
-          for name in wrk2-image-check wrk2-source-check wrk2-go-check; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
+          for name in wrk2-image-check wrk2-source-check iperf-ubuntu-image iperf-ubuntu-transfer; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
       - name: Install the Linux ARM64 binfmt interpreter
         id: qemu
         run: |
@@ -57,9 +59,74 @@ jobs:
           fi
           grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
           grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
-      - name: Build the image and run the HTTP client on amd64
-        id: amd64
+      - name: Resolve both original public label consumers
+        id: resolve
         if: always() && steps.setup.outcome == 'success'
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/supplier"; mkdir -p "$d"
+          for p in 5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4 05f0c6feac4693941c8ccf6b8730ddf3c258a51c; do
+            git checkout -q --detach "$p"
+            bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" build @openssl//:LICENSE.txt >"$d/$p.log" 2>&1
+            file=$(bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" cquery --output=files @openssl//:LICENSE.txt)
+            sha256sum "$file" >"$d/$p.sha256"
+            bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" mod graph >"$d/$p.graph"
+            grep -F 'openssl@3.3.1.bcr.11' "$d/$p.graph"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.resolve.outcome != 'skipped'
+        with:
+          name: supplier-public-label
+          path: ${{ runner.temp }}/supplier
+          if-no-files-found: error
+      - name: Build and inspect the iperf3 image for arm64
+        id: armimage
+        if: always() && steps.resolve.outcome == 'success'
+        timeout-minutes: 35
+        run: |
+          bash "$RUNNER_TEMP/iperf-ubuntu-image.sh" aarch64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.armimage.outcome != 'skipped'
+        with:
+          name: armimage
+          path: ${{ runner.temp }}/iperf-jammy/arm64/build
+          if-no-files-found: error
+      - name: Preserve the exact ARM64 archive for the native machine
+        id: publish
+        if: always() && steps.armimage.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: arm64-image
+          path: ${{ runner.temp }}/iperf-jammy/arm64/oci
+          compression-level: 0
+          if-no-files-found: error
+      - name: Build and inspect the iperf3 image for amd64
+        id: x86image
+        if: always() && steps.resolve.outcome == 'success'
+        timeout-minutes: 35
+        run: |
+          bash "$RUNNER_TEMP/iperf-ubuntu-image.sh" x86_64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.x86image.outcome != 'skipped'
+        with:
+          name: x86image
+          path: ${{ runner.temp }}/iperf-jammy/amd64/build
+          if-no-files-found: error
+      - name: Run both benchmark endpoints as UID 65532 on AMD64
+        id: x86transfer
+        if: always() && steps.x86image.outcome == 'success'
+        timeout-minutes: 3
+        run: |
+          bash "$RUNNER_TEMP/iperf-ubuntu-transfer.sh" amd64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.x86transfer.outcome != 'skipped'
+        with:
+          name: x86transfer
+          path: ${{ runner.temp }}/iperf-jammy/amd64/transfer
+          if-no-files-found: error
+      - name: Build the image and run the TLS client on amd64
+        id: amd64
+        if: always() && steps.resolve.outcome == 'success'
         timeout-minutes: 44
         run: bash "$RUNNER_TEMP/wrk2-image-check.sh" x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -68,9 +135,9 @@ jobs:
           name: wrk2-x86_64
           path: ${{ runner.temp }}/wrk2/x86_64
           if-no-files-found: error
-      - name: Build the image and run the HTTP client on arm64
+      - name: Build the image and run the TLS client on arm64
         id: arm64
-        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        if: always() && steps.resolve.outcome == 'success' && steps.qemu.outcome == 'success'
         timeout-minutes: 44
         run: bash "$RUNNER_TEMP/wrk2-image-check.sh" aarch64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -79,20 +146,9 @@ jobs:
           name: wrk2-aarch64
           path: ${{ runner.temp }}/wrk2/aarch64
           if-no-files-found: error
-      - name: Run the Kubernetes pod command and parse its latency distribution
-        id: consumer
-        if: always() && steps.amd64.outcome == 'success'
-        timeout-minutes: 35
-        run: bash "$RUNNER_TEMP/wrk2-go-check.sh"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.consumer.outcome != 'skipped'
-        with:
-          name: wrk2-consumer
-          path: ${{ runner.temp }}/wrk2/consumer
-          if-no-files-found: error
-      - name: Regenerate the four new source notices and verify the full catalog
+      - name: Regenerate the three source notices and verify the full catalog
         id: licenses
-        if: always() && steps.setup.outcome == 'success'
+        if: always() && steps.resolve.outcome == 'success'
         timeout-minutes: 25
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -103,3 +159,33 @@ jobs:
           name: wrk2-licenses
           path: ${{ runner.temp }}/wrk2/licenses
           if-no-files-found: error
+  arm:
+    needs: images
+    if: always() && needs.images.outputs.arm_archive != ''
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 6
+      - id: fetch
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: arm64-image
+          path: ${{ runner.temp }}/iperf-jammy/arm64/oci
+      - name: Run both endpoints as UID 65532 on genuine native ARM64
+        id: armtransfer
+        if: always() && steps.fetch.outcome == 'success'
+        timeout-minutes: 3
+        run: |
+          bash test/rbe/iperf-ubuntu-transfer.sh arm64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.armtransfer.outcome != 'skipped'
+        with:
+          name: armtransfer
+          path: ${{ runner.temp }}/iperf-jammy/arm64/transfer
+          if-no-files-found: error
+      - name: Set up the native Bazel coordinator
+        id: setup
+        if: always() && steps.armtransfer.outcome == 'success'
+        uses: bazel-contrib/setup-bazel@083175551ceeceebc757ebee2127fde78840ca77
