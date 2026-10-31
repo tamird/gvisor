@@ -424,7 +424,7 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 	defer s.ep.mu.Unlock()
 	s.ep.SACKPermitted = true
 	s.ep.scoreboard = NewSACKScoreboard(1000, 0)
-	first, middle, last := splitSACKProbePacket(s, clock)
+	first, middle, last := splitSACKProbePacket(s, clock, header.SACKBlock{Start: 2300, End: 2700})
 	ctx.segs = append(ctx.segs, first, middle, last)
 	for _, seg := range ctx.segs {
 		if !seg.acked || !seg.lost || seg.flags&header.TCPFlagPsh != 0 {
@@ -449,20 +449,20 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 }
 
 // splitSACKProbePacket splits [2000,3000) and records a separate transmission
-// of its middle [2300,2700), as sendSegment does after a successful retry.
+// of the middle fragment, as sendSegment does after a successful retry.
 //
 // +checklocks:s.ep.mu
-func splitSACKProbePacket(s *sender, clock tcpip.Clock) (*segment, *segment, *segment) {
+func splitSACKProbePacket(s *sender, clock tcpip.Clock, retry header.SACKBlock) (*segment, *segment, *segment) {
 	first := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(1000)), 0)
 	first.sequenceNumber, first.gsoStart, first.gsoMSS, first.xmitCount = 2000, 2000, 1000, 1
 	s.MaxPayloadSize = 500
 	first.acked, first.lost = true, true
 	s.writeList.PushBack(first)
-	s.splitSeg(first, 300)
+	s.splitSeg(first, int(first.sequenceNumber.Size(retry.Start)))
 	middle := first.Next()
-	s.splitSeg(middle, 400)
+	s.splitSeg(middle, int(retry.Start.Size(retry.End)))
 	last := middle.Next()
-	middle.gsoStart, middle.gsoMSS, middle.truncatedTail = 2300, 400, false
+	middle.gsoStart, middle.gsoMSS, middle.truncatedTail = retry.Start, uint16(retry.Start.Size(retry.End)), false
 	return first, middle, last
 }
 
@@ -471,13 +471,21 @@ func TestSACKRenegingAcrossOverlappingTransmissions(t *testing.T) {
 		retry = 400 * time.Millisecond
 		grace = 60 * time.Millisecond
 	)
+	type deadline struct {
+		ack   seqnum.Value
+		after time.Duration
+	}
+	middle := header.SACKBlock{Start: 2300, End: 2700}
+	whole := header.SACKBlock{Start: 2000, End: 3000}
 	for _, tc := range []struct {
-		name     string
-		reported header.SACKBlock
-		want     [3]time.Duration
+		name                    string
+		retransmitted, reported header.SACKBlock
+		deadlines               []deadline
 	}{
-		{"Original", header.SACKBlock{Start: 2000, End: 3000}, [3]time.Duration{grace, grace, grace}},
-		{"RetryAndTail", header.SACKBlock{Start: 2300, End: 2800}, [3]time.Duration{retry, grace, retry}},
+		{"Original", middle, whole, []deadline{{2100, grace}, {2400, grace}, {2750, grace}}},
+		{"RetryAndTail", middle, header.SACKBlock{Start: 2300, End: 2800}, []deadline{{2100, retry}, {2400, grace}, {2750, retry}}},
+		// Only the last one-byte queue entry owns the original packet.
+		{"LastByte", header.SACKBlock{Start: 2499, End: 2999}, whole, []deadline{{2000, grace}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			clock := faketime.NewManualClock()
@@ -503,7 +511,7 @@ func TestSACKRenegingAcrossOverlappingTransmissions(t *testing.T) {
 			bridge := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(1)), 0)
 			bridge.sequenceNumber, bridge.xmitCount = 1999, 1
 			s.writeList.PushBack(bridge)
-			splitSACKProbePacket(s, clock)
+			splitSACKProbePacket(s, clock, tc.retransmitted)
 			defer func() {
 				for seg := s.writeList.Front(); seg != nil; seg = s.writeList.Front() {
 					s.writeList.Remove(seg)
@@ -518,12 +526,11 @@ func TestSACKRenegingAcrossOverlappingTransmissions(t *testing.T) {
 			ack.parsedOptions.SACKBlocks = []header.SACKBlock{tc.reported}
 			s.handleRcvdSegment(ack)
 			ack.parsedOptions.SACKBlocks = nil
-			// At 2100 only the original covers UNA; at 2400 both do.
-			// At 2750 the retry has been ACKed and only the original remains.
-			for i, una := range []seqnum.Value{2100, 2400, 2750} {
+			for _, d := range tc.deadlines {
+				una := d.ack
 				ack.ackNumber = una
 				s.handleRcvdSegment(ack)
-				got, want := s.resendTimer.target.Sub(clock.NowMonotonic()), tc.want[i]
+				got, want := s.resendTimer.target.Sub(clock.NowMonotonic()), d.after
 				t.Logf("SPLIT_TIMER case=%s ack=%d got_ms=%d want_ms=%d", tc.name, una, got.Milliseconds(), want.Milliseconds())
 				if got != want {
 					t.Errorf("ACK %d scheduled retransmission after %v, want %v", una, got, want)

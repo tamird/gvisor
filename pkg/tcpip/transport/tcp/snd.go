@@ -1368,18 +1368,21 @@ func (s *sender) isDupAck(seg *segment) bool {
 // count. Previously reported bytes may live on both sides of a queue split.
 //
 // +checklocks:s.ep.mu
-func (s *sender) updateSACKCredit(seg *segment, known header.SACKBlock) {
-	n := s.ep.scoreboard.sackedPackets(seg.sackPackets(), s.SndUna, known)
+func (s *sender) updateSACKCredit(seg *segment, known header.SACKBlock) packetRun {
+	p := seg.sackPackets()
+	n := s.ep.scoreboard.sackedPackets(p, s.SndUna, known)
 	s.SackedOut += n - int(seg.sackCredit)
 	seg.sackCredit = uint32(n)
+	return p
 }
 
 // recordSACK updates packet ownership and, for a fully reported queue entry,
-// supplies the acknowledgment to RACK only once.
+// supplies the acknowledgment to RACK only once. It returns the transmitted
+// units examined when updating the entry.
 //
 // +checklocks:s.ep.mu
-func (s *sender) recordSACK(seg, rcvd *segment, info header.SACKBlock) {
-	s.updateSACKCredit(seg, info)
+func (s *sender) recordSACK(seg, rcvd *segment, info header.SACKBlock) packetRun {
+	p := s.updateSACKCredit(seg, info)
 	if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 && !seg.acked && seg.sackCredit != 0 {
 		span := seg.sackBlock()
 		if info.Contains(span) || s.ep.scoreboard.IsSACKED(span) {
@@ -1388,6 +1391,7 @@ func (s *sender) recordSACK(seg, rcvd *segment, info header.SACKBlock) {
 			seg.acked = true
 		}
 	}
+	return p
 }
 
 // walkSACK credits newly reported packets and updates RACK delivery and
@@ -1577,30 +1581,38 @@ func (s *sender) inRecovery() bool {
 	return false
 }
 
-// headPacketSACKed reports whether any complete transmission containing UNA
-// was selectively acknowledged. After a split, retransmitting just a middle
-// fragment can leave the original packet's endpoint on a later queue entry.
+// advanceSACK trims acknowledged bytes, updates credit for newly complete
+// packets, and reports whether the peer had SACKed an entire transmission
+// containing the first byte still due.
 //
 // +checklocks:s.ep.mu
-func (s *sender) headPacketSACKed(reported header.SACKBlock) bool {
-	if reported.Start == reported.End {
+func (s *sender) advanceSACK(ack *segment) bool {
+	reported := s.ep.scoreboard.Delete(s.SndUna)
+	head := s.writeList.Front()
+	if head == nil || !s.ep.SACKPermitted || head.sackCredit == 0 && s.ep.scoreboard.Empty() {
 		return false
 	}
-	// Only the entry owning the packet's last byte can describe it. That
-	// byte is within both the SACK block and one original MSS of UNA.
-	limit := s.SndUna.Add(min(s.SndUna.Size(reported.End), seqnum.Size(s.ep.scoreboard.initialMSS)))
-	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(limit); seg = seg.Next() {
-		p := seg.sackPackets()
-		if p.count == 0 || !s.SndUna.InRange(p.block.Start, p.block.End) {
+	// Trimming the head may remove credit. If a split packet has become
+	// fully reported, its last byte belongs to an entry within one original
+	// MSS of UNA. A retransmission can own a shorter span in between.
+	end := s.SndUna
+	if reported.Start != reported.End {
+		end = end.Add(min(end.Size(reported.End), seqnum.Size(s.ep.scoreboard.initialMSS)))
+	}
+	headSACKed := false
+	for seg := head; seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+		if seg != head && !seg.sequenceNumber.LessThan(end) {
+			break
+		}
+		p := s.recordSACK(seg, ack, reported)
+		if headSACKed || reported.Start == reported.End || p.count == 0 || !s.SndUna.InRange(p.block.Start, p.block.End) {
 			continue
 		}
 		start := p.block.Start.Add(p.block.Start.Size(s.SndUna) / p.mss * p.mss)
-		end := start.Add(min(p.mss, start.Size(p.block.End)))
-		if reported.Contains(header.SACKBlock{Start: start, End: end}) {
-			return true
-		}
+		stop := start.Add(min(p.mss, start.Size(p.block.End)))
+		headSACKed = reported.Contains(header.SACKBlock{Start: start, End: stop})
 	}
-	return false
+	return headSACKed
 }
 
 // handleRcvdSegment is called when a segment is received; it is responsible for
@@ -1792,11 +1804,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			ackLeft -= datalen
 		}
 
-		headSACK := s.ep.scoreboard.Delete(s.SndUna)
+		headSACKed := s.advanceSACK(rcvdSeg)
 		if !scheduleProbe {
 			// Restart the retransmission timer on an advancing ACK (RFC 6298 section 5.3).
 			timeout := s.RTO
-			if s.ep.SACKPermitted && s.SndWnd != 0 && s.headPacketSACKed(headSACK) {
+			if headSACKed && s.SndWnd != 0 {
 				// The first unacknowledged byte belongs to a packet the peer
 				// reported receiving. Give a later ACK half an RTT to clear the
 				// ambiguity before resending. See tcp_check_sack_reneging:
@@ -1807,23 +1819,6 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			}
 			s.probeTimer.disable()
 			s.resendTimer.enable(timeout)
-		}
-
-		if head := s.writeList.Front(); head != nil && s.ep.SACKPermitted && (head.sackCredit != 0 || !s.ep.scoreboard.Empty()) {
-			// Trimming the head may remove credit. If the first SACK range
-			// starts at UNA, the acknowledged prefix can also complete a
-			// packet whose final byte belongs to a subsequent queue entry.
-			info, ok := s.ep.scoreboard.ranges.Get(header.SACKBlock{Start: s.SndUna})
-			end := s.SndUna
-			if ok {
-				end = s.ep.scoreboard.creditEnd(s.SndUna, info.End)
-			}
-			for seg := head; seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-				if seg != head && !seg.sequenceNumber.LessThan(end) {
-					break
-				}
-				s.recordSACK(seg, rcvdSeg, info)
-			}
 		}
 
 		// Eifel compares the ACK's echo to the retransmission time (RFC 3522, section 3.2).
