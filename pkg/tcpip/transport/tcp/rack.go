@@ -17,8 +17,6 @@ package tcp
 import (
 	"time"
 
-	"gvisor.dev/gvisor/pkg/log"
-
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 )
@@ -102,7 +100,6 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 	// for the connection.
 	// See: https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2, step 2.
 	if seg.xmitCount > 1 {
-		log.Warningf("REPAIR_TRACE update seq=%d ack=%d xmits=%d rtt_us=%d min_us=%d state=%d", uint32(seg.sequenceNumber), uint32(ackSeg.ackNumber), seg.xmitCount, rtt.Microseconds(), rc.minRTT.Microseconds(), rc.snd.state)
 		if ackSeg.parsedOptions.TS && ackSeg.parsedOptions.TSEcr != 0 {
 			if ackSeg.parsedOptions.TSEcr < rc.snd.ep.tsVal(seg.xmitTime) {
 				return
@@ -394,9 +391,6 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 		}
 
 		endSeq := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize()))
-		if seg.xmitCount > 1 {
-			log.Warningf("REPAIR_TRACE detect seq=%d una=%d end=%d latest=%d delta_us=%d rtt_us=%d reo_us=%d remaining_us=%d lost=%t state=%d pipe=%d cwnd=%d", uint32(seg.sequenceNumber), uint32(rc.snd.SndUna), uint32(endSeq), uint32(rc.EndSequence), seg.xmitTime.Sub(rc.XmitTime).Microseconds(), rc.RTT.Microseconds(), rc.ReoWnd.Microseconds(), (seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution).Microseconds(), seg.lost, rc.snd.state, rc.snd.Outstanding, rc.snd.SndCwnd)
-		}
 		if seg.xmitTime.Before(rc.XmitTime) || (seg.xmitTime == rc.XmitTime && endSeq.LessThan(rc.EndSequence)) {
 			// Timestamp quantization can make two events less than one clock tick
 			// apart appear a full tick apart. Keep that uncertainty separate from
@@ -476,7 +470,6 @@ func (s *sender) enterRACKRecovery() bool {
 // +checklocksexclude:rc.snd.rtt.rttMutex
 func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 	snd := rc.snd
-	log.Warningf("REPAIR_TRACE recover una=%d fast=%t pipe=%d cwnd=%d state=%d", uint32(snd.SndUna), fastRetransmit, snd.Outstanding, snd.SndCwnd, snd.state)
 	if fastRetransmit {
 		snd.resendSegment()
 	}
@@ -499,23 +492,16 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 			continue
 		}
 
-		outstanding := snd.Outstanding
-		if snd.sackRecoveryInterrupted && outstanding > 0 {
-			// After an RTO, sendData charged the transmission before
-			// advancing writeNext. Replace one lost packet from that
-			// transmission without charging its replacement twice.
-			outstanding--
-		}
-		if outstanding >= snd.SndCwnd {
+		// Check the congestion window after entering recovery.
+		if snd.Outstanding >= snd.SndCwnd {
 			break
 		}
 
-		if sent := snd.maybeSendSegment(seg, snd.MaxPayloadSize, snd.SndUna.Add(snd.SndWnd)); !sent {
+		if sent := snd.maybeSendSegment(seg, int(snd.ep.scoreboard.SMSS()), snd.SndUna.Add(snd.SndWnd)); !sent {
 			break
 		}
-		log.Warningf("REPAIR_TRACE replace seq=%d charged=%d live=%d cwnd=%d interrupted=%t", uint32(seg.sequenceNumber), snd.Outstanding, outstanding, snd.SndCwnd, snd.sackRecoveryInterrupted)
 		dataSent = true
-		snd.Outstanding = outstanding + snd.pCount(seg, snd.MaxPayloadSize)
+		snd.Outstanding += snd.pCount(seg, snd.MaxPayloadSize)
 	}
 
 	snd.postXmit(dataSent, true /* shouldScheduleProbe */)
