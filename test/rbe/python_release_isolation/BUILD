@@ -5,7 +5,8 @@ sh_test(
     srcs = ["run.sh"],
     data = [
         "compare.py",
-        "stock.sh",
+        "flit.toml",
+        "hatch.toml",
         "fixed.sh",
         "//sandboxexec/sandbox/python:release_fixture_inputs",
     ],

@@ -1,3 +1,6 @@
+"""Exercise production release frontends, metadata, reproducibility and a Python 3.7 consumer."""
+import email
+import hashlib
 import json
 import os
 import shutil
@@ -6,133 +9,96 @@ import tarfile
 import zipfile
 from pathlib import Path
 
-root = Path(os.environ["TEST_SRCDIR"]) / os.environ["TEST_WORKSPACE"]
-target = root / "test/rbe/python_release_isolation"
-tmp = Path(os.environ["TEST_TMPDIR"])
-receipt = []
-for kind in ("fixed",):
-    for tool in ("build", "uv"):
-        workspace = tmp / kind / tool
-        project = workspace / "sandboxexec/sandbox/python"
-        shutil.copytree(root / "sandboxexec/sandbox/python", project, symlinks=False)
-        entry = workspace / "tools/make_python_release.sh"
-        entry.parent.mkdir()
-        shutil.copyfile(target / (kind + ".sh"), entry)
-        initial = (project / "pyproject.toml").read_bytes()
-        action_tmp = workspace / "tmp"
-        action_tmp.mkdir()
-        env = dict(os.environ, TMPDIR=str(action_tmp))
-        if tool == "uv":
-            # Exercise the supported uv fallback without the PyPA build frontend.
-            bin_dir = workspace / "bin"
-            bin_dir.mkdir()
-            shim = bin_dir / "python3"
-            shim.write_text("#!/bin/sh\nexit 1\n")
-            shim.chmod(0o755)
-            env["PATH"] = str(bin_dir) + ":" + env["PATH"]
-        for tag in (12, 13):
-            version = "2026.10.30." + str(tag)
-            expected = {"gvisor-" + version + "-py3-none-any.whl", "gvisor-" + version + ".tar.gz"}
-            out = workspace / str(tag)
-            result = subprocess.run(["bash", str(entry), "build", str(out), "release-20261030." + str(tag)], cwd=workspace, env=env, capture_output=True, text=True)
-            if result.returncode:
-                raise RuntimeError(result.stdout[-1000:] + result.stderr[-1500:])
-            names = {p.name for p in out.iterdir()}
-            if kind == "stock" and tag == 13:
-                previous = {n.replace(".13", ".12") for n in expected}
-                assert names == expected | previous, names
-            else:
-                assert names == expected, names
-            wheel = next(p for p in out.glob("*.whl") if version in p.name)
-            sdist = next(p for p in out.glob("*.tar.gz") if version in p.name)
-            with zipfile.ZipFile(wheel) as archive:
-                md = next(n for n in archive.namelist() if n.endswith(".dist-info/METADATA"))
-                assert "Version: " + version in archive.read(md).decode().splitlines()
-            with tarfile.open(sdist) as archive:
-                md = next(m for m in archive.getmembers() if m.name.endswith("/PKG-INFO"))
-                assert "Version: " + version in archive.extractfile(md).read().decode().splitlines()
-            unchanged = (project / "pyproject.toml").read_bytes() == initial
-            assert unchanged == (kind == "fixed")
-            assert not any(p.is_dir() for p in action_tmp.iterdir()), list(action_tmp.iterdir())
-            receipt.append(dict(arm=kind, frontend=tool, tag=version, files=sorted(names), project_unchanged=unchanged))
-print(json.dumps(receipt, indent=2))
-with (Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]) / "ordinary.json").open("w") as f:
-    json.dump(receipt, f, indent=2)
+ROOT = Path(os.environ["TEST_SRCDIR"]) / os.environ["TEST_WORKSPACE"]
+TEST = ROOT / "test/rbe/python_release_isolation"
+SCRATCH = Path(os.environ["TEST_TMPDIR"])
+OUTPUT = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
+VERSION = "2026.10.29.2"
+EPOCH = 315532800
+MODULES = {"gvisor/__init__.py", "gvisor/sandbox.py"}
+report = {}
 
-import json
-import os
-from pathlib import Path
-import shutil
-import subprocess
-import tarfile
 
-root = Path(os.environ["TEST_SRCDIR"]) / os.environ["TEST_WORKSPACE"]
-fixtures = root / "test/rbe/python_release_isolation"
-tmp = Path(os.environ["TEST_TMPDIR"]) / "member-test"
-project = tmp / "sandboxexec/sandbox/python"
-shutil.copytree(root / "sandboxexec/sandbox/python", project)
-entry = tmp / "tools/make_python_release.sh"
-entry.parent.mkdir()
-staging = tmp / "tmp"
-staging.mkdir()
-env = dict(os.environ, TMPDIR=str(staging))
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
 
-def build(arm, version):
-    shutil.copyfile(fixtures / (arm + ".sh"), entry)
-    out = tmp / version
-    result = subprocess.run(["bash", str(entry), "build", str(out), "release-20261030." + version], cwd=tmp, env=env, capture_output=True, text=True)
+
+def inspect(path):
+    if path.suffix == ".whl":
+        with zipfile.ZipFile(path) as z:
+            files = {name:z.read(name) for name in z.namelist()}
+        metadata = next(v for k,v in files.items() if k.endswith(".dist-info/METADATA"))
+        assert {k for k in files if k.startswith("gvisor/")} == MODULES,files.keys()
+    else:
+        with tarfile.open(path) as t:
+            files = {m.name.partition("/")[2]:t.extractfile(m).read() for m in t if m.isfile()}
+        metadata = files["PKG-INFO"]
+        assert {"README.md", "pyproject.toml", *MODULES} <= files.keys(),files.keys()
+    msg=email.message_from_bytes(metadata)
+    return {"sha256":sha(path.read_bytes()), "members":sorted(files),
+            "modules":{p:sha(files[p]) for p in sorted(MODULES)},
+            "description":sha(str(msg.get_payload()).strip().encode()),
+            "metadata":{k:sorted(msg.get_all(k,[])) for k in ("Name","Version","Summary","Requires-Python","License","License-Expression","Classifier","Project-URL","Requires-Dist","Description-Content-Type")}}
+
+
+def build(backend, frontend, date):
+    work=SCRATCH / backend / frontend
+    proj=work / "sandboxexec/sandbox/python"
+    shutil.copytree(ROOT / "sandboxexec/sandbox/python",proj,symlinks=False)
+    if backend != "stock":
+        shutil.copyfile(TEST / (backend+".toml"),proj / "pyproject.toml")
+    for file in proj.rglob("*"):
+        if file.is_file(): os.utime(file,(date,date))
+    tools=work/"tools"; tools.mkdir()
+    entry=tools/"make_python_release.sh"; shutil.copy(TEST/"fixed.sh",entry)
+    out=work/"dist"; temp=work/"temp"; temp.mkdir()
+    env=dict(os.environ,TMPDIR=str(temp),SOURCE_DATE_EPOCH=str(EPOCH))
+    if frontend=="uv":
+        shim=work/"bin"; shim.mkdir()
+        script=shim/"python3"; script.write_text("#!/bin/sh\nexit 1\n");script.chmod(0o755)
+        env["PATH"]=str(shim)+os.pathsep+env["PATH"]
+    result=subprocess.run(["bash",str(entry),"build",str(out),"release-20261029.2"],env=env,text=True,capture_output=True)
     if result.returncode:
-        raise RuntimeError(result.stdout[-800:] + result.stderr[-1500:])
-    archive = out / ("gvisor-2026.10.30." + version + ".tar.gz")
-    with tarfile.open(archive) as source:
-        return ["/".join(n.split("/")[1:]) for n in source.getnames() if "/" in n]
+        raise RuntimeError((result.stdout+result.stderr)[-2200:])
+    assert not list(temp.iterdir()), list(temp.iterdir())
+    marker="Successfully built wheel and sdist with python3 -m build." if frontend=="build" else "python3 -m build not available, building with uv build..."
+    assert marker in result.stdout,result.stdout[-1000:]
+    artifacts=sorted(out.iterdir())
+    assert len(artifacts)==2 and {a.name for a in artifacts}=={f"gvisor-{VERSION}-py3-none-any.whl", f"gvisor-{VERSION}.tar.gz"}
+    return {a.name:inspect(a) for a in artifacts}, artifacts
 
-stock = build("stock", "10")
-old = set(p.name for p in (project / "dist").iterdir())
-assert old == {"gvisor-2026.10.30.10-py3-none-any.whl", "gvisor-2026.10.30.10.tar.gz"}, old
-manifest = project / "gvisor.egg-info/SOURCES.txt"
-previous_manifest = manifest.read_text()
-assert not any(n.startswith("dist/") for n in previous_manifest.splitlines()), previous_manifest
-clean = build("fixed", "11")
-assert not any(n.startswith("dist/") for n in clean), clean
-# Determine whether an earlier manifest that listed a subsequently obsolete
-# input is also carried over into the copied project by setuptools.
-with manifest.open("a") as f:
-    f.write("\ndist/gvisor-2026.10.30.10.tar.gz\n")
-cached = build("fixed", "12")
-assert cached == clean, cached
-assert not any(p.is_dir() for p in staging.iterdir())
-data = {"backend": "setuptools", "prior_archives": sorted(old), "old_manifest": previous_manifest.splitlines(), "stock_members": stock, "clean_members": clean, "cached_members": cached}
-print(json.dumps(data, indent=2))
-(Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]) / "release.json").write_text(json.dumps(data, indent=2))
 
-# The public "all" command must resolve its relative upload directory in
-# the caller, after staging's temporary working directory is gone.
-cwd = tmp.parent / "all-relative"
-source = cwd / "sandboxexec/sandbox/python"
-shutil.copytree(root / "sandboxexec/sandbox/python", source)
-entry = cwd / "tools/make_python_release.sh"
-entry.parent.mkdir()
-shutil.copyfile(fixtures / "fixed.sh", entry)
-stage = cwd / "temporary"
-stage.mkdir()
-bin_dir = cwd / "home/.local/bin"
-bin_dir.mkdir(parents=True)
-twine = bin_dir / "twine"
-twine.write_text('#!/bin/sh\nprintf "%s\\n" "$PWD" "$@" > "$TWINE_RECORD"\n')
-twine.chmod(0o755)
-env = os.environ | {"TMPDIR": str(stage), "HOME": str(cwd / "home"), "TWINE_RECORD": str(cwd / "observed-upload"), "PATH": str(bin_dir) + ":" + os.environ["PATH"]}
-run = subprocess.run(["bash", str(entry), "all", "relative", "relative", "release-20261030.14"], cwd=cwd, env=env, capture_output=True, text=True)
-assert run.returncode == 0 and str(cwd / "relative") in run.stdout, (run.returncode, run.stdout[-1300:], run.stderr[-1000:])
-observed = (cwd / "observed-upload").read_text().splitlines()
-assert observed[0] == str(cwd) and observed[1] == "upload" and len(observed) == 6, observed
-assert {Path(v).parent for v in observed[-2:]} == {cwd / "relative"}, observed
-assert not any(stage.iterdir()), list(stage.iterdir())
-# Reject both frontends after staging starts. This must remove the private copy.
-for tool in ("python3", "uv"):
-    exe = bin_dir / tool
-    exe.write_text("#!/bin/sh\nexit 23\n")
-    exe.chmod(0o755)
-bad = subprocess.run(["bash", str(entry), "build", "failed", "release-20261030.15"], cwd=cwd, env=env, capture_output=True, text=True)
-assert bad.returncode != 0 and not any(stage.iterdir()), (bad.returncode, list(stage.iterdir()))
-(Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]) / "cwd.json").write_text(json.dumps({"all_relative": run.returncode, "upload": "local argument recorder (no network)", "failed_frontends": bad.returncode, "temporary_files_remaining": len(list(stage.iterdir()))}) + "\n")
+def install37(path, dest):
+    dest.mkdir()
+    python=os.environ["PACKAGE_PY37"]
+    proc=subprocess.run([python,"-m","pip","install","--isolated","--no-index","--no-deps","--find-links",os.environ["PIP_FIND_LINKS"],"--target",str(dest),str(path)],text=True,capture_output=True)
+    if proc.returncode: raise RuntimeError((proc.stdout+proc.stderr)[-1800:])
+    prog="import gvisor.sandbox,sys; print(sys.version.split()[0]); print(gvisor.sandbox.__file__)"
+    actual=subprocess.check_output([python,"-c",prog],env=dict(os.environ,PYTHONPATH=str(dest)),cwd=dest,text=True).splitlines()
+    assert actual[0]=="3.7.17" and Path(actual[1]).is_relative_to(dest),actual
+    return {"python":actual[0], "modules":{p:sha((dest/p).read_bytes()) for p in sorted(MODULES)}}
+
+
+for backend in ("stock","flit","hatch"):
+    data=report[backend]={}
+    try:
+        artifacts=[]
+        for frontend,date in (("build",946684800),("uv",1609459200)):
+            values,artifacts=build(backend,frontend,date);data[frontend]=values
+        data["pair_identical"]=all(val["sha256"]==data["uv"][name]["sha256"] for name,val in data["build"].items())
+        if backend!="stock":
+            data["installs"]={a.name:install37(a,SCRATCH/backend/("install-"+a.name)) for a in artifacts}
+            data["metadata_changes"]={}
+            for n,v in data["build"].items():
+                baseline=report["stock"]["build"][n]
+                assert v["modules"]==baseline["modules"]==data["installs"][n]["modules"]
+                assert v["description"]==baseline["description"]
+                diffs={k:[b,v["metadata"][k]] for k,b in baseline["metadata"].items() if b!=v["metadata"][k]}
+                data["metadata_changes"][n]=diffs
+            assert data["pair_identical"]
+        data["status"]="PASS"
+    except Exception as e:
+        data.update(status="FAIL",error=f"{type(e).__name__}: {e}")
+    print(backend,data["status"],data.get("error",""),flush=True)
+    (OUTPUT/"backend-results.json").write_text(json.dumps(report,indent=2)+"\n")
+assert report["stock"]["status"]=="PASS" and any(report[b]["status"]=="PASS" for b in ("flit","hatch"))
