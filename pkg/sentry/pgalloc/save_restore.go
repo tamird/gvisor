@@ -209,20 +209,7 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 	// provided.
 	var amfs *asyncMemoryFileSave
 	if opts.PagesFile != nil {
-		var sf stateio.SourceFile
-		if opts.PagesFile.aw.NeedRegisterSourceFD() {
-			fileSize := uint64(len(f.chunksLoad())) * chunkSize
-			var err error
-			sf, err = opts.PagesFile.aw.RegisterSourceFD(int32(f.file.Fd()), fileSize, f.getClientFileRangeSettings(fileSize))
-			if err != nil {
-				return fmt.Errorf("failed to register MemoryFile with pages file: %w", err)
-			}
-		}
-		amfs = &asyncMemoryFileSave{
-			f:  f,
-			pf: opts.PagesFile,
-			sf: sf,
-		}
+		amfs = &asyncMemoryFileSave{f: f, pf: opts.PagesFile}
 	}
 
 	// We only want to explicitly include pages containing non-zero bytes in
@@ -714,7 +701,26 @@ type asyncMemoryFileSave struct {
 	// Immutable fields:
 	f  *MemoryFile
 	pf *AsyncPagesFileSave
-	sf stateio.SourceFile
+
+	// The saver goroutine registers the source before its first write.
+	registered bool
+	sf         stateio.SourceFile
+}
+
+// register is called only by the saver goroutine, which also owns Close.
+func (amfs *asyncMemoryFileSave) register() error {
+	aw := amfs.pf.aw
+	if aw.NeedRegisterSourceFD() {
+		f := amfs.f
+		size := uint64(len(f.chunksLoad())) * chunkSize
+		sf, err := aw.RegisterSourceFD(int32(f.file.Fd()), size, f.getClientFileRangeSettings(size))
+		if err != nil {
+			return fmt.Errorf("failed to register MemoryFile with pages file: %w", err)
+		}
+		amfs.sf = sf
+	}
+	amfs.registered = true
+	return nil
 }
 
 type apsRange struct {
@@ -992,6 +998,13 @@ func (apfs *AsyncPagesFileSave) main() {
 		apfs.aw.Reserve(apfs.saveOff)
 		for !apfs.unsaved.Empty() {
 			mfr := apfs.unsaved.PeekFrontPtr()
+			if !mfr.amfs.registered {
+				if err := mfr.amfs.register(); err != nil {
+					apfs.mu.Unlock()
+					apfs.err = err
+					return
+				}
+			}
 			n := apfs.enqueueRange(*mfr)
 			if n == mfr.Length() {
 				apfs.unsaved.RemoveFront()
