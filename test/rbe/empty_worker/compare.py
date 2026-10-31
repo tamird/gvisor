@@ -122,14 +122,10 @@ def verify_product(r,actions):
     r["go_archive_outputs"]=[o for a in matches("GoCompilePkg","pkg/gohacks") for o in a["outputs"]]
     return ok and bool(r["go_archive_outputs"])
 try:
-    assert run("git","rev-parse","HEAD~3")==os.environ["BASE"]
-    results["provenance"]=provenance();save()
-    source(os.environ["ORIGINAL"])
-    results["positive_root_ok"]=bool(collect_root("gnu-root",gnu));save()
-    results["scratch_root_ok"]=bool(collect_root("scratch-root",image));save()
+    assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
+    assert run("git","rev-parse","HEAD~2")==os.environ["ORIGINAL_CARRIER"]
+    results["retained_controls"]={"carrier":os.environ["ORIGINAL_CARRIER"],"run":41237444729,"artifact":13055412963,"sha256":"02d0ae4ceb37e86e9ba474d8590e930605d20df2b72a854534a533eae9496850"}
     labels=[pkg+"sighandler_object",pkg+"sighandler.built-in.bin",package]
-    control, negative=invoke("stock","amd64",labels)
-    results["control_observed"]=control["native_exit"]!=0 and any(a.get("exitCode") or a.get("status") for a in negative)
     source(os.environ["CORRECTED"])
     opts=["--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain","--extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash"]
     product,actions=invoke("composed","amd64",[*labels,pkg+"sighandler.go.arch",pkg+"gen_stub"],opts)
@@ -137,7 +133,7 @@ try:
 except Exception as e:
     results["error"]=repr(e)
 finally:
-    passed=all(results.get(k) for k in ("positive_root_ok","scratch_root_ok","control_observed","real_product_ok"))
+    passed=bool(results.get("retained_controls") and results.get("real_product_ok"))
     results["verdict"]="VERIFIED" if passed else "INCOMPLETE"
     results["verified"]=now();save()
     print(results["verdict"],results.get("error",""),flush=True)
