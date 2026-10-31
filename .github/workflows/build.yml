@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 5
+          fetch-depth: 6
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -38,7 +38,6 @@ jobs:
           unset BUILDBUDDY_API_KEY
           cat >> "$rc" <<'RC'
           build --jobs=8
-          build --strategy_regexp=Compiling.*src/google/protobuf/descriptor[.]cc=linux-sandbox
           build --strategy=ReleaseFiles=linux-sandbox
           build --strategy=GoStdlib=linux-sandbox
           build --strategy=GoStdlibList=linux-sandbox
@@ -75,16 +74,6 @@ jobs:
           tag=gvisor.dev/images/basic/integrationtest:latest
           test "$(docker image inspect --format '{{.Id}}' "$tag")" = "$(docker image inspect --format '{{.Id}}' "$expected")"
           docker run --pull=never --runtime=runc --rm --workdir=/home/nonroot --user=nonroot "$tag" /bin/bash -ec 'test -x /home/nonroot/host_connect; test "$(id -u):$(id -g)" = 1338:1337'
-      - name: Run all nested runsc cases with the permanent Docker test
-        if: always() && steps.image.outcome == 'success'
-        run: python3 "$RUNNER_TEMP/guests.py" nested
-      - name: Publish the original nested case receipts before the other lane
-        if: always() && steps.image.outcome == 'success'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: nested-integration-c-cases
-          path: ${{ runner.temp }}/results/nested
-          if-no-files-found: error
       - name: Install the selected runsc release from this source
         id: runtime
         if: always() && steps.image.outcome == 'success'
@@ -101,6 +90,47 @@ jobs:
             sleep 1
           done
           exit 1
+      - name: Exercise the image's copy-up and directory fixtures with the installed runsc
+        if: always() && steps.runtime.outcome == 'success'
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/results/direct"
+          mkdir -p "$out"
+          grep -E '^Mem(Total|Available):' /proc/meminfo > "$out/host-memory"
+          container=gvisor.dev/images/basic/integrationtest:latest
+          failed=0
+          stock=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/integrationtest_x86_64@sha256:6475ee6d3497da8117e93738c739de11bbc5a76169543952ff5564ba88d2c835
+          for fixture in test_copy_up test_rewinddir; do
+            if docker run --runtime=integration-c --rm "$container" "./$fixture" > "$out/$fixture.log" 2>&1; then
+              echo "$fixture PASS" | tee -a "$out/results"
+            else
+              failed=1
+              echo "$fixture FAIL" | tee -a "$out/results"
+              if docker run --runtime=integration-c --rm "$stock" "./$fixture" > "$out/stock-$fixture.log" 2>&1; then
+                echo "stock $fixture PASS" | tee -a "$out/results"
+              else
+                echo "stock $fixture FAIL" | tee -a "$out/results"
+              fi
+            fi
+          done
+          exit "$failed"
+      - name: Publish the source runsc's direct fixture results
+        if: always() && steps.runtime.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: direct-integration-c-cases
+          path: ${{ runner.temp }}/results/direct
+          if-no-files-found: error
+      - name: Run all nested runsc cases with the permanent Docker test
+        if: always() && steps.image.outcome == 'success'
+        run: python3 "$RUNNER_TEMP/guests.py" nested
+      - name: Publish the original nested case receipts before the other lane
+        if: always() && steps.image.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nested-integration-c-cases
+          path: ${{ runner.temp }}/results/nested
+          if-no-files-found: error
       - name: Run copy-up, rewinddir, link, sticky, and both ping guest cases
         if: always() && steps.runtime.outcome == 'success'
         run: python3 "$RUNNER_TEMP/guests.py" guest
