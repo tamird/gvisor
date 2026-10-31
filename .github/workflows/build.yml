@@ -1,12 +1,12 @@
-name: Compare the first TCP timeout from Open on Linux and gVisor
+name: Compare TCP flight accounting alone and with timeout recovery
 on:
   push:
-    branches: [qualification/tcp-first-rto-from-open]
+    branches: [qualification/tcp-initial-rto-accounting]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-first-rto-from-open'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-initial-rto-accounting'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -14,7 +14,7 @@ jobs:
       with:
         fetch-depth: 8
         persist-credentials: false
-    - name: Observe the same two packet inputs on Linux and netstack
+    - name: Exercise two TCP packet traces in both accounting builds
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
@@ -23,16 +23,18 @@ jobs:
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
         stock=15711c0b514c9a4b517596143db420c242cef174
         stock_parent=05bcbbe6e12c1307c19358cdffe536320b47479d
-        pr16081=334f6e240b58a15878ad4c9e633ab331e2cf6819
-        pr16495=2191793758e23f53449ddc285210f4b808e8365e
-        test "$(git rev-parse HEAD^1)" = "d8fa7a11f08a70cf8a6a89e96fda6d1c5718b865"
-        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$stock_parent" "$stock" "$pr16081" "$pr16495"
+        guard=334f6e240b58a15878ad4c9e633ab331e2cf6819
+        accounting=24080245375f32ca2be6fa361a76b98db7f3ee8b
+        both=cb0f9890a5413b1abf599d2c8ac97537c7ebcf1e
+        test "$(git rev-parse HEAD^1)" = "e2971f58f64c1fac846c8d80e34bfc237116ddbf"
+        git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$stock_parent" "$stock" "$guard" "$accounting" "$both"
         parent_of() { git cat-file -p "$1" | sed -n '/^$/q;s/^parent //p'; }
         test "$(parent_of "$stock")" = "$stock_parent"
-        git cat-file -e "$stock_parent^{commit}"
+        test "$(parent_of "$guard")" = "$stock"
+        test "$(parent_of "$accounting")" = "$stock"
+        test "$(parent_of "$both")" = "$guard"
         git diff --quiet "$stock_parent" "$stock" -- . ':(exclude)test/packetimpact/tests/tcp_rack_test.go'
-        for source in "$pr16081" "$pr16495"; do
-          test "$(parent_of "$source")" = "$stock"
+        for source in "$accounting" "$both"; do
           git diff --quiet "$stock" "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/**'
         done
         mkdir -p "$RUNNER_TEMP/checker"
@@ -131,7 +133,7 @@ jobs:
         # under these flags. The listener builds only the facts it actually uses.
         proved=01811d57c4a1a18ef002fe92956669b43799f466
         git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$proved"
-        for source in "$stock" "$pr16081" "$pr16495"; do
+        for source in "$accounting" "$both"; do
           git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
         done
         cat > "$RUNNER_TEMP/replay-public/build-preflight.json" <<'PROOF'
@@ -139,15 +141,12 @@ jobs:
         PROOF
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in linux stock pr16081 pr16495; do
-          variant=netstack
+        for arm in accounting both; do
           case $arm in
-            linux|stock) source="$stock"; parent="$stock_parent" ;;
-            pr16081) source="$pr16081"; parent="$stock" ;;
-            pr16495) source="$pr16495"; parent="$stock" ;;
+            accounting) source="$accounting"; parent="$stock" ;;
+            both) source="$both"; parent="$guard" ;;
           esac
-          if [[ $arm == linux ]]; then variant=native; fi
-          label=//test/packetimpact/tests:tcp_rack_${variant}_test
+          label=//test/packetimpact/tests:tcp_rack_netstack_test
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           test "$(parent_of HEAD)" = "$parent"
@@ -169,15 +168,12 @@ jobs:
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/tcp_fence_report.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
-          # If the common target cannot compile, repeating three builds cannot add measurements.
-          if [[ $arm == linux && ! -s "$raw" ]]; then break; fi
-          if [[ $arm == linux && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
         done
         python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["linux","stock","pr16081","pr16495"]
+        arms = ["accounting","both"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["status"] == "PASS" for v in verdicts.values()) else "FAIL"}
@@ -190,6 +186,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: tcp-first-rto-from-open
+        name: tcp-initial-rto-accounting
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
