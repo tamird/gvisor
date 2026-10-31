@@ -810,11 +810,11 @@ func TestRenegingHeadAcrossLiveRestore(t *testing.T) {
 			}
 			// Leave one unreported byte: a range beginning exactly at the cumulative
 			// ACK is not a valid SACK block.
-			inject(1501, [2]int{1502, 2000}, [2]int{4000, 5000})
+			inject(1501, [2]int{1502, 2000}, [2]int{4000, 4100})
 			if !window("restored-suffix", 1501) {
 				// This is a new report for the next transmitted packet, not a repeat
 				// of the SACK used before the save. Stop halfway through that packet.
-				inject(1501, [2]int{2000, 3000})
+				inject(1502, [2]int{2000, 3000})
 				inject(2500)
 				window("restored-fresh", 2500)
 			}

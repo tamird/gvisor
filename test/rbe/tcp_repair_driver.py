@@ -69,7 +69,7 @@ def arm(name,key,target,kind,case=None):
     print(name,json.dumps(row),flush=True)
 target='//pkg/tcpip/transport/tcp/test/e2e:tcp_test'
 case='TestRenegingHeadAcrossLiveRestore'
-arms=['parent','timer','stale-head']
+arms=['parent','timer','public','stale-head']
 for key in arms:arm(key,key,target,'restore',case)
 v={'expected':arms,'executed':[k for k in arms if results[k].get('case_records',{}).get('executed')],'missing':[k for k in arms if not results[k].get('case_records',{}).get('executed')],'skips':{k:r.get('skipped_cases') for k,r in results.items()},'failures':errors,'arms':results,'execution_finished_at':max((r['ended'] for r in results.values() if 'ended' in r),default=None),'verdict_available_at':now()}
 (OUT/'verdict.json').write_text(json.dumps(v,indent=2)+'\n')

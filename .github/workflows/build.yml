@@ -25,6 +25,8 @@ jobs:
         mkdir -p "$RUNNER_TEMP/replay-public"
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
         git merge-base --is-ancestor 47025d1e8cec868c1b3d9556e34b0a39124b1dbf HEAD
+        git fetch --quiet --depth=1 origin e19dfe4de7b764ce49da0696b4e5ef9b17441bd3
+        test "$(git rev-parse FETCH_HEAD)" = e19dfe4de7b764ce49da0696b4e5ef9b17441bd3
         cp test/rbe/case_records.py "$RUNNER_TEMP/case_records.py"
         cp test/rbe/tcp_repair_sources.json "$RUNNER_TEMP/tcp-heads.json"
         cp test/rbe/tcp_repair_driver.py "$RUNNER_TEMP/driver.py"
