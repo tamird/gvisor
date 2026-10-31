@@ -186,7 +186,7 @@ def lane(name):
         write("native-executables", info)
     if name == "stock-scratch":
         assert outcome["exit"] and any("grpc_cpp_plugin" in t for t in outcome["evidence"]),outcome
-        assert any("/bin/bash" in t and any(v in t.lower() for v in ["not found","no such file","could not start","failed to start"]) for t in outcome["evidence"]),outcome
+        assert any("/bin/bash" in re.sub(r"\\+/", "/", t) and any(v in t.lower() for v in ["not found","no such file","could not start","failed to start"]) for t in outcome["evidence"]),outcome
         copies = [a for a in selected if a["mnemonic"]=="Genrule" and label(a["targetLabel"])==wrapper]
         assert len(copies)==1, copies
         cp=copies[0]

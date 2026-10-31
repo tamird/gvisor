@@ -1,0 +1,75 @@
+{
+  "status": "PASS",
+  "source": "aa767e4c43d011121271551fe24da501a56f729d",
+  "grpc_release": "v1.84.0",
+  "supplier_commit": "https://github.com/tamird/grpc/commit/184987c9a",
+  "original_artifact": "https://github.com/tamird/gvisor/actions/runs/41230918674/artifacts/13053878288",
+  "original_archive_sha256": "8f5e4794616bd06101f4cf9d04a2d335c5090d99b6942678598519c1fca3dbde",
+  "original_workflow_status": "failure",
+  "reason_for_replay": "The original text assertion did not decode escaped slashes in the OCI error.",
+  "completed": "2026-10-31T19:03:44.369642+00:00",
+  "targets": [
+    "//pkg/shim/v1/taskserver:_task_server_cc_grpc_proto_grpc_codegen",
+    "//test/packetimpact/proto:_posix_server_cc_grpc_proto_grpc_codegen"
+  ],
+  "executions": {
+    "native": {
+      "start": "2026-10-31T18:45:53.010220+00:00",
+      "finish": "2026-10-31T18:54:17.638102+00:00",
+      "exit": 0,
+      "evidence": [
+        "INFO: Invocation ID: 993c3d83-b11b-4996-a6f2-03c854e3aed8"
+      ]
+    },
+    "ordinary": {
+      "start": "2026-10-31T18:54:27.318977+00:00",
+      "finish": "2026-10-31T18:58:07.360161+00:00",
+      "exit": 0,
+      "evidence": [
+        "INFO: Invocation ID: 713a6587-2eb5-48c4-b82d-1b974cfa1506"
+      ]
+    },
+    "stock-scratch": {
+      "start": "2026-10-31T18:58:15.043634+00:00",
+      "finish": "2026-10-31T18:58:17.438376+00:00",
+      "exit": 1,
+      "evidence": [
+        "INFO: Invocation ID: d53749e5-853f-4758-b191-7ed38a23e192",
+        "ERROR: /home/runner/.cache/bazel/_bazel_runner/000ef9ee90a3e625fcf1f4edcfe0fd56/external/grpc+/src/compiler/BUILD:93:18: Executing genrule @@grpc+//src/compiler:grpc_cpp_plugin [for tool] failed: (Exit 1): bash failed: error executing Genrule command (from target @@grpc+//src/compiler:grpc_cpp_plugin) /bin/bash -c ... (remaining 1 argument skipped)",
+        "  \"msg\": \"executable file `\\/bin\\/bash` not found: No such file or directory\",",
+        "ERROR: Build did NOT complete successfully"
+      ]
+    }
+  },
+  "original_negative_reason": "  \"msg\": \"executable file `/bin/bash` not found: No such file or directory\",",
+  "matches": {
+    "pkg/shim/v1/taskserver/task_server.grpc.pb.h": {
+      "size": 47281,
+      "sha256": "3ba798654b5330253e571dbc566ef4acb837bbfbc89f81f00009130e0a8b88fd"
+    },
+    "pkg/shim/v1/taskserver/task_server.grpc.pb.cc": {
+      "size": 14060,
+      "sha256": "44a6999436838f828be03422d6b261ec692d763e3ecd947feb363f7cc445d7df"
+    },
+    "test/packetimpact/proto/posix_server.grpc.pb.h": {
+      "size": 168007,
+      "sha256": "2c0c88d5fd9c07ad6526328a49221329bfecf45354c40c59dd5a29929579d0ce"
+    },
+    "test/packetimpact/proto/posix_server.grpc.pb.cc": {
+      "size": 47771,
+      "sha256": "54d548cdcb0c4275956e145f44d5b4b1585ece8bd6ba715e7aa38eb8f4ce9cf4"
+    }
+  },
+  "static_tools": {
+    "bazel-out/k8-opt-exec-ST-347cb8e62cf9/bin/external/protobuf+/protoc": {
+      "sha256": "071d7e0ffc03f1644937db933baec45e84cc560d933a25beaf4a8dbf434ec5c7",
+      "contains_interp": false,
+      "contains_needed": false
+    },
+    "bazel-out/k8-opt-exec-ST-347cb8e62cf9/bin/external/grpc+/src/compiler/grpc_cpp_plugin_native": {
+      "sha256": "28b36fa935ba2eb97be83ab7837b962786008abe3df9f6b24798a91b5ba78de9",
+      "contains_interp": false,
+      "contains_needed": false
+    }
+  }
+}
