@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 import sys
 
@@ -28,7 +29,11 @@ if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("exe
 runner_exit = int((out/"runner_exit").read_text())
 if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
-observations = []
+observations = [(name,int(ack),int(got),int(want)) for name,ack,got,want in re.findall(r"SPLIT_TIMER case=(\w+) ack=(\d+) got_ms=(\d+) want_ms=(\d+)",logs)]
+if arm == "suites":
+    expected = [("Original",2100,60),("Original",2400,60),("Original",2750,60),("RetryAndTail",2100,400),("RetryAndTail",2400,60),("RetryAndTail",2750,400),("LastByte",2000,60)]
+    if [(name,ack,want) for name,ack,_,want in observations] != expected or any(got != want for _,_,got,want in observations):
+        why.append("missing or incorrect ACK deadline observations")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)

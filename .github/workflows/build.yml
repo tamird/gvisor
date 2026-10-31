@@ -1,11 +1,11 @@
-name: Verify TCP sender and SACK recovery suites
+name: Verify TCP recovery with one packet-credit walk
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-reneging-owner-suites'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-reneging-single-walk'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -20,7 +20,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "09a3ca25b2e495158eb09a57b86252e341ae7bd0"
+        test "$(git rev-parse HEAD^1)" = "7e837edccdcfdacb911ef57ebd93dbc57c2128bb"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -85,8 +85,8 @@ jobs:
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in suites analyzers; do
-          source=e19dfe4de7b764ce49da0696b4e5ef9b17441bd3
-          parent=f96afe45777d10e02b6565b76dd255f0062503ec
+          source=2710f1cce53093fab531bca7d58d09349a0a0e00
+          parent=6eb60bcbfc52571016c91acfb6275a60f593be16
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           fi
@@ -104,6 +104,7 @@ jobs:
           opts=()
           case $arm in
             suites)
+              opts=(--bazel-option=--test_arg=-test.v)
               labels=(//pkg/tcpip/transport/tcp:tcp_test
                       //pkg/tcpip/transport/tcp/test/e2e:tcp_test
                       //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test
