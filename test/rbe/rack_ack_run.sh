@@ -23,6 +23,21 @@ for arm in current split; do
   root=$(bazel --bazelrc="$rc" info output_base)
   native=0
   bazel --bazelrc="$rc" "${args[@]}" "${labels[@]}" > "$RUNNER_TEMP/$arm.log" 2>&1 || native=$?
+  if [[ "$arm" == current && "$native" != 0 && "$native" != 3 ]] && grep -q 'Remote Execution Failure:' "$RUNNER_TEMP/$arm.log"; then
+    # Keep the original result and retry only this incomplete build on GNU/Linux.
+    failed="$dir/remote-failure"
+    mkdir -p "$failed"
+    cp "$dir/arguments" "$failed/"
+    echo "$native" > "$failed/exit"
+    tail -120 "$RUNNER_TEMP/$arm.log" > "$failed/build.log"
+    first_capture=0
+    python3 -B "$tools/qualification_report.py" capture --events "$RUNNER_TEMP/$arm.bep" --output "$failed/events.jsonl" --output-root "$root" --report-dir "$failed/original" || first_capture=$?
+    echo "$first_capture" > "$failed/capture-exit"
+    args+=(--remote_executor= --spawn_strategy=linux-sandbox --jobs=2)
+    printf '%s\n' "${args[@]}" "${labels[@]}" > "$dir/arguments"
+    native=0
+    bazel --bazelrc="$rc" "${args[@]}" "${labels[@]}" > "$RUNNER_TEMP/$arm.log" 2>&1 || native=$?
+  fi
   printf '%s\n' "$native" > "$dir/exit"
   date -u +%FT%T.%3NZ > "$dir/finish"
   git status --porcelain --untracked-files=no > "$dir/after"
