@@ -804,7 +804,7 @@ func savePrivateMFs(ctx context.Context, w io.Writer, mfsToSave map[checkpoint.R
 // +checklocksexclude:k.extMu
 // +checklocksexclude:k.runningTasksMu
 // +checklocksexclude:k.tasks.mu
-func (k *Kernel) SaveTo(ctx context.Context, stateFile, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, appMFExcludeCommittedZeroPages, resume bool, fsOpts *FSSaveOpts, vfsOpts vfs.PrepareSaveOptions) error {
+func (k *Kernel) SaveTo(ctx context.Context, stateFile, pagesMetadata io.WriteCloser, pagesFile stateio.AsyncWriter, appMFExcludeCommittedZeroPages, resume bool, fsOpts *FSSaveOpts, vfsOpts vfs.PrepareSaveOptions, graphEngine *bool) error {
 	// The bypass is part of the saved task state, so it is armed before the
 	// state is written and covers both resuming after the save and restoring.
 	k.armSeccompRestartSyscallBypasses()
@@ -831,6 +831,11 @@ func (k *Kernel) SaveTo(ctx context.Context, stateFile, pagesMetadata io.WriteCl
 	defer fsCleanup.Clean()
 
 	return k.quiescePausedAnd(ctx, func() error {
+		if graphEngine != nil {
+			prevGraphEngine := state.GraphEngineEnabled()
+			state.EnableGraphEngine(*graphEngine)
+			defer state.EnableGraphEngine(prevGraphEngine)
+		}
 		return k.saveToLocked(ctx, stateFile, pagesMetadata, pagesFile, appMFExcludeCommittedZeroPages, resume, fsOpts, vfsOpts, &stateFileCleanup, &pagesCleanup, &fsCleanup)
 	})
 }
@@ -2202,6 +2207,11 @@ func (k *Kernel) RealtimeClock() ktime.SampledClock {
 // MonotonicClock returns the application CLOCK_MONOTONIC clock.
 func (k *Kernel) MonotonicClock() ktime.SampledClock {
 	return k.timekeeper.monotonicClock
+}
+
+// BoottimeClock returns the application CLOCK_BOOTTIME clock.
+func (k *Kernel) BoottimeClock() ktime.SampledClock {
+	return k.timekeeper.boottimeClock
 }
 
 // MonotonicRawClock returns the system CLOCK_MONOTONIC_RAW clock. When it is

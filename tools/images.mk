@@ -49,10 +49,12 @@ header ?= echo --- $(1) >&2
 REMOTE_IMAGE_PREFIX ?= us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images
 LOCAL_IMAGE_PREFIX  ?= gvisor.dev/images
 BAZEL_IMAGE_CONTEXTS := \
+  benchmarks_alpine=//images:benchmark_alpine_context \
   basic_alpine=//images/basic:alpine_context \
   basic_busybox=//images/basic:busybox_context \
   basic_fsstress=//images/basic:fsstress_context \
-  basic_tmpfile=//images/basic:tmpfile_context
+  basic_tmpfile=//images/basic:tmpfile_context \
+  benchmarks_bun-spawn=//images/benchmarks/bun-spawn:bun_spawn_context
 ifeq ($(ARCH),x86_64)
 BAZEL_IMAGE_CONTEXTS += benchmarks_syscallbench=//images/benchmarks/syscallbench:syscallbench_context
 endif

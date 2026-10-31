@@ -21,16 +21,13 @@ _templates:
     env:
       BUILDKITE_PIPELINE_INSTALL_RUNTIME: true
 env:
-  # Force a clean checkout every time to avoid reuse of files between runs.
-  BUILDKITE_CLEAN_CHECKOUT: true
-
   # Optional filter for syscall tests.
   SYSCALL_TEST_FILTERS: ''
 
 priority: ${PRIORITY:-0}
 
 agents:
-  queue: "default"
+  queue: "untrusted"
 
 steps:
   # Run smoke tests before the other tests.

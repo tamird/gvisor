@@ -1072,6 +1072,33 @@ func sandboxProcessEnv(conf *config.Config, opts sandboxProcessEnvOptions) []str
 	return env
 }
 
+// sentryGODEBUG returns the GODEBUG settings for the sandbox process.
+func sentryGODEBUG(conf *config.Config) []string {
+	// The Go runtime keeps its cgroup's CPU limit file open for the lifetime
+	// of the process to keep GOMAXPROCS in sync with the limit. The sentry
+	// sets GOMAXPROCS itself, so do not hold a host FD that it does not need.
+	godebug := []string{"containermaxprocs=0"}
+	// TODO(b/151157106): syscall tests fail by timeout if asyncpreemptoff
+	// isn't set.
+	if conf.Platform == "kvm" || conf.Platform == "slimvm" {
+		godebug = append(godebug, "asyncpreemptoff=1")
+	}
+	if conf.Network == config.NetworkPlugin {
+		godebug = append(godebug, "cgocheck=0")
+	}
+	// Heap profiles can only be collected from the sentry with --profile.
+	// Without it, don't sample heap allocations: each sampled allocation
+	// site costs a stack unwind and a profiling bucket that is never freed,
+	// and the first sample maps the runtime's ~1.4 MB bucket hash table.
+	// This must be set through GODEBUG rather than runtime.MemProfileRate,
+	// because much of the sentry's heap is allocated by package
+	// initializers, before main runs.
+	if !conf.ProfileEnable {
+		godebug = append(godebug, "memprofilerate=0")
+	}
+	return godebug
+}
+
 // sentryExeFD is the FD at which the prewarmer inherits the Sentry binary.
 // Must match `SENTRY_EXE_FD` in `runsc/prewarmer/prewarmer.c`.
 // LINT.IfChange
@@ -1232,6 +1259,9 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args) error {
 	if err := donations.DonateLogFile("final-metrics-log-fd", conf.FinalMetricsLog, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, lfOpts); err != nil {
 		return fmt.Errorf("donating final metrics log file: %w", err)
 	}
+	if err := donations.DonateLogFile("boot-times-log-fd", conf.BootTimesLog, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, lfOpts); err != nil {
+		return fmt.Errorf("donating boot times log file: %w", err)
+	}
 	rootfsTarPath := specutils.RootfsTarUpperPath(args.Spec)
 	if err := donations.DonateLogFile("rootfs-upper-tar-fd", rootfsTarPath, rootfsUpperTarFlags(rootfsTarPath), lfOpts); err != nil {
 		return fmt.Errorf("donating rootfs tar file: %w", err)
@@ -1293,20 +1323,8 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args) error {
 		donations.DonateAndClose("device-fd", deviceFile.ReleaseToFile("device file"))
 	}
 
-	// The Go runtime keeps its cgroup's CPU limit file open for the lifetime
-	// of the process to keep GOMAXPROCS in sync with the limit. The sentry
-	// sets GOMAXPROCS itself, so do not hold a host FD that it does not need.
-	godebug := []string{"containermaxprocs=0"}
-	// TODO(b/151157106): syscall tests fail by timeout if asyncpreemptoff
-	// isn't set.
-	if conf.Platform == "kvm" || conf.Platform == "slimvm" {
-		godebug = append(godebug, "asyncpreemptoff=1")
-	}
-	if conf.Network == config.NetworkPlugin {
-		godebug = append(godebug, "cgocheck=0")
-	}
 	// Go only reads the first GODEBUG variable in the environment.
-	cmd.Env = append(cmd.Env, "GODEBUG="+strings.Join(godebug, ","))
+	cmd.Env = append(cmd.Env, "GODEBUG="+strings.Join(sentryGODEBUG(conf), ","))
 
 	// nss is the set of namespaces to join or create before starting the sandbox
 	// process. Mount, IPC and UTS namespaces from the host are not used as they
@@ -1595,6 +1613,8 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args) error {
 	donation.LogDonations(cmd)
 	log.Debugf("Starting sandbox: %s %v", cmd.Path, cmd.Args)
 	log.Debugf("SysProcAttr: %+v", cmd.SysProcAttr)
+	// Pass the current time so the sandbox process knows when it was spawned.
+	cmd.Env = starttime.SpawnEnviron(cmd.Env)
 	if err := specutils.StartInNS(cmd, nss); err != nil {
 		err := fmt.Errorf("starting sandbox: %v", err)
 		// If the sandbox failed to start, it may be because the binary
@@ -1989,6 +2009,10 @@ type CheckpointOpts struct {
 	SaveRestoreExecTimeout     time.Duration
 	SaveRestoreExecContainerID string
 	SplitFSCheckpointPaths     []string
+
+	// StateEngine, when non-nil, overrides the sandbox's boot-time state
+	// serialization engine for this checkpoint.
+	StateEngine *config.StateEnginePolicy
 }
 
 // Checkpoint sends the checkpoint call for a container in the sandbox.
@@ -2020,6 +2044,15 @@ func (s *Sandbox) Checkpoint(conf *config.Config, cid string, imagePath string, 
 			Timeout:     opts.SaveRestoreExecTimeout,
 			ContainerID: opts.SaveRestoreExecContainerID,
 		},
+	}
+	if opts.StateEngine != nil {
+		useGraph := *opts.StateEngine == config.StateEngineGraph
+		opt.GraphEngine = &useGraph
+	} else if conf != nil {
+		if cliEngine, ok := conf.CLIStateEngine(); ok {
+			useGraph := cliEngine == config.StateEngineGraph
+			opt.GraphEngine = &useGraph
+		}
 	}
 	defer opt.FilePayload.Close()
 	if err := s.setCheckpointOptsFiles(conf, imagePath, opts, bundles, &opt); err != nil {

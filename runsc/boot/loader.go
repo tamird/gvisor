@@ -82,6 +82,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sentry/watchdog"
 	"gvisor.dev/gvisor/pkg/sighandling"
+	pkgstate "gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/link/ethernet"
@@ -228,6 +229,11 @@ type Loader struct {
 
 	// PreSeccompCallback is called right before installing seccomp filters.
 	PreSeccompCallback func()
+
+	// PostStartCallback, if set, is called once Run has successfully started
+	// the sandbox, right before the result is reported to the controller (and
+	// thus before `runsc start` returns).
+	PostStartCallback func()
 
 	// restoreDone is used to wait for restore to complete. Note that this may be
 	// much after the sandbox has started because under some configurations, the
@@ -656,6 +662,7 @@ func New(args Args) (*Loader, error) {
 		stopProfilingRuntime()
 		metric.StopProfilingMetrics()
 	}
+	pkgstate.EnableGraphEngine(args.Conf.StateEngine == config.StateEngineGraph)
 
 	// We initialize the rand package now to make sure /dev/urandom is pre-opened
 	// on kernels that do not support getrandom(2).
@@ -1364,6 +1371,9 @@ func (l *Loader) installSeccompFilters() error {
 // +checklocksexclude:l.mu
 func (l *Loader) Run() error {
 	err := l.run()
+	if err == nil && l.PostStartCallback != nil {
+		l.PostStartCallback()
+	}
 	l.ctrl.manager.startResultChan <- err
 	if err != nil {
 		// Give the controller some time to send the error to the
