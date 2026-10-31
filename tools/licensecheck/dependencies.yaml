@@ -79,10 +79,10 @@
   sha256: cadcf7ea4efe3a68728893813643cebe1185e5b1d4be5b96245f65c9a4d5ea41
   license: MIT
 - dependency: bazel_lib
-  version: https://github.com/bazel-contrib/bazel-lib/releases/download/v3.2.2/bazel-lib-v3.2.2.tar.gz
-  retrieved: "2026-10-06"
-  commit: cac2d7855949d1b222fa26888892fbbe1d31015d
-  sha256: 3d62bf30b95b71a566d9ebca50ee78d370b12522d244235b41166f65b142705d
+  version: https://github.com/bazel-contrib/bazel-lib/releases/download/v3.7.2/bazel-lib-v3.7.2.tar.gz
+  retrieved: "2026-10-29"
+  commit: 904332fd1c978e1d84161c120b26533df279c3dc
+  sha256: c75f8c375f9f2c73a565dba188f91a4e8d7ca16dd2b6152d3886c26bbf1c6532
   license: Apache-2.0
 - dependency: bazel_skylib
   version: https://github.com/bazelbuild/bazel-skylib/releases/download/1.9.2/bazel-skylib-1.9.2.tar.gz

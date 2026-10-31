@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
@@ -302,20 +303,39 @@ gazelle(name = "gazelle")
 
 # Gazelle indexes go_library rules by importpath, which unmigrated BUILD files
 # omit, so resolve gvisor.dev/gvisor imports by path instead (-index=none).
-GAZELLE_ARGS = [
+GAZELLE_FLAGS = [
     "-index=none",
     "-r=false",
-] + GAZELLE_PACKAGES
+]
 
-gazelle(
+# The source projection preserves package paths without treating their BUILD
+# files as subpackages. Use the same module repository names as gazelle_fix.
+GAZELLE_ROOT = "$(execpath @lint_inputs//:ROOT).d"
+
+run_binary(
     name = "gazelle_check",
-    args = GAZELLE_ARGS,
-    mode = "diff",
+    srcs = [
+        "@bazel_gazelle//:go_repository_config",
+        "@lint_inputs//:ROOT",
+        "@lint_inputs//:gazelle",
+    ],
+    args = [
+        "update",
+        "-mode=diff",
+        "-bzlmod",
+        "-repo_config=$(execpath @bazel_gazelle//:go_repository_config)",
+        "-repo_root=" + GAZELLE_ROOT,
+    ] + GAZELLE_FLAGS + [GAZELLE_ROOT + "/" + pkg for pkg in GAZELLE_PACKAGES],
+    mnemonic = "GazelleCheck",
+    # Gazelle writes BUILD diffs to stdout. Leave that stream attached so the
+    # failing action shows the corrective patch; retain stderr as its report.
+    stderr = "gazelle.stderr",
+    tool = "@bazel_gazelle//cmd/gazelle",
 )
 
 gazelle(
     name = "gazelle_fix",
-    args = GAZELLE_ARGS,
+    args = GAZELLE_FLAGS + GAZELLE_PACKAGES,
 )
 
 exports_files([

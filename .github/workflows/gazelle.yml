@@ -28,7 +28,8 @@ jobs:
 
     # The runner's bazel is bazelisk, which honors .bazelversion.
     - run: |
-        if ! bazel run //:gazelle_check; then
+        if ! bazel build //:gazelle_check; then
+          test ! -f bazel-bin/gazelle.stderr || cat bazel-bin/gazelle.stderr
           echo "::error::BUILD files are out of date. Run 'make gazelle-fix' and commit the result."
           exit 1
         fi
