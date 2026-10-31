@@ -1,5 +1,32 @@
+From aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde Mon Sep 17 00:00:00 2001
+From: Tamir Duberstein <tamird@gmail.com>
+Date: Sat, 31 Oct 2026 00:10:39 -0400
+Subject: [PATCH] Provide Go SDK commands as executable targets
+
+Go 1.25 stopped shipping binaries for some commands, including objdump.
+An action that invokes go tool can compile the missing command and its
+dependencies in its own build cache. A second sandbox pays for the
+same compilation again.
+
+Let consumers depend on a go_sdk_tool executable. Use the SDK's pkg/tool
+binary when it matches the requested platform; otherwise build the
+command in a separate action from the selected SDK. The buildid test
+now reads archives without adding the SDK to its runfiles.
+
+Updates #4535.
+---
+ go/def.bzl                        |  2 ++
+ go/private/rules/BUILD.bazel      |  5 ++-
+ go/private/rules/sdk.bzl          | 55 +++++++++++++++++++++++++++++++
+ go/toolchains.rst                 | 16 +++++++++
+ go/tools/builders/builder.go      |  2 ++
+ go/tools/builders/stdlib.go       | 23 +++++++++++++
+ tests/core/stdlib/BUILD.bazel     | 10 ++++--
+ tests/core/stdlib/buildid_test.go |  8 ++---
+ 8 files changed, 112 insertions(+), 9 deletions(-)
+
 diff --git a/go/def.bzl b/go/def.bzl
-index f811b702f6..d2e01ff162 100644
+index f811b702f69fe252ed5997a4527f883b87cd29c0..d2e01ff162626e3a6585c8d3a9c76b49665493fb 100644
 --- a/go/def.bzl
 +++ b/go/def.bzl
 @@ -61,6 +61,7 @@ load(
@@ -19,7 +46,7 @@ index f811b702f6..d2e01ff162 100644
  go_toolchain = _go_toolchain
  nogo = _nogo
 diff --git a/go/private/rules/BUILD.bazel b/go/private/rules/BUILD.bazel
-index 1059206323..1e1615d7a1 100644
+index 105920632306f262a577334e0492aceb046dc758..1e1615d7a1f88d405be6c5821ca8bd3e7bdda423 100644
 --- a/go/private/rules/BUILD.bazel
 +++ b/go/private/rules/BUILD.bazel
 @@ -101,7 +101,10 @@ bzl_library(
@@ -35,7 +62,7 @@ index 1059206323..1e1615d7a1 100644
  
  bzl_library(
 diff --git a/go/private/rules/sdk.bzl b/go/private/rules/sdk.bzl
-index 5c6617624d..c8b3f6dc54 100644
+index 5c6617624dc117abc70d895cda261bf7ac417aba..c8b3f6dc545a961fbaafb214b496858e289b5f60 100644
 --- a/go/private/rules/sdk.bzl
 +++ b/go/private/rules/sdk.bzl
 @@ -12,6 +12,7 @@
@@ -107,8 +134,35 @@ index 5c6617624d..c8b3f6dc54 100644
  def _package_list_impl(ctx):
      _build_package_list(ctx, ctx.files.srcs, ctx.file.root_file, ctx.outputs.out)
      return [DefaultInfo(files = depset([ctx.outputs.out]))]
+diff --git a/go/toolchains.rst b/go/toolchains.rst
+index 1d795e0f4ebc3b66390c4bb13bd021d7678f8680..d3349db3eefd7123a2b8fbbaf3a9fd3c0e5ea5fb 100644
+--- a/go/toolchains.rst
++++ b/go/toolchains.rst
+@@ -272,6 +272,22 @@ Bzlmod equivalent:
+ The SDK will use the bootstrapped compiler/linker binaries directly.
+ 
+ 
++Using SDK tools in build actions
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++Use an executable target for a Go SDK tool that an action needs:
++
++.. code:: bzl
++
++    load("@io_bazel_rules_go//go:def.bzl", "go_sdk_tool")
++
++    go_sdk_tool(name = "objdump", tool = "objdump")
++
++Declare the consumer's tool attribute with ``cfg = "exec"`` so it runs on
++the execution platform even when inspecting a file built for another
++platform. The rule reuses a matching executable in the SDK's ``pkg/tool``
++directory, or builds the command from the selected SDK in a separate action.
++
+ Writing new Go rules
+ ~~~~~~~~~~~~~~~~~~~~
+ 
 diff --git a/go/tools/builders/builder.go b/go/tools/builders/builder.go
-index c6a0adc19e..dc20fad147 100644
+index c6a0adc19e20d12b99d5afb1c3f65086f8994ded..dc20fad147cae18ccd5d173ed70b6b7877d6f014 100644
 --- a/go/tools/builders/builder.go
 +++ b/go/tools/builders/builder.go
 @@ -65,6 +65,8 @@ func main() {
@@ -121,7 +175,7 @@ index c6a0adc19e..dc20fad147 100644
  		action = stdlib
  	case "stdliblist":
 diff --git a/go/tools/builders/stdlib.go b/go/tools/builders/stdlib.go
-index fa9c01c038..09503f05e2 100644
+index fa9c01c038b9ebefc3071512acce12b8c4bf4fa0..09503f05e215a530e089b4892c3ad06f5f007029 100644
 --- a/go/tools/builders/stdlib.go
 +++ b/go/tools/builders/stdlib.go
 @@ -161,3 +161,26 @@ You may need to use the flags --cpu=x64_windows --compiler=mingw-gcc.`)
@@ -152,7 +206,7 @@ index fa9c01c038..09503f05e2 100644
 +	return goenv.runCommand(goenv.goCmd("build", "-trimpath", "-ldflags=-buildid=", "-o", *out, "cmd/"+flags.Arg(0)))
 +}
 diff --git a/tests/core/stdlib/BUILD.bazel b/tests/core/stdlib/BUILD.bazel
-index beda8775ae..647cb6f3fc 100644
+index beda8775ae5b70b51444b83723fea21a027ae89f..647cb6f3fc47a0a962169630621ee252cc0caf17 100644
 --- a/tests/core/stdlib/BUILD.bazel
 +++ b/tests/core/stdlib/BUILD.bazel
 @@ -1,13 +1,19 @@
@@ -178,7 +232,7 @@ index beda8775ae..647cb6f3fc 100644
  )
  
 diff --git a/tests/core/stdlib/buildid_test.go b/tests/core/stdlib/buildid_test.go
-index 7d86e4af91..69a0a08423 100644
+index 7d86e4af91bcbdb3f3f9d8ed6909dcdfa1ed23d3..69a0a0842322e173b25ea478f3de79fcbf0a73bd 100644
 --- a/tests/core/stdlib/buildid_test.go
 +++ b/tests/core/stdlib/buildid_test.go
 @@ -28,7 +28,7 @@ import (
@@ -203,3 +257,6 @@ index 7d86e4af91..69a0a08423 100644
  		out, err := cmd.Output()
  		if err != nil {
  			t.Error(err)
+-- 
+2.56.0.1231.g2a749126fe.frankengit
+
