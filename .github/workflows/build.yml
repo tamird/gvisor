@@ -1,35 +1,56 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Build the public pkg and runsc selections with native Bazel
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packages:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/buildkite-native-packages'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      PRODUCT: aa354f7c5b18f72fd033f9a1dc553c21673296f3
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Select the exact source and Buildkite Bazelisk hook
+      shell: bash
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        cp -a .github/qualification/package-build "$RUNNER_TEMP/checker"
+        git checkout --detach "$PRODUCT"
+        export DOCKER_BUILD=false
+        sed -n '/^install_bazel() {/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/native-bazel"
+        source "$RUNNER_TEMP/native-bazel"
+        test -x "$BUILDKITE_BAZEL_DIRECTORY/bazel"
+        echo "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+        echo "USE_BAZEL_FALLBACK_VERSION=error:" >> "$GITHUB_ENV"
+        test -s .bazelversion
+    - name: Build both wildcard selections for AMD64 and ARM64
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: /usr/bin/python3 -B "$RUNNER_TEMP/checker/verifybuild.py"
+    - name: Seal the receipt
+      if: always()
+      env:
+        TOKEN_TO_EXCLUDE: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        /usr/bin/python3 - <<'PYCODE'
+        import os, pathlib, tarfile
+        root=pathlib.Path(os.environ['RUNNER_TEMP'])
+        out=root/'package-build-result'
+        allowed={'summary.json','verdict.json','diagnostic.txt','executed_arguments','native_exit','source_before','source_after','commit_file','final_head','context.json','capture_exit','events','events.manifest.json','completed-targets.json'}
+        files=[p for p in out.rglob('*') if p.is_file() and p.name in allowed]
+        assert files and (out/'summary.json') in files
+        secret=os.environ['TOKEN_TO_EXCLUDE'].encode()
+        assert secret and all(secret not in p.read_bytes() for p in files)
+        with tarfile.open(root/'native-packages.tgz','w:gz') as tar:
+            for p in files:tar.add(p,arcname=p.relative_to(out))
+        PYCODE
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: native-package-builds
+        path: ${{ runner.temp }}/native-packages.tgz
+        if-no-files-found: error
