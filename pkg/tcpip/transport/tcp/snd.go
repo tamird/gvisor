@@ -1167,6 +1167,9 @@ func (s *sender) shouldEnterRecovery() bool {
 // a retransmit is needed according to the rules in RFC 6582 (NewReno).
 func (s *sender) detectLoss(seg *segment) (fastRetransmit bool) {
 	// We're not in fast recovery yet.
+	if s.state == tcpip.RTORecovery {
+		return false
+	}
 
 	// If RACK is enabled and there is no reordering we should honor the
 	// three duplicate ACK rule to enter recovery.
@@ -1660,7 +1663,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// After the reorder window is calculated, detect any loss by checking
 		// if the time elapsed after the segments are sent is greater than the
 		// reorder window.
-		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active {
+		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active && s.state != tcpip.RTORecovery {
 			// If any segment is marked as lost by
 			// RACK, enter recovery and retransmit
 			// the lost segments.

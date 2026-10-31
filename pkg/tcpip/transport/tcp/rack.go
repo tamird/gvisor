@@ -394,7 +394,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	}
 
 	numLost := rc.detectLoss(rc.snd.ep.stack.Clock().NowMonotonic())
-	if numLost == 0 {
+	if numLost == 0 || rc.snd.state == tcpip.RTORecovery {
 		return nil
 	}
 
