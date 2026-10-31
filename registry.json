@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+    "updatedAt": "2026-10-31T03:05:31.618066+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38295,23 +38295,15 @@
       "title": "Build staged releases with the verified tag",
       "url": "https://github.com/tamird/gvisor/commit/49c59fcc0",
       "group": "rbe",
-      "status": "Contributor review requested",
-      "summary": "The release job already verifies that its tag points to its checkout. Pass that tag to Bazel during building and signing. AMD64 and ARM64 binaries and package metadata reported the supplied release; the ordinary build retained its development version.",
-      "updatedAt": "2026-10-31T02:57:39.242289+00:00",
+      "status": "Agent revising package version action",
+      "summary": "The release job already verifies that its tag points to its checkout. Pass that tag to Bazel during building and signing. AMD64 and ARM64 binaries and package metadata reported the supplied release; the ordinary build retained its development version. The package version genrule still reads bazel-out directly and runs host text tools. The owner is replacing that part before asking for review.",
+      "updatedAt": "2026-10-31T03:05:31.618066+00:00",
       "evidence": [
         {
           "label": "Both staged releases and ordinary-build control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41160163215/artifacts/13027102542"
         }
-      ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "49c59fcc0063fa0e98d2b383947e4c238be0f21a",
-        "url": "https://github.com/tamird/gvisor/commit/49c59fcc0",
-        "title": "Build staged releases with the verified tag",
-        "summary": "The release job already verifies that its tag points to its checkout. Pass that tag to Bazel during building and signing. AMD64 and ARM64 binaries and package metadata reported the supplied release; the ordinary build retained its development version."
-      }
+      ]
     }
   ],
   "edges": [
