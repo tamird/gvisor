@@ -1,7 +1,7 @@
-name: Compare Nginx checkpoint graph emission
+name: Validate missing graph encoding wire and race controls
 on:
   push:
-    branches: [qualification/state-graph-stream-emission]
+    branches: [qualification/state-graph-emission-controls]
 permissions:
   contents: read
   actions: read
@@ -47,14 +47,14 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Measure one kernel graph from the four-worker Nginx checkpoint
+    - name: Check identical public graph wire and record verbose race cases
       run: bash "$RUNNER_TEMP/window_qualification.sh" nginx
-    - name: Reconcile the benchmark exit, graph format, sections and buffers
+    - name: Check the original stock fingerprint and all race results
       if: always()
       run: python3 -B "$RUNNER_TEMP/window_report.py" "$RUNNER_TEMP/records"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: nginx-graph-emission
+        name: graph-emission-controls
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

@@ -47,39 +47,13 @@ test_artifacts() {
 image_from() {
   sed -n 's/.*WINDOW-IMAGE hex=\([0-9a-f]*\)$/\1/p' "$1" | head -1
 }
-name=stock-build
-record "$STOCK"
-run_bazel build --config=x86_64 -c opt --jobs=32 --remote_download_outputs=toplevel --build_event_json_file="$RUNNER_TEMP/stock.bep" //test/benchmarks/checkpointfile:checkpointfile_test
-mkdir -p "$RUNNER_TEMP/phase-results"
-docker exec tcp-compiler python3 -B "$RUNNER_TEMP/identify.py" "$RUNNER_TEMP" stock "$STOCK" "$(cat "$d/exit")"
-
-name=stock-wire
-record "$STOCK"
+name=candidate-wire
+record "$CANDIDATE"
 run_bazel test "${common[@]}" --test_arg=-test.v --test_filter=TestStreamCheckpointWire //pkg/state:state_test
 test_artifacts pkg/state/state_test unit
-name=candidate-tests
-record "$CANDIDATE"
-run_bazel test "${common[@]}" --keep_going --test_arg=-test.v //pkg/state:state_test //pkg/state/tests:tests_test //pkg/state:state_nogo
-test_artifacts pkg/state/state_test unit
-test_artifacts pkg/state/tests/tests_test suite
-test_artifacts pkg/state/state_nogo analyzer
+
 name=candidate-race
 record "$CANDIDATE"
-run_bazel test "${common[@]}" --config=race --keep_going //pkg/state:state_test //pkg/state/tests:tests_test
+run_bazel test "${common[@]}" --config=race --keep_going --test_arg=-test.v //pkg/state:state_test //pkg/state/tests:tests_test
 test_artifacts pkg/state/state_test unit
 test_artifacts pkg/state/tests/tests_test suite
-
-  name=nginx
-  record "$GITHUB_SHA"
-  install -m 755 "$RUNNER_TEMP/stock.bin" test/rbe/window_nginx/stock.bin
-  image=test/rbe/window_nginx/nginx.tar
-  docker pull --platform=linux/amd64 "$NGINX"
-  digest=$(docker image inspect --format '{{.Id}}' "$NGINX")
-  echo "$digest" > "$d/nginx-image"
-  [[ $digest == sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5 ]]
-  docker tag "$NGINX" gvisor.dev/images/benchmarks/nginx:latest
-  test ! -e "$image"
-  docker save -o "$image" gvisor.dev/images/benchmarks/nginx:latest
-  trap 'rm -f "$image"' EXIT
-  run_bazel test "${common[@]}" --jobs=32 --test_timeout=1800 -c opt //test/rbe/window_nginx:checkpoint
-  test_artifacts test/rbe/window_nginx/checkpoint nginx
