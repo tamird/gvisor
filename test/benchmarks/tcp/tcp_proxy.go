@@ -16,7 +16,6 @@
 package main
 
 import (
-	"encoding/gob"
 	"flag"
 	"fmt"
 	"io"
@@ -201,10 +200,14 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		if err != nil {
 			return nil, func() error { return nil }, fmt.Errorf("failed to create tcp_probe file %s: %v", probeFileName, err)
 		}
-		probeEncoder := gob.NewEncoder(probeFile)
 		// Install a TCP Probe.
 		probe = func(state *tcp.TCPEndpointState) {
-			probeEncoder.Encode(state)
+			if state.ID.RemotePort == 45201 {
+				s := &state.Sender
+				if _, err := fmt.Fprintf(probeFile, "%d %d %d %d %d %d %d %d %d %t %d\n", time.Now().UnixNano(), state.ID.LocalPort, s.SndUna, s.SndNxt, s.SndWnd, s.SndCwnd, s.Outstanding, s.SackedOut, s.Ssthresh, s.FastRecovery.Active, s.RTO.Nanoseconds()); err != nil {
+					panic(err)
+				}
+			}
 		}
 	}
 
