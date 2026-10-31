@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 100
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 5, persist-credentials: false}
+        with: {fetch-depth: 1, persist-credentials: false}
       - name: Restore the exact Bazel executable already tested on Linux
         env:
           GH_TOKEN: ${{ github.token }}

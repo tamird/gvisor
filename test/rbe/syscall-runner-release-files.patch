@@ -1,0 +1,83 @@
+diff --git a/tools/BUILD b/tools/BUILD
+index 156ce36129..27667f041f 100644
+--- a/tools/BUILD
++++ b/tools/BUILD
+@@ -105,6 +105,10 @@ bzl_library(
+     visibility = [
+         "//:sandbox",
+     ],
++    deps = [
++        ":defs_bzl",
++        "@bazel_lib//lib:copy_file",
++    ],
+ )
+ 
+ exports_files([
+diff --git a/tools/release.bzl b/tools/release.bzl
+index a08c20ae02..f1f716b277 100644
+--- a/tools/release.bzl
++++ b/tools/release.bzl
+@@ -1,5 +1,6 @@
+ """Rules assembling the gVisor release binaries in their installed layout."""
+ 
++load("@bazel_lib//lib:copy_file.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action")
+ load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+ load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+ load("//tools:defs.bzl", "cov_available", "pkg_tar")
+@@ -95,38 +96,20 @@ def _single_file(target):
+     return files[0]
+ 
+ def _release_files_impl(ctx):
+-    outputs = []
+-    inputs = []
+-    commands = []
+-
+-    # Top-level binaries
+-    bins = [
+-        (target, ctx.actions.declare_file("%s/%s" % (ctx.label.name, _single_file(target).basename)))
+-        for target in ctx.attr.bins
+-    ]
+-    runsc = ctx.actions.declare_file("%s/runsc" % ctx.label.name)
+-    bins.append((ctx.attr.runsc, runsc))
+-    for target, out in bins:
++    layout = []
++    for target in ctx.attr.bins:
+         src = _single_file(target)
+-        inputs.append(src)
+-        outputs.append(out)
+-        commands.append('cp -f "%s" "%s"' % (src.path, out.path))
+-
+-    # Sidecar binaries
++        layout.append((src, ctx.actions.declare_file("%s/%s" % (ctx.label.name, src.basename))))
++    runsc = ctx.actions.declare_file("%s/runsc" % ctx.label.name)
++    layout.append((_single_file(ctx.attr.runsc), runsc))
+     for target, name in ctx.attr.sidecars.items():
+-        src = _single_file(target)
+         out = ctx.actions.declare_file("%s/gvisor-bin/%s" % (ctx.label.name, name))
+-        inputs.append(src)
+-        outputs.append(out)
+-        commands.append('mkdir -p "$(dirname "%s")" && cp -f "%s" "%s"' % (out.path, src.path, out.path))
+-
+-    ctx.actions.run_shell(
+-        inputs = inputs,
+-        outputs = outputs,
+-        command = "\n".join(commands),
+-        mnemonic = "ReleaseFiles",
+-    )
++        layout.append((_single_file(target), out))
+ 
++    outputs = []
++    for src, out in layout:
++        copy_file_action(ctx, src, out)
++        outputs.append(out)
+     runfiles = ctx.runfiles(files = outputs)
+     return [DefaultInfo(
+         executable = runsc,
+@@ -138,6 +121,7 @@ def _release_files_impl(ctx):
+ release_files = rule(
+     implementation = _release_files_impl,
+     executable = True,
++    toolchains = COPY_FILE_TOOLCHAINS,
+     attrs = {
+         "bins": attr.label_list(
+             doc = "Binaries placed at the top level of the layout.",

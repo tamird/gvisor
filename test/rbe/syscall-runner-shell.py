@@ -74,7 +74,7 @@ with (staging / "root.tar").open("wb") as f, tarfile.open(fileobj=f, mode="w") a
 cmd("docker", "import", staging / "root.tar", "repo-fetch:local")
 archive = staging / "source.tar"
 # Fetch the fixed input itself instead of relying on the carrier's clone depth.
-cmd("git", "fetch", "--no-tags", "--depth=1", "https://github.com/tamird/gvisor.git", SOURCE)
+cmd("git", "fetch", "--no-tags", "--depth=1", "https://github.com/tamird/gvisor.git", SOURCE, "7317e2f45ed1410ff688ebaaf9c0e4ff1c7ce6e9", "cbdbdb82b0eb2aa95fa97d38df19dec2db5fb7e5")
 cmd("git", "archive", "-o", archive, SOURCE)
 lock = gzip.decompress((tree / "test/rbe/repo_fetch_lock.gz").read_bytes())
 assert digest(lock) == LOCK
@@ -112,6 +112,13 @@ base = prepare(name)
 receipt = base / "receipt"; receipt.mkdir()
 cmd("tar", "-xf", archive, "-C", base/"work")
 work = base / "work"
+# Use #16506's already-qualified executable layout in both arms.
+# Its two input blobs are identical on this frozen release integration.
+layout_patch=tree / 'test/rbe/syscall-runner-release-files.patch'
+cmd("git","apply","--check",str(layout_patch),cwd=work)
+cmd("git","apply",str(layout_patch),cwd=work)
+layout_files={'tools/BUILD': '5ea6a82cfd80530f60a09cfa6790b1997c915d1ac31d7baf17f2fe18901dd5d2', 'tools/release.bzl': '69a0fa210e8e39552ec3a06218ed90d395cc2f183106ee58738a829633809259'}
+assert all(digest((work/p).read_bytes())==expected for p, expected in layout_files.items())
 (work/"MODULE.bazel.lock").write_bytes(lock)
 shutil.copyfile(tree/"test/rbe/repo_fetch_env.patch", work/"tools/gazelle-native-environment.patch")
 m = work/"MODULE.bazel"
@@ -170,7 +177,7 @@ original="7317e2f45ed1410ff688ebaaf9c0e4ff1c7ce6e9"
 corrected="cbdbdb82b0eb2aa95fa97d38df19dec2db5fb7e5"
 paths=["test/runner","test/syscalls/BUILD"]
 names = {"Nonblock","BlockingWrite","SmallWrite","SmallRead","IllegalSeek","IllegalPread","IllegalPwrite","BigWriteFails","BigRead","NotifyNonZero","SpliceReturnsEINVAL"}
-report={"build_integration":SOURCE,"stock":original,"corrected":corrected,"exact_source_paths":paths,"target":target,"entrypoint":"bazel test","lock":LOCK,"image":expected_image,"coordinator":inventory}
+report={"release_layout":'b1cb68d647deac35165b79f0ec5c230c12e4e562',"release_file_sources":layout_files,"build_integration":SOURCE,"stock":original,"corrected":corrected,"exact_source_paths":paths,"target":target,"entrypoint":"bazel test","lock":LOCK,"image":expected_image,"coordinator":inventory}
 def make_static(build, name):
     marker='    name = "'+name+'",'
     text=build.read_text()
@@ -192,20 +199,48 @@ for arm, revision in [("original",original),("corrected",corrected)]:
         # Inspect every affected configured link before submitting a test action.
         for platform_label in ["rbe_linux_arm64"]:
             log = "aquery-"+platform_label
-            query='outputs(".*(vdso/vdso.so|sysmsg/sighandler.built-in.bin.o|test/syscalls/linux/eventfd_test|test/runner/setup_container/setup_container|tools/test/compiled_posix_test_wrapper)$", mnemonic("CppLink", deps('+target+')))'
+            query='outputs(".*(vdso/vdso.so|sysmsg/sighandler.built-in.bin.o|test/syscalls/linux/eventfd_test|test/runner/setup_container/setup_container|tools/test/compiled_posix_test_wrapper|release/[^/]+|release/gvisor-bin/[^/]+)$", mnemonic("CppLink|CopyFile|ReleaseFiles", deps('+target+')))'
             query_args=client_prefix+["aquery"]+common+["--platforms=//tools/bazeldefs:"+platform_label,"--incompatible_use_native_posix_test_wrapper","--include_param_files","--output=jsonproto",query]
             proc=subprocess.run(query_args,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=800)
             (evidence/(log+".log")).write_text(redact(proc.stderr.decode(errors="replace"))[-40000:])
             src=json.loads(proc.stdout) if proc.returncode==0 else {}
             labels={str(x["id"]):x["label"] for x in src.get("targets",[])}
             entries=[]
+            copies=[]
+            dep_sets={str(d["id"]):d for d in src.get("depSetOfFiles",[])}
+            artifacts={str(a["id"]):str(a["pathFragmentId"]) for a in src.get("artifacts",[])}
+            fragments={str(f["id"]):f for f in src.get("pathFragments",[])}
+            def input_paths(action):
+                pending=list(map(str,action.get("inputDepSetIds",[])))
+                visited=set()
+                paths=set()
+                while pending:
+                    dep_id=pending.pop()
+                    if dep_id in visited: continue
+                    visited.add(dep_id)
+                    dep=dep_sets[dep_id]
+                    pending.extend(map(str,dep.get("transitiveDepSetIds",[])))
+                    for file_id in dep.get("directArtifactIds",[]):
+                        frag=fragments[artifacts[str(file_id)]]
+                        names=[frag["label"]]
+                        while "parentId" in frag and str(frag["parentId"]) in fragments:
+                            frag=fragments[str(frag["parentId"])]
+                            names.append(frag["label"])
+                        paths.add("/".join(reversed(names)))
+                return paths
             for action in src.get("actions",[]):
                 args=[*action.get("arguments",[])]
+                if labels.get(str(action.get("targetId")))=="//:release":
+                    copies.append({"mnemonic":action["mnemonic"],"argv":args,"executable_declared":bool(args and args[0] in input_paths(action))})
+                    continue
                 for param in action.get("paramFiles",[]): args.extend(param.get("arguments",[]))
                 entries.append({"target":labels.get(str(action.get("targetId"))), "argv":[x for x in args if (any(y in x for y in ("musl","glibc","-pthread","-lpthread","-ldl","-nostdlib","-static","-target","--target=","--sysroot")))]})
-            (evidence/(log+".json")).write_text(json.dumps({"exit":proc.returncode,"links":entries},indent=2))
+            (evidence/(log+".json")).write_text(json.dumps({"exit":proc.returncode,"links":entries,"release_files":copies},indent=2))
             print(log,proc.returncode,[(e["target"],e["argv"][:3]) for e in entries],flush=True)
         assert proc.returncode==0 and entries, (proc.returncode, entries)
+        expected_layout=['containerd-shim-runsc-v1', 'gvisor-bin/checkpointgofer', 'gvisor-bin/gvisor-proc-umounter', 'gvisor-bin/gvisor-sentry-prewarmer', 'gvisor-bin/gvisor_sentry', 'gvisor-bin/runsc-fd-parking', 'gvisor-bin/runsc-metric-server', 'runsc']
+        assert copies and all(c["mnemonic"]=="CopyFile" and c["executable_declared"] and c["argv"][1]=="cp" and not c["argv"][0].startswith("/") for c in copies),copies
+        assert sorted({c["argv"][-1].split("/bin/release/")[-1] for c in copies})==expected_layout,copies
         for label in ("//vdso:vdso.so","//pkg/sentry/platform/systrap/sysmsg:sighandler.built-in.bin.o"):
             relevant=[e["argv"] for e in entries if e["target"]==label]
             assert len(relevant)==2 and all("-nostdlib" in a and "-static" not in a for a in relevant),(label,relevant)
@@ -314,29 +349,12 @@ def actual_runner(arm,label=target):
 
 def testlog(arm):
     path=evidence/(arm+"-test.log")
-    if path.is_file():
+    if path.is_file() and path.stat().st_size:
         report[arm]["log_source"]="Bazel test.log"
         return path.read_text(errors="replace")
     report[arm]["log_source"]="Bazel --test_output=all"
     return (evidence/(arm+".log")).read_text(errors="replace")
 
-original, revised = report["original"],report["corrected"]
-stocklog=testlog("original")
-fixedlog=testlog("corrected")
-assert original["exit"] and actual_runner("original") and not original["noncached_wrong_platform"],original
-assert any(x["shebang"]=="#!/bin/bash" for x in original["launchers"]),original["launchers"]
-assert ("No such file or directory" in stocklog or "ENOENT" in stocklog) and "eventfd_test_native" in stocklog,stocklog
-assert not any("[ RUN      ] EventfdTest."+n in stocklog for n in names),stocklog
-assert revised["exit"]==0 and actual_runner("corrected") and not revised["noncached_wrong_platform"],revised
-assert any(x["elf_machine"]==183 and x["interpreter"] is None for x in revised["launchers"]),revised["launchers"]
-passed={n for n in names if "[       OK ] EventfdTest."+n in fixedlog}
-skipped={n for n in names if "[  SKIPPED ] EventfdTest."+n in fixedlog}
-assert all("[ RUN      ] EventfdTest."+n in fixedlog for n in names),fixedlog
-assert passed | skipped == names and not passed & skipped, (passed,skipped)
-assert {"IllegalSeek","SpliceReturnsEINVAL"} <= skipped <= {"IllegalSeek","SpliceReturnsEINVAL","BigWriteFails"},(passed,skipped)
-assert "[  FAILED  ] EventfdTest." not in fixedlog,fixedlog
-revised["passed"]=sorted(passed);revised["skipped"]=sorted(skipped)
-(evidence/"eventfd.json").write_text(json.dumps(report,indent=2))
 def stamp(number, rfc):
     if number is not None: return float(number)/1000
     if rfc: return datetime.fromisoformat(rfc.replace("Z","+00:00")).timestamp()
@@ -355,5 +373,23 @@ for arm in ("original","corrected"):
     data["last_test_finish_to_verdict_seconds"]=verdict_time-max(finishes) if finishes else None
     data["bazel_exit_to_verdict_seconds"]=verdict_time-data["bazel_exited_epoch"]
 report["verdict_epoch"]=verdict_time
+(evidence/"eventfd.json").write_text(json.dumps(report,indent=2))
+
+original, revised = report["original"],report["corrected"]
+stocklog=testlog("original")
+fixedlog=testlog("corrected")
+assert original["exit"] and actual_runner("original") and not original["noncached_wrong_platform"],original
+assert any(x["shebang"]=="#!/bin/bash" for x in original["launchers"]),original["launchers"]
+assert ("No such file or directory" in stocklog or "ENOENT" in stocklog) and "eventfd_test_native" in stocklog,stocklog
+assert not any("[ RUN      ] EventfdTest."+n in stocklog for n in names),stocklog
+assert revised["exit"]==0 and actual_runner("corrected") and not revised["noncached_wrong_platform"],revised
+assert any(x["elf_machine"]==183 and x["interpreter"] is None for x in revised["launchers"]),revised["launchers"]
+passed={n for n in names if "[       OK ] EventfdTest."+n in fixedlog}
+skipped={n for n in names if "[  SKIPPED ] EventfdTest."+n in fixedlog}
+assert all("[ RUN      ] EventfdTest."+n in fixedlog for n in names),fixedlog
+assert passed | skipped == names and not passed & skipped, (passed,skipped)
+assert {"IllegalSeek","SpliceReturnsEINVAL"} <= skipped <= {"IllegalSeek","SpliceReturnsEINVAL","BigWriteFails"},(passed,skipped)
+assert "[  FAILED  ] EventfdTest." not in fixedlog,fixedlog
+revised["passed"]=sorted(passed);revised["skipped"]=sorted(skipped)
 (evidence/"eventfd.json").write_text(json.dumps(report,indent=2))
 print("Original remote Bash shebang failed. Corrected native cases passed:",sorted(passed),"skipped:",sorted(skipped))
