@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T02:25:28.288627+00:00",
+    "updatedAt": "2026-10-31T02:41:05.863202+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21551,10 +21551,10 @@
       "head": "ae68fad953586e472b8c275b3aaaf17d5f1a450f",
       "title": "Fix GNU tools used for image assembly",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/ae68fad953586e472b8c275b3aaaf17d5f1a450f",
-      "status": "Contributor approved; waiting for native image prerequisites",
-      "updatedAt": "2026-10-22T10:37:37.771699+00:00",
-      "summary": "Upgrade gawk to 5.4 to fix _REGEX_NELTS compilation errors in image tools. The Autoconf patch preserves inherited action environment variables, correcting the observed GNU linker-PATH failure. The approved TODO says to remove the override when the dependency preserves those variables and recheck its need after all supported image-tool builds use hermetic LLVM; LLVM does not itself repair that API omission. Exact ae68 adds only three comments to approved 87e9. Ordinary GNU Make and both-architecture output-equivalence evidence remain applicable; the exact-source bundle policy is unchanged. Approval is complete; delivery awaits the existing native-image prerequisites.",
+      "url": "https://github.com/tamird/gvisor/commit/ae68fad95",
+      "status": "Contributor approved; awaiting pinned-license support",
+      "updatedAt": "2026-10-31T02:41:05.863202+00:00",
+      "summary": "The image-tool build needs gawk 5.4 for its regex fixes. The accompanying rules_cc_autoconf patch lets the GNU compiler find its selected linker during configure probes. Neither change uses an Ollama or profiling image. The approved gawk catalog entry covers the entire source bundle with LicenseRef-Gawk-source-bundle, which requires #16051. The original GNU and AMD64/ARM64 checks apply to the reviewed source; a standalone rebase has not been qualified.",
       "links": [
         {
           "label": "Shared prerequisite source",
@@ -21576,11 +21576,12 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "ae68fad953586e472b8c275b3aaaf17d5f1a450f",
-        "observedAt": "2026-10-22T10:37:37.771699+00:00",
-        "disposition": "Contributor approved; waiting for native image prerequisites",
-        "nextAction": "Wait for actual prerequisite landings and preserve the existing contributor approval.",
+        "observedAt": "2026-10-31T02:41:05.863202+00:00",
+        "disposition": "Contributor approved; awaiting pinned-license support",
+        "nextAction": "Once #16051 lands, rebase with the first active image that still needs gawk. Verify its configure probes and the regenerated catalog before submitting.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/ae68fad953586e472b8c275b3aaaf17d5f1a450f"
+          "https://github.com/tamird/gvisor/commit/ae68fad95",
+          "https://github.com/google/gvisor/pull/16051"
         ]
       },
       "refinement": {
@@ -40181,11 +40182,11 @@
       "evidence": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
     },
     {
-      "from": "branch:native-go-images",
+      "from": "pr:16051",
       "to": "branch:rules-img-gnu-prerequisite",
       "type": "depends_on",
-      "reason": "The shared GNU tool correction is factored on the approved native Go image and package foundation.",
-      "evidence": "https://github.com/tamird/gvisor/commit/ae68fad953586e472b8c275b3aaaf17d5f1a450f"
+      "reason": "The gawk 5.4.0 source bundle has a pinned LicenseRef-Gawk-source-bundle entry. Fetch must preserve that audit for its exact URL and SHA-256. Neither Go helper image is needed.",
+      "evidence": "https://github.com/tamird/gvisor/commit/ae68fad95"
     },
     {
       "from": "branch:rules-img-gnu-prerequisite",
