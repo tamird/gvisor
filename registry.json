@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T13:00:43.140376+00:00",
+    "updatedAt": "2026-10-31T13:04:02.570333+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39680,6 +39680,44 @@
         "requestedAt": "2026-10-31T12:53:25.918789+00:00",
         "summary": "Decide whether to open this standalone ABI fix. The independent inotify lock refactor is outside this request.",
         "body": "A second inotify_add_watch with IN_MASK_CREATE replaced an existing\nwatch instead of returning EEXIST. A caller opening its own watch on\nthe same inotify descriptor could silently replace another caller’s\nIN_OPEN interest with IN_MODIFY.\n\nReject the request before changing the watch, even when the second path\nis a hard link to the same file. Reject unknown mask bits and the\nmutually exclusive IN_MASK_CREATE and IN_MASK_ADD flags as Linux does\n[1].\n\nNative Linux and corrected gVisor passed six shared syscall cases.\nStock gVisor accepted the second call and reported IN_MODIFY where the\ntest expected IN_OPEN. It also accepted the hard-link call and invalid\nmasks. The hard-link comparison uses tmpfs [2].\n\n[1]: https://github.com/torvalds/linux/blob/028ef9c96/fs/notify/inotify/inotify_user.c#L744\n[2]: https://github.com/tamird/gvisor/actions/runs/41200317195/artifacts/13042568051"
+      }
+    },
+    {
+      "id": "branch:inotify-owner-locks",
+      "type": "branch",
+      "group": "analysis",
+      "repo": "tamird/gvisor",
+      "ref": "review/inotify-instance-locks",
+      "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
+      "title": "Check the instance lock when changing inotify watch indexes",
+      "url": "https://github.com/tamird/gvisor/commit/b79fa85f7",
+      "updatedAt": "2026-10-31T13:04:02.570333+00:00",
+      "status": "Contributor review requested",
+      "summary": "Adding or removing an inotify watch changes two indexes. Passing the instance lets checklocks identify its mutex. An unlocked removal failed the VFS owner on AMD64 and ARM64; three existing syscall controls passed. The change preserves the existing lock order and makes no Linux behavior change.",
+      "evidence": [
+        {
+          "label": "VFS analyzer: product passes",
+          "url": "https://app.buildbuddy.io/invocation/e7e8b98a-fcdd-4eb9-8a96-131a56b2b26b"
+        },
+        {
+          "label": "Unlocked Release: required instance mutex reported on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41203211510/artifacts/13043293902"
+        },
+        {
+          "label": "gVisor: duplicate watch, mask-add and one-shot syscall cases",
+          "url": "https://app.buildbuddy.io/invocation/805676b8-a808-4bbb-9bde-e458da8a30c1"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
+        "baseHead": "25172e526f45929759a44e174e617c320df1ad58",
+        "url": "https://github.com/tamird/gvisor/commit/b79fa85f7",
+        "title": "Check the instance lock when changing inotify watch indexes",
+        "requestedAt": "2026-10-31T13:04:02.570333+00:00",
+        "summary": "Decide whether to open the standalone watch-index lock refactor. The IN_MASK_CREATE ABI fix is a separate review.",
+        "body": "A watch belongs to both an inotify instance and a watched object.\nLooking it up or removing it by an integer ID hid the required instance\nlock from checklocks. Hold both locks from lookup through insertion,\nand pass the instance when removing its watch from the target.\n\nReturn the remaining count while holding the target lock. Both callers\nalready need it to decide whether to notify the filesystem. Keep that\nnotification outside both locks.\n\nThe VFS analyzer passed the refactor [1]. Dropping the instance lock\nbefore removing a watch in Release made the analyzer reject the call on\nboth target architectures [2]. Three existing syscall tests passed:\nduplicate watches, mask addition, and one-shot removal [3].\n\n[1]: https://app.buildbuddy.io/invocation/e7e8b98a-fcdd-4eb9-8a96-131a56b2b26b\n[2]: https://github.com/tamird/gvisor/actions/runs/41203211510/artifacts/13043293902\n[3]: https://app.buildbuddy.io/invocation/805676b8-a808-4bbb-9bde-e458da8a30c1"
       }
     }
   ],
