@@ -21,8 +21,12 @@ with zipfile.ZipFile(archive) as z:
         assert contents[:4] == b"\x7fELF" and contents[5] == 1
         assert struct.unpack_from("<H",contents,18)[0] == wanted_machine
         assert oct(entry.external_attr>>16) == expected_modes[name]
+        phoff = struct.unpack_from("<Q", contents, 32)[0]
+        phsize, phnum = struct.unpack_from("<HH", contents, 54)
+        types = [struct.unpack_from("<I", contents, phoff+i*phsize)[0] for i in range(phnum)]
+        assert not {2, 3}.intersection(types), (name, types)
         original = (Path("bazel-bin/release")/name).read_bytes()
         assert original == contents, name
-        records[name] = {"size":len(contents),"sha256":hashlib.sha256(contents).hexdigest(),"mode":expected_modes[name],"elf_machine":wanted_machine}
+        records[name] = {"size":len(contents),"sha256":hashlib.sha256(contents).hexdigest(),"mode":expected_modes[name],"elf_machine":wanted_machine,"elf_interpreter":None,"pt_dynamic":False}
 Path(sys.argv[2]).write_text(json.dumps({"verified":True,"arch":platform.machine(),"zip_digest":digest,"artifact":os.environ["ARTIFACT_ID"],"members":records},indent=2)+"\n")
 print("Verified",len(records),"installed ELF files for",platform.machine())
