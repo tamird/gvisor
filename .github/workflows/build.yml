@@ -18,10 +18,7 @@ jobs:
           set -euo pipefail
           if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
           unshare --user --map-root-user true
-      - name: Install the ARM64 userspace runner for the version smoke
-        run: |
-          if ! command -v qemu-aarch64 >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends qemu-user; fi
-      - name: Exercise the staged and ordinary release inputs
+      - name: Compare the original and native package version actions on scratch
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
