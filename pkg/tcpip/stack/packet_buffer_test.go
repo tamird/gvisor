@@ -838,3 +838,60 @@ func TestCalculateTransportChecksumUDPZero(t *testing.T) {
 		t.Errorf("got udpHdr.Checksum() = 0x%x, want = 0x%x", got, want)
 	}
 }
+
+func makeTCPForwardPacket(size int) *PacketBuffer {
+	pkt := NewPacketBuffer(PacketBufferOptions{Payload: buffer.MakeWithData(make([]byte, size))})
+	pkt.NetworkProtocolNumber = header.IPv4ProtocolNumber
+	pkt.TransportProtocolNumber = header.TCPProtocolNumber
+	pkt.NetworkHeader().Consume(header.IPv4MinimumSize)
+	pkt.TransportHeader().Consume(header.TCPMinimumSize)
+	return pkt
+}
+
+func TestForwardCopyLeavesSourceHeadersInPlace(t *testing.T) {
+	pkt := makeTCPForwardPacket(1500)
+	defer pkt.DecRef()
+	ip := header.IPv4(pkt.NetworkHeader().Slice())
+	ip.SetTTL(64)
+	tcp := header.TCP(pkt.TransportHeader().Slice())
+	tcp.SetSourcePort(12345)
+
+	forwarded := pkt.DeepCopyForForwarding(header.EthernetMinimumSize)
+	defer forwarded.DecRef()
+	copyIP := header.IPv4(forwarded.NetworkHeader().Slice())
+	if got, want := copyIP.TTL(), uint8(64); got != want {
+		t.Fatalf("forwarded TTL = %d, want %d", got, want)
+	}
+	copyIP.SetTTL(63)
+	copyTCP := header.TCP(forwarded.TransportHeader().Slice())
+	if got, want := copyTCP.SourcePort(), uint16(12345); got != want {
+		t.Fatalf("forwarded source port = %d, want %d", got, want)
+	}
+	copyTCP.SetSourcePort(54321)
+
+	// The IPv4 forwarder still owns these views while it constructs the copy.
+	// Compare their addresses before accessing anything the pool might have reused.
+	if &pkt.NetworkHeader().Slice()[0] != &ip[0] || &pkt.TransportHeader().Slice()[0] != &tcp[0] {
+		t.Fatal("forwarding replaced the original packet's borrowed headers")
+	}
+	if got, want := ip.TTL(), uint8(64); got != want {
+		t.Errorf("original TTL = %d, want %d", got, want)
+	}
+	if got, want := tcp.SourcePort(), uint16(12345); got != want {
+		t.Errorf("original source port = %d, want %d", got, want)
+	}
+}
+
+func BenchmarkTCPForwardCopy(b *testing.B) {
+	for _, size := range []int{64, 1500, 9000} {
+		b.Run(fmt.Sprint(size), func(b *testing.B) {
+			pkt := makeTCPForwardPacket(size)
+			defer pkt.DecRef()
+			b.ReportAllocs()
+			for b.Loop() {
+				copy := pkt.DeepCopyForForwarding(header.EthernetMinimumSize)
+				copy.DecRef()
+			}
+		})
+	}
+}
