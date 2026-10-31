@@ -6619,3 +6619,57 @@ func TestReadFile(t *testing.T) {
 		t.Errorf("Got %q (%d bytes), want 'inux' (4 bytes)", string(content3), len(content3))
 	}
 }
+
+func TestTCPBufferOCIAndGuestWrite(t *testing.T) {
+	const triplet = "8192 524288 268435456"
+	conf := testutil.TestConfig(t)
+	conf.Platform = "systrap"
+	conf.Network = config.NetworkSandbox
+	spec := testutil.NewSpecWithArgs("sleep", "infinity")
+	spec.Linux = &specs.Linux{Sysctl: map[string]string{
+		"net.ipv4.tcp_rmem": triplet,
+		"net.ipv4.tcp_wmem": triplet,
+	}}
+	_, bundle, cleanup, err := testutil.SetupContainer(spec, conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanup()
+	cont, err := New(conf, Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundle})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cont.Destroy()
+	if err := cont.Start(conf); err != nil {
+		t.Fatal(err)
+	}
+	const probe = `
+import pathlib, socket, sys
+files = [pathlib.Path("/proc/sys/net/ipv4/tcp_" + kind) for kind in ("rmem", "wmem")]
+def show(phase):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        print(phase, *(" ".join(p.read_text().split()) for p in files),
+              *(sock.getsockopt(socket.SOL_SOCKET, opt) for opt in (socket.SO_RCVBUF, socket.SO_SNDBUF)), sep="|")
+show("OCI")
+for path in files:
+    path.write_text(sys.argv[1])
+show("GUEST_WRITE")
+`
+	out, err := executeCombinedOutput(conf, cont, nil, "/usr/bin/python3", "-c", probe, triplet)
+	if err != nil {
+		t.Fatalf("guest probe: %v: %s", err, out)
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("guest probe output: %q", out)
+	}
+	for i, phase := range []string{"OCI", "GUEST_WRITE"} {
+		t.Run(phase, func(t *testing.T) {
+			got, want := lines[i], phase+"|"+triplet+"|"+triplet+"|524288|524288"
+			t.Logf("BUFFER_OPTION %s", got)
+			if got != want {
+				t.Errorf("got %q, want %q", got, want)
+			}
+		})
+	}
+}
