@@ -183,6 +183,7 @@ func main() {
 		}
 		test.Stderr = os.Stderr
 		test.Stdout = os.Stdout
+		test.Env = append(os.Environ(), fmt.Sprintf("FENCE_NETSTAT=/proc/%d/net/netstat", duts[0].cmd.Process.Pid))
 		testResult <- test.Run()
 	}()
 

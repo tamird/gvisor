@@ -54,6 +54,24 @@ func main() {
 
 // Bootstrap implements dut.DUT.
 func (n *native) Bootstrap(ctx context.Context) (testbench.DUTInfo, func() error, error) {
+	// This process is already in the native DUT's private network namespace.
+	want, ok := os.LookupEnv("FENCE_FRTO")
+	if !ok || (want != "0" && want != "2") {
+		return testbench.DUTInfo{}, nil, fmt.Errorf("invalid experiment setting %q", want)
+	}
+	const frto = "/proc/sys/net/ipv4/tcp_frto"
+	if err := os.WriteFile(frto, []byte(want), 0); err != nil {
+		return testbench.DUTInfo{}, nil, err
+	}
+	value, err := os.ReadFile(frto)
+	if err != nil {
+		return testbench.DUTInfo{}, nil, err
+	}
+	if string(value) != want+"\n" {
+		return testbench.DUTInfo{}, nil, fmt.Errorf("tcp_frto read back %q, want %s", value, want)
+	}
+	fmt.Printf("FENCE_CONFIG tcp_frto=%s\n", want)
+
 	// Enable ICMP sockets.
 	if err := os.WriteFile("/proc/sys/net/ipv4/ping_group_range", []byte("0 0"), 0); err != nil {
 		return testbench.DUTInfo{}, nil, fmt.Errorf("failed to enable icmp sockets: %w", err)

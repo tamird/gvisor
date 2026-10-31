@@ -17,6 +17,10 @@ package tcp_rack_test
 import (
 	"flag"
 	"fmt"
+	"os"
+	"slices"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -98,6 +102,41 @@ func sendAndReceive(t *testing.T, dut testbench.DUT, conn testbench.TCPIPv4, num
 	return lastSent
 }
 
+// spuriousRTOs reads the DUT's TcpExt counter, not the raw peer's counters.
+func spuriousRTOs(t *testing.T) uint64 {
+	t.Helper()
+	path, ok := os.LookupEnv("FENCE_NETSTAT")
+	if !ok {
+		t.Fatal("missing DUT network namespace path")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(string(raw), "\n")
+	for i := 0; i+1 < len(lines); i++ {
+		keys := strings.Fields(lines[i])
+		if len(keys) == 0 || keys[0] != "TcpExt:" {
+			continue
+		}
+		col := slices.Index(keys, "TCPSpuriousRTOs")
+		if col < 0 {
+			continue
+		}
+		values := strings.Fields(lines[i+1])
+		if len(values) != len(keys) || values[0] != "TcpExt:" {
+			t.Fatal("TcpExt name/value lines do not match")
+		}
+		count, err := strconv.ParseUint(values[col], 10, 64)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return count
+	}
+	t.Fatal("TCPSpuriousRTOs not found")
+	return 0
+}
+
 // TestFirstTimeout observes partial ACKs after the first timeout from Open.
 func TestFirstTimeout(t *testing.T) {
 	for _, mode := range []string{"cumulative", "sack_third"} {
@@ -110,6 +149,7 @@ func TestFirstTimeout(t *testing.T) {
 			seq := func(off int) seqnum.Value { return base.Add(seqnum.Size(off)) }
 			observe := func(at string) linux.TCPInfo {
 				info := dut.GetSockOptTCPInfo(t, fd)
+				fmt.Printf("FENCE_UNDO mode=%s phase=%s spurious=%d\n", mode, at, spuriousRTOs(t))
 				fmt.Printf("FENCE_STATE mode=%s phase=%s ca=%d cwnd=%d threshold=%d rto_us=%d retransmits=%d backoff=%d mss=%d\n", mode, at, info.CaState, info.SndCwnd, info.SndSsthresh, info.RTO, info.Retransmits, info.Backoff, mss)
 				return info
 			}
