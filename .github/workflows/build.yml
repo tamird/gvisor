@@ -1,35 +1,88 @@
-name: CI
-
-"on":
+name: Compare SACK reneging after a live TCP restore
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-sack-reneging-restore]
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-reneging-restore'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 8
+        persist-credentials: false
+    - name: Replay the sender before and after a live restore
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = 18221110ae7065d5a41488efda8da4bb6fb48bc7
+        test "$(git rev-parse HEAD^1^1)" = 5107630c44ad2be29c52175d1d7d26df80e6ce2b
+        cp test/rbe/case_records.py "$RUNNER_TEMP/case_records.py"
+        cp test/rbe/tcp_repair_sources.json "$RUNNER_TEMP/tcp-heads.json"
+        cp test/rbe/tcp_repair_driver.py "$RUNNER_TEMP/driver.py"
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        export FIFO_RC=$rc
+        test -x /usr/bin/x86_64-linux-gnu-gcc
+        uname -r > "$RUNNER_TEMP/replay-public/kernel"
+        printf '%s\n' '{"status":"PASS","scope":"local Linux AMD64 Go TestRunner"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        python3 "$RUNNER_TEMP/driver.py"
+    - name: Return the actual case results, original exits and packet captures
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: tcp-sack-reneging-restore
+        path: |
+          ${{ runner.temp }}/replay-public/*.json
+          ${{ runner.temp }}/replay-public/kernel
+          ${{ runner.temp }}/replay-public/linux-tcp-recovery
+          ${{ runner.temp }}/replay-public/*/*.json
+          ${{ runner.temp }}/replay-public/*/*.pcap
+          ${{ runner.temp }}/replay-public/*/test.log
+          ${{ runner.temp }}/replay-public/*/source
+          ${{ runner.temp }}/replay-public/*/exit
+          ${{ runner.temp }}/replay-public/*/diagnostics
+        if-no-files-found: error

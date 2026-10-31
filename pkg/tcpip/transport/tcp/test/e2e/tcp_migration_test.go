@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -633,5 +634,191 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 	}
 	if got := restoredStack2.CheckLocalAddress(preservedNICID, header.IPv6ProtocolNumber, preservedIPv6Addr.Address); got != preservedNICID {
 		t.Fatalf("restoredStack2.CheckLocalAddress(IPv6) = %d, want %d", got, preservedNICID)
+	}
+}
+
+func TestRenegingHeadAcrossLiveRestore(t *testing.T) {
+	for _, scenario := range []string{"unsaved", "restored"} {
+		t.Run(scenario, func(t *testing.T) {
+			const mss, offered, size = 1000, 1036, 5000
+			original := faketime.NewManualClock()
+			type observation struct {
+				una seqnum.Value
+				rto time.Duration
+				mss int
+			}
+			samples := make(chan observation, 64)
+			probe := func(s *tcp.TCPEndpointState) {
+				samples <- observation{s.Sender.SndUna, s.Sender.RTO, s.Sender.MaxPayloadSize}
+			}
+			c := testcontext.NewWithOpts(t, testcontext.Options{MTU: 1500, EnableV4: true, Clock: original, Probe: probe})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			c.SetGSOEnabled(true)
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, 0)
+			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, []byte{header.TCPOptionMSS, 4, offered >> 8, offered & 255, header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP})
+			data := make([]byte, size)
+			for i := range data {
+				data[i] = byte(i*37 + i/251)
+			}
+			if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); n != size || err != nil {
+				t.Fatalf("write=(%d,%v)", n, err)
+			}
+			p := c.GetPacket()
+			h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+			base := seqnum.Value(h.SequenceNumber())
+			if !bytes.Equal(h.Payload(), data) {
+				t.Fatalf("original write length=%d want one %d-byte aggregate", len(h.Payload()), size)
+			}
+			p.Release()
+			peer := seqnum.Value(testcontext.TestInitialSequenceNumber).Add(1)
+			blocks := func(ranges ...[2]int) []header.SACKBlock {
+				var bs []header.SACKBlock
+				for _, r := range ranges {
+					bs = append(bs, header.SACKBlock{Start: base.Add(seqnum.Size(r[0])), End: base.Add(seqnum.Size(r[1]))})
+				}
+				return bs
+			}
+			expect := func(off int) {
+				t.Helper()
+				select {
+				case s := <-samples:
+					if s.una != base.Add(seqnum.Size(off)) || s.mss != mss || s.rto <= 40*time.Millisecond {
+						t.Fatalf("ACK %d: got UNA=%d relative, MSS=%d RTO=%v", off, base.Size(s.una), s.mss, s.rto)
+					}
+				case <-time.After(5 * time.Second):
+					t.Fatalf("ACK %d not processed", off)
+				}
+			}
+			ack := func(off int, ranges ...[2]int) {
+				t.Helper()
+				c.SendAckWithSACK(peer, off, blocks(ranges...))
+				expect(off)
+			}
+			ack(0, [2]int{1000, 2000})
+			ack(1500)
+			// Examine packets, not timer fields. Advancing in millisecond steps also
+			// distinguishes an immediate fast retransmit from the short timer.
+			type sample struct{ tick, off, n int }
+			now := original
+			read := func() []byte {
+				v := c.GetPacketNonBlocking()
+				if v == nil {
+					return nil
+				}
+				defer v.Release()
+				return bytes.Clone(v.AsSlice())
+			}
+			window := func(stage string, wantOff int) bool {
+				t.Helper()
+				var seen []sample
+				for tick := 0; tick <= 40; tick++ {
+					if tick != 0 {
+						now.Advance(time.Millisecond)
+					}
+					for {
+						b := read()
+						if b == nil {
+							break
+						}
+						h := header.TCP(header.IPv4(b).Payload())
+						off := int(base.Size(seqnum.Value(h.SequenceNumber())))
+						n := len(h.Payload())
+						if n == 0 || off != wantOff || off+n > size || !bytes.Equal(h.Payload(), data[off:off+n]) {
+							t.Fatalf("%s tick=%d unexpected segment offset=%d bytes=%d, want original bytes starting %d", stage, tick, off, n, wantOff)
+						}
+						seen = append(seen, sample{tick, off, n})
+					}
+				}
+				if len(seen) > 1 {
+					t.Fatalf("%s multiple retransmissions %v", stage, seen)
+				}
+				s := sample{-1, -1, 0}
+				if len(seen) != 0 {
+					s = seen[0]
+					if s.tick == 0 {
+						t.Fatalf("%s sent immediately", stage)
+					}
+				}
+				t.Logf("RESTORE_WIRE stage=%s tick=%d offset=%d bytes=%d", stage, s.tick, s.off, s.n)
+				return len(seen) > 0
+			}
+			if scenario == "unsaved" {
+				window("unsaved-whole", 1500)
+				ack(size)
+				return
+			}
+			var image bytes.Buffer
+			if _, err := state.Save(context.Background(), &image, c.Stack()); err != nil {
+				t.Fatalf("save: %v", err)
+			}
+			after := stack.New(stack.Options{Clock: faketime.NewManualClock(), TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol}, NetworkProtocols: []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol}})
+			after.SetAllowLiveTCPMigration(true)
+			defer after.Destroy()
+			if _, err := state.Load(context.Background(), bytes.NewReader(image.Bytes()), after); err != nil {
+				t.Fatalf("load: %v", err)
+			}
+			link := channel.New(1000, 1500, "")
+			if err := after.CreateNIC(1, link); err != nil {
+				t.Fatal(err)
+			}
+			if err := after.AddProtocolAddress(1, tcpip.ProtocolAddress{Protocol: header.IPv4ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix}, stack.AddressProperties{}); err != nil {
+				t.Fatal(err)
+			}
+			after.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+			after.Restore()
+			tcpip.AsyncLoading.Wait()
+			var restored *tcp.Endpoint
+			for _, ep := range after.RegisteredEndpoints() {
+				if e, ok := ep.(*tcp.Endpoint); ok {
+					if restored != nil && restored != e {
+						t.Fatal("multiple restored sockets")
+					}
+					restored = e
+				}
+			}
+			if restored == nil || tcp.EndpointState(restored.State()) != tcp.StateEstablished {
+				t.Fatal("no restored established connection")
+			}
+			restored.SetQualificationSACKProbe(probe)
+			now = after.Clock().(*faketime.ManualClock)
+			read = func() []byte {
+				p := link.Read()
+				if p == nil {
+					return nil
+				}
+				defer p.DecRef()
+				v := p.ToView()
+				defer v.Release()
+				return bytes.Clone(v.AsSlice())
+			}
+			inject := func(off int, ranges ...[2]int) {
+				t.Helper()
+				var opts [40]byte
+				n := 0
+				if len(ranges) != 0 {
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeSACKBlocks(blocks(ranges...), opts[n:])
+				}
+				p := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: c.BuildSegment(nil, &testcontext.Headers{SrcPort: testcontext.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: peer, AckNum: base.Add(seqnum.Size(off)), RcvWnd: 30000, TCPOpts: opts[:n]})})
+				defer p.DecRef()
+				link.InjectInbound(ipv4.ProtocolNumber, p)
+				expect(off)
+			}
+			// Leave one unreported byte: a range beginning exactly at the cumulative
+			// ACK is not a valid SACK block.
+			inject(1501, [2]int{1502, 2000}, [2]int{4000, 5000})
+			if !window("restored-suffix", 1501) {
+				// This is a new report for the next transmitted packet, not a repeat
+				// of the SACK used before the save. Stop halfway through that packet.
+				inject(1501, [2]int{2000, 3000})
+				inject(2500)
+				window("restored-fresh", 2500)
+			}
+			inject(size)
+		})
 	}
 }

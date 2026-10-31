@@ -3476,3 +3476,10 @@ func (e *Endpoint) getExperimentOptionValue(route *stack.Route) uint16 {
 	}
 	return 0
 }
+
+// SetQualificationSACKProbe attaches the same test observer to the restored endpoint.
+func (e *Endpoint) SetQualificationSACKProbe(p TCPProbeFunc) {
+	e.LockUser()
+	e.probe = p
+	e.UnlockUser()
+}
