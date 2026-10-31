@@ -512,3 +512,13 @@ func (es *graphEncodeState) newObject(base unsafe.Pointer, end uintptr, ti *type
 type mapSlots struct {
 	k, e reflect.Value
 }
+
+// StreamStudyCapacity observes only capacity retained by the encoder pool after a save.
+func StreamStudyCapacity() (stage, final, parts, scratch int) {
+	es, ok := graphEncodeStatePool.Get().(*graphEncodeState)
+	if !ok {
+		return
+	}
+	defer graphEncodeStatePool.Put(es)
+	return cap(es.out.b), cap(es.final.b), cap(es.final.parts) * int(unsafe.Sizeof(graphPart{})), es.final.writer.Size()
+}

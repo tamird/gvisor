@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -705,4 +706,110 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
+}
+
+// BenchmarkStreamCapture creates the kernel once, before either measured binary runs.
+func BenchmarkStreamCapture(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires one runsc checkpoint")
+	}
+	dir := os.Getenv("STREAM_DIR")
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	data, _, names, mounts := checkpointNginx(context.Background(), b, machine)
+	spec, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
+	if err != nil {
+		b.Fatal(err)
+	}
+	for name, contents := range map[string][]byte{checkpointfiles.StateFileName: data, checkpointSpecName: spec} {
+		if err := os.WriteFile(filepath.Join(dir, name), contents, 0600); err != nil {
+			b.Fatal(err)
+		}
+	}
+	fmt.Printf("STREAM-CAPTURE bytes=%d digest=%x\n", len(data), sha256.Sum256(data))
+}
+
+// BenchmarkStreamArchive saves a kernel restored from the common capture to a real file.
+// The statefile writer closes that file. Each archive is read and restored outside timing.
+func BenchmarkStreamArchive(b *testing.B) {
+	if b.N != 1 || !state.GraphEngineEnabled() {
+		b.Fatal("requires one graph trial")
+	}
+	dir := os.Getenv("STREAM_DIR")
+	data, _, names, mounts, err := readCheckpointDir(dir)
+	if err != nil {
+		b.Fatal(err)
+	}
+	digest := sha256.Sum256(data)
+	ctx := restoreContext(b, names, mounts)
+	sys, err := systrap.New(platform.Options{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	plat := stubPlatform{sys}
+	for pass := 0; pass < 3; pass++ {
+		func() {
+			ctx, cleanup := withHostFDs(b, ctx, names)
+			defer cleanup()
+			k, err := loadKernel(ctx, plat, data, false)
+			if err != nil {
+				b.Fatal(err)
+			}
+			f, err := os.Create(filepath.Join(dir, "archive"))
+			if err != nil {
+				b.Fatal(err)
+			}
+			var before, after runtime.MemStats
+			runtime.ReadMemStats(&before)
+			start := time.Now()
+			cpu := processCPU(b)
+			err = saveKernel(ctx, f, k)
+			cpu = processCPU(b) - cpu
+			elapsed := time.Since(start)
+			runtime.ReadMemStats(&after)
+			if err != nil {
+				b.Fatal(err)
+			}
+			stage, final, parts, scratch := state.StreamStudyCapacity()
+			archive, err := os.ReadFile(f.Name())
+			if err != nil {
+				b.Fatal(err)
+			}
+			if len(archive) == 0 {
+				b.Fatal("empty archive")
+			}
+			child, release := withHostFDs(b, ctx, names)
+			defer release()
+			if _, err := loadKernel(child, plat, archive, pass%2 == 0); err != nil {
+				b.Fatalf("reload: %v", err)
+			}
+			fmt.Printf("STREAM-ARCHIVE pass=%d digest=%x wall=%d cpu=%d allocated=%d allocs=%d stage=%d final=%d parts=%d scratch=%d bytes=%d restored=true\n", pass, digest, elapsed.Nanoseconds(), cpu.Nanoseconds(), after.TotalAlloc-before.TotalAlloc, after.Mallocs-before.Mallocs, stage, final, parts, scratch, len(archive))
+		}()
+	}
+}
+
+func BenchmarkStreamPeerArchive(b *testing.B) {
+	dir := os.Getenv("STREAM_DIR")
+	archive, err := os.ReadFile(filepath.Join(dir, "archive"))
+	if err != nil {
+		b.Fatal(err)
+	}
+	_, _, names, mounts, err := readCheckpointDir(dir)
+	if err != nil {
+		b.Fatal(err)
+	}
+	base := restoreContext(b, names, mounts)
+	ctx, release := withHostFDs(b, base, names)
+	defer release()
+	sys, err := systrap.New(platform.Options{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	if _, err := loadKernel(ctx, stubPlatform{sys}, archive, true); err != nil {
+		b.Fatal(err)
+	}
+	fmt.Printf("STREAM-PEER bytes=%d decoded=true\n", len(archive))
 }
