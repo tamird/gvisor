@@ -98,10 +98,9 @@ func sendAndReceive(t *testing.T, dut testbench.DUT, conn testbench.TCPIPv4, num
 	return lastSent
 }
 
-// TestFlightFence SACKs the last old packet before sending new data. The two
-// receivers differ only in whether that new data reaches the out-of-order queue.
-func TestFlightFence(t *testing.T) {
-	for _, mode := range []string{"sack_old", "sack_old_and_new"} {
+// TestFirstTimeout observes partial ACKs after the first timeout from Open.
+func TestFirstTimeout(t *testing.T) {
+	for _, mode := range []string{"cumulative", "sack_third"} {
 		t.Run(mode, func(t *testing.T) {
 			dut, conn, fd, mss := createSACKConnection(t)
 			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("reno"))
@@ -140,72 +139,41 @@ func TestFlightFence(t *testing.T) {
 				actual := len(layers[len(layers)-1].(*testbench.Payload).Bytes)
 				fmt.Printf("FENCE_WIRE mode=%s phase=%s offset=%d bytes=%d wait_us=%d\n", mode, at, off, actual, time.Since(start).Microseconds())
 			}
-			send := func(at string, off, size int) {
-				if got, want := dut.Send(t, fd, make([]byte, size), 0), int32(size); got != want {
-					t.Fatalf("Send = %d, want %d", got, want)
-				}
-				packet(at, off, size, time.Second)
+			const flight = 8
+			// The peer receives every original segment but acknowledges none of
+			// them yet. No duplicate ACK can have put the sender into Recovery.
+			sendAndReceive(t, dut, conn, flight, fd, mss, false)
+			if got, want := observe("before_timeout").CaState, uint8(linux.TCP_CA_Open); got != want {
+				t.Fatalf("state before the first timeout = %d, want Open (%d)", got, want)
 			}
-			const guard = 3 * time.Second
-			old := 7*mss + 3
-			sendAndReceive(t, dut, conn, 7, fd, mss, false)
-			for off := old - 3; off < old; off++ {
-				send("original_tail", off, 1)
+			// A tail probe, if any, repeats the last segment. The retransmission
+			// of the FIRST segment is our timeout witness.
+			packet("first_timeout", 0, mss, 4*time.Second)
+			loss := observe("first_timeout")
+			if got, want := loss.CaState, uint8(linux.TCP_CA_Loss); got != want {
+				t.Fatalf("state on first-byte retransmission = %d, want Loss (%d)", got, want)
 			}
-			time.Sleep(simulatedRTT)
-			ack(mss, 4*mss, 7*mss)
-			packet("fast_repair", mss, mss, guard)
-			if got, want := observe("fast_repair").CaState, uint8(linux.TCP_CA_Recovery); got != want {
-				t.Fatalf("first repair state=%d want recovery (%d)", got, want)
+			if mode == "cumulative" {
+				ack(mss, -1, -1)
+			} else {
+				// Deliver segment 3 out of order while segment 2 is missing.
+				ack(mss, 2*mss, 3*mss)
 			}
-			packet("first_timeout", mss, mss, guard)
-			if got, want := observe("first_timeout").CaState, uint8(linux.TCP_CA_Loss); got != want {
-				t.Fatalf("second repair state=%d want loss (%d)", got, want)
+			// Wait for an impossible sequence so ListenForFrame records every
+			// repair. End this observation well before another RTO is due.
+			rto := time.Duration(loss.RTO) * time.Microsecond
+			window := min(80*time.Millisecond, rto/4)
+			if window < time.Millisecond {
+				t.Fatalf("unusable RTO: %v", rto)
 			}
-			ack(2*mss, 4*mss, 7*mss)
-			packet("partial_repair", 2*mss, 0, guard)
-			ack(old-3, old-1, old)
-			packet("tail_repair", old-3, 0, guard)
-			info := observe("before_queue")
-			if got, want := dut.Send(t, fd, make([]byte, mss), 0), int32(mss); got != want {
-				t.Fatalf("Send(new write) = %d, want %d", got, want)
-			}
-			// The peer has already buffered the last of the three old packets.
-			// The two earlier packets remain outstanding, leaving room for the
-			// new segment if the sender uses its third congestion-window slot.
-			window := min(80*time.Millisecond, time.Duration(info.RTO)*time.Microsecond/3)
-			_, sent := conn.ListenForFrame(t, testbench.Layers{nil, nil,
-				&testbench.TCP{SeqNum: testbench.Uint32(uint32(seq(old)))},
+			start := time.Now()
+			frames, found := conn.ListenForFrame(t, testbench.Layers{nil, nil,
+				&testbench.TCP{SeqNum: testbench.Uint32(uint32(seq((flight + 1) * mss)))},
 				&testbench.Payload{Bytes: make([]byte, mss)},
 			}, window)
-			fmt.Printf("FENCE_WIRE mode=%s phase=admission new_sent=%t window_us=%d\n", mode, sent, window.Microseconds())
-			if !sent {
-				t.Fatal("no new segment before the second timeout; cannot construct the peer SACK")
+			if found {
+				t.Fatal("received unsent sequence")
 			}
-			started := time.Now()
-			before := observe("new_outstanding")
-			packet("second_timeout", old-3, 1, guard)
-			if elapsed := time.Since(started); elapsed < time.Duration(before.RTO)*time.Microsecond/2 {
-				t.Fatalf("not an RTO witness: repair after %v, RTO=%d us", elapsed, before.RTO)
-			}
-			observe("second_timeout")
-			// Deliver the first old byte just retransmitted, keep the middle
-			// old byte missing, and report the buffered final old byte. If the
-			// new segment arrived too, it is contiguous with that final byte.
-			sackEnd := old
-			if mode == "sack_old_and_new" {
-				sackEnd += mss
-			}
-			ack(old-2, old-1, sackEnd)
-			time.Sleep(simulatedRTT)
-			observe("after_partial_ack")
-			// Do not require an immediate repair: whether and when the sender
-			// sends it is one outcome under comparison. A second full timeout
-			// lies outside this bounded observation.
-			frames, found := conn.ListenForFrame(t, testbench.Layers{nil, nil,
-				&testbench.TCP{SeqNum: testbench.Uint32(uint32(seq(old - 2)))},
-				&testbench.Payload{Bytes: make([]byte, 1)},
-			}, window)
 			for _, frame := range frames {
 				if len(frame) != 4 {
 					continue
@@ -218,9 +186,15 @@ func TestFlightFence(t *testing.T) {
 				if !ok || len(payload.Bytes) == 0 {
 					continue
 				}
-				fmt.Printf("FENCE_WIRE mode=%s phase=after_partial_ack offset=%d bytes=%d\n", mode, uint32(*tcp.SeqNum)-uint32(base), len(payload.Bytes))
+				off := uint32(*tcp.SeqNum) - uint32(base)
+				if off < uint32(flight*mss) {
+					fmt.Printf("FENCE_WIRE mode=%s phase=after_ack offset=%d bytes=%d\n", mode, off, len(payload.Bytes))
+				}
 			}
-			fmt.Printf("FENCE_WIRE mode=%s phase=missing_repair found=%t window_us=%d\n", mode, found, window.Microseconds())
+			observe("after_ack")
+			if elapsed := time.Since(start); elapsed >= rto {
+				t.Fatalf("observation lasted %v, reached next timeout %v", elapsed, rto)
+			}
 			fmt.Printf("FENCE_DONE mode=%s\n", mode)
 		})
 	}
