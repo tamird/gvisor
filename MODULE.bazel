@@ -919,3 +919,11 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+http_file(
+    name = "july_runsc",
+    downloaded_file_path = "runsc",
+    executable = True,
+    integrity = "sha512-XeCKosBI+FKJCEpsZWSKSd6lENpUZ3oZbyI/vwhJnDZ0HaeZdrUeDithBjveAe8qcJx87ZW22CnZo8Dzxot4qw==",
+    urls = ["https://storage.googleapis.com/gvisor/releases/release/20260721.0/x86_64/runsc"],
+)

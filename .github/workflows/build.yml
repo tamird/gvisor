@@ -1,35 +1,43 @@
-name: CI
-
-"on":
+name: Restore an occupied TCP tuple with the July runtime
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-loopback-checkpoint-tuple]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false}
+    - name: Exercise the same tuples on Linux and the pinned July release
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        d="$RUNNER_TEMP/records"
+        mkdir -p "$d"
+        git rev-parse HEAD > "$d/source"
+        test "$(cat "$d/source")" = "$GITHUB_SHA"
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tuple --entrypoint /bin/sleep --privileged --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" infinity
+        docker exec tuple uname -a > "$d/kernel"
+        rc=0
+        docker exec tuple bazel --ignore_all_rc_files test --spawn_strategy=local --nocache_test_results --test_output=errors --test_timeout=480 //test/rbe/restoretuple:tuple > "$RUNNER_TEMP/bazel.log" 2>&1 || rc=$?
+        date -u +%FT%TZ > "$d/execution-finished"
+        printf '%s\n' "$rc" > "$d/exit"
+        tail -50 "$RUNNER_TEMP/bazel.log" > "$d/diagnostics"
+        for file in test.log test.xml; do
+          if ! docker exec tuple cat "bazel-testlogs/test/rbe/restoretuple/tuple/$file" > "$d/$file"; then
+            rm -f "$d/$file"
+          fi
+        done
+        python3 test/rbe/tuple_verdict.py "$d"
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: exact-loopback-restore
+        path: ${{ runner.temp }}/records
+        if-no-files-found: error
