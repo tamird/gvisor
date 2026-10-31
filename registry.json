@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T17:52:38.404+00:00",
+    "updatedAt": "2026-10-31T18:05:07.150+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31484,8 +31484,8 @@
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T17:52:38.404+00:00",
-      "summary": "The first ambiguous ACK for a retransmitted tail probe reduced stock Reno’s congestion window from 20 packets to 3 in all five controlled traces. Linux and the fix agree in all five cases, including a peer sequence advance with an unchanged advertised window width. This measures ACK handling, not throughput.",
+      "updatedAt": "2026-10-31T18:05:07.150+00:00",
+      "summary": "Aditya’s review found that reducing the congestion window after a tail probe left the published sender in fast recovery. On two 10 ms RTT traces it waited 3 seconds to retransmit the next loss. The amended sender retried in 220 and 223 ms. Both senders still waited for a timeout on an ambiguous ACK and repaired a separate hole in 3 ms when the peer SACKed a later segment. Master produced three of the four observations and repaired a different segment in the ambiguous case. The final revision changes which recovery statistic counts the repaired probe.",
       "evidence": [
         {
           "label": "Published upstream PR #16596",
@@ -31510,14 +31510,34 @@
         {
           "label": "Stock: five wire traces",
           "url": "https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019"
+        },
+        {
+          "label": "Final proposed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/e1a3e3de2"
+        },
+        {
+          "label": "Published, corrected and master probe timing",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41226847064/artifacts/13052405694"
+        },
+        {
+          "label": "Four observed traces with the congestion response corrected",
+          "url": "https://app.buildbuddy.io/invocation/197ca5f8-fe5f-4649-8fc6-9a5f17bd382e"
+        },
+        {
+          "label": "Linux and gVisor packet comparison before the counter-only revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41227174846"
+        },
+        {
+          "label": "Final source TCP suites and analyzer targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41227515403"
         }
       ],
       "followup": {
         "owner": "tcp_split_owner",
         "sourceHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
         "observedAt": "2026-10-31T17:34:52Z",
-        "disposition": "Standalone review under investigation",
-        "nextAction": "Check the reported post-probe congestion state and the next loss-probe timer against the reviewer’s two packet sequences.",
+        "disposition": "Tested amendment under review",
+        "nextAction": "Verify the Linux packets, TCP suites and analyzers on e1a3e3de2. Publish the approved amendment, description and reply only after the required checks and contributor decision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16596",
           "https://github.com/tamird/gvisor/commit/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
@@ -31525,7 +31545,12 @@
           "https://app.buildbuddy.io/invocation/dea215a4-78bb-4acb-804b-54583419d20a",
           "https://app.buildbuddy.io/invocation/df6869ae-9333-48b7-8304-41995b1754e4",
           "https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019",
-          "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574"
+          "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574",
+          "https://github.com/tamird/gvisor/commit/e1a3e3de2",
+          "https://github.com/tamird/gvisor/actions/runs/41226847064/artifacts/13052405694",
+          "https://app.buildbuddy.io/invocation/197ca5f8-fe5f-4649-8fc6-9a5f17bd382e",
+          "https://github.com/tamird/gvisor/actions/runs/41227174846",
+          "https://github.com/tamird/gvisor/actions/runs/41227515403"
         ],
         "actionableComment": {
           "kind": "review",
@@ -31533,6 +31558,17 @@
           "commentId": "PRR_kwDOB9IlXs8AAAABVS52Ng",
           "url": "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
+        "baseHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+        "url": "https://github.com/tamird/gvisor/commit/e1a3e3de2",
+        "title": "Finish the tail-probe congestion response",
+        "summary": "After the outstanding checks pass, publish e1a3e3de2 to #16596, update the PR description from the commit message and send the prepared reply to Aditya’s review?",
+        "requestedAt": "2026-10-31T18:03:49.634+00:00",
+        "body": "The published revision and corrected sender both reproduced all four manual-clock observations. In the two cases where an advancing ACK confirmed loss, the published sender waited 3 seconds and the corrected sender retried after 220 and 223 ms. The final amendment counts that response in TLPRecovery. The Linux packet comparison, TCP suites and analyzers are still in progress.\n\ngit range-diff 1eb1f6b45^! e1a3e3de2^!\n\nProposed reply to Aditya\n\n@adios-404, thanks for the reproducer. I folded the fix into this PR and credited you. With your manual clock, the [previous version](https://app.buildbuddy.io/invocation/04537520-a094-4b81-ac6d-20fa2fcc50f1) waited three seconds in both write orderings. [With the fix](https://app.buildbuddy.io/invocation/197ca5f8-fe5f-4649-8fc6-9a5f17bd382e), the next tail was probed after 220 and 223 ms. Without an ACK past the original probe, the sender still waited for the RTO, as you pointed out.\n\nI kept the recovery point but removed the enter/leave-fast-recovery pair. That pair also discarded the SACK count if the advancing ACK reported another hole. A fourth trace checks that case: the sender stays in Disorder and RACK repairs the separate hole after 3 ms. The repaired probe now counts toward TLPRecovery; SACKRecovery still counts an actual entry into fast recovery. The existing packet test leaves one segment outstanding and checks the congestion state via TCP_INFO.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -40262,8 +40298,8 @@
       "url": "https://github.com/tamird/gvisor/tree/checkpoint-page-read-error",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T17:39:47.195+00:00",
-      "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The race test did not execute because runtime/cgo failed to build.",
+      "updatedAt": "2026-10-31T18:05:07.150+00:00",
+      "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The initial race test did not build. On a GNU worker all 69 race cases passed with zero skips.",
       "evidence": [
         {
           "label": "Proposed source and permanent three-page test",
@@ -40284,6 +40320,14 @@
         {
           "label": "Exact stock failure, 69 corrected cases, two analyzers and missing race run",
           "url": "https://github.com/tamird/gvisor/actions/runs/41225245512/artifacts/13051463182"
+        },
+        {
+          "label": "GNU worker, all 69 race cases passed",
+          "url": "https://app.buildbuddy.io/invocation/763b9cf2-98fb-42cf-9467-61b32ccbbfb7"
+        },
+        {
+          "label": "Combined original, corrected, analyzer and race results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41225784692/artifacts/13052785144"
         }
       ],
       "contributorReview": {
@@ -40336,6 +40380,44 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41220920008"
         }
       ]
+    },
+    {
+      "id": "branch:checkpoint-memory-file-registration",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "checkpoint-memory-file-registration",
+      "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
+      "title": "Preserve the page read error across memory files",
+      "url": "https://github.com/tamird/gvisor/tree/checkpoint-memory-file-registration",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T18:05:07.150+00:00",
+      "summary": "When a checkpoint gofer reports a truncated pages file, registering a second memory file can hide the original I/O error behind “invalid server file handle.” The corrected loader checks its saved error before registration. Both the intact and truncated two-file gofer cases passed in the diagnostic. On 211a9e3b9, all 70 package cases and both Nogo targets passed. With an in-memory pages reader the permanent regression saw “file already closed” on stock and EIO on the fix.",
+      "evidence": [
+        {
+          "label": "Proposed source and two-file gofer regression",
+          "url": "https://github.com/tamird/gvisor/commit/211a9e3b9"
+        },
+        {
+          "label": "Intact and truncated files on the original and corrected loaders",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41226335084/artifacts/13052195243"
+        },
+        {
+          "label": "Exact source, original regression failure, 70 package cases and both analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "211a9e3b977a9f0f7ad3e970ebeadfa26d7c9ecf",
+        "baseHead": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+        "url": "https://github.com/tamird/gvisor/commit/211a9e3b9",
+        "title": "Preserve read errors across memory files",
+        "requestedAt": "2026-10-31T18:03:49.634+00:00",
+        "summary": "Open this PR after the parent checkpoint page-read fix lands?",
+        "body": "When the checkpoint gofer fails to read a truncated pages file, a\nlater memory file can report an invalid server handle instead of the\noriginal I/O error [1].\n\nCheck the saved read error before registering the next destination.\nThe existing file-list mutex serializes registration with Close.\n\nThe permanent regression uses the same loader for two memory files.\nThe parent reports a closed reader on the second file. The corrected\nloader returns EIO on both. All 70 package cases and both analyzer\ntargets passed [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41226335084/artifacts/13052195243\n[2]: https://github.com/tamird/gvisor/actions/runs/41227312524/artifacts/13052705306"
+      }
     }
   ],
   "edges": [
@@ -43641,6 +43723,13 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/1d96ea04c"
       ]
+    },
+    {
+      "from": "branch:checkpoint-page-read-error",
+      "to": "branch:checkpoint-memory-file-registration",
+      "type": "depends_on",
+      "reason": "The follow-up builds on the checkpoint reader cleanup. It preserves the first read error when another memory file later registers with the same reader.",
+      "evidence": "https://github.com/tamird/gvisor/commit/211a9e3b9"
     }
   ],
   "investigations": [
