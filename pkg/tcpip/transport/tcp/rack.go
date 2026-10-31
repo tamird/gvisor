@@ -284,11 +284,22 @@ func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
 	}
 
 	// New data beyond the probe was delivered without evidence that both
-	// copies arrived. Respond to the loss once, as in fast recovery.
+	// copies arrived. Reduce the window as for a loss, but do not start
+	// fast recovery: the probe has already repaired this hole. Keep the
+	// recovery point so this flight cannot trigger a second reduction.
 	s.rc.tlpRxtOut = false
 	s.cc.HandleLossDetected()
-	s.enterRecovery()
-	s.leaveRecovery()
+	s.SndCwnd = s.Ssthresh
+	s.cc.PostRecovery()
+	s.FastRecovery.Last = s.SndNxt - 1
+	if s.ep.scoreboard.Empty() || !ack.LessThan(s.ep.scoreboard.MaxSACKED()) {
+		s.state = tcpip.Open
+	} else {
+		s.state = tcpip.Disorder
+	}
+	stats := s.ep.stack.Stats().TCP
+	stats.SACKRecovery.Increment()
+	stats.TLPRecovery.Increment()
 }
 
 // updateRACKReorderWindow updates the reorder window.
