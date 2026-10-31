@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-30T23:43:49.478418+00:00",
+    "updatedAt": "2026-10-31T00:17:49.384556+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -725,14 +725,14 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-23T23:16:03.213711+00:00",
-      "summary": "The requested post-#16046 rebase is published at e758ff20aee5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 7d6a86c59d. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 7d6a86c59d028fa5bdd3cff67c2402007d1fc1f3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nCurrent-head generate39438600334/job118682147248 at56ce completes export, the generated commit and local Go-branch push, then exits1 because removing its temporary repository reports Directory not empty. The retained log does not identify a concurrent writer. This is the existing disposable-clone cleanup failure class tracked with pending15598; no new topic amendment or retry is justified by this log. A later status-post403 is separate from the failing cleanup. Gazelle remains the independent inherited dependency correction in16031. Contributor approval and56ce delivery remain complete.\n\nThe user approved the ZIP compatibility refinement56ce, and root delivered it to public PR15106 with an exact old-d7dc lease. Local HEAD, origin tracking and provider head match56ce. Existing title/body already matched the approved change, so no rewrite or new public comment was needed. Contributor review is complete; current-head CI and import monitoring continues. Exact current-head Gazelle job118682146746 fails only on the inherited unused //pkg/zip production dependency, covered by16031. Current lint and fileheader checks pass; pending checks remain pending.\n\nThe user approved the ZIP compatibility refinement56ce, and root delivered it to public PR15106 with an exact old-d7dc lease. Local HEAD, origin tracking and provider head match56ce. Existing title/body already matched the approved change, so no rewrite or new public comment was needed. Contributor review is complete; current-head CI and import monitoring continues.\n\nAfter the approved mechanical publication, root found a separate compatibility issue with merged ZIP import enforcement760b: the Go-export helper still directly imports archive/zip. Root owns a narrow public amendment and its canonical validation in gvisor-15049. The mechanical rebase and authorized reply remain completed; they do not establish semantic validation against the new enforcement. Current Gazelle also retains the separate inherited unused //pkg/zip dependency covered by16031.\n\nExact current-head Gazelle job 118633416221 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe contributor-approved sidecar amendment is published at d7dcfd359c. Its code is unchanged from approved7709; the temporal context was removed from the commit/body and included in the authorized post-update reviewer comment. Root verified exact public head and matching tracking. No contributor decision remains.\n\nHistorical qualification and delivery evidence:\n\nThe revised proposal7709f36fdf is fully qualified and awaits the user contributor decision. Root owns delivery after approval; Hostinet has no remaining implementation or validation task. The unchanged publicfc959 conflict remains visible until approved delivery.\n\nThe revised Go-export proposal is qualified at 7709f36fdf and ready for the contributor-review workflow. Three owning tests retain seven passing cases from the exact d2e4 source; the actual archive matches all 2,496 expected files, including the new Go/C sidecars and README; final canonical buildifier passes after three formatting-only hunks. Original bootstrap/compiler/cache/configuration failures remain recorded. Public fc959 is unchanged, so its current conflict is not yet resolved by this unpublished amendment.\n\nThe image-only Ubuntu 22.04 continuation at d2e4 also completed FAIL: the upstream ARM64 sighandler_object link reports .rela.dyn/.crblob overlap. The retained setup confirms GCC 11 and clang 14; no archive-parity or lint success is claimed. All prior failures and seven recovered assembler/analyzer passes remain separate. Public fc9590023c is unchanged; root and Hostinet own source-backed diagnosis, with no blind retry.\n\nThe d2e4 sidecar proposal retains seven recovered assembler/analyzer passes. Its archive continuation failed compiling upstream sysmsg with the default Ubuntu 20.04 GCC 9 worker; this raw failure remains recorded. A reviewed image-only continuation now uses the pinned Ubuntu 22.04 worker matching the upstream Dockerfile baseline, with the same source, declared prerequisites, archive parity and lint commands. Public fc9590023c remains unchanged pending qualification and contributor review.\n\nThe three assembler/analyzer owners passed seven cases at d2e4ddb554; their original reporter failure is preserved with a bounded same-artifact reconciliation. The archive/lint continuation first failed for a missing declared cross compiler, then a compiler diagnostic probe failed before the reporter started. Hostinet has reviewed recovery that installs the declared worker prerequisites and removes only the unsupported probe; archive parity and canonical lint still must pass. The public fc9590023c head is unchanged, and the substantive sidecar integration still requires contributor review after qualification.\n\nThe rebase now requires a substantive source integration: current upstream adds two Go sidecar entrypoints, three C sidecars and the export README. The independently reviewed amendment is signed and published for review at d2e4ddb554. Its focused assembler, archive parity and lint qualification packet is approved for execution; public #15106 remains at fc9590023c pending validation and contributor review.\n\nCurrent provider readback identifies a real merge conflict at fc9590023c against base3cd71284c. The earlier rebase completion remains historical; root has been notified to assign the current conflict correction.\n\nThe conflict repair is published at fc9590023 and current GitHub mergeability is confirmed. All eight applicable public checks pass, with four conditional skips. Earlier approvals do not establish approval of this rebased head. The requested follow-up to zkoopmans is posted; the native review-request API returned 404, so no successful re-request is claimed. The existing fvoznika request remains.\n\nThe focused hermetic composition at ff4888692 is independently qualified: the assembler and two analyzer owners pass, the actual 2,442-entry archive contains all seven command sources across five directories including both sentry mains, and the existing Linux AMD64 cgo consumer compiles all exported packages from that exact archive. Analyzer findings bind both architectures; no ARM64 native consumer or application-runtime result is claimed. The earlier standalone worker passed helper/analyzer checks but lacked ambient clang for the archive build; that failure remains recorded separately.\n\nEarlier source and review record:\n\nCurrent-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved change was refreshed onto master 254aeb360ee148130c24b62f0655bc832a647fe0 and published at 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Independent review verified exact ordered additions/removals in every changed path and the unchanged commit message, while retaining current upstream Gazelle/importpath/embed context. The delivery owner verified the exact live head and matching tracking ref; lint passed at publication. Current checks and mergeability are shown from the latest snapshot. Earlier runtime evidence remains tied to its original source; this rebase adds no new execution claim.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 8d55f931860145475cae7e872db3784499faf855. Root will assess a source-preserving refresh. Existing approval and addressed suggestions remain recorded; no new semantic source change is inferred.\n\nEarlier source and review history:\n\nThe authorized October 2/3 rebase is published at 8d55f931860145475cae7e872db3784499faf855 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15106#issuecomment-5963408295. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; the current-head GitHub check rollup now passes, including generate. Publication and reply were independently verified at 21:07 UTC.",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "summary": "The maintainer approved b61651f93, and the PR has the ready to pull label. The separate Go archive assembler follow-up leaves that head intact.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "e758ff20aee552bab5474f8f36bc50efd5a74c8d",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Substantive amendment after prior maintainer approval; reminder proof reconciled",
-        "nextAction": "Use the existing three-hour Pacific-business-hours reminder after fresh head, approval and mergeability checks. Existing source corrections and contributor approvals are complete; do not repeat them.",
+        "sourceHead": "b61651f9371f514411dbb4fc2bd367f860204546",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
+        "disposition": "Maintainer approved the published head",
+        "nextAction": "Follow the matching import and public checks. No reapproval reminder is due for this head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15106",
           "https://github.com/tamird/gvisor/commit/56ceeb1a04062a78e72d94737b22fceb513ef3ea",
@@ -744,7 +744,7 @@
           "https://github.com/tamird/gvisor/commit/e758ff20aee552bab5474f8f36bc50efd5a74c8d"
         ]
       },
-      "head": "e758ff20aee552bab5474f8f36bc50efd5a74c8d",
+      "head": "b61651f9371f514411dbb4fc2bd367f860204546",
       "evidence": [
         {
           "label": "Qualified revised Go-export proposal",
@@ -13644,7 +13644,7 @@
       "repo": "google/gvisor",
       "number": 15918,
       "ref": "ipv6-multicast-bound-device",
-      "head": "fd2999b440601691d26f86ad5b8c2af2e5fe1fe9",
+      "head": "29edee9cbe9321287548342acca1004c1d9e9c00",
       "title": "Honor bound devices for IPv6 multicast selection",
       "url": "https://github.com/google/gvisor/pull/15918",
       "group": "runtime",
@@ -13663,15 +13663,15 @@
       "followup": {
         "owner": "external_sweeps",
         "disposition": "Contributor approval delivered; maintainer review pending",
-        "sourceHead": "fd2999b440601691d26f86ad5b8c2af2e5fe1fe9",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
+        "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "nextAction": "Follow exact-head public CI and incoming maintainer feedback. The approved delivery is complete.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15918",
           "https://github.com/tamird/gvisor/commit/fd2999b440601691d26f86ad5b8c2af2e5fe1fe9"
         ]
       },
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00"
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00"
     },
     {
       "id": "pr:15919",
@@ -21924,17 +21924,17 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-rust-protobuf37-review",
-      "head": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
+      "head": "4b21538bf21567c09e57a36c9749ff25b7332669",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
+      "url": "https://github.com/tamird/gvisor/commit/4b21538bf",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-30T16:55:14.197497+00:00",
-      "summary": "The Rust library-notice export is proposed in hermeticbuild/rules_rs#333. The image proposal pins BCR rules_rs 0.1.3. Remove the local patch when the first BCR version containing the merged export is available.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nApproved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "summary": "Two source links in the local rules_rs patch use the verified nine-character revision. The patch hunks, catalog and prior approval are unchanged.\n\nThe Rust library-notice export is proposed in hermeticbuild/rules_rs#333. The image proposal pins BCR rules_rs 0.1.3. Remove the local patch when the first BCR version containing the merged export is available.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nApproved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
       "followup": {
         "owner": "root",
-        "sourceHead": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
-        "observedAt": "2026-10-30T16:55:14.197497+00:00",
+        "sourceHead": "4b21538bf21567c09e57a36c9749ff25b7332669",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Contributor approved; waiting for prerequisites",
         "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits. Replace the local notice patch once a BCR rules_rs version includes the public library_notice target.",
         "evidence": [
@@ -22021,10 +22021,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "6a38390bf36512b773254ef75cd36180c635b1f2"
+          "head": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26"
         },
         "after": {
-          "head": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26"
+          "head": "4b21538bf21567c09e57a36c9749ff25b7332669"
         }
       }
     },
@@ -27150,17 +27150,17 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-python-upstream-context",
-      "head": "037a5a3f80a82c25c515181bb41538dafed055d4",
+      "head": "022b009cfe9b6bd92da786a1339de707fbea1d9c",
       "title": "Build the Python HTTP image with rules_img",
       "url": "https://github.com/google/gvisor/pull/16459",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-27T18:39:29+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "The contributor-approved image change is published as #16459 at 2e4cf26a2 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The contributor subsequently approved this exact proposal.",
       "followup": {
         "owner": "root",
-        "sourceHead": "037a5a3f80a82c25c515181bb41538dafed055d4",
-        "observedAt": "2026-10-27T18:39:29+00:00",
+        "sourceHead": "022b009cfe9b6bd92da786a1339de707fbea1d9c",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Rebased; the approved Python image patch is unchanged",
         "nextAction": "The source now includes fsstress and the Python image. Follow the export; Buildkite #37 on its previous revision was canceled by a user.",
         "evidence": [
@@ -27218,17 +27218,17 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-mysql-upstream",
-      "head": "48f06c61104b8f3f5550d2c7fd5d984dce0b77cc",
+      "head": "7108c1aeff83b0f3bf5354d3c07bceabb39a45f4",
       "title": "Pin the basic MySQL image",
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "The contributor-approved image change is published as #16458 at 48f06c611 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. The MySQL approval is separate from the Redis proposal.",
       "followup": {
         "owner": "native_runtime",
-        "sourceHead": "48f06c61104b8f3f5550d2c7fd5d984dce0b77cc",
-        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "sourceHead": "7108c1aeff83b0f3bf5354d3c07bceabb39a45f4",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Approved image migration published as #16458",
         "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
         "evidence": [
@@ -27272,17 +27272,17 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-postgresql-upstream",
-      "head": "50a6f3c30a99c0320937dc4d09525f830c927602",
+      "head": "a7a46825e08dd82f9e2487564614c84afe5f0095",
       "title": "Pin the PostgreSQL compatibility image",
       "url": "https://github.com/google/gvisor/pull/16460",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T23:09:42.124781+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "The contributor-approved image change is published as #16460 at 50a6f3c30 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The contributor subsequently approved this exact proposal.",
       "followup": {
         "owner": "native_runtime",
-        "sourceHead": "50a6f3c30a99c0320937dc4d09525f830c927602",
-        "observedAt": "2026-10-26T23:09:42.124781+00:00",
+        "sourceHead": "a7a46825e08dd82f9e2487564614c84afe5f0095",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Approved image migration published as #16460",
         "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
         "evidence": [
@@ -27326,17 +27326,17 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-tomcat-upstream-current",
-      "head": "235ec4262784bf0a359886eda0f9783540f57bdd",
+      "head": "d754a40f1fa4dd0be2ac92f7d2c604a6cf02d1c0",
       "title": "Pin the existing Tomcat fixture images",
       "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T23:13:19.855537+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "The contributor-approved image change is published as #16462 at 235ec4262 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head; no contributor decision remains pending.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "235ec4262784bf0a359886eda0f9783540f57bdd",
-        "observedAt": "2026-10-26T23:13:19.855537+00:00",
+        "sourceHead": "d754a40f1fa4dd0be2ac92f7d2c604a6cf02d1c0",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Approved image migration published as #16462",
         "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
         "evidence": [
@@ -27439,17 +27439,17 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-httpd-upstream-current",
-      "head": "0be1230abf0abfa919f815b9d7f8a610aaa727e8",
+      "head": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
       "title": "Pin upstream Apache test images",
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T23:54:30.014199+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "The approved image migration is published as #16466 at 0be1230ab. No contributor decision remains. Current checks, imports and maintainer review come from the GitHub snapshot.\n\nThe combined image qualification 63f7b7ba passed all 34 archive/context owners and all 16 image config/layer comparisons on AMD64 and ARM64. Its corrected aggregate source archives contained all 178 tracked files with matching bytes and modes, plus two architecture-correct generated CUDA helpers. This includes Bun's unchanged spawn.js and the Apache source forwarding; it is archive evidence, not a new runtime execution.\n\nSource-specific earlier qualification:\n\nBasic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The required image_outputs and Make interfaces are now on master; no shared BusyBox/compiler output is consumed.",
       "followup": {
         "owner": "root",
-        "sourceHead": "0be1230abf0abfa919f815b9d7f8a610aaa727e8",
-        "observedAt": "2026-10-26T23:54:30.014199+00:00",
+        "sourceHead": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Approved image migration published as #16466",
         "nextAction": "Follow current-head checks, matching imports and maintainer review through the existing intake. No repeated contributor decision or runtime replay.",
         "evidence": [
@@ -28112,12 +28112,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/kvm-vdso-declared-tools",
-      "head": "c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
+      "head": "5f020ddd609be492ca79508f4f3e3745a8bf1e93",
       "title": "Declare vDSO disassembly tools",
       "url": "https://github.com/google/gvisor/pull/16491",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "Bazel ran all 23 AMD64 and 20 ARM64 cases with PATH=/nonexistent. Both native test actions used the declared LLVM tools. This covers the vDSO unit tests, which do not require /dev/kvm.",
       "evidence": [
         {
@@ -28136,8 +28136,8 @@
       "number": 16491,
       "followup": {
         "owner": "root",
-        "sourceHead": "c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
-        "observedAt": "2026-10-27T09:36:13+00:00",
+        "sourceHead": "5f020ddd609be492ca79508f4f3e3745a8bf1e93",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Published as #16491",
         "nextAction": "Follow maintainer review and public checks on #16491.",
         "evidence": [
@@ -29563,15 +29563,15 @@
       "title": "Build the resolver-symlink image with Bazel",
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/16549",
-      "head": "e4d530d2aa5499b279d08a1c88abc17c99abf933",
+      "head": "7c32498331da0aa2e946a59685556e32a1107deb",
       "status": "open",
-      "updatedAt": "2026-10-28T01:18:31.935784+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "Declare the relative /etc/resolv.conf symlink as a layer on the pinned BusyBox image. #16549 preserves the approved resolver edits and the merged fsstress target. Earlier qualification covered both architecture archives, Make loading and AMD64 containerd mount-over-symlink tests.",
       "followup": {
-        "observedAt": "2026-10-28T01:18:31.935784+00:00",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "nextAction": "Follow upstream review, CI and import.",
         "disposition": "Approved resolver submitted",
-        "sourceHead": "e4d530d2aa5499b279d08a1c88abc17c99abf933",
+        "sourceHead": "7c32498331da0aa2e946a59685556e32a1107deb",
         "owner": "root"
       },
       "evidence": [
@@ -35636,12 +35636,12 @@
       "number": 16726,
       "repo": "google/gvisor",
       "ref": "test/cl1008391870",
-      "head": "c6afaa53a68057de1e83c33f25c8ca94978ac0e8",
+      "head": "cd90d7a7403ed4a739b2cf109463b0e76270b87a",
       "title": "tools/go_stateify: emit typed calls, registration, and callbacks (20/21)",
       "url": "https://github.com/google/gvisor/pull/16726",
       "group": "runtime",
       "status": "merged",
-      "updatedAt": "2026-10-30T17:24:00.776380+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "The generator merged. Lucas’s #16747 corrects nested conversion scratch reuse in the integrated graph codec. The original inline review no longer needs a decision.",
       "evidence": [
         {
@@ -36091,18 +36091,18 @@
       "number": 16740,
       "title": "Keep nested checkpoint conversions from overwriting each other",
       "group": "runtime",
-      "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
-      "head": "905873f0ea52d9d279bb05195f9239953451971b",
+      "summary": "Keep conversion scratch out of the graph decoder cache until its consumer has finished. The published head is 62e214867; follow the review there.",
+      "head": "62e214867e089f4ba2db0b79beecd8148c4da509",
       "ref": "review/state-nested-conversion-merged",
       "url": "https://github.com/google/gvisor/pull/16740",
       "status": "open",
-      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "refinement": {
         "before": {
-          "head": "07b30159f3972037e9b77c8353e388f5f9409ab0"
+          "head": "905873f0ea52d9d279bb05195f9239953451971b"
         },
         "after": {
-          "head": "905873f0ea52d9d279bb05195f9239953451971b"
+          "head": "62e214867e089f4ba2db0b79beecd8148c4da509"
         }
       },
       "settledReviews": [
@@ -36153,8 +36153,8 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "905873f0ea52d9d279bb05195f9239953451971b",
-        "observedAt": "2026-10-30T10:46:19.726076+00:00",
+        "sourceHead": "62e214867e089f4ba2db0b79beecd8148c4da509",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
         "disposition": "Delivered as #16740",
         "nextAction": "Follow the upstream review on #16740.",
         "evidence": [
@@ -37332,20 +37332,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/declared-jekyll-site",
-      "head": "7b81fd10a5af9729d8d6953c41df562bfb25e71c",
+      "head": "6719095ebbd170eefb875c446f6a93a5fe6cf7b9",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-10-30T23:35:30.492132+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "Bazel builds the website without a Docker daemon. Dropping the inline-SVG plugin and its optimizer preserved all 278 published files byte for byte; neither gem was installed in the selected SDK. Disabling Autoprefixer changed css/main.css, so it stays. The serving-image check also covered the hard-linked logo.",
       "followup": {
         "owner": "root",
-        "sourceHead": "7b81fd10a5af9729d8d6953c41df562bfb25e71c",
-        "observedAt": "2026-10-30T23:35:30.492132+00:00",
-        "disposition": "Qualify builder-free publication and resolve source notices",
-        "nextAction": "Wait for a rules_img release with #811 and the declared Buildkite Bazelisk bootstrap. Finish the Ruby SDK and five gem notices. Autoprefixer ships a restored July bundle: its 61 named browser feature tables match caniuse-lite 1.0.30001109, not the later release lock. The enclosing Go docs and server build still uses GNU tools.",
+        "sourceHead": "6719095ebbd170eefb875c446f6a93a5fe6cf7b9",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
+        "disposition": "Source notices verified; waiting for build prerequisites",
+        "nextAction": "Wait for the first BCR rules_img release containing #811 and the declared Buildkite Bazelisk bootstrap. The five Ruby gems and tar.bzl are verified. The pinned build SDK's component notices are recorded separately; the catalog does not enumerate OCI inputs. The Go docs and server still require GNU tools.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41148839163/artifacts/13021069904",
           "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780",
           "https://github.com/tamird/gvisor/actions/runs/41127231437/artifacts/13011169580",
           "https://github.com/tamird/gvisor/actions/runs/41122472914/artifacts/13009007947",
@@ -37366,6 +37367,14 @@
         }
       },
       "evidence": [
+        {
+          "label": "226-entry Fetch/Verify, both failure controls and SDK inventory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41148839163/artifacts/13021069904"
+        },
+        {
+          "label": "Notice-only revision from the qualified renderer",
+          "url": "https://github.com/tamird/gvisor/compare/7b81fd10a...6719095eb"
+        },
         {
           "label": "278 matching files without the SVG gems; CSS changes without Autoprefixer",
           "url": "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780"
@@ -37798,6 +37807,29 @@
       },
       "updatedAt": "2026-10-30T23:43:49.478418+00:00",
       "status": "Contributor review requested"
+    },
+    {
+      "id": "branch:go-export-direct",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/gvisor",
+      "ref": "research/go-export-direct",
+      "title": "Run the Go export assembler directly",
+      "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb",
+      "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "summary": "The approved #15106 invokes its ZIP writer through a shell. Compare that archive with a direct invocation through bazel_lib before asking for review.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
+        "observedAt": "2026-10-31T00:17:49.384556+00:00",
+        "disposition": "Agent work: archive comparison",
+        "nextAction": "Verify both action graphs and compare the complete ZIP bytes. Keep #15106 at its approved head.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41148869478"
+        ]
+      }
     }
   ],
   "edges": [
@@ -41065,6 +41097,15 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16739",
         "https://github.com/tamird/gvisor/compare/ed3929b26...a2d366673"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:15106",
+      "to": "branch:go-export-direct",
+      "reason": "The Go export target and ZIP assembler are introduced by #15106.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15106"
       ]
     }
   ],
@@ -53425,7 +53466,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-30T19:01:02.657670+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -54262,9 +54303,31 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41107074427/artifacts/13000859718"
             }
           ]
+        },
+        {
+          "text": "On a native ARM64 scratch worker, the ordinary eventfd syscall target stopped at the stock Bash launcher with zero named cases. Using the native launcher and the separate release-copy prerequisite, the same target returned zero: eight tests passed and three skipped. The TestRunner XML and its logs agree. The Actions job later failed while looking for a local ELF; it did not retrieve that executable for separate byte verification.",
+          "evidence": [
+            {
+              "label": "Original two-arm action and XML bundle",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41148677403/artifacts/13022685172"
+            },
+            {
+              "label": "Corrected test on scratch ARM64",
+              "url": "https://app.buildbuddy.io/invocation/a4f2ec0a-533b-4c04-b20a-931dfaaf8b7a"
+            }
+          ]
+        },
+        {
+          "text": "Without a workspace status script, explicit Bazel labels preserved both runsc and package release versions on AMD64 and ARM64. An unlabeled build produced empty versions. Sentry restore compares the saved version for equality, so an unlabeled compatibility identity is needed before removing the script globally.",
+          "evidence": [
+            {
+              "label": "Four-arm release and no-label comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41148061251/artifacts/13021882555"
+            }
+          ]
         }
       ],
-      "nextStep": "Send the Debian layer patch upstream if approved. Compare the complete Jekyll output and serve it, keeping its ordinary build prerequisites separate from the site renderer on the scratch worker.",
+      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Check how unlabeled development binaries can identify incompatible checkpoints before removing the workspace status script. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage.",
       "evidence": [
         {
           "label": "Skylib supplier proposal for shell-free native file copies",
@@ -55377,8 +55440,8 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-29T14:25:26.280531+00:00",
-      "lastReviewedAt": "2026-10-29T14:25:26.280531+00:00",
+      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "lastReviewedAt": "2026-10-31T00:00:00.000000+00:00",
       "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
       "findings": [
         {
@@ -55421,6 +55484,23 @@
             {
               "label": "104 reporting tests and published snapshot",
               "url": "https://github.com/tamird/gvisor/actions/runs/40890716632"
+            }
+          ]
+        },
+        {
+          "text": "The October 31 sweep covered all 111 source revisions accumulated by the tracker and checked current review threads on 54 changed PRs. The approved Go export still invoked a shell, so its direct assembler is a follow-up. Two stale source links in the Rust image fork are fixed. The CORK, gofer and VFIO work now has shared syscall coverage.",
+          "evidence": [
+            {
+              "label": "Go archive follow-up",
+              "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb"
+            },
+            {
+              "label": "Rust link correction",
+              "url": "https://github.com/tamird/gvisor/compare/c82e52cb7...4b21538bf"
+            },
+            {
+              "label": "CORK syscall coverage",
+              "url": "https://github.com/google/gvisor/pull/16671"
             }
           ]
         }
