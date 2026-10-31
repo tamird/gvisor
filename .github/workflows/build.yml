@@ -1,35 +1,115 @@
-name: CI
-
-"on":
+name: Check GNU Sentry arena selection against its original guest and filter
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/sentry-glibc-arena-budget]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      PRODUCT: 9783884fd57fed198622e331c8bc138ae8c35e32
+      REVIEW: 9bcd424e5de0e45a482e5ba5ef3452cc4e328e38
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Verify both actual source changes and the two Linux devices
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse "$PRODUCT^")" = 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa
+          git fetch --depth=2 --no-tags origin refs/heads/research/sentry-cgo-arena-limit
+          test "$(git rev-parse FETCH_HEAD)" = "$REVIEW"
+          a=$(git diff "$PRODUCT^" "$PRODUCT" | git patch-id --stable | cut -d' ' -f1)
+          b=$(git diff "$REVIEW^" "$REVIEW" | git patch-id --stable | cut -d' ' -f1)
+          test -n "$a" && test "$a" = "$b"
+          for head in "$REVIEW" "$PRODUCT"; do
+            test "$(git diff --name-only "$head^" "$head")" = runsc/sandbox/sandbox.go
+          done
+          mkdir -p "$RUNNER_TEMP/receipt"
+          cp test/rbe/tldk_original/{arena-case.py,arena-audit.py,arena-report.py,device.py,recover.py} "$RUNNER_TEMP/"
+          git checkout --detach "$PRODUCT"
+          sudo env PRODUCT="$PRODUCT" RUNNER_TEMP="$RUNNER_TEMP" python3 "$RUNNER_TEMP/device.py"
+          cp "$RUNNER_TEMP/traffic/device.json" "$RUNNER_TEMP/receipt/"
+      - name: Restore original launcher, guest test, Sentry and sidecars by digest
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 "$RUNNER_TEMP/recover.py"
+      - name: Configure the pinned Linux execution platform
+        id: setup
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare --user --map-root-user true
+          test "$(gcc -dumpversion | cut -d. -f1)" = 11
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/images.bazelrc
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=linux-sandbox' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          cat >> "$rc" <<'RC'
+          build --jobs=8
+          build --strategy=ReleaseFiles=linux-sandbox
+          build --strategy=GoStdlib=linux-sandbox
+          build --strategy=GoStdlibList=linux-sandbox
+          build --strategy=GoStandardLibraryAnalysis=linux-sandbox
+          build --strategy=GoStaticAnalysis=linux-sandbox
+          build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache
+          build --noremote_upload_local_results
+          build --remote_download_outputs=toplevel
+          build --nobuild_event_json_file_path_conversion
+          build --noshow_progress
+          RC
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          # The qualified GNU container has its C++ cross compiler; host-routed
+          # C++ actions must instead use the matching GCC on this AMD64 runner.
+          printf '%s\n' 'build --strategy=CppCompile=linux-sandbox' 'build --jobs=3' >> "$rc"
+          if ! command -v aarch64-linux-gnu-gcc >/dev/null; then sudo apt-get -qq update; sudo apt-get -q install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu; fi
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Build only the changed GNU launcher on the exact one-hunk comparison
+        timeout-minutes: 60
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          l=//runsc:runsc-plugin-stack
+          b() { bazelisk "--bazelrc=$RUNNER_TEMP/images.bazelrc" "$@"; }
+          b build --config=x86_64 --config=plugin-tldk --build_event_json_file="$RUNNER_TEMP/candidate-launcher.bep" "$l" > "$RUNNER_TEMP/candidate-launcher.log" 2>&1
+          f=$(b cquery --config=x86_64 --config=plugin-tldk --output=files "$l" 2>"$RUNNER_TEMP/launch-path.log")
+          mkdir "$RUNNER_TEMP/arena-fixed"
+          install -m755 "$f" "$RUNNER_TEMP/arena-fixed/runsc"
+          ln -s "$RUNNER_TEMP/reused/gvisor-bin" "$RUNNER_TEMP/arena-fixed/gvisor-bin"
+      - name: Alternate eight pairs with the same Sentry and real TCP client and server
+        timeout-minutes: 22
+        run: python3 "$RUNNER_TEMP/arena-case.py"
+      - name: Verify the direct upstream-base sandbox package and its analyzer
+        if: always() && !cancelled()
+        timeout-minutes: 90
+        run: |
+          set -euo pipefail
+          git checkout --detach "$REVIEW"
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          bazelisk "--bazelrc=$RUNNER_TEMP/images.bazelrc" test --keep_going --config=x86_64 --test_output=errors --build_event_json_file="$RUNNER_TEMP/reviewed-owner.bep" //runsc/sandbox:sandbox_test //runsc/sandbox:sandbox_nogo > "$RUNNER_TEMP/reviewed-owner.log" 2>&1
+      - name: Reconcile original build and owning test outcomes
+        if: always()
+        run: python3 "$RUNNER_TEMP/arena-report.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: cgo-arena-traffic-and-startup
+          path: ${{ runner.temp }}/receipt
+          if-no-files-found: error
