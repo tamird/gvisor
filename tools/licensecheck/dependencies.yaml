@@ -1059,6 +1059,16 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: iperf
+  version: https://github.com/esnet/iperf/releases/download/3.18/iperf-3.18.tar.gz
+  retrieved: "2026-10-21"
+  commit: 2a2984488d6de8f7a2d1f5938e03ca7be57e227c
+  sha256: c0618175514331e766522500e20c94bfb293b4424eb27d7207fb427b88d20bab
+  license:
+    - BSD-3-Clause
+    - BSD-3-Clause-LBNL
+    - HPND
+    - MIT
 - dependency: k8s.io/api
   version: v0.32.3
   retrieved: "2026-08-27"
@@ -1135,6 +1145,12 @@
   commit: 55f93686c01528224f448c19128836e7df245f72
   sha256: b8cb0ef2dd7f57f18933997c9934bb1fa962594f701cd5a8d3c2c80541559372
   license: MIT
+- dependency: openssl
+  version: https://github.com/openssl/openssl/releases/download/openssl-3.3.1/openssl-3.3.1.tar.gz
+  retrieved: "2026-10-21"
+  commit: db2ac4f6ebd8f3d7b2a60882992fbea1269114e2
+  sha256: 777cd596284c883375a2a7a11bf5d2786fc5413255efab20c50d6ffe6d020b7e
+  license: Apache-2.0
 - dependency: platforms
   version: https://github.com/bazelbuild/platforms/releases/download/1.1.0/platforms-1.1.0.tar.gz
   retrieved: "2026-09-25"
