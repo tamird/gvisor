@@ -82,8 +82,9 @@ for pr in snapshot['prs']:
     if pr['status'] != 'open': continue
     node = nodes.get((pr.get('repo'), pr['number']), {})
     disposition = public_import_disposition(pr, node.get('approvedPatch'), node.get('landedPatch'))
-    plan = reminder_plan(pr, node, datetime.fromisoformat(snapshot['checkedAt'].replace('Z', '+00:00')), snapshot['owner'], frozenset())
-    assert plan['publicImportDisposition'] == disposition
+    reviewers = frozenset(pr.get('maintainerReviewers', []))
+    plan = reminder_plan(pr, node, datetime.fromisoformat(snapshot['checkedAt'].replace('Z', '+00:00')), snapshot['owner'], reviewers)
+    assert plan['publicImportDisposition'] == disposition, pr['url']
     rows.append([pr.get('repo'), pr['number'], disposition])
 print(json.dumps(rows))`;
   const rows = JSON.parse(execFileSync('python3', ['-c', script], {
