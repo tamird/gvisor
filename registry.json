@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T15:23:16.789097+00:00",
+    "updatedAt": "2026-10-31T15:53:13.605957+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1813,7 +1813,7 @@
       "summary": "The source conflict is repaired at e22d4ffb69. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. The GNU amendment remains delivered; the independent musl follow-up keeps its own evidence and scope.\n\nEarlier source-specific record:\n\nThe contributor-approved GNU replacement is published on #15153 at 85c742f25. This revision preserves the approved implementation and applies buildifier attribute ordering. Both ordinary GNU static consumers passed on 7d549676b, and the 203-record license audit remains bound to identical license inputs. No GNU runtime traffic is claimed. The contributor decision is complete; current public checks and the two existing maintainer requests are reported by the provider snapshot. The separate musl candidate ccae8886e has target-specific GNU and musl evidence but remains agent work pending full compiler-consumer proof.\n\nPreserved earlier amendment record:\n\nThe public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
+      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
       "followup": {
         "disposition": "Equivalent conflict repair published; existing review requirements retained",
         "owner": "root",
@@ -1842,6 +1842,14 @@
         }
       },
       "evidence": [
+        {
+          "label": "GNU plugin: same binaries and socket case passed on retry",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41216582843/artifacts/13048790798"
+        },
+        {
+          "label": "GNU plugin: original failing instruction was an openat killed by seccomp; pathname unknown",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41216085608/artifacts/13048471600"
+        },
         {
           "label": "Same GNU binaries and socket test: native and ordinary gVisor pass; TLDK exits before the guest starts",
           "url": "https://github.com/tamird/gvisor/actions/runs/41214352576/artifacts/13046709120"
@@ -33661,15 +33669,23 @@
       "id": "branch:bazel-cpplint",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/bazel-cpplint-bcr-nostamp",
-      "head": "b4720d1975646e4d202ba3f59b7b835cedcdee3b",
-      "title": "Run cpplint once over the repository’s tracked C++ sources",
-      "url": "https://github.com/tamird/gvisor/commit/b4720d1975646e4d202ba3f59b7b835cedcdee3b",
+      "ref": "research/shared-repository-lint",
+      "head": "c464adaff29390ff280a13a7d7fb13938f8934cc",
+      "title": "Run Buildifier and cpplint on declared repository inputs",
+      "url": "https://github.com/tamird/gvisor/commit/c464adaff",
       "group": "analysis",
-      "summary": "One declared action checks the repository, including new packages and dotfiles, with the selected Python and cpplint. The action ran from scratch; the optional bazel test wrapper uses Bash.",
-      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "summary": "One source inventory discovers new BUILD and C++ files across package boundaries. Both checks run as Bazel actions, without per-package hooks or a shell. The standalone extraction includes no packaging or compiler changes.",
+      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
       "status": "Agent work",
       "evidence": [
+        {
+          "label": "Standalone lint prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/c464adaff"
+        },
+        {
+          "label": "Earlier inventory and native actions",
+          "url": "https://github.com/tamird/gvisor/commit/65aa30efd"
+        },
         {
           "label": "All 485 tracked files",
           "url": "https://app.buildbuddy.io/invocation/e5541d9c-bd25-4df5-b852-110de5dc4b49"
@@ -33697,20 +33713,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "3166a17cb14171cd23b30d826eb5d5b299385ac8"
+          "head": "b4720d1975646e4d202ba3f59b7b835cedcdee3b"
         },
         "after": {
-          "head": "b4720d1975646e4d202ba3f59b7b835cedcdee3b"
+          "head": "c464adaff29390ff280a13a7d7fb13938f8934cc"
         }
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "b4720d1975646e4d202ba3f59b7b835cedcdee3b",
-        "observedAt": "2026-10-29T15:46:52.917812+00:00",
+        "sourceHead": "c464adaff29390ff280a13a7d7fb13938f8934cc",
+        "observedAt": "2026-10-31T15:53:13.605957+00:00",
         "disposition": "Agent work",
-        "nextAction": "Use the checked inputs and package configurations in the shared lint design. Do not submit the standalone package hooks or fork-specific driver.",
+        "nextAction": "Validate the two checks together on this standalone source, then propose updating #16663. No maintainer review is needed yet.",
         "evidence": [
-          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
+          "https://github.com/tamird/gvisor/commit/c464adaff",
+          "https://github.com/tamird/gvisor/commit/65aa30efd",
+          "https://app.buildbuddy.io/invocation/e5541d9c-bd25-4df5-b852-110de5dc4b49"
         ]
       }
     },
@@ -39988,6 +40006,91 @@
         "summary": "If a cumulative ACK stops inside a packet that the peer reported receiving in full, Linux retries sooner. A SACK for only the packet’s suffix leaves the usual timeout in place. The same distinction applies when gVisor retransmits a shorter fragment. Submit after #15634.",
         "body": "A receiver under memory pressure can discard data it previously\nreported receiving. If its cumulative ACK stops inside a packet that\nit selectively acknowledged in full, waiting for the retransmission\ntimeout can delay recovery. A SACK for only the tail of that packet\ndoes not establish the same contradiction.\n\nGive the receiver half a round trip (at least 10 ms) to advance its\nACK before retransmitting, as Linux does [1]. Keep enough of the\nreported range to distinguish a whole transmission from a suffix as\nACKs advance. Check the original packet and any shorter retransmission\nduring the existing walk that updates SACK credit.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L2247-L2256"
       }
+    },
+    {
+      "id": "branch:native-gazelle-check",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/native-gazelle-check",
+      "head": "de64c6b62428b11ae47240b753998fc28f43069e",
+      "title": "Run the Gazelle presubmit as a Bazel action",
+      "url": "https://github.com/tamird/gvisor/commit/de64c6b62",
+      "group": "analysis",
+      "summary": "The separate Gazelle check uses the same managed package list and repository map as the fixer. A stale BUILD file produces Gazelle’s diff. Symlinks outside the checkout cannot become inputs; downstream target wildcards do not select the check’s status file.",
+      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
+      "status": "Contributor review requested",
+      "evidence": [
+        {
+          "label": "Clean Gazelle and Buildifier checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41214792711/artifacts/13047825010"
+        },
+        {
+          "label": "Stale BUILD diagnostic and downstream wildcard control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41214197177/artifacts/13047627449"
+        },
+        {
+          "label": "External symlinks excluded from action inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41213227359/artifacts/13046902331"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "de64c6b62428b11ae47240b753998fc28f43069e",
+        "baseHead": "0eb8eca5ba25161133cd6fb8ad5a21604e988b92",
+        "url": "https://github.com/tamird/gvisor/commit/de64c6b62",
+        "title": "Run the Gazelle presubmit as a Bazel action",
+        "requestedAt": "2026-10-31T15:53:13.605957+00:00",
+        "summary": "The separate Gazelle check uses the same managed package list and repository map as the fixer. A stale BUILD file produces Gazelle’s diff. Symlinks outside the checkout cannot become inputs; downstream target wildcards do not select the check’s status file.",
+        "body": "Presubmit runs Gazelle through a shell launcher in the checkout. Run\nthe diff check on its declared inputs so it can execute on a remote\nworker. Collect the managed package files, including embedded data,\nand inherited BUILD directives in the existing lint inventory.\nExclude symlinks so files outside the checkout cannot become inputs.\n\nShare the package list, flags and Bzlmod repository map with the\nin-place fixer. Expose the Gazelle-owned map through a supplier alias\nso bazel mod tidy preserves the dependency. Leave the check and its\nstatus file with the other developer tools, behind the root alias."
+      },
+      "refinement": {
+        "before": {
+          "head": "0eb8eca5ba25161133cd6fb8ad5a21604e988b92"
+        },
+        "after": {
+          "head": "de64c6b62428b11ae47240b753998fc28f43069e"
+        }
+      }
+    },
+    {
+      "id": "branch:fdnotifier-startup",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/fdnotifier-startup",
+      "head": "ff062297311a053e968fc6cdf2b7e98f09854232",
+      "title": "Start the host FD notifier on the first registration",
+      "url": "https://github.com/tamird/gvisor/commit/ff0622973",
+      "group": "runtime",
+      "summary": "With the sentry at its file descriptor limit, pausing unused host notifications panicked. A failed first registration also poisoned later attempts after the limit was restored. Independent Linux processes reproduced both failures; both fixed cases and the existing eventfd consumers pass.",
+      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
+      "status": "Agent work",
+      "evidence": [
+        {
+          "label": "Stock: cold Pause and retried AddFD both fail",
+          "url": "https://app.buildbuddy.io/invocation/7c2fd860-3c8e-4cdf-8d5f-92f56138ca4d"
+        },
+        {
+          "label": "Fixed: both probes and eventfd tests pass",
+          "url": "https://app.buildbuddy.io/invocation/46cfaaeb-0a5d-4d9f-9793-295ec2e8216a"
+        },
+        {
+          "label": "Original receipt: analyzer targets pass, architecture artifacts missing",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41215783485/artifacts/13048276945"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ff062297311a053e968fc6cdf2b7e98f09854232",
+        "observedAt": "2026-10-31T15:53:13.605957+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Recover the four architecture-specific analyzer reports before requesting contributor review.",
+        "evidence": [
+          "https://app.buildbuddy.io/invocation/7c2fd860-3c8e-4cdf-8d5f-92f56138ca4d",
+          "https://app.buildbuddy.io/invocation/46cfaaeb-0a5d-4d9f-9793-295ec2e8216a",
+          "https://github.com/tamird/gvisor/actions/runs/41215783485/artifacts/13048276945"
+        ]
+      }
     }
   ],
   "edges": [
@@ -43281,6 +43384,15 @@
       "evidence": [
         "https://github.com/tamird/gvisor/compare/f96afe457...3d868e9c6"
       ]
+    },
+    {
+      "from": "branch:bazel-cpplint",
+      "to": "branch:native-gazelle-check",
+      "type": "depends_on",
+      "reason": "Both checks use the same first-party source inventory and //tools/lint package.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/de64c6b62"
+      ]
     }
   ],
   "investigations": [
@@ -46174,7 +46286,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
+      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
       "summary": "Parth leads the graph codec. It cut encode time by 82% and decode time by 49% for the four-worker Nginx kernel measured here. The benchmark reloaded both state files. The four round-trip regressions tracked in #16715 are fixed on master (#16747). The open question is whether the graph encoder’s range index costs enough time or memory on a real workload to justify changing it.",
       "findings": [
         {
@@ -49004,8 +49116,16 @@
           ]
         }
       ],
-      "nextStep": "Graph checkpoints are now the default. Measure the object and target tables and temporary array buffers on a real four-worker Nginx Save before choosing an encoder change. Older wire-format results apply only to the wire engine.",
+      "nextStep": "Compare emitting object data in spans with the existing encoder on real four-worker Nginx checkpoints. Check cold and repeated saves separately, reload both formats and compare bytes. No speedup has been established.",
       "evidence": [
+        {
+          "label": "Nginx: 123,446 bytes copied into the 145,519-byte graph; 104 bytes of temporary array data",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41214389529/artifacts/13047653511"
+        },
+        {
+          "label": "Paired encoder experiment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41215920686"
+        },
         {
           "label": "Graph range-index benchstat: dense, sparse and four-worker Nginx",
           "url": "https://tamird.github.io/gvisor/graph-range-index-benchstat.txt"
@@ -58090,7 +58210,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
+      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
       "findings": [
@@ -58202,8 +58322,16 @@
           ]
         }
       ],
-      "nextStep": "The Gazelle check now excludes source symlinks and keeps its output in //tools/lint behind the root alias. Confirm a clean Gazelle run and fix the Buildifier diagnostic before contributor review.",
+      "nextStep": "Review the separate Gazelle check. Validate the standalone shared Buildifier and cpplint prerequisite before amending #16663.",
       "evidence": [
+        {
+          "label": "Gazelle: qualified proposal",
+          "url": "https://github.com/tamird/gvisor/commit/de64c6b62"
+        },
+        {
+          "label": "Shared lint source inventory",
+          "url": "https://github.com/tamird/gvisor/commit/c464adaff"
+        },
         {
           "label": "Source symlink and action-input controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41213227359/artifacts/13046902331"
