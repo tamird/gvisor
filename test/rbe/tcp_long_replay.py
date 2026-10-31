@@ -28,7 +28,12 @@ if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("exe
 runner_exit = int((out/"runner_exit").read_text())
 if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
     why.append("package did not pass or no cases were executed")
-observations = []
+observations = [line[line.index("COOKIE_WS"):].strip() for line in logs.splitlines() if "COOKIE_WS " in line]
+if arm in ("native", "netstack"):
+    for ts, expected in (("true", 128), ("false", 16)):
+        matches = [line for line in observations if f"timestamps={ts} " in line and f"window_field=16 initial_bytes={expected} want_bytes={expected}" in line]
+        if len(matches) != 1:
+            why.append(f"expected one {ts=} observation of {expected} received bytes, found {len(matches)}")
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
