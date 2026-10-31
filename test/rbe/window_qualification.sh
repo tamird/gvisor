@@ -51,7 +51,7 @@ name=stock-build
 record "$STOCK"
 run_bazel build --config=x86_64 -c opt --jobs=32 --remote_download_outputs=toplevel --build_event_json_file="$RUNNER_TEMP/stock.bep" //test/benchmarks/checkpointfile:checkpointfile_test
 mkdir -p "$RUNNER_TEMP/phase-results"
-python3 -B "$RUNNER_TEMP/identify.py" "$RUNNER_TEMP" stock "$STOCK" "$(cat "$d/exit")"
+docker exec tcp-compiler python3 -B "$RUNNER_TEMP/identify.py" "$RUNNER_TEMP" stock "$STOCK" "$(cat "$d/exit")"
 
 name=stock-wire
 record "$STOCK"

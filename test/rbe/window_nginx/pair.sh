@@ -12,7 +12,7 @@ bench() {
   local bin=$1 mode=$2
   taskset -c "$cpu" "$bin" "${flags[@]}" "-test.bench=^BenchmarkStream${mode}$" > "$dir/trial.log" 2>&1 || { tail -38 "$dir/trial.log"; return 1; }
   grep -qx PASS "$dir/trial.log"
-  grep -E '^STREAM-(ARCHIVE|PEER|CAPTURE) ' "$dir/trial.log"
+  grep -Eo 'STREAM-(ARCHIVE|PEER|CAPTURE) .*' "$dir/trial.log"
 }
 bench "$candidate" Capture
 for i in $(seq 0 15); do
