@@ -24,4 +24,6 @@ states={k:re.findall(r"--- "+k+r": (Test[^ (]+) ",text) for k in ("PASS","SKIP",
 record={"source":os.environ["PRODUCT"],"rc":rc,"required":required,"missing":sorted(set(required)-set(states["PASS"])),**states}
 (out/"result.json").write_text(json.dumps(record,indent=2)+"\n")
 print(json.dumps(record))
+if rc:
+    print("\n".join((out/"build.log").read_text(errors="replace").splitlines()[-20:]))
 sys.exit(bool(rc or record["missing"] or states["FAIL"] or states["SKIP"]))

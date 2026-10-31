@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 4
+          fetch-depth: 5
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -38,6 +38,7 @@ jobs:
           unset BUILDBUDDY_API_KEY
           cat >> "$rc" <<'RC'
           build --jobs=8
+          build --strategy_regexp=Compiling.*src/google/protobuf/descriptor[.]cc=linux-sandbox
           build --strategy=ReleaseFiles=linux-sandbox
           build --strategy=GoStdlib=linux-sandbox
           build --strategy=GoStdlibList=linux-sandbox
@@ -77,15 +78,20 @@ jobs:
       - name: Run all nested runsc cases with the permanent Docker test
         if: always() && steps.image.outcome == 'success'
         run: python3 "$RUNNER_TEMP/guests.py" nested
+      - name: Publish the original nested case receipts before the other lane
+        if: always() && steps.image.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nested-integration-c-cases
+          path: ${{ runner.temp }}/results/nested
+          if-no-files-found: error
       - name: Install the selected runsc release from this source
         id: runtime
         if: always() && steps.image.outcome == 'success'
         run: |
           set -euo pipefail
-          dest="$RUNNER_TEMP/runtime"
-          mkdir -p "$dest"
-          export MAKEFLAGS=DOCKER_BUILD=false
-          make -s copy DOCKER_BUILD=false TARGETS=//:release DESTINATION="$dest/" STARTUP_OPTIONS="--bazelrc=$RUNNER_TEMP/images.bazelrc" OPTIONS=--config=x86_64 > "$RUNNER_TEMP/results/release-install.log" 2>&1
+          bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" build --config=x86_64 //:release > "$RUNNER_TEMP/results/release-install.log" 2>&1
+          dest="$(realpath bazel-bin/release)"
           test -x "$dest/runsc"
           test -d "$dest/gvisor-bin"
           sudo "$dest/runsc" install --runtime=integration-c -- --platform=systrap --net-raw >> "$RUNNER_TEMP/results/release-install.log" 2>&1
