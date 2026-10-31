@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -21,4 +21,10 @@ go_library(
         "@com_github_moby_sys_capability//:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+go_test(
+    name = "arena_probe_test",
+    srcs = ["arena_probe_test.go"],
+    embed = [":sandboxposture"],
 )
