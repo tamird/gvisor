@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T19:36:28.936+00:00",
+    "updatedAt": "2026-10-31T19:51:53.969+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28828,8 +28828,8 @@
       "url": "https://github.com/google/gvisor/pull/16496",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
-      "summary": "The permission fixture now exercises EACCES even on privileged workers. All 156 cgroup cases and the raw-socket test passed on AMD64 and ARM64, without skips.",
+      "updatedAt": "2026-10-31T19:51:53.969+00:00",
+      "summary": "The approved source removes the cgroup test’s local tag. Copybara #16542 keeps it, preventing Bazel from generating the test main on AMD64 and ARM64 remote workers. A comment asking Lucas to fix the import is ready.",
       "followup": {
         "owner": "root",
         "sourceHead": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
@@ -28947,6 +28947,14 @@
       },
       "evidence": [
         {
+          "label": "Imported diff: local tag is retained",
+          "url": "https://github.com/google/gvisor/pull/16542/files"
+        },
+        {
+          "label": "Both affected runsc builds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41231932306/artifacts/13055965081"
+        },
+        {
           "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
         },
@@ -28971,7 +28979,17 @@
           "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b"
         }
       },
-      "number": 16496
+      "number": 16496,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+        "url": "https://github.com/google/gvisor/pull/16496",
+        "title": "Ask Lucas to correct the imported cgroup test",
+        "requestedAt": "2026-10-31T19:51:53.969+00:00",
+        "summary": "Post the tested difference? The approved source removes the local tag but the import keeps it. It blocks the runsc builds on both remote architectures.",
+        "body": "@manninglucas, [the import](https://github.com/google/gvisor/pull/16542/files) includes the capability fix from the approved head, but keeps `tags = [\"local\"]` on `//runsc/cgroup:cgroup_test`. The [source change](https://github.com/google/gvisor/pull/16496/files) removes that line. With it present Bazel cannot even generate the test’s Go main on a remote worker ([AMD64](https://app.buildbuddy.io/invocation/34735724-4f08-4272-8288-1c81321339c4); [both architectures](https://github.com/tamird/gvisor/actions/runs/41231932306/artifacts/13055965081)).\n\nCould you remove the local tag in the internal change before it lands? The import already points to the head you approved.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "pr:16505",
@@ -37891,9 +37909,25 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T10:05:06.692493+00:00",
-      "summary": "Two posting decisions remain independent. One concerns the Go memory limit selected at boot under a constrained ancestor. The other covers restore after a cgroup resize and its OOM-counter test. Each draft is shown separately below.",
+      "updatedAt": "2026-10-31T19:51:53.969+00:00",
+      "summary": "The resize and wrong-cgroup-path findings are ready for one inline review. A sandbox started at 2 GiB and lowered to 200 MiB used a 1,023 MiB Go limit and was OOM-killed. Reading the current limit let both restores finish. The ancestor-limit boot review remains a separate decision.",
       "evidence": [
+        {
+          "label": "Restore after resize: OOM and matched control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41235041675/artifacts/13055480274"
+        },
+        {
+          "label": "Read the live limit on Restore",
+          "url": "https://github.com/tamird/gvisor/commit/07696b6af"
+        },
+        {
+          "label": "Both corrected restores at 200 MiB",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41235711507/artifacts/13055496610"
+        },
+        {
+          "label": "Save-phase OOM and cgroup counter evidence",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41235498081/artifacts/13055292180"
+        },
         {
           "label": "Boot review: nested 512 MiB and 256 MiB controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885"
@@ -37953,8 +37987,8 @@
         "head": "874db9fce52716e00f0acb2ab0bd8bc893afbe8c",
         "url": "https://github.com/google/gvisor/pull/16735/files#diff-90e781a80cf5f39deaf2f50f0040406c0b5237af8a8db5ce25a9ad4017091fb3R271",
         "title": "Post the restore OOM and test-counter review",
-        "summary": "After a sandbox was resized from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel recorded an OOM kill. The test also reads a cgroup directory while discarding the error. Posting these two comments requires its own approval.",
-        "body": "On `pkg/sentry/state/state.go`, at the call to `gccontrol.Suspend` in `SuspendGCForRestore`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? `MaximumTotalMemoryBytes` is set when the sandbox is created. On `9d3e6518a`, I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91). A [candidate that reads the current limit](https://github.com/tamird/gvisor/commit/18b3427c1) restored [both copies](https://github.com/tamird/gvisor/actions/runs/41152797282/artifacts/13023434512) under the 200 MiB ceiling. The limit selection is unchanged at `874db9fce`. Both [10,000-file saves](https://github.com/tamird/gvisor/actions/runs/41153967310/artifacts/13024262603) succeeded under that same ceiling, but the resized sandbox again selected a 1,024 MiB Go soft limit while the sandbox created at 200 MiB selected 100 MiB.\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
+        "summary": "Post the two inline findings? A resized sandbox was OOM-killed at restore; the test reads a cgroup directory instead of memory.events. Reading the live bound let both 200 MiB restores complete.",
+        "body": "On the call to gccontrol.Suspend in SuspendGCForRestore:\n\n@parth-opensrc, this uses the limit from sandbox creation. If the user lowers the limit before restore, the kernel enforces the new value but GC still budgets against the old one.\n\nI saved the existing 50,000-file workload under 2 GiB in both cases and restored it with memory.max at 200 MiB. Creating the restore sandbox at 200 MiB gave Go a 99 MiB limit and restore succeeded. Creating it at 2 GiB and lowering it with Container.Update before Restore gave Go a 1,023 MiB limit. The restore RPC returned EOF and memory.events recorded one OOM kill, versus zero in the control. The [test output and cgroup counters](https://github.com/tamird/gvisor/actions/runs/41235041675/artifacts/13055480274) are from the same run.\n\n[Reading the limit when the host sends Restore](https://github.com/tamird/gvisor/commit/07696b6af) let [both restores finish](https://github.com/tamird/gvisor/actions/runs/41235711507/artifacts/13055496610) with a Go limit of about 99 MiB and no OOM kills. Could Restore use that current bound? Checkpoint uses the same cached value. If the host cannot supply a current bound, keeping ordinary GC enabled would avoid suspending it against a limit that may no longer exist.\n\nPosted by Codex on behalf of @tamird.\n\nOn the read of memory.events in the restore test:\n\n@parth-opensrc, on cgroup v2, MakePath takes a controller name and returns the cgroup directory regardless of that argument [1]. Both Stat calls here therefore succeed as long as the directory exists, even if memory.swap.max is missing. The failure diagnostic later tries to ReadFile the directory, too, so it drops the OOM counters when restore fails.\n\nCould these use filepath.Join(probe.MakePath(\"\"), \"memory.max\") (and similarly for memory.swap.max and memory.events)? That makes the optional swap check and the OOM report inspect the intended files. If skipping systems without the memory controller is required, Install can itself fail before these checks.\n\nThere is a second reason to read those counters on failure: with the 200 MiB cap applied during fixture setup, the [sentry was OOM-killed during Save](https://github.com/tamird/gvisor/actions/runs/41235498081/artifacts/13055292180) before this test reached Restore. The same happened with ordinary GC; on this worker the proposed policy declined to suspend anyway. Giving only the checkpoint writer 2 GiB let the restore assertion run against a real 200 MiB cap.\n\n[1]: https://github.com/google/gvisor/blob/874db9fce/runsc/cgroup/cgroup_v2.go#L436\n\nPosted by Codex on behalf of @tamird."
       },
       "head": "874db9fce52716e00f0acb2ab0bd8bc893afbe8c",
       "additionalReviews": [
@@ -40357,14 +40391,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/sentry-cgo-arena-limit",
-      "head": "c5a4f9fb9024c882b4d291ab9710a5dce637e0cf",
-      "url": "https://github.com/tamird/gvisor/tree/research/sentry-cgo-arena-limit",
-      "title": "Set the glibc arena limit before Sentry startup",
+      "head": "799775e4b7d4719c59acaffffb945869ff516425",
+      "url": "https://github.com/tamird/gvisor/commit/799775e4b",
+      "title": "Set the glibc arena limit before starting the Sentry",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T17:39:47.195+00:00",
-      "summary": "After seccomp, glibc tried to open the host CPU list to size its malloc arenas. All eight stock GNU plugin sandboxes were killed there; all eight configured sandboxes exchanged data on the same two-way TCP workload. The limit follows launch-time CPU affinity. The control never started successfully, so these runs provide no startup-cost comparison. The pure/cgo environment check is still running.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T19:51:53.969+00:00",
+      "summary": "The original network-plugin Sentry was killed in glibc on both starts. Setting its malloc arena limit allowed the same Sentry to complete both two-way TCP exchanges. Installed pure and race startup checks passed; there was no successful control start for a timing comparison.",
       "evidence": [
+        {
+          "label": "Two paired plugin starts and installed pure/race environments",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41229847718/artifacts/13055491752"
+        },
+        {
+          "label": "Sandbox package, posture tests and analyzer",
+          "url": "https://app.buildbuddy.io/invocation/c0c96bd4-172b-4e42-80d3-c39088af7584"
+        },
+        {
+          "label": "Standalone allocator fix",
+          "url": "https://github.com/tamird/gvisor/commit/799775e4b"
+        },
         {
           "label": "Revised source with posture expectations",
           "url": "https://github.com/tamird/gvisor/commit/c5a4f9fb9"
@@ -40389,7 +40435,26 @@
           "label": "Real pure/cgo root environment check",
           "url": "https://github.com/tamird/gvisor/actions/runs/41220920008"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "c5a4f9fb9024c882b4d291ab9710a5dce637e0cf"
+        },
+        "after": {
+          "head": "799775e4b7d4719c59acaffffb945869ff516425"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "799775e4b7d4719c59acaffffb945869ff516425",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/799775e4b",
+        "title": "Set the glibc arena limit before starting the Sentry",
+        "summary": "Open the standalone allocator fix? It needs no broader compiler or DPDK change.",
+        "requestedAt": "2026-10-31T19:51:53.969+00:00",
+        "body": "A Sentry using the network plugin can die before the first guest process\nstarts. On a new C thread, free initialized glibc's thread cache and\nrequested a malloc arena. To choose its arena limit, glibc tried to open\n/sys/devices/system/cpu/online. The Sentry had already installed seccomp\nand was killed on openat. This happened with both the public builder [1]\nand the GNU plugin build in #15153 [2].\n\nSet MALLOC_ARENA_MAX for a Sentry that may use cgo. Use eight arenas per\nCPU available to runsc at startup, glibc's usual 64-bit multiplier [3].\nRestricted affinity can give a lower ceiling than counting every online\nCPU. The Sentry gains no filesystem access or syscall permissions.\n\nKeep GLIBC_TUNABLES for rseq. When given both settings in that variable,\nglibc 2.35 overwrote the separator in the original environment. Using a\nseparate variable preserved both entries in /proc on an installed race\nSentry. The installed pure Sentry had neither entry; both passed\nTestSandboxProcessEnv [4].\n\nIn two alternating pairs, the original launcher died on the same openat\nboth times. With MALLOC_ARENA_MAX set, the identical GNU Sentry passed\nthe two-way TCP exchange in TestConnectToSelf both times [4]. An earlier\neight-pair comparison saw the same result with the combined spelling\n[5]. Neither comparison had a successful control start from which to\nestimate a startup-time change.\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41220920008/artifacts/13052468883\n[2]: https://github.com/tamird/gvisor/actions/runs/41218606094/artifacts/13049226211\n[3]: https://github.com/bminor/glibc/blob/bb59339d0/manual/tunables.texi#L215-L227\n[4]: https://github.com/tamird/gvisor/actions/runs/41229847718/artifacts/13055491752\n[5]: https://github.com/tamird/gvisor/actions/runs/41219191400/artifacts/13050471603"
+      }
     },
     {
       "id": "branch:checkpoint-memory-file-registration",
@@ -40515,9 +40580,17 @@
       "url": "https://github.com/tamird/gvisor/tree/review/buildkite-native-packages",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-31T19:04:25.739+00:00",
-      "summary": "Both Buildkite pipelines keep their pkg and runsc target selections. The compile steps invoke Bazel directly, so Make no longer starts a Docker builder or queries output paths the pipelines discard. Source review is complete. A four-arm run is qualifying the change with the declared compiler.",
+      "updatedAt": "2026-10-31T19:51:53.969+00:00",
+      "summary": "Both pkg builds passed on plain Ubuntu (AMD64 and ARM64). Both runsc builds stopped at the cgroup test’s local tag. The approved source in #16496 removes that tag; the runsc-only job is checking both architectures with that repair.",
       "evidence": [
+        {
+          "label": "Two passing pkg builds and the blocked runsc builds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41231932306/artifacts/13055965081"
+        },
+        {
+          "label": "Runsc-only check with #16496 on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41235961062"
+        },
         {
           "label": "Production pipeline changes",
           "url": "https://github.com/tamird/gvisor/commit/15f6eb9c5"
