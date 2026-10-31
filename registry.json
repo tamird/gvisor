@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T07:18:55.041730+00:00",
+    "updatedAt": "2026-10-31T07:25:46.494761+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38938,20 +38938,20 @@
       "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T07:18:55.041730+00:00",
+      "status": "Contributor review",
+      "updatedAt": "2026-10-31T07:25:46.494761+00:00",
       "url": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
-      "summary": "The fully static ARM64 sender trapped while cancelling its network thread after transferring data. Both endpoints now use the published Ubuntu C runtime. Native AMD64 and ARM64 completed forward and four-way reverse transfers. iperf2 and iperf3 use incompatible protocols. Both endpoints move together.",
+      "summary": "The fully static ARM64 sender trapped while cancelling its network thread after transferring data. Both endpoints now use the published Ubuntu C runtime. Native AMD64 and ARM64 completed forward and four-way reverse transfers. iperf2 and iperf3 use incompatible protocols. Both endpoints move together. On native ARM64 the Go benchmark also reported positive sender bandwidth in all eight upload and download cases, with 1, 4, 16 and 64 connections. The AMD64 Go benchmark ran on the preceding Jammy image.",
       "followup": {
         "owner": "Build and release",
         "sourceHead": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
-        "observedAt": "2026-10-31T07:18:55.041730+00:00",
-        "disposition": "Collect the eight native ARM64 Go cases",
-        "nextAction": "Verify the normal Go benchmark on the ARM64 machine. The earlier runner lacked the x86 cross-compiler required for the second vDSO.",
+        "observedAt": "2026-10-31T07:25:46.494761+00:00",
+        "disposition": "Review the runtime and packaging",
+        "nextAction": "Open the standalone image after its review, disposition of the two-line metrics change, and acceptance of its license identifiers from held #15146.",
         "evidence": [
+          "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
-          "https://github.com/tamird/gvisor/actions/runs/41177931871",
-          "https://github.com/tamird/gvisor/actions/runs/41175040549/artifacts/13033728082"
+          "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034547712"
         ]
       },
       "refinement": {
@@ -38963,6 +38963,10 @@
         }
       },
       "evidence": [
+        {
+          "label": "All eight named Go benchmark cases on the final native ARM64 runtime, no skips",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034547712"
+        },
         {
           "label": "Native ARM64 client originally trapped during pthread cancellation",
           "url": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032063746"
@@ -38999,7 +39003,16 @@
           "label": "The shared public OpenSSL source label",
           "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033808570"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "baseHead": "6e6276344dce3728a09a8271c8360269e7d881a4",
+        "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
+        "url": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
+        "title": "Review the iperf3 runtime and image packaging",
+        "summary": "Build the BCR iperf3 executable and use the Ubuntu Jammy runtime for both endpoints. The original fully static ARM64 sender aborted after transfer. Switching both endpoints from iperf2 changes the protocol and benchmark baseline. The three Go files are identical to the prior image revision. Its outstanding two-line metrics decision remains separate."
+      }
     }
   ],
   "edges": [
