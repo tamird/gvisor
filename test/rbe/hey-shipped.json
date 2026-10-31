@@ -1,0 +1,44 @@
+{
+  "benchmarks/hey_x86_64": {
+    "manifest": "sha256:4ee056774685f11df9503e9e67db54d5fcb1a9c9d9ffa9afa3b1ce93bb9e02b0",
+    "layers": [
+      {
+        "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+        "size": 30651398,
+        "digest": "sha256:1d0c5c3a85905b425efa55b278a29ee6685814847d91ad32fc91490cabe886ed"
+      },
+      {
+        "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+        "size": 1409475,
+        "digest": "sha256:fd5e3b9c44e9bceabe6d5ceca19fc4117e950335d76b6b4df5c046f038fa9dd6"
+      },
+      {
+        "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+        "size": 6305342,
+        "digest": "sha256:10ee8e410095f2a0cde1a547b8703fcea2b2aef39c0ba3ebea953a1719c336c7"
+      }
+    ],
+    "total": 38366215
+  },
+  "benchmarks/hey_aarch64": {
+    "manifest": "sha256:d32f00afa51baf4ab2010fd9e240cefd7b4f86b2b1028e70d892c298e972dc92",
+    "layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:119d19e001bafa21919289095e1dbfac64f1e16d2469dd14c2d2a520039d26d9",
+        "size": 27613184
+      },
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:a9bb4ae8e8d200fb3ce3f7d669a6296c1a144ae68144e137fee840613fda67c1",
+        "size": 1383035
+      },
+      {
+        "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+        "digest": "sha256:83730ac730317d9ad86ee40701bd6a49f818b376edc7455e4a9745146665c2d3",
+        "size": 5798457
+      }
+    ],
+    "total": 34794676
+  }
+}

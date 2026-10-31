@@ -38,3 +38,10 @@ go_test(
     ],
     embed = [":tools"],
 )
+
+go_test(
+    name = "hey_image_test",
+    srcs = ["hey_image_test.go"],
+    embed = [":tools"],
+    tags = ["manual"],
+)
