@@ -12,26 +12,12 @@ _platform_support_env_vars = {
 }
 
 def _runner_test_impl(ctx):
-    # Generate a runner binary.
     runner = ctx.actions.declare_file(ctx.label.name)
-    setup = ""
-    if ctx.attr.requires_atime:
-        setup = "%s --require-atime " % ctx.executable._setup_container.short_path
-    runner_content = "\n".join([
-        "#!/bin/bash",
-        "set -euf -x -o pipefail",
-        "if [[ -n \"${TEST_UNDECLARED_OUTPUTS_DIR}\" ]]; then",
-        "  mkdir -p \"${TEST_UNDECLARED_OUTPUTS_DIR}\"",
-        "  chmod a+rwx \"${TEST_UNDECLARED_OUTPUTS_DIR}\"",
-        "fi",
-        "exec %s%s %s \"$@\" %s\n" % (
-            setup,
-            ctx.files.runner[0].short_path,
-            " ".join(ctx.attr.runner_args),
-            ctx.files.test[0].short_path,
-        ),
-    ])
-    ctx.actions.write(runner, runner_content, is_executable = True)
+    ctx.actions.symlink(
+        output = runner,
+        target_file = ctx.executable._setup_container,
+        is_executable = True,
+    )
 
     # Return with all transitive files.
     runfiles = ctx.runfiles(
@@ -44,10 +30,15 @@ def _runner_test_impl(ctx):
         collect_default = True,
         collect_data = True,
     )
-    if ctx.attr.requires_atime:
-        runfiles = runfiles.merge(ctx.attr._setup_container[DefaultInfo].default_runfiles)
-        runfiles = runfiles.merge(ctx.runfiles(files = [ctx.executable._setup_container]))
-    return [DefaultInfo(executable = runner, runfiles = runfiles)]
+    runfiles = runfiles.merge(ctx.attr._setup_container[DefaultInfo].default_runfiles)
+    runfiles = runfiles.merge(ctx.runfiles(files = [ctx.executable._setup_container]))
+    return [
+        DefaultInfo(executable = runner, runfiles = runfiles),
+        RunEnvironmentInfo(environment = {
+            "GVISOR_SYSCALL_TEST_BINARY": ctx.files.test[0].short_path,
+            "GVISOR_SYSCALL_TEST_RUNNER": ctx.files.runner[0].short_path,
+        }),
+    ]
 
 _runner_test = rule(
     attrs = {
@@ -56,10 +47,6 @@ _runner_test = rule(
         ),
         "test": attr.label(
             mandatory = True,
-        ),
-        "runner_args": attr.string_list(),
-        "requires_atime": attr.bool(
-            doc = "Enable host-backed atime updates; requires CAP_SYS_ADMIN on noatime mounts.",
         ),
         "_setup_container": attr.label(
             default = "//test/runner/setup_container",
@@ -211,13 +198,14 @@ def _syscall_test(
     if platform == "ptrace":
         runner_args.append("--trace")
 
-    # Call the rule above.
+    launch_args = ["--syscall-test"]
+    # Native always uses a host directory; FUSE variants use guest tmpfs.
+    if requires_atime and (platform == "native" or not use_tmpfs):
+        launch_args.append("--require-atime")
     _runner_test(
         name = name,
         test = test,
-        # Native always uses a host directory; FUSE variants use guest tmpfs.
-        requires_atime = requires_atime and (platform == "native" or not use_tmpfs),
-        runner_args = runner_args,
+        args = launch_args + runner_args + kwargs.pop("args", []),
         tags = tags,
         **kwargs
     )
