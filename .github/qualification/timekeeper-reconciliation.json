@@ -1,0 +1,68 @@
+{
+  "artifact": "https://github.com/tamird/gvisor/actions/runs/41208308900/artifacts/13046255289",
+  "sha256": "bf9d004670b6acaab42d3e36358c9947d964e82661f9d467c3363d737a864757",
+  "originalWorkflowConclusion": "failure",
+  "originalVerdictAt": "2026-10-31T14:20:58.082317+00:00",
+  "originalFailedArms": [
+    "unguarded"
+  ],
+  "target": "//pkg/sentry/kernel:kernel_nogo",
+  "arms": {
+    "normal": {
+      "source": "630c779cfcee2188fb4e39a64f06db875f8d9440",
+      "start": "2026-10-31T14:03:34.027287+00:00",
+      "completed": "2026-10-31T14:20:05.132405+00:00",
+      "verdictAt": "2026-10-31T14:20:05.186347+00:00",
+      "exit": 0,
+      "summaries": [
+        "PASSED"
+      ],
+      "invocations": [
+        "https://app.buildbuddy.io/invocation/263ed832-c192-4fab-b08c-e8cc6b556779"
+      ],
+      "originalVerified": true,
+      "rawTestLogSHA256": "c5ff9effd07e26c24cec7c615e612a84ea5c0782533e011099aa4fdadf632935",
+      "architectures": {
+        "arm64": {
+          "status": "PASS",
+          "findings": {}
+        },
+        "amd64": {
+          "status": "PASS",
+          "findings": {}
+        }
+      }
+    },
+    "unguarded": {
+      "source": "390e82f7879af2b2cabfde92dc49cfa26c70624c",
+      "start": "2026-10-31T14:20:05.229662+00:00",
+      "completed": "2026-10-31T14:20:57.903559+00:00",
+      "verdictAt": "2026-10-31T14:20:57.956011+00:00",
+      "exit": 3,
+      "summaries": [
+        "FAILED"
+      ],
+      "invocations": [
+        "https://app.buildbuddy.io/invocation/1caf427e-2505-40be-b38b-1caa3250201f"
+      ],
+      "originalVerified": false,
+      "rawTestLogSHA256": "54e869e5d4eb8526e8daea1ad17bb8110f01ae9ccf0283cb23485344e80c95f1",
+      "architectures": {
+        "arm64": {
+          "status": "EXPECTED_FAILURE",
+          "findings": {
+            "checklocks: pkg/sentry/kernel/timekeeper.go:392:12: must hold t.updateMu exclusively (&(*({freevar:t}).updateMu)) to call update, but not held (locks: no locks held) (GOOARCH=arm64, GOOS=linux)": 4
+          }
+        },
+        "amd64": {
+          "status": "EXPECTED_FAILURE",
+          "findings": {
+            "checklocks: pkg/sentry/kernel/timekeeper.go:392:12: must hold t.updateMu exclusively (&(*({freevar:t}).updateMu)) to call update, but not held (locks: no locks held) (GOOARCH=amd64, GOOS=linux)": 4
+          }
+        }
+      }
+    }
+  },
+  "reconciledAt": "2026-10-31T14:29:12.269183+00:00",
+  "remainingIntervention": "Include the one-line annotation in the next checklocks batch. No runtime fix or Bazel rerun."
+}
