@@ -1133,3 +1133,153 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestRACKTLPAfterTLPResponse tests that after the congestion response to a
+// retransmitted tail loss probe (RFC 8985, section 7.4.2), the sender can
+// schedule a loss probe again. Two new segments are sent after the probe, the
+// first is acknowledged and the second is lost: a loss probe, not the RTO,
+// must repair it.
+func TestRACKTLPAfterTLPResponse(t *testing.T) {
+	const (
+		rtt = 10 * time.Millisecond
+		// probeLimit allows 2*SRTT plus the 200 ms delayed-ACK allowance for
+		// one outstanding segment, with slack. The RTO is 3 s, the minimum
+		// the test context sets.
+		_ = 500 * time.Millisecond
+	)
+	for _, tc := range []struct {
+		name                 string
+		early, advance, hole bool
+	}{
+		{name: "pending"},
+		{name: "later", advance: true},
+		{name: "earlier", early: true, advance: true},
+		{name: "hole", advance: true, hole: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			states := make(chan tcp.TCPSenderState, 256)
+			probe := func(s *tcp.TCPEndpointState) {
+				select {
+				case states <- s.Sender:
+				default:
+				}
+			}
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: uint32(mtu), Clock: clock, Probe: probe})
+			defer c.Cleanup()
+
+			e2e.SetStackSACKPermitted(t, c, true)
+			c.CreateConnectedWithOptions(header.TCPSynOptions{SACKPermitted: c.SACKEnabled(), TS: true}, 0 /* delay */)
+
+			seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+			// ack sends an ACK of n bytes and waits until the sender has
+			// processed it.
+			ack := func(n int) tcp.TCPSenderState {
+				t.Helper()
+				for len(states) > 0 {
+					<-states
+				}
+				c.SendAck(seq, n)
+				select {
+				case s := <-states:
+					return s
+				case <-time.After(5 * time.Second):
+					t.Fatalf("timed out waiting for the ACK of %d bytes", n)
+					return tcp.TCPSenderState{}
+				}
+			}
+			data := make([]byte, 5*maxPayload)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			write := func(from, to int) {
+				t.Helper()
+				if _, err := c.EP.Write(bytes.NewReader(data[from:to]), tcpip.WriteOptions{}); err != nil {
+					t.Fatalf("Write failed: %s", err)
+				}
+			}
+			// nextData advances the clock 1 ms at a time until the sender
+			// sends data, and returns the data's offset and the time taken.
+			nextData := func(limit time.Duration) (int, time.Duration) {
+				t.Helper()
+				for elapsed := time.Duration(0); elapsed < limit; {
+					clock.Advance(time.Millisecond)
+					elapsed += time.Millisecond
+					for v := c.GetPacketNonBlocking(); v != nil; v = c.GetPacketNonBlocking() {
+						tcpHdr := header.TCP(header.IPv4(v.AsSlice()).Payload())
+						offset := int(c.IRS.Add(1).Size(seqnum.Value(tcpHdr.SequenceNumber())))
+						n := len(tcpHdr.Payload())
+						v.Release()
+						if n > 0 {
+							return offset, elapsed
+						}
+					}
+				}
+				t.Fatalf("no data sent within %v", limit)
+				return 0, 0
+			}
+
+			// Measure the RTT with one segment.
+			write(0, maxPayload)
+			c.ReceiveAndCheckPacketWithOptions(data, 0, maxPayload, e2e.TSOptionSize)
+			clock.Advance(rtt)
+			ack(maxPayload)
+
+			// The next segment is lost, and the PTO retransmits it as the
+			// probe.
+			write(maxPayload, 2*maxPayload)
+			c.ReceiveAndCheckPacketWithOptions(data, maxPayload, maxPayload, e2e.TSOptionSize)
+			if off, _ := nextData(time.Second); off != maxPayload {
+				t.Fatalf("got the probe at offset %d, want a retransmission at %d", off, maxPayload)
+			}
+
+			writeNew := func() {
+				t.Helper()
+				end := 4 * maxPayload
+				if tc.hole {
+					end += maxPayload
+				}
+				write(2*maxPayload, end)
+				for from := 2 * maxPayload; from < end; from += maxPayload {
+					c.ReceiveAndCheckPacketWithOptions(data, from, maxPayload, e2e.TSOptionSize)
+				}
+			}
+			if tc.early {
+				writeNew()
+			}
+			// The ACK of the probe can be for either copy.
+			clock.Advance(rtt)
+			ack(2 * maxPayload)
+			if !tc.early {
+				writeNew()
+			}
+			// The first new segment is acknowledged, and the second is lost.
+			if tc.advance {
+				clock.Advance(rtt)
+				if tc.hole {
+					for len(states) > 0 {
+						<-states
+					}
+					start := c.IRS.Add(4*maxPayload + 1)
+					c.SendAckWithSACK(seq, 3*maxPayload, []header.SACKBlock{{Start: start, End: start.Add(maxPayload)}})
+					select {
+					case <-states:
+					case <-time.After(5 * time.Second):
+						t.Fatal("waiting for ACK with SACK")
+					}
+				} else {
+					ack(3 * maxPayload)
+				}
+			}
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatalf("GetSockOpt failed: %v", err)
+			}
+			// The response to the probe counts as one SACK recovery.
+			stats := c.Stack().Stats().TCP
+			sack, tlp := stats.SACKRecovery.Value(), stats.TLPRecovery.Value()
+			off, elapsed := nextData(2 * info.RTO)
+			fmt.Printf("TLP_EPISODE %s offset=%d elapsed_ms=%d timeouts=%d state=%d sack=%d tlp=%d\n", tc.name, off, elapsed.Milliseconds(), stats.Timeouts.Value(), info.CcState, sack, tlp)
+		})
+	}
+}
