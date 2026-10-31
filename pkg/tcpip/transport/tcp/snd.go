@@ -649,23 +649,15 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// the data we transmit.
 	s.Outstanding = 0
 
-	// Expunge all SACK information as per https://tools.ietf.org/html/rfc6675#section-5.1
-	//
-	//  In order to avoid memory deadlocks, the TCP receiver is allowed to
-	//  discard data that has already been selectively acknowledged. As a
-	//  result, [RFC2018] suggests that a TCP sender SHOULD expunge the SACK
-	//  information gathered from a receiver upon a retransmission timeout
-	//  (RTO) "since the timeout might indicate that the data receiver has
-	//  reneged." Additionally, a TCP sender MUST "ignore prior SACK
-	//  information in determining which data to retransmit."
-	//
-	// NOTE: We take the stricter interpretation and just expunge all
-	// information as we lack more rigorous checks to validate if the SACK
-	// information is usable after an RTO.
-	s.ep.scoreboard.Reset()
-	s.SackedOut = 0
-	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-		seg.sackCredit = 0
+	// The peer may discard selectively acknowledged data. If its cumulative
+	// ACK stopped at a byte it had already reported, retransmit those bytes
+	// too. Otherwise the outstanding hole does not invalidate later SACKs.
+	if s.ep.scoreboard.IsSACKED(header.SACKBlock{Start: s.SndUna, End: s.SndUna.Add(1)}) {
+		s.ep.scoreboard.Reset()
+		s.SackedOut = 0
+		for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+			seg.sackCredit = 0
+		}
 	}
 	s.updateWriteNext(s.writeList.Front())
 
