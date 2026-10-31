@@ -1,6 +1,6 @@
 set -euo pipefail
 r="$RUNNER_TEMP/wrk2/consumer"; mkdir -p "$r"; exec > >(tee "$r/coordinator.log") 2>&1
-git checkout -q --detach 46c4aab9a3cc572b0554bb60b5e9d6080b4c1aca
+git checkout -q --detach 3fbd95b13b4b2fbae349c1202e68e4d45df8fd69
 git rev-parse HEAD >"$r/source"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 label=//test/kubernetes/benchmarks/httpbench:wrk2_test

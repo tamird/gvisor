@@ -4,10 +4,12 @@ case "$arm" in x86_64) arch=amd64;; aarch64) arch=arm64;; *) exit 2;; esac
 r="$RUNNER_TEMP/wrk2/$arm"
 mkdir -p "$r"
 exec > >(tee "$r/coordinator.log") 2>&1
-git checkout -q --detach 106d6799384d037b2bd6359463603c5752a24a56
+git checkout -q --detach 3fbd95b13b4b2fbae349c1202e68e4d45df8fd69
 git rev-parse HEAD >"$r/source"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
 export MAKEFLAGS=DOCKER_BUILD=false
+bz cquery --notool_deps --noimplicit_deps --config="$arm" --output=label 'deps(@wrk2//:wrk2)' >"$r/source-dependencies"
+if grep -E '^(@@?zlib[+~/]|@@?zlib//)' "$r/source-dependencies"; then exit 1; fi
 make -s rebuild-benchmarks_wrk2 ARCH="$arm" DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$RUNNER_TEMP/images.bazelrc"
 tag=gvisor.dev/images/benchmarks/wrk2:latest
 docker image inspect "$tag" --format '{{.Architecture}} {{json .Config.Cmd}} {{.Size}}' >"$r/image"
@@ -18,9 +20,9 @@ listener=
 cleanup() { [[ -z "$listener" ]] || kill "$listener" 2>/dev/null || :; rm -rf "$work"; }
 trap cleanup EXIT
 docker image save -o "$work/image.tar" "$tag"
-bz build --config="$arm" @wrk2//:LICENSE @wrk2//:NOTICE @luajit//:COPYRIGHT @openssl//:LICENSE.txt @zlib//:LICENSE
+bz build --config="$arm" @wrk2//:LICENSE @wrk2//:NOTICE @luajit//:COPYRIGHT @openssl//:LICENSE.txt
 root=$(bz info execution_root)
-for label in @wrk2//:LICENSE @wrk2//:NOTICE @luajit//:COPYRIGHT @openssl//:LICENSE.txt @zlib//:LICENSE; do
+for label in @wrk2//:LICENSE @wrk2//:NOTICE @luajit//:COPYRIGHT @openssl//:LICENSE.txt; do
   f=$(bz cquery --config="$arm" --output=files "$label")
   name=${label#@}; name=${name//\/\/:/\/}
   printf '%s\t%s\n' "$name" "$root/$f"
@@ -43,9 +45,13 @@ with tarfile.open(w/'image.tar') as image:
 assert set(data)=={'usr/bin/wrk2',*expected},data.keys()
 assert all(data[k]==v for k,v in expected.items())
 (w/'wrk2').write_bytes(data['usr/bin/wrk2'])
+(r/'executable.sha256').write_text(hashlib.sha256(data['usr/bin/wrk2']).hexdigest()+'\n')
 (r/'notices').write_text(''.join(f'{hashlib.sha256(v).hexdigest()}  {k}\n' for k,v in sorted(expected.items())))
 PY
 readelf -W -l -d "$work/wrk2" >"$r/elf"
+if grep -Eq 'NEEDED.*libz\.so' "$r/elf"; then exit 1; fi
+nm -A "$work/wrk2" | awk '$NF ~ /^(zlibVersion|compress2?|uncompress|inflate|deflate|crc32|adler32)$/ {print}' >"$r/zlib-symbols"
+test ! -s "$r/zlib-symbols"
 readelf --dyn-syms -W "$work/wrk2" | grep -w luaJIT_BC_wrk >"$r/bytecode"
 grep -F 'Requesting program interpreter' "$r/elf"
 cat >"$work/serve.py" <<'PY'

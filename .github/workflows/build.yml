@@ -1,4 +1,4 @@
-name: Verify the QEMU source fixture and independently recover the wrk2 license records
+name: Verify the standalone wrk2 image without a zlib dependency
 on:
   push:
     branches: [qualification/official-go-images]
@@ -7,11 +7,11 @@ permissions:
 jobs:
   images:
     runs-on: ubuntu-22.04
-    timeout-minutes: 38
+    timeout-minutes: 135
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 6
+          fetch-depth: 12
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -46,51 +46,60 @@ jobs:
           build --remote_download_outputs=toplevel
           build --noshow_progress
           RC
-          for name in wrk2-final-catalog; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
-      - name: Exercise the held classifier's complete owning Go test on current master
-        id: held
-        timeout-minutes: 11
+          for name in wrk2-image-check wrk2-source-check wrk2-go-check; do git show "$GITHUB_SHA:test/rbe/$name.sh" > "$RUNNER_TEMP/$name.sh"; done
+      - name: Install the Linux ARM64 binfmt interpreter
+        id: qemu
         run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/held"; exec > >(tee "$RUNNER_TEMP/held/full-test.log") 2>&1
-          git checkout -q --detach 0ea1ef52852648509db60dba0f9390052e0cfd2f
-          git rev-parse HEAD > "$RUNNER_TEMP/held/source"
-          bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" test //tools/licensecheck:licensecheck_test --test_arg=-test.v --test_output=all --nocache_test_results
-          grep -Eq -- '--- PASS: TestEnumerateAndFetchQemuLicenseSource' "$RUNNER_TEMP/held/full-test.log"
-          xml=$(bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" info bazel-testlogs)/tools/licensecheck/licensecheck_test/test.xml
-          cp "$xml" "$RUNNER_TEMP/held/test.xml"
-          date -u '+PASS %FT%TZ' > "$RUNNER_TEMP/held/verdict"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.held.outcome != 'skipped'
-        with:
-          name: held-classifier-results
-          path: ${{ runner.temp }}/held
-          if-no-files-found: error
-      - name: Verify the additional COPYRIGHT lookup
-        id: filename
+          if [[ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends qemu-user-static binfmt-support
+            sudo update-binfmts --enable qemu-aarch64
+          fi
+          grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
+          grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
+      - name: Build the image and run the HTTP client on amd64
+        id: amd64
         if: always() && steps.setup.outcome == 'success'
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/filename"; exec > >(tee "$RUNNER_TEMP/filename/test.log") 2>&1
-          git checkout -q --detach 09512475c9afd60b7a4a3935314909b015012cf8
-          bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" test //tools/licensecheck:licensecheck_test --test_filter=TestLicenseSourceIdentity/pinned.COPYRIGHT --test_arg=-test.v --test_output=all --nocache_test_results
-          grep -Eq -- '--- PASS: TestLicenseSourceIdentity/pinned_COPYRIGHT' "$RUNNER_TEMP/filename/test.log"
+        timeout-minutes: 44
+        run: bash "$RUNNER_TEMP/wrk2-image-check.sh" x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.filename.outcome != 'skipped'
+        if: always() && steps.amd64.outcome != 'skipped'
         with:
-          name: filename-test
-          path: ${{ runner.temp }}/filename
+          name: wrk2-x86_64
+          path: ${{ runner.temp }}/wrk2/x86_64
           if-no-files-found: error
-      - name: Run canonical Verify and discover the four new notices from an empty per-record seed
-        id: image
+      - name: Build the image and run the HTTP client on arm64
+        id: arm64
+        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        timeout-minutes: 44
+        run: bash "$RUNNER_TEMP/wrk2-image-check.sh" aarch64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.arm64.outcome != 'skipped'
+        with:
+          name: wrk2-aarch64
+          path: ${{ runner.temp }}/wrk2/aarch64
+          if-no-files-found: error
+      - name: Run the Kubernetes pod command and parse its latency distribution
+        id: consumer
+        if: always() && steps.amd64.outcome == 'success'
+        timeout-minutes: 35
+        run: bash "$RUNNER_TEMP/wrk2-go-check.sh"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.consumer.outcome != 'skipped'
+        with:
+          name: wrk2-consumer
+          path: ${{ runner.temp }}/wrk2/consumer
+          if-no-files-found: error
+      - name: Regenerate the four new source notices and verify the full catalog
+        id: licenses
         if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 23
+        timeout-minutes: 25
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: bash "$RUNNER_TEMP/wrk2-final-catalog.sh"
+        run: bash "$RUNNER_TEMP/wrk2-source-check.sh"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.image.outcome != 'skipped'
+        if: always() && steps.licenses.outcome != 'skipped'
         with:
-          name: wrk2-canonical-records
+          name: wrk2-licenses
           path: ${{ runner.temp }}/wrk2/licenses
           if-no-files-found: error
