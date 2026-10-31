@@ -12,13 +12,13 @@ if [[ "$name" == hackbench ]]; then
   member=$(tar -tf "$archive" | grep -Ex '(\./)?images/benchmarks/hackbench/image.tar')
   tar -xOf "$archive" "$member" >"$work/image.tar"; docker load --input "$work/image.tar"; image=gvisor.dev/images/benchmarks/hackbench:latest
 else
-  product=4be95c2fafab8da9703de07e7a0cd8258c737e3e; target=//test/benchmarks/network:iperf_test; bench='^BenchmarkIperf'
+  product=05f0c6feac4693941c8ccf6b8730ddf3c258a51c; target=//test/benchmarks/network:iperf_test; bench='^BenchmarkIperf'
   git checkout -q --detach "$product"; image=gvisor.dev/images/benchmarks/iperf:latest
   docker tag "gvisor.dev/images/benchmarks/iperf:$cpu" "$image"
 fi
 git rev-parse HEAD > "$r/product"; grep -Fx "$product" "$r/product"; test "$(docker image inspect -f '{{.Architecture}}' "$image")" = "$cpu"
 ret=0
-bz test --jobs=2 '--strategy_regexp=Compiling src/google/protobuf/.*\.cc=linux-sandbox' --strategy=TestRunner=local --nocache_test_results --test_output=errors --test_arg=-test.v '--test_arg=-test.run=^$' --test_arg="-test.bench=$bench" --test_arg=-test.benchtime=1x --test_arg=-runtime=runc --test_timeout=600 "$target" || ret=$?
+bz test --config="$arm" --jobs=2 '--strategy_regexp=Compiling src/google/protobuf/.*\.cc=linux-sandbox' --strategy=TestRunner=local --nocache_test_results --test_output=errors --test_arg=-test.v '--test_arg=-test.run=^$' --test_arg="-test.bench=$bench" --test_arg=-test.benchtime=1x --test_arg=-runtime=runc --test_timeout=600 "$target" || ret=$?
 d="bazel-testlogs/${target:2}";d=${d/:/\/}
 [[ ! -f "$d/test.log" ]] || cp "$d/test.log" "$r/test.log"
 [[ ! -f "$d/test.xml" ]] || cp "$d/test.xml" "$r/test.xml"

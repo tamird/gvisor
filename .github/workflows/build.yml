@@ -69,7 +69,8 @@ jobs:
             git checkout -q --detach "$p"
             bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" build @openssl//:LICENSE.txt >"$d/$p.log" 2>&1
             file=$(bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" cquery --output=files @openssl//:LICENSE.txt)
-            sha256sum "$file" >"$d/$p.sha256"
+            execroot=$(bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" info execution_root)
+            sha256sum "$execroot/$file" >"$d/$p.sha256"
             bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" mod graph >"$d/$p.graph"
             grep -F 'openssl@3.3.1.bcr.11' "$d/$p.graph"
           done
@@ -163,7 +164,7 @@ jobs:
     needs: images
     if: always() && needs.images.outputs.arm_archive != ''
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 65
+    timeout-minutes: 77
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -189,3 +190,32 @@ jobs:
         id: setup
         if: always() && steps.armtransfer.outcome == 'success'
         uses: bazel-contrib/setup-bazel@083175551ceeceebc757ebee2127fde78840ca77
+      - name: Execute the eight parsed iperf3 Go benchmark cases on native ARM64
+        id: armgo
+        if: always() && steps.armtransfer.outcome == 'success' && steps.setup.outcome == 'success'
+        timeout-minutes: 65
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          git show "$GITHUB_SHA:test/rbe/iperf-ubuntu-go.sh" >"$RUNNER_TEMP/iperf-ubuntu-go.sh"
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          umask 077
+          printf 'build --remote_cache=grpcs://remote.buildbuddy.io\nbuild --bes_backend=grpcs://remote.buildbuddy.io\nbuild --bes_results_url=https://app.buildbuddy.io/invocation/\nbuild --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\nbuild --noremote_upload_local_results\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >"$RUNNER_TEMP/images.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          # vdsodata's split transition builds one vDSO for each CPU even when
+          # the Go benchmark and both network endpoints run natively on ARM.
+          if ! command -v x86_64-linux-gnu-g++ >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends g++-x86-64-linux-gnu
+          fi
+          x86_64-linux-gnu-g++ -dumpmachine
+          aarch64-linux-gnu-g++ -dumpmachine
+          command -v bazel
+          bash "$RUNNER_TEMP/iperf-ubuntu-go.sh" iperf aarch64
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.armgo.outcome != 'skipped'
+        with:
+          name: armgo
+          path: ${{ runner.temp }}/iperf-results/iperf-go-aarch64
+          if-no-files-found: error
