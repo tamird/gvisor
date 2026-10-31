@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Check the Timekeeper updater lifecycle locks
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/timekeeper-lifecycle-locks]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/timekeeper-lifecycle-locks'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      SOURCE: 5bb344423d08a2319d4f908b2bcc39e70b96e24b
+      MISSING: 083ba2cbf345ea624ac8e848cda00ea9cd7e2f75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^) == "$MISSING" && $(git rev-parse HEAD^^) == "$SOURCE" ]]
+        cp .github/qualification/timekeeper-compare.py "$RUNNER_TEMP/"
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root --cap-add SYS_ADMIN --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Check all callers with the required locks held
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/timekeeper-compare.py" normal
+    - name: Check starting and stopping before acquiring the mutex
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/timekeeper-compare.py" unguarded
+    - name: Reconcile the two runs
+      if: always()
+      run: python3 "$RUNNER_TEMP/timekeeper-compare.py" collect
+    - name: Sanitize the receipt
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PY_REDACT'
+        import os
+        from pathlib import Path
+        key = os.environ['BB_KEY'].encode()
+        for p in (Path(os.environ['RUNNER_TEMP'])/'proof').rglob('*'):
+            if key and p.is_file() and key in (data := p.read_bytes()):
+                p.write_bytes(data.replace(key, b'[REDACTED]'))
+        PY_REDACT
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: timekeeper-lifecycle-locks
+        path: ${{ runner.temp }}/proof/
+        if-no-files-found: error
