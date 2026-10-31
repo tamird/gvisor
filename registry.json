@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T08:29:06.907584+00:00",
+    "updatedAt": "2026-10-31T08:36:42.408674+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39037,6 +39037,53 @@
         "url": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
         "title": "Review the iperf3 runtime and image packaging",
         "summary": "Build the BCR iperf3 executable and use the Ubuntu Jammy runtime for both endpoints. The original fully static ARM64 sender aborted after transfer. Switching both endpoints from iperf2 changes the protocol and benchmark baseline. The three Go files are identical to the prior image revision. Its outstanding two-line metrics decision remains separate."
+      }
+    },
+    {
+      "id": "branch:llvm-unwind-link-libraries",
+      "type": "branch",
+      "repo": "tamird/hermetic-llvm",
+      "ref": "review/linux-unwind-link-libraries",
+      "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9",
+      "title": "Link Linux libunwind’s system libraries only when the C++ runtimes are enabled",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/321ef8af9",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "summary": "Send the LLVM change upstream. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries.",
+      "updatedAt": "2026-10-31T08:36:42.408674+00:00",
+      "refinement": {
+        "before": {
+          "head": "83245b9576c00597846d36b1d25be8edb10d7d8e"
+        },
+        "after": {
+          "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Review the change against current LLVM main",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/fd2addebf...321ef8af9"
+        },
+        {
+          "label": "Earlier implementation; the production change is identical",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/83245b957"
+        },
+        {
+          "label": "Stock link failed; native freestanding and hosted tests passed and both bootstrap links retained their dependencies",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41184756532/artifacts/13036647227"
+        },
+        {
+          "label": "All six gVisor sidecars linked on empty AMD64 and ARM64 workers with the same rule",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41181782834/artifacts/13035731072"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/321ef8af9",
+        "title": "Link Linux libunwind’s system libraries only when the C++ runtimes are enabled",
+        "summary": "Send the LLVM change upstream. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries."
       }
     }
   ],
