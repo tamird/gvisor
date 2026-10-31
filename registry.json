@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T00:53:29.082073+00:00",
+    "updatedAt": "2026-10-31T01:23:33.649647+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4456,8 +4456,8 @@
       "url": "https://github.com/tamird/gvisor/commit/bcb5de5b2",
       "group": "bazel",
       "status": "Contributor approved; waiting for prerequisites",
-      "summary": "The compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051. The reviewed compiler now waits for #16669’s two-target static-link fix. Its delivery stack keeps the four other Go declarations at their upstream settings.",
-      "updatedAt": "2026-10-30T05:06:38.535625+00:00",
+      "summary": "The compiler and sysroot code are unchanged. The revised catalog identifies LLVM and parser notices by their standard SPDX identifiers rather than a private LicenseRef. This removes the compiler proposal’s dependency on #16051. The static-link fix (#16669), header selection (#16236), and Benchmark exports (#16313) have merged. The remaining upstream prerequisites are #15153, #15368, #15146 and #16249. Its delivery stack keeps the four other Go declarations at their upstream settings.",
+      "updatedAt": "2026-10-31T01:17:56.603458+00:00",
       "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
       "evidence": [
         {
@@ -35671,9 +35671,9 @@
       "title": "Keep nested checkpoint conversions from overwriting each other",
       "url": "https://github.com/tamird/gvisor/commit/905873f0e",
       "group": "runtime",
-      "status": "Published as #16740",
-      "summary": "A nested converted field can overwrite the outer field before its callback sees the value. Keep active storage out of the decoder cache and return it only after an immediate callback when no decoding hook could retain it.",
-      "updatedAt": "2026-10-30T10:46:19.726076+00:00",
+      "status": "Superseded",
+      "summary": "Master contains the fix and its regression in 0bbcbf9de. The fork PR was closed as superseded; no action remains.",
+      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
       "evidence": [
         {
           "label": "Published upstream as #16740",
@@ -35710,6 +35710,14 @@
         {
           "label": "Existing checkpoint round-trip issue",
           "url": "https://github.com/google/gvisor/issues/16715"
+        },
+        {
+          "label": "Upstream fix",
+          "url": "https://github.com/google/gvisor/commit/0bbcbf9de"
+        },
+        {
+          "label": "Upstream regression",
+          "url": "https://github.com/google/gvisor/blob/0bbcbf9de/pkg/state/tests/graph_test.go#L1333"
         }
       ],
       "settledReviews": [
@@ -35723,9 +35731,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "905873f0ea52d9d279bb05195f9239953451971b",
-        "observedAt": "2026-10-30T10:46:19.726076+00:00",
-        "disposition": "Delivered as #16740",
-        "nextAction": "Follow the upstream review on #16740.",
+        "observedAt": "2026-10-31T01:23:33.649647+00:00",
+        "disposition": "Superseded by the merged upstream fix",
+        "nextAction": "None; the upstream change and its tests are on master.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16740"
         ]
@@ -36091,12 +36099,12 @@
       "number": 16740,
       "title": "Keep nested checkpoint conversions from overwriting each other",
       "group": "runtime",
-      "summary": "Keep conversion scratch out of the graph decoder cache until its consumer has finished. The published head is 62e214867; follow the review there.",
+      "summary": "Master contains the fix and its regression in 0bbcbf9de. The fork PR was closed as superseded; no action remains.",
       "head": "62e214867e089f4ba2db0b79beecd8148c4da509",
       "ref": "review/state-nested-conversion-merged",
       "url": "https://github.com/google/gvisor/pull/16740",
-      "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "status": "closed",
+      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
       "refinement": {
         "before": {
           "head": "905873f0ea52d9d279bb05195f9239953451971b"
@@ -36149,14 +36157,22 @@
         {
           "label": "Existing checkpoint round-trip issue",
           "url": "https://github.com/google/gvisor/issues/16715"
+        },
+        {
+          "label": "Upstream fix",
+          "url": "https://github.com/google/gvisor/commit/0bbcbf9de"
+        },
+        {
+          "label": "Upstream regression",
+          "url": "https://github.com/google/gvisor/blob/0bbcbf9de/pkg/state/tests/graph_test.go#L1333"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "62e214867e089f4ba2db0b79beecd8148c4da509",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Delivered as #16740",
-        "nextAction": "Follow the upstream review on #16740.",
+        "observedAt": "2026-10-31T01:23:33.649647+00:00",
+        "disposition": "Superseded by the merged upstream fix",
+        "nextAction": "None; the upstream change and its tests are on master.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16740"
         ]
@@ -36172,9 +36188,9 @@
       "title": "Snapshot ordinary LoadValue callback arguments at delivery",
       "url": "https://github.com/tamird/gvisor/commit/13a440083",
       "group": "runtime",
-      "summary": "When a handwritten callback retains the interface it received, changing the destination afterward must not change that saved value. The graph reader kept a pointer to the destination; the legacy reader returned its value.",
-      "status": "Published as #16741",
-      "updatedAt": "2026-10-30T13:03:39.698453+00:00",
+      "summary": "Master contains the fix and its regression in 0bbcbf9de. The fork PR was closed as superseded; no action remains.",
+      "status": "Superseded",
+      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
       "refinement": {
         "before": {
           "head": "0316d4624e80996c59be12bb1c3516cd7c389e0b"
@@ -36207,6 +36223,14 @@
         {
           "label": "State round-trip investigation",
           "url": "https://github.com/google/gvisor/issues/16715"
+        },
+        {
+          "label": "Upstream fix",
+          "url": "https://github.com/google/gvisor/commit/0bbcbf9de"
+        },
+        {
+          "label": "Upstream regression",
+          "url": "https://github.com/google/gvisor/blob/0bbcbf9de/pkg/state/graph_decode_callbacks_test.go#L1179"
         }
       ],
       "settledReviews": [
@@ -36221,9 +36245,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "13a44008304ed152babfd929a28dc2cb1ab160b5",
-        "observedAt": "2026-10-30T13:03:39.698453+00:00",
-        "disposition": "Delivered as #16741",
-        "nextAction": "Follow the upstream review on #16741.",
+        "observedAt": "2026-10-31T01:23:33.649647+00:00",
+        "disposition": "Superseded by the merged upstream fix",
+        "nextAction": "None; the upstream change and its tests are on master.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16741"
         ]
@@ -36380,12 +36404,12 @@
       "number": 16741,
       "title": "Snapshot ordinary LoadValue callback arguments at delivery",
       "group": "runtime",
-      "summary": "When a handwritten callback retains the interface it received, changing the destination afterward must not change that saved value. The graph reader kept a pointer to the destination; the legacy reader returned its value.",
+      "summary": "Master contains the fix and its regression in 0bbcbf9de. The fork PR was closed as superseded; no action remains.",
       "head": "13a44008304ed152babfd929a28dc2cb1ab160b5",
       "ref": "review/state-loadvalue-snapshot-merged",
       "url": "https://github.com/google/gvisor/pull/16741",
-      "status": "open",
-      "updatedAt": "2026-10-30T13:03:39.698453+00:00",
+      "status": "closed",
+      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
       "refinement": {
         "before": {
           "head": "0316d4624e80996c59be12bb1c3516cd7c389e0b"
@@ -36426,14 +36450,22 @@
         {
           "label": "State round-trip investigation",
           "url": "https://github.com/google/gvisor/issues/16715"
+        },
+        {
+          "label": "Upstream fix",
+          "url": "https://github.com/google/gvisor/commit/0bbcbf9de"
+        },
+        {
+          "label": "Upstream regression",
+          "url": "https://github.com/google/gvisor/blob/0bbcbf9de/pkg/state/graph_decode_callbacks_test.go#L1179"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "13a44008304ed152babfd929a28dc2cb1ab160b5",
-        "observedAt": "2026-10-30T13:03:39.698453+00:00",
-        "disposition": "Delivered as #16741",
-        "nextAction": "Follow the upstream review on #16741.",
+        "observedAt": "2026-10-31T01:23:33.649647+00:00",
+        "disposition": "Superseded by the merged upstream fix",
+        "nextAction": "None; the upstream change and its tests are on master.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16741"
         ]
@@ -36446,13 +36478,13 @@
       "number": 16180,
       "repo": "google/gvisor",
       "ref": "fix-wildcard-bind-port-release",
-      "head": "ed3f77eb2dc84b35f85083caac2acea26e682444",
+      "head": "48e209b56058f40e422daa3d5308d5c18a29a1ae",
       "title": "tcp: release the port of a wildcard-bound endpoint when it is closed",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T15:04:33.917505+00:00",
+      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
       "url": "https://github.com/google/gvisor/pull/16180",
-      "summary": "On this contributor head, connecting a dual-stack wildcard socket to an IPv4-mapped peer leaves an IPv6 port reservation after an abortive close.",
+      "summary": "The author fixed the port reservation leak and added the shared IPv4/mapped syscall regression. The remaining action is upstream approval to run fork CI.",
       "evidence": [
         {
           "label": "Linux and runsc syscall receipt",
@@ -36461,6 +36493,10 @@
         {
           "label": "Posted review of the remaining IPv6 reservation",
           "url": "https://github.com/google/gvisor/pull/16180#discussion_r4425055803"
+        },
+        {
+          "label": "Author’s revised implementation and results",
+          "url": "https://github.com/google/gvisor/pull/16180#discussion_r4429746352"
         }
       ],
       "settledReviews": [
@@ -36474,10 +36510,10 @@
       ],
       "followup": {
         "owner": "TCP owner",
-        "disposition": "Review posted",
-        "sourceHead": "ed3f77eb2dc84b35f85083caac2acea26e682444",
-        "observedAt": "2026-10-30T15:04:33.917505+00:00",
-        "nextAction": "Wait for the contributor's response to the mapped-rebind review.",
+        "disposition": "Author fixed the mapped-bind finding",
+        "sourceHead": "48e209b56058f40e422daa3d5308d5c18a29a1ae",
+        "observedAt": "2026-10-31T01:23:33.649647+00:00",
+        "nextAction": "A maintainer can approve the fork workflow run.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16180#discussion_r4425055803"
         ]
@@ -37078,7 +37114,7 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T00:53:29.082073+00:00",
+      "updatedAt": "2026-10-31T01:23:33.649647+00:00",
       "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
       "evidence": [
         {
@@ -37096,17 +37132,30 @@
         {
           "label": "Restore reproducer",
           "url": "https://github.com/tamird/gvisor/commit/9099adb91"
+        },
+        {
+          "label": "Same 200 MiB ceiling on save, different Go limits after resize",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41153967310/artifacts/13024262603"
+        },
+        {
+          "label": "Three-container restore control on tmpfs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41153458353/artifacts/13024550737"
+        },
+        {
+          "label": "Current restore suspension call",
+          "url": "https://github.com/google/gvisor/blob/dba98301b/pkg/sentry/state/state.go#L271"
         }
       ],
       "contributorReview": {
         "status": "pending",
         "kind": "review",
-        "head": "9d3e6518a0a467c6575390cb6a61ff134024d243",
+        "head": "dba98301bc2e29cbfc67b6afe425a1697d3c6ea9",
         "url": "https://github.com/google/gvisor/pull/16735",
         "title": "Post the GC budget review",
         "summary": "After a sandbox was lowered from 2 GiB to 200 MiB, restore still set a 1,024 MiB Go limit and the kernel OOM-killed it. The same checkpoint succeeded in a sandbox created at 200 MiB. The boot-time limit also misses constrained ancestors; see #16767.",
-        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit set by this revision](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird.\n\nRestore findings for the same head:\n\nOn `pkg/sentry/state/state.go`, at the call to `garbage.Suspend`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? `MaximumTotalMemoryBytes` is set when the sandbox is created. I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91).\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
-      }
+        "body": "@parth-opensrc, could we land [#16767](https://github.com/google/gvisor/pull/16767) before enabling GC suspension during boot? The cgroup reader can miss a limit above the immediate parent. The new boot policy then gives Go a soft limit larger than the kernel will allow the sandbox to use.\n\nI [measured the limit on 9d3e6518a](https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034) with a 192 MiB grandparent and an unlimited parent. An unlimited leaf gave Go 1 GiB; a 512 MiB leaf gave it 256 MiB. With #16767, both gave 96 MiB. A tighter 128 MiB leaf gave 64 MiB either way.\n\nPosted on behalf of @tamird.\n\nRestore findings for the same head:\n\nOn `pkg/sentry/state/state.go`, at the call to `gccontrol.Suspend`:\n\n@parth-opensrc, could restore use the destination’s current cgroup limit here? The measurements below are from 9d3e6518a; the renamed gccontrol still uses the same startup reading at dba98301b. `MaximumTotalMemoryBytes` is set when the sandbox is created. I restored the same checkpoint twice, with a final cgroup limit of 200 MiB. When the sandbox started at 200 MiB, Go used a 100 MiB soft limit and the guest resumed. When it started at 2 GiB and was lowered to 200 MiB with `Container.Update`, Go still used a 1,024 MiB soft limit. Restore returned EOF and the kernel recorded one OOM kill. [Matched results](https://github.com/tamird/gvisor/actions/runs/41152055757/artifacts/13023183576) · [reproducer](https://github.com/tamird/gvisor/commit/9099adb91). A [candidate that reads the current limit](https://github.com/tamird/gvisor/commit/18b3427c1) restored [both copies](https://github.com/tamird/gvisor/actions/runs/41152797282/artifacts/13023434512) under the 200 MiB ceiling. Both [10,000-file saves](https://github.com/tamird/gvisor/actions/runs/41153967310/artifacts/13024262603) succeeded under that same ceiling, but the resized sandbox again selected a 1,024 MiB Go soft limit while the sandbox created at 200 MiB selected 100 MiB.\n\nOn `runsc/container/container_save_restore_test.go`, at the read of `memory.events`:\n\nOn cgroup v2, `MakePath` returns the directory regardless of its argument. This reads the directory and discards `EISDIR`; the earlier existence checks also stat the directory rather than the files. Could these use `filepath.Join(probe.MakePath(\"\"), filename)` and report a read failure? That would make the OOM counters available when the restore fails."
+      },
+      "head": "dba98301bc2e29cbfc67b6afe425a1697d3c6ea9"
     },
     {
       "id": "pr:hermeticbuild/rules_rs:333",
@@ -37836,6 +37885,38 @@
         "title": "Run the Go export assembler directly",
         "summary": "The approved #15106 launches its ZIP assembler through Bash. A declared Bazel action calls the assembler directly and produces the identical 2,526-entry archive.",
         "body": "Review the single BUILD change for submission after #15106 lands. The comparison verified both complete archives byte for byte and identified Genrule on the parent and GoExport on the proposal. https://github.com/tamird/gvisor/actions/runs/41150603904/artifacts/13022154932"
+      }
+    },
+    {
+      "id": "pr:15019",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15019,
+      "ref": "claude/15013-timewait-forwarder-syn",
+      "title": "Forward new SYNs received in TCP TIME_WAIT",
+      "url": "https://github.com/google/gvisor/pull/15019",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-31T01:17:56.603458+00:00",
+      "summary": "Linux keeps the TIME_WAIT endpoint after an unexpected SYN-ACK and ACKs the repeated old FIN. The proposed forwarder resets both. A bare SYN still reopens the connection with the narrower guard.",
+      "evidence": [
+        {
+          "label": "Packet traces: native Linux, proposed forwarder, and correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41153077876/artifacts/13024367271"
+        },
+        {
+          "label": "Guard and repeated-FIN control",
+          "url": "https://github.com/tamird/gvisor/compare/9a707824b...2bc369a8a"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "review",
+        "head": "e503a89e87b363812834ccaa96eb503446490faa",
+        "url": "https://github.com/google/gvisor/pull/15019",
+        "title": "Post the TIME_WAIT packet comparison",
+        "summary": "Linux keeps the TIME_WAIT endpoint after an unexpected SYN-ACK and ACKs the repeated old FIN. The proposed forwarder resets both. A bare SYN still reopens the connection with the narrower guard.",
+        "body": "Could we keep the TIME_WAIT endpoint for this SYN-ACK? With these packet fields, Linux ACKs the SYN-ACK with the old connection’s sequence numbers. Repeating that connection’s last FIN gets the same ACK. On this head both packets get RSTs: the forwarder rejects the SYN-ACK, but by then the old endpoint is already gone.\n\nRestricting TIME_WAIT reuse to a SYN without ACK or RST keeps both ACKs and still accepts a genuine reopening SYN. Here are the [packet traces](https://github.com/tamird/gvisor/actions/runs/41153077876/artifacts/13024367271), the [tested guard](https://github.com/tamird/gvisor/compare/9a707824b...2bc369a8a), and [the corresponding Linux check](https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_minisocks.c#L253)."
       }
     }
   ],
@@ -40045,8 +40126,8 @@
     {
       "from": "pr:16236",
       "to": "branch:hermetic-compiler-review",
-      "type": "depends_on",
-      "reason": "Integration/readiness prerequisite: the declared libc/sysroot C++ graph requires netfilter UAPI identifiers absent from the previous 4.19 default. The accepted C++/lint composition uses Linux 6.18.33; this is not a compiler Starlark API dependency.",
+      "type": "includes",
+      "reason": "The merged header-selection change supplies the netfilter UAPI declarations needed by the compiler graph.",
       "evidence": "https://github.com/google/gvisor/pull/16236"
     },
     {
@@ -40171,8 +40252,8 @@
     {
       "from": "pr:16313",
       "to": "branch:hermetic-compiler-review",
-      "type": "depends_on",
-      "reason": "The independently reviewed umbrella-header exports are now tracked in standalone #16313 after the Benchmark version update landed.",
+      "type": "includes",
+      "reason": "The merged Benchmark umbrella annotations preserve its public header exports.",
       "evidence": "https://github.com/google/gvisor/pull/16313"
     },
     {
@@ -40979,8 +41060,8 @@
     },
     {
       "to": "branch:hermetic-compiler-review",
-      "type": "depends_on",
-      "reason": "#16669 is open. Host-run benchmarks and the test_app executable need to run without the build host’s loader. The four other original Go declarations remain at their upstream settings. The compiler patch applies on this two-target prerequisite.",
+      "type": "includes",
+      "reason": "The merged static-link fix lets host-run benchmarks and the test app execute without the build host’s loader.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16669",
         "https://github.com/tamird/gvisor/commit/a6b802e4d",
