@@ -22,6 +22,6 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: graph-race-original
-          path: ${{ runner.temp }}/graph-race-original.json
+          name: race-exit
+          path: ${{ runner.temp }}/race-exit.json
           if-no-files-found: error
