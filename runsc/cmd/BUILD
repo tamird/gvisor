@@ -165,10 +165,9 @@ go_test(
         "statefile_fixture_test.go",
         "statefile_output_test.go",
     ],
-    data = ["//:release"],  # keep
+    data = ["//runsc"],  # keep
     deps = [
         "//pkg/state/statefile",
         "//pkg/test/testutil",
-        "//runsc/specutils",
     ],
 )

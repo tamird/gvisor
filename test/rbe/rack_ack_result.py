@@ -13,7 +13,7 @@ import re
 names=("readonly_existing_file_rejected_when_unprivileged","dirs_without_read_perm_succeed_when_unprivileged")
 arms={}
 errors=[]
-for arm in ("current","split"):
+for arm in ("split",):
     try:
         d=root/arm
         v=json.loads((d/"verdict.json").read_text())

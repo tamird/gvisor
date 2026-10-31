@@ -24,11 +24,11 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/test/testutil"
-	"gvisor.dev/gvisor/runsc/specutils"
 )
 
 func TestStatefileOutputSymlinks(t *testing.T) {
-	if err := testutil.ConfigureExePath(); err != nil {
+	runsc, err := testutil.FindFile("runsc/runsc")
+	if err != nil {
 		t.Fatal(err)
 	}
 	imgDir := t.TempDir()
@@ -44,7 +44,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 			t.Fatalf("Symlink: %v", err)
 		}
 
-		if out, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+linkOut, img).CombinedOutput(); err != nil {
+		if out, err := exec.Command(runsc, "statefile", "-get=k", "-output="+linkOut, img).CombinedOutput(); err != nil {
 			t.Fatalf("statefile -output=<dangling symlink> failed: %v\n%s", err, out)
 		}
 		linfo, err := os.Lstat(linkOut)
@@ -70,7 +70,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 			t.Fatalf("Symlink: %v", err)
 		}
 
-		if out, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+brokenLink, img).CombinedOutput(); err == nil {
+		if out, err := exec.Command(runsc, "statefile", "-get=k", "-output="+brokenLink, img).CombinedOutput(); err == nil {
 			t.Errorf("statefile -output=<symlink into missing dir> unexpectedly succeeded:\n%s", out)
 		}
 		linfo, err := os.Lstat(brokenLink)
@@ -93,7 +93,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 		}
 
 		var stderr bytes.Buffer
-		cmd := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output=/dev/stdout", img)
+		cmd := exec.Command(runsc, "statefile", "-get=k", "-output=/dev/stdout", img)
 		cmd.Stdout = unlinked
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
@@ -127,7 +127,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 		}
 
 		var stderr bytes.Buffer
-		cmd := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+stdoutLink, img)
+		cmd := exec.Command(runsc, "statefile", "-get=k", "-output="+stdoutLink, img)
 		cmd.Stdout = unlinked
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
@@ -170,7 +170,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 		wantInput := writeSyntheticStatefile(t, localImg, map[string]string{"k": "v"}, []byte("unused"))
 
 		outArg := filepath.Join(workDir, "link") + "/../checkpoint"
-		if out, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+outArg, localImg).CombinedOutput(); err != nil {
+		if out, err := exec.Command(runsc, "statefile", "-get=k", "-output="+outArg, localImg).CombinedOutput(); err != nil {
 			t.Fatalf("statefile -output=%s failed: %v\n%s", outArg, err, out)
 		}
 		gotInput, err := os.ReadFile(localImg)
@@ -210,7 +210,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 		localImg := filepath.Join(workDir, "checkpoint")
 		wantInput := writeSyntheticStatefile(t, localImg, map[string]string{"k": "v"}, []byte("unused"))
 
-		if out, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+outLink, localImg).CombinedOutput(); err != nil {
+		if out, err := exec.Command(runsc, "statefile", "-get=k", "-output="+outLink, localImg).CombinedOutput(); err != nil {
 			t.Fatalf("statefile -output=%s failed: %v\n%s", outLink, err, out)
 		}
 		gotInput, err := os.ReadFile(localImg)
@@ -245,7 +245,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 			t.Fatalf("WriteFile(bystander): %v", err)
 		}
 
-		cmd := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output=../checkpoint", img)
+		cmd := exec.Command(runsc, "statefile", "-get=k", "-output=../checkpoint", img)
 		cmd.Dir = symCWD
 		env := make([]string, 0, len(os.Environ())+1)
 		for _, kv := range os.Environ() {
@@ -291,7 +291,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 		}
 
 		for _, outTarget := range []string{"/proc/self/fd/3", linkToFD3} {
-			cmd := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+outTarget, localImg)
+			cmd := exec.Command(runsc, "statefile", "-get=k", "-output="+outTarget, localImg)
 			cmd.ExtraFiles = []*os.File{rwFile}
 			if out, err := cmd.CombinedOutput(); err == nil {
 				t.Fatalf("statefile -output=%s unexpectedly succeeded:\n%s", outTarget, out)
@@ -316,7 +316,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 		if err := os.WriteFile(roFile, want, 0444); err != nil {
 			t.Fatalf("WriteFile: %v", err)
 		}
-		if out, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+roFile, img).CombinedOutput(); err == nil {
+		if out, err := exec.Command(runsc, "statefile", "-get=k", "-output="+roFile, img).CombinedOutput(); err == nil {
 			t.Fatalf("statefile -output=<0444 file> unexpectedly succeeded:\n%s", out)
 		}
 		got, err := os.ReadFile(roFile)
@@ -344,7 +344,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 		}
 
 		wxOut := filepath.Join(wxDir, "out.txt")
-		if out, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+wxOut, img).CombinedOutput(); err != nil {
+		if out, err := exec.Command(runsc, "statefile", "-get=k", "-output="+wxOut, img).CombinedOutput(); err != nil {
 			t.Fatalf("statefile -output in 0300 dir failed: %v\n%s", err, out)
 		}
 		if got, err := os.ReadFile(wxOut); err != nil {
@@ -353,7 +353,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 			t.Errorf("ReadFile(%s) = %q, want %q", wxOut, got, "v\n")
 		}
 
-		cwdCmd := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output=cwd_out.txt", img)
+		cwdCmd := exec.Command(runsc, "statefile", "-get=k", "-output=cwd_out.txt", img)
 		cwdCmd.Dir = wxDir
 		if out, err := cwdCmd.CombinedOutput(); err != nil {
 			t.Fatalf("statefile relative -output in 0300 cwd failed: %v\n%s", err, out)
@@ -383,7 +383,7 @@ func TestStatefileOutputSymlinks(t *testing.T) {
 			t.Fatalf("Chmod(xDir, 0100): %v", err)
 		}
 
-		if out, err := exec.Command(specutils.ExePath, "statefile", "-get=k", "-output="+linkPath, img).CombinedOutput(); err != nil {
+		if out, err := exec.Command(runsc, "statefile", "-get=k", "-output="+linkPath, img).CombinedOutput(); err != nil {
 			t.Fatalf("statefile -output through 0100 dir symlink failed: %v\n%s", err, out)
 		}
 		if got, err := os.ReadFile(targetPath); err != nil {

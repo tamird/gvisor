@@ -7,8 +7,8 @@ for script in qualification_report.py unit_matrix.py rack_ack_result.py; do
 done
 tcppkg=//pkg/tcpip/transport/tcp
 rack=$tcppkg/test/e2e:tcp_rack_test
-for arm in current split; do
-  case "$arm" in current) src=0ceaa881e662d62a691f658f88eba122071800b6;; split) src=ca45eacaca5b6b939916d8bba2c2d4170ef6e21e;; esac
+for arm in split; do
+  case "$arm" in current) src=0ceaa881e662d62a691f658f88eba122071800b6;; split) src=001aec83c6dbcda628d6fba8b7592d1804f21e63;; esac
   git checkout --quiet --detach "$src"
   dir="$out/$arm"
   mkdir "$dir"
@@ -20,24 +20,16 @@ for arm in current split; do
   args+=(--test_arg=-test.v '--test_arg=-test.run=^TestStatefileOutputSymlinks$')
   printf '%s\n' "${labels[@]}" > "$dir/targets"
   printf '%s\n' "${args[@]}" "${labels[@]}" > "$dir/arguments"
+  test_label=//runsc/cmd:statefile_output_test
+  bazel --bazelrc="$rc" query "tests(//runsc/cmd/...) intersect $test_label" > "$dir/discovered"
+  test "$(cat "$dir/discovered")" = "$test_label"
+  bazel --bazelrc="$rc" query "labels(data, $test_label)" > "$dir/data"
+  test "$(cat "$dir/data")" = '//runsc:runsc'
+  bazel --bazelrc="$rc" query "attr(tags, 'manual|nogo', $test_label)" > "$dir/excluded"
+  test ! -s "$dir/excluded"
   root=$(bazel --bazelrc="$rc" info output_base)
   native=0
   bazel --bazelrc="$rc" "${args[@]}" "${labels[@]}" > "$RUNNER_TEMP/$arm.log" 2>&1 || native=$?
-  if [[ "$arm" == current && "$native" != 0 && "$native" != 3 ]] && grep -q 'Remote Execution Failure:' "$RUNNER_TEMP/$arm.log"; then
-    # Keep the original result and retry only this incomplete build on GNU/Linux.
-    failed="$dir/remote-failure"
-    mkdir -p "$failed"
-    cp "$dir/arguments" "$failed/"
-    echo "$native" > "$failed/exit"
-    tail -120 "$RUNNER_TEMP/$arm.log" > "$failed/build.log"
-    first_capture=0
-    python3 -B "$tools/qualification_report.py" capture --events "$RUNNER_TEMP/$arm.bep" --output "$failed/events.jsonl" --output-root "$root" --report-dir "$failed/original" || first_capture=$?
-    echo "$first_capture" > "$failed/capture-exit"
-    args+=(--remote_executor= --spawn_strategy=linux-sandbox --jobs=2)
-    printf '%s\n' "${args[@]}" "${labels[@]}" > "$dir/arguments"
-    native=0
-    bazel --bazelrc="$rc" "${args[@]}" "${labels[@]}" > "$RUNNER_TEMP/$arm.log" 2>&1 || native=$?
-  fi
   printf '%s\n' "$native" > "$dir/exit"
   date -u +%FT%T.%3NZ > "$dir/finish"
   git status --porcelain --untracked-files=no > "$dir/after"
@@ -52,3 +44,10 @@ for arm in current split; do
   echo "$verify" > "$dir/verifier-exit"
 done
 python3 -B "$tools/rack_ack_result.py" final "$out"
+
+# Check the global default selector after preserving the original test receipts.
+global_status=0
+timeout 300 bazel --bazelrc="$rc" query --keep_going "tests(//...) intersect $test_label" > "$dir/default-selector" 2> "$dir/default-query.log" || global_status=$?
+printf '%s\n' "$global_status" > "$dir/default-query.exit"
+grep -Fx "$test_label" "$dir/default-selector"
+test "$global_status" = 0
