@@ -1,35 +1,92 @@
-name: CI
-
-"on":
+name: Check the memory reported by a sandbox in a capped pod
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/sandbox-cgroup-memory-total]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CURRENT: ${{ github.sha }}
+      BASE: 8a84b240f0f85882e3aacb5b550476fe09e11e25
+      STOCK: e7104cbba44334d8a45f0d992bb61f015c3e693b
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 6, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        [[ "$(git rev-parse HEAD)" == "$CURRENT" ]]
+        [[ "$(git rev-parse HEAD~2)" == "e7104cbba44334d8a45f0d992bb61f015c3e693b" && "$(git rev-parse HEAD~3)" == "$BASE" ]]
+        git checkout --quiet --detach "$CURRENT"
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /var/run/docker.sock:/var/run/docker.sock -v "$(command -v docker):/usr/local/bin/docker:ro" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+    - name: Read MemTotal from three real sandboxes on each revision
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        d=$RUNNER_TEMP/records
+        mkdir -p "$d"/{stock,corrected}
+        cp test/rbe/guest_memory_verdict.py test/rbe/qualification_report.py test/rbe/unit_matrix.py "$RUNNER_TEMP/"
+        git diff --exit-code "$STOCK" "$CURRENT" -- test/root/runsc_test.go runsc/sandbox runsc/boot pkg/sentry/usage
+        for variant in stock corrected; do
+          rev=$CURRENT
+          if [[ "$variant" == stock ]]; then rev=$STOCK; fi
+          git checkout --quiet --detach "$rev"
+          git rev-parse HEAD > "$d/$variant/source"
+          git diff --quiet
+          opts=(--config=x86_64 --spawn_strategy=remote,local --noremote_upload_local_results --strategy=GoStaticAnalysis=local --strategy=GoStandardLibraryAnalysis=local --remote_download_outputs=toplevel --jobs=24)
+          bazel=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
+          "${bazel[@]}" build "${opts[@]}" //:release > "$RUNNER_TEMP/$variant-build.log" 2>&1 || { tail -20 "$RUNNER_TEMP/$variant-build.log" > "$d/$variant/diagnostics"; exit 1; }
+          path=bazel-bin/release/runsc
+          docker exec tcp-compiler test -x bazel-bin/release/gvisor-bin/gvisor_sentry
+          docker exec tcp-compiler test -x "$path"
+          python3 -c 'import json,sys; print(json.dumps({"runtimes":{"runsc":{"path":sys.argv[1]}}}))' "$GITHUB_WORKSPACE/$path" > "$RUNNER_TEMP/runtime.json"
+          rc=0
+          "${bazel[@]}" test "${opts[@]}" --strategy=TestRunner=local --test_arg=--runtime=runsc --test_arg=--config_path="$RUNNER_TEMP/runtime.json" --test_filter='^TestSandboxAncestorMemoryLimit$' --test_arg=-test.v --nocache_test_results --test_timeout=240 --test_sharding_strategy=disabled //test/root:root_test > "$RUNNER_TEMP/$variant.bazel.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$d/$variant/exit"
+          grep -EA4 'Invocation ID:|ERROR:|FAILED|Build did NOT' "$RUNNER_TEMP/$variant.bazel.log" | tail -30 > "$d/$variant/diagnostics" || true
+          for file in test.log test.xml; do
+            docker exec tcp-compiler cat "bazel-testlogs/test/root/root_test/$file" > "$d/$variant/$file" || rm -f "$d/$variant/$file"
+          done
+          git diff --quiet
+        done
+        date -u +%FT%TZ > "$d/end"
+        python3 "$RUNNER_TEMP/guest_memory_verdict.py" "$d"
+    - name: Redact credentials from the evidence bundle
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"records").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: sandbox-cgroup-memory-total
+        path: ${{ runner.temp }}/records/
+        if-no-files-found: error
