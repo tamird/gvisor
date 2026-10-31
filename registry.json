@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T11:24:59.817331+00:00",
+    "updatedAt": "2026-10-31T11:35:39.860367+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -13711,6 +13711,18 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/fd2999b440601691d26f86ad5b8c2af2e5fe1fe9"
+        },
+        {
+          "label": "Import reviewer’s request",
+          "url": "https://github.com/google/gvisor/pull/16774#issuecomment-6542642860"
+        },
+        {
+          "label": "One-file follow-up to the approved source",
+          "url": "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f"
+        },
+        {
+          "label": "Native Linux, approved guest and targeted mutation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41197133726/artifacts/13041440709"
         }
       ],
       "followup": {
@@ -13724,7 +13736,7 @@
           "https://github.com/tamird/gvisor/commit/fd2999b440601691d26f86ad5b8c2af2e5fe1fe9"
         ]
       },
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00"
+      "updatedAt": "2026-10-31T11:35:39.860367+00:00"
     },
     {
       "id": "pr:15919",
@@ -39369,6 +39381,87 @@
           "at": "2026-10-31T11:24:59.817331+00:00"
         }
       ]
+    },
+    {
+      "id": "branch:multicast-device-before-bind",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/multicast-device-before-bind",
+      "head": "3569e5c2f06baef228207bcbc21d49d3aad593ef",
+      "title": "Test IPv6 multicast interface selection before binding a local address",
+      "url": "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T11:35:39.860367+00:00",
+      "summary": "The blocking and nonblocking IPv6 UDP cases run the same selection and reset sequence twice. Before bind(2), SO_BINDTODEVICE is the only interface constraint. After bind(2), the test retains its original address-bound coverage. Native Linux and the approved gVisor code passed both cases. Removing just the socket device check let both sockets select loopback while unbound. The fixture supplied loopback and an addressed Ethernet interface. Runners without two IPv6 interfaces can still skip this test.",
+      "evidence": [
+        {
+          "label": "Import reviewer’s request",
+          "url": "https://github.com/google/gvisor/pull/16774#issuecomment-6542642860"
+        },
+        {
+          "label": "One-file follow-up to the approved source",
+          "url": "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f"
+        },
+        {
+          "label": "Native Linux, approved guest and targeted mutation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41197133726/artifacts/13041440709"
+        },
+        {
+          "label": "Original fixture build failure before any test ran",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41196657528/artifacts/13041227919"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3569e5c2f06baef228207bcbc21d49d3aad593ef",
+        "url": "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f",
+        "title": "Submit the test-only device-binding follow-up after #15918 lands",
+        "summary": "The blocking and nonblocking IPv6 UDP cases run the same selection and reset sequence twice. Before bind(2), SO_BINDTODEVICE is the only interface constraint. After bind(2), the test retains its original address-bound coverage. Native Linux and the approved gVisor code passed both cases. Removing just the socket device check let both sockets select loopback while unbound. The fixture supplied loopback and an addressed Ethernet interface. Runners without two IPv6 interfaces can still skip this test.",
+        "baseHead": "29edee9cbe9321287548342acca1004c1d9e9c00"
+      }
+    },
+    {
+      "id": "pr:16774",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16774,
+      "url": "https://github.com/google/gvisor/pull/16774",
+      "title": "Honor bound devices for IPv6 multicast selection",
+      "head": "64f65a3ac5e3fe56cf45b787c32de6c77fc6d286",
+      "ref": "test/cl1010921581",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Copybara import of the approved #15918. A reviewer asked for a regression that exercises the socket device check before binding a local address. The separate test-only follow-up is on the fork.",
+      "updatedAt": "2026-10-31T11:35:39.860367+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "64f65a3ac5e3fe56cf45b787c32de6c77fc6d286",
+        "url": "https://github.com/google/gvisor/pull/16774#issuecomment-6542642860",
+        "title": "Reply to the device-binding test request on Copybara import #16774",
+        "summary": "Share the measured Linux, approved gVisor, and one-check-removed results with the import reviewer. The proposed test has a separate contributor decision.",
+        "body": "I ran the case before bind(2), with SO_BINDTODEVICE set to eth0. Linux 7.0 and gVisor accepted eth0, rejected lo with EINVAL, and kept eth0 selected. After clearing the selection, both still rejected lo and returned interface index zero. Removing only the GetBindToDevice() check made selecting lo succeed on both blocking and nonblocking sockets [1].\n\nThe test-only follow-up repeats the same checks after binding the local address [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41197133726/artifacts/13041440709\n[2]: https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f\n\nPosted on behalf of @tamird."
+      },
+      "evidence": [
+        {
+          "label": "Approved source PR",
+          "url": "https://github.com/google/gvisor/pull/15918"
+        },
+        {
+          "label": "Import reviewer’s request",
+          "url": "https://github.com/google/gvisor/pull/16774#issuecomment-6542642860"
+        },
+        {
+          "label": "One-file follow-up to the approved source",
+          "url": "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f"
+        },
+        {
+          "label": "Native Linux, approved guest and targeted mutation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41197133726/artifacts/13041440709"
+        }
+      ]
     }
   ],
   "edges": [
@@ -42633,6 +42726,16 @@
       "type": "depends_on",
       "reason": "The proposed tree carries the same two reporting lines as the separately pending metric review. It no longer needs the old native-Go image foundation.",
       "evidence": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea"
+    },
+    {
+      "from": "pr:15918",
+      "to": "branch:multicast-device-before-bind",
+      "type": "depends_on",
+      "reason": "The separate regression extends the approved guard and shared syscall test in #15918. Its original source remains unchanged.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f",
+        "https://github.com/google/gvisor/pull/16774#issuecomment-6542642860"
+      ]
     }
   ],
   "investigations": [
