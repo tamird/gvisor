@@ -1306,3 +1306,83 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+func TestSACKHeadAfterGSOWrite(t *testing.T) {
+	for _, size := range []int{2000, 1900} {
+		for _, report := range []string{"packet", "suffix"} {
+			for _, recovery := range []struct {
+				name string
+				mode int
+			}{{"rack", int(tcpip.TCPRACKLossDetection)}, {"rfc6675", 0}} {
+				t.Run(fmt.Sprintf("%d_%s_%s", size, report, recovery.name), func(t *testing.T) {
+					clock := faketime.NewManualClock()
+					type observed struct {
+						una seqnum.Value
+						rto time.Duration
+						mss int
+					}
+					states := make(chan observed, 16)
+					c := context.NewWithOpts(t, context.Options{MTU: 1500, EnableV4: true, Clock: clock, Probe: func(s *tcp.TCPEndpointState) {
+						states <- observed{s.Sender.SndUna, s.Sender.RTO, s.Sender.MaxPayloadSize}
+					}})
+					defer c.Cleanup()
+					c.SetGSOEnabled(true)
+					e2e.SetStackSACKPermitted(t, c, true)
+					e2e.SetStackTCPRecovery(t, c, recovery.mode)
+					// The 36 bytes reserved for TCP options leave two wire packets: a
+					// 1,000-byte packet followed by a 900- or 1,000-byte packet.
+					const offered = 1036
+					opts := []byte{header.TCPOptionMSS, 4, offered >> 8, offered & 0xff, header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP}
+					c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, opts)
+					if n, err := c.EP.Write(bytes.NewReader(make([]byte, size)), tcpip.WriteOptions{}); n != size || err != nil {
+						t.Fatalf("write = (%d, %v), want (%d, nil)", n, err, size)
+					}
+					p := c.GetPacket()
+					h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+					start := seqnum.Value(h.SequenceNumber())
+					initial := len(h.Payload())
+					p.Release()
+					if initial != size {
+						t.Fatalf("initial link buffer = %d bytes, want one %d-byte GSO buffer", initial, size)
+					}
+					const mid = 1500
+					left := 1000
+					if report == "suffix" {
+						left = mid
+					}
+					seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+					ack := func(off int, blocks []header.SACKBlock) observed {
+						t.Helper()
+						c.SendAckWithSACK(seq, off, blocks)
+						s := <-states
+						if want := start.Add(seqnum.Size(off)); s.una != want || s.mss != 1000 {
+							t.Fatalf("ACK %d: UNA=%v MSS=%d, want %v and 1000", off, s.una, s.mss, want)
+						}
+						return s
+					}
+					ack(0, []header.SACKBlock{{Start: start.Add(seqnum.Size(left)), End: start.Add(seqnum.Size(size))}})
+					ack(mid, nil)
+					s := ack(mid+1, nil)
+					const wait = 40 * time.Millisecond
+					if s.rto <= wait {
+						t.Fatalf("RTO=%s, observation interval=%s", s.rto, wait)
+					}
+					clock.Advance(wait)
+					offset, count := -1, 0
+					if p := c.GetPacketNonBlocking(); p != nil {
+						h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+						offset = int(start.Size(seqnum.Value(h.SequenceNumber())))
+						count = len(h.Payload())
+						p.Release()
+						if p := c.GetPacketNonBlocking(); p != nil {
+							p.Release()
+							t.Fatal("multiple packets before the RTO")
+						}
+					}
+					t.Logf("GSO_TRACE size=%d report=%s mode=%s offset=%d bytes=%d", size, report, recovery.name, offset, count)
+					ack(size, nil)
+				})
+			}
+		}
+	}
+}
