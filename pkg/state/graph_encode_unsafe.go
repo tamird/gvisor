@@ -244,8 +244,8 @@ type graphEncodeState struct {
 	// out holds the encodings of objects.
 	out encBuf
 
-	// final holds the stream.
-	final encBuf
+	// final orders the staged payloads and their wire framing.
+	final graphOutput
 
 	objs    chunked[encObject]
 	targets chunked[encTarget]
@@ -434,7 +434,7 @@ const maxPooledSlots = 1 << 18
 
 // release returns es to graphEncodeStatePool, if it is not too large.
 func (es *graphEncodeState) release() {
-	if cap(es.out.b)+cap(es.final.b)+cap(es.binaryBuf) > maxPooledBytes ||
+	if cap(es.out.b)+cap(es.final.b)+cap(es.final.parts)*int(unsafe.Sizeof(graphPart{}))+cap(es.binaryBuf) > maxPooledBytes ||
 		len(es.byAddr.slots)+len(es.blocks.slots) > maxPooledSlots ||
 		cap(es.blockEntries)+cap(es.queue) > maxPooledSlots ||
 		cap(es.refs)+cap(es.segRefs) > maxPooledSlots {
@@ -443,6 +443,8 @@ func (es *graphEncodeState) release() {
 	es.ctx = nil
 	es.out.b = es.out.b[:0]
 	es.final.b = es.final.b[:0]
+	es.final.parts = es.final.parts[:0]
+	es.final.dataBytes = 0
 	es.objs.reset()
 	es.targets.reset()
 	es.byAddr.reset()

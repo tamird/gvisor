@@ -15,6 +15,7 @@
 package state
 
 import (
+	"bufio"
 	"cmp"
 	"context"
 	"encoding/binary"
@@ -219,6 +220,63 @@ func (es *graphEncodeState) pruneUnreachable() {
 // streamMagic starts every stream.
 const streamMagic = 0x32534776
 
+// A graphPart writes the new framing ending at prefixEnd, followed by a
+// segment of the staged object data. Neither ever points into the caller.
+type graphPart struct {
+	prefixEnd int
+	seg       segment
+}
+
+// graphOutput keeps the wire order of the staged data. Its encBuf holds
+// only framing, including the type, object and target tables.
+type graphOutput struct {
+	encBuf
+	parts     []graphPart
+	dataBytes int
+	writer    bufio.Writer
+}
+
+func (g *graphOutput) payload(s segment) {
+	if s.len == 0 {
+		return
+	}
+	g.dataBytes += s.len
+	if len(g.parts) != 0 {
+		last := &g.parts[len(g.parts)-1]
+		if last.prefixEnd == len(g.b) && last.seg.off+last.seg.len == s.off {
+			last.seg.len += s.len
+			return
+		}
+	}
+	g.parts = append(g.parts, graphPart{prefixEnd: len(g.b), seg: s})
+}
+
+func (g *graphOutput) length() int {
+	return len(g.b) + g.dataBytes
+}
+
+// write flushes all the bytes of a validated graph. Small segments are
+// buffered, and a large contiguous span can go directly to the caller.
+func (g *graphOutput) write(dst io.Writer, staged []byte) error {
+	g.writer.Reset(dst)
+	defer g.writer.Reset(nil)
+	start := 0
+	for _, part := range g.parts {
+		if _, err := g.writer.Write(g.b[start:part.prefixEnd]); err != nil {
+			return err
+		}
+		seg := part.seg
+		if _, err := g.writer.Write(staged[seg.off : seg.off+seg.len]); err != nil {
+			return err
+		}
+		start = part.prefixEnd
+	}
+	if _, err := g.writer.Write(g.b[start:]); err != nil {
+		return err
+	}
+	return g.writer.Flush()
+}
+
 // save serializes the object graph rooted at the value of type ti at root,
 // and appends it to w.
 //
@@ -229,7 +287,7 @@ const streamMagic = 0x32534776
 //   - The object table: the kind and type of each object.
 //   - The target table: the object and offset of each pointer target.
 //   - The data of each object, in order. Pointers are target indices.
-func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
+func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *graphOutput) {
 	size := max(ti.size, 1)
 	obj := es.newObject(root, uintptr(root)+size, ti, 1, false)
 	if ti.size != 0 {
@@ -301,17 +359,8 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 	var tables encBuf
 	tables.grow(int(n)*4 + es.targets.n*3 + 64)
 	tables.uvarint(uint64(n))
-	dataMaxBytes := 0
 	for i := int32(0); i < int32(es.objs.n); i++ {
 		o := es.obj(i)
-		if o.isArray && es.sameTypeArrayChain(i) {
-			if r, _ := es.root(i); !es.obj(r).dead {
-				for _, ch := range es.chunkList(o) {
-					// Each chunk writes start-delta and length uvarints plus its payload.
-					dataMaxBytes += 2*binary.MaxVarintLen64 + ch.seg.len
-				}
-			}
-		}
 		if o.parent >= 0 || o.dead {
 			continue
 		}
@@ -319,16 +368,11 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 		case o.isMap:
 			tables.byte(objKindMap)
 			tables.uvarint(uint64(o.n))
-			// Map payload is prefixed with its byte-length uvarint.
-			dataMaxBytes += binary.MaxVarintLen64 + o.seg.len
 		case o.isArray:
 			idx, flag := es.types.objectIndex(o.ti)
 			tables.byte(objKindArray | flag)
 			tables.uvarint(uint64(idx))
 			tables.uvarint(uint64(o.n))
-			// Array payload begins with a chunk-count uvarint, plus an optional
-			// byte-length uvarint when inexact.
-			dataMaxBytes += 2 * binary.MaxVarintLen64
 		default:
 			var (
 				idx  int
@@ -341,8 +385,6 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 			}
 			tables.byte(objKindValue | flag)
 			tables.uvarint(uint64(idx))
-			// Value payload has an optional byte-length uvarint when inexact.
-			dataMaxBytes += binary.MaxVarintLen64 + o.seg.len
 		}
 	}
 
@@ -369,11 +411,9 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 		}
 	}
 
-	// Pre-size w with an upper bound on the stream size: 4-byte streamMagic +
-	// 8-byte schemaFingerprint + uvarint type count + serialized tables +
-	// object payload upper bound.
-	const streamHeaderMaxBytes = 4 + 8 + binary.MaxVarintLen64
-	w.grow(streamHeaderMaxBytes + len(es.types.buf.b) + len(tables.b) + dataMaxBytes)
+	// The object and target tables have populated the type table. Reserve
+	// space for these fixed sections; the payload stays in es.out.
+	w.grow(12 + binary.MaxVarintLen64 + len(es.types.buf.b) + len(tables.b))
 	w.uint32(streamMagic)
 	w.uint64(schemaFingerprint())
 	w.uvarint(uint64(len(es.types.types)))
@@ -393,22 +433,22 @@ func (es *graphEncodeState) save(root unsafe.Pointer, ti *typeInfo, w *encBuf) {
 			w.uvarint(uint64(o.seg.len))
 		}
 		if !o.isArray {
-			w.bytes(es.out.b[o.seg.off : o.seg.off+o.seg.len])
+			w.payload(o.seg)
 			continue
 		}
 		chunks = es.arrayChunks(int32(i), 0, chunks[:0])
 		if inexact {
 			// Prefix the data with its length.
 			var sub encBuf
-			es.writeChunks(&sub, o, chunks)
+			es.writeChunks(&sub, o, chunks, func(s segment) { sub.bytes(es.out.b[s.off : s.off+s.len]) })
 			w.uvarint(uint64(len(sub.b)))
 			w.bytes(sub.b)
 			continue
 		}
-		es.writeChunks(w, o, chunks)
+		es.writeChunks(&w.encBuf, o, chunks, w.payload)
 	}
 	es.stats.objects = int(n)
-	setHints(ti, len(w.b), es.targets.n)
+	setHints(ti, w.length(), es.targets.n)
 }
 
 // resolveZeroTarget resolves a zero-sized target at addr of type ti to an
@@ -442,7 +482,7 @@ func (es *graphEncodeState) resolveZeroTarget(addr uintptr, ti *typeInfo) (int32
 }
 
 // writeChunks writes the chunks of an array object.
-func (es *graphEncodeState) writeChunks(w *encBuf, o *encObject, chunks []chunk) {
+func (es *graphEncodeState) writeChunks(w *encBuf, o *encObject, chunks []chunk, payload func(segment)) {
 	if len(chunks) > 1 {
 		slices.SortFunc(chunks, func(a, b chunk) int { return cmp.Compare(a.start, b.start) })
 	}
@@ -455,7 +495,7 @@ func (es *graphEncodeState) writeChunks(w *encBuf, o *encObject, chunks []chunk)
 		w.uvarint(uint64(ch.start - last))
 		w.uvarint(uint64(ch.end - ch.start))
 		last = ch.end
-		w.bytes(es.out.b[ch.seg.off : ch.seg.off+ch.seg.len])
+		payload(ch.seg)
 	}
 }
 
@@ -498,16 +538,16 @@ func saveGraph(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 		}
 		es.save(e.data, ti.elem, out)
 	})
-	es.stats.bytes = len(out.b)
+	es.stats.bytes = out.length()
 	es.stats.elapsed = gohacks.Nanotime() - start
 	if err != nil {
 		return Stats{graph: es.stats}, err
 	}
 	ww := wire.Writer{Writer: w}
-	if err := writeGraphHeader(&ww, uint64(len(out.b))); err != nil {
+	if err := writeGraphHeader(&ww, uint64(out.length())); err != nil {
 		return Stats{graph: es.stats}, err
 	}
-	if _, err := w.Write(out.b); err != nil {
+	if err := out.write(w, es.out.b); err != nil {
 		return Stats{graph: es.stats}, err
 	}
 	return Stats{graph: es.stats}, nil
