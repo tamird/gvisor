@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-31T03:07:00.849864+00:00",
-  "registryDate": "2026-10-31T04:38:05.342918+00:00",
+  "registryDate": "2026-10-31T04:41:52.055360+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -257265,6 +257265,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-31T04:38:05.342918+00:00"
+      }
+    },
+    "branch:gofer-dgram-host-writable": {
+      "contributor-review": {
+        "scope": "9963cb1a8fb4782b1bfa1c645db449a091397982",
+        "since": "2026-10-31T04:41:52.055360+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-31T04:41:52.055360+00:00"
       }
     }
   },

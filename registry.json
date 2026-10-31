@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T04:38:05.342918+00:00",
+    "updatedAt": "2026-10-31T04:41:52.055360+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38549,27 +38549,41 @@
       "group": "runtime",
       "repo": "tamird/gvisor",
       "ref": "review/gofer-dgram-host-writable",
-      "head": "86114ad1b83d3871975d774cbcea966b205daff7",
+      "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
       "title": "Wake poll on a drained host Unix datagram socket",
-      "url": "https://github.com/tamird/gvisor/commit/86114ad1b",
+      "url": "https://github.com/tamird/gvisor/commit/9963cb1a8",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
-      "updatedAt": "2026-10-31T04:38:05.342918+00:00",
+      "updatedAt": "2026-10-31T04:41:52.055360+00:00",
       "evidence": [
         {
           "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
           "url": "https://github.com/tamird/gvisor/actions/runs/41166357327/artifacts/13029668642"
+        },
+        {
+          "label": "Three-line explanation added to the tested source",
+          "url": "https://github.com/tamird/gvisor/compare/86114ad1b..9963cb1a8"
         }
       ],
-      "status": "Agent work",
-      "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "86114ad1b83d3871975d774cbcea966b205daff7",
-        "observedAt": "2026-10-31T04:38:05.342918+00:00",
-        "disposition": "Checking where the connecting endpoint should install its notification queue",
-        "nextAction": "Check whether the existing sender hook can attach the queue while preserving the old peer on failure and avoiding a late concrete-type assertion.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41166357327/artifacts/13029668642"
-        ]
+      "status": "Contributor review requested",
+      "refinement": {
+        "before": {
+          "head": "86114ad1b83d3871975d774cbcea966b205daff7",
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+        },
+        "after": {
+          "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
+          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
+        "url": "https://github.com/tamird/gvisor/commit/9963cb1a8",
+        "title": "Open the host Unix datagram writable-wakeup fix",
+        "summary": "Linux and the proposed implementation delivered EPOLLOUT after a full host socket drained. Stock gVisor timed out, although an immediate poll confirmed the socket was writable.",
+        "body": "May I open the Unix datagram wakeup fix? Connect attaches host notifications to the waiting endpoint queue before replacing its old peer. The final revision adds a comment explaining the queue selection. The measured code and shared syscall test are unchanged.",
+        "requestedAt": "2026-10-31T04:41:52.055360+00:00"
       }
     }
   ],
