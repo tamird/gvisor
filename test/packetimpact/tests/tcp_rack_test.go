@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -174,6 +175,7 @@ func TestRACKTailProbeACK(t *testing.T) {
 			if got, want := after.CaState, uint8(linux.TCP_CA_Open); tc.loss && got != want {
 				t.Errorf("congestion state after probe repaired the loss = %d, want %d", got, want)
 			}
+			fmt.Printf("TLP_WIRE %s before=%d after=%d ca=%d unacked=%d\n", tc.name, before.SndSsthresh, after.SndSsthresh, after.CaState, after.Unacked)
 			if got := after.SndSsthresh < before.SndSsthresh; got != tc.loss {
 				t.Errorf("ACK beyond probe: ssthresh changed from %d to %d, want reduction=%t", before.SndSsthresh, after.SndSsthresh, tc.loss)
 			}
