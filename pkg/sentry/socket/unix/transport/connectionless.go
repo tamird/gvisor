@@ -143,11 +143,17 @@ func (e *connectionlessEndpoint) Connect(ctx context.Context, server BoundEndpoi
 	}
 
 	e.Lock()
+	defer e.Unlock()
+	if host, ok := peer.(*SCMSender); ok {
+		if err := host.attachWaitQueue(&e.WaitQueue); err != nil {
+			peer.Release(ctx)
+			return syserr.FromError(err)
+		}
+	}
 	if e.peer != nil {
 		e.peer.Release(ctx)
 	}
 	e.peer = peer
-	e.Unlock()
 
 	return nil
 }
