@@ -357,7 +357,7 @@ func (es *graphEncodeState) trySplice(addr uintptr, ti *typeInfo, max uintptr) u
 // gatherSplices collects the encodings of the descendants of obj within
 // [lo, hi) that must be reused.
 func (es *graphEncodeState) gatherSplices(obj int32, lo, hi uintptr) {
-	for _, c := range es.childList(es.obj(obj)) {
+	for _, c := range es.obj(obj).childList() {
 		co := es.obj(c)
 		if co.end <= lo || co.addr >= hi {
 			continue
@@ -391,7 +391,7 @@ func (es *graphEncodeState) gatherSplices(obj int32, lo, hi uintptr) {
 
 // setupSplices prepares the splices for encoding [lo, hi) of obj.
 func (es *graphEncodeState) setupSplices(obj int32, lo, hi uintptr) {
-	if len(es.childList(es.obj(obj))) == 0 {
+	if len(es.obj(obj).childList()) == 0 {
 		return
 	}
 	es.gatherSplices(obj, lo, hi)

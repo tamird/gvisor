@@ -303,6 +303,8 @@ func (es *graphEncodeState) absorb(parent, obj int32) {
 	off := o.addr - p.addr
 	o.parent = parent
 	o.parentOff = off
+	px := p.extra()
+	px.children = append(px.children, obj)
 	count := uintptr(1)
 	if o.isArray {
 		count = o.n
@@ -365,12 +367,10 @@ func (es *graphEncodeState) containsRange(obj int32, addr, end uintptr, ti *type
 
 // newContainer adds an object that absorbs the live objects in ov.
 func (es *graphEncodeState) newContainer(base unsafe.Pointer, end uintptr, ti *typeInfo, n uintptr, isArray bool, ov []int32) int32 {
-	start := int32(len(es.children))
-	es.children = append(es.children, ov...)
+	ov = append(es.absorbBuf[:0], ov...)
+	es.absorbBuf = ov
 	obj := es.newObject(base, end, ti, n, isArray)
-	o := es.obj(obj)
-	o.childStart, o.childEnd = start, int32(len(es.children))
-	for _, c := range es.childList(o) {
+	for _, c := range ov {
 		es.absorb(obj, c)
 	}
 	es.index(obj)

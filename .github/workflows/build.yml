@@ -1,35 +1,85 @@
-name: CI
-
-"on":
+name: Measure encoder metadata allocation on a real checkpoint
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/graph-absorbed-children]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/graph-absorbed-children'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      SOURCE: f659462bb76a1e2a65e0c70755df74d60e7819c2
+      UPSTREAM_SHA: aa767e4c43d011121271551fe24da501a56f729d
+      PROFILE_BASE: 76e4600186526062168b8f1feddc2d2ce321f81b
+      PRODUCT: 74b62e1b72cfca5bebc0e58cd1d7730351e85a7f
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 6
+        persist-credentials: false
+    - name: Prepare native Linux coordinator
+      run: |
+        set -euo pipefail
+        [[ $(git rev-parse HEAD^1) == "$SOURCE" ]]
+        if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        unshare --user --map-root-user true
+        plat=$RUNNER_TEMP/overlay-gnu
+        mkdir -p "$plat"
+        printf 'module(name="poll_gnu_platform")\n' >"$plat/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"EstimatedMemory":"4GB","Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" >"$plat/BUILD"
+    - name: Configure authenticated remote actions
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail; umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=poll_gnu_platform=$RUNNER_TEMP/overlay-gnu" 'build --host_platform=@poll_gnu_platform//:gnu' 'build --extra_execution_platforms=@poll_gnu_platform//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } >"$RUNNER_TEMP/overlay.bazelrc"
+    - name: Start the existing GNU Bazel coordinator
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name overlay-guest --entrypoint /bin/bash --user root --cap-add SYS_ADMIN --cap-add SYS_PTRACE --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+
+    - name: Stage the pinned four-worker Nginx workload
+      run: |
+        set -euo pipefail
+        image=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+        docker pull --platform=linux/amd64 "$image"
+        [[ $(docker image inspect --format '{{.Id}}' "$image") == sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5 ]]
+        docker tag "$image" gvisor.dev/images/benchmarks/nginx:latest
+        docker save -o "$RUNNER_TEMP/nginx.tar" gvisor.dev/images/benchmarks/nginx:latest
+        go version
+    - name: Compare Nginx, small and changing checkpoint graphs
+      run: python3 .github/qualification/nginx-children.py
+    - name: Run the pinned Go benchstat analyzer on all matched inputs
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        out=$RUNNER_TEMP/profile-proof
+        test -s "$out/control.bench"
+        test -s "$out/candidate.bench"
+        test "$(git rev-parse "$GITHUB_SHA^3")" = 2b51abee8530385431b7225198fdd5cd65e78696
+        git checkout -q --detach 2b51abee8530385431b7225198fdd5cd65e78696
+        target=@org_golang_x_perf//cmd/benchstat
+        bazel build -c opt --config=x86_64 --jobs=4 "$target" > "$RUNNER_TEMP/benchstat-build.log" 2>&1
+        bazel cquery -c opt --config=x86_64 --output=files "$target" > "$RUNNER_TEMP/benchstat-files"
+        mapfile -t tools < <(while IFS= read -r f; do if test -f "$f" && test -x "$f"; then echo "$f"; fi; done < "$RUNNER_TEMP/benchstat-files")
+        test "${#tools[@]}" = 1
+        exe="$PWD/${tools[0]}"
+        sha256sum "$exe" > "$out/benchstat-tool"
+        (cd "$out"; "$exe" control.bench candidate.bench | tee benchstat.txt)
+        for name in EncodeStatefile Tiny Many Alternating; do grep -Fq "/$name" "$out/benchstat.txt"; done
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always()
+      with:
+        name: graph-absorbed-children
+        path: ${{ runner.temp }}/profile-proof
+        if-no-files-found: error

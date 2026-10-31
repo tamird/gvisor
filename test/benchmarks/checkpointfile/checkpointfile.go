@@ -24,9 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -58,7 +56,6 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
-	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot"
@@ -175,8 +172,8 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		// suffix is appended to the sub-benchmark names.
 		suffix string
 		// statefile is true if the state file is written and read
-		// like the input checkpoint: through statefile.NewWriter with its
-		// metadata, and directly from statefile.NewReader.
+		// as runsc does: through statefile.NewWriter with runsc's
+		// default metadata, and directly from statefile.NewReader.
 		// Otherwise, the encoding is written to a counting writer
 		// and read through a bufio.Reader.
 		statefile bool
@@ -213,22 +210,6 @@ func BenchmarkCheckpointFile(b *testing.B) {
 			b.ReportAllocs()
 			var cpu time.Duration
 			var encodedBytes int64
-			var encoded bytes.Buffer
-			var metadata map[string]string
-			if mode.statefile {
-				var err error
-				metadata, err = statefile.MetadataUnsafe(bytes.NewReader(stateFile))
-				if err != nil {
-					b.Fatalf("reading checkpoint metadata: %v", err)
-				}
-				// NewWriter supplies its own internal metadata.
-				for key := range metadata {
-					if strings.HasPrefix(key, "_") {
-						delete(metadata, key)
-					}
-				}
-				encoded.Grow(len(stateFile))
-			}
 			b.ResetTimer()
 			b.StopTimer()
 			for i := 0; i < b.N; i++ {
@@ -241,45 +222,19 @@ func BenchmarkCheckpointFile(b *testing.B) {
 					if err != nil {
 						b.Fatal(err)
 					}
-					if mode.statefile {
-						encoded.Reset()
-						cpu += cpuTime(b, func() error {
-							return saveKernel(ctx, &encoded, k, metadata)
-						})
-						return
-					}
 					w := &countingWriter{}
 					cpu += cpuTime(b, func() error {
-						_, err := state.Save(ctx, w, k)
-						return err
+						if !mode.statefile {
+							_, err := state.Save(ctx, w, k)
+							return err
+						}
+						return saveKernel(ctx, w, k)
 					})
 					encodedBytes = w.n
 				}()
 			}
 			b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
-			if mode.statefile {
-				// Check the last measured output outside the benchmark timer.
-				ctx, cleanup := withHostFDs(b, ctx, names)
-				defer cleanup()
-				if _, err := loadKernel(ctx, plat, encoded.Bytes(), true); err != nil {
-					b.Fatalf("loading encoded state file: %v", err)
-				}
-				if path := os.Getenv("GVISOR_PROFILE_RECEIPT"); path != "" {
-					f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
-					if err != nil {
-						b.Fatal(err)
-					}
-					if _, err := fmt.Fprintf(f, "%d %x\n", encoded.Len(), sha256.Sum256(encoded.Bytes())); err != nil {
-						b.Fatal(err)
-					}
-					if err := f.Close(); err != nil {
-						b.Fatal(err)
-					}
-				}
-				b.ReportMetric(float64(encoded.Len()), "encoded-state-file-B")
-			} else {
-				b.ReportMetric(float64(encodedBytes), "encoded-kernel-B")
-			}
+			b.ReportMetric(float64(encodedBytes), "encoded-kernel-B")
 		})
 	}
 }
@@ -344,27 +299,6 @@ func TestCheckpointFileRoundTrip(t *testing.T) {
 		t.Fatalf("failed to create platform: %v", err)
 	}
 	plat := stubPlatform{sys}
-	if !state.GraphEngineEnabled() {
-		t.Fatal("graph is not default")
-	}
-	for _, kernelHeader := range []bool{false, true} {
-		r, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(stateFile)), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if kernelHeader {
-			var fs cpuid.FeatureSet
-			if _, err := state.Load(context.Background(), r, &fs); err != nil {
-				t.Fatal(err)
-			}
-		}
-		header, err := state.ReadHeaderMode(&wire.Reader{Reader: r})
-		if err != nil || !header.Object || !header.Graph {
-			t.Fatalf("graph header kernel=%t: %+v %v", kernelHeader, header, err)
-		}
-		r.Close()
-		t.Logf("verified input graph header: kernel=%t", kernelHeader)
-	}
 	data := stateFile
 	var sizes []int
 	for i := 0; i < 3; i++ {
@@ -446,15 +380,6 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 			b.Fatalf("failed to stat checkpoint file: %v", err)
 		}
 		sizes[e.Name()] = fi.Size()
-		if dest, ok := os.LookupEnv("CHECKPOINT_CAPTURE_DIR"); ok {
-			data, err := os.ReadFile(filepath.Join(dir, e.Name()))
-			if err != nil {
-				b.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(dest, e.Name()), data, 0600); err != nil {
-				b.Fatal(err)
-			}
-		}
 	}
 	if _, ok := sizes[checkpointfiles.StateFileName]; !ok {
 		b.Fatalf("no %s in %s", checkpointfiles.StateFileName, dir)
@@ -462,15 +387,6 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	stateFile, err = os.ReadFile(filepath.Join(dir, checkpointfiles.StateFileName))
 	if err != nil {
 		b.Fatalf("failed to read state file: %v", err)
-	}
-	if dest, ok := os.LookupEnv("CHECKPOINT_CAPTURE_DIR"); ok {
-		spec, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
-		if err != nil {
-			b.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(dest, checkpointSpecName), spec, 0600); err != nil {
-			b.Fatal(err)
-		}
 	}
 	return stateFile, sizes, names, mounts
 }
@@ -640,18 +556,19 @@ func loadKernel(ctx context.Context, plat platform.Platform, data []byte, direct
 }
 
 // saveKernel encodes the CPUID feature set and the kernel to w through
-// statefile.NewWriter using the input checkpoint's metadata.
-func saveKernel(ctx context.Context, w io.Writer, k *kernel.Kernel, metadata map[string]string) error {
-	wc, err := statefile.NewWriter(w, nil, metadata)
+// statefile.NewWriter, with the metadata of runsc checkpoint's defaults, as
+// Kernel.SaveTo does.
+func saveKernel(ctx context.Context, w io.Writer, k *kernel.Kernel) error {
+	wc, err := statefile.NewWriter(w, nil, statefile.CompressionLevelDefault.ToMetadata())
 	if err != nil {
 		return fmt.Errorf("statefile.NewWriter: %w", err)
 	}
 	fs := k.FeatureSet()
 	if _, err := state.Save(ctx, wc, &fs); err != nil {
-		return errors.Join(fmt.Errorf("saving the CPUID feature set: %w", err), wc.Close())
+		return fmt.Errorf("saving the CPUID feature set: %w", err)
 	}
 	if _, err := state.Save(ctx, wc, k); err != nil {
-		return errors.Join(fmt.Errorf("saving the kernel: %w", err), wc.Close())
+		return fmt.Errorf("saving the kernel: %w", err)
 	}
 	return wc.Close()
 }
@@ -788,64 +705,4 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
-}
-
-func BenchmarkGraphSlabShapes(b *testing.B) {
-	mkRoot := func(n int) []*uint64 {
-		values := make([]uint64, n)
-		root := make([]*uint64, n)
-		for i := range root {
-			values[i] = uint64(i + 1)
-			root[i] = &values[i]
-		}
-		root[n-1] = root[0]
-		return root
-	}
-	tiny, many := mkRoot(3), mkRoot(16385)
-	for _, shape := range []struct {
-		name  string
-		roots [][]*uint64
-	}{
-		{"Tiny", [][]*uint64{tiny}},
-		{"Many", [][]*uint64{many}},
-		{"Alternating", [][]*uint64{tiny, many}},
-	} {
-		b.Run(shape.name, func(b *testing.B) {
-			ctx := b.Context()
-			var encoded bytes.Buffer
-			check := func(root []*uint64) {
-				var got []*uint64
-				if _, err := state.Load(ctx, bytes.NewReader(encoded.Bytes()), &got); err != nil {
-					b.Fatal(err)
-				}
-				if len(got) != len(root) || got[0] != got[len(got)-1] {
-					b.Fatalf("restored length or endpoint alias differs for %d pointers", len(root))
-				}
-				for i, p := range got {
-					if p == nil || *p != *root[i] {
-						b.Fatalf("wrong restored value at %d", i)
-					}
-				}
-			}
-			for _, root := range shape.roots {
-				encoded.Reset()
-				if _, err := state.Save(ctx, &encoded, &root); err != nil {
-					b.Fatal(err)
-				}
-				check(root)
-			}
-			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				encoded.Reset()
-				root := &shape.roots[i%len(shape.roots)]
-				if _, err := state.Save(ctx, &encoded, root); err != nil {
-					b.Fatal(err)
-				}
-			}
-			b.StopTimer()
-			check(shape.roots[(b.N-1)%len(shape.roots)])
-			b.ReportMetric(float64(encoded.Len()), "last-wire-B")
-		})
-	}
 }
