@@ -1,0 +1,135 @@
+{
+  "source": "9e3e72d7316c7530a4455f1d4ebb41f60ca064e3",
+  "testSha256": "9afd1c659c647d298bbbe9427b7fe64d73d6509c10be8e719f0d6032e19897a2",
+  "image": "ubuntu@sha256:64483f3496c1373bfd55348e88694d1c4d0c9b660dee6bfef5e12f43b9933b30",
+  "outcomes": {
+    "plugin": {
+      "bazelExit": 3,
+      "result": "FAILED",
+      "execution": {
+        "strategy": "local",
+        "hostname": "runnervmcwoy2",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0.001s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0.002s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "7.599s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "7.611s"
+        },
+        "exitCode": 1
+      },
+      "cached": false,
+      "namedStarts": [
+        "TestConnectToSelf"
+      ],
+      "namedPasses": [],
+      "namedFailures": [
+        "TestConnectToSelf"
+      ],
+      "skipped": false,
+      "namedFailureMessages": [
+        "integration_test.go:256: docker run failed: ContainerStart failed: Error response from daemon: OCI runtime start failed: starting container: starting root container: urpc method \"containerManager.StartRoot\" failed: EOF: the sandbox exited before the container started (see the sandbox logs)"
+      ]
+    }
+  },
+  "trials": [
+    {
+      "bazelExit": 3,
+      "result": "FAILED",
+      "execution": {
+        "strategy": "local",
+        "hostname": "runnervmcwoy2",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0.001s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0.002s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "7.599s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "7.611s"
+        },
+        "exitCode": 1
+      },
+      "cached": false,
+      "namedStarts": [
+        "TestConnectToSelf"
+      ],
+      "namedPasses": [],
+      "namedFailures": [
+        "TestConnectToSelf"
+      ],
+      "skipped": false,
+      "namedFailureMessages": [
+        "integration_test.go:256: docker run failed: ContainerStart failed: Error response from daemon: OCI runtime start failed: starting container: starting root container: urpc method \"containerManager.StartRoot\" failed: EOF: the sandbox exited before the container started (see the sandbox logs)"
+      ],
+      "trial": 1
+    }
+  ],
+  "bounds": {
+    "atMost": 8,
+    "stopAfterOriginalFatalEvent": true,
+    "passed": 0,
+    "failed": 1
+  },
+  "classification": "reproduced terminating openat with verified pathname"
+}

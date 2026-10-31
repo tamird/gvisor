@@ -1,0 +1,115 @@
+{
+  "processes": {
+    "3523": {
+      "affinity": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "3559": {
+      "affinity": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "fatal": [
+    {
+      "pid": 3523,
+      "tid": 3574,
+      "registerSyscall": 257,
+      "dirfd": -100,
+      "flags": "0x80000",
+      "pathReadResult": 31,
+      "pathname": "/sys/devices/system/cpu/online",
+      "syscallSite": {
+        "elfOffset": "0xe88bba",
+        "symbol": "??",
+        "source": "??:0"
+      },
+      "stackID": 227,
+      "userFrames": [
+        {
+          "elfOffset": "0xe88bbc",
+          "symbol": "??",
+          "source": "??:0"
+        }
+      ],
+      "possibleReturnSites": [
+        {
+          "slot": 11,
+          "elfOffset": "0xe8b607",
+          "symbol": "??",
+          "source": "??:0"
+        }
+      ],
+      "cfiFrames": [
+        {
+          "elfOffset": "0xe88bbc",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xe8b607",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xe8ba3c",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xe21049",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xe22f38",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xe23a0c",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xd463e6",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xe19daa",
+          "symbol": "??",
+          "source": "??:0"
+        },
+        {
+          "elfOffset": "0xee4aaf",
+          "symbol": "??",
+          "source": "??:0"
+        }
+      ],
+      "cfiBoundary": "unsupported register rule or end of stack"
+    }
+  ],
+  "priorELFOffset": "0xe88bba",
+  "unwindPreflight": {
+    "ehFrameBytes": 189332,
+    "initialSiteHasCFI": true
+  },
+  "probeAttached": true,
+  "audit": [
+    {
+      "pid": "3523",
+      "sig": "31",
+      "arch": "c000003e",
+      "syscall": "257",
+      "code": "0x80000000"
+    }
+  ]
+}
