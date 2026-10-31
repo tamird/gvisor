@@ -145,6 +145,9 @@ func testCapabilities(t *testing.T, directfs bool) {
 
 func TestMain(m *testing.M) {
 	flag.Parse()
+	if _, ok := os.LookupEnv("STATEFILE_NONROOT_PROBE"); ok {
+		os.Exit(m.Run())
+	}
 	if err := specutils.MaybeRunAsRoot(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error running as root: %v", err)
 		os.Exit(123)
