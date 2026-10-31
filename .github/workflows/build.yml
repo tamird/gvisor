@@ -6,14 +6,14 @@ permissions:
   contents: read
 jobs:
   image:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 95
     env:
       PRODUCT: 712966d0b4e6fc3f518507c8100a809ff0d0563c
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 2
+          fetch-depth: 3
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -22,6 +22,7 @@ jobs:
           set -euo pipefail
           if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
           unshare --user --map-root-user true
+          test "$(gcc -dumpversion | cut -d. -f1)" = 11
           mkdir -p "$RUNNER_TEMP/gnu"
           GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
           printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
