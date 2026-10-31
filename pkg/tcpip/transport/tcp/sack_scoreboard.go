@@ -60,9 +60,9 @@ type SACKScoreboard struct {
 	sacked    seqnum.Size                     `state:"nosave"`
 	ranges    *btree.BTreeG[header.SACKBlock] `state:"nosave"`
 
-	// headPacketSACKed remembers the first unacknowledged packet across
-	// cumulative ACKs that remove its prefix from ranges.
-	headPacketSACKed bool `state:"nosave"`
+	// ackedPrefix is the prefix removed from the SACK range containing the
+	// cumulative ACK. Its bytes were selectively reported, not just ACKed.
+	ackedPrefix header.SACKBlock `state:"nosave"`
 }
 
 // NewSACKScoreboard returns a new SACK Scoreboard.
@@ -77,7 +77,7 @@ func NewSACKScoreboard(smss uint16, iss seqnum.Value) *SACKScoreboard {
 
 // Reset erases all known range information from the SACK scoreboard.
 func (s *SACKScoreboard) Reset() {
-	s.headPacketSACKed = false
+	s.ackedPrefix = header.SACKBlock{}
 	s.ranges = btree.NewG[header.SACKBlock](defaultBtreeDegree, sackBlockLess)
 	s.sacked = 0
 }
@@ -261,15 +261,27 @@ func (s *SACKScoreboard) String() string {
 	return str.String()
 }
 
-// Delete removes all SACK information prior to seq.
-func (s *SACKScoreboard) Delete(seq seqnum.Value) {
+// Delete removes SACK information prior to seq and returns the reported
+// range containing seq, including any prefix removed by a previous ACK.
+func (s *SACKScoreboard) Delete(seq seqnum.Value) (head header.SACKBlock) {
+	prev := s.ackedPrefix
+	s.ackedPrefix = header.SACKBlock{}
 	if s.Empty() {
-		return
+		return head
 	}
 	var toDelete []header.SACKBlock
 	var toInsert []header.SACKBlock
 	r := header.SACKBlock{seq, seq.Add(1)}
 	s.ranges.DescendLessOrEqual(r, func(sb header.SACKBlock) bool {
+		if seq.LessThan(sb.End) {
+			start := sb.Start
+			if start == prev.End {
+				start = prev.Start
+			}
+			// No packet crossing seq can start more than one original MSS back.
+			head = header.SACKBlock{Start: seq - seqnum.Value(min(start.Size(seq), seqnum.Size(s.initialMSS))), End: sb.End}
+			s.ackedPrefix = header.SACKBlock{Start: head.Start, End: seq}
+		}
 		if sb == r {
 			return true
 		}
@@ -289,6 +301,7 @@ func (s *SACKScoreboard) Delete(seq seqnum.Value) {
 	for _, sb := range toInsert {
 		s.ranges.ReplaceOrInsert(sb)
 	}
+	return head
 }
 
 // Copy provides a copy of the SACK scoreboard.

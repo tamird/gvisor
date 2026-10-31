@@ -1577,34 +1577,29 @@ func (s *sender) inRecovery() bool {
 	return false
 }
 
-// updateSACKedHead records whether the peer reported the whole transmitted
-// packet at SndUna. A cumulative ACK can trim that packet across several
-// calls. Once Delete drops the acknowledged prefix from the scoreboard, the
-// remaining bytes cannot distinguish a whole-packet SACK from a suffix SACK.
+// headPacketSACKed reports whether any complete transmission containing UNA
+// was selectively acknowledged. After a split, retransmitting just a middle
+// fragment can leave the original packet's endpoint on a later queue entry.
 //
 // +checklocks:s.ep.mu
-func (s *sender) updateSACKedHead(previousUNA seqnum.Value) bool {
-	scoreboard := s.ep.scoreboard
-	if !scoreboard.Empty() {
-		for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-			p := seg.sackPackets()
-			if p.count == 0 {
-				// A queue split may put the packet's last byte in the next entry.
-				continue
-			}
-			if s.SndUna.InRange(p.block.Start, p.block.End) {
-				start := p.block.Start.Add(p.block.Start.Size(s.SndUna) / p.mss * p.mss)
-				end := start.Add(min(p.mss, start.Size(p.block.End)))
-				if start.LessThan(previousUNA) {
-					return scoreboard.headPacketSACKed
-				}
-				scoreboard.headPacketSACKed = scoreboard.IsSACKED(header.SACKBlock{Start: start, End: end})
-				return scoreboard.headPacketSACKed
-			}
-			break
+func (s *sender) headPacketSACKed(reported header.SACKBlock) bool {
+	if reported.Start == reported.End {
+		return false
+	}
+	// Only the entry owning the packet's last byte can describe it. That
+	// byte is within both the SACK block and one original MSS of UNA.
+	limit := s.SndUna.Add(min(s.SndUna.Size(reported.End), seqnum.Size(s.ep.scoreboard.initialMSS)))
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(limit); seg = seg.Next() {
+		p := seg.sackPackets()
+		if p.count == 0 || !s.SndUna.InRange(p.block.Start, p.block.End) {
+			continue
+		}
+		start := p.block.Start.Add(p.block.Start.Size(s.SndUna) / p.mss * p.mss)
+		end := start.Add(min(p.mss, start.Size(p.block.End)))
+		if reported.Contains(header.SACKBlock{Start: start, End: end}) {
+			return true
 		}
 	}
-	scoreboard.headPacketSACKed = false
 	return false
 }
 
@@ -1750,7 +1745,6 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			s.schedulePTO()
 		}
 
-		previousUNA := s.SndUna
 		// Remove all acknowledged data from the write list.
 		acked := s.SndUna.Size(ack)
 		s.SndUna = ack
@@ -1798,10 +1792,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			ackLeft -= datalen
 		}
 
+		headSACK := s.ep.scoreboard.Delete(s.SndUna)
 		if !scheduleProbe {
 			// Restart the retransmission timer on an advancing ACK (RFC 6298 section 5.3).
 			timeout := s.RTO
-			if s.ep.SACKPermitted && s.updateSACKedHead(previousUNA) && s.SndWnd != 0 {
+			if s.ep.SACKPermitted && s.SndWnd != 0 && s.headPacketSACKed(headSACK) {
 				// The first unacknowledged byte belongs to a packet the peer
 				// reported receiving. Give a later ACK half an RTT to clear the
 				// ambiguity before resending. See tcp_check_sack_reneging:
@@ -1814,8 +1809,6 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			s.resendTimer.enable(timeout)
 		}
 
-		// Clear SACK information for all acked data.
-		s.ep.scoreboard.Delete(s.SndUna)
 		if head := s.writeList.Front(); head != nil && s.ep.SACKPermitted && (head.sackCredit != 0 || !s.ep.scoreboard.Empty()) {
 			// Trimming the head may remove credit. If the first SACK range
 			// starts at UNA, the acknowledged prefix can also complete a
