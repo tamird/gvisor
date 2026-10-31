@@ -3,7 +3,7 @@ name: CI
 "on":
   push:
     branches:
-      - "*"
+      - qualification/github-push-release
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -11,19 +11,57 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
+      actions: read
     steps:
     - name: Checkout
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+    - name: Check that the builder daemon is unavailable
+      run: |
+        set -euo pipefail
+        if systemctl cat docker.service >/dev/null 2>&1; then
+          sudo systemctl stop docker.socket docker.service
+        fi
+        if docker info >/dev/null 2>&1; then exit 1; fi
+        mkdir -p "$RUNNER_TEMP/verified"
+        printf '%s\n' 'Docker daemon unavailable before build' > "$RUNNER_TEMP/verified/builder"
+        df -h . > "$RUNNER_TEMP/verified/space-before"
     - name: Build the release
       run: bazel build --remote_download_outputs=toplevel //:release
 
     - name: Upload runsc
+      id: upload
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-          name: runsc
+          name: runsc-${{ runner.arch }}
           path: bazel-bin/release/
           if-no-files-found: error
+
+    - name: Verify the downloadable archive against the release outputs
+      env:
+        GH_TOKEN: ${{ github.token }}
+        ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+        ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/verified"
+        printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/verified/source"
+        uname -a > "$RUNNER_TEMP/verified/kernel"
+        bazel --version > "$RUNNER_TEMP/verified/bazel-version"
+        bazel-bin/release/runsc --version > "$RUNNER_TEMP/verified/runsc-version"
+        gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip" > "$RUNNER_TEMP/release.zip"
+        python3 test/rbe/verify-push-release.py "$RUNNER_TEMP/release.zip" "$RUNNER_TEMP/verified/members.json"
+    - name: Publish the archive observations
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: release-receipt-${{ runner.arch }}
+        path: ${{ runner.temp }}/verified/
+        if-no-files-found: ignore
