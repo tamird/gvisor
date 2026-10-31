@@ -583,7 +583,7 @@ func (r *receiver) handleTimeWaitSegment(s *segment) (resetTimeWait bool, newSyn
 
 	//    (2) returns to TIME-WAIT state if the SYN turns out
 	//      to be an old duplicate".
-	if s.flags.Contains(header.TCPFlagSyn) && r.RcvNxt.LessThan(segSeq) {
+	if s.flags.Contains(header.TCPFlagSyn) && !s.flags.Contains(header.TCPFlagAck) && r.RcvNxt.LessThan(segSeq) {
 		return false, true
 	}
 
