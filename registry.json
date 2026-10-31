@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T08:10:45.007273+00:00",
+    "updatedAt": "2026-10-31T08:29:06.907584+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28108,9 +28108,9 @@
       "title": "Keep timed-out SACK recovery from restarting",
       "url": "https://github.com/google/gvisor/pull/16495",
       "group": "runtime",
-      "status": "open",
-      "summary": "A partial cumulative ACK could start SACK recovery again after a retransmission timeout and make Reno cut its threshold twice. The new wire regression reproduces it and shows that, once the peer acknowledges the original flight, a later gap still triggers a retransmission. It passes normally and under race, and both owning analyzers pass on AMD64 and ARM64. Independent of #15634. Stock gVisor stalled in all five runs of the reporter’s reproducer. The corrected sender completed all five transfers in under a second.",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
+      "status": "draft",
+      "summary": "Linux and the parent retry a lost SACK repair within 80 ms when the peer supplies a fresh SACK. The published change instead waits for the retransmission timeout to back off from 400 to 800 ms. All three waited when the peer repeated the same SACK. The earlier reporter workload and wire regression remain recorded below.",
+      "updatedAt": "2026-10-31T08:29:06.907584+00:00",
       "refinement": {
         "before": {
           "head": "c31f03115fab5a3522a5acb6312393a7067f9f0f"
@@ -28122,19 +28122,24 @@
       "followup": {
         "owner": "root",
         "sourceHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
-        "observedAt": "2026-10-27T09:36:13+00:00",
-        "disposition": "Published as #16495",
-        "nextAction": "Follow maintainer review and public checks on #16495.",
+        "observedAt": "2026-10-31T08:29:06.907584+00:00",
+        "disposition": "Draft under revision",
+        "nextAction": "Preserve the original interrupted-recovery fix and restore prompt repair on fresh SACK progress. Qualify the revision against the repeated-SACK control.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16495",
           "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b",
           "https://github.com/tamird/gvisor/commit/b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
           "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335",
           "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838",
-          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144"
+          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144",
+          "https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229"
         ]
       },
       "evidence": [
+        {
+          "label": "Native Linux, parent and published head after fresh and repeated SACKs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229"
+        },
         {
           "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/1a1e9569dc8e7152c98028b7cb78fe6f574e102b"
@@ -54755,11 +54760,11 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T08:10:45.007273+00:00",
+      "updatedAt": "2026-10-31T08:29:06.907584+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
-          "text": "The declared LLVM toolchain compiled and linked sentry-prewarmer, procumounter and fdparking on native AMD64 and ARM64 workers containing only /hello. All six installed ELFs matched their cold link outputs and had no dynamic interpreter or dynamic section. The registry toolchain could not launch its module-map generator. The generator fix alone reached the linker but failed to find pthread and dl. The passing source also omitted those libunwind-only defaults when static C++ runtimes were disabled and used TMPDIR=. The six signed release files in the separate comparison used a shell-equipped worker.",
+          "text": "The declared LLVM toolchain compiled and linked sentry-prewarmer, procumounter and fdparking on native AMD64 and ARM64 workers containing only /hello. All six installed ELFs matched their cold link outputs and had no dynamic interpreter or dynamic section. The registry toolchain could not launch its module-map generator. The generator fix alone reached the linker but failed to find pthread and dl. The passing source also omitted those libunwind-only defaults when static C++ runtimes were disabled and used TMPDIR=. The six signed release files in the separate comparison used a shell-equipped worker. The freestanding gVisor rules already disable the C++ runtimes. A separate LLVM change makes the existing switch omit those two system libraries while keeping the libc search path and bootstrap linker defaults.",
           "evidence": [
             {
               "label": "Three cold native compiles and links per architecture, with ELF and digest checks",
@@ -54780,6 +54785,22 @@
             {
               "label": "Qualification patch omitting libunwind-only system libraries",
               "url": "https://github.com/tamird/gvisor/blob/1adf13461/tools/qualification-linux-libraries.patch"
+            },
+            {
+              "label": "LLVM system-library fix and native freestanding regression",
+              "url": "https://github.com/tamird/hermetic-llvm/commit/321ef8af9"
+            },
+            {
+              "label": "Supplier regression, hosted C++ and bootstrap link qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41184756532"
+            },
+            {
+              "label": "Separate proposal for a Linux platform without libc",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/851"
+            },
+            {
+              "label": "Separate proposal to reorganize toolchain runtime linkage",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/564"
             }
           ]
         },

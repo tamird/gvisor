@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-31T06:53:04.039601+00:00",
-  "registryDate": "2026-10-31T08:10:45.007273+00:00",
+  "registryDate": "2026-10-31T08:29:06.907584+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -203568,21 +203568,21 @@
       "repo": "google/gvisor",
       "title": "Keep timed-out SACK recovery from restarting",
       "url": "https://github.com/google/gvisor/pull/16495",
-      "status": "open",
+      "status": "draft",
       "ref": "fixes/tcp-interrupted-sack-recovery",
       "head": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
       "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
       "branchHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-10-31T06:52:08.024051+00:00",
+      "mergeabilityCheckedAt": "2026-10-31T08:29:06.906579+00:00",
       "headCommittedAt": "2026-10-27T09:31:00Z",
       "headHistoryComplete": true,
       "headIntroducedAt": "2026-10-27T09:31:46Z",
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
       "authorLogin": "tamird",
-      "updatedAt": "2026-10-27T09:33:57Z",
+      "updatedAt": "2026-10-31T08:19:17Z",
       "createdAt": "2026-10-27T09:28:42Z",
       "mergedAt": null,
       "closedAt": null,
@@ -203837,41 +203837,16 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-31T06:52:33.198570+00:00",
+      "checkedAt": "2026-10-31T08:29:06.907098+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
         "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
-        "checkedAt": "2026-10-31T06:52:08.024051+00:00"
+        "checkedAt": "2026-10-31T08:29:06.906579+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
-      "imports": [],
-      "maintainerReviewers": [],
-      "publicImportDisposition": {
-        "binding": {
-          "sourceHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
-          "approvedHead": null,
-          "currentApproval": false,
-          "complete": true,
-          "labels": [],
-          "labelsComplete": true,
-          "labelHistory": {
-            "complete": true,
-            "items": []
-          },
-          "imports": [],
-          "eligible": false
-        },
-        "scope": "none",
-        "state": "absent",
-        "action": null,
-        "trigger": {
-          "label": "ready to pull",
-          "state": "unknown"
-        },
-        "description": "No matching public export was found in the complete lookup."
-      }
+      "imports": []
     },
     {
       "number": 16496,
@@ -258036,12 +258011,12 @@
       }
     },
     "pr:16495": {
-      "maintainer-review": {
+      "draft": {
         "scope": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
-        "since": "2026-10-27T09:37:09.724718+00:00",
+        "since": "2026-10-31T08:29:06.907098+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-31T06:52:33.198570+00:00"
+        "observedAt": "2026-10-31T08:29:06.907098+00:00"
       }
     },
     "pr:16496": {
@@ -259091,6 +259066,15 @@
         "observedAt": "2026-10-31T07:18:55.041730+00:00"
       }
     },
+    "branch:rules-img-wrk2-image": {
+      "contributor-review": {
+        "scope": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
+        "since": "2026-10-31T07:18:55.041730+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-31T07:18:55.041730+00:00"
+      }
+    },
     "branch:tcp-restore-send-deadlines": {
       "contributor-review": {
         "scope": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
@@ -259260,15 +259244,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-31T06:29:18.760429+00:00"
-      }
-    },
-    "branch:rules-img-wrk2-image": {
-      "contributor-review": {
-        "scope": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
-        "since": "2026-10-31T07:18:55.041730+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-31T07:18:55.041730+00:00"
       }
     },
     "branch:standalone-iperf-runtime": {
