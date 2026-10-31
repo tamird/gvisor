@@ -1372,3 +1372,71 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 	}
 	t.Fatal("pooled graphEncodeState retained user allocation across GC")
 }
+
+// The counter arm replaces this accessor, leaving the Save timing arm uninstrumented.
+var readWindowVisits = func() (uint64, uint64) { return 0, 0 }
+
+func TestGraphGrowingWindows(t *testing.T) {
+	wasEnabled := GraphEngineEnabled()
+	EnableGraphEngine(true)
+	defer EnableGraphEngine(wasEnabled)
+
+	for _, n := range []int{128, 256, 512, 1024, 2048} {
+		backing := make([]byte, n)
+		backing[0] = 37
+		prefixes := make([][]byte, n)
+		for i := range prefixes {
+			prefixes[i] = backing[:1 : i+1]
+		}
+		narrow := append([][]byte(nil), prefixes...)
+		wide := append([][]byte(nil), prefixes...)
+		slices.Reverse(wide)
+		for sample := 0; sample < 6; sample++ {
+			orders := []string{"narrow", "wide"}
+			if sample%2 != 0 {
+				slices.Reverse(orders)
+			}
+			for _, order := range orders {
+				windows := narrow
+				if order == "wide" {
+					windows = wide
+				}
+				var image bytes.Buffer
+				links, buckets := readWindowVisits()
+				start := time.Now()
+				_, err := Save(t.Context(), &image, &windows)
+				elapsed := time.Since(start)
+				endLinks, endBuckets := readWindowVisits()
+				if err != nil {
+					t.Fatalf("Save(%d,%s): %v", n, order, err)
+				}
+				size := image.Len()
+				var restored [][]byte
+				if _, err := Load(t.Context(), &image, &restored); err != nil {
+					t.Fatalf("Load(%d,%s): %v", n, order, err)
+				}
+				if len(restored) != n {
+					t.Fatalf("restored %d windows, want %d", len(restored), n)
+				}
+				if order == "wide" {
+					slices.Reverse(restored)
+				}
+				for i, view := range restored {
+					if len(view) != 1 || cap(view) != i+1 || view[0] != 37 || &view[0] != &restored[0][0] {
+						t.Fatalf("incorrect window %d, %d, %s", i, n, order)
+					}
+				}
+				full := restored[n-1][:n]
+				if !bytes.Equal(full, backing) {
+					t.Fatalf("different restored backing, %d, %s", n, order)
+				}
+				full[0]++
+				if restored[0][0] != 38 {
+					t.Fatalf("lost post-restore alias, %d, %s", n, order)
+				}
+				t.Logf("WINDOW-SAVE n=%d order=%s sample=%d save_ns=%d bytes=%d links=%d buckets=%d",
+					n, order, sample, elapsed.Nanoseconds(), size, endLinks-links, endBuckets-buckets)
+			}
+		}
+	}
+}
