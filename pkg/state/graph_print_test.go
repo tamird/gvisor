@@ -17,6 +17,8 @@ package state
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"errors"
 	"io"
 	"strings"
 	"sync"
@@ -166,4 +168,54 @@ func TestPrintGraphUnexportedInlineMapAndTrailingData(t *testing.T) {
 	if err := PrintGraph(&out, withTrailing, 0, false); err == nil || !strings.Contains(err.Error(), "trailing data") {
 		t.Fatalf("PrintGraph with trailing byte = %v, want trailing data error", err)
 	}
+}
+
+type streamWriterFailure struct {
+	left int
+	err  error
+}
+
+func (w *streamWriterFailure) Write(p []byte) (int, error) {
+	if len(p) <= w.left {
+		w.left -= len(p)
+		return len(p), nil
+	}
+	n := w.left
+	w.left = 0
+	return n, w.err
+}
+
+func TestStreamCheckpointWire(t *testing.T) {
+	registerPrintTestTypes()
+	backing := make([]int, 8192)
+	for i := range backing {
+		backing[i] = i + 10
+	}
+	x := printSliceHolder{full: backing, part: backing[17:41]}
+	ctx := context.Background()
+	var buf bytes.Buffer
+	stats, err := Save(ctx, &buf, &x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rd := bytes.NewReader(buf.Bytes())
+	hdr, err := ReadHeaderMode(&wire.Reader{Reader: rd})
+	if err != nil || int(hdr.Length) != rd.Len() || stats.graph.bytes != rd.Len() {
+		t.Fatalf("framing: %+v, graph %d, remaining %d, error %v", hdr, stats.graph.bytes, rd.Len(), err)
+	}
+	var restored printSliceHolder
+	if _, err := Load(ctx, bytes.NewReader(buf.Bytes()), &restored); err != nil {
+		t.Fatal(err)
+	}
+	if len(restored.full) != len(backing) || &restored.full[17] != &restored.part[0] || restored.part[0] != 27 {
+		t.Fatal("lost original slice value or alias")
+	}
+	want := errors.New("writer stopped")
+	for _, n := range []int{0, 11, 4096} {
+		_, err := Save(ctx, &streamWriterFailure{n, want}, &x)
+		if !errors.Is(err, want) {
+			t.Fatalf("after %d bytes got %v want %v", n, err, want)
+		}
+	}
+	t.Logf("STREAM-WIRE sha=%x bytes=%d", sha256.Sum256(buf.Bytes()), buf.Len())
 }
