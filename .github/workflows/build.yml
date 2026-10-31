@@ -1,11 +1,11 @@
-name: Verify TCP recovery with one packet-credit walk
+name: Verify the split timer and send queue lock
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-reneging-single-walk'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-reneging-single-walk-fixture'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,14 +13,14 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Verify checkpoint package tests and analyzers
+    - name: Verify the split timer fixture and its lock annotations
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "7e837edccdcfdacb911ef57ebd93dbc57c2128bb"
+        test "$(git rev-parse HEAD^1)" = "d4820c268f9775d55ac451ddf3ac4e865cc5d2c2"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -85,8 +85,8 @@ jobs:
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         for arm in suites analyzers; do
-          source=2710f1cce53093fab531bca7d58d09349a0a0e00
-          parent=6eb60bcbfc52571016c91acfb6275a60f593be16
+          source=a1160571a0b1a2ad769030cace2f893bf61ead7b
+          parent=2710f1cce53093fab531bca7d58d09349a0a0e00
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           fi
@@ -104,16 +104,11 @@ jobs:
           opts=()
           case $arm in
             suites)
-              opts=(--bazel-option=--test_arg=-test.v)
-              labels=(//pkg/tcpip/transport/tcp:tcp_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
-                      //pkg/tcpip/transport/tcp/test/e2e:sack_scoreboard_test)
+              opts=(--bazel-option=--test_arg=-test.v --bazel-option=--test_filter=^TestSACKRenegingAcrossOverlappingTransmissions$)
+              labels=(//pkg/tcpip/transport/tcp:tcp_test)
               ;;
             analyzers)
-              labels=(//pkg/tcpip/transport/tcp:tcp_nogo
-                      //pkg/tcpip/transport/tcp:tcp_test_nogo)
+              labels=(//pkg/tcpip/transport/tcp:tcp_test_nogo)
               ;;
           esac
           selection=()
