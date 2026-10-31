@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T12:12:41.296093+00:00",
+    "updatedAt": "2026-10-31T12:18:46.029487+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39545,6 +39545,42 @@
         {
           "label": "Original fails, corrected passes, eight alternating pairs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41199044377/artifacts/13041728253"
+        }
+      ]
+    },
+    {
+      "id": "branch:python-versioned-releases",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/python-versioned-releases",
+      "head": "aff7e546bfbcd67d5a87e8054f54fb2a1b935e9e",
+      "title": "Build Python archives only for versioned releases",
+      "url": "https://github.com/tamird/gvisor/compare/aa767e4c4...aff7e546b",
+      "group": "release",
+      "status": "Contributor review requested",
+      "summary": "The Buildkite release job invokes the project builder for Python even when its publisher excludes the wheel and sdist. Check the local tag after release staging. Skip Python packaging on untagged master and nightly jobs, and keep it on tagged releases, including reruns. The AMD64 release coordinator produces both Python archives once for all architectures. The separate image and binary builds retain their current commands.",
+      "updatedAt": "2026-10-31T12:18:46.029487+00:00",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "aff7e546bfbcd67d5a87e8054f54fb2a1b935e9e",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/compare/aa767e4c4...aff7e546b",
+        "title": "Open the Buildkite Python release eligibility change",
+        "summary": "The Buildkite release job invokes the project builder for Python even when its publisher excludes the wheel and sdist. Check the local tag after release staging. Skip Python packaging on untagged master and nightly jobs, and keep it on tagged releases, including reruns. The AMD64 release coordinator produces both Python archives once for all architectures. The separate image and binary builds retain their current commands."
+      },
+      "evidence": [
+        {
+          "label": "Six ineligible jobs skip the builder; two valid tags retain packaging; real tagged Make produces the versioned wheel and sdist",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41199789012/artifacts/13042465891"
+        },
+        {
+          "label": "Actual staging tag becomes the final tag before the builder and publisher run (single-case recovery)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41200236129/artifacts/13041739515"
+        },
+        {
+          "label": "Existing nightly and directory publication policy",
+          "url": "https://github.com/google/gvisor/blob/aa767e4c4/tools/make_release.sh#L89-L131"
         }
       ]
     }
