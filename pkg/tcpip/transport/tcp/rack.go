@@ -17,6 +17,8 @@ package tcp
 import (
 	"time"
 
+	"gvisor.dev/gvisor/pkg/log"
+
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 )
@@ -100,6 +102,8 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 	// for the connection.
 	// See: https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2, step 2.
 	if seg.xmitCount > 1 {
+		log.Warningf("REPAIR_TRACE update seq=%d ack=%d xmits=%d rtt_us=%d min_us=%d state=%d", uint32(seg.sequenceNumber), uint32(ackSeg.ackNumber), seg.xmitCount, rtt.Microseconds(), rc.minRTT.Microseconds(), rc.snd.state)
+
 		if ackSeg.parsedOptions.TS && ackSeg.parsedOptions.TSEcr != 0 {
 			if ackSeg.parsedOptions.TSEcr < rc.snd.ep.tsVal(seg.xmitTime) {
 				return
@@ -391,6 +395,9 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 		}
 
 		endSeq := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize()))
+		if seg.xmitCount > 1 {
+			log.Warningf("REPAIR_TRACE detect seq=%d una=%d end=%d latest=%d delta_us=%d rtt_us=%d reo_us=%d remaining_us=%d lost=%t state=%d pipe=%d cwnd=%d", uint32(seg.sequenceNumber), uint32(rc.snd.SndUna), uint32(endSeq), uint32(rc.EndSequence), seg.xmitTime.Sub(rc.XmitTime).Microseconds(), rc.RTT.Microseconds(), rc.ReoWnd.Microseconds(), (seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution).Microseconds(), seg.lost, rc.snd.state, rc.snd.Outstanding, rc.snd.SndCwnd)
+		}
 		if seg.xmitTime.Before(rc.XmitTime) || (seg.xmitTime == rc.XmitTime && endSeq.LessThan(rc.EndSequence)) {
 			// Timestamp quantization can make two events less than one clock tick
 			// apart appear a full tick apart. Keep that uncertainty separate from
@@ -466,6 +473,8 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 // +checklocksexclude:rc.snd.rtt.rttMutex
 func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 	snd := rc.snd
+	log.Warningf("REPAIR_TRACE recover una=%d fast=%t pipe=%d cwnd=%d state=%d", uint32(snd.SndUna), fastRetransmit, snd.Outstanding, snd.SndCwnd, snd.state)
+
 	if fastRetransmit {
 		snd.resendSegment()
 	}
