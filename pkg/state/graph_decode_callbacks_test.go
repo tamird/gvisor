@@ -1372,3 +1372,32 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 	}
 	t.Fatal("pooled graphEncodeState retained user allocation across GC")
 }
+
+// TestChunkedScratchReuse exercises each boundary used by encoder object and
+// pointer metadata, including reusing retained slabs after a larger graph.
+func TestChunkedScratchReuse(t *testing.T) {
+	var c chunked[*int]
+	for _, n := range []int{1, 129, 1025, 8193, 3, 1024} {
+		values := make([]int, n)
+		for i := range values {
+			slot := c.add()
+			if *slot != nil {
+				t.Fatalf("add at %d/%d returned a stale pointer", i, n)
+			}
+			*slot = &values[i]
+		}
+		for i := range values {
+			if *c.at(i) != &values[i] {
+				t.Fatalf("at(%d) returned the wrong slot in %d entries", i, n)
+			}
+		}
+		c.reset()
+		for _, slab := range c.chunks {
+			for _, p := range slab[:cap(slab)] {
+				if p != nil {
+					t.Fatalf("reset retained a pointer from %d entries", n)
+				}
+			}
+		}
+	}
+}
