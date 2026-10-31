@@ -119,6 +119,9 @@ build_wheel_sdist() {
 
     update_version "${release_name}"
 
+    # ZIP timestamps start in 1980. Give both archives the same source timestamp.
+    export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-315532800}"
+
     # Build wheel and sdist (with fallback to --no-isolation or uv build)
     echo "Building distribution packages..."
     if python3 -m build --outdir ../dist 2>/dev/null; then
