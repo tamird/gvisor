@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T18:40:13.891+00:00",
+    "updatedAt": "2026-10-31T19:09:11.372+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40462,9 +40462,9 @@
       "title": "Preserve checkpoint write errors across memory files",
       "url": "https://github.com/tamird/gvisor/tree/checkpoint-page-write-error",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T18:40:13.891+00:00",
-      "summary": "After the checkpoint writer runs out of disk space, registering a second memory file can hide ENOSPC behind an invalid server file handle. The two-file gofer test reproduced this. Exact-source and kernel-caller qualification is in progress.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T19:07:23.722+00:00",
+      "summary": "When the pages file fills up, registering another memory file can hide ENOSPC behind an invalid checkpoint-gofer handle. The corrected kernel preserved ENOSPC. All 69 package cases, the same 69 with the race detector, the kernel case and both Nogo targets passed. The two original failures and all six reports are in the combined receipt.",
       "evidence": [
         {
           "label": "Writer source and permanent regression",
@@ -40475,10 +40475,93 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41228518403/artifacts/13052313832"
         },
         {
-          "label": "Exact source and kernel caller qualification",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41229161788"
+          "label": "Original and corrected kernel calls, package and analyzers; race arm did not start",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41229161788/artifacts/13054071409"
+        },
+        {
+          "label": "All six original reports, including the corrected 69-case race pass",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41232439201/artifacts/13053884186"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "04c66b4d86260991e49c97c7461a04f5f479c823",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/04c66b4d8",
+        "title": "Preserve checkpoint page write errors",
+        "requestedAt": "2026-10-31T19:07:23.722+00:00",
+        "summary": "Open this standalone PR against gVisor?",
+        "body": "A checkpoint can run out of space while the kernel is still supplying\nmemory files. The writer closes the pages file, and registering another\nfile with the checkpoint gofer then fails with \"invalid server file\nhandle\". That error hides the ENOSPC that stopped the checkpoint.\n\nSerialize registration with writer shutdown and return the original\nwrite error before scanning the next file. Registration can still run\nconcurrently with writes from earlier files.\n\nA kernel checkpoint on a full pages device returned ENOSPC after the\nchange. All 69 package cases also passed with the race detector [1].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41232439201/artifacts/13053884186"
+      }
+    },
+    {
+      "id": "branch:buildkite-native-packages",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/buildkite-native-packages",
+      "head": "15f6eb9c55cadfccf64e50408a42ad5fb1d49da9",
+      "title": "Build pkg and runsc directly with Bazel on Buildkite",
+      "url": "https://github.com/tamird/gvisor/tree/review/buildkite-native-packages",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-31T19:04:25.739+00:00",
+      "summary": "Both Buildkite pipelines keep their pkg and runsc target selections. The compile steps invoke Bazel directly, so Make no longer starts a Docker builder or queries output paths the pipelines discard. Source review is complete. A four-arm run is qualifying the change with the declared compiler.",
+      "evidence": [
+        {
+          "label": "Production pipeline changes",
+          "url": "https://github.com/tamird/gvisor/commit/15f6eb9c5"
+        },
+        {
+          "label": "Tested integration source",
+          "url": "https://github.com/tamird/gvisor/commit/aa354f7c5"
+        },
+        {
+          "label": "Four-arm comparison on a plain Ubuntu executor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41231932306"
         }
       ]
+    },
+    {
+      "id": "branch:grpc-native-codegen",
+      "type": "branch",
+      "repo": "tamird/grpc",
+      "ref": "research/native-cpp-codegen",
+      "head": "184987c9af1522e853a8888a1dfd1e960c69d40a",
+      "title": "Use the native C++ plugin during gRPC code generation",
+      "url": "https://github.com/tamird/grpc/commit/184987c9a",
+      "group": "rbe",
+      "status": "Human submission required",
+      "updatedAt": "2026-10-31T19:09:11.372+00:00",
+      "summary": "The distribution wrapper requires Bash on Linux. With statically linked protoc and the native execution-platform plugin, two real gVisor service generators ran on a shell-free Linux AMD64 worker. Their four output files matched the ordinary build. CocoaPods keeps its universal macOS distribution target. gRPC requires a human to own and submit upstream contributions.",
+      "evidence": [
+        {
+          "label": "Compare the one-line proposal and open a PR",
+          "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:research/native-cpp-codegen?expand=1"
+        },
+        {
+          "label": "Original GNU and scratch executions, ELF linkage and four generated files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41230918674/artifacts/13053878288"
+        },
+        {
+          "label": "Replayed missing-shell diagnostic and matching output hashes",
+          "url": "https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json"
+        },
+        {
+          "label": "gRPC contribution policy",
+          "url": "https://github.com/grpc/grpc/blob/df3dd4dcb/CONTRIBUTING.md#generative-ai-policy"
+        }
+      ],
+      "humanAction": {
+        "status": "pending",
+        "kind": "submission",
+        "head": "184987c9af1522e853a8888a1dfd1e960c69d40a",
+        "title": "[Bazel] Use the native C++ plugin for codegen",
+        "summary": "Review the one-line change and submit the gRPC PR yourself if you choose. gRPC requires the human contributor to own the code and the upstream communication.",
+        "body": "cc_grpc_library passes protoc a distribution artifact. On Linux its\nGenrule copies the plugin with Bash and cp. A worker with no shell\ncould not start that action [1].\n\nPass protoc the C++ plugin built for its execution platform. The\ndistribution target still provides the named binary used by CocoaPods,\nincluding the universal binary on macOS.\n\nWith statically linked tools on Linux AMD64, two gVisor services ran\ntheir generators on a worker with no shell. All four generated C++\nsources and headers matched the ordinary build byte for byte [2].\n\n[1]: https://app.buildbuddy.io/invocation/d53749e5-853f-4758-b191-7ed38a23e192\n[2]: https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json",
+        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:research/native-cpp-codegen?expand=1",
+        "policyURL": "https://github.com/grpc/grpc/blob/df3dd4dcb/CONTRIBUTING.md#generative-ai-policy"
+      }
     }
   ],
   "edges": [
@@ -43791,6 +43874,20 @@
       "type": "depends_on",
       "reason": "The follow-up builds on the checkpoint reader cleanup. It preserves the first read error when another memory file later registers with the same reader.",
       "evidence": "https://github.com/tamird/gvisor/commit/211a9e3b9"
+    },
+    {
+      "from": "branch:buildkite-source-lint-native",
+      "to": "branch:buildkite-native-packages",
+      "type": "depends_on",
+      "reason": "The compile commands reuse the Bazelisk installation supplied by the source lint change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/aa354f7c5"
+    },
+    {
+      "from": "branch:hermetic-compiler-review",
+      "to": "branch:buildkite-native-packages",
+      "type": "depends_on",
+      "reason": "The ordinary build agent uses the declared compiler and sysroot after removing the Docker builder.",
+      "evidence": "https://github.com/tamird/gvisor/commit/aa354f7c5"
     }
   ],
   "investigations": [
@@ -56312,7 +56409,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
+      "updatedAt": "2026-10-31T19:04:25.739+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -57355,6 +57452,23 @@
             {
               "label": "Build-time freshness design",
               "url": "https://github.com/bazel-contrib/bazel-lib/issues/993"
+            }
+          ]
+        },
+        {
+          "text": "The stock C++ gRPC generator for gVisor’s task server and packetimpact service tried to run Bash to copy its plugin. That remote action failed on the empty AMD64 worker. Selecting the existing native plugin let both generators run there with statically linked tools and produced four files byte-identical to the ordinary GNU build. The fork change leaves the universal macOS distribution target intact. The original workflow misread the escaped missing-shell diagnostic; replay verified the original three outcomes.",
+          "evidence": [
+            {
+              "label": "One-line gRPC supplier proposal",
+              "url": "https://github.com/tamird/grpc/commit/184987c9a"
+            },
+            {
+              "label": "Exact remote actions, worker images, static tool linkage and generated file hashes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41230918674/artifacts/13053878288"
+            },
+            {
+              "label": "Corrected verification of the original artifact without a rebuild",
+              "url": "https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json"
             }
           ]
         }
