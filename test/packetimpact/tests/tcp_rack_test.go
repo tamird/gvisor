@@ -15,7 +15,10 @@
 package tcp_rack_test
 
 import (
+	"bytes"
+	"context"
 	"flag"
+	"slices"
 	"testing"
 	"time"
 
@@ -499,4 +502,92 @@ func TestRACKRepeatedSACKAfterRTO(t *testing.T) {
 		}
 	}
 	ack(3, first.Add(seqnum.Size(mss)), block(2))
+}
+
+// TestReceiverSACKWithdrawal asks Linux to acknowledge out-of-order data, then
+// fills its holes in order. The application drains every contiguous byte before
+// the next hole is filled, so a stopped ACK cannot be explained by a slow reader.
+func TestReceiverSACKWithdrawal(t *testing.T) {
+	const size, count = 480, 32
+	for _, shrink := range []bool{false, true} {
+		name := "control"
+		if shrink {
+			name = "shrink"
+		}
+		t.Run(name, func(t *testing.T) {
+			dut, conn, fd, _ := createSACKConnection(t)
+			dut.SetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_RCVBUF, 131072)
+			first := *conn.LocalSeqNum(t)
+			seq := func(off int) uint32 { return uint32(first) + uint32(off) }
+			send := func(i int) {
+				conn.Send(t, testbench.TCP{SeqNum: testbench.Uint32(seq(i * size)), Flags: testbench.TCPFlags(header.TCPFlagAck | header.TCPFlagPsh)}, &testbench.Payload{Bytes: bytes.Repeat([]byte{byte(i)}, size)})
+			}
+			ack := func(off int) *testbench.TCP {
+				t.Helper()
+				got, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(seq(off))}, time.Second)
+				if err != nil {
+					t.Fatalf("ACK at offset %d: %v", off, err)
+				}
+				return got
+			}
+			for i := 1; i < count; i += 2 {
+				send(i)
+				opts := header.ParseTCPOptions(ack(0).Options)
+				want := header.SACKBlock{Start: seqnum.Value(seq(i * size)), End: seqnum.Value(seq((i + 1) * size))}
+				if !slices.Contains(opts.SACKBlocks, want) {
+					t.Fatalf("segment %d: peer did not report its receipt: %v", i, opts.SACKBlocks)
+				}
+			}
+			if shrink {
+				dut.SetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_RCVBUF, 1024)
+			}
+			capacity := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_RCVBUF)
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			var data []byte
+			var withdrawn []int
+			for len(data) < size*count {
+				before := len(data)
+				if before%size != 0 {
+					t.Fatalf("unexpected partial segment at %d", before)
+				}
+				i := before / size
+				if i%2 != 0 {
+					withdrawn = append(withdrawn, i)
+				}
+				send(i)
+				deadline := time.Now().Add(time.Second)
+				for {
+					n, buf, err := dut.RecvWithErrno(ctx, t, fd, size*count, unix.MSG_DONTWAIT)
+					if n > 0 {
+						if int(n) != len(buf) {
+							t.Fatalf("recv returned %d with %d bytes", n, len(buf))
+						}
+						data = append(data, buf...)
+						continue
+					}
+					if n != -1 || err != unix.EAGAIN {
+						t.Fatalf("recv from %d: %d, %v", before, n, err)
+					}
+					if len(data) > before {
+						break
+					}
+					if time.Now().After(deadline) {
+						t.Fatalf("no progress after sending segment %d; consumed %d", i, before)
+					}
+					time.Sleep(time.Millisecond)
+				}
+				ack(len(data))
+			}
+			for j, b := range data {
+				if int(b) != j/size {
+					t.Fatalf("byte %d = %d, want %d", j, b, j/size)
+				}
+			}
+			t.Logf("RECEIVER variant=%s first=%d rcvbuf=%d sacked=%d replayed=%v bytes=%d", name, first, capacity, count/2, withdrawn, len(data))
+			if (len(withdrawn) > 0) != shrink {
+				t.Fatalf("with shrink=%t had to resend previously SACKed segments %v", shrink, withdrawn)
+			}
+		})
+	}
 }
