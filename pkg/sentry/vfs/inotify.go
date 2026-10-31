@@ -147,7 +147,10 @@ func (i *Inotify) Release(ctx context.Context) {
 		if ws == nil {
 			panic("Cannot remove watch from an unwatchable dentry")
 		}
-		if ws.remove(i) == 0 {
+		i.mu.Unlock()
+		remaining := ws.remove(i)
+		i.mu.Lock()
+		if remaining == 0 {
 			ds = append(ds, d)
 		}
 	}
