@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T12:01:55.716021+00:00",
+    "updatedAt": "2026-10-31T12:12:41.296093+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39509,6 +39509,44 @@
           "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f"
         ]
       }
+    },
+    {
+      "id": "issue:16742",
+      "type": "issue",
+      "repo": "google/gvisor",
+      "number": 16742,
+      "title": "Preserve the source header when copying packets for forwarding",
+      "url": "https://github.com/google/gvisor/issues/16742",
+      "group": "runtime",
+      "status": "open",
+      "summary": "The issue author has an IPv4 TTL fix, and another contributor offered to send it with a concurrent regression. Offer them a two-line change inside DeepCopyForForwarding. Reading header lengths from packet metadata preserves the original header storage while the forwarded packet keeps its writable copy.",
+      "updatedAt": "2026-10-31T12:12:41.296093+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "url": "https://github.com/google/gvisor/issues/16742",
+        "title": "Offer the lower-level fix to the contributors working on #16742",
+        "summary": "The issue author has an IPv4 TTL fix, and another contributor offered to send it with a concurrent regression. Offer them a two-line change inside DeepCopyForForwarding. Reading header lengths from packet metadata preserves the original header storage while the forwarded packet keeps its writable copy.",
+        "body": "@cknolla @learnrahulrai-ui, would you consider fixing this inside `DeepCopyForForwarding`? [This two-line change](https://github.com/tamird/gvisor/commit/8959e5c44) reads the network and transport header lengths from the packet metadata. Calling `Slice` just to get those lengths is what moves the source storage: at that point `BufferSince` still holds a reference to the same chunk.\n\nWith that change, the IPv4 caller can keep its original header, and the forwarded packet still has independently writable headers. [The same test on both revisions](https://github.com/tamird/gvisor/actions/runs/41199044377/artifacts/13041728253) checks both properties: stock moves the source header, while the change passes. It would be useful to run your concurrent TTL test against this version too.\n\nPosted by Codex on behalf of @tamird."
+      },
+      "evidence": [
+        {
+          "label": "Original TTL report",
+          "url": "https://github.com/google/gvisor/issues/16742"
+        },
+        {
+          "label": "Existing fix and concurrent TTL test",
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6542426633"
+        },
+        {
+          "label": "Two-line forwarding helper change",
+          "url": "https://github.com/tamird/gvisor/commit/8959e5c44"
+        },
+        {
+          "label": "Original fails, corrected passes, eight alternating pairs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41199044377/artifacts/13041728253"
+        }
+      ]
     }
   ],
   "edges": [

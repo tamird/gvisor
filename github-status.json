@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-31T10:33:11.933574+00:00",
-  "registryDate": "2026-10-31T12:01:55.716021+00:00",
+  "registryDate": "2026-10-31T12:12:41.296093+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -251674,6 +251674,24 @@
         }
       ],
       "olderComments": false
+    },
+    "issue:16742": {
+      "githubState": "open",
+      "githubStateReason": null,
+      "githubURL": "https://github.com/google/gvisor/issues/16742",
+      "closedAt": null,
+      "updatedAt": "2026-10-31T10:49:42Z",
+      "checkedAt": "2026-10-31T12:12:41.804154+00:00",
+      "comments": [
+        {
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6542426633",
+          "updatedAt": "2026-10-31T10:49:42Z",
+          "author": {
+            "login": "learnrahulrai-ui"
+          }
+        }
+      ],
+      "olderComments": false
     }
   },
   "reviewPRs": [
@@ -258870,6 +258888,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-31T10:28:33.920382+00:00"
+      }
+    },
+    "issue:16742": {
+      "contributor-review": {
+        "scope": "https://github.com/google/gvisor/issues/16742",
+        "since": "2026-10-31T12:12:41.296093+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-31T12:12:41.296093+00:00"
       }
     }
   },
