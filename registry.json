@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T02:01:19.983938+00:00",
+    "updatedAt": "2026-10-31T02:15:52.472834+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38019,6 +38019,68 @@
           "url": "https://github.com/google/gvisor/issues/16670#reviews-that-can-proceed-independently"
         }
       ]
+    },
+    {
+      "id": "branch:c-ares-config-header",
+      "type": "branch",
+      "repo": "tamird/bazel-central-registry",
+      "ref": "c-ares-symlink-header",
+      "head": "4db92b7501f6a690be7b313ecd9f5bb6f27d3335",
+      "title": "Provide the c-ares configuration header without host utilities",
+      "url": "https://github.com/tamird/bazel-central-registry/commit/4db92b750",
+      "group": "bazel",
+      "updatedAt": "2026-10-31T02:12:16.708374+00:00",
+      "status": "Contributor review requested",
+      "summary": "Without cp on the Bazel client, both headers on gVisor’s selected c-ares and one on BCR 1.34.9 fail. The registry revision replaces the remaining copy with a symlink. Both Linux architectures produced the same header bytes and built the library on scratch workers.",
+      "evidence": [
+        {
+          "label": "Final verdict: four arms, both graphs and build receipts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41158775490/artifacts/13026545213"
+        },
+        {
+          "label": "Original build results, including the query that returned no actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41157482164/artifacts/13025534182"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "4db92b7501f6a690be7b313ecd9f5bb6f27d3335",
+        "url": "https://github.com/tamird/bazel-central-registry/commit/4db92b750",
+        "title": "Submit the c-ares header rule to BCR",
+        "summary": "Without cp on the Bazel client, both headers on gVisor’s selected c-ares and one on BCR 1.34.9 fail. The registry revision replaces the remaining copy with a symlink. Both Linux architectures produced the same header bytes and built the library on scratch workers."
+      }
+    },
+    {
+      "id": "branch:statefile-output-permissions",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/statefile-output-permissions",
+      "head": "54b3b894b064f037c76565eea2f7274bdd7a7420",
+      "title": "Run statefile output permission tests as the invoking user",
+      "url": "https://github.com/tamird/gvisor/commit/54b3b894b",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T02:15:52.472834+00:00",
+      "summary": "The command test suite enters a root user namespace, so it skipped its two output-permission cases even on an unprivileged worker. The two cases now run as the invoking user; all eight other output cases remain in cmd_test. Workers actually running as root still skip the permission cases.",
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "54b3b894b064f037c76565eea2f7274bdd7a7420",
+        "url": "https://github.com/tamird/gvisor/commit/54b3b894b",
+        "title": "Open the statefile permission test fix",
+        "summary": "The command test suite enters a root user namespace, so it skipped its two output-permission cases even on an unprivileged worker. The two cases now run as the invoking user; all eight other output cases remain in cmd_test. Workers actually running as root still skip the permission cases."
+      },
+      "evidence": [
+        {
+          "label": "Two permission cases and eight retained cases executed; release data dependency and wildcard target verified",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41157779412/artifacts/13026505645"
+        },
+        {
+          "label": "Both original cases skipped in cmd_test",
+          "url": "https://app.buildbuddy.io/invocation/ce7a164f-84b4-4792-8f4e-7d910af0fcf2"
+        }
+      ]
     }
   ],
   "edges": [
@@ -53664,12 +53726,20 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
+      "updatedAt": "2026-10-31T02:12:16.708374+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
-          "text": "The selected c-ares 1.34.5.bcr.2 header actions run cp through Bash on the Bazel client: Skylib marks them no-remote. The compiler comparison tests a symlink on both architectures. Separately, rules_python merged the namespace-file fix; release 2.4.6 does not contain it.",
+          "text": "Without cp on the Bazel client, both headers on gVisor’s selected c-ares and one on BCR 1.34.9 fail. The registry revision replaces the remaining copy with a symlink. Both Linux architectures produced the same header bytes and built the library on scratch workers. Separately, rules_python merged the namespace-file fix; 2.4.6 does not include it.",
           "evidence": [
+            {
+              "label": "Final verdict: four arms, both graphs and build receipts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41158775490/artifacts/13026545213"
+            },
+            {
+              "label": "Original build results, including the query that returned no actions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41157482164/artifacts/13025534182"
+            },
             {
               "label": "Single-job Linux comparison (running)",
               "url": "https://github.com/tamird/gvisor/actions/runs/41157482164"
