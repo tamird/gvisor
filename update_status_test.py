@@ -376,6 +376,12 @@ class CollectorHistoryTest(unittest.TestCase):
         updater.requests += 1
         if updater.requests > updater.REQUEST_LIMIT:
             raise RuntimeError("request cap exceeded")
+        if 'object(expression:"HEAD:MAINTAINERS.md")' in query:
+            roster = ("<!-- Generated from governance/maintainers.yaml by\n"
+                      "Name | GitHub | Areas\n--- | --- | ---\n"
+                      "Maintainer | [@kerumeto](https://github.com/kerumeto) | Core\n"
+                      "\n## Emeritus Maintainers\n")
+            return {"repository": {"object": {"oid": "b" * 40, "text": roster}}}
         if "pullRequests(states:OPEN" in query:
             self.inventory_pages += 1
             offset = int((variables or {}).get("after") or 0)
@@ -520,9 +526,9 @@ class CollectorHistoryTest(unittest.TestCase):
 
         # Two inventory pages, two PR detail queries, the second repository,
         # and its issue use all six requests. There is no optional read left.
-        with mock.patch.object(self, "graphql", side_effect=query), mock.patch.object(updater, "REQUEST_LIMIT", 6):
+        with mock.patch.object(self, "graphql", side_effect=query), mock.patch.object(updater, "REQUEST_LIMIT", 7):
             snapshot = self.collect()
-        self.assertEqual(snapshot["limits"]["requests"], 6)
+        self.assertEqual(snapshot["limits"]["requests"], 7)
         self.assertEqual(snapshot["issues"]["issue:19"]["githubState"], "open")
         prs = {pr["number"]: pr for pr in snapshot["prs"]}
         self.assertEqual(prs[17]["repo"], second_repo)

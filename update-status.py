@@ -963,7 +963,7 @@ def main() -> None:
     for repo, policy in policies.items():
         records, fresh, prior, inventory = collect_repository(repo, policy, previous)
         if repo == "google/gvisor":
-            records = [with_maintainer_reviewers(pr, maintainers) for pr in records]
+            records = [with_maintainer_reviewers(pr, maintainers) if pr["status"] == "open" else pr for pr in records]
         # Keep observed human feedback actionable even if a later repository or
         # snapshot validation fails. This log is not a published observation.
         for record in reviewer_handoff(records, previous):
