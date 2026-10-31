@@ -29,11 +29,65 @@ import (
 	"gvisor.dev/gvisor/pkg/unet"
 )
 
+func probeHostRights(s *unet.Socket) error {
+	read0, write0, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	defer read0.Close()
+	defer write0.Close()
+	read1, write1, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	defer read1.Close()
+	defer write1.Close()
+	dir, err := os.Open(".")
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+
+	w := s.Writer(true)
+	w.PackFDs(int(write0.Fd()), int(dir.Fd()), int(write1.Fd()))
+	if n, err := w.WriteVec([][]byte{{'r'}}); err != nil || n != 1 {
+		return fmt.Errorf("sending rights: n=%d err=%v", n, err)
+	}
+	if err := write0.Close(); err != nil {
+		return err
+	}
+	if err := write1.Close(); err != nil {
+		return err
+	}
+	var done [1]byte
+	if _, err := io.ReadFull(s, done[:]); err != nil || done[0] != 'd' {
+		return fmt.Errorf("waiting for close: byte=%q err=%v", done, err)
+	}
+	// The guest has consumed the message and closed every delivered FD.
+	// Linux reports POLLHUP for each pipe with no remaining writers.
+	fds := []unix.PollFd{{Fd: int32(read0.Fd()), Events: unix.POLLIN}, {Fd: int32(read1.Fd()), Events: unix.POLLIN}}
+	if _, err := unix.Poll(fds, 0); err != nil {
+		return err
+	}
+	result := []byte{'o', 'o'}
+	for i, p := range fds {
+		if p.Revents&unix.POLLHUP != 0 {
+			result[i] = 'h'
+		}
+	}
+	_, err = s.Write(result)
+	return err
+}
+
 func doEcho(s *unet.Socket) error {
 	buf := make([]byte, 512)
 	n, err := s.Read(buf)
 	if err != nil {
 		return fmt.Errorf("failed to read: %d, %w", n, err)
+	}
+
+	if n == 1 && buf[0] == '?' {
+		return probeHostRights(s)
 	}
 
 	n, err = s.Write(buf[:n])

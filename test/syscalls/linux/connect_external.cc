@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <grp.h>
 #include <linux/capability.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -178,6 +179,60 @@ INSTANTIATE_TEST_SUITE_P(Dgram, GoferDgramTest,
 
 // Connect to a socket that only its group may reach, holding that group as a
 // supplementary group, as a user in the docker group does for docker.sock.
+TEST(GoferStreamTest, ReleaseUndeliveredHostRights) {
+  const char* root = getenv("TEST_UDS_TREE");
+  ASSERT_NE(root, nullptr);
+  FileDescriptor sock =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_UNIX, SOCK_STREAM, 0));
+  const std::string path = JoinPath(root, "stream", "echo");
+  struct sockaddr_un addr = {};
+  addr.sun_family = AF_UNIX;
+  ASSERT_LT(path.size(), sizeof(addr.sun_path));
+  memcpy(addr.sun_path, path.data(), path.size());
+  ASSERT_THAT(connect(sock.get(), reinterpret_cast<struct sockaddr*>(&addr),
+                      sizeof(addr)), SyscallSucceeds());
+  ASSERT_THAT(WriteFd(sock.get(), "?", 1),
+              SyscallSucceedsWithValue(1));
+
+  for (int receive_flags : {static_cast<int>(MSG_PEEK), 0}) {
+    char data;
+    struct iovec iov = {.iov_base = &data, .iov_len = sizeof(data)};
+    alignas(struct cmsghdr) char control[CMSG_SPACE(3 * sizeof(int))] = {};
+    struct msghdr msg = {};
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = control;
+    msg.msg_controllen = sizeof(control);
+    ASSERT_THAT(recvmsg(sock.get(), &msg, receive_flags),
+                SyscallSucceedsWithValue(1));
+    ASSERT_EQ(data, 'r');
+    auto* cmsg = CMSG_FIRSTHDR(&msg);
+    ASSERT_NE(cmsg, nullptr);
+    ASSERT_EQ(cmsg->cmsg_level, SOL_SOCKET);
+    ASSERT_EQ(cmsg->cmsg_type, SCM_RIGHTS);
+    ASSERT_GE(cmsg->cmsg_len, CMSG_LEN(sizeof(int)));
+    ASSERT_LE(cmsg->cmsg_len, CMSG_LEN(3 * sizeof(int)));
+    size_t count = (cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(int);
+    auto* fds = reinterpret_cast<int*>(CMSG_DATA(cmsg));
+    // The accepted prefix must still work after import of its successor fails.
+    EXPECT_THAT(write(fds[0], "x", 1), SyscallSucceedsWithValue(1));
+    for (size_t i = 0; i < count; i++) {
+      EXPECT_THAT(close(fds[i]), SyscallSucceeds());
+    }
+    const bool truncated = msg.msg_flags & MSG_CTRUNC;
+    printf("HOST-RIGHTS peek=%d received=%zu ctrunc=%d\n",
+           receive_flags == MSG_PEEK, count, truncated);
+    EXPECT_EQ(truncated, count < 3);
+  }
+  ASSERT_THAT(WriteFd(sock.get(), "d", 1), SyscallSucceedsWithValue(1));
+  char state[2];
+  ASSERT_THAT(ReadFd(sock.get(), state, sizeof(state)),
+              SyscallSucceedsWithValue(2));
+  printf("HOST-RIGHTS prefix=%c suffix=%c\n", state[0], state[1]);
+  EXPECT_EQ(state[0], 'h');
+  EXPECT_EQ(state[1], 'h');
+}
+
 TEST(GoferStreamTest, ConnectWithSupplementaryGroup) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SETUID)));
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SETGID)));
