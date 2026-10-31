@@ -1,35 +1,59 @@
-name: CI
-
-"on":
+name: Compare two real gVisor C++ gRPC generators
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/grpc-native-codegen]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      MINIMAL: mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Prepare the previously qualified compiler coordinator and execution platforms
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        d="$RUNNER_TEMP/grpc-receipt"
+        mkdir -p "$d" "$RUNNER_TEMP/grpc-workers"
+        printf '{"status":"INCOMPLETE","reason":"no final verifier result"}\n' > "$d/verdict.json"
+        test "$(git rev-parse HEAD^)" = aa767e4c43d011121271551fe24da501a56f729d
+        cat > "$RUNNER_TEMP/grpc-workers/MODULE.bazel" <<'EOF'
+        module(name = "grpc_workers")
+        EOF
+        cat > "$RUNNER_TEMP/grpc-workers/BUILD" <<EOF
+        package(default_visibility=["//visibility:public"])
+        constraint_setting(name="contents")
+        constraint_value(name="empty",constraint_setting=":contents")
+        platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://$GNU"})
+        platform(name="scratch",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux",":empty"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://$MINIMAL"})
+        EOF
+        umask 077
+        test -n "$BUILDBUDDY_API_KEY"
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+          printf '%s\n' "build --inject_repository=grpc_workers=$RUNNER_TEMP/grpc-workers" 'build --extra_execution_platforms=@grpc_workers//:gnu,@grpc_workers//:scratch' 'build --host_platform=@grpc_workers//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/grpc.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        umask 022
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name grpc-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec grpc-compiler gcc -dumpfullversion > "$d/coordinator-gcc"
+    - name: Run the stock and corrected configured gVisor actions
+      timeout-minutes: 98
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        python3 test/rbe/grpc-native-codegen/measure.py
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: grpc-native-codegen
+        path: ${{ runner.temp }}/grpc-receipt/
+        if-no-files-found: error
