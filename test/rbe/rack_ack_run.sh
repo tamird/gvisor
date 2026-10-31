@@ -9,6 +9,7 @@ git update-index --refresh
 test -z "$(git status --porcelain --untracked-files=no)"
 label=release-20991231.7
 git init --quiet --bare "$RUNNER_TEMP/tag-origin.git"
+git -C "$RUNNER_TEMP/tag-origin.git" config receive.shallowUpdate true
 git -c user.name=Qualifier -c user.email=qualifier@example.com tag -a "$label-staging" -m 'release fixture' "$product"
 git push --quiet "$RUNNER_TEMP/tag-origin.git" "refs/tags/$label-staging"
 git -c user.name=Qualifier -c user.email=qualifier@example.com tag -a dev-20981231.4 -m 'competing annotated tag' "$product"
