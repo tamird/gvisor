@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("pkg/sentry/platform/systrap/sysmsg|pkg/gohacks|test/rbe/empty_worker")) or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("pkg/sentry/platform/systrap/sysmsg|pkg/gohacks|test/rbe/empty_worker")) or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoImports" or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -80,6 +80,14 @@ def invoke(kind,arch,targets,options=()):
     original=txt.read_text(errors="replace")
     messages=[l.strip()[:1300] for l in original.splitlines() if re.search(r"ERROR:|Traceback|Error in|in fail|No such file|could not start|failed to start|not found|undefined symbol|unable to find|permission denied|unrecognized option|Invocation ID:",l,re.I) and not re.search(r"api.key|authorization|credential",l,re.I)]
     r={"source":run("git","rev-parse","HEAD"),"targets":targets,"argv":cmd[2:],"native_exit":status,"started":start,"finished":finished,"invocations":re.findall(r"Invocation ID: ([0-9a-f-]{36})",original),"errors":messages[-32:]}
+    records=[]
+    lines=original.splitlines()
+    for index,line in enumerate(lines):
+        if line.startswith("ERROR:") or line.startswith("panic:") or "permission denied" in line.lower() or "not found" in line.lower():
+            block="\n".join(lines[index:index+6])
+            if re.search(r"api[-_]key|authorization|credential|remote_header",block,re.I): continue
+            if len(records)<60: records.append(block[:1900])
+    (folder/"diagnostics.txt").write_text("\n---\n".join(records)+"\n")
     results[kind]=r; save()
     actions=rows(log)
     (folder/"actions.json").write_text(json.dumps(actions,indent=2)+"\n")
@@ -139,6 +147,12 @@ try:
     result,actions=invoke("consumer","arm64",[pkg+"sysmsg"],opts)
     failures=[a for a in actions if a.get("exitCode") or a.get("status")]
     result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status")} for a in failures]
+    result["generator_counts"]={}
+    for kind in ("GoStateify","GoImports","ProtocAuthenticityCheck"):
+        runs=[a for a in actions if a["mnemonic"]==kind]
+        result["generator_counts"][kind]={"actions":len(runs),"succeeded":sum(not (a.get("status") or a.get("exitCode")) for a in runs),"failed":sum(bool(a.get("status") or a.get("exitCode")) for a in runs)}
+    result["prior_consumer"]={"artifact":13061104668,"run":41252057046,"sha256":"6c6960be1ea9343d48f2131af40da435d268464bfe5d63ec954519b044a4eef6"}
+
     if result["native_exit"]==0:
         compiled=[a for a in actions if a["label"]==pkg+"sysmsg" and a["mnemonic"]=="GoCompilePkg"]
         archive,=[o for a in compiled for o in a["outputs"] if o["path"].endswith("/sysmsg.a")]

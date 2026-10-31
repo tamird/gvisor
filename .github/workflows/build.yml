@@ -27,11 +27,11 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-arm64 -o "$RUNNER_TEMP/bb"
           echo "5e8586e88d169395c2119a4143aa4d86d9b53d7abab3520acc735473f2bd2a90  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Build the systrap Go library with the complete native stub proposal
+      - name: Build the ARM64 systrap library with declared stateify and protoc tools
         env:
           BASE: ddf4c56a5ae1a1e539ec5989649930c97c26e593
           ORIGINAL: ec550a48a00e04396c21617a152224096bf93af2
-          CORRECTED: 5ad5aa35ad6c24beed51727942b826662ebf5176
+          CORRECTED: 060d9517a717efe810d841722fcaf333db2e3a55
           AMD64_CONTROL: 17927b34de218b8c26b5feb834856d7d49259444
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -49,6 +49,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: arm64-systrap-library
+          name: arm64-declared-systrap-library
           path: ${{ runner.temp }}/package-evidence
           if-no-files-found: error
