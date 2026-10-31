@@ -1,35 +1,42 @@
-name: CI
-
-"on":
+name: Diagnose the original GNU plugin executable on Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tldk-gnu-original-diagnostic]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  original:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    env:
+      PRODUCT: 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Check exact source and open the two devices
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          mkdir -p "$RUNNER_TEMP/receipt"
+          cp test/rbe/tldk_original/{recover.py,diagnostic.py,device.py} "$RUNNER_TEMP/"
+          git checkout -q --detach "$PRODUCT"
+          sudo env PRODUCT="$PRODUCT" RUNNER_TEMP="$RUNNER_TEMP" python3 "$RUNNER_TEMP/device.py"
+          cp "$RUNNER_TEMP/traffic/device.json" "$RUNNER_TEMP/receipt/"
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+      - name: Restore the original Bazel-built outputs by digest without rebuilding
+        timeout-minutes: 12
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 "$RUNNER_TEMP/recover.py"
+      - name: Run the original Go program under native, netstack and TLDK with private Sentry logs
+        timeout-minutes: 22
+        run: python3 "$RUNNER_TEMP/diagnostic.py"
+      - name: Retain only verified digests, named case verdicts and redacted error excerpts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: original-tldk-diagnosis
+          path: ${{ runner.temp }}/receipt
+          if-no-files-found: error
