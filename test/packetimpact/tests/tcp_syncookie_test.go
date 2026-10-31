@@ -97,7 +97,9 @@ func TestTCPSynCookie(t *testing.T) {
 					}
 					if !c.expectRetransmit && err == nil {
 						// FIXME(b/421034671): it always fails on Linux.
-						if !dut.Uname.IsLinux() {
+						if dut.Uname.IsLinux() {
+							fmt.Printf("COOKIE_WAIVED flags=%02x\n", uint8(test.flags))
+						} else {
 							t.Fatalf("expected no retransmitted SYNACK, but got %s", got)
 						}
 					}
