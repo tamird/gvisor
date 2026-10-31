@@ -30,6 +30,9 @@ import (
 	"gvisor.dev/gvisor/pkg/memutil"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
+	"gvisor.dev/gvisor/pkg/sentry/state/stateipc"
+	"gvisor.dev/gvisor/pkg/unet"
+	"gvisor.dev/gvisor/pkg/urpc"
 )
 
 func newSaveTestMemoryFile(t *testing.T, diskBacked bool) *MemoryFile {
@@ -389,5 +392,86 @@ func TestAsyncLoadShortRead(t *testing.T) {
 	}
 	if !dst.HasUniqueRef(fr) {
 		t.Error("page loader still holds a reference after reporting EIO")
+	}
+}
+
+type pageRPCFixture []byte
+
+func (s pageRPCFixture) Destroy() {}
+func (s pageRPCFixture) OpenRead(string) (stateio.AsyncReader, error) {
+	return stateio.NewIOReader(bytes.NewReader(s), uint64(hostarch.PageSize), 1, 2), nil
+}
+func (s pageRPCFixture) OpenWrite(string) (stateio.AsyncWriter, error) {
+	return nil, os.ErrPermission
+}
+
+func TestAsyncRestoreSecondFile(t *testing.T) {
+	src := newSaveTestMemoryFile(t, false)
+	fr := allocateSaveTestPages(t, src)
+	pwritePage(t, src, fr, 0, 1)
+	meta, pages := saveTestPageFiles(t, src, false)
+	for _, tc := range []struct {
+		name string
+		data []byte
+		want error
+	}{
+		{"intact", bytes.Repeat(pages, 2), nil},
+		{"truncated", pages[:1], linuxerr.EIO},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server, err := stateipc.NewAsyncFileServer(pageRPCFixture(tc.data))
+			if err != nil {
+				t.Fatal(err)
+			}
+			usrv := urpc.NewServer()
+			usrv.Register(server)
+			clientSock, serverSock, err := unet.SocketPair(false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			usrv.StartHandling(serverSock)
+			client, err := stateipc.NewAsyncFileClient(urpc.NewClient(clientSock))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer client.DecRef()
+			ar, err := client.OpenRead("pages")
+			if err != nil {
+				t.Fatal(err)
+			}
+			done := make(chan error, 1)
+			loader, err := StartAsyncPagesFileLoad(ar, func(err error) { done <- err }, nil, AsyncPagesFileLoadOpts{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			first := make(chan error, 1)
+			opts := &LoadOpts{PagesFile: loader, DoneCallback: func(err error) { first <- err }}
+			dst := newSaveTestMemoryFile(t, false)
+			if err := dst.LoadFrom(t.Context(), bytes.NewReader(meta), opts); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { dst.DecRef(fr) })
+			if got, want := <-first, tc.want; got != want {
+				t.Fatalf("first file: got %v, want %v", got, want)
+			}
+			if tc.want != nil {
+				if got, want := <-done, tc.want; got != want {
+					t.Fatalf("page reader: got %v, want %v", got, want)
+				}
+			}
+			next := newSaveTestMemoryFile(t, false)
+			opts.DoneCallback = nil
+			err = next.LoadFrom(t.Context(), bytes.NewReader(meta), opts)
+			loader.MemoryFilesDone()
+			t.Cleanup(func() { next.DecRef(fr) })
+			if got, want := err, tc.want; got != want {
+				t.Errorf("second file after first completed: got %v, want %v", got, want)
+			}
+			if tc.want == nil {
+				if err := <-done; err != nil {
+					t.Fatal(err)
+				}
+			}
+		})
 	}
 }
