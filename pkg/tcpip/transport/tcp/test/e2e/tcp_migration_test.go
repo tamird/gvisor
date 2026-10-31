@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -634,4 +635,98 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 	if got := restoredStack2.CheckLocalAddress(preservedNICID, header.IPv6ProtocolNumber, preservedIPv6Addr.Address); got != preservedNICID {
 		t.Fatalf("restoredStack2.CheckLocalAddress(IPv6) = %d, want %d", got, preservedNICID)
 	}
+}
+
+func TestSACKPacketsAfterLiveRestore(t *testing.T) {
+	const mss, advertised, packets = 1000, 1036, 8
+	samples := make(chan int, 32)
+	probe := func(s *tcp.TCPEndpointState) { samples <- s.Sender.SackedOut }
+	c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, Clock: faketime.NewManualClock(), Probe: probe})
+	defer c.Cleanup()
+	c.Stack().SetAllowLiveTCPMigration(true)
+	c.Stack().SetRemoveConf(true)
+	c.SetGSOEnabled(true)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, 0)
+	c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, []byte{header.TCPOptionMSS, 4, byte(advertised / 256), byte(advertised % 256), header.TCPOptionSACKPermitted, header.TCPOptionSackPermittedLength, header.TCPOptionNOP, header.TCPOptionNOP})
+	if n, err := c.EP.Write(bytes.NewReader(make([]byte, packets*mss)), tcpip.WriteOptions{}); err != nil || n != packets*mss {
+		t.Fatalf("write=%d: %v", n, err)
+	}
+	p := c.GetPacket()
+	wire := header.TCP(header.IPv4(p.AsSlice()).Payload())
+	base := seqnum.Value(wire.SequenceNumber())
+	size := len(wire.Payload())
+	p.Release()
+	if size != packets*mss {
+		t.Fatalf("sent aggregate %d want %d", size, packets*mss)
+	}
+	sb := []header.SACKBlock{{Start: base.Add(2 * mss), End: base.Add(3 * mss)}}
+	seq := seqnum.Value(testcontext.TestInitialSequenceNumber).Add(1)
+	expect := func(stage string, want int) {
+		t.Helper()
+		select {
+		case got := <-samples:
+			t.Logf("SACK_RESTORE stage=%s count=%d", stage, got)
+			if got != want {
+				t.Fatalf("%s received count=%d want %d", stage, got, want)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("%s did not process peer ACK", stage)
+		}
+	}
+	c.SendAckWithSACK(seq, 0, sb)
+	expect("before", 1)
+	var image bytes.Buffer
+	if _, err := state.Save(context.Background(), &image, c.Stack()); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	after := stack.New(stack.Options{Clock: faketime.NewManualClock(), TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol}, NetworkProtocols: []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol}})
+	after.SetAllowLiveTCPMigration(true)
+	defer after.Destroy()
+	if _, err := state.Load(context.Background(), bytes.NewReader(image.Bytes()), after); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	link := channel.New(1000, 1500, "")
+	if err := after.CreateNIC(1, link); err != nil {
+		t.Fatalf("create NIC: %v", err)
+	}
+	if err := after.AddProtocolAddress(1, tcpip.ProtocolAddress{Protocol: header.IPv4ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix}, stack.AddressProperties{}); err != nil {
+		t.Fatalf("add address: %v", err)
+	}
+	after.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+	after.Restore()
+	tcpip.AsyncLoading.Wait()
+	var restored *tcp.Endpoint
+	for _, ep := range after.RegisteredEndpoints() {
+		if v, ok := ep.(*tcp.Endpoint); ok {
+			if restored != nil && restored != v {
+				t.Fatal("multiple restored TCP endpoints")
+			}
+			restored = v
+		}
+	}
+	if restored == nil || tcp.EndpointState(restored.State()) != tcp.StateEstablished {
+		t.Fatalf("no restored established socket")
+	}
+	// The probe is deliberately not checkpointed. Attach the same read-only
+	// sender observer to the restored socket, then inject real TCP ACKs.
+	restored.SetQualificationSACKProbe(probe)
+	inject := func(acked int, blocks []header.SACKBlock) {
+		var opts [40]byte
+		n := 0
+		if len(blocks) > 0 {
+			n += header.EncodeNOP(opts[n:])
+			n += header.EncodeNOP(opts[n:])
+			n += header.EncodeSACKBlocks(blocks, opts[n:])
+		}
+		p := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: c.BuildSegment(nil, &testcontext.Headers{SrcPort: testcontext.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: seq, AckNum: base.Add(seqnum.Size(acked)), RcvWnd: 30000, TCPOpts: opts[:n]})})
+		defer p.DecRef()
+		link.InjectInbound(ipv4.ProtocolNumber, p)
+	}
+	inject(0, nil)
+	expect("reset", 0)
+	inject(0, sb)
+	expect("reinstate", 1)
+	inject(packets*mss, nil)
+	expect("drain", 0)
 }
