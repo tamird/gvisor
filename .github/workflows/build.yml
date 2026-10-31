@@ -1,11 +1,11 @@
-name: Verify TCP sender and SACK recovery suites
+name: Verify the SYN-cookie handshake paths on Linux and gVisor
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-reneging-owner-suites'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-boundary'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -13,14 +13,14 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Verify checkpoint package tests and analyzers
+    - name: Run the Linux waiver control and the corrected handshake flag matrix
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "09a3ca25b2e495158eb09a57b86252e341ae7bd0"
+        test "$(git rev-parse HEAD^1)" = "7e837edccdcfdacb911ef57ebd93dbc57c2128bb"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -84,9 +84,11 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in suites analyzers; do
-          source=e19dfe4de7b764ce49da0696b4e5ef9b17441bd3
-          parent=f96afe45777d10e02b6565b76dd255f0062503ec
+        for arm in stock-native fixed-native fixed-netstack; do
+          case $arm in
+            stock-native) source=8b385d7316941e0e4eacc58276ef072b4410803f; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
+            fixed-native|fixed-netstack) source=619758d82036e4647928c485d6cf36c333f81cce; parent=e40d5fe9cdb59a09f5136d9a0761257d8db1a6d1 ;;
+          esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           fi
@@ -102,19 +104,7 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
           opts=()
-          case $arm in
-            suites)
-              labels=(//pkg/tcpip/transport/tcp:tcp_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test
-                      //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
-                      //pkg/tcpip/transport/tcp/test/e2e:sack_scoreboard_test)
-              ;;
-            analyzers)
-              labels=(//pkg/tcpip/transport/tcp:tcp_nogo
-                      //pkg/tcpip/transport/tcp:tcp_test_nogo)
-              ;;
-          esac
+          labels=("//test/packetimpact/tests:tcp_syncookie_${arm#*-}_test")
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
@@ -130,7 +120,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["suites","analyzers"]
+        arms = ["stock-native","fixed-native","fixed-netstack"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -143,6 +133,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: sack-reneging-verdicts
+        name: cookie-boundary-verdicts
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
