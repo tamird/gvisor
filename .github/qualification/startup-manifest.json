@@ -1,0 +1,81 @@
+{
+  "files": {
+    "original-A": {
+      "bep_name": "runsc/cmd/sentry/gvisor_sentry_/gvisor_sentry",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/2681911ca7eca2e1fea6473e9acd9a39a50749d7053ece9c5b368960d348c88c/54863239",
+      "sha256": "2681911ca7eca2e1fea6473e9acd9a39a50749d7053ece9c5b368960d348c88c",
+      "size": 54863239
+    },
+    "prototype-A": {
+      "bep_name": "runsc/cmd/sentry/gvisor_sentry_/gvisor_sentry",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/2ae1b9fd48dd0056b4127f3857cd67530b5dd122bee95f327346952da339668e/54872671",
+      "sha256": "2ae1b9fd48dd0056b4127f3857cd67530b5dd122bee95f327346952da339668e",
+      "size": 54872671
+    },
+    "release/gvisor-bin/checkpointgofer": {
+      "bep_name": "release/gvisor-bin/checkpointgofer",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/353d03e854034e48afd0b2a0e0a77f16704a69e04692415c4474b00a1be145b8/48794091",
+      "sha256": "353d03e854034e48afd0b2a0e0a77f16704a69e04692415c4474b00a1be145b8",
+      "size": 48794091
+    },
+    "release/gvisor-bin/gvisor-proc-umounter": {
+      "bep_name": "release/gvisor-bin/gvisor-proc-umounter",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/b3bbbaef5ddc62084e5febd19d3acca14f3d42b2a25d8552fb40def699467019/1280",
+      "sha256": "b3bbbaef5ddc62084e5febd19d3acca14f3d42b2a25d8552fb40def699467019",
+      "size": 1280
+    },
+    "release/gvisor-bin/gvisor-sentry-prewarmer": {
+      "bep_name": "release/gvisor-bin/gvisor-sentry-prewarmer",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/046e3ec1de3aa7b7ec7ce53b4f0d1e08db15987847606a8e361133d5c5bd3d73/1752",
+      "sha256": "046e3ec1de3aa7b7ec7ce53b4f0d1e08db15987847606a8e361133d5c5bd3d73",
+      "size": 1752
+    },
+    "release/gvisor-bin/gvisor_sentry": {
+      "bep_name": "release/gvisor-bin/gvisor_sentry",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/2681911ca7eca2e1fea6473e9acd9a39a50749d7053ece9c5b368960d348c88c/54863239",
+      "sha256": "2681911ca7eca2e1fea6473e9acd9a39a50749d7053ece9c5b368960d348c88c",
+      "size": 54863239
+    },
+    "release/gvisor-bin/runsc-fd-parking": {
+      "bep_name": "release/gvisor-bin/runsc-fd-parking",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/03af90d07ea466c10ecc3e3ba839b2a59540959dd3286aea3886917cba850c11/1320",
+      "sha256": "03af90d07ea466c10ecc3e3ba839b2a59540959dd3286aea3886917cba850c11",
+      "size": 1320
+    },
+    "release/gvisor-bin/runsc-metric-server": {
+      "bep_name": "release/gvisor-bin/runsc-metric-server",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/24476feacc0fc83890a56832c04da170a6093dcff79db1e65383460207d12fbe/21566634",
+      "sha256": "24476feacc0fc83890a56832c04da170a6093dcff79db1e65383460207d12fbe",
+      "size": 21566634
+    },
+    "release/runsc": {
+      "bep_name": "release/runsc",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/e0b537507d2bd9c1694148db00055417dce52fe9bc2481811ee7da50cbea8190/19404499",
+      "sha256": "e0b537507d2bd9c1694148db00055417dce52fe9bc2481811ee7da50cbea8190",
+      "size": 19404499
+    },
+    "rootfs/probe": {
+      "bep_name": "test/cmd/test_app/test_app_/test_app",
+      "host": "remote.buildbuddy.io",
+      "resource": "/blobs/a05c3cd8eae881679b833f922da29911ad0a34d8a7f580a176afa514c35e6d90/7585324",
+      "sha256": "a05c3cd8eae881679b833f922da29911ad0a34d8a7f580a176afa514c35e6d90",
+      "size": 7585324
+    }
+  },
+  "input_zip_sha256": "5c36c0e16b7d7a07235857c16ca1f88ad0132d806e713c9c068e2f5eedacf0af",
+  "producer_artifact": "13031587570",
+  "producer_run": 41171557571,
+  "sources": {
+    "original-A": "d4fcbffa13fb9ae7b242c7827ab0e92e42fa1ae9",
+    "prototype-A": "c6162d69b8d2f573de3112a928e488870abfacf1"
+  }
+}
