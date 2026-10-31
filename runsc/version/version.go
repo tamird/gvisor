@@ -38,6 +38,20 @@ func Version() string {
 	return development
 }
 
+// CheckpointLabel returns the release label whose binaries may restore one
+// another's checkpoints. An empty result identifies a development build.
+// Use only --embed_label: a workspace status command can report the same
+// STABLE_VERSION for unrelated binaries.
+func CheckpointLabel() string {
+	switch buildLabel {
+	case "0.0.0", "VERSION_MISSING", development:
+		// These placeholders can appear in checkpoints with no release identity.
+		return ""
+	default:
+		return buildLabel
+	}
+}
+
 // Matches reports whether label identifies this build. Two unstamped binaries
 // do not establish compatibility merely by having the same missing version.
 func Matches(label string) bool {

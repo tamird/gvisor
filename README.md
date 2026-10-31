@@ -92,12 +92,12 @@ bazel build --config=release_version --embed_label=release-20261029.0 //debian:r
 The Debian and tar packages for both architectures are under
 `bazel-bin/debian/release-artifacts/{x86_64,aarch64}/`.
 
-Ordinary builds need no Git checkout. They report `(devel)`; a development
-checkpoint can be restored by the same linked sentry. Use a release label
-to share a checkpoint between compatible release builds or to require
-release matching across sidecars. An unstamped Debian package is versioned
-`0~devel`. A custom `--workspace_status_command` used with `--stamp` may
-supply `STABLE_VERSION` instead of `--embed_label`.
+Ordinary builds report `(devel)` and can restore checkpoints from the same
+linked sentry. Use `--embed_label` to allow checkpoint restores between
+compatible release builds. A custom workspace status command may supply
+`STABLE_VERSION` for the CLI and Debian package; that value does not
+identify a checkpoint release. An unstamped Debian package is versioned
+`0~devel`.
 
 To build specific libraries or binaries, you can specify the target:
 
