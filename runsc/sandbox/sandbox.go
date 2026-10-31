@@ -1067,7 +1067,10 @@ func sandboxProcessEnv(conf *config.Config, opts sandboxProcessEnvOptions) []str
 		// Platforms that use stub processes are not compatible with
 		// the glibc rseq, because they unmap everything from a process
 		// address space.
-		env = append(env, "GLIBC_TUNABLES=glibc.pthread.rseq=0")
+		// glibc would open /sys/devices/system/cpu/online to size its malloc
+		// arena pool lazily, after the Sentry installs seccomp. Set the limit
+		// up front using glibc's 64-bit scale and the CPUs available to runsc.
+		env = append(env, "GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.malloc.arena_max="+strconv.Itoa(8*runtime.NumCPU()))
 	}
 	return env
 }
