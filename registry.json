@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T19:09:11.372+00:00",
+    "updatedAt": "2026-10-31T19:24:37.648+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23743,16 +23743,9 @@
       "title": "Preserve window scaling on SYN-cookie connections",
       "url": "https://github.com/tamird/gvisor/tree/research/tcp-cookie-window-scale-current",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T17:39:47.195+00:00",
-      "summary": "The contributor approved this SYN-cookie window-scale change. Its SACK prerequisite #16336 landed in 247a7b4fa. At refreshed head df25b25c8, 493 TCP cases and five analyzers passed. No packet tests executed in that job because its compiler worker lacked GLIBC_2.38 and both GNU cross-compilers. The packet tests are running on the qualified GNU platform. Earlier wire controls isolated the timestamp case: gVisor offered no window scale and delivered 16 bytes where Linux delivered 128.",
-      "followup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "888d2415fee5f8e197e78c7365cbc09da8a2fc89",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor approved; delivery assigned",
-        "nextAction": "Publish the approved change after the Linux and gVisor packet checks on the qualified GNU platform."
-      },
+      "status": "Published as #16784",
+      "updatedAt": "2026-10-31T19:24:37.648+00:00",
+      "summary": "The contributor-approved change is open as #16784. On Linux and gVisor all 34 packet cases passed. Each delivered 128 bytes with timestamps and 16 without. The preceding build passed 493 TCP cases and five analyzers.",
       "evidence": [
         {
           "label": "Agent-owned window-scaling product",
@@ -23785,8 +23778,25 @@
         {
           "label": "Recovery of the two packet checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41223629069"
+        },
+        {
+          "label": "Published upstream",
+          "url": "https://github.com/google/gvisor/pull/16784"
+        },
+        {
+          "label": "All five original packet reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41232914889/artifacts/13054526972"
+        },
+        {
+          "label": "Native Linux window scaling (34 passed)",
+          "url": "https://app.buildbuddy.io/invocation/344ad19f-9bb2-4d19-9b6e-fffe84e20544"
+        },
+        {
+          "label": "gVisor window scaling (34 passed)",
+          "url": "https://app.buildbuddy.io/invocation/4fa7378d-2d84-492b-a09d-5af7d237b16a"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "pr:16313",
@@ -31484,7 +31494,7 @@
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T18:05:07.150+00:00",
+      "updatedAt": "2026-10-31T19:24:37.648+00:00",
       "summary": "Aditya’s review found that reducing the congestion window after a tail probe left the published sender in fast recovery. On two 10 ms RTT traces it waited 3 seconds to retransmit the next loss. The amended sender retried in 220 and 223 ms. Both senders still waited for a timeout on an ambiguous ACK and repaired a separate hole in 3 ms when the peer SACKed a later segment. Master produced three of the four observations and repaired a different segment in the ambiguous case. The final revision changes which recovery statistic counts the repaired probe.",
       "evidence": [
         {
@@ -31521,7 +31531,7 @@
         },
         {
           "label": "Four observed traces with the congestion response corrected",
-          "url": "https://app.buildbuddy.io/invocation/197ca5f8-fe5f-4649-8fc6-9a5f17bd382e"
+          "url": "https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c"
         },
         {
           "label": "Linux and gVisor packet comparison before the counter-only revision",
@@ -31548,7 +31558,7 @@
           "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574",
           "https://github.com/tamird/gvisor/commit/e1a3e3de2",
           "https://github.com/tamird/gvisor/actions/runs/41226847064/artifacts/13052405694",
-          "https://app.buildbuddy.io/invocation/197ca5f8-fe5f-4649-8fc6-9a5f17bd382e",
+          "https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c",
           "https://github.com/tamird/gvisor/actions/runs/41227174846",
           "https://github.com/tamird/gvisor/actions/runs/41227515403"
         ],
@@ -31568,7 +31578,7 @@
         "title": "Finish the tail-probe congestion response",
         "summary": "After the outstanding checks pass, publish e1a3e3de2 to #16596, update the PR description from the commit message and send the prepared reply to Aditya’s review?",
         "requestedAt": "2026-10-31T18:03:49.634+00:00",
-        "body": "The published revision and corrected sender both reproduced all four manual-clock observations. In the two cases where an advancing ACK confirmed loss, the published sender waited 3 seconds and the corrected sender retried after 220 and 223 ms. The final amendment counts that response in TLPRecovery. The Linux packet comparison, TCP suites and analyzers are still in progress.\n\ngit range-diff 1eb1f6b45^! e1a3e3de2^!\n\nProposed reply to Aditya\n\n@adios-404, thanks for the reproducer. I folded the fix into this PR and credited you. With your manual clock, the [previous version](https://app.buildbuddy.io/invocation/04537520-a094-4b81-ac6d-20fa2fcc50f1) waited three seconds in both write orderings. [With the fix](https://app.buildbuddy.io/invocation/197ca5f8-fe5f-4649-8fc6-9a5f17bd382e), the next tail was probed after 220 and 223 ms. Without an ACK past the original probe, the sender still waited for the RTO, as you pointed out.\n\nI kept the recovery point but removed the enter/leave-fast-recovery pair. That pair also discarded the SACK count if the advancing ACK reported another hole. A fourth trace checks that case: the sender stays in Disorder and RACK repairs the separate hole after 3 ms. The repaired probe now counts toward TLPRecovery; SACKRecovery still counts an actual entry into fast recovery. The existing packet test leaves one segment outstanding and checks the congestion state via TCP_INFO.\n\nPosted by Codex on behalf of @tamird."
+        "body": "The published revision and corrected sender both reproduced all four manual-clock observations. In the two cases where an advancing ACK confirmed loss, the published sender waited 3 seconds and the corrected sender retried after 220 and 223 ms. The final amendment counts that response in TLPRecovery. The Linux packet comparison, TCP suites and analyzers are still in progress.\n\ngit range-diff 1eb1f6b45^! e1a3e3de2^!\n\nProposed reply to Aditya\n\n@adios-404, thanks for the reproducer. I folded the fix into this PR and credited you. With your manual clock, the [previous version](https://app.buildbuddy.io/invocation/04537520-a094-4b81-ac6d-20fa2fcc50f1) waited three seconds in both write orderings. [With the fix](https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c), the next tail was probed after 220 and 223 ms. Without an ACK past the original probe, the sender still waited for the RTO, as you pointed out.\n\nI kept the recovery point but removed the enter/leave-fast-recovery pair. That pair also discarded the SACK count if the advancing ACK reported another hole. A fourth trace checks that case: the sender stays in Disorder and RACK repairs the separate hole after 3 ms. The repaired probe now counts toward TLPRecovery; SACKRecovery still counts an actual entry into fast recovery. The existing packet test leaves one segment outstanding and checks the congestion state via TCP_INFO.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -40562,6 +40572,76 @@
         "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:research/native-cpp-codegen?expand=1",
         "policyURL": "https://github.com/grpc/grpc/blob/df3dd4dcb/CONTRIBUTING.md#generative-ai-policy"
       }
+    },
+    {
+      "id": "pr:16784",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16784,
+      "ref": "tcp-cookie-window-scale",
+      "head": "df25b25c88d3b7dd52957039bd228fa63a1679d7",
+      "title": "Preserve TCP window scaling under SYN cookies",
+      "url": "https://github.com/google/gvisor/pull/16784",
+      "group": "runtime",
+      "status": "open",
+      "summary": "The contributor-approved change is open as #16784. On Linux and gVisor all 34 packet cases passed. Each delivered 128 bytes with timestamps and 16 without. The preceding build passed 493 TCP cases and five analyzers.",
+      "updatedAt": "2026-10-31T19:24:37.648+00:00",
+      "evidence": [
+        {
+          "label": "All five original packet reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41232914889/artifacts/13054526972"
+        },
+        {
+          "label": "Native Linux window scaling (34 passed)",
+          "url": "https://app.buildbuddy.io/invocation/344ad19f-9bb2-4d19-9b6e-fffe84e20544"
+        },
+        {
+          "label": "gVisor window scaling (34 passed)",
+          "url": "https://app.buildbuddy.io/invocation/4fa7378d-2d84-492b-a09d-5af7d237b16a"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcp-cookie-handshake-boundary",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposals/tcp-cookie-handshake-boundary",
+      "head": "e62e48e9a8ba9523323071f011c1390b7873852f",
+      "title": "Identify real SYN cookies in the handshake test",
+      "url": "https://github.com/tamird/gvisor/tree/proposals/tcp-cookie-handshake-boundary",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-31T19:24:37.648+00:00",
+      "summary": "The old packet test accepted six unexpected Linux SYN-ACK retransmissions. The revised test identified the third SYN on Linux and the second on gVisor as the first cookie. Its 12 retransmission checks ran on each, and both suites passed all 31 cases.",
+      "evidence": [
+        {
+          "label": "Standalone packet test",
+          "url": "https://github.com/tamird/gvisor/commit/e62e48e9a"
+        },
+        {
+          "label": "Stock and corrected packet reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41232914889/artifacts/13054526972"
+        },
+        {
+          "label": "31 native Linux cases",
+          "url": "https://app.buildbuddy.io/invocation/d9146859-6ce5-45eb-a0cc-4d3276ad6cdd"
+        },
+        {
+          "label": "31 gVisor cases",
+          "url": "https://app.buildbuddy.io/invocation/280e92d7-d76a-43bd-8dde-ceafabe59359"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e62e48e9a8ba9523323071f011c1390b7873852f",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/e62e48e9a",
+        "title": "Identify real SYN cookies in the handshake test",
+        "requestedAt": "2026-10-31T19:24:37.648+00:00",
+        "summary": "Open this standalone packet-test PR against gVisor?",
+        "body": "With a listen backlog of one, Linux can save more than one pending SYN.\nThe second SYN in the packet test then exercises a second stateful\nhandshake, and the test ignores its retransmitted SYN-ACK on Linux.\n\nOffer SACK without timestamps and keep the pending handshakes open\nuntil a SYN-ACK omits SACK. Check that the first connection retransmits\nits SYN-ACK and the cookie connection does not, before testing which\nACK flag combinations each accepts."
+      }
     }
   ],
   "edges": [
@@ -42855,7 +42935,7 @@
       "from": "pr:16336",
       "to": "branch:tcp-cookie-window-scale",
       "type": "depends_on",
-      "reason": "The window-scaling product uses the exact SACK change now published as #16336; its separate contributor decision remains outstanding.",
+      "reason": "The window-scale change builds on the SACK change merged through #16336.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
         "https://github.com/tamird/gvisor/commit/bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0"
@@ -43888,6 +43968,13 @@
       "type": "depends_on",
       "reason": "The ordinary build agent uses the declared compiler and sysroot after removing the Docker builder.",
       "evidence": "https://github.com/tamird/gvisor/commit/aa354f7c5"
+    },
+    {
+      "from": "branch:tcp-cookie-window-scale",
+      "to": "pr:16784",
+      "type": "includes",
+      "reason": "The contributor-approved window-scale change was submitted in #16784.",
+      "evidence": "https://github.com/google/gvisor/pull/16784"
     }
   ],
   "investigations": [
