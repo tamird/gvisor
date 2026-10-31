@@ -86,8 +86,11 @@ the release label once. Bazel uses it for the binaries, checkpoint identity
 and package versions:
 
 ```sh
-make release-artifacts RELEASE_VERSION=release-20261029.0
+bazel build --config=release_version --embed_label=release-20261029.0 //debian:release-artifacts
 ```
+
+The Debian and tar packages for both architectures are under
+`bazel-bin/debian/release-artifacts/{x86_64,aarch64}/`.
 
 Ordinary builds report `(devel)` and can restore checkpoints from the same
 linked sentry. Use `--embed_label` to allow checkpoint restores between
