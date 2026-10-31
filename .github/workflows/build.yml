@@ -1,35 +1,109 @@
-name: CI
-
-"on":
+name: Keep the wire signed-zero regression active under either default
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-signed-zero-both]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      BASE: 4319e9d026b47c1768b6b1fd8711f1ec15a14bd1
+      PRODUCT: 1f4905b21f956027a76ded34b96584e00f9269f1
+      STOCK_TREE: 8413368e5c52d4c44f1b5f4ad15c80cbdbf8f1fe
+      FIX_TREE: 003c80d65a8f2f64524bb5c69f111e80094ea194
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 4, persist-credentials: false}
+    - name: Compare the wire and graph round trips on unchanged inputs
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        mkdir -p "$RUNNER_TEMP/focused_platform" "$RUNNER_TEMP/results"/{stock,fix}
+        platform=$RUNNER_TEMP/focused_platform
+        printf '%s\n' 'module(name="focused_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/focused.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=focused_platform=$platform" \
+            'build --host_platform=@focused_platform//:ubuntu' \
+            'build --extra_execution_platforms=@focused_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        cp test/rbe/{tuple_zero_verdict,qualification_report,unit_matrix}.py "$RUNNER_TEMP/"
+        git checkout --quiet --detach "$PRODUCT"
+        fix=//pkg/state:state_test
+        base=//pkg/state/tests:tests_test
+        for lane in stock fix; do
+          dir=$RUNNER_TEMP/results/$lane
+          if [[ $lane = stock ]]; then
+            git restore --source="$BASE" --staged --worktree -- pkg/state/encode.go
+            selection=(--test_filter='^TestSignedZero$' "$base")
+          else
+            git restore --source="$PRODUCT" --staged --worktree -- pkg/state/encode.go
+            selection=("$base" "$fix")
+          fi
+          git diff --exit-code
+          git write-tree > "$dir/tree"
+          code=0
+          bazelisk --bazelrc="$rc" test --config=x86_64 --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --nocache_test_results --test_arg=-test.v "${selection[@]}" > "$RUNNER_TEMP/$lane.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$dir/rc"
+          grep -E 'ERROR:|Invocation ID:|^//pkg/state|Build did NOT' "$RUNNER_TEMP/$lane.log" | tail -12 > "$dir/diagnostics" || true
+          for target in "${selection[@]}"; do
+            if [[ $target == //* ]]; then
+              path=${target#//}
+              file=bazel-testlogs/${path/:/\/}/test.xml
+              if [[ -f $file ]]; then cp "$file" "$dir/${target##*:}.xml"; fi
+            fi
+          done
+        done
+        date -u +%FT%TZ > "$RUNNER_TEMP/results/end"
+        python3 "$RUNNER_TEMP/tuple_zero_verdict.py" "$RUNNER_TEMP/results"
+    - name: Redact credentials from the evidence bundle
+      id: redact
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key=os.environ["BB_KEY"].encode()
+        for f in (Path(os.environ["RUNNER_TEMP"])/"results").rglob("*"):
+            if f.is_file() and key and key in (data:=f.read_bytes()):
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+        PYTHON
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.redact.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: state-signed-zero-both
+        path: ${{ runner.temp }}/results/
+        if-no-files-found: error
