@@ -40,15 +40,22 @@ def main() -> int:
         for phase in ("before_timeout", "first_timeout", "before_feedback", "after_ack"):
             if not any(s.startswith(f"FENCE_STATE mode={mode} phase={phase} ") for s in observations):
                 errors.append(f"{mode}: missing TCP_INFO at {phase}")
-        if not any(s.startswith(f"FENCE_WIRE mode={mode} phase=first_timeout offset=0 ") for s in observations):
-            errors.append(f"{mode}: did not observe the first segment retransmitted")
-        for phase in ("discarded_repair", "later_repair"):
-            if not any(s.startswith(f"FENCE_WIRE mode={mode} phase={phase} ") for s in observations):
-                errors.append(f"{mode}: missing actual {phase}")
-        if sum(s.startswith(f"FENCE_ACK mode={mode} ") for s in observations) != 2:
-            errors.append(f"{mode}: expected both partial ACKs")
-        if not any(s.startswith(f"FENCE_ACK mode={mode} ") for s in observations):
-            errors.append(f"{mode}: no partial acknowledgment")
+        samples = [int(l.rsplit("mss=", 1)[1]) for l in observations if l.startswith(f"FENCE_STATE mode={mode} phase=before_feedback ")]
+        if len(samples) != 1:
+            errors.append(f"{mode}: absent or duplicate MSS")
+            continue
+        m = samples[0]
+        def seen(event):
+            return any(line.startswith(event) for line in observations)
+        for phase, off in (("fast_repair", m), ("first_timeout", m), ("discarded_repair", 2*m), ("later_repair", 3*m)):
+            if not seen(f"FENCE_WIRE mode={mode} phase={phase} offset={off} bytes={m} "):
+                errors.append(f"{mode}: missing {phase} at {off}")
+        seen_acks = [line for line in observations if line.startswith(f"FENCE_ACK mode={mode} ")]
+        expected_acks = [(m,4*m,7*m),(2*m,4*m,7*m),(2*m,(3 if mode=="sack_repair" else 4)*m,7*m)]
+        if seen_acks != [f"FENCE_ACK mode={mode} cumulative={a} sack={b}-{c}" for a,b,c in expected_acks]:
+            errors.append(f"{mode}: incorrect sequence of ACKs/SACKs")
+        if not (seen(f"FENCE_WIRE mode={mode} phase=after_ack offset={2*m} bytes={m}") or seen(f"FENCE_WIRE mode={mode} phase=later_retry offset={2*m} bytes={m}")):
+            errors.append(f"{mode}: actual lost-repair retry never observed")
     if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
         errors.append("qualifier failed")
     zip_path = Path("bazel-testlogs/test/packetimpact/tests/tcp_rack_netstack_test/test.outputs/outputs.zip")
@@ -67,8 +74,8 @@ def main() -> int:
     if arm != "linux":
         flows=[int(m[1]) for l in observations if (m:=re.fullmatch(r"FENCE_FLOW mode=sack_repair base=(\d+)",l))]
         mss=[int(m[1]) for l in observations if (m:=re.fullmatch(r"FENCE_STATE mode=sack_repair phase=before_feedback .* mss=(\d+)",l))]
-        seq=(flows[0]+2*mss[0]) % (1<<32) if len(flows)==len(mss)==1 else None
-        samples=[(int(m[1]),int(m[2])) for l in trace if (m:=re.fullmatch(rf"update seq={seq} ack=\d+ xmits=2 rtt_us=(\d+) min_us=(\d+) state=\d+",l))]
+        seq=(flows[0]+3*mss[0]) % (1<<32) if len(flows)==len(mss)==1 else None
+        samples=[(int(m[1]),int(m[2])) for l in trace if (m:=re.fullmatch(rf"update seq={seq} ack={(flows[0]+2*mss[0]) % (1<<32) if flows and mss else None} xmits=(?:[2-9]|[1-9][0-9]+) rtt_us=(\d+) min_us=(\d+) state=\d+",l))]
         if len(samples)!=1 or not (samples[0][0]>=samples[0][1]>0):
             errors.append("no unambiguous RTT sample from the SACKed retransmission")
         verdict["sack_rtt_and_minimum_us"] = samples
