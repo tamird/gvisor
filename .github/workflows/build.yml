@@ -1,7 +1,7 @@
-name: Run epoll, futex and SysV shared-memory syscall cases on scratch
+name: Run SysV shared-memory syscall cases on scratch
 on:
   push:
-    branches: [qualification/syscall-musl-runtime-breadth]
+    branches: [qualification/syscall-musl-shm-headers]
 permissions:
   contents: read
   actions: read
@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {ref: f728497c0a91ca4a40cf6d29953a3ee963a0a1f9, path: product, persist-credentials: false, fetch-depth: 1}
+        with: {ref: 2f98c6da4fd3823ddf42d79efee4767290fd4ee3, path: product, persist-credentials: false, fetch-depth: 1}
       - name: Prepare private remote configuration and evidence
         working-directory: carrier
         env:
@@ -62,7 +62,7 @@ jobs:
       - name: Run ordinary musl syscall cases on both scratch architectures
         working-directory: product
         env:
-          PRODUCT: f728497c0a91ca4a40cf6d29953a3ee963a0a1f9
+          PRODUCT: 2f98c6da4fd3823ddf42d79efee4767290fd4ee3
         run: python3 "$RUNNER_TEMP/run.py"
       - name: Reconcile the supplier and original package verdicts
         if: always()
@@ -78,7 +78,7 @@ jobs:
           supplier, runtime = read("supplier.json"), read("summary.json")
           states = [supplier["status"], runtime["status"]]
           identity = (supplier.get("source") == "c2f5f79dce24877679cede14b85666b7ca65c6de"
-                      and runtime.get("source") == "f728497c0a91ca4a40cf6d29953a3ee963a0a1f9"
+                      and runtime.get("source") == "2f98c6da4fd3823ddf42d79efee4767290fd4ee3"
                       and supplier.get("binary_sha256") == runtime.get("native_bazel", {}).get("sha256"))
           status = "FAIL" if "FAIL" in states else "PASS" if states == ["PASS", "PASS"] and identity else "INCOMPLETE"
           result = {"status": status, "supplier_status": states[0], "runtime_status": runtime["status"], "observation_status": states[1],
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-musl-syscall-breadth
+          name: native-musl-shm-interfaces
           path: |
             ${{ runner.temp }}/native-package-evidence
           if-no-files-found: error

@@ -18,9 +18,12 @@ from static_build import elf
 SOURCE = os.environ["PRODUCT"]
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
 CASES = {
-    "//test/syscalls:epoll_test_native": ["EpollTest/EdgeTriggered", "EpollTest/Oneshot", "EpollTest/WaitThenUnblock"],
-    "//test/syscalls:futex_test_native": ["PrivateFutexTest/WakeOp0Set", "RobustFutexTest/BasicSetGet", "SharedFutexTest/WakeInterprocessSharedAnon"],
-    "//test/syscalls:shm_test_native": ["ShmTest/AttachDetach", "ShmTest/DetachedSegmentsPersist", "ShmTest/RemovedSegmentsAreDestroyed"],
+    "//test/syscalls:shm_test_native": [
+        "ShmTest/AttachDetach",
+        "ShmTest/DetachedSegmentsPersist",
+        "ShmTest/RemovedSegmentsAreDestroyed",
+        "ShmDeathTest/SegmentNotAccessibleAfterDetach",
+    ],
 }
 TARGETS = list(CASES)
 BINARIES = {target: "//test/syscalls/linux:" + target.split(":")[1].removesuffix("_native") for target in TARGETS}
