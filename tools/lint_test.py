@@ -18,7 +18,6 @@
 
 import os
 import pathlib
-import re
 import subprocess
 import sys
 import tempfile
@@ -34,33 +33,19 @@ class LintTest(unittest.TestCase):
     self.temp = tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"])
     self.addCleanup(self.temp.cleanup)
     self.root = pathlib.Path(self.temp.name)
-    self.cache = self.root / "cache"
     self.bin = self.root / "bin"
-    self.env = dict(os.environ, LINT_CACHE_DIR=str(self.cache))
+    self.env = os.environ.copy()
     self.env["PATH"] = str(self.bin) + os.pathsep + self.env["PATH"]
-    self.cache.mkdir()
     self.bin.mkdir()
-    self.versions = dict(
-        re.findall(
-            r'^declare -r ([A-Z_]+)_VERSION="([^"]+)"$',
-            LINT.read_text(),
-            re.MULTILINE,
-        )
-    )
-    self.tool(self.bin / "git", "printf 'tracked source\\0'")
-    self.tool(self.bin / "curl", "echo unexpected-download >&2; exit 42")
-    for name in ("goimports", "clang-format", "buildifier"):
-      self.tool(self.formatter(name), "exit 0")
+    self.tool(self.bin / "git", 'if [ "$2" = -z ]; then printf "tracked.c\\0"; fi')
+    self.bazel_ok()
 
   def tool(self, path: pathlib.Path, body: str) -> None:
     path.write_text("#!/bin/sh\n" + body + "\n")
     path.chmod(0o755)
 
-  def formatter(self, name: str) -> pathlib.Path:
-    if name == "goimports":
-      return self.bin / "bazel"
-    version = self.versions[name.upper().replace("-", "_")]
-    return self.cache / f"{name}-{version}"
+  def bazel_ok(self) -> None:
+    self.tool(self.bin / "bazel", 'if [ "$1" = query ]; then echo //:tracked.c; fi')
 
   def lint(self, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -93,41 +78,24 @@ class LintTest(unittest.TestCase):
     ):
       name = args[-1]
       with self.subTest(args=args):
-        self.tool(self.formatter(name), "exit 7")
+        self.tool(self.bin / "bazel", "exit 7")
         self.assert_failed(self.lint(*args), name)
-        self.tool(self.formatter(name), "exit 0")
+        self.bazel_ok()
 
   def test_diagnostics_and_continuation(self) -> None:
     self.tool(
-        self.formatter("clang-format"), "echo formatter-crashed >&2; exit 7"
+        self.bin / "bazel",
+        'case "$*" in *buildifier*) exit 0;; esac; echo formatter-crashed >&2; exit 7',
     )
     result = self.lint("clang-format", "buildifier")
     self.assert_failed(result, "clang-format")
     self.assertIn("formatter-crashed", result.stderr)
     self.assertIn("PASS  buildifier", result.stderr)
 
-  def test_installer_failure(self) -> None:
-    # Both failures occur in an installer command substitution. A stale cache
-    # entry must not be made executable by commands following the failure.
-    self.formatter("buildifier").chmod(0o644)
-    result = self.lint("buildifier")
-    self.assert_failed(result, "buildifier")
-    self.assertIn("unexpected-download", result.stderr)
-    self.assertEqual(self.formatter("buildifier").stat().st_mode & 0o111, 0)
-    # mktemp adds another substitution, whose status local must not mask.
-    self.tool(self.bin / "mktemp", "echo temporary-file-failed >&2; exit 7")
-    result = self.lint("buildifier", "goimports")
-    self.assert_failed(result, "buildifier")
-    self.assertIn("temporary-file-failed", result.stderr)
-    self.assertNotIn("unexpected-download", result.stderr)
-    self.assertIn("PASS  goimports", result.stderr)
-
   def test_failed_file_selection(self) -> None:
     # The last spelling selection succeeds; it must not hide an earlier
     # failed list operation in the same pipeline.
     self.tool(self.bin / "git", 'case "$4" in "*.md") exit 7;; esac; exit 0')
-    (self.cache / f"codespell-{self.versions['CODESPELL']}").mkdir()
-    self.tool(self.bin / "python3", "exit 0")
     self.assert_failed(self.lint("spelling"), "spelling")
 
 

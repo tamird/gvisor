@@ -20,6 +20,7 @@ license(
 )
 
 exports_files([
+    ".clang-tidy",
     "CODEOWNERS",
     "LICENSE",
     "README.md",
@@ -325,5 +326,5 @@ exports_files([
 
 exports_files(
     [".clang-format"],
-    visibility = ["//tools:__pkg__"],
+    visibility = ["//:__subpackages__"],
 )

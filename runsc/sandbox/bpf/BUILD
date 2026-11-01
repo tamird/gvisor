@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "bpf_program", "go_library")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -30,3 +31,5 @@ bpf_program(
     bpf_object = "tunnel_veth_ebpf.o",
     visibility = ["//:sandbox"],
 )
+
+cc_lint_tests()

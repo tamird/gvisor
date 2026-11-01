@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary", "gbenchmark", "select_gtest")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -418,3 +419,5 @@ cc_binary(
         "//test/util:test_main",
     ],
 )
+
+cc_lint_tests()

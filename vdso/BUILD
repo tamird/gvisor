@@ -6,6 +6,7 @@
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -79,3 +80,5 @@ py_test(
     data = [":vdso"],
     main = "check_vdso.py",
 )
+
+cc_lint_tests()

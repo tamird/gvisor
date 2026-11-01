@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -17,3 +18,5 @@ cc_binary(
         "@com_google_protobuf//:protobuf",
     ],
 )
+
+cc_lint_tests()

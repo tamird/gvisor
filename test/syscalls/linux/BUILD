@@ -1,6 +1,7 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "cc_binary", "cc_library", "gbenchmark", "select_gtest", "select_system")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -5693,3 +5694,5 @@ cc_binary(
         "@com_google_absl//absl/time",
     ],
 )
+
+cc_lint_tests()

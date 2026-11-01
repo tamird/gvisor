@@ -59,6 +59,8 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":broom: Lint"
+    env:
+      DOCKER_BUILD: "false"
     command: make lint
   - <<: *common
     <<: *source_test

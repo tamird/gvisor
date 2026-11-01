@@ -340,6 +340,8 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":broom: Lint"
+    env:
+      DOCKER_BUILD: "false"
     command: make lint
     agents:
       arch: "amd64"

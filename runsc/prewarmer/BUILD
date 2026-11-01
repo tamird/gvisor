@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_binary", "go_test")
+load("//tools/lint:cc.bzl", "cc_lint_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -76,3 +77,5 @@ go_test(
     ],
     deps = ["//pkg/test/testutil"],
 )
+
+cc_lint_tests()
