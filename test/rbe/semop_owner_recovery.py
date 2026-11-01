@@ -25,7 +25,7 @@ OWNERS = [
     "//pkg/sentry/syscalls/linux:linux_nogo",
     "//pkg/sentry/socket/control:control_test",
 ]
-MISSING = [OWNERS[1], OWNERS[4]]
+MISSING = [OWNERS[4]]
 ROOT = Path(os.environ["RUNNER_TEMP"])
 OUT = ROOT / "semop-owner-evidence"
 OUT.mkdir(exist_ok=True)
@@ -45,18 +45,25 @@ def write(path, value):
 def prior():
     path = ROOT / "semop-prior.zip"
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    assert digest == "5e54e4170122fb66ad56d3b7d300d79a7ce84ab854303baa7dcab64992093794"
+    assert digest == "68f695e858d3691280f7e46d683d5bf9e47fb1e9338de611bc219e5d42c3d429"
     with zipfile.ZipFile(path) as archive:
-        old = json.loads(archive.read("retry.json"))
-    assert old["source"] == SOURCE
-    passed = [row["owner"]["label"] for row in old["executed"]
-              if row["status"] == "PASSED" and row["xml"]["passed"] > 0 and not row["xml"]["failed"]
-              and not row["cached_locally"] and row["execution_info"] == {"strategy": "remote"}]
-    assert sorted(passed) == sorted(set(OWNERS) - set(MISSING))
-    assert {row["label"] for row in old["missing"]} == set(MISSING)
-    row = {"status": "INCOMPLETE", "source": SOURCE, "passed": passed, "missing": MISSING,
-           "originalBazelExit": old["bep_finish"]["exitCode"], "priorArtifact": 13091282823,
-           "priorSHA256": digest, "actionDiagnosticArtifact": 13096994117}
+        base = json.loads(archive.read("original.json"))
+        previous = json.loads(archive.read("retry.json"))
+    assert base["source"] == previous["source"] == SOURCE
+    assert base["priorArtifact"] == 13091282823
+    assert base["priorSHA256"] == "5e54e4170122fb66ad56d3b7d300d79a7ce84ab854303baa7dcab64992093794"
+    kernel = OWNERS[1]
+    assert set(base["passed"]) == set(OWNERS) - {kernel, *MISSING}
+    assert len(previous["executed"]) == 1
+    attempt = previous["executed"][0]
+    assert attempt["owner"]["label"] == kernel and attempt["status"] == "PASSED"
+    assert attempt["xml"]["passed"] == 1 and not attempt["xml"]["failed"] and not attempt["xml"]["skipped"]
+    assert not attempt["cached_locally"] and attempt["execution_info"] == {"strategy": "remote"}
+    assert previous["architectureMarkers"] == {kernel: ["amd64", "arm64"]}
+    assert {entry["label"] for entry in previous["missing"]} == set(MISSING)
+    row = {"status": "INCOMPLETE", "source": SOURCE, "passed": [*base["passed"], kernel], "missing": MISSING,
+           "priorArtifacts": [13091282823, 13099715950], "actionDiagnosticArtifacts": [13096994117, 13098968702],
+           "priorSHA256": digest, "previousBazelExit": previous["bep_finish"]["exitCode"]}
     write(OUT / "original.json", row)
     (ROOT / "semop-missing.txt").write_text("\n".join(MISSING) + "\n")
 
@@ -76,9 +83,10 @@ def retry():
     assert not (private / "before").read_bytes()
     invocation = str(uuid.uuid4())
     write(OUT / "invocation.json", {"source": SOURCE, "id": invocation, "expected": missing, "at": now()})
+    print("Bazel invocation", invocation, flush=True)
     args = ["test", "--invocation_id=" + invocation,
             "--local_resources=cpu=1",
-            "--strategy_regexp=Analyzing .*//pkg/sentry/(kernel:kernel|syscalls/linux:linux)=local", "--config=x86_64", "--jobs=4", "--keep_going", "--build_tag_filters=", "--test_tag_filters=",
+            "--strategy=GoStaticAnalysis=local", "--config=x86_64", "--jobs=4", "--keep_going", "--build_tag_filters=", "--test_tag_filters=",
             "--noremote_local_fallback", "--strategy=TestRunner=remote", "--test_timeout=300", "--test_output=errors", "--nocache_test_results",
             "--modify_execution_info=^TestRunner$=+no-remote-cache", "--test_env=GO_TEST_WRAP_TESTV=1",
             "--remote_download_outputs=toplevel", "--remote_download_regex=.*[/]test[.](log|xml)$",
@@ -98,7 +106,8 @@ def retry():
                 trace = json.load(stream)
             for event in trace.get("traceEvents", []):
                 name = str(event.get("name", ""))
-                for label in ("//pkg/sentry/kernel:kernel", "//pkg/sentry/syscalls/linux:linux"):
+                for label in ("//pkg/sentry/socket/netstack:netstack", "//pkg/sentry/socket:socket",
+                              "//pkg/sentry/socket/netfilter:netfilter", "//pkg/sentry/syscalls/linux:linux"):
                     if "Analyzing" in name and label in name:
                         phase = event.get("cat", "")
                         if re.fullmatch(r"[a-zA-Z _-]{1,70}", phase):
@@ -107,6 +116,20 @@ def retry():
         except (OSError, ValueError):
             profile_summary = {"status": "incomplete profile"}
     write(OUT / "action-profile.json", profile_summary)
+    # Expose action names/timing and process counts, never complete commands.
+    with (private / "bazel.log").open(errors="replace") as stream:
+        last = []
+        processes = []
+        for line in stream:
+            if "processes:" in line:
+                processes = re.findall(r"[0-9]+ (?:remote cache hit|remote|local|internal|worker)", line)
+            if "Analyzing " in line or "Generating " in line:
+                last.append({"owners": re.findall(r"//[a-z0-9_./-]+:[a-z0-9_./-]+", line),
+                             "balance": re.findall(r"\[[0-9,]+ / [0-9,]+\]", line),
+                             "elapsed": re.findall(r"\b[0-9]+s\b", line),
+                             "runners": re.findall(r"\b(?:local|remote|worker)\b", line)})
+                last = last[-40:]
+    write(OUT / "progress.json", {"processes": processes, "last": last})
     (private / "exit").write_text(str(rc))
     write(OUT / "retry.json", {"status": "FAIL" if rc else "INCOMPLETE", "source": SOURCE,
                                "expected": missing, "native_exit": rc, "execution_finished_at": finished})
