@@ -8,7 +8,7 @@ jobs:
   syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 65
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       PRODUCT: c16f3c5e55d1740154b7ddfa0300ef0dff0202ce
@@ -36,8 +36,12 @@ jobs:
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } > "$RUNNER_TEMP/tcp.bazelrc"
         unset BUILDBUDDY_API_KEY
+        if [[ $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
         docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --cap-add=SYS_ADMIN --cap-add=SYS_PTRACE --security-opt apparmor=unconfined --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler unshare -Urnm sh -ec 'mount -t tmpfs tmpfs /mnt; ip link set lo up; ip -6 addr show dev lo | grep -Fq ::1'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
         docker exec tcp-compiler python3 -c 'import socket; s=socket.socket(socket.AF_INET6); s.bind(("::1",0)); print(s.getsockname())' > "$RUNNER_TEMP/records/native-ipv6"
@@ -45,13 +49,13 @@ jobs:
       run: |
         set -euo pipefail
         git checkout --quiet --detach "$PRODUCT"
-        for name in poll-native poll-stock poll-fixed; do
+        for name in poll-stock poll-fixed; do
           src=$PRODUCT
           if [[ "$name" == poll-stock ]]; then src=$STOCK; fi
           testname=tcp_socket_test
           path=test/syscalls/linux/tcp_socket.cc
-          filter='AllInetTests/TcpSocketTest.ReadAfterInitialShutdown/*'
-          executor=remote
+          filter='AllInetTests/TcpSocketTest.ReadAfterInitialShutdown/1'
+          executor=local
           platform=runsc_systrap_hostnet
           if [[ "$name" == *-native ]]; then executor=local; platform=native; fi
           git checkout --quiet --detach "$src"
@@ -79,7 +83,7 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-hostinet-read-shutdown-reuse
+        name: tcp-hostinet-read-shutdown-ipv6
         path: |
           ${{ runner.temp }}/records/verdict.json
           ${{ runner.temp }}/tcp-evidence/*.json

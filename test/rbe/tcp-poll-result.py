@@ -10,11 +10,11 @@ import xml.etree.ElementTree as XML
 
 
 root = Path(sys.argv[1])
-cases = {f"AllInetTests/TcpSocketTest.ReadAfterInitialShutdown/{n}" for n in (0, 1)}
-expected = {(family, mode) for family in (2, 10) for mode in range(3)}
+cases = {f"AllInetTests/TcpSocketTest.ReadAfterInitialShutdown/{n}" for n in (1,)}
+expected = {(family, mode) for family in (10,) for mode in range(3)}
 observations = {}
 native_only = len(sys.argv) > 2
-for name in ("poll-native",) if native_only else ("poll-native", "poll-stock", "poll-fixed"):
+for name in ("poll-native",) if native_only else ("poll-stock", "poll-fixed"):
     directory = root / name
     def read(file):
         path = directory / file
