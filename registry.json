@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T18:44:40.953339+00:00",
+    "updatedAt": "2026-11-01T18:59:26.774280+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48839,7 +48839,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T18:44:40.953339+00:00",
+      "updatedAt": "2026-11-01T18:59:26.774280+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
@@ -51941,7 +51941,7 @@
           ]
         },
         {
-          "text": "On unchanged master, 50,000 files needed 200,998 callback records. The standalone registration API reserved 50,289 slots, but the final slice grew to 243,598 slots versus 228,693. Allocated bytes fell 5.47% and peak heap fell 3.58%; retained heap rose 1.55%. Eight native pairs did not establish faster restore (230.3 ms stock, 236.4 ms with reservation). Hold the proposal. The earlier 9.55% improvement was measured on the separate decoder that combines a callback and its waiter (150,890 records).",
+          "text": "On unchanged master, 50,000 files needed 200,998 callback records. The standalone registration API reserved 50,289 slots, but the final slice grew to 243,598 slots versus 228,693. Allocated bytes fell 5.47% and peak heap fell 3.58%. Retained heap rose 1.55%. Eight native pairs did not establish faster restore (230.3 ms stock, 236.4 ms with reservation). Hold the proposal. The earlier 9.55% improvement was measured on the separate decoder that combines a callback and its waiter (150,890 records).",
           "evidence": [
             {
               "label": "Standalone API on current master",
@@ -51954,11 +51954,19 @@
             {
               "label": "Independent callback/waiter simplification",
               "url": "https://github.com/tamird/gvisor/commit/9f19447bd"
+            },
+            {
+              "label": "Original race timeout and analyzer diagnostics",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41338269606/artifacts/13095958256"
+            },
+            {
+              "label": "Four passing race shards, including 46 race-only registration cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41338894742/artifacts/13096287111"
             }
           ]
         }
       ],
-      "nextStep": "Evaluate whether producers know their dependency counts at registration. The standalone reservation has no contributor decision pending. Recover the failed race and ARM64 analyzer diagnostics from the recorded invocations.",
+      "nextStep": "Hold the reservation API. A map’s entry count is known before it is decoded, but each key or value can introduce zero or multiple dependencies. The independent callback/waiter simplification removes a redundant record at the point where the decoder knows both are needed.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
