@@ -2,6 +2,7 @@ load(":probe.bzl", "observed_root")
 
 platform(
     name = "arm64",
+    constraint_values = ["@llvm//constraints/libc:musl"],
     parents = ["@io_bazel_rules_go//go/toolchain:linux_arm64_cgo"],
     exec_properties = {
         "Arch": "arm64",
@@ -15,6 +16,7 @@ platform(
 
 platform(
     name = "amd64",
+    constraint_values = ["@llvm//constraints/libc:musl"],
     parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
     exec_properties = {
         "Arch": "amd64",
