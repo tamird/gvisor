@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "go_binary")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "go_reset_target")
 
 package(default_applicable_licenses = ["//:license"])
 
@@ -11,6 +11,12 @@ go_binary(
     deps = [
         "//tools/go_marshal/gomarshal",
     ],
+)
+
+go_reset_target(
+    name = "go_marshal_tool",
+    dep = ":go_marshal",
+    visibility = ["//:sandbox"],
 )
 
 config_setting(

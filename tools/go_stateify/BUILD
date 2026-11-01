@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "go_binary")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "go_reset_target")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -13,6 +13,12 @@ go_binary(
         "//tools/constraintutil",
         "@org_golang_x_tools//imports",
     ],
+)
+
+go_reset_target(
+    name = "stateify_tool",
+    dep = ":stateify",
+    visibility = ["//:sandbox"],
 )
 
 bzl_library(

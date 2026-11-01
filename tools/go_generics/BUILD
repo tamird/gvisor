@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "go_binary")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "go_reset_target")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -14,6 +14,12 @@ go_binary(
     ],
     visibility = ["//:sandbox"],
     deps = ["//tools/go_generics/globals"],
+)
+
+go_reset_target(
+    name = "go_generics_tool",
+    dep = ":go_generics",
+    visibility = ["//:sandbox"],
 )
 
 bzl_library(
