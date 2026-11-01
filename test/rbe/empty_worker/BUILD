@@ -44,3 +44,17 @@ exports_files([
     "grpc-native.patch",
     "protobuf-stage1-direct.patch",
 ])
+
+platform(
+    name = "amd64_musl",
+    constraint_values = ["@llvm//constraints/libc:musl"],
+    parents = [":amd64"],
+    visibility = ["//visibility:public"],
+)
+
+platform(
+    name = "arm64_musl",
+    constraint_values = ["@llvm//constraints/libc:musl"],
+    parents = [":arm64"],
+    visibility = ["//visibility:public"],
+)
