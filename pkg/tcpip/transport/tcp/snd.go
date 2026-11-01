@@ -1550,7 +1550,7 @@ func (s *sender) detectSpuriousRecovery(hasDSACK bool, tsEchoReply uint32) {
 	// If the value of the Timestamp Echo Reply field of the acceptable ACK's
 	// Timestamps option is smaller than the value of RetransmitTS, then
 	// proceed to next step, else return.
-	if tsEchoReply >= s.retransmitTS {
+	if !seqnum.Value(tsEchoReply).LessThan(seqnum.Value(s.retransmitTS)) {
 		return
 	}
 
