@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T15:54:06.326682+00:00",
+    "updatedAt": "2026-11-01T16:10:03.057491+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T15:54:06.326682+00:00"
+    "registryDate": "2026-11-01T16:10:03.057491+00:00"
   },
   "groups": [
     {
@@ -42225,6 +42225,40 @@
         "summary": "Open the upstream rules_cc_autoconf PR?",
         "body": "Configuration checks report missing types and headers on remote workers\nwithout /bin/sh, even when the declared compiler supports them. Launch\ncompiler and preprocessor arguments directly with posix_spawnp. Preserve\noutput redirection and report process startup, wait and signal failures\ninstead of caching a negative capability. Ordinary compiler rejections\nremain negative probe results.\n\nKeep the Windows command path unchanged. Exercise argument boundaries,\noutput streams and process errors, including the checker CLI paths for\ncompile, sizeof and alignof probes."
       }
+    },
+    {
+      "id": "branch:ipc-guard-registry",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/ipc-guard-registry",
+      "head": "6ff606c7ea63a15bb43201115ace2c59c2b3918d",
+      "title": "Guard SysV IPC registry operations with the registry mutex",
+      "url": "https://github.com/tamird/gvisor/tree/proposal/ipc-guard-registry",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T16:10:03.057491+00:00",
+      "summary": "Keeping a pointer to an IPC registry after unlocking allowed an unchecked call to ObjectCount. With the caller’s existing mutex moved to the common registry, both the AMD64 and ARM64 analyzers caught that call. The fixed code passed all four owning analyzers and all three AMD64 SysV syscall suites, with 101 records total and no skips.",
+      "evidence": [
+        {
+          "label": "Standalone commit",
+          "url": "https://github.com/tamird/gvisor/commit/6ff606c7e"
+        },
+        {
+          "label": "Unlocked registry access on both architectures and 101 corrected records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41323263703/artifacts/13090538239"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6ff606c7ea63a15bb43201115ace2c59c2b3918d",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/6ff606c7e",
+        "title": "Guard SysV IPC registry operations with the registry mutex",
+        "requestedAt": "2026-11-01T16:10:03.057491+00:00",
+        "summary": "Open the standalone SysV registry lock PR?",
+        "body": "The message, semaphore and shared-memory registries serialize operations\non an ipc.Registry. Guarding the caller’s registry pointer checks the\nlookup of that pointer, but permits a caller to retain it and access\nthe ID or key map after unlocking.\n\nMove the existing mutex into ipc.Registry and require it on the map\noperations. Callers still hold the same lock across lookup, creation\nand their own resource accounting."
+      }
     }
   ],
   "edges": [
@@ -48603,7 +48637,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T15:53:17.540212+00:00",
+      "updatedAt": "2026-11-01T16:10:03.057491+00:00",
       "summary": "Callback storage accounted for most temporary allocation while restoring 50,000 tmpfs files. Chunked storage brought up the guest 34 ms sooner but slowed small map and slice loads. A separate four-worker Nginx checkpoint encoded in 2.25 ms and decoded in 8.99 ms with the default graph codec, compared with 12.71 ms and 17.75 ms with the legacy codec.",
       "findings": [
         {
@@ -51647,9 +51681,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41322169511/artifacts/13090115595"
             }
           ]
+        },
+        {
+          "text": "Checkpointing a 32 MiB incompressible writable layer with stock gVisor reported ENOSPC from the pages write when an 8 MiB tmpfs filled. With 96 MiB available, checkpointing wrote 33,693,696 bytes of pages and a fresh sandbox restored the entire layer with its SHA-256 intact. The near-full disk case reported for a 1 GiB layer still needs a disk-backed reproduction.",
+          "evidence": [
+            {
+              "label": "Exact-source capacity comparison and restore",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41324378390/artifacts/13091051028"
+            },
+            {
+              "label": "Reporter’s disk and layer measurements",
+              "url": "https://github.com/google/gvisor/issues/14229"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare a nine-line change to contiguous table growth on the same three callback counts and the 50,000-file kernel. Also check the container checkpoint and restore APIs against a full local destination.",
+      "nextStep": "Compare a nine-line change to contiguous table growth on the same three callback counts and the 50,000-file kernel. Compare the near-full disk case using the reporter’s layer size.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
@@ -60400,7 +60447,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T15:53:17.540212+00:00",
+      "updatedAt": "2026-11-01T16:10:03.057491+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -60524,20 +60571,20 @@
           ]
         },
         {
-          "text": "The SysV IPC registries guard the pointer to their common ID and key maps. A caller can retain that pointer under lock and use it after unlocking. A proposed change moves the existing mutex to the shared registry so that each map operation can require it. The same unlocked call is being tested against stock and the proposal, alongside the message queue, shared memory and semaphore syscall suites.",
+          "text": "Keeping a pointer to an IPC registry after unlocking allowed an unchecked call to ObjectCount. With the caller’s existing mutex moved to the common registry, both the AMD64 and ARM64 analyzers caught that call. The fixed code passed all four owning analyzers and all three AMD64 SysV syscall suites, with 101 records total and no skips.",
           "evidence": [
             {
               "label": "Proposed lock placement",
               "url": "https://github.com/tamird/gvisor/commit/6ff606c7e"
             },
             {
-              "label": "Analyzer controls and syscall suites",
-              "url": "https://github.com/tamird/gvisor/actions/runs/41323263703"
+              "label": "Both analyzer diagnostics and named syscall cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41323263703/artifacts/13090538239"
             }
           ]
         }
       ],
-      "nextStep": "The semop membership fix and the wait-list lock annotation are ready for contributor review. Test GETPID from the writer’s own, parent and sibling PID namespaces, and preserve the writer’s PID after reap. Verify the common registry contract on a retained pointer.",
+      "nextStep": "The semop membership fix and the wait-list lock annotation are ready for contributor review. Test GETPID from the writer’s own, parent and sibling PID namespaces, and preserve the writer’s PID after reap. The shared registry fix is ready for contributor review.",
       "evidence": [
         {
           "label": "Timekeeper updater: all four lock diagnostics verified",
