@@ -24,6 +24,7 @@ usage() {
   echo "usage: $0 <command> [args...]" >&2
   echo "Commands:" >&2
   echo "  build <dest-dir> [release-name]" >&2
+  echo "  version [release-name]" >&2
   echo "  upload-wheel <target-dir>" >&2
   echo "  publish-manifest <release-root>" >&2
   echo "  all <dest-dir> <target-dir> [release-name]" >&2
@@ -72,30 +73,22 @@ get_next_ar_version() {
   fi
 }
 
-# update_version converts release-YYYYMMDD.x to PEP 440 CalVer format YYYY.MM.DD.x
-# or resolves auto version from AR, and updates pyproject.toml in-place.
-update_version() {
-  local -r release_name="${1:-}"
-  local wheel_version=""
-
-  echo "=== [Version Injection] Updating pyproject.toml version ==="
-  if [[ "${release_name}" == "auto" ]] || [[ -z "${release_name}" ]]; then
-    echo "Resolving next dynamic version from Artifact Registry..."
-    wheel_version=$(get_next_ar_version)
-  elif [[ "${release_name}" =~ ^([0-9]{4})\.([0-9]{2})\.([0-9]{2})\.(.*)$ ]]; then
-    # Already in YYYY.MM.DD.x format
-    wheel_version="${release_name}"
+# resolve_version prints the PEP 440 version passed to the build backend.
+resolve_version() {
+  local -r name="${1:-}"
+  if [[ -z "${name}" || "${name}" == "auto" ]]; then
+    get_next_ar_version
+  elif [[ "${name}" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}\. ]]; then
+    printf '%s\n' "${name}"
   else
-    # Convert release-YYYYMMDD.x or YYYYMMDD.x to YYYY.MM.DD.x
-    wheel_version=$(echo "${release_name#release-}" | sed -E 's/^([0-9]{4})([0-9]{2})([0-9]{2})\.(.*)$/\1.\2.\3.\4/')
+    printf '%s\n' "${name#release-}" | sed -E 's/^([0-9]{4})([0-9]{2})([0-9]{2})\.(.*)$/\1.\2.\3.\4/'
   fi
+}
 
-  if [[ -n "${wheel_version}" ]]; then
-    echo "Updating pyproject.toml version to: ${wheel_version}"
-    sed -i "s/^version = \".*\"/version = \"${wheel_version}\"/" pyproject.toml
-    echo "pyproject.toml version is now:"
-    grep "^version = " pyproject.toml || true
-  fi
+update_version() {
+  local version
+  version=$(resolve_version "${1:-}")
+  sed -i "s/^version = \".*\"/version = \"${version}\"/" pyproject.toml
 }
 
 # build_wheel_sdist builds Python SandboxExec wheel and sdist archives and copies them to dest-dir.
@@ -321,6 +314,9 @@ main() {
         usage
       fi
       build_wheel_sdist "$1" "${2:-}"
+      ;;
+    version)
+      resolve_version "${1:-}"
       ;;
     upload-wheel)
       if [[ "$#" -lt 1 ]]; then
