@@ -99,3 +99,62 @@ func TestRepeatedSynInSynRcvd(t *testing.T) {
 		t.Errorf("accepted socket total retransmissions = %d, want %d", got, want)
 	}
 }
+
+// Fork-only wire control for the signed PAWS comparison.
+func TestDuplicateSynTimestampHalfSpace(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+	defer conn.Close(t)
+	opts := make([]byte, header.TCPOptionTSLength)
+	header.EncodeTSOption(11, 0, opts)
+	syn := conn.CreateFrame(t, testbench.Layers{&testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: opts}})
+	conn.SendFrame(t, syn)
+	synACK := header.TCPFlagSyn | header.TCPFlagAck
+	first, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(synACK)}, 300*time.Millisecond)
+	if err != nil {
+		t.Fatalf("first SYN-ACK: %s", err)
+	}
+	ts := header.ParseSynOptions(first.Options, true)
+	if !ts.TS || ts.TSEcr != 11 {
+		t.Fatalf("timestamps not negotiated: %+v", ts)
+	}
+	header.EncodeTSOption((1<<31)+11, 0, opts)
+	syn[len(syn)-1].(*testbench.TCP).Options = opts
+	conn.SendFrameStateless(t, syn)
+	frames, _ := conn.ListenForFrame(t, testbench.Layers{nil, nil, &testbench.TCP{Flags: testbench.TCPFlags(synACK), SeqNum: first.SeqNum}}, 200*time.Millisecond)
+	var response string
+	for _, frame := range frames {
+		for _, layer := range frame {
+			p, ok := layer.(*testbench.TCP)
+			if !ok || *p.SrcPort != *first.SrcPort || *p.DstPort != *first.DstPort {
+				continue
+			}
+			if *p.AckNum != *first.AckNum {
+				t.Fatalf("unexpected ACK number: %+v", p)
+			}
+			switch {
+			case *p.Flags == synACK && *p.SeqNum == *first.SeqNum:
+				response = "SYN-ACK"
+			case *p.Flags == header.TCPFlagAck && *p.SeqNum == *first.SeqNum+1:
+				response = "ACK"
+			default:
+				t.Fatalf("unexpected reply: %+v", p)
+			}
+			break
+		}
+		if response != "" {
+			break
+		}
+	}
+	header.EncodeTSOption(12, ts.TSVal, opts)
+	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), Options: opts})
+	child, _ := dut.Accept(t, listener)
+	defer dut.Close(t, child)
+	total := dut.GetSockOptTCPInfo(t, child).TotalRetrans
+	t.Logf("DUPSYN_HALF previous=11 peer=2147483659 response=%s total=%d", response, total)
+	if response != "SYN-ACK" || total != 1 {
+		t.Errorf("half-space timestamp got %q and %d child retries; want SYN-ACK and 1", response, total)
+	}
+}
