@@ -205,7 +205,7 @@ func (ds *graphDecodeState) runCallbacks() {
 			if o.cbTail < 0 {
 				o.cbHead = o.waitHead
 			} else {
-				ds.cbs[o.cbTail].next = o.waitHead
+				ds.callback(o.cbTail).next = o.waitHead
 			}
 			o.cbTail = o.waitTail
 		}
@@ -225,8 +225,8 @@ func (ds *graphDecodeState) runCallbacks() {
 			if ds.stats.enabled && o.cbHead >= 0 && ds.objs[cur].ti != nil {
 				ds.stats.start(ds.objs[cur].ti)
 			}
-			for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
-				cb := &ds.cbs[c]
+			for c := o.cbHead; c >= 0; c = ds.callback(c).next {
+				cb := ds.callback(c)
 				if cb.waiter >= 0 {
 					w := &ds.ods[cb.waiter]
 					w.blockedBy--
@@ -312,8 +312,8 @@ func (ds *graphDecodeState) findCycle() []int32 {
 		if first < 0 {
 			first = int32(i)
 		}
-		for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
-			if w := ds.cbs[c].waiter; w >= 0 {
+		for c := o.cbHead; c >= 0; c = ds.callback(c).next {
+			if w := ds.callback(c).waiter; w >= 0 {
 				blockers[w] = int32(i)
 			}
 		}
