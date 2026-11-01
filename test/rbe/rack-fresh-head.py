@@ -7,8 +7,8 @@ from pathlib import Path
 import re
 from xml.etree import ElementTree as ET
 
-inv = "fb2dea5f-950c-40e1-8b7d-b19fca8d224b"
-prefix = "//pkg/tcpip/transport/tcp/test/e2e:"
+inv = "8351c413-99b1-450e-8f84-65516c391059"
+prefix = "//test/rbe/forward_gso:"
 key = os.environ["BUILDBUDDY_API_KEY"]
 dest = Path(os.environ["RUNNER_TEMP"]) / "verdict.json"
 out = {"invocation": inv, "owners": {}}
@@ -41,14 +41,15 @@ def pages(method, req):
 
 
 def relevant(lines):
-    return [line.strip()[:640] for line in lines if re.search(
-        r"(?:_test|context|checker|tcp_testing)\.go:\d+:|^--- FAIL", line)
-        and not re.search("authorization|token|api.key|password|bearer|remote_header", line,re.I)][:55]
+    return [line.strip()[:850] for line in lines if re.search(
+        r"Traceback|(?:Error|Exception)(?:\(|:)|FATAL|error:|File \"|test timed out|not found|No space left|permission denied|timed out|Cannot|could not|failed to|timeout after|signal:", line, re.I)
+        and not re.search("authorization|token|api.key|password|bearer|remote.header|bes.header", line, re.I)][-50:]
+
 
 
 try:
     targets = {x["label"]:x.get("status") for page in pages("GetTarget",{"selector":{"invocation_id":inv}}) for x in page.get("target",[])}
-    for module in ("tcp_test","tcp_sack_test"):
+    for module in ("forwarding_test",):
         label=prefix+module
         rec = out["owners"][label] = {"target":targets.get(label), "files":{}, "failures":{}}
         raw = {}

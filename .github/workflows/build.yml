@@ -1,7 +1,7 @@
-name: Observe TCP Limited Transmit and loss recovery
+name: Recover the original forwarding test failure
 on:
   push:
-    branches: [qualification/tcp-limited-transmit-original]
+    branches: [qualification/tcp-forwarded-gso-receipt]
 permissions:
   contents: read
 jobs:
@@ -19,5 +19,5 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-limited-transmit-original
+        name: tcp-forwarded-gso-receipt
         path: ${{ runner.temp }}/verdict.json
