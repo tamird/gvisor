@@ -42,6 +42,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/state/checkpointfiles"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
@@ -2964,4 +2965,131 @@ func TestCheckpointRestoreCrossEngineChained(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestCheckpointTmpfsTreeForProfile(t *testing.T) {
+	imageDir := os.Getenv("WORKLOAD_CHECKPOINT_DIR")
+	if imageDir == "" {
+		t.Fatal("missing capture directory")
+	}
+	const limit int64 = 2 << 30
+	memLimit := limit
+	spec, conf := sleepSpecConf(t)
+	conf.Overlay2.Set("none")
+	conf.Debug, conf.Strace, conf.LogPackets = false, false, false
+	conf.Platform = "systrap"
+	cgPath := "/" + testutil.RandomID("gvisor-profile-cg")
+	spec.Mounts = []specs.Mount{{Type: "tmpfs", Destination: "/tmpfs"}}
+	spec.Linux = &specs.Linux{
+		CgroupsPath: cgPath,
+		Resources:   &specs.LinuxResources{Memory: &specs.LinuxMemory{Limit: &memLimit}},
+	}
+	_, bundle, cleanup, err := testutil.SetupContainer(spec, conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanup()
+	args := Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundle}
+	checkCap := func(stage string) {
+		t.Helper()
+		buf, err := os.ReadFile(filepath.Join("/sys/fs/cgroup", cgPath, "memory.max"))
+		if err != nil || strings.TrimSpace(string(buf)) != strconv.FormatInt(limit, 10) {
+			t.Fatalf("%s: expected %d imposed bytes, got %q, %v", stage, limit, buf, err)
+		}
+		t.Logf("TMPFS-CAP %s %d", stage, limit)
+	}
+	cont, err := New(conf, args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if cont != nil {
+			cont.Destroy()
+		}
+	}()
+	if err := cont.Start(conf); err != nil {
+		t.Fatal(err)
+	}
+	if err := waitForProcessCount(cont, 1); err != nil {
+		t.Fatal(err)
+	}
+	checkCap("save")
+	testApp, err := testutil.FindFile("test/cmd/test_app/test_app")
+	if err != nil {
+		t.Fatal(err)
+	}
+	work := func(c *Container, subcommand string) {
+		t.Helper()
+		f, err := os.Open(testApp)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+		status, err := c.executeSync(conf, &controlapi.ExecArgs{
+			Argv:        []string{"test_app", subcommand, "--target-dir=/tmpfs", "--depth=50", "--file-per-level=1000", "--file-size=0"},
+			FilePayload: controlapi.NewFilePayload(map[int]*os.File{0: os.Stdin, 1: os.Stdout, 2: os.Stderr}, f),
+		})
+		if err != nil || !status.Exited() || status.ExitStatus() != 0 {
+			t.Fatalf("%s: %v, %v", subcommand, status, err)
+		}
+	}
+	work(cont, "fsTreeCreate")
+	start := time.Now()
+	if err := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelNone}); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("TMPFS-NS checkpoint %d", time.Since(start).Nanoseconds())
+	if _, err := cont.Wait(); err != nil {
+		t.Fatal(err)
+	}
+	if err := cont.Destroy(); err != nil {
+		t.Fatal(err)
+	}
+	cont = nil
+	checkpointFile, err := os.Open(filepath.Join(imageDir, checkpointfiles.StateFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sr, _, err := statefile.NewReader(checkpointFile, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fs cpuid.FeatureSet
+	if _, err := state.Load(context.Background(), sr, &fs); err != nil {
+		t.Fatal(err)
+	}
+	h, err := state.ReadHeaderMode(&wire.Reader{Reader: sr})
+	if err != nil || !h.Object || !h.Graph {
+		t.Fatalf("kernel graph header %+v: %v", h, err)
+	}
+	if err := sr.Close(); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("TMPFS-GRAPH kernel=true")
+	if err := os.WriteFile(filepath.Join(imageDir, "spec.json"), []byte(`{"names":["__no_name_0"],"mounts":["/","/tmpfs"]}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+	start = time.Now()
+	restored, err := New(conf, args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restored.Destroy()
+	created := time.Now()
+	checkCap("restore")
+	rpc := time.Now()
+	if err := restored.Restore(conf, imageDir, sandbox.DirectIOOff, false, nil); err != nil {
+		t.Fatal(err)
+	}
+	returned := time.Now()
+	status, err := execute(conf, restored, "/bin/true")
+	if err != nil || !status.Exited() || status.ExitStatus() != 0 {
+		t.Fatalf("guest ready: %v %v", status, err)
+	}
+	ready := time.Now()
+	t.Logf("TMPFS-NS new %d", created.Sub(start).Nanoseconds())
+	t.Logf("TMPFS-NS restore %d", returned.Sub(rpc).Nanoseconds())
+	t.Logf("TMPFS-NS new-to-guest %d", ready.Sub(start).Nanoseconds())
+	work(restored, "fsTreeVerify")
+	t.Logf("TMPFS-VERIFIED 50000")
 }
