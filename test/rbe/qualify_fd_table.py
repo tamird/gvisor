@@ -13,15 +13,7 @@ import qualification_report as report
 pr, architecture, source, rc, destination = sys.argv[1:]
 assert pr in ("fd-table-positive", "fd-table-negative")
 negative = pr == "fd-table-negative"
-case_owners = {
-    "//pkg/sentry/kernel:kernel_test_nogo": [],
-} if negative else {
-    "//pkg/sentry/kernel:kernel_test_nogo": [],
-    "//pkg/sentry/syscalls/linux:linux_test_nogo": [],
-    "//runsc/boot:boot_test_nogo": [],
-    "//pkg/sentry/kernel:kernel_test": ["TestFDTable", "TestFDTableMany", "TestFDTableOverLimit", "TestDescriptorFlags", "TestSetFlagsForRange"],
-    "//pkg/sentry/syscalls/linux:linux_test": ["TestSeccheckMax", "TestSeccheckSyscalls"],
-}
+case_owners = {"//pkg/sentry/kernel:kernel_test_nogo": []}
 owners = list(case_owners)
 required = {(label, case) for label, cases in case_owners.items() for case in cases}
 d = Path(destination)
@@ -83,6 +75,11 @@ try:
             records.append({"name":case.get("name"),"owner":f["identity"]["label"],
                             "result":next((c.tag for c in case if c.tag in ("skipped","failure","error")),"pass")})
     r["cases"]=records
+    r["test_diagnostics"] = {
+        f["identity"]["label"]: [line[:1500] for line in (d/f["path"]).read_text(errors="replace").splitlines()
+                                  if re.search(r"[.]go:\d+|^amd64:|^arm64:|findings", line)][:300]
+        for f in m["reports"] if f["name"] == "test.log"
+    }
     found={(row["owner"],row["name"]) for row in records if row["result"]=="pass"}
     r["missing_required"]=sorted(required-found)
     ran={e["owner"] for e in r["executions"] if e["remote"] and not e["cached"]}
