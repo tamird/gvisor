@@ -139,12 +139,13 @@ func newGraphDecodeState(ctx context.Context) *graphDecodeState {
 const (
 	maxDecodeObjectBytes = 1 << 30 // 1 GiB per single allocated object
 	maxDecodeTotalBytes  = 4 << 30 // 4 GiB total allocated object bytes per Load
+	maxPooledCallbacks   = maxPooledBytes / 64
 )
 
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
-	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
+	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledCallbacks {
 		return
 	}
 	clear(ds.types[:cap(ds.types)])
@@ -420,6 +421,13 @@ func (ds *graphDecodeState) appendCallback(head, tail *int32, cb decodeCallback)
 		ds.deferred++
 	}
 	cb.next = -1
+	if n := len(ds.cbs); n == cap(ds.cbs) && n >= 8192 && n < maxPooledCallbacks {
+		// Copy large callback tables less often. Do not grow past the pool
+		// limit until the checkpoint actually needs that many callbacks.
+		cbs := make([]decodeCallback, n, min(n*2, maxPooledCallbacks))
+		copy(cbs, ds.cbs)
+		ds.cbs = cbs
+	}
 	ds.cbs = append(ds.cbs, cb)
 	i := int32(len(ds.cbs) - 1)
 	if *tail < 0 {
