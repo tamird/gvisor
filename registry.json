@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T17:42:13.998320+00:00",
+    "updatedAt": "2026-11-01T17:48:17.215162+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42348,36 +42348,63 @@
       "id": "branch:bazel-9-3-1",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/bazel-9-3-1",
-      "head": "542eadd05f05f309cc0d2344ac4b07e967a67fd1",
+      "ref": "proposal/build-with-bazel-9",
+      "head": "375b2c57032fa910447d4b81217fde2171303a9b",
       "title": "Build gVisor with Bazel 9.3.1",
-      "url": "https://github.com/tamird/gvisor/commit/542eadd05",
+      "url": "https://github.com/tamird/gvisor/commit/375b2c570",
       "group": "bazel",
-      "status": "Agent work",
-      "summary": "The existing Docker builder and Bazelisk read the same pin. The change makes the archived Coral toolchain and pinned LLVM source load the rules Bazel 9 externalized, and directs Mac developers to the shared pin. The current fork commit is in remote qualification.",
-      "updatedAt": "2026-11-01T17:42:13.998320+00:00",
+      "status": "Contributor review requested",
+      "summary": "Upgrade the shared Bazel pin to 9.3.1. Two compatibility patches keep gVisor’s existing Coral compiler and LLVM parser. The upgrade includes the directory-watch fix needed by the lint migration.",
+      "updatedAt": "2026-11-01T17:48:17.215162+00:00",
       "evidence": [
         {
-          "label": "Upgrade commit",
-          "url": "https://github.com/tamird/gvisor/commit/542eadd05"
+          "label": "Final upgrade commit",
+          "url": "https://github.com/tamird/gvisor/commit/375b2c570"
         },
         {
-          "label": "AMD64/ARM64 qualification",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41327424761"
+          "label": "AMD64 release binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41332521937/artifacts/13094216725"
         },
         {
-          "label": "Upstream directory-watching fix",
-          "url": "https://github.com/bazelbuild/bazel/issues/30883"
+          "label": "ARM64 release binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41332521937/artifacts/13093709440"
         },
         {
-          "label": "ARM64 release build with an init process for the Bazel server",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41328055309"
+          "label": "Native AMD64 hostarch and runsc",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41332521937/artifacts/13093849188"
         },
         {
-          "label": "AMD64 and ARM64 release builds with analysis on Linux coordinators",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41332521937"
+          "label": "Native ARM64 hostarch and runsc",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41332521937/artifacts/13093609892"
+        },
+        {
+          "label": "Directory-watch fix included in 9.3.1",
+          "url": "https://github.com/bazelbuild/bazel/commit/923188d6f"
+        },
+        {
+          "label": "Coral provider in original negative control",
+          "url": "https://github.com/google-coral/crosstool/blob/8e8855091/cc_toolchain_config.bzl.tpl#L384"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "542eadd05f05f309cc0d2344ac4b07e967a67fd1"
+        },
+        "after": {
+          "head": "375b2c57032fa910447d4b81217fde2171303a9b"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "375b2c57032fa910447d4b81217fde2171303a9b",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/375b2c570",
+        "title": "Build gVisor with Bazel 9.3.1",
+        "requestedAt": "2026-11-01T17:48:17.215162+00:00",
+        "summary": "Open the standalone Bazel 9.3.1 upgrade?",
+        "body": "All eight release binaries built for AMD64 and ARM64. The native hostarch suite and runsc do true passed on each. The directory-watching reproducer passes on 9.3.1 and the license catalog verifies unchanged. The AMD64 workflow is red because a negative control expected different error text: unpatched Coral failed on its CcToolchainConfigInfo provider, as confirmed in the pinned source. The product steps passed."
+      }
     },
     {
       "id": "pr:16793",
