@@ -876,7 +876,14 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 			for nSeg := seg.Next(); nSeg != nil && nSeg.payloadSize() != 0; nSeg = seg.Next() {
 				if seg.payloadSize()+nSeg.payloadSize() > available {
 					nextTooBig = true
-					break
+					// When sending one full wire packet, the next write may
+					// already require segmentation. Merge it and let the
+					// normal send path split at the MSS. Keep writes that
+					// could fit in a packet intact, as described above.
+					if available != s.MaxPayloadSize || seg.payloadSize() >= available ||
+						nSeg.payloadSize() <= s.MaxPayloadSize || seg.pkt.Mark != nSeg.pkt.Mark {
+						break
+					}
 				}
 				seg.merge(nSeg)
 				s.writeList.Remove(nSeg)
