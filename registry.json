@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T05:08:12.703055+00:00",
+    "updatedAt": "2026-11-01T06:33:17.043911+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41456,6 +41456,40 @@
         "url": "https://github.com/tamird/gvisor/commit/b5c5589ba",
         "body": "Submit this checklocks-only follow-up after the descriptor replacement fix. Both the reference-owning setter and the flag-only swap require the mutex. Three analyzer targets accepted the final source, and removing locks triggered all six intended diagnostics on each architecture.",
         "requestedAt": "2026-11-01T06:11:46.802628+00:00"
+      }
+    },
+    {
+      "id": "branch:llvm-instrumentor-template",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/hermetic-llvm",
+      "ref": "proposal/instrumentor-template",
+      "head": "bdd158a6b8ddecb97fd226e416dcf1440b3595fb",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/bdd158a6b",
+      "title": "Generate the LLVM instrumentor header without a shell",
+      "updatedAt": "2026-11-01T06:33:17.043911+00:00",
+      "status": "Contributor review requested",
+      "summary": "LLVM 23 embeds a runtime helper in a C++ string using a shell and cat. Bazel can use LLVM’s CMake template for the same header. The resulting AMD64 and ARM64 archives contained the same 9,899 bytes and terminating NUL. Editing the helper in a local checkout with the amended overlay regenerated the header.",
+      "evidence": [
+        {
+          "label": "Supplier Bazel 9 run with both architectures and a local source edit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41280686305/artifacts/13073123265"
+        },
+        {
+          "label": "gVisor Bazel 8 integration including TableGen",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41279721263/artifacts/13071944389"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "baseHead": "fd2addebff08b29675ee266bc2766e475ce9263b",
+        "head": "bdd158a6b8ddecb97fd226e416dcf1440b3595fb",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/bdd158a6b",
+        "title": "Generate the LLVM instrumentor header without a shell",
+        "requestedAt": "2026-11-01T06:33:17.043911+00:00",
+        "summary": "Review submitting the LLVM 23 overlay correction to hermeticbuild/hermetic-llvm.",
+        "body": "LLVM's Bazel rule uses printf, cat, and echo to embed the instrumentor\nruntime source in a C++ string. Building the IPO library therefore\nrequires a shell and cat on the execution platform.\n\nExpose the helper text to LLVM 23's overlay and expand the template that\nCMake and GN use for the same header. Bazel can then generate it without\nrunning another program. Read the resolved source path so edits in a\nlocal LLVM checkout regenerate the header."
       }
     }
   ],
