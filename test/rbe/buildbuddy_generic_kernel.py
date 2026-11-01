@@ -12,8 +12,8 @@ import traceback
 import qualification_report as report
 
 
-BEFORE = "31b801ff8e0116316e3f695699eb9c5994b0c2ba"
-AFTER = "2f8adc887160f94cd1480140dae2bf3e3a117fd1"
+BEFORE = "78f826dd61c078b907ec9328385ea56d01741bfc"
+AFTER = "7c8ace19ecf563a0417c2fa39575e04eb7851e5e"
 TARGET = "//enterprise/server/remote_execution/containers/firecracker:guest_kernel_test"
 PREFIX = "firecracker/TestGuestKernelBootAndSnapshot/generic_snapshot_lookup/"
 CASES = frozenset(PREFIX + name for name in

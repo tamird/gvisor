@@ -15,10 +15,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/buildbuddy
-          ref: 2f8adc887160f94cd1480140dae2bf3e3a117fd1
+          ref: 7c8ace19ecf563a0417c2fa39575e04eb7851e5e
           path: product
           persist-credentials: false
           fetch-depth: 2
+      - name: Fetch the immutable regression control
+        working-directory: product
+        run: git fetch --no-tags --depth=1 origin 78f826dd61c078b907ec9328385ea56d01741bfc
       - name: Prepare private remote configuration and reporter
         working-directory: carrier
         env:
