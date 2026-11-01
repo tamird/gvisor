@@ -1,35 +1,116 @@
-name: CI
-
-"on":
+name: Check a full local pages destination
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/checkpoint-enospc-control]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  checkpoint:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 48
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT: aa767e4c43d011121271551fe24da501a56f729d
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 6, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!runsc/container/container_save_restore_test.go'
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /var/run/docker.sock:/var/run/docker.sock -v "$(command -v docker):/usr/local/bin/docker:ro" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+    - name: Checkpoint onto roomy and full tmpfs mounts
+      id: measure
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        report="$RUNNER_TEMP/records"
+        iid=$(cat /proc/sys/kernel/random/uuid)
+        printf '%s\n' "$iid" > "$report/invocation-id"
+        rc=0
+        timeout --signal=TERM --kill-after=30s 36m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --invocation_id="$iid" --config=x86_64 --spawn_strategy=remote,local --noremote_upload_local_results --strategy=GoStaticAnalysis=local --strategy=GoStandardLibraryAnalysis=local --strategy=TestRunner=local --jobs=24 --test_filter='^TestCheckpointDestinationCapacity$' --test_sharding_strategy=disabled --nocache_test_results --test_arg=-test.v --test_timeout=480 //runsc/container:container_test > "$RUNNER_TEMP/capacity-bazel.log" 2>&1 || rc=$?
+        echo "$rc" > "$report/bazel-exit"
+        date -u +%FT%TZ > "$report/execution-finished"
+        grep -E 'ERROR:|error:|Invocation ID:|failed to build| timed out' "$RUNNER_TEMP/capacity-bazel.log" | tail -20 > "$report/build-diagnostics" || true
+        docker exec tcp-compiler cat bazel-testlogs/runsc/container/container_test/test.log | grep -E 'CHECKPOINT |DESTINATION |CAPACITY |RESTORED |=== RUN|--- (PASS|FAIL|SKIP)|container_save_restore_test.go:[0-9]+:' > "$report/test-observations" || true
+        docker exec tcp-compiler cat bazel-testlogs/runsc/container/container_test/test.xml > "$report/test.xml" || true
+        exit "$rc"
+    - name: Reconcile the two original cases
+      if: always()
+      run: |
+        python3 - <<'PYTHON'
+        import datetime, json, os, pathlib, re, xml.etree.ElementTree as ET
+        root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'records'
+        root.mkdir(exist_ok=True)
+        expected = ['roomy', 'full']
+        results = {}
+        xml_error = None
+        try:
+            for case in ET.parse(root/'test.xml').iter('testcase'):
+                name = case.get('name', '').split('/')[-1]
+                if name in expected:
+                    results[name] = 'failed' if case.find('failure') is not None or case.find('error') is not None else 'skipped' if case.find('skipped') is not None else 'passed'
+        except (OSError, ET.ParseError) as exc:
+            xml_error = str(exc)
+        def read(name):
+            p = root / name
+            return p.read_text().strip() if p.exists() else ''
+        obs=read('test-observations')
+        observed={name:bool(re.search('CAPACITY '+name+r' pages=\d+ checkpoint_error=', obs)) for name in expected}
+        missing=[name for name in expected if name not in results or not observed[name]]
+        fullsave=re.search(r"CAPACITY full pages=(\d+) checkpoint_error=(.*)",obs)
+        fulloutcome=None
+        if fullsave:
+            if 'no space left on device' in fullsave[2].lower():
+                fulloutcome='reported_enospc'
+            elif 'RESTORED full bytes=33554432 sha256=matched' in obs:
+                fulloutcome='success_and_verified_restore'
+            elif fullsave[2].strip()=='<nil>':
+                fulloutcome='success_without_verified_restore'
+        good='RESTORED roomy bytes=33554432 sha256=matched' in obs
+        verified=(read('bazel-exit')=='0' and good and fulloutcome in ('reported_enospc','success_and_verified_restore') and not missing and all(results[k]=='passed' for k in expected))
+        result=dict(product=os.environ['PRODUCT'],fixture=os.environ['GITHUB_SHA'],invocation=read('invocation-id'),expected=expected,results=results,fullOutcome=fulloutcome,observations=[line for line in obs.splitlines() if re.search(r'CHECKPOINT |DESTINATION |CAPACITY |RESTORED ',line)],observed=observed,missing=missing,skipped=[k for k,v in results.items() if v=='skipped'],failed=[k for k,v in results.items() if v=='failed'],roomyRestored=good,xmlError=xml_error,verified=verified,finished=read('execution-finished'),verifiedAt=datetime.datetime.now(datetime.timezone.utc).isoformat())
+        (root/'verdict.json').write_text(json.dumps(result,indent=2)+'\n')
+        print(result)
+        raise SystemExit(0 if verified else 1)
+        PYTHON
+    - name: Redact and check the retained reports
+      id: sanitize
+      if: always()
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os
+        from pathlib import Path
+        key = os.environ["BB_KEY"].encode()
+        assert key
+        for f in (Path(os.environ["RUNNER_TEMP"]) / "records").iterdir():
+            data=f.read_bytes()
+            if key in data:
+                f.write_bytes(data.replace(key,b"[REDACTED]"))
+            assert key not in f.read_bytes()
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: ${{ always() && steps.sanitize.outcome == 'success' }}
       with:
-          name: runsc
-          path: bin/
+        name: checkpoint-capacity
+        path: ${{ runner.temp }}/records
+        if-no-files-found: error
