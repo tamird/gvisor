@@ -52,23 +52,19 @@ func (ds *graphDecodeState) decodeObjects() {
 	for i := range ds.objs {
 		ds.cur = int32(i)
 		o := &ds.objs[i]
-		if o.kind == objKindMap || (o.inexact && o.kind == objKindValue) {
-			n := d.byteLength()
-			if !ds.decodable(o) {
-				// Decode the object once it has been referred to.
-				deferred = append(deferred, deferredObject{obj: int32(i), pos: d.pos, end: d.pos + n})
-				d.pos += n
-				continue
-			}
-		} else if o.inexact && !ds.decodable(o) {
-			n := d.byteLength()
-			deferred = append(deferred, deferredObject{obj: int32(i), pos: d.pos, end: d.pos + n})
-			d.pos += n
+		if o.kind != objKindMap && !o.inexact {
+			ds.decodeObject(int32(i))
 			continue
-		} else if o.inexact {
-			d.byteLength()
 		}
-		ds.decodeObject(int32(i))
+		n := d.byteLength()
+		end := d.pos + n
+		if !ds.decodable(o) {
+			// Decode the object once it has been referred to.
+			deferred = append(deferred, deferredObject{obj: int32(i), pos: d.pos, end: end})
+			d.pos = end
+			continue
+		}
+		ds.decodeFrame(int32(i), end)
 	}
 	for len(deferred) > 0 {
 		remaining := deferred[:0]
@@ -80,10 +76,7 @@ func (ds *graphDecodeState) decodeObjects() {
 			pos := d.pos
 			d.pos = do.pos
 			ds.cur = do.obj
-			ds.decodeObject(do.obj)
-			if d.pos != do.end {
-				Failf("object %d has %d bytes of trailing data", do.obj, do.end-d.pos)
-			}
+			ds.decodeFrame(do.obj, do.end)
 			d.pos = pos
 		}
 		if len(remaining) == len(deferred) {
@@ -91,6 +84,18 @@ func (ds *graphDecodeState) decodeObjects() {
 		}
 		deferred = remaining
 	}
+}
+
+// decodeFrame confines the object to the bytes its length prefix declares.
+func (ds *graphDecodeState) decodeFrame(obj int32, end int) {
+	d := &ds.in
+	stream := d.b
+	d.b = stream[:end]
+	ds.decodeObject(obj)
+	if d.pos != end {
+		Failf("object %d has %d bytes of trailing data", obj, end-d.pos)
+	}
+	d.b = stream
 }
 
 // decodable returns true if the type needed to decode o is known.
