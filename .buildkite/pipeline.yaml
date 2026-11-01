@@ -379,7 +379,9 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":golang: Nogo tests"
-    command: make nogo-tests
+    command: bazel test --config=ci --config=nogo //...
+    env:
+      DOCKER_BUILD: "false"
     agents:
       queue: "default"
   - <<: *common
