@@ -31,9 +31,12 @@ def elf(data):
     if data[:6] != b"\x7fELF\x02\x01":
         raise ValueError("Expected a little-endian ELF64 wrapper")
     header = struct.unpack_from("<16sHHIQQQIHHHHHH", data)
-    interpreter, needed = [], []
+    interpreter, needed, loads = [], [], []
+    table = None
     for i in range(header[10]):
-        kind, _, offset, _, _, size, _, _ = struct.unpack_from("<IIQQQQQQ", data, header[5] + i * header[9])
+        kind, _, offset, address, _, size, _, _ = struct.unpack_from("<IIQQQQQQ", data, header[5] + i * header[9])
+        if kind == 1:
+            loads.append((address, offset, size))
         if kind == 3:
             interpreter.append(data[offset:offset + size].rstrip(b"\x00").decode())
         if kind == 2:
@@ -41,7 +44,12 @@ def elf(data):
                 tag, value = struct.unpack_from("<qQ", data, j)
                 if tag == 1:
                     needed.append(value)
-    return {"machine": header[2], "interpreter": interpreter, "needed_offsets": needed,
+                if tag == 5:
+                    table = value
+    base = next((offset + table - address for address, offset, size in loads
+                 if table is not None and address <= table < address + size), None)
+    names = [data[base + value:data.index(b"\0", base + value)].decode() for value in needed]
+    return {"machine": header[2], "interpreter": interpreter, "needed_offsets": needed, "needed": names,
             "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
