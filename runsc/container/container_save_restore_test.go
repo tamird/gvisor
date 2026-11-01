@@ -2967,23 +2967,26 @@ func TestCheckpointRestoreCrossEngineChained(t *testing.T) {
 }
 
 func TestCheckpointDestinationCapacity(t *testing.T) {
-	for _, tc := range []struct {
-		name  string
-		limit string
-	}{
-		{"roomy", "96m"},
-		{"full", "8m"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			image := makeTempDir(t, "capacity-image")
-			if err := unix.Mount("tmpfs", image, "tmpfs", 0, "size="+tc.limit+",mode=0777"); err != nil {
-				t.Fatal(err)
-			}
-			defer func() {
-				if err := unix.Unmount(image, 0); err != nil {
-					t.Error(err)
+	for _, name := range []string{"roomy", "full"} {
+		t.Run(name, func(t *testing.T) {
+			image := filepath.Join("/checkpoint-destinations", name)
+			available := func(phase string) uint64 {
+				t.Helper()
+				var fs unix.Statfs_t
+				if err := unix.Statfs(image, &fs); err != nil {
+					t.Fatal(err)
 				}
-			}()
+				free := fs.Bavail * uint64(fs.Bsize)
+				t.Logf("DESTINATION %s %s type=%#x size=%d available=%d", name, phase, fs.Type, fs.Blocks*uint64(fs.Bsize), free)
+				if fs.Type != unix.EXT4_SUPER_MAGIC {
+					t.Fatalf("checkpoint mount type %#x, want ext4", fs.Type)
+				}
+				return free
+			}
+			free := available("before")
+			if name == "full" && (free < 199<<20 || free > 201<<20) || name == "roomy" && free < 1200<<20 {
+				t.Fatalf("unexpected available bytes on %s ext4: %d", name, free)
+			}
 			lower := makeTempDir(t, "capacity-lower")
 			spec, conf := sleepSpecConf(t)
 			conf.Platform = "systrap"
@@ -3024,31 +3027,38 @@ func TestCheckpointDestinationCapacity(t *testing.T) {
 			if err := waitForProcessCount(c, 1); err != nil {
 				t.Fatal(err)
 			}
-			run := func(command string) {
+			run := func(failure, command string) string {
 				t.Helper()
 				output, exit, err := executeCombinedOutputWithStatus(conf, c, nil, "/bin/sh", "-ec", command)
 				if err != nil || exit != 0 {
-					t.Fatalf("%s: %v, exit %d, %s", command, err, exit, output)
+					t.Fatalf("%s %s command %q: %v, exit %d, %s", failure, name, command, err, exit, output)
 				}
+				return strings.TrimSpace(string(output))
 			}
-			run("cd /mnt; dd if=/dev/urandom of=payload bs=1M count=32 status=none; sha256sum payload > checksum; sha256sum -c checksum")
+			check := "cd /mnt; test \"$(stat -c %s payload)\" = 1073741824; sha256sum payload"
+			run("PAYLOAD_WRITE_ERROR", "cd /mnt; dd if=/dev/urandom of=payload bs=1M count=1024 status=none")
+			before := run("PAYLOAD_READ_ERROR", check)
+			fields := strings.Fields(before)
+			if len(fields) != 2 || len(fields[0]) != 64 || fields[1] != "payload" {
+				t.Fatalf("unexpected SHA-256 output %q", before)
+			}
+			t.Logf("PAYLOAD %s bytes=1073741824 sha256=%s", name, fields[0])
 			if _, err := os.Stat(filepath.Join(lower, "payload")); !os.IsNotExist(err) {
 				t.Fatalf("expected payload only in the writable layer, stat lower returned %v", err)
 			}
 			saveErr := c.Checkpoint(conf, image, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelNone})
-			t.Logf("CHECKPOINT %s err=%v", tc.name, saveErr)
-			var fs unix.Statfs_t
-			if err := unix.Statfs(image, &fs); err != nil {
-				t.Fatal(err)
-			}
-			t.Logf("DESTINATION %s size=%d available=%d", tc.name, fs.Blocks*uint64(fs.Bsize), fs.Bavail*uint64(fs.Bsize))
+			t.Logf("CHECKPOINT %s err=%v", name, saveErr)
+			available("after")
 			pages, err := os.Stat(filepath.Join(image, checkpointfiles.PagesFileName))
+			var pageBytes int64 = -1
 			if err != nil {
-				t.Fatal(err)
+				t.Logf("PAGES_ERROR %s: %v", name, err)
+			} else {
+				pageBytes = pages.Size()
 			}
-			t.Logf("CAPACITY %s pages=%d checkpoint_error=%v", tc.name, pages.Size(), saveErr)
+			t.Logf("CAPACITY %s pages=%d checkpoint_error=%v", name, pageBytes, saveErr)
 			if saveErr != nil {
-				if tc.name != "full" || !strings.Contains(strings.ToLower(saveErr.Error()), "no space left on device") {
+				if name != "full" || !strings.Contains(strings.ToLower(saveErr.Error()), "no space left on device") {
 					t.Fatalf("unexpected checkpoint error: %v", saveErr)
 				}
 				return
@@ -3062,12 +3072,14 @@ func TestCheckpointDestinationCapacity(t *testing.T) {
 				t.Fatal(err)
 			}
 			if err := c.Restore(conf, image, sandbox.DirectIOOff, false, nil); err != nil {
-				t.Fatalf("successful checkpoint could not restore: %v", err)
+				t.Fatalf("RESTORE_ERROR %s: %v", name, err)
 			}
-			run("cd /mnt; test \"$(stat -c %s payload)\" = 33554432; sha256sum -c checksum")
-			t.Logf("RESTORED %s bytes=33554432 sha256=matched", tc.name)
-			if tc.name == "roomy" && pages.Size() < 32<<20 {
-				t.Fatalf("pages file contains %d bytes, want at least the 32 MiB payload", pages.Size())
+			if after := run("RESTORED_READ_ERROR", check); after != before {
+				t.Fatalf("CHECKSUM_MISMATCH %s got %q want %q", name, after, before)
+			}
+			t.Logf("RESTORED %s bytes=1073741824 sha256=%s", name, fields[0])
+			if name == "roomy" && pageBytes < 1<<30 {
+				t.Fatalf("pages file contains %d bytes, want at least the 1 GiB payload", pageBytes)
 			}
 		})
 	}
