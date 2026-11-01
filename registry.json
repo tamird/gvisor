@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T18:59:26.774280+00:00",
+    "updatedAt": "2026-11-01T19:40:22.453604+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42462,6 +42462,40 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41328486242/artifacts/13091944899"
         }
       ]
+    },
+    {
+      "id": "pr:15867",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15867,
+      "ref": "codex/checklocks-slices-callbacks-15728",
+      "head": "1165b33ea7500227832c74e5c82e0b7230d52a0f",
+      "title": "Review lock ownership after synchronous slice callbacks",
+      "url": "https://github.com/google/gvisor/pull/15867",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "A slices.ContainsFunc predicate can release its caller’s mutex. The proposed analyzer then accepts a map deletion that requires that mutex. Taking a different mutex inside the predicate hides the same bug.",
+      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "1165b33ea7500227832c74e5c82e0b7230d52a0f",
+        "url": "https://github.com/google/gvisor/pull/15867",
+        "title": "Post the checklocks finding on the slices callback",
+        "summary": "A slices.ContainsFunc predicate can release its caller’s mutex. The proposed analyzer then accepts a map deletion that requires that mutex. Taking a different mutex inside the predicate hides the same bug.",
+        "body": "Could we check that the callback returns with the same locks it had on entry? With one element, a ContainsFunc predicate that unlocks e.mu and returns true leaves the following delete(e.entries, key) unguarded. checkFunction returns the callback’s exit state here, but the caller still treats e.mu as held.\n\nComparing lock identity and mode catches both the unlock and an exchange for another mutex. Unlocking and reacquiring e.mu inside the predicate still passes, as do the bound-method examples. [Tested change](https://github.com/tamird/gvisor/commit/a79d4bf1b) · [AMD64 and ARM64 analyzer results](https://github.com/tamird/gvisor/actions/runs/41340536537/artifacts/13098361016).",
+        "requestedAt": "2026-11-01T19:40:22.453604+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Original, corrected and negative-control analyzer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41340536537/artifacts/13098361016"
+        },
+        {
+          "label": "Check the callback’s exit lock state",
+          "url": "https://github.com/tamird/gvisor/commit/a79d4bf1b"
+        }
+      ]
     }
   ],
   "edges": [
@@ -45933,7 +45967,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
+      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -47786,9 +47820,22 @@
               "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
+        },
+        {
+          "text": "Moving a two-packet gVisor burst past one queue departure delivered both packets in all three trials, but then the competing Linux sender lost its second packet. With one extra queue slot, all four packets arrived in each trial.",
+          "evidence": [
+            {
+              "label": "Twelve Linux queue replays and the recorded packet sequence",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41340632594/artifacts/13096799128"
+            },
+            {
+              "label": "Live transfers and both senders’ window samples",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41304678019/artifacts/13082839573"
+            }
+          ]
         }
       ],
-      "nextStep": "Replay a pair of packets at a full queue and move it across one packet departure. Check the fate of both the pair and the competing flow.",
+      "nextStep": "In the two live CUBIC trials, gVisor had a smaller mean window even when both senders were backlogged and outside recovery (69 vs 86 segments and 67 vs 99). Use those loss and window histories to pick a sender change before rerunning the competition.",
       "evidence": [
         {
           "label": "Eight competing transfers with verified packet captures",
@@ -58896,7 +58943,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
+      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -60458,9 +60505,26 @@
               "url": "https://app.buildbuddy.io/invocation/9125942b-1fc2-42df-b235-6dee4e0ae37a"
             }
           ]
+        },
+        {
+          "text": "On Bazel 9.3.1 an ARM64 root without /tmp could not build the Go standard library. With an empty mode-01777 /tmp on distroless/static, the Go stdlib, its package list, a real consumer and a glibc assembly action ran. The root had no ELF tools. A second action saw no file from the first action’s /tmp. On the same worker image, changing only TMPDIR to an absent path made the Go package-list action fail with ENOENT.",
+          "evidence": [
+            {
+              "label": "Go actions on the root without /tmp",
+              "url": "https://app.buildbuddy.io/invocation/a3d67918-3e94-4046-af9c-92040c843365"
+            },
+            {
+              "label": "Original Go, LLVM, image and isolation results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41342268569/artifacts/13098220759"
+            },
+            {
+              "label": "Reconciled positive results and single-variable TMPDIR control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41342843737/artifacts/13098301782"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify the actual Make consumer and trace the libpluginstack shell action to its owning rule.",
+      "nextStep": "Use an isolated, writable temporary directory when qualifying these Go and LLVM actions. The next uncovered consumer is libpluginstack: check the actual Make target and identify the rule that still starts Bash.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -60743,7 +60807,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
+      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -60878,9 +60942,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41323263703/artifacts/13090538239"
             }
           ]
+        },
+        {
+          "text": "A slices.ContainsFunc predicate can release its caller’s mutex. The proposed analyzer then accepts a map deletion that requires that mutex. Taking a different mutex inside the predicate hides the same bug.",
+          "evidence": [
+            {
+              "label": "Original, corrected and negative-control analyzer results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41340536537/artifacts/13098361016"
+            },
+            {
+              "label": "Check the callback’s exit lock state",
+              "url": "https://github.com/tamird/gvisor/commit/a79d4bf1b"
+            }
+          ]
         }
       ],
-      "nextStep": "Check whether #15867 detects a slice predicate that releases or exchanges its caller’s mutex. The SysV registry annotations are upstream for review in #16795. The semaphore wait-list annotation and semop PID fix await contributor review. The namespace-aware GETPID candidate still lacks two analyzer results.",
+      "nextStep": "The inline review on #15867 is ready for a contributor decision. #16795 is with maintainers. Two SysV GETPID analyzer targets are running on a larger coordinator after small workers exhausted memory.",
       "evidence": [
         {
           "label": "Timekeeper updater: all four lock diagnostics verified",
