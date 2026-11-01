@@ -1,7 +1,7 @@
-name: Recover original native Go bootstrap diagnostics
+name: Recover original native Go runtime diagnostics
 on:
   push:
-    branches: [qualification/native-go-bootstrap-diagnostic]
+    branches: [qualification/native-go-runtime-diagnostic]
 permissions:
   contents: read
 jobs:
@@ -12,13 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
-      - name: Read original failed action metadata and stderr
+      - name: Read original action outcomes and filtered test output
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: python3 test/rbe/native_packages/diagnose.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-go-bootstrap-diagnostic
-          path: ${{ runner.temp }}/bootstrap-diagnostic.json
+          name: native-go-runtime-diagnostic
+          path: ${{ runner.temp }}/runtime-diagnostic.json
           if-no-files-found: error

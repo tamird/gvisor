@@ -1,19 +1,30 @@
-"""Recover only the two failed Go bootstrap actions; do not run a build."""
+"""Recover the original wrapper failures and zero-case Go output; run no tests."""
 import base64
+import hashlib
 import json
 import os
 import re
 from datetime import datetime
+from pathlib import Path
 import urllib.parse
 import urllib.request
-from pathlib import Path
 
-DIGESTS = {
-    "amd64": "3cbbcd72629e840be3a527c7b6a0719a17122635d6dd141f0059b67d46011428",
-    "arm64": "5ef694a9742e6cab1e3f56c5fb63e4e1523f1efbcd9e94a3fd4356343c35d958",
+ORIGINALS = {
+    "amd64": {
+        "invocation": "f95159a7-0430-48a0-b3f6-f20c9da875b9", "finish_ms": 1793522596969,
+        "exit": 1, "actions": {
+            "//pkg/state:state_test": "e4688d91bde4a989e8512619963cebb24edd892436a4c97328be130dfcbf80fe",
+            "//pkg/tcpip/transport/tcp:tcp_test": "92a4ce9534a3c72901777d70a2727b263961e57794883ec49d68ced9e094ba54",
+        },
+    },
+    "arm64": {
+        "invocation": "27323794-3077-4611-a52c-6b7948b7f7af", "finish_ms": 1793522875477,
+        "exit": 0, "actions": {
+            "//pkg/state:state_test": "f19164ca30b329704b598d8428b62fde404d9f9de006f43008326b3b4035feef",
+            "//pkg/tcpip/transport/tcp:tcp_test": "826519dafa6d026e09212b9cc2adb2f3ea7030cfcaa1eeee5efc319976724466",
+        },
+    },
 }
-
-FINISH_MS = {"amd64": 1793521139114, "arm64": 1793521232481}
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -27,11 +38,9 @@ key = os.environ["BUILDBUDDY_API_KEY"]
 
 def fetch(path, payload=None):
     data = None if payload is None else json.dumps(payload).encode()
-    request = urllib.request.Request(
-        "https://app.buildbuddy.io/" + path, data=data,
-        headers={"x-buildbuddy-api-key": key, "Content-Type": "application/json"},
-    )
-    with opener.open(request, timeout=45) as response:
+    request = urllib.request.Request("https://app.buildbuddy.io/" + path, data=data,
+        headers={"x-buildbuddy-api-key": key, "Content-Type": "application/json"})
+    with opener.open(request, timeout=40) as response:
         return response.read()
 
 
@@ -39,69 +48,82 @@ def rpc(method, payload):
     return json.loads(fetch("rpc/BuildBuddyService/" + method, payload))
 
 
-out = Path(os.environ["RUNNER_TEMP"]) / "bootstrap-diagnostic.json"
-result = {"status": "INCOMPLETE", "original_run": 41288127365, "executed_tests": 0, "actions": {}}
+def blob(digest, invocation):
+    url = "bytestream://remote.buildbuddy.io/blobs/" + digest["hash"] + "/" + str(digest["sizeBytes"])
+    data = fetch("file/download?" + urllib.parse.urlencode({"bytestream_url": url, "invocation_id": invocation}))
+    if len(data) != int(digest["sizeBytes"]) or hashlib.sha256(data).hexdigest() != digest["hash"]:
+        raise ValueError("Original output digest mismatch")
+    return data
+
+
+def project(data):
+    lines = data.decode(errors="replace").replace(key, "[REDACTED]").splitlines()
+    selected = [line[:1200] for line in lines
+        if re.search(r"error|warning|no such file|not found|permission denied|exec format|cannot execute|bad substitution|syntax error|go: |fork/exec|PASS|FAIL|=== RUN|--- SKIP|no tests|test.*shard|test.*filter", line, re.I)
+        and not re.search(r"api.key|remote.header|bes.header|authorization", line, re.I)]
+    return {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "diagnostic_lines": selected[:25]}
+
+
+result = {"status": "INCOMPLETE", "original_run": 41289663114, "new_test_executions": 0, "architectures": {}}
 try:
-    for arch, digest in DIGESTS.items():
-        target = f"@@rules_go++go_sdk+main___download_0_linux_{arch}//:builder"
-        search = rpc("SearchExecution", {"query": {
-            "updatedAfter": "2026-11-01T07:50:00Z", "updatedBefore": "2026-11-01T09:30:00Z",
-            "dimensionFilter": [{"dimension": {"execution": "TARGET_LABEL_EXECUTION_DIMENSION"}, "value": target}],
-        }, "count": 50})
-        selected = [row for row in search.get("execution", [])
-                    if row["execution"].get("actionDigest", {}).get("hash") == digest]
-        if not selected:
-            result["actions"][arch] = {"status": "MISSING", "action_hash": digest,
-                                      "matching_target_count": len(search.get("execution", [])),
-                                      "more_results": bool(search.get("nextPageToken"))}
-            continue
-        candidates = {row["invocationMetadata"]["id"] for row in selected}
-        if len(candidates) > 8:
-            raise ValueError("too many candidate invocations")
-        matches = []
-        for invocation in candidates:
-            original = rpc("GetInvocation", {"lookup": {"invocationId": invocation}})
-            for item in original.get("invocation", []):
-                for event in item.get("event", []):
-                    finished = event.get("buildEvent", {}).get("finished", {})
-                    milliseconds = finished.get("finishTimeMillis")
-                    if milliseconds is None and finished.get("finishTime"):
-                        milliseconds = round(datetime.fromisoformat(finished["finishTime"]).timestamp() * 1000)
-                    if milliseconds is not None and int(milliseconds) == FINISH_MS[arch]:
-                        matches.append(invocation)
-        if len(matches) != 1:
-            raise ValueError(f"{arch}: original BEP finish did not uniquely identify invocation")
-        invocation = matches[0]
-        records = rpc("GetExecution", {"executionLookup": {"invocationId": invocation,
-                      "actionDigestHash": digest}, "inlineExecuteResponse": True})
-        actions = [item for item in records["execution"] if item["actionDigest"]["hash"] == digest]
-        if len(actions) != 1:
-            raise ValueError(f"{arch}: expected one original action")
-        action = actions[0]
-        response = action.get("executeResponse", {})
-        action_result = response.get("result", {})
-        stderr = base64.b64decode(action_result.get("stderrRaw", ""))
-        stderr_digest = action_result.get("stderrDigest")
-        if not stderr and stderr_digest:
-            url = "bytestream://remote.buildbuddy.io/blobs/" + stderr_digest["hash"] + "/" + str(stderr_digest["sizeBytes"])
-            stderr = fetch("file/download?" + urllib.parse.urlencode({"bytestream_url": url, "invocation_id": invocation}))
-        if action_result.get("exitCode") != 1 or action.get("stage") not in (4, "COMPLETED"):
-            raise ValueError(f"{arch}: original terminal exit1 missing")
-        text = stderr.decode(errors="replace").replace(key, "[REDACTED]")
-        diagnostics = [line[:1000] for line in text.splitlines()
-                       if re.search(r"error:|no such file|not found|permission denied|exec format|cannot execute|bad substitution|syntax error|go: |fork/exec", line, re.I)
-                       and not re.search(r"api.key|remote.header|bes.header|authorization", line, re.I)][:12]
-        if not diagnostics:
-            raise ValueError(f"{arch}: no compiler/exec diagnostic in original stderr")
-        result["actions"][arch] = {"status": "RECOVERED", "action_hash": digest,
-            "invocation": invocation, "execution_id": action.get("executionId"),
-            "exit_code": action_result.get("exitCode"), "execution_status": action.get("status"),
-            "bep_finish_ms": FINISH_MS[arch], "stderr_digest": stderr_digest,
-            "diagnostic_lines": diagnostics}
-    if len(result["actions"]) == 2 and all(row["status"] == "RECOVERED" for row in result["actions"].values()):
-        result["status"] = "PASS"
+    for arch, original in ORIGINALS.items():
+        invocation = original["invocation"]
+        row = {"status": "INCOMPLETE", "invocation": invocation, "actions": {}, "test_logs": {}}
+        result["architectures"][arch] = row
+        response = rpc("GetInvocation", {"lookup": {"invocationId": invocation}})
+        invocations = [item for item in response.get("invocation", []) if item.get("invocationId") == invocation]
+        if len(invocations) != 1:
+            raise ValueError(arch + ": expected exact original invocation")
+        events = [item.get("buildEvent", {}) for item in invocations[0].get("event", [])]
+        finishes = [event["finished"] for event in events if "finished" in event]
+        if len(finishes) != 1:
+            raise ValueError(arch + ": terminal event missing")
+        finished = finishes[0]
+        milliseconds = finished.get("finishTimeMillis")
+        if milliseconds is None:
+            milliseconds = round(datetime.fromisoformat(finished["finishTime"]).timestamp() * 1000)
+        if int(milliseconds) != original["finish_ms"]:
+            raise ValueError(arch + ": original finish identity mismatch")
+        row["finish_ms"] = int(milliseconds)
+        for target, digest in original["actions"].items():
+            data = rpc("GetExecution", {"executionLookup": {"invocationId": invocation,
+                "actionDigestHash": digest}, "inlineExecuteResponse": True})
+            actions = [item for item in data.get("execution", []) if item.get("actionDigest", {}).get("hash") == digest]
+            if len(actions) != 1:
+                raise ValueError(target + ": expected one original action")
+            action = actions[0]
+            value = action.get("executeResponse", {}).get("result")
+            if value is None or value.get("exitCode", 0) != original["exit"] or action.get("stage") not in (4, "COMPLETED"):
+                raise ValueError(target + ": original terminal outcome mismatch")
+            evidence = {"action_hash": digest, "exit_code": value.get("exitCode", 0), "streams": {}}
+            row["actions"][target] = evidence
+            for stream in ("stdout", "stderr"):
+                content = base64.b64decode(value.get(stream + "Raw", ""))
+                if not content and value.get(stream + "Digest"):
+                    content = blob(value[stream + "Digest"], invocation)
+                if content:
+                    evidence["streams"][stream] = project(content)
+        for event in events:
+            target = event.get("id", {}).get("testResult", {}).get("label")
+            if target not in original["actions"]:
+                continue
+            for output in event.get("testResult", {}).get("testActionOutput", []):
+                if output.get("name") != "test.log":
+                    continue
+                uri = output.get("uri", "")
+                match = re.fullmatch(r"bytestream://remote\.buildbuddy\.io/(?:[^?]*/)?blobs/([0-9a-f]{64})/(\d+)", uri)
+                if not match:
+                    continue
+                row["test_logs"][target] = project(blob({"hash": match[1], "sizeBytes": match[2]}, invocation))
+        for target, evidence in row["actions"].items():
+            diagnostics = [line for stream in evidence["streams"].values() for line in stream["diagnostic_lines"]]
+            diagnostics += row["test_logs"].get(target, {}).get("diagnostic_lines", [])
+            if not diagnostics:
+                raise ValueError(target + ": original diagnostic text unavailable")
+        row["status"] = "RECOVERED"
+    result["status"] = "PASS"
 except Exception as err:
     result["error"] = str(err).replace(key, "[REDACTED]")[:1000]
 finally:
-    out.write_text(json.dumps(result, indent=2) + "\n")
-raise SystemExit(0 if result["status"] == "PASS" else 1)
+    (Path(os.environ["RUNNER_TEMP"]) / "runtime-diagnostic.json").write_text(json.dumps(result, indent=2) + "\n")
+raise SystemExit(result["status"] != "PASS")
