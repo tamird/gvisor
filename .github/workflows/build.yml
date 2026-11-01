@@ -1,19 +1,17 @@
-name: Check where the bounded TCP receive queue rejects whole packets
+name: Inspect TCP socket errors after a refused connection
 on:
   push:
-    branches: [qualification/tcp-pressure-diagnostics]
+    branches: [qualification/tcp-poll-consumed-error]
 permissions:
   contents: read
-  actions: read
 jobs:
-  compare:
+  syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      REVIEWED: 3cd9a5d970293241934d039506f43ad55384c7fe
-      BOUNDED: 54c46f4a64beab2932e314bd2122a9cd2b7dd670
+      STOCK: aa767e4c43d011121271551fe24da501a56f729d
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 5, persist-credentials: false}
@@ -23,8 +21,9 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        cp test/rbe/small-segment-goodput.go.inc "$RUNNER_TEMP/fixture.inc"
-        cp test/rbe/small-segment-goodput.py "$RUNNER_TEMP/samples.py"
+        cp test/rbe/tcp-poll-result.py "$RUNNER_TEMP/verify-tcp.py"
+        cp test/rbe/tcp-poll-sample.cc.inc "$RUNNER_TEMP/probe"
+        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -35,80 +34,52 @@ jobs:
         } > "$RUNNER_TEMP/tcp.bazelrc"
         unset BUILDBUDDY_API_KEY
         docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-    - name: Summarize the original uninstrumented timings
-      env:
-        GH_TOKEN: ${{ github.token }}
+        docker exec tcp-compiler python3 -c 'import socket; s=socket.socket(socket.AF_INET6); s.bind(("::1",0)); print(s.getsockname())' > "$RUNNER_TEMP/records/native-ipv6"
+    - name: Record each native and guest action independently
       run: |
         set -euo pipefail
-        gh api repos/tamird/gvisor/actions/artifacts/13073258813/zip > "$RUNNER_TEMP/original.zip"
-        echo 'cc2ca2ddd01984ff0bbe9ace2ce51e5bc7351f0acc38172295e0eb127d4b60b3  original.zip' | (cd "$RUNNER_TEMP"; sha256sum -c -)
-        unzip -p "$RUNNER_TEMP/original.zip" verdict.json > "$RUNNER_TEMP/original.json"
-        python3 - <<'PY'
-        from pathlib import Path
-        import json,os
-        p=Path(os.environ['RUNNER_TEMP']); v=json.loads((p/'original.json').read_text()); xs=v['samples']
-        assert v['status']=='PASS' and len(xs)==v['expected']==60
-        assert {n:s['source'] for n,s in v['sources'].items()}=={n:os.environ[n.upper()] for n in ['reviewed','bounded']}
-        assert {(x['name'],x['pair'],x['mss']) for x in xs}=={(n,pair,k) for n in ('reviewed','bounded') for pair in range(10) for k in (100,536,1448)}
-        for name in ('reviewed','bounded'):
-            text=[f"BenchmarkSlowReader/payload={x['mss']} 1 {x['ns']} ns/op" for x in xs if x['name']==name]
-            (p/'records'/(name+'.bench')).write_text('\n'.join(text)+'\n')
-        PY
-        git fetch -q --depth=1 https://github.com/tamird/gvisor.git 0cd3edb6cb054149a36d53c35a1055e851b145b5
-        git checkout -q --detach 0cd3edb6cb054149a36d53c35a1055e851b145b5
-        bzl=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
-        target=@org_golang_x_perf//cmd/benchstat
-        "${bzl[@]}" build --config=x86_64 -c opt --remote_download_outputs=toplevel "$target"
-        path=$("${bzl[@]}" cquery --config=x86_64 -c opt --output=files "$target" | tail -1)
-        docker exec --workdir "$RUNNER_TEMP/records" tcp-compiler "$GITHUB_WORKSPACE/$path" reviewed=reviewed.bench bounded=bounded.bench > "$RUNNER_TEMP/records/benchstat.txt"
-        grep 'n=10' "$RUNNER_TEMP/records/benchstat.txt"
-    - name: Count whole-queue refusals independently of the timings
-      run: |
-        set -euo pipefail
-        git fetch --quiet --no-tags --depth=1 https://github.com/tamird/gvisor.git "$BOUNDED"
-        git checkout --quiet --detach "$BOUNDED"
-        test "$(git rev-parse HEAD)" = "$BOUNDED"
-        python3 - <<'PY'
-        from pathlib import Path
-        import os
-        queue=Path('pkg/tcpip/transport/tcp/segment_queue.go')
-        source=queue.read_text()
-        anchor='if !q.emptyLocked() && over > q.ep.ops.GetSendBufferSize() {'
-        assert source.count(anchor)==1
-        source=source.replace('import "gvisor.dev/gvisor/pkg/tcpip/header"', 'import "sync/atomic"\nimport "gvisor.dev/gvisor/pkg/tcpip/header"\n\nvar QualificationWholeRefusals atomic.Uint64')
-        queue.write_text(source.replace(anchor,anchor+'\n\t\tQualificationWholeRefusals.Add(1)'))
-        fixture=Path(os.environ['RUNNER_TEMP'],'fixture.inc').read_text()
-        fixture=fixture.replace('start := time.Now()', 'beforeRefusals := tcp.QualificationWholeRefusals.Load()\n\t\t\tstart := time.Now()')
-        fixture=fixture.replace('drops := c.EP.Stats()', 't.Logf("CAP payload=%d refused=%d", mss, tcp.QualificationWholeRefusals.Load()-beforeRefusals)\n\t\t\tdrops := c.EP.Stats()')
-        with Path('pkg/tcpip/transport/tcp/test/e2e/tcp_test.go').open('a') as out:
-            out.write(fixture)
-        PY
-        bzl=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
-        target=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
-        "${bzl[@]}" test --config=x86_64 --jobs=100 --test_sharding_strategy=disabled --test_arg=-test.run=^TestBurstGoodput$ --test_arg=-test.v --test_arg=-test.count=10 --test_timeout=1400 --nocache_test_results --remote_download_outputs=toplevel --test_output=errors "$target"
-        docker exec tcp-compiler cat bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_test/test.log > "$RUNNER_TEMP/counter.log"
-        python3 - <<'PY'
-        from pathlib import Path
-        import json,os,re
-        p=Path(os.environ['RUNNER_TEMP']); log=(p/'counter.log').read_text()
-        raw=re.findall(r'CAP payload=(\d+) refused=(\d+)',log)
-        drops=re.findall(r'GOODPUT mss=(\d+) bytes=(\d+) ns=\d+ dropped=(\d+)',log)
-        assert len(drops)==len(raw)==30 and log.count('--- PASS: TestBurstGoodput/')==30
-        rows=[]
-        for (k,full),(size,amount,total) in zip(raw,drops):
-            assert size==k and int(amount)==1048575 and int(full)<=int(total)
-            rows.append({'payload':int(k),'cap_refusals':int(full),'total_discards':int(total)})
-        assert all(sum(r['payload']==k for r in rows)==10 for k in [100,536,1448])
-        verdict={'status':'PASS','source':os.environ['BOUNDED'],'timings_artifact':13073258813,'expected':30,'executed':len(rows),'rows':rows}
-        (p/'records'/'cap-diagnostics.json').write_text(json.dumps(verdict,indent=2)+'\n')
-        print({k:sum(r['cap_refusals'] for r in rows if r['payload']==k) for k in (100,536,1448)})
-        PY
+        for name in poll-native poll-stock; do
+          src=$STOCK
+          testname=tcp_socket_test
+          path=test/syscalls/linux/tcp_socket.cc
+          filter='AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/*'
+          executor=remote
+          platform=runsc_ptrace
+          if [[ "$name" == *-native ]]; then executor=local; platform=native; fi
+          git checkout --quiet --detach "$src"
+          [[ "$(git rev-parse HEAD)" == "$src" ]]
+          if [[ "$name" == poll-native ]]; then
+            python3 - <<'PYFIX'
+          import os
+          from pathlib import Path
+          f=Path('test/syscalls/linux/tcp_socket.cc'); text=f.read_text()
+          start=text.index('TEST_P(SimpleTcpSocketTest, NonBlockingConnectRefused)')
+          at=text.index('  // Avoiding triggering save',start)
+          f.write_text(text[:at]+Path(os.environ['RUNNER_TEMP'],'probe').read_text()+text[at:])
+          PYFIX
+          fi
+          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
+          sha256sum "$path" > "$d/fixture-sha256"
+          target="//test/syscalls:${testname}_${platform}"
+          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
+          printf '%s\n' "$executor" > "$d/executor"; printf '%s\n' "$filter" > "$d/filter"
+          date -u +%FT%TZ > "$d/start"
+          rc=0
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --verbose_failures --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=450 --test_sharding_strategy=disabled --test_env=GTEST_FILTER="$filter" "$target" > "$d/bazel.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
+          for file in test.log test.xml; do
+            docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/$file" > "$d/$file" || rm -f "$d/$file"
+          done
+        done
+    - name: Verify each actual socket assertion
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: pressure-benchstat-and-queue-cap
-        path: ${{ runner.temp }}/records
+        name: tcp-error-consumption
+        path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error
