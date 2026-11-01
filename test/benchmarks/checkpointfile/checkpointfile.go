@@ -81,6 +81,18 @@ const (
 // BenchmarkCheckpointFile reports various benchmark metrics about a
 // checkpointed kernel.
 func BenchmarkCheckpointFile(b *testing.B) {
+	if os.Getenv("CALLBACK_CAPACITY_STUDY") == "1" {
+		state.CallbackPoolStudy = func(records, capacity int, put bool) {
+			fmt.Printf("CALLBACK-CAPACITY records=%d capacity=%d pool=%t\n", records, capacity, put)
+		}
+		state.CallbackReservationStudy = func(capacity int) {
+			fmt.Printf("CALLBACK-RESERVATION capacity=%d\n", capacity)
+		}
+		b.Cleanup(func() {
+			state.CallbackPoolStudy = nil
+			state.CallbackReservationStudy = nil
+		})
+	}
 	ctx := context.Background()
 	var (
 		stateFile     []byte
