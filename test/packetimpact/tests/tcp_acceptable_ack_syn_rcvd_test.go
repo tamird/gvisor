@@ -99,3 +99,98 @@ func TestRepeatedSynInSynRcvd(t *testing.T) {
 		t.Errorf("accepted socket total retransmissions = %d, want %d", got, want)
 	}
 }
+
+// Fork control: move the requested retry far enough from the original SYN
+// to tell the old timeout from a new timeout at the same backoff level.
+func TestRepeatedSynRenewsDeadline(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+	defer conn.Close(t)
+	opts := make([]byte, header.TCPOptionTSLength)
+	header.EncodeTSOption(1100, 0, opts)
+	syn := conn.CreateFrame(t, testbench.Layers{&testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: opts}})
+	start := time.Now()
+	conn.SendFrame(t, syn)
+	flags := testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)
+	first, err := conn.Expect(t, testbench.TCP{Flags: flags}, 300*time.Millisecond)
+	if err != nil {
+		t.Fatalf("initial SYN-ACK: %s", err)
+	}
+	time.Sleep(time.Until(start.Add(550 * time.Millisecond)))
+	// Linux ignores ECE/CWR when matching the original peer SYN.
+	last := syn[len(syn)-1].(*testbench.TCP)
+	header.EncodeTSOption(1200, 0, opts)
+	last.Options = opts
+	last.Flags = testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagEce | header.TCPFlagCwr)
+	repeated := time.Now()
+	conn.SendFrameStateless(t, syn)
+	want := testbench.TCP{Flags: flags, SeqNum: first.SeqNum, AckNum: first.AckNum}
+	retry, err := conn.Expect(t, want, time.Until(start.Add(875*time.Millisecond)))
+	if err != nil {
+		t.Fatalf("SYN-ACK after ECN-marked repeat: %s", err)
+	}
+	immediate := time.Now()
+	timer, err := conn.Expect(t, want, time.Until(repeated.Add(1900*time.Millisecond)))
+	if err != nil {
+		t.Fatalf("timed SYN-ACK: %s", err)
+	}
+	elapsed := time.Since(repeated)
+	t.Logf("DUPSYN_TIMER before_repeat_us=%d requested_reply_us=%d timed_reply_us=%d", repeated.Sub(start).Microseconds(), immediate.Sub(repeated).Microseconds(), elapsed.Microseconds())
+	if elapsed < 800*time.Millisecond || elapsed > 1900*time.Millisecond {
+		t.Fatalf("timed response %s after the repeated SYN", elapsed)
+	}
+	initialTS := header.ParseSynOptions(first.Options, true)
+	retryTS := header.ParseSynOptions(retry.Options, true)
+	timerTS := header.ParseSynOptions(timer.Options, true)
+	header.EncodeTSOption(1300, timerTS.TSVal, opts)
+	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), Options: opts})
+	child, _ := dut.Accept(t, listener)
+	defer dut.Close(t, child)
+	info := dut.GetSockOptTCPInfo(t, child)
+	t.Logf("DUPSYN_TS initial=%d:%d requested=%d:%d timed=%d:%d total=%d child_rtt_us=%d", initialTS.TSVal, initialTS.TSEcr, retryTS.TSVal, retryTS.TSEcr, timerTS.TSVal, timerTS.TSEcr, info.TotalRetrans, info.RTT)
+	if !initialTS.TS || !retryTS.TS || !timerTS.TS || initialTS.TSEcr != 1100 || retryTS.TSEcr != 1100 || timerTS.TSEcr != 1100 {
+		t.Errorf("timestamp option/echo changed: first=%+v requested=%+v timed=%+v", initialTS, retryTS, timerTS)
+	}
+	if int32(retryTS.TSVal-initialTS.TSVal) <= 0 || int32(timerTS.TSVal-retryTS.TSVal) <= 0 {
+		t.Errorf("reused local send timestamp: first=%d requested=%d timed=%d", initialTS.TSVal, retryTS.TSVal, timerTS.TSVal)
+	}
+	if got := info.TotalRetrans; got != 2 {
+		t.Errorf("accepted socket total retransmissions = %d, want 2", got)
+	}
+}
+
+func TestStaleRepeatedSynGetsACK(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+	defer conn.Close(t)
+	opts := make([]byte, header.TCPOptionTSLength)
+	header.EncodeTSOption(11, 0, opts)
+	syn := conn.CreateFrame(t, testbench.Layers{&testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: opts}})
+	conn.SendFrame(t, syn)
+	first, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, 300*time.Millisecond)
+	if err != nil {
+		t.Fatalf("initial SYN-ACK: %s", err)
+	}
+	ts := header.ParseSynOptions(first.Options, true)
+	if !ts.TS || ts.TSEcr != 11 {
+		t.Fatalf("timestamps not negotiated: %+v", ts)
+	}
+	header.EncodeTSOption(10, 0, opts)
+	syn[len(syn)-1].(*testbench.TCP).Options = opts
+	conn.SendFrameStateless(t, syn)
+	seq := *first.SeqNum + 1
+	if _, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), SeqNum: &seq, AckNum: first.AckNum}, 200*time.Millisecond); err != nil {
+		t.Fatalf("out-of-window ACK for a stale timestamp: %s", err)
+	}
+	header.EncodeTSOption(12, ts.TSVal, opts)
+	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), Options: opts})
+	child, _ := dut.Accept(t, listener)
+	defer dut.Close(t, child)
+	if got := dut.GetSockOptTCPInfo(t, child).TotalRetrans; got != 0 {
+		t.Errorf("accepted socket total retransmissions = %d, want 0", got)
+	}
+}
