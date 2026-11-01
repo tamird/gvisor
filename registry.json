@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T15:14:31.620607+00:00",
+    "updatedAt": "2026-11-01T15:24:47.353033+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T15:14:31.620607+00:00"
+    "registryDate": "2026-11-01T15:24:47.353033+00:00"
   },
   "groups": [
     {
@@ -48527,7 +48527,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T14:56:10.653236+00:00",
+      "updatedAt": "2026-11-01T15:24:47.353033+00:00",
       "summary": "Callback storage accounted for most temporary allocation while restoring 50,000 tmpfs files. Chunked storage brought up the guest 34 ms sooner but slowed small map and slice loads. A separate four-worker Nginx checkpoint encoded in 2.25 ms and decoded in 8.99 ms with the default graph codec, compared with 12.71 ms and 17.75 ms with the legacy codec.",
       "findings": [
         {
@@ -51545,9 +51545,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41316254165/artifacts/13088690081"
             }
           ]
+        },
+        {
+          "text": "Keeping the first 8,192 callbacks in a flat slice cut allocated memory from 120.25 to 71.46 MiB on a 50,000-file checkpoint. Over eight paired live restores, median time to the first guest command fell from 237.1 to 191.5 ms and every file was readable. The 1,024-element slice benchmark was 5.4% slower (p=0.051, 16 pairs). This comparison included two earlier decoder changes on both sides.",
+          "evidence": [
+            {
+              "label": "Decode benchmarks, 16 live restores and smaller fixtures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41318857442/artifacts/13089546087"
+            },
+            {
+              "label": "Standalone change against master",
+              "url": "https://github.com/tamird/gvisor/commit/73fd64c8f"
+            }
+          ]
         }
       ],
-      "nextStep": "Keep the flat callback table for small restores and test chunked overflow on the same checkpoint and pooled fixtures. Hold the all-chunked prototype.",
+      "nextStep": "Compare the standalone change with unmodified master. Check the cost to smaller decodes and whether discarding pooled decoders once they exceed 8,192 callbacks affects intermediate sizes.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
@@ -58464,7 +58477,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T14:56:10.653236+00:00",
+      "updatedAt": "2026-11-01T15:24:47.353033+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -59975,9 +59988,26 @@
               "url": "https://github.com/tamird/bazel-central-registry/commit/e00baea8d"
             }
           ]
+        },
+        {
+          "text": "Allowing a symlink for Make’s generated configuration header got the plugin build past the shell copy. Make then failed to compile because its configuration reported stdbool.h missing. Its configuration tool invokes compiler probes through std::system and interprets a failing command as an absent feature.",
+          "evidence": [
+            {
+              "label": "Make compiler diagnostics",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41320032891/artifacts/13088718090"
+            },
+            {
+              "label": "Make registry change",
+              "url": "https://github.com/tamird/bazel-central-registry/commit/f8f5f2018"
+            },
+            {
+              "label": "Controlled stdbool.h probe",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41320872379"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify Make’s configuration-header change on the plugin build, and run the module’s own six smoke tests on populated Linux.",
+      "nextStep": "Compare the same stdbool.h probes with the same GNU compiler on the scratch worker and the populated Firecracker worker, then verify the cause of any difference before changing the supplier.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -60914,9 +60944,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T15:14:31.620607+00:00",
+      "updatedAt": "2026-11-01T15:24:47.353033+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Await contributor review of Limited Transmit. Recover the forwarded-GSO comparison: its 55-minute coordinator deadline expired with no recorded transfers or BuildBuddy invocation ID.",
+      "nextStep": "Await contributor review of Limited Transmit. Recover the guest harness traceback from the recorded invocation and run the two remaining forwarding cases.",
       "findings": [
         {
           "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
@@ -61453,6 +61483,15 @@
             {
               "label": "Final packet test, 444 TCP/SACK cases and both architecture analyzers",
               "url": "https://github.com/tamird/gvisor/actions/runs/41318777225/artifacts/13089025818"
+            }
+          ]
+        },
+        {
+          "text": "The Linux router forwarded a verified 1 MiB transfer at an MTU of 1,466. The ingress capture included 26 over-MTU TCPv4 frames; the largest was 65,096 bytes. The guest harness raised a Python exception before it recorded either transfer. Guest forwarding remains unmeasured.",
+          "evidence": [
+            {
+              "label": "Three requested cases, capture and result inventory",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41320376645/artifacts/13089681341"
             }
           ]
         }
