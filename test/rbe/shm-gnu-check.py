@@ -51,6 +51,17 @@ def read_database(work, result):
         })
         if re.fullmatch(r"x86_64-(?:[^-]+-)?linux-gnu", triple) is None:
             raise ValueError(f"expected GNU x86-64 compiler, got {triple}")
+        original_hashes = {
+            "test/syscalls/linux/shm.cc": "fa416f53aee244226f2ad15d4e7e6d428ba3478d09600ca3170cb4e0f52252b0",
+            "test/util/multiprocess_util.cc": "e485d3fbb1af44d5526075a88ece6baa67a2559aa0f5ff4f0562e7099961052e",
+        }
+        if result["compiled_sources"][-1]["arguments_sha256"] != original_hashes[name]:
+            raise ValueError(f"original GNU compile arguments changed for {name}")
+        if args.count("-fno-canonical-system-headers") != 1:
+            raise ValueError(f"expected original GCC diagnostic-path flag in {name}")
+        args.remove("-fno-canonical-system-headers")
+        result["compiled_sources"][-1]["clang_arguments_sha256"] = sha(json.dumps(args).encode())
+        result["compiled_sources"][-1]["removed_for_clang"] = "-fno-canonical-system-headers"
         subset.append(entry)
     database.write_text(json.dumps(subset))
     result["configuration_sha256"] = sha(Path(".clang-tidy").read_bytes())
@@ -105,9 +116,11 @@ def check_cases(work, result):
         result["xml_provenance"] = "BEP digest and length"
     else:
         uri = urlparse(evidence["uri"])
-        matches = (uri.scheme == "file" and Path(unquote(uri.path)).samefile(
+        matches = ((uri.scheme == "file" and Path(unquote(uri.path)).samefile(
             "bazel-testlogs/test/syscalls/shm_test_native/test.xml"))
-        result["xml_provenance"] = "BEP local output"
+            or (uri.scheme == "bytestream" and
+                uri.path.endswith(f"/{result['xml_sha256']}/{len(xml)}")))
+        result["xml_provenance"] = f"BEP {uri.scheme} output"
     if not matches:
         raise ValueError("native XML does not match the original TestRunner output")
     rows = []

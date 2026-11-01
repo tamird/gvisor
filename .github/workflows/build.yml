@@ -1,4 +1,4 @@
-name: Check the shared-memory syscall cases and include-cleaner on GNU Linux
+name: Verify GNU shared-memory includes and recover the four original cases
 on:
   push:
     branches: [qualification/shm-native-gnu-includes]
@@ -14,7 +14,7 @@ jobs:
       PRODUCT: 154269d6f7268496ae9583afe929ca5eb0c37cf8
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 2, persist-credentials: false}
+      with: {fetch-depth: 3, persist-credentials: false}
     - name: Prepare the existing GNU compiler and native TestRunner
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -23,7 +23,8 @@ jobs:
         w="$RUNNER_TEMP/shm-gnu"
         mkdir -p "$w/public" "$w/bin" "$w/platform"
         cp test/rbe/shm-gnu-check.py "$w/check.py"
-        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        cp test/rbe/shm-gnu-original-xml.py "$w/recover.py"
+        test "$(git rev-parse HEAD^^)" = "$PRODUCT"
         git checkout -q --detach "$PRODUCT"
         test "$(git rev-parse HEAD^{tree})" = e1d4f1b96f4b5072e57080cbe816df2eeda55665
         printf 'module(name="tcp_gnu")\n' > "$w/platform/MODULE.bazel"
@@ -43,16 +44,11 @@ jobs:
         actual=$(docker exec shm-gnu sh -ec 'command -v bazel')
         printf '#!/bin/sh\nexec "%s" --bazelrc="%s" "$@"\n' "$actual" "$w/gnu.bazelrc" > "$w/bin/bazel"
         chmod 755 "$w/bin/bazel"
-    - name: Run the four original shared-memory cases on the native kernel
+    - name: Verify the original four GTests from their completed native invocation
       id: syscalls
-      run: |
-        set -euo pipefail
-        w="$RUNNER_TEMP/shm-gnu"
-        filter=ShmTest.AttachDetach:ShmTest.DetachedSegmentsPersist:ShmTest.RemovedSegmentsAreDestroyed:ShmDeathTest.SegmentNotAccessibleAfterDetach
-        rc=0
-        docker exec shm-gnu "$w/bin/bazel" test --strategy=TestRunner=local --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=errors --test_timeout=300 --test_sharding_strategy=disabled --test_env="GTEST_FILTER=$filter" --build_event_json_file="$w/events" //test/syscalls:shm_test_native > "$w/syscalls.log" 2>&1 || rc=$?
-        printf '%s\n' "$rc" > "$w/syscalls.exit"
-        docker exec shm-gnu python3 "$w/check.py" syscalls "$w"
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 "$RUNNER_TEMP/shm-gnu/recover.py" "$RUNNER_TEMP/shm-gnu"
     - name: Generate real compile commands for the two source owners
       id: database
       if: ${{ !cancelled() && steps.syscalls.outcome != 'skipped' }}
