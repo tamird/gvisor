@@ -1,9 +1,7 @@
 
-// TestRACKPendingSACK brackets loss recovery around an ACK that has reached
-// the stack but has not yet been processed by TCP's dispatcher.
-func TestRACKPendingSACK(t *testing.T) {
-	var boundary time.Duration
-	for _, schedule := range []string{"time-only", "hold-repeat", "hold-extend", "process-extend"} {
+// TestRACKOldestDeadline isolates an advancing cumulative ACK from later SACK-only updates.
+func TestRACKOldestDeadline(t *testing.T) {
+	for _, schedule := range []string{"ack-arrives", "ack-withheld"} {
 		t.Run(schedule, func(t *testing.T) {
 			const warm = 8
 			const rtt = 100 * time.Millisecond
@@ -13,8 +11,15 @@ func TestRACKPendingSACK(t *testing.T) {
 			defer c.Cleanup()
 			e2e.EnableCUBIC(t, c)
 			e2e.SetStackSACKPermitted(t, c, true)
+			// Fix the RTO to the observed 200 ms deadline; this test does
+			// not attempt to reproduce the WAN estimator's prior samples.
+			limit := tcpip.TCPMaxRTOOption(200 * time.Millisecond)
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &limit); err != nil {
+				t.Fatal(err)
+			}
 			e2e.CreateConnectedWithSACKAndTS(c)
 			first := c.IRS.Add(1 + warm*maxPayload)
+			left := first
 			type packet struct {
 				at   int
 				echo uint32
@@ -53,8 +58,8 @@ func TestRACKPendingSACK(t *testing.T) {
 				t.Helper()
 				select {
 				case st := <-states:
-					if st.SndUna != first {
-						t.Fatalf("UNA=%d want %d", st.SndUna, first)
+					if st.SndUna != left {
+						t.Fatalf("UNA=%d want %d", st.SndUna, left)
 					}
 					return st
 				case <-time.After(3 * time.Second):
@@ -72,7 +77,7 @@ func TestRACKPendingSACK(t *testing.T) {
 					n += header.EncodeNOP(opts[n:])
 					n += header.EncodeSACKBlocks(blocks, opts[n:])
 				}
-				c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: seqnum.Value(context.TestInitialSequenceNumber).Add(1), AckNum: first, RcvWnd: 30000, TCPOpts: opts[:n]})
+				c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: seqnum.Value(context.TestInitialSequenceNumber).Add(1), AckNum: left, RcvWnd: 30000, TCPOpts: opts[:n]})
 			}
 			block := func(i, j int) header.SACKBlock {
 				return header.SACKBlock{Start: first.Add(seqnum.Size(i * maxPayload)), End: first.Add(seqnum.Size(j * maxPayload))}
@@ -93,78 +98,74 @@ func TestRACKPendingSACK(t *testing.T) {
 			if !prior.FastRecovery.Active || len(early) == 0 || early[0].at != 0 || prior.SackedOut != 7 {
 				t.Fatalf("initial recovery=%v SACKed=%d copies=%v", prior.FastRecovery.Active, prior.SackedOut, early)
 			}
+			repairStamp := lastSentStamp
 			clk.Advance(5 * time.Millisecond)
 			send(12, 2)
+			clk.Advance(time.Millisecond)
+			left = first.Add(maxPayload)
+			ack(10003, repairStamp, old...)
+			anchor := await()
+			initial := drain()
+			if !anchor.FastRecovery.Active || anchor.RTO != 200*time.Millisecond {
+				t.Fatalf("anchor active=%v RTO=%v", anchor.FastRecovery.Active, anchor.RTO)
+			}
 			start := clk.NowMonotonic()
-			final := append([]header.SACKBlock(nil), old...)
-			if schedule != "hold-repeat" {
-				final[0] = block(10, 13)
+			at := func(d time.Duration) {
+				t.Helper()
+				delta := d - clk.NowMonotonic().Sub(start)
+				if delta < 0 {
+					t.Fatal("past deadline")
+				}
+				clk.Advance(delta)
 			}
 			stats := c.Stack().Stats().TCP
-			p := c.Stack().TransportProtocolInstance(tcp.ProtocolNumber)
-			paused := false
-			defer func() {
-				if paused {
-					p.Resume()
-				}
-			}()
-			var immediately, after []packet
-			var st tcp.TCPSenderState
-			if schedule != "time-only" {
-				if boundary < 3*time.Millisecond {
-					t.Fatal("no calibrated deadline")
-				}
-				clk.Advance(boundary - 2*time.Millisecond)
-				if stats.Timeouts.Value() != 0 {
-					t.Fatal("missed pre-timeout boundary")
-				}
-				_ = drain()
-				if schedule != "process-extend" {
-					p.Pause()
-					paused = true
-				}
-				ack(10003, flightStamp, final...)
-				if !paused {
-					st = await()
-					immediately = drain()
-				} else {
-					select {
-					case <-states:
-						t.Fatal("paused dispatcher processed ACK")
-					default:
-					}
-				}
+			// The first ACK to advance the left edge anchored the old timer.
+			// A later SACK causes a repair of that new left edge, not of its predecessor.
+			at(131413 * time.Microsecond)
+			old[0] = block(10, 13)
+			ack(10004, flightStamp, old...)
+			repaired := await()
+			atRepair := drain()
+			if stats.Timeouts.Value() != 0 || !repaired.FastRecovery.Active || len(atRepair) == 0 || atRepair[0].at != 1 {
+				t.Fatalf("needed a successful repair at SND.UNA in RACK: %v active=%v timeouts=%d prior=%v", atRepair, repaired.FastRecovery.Active, stats.Timeouts.Value(), initial)
 			}
-			for i := 0; stats.Timeouts.Value() == 0 && i < 8000; i++ {
-				_ = drain()
-				clk.Advance(time.Millisecond)
+			acceptedStamp := lastSentStamp
+			at(180 * time.Millisecond)
+			ack(10005, flightStamp, old...)
+			await()
+			gapCopies := drain()
+			at(200*time.Millisecond - time.Nanosecond)
+			if n := stats.Timeouts.Value(); n != 0 {
+				t.Fatalf("early premature timeout: %d", n)
 			}
-			since := clk.NowMonotonic().Sub(start)
-			copies := drain()
-			wantEcho := uint32(10002)
-			if schedule == "process-extend" {
-				wantEcho = 10003
+			at(200 * time.Millisecond)
+			oldCount := stats.Timeouts.Value()
+			oldDeadline := drain()
+			if (oldCount == 1) != (len(oldDeadline) > 0 && oldDeadline[0].at == 1) {
+				t.Fatalf("old counter=%d packets=%v", oldCount, oldDeadline)
 			}
-			if stats.Timeouts.Value() != 1 || len(copies) != 1 || copies[0] != (packet{0, wantEcho}) {
-				t.Fatalf("RTO at %v: copies=%v want [{0 %d}]; prior=%v", since, copies, wantEcho, immediately)
-			}
-			if schedule == "time-only" {
-				boundary = since
-			}
-			fast := stats.FastRetransmit.Value()
-			clk.Advance(100 * time.Microsecond)
-			if paused {
-				p.Resume()
-				paused = false
-				st = await()
-			}
-			after = drain()
-			for _, pkt := range after {
-				if pkt.echo != 10003 {
-					t.Fatalf("new echo missing: %v", after)
+			at(239419 * time.Microsecond)
+			var progress []packet
+			if schedule == "ack-arrives" {
+				left = first.Add(2 * maxPayload)
+				ack(10006, acceptedStamp, old...)
+				st := await()
+				progress = drain()
+				if st.SndUna != left {
+					t.Fatalf("cumulative ACK did not advance: %d", st.SndUna)
 				}
 			}
-			t.Logf("ORDER %s before=%v timer=%v next=%v fast=%d sacked=%d initial=%d rto_after_us=%d", schedule, immediately, copies, after, stats.FastRetransmit.Value()-fast, st.SackedOut, prior.SackedOut, since.Microseconds())
+			at(331413*time.Microsecond - time.Nanosecond)
+			if got := stats.Timeouts.Value(); got != oldCount {
+				t.Fatalf("before protected deadline: %d -> %d", oldCount, got)
+			}
+			at(331413 * time.Microsecond)
+			fullDeadline := drain()
+			fullCount := stats.Timeouts.Value()
+			if fullCount > oldCount && (len(fullDeadline) == 0 || fullDeadline[0].at != 1) {
+				t.Fatalf("full deadline did not repair the oldest: %v", fullDeadline)
+			}
+			t.Logf("DEADLINE %s rto_us=%d repaired=%v before=%v old=%d:%v progress=%v full=%d:%v", schedule, anchor.RTO.Microseconds(), atRepair, gapCopies, oldCount, oldDeadline, progress, fullCount, fullDeadline)
 		})
 	}
 }
