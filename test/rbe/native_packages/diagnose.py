@@ -38,9 +38,10 @@ try:
         "updatedAfter": "2026-11-01T08:05:00Z", "updatedBefore": "2026-11-01T10:10:00Z"}, "count": 100})
     if response.get("nextPageToken"):
         raise ValueError("The bounded invocation search is incomplete")
-    candidates = [i for i in response.get("invocation", []) if set(i.get("pattern", [])) == EXPECTED]
+    # Search summaries use ShortFormatPatterns and omit the final label.
+    candidates = [i for i in response.get("invocation", []) if i.get("pattern", [None])[0] == "//src:bazel"]
     result["search_count"] = len(response.get("invocation", []))
-    result["exact_pattern_count"] = len(candidates)
+    result["first_pattern_count"] = len(candidates)
     result["matching_command_receipts"] = []
     selected = []
     for candidate in candidates:
@@ -50,6 +51,8 @@ try:
         if len(exact) != 1:
             raise ValueError("Ambiguous invocation identity")
         invocation = exact[0]
+        if set(invocation.get("pattern", [])) != EXPECTED:
+            continue
         events = [event.get("buildEvent", {}) for event in invocation.get("event", [])]
         finishes = [event["finished"] for event in events if "finished" in event]
         if len(finishes) != 1:
