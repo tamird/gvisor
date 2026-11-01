@@ -4422,6 +4422,40 @@ func TestPassiveSendMSSLessThanMTU(t *testing.T) {
 	e2e.CheckBrokenUpWrite(t, c, maxPayload)
 }
 
+func TestGeneratedCookieWithFailedOutput(t *testing.T) {
+	c := context.New(t, e2e.DefaultMTU)
+	defer c.Cleanup()
+	c.Create(-1)
+	always := tcpip.TCPAlwaysUseSynCookies(true)
+	if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &always); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.EP.Bind(tcpip.FullAddress{Port: context.StackPort}); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.EP.Listen(1); err != nil {
+		t.Fatal(err)
+	}
+
+	// The channel still accepts inbound packets, but refuses the SYN-ACK.
+	c.Stack().GetLinkEndpointByName("nic1").Close()
+	c.SendPacket(nil, &context.Headers{
+		SrcPort: context.TestPort,
+		DstPort: context.StackPort,
+		Flags:   header.TCPFlagSyn,
+		SeqNum:  context.TestInitialSequenceNumber,
+		RcvWnd:  30000,
+	})
+	c.Stack().Pause()
+	c.Stack().Resume()
+	if got := c.EP.Stats().(*tcp.Stats).SendErrors.SynSendToNetworkFailed.Value(); got != 1 {
+		t.Fatalf("failed SYN-ACK outputs = %d, want 1", got)
+	}
+	if got := c.Stack().Stats().TCP.ListenOverflowSynCookieSent.Value(); got != 1 {
+		t.Errorf("generated SYN cookies with failed output = %d, want 1", got)
+	}
+}
+
 func TestSynCookiePassiveSendMSSLessThanMTU(t *testing.T) {
 	const maxPayload = 536
 	const mtu = 2000
