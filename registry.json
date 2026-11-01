@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T08:55:45.390254+00:00",
+    "updatedAt": "2026-11-01T09:09:12.149661+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41593,6 +41593,40 @@
         "summary": "Open the packet-test follow-up after the SYN-cookie identification helper lands?",
         "body": "Queue three bytes in the order a, c, b on an accepted cookie connection. Linux and gVisor acknowledge 1, 1, then 3 bytes. When the peer negotiated SACK and timestamps, the middle ACK also reports the received interval [2,3). Omitting either option suppresses the block. Clearing SACK only on the accepted socket breaks that assertion even though the SYN-ACK still advertised it.\n\nThe ordinary handshakes and the stack-wide SACK-disabled cases stay in the Go suite. This test and the separate peer-window test apply in either order."
       }
+    },
+    {
+      "id": "branch:state-graph-callback-waiter",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/state-graph-callback-waiter",
+      "head": "9f19447bdd727295bbaee1d8b198ae4e52a75ce5",
+      "title": "Keep a load callback with its waiting object",
+      "url": "https://github.com/tamird/gvisor/commit/9f19447bd",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T09:09:12.149661+00:00",
+      "summary": "Deliver the loaded value and unblock its waiting object with one callback record.",
+      "evidence": [
+        {
+          "label": "Matched decodes, real guest restores and correctness suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41290099363/artifacts/13077381724"
+        },
+        {
+          "label": "Removing the callback delivery fails the ordering check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41289759911/artifacts/13076269819"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "9f19447bdd727295bbaee1d8b198ae4e52a75ce5",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/9f19447bd",
+        "title": "Keep a load callback with its waiting object",
+        "requestedAt": "2026-11-01T09:09:12.149661+00:00",
+        "summary": "Open the graph-reader optimization as a standalone PR?",
+        "body": "The reader queued two adjacent records for a callback and a waiting object. One record can deliver the loaded value and then release the waiter. On a 50,000-file tmpfs checkpoint this saved 15.7 MiB per decode and reduced decode time by 5.3% with GC enabled. All 16 fresh guest restores verified every file. The native end-to-end comparison did not establish faster guest readiness."
+      }
     }
   ],
   "edges": [
@@ -47909,11 +47943,11 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T08:52:55.845490+00:00",
+      "updatedAt": "2026-11-01T09:09:12.149661+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
         {
-          "text": "An actual Sentry checkpoint of 50,000 empty tmpfs files contained 7,302,517 bytes of kernel objects and 135,168 bytes of pages. Checkpoint took 167 ms. Starting a fresh sandbox, restoring it and running /bin/true took 154 ms; the restored guest listed every file. Six single-CPU benchmark samples gave median Encode and Decode times of 141 and 103 ms. Decode with GC took 163 ms, with three collections. With GC enabled, 360 ms of 1.58 s of sampled loadKernel CPU went through callback execution. The largest of those paths (220 ms) restored the parent pointer of a tmpfs directory entry.",
+          "text": "An actual Sentry checkpoint of 50,000 empty tmpfs files contained 7,302,517 bytes of kernel objects and 135,168 bytes of pages. Checkpoint took 167 ms. Starting a fresh sandbox, restoring it and running /bin/true took 154 ms; the restored guest listed every file. Six single-CPU benchmark samples gave median Encode and Decode times of 141 and 103 ms. Decode with GC took 163 ms, with three collections. With GC enabled, 360 ms of 1.58 s of sampled loadKernel CPU went through callback execution. The largest of those paths (220 ms) restored the parent pointer of a tmpfs directory entry. Combining the callback and its waiting object removed 15.7 MiB of allocations per graph decode. In 16 matched pairs the same 50,000-file checkpoint decoded in 203.5 ms instead of 215.0 ms with GC. Eight native restore pairs verified all files and did not establish faster guest readiness.",
           "evidence": [
             {
               "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
@@ -47922,6 +47956,14 @@
             {
               "label": "Per-function CPU samples from the original processes",
               "url": "https://github.com/tamird/gvisor/actions/runs/41289006099/artifacts/13076482536"
+            },
+            {
+              "label": "16 paired decodes per GC mode and eight native restore pairs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41290099363/artifacts/13077381724"
+            },
+            {
+              "label": "Five insertions and eight deletions in the existing reader",
+              "url": "https://github.com/tamird/gvisor/commit/9f19447bd"
             }
           ]
         },
@@ -50804,7 +50846,7 @@
           ]
         }
       ],
-      "nextStep": "Measure whether the callback that restores a field can also release its dependency. Compare both decoders on one frozen image and verify all 50,000 files in fresh guest restores.",
+      "nextStep": "Review the callback change. On the save side, determine whether the measured binary-search cost in segment-reference resolution can be removed in the existing writer.",
       "evidence": [
         {
           "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
@@ -57691,7 +57733,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T08:52:55.845635+00:00",
+      "updatedAt": "2026-11-01T09:08:32.894251+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -57716,7 +57758,7 @@
           ]
         },
         {
-          "text": "The shell setting for Go SDK bootstrap was lost when Bazel selected tools for the execution platform. Making the setting universal selected the declared ash on both CPUs and got past bootstrap. On AMD64, starting the embedded posix_tw failed with ENOENT. On ARM64, the compiled test wrapper exited successfully but wrote an empty XML suite. Neither run qualified a named test. The build-only result above is independent of test execution.",
+          "text": "Selecting Go’s declared bootstrap shell got both architectures past SDK setup. On ARM64, enabling named Go test output then verified all 67 state and 42 TCP cases on a fresh scratch worker, with no skips or missing tests. On AMD64, Bazel’s own test wrapper names /lib64/ld-linux-x86-64.so.2 as its ELF interpreter. That file is absent from the empty worker, which returns ENOENT before the test can start.",
           "evidence": [
             {
               "label": "Original and corrected action arguments, wrapper paths, and case counts",
@@ -57729,6 +57771,14 @@
             {
               "label": "Original wrapper exit and output from both CPUs",
               "url": "https://github.com/tamird/gvisor/actions/runs/41290695384/artifacts/13077530903"
+            },
+            {
+              "label": "109 named ARM64 tests and 1.1-second verified verdict",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41290809658/artifacts/13076668421"
+            },
+            {
+              "label": "Linux-only static Bazel test wrapper",
+              "url": "https://github.com/tamird/bazel/commit/b70c33483"
             }
           ]
         },
@@ -59032,7 +59082,7 @@
           ]
         }
       ],
-      "nextStep": "Check the interpreter recorded in the embedded AMD64 wrapper and compare a portable build on both workers. On ARM64, run the two owners with named Go test output enabled.",
+      "nextStep": "Run Bazel’s embedded Linux wrapper on glibc and qualify the two AMD64 owners on the same scratch image. All 109 ARM64 cases have executed.",
       "evidence": [
         {
           "label": "Both scratch architectures: 14 affected targets rebuilt, including the two original failures",
@@ -59908,12 +59958,12 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T08:52:55.845639+00:00",
+      "updatedAt": "2026-11-01T09:08:32.894251+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Check the sequence quoted by ICMP against data still outstanding. Qualify the half-close fix and measure open-socket poll cost. Compare FIN versus reset after shutdown with unread data.",
+      "nextStep": "Compare competing Reno and CUBIC flows with the remaining two production changes from #15432, on the same sender and native worker. Finish the readiness and socket-error qualification and keep the review order in #16670 current.",
       "findings": [
         {
-          "text": "On an established TCP connection with extended errors enabled, Linux reported an injected host-unreachable error through poll and SO_ERROR. Its MSG_ERRQUEUE stayed empty. Stock gVisor returned an IPv4 error-queue record; on IPv6, an address-unreachable message produced no error at all. The sockets still transferred data. The error-queue and IPv6 dispatch paths are being tested separately. An IPv6 network-unreachable control reached the existing dispatcher and reproduced the IPv4 TCP error-queue difference. With later data outstanding, Linux ignored an error quoting an already acknowledged segment. A prototype reported EHOSTUNREACH for both stale and outstanding quotes.",
+          "text": "On an established TCP connection, Linux reported an ICMP error only while the quoted sequence was outstanding. The error was consumed once through SO_ERROR; the connected socket could continue exchanging data. On stock gVisor a stale quote produced EHOSTUNREACH. A correction that checks the sequence under the TCP endpoint mutex passed the same permanent packet test. The exercised IPv6 case is network-unreachable; address-unreachable dispatch is a separate question.",
           "evidence": [
             {
               "label": "IPv4: both SO_ERROR and MSG_ERRQUEUE read orders, IP_RECVERR off/on",
@@ -59930,11 +59980,19 @@
             {
               "label": "Stale versus outstanding ICMP quotes on the same live connection",
               "url": "https://github.com/tamird/gvisor/actions/runs/41289845793/artifacts/13076738006"
+            },
+            {
+              "label": "Linux, stock and corrected gVisor on the same stale quotation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41291214587/artifacts/13077218354"
+            },
+            {
+              "label": "Active/stale and socket-error control results",
+              "url": "https://github.com/tamird/gvisor/blob/6e98ea623/test/rbe/tcp-quoted-error-worker-result.json"
             }
           ]
         },
         {
-          "text": "Linux reported POLLRDHUP after local read shutdown and woke an epoll watch interested only in EPOLLRDHUP when the peer sent FIN. On stock gVisor the local result depended on an earlier POLLIN poll and the peer-FIN watch timed out, on both IPv4 and IPv6.",
+          "text": "Linux reported POLLRDHUP after local read shutdown and woke an epoll watch interested only in EPOLLRDHUP when the peer sent FIN. On stock gVisor the local result depended on an earlier POLLIN poll and the peer-FIN watch timed out, on both IPv4 and IPv6. With unread data, Linux shutdown(SHUT_RDWR) sent FIN and preserved those bytes for read, while gVisor reset the peer. The same shutdown syscall checks passed with the discard-and-reset decision moved to close.",
           "evidence": [
             {
               "label": "Identical Linux and gVisor syscall tests",
@@ -59943,6 +60001,10 @@
             {
               "label": "Candidate and open-socket performance comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/41290171945"
+            },
+            {
+              "label": "Unread shutdown, close and buffered-read syscall controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41290607949"
             }
           ]
         },
@@ -60384,6 +60446,10 @@
         {
           "label": "OCI vs guest writes: procfs and actual new socket buffers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41161385542/artifacts/13027456661"
+        },
+        {
+          "label": "Matched flight-accounting comparison with Linux",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41291435255"
         }
       ],
       "reviewWatch": {
