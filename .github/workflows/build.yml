@@ -1,7 +1,7 @@
-name: Compare ordinary GNU syscall launchers on scratch
+name: Run ordinary native musl syscall cases on scratch
 on:
   push:
-    branches: [qualification/syscall-gnu-runtime]
+    branches: [qualification/syscall-musl-runtime]
 permissions:
   contents: read
   actions: read
@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {ref: f728497c0a91ca4a40cf6d29953a3ee963a0a1f9, path: product, persist-credentials: false, fetch-depth: 2}
+        with: {ref: f728497c0a91ca4a40cf6d29953a3ee963a0a1f9, path: product, persist-credentials: false, fetch-depth: 1}
       - name: Prepare private remote configuration and evidence
         working-directory: carrier
         env:
@@ -59,7 +59,7 @@ jobs:
           unset GH_TOKEN
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -30 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/native-package-evidence/bootstrap.json"
-      - name: Compare stock and native GNU syscall entry points on both scratch architectures
+      - name: Run ordinary musl syscall cases on both scratch architectures
         working-directory: product
         env:
           PRODUCT: f728497c0a91ca4a40cf6d29953a3ee963a0a1f9
@@ -76,7 +76,7 @@ jobs:
               path = root / name
               return json.loads(path.read_text()) if path.exists() else {"status": "INCOMPLETE"}
           supplier, runtime = read("supplier.json"), read("summary.json")
-          states = [supplier["status"], runtime.get("observation_status", "INCOMPLETE")]
+          states = [supplier["status"], runtime["status"]]
           identity = (supplier.get("source") == "c2f5f79dce24877679cede14b85666b7ca65c6de"
                       and runtime.get("source") == "f728497c0a91ca4a40cf6d29953a3ee963a0a1f9"
                       and supplier.get("binary_sha256") == runtime.get("native_bazel", {}).get("sha256"))
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-gnu-syscall-runtime
+          name: native-musl-syscall-runtime
           path: |
             ${{ runner.temp }}/native-package-evidence
           if-no-files-found: error
