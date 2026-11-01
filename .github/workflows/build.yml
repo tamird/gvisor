@@ -1,4 +1,4 @@
-name: Build the GNU plugin with declared shell and metadata tools
+name: Build the LLVM GNU-libc plugin with declared tools
 on:
   push:
     branches: [qualification/plugin-shell-closure]

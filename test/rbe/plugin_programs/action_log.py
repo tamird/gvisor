@@ -19,6 +19,7 @@ def project(data):
         "sha256": hashlib.sha256(data).hexdigest(),
         "bytes": len(data),
         "compiler_targets": targets,
+        "compiler_commands": sorted(set(re.findall(r"/bin/(clang(?:[+][+])?)\s+-target\s+([A-Za-z0-9_-]+)", text))),
         "pmd_recipes": len(re.findall(r"^\s*PMDINFO\s+[^\r\n]*[.]pmd[.]c\s*$", text, re.M)),
         **diagnostics(text),
     }

@@ -1,4 +1,4 @@
-"""Observe the original GNU plugin Make rule on the native tool-free worker."""
+"""Observe the LLVM/GNU plugin Make rule on the native tool-free worker."""
 import datetime
 import hashlib
 import json
@@ -12,7 +12,7 @@ OUT = TMP / "plugin-evidence"
 TARGET = "@libpluginstack//:libpluginstack"
 OWNER = "@@+_repo_rules+libpluginstack//:libpluginstack"
 NATIVE = "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18"
-BASE = "4a8aea885c34e252efc006fe596ed9a3df6fa6ed"
+BASE = "f503093fe2a498edc2b786ba31db1c777505b26c"
 CONFIG = "@@+_repo_rules+libpluginstack//:pmd_config"
 HELPER = "@@+_repo_rules+plugin_dpdk//:pmdinfogen"
 COMPILER_IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
@@ -61,6 +61,7 @@ def diagnostics(text):
 def audit(compact):
     query = """select(.spawn != null) | .spawn | select(.targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper or (.exitCode != null and .exitCode != 0))
         | {mnemonic, targetLabel, args:(if .targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper then .args[0:2] else [] end), digest, runner, cacheHit, exitCode, status,
+        target_triples: ([range(0; (.args | length)) as $i | select(.args[$i] == "-target" or .args[$i] == "--target") | .args[$i+1]] + [.args[]? | select(startswith("--target=")) | ltrimstr("--target=")]),
         platform:[.platform.properties[]?|select(.name=="Arch" or .name=="OSFamily" or
                .name=="container-image" or .name=="workload-isolation-type" or .name=="recycle-runner")]}"""
     with subprocess.Popen([str(TMP / "bb"), "print", "--raw", "--compact_execution_log=" + str(compact)],
@@ -83,6 +84,17 @@ def main():
          "previous_helper_failure": {"invocation": "f9a06f1c-cc5f-4b9c-b518-128f1505231b",
                                      "action": "28ae53bea672c865eada319c9fb0c64f84085a01d2779651eb8fa3191be9c5de/376",
                                      "exit": 2, "helper": "gen-config-h.sh"},
+         "previous_binutils_failure": {
+             "artifact": 13106596549,
+             "invocation": "79134506-3dfa-4729-b351-cc70f2abe4d1",
+             "action": "f4a5337c96cede88ef5eb5ac42e3e9bb09b1b313526a5200f477ca7ef77a5847/376",
+             "exit": 2, "cause": "unpopulated legacy LLVM ld and objdump paths"},
+         "declared_toolchains": {
+             "make": "GNU Make 4.4.1 (BCR 4.4.1.bcr.4)",
+             "plugin_compiler": "hermetic-llvm 0.8.24 Clang targeting GNU libc on Linux AMD64",
+             "plugin_binutils": ["@llvm//tools:ld.lld", "@llvm//tools:llvm-objdump"],
+             "helper_compiler": "hermetic-llvm 0.8.24 Clang targeting musl on native Linux AMD64",
+             "scope": "This integration does not qualify public #15153's GCC toolchain."},
          "expected": {"target": TARGET, "support": [CONFIG, HELPER]},
          "started": now(), "status": "INCOMPLETE"}
     save(r)
@@ -183,6 +195,9 @@ def main():
                 assert properties["Arch"] == "amd64" and properties["OSFamily"] == "linux"
                 assert properties["container-image"] == (NATIVE if a["targetLabel"] == CONFIG else COMPILER_IMAGE)
                 assert not a["exitCode"] and (a["runner"] == "remote" or a["cacheHit"])
+            helper_compiles = [a for a in support if a["targetLabel"] == HELPER and a["mnemonic"] == "CppCompile"]
+            assert helper_compiles and all(a["args"][0].endswith("/clang") and
+                                          a["target_triples"] == ["x86_64-linux-musl"] for a in helper_compiles)
             r["support_disposition"] = {"fresh_remote": sum(not a["cacheHit"] for a in support),
                                        "cached": sum(bool(a["cacheHit"]) for a in support)}
             archives = outputs["libpluginstack.a"]
