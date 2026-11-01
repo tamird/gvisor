@@ -13,6 +13,12 @@ func TestRACKOldestDeadline(t *testing.T) {
 			e2e.SetStackSACKPermitted(t, c, true)
 			// Fix the RTO to the observed 200 ms deadline; this test does
 			// not attempt to reproduce the WAN estimator's prior samples.
+			// TCP's test context raises the minimum to 3 s. Restore the actual
+			// runtime floor before constraining the upper bound for this replay.
+			floor := tcpip.TCPMinRTOOption(-1)
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &floor); err != nil {
+				t.Fatal(err)
+			}
 			limit := tcpip.TCPMaxRTOOption(200 * time.Millisecond)
 			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &limit); err != nil {
 				t.Fatal(err)
