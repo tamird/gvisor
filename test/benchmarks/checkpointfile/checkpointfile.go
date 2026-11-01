@@ -24,15 +24,19 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/google/pprof/profile"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"runtime/metrics"
+	"runtime/pprof"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -56,6 +60,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot"
@@ -705,4 +710,261 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
+}
+
+// BenchmarkStreamCapture creates the kernel once, before either measured binary runs.
+func BenchmarkStreamCapture(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires one runsc checkpoint")
+	}
+	dir := os.Getenv("STREAM_DIR")
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	data, _, names, mounts := checkpointNginx(context.Background(), b, machine)
+	spec, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
+	if err != nil {
+		b.Fatal(err)
+	}
+	for name, contents := range map[string][]byte{checkpointfiles.StateFileName: data, checkpointSpecName: spec} {
+		if err := os.WriteFile(filepath.Join(dir, name), contents, 0600); err != nil {
+			b.Fatal(err)
+		}
+	}
+	fmt.Printf("STREAM-CAPTURE bytes=%d digest=%x\n", len(data), sha256.Sum256(data))
+}
+
+// BenchmarkColdDecode decodes the original two state records once per process.
+func BenchmarkColdDecode(b *testing.B) {
+	if b.N != 1 || !state.GraphEngineEnabled() {
+		b.Fatal("one graph decode required")
+	}
+	data, _, names, mounts, err := readCheckpointDir(os.Getenv("STREAM_DIR"))
+	if err != nil {
+		b.Fatal(err)
+	}
+	sr, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(data)), nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+	raw, err := io.ReadAll(sr)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if err := sr.Close(); err != nil {
+		b.Fatal(err)
+	}
+	s := bytes.NewReader(raw)
+	for i := 0; i < 2; i++ {
+		head, err := state.ReadHeaderMode(&wire.Reader{Reader: s})
+		if err != nil || !head.Graph || head.Length > uint64(s.Len()) {
+			b.Fatalf("frame %d: %+v %v", i, head, err)
+		}
+		if _, err := s.Seek(int64(head.Length), io.SeekCurrent); err != nil {
+			b.Fatal(err)
+		}
+	}
+	r := bytes.NewReader(raw[:len(raw)-s.Len()])
+	digest := sha256.Sum256(data)
+	ctx, cleanup := withHostFDs(b, restoreContext(b, names, mounts), names)
+	defer cleanup()
+	sys, err := systrap.New(platform.Options{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	var fs cpuid.FeatureSet
+	k := &kernel.Kernel{Platform: stubPlatform{sys}}
+	k.SetMemoryFile(pgalloc.MemoryFileFromContext(ctx))
+	type stamp struct {
+		name                     string
+		wall, cpu, bytes, allocs int64
+	}
+	var marks [2][12]stamp
+	var counts [2]int
+	record := 0
+	mode := os.Getenv("STUDY_MODE")
+	id := os.Getenv("STUDY_ID")
+	if mode == "phase-cpu" || mode == "phase-alloc" {
+		state.StudyGraphPoint = func(name string) {
+			p := &marks[record][counts[record]]
+			counts[record]++
+			p.name = name
+			if mode == "phase-cpu" {
+				p.wall = time.Now().UnixNano()
+				p.cpu = processCPU(b).Nanoseconds()
+			} else {
+				var m runtime.MemStats
+				runtime.ReadMemStats(&m)
+				p.bytes = int64(m.TotalAlloc)
+				p.allocs = int64(m.Mallocs)
+			}
+		}
+		defer func() { state.StudyGraphPoint = nil }()
+	}
+	var cp bytes.Buffer
+	var before *profile.Profile
+	if mode == "sample" {
+		if err := pprof.StartCPUProfile(&cp); err != nil {
+			b.Fatal(err)
+		}
+		n, err := strconv.Atoi(id)
+		if err != nil {
+			b.Fatal(err)
+		}
+		end := time.Now().Add(time.Duration(n%10) * time.Millisecond)
+		for time.Now().Before(end) {
+		}
+	}
+	load := func(name string, dst any) {
+		var err error
+		do := func() {
+			if state.StudyGraphPoint != nil {
+				state.StudyGraphPoint("start")
+			}
+			_, err = state.Load(ctx, r, dst)
+			if state.StudyGraphPoint != nil {
+				state.StudyGraphPoint("release")
+			}
+		}
+		if mode == "sample" {
+			pprof.Do(context.Background(), pprof.Labels("record", name), func(context.Context) { do() })
+		} else {
+			do()
+		}
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	load("cpuid", &fs)
+	record = 1
+	if mode == "heap" {
+		before = studyHeap(b)
+	}
+	load("kernel", k)
+	runtime.KeepAlive(k)
+	runtime.KeepAlive(fs)
+	if r.Len() != 0 {
+		b.Fatal("incomplete kernel")
+	}
+	if mode == "sample" {
+		pprof.StopCPUProfile()
+		p, err := profile.Parse(&cp)
+		if err != nil {
+			b.Fatal(err)
+		}
+		studyProfile(b, mode, id, p)
+	}
+	if mode == "heap" {
+		after := studyHeap(b)
+		before.Scale(-1)
+		p, err := profile.Merge([]*profile.Profile{after, before})
+		if err != nil {
+			b.Fatal(err)
+		}
+		studyProfile(b, mode, id, p)
+	}
+	if state.StudyGraphPoint != nil {
+		for g, n := range counts {
+			for j := 1; j < n; j++ {
+				x, y := marks[g][j-1], marks[g][j]
+				fmt.Printf("STUDY-PHASE mode=%s id=%s root=%d phase=%s wall=%d cpu=%d bytes=%d allocs=%d\n", mode, id, g, y.name, y.wall-x.wall, y.cpu-x.cpu, y.bytes-x.bytes, y.allocs-x.allocs)
+			}
+		}
+	}
+	fmt.Printf("STUDY-DONE mode=%s id=%s digest=%x pid=%d\n", mode, id, digest, os.Getpid())
+}
+
+func studyHeap(b *testing.B) *profile.Profile {
+	b.Helper()
+	runtime.GC()
+	runtime.GC()
+	var buf bytes.Buffer
+	if err := pprof.Lookup("allocs").WriteTo(&buf, 0); err != nil {
+		b.Fatal(err)
+	}
+	p, err := profile.Parse(&buf)
+	if err != nil {
+		b.Fatal(err)
+	}
+	return p
+}
+
+func studyProfile(b *testing.B, mode, id string, p *profile.Profile) {
+	ix := -1
+	want := "cpu"
+	if mode == "heap" {
+		want = "alloc_space"
+	}
+	for i, t := range p.SampleType {
+		if t.Type == want {
+			ix = i
+			break
+		}
+	}
+	if ix < 0 {
+		b.Fatalf("profile lacks %s", want)
+	}
+	result := make(map[string]map[string]int64)
+	add := func(key, name string, v int64) {
+		if result[key] == nil {
+			result[key] = make(map[string]int64)
+		}
+		result[key][name] += v
+	}
+	for _, s := range p.Sample {
+		v := s.Value[ix]
+		if v == 0 {
+			continue
+		}
+		root := "kernel"
+		if mode == "sample" {
+			tags := s.Label["record"]
+			if len(tags) != 1 {
+				continue
+			}
+			root = tags[0]
+		}
+		var fn []string
+		seen := map[string]bool{}
+		inside := false
+		for _, l := range s.Location {
+			for _, line := range l.Line {
+				if line.Function == nil {
+					continue
+				}
+				name := line.Function.Name
+				if strings.HasPrefix(name, "gvisor.dev/gvisor/pkg/state.") {
+					inside = true
+				}
+				if !seen[name] {
+					seen[name] = true
+					fn = append(fn, name)
+				}
+			}
+		}
+		if mode == "heap" && !inside {
+			continue
+		}
+		if len(fn) == 0 {
+			continue
+		}
+		add(root+"/total", "all", v)
+		add(root+"/flat", fn[0], v)
+		for _, f := range fn {
+			add(root+"/cum", f, v)
+		}
+		for _, f := range fn {
+			if strings.HasPrefix(f, "gvisor.dev/gvisor/pkg/state.") {
+				add(root+"/state", f, v)
+				break
+			}
+		}
+	}
+	raw, err := json.Marshal(result)
+	if err != nil {
+		b.Fatal(err)
+	}
+	fmt.Printf("STUDY-PROFILE %s %s %s\n", mode, id, raw)
 }

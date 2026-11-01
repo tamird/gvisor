@@ -26,6 +26,14 @@ import (
 )
 
 // load decodes the stream in data into the value of type ti at root.
+var StudyGraphPoint func(string)
+
+func studyGraphPoint(s string) {
+	if f := StudyGraphPoint; f != nil {
+		f(s)
+	}
+}
+
 func (ds *graphDecodeState) load(root unsafe.Pointer, ti *typeInfo) {
 	d := &ds.in
 	if magic := d.uint32(); magic != streamMagic {
@@ -34,15 +42,21 @@ func (ds *graphDecodeState) load(root unsafe.Pointer, ti *typeInfo) {
 	if f := d.uint64(); f != schemaFingerprint() {
 		Failf("the state was saved by a binary with different types (fingerprint %#x, want %#x)", f, schemaFingerprint())
 	}
+	studyGraphPoint("schema")
 	ds.readTypes()
+	studyGraphPoint("types")
 	ds.readObjects(root, ti)
+	studyGraphPoint("objects")
 	ds.readTargets()
+	studyGraphPoint("targets")
 	ds.decodeObjects()
+	studyGraphPoint("decode")
 	setHints(ti, len(d.b), len(ds.targets))
 	if d.pos != len(d.b) {
 		Failf("%d bytes of trailing data", len(d.b)-d.pos)
 	}
 	ds.runCallbacks()
+	studyGraphPoint("callbacks")
 }
 
 // decodeObjects decodes the data of all objects.
@@ -424,6 +438,7 @@ func loadGraph(ctx context.Context, r io.Reader, rootPtr any, length uint64, sta
 		return Stats{graph: ds.stats}, err
 	}
 	ds.in = decBuf{b: data}
+	studyGraphPoint("input_copy")
 	err := safely(func() {
 		e := efaceOf(&rootPtr)
 		if e.typ == nil {
