@@ -1,7 +1,7 @@
 name: Identify the remaining semaphore analysis actions
 on:
   push:
-    branches: [qualification/semop-stalled-executions]
+    branches: [qualification/semop-last-action-diagnostic]
 permissions:
   contents: read
 jobs:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 1}
-      - name: Retrieve only retained action metadata from both original builds
+      - name: Retrieve only retained action metadata from the interrupted two-owner build
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
