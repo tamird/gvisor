@@ -52,6 +52,7 @@ def native_actions(path, arch, tmp):
     projection = 'select(has("spawn")) | .spawn | {m:.mnemonic,l:.targetLabel,x:.args[0],t:(if .mnemonic == "TestRunner" then .args[1:] else [] end),r:.runner,c:.cacheHit,s:.status,e:.exitCode,d:.digest,p:(.platform.properties // [])}'
     counts = collections.Counter()
     tests = []
+    xml_actions = []
     bad = []
     with subprocess.Popen([str(tmp / "bb"), "print", "--raw", "--compact_execution_log=" + str(path)],
                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as decoder:
@@ -74,7 +75,10 @@ def native_actions(path, arch, tmp):
                 if row["m"] == "TestRunner":
                     item["test_binary"] = row["t"][0]
                     item["test_args"] = row["t"][1:]
-                    tests.append(item)
+                    if item["test_binary"] == "--generate-xml":
+                        xml_actions.append(item)
+                    else:
+                        tests.append(item)
                 if (not correct or runner not in ("remote", "remote cache hit") or row["s"] or row["e"]) and len(bad) < 30:
                     bad.append(item)
             projection_exit = projected.wait()
@@ -82,7 +86,7 @@ def native_actions(path, arch, tmp):
     valid_tests = original_tests(tests, TARGETS, "posix_tw" if arch == "amd64" else "compiled_posix_test_wrapper")
     return {"status": "PASS" if counts["total"] and not bad and not decode_exit and not projection_exit and valid_tests else "FAIL",
             "counts": dict(counts), "decoder_exits": [decode_exit, projection_exit],
-            "tests": tests, "failed_or_other": bad}
+            "tests": tests, "xml_actions": xml_actions, "failed_or_other": bad}
 
 
 def output_evidence(bazel, common, work, execroot):
@@ -121,6 +125,10 @@ def accepted_observation(row, code, text, capture):
     counts = actions["counts"]
     if (not original or counts.get("local") or counts.get("off_platform")
             or any(actions["decoder_exits"])):
+        return False
+    if any(xml["target"] != action["target"] or xml["executable"] != action["executable"]
+           or xml["runner"] != "remote" or xml["cache_hit"] or xml["exit_code"] or xml["status"]
+           for xml in actions["xml_actions"]):
         return False
     outputs = row["outputs"]["reports"]
     kind = row["outputs"]["test_executable"]
@@ -163,6 +171,8 @@ def qualify(arch, tmp, out, private, bazel):
               "--aspects=//tools/nogo:defs.bzl%nogo_aspect_tricorder", "--output_groups=+tricorder",
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
+              # The test executable is a symlink to the target-configured Go binary.
+              "--remote_download_regex=.*/bin/(tools/nogo/nogo_/nogo|pkg/waiter/waiter_nogo(\\.(amd64|arm64)\\.findings)?)$",
               "--remote_download_outputs=toplevel", "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
@@ -214,17 +224,16 @@ def qualify(arch, tmp, out, private, bazel):
             shutil.copyfile(xml, destination)
         row["tests_status"] = verdict["status"]
         row["status"] = verdict["status"]
-        # Preserve the test verdict before any independent worker-log decoding.
-        write(public / "receipt.json", row)
-        row["actions"] = native_actions(work / "actions.compact", arch, tmp)
-        # Runtime status is retained even if output inspection later fails.
-        write(public / "receipt.json", row)
-        row["outputs"] = output_evidence(bazel, common, work, execroot)
         logs = list((work / "reports").rglob("test.log"))
         text = "\n".join(path.read_text(errors="replace") for path in logs)
         row["test_log"] = [line[:1200] for line in text.splitlines()
                            if re.search(r"PASS|checklocks|ENOENT|not found|no such file", line, re.I)
                            and not re.search(r"header|token|api.key|authorization", line, re.I)][:30]
+        # A missing downloaded input must not discard the original filtered log.
+        write(public / "receipt.json", row)
+        row["actions"] = native_actions(work / "actions.compact", arch, tmp)
+        write(public / "receipt.json", row)
+        row["outputs"] = output_evidence(bazel, common, work, execroot)
         row["verified_at"] = now()
         row["status"] = "PASS" if accepted_observation(row, code, text, capture) else "FAIL"
         write(public / "receipt.json", row)

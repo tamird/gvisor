@@ -1,112 +1,31 @@
-name: Check Nogo on a shell-free worker
+name: Verify the three original Nogo scratch actions
 on:
   push:
-    branches: [qualification/nogo-native-scratch]
+    branches: [qualification/native-nogo-originals]
 permissions:
   contents: read
   actions: read
 jobs:
-  compare:
-    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+  recover:
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: carrier, persist-credentials: false, fetch-depth: 1}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, persist-credentials: false, fetch-depth: 10}
-      - name: Prepare private remote configuration and evidence
-        working-directory: carrier
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -eu
-          umask 077
-          mkdir -p "$RUNNER_TEMP/native-package-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/native-package-evidence/bootstrap.json"
-          test -n "$BUILDBUDDY_API_KEY"
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/sidecar.bazelrc"
-          unset BUILDBUDDY_API_KEY
-          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
-          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
-          cp test/rbe/{qualification_report.py,unit_matrix.py} "$RUNNER_TEMP/"
-          cp test/rbe/native_packages/{run.py,native-wrapper-control.json} "$RUNNER_TEMP/"
-          gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$RUNNER_TEMP/supplier.zip"
-          python3 - <<'PY_REUSE'
-          import hashlib, json, os, zipfile
-          from pathlib import Path
-          tmp = Path(os.environ["RUNNER_TEMP"])
-          archive = tmp / "supplier.zip"
-          assert hashlib.sha256(archive.read_bytes()).hexdigest() == "993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619"
-          with zipfile.ZipFile(archive) as bundle:
-              receipt = json.loads(bundle.read("native-package-evidence/supplier.json"))
-              binary = bundle.read("bazel-candidate")
-          assert receipt["status"] == "PASS"
-          assert receipt["source"] == "c2f5f79dce24877679cede14b85666b7ca65c6de"
-          assert hashlib.sha256(binary).hexdigest() == receipt["binary_sha256"] == "556164c2874fc66cdac3a32b53f862e705e9b9643c0ad3dea12880c97687d250"
-          receipt["reused_from"] = {"run": 41293756340, "artifact": 13078732581,
-                                  "artifact_sha256": "993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619"}
-          (tmp / "native-package-evidence/supplier.json").write_text(json.dumps(receipt, indent=2) + "\n")
-          (tmp / "bazel-candidate").write_bytes(binary)
-          (tmp / "bazel-candidate").chmod(0o755)
-          PY_REUSE
-          unset GH_TOKEN
-          bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -30 "$RUNNER_TEMP/actionlint.log"; exit 1; }
-          printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/native-package-evidence/bootstrap.json"
-      - name: Check the Bash control, native analyzer and known lock failure
-        working-directory: product
-        run: |
-          set -eu
-          stock=851d04fc2918adcaa60a78fd9fa7e766bc4fec68
-          clean=ace5bfd763bd1fcbeca91d966919cdbd72d53c20
-          diagnostic=e99d71d29163b6db3cc456b9e72c1ae4a049f922
-          test "$(git rev-parse "$clean^")" = "$stock"
-          test "$(git rev-parse "$diagnostic^")" = "$clean"
-          test "$(git diff --name-only "$stock" "$clean")" = "$(printf '%s\n' tools/arch.bzl tools/nogo/defs.bzl)"
-          test "$(git diff --name-only "$clean" "$diagnostic")" = pkg/waiter/waiter.go
-          rc=0
-          for variant in stock clean diagnostic; do
-            case "$variant" in
-              stock) source_id=$stock ;;
-              clean) source_id=$clean ;;
-              diagnostic) source_id=$diagnostic ;;
-            esac
-            VARIANT="$variant" PRODUCT="$source_id" python3 "$RUNNER_TEMP/run.py" || rc=1
-          done
-          exit "$rc"
-      - name: Reconcile the three original verdicts
-        if: always()
-        run: |
-          python3 - <<'PY_RESULT'
-          import datetime, json, os
-          from pathlib import Path
-          root = Path(os.environ["RUNNER_TEMP"]) / "native-package-evidence"
-          root.mkdir(exist_ok=True)
-          expected = {"stock": "851d04fc2918adcaa60a78fd9fa7e766bc4fec68",
-                      "clean": "ace5bfd763bd1fcbeca91d966919cdbd72d53c20",
-                      "diagnostic": "e99d71d29163b6db3cc456b9e72c1ae4a049f922"}
-          states = {}
-          for variant, source in expected.items():
-              path = root / variant / "summary.json"
-              data = json.loads(path.read_text()) if path.exists() else {}
-              states[variant] = data.get("status", "INCOMPLETE") if data.get("source") == source else "INCOMPLETE"
-          status = "FAIL" if "FAIL" in states.values() else "PASS" if set(states.values()) == {"PASS"} else "INCOMPLETE"
-          result = {"status": status, "variants": states, "expected_sources": expected,
-                    "verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
-          (root / "result.json").write_text(json.dumps(result, indent=2) + "\n")
-          print(json.dumps(result))
-          raise SystemExit(status != "PASS")
-          PY_RESULT
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
-        with:
-          name: native-nogo-scratch
-          path: |
-            ${{ runner.temp }}/native-package-evidence
-          if-no-files-found: error
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false}
+    - name: Reuse the established CAS decoder
+      run: |
+        set -eu
+        curl -fsSL --max-time 90 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$RUNNER_TEMP/bb"
+        echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $RUNNER_TEMP/bb" | sha256sum -c -
+        chmod 0500 "$RUNNER_TEMP/bb"
+    - name: Read the Nogo inputs and logs from the three original actions
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 test/rbe/native_packages/recover_nogo.py
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: original-native-nogo-inputs
+        path: ${{ runner.temp }}/native-nogo-original.json
+        if-no-files-found: error
