@@ -103,6 +103,16 @@ def checked_cases(xml):
     return [{"class": case.get("classname"), "name": case.get("name")} for case in cases]
 
 
+def verify_test_actions(actions, labels):
+    primary = [action for action in actions if action["x"] == "external/bazel_tools/tools/test/test-setup.sh"]
+    xml = [action for action in actions if action["x"] == "external/bazel_tools/tools/test/generate-xml.sh"]
+    assert len(primary) + len(xml) == len(actions)
+    assert len(primary) == len(labels) and {action["l"] for action in primary} == labels
+    assert len(xml) == len({action["l"] for action in xml}) and {action["l"] for action in xml} <= labels
+    assert all(action["r"] == "remote" and not action["c"] and action["s"] in (None, "") and action["e"] in (None, 0) for action in actions)
+    return {"primary": primary, "xml": xml}
+
+
 def unit_tests():
     labels = {"@@rules_cc_autoconf+//autoconf/private/checker:" + name for name in ("process_test", "system_header_test", "library_check_test")}
     image = "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
@@ -116,7 +126,7 @@ def unit_tests():
         flags = ["--config=x86_64", "--config=plugin-tldk", "--compilation_mode=opt", "--host_platform=//test/rbe/make_control:populated", "--extra_execution_platforms=//test/rbe/make_control:populated", "--registry=" + (workspace / "registry").as_uri(), "--registry=https://bcr.bazel.build", "--jobs=400", "--remote_download_outputs=all", "--strategy=TestRunner=remote", "--nocache_test_results", "--keep_going", "--color=no", "--curses=no", "--build_event_json_file=" + str(bep), "--execution_log_compact_file=" + str(compact)]
         rc = invoke(item, "test", [*base, "test", *flags, *sorted(labels)])
         parsed = wildcard.events(bep)
-        item["test"].update(invocation=parsed["invocation"], finish=parsed["finish"], completed=[{"label": label, "configuration": config, "status": status} for (label, config), status in parsed["completed"].items()])
+        item["test"].update(invocation=parsed["invocation"], finish=parsed["finish"], configured=sorted(parsed["configured"]), completed=[{"label": label, "configuration": config, "status": status} for (label, config), status in parsed["completed"].items()])
         summaries = {}
         results = {}
         for line in bep.read_text().splitlines():
@@ -145,8 +155,7 @@ def unit_tests():
         assert rc == 0 and set(parsed["configured"]) == labels and len(parsed["completed"]) == len(labels) and all(label in labels and status == "built" for (label, _), status in parsed["completed"].items())
         assert summaries == dict.fromkeys(labels, "PASSED") and results == {label: ["PASSED"] for label in labels}
         assert item["actions"]["decoder_exits"] == [0, 0] and not item["actions"]["off_platform"] and not item["actions"]["local_runs"]
-        assert len(item["test_actions"]) == len(labels) and {action["l"] for action in item["test_actions"]} == labels
-        assert all(action["r"] == "remote" and not action["c"] and action["s"] in (None, "") and action["e"] in (None, 0) for action in item["test_actions"])
+        item["test_action_groups"] = verify_test_actions(item["test_actions"], labels)
         row["executed_tests"] = len(labels)
         item["status"] = "PASS"
     except Exception as err:
