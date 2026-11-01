@@ -122,3 +122,149 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 		})
 	}
 }
+
+func TestLimitedTransmitRecovery(t *testing.T) {
+	for _, small := range []bool{true, false} {
+		mode := "threshold"
+		if small {
+			mode = "small"
+		}
+		t.Run(mode, func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listen, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+			defer dut.Close(t, listen)
+			wide := uint16(65535)
+			conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port, WindowSize: &wide}, testbench.TCP{SrcPort: &port})
+			defer conn.Close(t)
+			opts := make([]byte, 4)
+			header.EncodeMSSOption(1000, opts)
+			conn.ConnectWithOptions(t, opts)
+			fd, _ := dut.Accept(t, listen)
+			defer dut.Close(t, fd)
+			dut.SetSockOpt(t, fd, unix.IPPROTO_TCP, unix.TCP_CONGESTION, []byte("reno"))
+			mss := int(dut.GetSockOptTCPInfo(t, fd).SndMss)
+			data := make([]byte, mss)
+			write := func(buf []byte) {
+				t.Helper()
+				if int(dut.Send(t, fd, buf, 0)) != len(buf) {
+					t.Fatal("short write")
+				}
+			}
+			ack := func(n seqnum.Value) {
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(n))})
+			}
+			expect := func(n seqnum.Value, timeout time.Duration) {
+				t.Helper()
+				if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(n))}, &testbench.Payload{Bytes: data}, timeout); err != nil {
+					t.Fatal(err)
+				}
+			}
+			next := *conn.RemoteSeqNum(t)
+			if small {
+				// A real timeout followed by progress leaves a small congestion window.
+				write(data)
+				expect(next, time.Second)
+				for {
+					expect(next, 5*time.Second)
+					if dut.GetSockOptTCPInfo(t, fd).CaState == linux.TCP_CA_Loss {
+						break
+					}
+				}
+				next = next.Add(seqnum.Size(mss))
+				ack(next)
+			}
+			// Advance past any prior recovery boundary before creating the loss.
+			write(data)
+			expect(next, time.Second)
+			next = next.Add(seqnum.Size(mss))
+			ack(next)
+			time.Sleep(12 * time.Millisecond)
+			startInfo := dut.GetSockOptTCPInfo(t, fd)
+			n := int(startInfo.SndCwnd)
+			if small && (n < 2 || n > 3) || !small && (n < 6 || n > 20) {
+				t.Fatalf("unexpected %s cwnd=%d", mode, n)
+			}
+			rto := time.Duration(startInfo.RTO) * time.Microsecond
+			base := next
+			pkt := func(i int) seqnum.Value { return base.Add(seqnum.Size(i * mss)) }
+			start := time.Now()
+			for i := 0; i < n; i++ {
+				write(data)
+				expect(pkt(i), time.Second)
+			}
+			write(make([]byte, 2*mss))
+			// The first packet is lost. Only packets actually observed past that
+			// hole can elicit another duplicate ACK, including new transmissions.
+			arrived, dups, high, repaired := n-1, 0, n, false
+			var windows, extra []int
+			var repairElapsed time.Duration
+			collect := func(wait time.Duration, visit func(int)) {
+				frames, _ := conn.ListenForFrame(t, testbench.Layers{nil, nil, &testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagRst)}}, wait)
+				for _, frame := range frames {
+					for j, l := range frame {
+						h, ok := l.(*testbench.TCP)
+						if !ok || *h.SrcPort != port || len(frame) <= j+1 {
+							continue
+						}
+						p, ok := frame[j+1].(*testbench.Payload)
+						if !ok || len(p.Bytes) == 0 {
+							continue
+						}
+						off := uint32(*h.SeqNum) - uint32(base)
+						if off%uint32(mss) != 0 || len(p.Bytes)%mss != 0 || uint64(off)+uint64(len(p.Bytes)) > uint64((n+2)*mss) {
+							t.Fatalf("unexpected payload off=%d len=%d", off, len(p.Bytes))
+						}
+						for i := 0; i < len(p.Bytes)/mss; i++ {
+							visit(int(off)/mss + i)
+						}
+					}
+				}
+			}
+			for !repaired && time.Since(start) < 3*rto+time.Second {
+				if dups < 3 && dups < arrived {
+					ack(base)
+					dups++
+				}
+				collect(10*time.Millisecond, func(i int) {
+					if i == 0 {
+						if !repaired {
+							repairElapsed = time.Since(start)
+						}
+						repaired = true
+						return
+					}
+					if i != high {
+						t.Fatalf("unexpected packet %d (next new %d)", i, high)
+					}
+					extra = append(extra, i)
+					high++
+					arrived++
+				})
+				if dups > 0 && len(windows) < dups {
+					windows = append(windows, int(dut.GetSockOptTCPInfo(t, fd).SndCwnd))
+				}
+			}
+			if !repaired {
+				t.Fatalf("no repair in %v", time.Since(start))
+			}
+			info := dut.GetSockOptTCPInfo(t, fd)
+			atRepair := high
+			// Cumulatively acknowledge the repaired flight, then drain every byte
+			// still queued by the sender.
+			ack(pkt(high))
+			for deadline := time.Now().Add(2 * time.Second); high < n+2 && time.Now().Before(deadline); {
+				collect(10*time.Millisecond, func(i int) {
+					if i != high {
+						t.Fatalf("drain packet %d, want %d", i, high)
+					}
+					high++
+				})
+				ack(pkt(high))
+			}
+			fmt.Printf("LIMIT mode=%s cwnd=%d mss=%d dupacks=%d extra=%v windows=%v state=%d ssthresh=%d repaired_us=%d rto_us=%d at_repair=%d completed=%d\n", mode, n, mss, dups, extra, windows, info.CaState, info.SndSsthresh, repairElapsed.Microseconds(), rto.Microseconds(), atRepair, high)
+			if high != n+2 {
+				t.Fatal("stream did not finish")
+			}
+		})
+	}
+}

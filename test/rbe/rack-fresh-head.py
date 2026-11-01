@@ -8,7 +8,7 @@ from pathlib import Path
 
 root = Path(os.environ["RUNNER_TEMP"])
 out = {}
-for arm in ("linux", "stock", "netstack"):
+for arm in ("linux", "stock", "netstack", "rack", "owners"):
     d = root / "records" / arm
     if not (d / "exit").exists():
         out[arm] = {"passed": False, "reason": "not completed"}
@@ -36,7 +36,7 @@ for arm in ("linux", "stock", "netstack"):
                             actual.add(child[k]["label"])
         action = [e["testResult"].get("status") for e in events if e["id"].get("testResult", {}).get("label") in actual]
         summary = [e["testSummary"].get("overallStatus") for e in events if e["id"].get("testSummary", {}).get("label") in actual]
-        dest = d / label.split(":")[1]
+        dest = d / label.removeprefix("//").replace("/", "_").replace(":", "_")
         text = (dest / "test.log").read_text(errors="replace")
         cases = {}
         try:
@@ -44,13 +44,43 @@ for arm in ("linux", "stock", "netstack"):
                 cases[case.get("name", "")] = [c.tag for c in case if c.tag in ("failure", "error", "skipped")]
         except (OSError, ET.ParseError):
             pass
-        named = {k: v for k, v in cases.items() if action and "TestSACKCreditBeforeCumulativeACK" in k}
-        trace = [s.strip() for s in text.splitlines() if "CREDIT mode=" in s]
         passed = action == summary == ["PASSED"] and code == 0
-        for case in ("open", "closed"):
-            passed &= any(k.endswith("/" + case) and not v for k, v in named.items())
-            passed &= len([s for s in trace if "CREDIT mode=" + case + " " in s]) == 1
-        note = [s.strip()[:520] for s in (text + "\n" + log).splitlines() if re.search(r"SETUP mode=|CREDIT mode=|: error:|fatal error:|command not found|INFO: Elapsed time|tcp_rack_test.go:\d+|^ERROR:|^panic:|^--- FAIL|^FAIL:|^--- SKIP|failed to|disable RACK|check RACK|command returned|operation not permitted|read-only file system", s) and not re.search("token|authorization|api[_-]?key|bearer|remote[_-]?header|password",s,re.I)]
+        names = []
+        if arm in ("linux", "stock", "netstack"):
+            names.extend("TestLimitedTransmitRecovery/" + case for case in ("small", "threshold"))
+        if arm in ("netstack", "rack"):
+            names.extend("TestSACKCreditBeforeCumulativeACK/" + case for case in ("open", "closed"))
+        named = {k: v for k, v in cases.items() if any(k.endswith(name) for name in names)}
+        passed &= all(any(k.endswith(name) and not v for k,v in named.items()) for name in names)
+        trace = [s.strip() for s in text.splitlines() if "CREDIT mode=" in s or "LIMIT mode=" in s]
+        for case in names:
+            scenario = case.split("/")[1]
+            measured = [s for s in trace if "mode=" + scenario + " " in s]
+            passed &= len(measured) == 1
+            if not measured:
+                continue
+            line = measured[0]
+            if scenario in ("open", "closed"):
+                m = re.search(r"first=(\d+).*idle=\[(.*?)\] sack=\[(.*?)\] repeat=\[(.*?)\] extend=\[(.*?)\]",line)
+                passed &= bool(m and not m[2] and not m[4] and (m[3],m[5]) == ((m[1],str(int(m[1])+1)) if scenario=="open" else ("","")))
+                continue
+            m = re.search(r"cwnd=(\d+).*dupacks=(\d+) extra=\[(.*?)\] windows=\[(.*?)\] state=(\d+) ssthresh=(\d+) repaired_us=(\d+) rto_us=(\d+) at_repair=(\d+) completed=(\d+)",line)
+            if not m:
+                passed = False
+                continue
+            n,dup,state,ss,elapsed,rto,at,done = map(int,(m[1],m[2],m[5],m[6],m[7],m[8],m[9],m[10]))
+            passed &= done == n+2
+            if scenario == "small" and arm == "stock":
+                passed &= at==n and dup<3 and state==4 and elapsed>=rto*0.8
+            elif arm=="netstack" or (arm=="stock" and scenario=="threshold"):
+                passed &= dup==3 and state==3 and elapsed<rto and ss==max(2,n//2)
+                if arm=="netstack":
+                    passed &= m[3].split()[:2] == [str(n),str(n+1)] and m[4].split()[:2]==[str(n),str(n)]
+            # The native observation is a control, not an assertion that Linux
+            # implements the same controller state accounting as gVisor.
+        if arm=="owners":
+            passed &= bool(cases) and len([k for k,v in cases.items() if not v])>0
+        note = [s.strip()[:520] for s in (text + "\n" + log).splitlines() if re.search(r"SETUP mode=|CREDIT mode=|LIMIT mode=|unexpected|no repair|: error:|fatal error:|command not found|INFO: Elapsed time|tcp_rack_test.go:\d+|^ERROR:|^panic:|^--- FAIL|^FAIL:|^--- SKIP|failed to|disable RACK|check RACK|command returned|operation not permitted|read-only file system", s) and not re.search("token|authorization|api[_-]?key|bearer|remote[_-]?header|password",s,re.I)]
         results[label] = {"passed":passed, "actual":sorted(actual), "action":action, "summary":summary, "xml":len(cases), "skips":sum("skipped" in v for v in cases.values()), "named":named, "observations":trace, "diagnostics":note[-24:] if not passed or arm=="stock" else []}
     out[arm] = {"passed": all(r["passed"] for r in results.values()), "source":(d/"head").read_text().strip(), "exit":code, "targets":results, "invocations":re.findall(r"Invocation ID: ([\w-]+)", log)}
 record = {"fixture":hashlib.sha256((root/"rack-fresh-head.go.txt").read_bytes()).hexdigest(), "arms":out, "complete":all(r["passed"] for r in out.values())}

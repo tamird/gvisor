@@ -1,17 +1,17 @@
-name: Observe TCP credit before a cumulative ACK
+name: Observe TCP Limited Transmit and loss recovery
 on:
   push:
-    branches: [qualification/tcp-sack-before-cumack]
+    branches: [qualification/tcp-limited-transmit]
 permissions:
   contents: read
 jobs:
   syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 72
+    timeout-minutes: 78
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: d8559280f5f7656e22bb6e7647ec1319fca6181a
+      PRODUCT: 78c1a89127d3f8ad0c412cbb9315d9a9d812837d
       MASTER: aa767e4c43d011121271551fe24da501a56f729d
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -41,7 +41,7 @@ jobs:
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-    - name: Check the same SACK sequence on Linux, stock gVisor, and the patch-identical backport
+    - name: Measure packet credit, recovery threshold and first repair
       run: |
         set -euo pipefail
         runarm() {
@@ -52,8 +52,8 @@ jobs:
           printf '%s\n' "$source" > "$d/head"
           opts=()
           case "$arm" in
-            linux|stock|netstack|prbase)
-              python3 "$RUNNER_TEMP/rack-fresh-head-config.py"
+            linux|stock|netstack|rack)
+              python3 "$RUNNER_TEMP/rack-fresh-head-config.py" "$arm"
               cat "$RUNNER_TEMP/rack-fresh-head.go.txt" >> test/packetimpact/tests/tcp_rack_test.go
               git apply "$RUNNER_TEMP/exec.patch" ;;
             *clock)
@@ -67,25 +67,27 @@ jobs:
           printf '%s\n' "$code" > "$d/exit"
           printf '%s\n' "${labels[@]}" > "$d/labels"
           for label in "${labels[@]}"; do
-            path=${label#//}; key=${label##*:}; mkdir -p "$d/$key"
+            path=${label#//}; key=${path//\//_}; key=${key/:/_}; mkdir -p "$d/$key"
             for file in test.log test.xml; do
               docker exec tcp-compiler cat "bazel-testlogs/${path/:/\/}/$file" > "$d/$key/$file" || true
             done
           done
           case "$arm" in
-            linux|stock|netstack|prbase) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go pkg/tcpip/transport/tcp/protocol.go ;;
+            linux|stock|netstack|rack) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go pkg/tcpip/transport/tcp/protocol.go ;;
             *clock) git restore --source="$source" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go ;;
           esac
         }
-        runarm linux "$MASTER" //test/packetimpact/tests:tcp_rack_native_test '^TestSACKCreditBeforeCumulativeACK$' 12m
-        runarm stock "$MASTER" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 15m
-        runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 16m
+        runarm linux "$MASTER" //test/packetimpact/tests:tcp_rack_native_test '^TestLimitedTransmitRecovery$' 12m
+        runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^(TestLimitedTransmitRecovery|TestSACKCreditBeforeCumulativeACK)$' 14m
+        runarm stock "$MASTER" //test/packetimpact/tests:tcp_rack_netstack_test '^TestLimitedTransmitRecovery$' 12m
+        runarm rack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 14m
+        runarm owners "$PRODUCT" '//pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp:tcp_nogo' '' 18m
     - name: Verify the original packet and owner results
       if: always()
       run: python3 "$RUNNER_TEMP/rack-fresh-head.py"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-sack-before-cumack
+        name: tcp-limited-transmit
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error
