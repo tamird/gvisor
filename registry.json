@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T22:24:10+00:00",
+    "updatedAt": "2026-11-01T22:36:52+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4586,12 +4586,12 @@
       "repo": "tamird/gvisor",
       "ref": "review/llvm-compiler-current",
       "title": "Use declared LLVM C and C++ toolchains",
-      "url": "https://github.com/tamird/gvisor/commit/0afd5b37e",
+      "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original driver ABI TestParser passed on AMD64 and native ARM64, one test each with no skips. The original uncached ARM64 action supplied the exact 224,953,640-byte linked ELF through its test runfiles. The digest was recovered from its retained input tree. A full-repository query also found that the relocated syscallbench target passes an attribute removed by this compiler change.",
-      "updatedAt": "2026-11-01T22:24:10+00:00",
-      "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
+      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original driver ABI TestParser passed on AMD64 and native ARM64, one test each with no skips. The original uncached ARM64 action supplied the exact 224,953,640-byte linked ELF through its test runfiles. The digest was recovered from its retained input tree. The static syscallbench binary now uses the same musl platform selection as static Go binaries. It ran all three syscall modes on AMD64. Its existing x86-64 constraint rejected ARM64 as expected. Ordinary C binaries used the GNU loader and libc on both architectures. The syscall() and fork/wait modes now call musl. Comparing their timing across compilers requires the same benchmark binary.",
+      "updatedAt": "2026-11-01T22:36:52+00:00",
+      "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
           "label": "Compiler binaries and analyzers on both architectures",
@@ -4660,14 +4660,22 @@
         {
           "label": "Read-only original-result recovery: remote uncached attempt and finish time; input-digest lookup incomplete",
           "url": "https://github.com/tamird/gvisor/actions/runs/41267526547/artifacts/13067558079"
+        },
+        {
+          "label": "Exact ARM64 executable digest in the original test action",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41356396814/artifacts/13103082090"
+        },
+        {
+          "label": "Static syscallbench execution and ordinary GNU C binaries on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385"
         }
       ],
       "refinement": {
         "before": {
-          "head": "467779e0fdf846ea354c8bf545a8a264c14677f2"
+          "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce"
         },
         "after": {
-          "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce"
+          "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c"
         }
       },
       "settledReviews": [
@@ -4680,10 +4688,10 @@
       ],
       "followup": {
         "owner": "Compiler integration",
-        "sourceHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
+        "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
         "disposition": "Qualify current compiler",
-        "observedAt": "2026-11-01T22:22:07+00:00",
-        "nextAction": "Fix syscallbench on its current BUILD path and verify both target architectures. Removing the obsolete attribute restores full package loading, but the default GNU sysroot cannot statically link its libc dependencies. With the declared musl sysroot the AMD64 binary has no interpreter or dynamic dependencies and runs all ten syscalls. Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
+        "observedAt": "2026-11-01T22:36:52+00:00",
+        "nextAction": "Review the full Buildkite Nogo qualification on the revised compiler stack. Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -4698,7 +4706,8 @@
           "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008",
           "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel",
           "https://github.com/tamird/gvisor/actions/runs/41356396814/artifacts/13103082090",
-          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395"
+          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395",
+          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385"
         ]
       }
     },
@@ -38084,6 +38093,10 @@
         {
           "label": "Current restore suspension call",
           "url": "https://github.com/google/gvisor/blob/dba98301b/pkg/sentry/state/state.go#L271"
+        },
+        {
+          "label": "Three-way 100,000-file save comparison with the earlier reference policy",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41356803281"
         }
       ],
       "contributorReview": {
@@ -42657,7 +42670,7 @@
       "url": "https://github.com/tamird/gvisor/commit/e86e84eb8",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-01T22:24:10+00:00",
+      "updatedAt": "2026-11-01T22:36:52+00:00",
       "summary": "Both Buildkite jobs can launch Nogo directly with Bazelisk. The declared compiler built and analyzed the AMD64 and ARM64 vDSOs and systrap stubs on an AMD64 host without an installed cross compiler. A deliberate finding also reached Buildkite’s failed-log uploader. Full-repository execution still needs verification. The revised job retains Buildkite’s existing debug symbols. The full target pattern exposed a compiler integration defect in the syscallbench BUILD file.",
       "evidence": [
         {
@@ -42676,13 +42689,14 @@
       "followup": {
         "owner": "root",
         "sourceHead": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
-        "observedAt": "2026-11-01T22:22:07+00:00",
+        "observedAt": "2026-11-01T22:36:52+00:00",
         "disposition": "Selected native jobs verified",
-        "nextAction": "Verify both full Buildkite job selections after the compiler integration fixes syscallbench. The focused ELF checks passed. The latest action-graph verifier could not identify the requested root labels.",
+        "nextAction": "Check the complete Buildkite commands on the corrected compiler stack. Aquery configured all 871 wildcard-selected tests on AMD64, and every GoStaticAnalysis and TestRunner action key matched across strip settings. Some link actions differ, so the previous full run cannot qualify the final stack.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456",
           "https://github.com/tamird/gvisor/actions/runs/41355123970",
-          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395"
+          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395",
+          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385"
         ]
       }
     }
@@ -46174,7 +46188,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T22:24:10+00:00",
+      "updatedAt": "2026-11-01T22:36:52+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48086,11 +48100,19 @@
             {
               "label": "Review guide and priorities",
               "url": "https://github.com/google/gvisor/issues/16670"
+            },
+            {
+              "label": "Oldest repair and later repair deadline controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41311309196/artifacts/13085019861"
+            },
+            {
+              "label": "Second copy after timeout with a new SACK",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41310394454/artifacts/13084279388"
             }
           ]
         }
       ],
-      "nextStep": "Examine the two goodput reversals in the retained transfers. Compare both senders’ delivery and loss recovery over the same interval before deciding whether to pursue the packetization change.",
+      "nextStep": "Prioritize the oldest-repair deadline in #16624. In the largest reversal the peer received three copies of that repair, two sent only 16.6 ms after the first. The captures omit the endpoint timeout counter and handler order. Existing deterministic tests already separate the deadline and post-timeout SACK paths.",
       "evidence": [
         {
           "label": "Eight competing transfers with verified packet captures",
