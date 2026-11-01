@@ -1,35 +1,101 @@
-name: CI
-
-"on":
+name: Measure graph object descriptors on a 50,000-file checkpoint
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-graph-object-type]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 48
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CURRENT: ${{ github.sha }}
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
+      PRODUCT: a7fa95549d87f22e055aab43e3141afe5d883450
+      STOCK: d280d49cf180e6443fdba49d57260c3bfd471ff5
+      FIXED: 879b790b7a82b61f4d0833476fe1fff4c20d6f08
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 6, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        [[ "$(git rev-parse HEAD)" == "$CURRENT" ]]
+        test "$(git rev-parse HEAD^)" = "$FIXED"
+        git fetch --depth=2 --no-tags origin "$STOCK"
+        test "$(git rev-parse "$STOCK^")" = "$BASE"
+        test "$(git rev-parse HEAD~2)" = "$PRODUCT"
+        test "$(git rev-parse HEAD~3)" = "$BASE"
+        git diff --exit-code "$BASE" "$STOCK" -- . ':!runsc/container/BUILD' ':!runsc/container/container_save_restore_test.go'
+        git diff --exit-code "$PRODUCT" "$FIXED" -- . ':!runsc/container/BUILD' ':!runsc/container/container_save_restore_test.go'
+        git diff --exit-code "$STOCK" "$FIXED" -- runsc/container/BUILD runsc/container/container_save_restore_test.go
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /var/run/docker.sock:/var/run/docker.sock -v "$(command -v docker):/usr/local/bin/docker:ro" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+    - name: Preserve comparison driver outside the selected trees
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        mkdir -p "$RUNNER_TEMP/pair/records"
+        cp test/rbe/tmpfs_profile/pair-{run,bench}.py "$RUNNER_TEMP/pair/"
+    - name: Verify both state test suites and graph object resolution cases
+      id: positive
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" positive
+    - name: Build the two existing benchmark binaries
+      id: compiled
+      if: ${{ !cancelled() }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" prepare
+    - name: Compare native systrap restores and verify 50,000 files
+      id: live
+      if: ${{ !cancelled() && steps.compiled.outcome == 'success' }}
+      timeout-minutes: 29
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" native
+    - name: Compare sixteen paired Save and both Load samples per mode on one exact state file
+      id: bench
+      if: ${{ !cancelled() && steps.live.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" benchmark
+    - name: Compare elapsed time, CPU and allocations with pinned benchstat
+      id: comparison
+      if: ${{ !cancelled() && steps.bench.outcome == 'success' && steps.live.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" stats
+    - name: Record the qualification verdict
+      if: always()
+      env:
+        STEP_RESULTS: ${{ toJSON(steps) }}
+      run: |
+        python3 - <<'PYTHON'
+        import json, os, pathlib, time
+        folder = pathlib.Path(os.environ["RUNNER_TEMP"]) / "pair" / "records"
+        folder.mkdir(parents=True, exist_ok=True)
+        phases = json.loads(os.environ["STEP_RESULTS"])
+        expected = ["positive", "compiled", "live", "bench", "comparison"]
+        outcomes = {key: phases.get(key, {}).get("outcome", "missing") for key in expected}
+        required = ["fixed-suites.json", "source.json", "bench-finished.json", "benchstat.txt", "live-00-stock.json", "live-00-fixed.json"]
+        missing = [name for name in required if not (folder / name).is_file()]
+        passed = all(status == "success" for status in outcomes.values()) and not missing
+        verdict = {"pass": passed, "baseline": os.environ["BASE"], "candidate": os.environ["PRODUCT"], "phases": outcomes, "missing": missing, "verifiedAtNs": time.time_ns()}
+        (folder / "verdict.json").write_text(json.dumps(verdict, indent=2) + "\n")
+        print(verdict)
+        raise SystemExit(0 if passed else 1)
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: tmpfs-graph-object-type
+        path: ${{ runner.temp }}/pair/records/
+        if-no-files-found: error
