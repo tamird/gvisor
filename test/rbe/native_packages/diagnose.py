@@ -49,9 +49,14 @@ def rpc(method, payload):
 
 
 def blob(digest, invocation):
-    url = "bytestream://remote.buildbuddy.io/blobs/" + digest["hash"] + "/" + str(digest["sizeBytes"])
+    size = int(digest.get("sizeBytes", 0))
+    if size == 0:
+        if digest["hash"] != hashlib.sha256(b"").hexdigest():
+            raise ValueError("Invalid empty output digest")
+        return b""
+    url = "bytestream://remote.buildbuddy.io/blobs/" + digest["hash"] + "/" + str(size)
     data = fetch("file/download?" + urllib.parse.urlencode({"bytestream_url": url, "invocation_id": invocation}))
-    if len(data) != int(digest["sizeBytes"]) or hashlib.sha256(data).hexdigest() != digest["hash"]:
+    if len(data) != size or hashlib.sha256(data).hexdigest() != digest["hash"]:
         raise ValueError("Original output digest mismatch")
     return data
 
