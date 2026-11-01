@@ -1,7 +1,7 @@
-name: Inspect TCP socket errors after a refused connection
+name: Compare TCP receive pressure with pipelined small writes
 on:
   push:
-    branches: [qualification/tcp-poll-consumed-error]
+    branches: [qualification/tcp-small-writes-comparison]
 permissions:
   contents: read
 jobs:
@@ -22,8 +22,10 @@ jobs:
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
-        cp test/rbe/tcp-poll-result.py "$RUNNER_TEMP/verify-tcp.py"
-        cp test/rbe/tcp-poll-sample.cc.inc "$RUNNER_TEMP/probe"
+        cp test/rbe/tcp-small-writes.py "$RUNNER_TEMP/verify-tcp.py"
+        cp test/rbe/tcp-small-writes-sources.json "$RUNNER_TEMP/records/sources.json"
+        git fetch -q --depth=2 https://github.com/google/gvisor.git 3498766a36a892aacc7bfa6ffec6e2a9f6c1276f 3cd9a5d970293241934d039506f43ad55384c7fe
+        git fetch -q --depth=2 https://github.com/tamird/gvisor.git 54c46f4a64beab2932e314bd2122a9cd2b7dd670
         git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
@@ -43,28 +45,16 @@ jobs:
       run: |
         set -euo pipefail
         git checkout --quiet --detach "$STOCK"
-        python3 - <<'PYFIX'
-        import os
-        from pathlib import Path
-        f=Path('test/syscalls/linux/tcp_socket.cc'); text=f.read_text()
-        start=text.index('TEST_P(SimpleTcpSocketTest, NonBlockingConnectRefused)')
-        at=text.index('  // Avoiding triggering save',start)
-        f.write_text(text[:at]+Path(os.environ['RUNNER_TEMP'],'probe').read_text()+text[at:])
-        PYFIX
-        for name in poll-native poll-stock; do
-          src=$STOCK
-          testname=tcp_socket_test
-          path=test/syscalls/linux/tcp_socket.cc
-          filter='AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/*'
+        filter='AllInetTests/SimpleTcpSocketTest.SmallSegmentsQueuedWhileNotReading/*'
+        testname=tcp_socket_test
+        for name in native stock reviewed bounded coalesced; do
           executor=remote
           platform=runsc_ptrace
-          if [[ "$name" == *-native ]]; then executor=local; platform=native; fi
-          git checkout --quiet --detach "$src"
-          [[ "$(git rev-parse HEAD)" == "$src" ]]
+          if [[ "$name" == native ]]; then executor=local; platform=native; fi
           d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
-          sha256sum "$path" > "$d/fixture-sha256"
+          python3 "$RUNNER_TEMP/verify-tcp.py" prepare "$name" "$RUNNER_TEMP/records"
           target="//test/syscalls:${testname}_${platform}"
-          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
+          printf '%s\n' "$target" > "$d/target"
           printf '%s\n' "$executor" > "$d/executor"; printf '%s\n' "$filter" > "$d/filter"
           date -u +%FT%TZ > "$d/start"
           rc=0
@@ -76,10 +66,10 @@ jobs:
         done
     - name: Verify each actual socket assertion
       if: ${{ !cancelled() }}
-      run: python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
+      run: python3 "$RUNNER_TEMP/verify-tcp.py" verify "$RUNNER_TEMP/records"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-error-consumption
+        name: tcp-small-writes-syscalls
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

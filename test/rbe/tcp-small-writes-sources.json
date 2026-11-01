@@ -1,0 +1,39 @@
+{
+  "native": {
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [],
+    "tree": "bb227d898e6e6eeaf662d62fba42b0c2f5b86906",
+    "fixture_blob": "7715d721c38e8543e29c0a9b67ad5dbbdf469180"
+  },
+  "stock": {
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [],
+    "tree": "bb227d898e6e6eeaf662d62fba42b0c2f5b86906",
+    "fixture_blob": "7715d721c38e8543e29c0a9b67ad5dbbdf469180"
+  },
+  "reviewed": {
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [
+      "3cd9a5d970293241934d039506f43ad55384c7fe"
+    ],
+    "tree": "181bffbc145b01823f3fb1b56add850605c9e331",
+    "fixture_blob": "7715d721c38e8543e29c0a9b67ad5dbbdf469180"
+  },
+  "bounded": {
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [
+      "3cd9a5d970293241934d039506f43ad55384c7fe",
+      "54c46f4a64beab2932e314bd2122a9cd2b7dd670"
+    ],
+    "tree": "df0a91d4c8ff1922b6f5657d19624ce470c80dc2",
+    "fixture_blob": "7715d721c38e8543e29c0a9b67ad5dbbdf469180"
+  },
+  "coalesced": {
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [
+      "3498766a36a892aacc7bfa6ffec6e2a9f6c1276f"
+    ],
+    "tree": "88adafcfe1d3b4f6d0e90da1fd53b480767d6357",
+    "fixture_blob": "7715d721c38e8543e29c0a9b67ad5dbbdf469180"
+  }
+}
