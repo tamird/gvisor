@@ -75,6 +75,8 @@ type graphObjectDecodeState struct {
 type graphDecodeState struct {
 	ctx context.Context
 	in  decBuf
+	// graphLen is the whole graph's size, even while in is limited to one object.
+	graphLen int
 
 	types []*typeInfo
 	// typeNames are the names of named types, which may not be registered.
