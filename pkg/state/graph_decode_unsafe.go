@@ -78,11 +78,12 @@ type graphDecodeState struct {
 
 	types []*typeInfo
 	// typeNames are the names of named types, which may not be registered.
-	typeNames []string
-	objs      []decObject
-	ods       []graphObjectDecodeState
-	cbs       []decodeCallback
-	targets   []unsafe.Pointer
+	typeNames  []string
+	objs       []decObject
+	ods        []graphObjectDecodeState
+	cbs        []decodeCallback
+	cbOverflow chunked[decodeCallback]
+	targets    []unsafe.Pointer
 	// targetObjs are the objects of targets, or -1.
 	targetObjs []int32
 
@@ -145,7 +146,7 @@ const (
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
-	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
+	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || ds.cbOverflow.n != 0 {
 		return
 	}
 	clear(ds.types[:cap(ds.types)])
@@ -418,18 +419,34 @@ func (cb *decodeCallback) user() bool {
 	return cb.fn != nil || cb.afterLoader != nil || cb.valueLoader != nil
 }
 
+// Keep small callback tables flat. Once this prefix fills, append overflow
+// slabs without copying the prefix and discard the decoder after Load.
+const flatCallbackLimit = maxPooledChunks << chunkedShift
+
+func (ds *graphDecodeState) callback(i int32) *decodeCallback {
+	if uint(i) < uint(len(ds.cbs)) {
+		return &ds.cbs[i]
+	}
+	return ds.cbOverflow.at(int(i) - flatCallbackLimit)
+}
+
 func (ds *graphDecodeState) appendCallback(head, tail *int32, cb decodeCallback) {
 	if cb.waiter < 0 || cb.user() {
 		ds.hooks++
 		ds.deferred++
 	}
 	cb.next = -1
-	ds.cbs = append(ds.cbs, cb)
-	i := int32(len(ds.cbs) - 1)
+	i := int32(len(ds.cbs))
+	if i < flatCallbackLimit {
+		ds.cbs = append(ds.cbs, cb)
+	} else {
+		i += int32(ds.cbOverflow.n)
+		*ds.cbOverflow.add() = cb
+	}
 	if *tail < 0 {
 		*head = i
 	} else {
-		ds.cbs[*tail].next = i
+		ds.callback(*tail).next = i
 	}
 	*tail = i
 }
