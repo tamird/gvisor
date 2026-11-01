@@ -112,6 +112,9 @@ def smoke(install,busybox):
     (fs/"busybox").chmod(0o755)
     expected="release-"+cpu+"-"+results["corrected"][:9]
     (fs/"probe").write_text(expected)
+    # The runner owns these files. Guest uid 0 has no DAC override in this spec.
+    for child in (fs,fs/"proc"): child.chmod(0o755)
+    (fs/"probe").chmod(0o644)
     process={"terminal":False,"user":{"uid":0,"gid":0},"cwd":"/",
              "args":["/busybox","sh","-ec",'/busybox cat /probe; printf "\\n"; /busybox uname -m'],"env":["PATH=/"]}
     spec={"ociVersion":"1.0.2","root":{"path":"rootfs"},"process":process,
