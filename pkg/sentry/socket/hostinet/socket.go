@@ -194,6 +194,19 @@ func (s *Socket) Release(ctx context.Context) {
 	if s.fd < 0 {
 		return
 	}
+	// Linux skips the linger wait when the task holding the last file
+	// reference exits. The sentry thread closing the host fd is still
+	// running. Preserve zero linger, which requests an abortive close.
+	if t := kernel.TaskFromContext(ctx); s.stype == linux.SOCK_STREAM && t != nil && t.ExitState() >= kernel.TaskExitInitiated {
+		linger, err := unix.GetsockoptLinger(s.fd, unix.SOL_SOCKET, unix.SO_LINGER)
+		if err == nil && linger.Onoff != 0 && linger.Linger != 0 {
+			err = unix.SetsockoptLinger(s.fd, unix.SOL_SOCKET, unix.SO_LINGER, &unix.Linger{})
+		}
+		if err != nil {
+			log.Warningf("Disabling TCP linger on task exit: %v", err)
+		}
+	}
+
 	fdnotifier.RemoveFD(int32(s.fd))
 	_ = unix.Close(s.fd)
 }
