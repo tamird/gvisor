@@ -1,0 +1,45 @@
+{
+  "scope": "ordinary GNU syscall binaries",
+  "targets": [
+    "//test/syscalls/linux:fork_test",
+    "//test/syscalls/linux:futex_test",
+    "//test/syscalls/linux:shm_test",
+    "//test/syscalls/linux:tcp_socket_test",
+    "//test/syscalls/linux:udp_socket_test"
+  ],
+  "expected": {
+    "amd64": [
+      "//test/syscalls/linux:fork_test",
+      "//test/syscalls/linux:futex_test",
+      "//test/syscalls/linux:shm_test",
+      "//test/syscalls/linux:tcp_socket_test",
+      "//test/syscalls/linux:udp_socket_test"
+    ],
+    "arm64": [
+      "//test/syscalls/linux:fork_test",
+      "//test/syscalls/linux:futex_test",
+      "//test/syscalls/linux:shm_test",
+      "//test/syscalls/linux:tcp_socket_test",
+      "//test/syscalls/linux:udp_socket_test"
+    ]
+  },
+  "skipped": {
+    "amd64": [],
+    "arm64": []
+  },
+  "provenance": {
+    "source": "851d04fc2918adcaa60a78fd9fa7e766bc4fec68",
+    "selection": "Five unchanged cc_binary(linkstatic=1) owners covering process, IPC and network operations. This is build-only qualification.",
+    "earlier_eventfd": {
+      "run": 41148677403,
+      "artifact": 13022685172,
+      "scope": "Older ARM64 eventfd syscall runner, none of these five owners."
+    }
+  },
+  "extra_flags": [
+    "--workspace_status_command=",
+    "--host_features=fully_static_link",
+    "--noincompatible_exclude_starlark_flags_from_exec_config",
+    "--build_tag_filters=-network_plugins"
+  ]
+}

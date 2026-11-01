@@ -1,7 +1,7 @@
-name: Run ordinary C++ tests with static musl on scratch
+name: Build ordinary GNU syscall binaries on scratch
 on:
   push:
-    branches: [qualification/native-cpp-musl]
+    branches: [qualification/syscall-gnu-build]
 permissions:
   contents: read
   actions: read
@@ -35,8 +35,7 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-          cp test/rbe/{qualification_report.py,unit_matrix.py} "$RUNNER_TEMP/"
-          cp test/rbe/native_packages/{run.py,static_build.py,native-wrapper-control.json} "$RUNNER_TEMP/"
+          cp test/rbe/native_packages/{run.py,static_build.py,gnu_outputs.py,expected-targets.json} "$RUNNER_TEMP/"
           gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$RUNNER_TEMP/supplier.zip"
           python3 - <<'PY_REUSE'
           import hashlib, json, os, zipfile
@@ -59,12 +58,12 @@ jobs:
           unset GH_TOKEN
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -30 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/native-package-evidence/bootstrap.json"
-      - name: Run both original C++ suites on native scratch architectures
+      - name: Build five unchanged GNU syscall targets on both scratch architectures
         working-directory: product
         env:
           PRODUCT: 851d04fc2918adcaa60a78fd9fa7e766bc4fec68
         run: python3 "$RUNNER_TEMP/run.py"
-      - name: Reconcile the supplier and original package verdicts
+      - name: Reconcile the supplier and original build verdicts
         if: always()
         run: |
           python3 - <<'PY_RESULT'
@@ -90,7 +89,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-cpp-musl
+          name: native-gnu-syscall-build
           path: |
             ${{ runner.temp }}/native-package-evidence
           if-no-files-found: error
