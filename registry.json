@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T18:14:27.339843+00:00",
+    "updatedAt": "2026-11-01T18:44:40.953339+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48839,7 +48839,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T18:04:18.442080+00:00",
+      "updatedAt": "2026-11-01T18:44:40.953339+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
@@ -51939,9 +51939,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41331466842/artifacts/13094456718"
             }
           ]
+        },
+        {
+          "text": "On unchanged master, 50,000 files needed 200,998 callback records. The standalone registration API reserved 50,289 slots, but the final slice grew to 243,598 slots versus 228,693. Allocated bytes fell 5.47% and peak heap fell 3.58%; retained heap rose 1.55%. Eight native pairs did not establish faster restore (230.3 ms stock, 236.4 ms with reservation). Hold the proposal. The earlier 9.55% improvement was measured on the separate decoder that combines a callback and its waiter (150,890 records).",
+          "evidence": [
+            {
+              "label": "Standalone API on current master",
+              "url": "https://github.com/tamird/gvisor/commit/255bc204e"
+            },
+            {
+              "label": "Eight native pairs, 16 decode pairs and whole-checkpoint heap data",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41335098309/artifacts/13095863118"
+            },
+            {
+              "label": "Independent callback/waiter simplification",
+              "url": "https://github.com/tamird/gvisor/commit/9f19447bd"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify the smaller registration API on the same workload. Only loaders that unconditionally schedule an after-load hook need a new registration call.",
+      "nextStep": "Evaluate whether producers know their dependency counts at registration. The standalone reservation has no contributor decision pending. Recover the failed race and ARM64 analyzer diagnostics from the recorded invocations.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
