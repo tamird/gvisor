@@ -39,7 +39,7 @@ try:
     if response.get("nextPageToken"):
         raise ValueError("The bounded invocation search is incomplete")
     # Search summaries use ShortFormatPatterns and omit the final label.
-    candidates = [i for i in response.get("invocation", []) if i.get("pattern", [None])[0] == "//src:bazel"]
+    candidates = [i for i in response.get("invocation", []) if (i.get("pattern") or [None])[0] == "//src:bazel"]
     result["search_count"] = len(response.get("invocation", []))
     result["first_pattern_count"] = len(candidates)
     result["matching_command_receipts"] = []
@@ -51,9 +51,11 @@ try:
         if len(exact) != 1:
             raise ValueError("Ambiguous invocation identity")
         invocation = exact[0]
-        if set(invocation.get("pattern", [])) != EXPECTED:
-            continue
         events = [event.get("buildEvent", {}) for event in invocation.get("event", [])]
+        # GetInvocation also retains the short table summary; use the actual BEP.
+        patterns = [event.get("id", {}).get("pattern", {}).get("pattern", []) for event in events]
+        if not any(set(pattern) == EXPECTED for pattern in patterns):
+            continue
         finishes = [event["finished"] for event in events if "finished" in event]
         if len(finishes) != 1:
             continue
@@ -76,6 +78,14 @@ try:
     chunks = rpc("GetEventLogChunk", {"invocationId": identifier, "minLines": 120})
     content = base64.b64decode(chunks.get("buffer", "")).decode(errors="replace")
     content += "\n" + invocation.get("consoleBuffer", "")
+    executions = rpc("GetExecution", {"executionLookup": {"invocationId": identifier}})
+    codes = {3: "INVALID_ARGUMENT", 4: "DEADLINE_EXCEEDED", 5: "NOT_FOUND", 7: "PERMISSION_DENIED",
+             8: "RESOURCE_EXHAUSTED", 9: "FAILED_PRECONDITION", 13: "INTERNAL", 14: "UNAVAILABLE", 16: "UNAUTHENTICATED"}
+    result["execution_status_codes"] = sorted({int(e.get("status", {}).get("code", 0)) for e in executions.get("execution", [])})
+    for execution in executions.get("execution", []):
+        status = execution.get("status", {})
+        if int(status.get("code", 0)) in codes:
+            content += "\n" + codes[int(status["code"])] + ": " + status.get("message", "")
     content = content.replace(key, "[REDACTED]")
     lines = []
     statuses = set()
