@@ -98,9 +98,10 @@ if [[ "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == "true" ]]; then
     gcloud storage cat "$STAGED_BINARIES" \
       | tar -C "$BUILDKITE_STAGED_BINARIES_DIRECTORY" -zxvf -
     chmod -R +x "$BUILDKITE_STAGED_BINARIES_DIRECTORY"
+    read -r -a runtime_args <<< "${RUNTIME_ARGS:-}"
     sudo "$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc" install \
       --experimental=true --runtime="${RUNTIME}" \
-      -- "${RUNTIME_ARGS:-}"
+      -- "${runtime_args[@]}"
   else
     make sudo TARGETS=//runsc:runsc \
       ARGS="install --experimental=true --runtime=${RUNTIME} -- ${RUNTIME_ARGS:-}"
