@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("^@@llvm\\+//tools/internal:|^//vdso:|^//runsc/boot/filter:|^//pkg/sentry/platform/systrap:systrap$")) or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoImports" or .mnemonic=="GoStateify" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("^//vdso:|^//runsc:|^//runsc/boot/filter:filter$")) or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -72,10 +72,10 @@ def invoke(kind,arch,targets,options=()):
     folder=out/kind; folder.mkdir(exist_ok=True)
     log=tmp/(kind+".binpb");txt=tmp/(kind+".buildlog");bep=tmp/(kind+".bep")
     plat="//test/rbe/empty_worker:"+arch
-    cmd=["bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"build","--config=aarch64","--keep_going","--jobs=40","--remote_accept_cached","--noremote_upload_local_results","--remote_download_outputs=toplevel","--spawn_strategy=remote","--noremote_local_fallback","--host_platform="+plat,"--extra_execution_platforms="+plat,"--execution_log_compact_file="+str(log),"--build_event_json_file="+str(bep),"--nobuild_event_json_file_path_conversion","--color=no","--curses=no",*options,*targets]
+    cmd=["bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"build","--config="+("aarch64" if arch=="arm64" else "x86_64"),"--keep_going","--jobs=40","--remote_accept_cached","--noremote_upload_local_results","--remote_download_outputs=toplevel","--spawn_strategy=remote","--noremote_local_fallback","--host_platform="+plat,"--extra_execution_platforms="+plat,"--execution_log_compact_file="+str(log),"--build_event_json_file="+str(bep),"--nobuild_event_json_file_path_conversion","--color=no","--curses=no",*options,*targets]
     start=now()
     with txt.open("w") as stream:
-        status=subprocess.run(cmd,stdout=stream,stderr=subprocess.STDOUT).returncode
+        status=subprocess.run(["timeout","--signal=INT","--kill-after=25s","31m",*cmd],stdout=stream,stderr=subprocess.STDOUT).returncode
     finished=now()
     original=txt.read_text(errors="replace")
     messages=[l.strip()[:1300] for l in original.splitlines() if re.search(r"ERROR:|Traceback|Error in|in fail|No such file|could not start|failed to start|not found|undefined symbol|unable to find|permission denied|unrecognized option|Invocation ID:",l,re.I) and not re.search(r"api.key|authorization|credential",l,re.I)]
@@ -84,9 +84,9 @@ def invoke(kind,arch,targets,options=()):
     lines=original.splitlines()
     for index,line in enumerate(lines):
         if line.startswith("ERROR:") or line.startswith("panic:") or "permission denied" in line.lower() or "not found" in line.lower():
-            block="\n".join(lines[index:index+6])
+            block="\n".join(lines[index:index+14])
             if re.search(r"api[-_]key|authorization|credential|remote_header",block,re.I): continue
-            if len(records)<60: records.append(block[:1900])
+            if len(records)<60: records.append(block[:3600])
     (folder/"diagnostics.txt").write_text("\n---\n".join(records)+"\n")
     results[kind]=r; save()
     actions=rows(log)
@@ -94,90 +94,52 @@ def invoke(kind,arch,targets,options=()):
     r["actions"]=[{k:a.get(k) for k in ("label","mnemonic","runner","cacheHit","exitCode","status","executable")} for a in actions]
     print(kind,status,r["invocations"],messages[-5:],flush=True);save()
     return r,actions
-def remote(a,img):
-    props={p["name"]:p["value"] for p in (a.get("platform") or {}).get("properties",[])}
-    return a.get("runner")=="remote" and not a.get("cacheHit") and props.get("container-image")==img and props.get("Arch")=="arm64"
-def collect_root(kind,img):
-    result,actions=invoke(kind,"arm64" if img==image else "gnu",[probe])
-    if result["native_exit"]:return False
-    data=Path("bazel-bin/test/rbe/empty_worker/root.txt").read_bytes()
-    assert "machine aarch64" in data.decode().splitlines()
-    (out/kind/"filesystem.txt").write_bytes(data)
-    obs={name:(value,int(rc)) for name,value,rc in re.findall(r"^exec (\S+) (yes|no) (\d+)$",data.decode(),re.M)}
-    result["probe"]=obs
-    result["root_paths"]=re.findall(r"^root (\S+)$",data.decode(),re.M)
-    act,=[a for a in actions if a["mnemonic"]=="ObserveWorkerRoot"]
-    seen=set(obs)=={"/bin/sh","/bin/bash","/usr/bin/cc","/usr/bin/gcc","/usr/bin/clang"}
-    verified=remote(act,img) and not act.get("exitCode") and any(o.get("digest",{}).get("hash")==sha(data) for o in act["outputs"])
-    if img==image:
-        content=re.search(r"^hello-sha (\w+)$",data.decode(),re.M)
-        return verified and seen and not ({"/bin","/usr","/tmp"} & set(result["root_paths"])) and "/hello" in result["root_paths"] and content and content[1]==results["provenance"]["hello_sha256"] and all(e==("no",127) for e in obs.values())
-    return verified and seen and obs["/bin/sh"]==("yes",0) and any(obs[k]==("yes",0) for k in ("/usr/bin/gcc","/usr/bin/cc"))
-def verify_product(r,actions):
-    if r["native_exit"]: return False
-    successful=[a for a in actions if remote(a,image) and not a.get("exitCode") and not a.get("status")]
-    def matches(m,s):
-        return [a for a in successful if a.get("mnemonic")==m and s in (a.get("label") or "")]
-    ok = len(matches("CppCompile","systrap/sysmsg"))>=4 and bool(matches("CppLink","systrap/sysmsg")) and bool(matches("GoCompilePkg","pkg/gohacks")) and bool(matches("GoLink","systrap/sysmsg")) and bool(matches("GoToolchainBinaryBuild",""))
-    sd=Path("bazel-bin/pkg/sentry/platform/systrap/sysmsg")
-    elf=sd/"sighandler.built-in.bin.o";blob=sd/"sighandler.built-in.bin";offsets=sd/"sighandler.go.arch"
-    section=tmp/"section.bin"
-    subprocess.run(["objcopy","--dump-section",".crblob="+str(section),str(elf),str(tmp/"readback.elf")],check=True)
-    exports=dict((name,int(value,16)) for value,name in re.findall(r"^([0-9a-fA-F]+)\s+\w\s+(__export_\w+)$",run("nm","-n",str(elf)),re.M))
-    written=dict((name,int(value,16)) for name,value in re.findall(r"Sighandler_blob_offset__(__export_\w+) = (0x\w+)",offsets.read_text()))
-    assert exports and exports==written
-    ok = ok and blob.read_bytes()==section.read_bytes() and 0<len(blob.read_bytes()) and int.from_bytes(elf.read_bytes()[18:20],"little")==183
-    ok = ok and all(0 <= n < len(blob.read_bytes()) for n in exports.values())
-    for path in (elf, blob, offsets):
-        shutil.copyfile(path, out/"composed"/path.name)
-    r["machine"]=int.from_bytes(elf.read_bytes()[18:20],"little")
-    r["section_bytes"]=section.stat().st_size
-    r["section_exact"]=section.read_bytes()==blob.read_bytes()
-    r["materialized"]={p.name:{"bytes":p.stat().st_size,"sha256":sha(p.read_bytes())} for p in (elf,blob,offsets)}
-    r["exported_offsets"]=exports
-    ok = ok and all(any(o.get("digest",{}).get("hash")==m["sha256"] for a in successful for o in a["outputs"]) for m in r["materialized"].values())
-    r["go_archive_outputs"]=[o for a in matches("GoCompilePkg","pkg/gohacks") for o in a["outputs"]]
-    return ok and bool(r["go_archive_outputs"])
 try:
     assert platform.machine()=="aarch64"
     assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
     source(os.environ["CORRECTED"])
-    results["original_arm64_bundle"]={"id":13061034514,"run":41251597684,"sha256":"ee045dc1a9159920c85f29387e501ea019b26b3f67727b06de23306819b37a13"}
-    opts=["--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain","--extra_toolchains=//test/rbe/go_bootstrap:linux_arm64_ash"]
-    owner="//runsc/boot/filter:filter"
-    opts.extend(["--compilation_mode=fastbuild",r"--remote_download_regex=(.*/)?runsc/boot/filter/filter[.][ax]$"])
-    result,actions=invoke("consumer","arm64",[owner],opts)
-    failures=[a for a in actions if a.get("exitCode") or a.get("status")]
-    result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action")} for a in failures]
-    result["original_sysmsg_bytes"]={"run":41253543881,"artifact":13062207201}
-    result["prior_filter"]={"source":"3b55c3fdad7f1a1abc7111bfa142551df898b3fe","run":41253758463,"artifact":13062502477}
-    result["vdso_actions"]=[{k:a.get(k) for k in ("label","mnemonic","runner","cacheHit","exitCode","status","action","outputs")} for a in actions if (a.get("label") or "").startswith("//vdso:")]
-    kind="PrecompileSeccomp"
-    result["precompilers"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","cacheHit","exitCode","status","outputs")} for a in actions if a["mnemonic"]==kind]
-    if result["native_exit"]==0:
-        compiled,=[a for a in actions if a["label"]==owner and a["mnemonic"]=="GoCompilePkg"]
-        gen,=[a for a in actions if a["label"]=="//runsc/boot/filter:filter_precompiled" and a["mnemonic"]==kind]
-        assert "filter_precompiled_gen_stubbed_bin" in gen["executable"],gen["executable"]
-        for a in (compiled,gen):
-            props={p["name"]:p["value"] for p in a["platform"]["properties"]}
-            assert props["Arch"]=="arm64" and props["container-image"]==image and not a.get("exitCode") and not a.get("status")
-        archive,=[o for o in compiled["outputs"] if o["path"].endswith("/filter.a")]
-        result["owner_archive"]=archive
-        result["owner_action"]={k:compiled.get(k) for k in ("runner","cacheHit","platform","executable","action")}
-        save()
-        exec_root=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
-        assert exec_root.is_absolute()
-        data=(exec_root/archive["path"]).read_bytes()
-        assert len(data)==int(archive["digest"]["sizeBytes"]) and sha(data)==archive["digest"]["hash"]
-        result["materialized_archive"]={"bytes":len(data),"sha256":sha(data)}
-        results["verdict"]="FASTBUILD_FILTER_BUILT"
-    elif any(remote(a,image) for a in failures):
-        results["verdict"]="MEASURED_WORKER_FAILURE"
-    else:
-        results["verdict"]="NO_WORKER_WITNESS"
-except Exception as e:
-    results["error"]=repr(e);results["verdict"]="INCOMPLETE"
+    results["original_controls"]={"amd64":13056457271,"arm64":13061034514,
+                                  "arm64_filter":13062876059}
+    target="//runsc:runsc"
+    for cpu,machine in (("arm64",183),("amd64",62)):
+        try:
+            opts=["--compilation_mode=fastbuild","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
+                  "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash"]
+            result,actions=invoke(cpu,cpu,[target],opts)
+            failed=[a for a in actions if a.get("exitCode") or a.get("status")]
+            result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action")} for a in failed]
+            def props(a):
+                return {p["name"]:p["value"] for p in a["platform"]["properties"]}
+            if result["native_exit"]==0:
+                rows=[(a,o) for a in actions if a["mnemonic"]=="GoLink" and a["label"].startswith("//runsc:") for o in a["outputs"] if Path(o["path"]).name=="runsc"]
+                tool,product=next((a,o) for a,o in rows if o["path"].split("/")[1].startswith("aarch64-" if cpu=="arm64" else "k8-"))
+                assert props(tool)["Arch"]==cpu and props(tool)["container-image"]==image
+                result["owner_action"]={k:tool.get(k) for k in ("label","runner","cacheHit","platform","action","executable")}
+                result["owner_output"]=product
+                save()
+                exec_root=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
+                assert exec_root.is_absolute()
+                file=exec_root/product["path"]
+                with file.open("rb") as stream:
+                    head=stream.read(24)
+                    assert head[:6]==b"\x7fELF\x02\x01" and int.from_bytes(head[18:20],"little")==machine
+                    stream.seek(0)
+                    digest=hashlib.file_digest(stream,"sha256").hexdigest()
+                assert file.stat().st_size==int(product["digest"]["sizeBytes"]) and digest==product["digest"]["hash"]
+                result.update(verdict="RUNSC_BUILT",bytes=file.stat().st_size,sha256=digest,elf_machine=machine)
+            elif any(x.get("runner")=="remote" and x.get("platform") and props(x).get("Arch")==cpu and props(x).get("container-image")==image for x in failed):
+                result["verdict"]="MEASURED_WORKER_FAILURE"
+            else:
+                result["verdict"]="NO_WORKER_WITNESS"
+        except Exception as err:
+            results.setdefault(cpu,{})["verification_error"]=repr(err)[:600]
+            results[cpu]["verdict"]="INCOMPLETE"
+        finally:
+            save()
+    results["verdict"]="ALL_ARMS_OBSERVED" if all(results[cpu]["verdict"] in ("RUNSC_BUILT","MEASURED_WORKER_FAILURE") for cpu in ("arm64","amd64")) else "INCOMPLETE"
+except Exception as err:
+    results["error"]=repr(err);results["verdict"]="INCOMPLETE"
 finally:
     results["verified"]=now();save()
-    print(results["verdict"],results.get("error",""),flush=True)
-sys.exit(results["verdict"] not in ("FASTBUILD_FILTER_BUILT","MEASURED_WORKER_FAILURE"))
+    print(results["verdict"],[(cpu,results.get(cpu,{}).get("verdict")) for cpu in ("arm64","amd64")],flush=True)
+sys.exit(results["verdict"]!="ALL_ARMS_OBSERVED")
