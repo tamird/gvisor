@@ -55,8 +55,7 @@ steps:
     commands:
       # Stamps the binaries below with release-<name>.
       - ./.buildkite/scripts/release/tag.sh stage
-      # Python packaging uses the release tools installed in the builder.
-      - make DOCKER_BUILD=true artifacts-python
+      - make DOCKER_BUILD=false artifacts-python
       - |
         if [[ "$${BUILDKITE_TAG:-}" == release-*-staging ]]; then
           label="$${BUILDKITE_TAG%-staging}"
