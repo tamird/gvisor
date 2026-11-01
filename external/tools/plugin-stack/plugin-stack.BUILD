@@ -51,20 +51,15 @@ _ENV = {
     "RTE_TARGET": "x86_64-native-linuxapp-$(C_COMPILER)",
 }
 
-_COMMON = dict(
-    build_shell = "@plugin_programs//:bin/bash",
-    exec_compatible_with = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
-    ],
-    exec_properties = {
-        "container-image": "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18",
-        "recycle-runner": "false",
-    },
-    lib_source = ":sources",
-    toolchains = ["@//external/tools/plugin-stack:toolchain"],
-    visibility = ["//visibility:public"],
-)
+_EXEC_PROPERTIES = {
+    "container-image": "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18",
+    "recycle-runner": "false",
+}
+
+_EXEC_CONSTRAINTS = [
+    "@platforms//cpu:x86_64",
+    "@platforms//os:linux",
+]
 
 # Produce the real configuration without compiling DPDK or its build tools.
 make(
@@ -74,7 +69,11 @@ make(
         "dpdk",
     ],
     build_data = _BUILD_DATA,
+    build_shell = "@plugin_programs//:bin/bash",
     env = _ENV,
+    exec_compatible_with = _EXEC_CONSTRAINTS,
+    exec_properties = _EXEC_PROPERTIES,
+    lib_source = ":sources",
     out_headers_only = True,
     postfix_script = """
 mkdir -p $$INSTALLDIR/include
@@ -85,7 +84,8 @@ cp dpdk/_build/dpdk/$$RTE_TARGET/include/rte_config.h $$INSTALLDIR/include/
         "@platforms//os:linux",
     ],
     targets = ["config"],
-    **_COMMON
+    toolchains = ["@//external/tools/plugin-stack:toolchain"],
+    visibility = ["//visibility:public"],
 )
 
 make(
@@ -99,10 +99,14 @@ make(
         ":pmd_config",
         "@plugin_dpdk//:pmdinfogen",
     ],
+    build_shell = "@plugin_programs//:bin/bash",
     env = _ENV | {
         "PMDINFOGEN": "$(execpath @plugin_dpdk//:pmdinfogen)",
         "PMD_CONFIG": "$(execpath :pmd_config)",
     },
+    exec_compatible_with = _EXEC_CONSTRAINTS,
+    exec_properties = _EXEC_PROPERTIES,
+    lib_source = ":sources",
     # The binary and configuration are additional qualification outputs.
     out_binaries = ["dpdk-pmdinfogen"],
     out_data_files = ["rte_config.h"],
@@ -122,5 +126,6 @@ cp $$PMD_CONFIG/rte_config.h $$INSTALLDIR/rte_config.h
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     targets = ["libtldk.a"],
-    **_COMMON
+    toolchains = ["@//external/tools/plugin-stack:toolchain"],
+    visibility = ["//visibility:public"],
 )
