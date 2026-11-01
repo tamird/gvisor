@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T13:34:54.530558+00:00",
+    "updatedAt": "2026-11-01T13:49:13.599008+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T13:34:54.530558+00:00"
+    "registryDate": "2026-11-01T13:49:13.599008+00:00"
   },
   "groups": [
     {
@@ -41963,6 +41963,74 @@
         "summary": "Open the independent shared-memory test portability PR?",
         "body": "Four shared-memory cases ran under default GNU and on both native musl architectures. The ExitAllThreads test also executed the changed fork helper on native GNU and musl."
       }
+    },
+    {
+      "id": "branch:state-resolved-graph-type",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/state-resolved-graph-type",
+      "head": "00b4278b97991c5885ec17dd13ba0968ff90768c",
+      "title": "Store one resolved payload type per checkpoint graph object",
+      "url": "https://github.com/tamird/gvisor/commit/00b4278b9",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T13:49:13.599008+00:00",
+      "summary": "One type pointer now describes what to decode for maps, arrays and values. The descriptor shrinks from 56 to 40 bytes on 64-bit systems. In 16 paired decodes of one 50,000-file tmpfs checkpoint, GC-on decode fell from 185.4 to 179.5 ms and live heap from 67.04 to 65.49 MiB. GC-off decode time and peak heap were unchanged within the measurements.",
+      "evidence": [
+        {
+          "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114"
+        },
+        {
+          "label": "AMD64 state race suites, AMD64 and ARM64 analyzers, and framing integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41312665985/artifacts/13085841881"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "00b4278b97991c5885ec17dd13ba0968ff90768c",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/00b4278b9",
+        "title": "Store one resolved payload type per checkpoint graph object",
+        "requestedAt": "2026-11-01T13:49:13.599008+00:00",
+        "summary": "Open the standalone decoder descriptor simplification?",
+        "body": "Both live restores verified 50,000 files. The shared checkpoint comparison measured 3.18% lower GC-on decode time, 2.31% lower live heap and 1.13% fewer bytes allocated. The state package suites, AMD64 race suites and both architecture analyzers passed."
+      }
+    },
+    {
+      "id": "branch:state-graph-object-frame-bounds",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/graph-frame-after-descriptors",
+      "head": "70a5246a5c87b1f6dcadef0e9bc580d8842e7238",
+      "title": "Bound graph object decoding by its payload length",
+      "url": "https://github.com/tamird/gvisor/commit/70a5246a5",
+      "group": "runtime",
+      "summary": "A map whose payload ends immediately after its key could consume a value from outside that payload. Load and PrintGraph now bound eager and deferred reads by the object’s length prefix.",
+      "evidence": [
+        {
+          "label": "Stock Load and Print read the missing value",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41311798936/artifacts/13086400728"
+        },
+        {
+          "label": "Both public paths reject the truncated payload; the large child map retains its allocation hint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41312665985/artifacts/13085841881"
+        }
+      ],
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T13:49:13.599008+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "70a5246a5c87b1f6dcadef0e9bc580d8842e7238",
+        "baseHead": "00b4278b97991c5885ec17dd13ba0968ff90768c",
+        "url": "https://github.com/tamird/gvisor/commit/70a5246a5",
+        "title": "Bound graph object decoding by its payload length",
+        "requestedAt": "2026-11-01T13:49:13.599008+00:00",
+        "summary": "Open the framing fix after the descriptor change lands?",
+        "body": "Stock Load and Print both accept a checkpoint truncated after the map key. Both reject the same malformed checkpoint with this fix. Eight records passed, including valid map decoding and the 4,096-entry nested-map control."
+      }
     }
   ],
   "edges": [
@@ -45409,6 +45477,15 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/b68f40e4e"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:state-resolved-graph-type",
+      "to": "branch:state-graph-object-frame-bounds",
+      "reason": "The frame reader uses the consolidated payload type to decide when to defer each object.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/00b4278b9...70a5246a5"
+      ]
     }
   ],
   "investigations": [
@@ -48323,9 +48400,35 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T13:34:54.530558+00:00",
+      "updatedAt": "2026-11-01T13:47:22.903093+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
+        {
+          "text": "A map whose payload ends immediately after its key could consume a value from outside that payload. Load and PrintGraph now bound eager and deferred reads by the object’s length prefix.",
+          "evidence": [
+            {
+              "label": "Stock Load and Print read the missing value",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41311798936/artifacts/13086400728"
+            },
+            {
+              "label": "Both public paths reject the truncated payload; the large child map retains its allocation hint",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41312665985/artifacts/13085841881"
+            }
+          ]
+        },
+        {
+          "text": "One type pointer now describes what to decode for maps, arrays and values. The descriptor shrinks from 56 to 40 bytes on 64-bit systems. In 16 paired decodes of one 50,000-file tmpfs checkpoint, GC-on decode fell from 185.4 to 179.5 ms and live heap from 67.04 to 65.49 MiB. GC-off decode time and peak heap were unchanged within the measurements.",
+          "evidence": [
+            {
+              "label": "Five-file simplification, 20 net lines removed",
+              "url": "https://github.com/tamird/gvisor/commit/00b4278b9"
+            },
+            {
+              "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114"
+            }
+          ]
+        },
         {
           "text": "The first prototype changed a Go field tag included in the graph fingerprint and could not read a stock checkpoint. Preserving the tag allowed both binaries to read each other’s output. In 16 paired samples per mode on the same 50,000-file checkpoint, the atomic parent-field change gave no measurable improvement in elapsed time, CPU use, GC or allocations. The two state suites passed.",
           "evidence": [
@@ -51295,11 +51398,11 @@
           ]
         }
       ],
-      "nextStep": "Compare one resolved payload type per graph object on the same 50,000-file checkpoint. Both state suites passed, including the graph printer; the paired benchmark is running.",
+      "nextStep": "The smaller descriptor and the frame-boundary correction are ready for contributor review. Submit the descriptor first, then the correction on the same decoder.",
       "evidence": [
         {
-          "label": "Graph object sizing and checkpoint benchmark",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41310990566"
+          "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114"
         },
         {
           "label": "Checkpoint compatibility and 96 same-file measurements",
