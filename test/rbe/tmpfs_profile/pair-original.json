@@ -1,0 +1,43 @@
+{
+  "bad-state-suites-command.json": {
+    "exit": 3,
+    "start": 1793522389175927438,
+    "end": 1793522433391949319,
+    "diagnostics": [
+      "INFO: Invocation ID: e393eb1f-0384-4242-9b74-337922a4386e"
+    ]
+  },
+  "fixed-state-suites-command.json": {
+    "exit": 34,
+    "start": 1793522433503503171,
+    "end": 1793522569391465120,
+    "diagnostics": [
+      "INFO: Invocation ID: db728595-bac2-4a76-beb9-e79702c62469",
+      "ERROR: /home/runner/work/gvisor/gvisor/pkg/state/tests/BUILD:28:8: Testing //pkg/state/tests:tests_test failed: (Exit 34): Remote Execution Failure:",
+      "ERROR: Build did NOT complete successfully",
+      "FAILED: "
+    ]
+  },
+  "fixed-suites.json": {
+    "//pkg/state:state_test": {
+      "total": 67,
+      "failed": [],
+      "skipped": [],
+      "missing": []
+    }
+  },
+  "bad-suites.json": {
+    "//pkg/state:state_test": {
+      "total": 1,
+      "failed": [
+        "TestGraphCallbackOrder"
+      ],
+      "skipped": [],
+      "missing": [],
+      "expected": [
+        "graph_decode_callbacks_test.go:286: loadGraph: error executing callbacks: A: first afterLoad ran out of order (scalar=true valueRef=false after=false):"
+      ]
+    }
+  },
+  "archive": "https://github.com/tamird/gvisor/actions/runs/41289759911/artifacts/13076269819"
+}

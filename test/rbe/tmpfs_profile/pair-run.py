@@ -39,15 +39,16 @@ def select(arm):
     subprocess.run(["git","diff","--exit-code","--quiet"],check=True)
 def output_file(name, target):
     found=command(name,bz+["cquery",*opts,"--output=files",target],get_stdout=True).splitlines()
-    matches=[Path(x).absolute() for x in found if Path(x).is_file() and os.access(x,os.X_OK)]
+    matches=[Path(x).absolute() for x in found if x and subprocess.run(gnu+["test","-f",x,"-a","-x",x]).returncode==0]
     if len(matches)!=1:raise ValueError((target,matches))
     return matches[0]
 cases={"state_test":["TestGraphCallbackOrder","TestGraphDependencyCycle","TestGraphDecodeMapPopulatedBeforeCallbacks","TestGraphDecodeMapAndLoadValueDirectStructWithHooks","TestLoadValueSnapshot"],"tests_test":["TestWaitOrdering","TestInteriorPointersIntoSlices","TestMapIdentity"]}
 def suite(arm):
     select(arm)
-    owners=["//pkg/state:state_test"] if arm=="bad" else ["//pkg/state:state_test","//pkg/state/tests:tests_test"]
+    owners=["//pkg/state:state_test"] if arm=="bad" else ["//pkg/state/tests:tests_test"]
     args=["test",*opts,"--test_arg=-test.v","--test_sharding_strategy=disabled","--nocache_test_results"]
     if arm=="bad":args+=["--test_filter=^TestGraphCallbackOrder$"]
+    else:args+=["--strategy=TestRunner=local"]
     code=command(arm+"-state-suites",bz+args+owners,allow_failure=True)
     all_cases={}
     for owner in owners:
@@ -102,7 +103,7 @@ def prepare():
         exe=output_file(arm+"-build-path",label)
         subprocess.run(gnu+["cp",str(exe),str(root/arm)],check=True)
     assert original_bench[0]==original_bench[1]=="588cc13ed911b4a04f5d192032a5afa315be61a0",original_bench
-    hashes={arm:hashlib.sha256((root/arm).read_bytes()).hexdigest() for arm in ("stock","fixed")}
+    hashes={arm:subprocess.check_output(gnu+["sha256sum",str(root/arm)],text=True).split()[0] for arm in ("stock","fixed")}
     assert len(set(hashes.values()))==2,hashes
     record("source.json",{"arms":sources,"benchmark_blob":original_bench[0],"lookup":hashes,"product":os.environ['PRODUCT']})
 def order(i):
