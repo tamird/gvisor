@@ -4,6 +4,7 @@ on:
     branches: [qualification/plugin-scratch]
 permissions:
   contents: read
+  actions: read
 jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
@@ -54,7 +55,30 @@ jobs:
           fi
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -20 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
-      - name: Compare same-version configure behavior and run supplier regressions
+      - name: Retrieve original probe evidence and command diagnostic
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          gh api repos/tamird/gvisor/actions/artifacts/13090111207/zip > "$RUNNER_TEMP/original.zip"
+          python3 - <<'PYCODE'
+          import hashlib, json, os, re, subprocess
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          invocation = "7b34ba6d-72ee-4e40-be44-a826ab9ad203"
+          path = root / "original-diagnostic.private"
+          with path.open("w") as stream:
+              try:
+                  code = subprocess.run([str(root / "bb"), "view", invocation, "--errors"], stdout=stream, stderr=stream, timeout=120).returncode
+              except subprocess.TimeoutExpired:
+                  code = 124
+          content = path.read_text(errors="replace")
+          match = re.search(r"No context of type TestActionContext registered for requested value 'remote', available identifiers are: \[[a-z, ]+\]", content)
+          row = {"invocation": invocation, "read_exit": code, "status": "RECOVERED" if match and code == 0 else "INCOMPLETE", "diagnostic": match.group() if match else None, "bytes": len(content.encode()), "sha256": hashlib.sha256(content.encode()).hexdigest()}
+          (root / "package-evidence/original-unit-diagnostic.json").write_text(json.dumps(row, indent=2) + "\n")
+          PYCODE
+      - name: Finish supplier regressions without repeating the successful probes
         working-directory: product
         run: |
           set -eu
@@ -70,7 +94,7 @@ jobs:
               visibility = ["//visibility:public"],
           )
           EOF
-          python3 ../carrier/test/rbe/empty_worker/configure_probe.py
+          python3 ../carrier/test/rbe/empty_worker/configure_probe.py --finish
       - name: Require all independent results
         if: always()
         run: |

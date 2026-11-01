@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+import zipfile
 
 
 root = Path(os.environ["RUNNER_TEMP"])
@@ -29,13 +30,13 @@ def save():
     (out / "configure-probe.json").write_text(json.dumps(row, indent=2) + "\n")
 
 
-def invoke(item, phase, command, output=None):
+def invoke(item, phase, command, output=None, cwd=None):
     log = output or root / (item["name"] + "-" + phase + ".private")
     result = {"started": wildcard.now()}
     item[phase] = result
     save()
     with log.open("w") as stream, (root / (item["name"] + "-" + phase + "-stderr.private")).open("w") as err:
-        result["exit"] = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "12m", *command], stdout=stream, stderr=err).returncode
+        result["exit"] = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "12m", *command], cwd=cwd, stdout=stream, stderr=err).returncode
     result["finished"] = wildcard.now()
     save()
     return result["exit"]
@@ -112,7 +113,7 @@ def unit_tests():
     bep, compact = root / "unit.bep", root / "unit.compact"
     try:
         assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=supplier, text=True).strip() == candidate
-        flags = ["--config=x86_64", "--config=plugin-tldk", "--compilation_mode=opt", "--host_platform=//test/rbe/make_control:populated", "--extra_execution_platforms=//test/rbe/make_control:populated", "--registry=" + (workspace / "registry").as_uri(), "--registry=https://bcr.bazel.build", "--jobs=400", "--remote_download_outputs=all", "--test_strategy=remote", "--nocache_test_results", "--keep_going", "--color=no", "--curses=no", "--build_event_json_file=" + str(bep), "--execution_log_compact_file=" + str(compact)]
+        flags = ["--config=x86_64", "--config=plugin-tldk", "--compilation_mode=opt", "--host_platform=//test/rbe/make_control:populated", "--extra_execution_platforms=//test/rbe/make_control:populated", "--registry=" + (workspace / "registry").as_uri(), "--registry=https://bcr.bazel.build", "--jobs=400", "--remote_download_outputs=all", "--strategy=TestRunner=remote", "--nocache_test_results", "--keep_going", "--color=no", "--curses=no", "--build_event_json_file=" + str(bep), "--execution_log_compact_file=" + str(compact)]
         rc = invoke(item, "test", [*base, "test", *flags, *sorted(labels)])
         parsed = wildcard.events(bep)
         item["test"].update(invocation=parsed["invocation"], finish=parsed["finish"], completed=[{"label": label, "configuration": config, "status": status} for (label, config), status in parsed["completed"].items()])
@@ -170,12 +171,28 @@ try:
         raise AssertionError("case verifier accepted missing or failed execution")
     row["reporter_controls"] = 5
     row["format"] = {"name": "format"}
-    invoke(row["format"], "check", [*base, "run", "@buildifier_prebuilt//:buildifier", "--", "-mode=check", str(supplier / "autoconf/private/checker/BUILD.bazel")])
+    invoke(row["format"], "check", [*base, "run", "@buildifier_prebuilt//:buildifier", "--", "-mode=check", str(supplier / "autoconf/private/checker/BUILD.bazel")], cwd=workspace / "carrier")
     # This is a qualification-only dependency override, identical in both arms.
     with Path("MODULE.bazel").open("a") as stream:
         stream.write('\nlocal_path_override(module_name = "rules_cc_autoconf", path = ' + json.dumps(str(supplier)) + ')\n')
-    collect("control", control, wildcard.image, "oci", "//test/rbe/empty_worker:amd64_musl")
-    collect("fixed", candidate, wildcard.image, "oci", "//test/rbe/empty_worker:amd64_musl")
+    if sys.argv[1:] == ["--finish"]:
+        original_zip = root / "original.zip"
+        digest = hashlib.sha256(original_zip.read_bytes()).hexdigest()
+        assert digest == "902c3db9022cef2b4c7d684d1305f1e6279c5a37fa87a5281898144a7378cfb8"
+        with zipfile.ZipFile(original_zip) as bundle:
+            original = json.loads(bundle.read("configure-probe.json"))
+        for key in ("source", "registry", "target", "supplier_control", "supplier_candidate", "supplier_version"):
+            assert original[key] == row[key]
+        assert original["status"] == "INCOMPLETE" and original["executed_tests"] == 0
+        assert set(original["arms"]) == {"control", "fixed"}
+        assert all(arm["status"] == "OBSERVED" for arm in original["arms"].values())
+        (out / "original-producer.json").write_text(json.dumps(original, indent=2) + "\n")
+        row["reused_probe_evidence"] = {"run": 41322597750, "artifact": 13090111207, "zip_sha256": digest}
+        row["arms"] = original["arms"]
+    else:
+        assert not sys.argv[1:]
+        collect("control", control, wildcard.image, "oci", "//test/rbe/empty_worker:amd64_musl")
+        collect("fixed", candidate, wildcard.image, "oci", "//test/rbe/empty_worker:amd64_musl")
     unit_tests()
     if all(value["status"] == "OBSERVED" for value in row["arms"].values()) and row["unit"]["status"] == "PASS" and row["format"]["check"]["exit"] == 0:
         assert row["arms"]["control"]["compiler"] == row["arms"]["fixed"]["compiler"]
