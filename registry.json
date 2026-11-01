@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T03:06:28.845307+00:00",
+    "updatedAt": "2026-11-01T04:26:11.575254+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41201,6 +41201,52 @@
         "summary": "Open the standalone fix for receive accounting on TCP listeners? It has no prerequisite.",
         "body": "With SYN cookies and a small receive buffer, a listener can stop\naccepting connections even after the application reads and closes every\naccepted socket. When each connection sends 512 bytes on its final ACK,\nthe first four succeed but the fifth never makes the listener readable.\n\nThat ACK passes from the listener to the accepted socket. Each enqueue\ncharges the segment to its new socket, but freeing it releases only the\nlast charge. Transfer the charge when the segment changes sockets and\nkeep it when the same socket requeues it.\n\nExercise eight successive connections with and without SYN cookies.\nLinux and gVisor both accept all eight and deliver their payloads."
       }
+    },
+    {
+      "id": "branch:smoke-race-target-mode",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/gvisor",
+      "ref": "proposals/smoke-race-target-mode",
+      "head": "8c6ed7a88a418240a629c29a6e9bbe217491bbab",
+      "url": "https://github.com/tamird/gvisor/commit/8c6ed7a88",
+      "title": "Select race instrumentation on the smoke launcher",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T04:26:11.575254+00:00",
+      "summary": "The Buildkite smoke target already enables the Go race detector on runsc and its dependencies. Adding the global race configuration also makes four build tools require a host ELF loader. With the redundant flag removed, the race launcher linked on an empty AMD64 worker. The ordinary GNU Make job then staged all eight binaries at the same source revision and ran its rootless guest successfully.",
+      "evidence": [
+        {
+          "label": "Original empty-worker build failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41265372846/artifacts/13067411625"
+        },
+        {
+          "label": "Generator ELF interpreters, corrected scratch link and rootless guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41267001039/artifacts/13067872662"
+        },
+        {
+          "label": "Same-source Make smoke, eight staged ELF files and matching Sentry stamp",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41272340656/artifacts/13069493542"
+        },
+        {
+          "label": "Original GNU release analyzer resource failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41268339617/artifacts/13069347525"
+        },
+        {
+          "label": "Target-level race instrumentation introduced in ba94580e1",
+          "url": "https://github.com/google/gvisor/commit/ba94580e1"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "8c6ed7a88a418240a629c29a6e9bbe217491bbab",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "requestedAt": "2026-11-01T04:26:11.575254+00:00",
+        "url": "https://github.com/tamird/gvisor/commit/8c6ed7a88",
+        "title": "Select race instrumentation on the smoke launcher",
+        "summary": "Open this standalone Buildkite race smoke correction upstream? It has no prerequisite.",
+        "body": "runsc-race sets race on its own Go dependency graph since ba94580e1.\nPassing --config=race to the entire build also instruments build tools\nand lets the Nogo executable link against the host libc. The code\ngenerators then cannot execute on a worker without that loader.\n\nBuild the explicit smoke target in the ordinary configuration. Keep the\nrace config available for builds that request instrumentation globally."
+      }
     }
   ],
   "edges": [
@@ -57245,9 +57291,34 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T01:23:49.375840+00:00",
+      "updatedAt": "2026-11-01T04:26:11.575254+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The Buildkite AMD64 race smoke originally failed 216 executions on the empty worker. Four source-generation and analysis tools required the missing ELF loader. With race selected on the launcher target, the empty worker linked an 18,195,680-byte race binary. A native unprivileged guest ran that binary with the seven previously built release files; its development stamps differed. Separately, the ordinary GNU Make recipe built and staged all eight files from 8c6ed7a88, and the Sentry confirmed the same stamp before the rootless guest exited successfully. The GNU recovery reused cached outputs and ran the Linux ABI analyzer locally.",
+          "evidence": [
+            {
+              "label": "Original empty-worker build failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41265372846/artifacts/13067411625"
+            },
+            {
+              "label": "Generator ELF interpreters, corrected scratch link and rootless guest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41267001039/artifacts/13067872662"
+            },
+            {
+              "label": "Same-source Make smoke, eight staged ELF files and matching Sentry stamp",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41272340656/artifacts/13069493542"
+            },
+            {
+              "label": "Original GNU release analyzer resource failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41268339617/artifacts/13069347525"
+            },
+            {
+              "label": "Standalone smoke proposal",
+              "url": "https://github.com/tamird/gvisor/commit/8c6ed7a88"
+            }
+          ]
+        },
         {
           "text": "Buildkite’s optimized binary release has three formats per architecture. On AMD64 and ARM64, the Debian package, bzip2 tarball and Zstandard tarball contained the same eight executable files byte for byte. Both Debian packages included the containerd config and a version from a local fixture tag. The first Zstandard actions could not start the compiler-produced compressor because the scratch images lacked the GNU loader. Declaring musl on each execution platform produced a static compressor. Only Zstandard was rebuilt; the original Debian results and bzip2 bytes were verified. Bazel fetched repositories and stamped the build on the Ubuntu clients.",
           "evidence": [
