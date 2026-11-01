@@ -15,6 +15,12 @@ result={"source":source,"carrier":os.environ["GITHUB_SHA"],"conclusion":"INCOMPL
 try:
     log=(work/"make.log").read_text(errors="replace");lines=log.splitlines()
     result["messages"]=[l[:730] for l in lines if re.search(r'Changing configuration RootDir|found: booting sandbox|check not enforced.*gvisor_sentry|^ERROR:|^make: \*\*\*|fatal error:|undefined reference|Permission denied|command not found|Build did NOT complete',l) and not re.search(r'api.?key|token|credential|authorization|remote_header|bes_header',l,re.I)][:30]
+    sanitize=lambda rows:[r[:1100] for r in rows if not re.search(r'api.?key|token|credential|authorization|remote_header|bes_header|Bearer |X-Goog-',r,re.I)]
+    for filename in ["initial-user.log","initial-client.log","ready-client.log","bazel-argv.log"]:
+        path=work/filename
+        if path.exists():result[filename]=sanitize(path.read_text(errors="replace").splitlines())[-18:]
+    if result["makeExit"]:
+        result["originalMakeDiagnostic"]=sanitize(lines)[:40]+sanitize(lines)[-96:]
     stages={}
     for name,target in [("release","//:release"),("race","//runsc:runsc-race")]:
         path=work/(name+".bep"); stage={"target":target};stages[name]=stage
