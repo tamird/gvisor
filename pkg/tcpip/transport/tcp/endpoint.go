@@ -324,7 +324,7 @@ func (sq *sndQueueInfo) CloneState(other *TCPSndBufState) {
 // e.rcvQueueMu -> Protects e.rcvQueue's associated fields but not e.rcvQueue
 // itself.
 // e.sndQueueMu -> Protects the e.sndQueue and associated fields.
-// e.lastErrorMu -> Protects the lastError field.
+// e.lastErrorMu -> Protects pending socket errors.
 //
 // LOCKING/UNLOCKING of the endpoint.  The locking of an endpoint is different
 // based on the context in which the lock is acquired. In the syscall context
@@ -376,15 +376,15 @@ type Endpoint struct {
 	protocol    *protocol
 	waiterQueue *waiter.Queue `state:"wait"`
 
-	// hardError is meaningful only when state is stateError. It stores the
-	// error to be returned when read/write syscalls are called and the
-	// endpoint is in this state. hardError is protected by endpoint mu.
+	lastErrorMu lastErrorMutex `state:"nosave"`
+
+	// hardError is reported by poll and consumed by socket I/O or SO_ERROR.
+	// +checklocks:lastErrorMu
 	hardError tcpip.Error
 
-	// lastError represents the last error that the endpoint reported;
-	// access to it is protected by the following mutex.
-	lastErrorMu lastErrorMutex `state:"nosave"`
-	lastError   tcpip.Error
+	// lastError records an advisory error for SO_ERROR or a later timeout.
+	// +checklocks:lastErrorMu
+	lastError tcpip.Error
 
 	rcvQueueMu rcvQueueMutex `state:"nosave"`
 
@@ -948,16 +948,6 @@ func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 
 	case StateClose, StateError, StateTimeWait:
 		result = mask & (waiter.ReadableEvents | waiter.WritableEvents | waiter.EventHUp | waiter.EventRdHUp)
-		if mask&waiter.EventErr != 0 {
-			// SO_ERROR consumes the pending hard error. A queued extended
-			// error remains pollable until recvmsg(MSG_ERRQUEUE) consumes it.
-			e.LockUser()
-			hasError := e.hardError != nil
-			e.UnlockUser()
-			if hasError || e.SocketOptions().PeekErr() != nil {
-				result |= waiter.EventErr
-			}
-		}
 
 	case StateListen:
 		// Check if there's anything in the accepted queue.
@@ -993,6 +983,17 @@ func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 				e.updateConnDirectionState(connDirectionStateRcvClosed)
 			}
 			e.rcvQueueMu.Unlock()
+		}
+	}
+
+	if mask&waiter.EventErr != 0 {
+		// SO_ERROR or socket I/O consumes a pending hard error. A queued
+		// extended error remains pollable until recvmsg(MSG_ERRQUEUE).
+		e.lastErrorMu.Lock()
+		hasError := e.hardError != nil
+		e.lastErrorMu.Unlock()
+		if hasError || e.SocketOptions().PeekErr() != nil {
+			result |= waiter.EventErr
 		}
 	}
 
@@ -1394,6 +1395,8 @@ func (e *Endpoint) SetOwner(owner tcpip.PacketOwner) {
 
 // +checklocks:e.mu
 func (e *Endpoint) hardErrorLocked() tcpip.Error {
+	e.lastErrorMu.Lock()
+	defer e.lastErrorMu.Unlock()
 	err := e.hardError
 	e.hardError = nil
 	return err
@@ -1537,11 +1540,14 @@ func (e *Endpoint) checkReadLocked() tcpip.Error {
 	// would cause the state to become StateError so we should allow the
 	// reads to proceed before returning a ECONNRESET.
 	bufUsed := e.RcvBufUsed
-	if s := e.EndpointState(); !s.connected() && s != StateClose && bufUsed == 0 {
+	s := e.EndpointState()
+	if bufUsed == 0 && (s.connected() || s == StateError) {
+		if err := e.hardErrorLocked(); err != nil {
+			return err
+		}
+	}
+	if !s.connected() && s != StateClose && bufUsed == 0 {
 		if s == StateError {
-			if err := e.hardErrorLocked(); err != nil {
-				return err
-			}
 			return &tcpip.ErrClosedForReceive{}
 		}
 		e.stats.ReadErrors.NotConnected.Increment()
@@ -1566,11 +1572,14 @@ func (e *Endpoint) checkReadLocked() tcpip.Error {
 // +checklocks:e.sndQueueInfo.sndQueueMu
 func (e *Endpoint) isEndpointWritableLocked() (int, tcpip.Error) {
 	// The endpoint cannot be written to if it's not connected.
-	switch s := e.EndpointState(); {
-	case s == StateError:
+	s := e.EndpointState()
+	if s.connected() || s == StateError {
 		if err := e.hardErrorLocked(); err != nil {
 			return 0, err
 		}
+	}
+	switch {
+	case s == StateError:
 		return 0, &tcpip.ErrClosedForSend{}
 	case !s.connecting() && !s.connected():
 		return 0, &tcpip.ErrClosedForSend{}
@@ -3011,11 +3020,6 @@ func (e *Endpoint) enqueueSegment(s *segment) bool {
 }
 
 func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, pkt *stack.PacketBuffer) {
-	// Update last error first.
-	e.lastErrorMu.Lock()
-	e.lastError = err
-	e.lastErrorMu.Unlock()
-
 	var recvErr bool
 	switch pkt.NetworkProtocolNumber {
 	case header.IPv4ProtocolNumber:
@@ -3025,6 +3029,28 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 	default:
 		panic(fmt.Sprintf("unhandled network protocol number = %d", pkt.NetworkProtocolNumber))
 	}
+
+	// tcp_v4_err and tcp_v6_err deliver errors on established connections
+	// without queuing the quoted packet. RECVERR makes the error visible to
+	// poll and socket I/O unless a syscall currently owns the socket.
+	// See https://github.com/torvalds/linux/blob/cbbddb6b0/net/ipv4/tcp_ipv4.c#L647
+	// and https://github.com/torvalds/linux/blob/cbbddb6b0/net/ipv6/tcp_ipv6.c#L540.
+	e.lastErrorMu.Lock()
+	if e.EndpointState().connected() {
+		report := recvErr && !e.isOwnedByUser()
+		if report {
+			e.hardError = err
+		} else {
+			e.lastError = err
+		}
+		e.lastErrorMu.Unlock()
+		if report {
+			e.waiterQueue.Notify(waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
+		}
+		return
+	}
+	e.lastError = err
+	e.lastErrorMu.Unlock()
 
 	if recvErr {
 		e.SocketOptions().QueueErr(&tcpip.SockError{
@@ -3059,8 +3085,7 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 		}
 		e.stack.Stats().TCP.FailedConnectionAttempts.Increment()
 		e.cleanupLocked()
-		e.hardError = err
-		e.setEndpointState(StateError)
+		e.setErrorStateLocked(err)
 		e.mu.Unlock()
 		e.drainClosingSegmentQueue()
 		e.waiterQueue.Notify(waiter.EventHUp | waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)

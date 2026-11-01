@@ -136,6 +136,7 @@ func timerHandler(e *Endpoint, f func() tcpip.Error) func() {
 	return func() {
 		e.mu.Lock()
 		if err := f(); err != nil {
+			e.cleanupLocked()
 			e.lastErrorMu.Lock()
 			// If the handler timed out and we have a lastError recorded (maybe due
 			// to an ICMP message received), promote it to be the hard error.
@@ -145,9 +146,8 @@ func timerHandler(e *Endpoint, f func() tcpip.Error) func() {
 				e.hardError = err
 			}
 			e.lastError = err
-			e.lastErrorMu.Unlock()
-			e.cleanupLocked()
 			e.setEndpointState(StateError)
+			e.lastErrorMu.Unlock()
 			e.mu.Unlock()
 			e.waiterQueue.Notify(waiter.EventHUp | waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
 			return
@@ -1091,7 +1091,6 @@ func (e *Endpoint) sendData(next *segment) {
 func (e *Endpoint) resetConnectionLocked(err tcpip.Error) {
 	// Only send a reset if the connection is being aborted for a reason
 	// other than receiving a reset.
-	e.hardError = err
 	switch err.(type) {
 	case *tcpip.ErrConnectionReset, *tcpip.ErrTimeout:
 	default:
@@ -1128,6 +1127,16 @@ func (e *Endpoint) resetConnectionLocked(err tcpip.Error) {
 	e.purgeWriteQueue()
 	e.purgePendingRcvQueue()
 	e.cleanupLocked()
+	e.setErrorStateLocked(err)
+}
+
+// setErrorStateLocked publishes the terminal error and state together so
+// an ICMP delivered for the old connection cannot replace the terminal error.
+// +checklocks:e.mu
+func (e *Endpoint) setErrorStateLocked(err tcpip.Error) {
+	e.lastErrorMu.Lock()
+	defer e.lastErrorMu.Unlock()
+	e.hardError = err
 	e.setEndpointState(StateError)
 }
 
@@ -1250,7 +1259,9 @@ func (e *Endpoint) handleReset(s *segment) (ok bool, err tcpip.Error) {
 	//  signal. Enter the CLOSED state, delete the TCB, and return.
 	case StateCloseWait:
 		e.transitionToStateCloseLocked()
+		e.lastErrorMu.Lock()
 		e.hardError = &tcpip.ErrAborted{}
+		e.lastErrorMu.Unlock()
 		return false, nil
 	default:
 		return false, &tcpip.ErrConnectionReset{}
@@ -1488,9 +1499,8 @@ func (e *Endpoint) handshakeFailed(err tcpip.Error) {
 	if e.h != nil && e.h.retransmitTimer != nil {
 		e.h.retransmitTimer.stop()
 	}
-	e.hardError = err
 	e.cleanupLocked()
-	e.setEndpointState(StateError)
+	e.setErrorStateLocked(err)
 }
 
 // handleTimeWaitSegments processes segments received during TIME_WAIT
